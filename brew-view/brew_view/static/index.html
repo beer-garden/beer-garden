@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang='en' ng-app="bgApp">
+  <head>
+    <title ng-bind="config.application_name"></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" charset="utf-8">
+
+    <link href="dist/vendor.css" rel="stylesheet">
+    <link href="dist/index.css" rel="stylesheet">
+    <link ng-if="themes.slate" ng-href="dist/dark.css" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link ng-if="config.icon_default" ng-href="dist/image/{{config.icon_default}}.png" rel="shortcut icon">
+  </head>
+
+  <body ng-cloak ng-controller="ApplicationController">
+    <!-- Navbar Start -->
+    <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom:0">
+
+      <!-- Navbar Top Start -->
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle Navigation</span>
+          <span class='icon-bar'></span>
+          <span class='icon-bar'></span>
+          <span class='icon-bar'></span>
+        </button>
+        <a class="navbar-brand" href="#/">
+          <i ng-class="getIcon(config.icon_default)"></i>
+          <span ng-cloak>{{config.application_name}}</span>
+        </a>
+      </div>
+
+      <ul class="nav navbar-nav navbar-top-links navbar-right">
+        <li class="dropdown">
+          <a href="" class="dropdown-toggle" data-toggle="dropdown"> Themes <span class="caret"></span></a>
+          <ul class="dropdown-menu">
+            <li ng-repeat="(style, bool) in themes">
+              <a href="" ng-click="changeTheme(style)">{{style}} <span ng-if="bool"><i class="fa fa-check"></i></span></a>
+            </li>
+          </ul>
+        </li>
+
+        <li>
+          <a ui-sref="about" ui-sref-active="active">About</a>
+        </li>
+      </ul>
+      <!-- Navbar Top End -->
+
+      <!-- Sidebar Start -->
+      <div class="navbar-default sidebar" role="navigation">
+        <div class="sidebar-nav navbar-collapse">
+          <ul class="nav" id="side-menu">
+
+            <li>
+              <a>
+                <i class="fa fa-cogs fa-fw"></i>
+                <span>Systems</span>
+                <span class="fa arrow"></span>
+              </a>
+
+              <ul class="nav nav-second-level">
+                <li ng-repeat="(name, arr) in systems | groupBy:'name'" ng-init="collapsed=false">
+                  <a ng-if="arr.length == 1" ui-sref="system({id: arr[0].id})" ui-sref-active="active">
+                    <i class="fa fa-cog"></i>
+                    <span>{{arr[0].display_name || arr[0].name}}</span>
+                  </a>
+                  <a ng-if="arr.length > 1" ng-click="$parent.collapsed = !$parent.collapsed">
+                    <i class="fa fa-cog"></i>
+                    <span>{{arr[0].display_name || arr[0].name}}</span>
+                    <span class="fa" ng-class="{'fa-angle-left': collapsed, 'fa-angle-down': !collapsed}" style="float: right;"></span>
+                  </a>
+                  <ul ng-if="arr.length > 1" ng-style="{'max-height': (!collapsed) ? (arr.length*40 + 'px') : '0px'}" class="nav nav-third-level show-more">
+                    <li ng-repeat="system in arr">
+                      <a ui-sref="system({id: system.id})" ui-sref-active="active">
+                        <span>{{system.version}}</span>
+                      </a>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+
+            </li>
+            <li>
+              <a ui-sref="commands" ng-class="{active: ($state.current.name.startsWith('command'))}">
+                <i class="fa fa-fw fa-send-o"></i>
+                <span>Commands</span>
+              </a>
+            </li>
+            <li>
+              <a ui-sref="requests" ng-class="{active: ($state.current.name.startsWith('request'))}">
+                <i class="fa fa-fw fa-tasks"></i>
+                <span>Requests</span>
+              </a>
+            </li>
+            <li>
+              <a ui-sref-active="active">
+                <i class="fa fa-wrench fa-fw"></i>
+                <span>Administration</span>
+                <span class="fa arrow"></span>
+              </a>
+              <ul class="nav nav-second-level" ng-cloak>
+                <li>
+                  <a ui-sref="system_admin" ui-sref-active="active">
+                    <i class="fa fa-power-off"></i>
+                    <span>Systems Management</span>
+                  </a>
+                </li>
+                <li>
+                  <a ui-sref="queues" ui-sref-active="active">
+                    <i class="fa fa-database"></i>
+                    <span>Queue Management</span>
+                  </a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <!-- Sidebar End -->
+
+    </nav>
+    <!-- Navbar End -->
+
+    <div id="page-wrapper">
+      <div class="row">
+        <div ui-view></div>
+      </div>
+    </div>
+
+    <script src="dist/vendor.js"></script>
+    <script src="dist/index.js"></script>
+
+  </body>
+</html>

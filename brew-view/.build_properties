@@ -1,0 +1,6 @@
+GROUP_ID=x86_64.el6
+GROUP_PATH=x86_64/el6
+BUILD_IMAGE=beer-garden/build
+MODULE_NAME=brew_view
+PACKAGE_NAME=brew-view
+RPM_ARCHITECTURE=x86_64

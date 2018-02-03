@@ -1,0 +1,3 @@
+graft brew_view/static
+prune brew_view/static/node_modules
+

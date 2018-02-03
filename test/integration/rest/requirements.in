@@ -1,0 +1,16 @@
+
+# Dependencies
+brewtils
+
+# Build/Deploy Dependencies
+pip-tools
+
+# Test Dependencies
+mock
+nose
+rednose
+coverage
+nosexcover
+pylint
+tox
+

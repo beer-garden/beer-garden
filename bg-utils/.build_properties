@@ -1,0 +1,3 @@
+MODULE_NAME=bg_utils
+PACKAGE_NAME=bg-utils
+BUILD_IMAGE=beer-garden/build

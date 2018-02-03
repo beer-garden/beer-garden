@@ -1,0 +1,61 @@
+{
+  "level": "INFO",
+  "handlers": {
+    "logstash": {
+      "class": "logstash_async.handler.AsynchronousLogstashHandler",
+      "transport": "logstash_async.transport.TcpTransport",
+      "host": "localhost",
+      "port": 5000,
+      "ssl_enable": false,
+      "ssl_verify": false,
+      "ca_certs": null,
+      "certfile": null,
+      "keyfile": null,
+      "database_path": "test.sql",
+      "formatter": "logstash"
+    },
+    "stdout": {
+      "class": "logging.StreamHandler",
+      "formatter": "stdout",
+      "level": "INFO",
+      "stream": "ext://sys.stdout"
+    },
+    "file": {
+      "backupCount": 20,
+      "class": "logging.handlers.RotatingFileHandler",
+      "encoding": "utf8",
+      "formatter": "default",
+      "level": "INFO",
+      "maxBytes": 10485760,
+      "filename": "plugin.log"
+    }
+  },
+  "formatters": {
+    "default": {
+      "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    },
+    "logstash": {
+      "format": "%(message)s"
+    },
+    "stdout": {
+      "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    }
+  },
+  "loggers": {
+    "plugin1": {
+      "level": "WARN",
+      "handlers": [
+        "logstash", "stdout"
+      ],
+      "formatters": {
+        "logstash": "%(ascitime)s - %(message)s"
+      }
+    },
+    "plugin2": {
+      "level": "DEBUG",
+      "handlers": [
+        "stdout"
+      ]
+    }
+  }
+}

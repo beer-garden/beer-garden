@@ -1,0 +1,55 @@
+/* To work with bootswatch theming, we need to set many of the background images to none */
+/* bootstrap is automatically setting the background images to be gradients */
+#page-wrapper{
+    background: inherit;
+    border-left: 1px solid #CBCBCB !important;
+}
+.navbar-default{
+    background-image: none;
+}
+.sidebar ul li a.active {
+    background: #5B85AB;
+    color: white;
+}
+.panel-default > .panel-heading {
+    background-image: none;
+}
+.dropdown-menu > li > a:hover, .dropdown-menu > li > a:focus,
+.navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .active > a{
+    background-image: none;
+}
+.navbar-nav{
+    margin-right: 0px !important;
+}
+/* Ace editors */
+.ace-tm, .ace-dawn{
+    background-color: rgba(255,255,255, .6) !important;
+}
+.icon-color{
+    color: #C8C8C8 !important;
+}
+
+/* Weird button background */
+.btn-primary:hover, .btn-primary:focus,
+.btn-success:hover, .btn-success:focus,
+.btn-info:hover, .btn-info:focus,
+.btn-warning:hover, .btn-warning:focus,
+.btn-danger:hover, .btn-danger:focus{
+    background-position: 0;
+}
+
+.alert-primary,
+.alert-success,
+.alert-info,
+.alert-warning,
+.alert-danger{
+    background-image: none;
+}
+
+.panel-primary > .panel-heading,
+.panel-success > .panel-heading,
+.panel-info > .panel-heading,
+.panel-warning > .panel-heading,
+.panel-danger > .panel-heading{
+    background-image: none;
+}
