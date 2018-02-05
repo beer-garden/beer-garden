@@ -1,0 +1,22 @@
+
+# Dependencies
+bg-utils==2.2.0.dev0
+pika
+pyrabbit2
+futures ; python_version < "3.0"
+subprocess32 ; python_version < "3.0"
+
+# Build/Deploy Dependencies
+fabric3==1.12.0.post1
+pyyaml
+pycrypto
+
+# Test Dependencies
+mock
+nose
+rednose
+coverage
+nosexcover
+pylint
+tox
+
