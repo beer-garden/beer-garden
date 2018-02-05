@@ -1,0 +1,9 @@
+<h1 class='page-header'>Requests</h1>
+
+<loading      loader="requests"></loading>
+<server-error loader="requests"></server-error>
+<empty        loader="requests" label="requests"></empty>
+
+<div class="container-fluid animate-if" ng-show="requests.loaded && !requests.error" style="padding-bottom: 3rem;">
+  <table datatable="" dt-options="dtOptions" dt-columns="dtColumns" class="table table-striped table-bordered" style="width: 100%" />
+</div>

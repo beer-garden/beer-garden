@@ -1,0 +1,26 @@
+
+<div class="col-md-12" ng-if="(loader.loaded && !loader.error && loader.data.length === 0) || (loader.status === 404)">
+  <div class="panel panel-warning">
+    <div class="panel-heading">
+      <h2><strong> Hmmm...</strong> No {{label}} could be found</h2>
+    </div>
+    <div class="panel-body">
+      <p>There are a couple of explanations for why there would be no {{label}}. Check out below for troubleshooting steps.</p>
+      <table class="table">
+        <tr>
+          <th width="15%">Problem</th>
+          <th width="60%">Description</th>
+          <th width="25%">Resolution</th>
+        </tr>
+        <tr ng-repeat="solution in loader.errorMap.empty.solutions">
+          <td ng-bind-html="solution.problem"></td>
+          <td ng-bind-html="solution.description"></td>
+          <td ng-bind-html="solution.resolution"></td>
+        </tr>
+      </table>
+    </div>
+    <div class="panel-footer">
+      <p>If none of the above solutions seem to solve the problem, please check in with your System Administrator.</p>
+    </div>
+  </div>
+</div>
