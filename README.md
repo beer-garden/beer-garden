@@ -28,10 +28,10 @@ The first step is to clone the git repository that contains the `docker-compose.
 
 ```
 git clone git@github.com:beer-garden/beer-garden.git
-cd beer-garden/docker/docker-compose/version_2
+cd beer-garden/docker/docker-compose
 ```
 
-Opne up the `conf/bartender-config.json` file and find the line that looks like this:
+Open up the `conf/bartender-config.json` file and find the line that looks like this:
 
 ```
 "amq_publish_host": "CHANGE_ME_PLEASE"
