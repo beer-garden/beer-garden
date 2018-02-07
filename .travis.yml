@@ -1,0 +1,9 @@
+install: pip install -U tox-travis codecov
+language: python
+python:
+- 3.6
+- 3.5
+- 2.7
+script: tox
+after_success:
+  codecov
