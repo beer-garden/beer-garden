@@ -24,9 +24,9 @@ setup(
     packages=find_packages(exclude=['test', 'test.*']),
     package_data={'': ['README.md'], 'bg_utils': ['thrift/*.thrift']},
     install_requires=[
-        'application-configuration>=0.0.9',
-        'brewtils==2.3.0.dev0',
+        'brewtils>=2.3.0',
         'mongoengine',
-        'thriftpy'
+        'thriftpy',
+        'yapconf'
     ]
 )
