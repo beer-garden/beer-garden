@@ -1,13 +1,16 @@
 
 # Runtime Dependencies
-brewtils==2.3.0.dev0
+-e git+https://github.com/beer-garden/brewtils@master#egg=brewtils
+futures ; python_version < "3.0"
 mongoengine
-application-configuration
 pika
 thriftpy
+yapconf
 
 # Documentation Dependencies
 sphinx
+sphinx_rtd_theme
+watchdog
 
 # Build / Test Dependencies
 mock
@@ -15,6 +18,8 @@ nose
 rednose
 coverage
 nosexcover
-pylint
 tox
-
+pytz
+flake8
+wheel
+twine

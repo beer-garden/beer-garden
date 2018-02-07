@@ -4,57 +4,62 @@
 #
 #    pip-compile --output-file requirements.txt requirements.in
 #
-
+-e git+https://github.com/beer-garden/brewtils@master#egg=brewtils
 alabaster==0.7.10         # via sphinx
-application-configuration==0.0.9
-astroid==1.5.3            # via pylint
+argh==0.26.2              # via watchdog
 babel==2.5.1              # via sphinx
-backports.functools-lru-cache==1.4  # via astroid, pylint
-brewtils==2.3.0.dev0
 certifi==2017.7.27.1      # via requests
 chardet==3.0.4            # via requests
 colorama==0.3.9           # via rednose
-configparser==3.5.0       # via pylint
+configparser==3.5.0       # via flake8
 coverage==4.4.1
 docutils==0.14            # via sphinx
-enum34==1.1.6             # via astroid
+enum34==1.1.6             # via flake8
+flake8==3.5.0
 funcsigs==1.0.2           # via mock
-future==0.16.0            # via application-configuration
-futures==3.1.1            # via brewtils
+futures==3.2.0 ; python_version < "3.0"
 idna==2.6                 # via requests
 imagesize==0.7.1          # via sphinx
-isort==4.2.15             # via pylint
 jinja2==2.9.6             # via sphinx
-lark-parser==0.3.7        # via brewtils
-lazy-object-proxy==1.3.1  # via astroid
+lark-parser==0.3.7
 markupsafe==1.0           # via jinja2
-marshmallow==2.13.6       # via brewtils
-mccabe==0.6.1             # via pylint
+marshmallow==2.13.6
+mccabe==0.6.1             # via flake8
 mock==2.0.0
 mongoengine==0.14.3
 nose==1.3.7
 nosexcover==1.0.11
+pathtools==0.1.2          # via watchdog
 pbr==3.1.1                # via mock
 pika==0.11.0
+pkginfo==1.4.1            # via twine
 pluggy==0.5.2             # via tox
 ply==3.10                 # via thriftpy
 py==1.4.34                # via tox
+pycodestyle==2.3.1        # via flake8
+pyflakes==1.6.0           # via flake8
 pygments==2.2.0           # via sphinx
-pylint==1.7.4
 pymongo==3.5.1            # via mongoengine
-pytz==2017.2              # via babel
-pyyaml==3.12              # via application-configuration
+python-box==3.1.1         # via yapconf
+pytz==2017.2
+pyyaml==3.12              # via watchdog
 rednose==1.2.2
-requests==2.18.4          # via brewtils, sphinx
-singledispatch==3.4.0.3   # via astroid, pylint
-six==1.11.0               # via application-configuration, astroid, brewtils, mock, mongoengine, pylint, singledispatch, sphinx, tox
+requests-toolbelt==0.8.0  # via twine
+requests==2.18.4          # via requests-toolbelt, sphinx, twine
+six==1.11.0               # via mock, mongoengine, sphinx, tox, yapconf
 snowballstemmer==1.2.1    # via sphinx
+sphinx-rtd-theme==0.2.4
 sphinx==1.6.4
 sphinxcontrib-websupport==1.0.1  # via sphinx
 termstyle==0.1.11         # via rednose
 thriftpy==0.3.9
 tox==2.9.1
-typing==3.6.2             # via sphinx
+tqdm==4.19.5              # via twine
+twine==1.9.1
+typing==3.6.4             # via sphinx
 urllib3==1.22             # via requests
 virtualenv==15.1.0        # via tox
-wrapt==1.10.11            # via astroid, brewtils
+watchdog==0.8.3
+wheel==0.30.0
+wrapt==1.10.11
+yapconf==0.1.0
