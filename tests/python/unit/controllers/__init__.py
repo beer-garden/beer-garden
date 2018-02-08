@@ -1,7 +1,7 @@
-from app_config import ConfigSpec
 from mock import patch, Mock
 from mongoengine import connect
 from tornado.testing import AsyncHTTPTestCase
+from yapconf import YapconfSpec
 
 import brew_view
 from brew_view.specification import SPECIFICATION
@@ -16,8 +16,8 @@ class TestHandlerBase(AsyncHTTPTestCase):
         server_patch = patch('brew_view.HTTPServer')
         server_patch.start()
 
-        spec = ConfigSpec(SPECIFICATION)
-        brew_view.setup(spec, {})
+        spec = YapconfSpec(SPECIFICATION)
+        brew_view.setup_brew_view(spec, {})
         connect('beer_garden', host='mongomock://localhost')
 
         cls.app = brew_view.tornado_app

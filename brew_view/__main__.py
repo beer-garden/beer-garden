@@ -3,7 +3,7 @@ import signal
 import sys
 from argparse import ArgumentParser
 
-from app_config import ConfigSpec
+from yapconf import YapconfSpec
 
 import bg_utils
 import brew_view
@@ -37,17 +37,17 @@ def shutdown():
 
 
 def generate_logging_config():
-    spec = ConfigSpec(SPECIFICATION, env_prefix="BG_")
+    spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
     bg_utils.generate_logging_config(spec, get_default_logging_config, sys.argv[1:])
 
 
 def generate_config():
-    spec = ConfigSpec(SPECIFICATION, env_prefix='BG_')
+    spec = YapconfSpec(SPECIFICATION, env_prefix='BG_')
     bg_utils.generate_config(spec, sys.argv[1:])
 
 
 def migrate_config():
-    spec = ConfigSpec(SPECIFICATION, env_prefix="BG_")
+    spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
     bg_utils.migrate_config(spec, sys.argv[1:])
 
 
@@ -55,12 +55,12 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    spec = ConfigSpec(SPECIFICATION, env_prefix="BG_")
+    spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
     parser = ArgumentParser()
     spec.add_arguments_to_parser(parser)
     args = parser.parse_args(sys.argv[1:])
 
-    brew_view.setup(spec, vars(args))
+    brew_view.setup_brew_view(spec, vars(args))
     brew_view.logger.debug("Application set up successfully.")
 
     brew_view.logger.debug("Publishing application startup event.")

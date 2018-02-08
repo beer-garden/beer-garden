@@ -37,11 +37,11 @@ app_log_config = None
 notification_meta = None
 
 
-def setup(spec, cli_args):
+def setup_brew_view(spec, cli_args):
     global config, logger, app_log_config, event_publishers, notification_meta
 
     # We load the config once just to see if there is a config file we should load
-    temp_config = spec.load_app_config(cli_args, 'ENVIRONMENT')
+    temp_config = spec.load_config(cli_args, 'ENVIRONMENT')
 
     # If they specified a config file, we should load it up
     if temp_config.config:
@@ -50,7 +50,7 @@ def setup(spec, cli_args):
     else:
         config_from_file = {}
 
-    config = spec.load_app_config(cli_args, config_from_file, 'ENVIRONMENT')
+    config = spec.load_config(cli_args, config_from_file, 'ENVIRONMENT')
 
     # This is a little weird - just being slightly redundant here to avoid needing to change application-configuration
     prefix = brewtils.rest.normalize_url_prefix(config.url_prefix)
