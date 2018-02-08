@@ -1,9 +1,9 @@
 import unittest
 import json
 
+from . import TestHandlerBase
 from mock import Mock, patch
-from .import TestHandlerBase
-from .utils import TestUtils
+from test.python.utils import TestUtils
 
 
 class LoggingApiTest(TestHandlerBase, TestUtils):

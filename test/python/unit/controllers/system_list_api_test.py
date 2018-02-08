@@ -1,7 +1,7 @@
 from mock import Mock, patch
 
-from tests.python.unit.controllers.utils import TestUtils
 from . import TestHandlerBase
+from test.python.utils import TestUtils
 
 
 class SystemListAPITest(TestHandlerBase, TestUtils):
