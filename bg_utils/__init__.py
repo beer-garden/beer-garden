@@ -24,8 +24,8 @@ def parse_args(spec, item_names, cli_args):
 
     Args:
         spec (yapconf.YapconfSpec) Specification for the application
-        item_names: Names to parse
-        cli_args (list): Command line arguments
+        item_names(List[str]) Names to parse
+        cli_args (List[str]): Command line arguments
 
     Returns:
         Namespace: Arguments object
@@ -48,7 +48,7 @@ def generate_config(spec, cli_args):
 
     Args:
         spec (yapconf.YapconfSpec) Specification for the application
-        cli_args (list): Command line arguments
+        cli_args (List[str]): Command line arguments
 
     Returns:
         box.Box: The generated configuration object
@@ -71,7 +71,7 @@ def generate_config_file(spec, cli_args):
 
     Args:
         spec (yapconf.YapconfSpec) Specification for the application
-        cli_args (list): Command line arguments
+        cli_args (List[str]): Command line arguments
 
     Returns:
         None
@@ -94,7 +94,7 @@ def update_config_file(spec, cli_args):
 
     Args:
         spec (yapconf.YapconfSpec) Specification for the application
-        cli_args (list): Command line arguments
+        cli_args (List[str]): Command line arguments
 
     Returns:
         None
@@ -116,48 +116,54 @@ def update_config_file(spec, cli_args):
                              update_defaults=True)
 
 
-def generate_logging_config(config_spec, default_config_generator, cli_args):
-    """Generate logging configuration file. If no log_config is reported, simply prints out a logging config
+def generate_logging_config(spec, default_config_generator, cli_args):
+    """Generate and save logging configuration file.
 
-    The default_config_generator must accept a log level and filename as arguments
+    The default_config_generator must accept a log level and filename as arguments.
 
-    :param config_spec: ConfigSpec for your application
-    :param default_config_generator: method to generate a default logging config
-    :param cli_args: Command-line arguments
-    :return:
+    If 'log_config' exists in the command line arguments the configuration will be written there.
+
+    Args:
+        spec (yapconf.YapconfSpec) Specification for the application
+        default_config_generator (method) Method to generate default logging configuration
+        cli_args (List[str]): Command line arguments
+
+    Returns:
+        str: The logging configuration dictionary as a string
     """
-    args = parse_args(config_spec, ["log_config", "log_file", "log_level"], cli_args)
+    args = parse_args(spec, ["log_config", "log_file", "log_level"], cli_args)
 
     default_logging_config = default_config_generator(args.log_level, args.log_file)
 
     config_string = json.dumps(default_logging_config, indent=4, sort_keys=True)
-    if args.log_config is None:
-        print(config_string)
-    else:
+
+    if args.log_config is not None:
         with open(args.log_config, 'w') as f:
             f.write(str(config_string))
 
     return config_string
 
 
+def setup_application_logging(config, default_config):
+    """Setup the application logging based on the config object.
 
+    If config.log_config is not set then the default_logging_config will be used.
 
-def setup_application_logging(app_config, default_logging_config):
-    """Setup the application logging based on the app_config object.
+    Args:
+        config (box.Box) The application configuration object
+        default_config (dict) Dictionary configuration to use if config.log_config is missing
 
-    If app_config.log_config is not set, then the default_logging_config will be used.
-
-    :param app_config: Return value from config_spec.load_config
-    :param default_logging_config: A default logging config dictionary
-    :return:
+    Returns:
+        dict: The logging configuration used
     """
-    if app_config.log_config:
-        with open(app_config.log_config, 'rt') as f:
+    if config.log_config:
+        with open(config.log_config, 'rt') as f:
             logging_config = json.load(f)
     else:
-        logging_config = default_logging_config
+        logging_config = default_config
 
     logging.config.dictConfig(logging_config)
+
     return logging_config
 
 
