@@ -1,21 +1,21 @@
 BG-Utils
 ========
 
-.. image:: https://img.shields.io/pypi/v/brewtils.svg
-        :target: https://pypi.python.org/pypi/brewtils
+.. image:: https://img.shields.io/pypi/v/bg-utils.svg
+        :target: https://pypi.python.org/pypi/bg-utils
 
-.. image:: https://img.shields.io/travis/loganasherjones/yapconf.svg
-        :target: https://travis-ci.org/beer-garden/brewtils?branch=master
+.. image:: https://img.shields.io/travis/beer-garden/bg-utils.svg
+        :target: https://travis-ci.org/beer-garden/bg-utils?branch=master
 
-.. image:: https://codecov.io/gh/beer-garden/brewtils/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/beer-garden/brewtils
+.. image:: https://codecov.io/gh/beer-garden/bg-utils/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/beer-garden/bg-utils
 
-.. image:: https://readthedocs.org/projects/brewtils/badge/?version=latest
-        :target: https://brewtils.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/bg-utils/badge/?version=latest
+        :target: https://bg-utils.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-.. image:: https://pyup.io/repos/github/beer-garden/brewtils/shield.svg
-     :target: https://pyup.io/repos/github/beer-garden/brewtils/
+.. image:: https://pyup.io/repos/github/beer-garden/bg-utils/shield.svg
+     :target: https://pyup.io/repos/github/beer-garden/bg-utils/
      :alt: Updates
 
 Common components shared between Bartender and Brew-view.
