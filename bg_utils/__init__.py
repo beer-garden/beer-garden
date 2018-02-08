@@ -4,7 +4,6 @@ import logging.config
 import os
 from argparse import ArgumentParser
 from io import open
-from builtins import str
 
 import thriftpy
 
