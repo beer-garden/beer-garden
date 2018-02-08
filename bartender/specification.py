@@ -1,6 +1,6 @@
 SPECIFICATION = {
     "amq_admin_host": {
-        "type": "string",
+        "type": "str",
         "default": "localhost",
         "description": "Hostname of the AMQ Admin host",
         "previous_names": ["AMQ_ADMIN_HOST"]
@@ -12,13 +12,13 @@ SPECIFICATION = {
         "previous_names": ["AMQ_ADMIN_PORT"]
     },
     "amq_admin_user": {
-        "type": "string",
+        "type": "str",
         "default": "guest",
         "description": "Username to login to the AMQ admin",
         "previous_names": ["AMQ_ADMIN_USER"]
     },
     "amq_admin_password": {
-        "type": "string",
+        "type": "str",
         "default": "guest",
         "description": "Password to login to the AMQ admin",
         "previous_names": ["AMQ_ADMIN_PW"]
@@ -30,7 +30,7 @@ SPECIFICATION = {
         "previous_names": ["AMQ_CONNECTION_ATTEMPTS"]
     },
     "amq_exchange": {
-        "type": "string",
+        "type": "str",
         "default": "beer_garden",
         "description": "Exchange name to use for AMQ",
         "previous_names": ["AMQ_EXCHANGE"]
@@ -42,7 +42,7 @@ SPECIFICATION = {
         "previous_names": ["AMQ_HEARTBEAT_INTERVAL"]
     },
     "amq_host": {
-        "type": "string",
+        "type": "str",
         "default": "localhost",
         "description": "Hostname of AMQ to use",
         "previous_names": ["AMQ_HOST"]
@@ -54,60 +54,60 @@ SPECIFICATION = {
         "previous_names": ["AMQ_PORT"]
     },
     "amq_publish_host": {
-        "type": "string",
+        "type": "str",
         "default": "localhost",
         "description": "Publicly accessible hostname for plugins to connect to",
         "previous_names": ["AMQ_PUBLISH_HOST"]
     },
     "amq_password": {
-        "type": "string",
+        "type": "str",
         "default": "guest",
         "description": "Password to login to the AMQ host",
         "previous_names": ["AMQ_PW"]
     },
     "amq_user": {
-        "type": "string",
+        "type": "str",
         "default": "guest",
         "description": "Username to login to the AMQ host",
         "previous_names": ["AMQ_USER"]
     },
     "amq_virtual_host": {
-        "type": "string",
+        "type": "str",
         "default": "/",
         "description": "Virtual host to use for AMQ",
         "previous_names": ["AMQ_VIRTUAL_HOST"]
     },
     "ca_cert": {
-        "type": "string",
+        "type": "str",
         "description": "Path to CA certificate file to use",
         "required": False
     },
     "ca_verify": {
-        "type": "boolean",
+        "type": "bool",
         "default": True,
         "description": "Verify external certificates",
         "required": False
     },
     "config": {
-        "type": "string",
+        "type": "str",
         "description": "Path to configuration file to use",
         "required": False,
         "cli_short_name": "c"
     },
     "db_host": {
-        "type": "string",
+        "type": "str",
         "default": "localhost",
         "description": "Hostname/IP of the database server",
         "previous_names": ["DB_HOST"]
     },
     "db_name": {
-        "type": "string",
+        "type": "str",
         "default": "beer_garden",
         "description": "Name of the database to use",
         "previous_names": ["DB_NAME"]
     },
     "db_password": {
-        "type": "string",
+        "type": "str",
         "default": None,
         "required": False,
         "description": "Password to connect to the database"
@@ -119,7 +119,7 @@ SPECIFICATION = {
         "previous_names": ["DB_PORT"]
     },
     "db_username": {
-        "type": "string",
+        "type": "str",
         "default": None,
         "required": False,
         "description": "Username to connect to the database"
@@ -130,18 +130,18 @@ SPECIFICATION = {
         "description": "Number of minutes to wait before deleting events (negative number for never)"
     },
     "log_config": {
-        "type": "string",
+        "type": "str",
         "description": "Path to a logging config file.",
         "required": False,
         "cli_short_name": "l"
     },
     "log_file": {
-        "type": "string",
+        "type": "str",
         "description": "File you would like the application to log to",
         "required": False
     },
     "log_level": {
-        "type": "string",
+        "type": "str",
         "description": "Log level for the application",
         "default": "INFO",
         "choices": ["DEBUG", "INFO", "WARN", "WARNING", "ERROR", "CRITICAL"]
@@ -163,13 +163,13 @@ SPECIFICATION = {
         "previous_names": ["INFO_REQUEST_TTL"]
     },
     "plugin_directory": {
-        "type": "string",
+        "type": "str",
         "description": "Directory where local plugins are located",
         "required": False,
         "previous_names": ["PLUGINS_DIRECTORY"]
     },
     "plugin_log_directory": {
-        "type": "string",
+        "type": "str",
         "description": "Directory where local plugin logs should go",
         "required": False
     },
@@ -196,14 +196,14 @@ SPECIFICATION = {
         "description": "Amount of time to wait before marking a plugin as unresponsive"
     },
     "ssl_enabled": {
-        "type": "boolean",
+        "type": "bool",
         "default": False,
         "description": "Is the API server using SSL",
         "previous_names": ["SSL_ENABLED"],
         "cli_separator": "_"
     },
     "thrift_host": {
-        "type": "string",
+        "type": "str",
         "default": "0.0.0.0",
         "description": "Host to bind the thrift server to"
     },
@@ -214,13 +214,13 @@ SPECIFICATION = {
         "previous_names": ["THRIFT_PORT"]
     },
     "url_prefix": {
-        "type": "string",
+        "type": "str",
         "default": None,
         "description": "URL prefix of the API server",
         "required": False
     },
     "web_host": {
-        "type": "string",
+        "type": "str",
         "default": "localhost",
         "description": "Hostname of the API server",
         "previous_names": ["WEB_HOST"]

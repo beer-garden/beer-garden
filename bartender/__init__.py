@@ -25,7 +25,7 @@ def setup_bartender(spec, cli_args):
     global application, config, logger, bv_client
 
     # We load the config once just to see if there is a config file we should load from.
-    temp_config = spec.load_app_config(cli_args, 'ENVIRONMENT')
+    temp_config = spec.load_config(cli_args, 'ENVIRONMENT')
 
     # If they specified a config file, we should load it up
     if temp_config.config:
@@ -34,7 +34,7 @@ def setup_bartender(spec, cli_args):
     else:
         config_from_file = {}
 
-    config = spec.load_app_config(cli_args, config_from_file, 'ENVIRONMENT')
+    config = spec.load_config(cli_args, config_from_file, 'ENVIRONMENT')
 
     prefix = brewtils.rest.normalize_url_prefix(config.url_prefix)
     config['url_prefix'] = prefix

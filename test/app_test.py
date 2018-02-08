@@ -1,8 +1,8 @@
 import unittest
 from datetime import timedelta
 
-from app_config import ConfigSpec
 from mock import MagicMock, Mock, patch
+from yapconf import YapconfSpec
 
 from bartender.app import BartenderApp, HelperThread
 from bartender.specification import SPECIFICATION
@@ -13,7 +13,7 @@ from bg_utils.models import Event, Request
 class BartenderAppTest(unittest.TestCase):
 
     def setUp(self):
-        self.config = ConfigSpec(SPECIFICATION).load_app_config()
+        self.config = YapconfSpec(SPECIFICATION).load_config()
 
         self.app = BartenderApp(self.config)
         self.thrift_server = Mock()

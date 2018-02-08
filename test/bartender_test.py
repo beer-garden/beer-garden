@@ -2,9 +2,9 @@ import logging
 import os
 import unittest
 
-from app_config import ConfigSpec
-from app_config.json_model import JsonModel
 from mock import Mock, patch, call
+from box import Box
+from yapconf import YapconfSpec
 
 import bartender as bg
 from bartender.app import BartenderApp
@@ -14,7 +14,7 @@ from bartender.specification import SPECIFICATION, get_default_logging_config
 class BartenderTest(unittest.TestCase):
 
     def setUp(self):
-        self.spec = ConfigSpec(SPECIFICATION)
+        self.spec = YapconfSpec(SPECIFICATION)
         self.environment_copy = os.environ.copy()
         os.environ = {}
 
@@ -26,7 +26,7 @@ class BartenderTest(unittest.TestCase):
     @patch('bartender._progressive_backoff', Mock())
     def test_setup_no_file_given(self):
         bg.setup_bartender(self.spec, {})
-        self.assertIsInstance(bg.config, JsonModel)
+        self.assertIsInstance(bg.config, Box)
         self.assertIsInstance(bg.logger, logging.Logger)
         self.assertIsInstance(bg.application, BartenderApp)
 

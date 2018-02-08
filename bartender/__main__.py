@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 import signal
-import bg_utils
 import sys
 from argparse import ArgumentParser
-from app_config import ConfigSpec
+
+import bg_utils
+from yapconf import YapconfSpec
 
 import bartender
 from bartender.specification import SPECIFICATION, get_default_logging_config
@@ -21,17 +22,17 @@ def signal_handler(signal_number, stack_frame):
 
 
 def generate_logging_config():
-    spec = ConfigSpec(SPECIFICATION, env_prefix="BG_")
+    spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
     bg_utils.generate_logging_config(spec, get_default_logging_config, sys.argv[1:])
 
 
 def generate_config():
-    spec = ConfigSpec(SPECIFICATION, env_prefix="BG_")
+    spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
     bg_utils.generate_config(spec, sys.argv[1:])
 
 
 def migrate_config():
-    spec = ConfigSpec(SPECIFICATION, env_prefix="BG_")
+    spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
     bg_utils.migrate_config(spec, sys.argv[1:])
 
 
@@ -39,7 +40,7 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    spec = ConfigSpec(SPECIFICATION, env_prefix="BG_")
+    spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
     parser = ArgumentParser()
     spec.add_arguments_to_parser(parser)
     args = parser.parse_args(sys.argv[1:])
