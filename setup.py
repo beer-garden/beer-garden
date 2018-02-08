@@ -23,7 +23,7 @@ setup(
     license='MIT',
     packages=(find_packages(exclude=['test', 'test.*'])),
     install_requires=[
-        'bg-utils==2.3.0',
+        'bg-utils==2.4.0',
         'pika==0.11.0',
         'pyrabbit2==1.0.0',
         'futures==3.1.1;python_version<"3.0"',
