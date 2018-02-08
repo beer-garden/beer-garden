@@ -30,69 +30,65 @@ class BgutilsTest(unittest.TestCase):
         self.assertEqual(args.config, "/path/to/config/file")
 
     def test_generate_config(self):
-        config = bg_utils.generate_config(self.spec, ["--config", "/path/to/config"])
+        config = bg_utils._generate_config(self.spec, ["--config", "/path/to/config"])
         self.assertIsNone(config.log_file)
         self.assertIsNone(config.log_config)
         self.assertEqual('INFO', config.log_level)
         self.assertEqual('/path/to/config', config.config)
 
-    def test_generate_logging_config_not_to_file(self):
-        config_generator = Mock(return_value={'foo': 'bar'})
-        config_string = bg_utils.generate_logging_config(self.spec, config_generator, [])
-        config_generator.assert_called_with('INFO', None)
-        self.assertEqual(config_string, json.dumps({'foo': 'bar'}, indent=4, sort_keys=True))
+    def test_generate_config_file(self):
+        self.spec._write_dict_to_file = Mock()
+        bg_utils.generate_config_file(self.spec, ["--config", "/path/to/config"])
+        expected = Box({"log_file": None, "log_level": "INFO", "log_config": None,
+                        "config": "/path/to/config"})
+        self.spec._write_dict_to_file.assert_called_with(expected, '/path/to/config', 'json')
+
+    def test_generate_config_file_no_config(self):
+        self.spec._write_dict_to_file = Mock()
+        bg_utils.generate_config_file(self.spec, [])
+        self.assertFalse(self.spec._write_dict_to_file.called)
+
+    def test_update_config(self):
+        self.spec.update_defaults = Mock()
+        self.spec.migrate_config_file = Mock()
+        expected = Box({"log_file": None, "log_level": "INFO", "log_config": None,
+                        "config": "/path/to/config"})
+
+        bg_utils.update_config_file(self.spec, ["--config", "/path/to/config"])
+        self.spec.update_defaults.assert_called_once_with(expected)
+        self.assertTrue(self.spec.migrate_config_file.called)
+
+    def test_update_config_no_config_specified(self):
+        self.spec.migrate_config_file = Mock()
+        with self.assertRaises(SystemExit):
+            bg_utils.update_config_file(self.spec, [])
+
+        self.assertFalse(self.spec.migrate_config_file.called)
 
     @patch('bg_utils.open')
-    def test_generate_logging_config_to_file(self, open_mock):
+    def test_generate_logging_config(self, open_mock):
         fake_file = Mock()
         fake_file.__exit__ = Mock()
         fake_file.__enter__ = Mock(return_value=fake_file)
         open_mock.return_value = fake_file
-        config_generator = Mock(return_value={'foo': 'bar'})
-        bg_utils.generate_logging_config(self.spec, config_generator, ["--log_config", "/path/to/log/config"])
-        fake_file.write.assert_called_with(str(json.dumps({'foo': 'bar'}, indent=4, sort_keys=True)))
+        generated_config = {'foo': 'bar'}
+        config_generator = Mock(return_value=generated_config)
 
-    def test_generate_config_no_file(self):
-        self.spec.migrate_config_file = Mock()
-        self.assertRaises(YapconfLoadError, bg_utils.generate_config_file, self.spec, [])
-        #bg_utils.generate_config_file(self.spec, [])
-        #self.spec.migrate_config_file.assert_called_with(
-        #        {"log_file": None, "log_level": "INFO", "log_config": None, "config": None})
+        logging_config = bg_utils.generate_logging_config_file(
+            self.spec, config_generator, ["--log_config", "/path/to/log/config"])
+        self.assertEqual(logging_config, generated_config)
+        self.assertTrue(open_mock.called)
 
-    def test_generate_config_with_file(self):
-        self.spec.migrate_config_file = Mock()
-        bg_utils.generate_config_file(self.spec, ["--config", "/path/to/config"])
-        expected = Box({"log_file": None, "log_level": "INFO", "log_config": None, "config": "/path/to/config"})
-        self.spec.migrate_config_file.assert_called_with('', expected,
-            output_file_name="/path/to/config",
-            output_file_type='json')
+    @patch('bg_utils.open')
+    def test_generate_logging_config_no_file(self, open_mock):
+        generated_config = {'foo': 'bar'}
+        config_generator = Mock(return_value=generated_config)
 
-    def test_migrate_config_no_config_specified(self):
-        with self.assertRaises(SystemExit):
-            bg_utils.migrate_config(self.spec, [])
-
-    def test_migrate_config_no_log_config_specified(self):
-        self.spec.migrate_config_file = Mock()
-        bg_utils.migrate_config(self.spec, ["--config", "/path/to/config"])
-        self.assertIsNone(self.spec.get_item("log_config").default)
-        self.spec.migrate_config_file.assert_called_with('/path/to/config', override_current=False,
-                                                         current_config_file_type='json',
-                                                         output_file_name='/path/to/config',
-                                                         output_file_type='json',
-                                                         create=True,
-                                                         update_defaults=True)
-
-    def test_migrate_config_with_log_config_specified(self):
-        self.spec.migrate_config_file = Mock()
-        bg_utils.migrate_config(self.spec, ["--config", "/path/to/config", "--log_config", "/path/to/log/config"])
-        self.assertEqual(self.spec.get_item("log_config").default, "/path/to/log/config")
-        self.spec.migrate_config_file.assert_called_with('/path/to/config', override_current=False,
-                                                         current_config_file_type='json',
-                                                         output_file_name='/path/to/config',
-                                                         output_file_type='json',
-                                                         create=True,
-                                                         update_defaults=True)
-
+        logging_config = bg_utils.generate_logging_config_file(self.spec, config_generator, [])
+        config_generator.assert_called_with('INFO', None)
+        self.assertEqual(logging_config, generated_config)
+        self.assertFalse(open_mock.called)
+ 
     @patch('bg_utils.logging.config.dictConfig')
     def test_setup_application_logging_no_log_config(self, config_mock):
         app_config = Mock(log_config=None)
