@@ -1,7 +1,7 @@
 # Makefile for bg-utils
 
 MODULE_NAME   = bg_utils
-TEST_DIR      = tests
+TEST_DIR      = test
 
 .PHONY: clean clean-build clean-docs clean-test clean-pyc docs help test
 .DEFAULT_GOAL := help
@@ -62,7 +62,7 @@ lint: ## check style with flake8
 	flake8 $(MODULE_NAME) $(TEST_DIR)
 
 test: ## run tests quickly with the default Python
-	nosetests
+	nosetests $(TEST_DIR)
 
 test-all: ## run tests on every Python version with tox
 	tox
