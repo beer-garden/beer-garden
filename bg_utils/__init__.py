@@ -6,6 +6,7 @@ from argparse import ArgumentParser
 from io import open
 
 import thriftpy
+from yapconf.exceptions import YapconfLoadError
 
 from ._version import __version__ as generated_version
 from .fields import DummyField, StatusInfo
@@ -18,25 +19,101 @@ bg_thrift = thriftpy.load(os.path.join(os.path.dirname(__file__), 'thrift', 'bee
                           module_name='bg_thrift')
 
 
-def parse_args(config_spec, item_names, cli_args):
+def parse_args(spec, item_names, cli_args):
     """Parse command-line arguments for specific item names
 
-    :param config_spec: ConfigSpec for your application
-    :param item_names: The name of the config items to parse out
-    :param cli_args: The command-line arguments
-    :return: Namespace args object
+    Args:
+        spec (yapconf.YapconfSpec) Specification for the application
+        item_names: Names to parse
+        cli_args (list): Command line arguments
+
+    Returns:
+        Namespace: Arguments object
     """
     parser = ArgumentParser()
     for item_name in item_names:
-        item = config_spec.get_item(item_name)
+        item = spec.get_item(item_name)
         item.add_argument(parser)
 
     args = parser.parse_args(cli_args)
     for item_name in item_names:
         if getattr(args, item_name) is None:
-            item = config_spec.get_item(item_name)
+            item = spec.get_item(item_name)
             setattr(args, item_name, item.default)
+
     return args
+
+def generate_config(spec, cli_args):
+    """Generate a configuration from a spec and command line arguments.
+
+    Args:
+        spec (yapconf.YapconfSpec) Specification for the application
+        cli_args (list): Command line arguments
+
+    Returns:
+        box.Box: The generated configuration object
+    """
+    parser = ArgumentParser()
+    spec.add_arguments(parser)
+    args = parser.parse_args(cli_args)
+
+    logger = logging.getLogger(__name__)
+    logger.info(vars(args))
+
+    return spec.load_config(vars(args), 'ENVIRONMENT')
+ 
+
+def generate_config_file(spec, cli_args):
+    """Generate a configuration file.
+
+    Takes a specification and a series of command line arguments. Will create a file at the
+    location specified by the resolved `config` value.
+
+    Args:
+        spec (yapconf.YapconfSpec) Specification for the application
+        cli_args (list): Command line arguments
+
+    Returns:
+        None
+
+    Raises:
+        YapconfLoadError: Missing 'config' configuration option (file location)
+    """
+    config = self.generate_config(spec, cli_args)
+
+    if not config.get('config', None):
+        raise YapconfLoadError('Required configuration option "config" not found')
+
+    spec.migrate_config_file('', output_file_name=config.config, output_file_type='json')
+
+
+def update_config_file(spec, cli_args):
+    """Updates a configuration file in-place.
+
+    cli_args must contain a 'config' argument that specifies the config file to update.
+
+    Args:
+        spec (yapconf.YapconfSpec) Specification for the application
+        cli_args (list): Command line arguments
+
+    Returns:
+        None
+
+    Raises:
+        YapconfLoadError: Missing 'config' configuration option (file location)
+    """
+    spec.get_item("config").required = True
+    config = self.generate_config(spec, cli_args)
+
+    if not config.get('config', None):
+        raise YapconfLoadError('Required configuration option "config" not found')
+
+    spec.update_defaults(config)
+    spec.migrate_config_file(config.config, override_current=False,
+                             current_config_file_type="json",
+                             output_file_name=config.config,
+                             output_file_type="json", create=True,
+                             update_defaults=True)
 
 
 def generate_logging_config(config_spec, default_config_generator, cli_args):
@@ -63,42 +140,6 @@ def generate_logging_config(config_spec, default_config_generator, cli_args):
     return config_string
 
 
-def generate_config(config_spec, cli_args):
-    """Generate application configuration. If no config is reported, simply print out a config
-
-    :param config_spec: ConfigSpec for your application
-    :param cli_args: Command-line arguments
-    :return:
-    """
-    parser = ArgumentParser()
-    config_spec.add_arguments_to_parser(parser)
-    args = parser.parse_args(cli_args)
-    app_config = config_spec.load_app_config(vars(args), 'ENVIRONMENT')
-    if app_config.config:
-        config_spec.output_config(app_config.info, output_file_path=app_config.config, output_file_type='json')
-    else:
-        print(config_spec.output_config(app_config.info))
-
-
-def migrate_config(config_spec, cli_args):
-    """Migrate a config file
-
-    Requires the config argument be passed in the cli_args
-
-    :param config_spec: ConfigSpec for your application
-    :param cli_args: Command-line arguments
-    :return:
-    """
-    parser = ArgumentParser()
-    config_spec.get_item("config").required = True
-    config_spec.add_arguments_to_parser(parser)
-    args = parser.parse_args(cli_args)
-    app_config = config_spec.load_app_config(vars(args), 'ENVIRONMENT')
-    config_spec.update_defaults(app_config.info)
-
-    config_spec.migrate_config_file(app_config.config, override_current=False, current_config_file_type="json",
-                                    output_file_name=app_config.config, output_file_type="json", create=True,
-                                    update_defaults=True)
 
 
 def setup_application_logging(app_config, default_logging_config):
@@ -106,7 +147,7 @@ def setup_application_logging(app_config, default_logging_config):
 
     If app_config.log_config is not set, then the default_logging_config will be used.
 
-    :param app_config: Return value from config_spec.load_app_config
+    :param app_config: Return value from config_spec.load_config
     :param default_logging_config: A default logging config dictionary
     :return:
     """
