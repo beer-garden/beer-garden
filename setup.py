@@ -29,7 +29,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "apispec==0.25.4",
-        "bg-utils==2.2.0.dev0",
+        "bg-utils==2.4.0",
         "tornado==4.5.2",
         'futures==3.1.1;python_version<"3.0"'
     ],
