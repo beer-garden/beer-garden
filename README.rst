@@ -1,10 +1,11 @@
-|pypi| |travis| |codecov| |docs| |pyup|
 
 =========
 Bartender
 =========
 
 Bartender is the beer-garden backend. It's responsible for maintaining plugin health/status and running the actual plugins.
+
+|travis| |codecov| |docs| |pyup|
 
 .. |pypi| image:: https://img.shields.io/pypi/v/bartender.svg
    :target: https://pypi.python.org/pypi/bartender
