@@ -1,22 +1,25 @@
 
 # Dependencies
-bg-utils==2.2.0.dev0
-pika
-pyrabbit2
+-e git+https://github.com/beer-garden/brewtils@master#egg=brewtils
+-e git+https://github.com/beer-garden/bg-utils@master#egg=bg-utils
 futures ; python_version < "3.0"
 subprocess32 ; python_version < "3.0"
+pika
+pyrabbit2
 
-# Build/Deploy Dependencies
-fabric3==1.12.0.post1
-pyyaml
-pycrypto
+# Documentation Dependencies
+sphinx
+sphinx_rtd_theme
+watchdog
 
-# Test Dependencies
+# Build / Test Dependencies
 mock
 nose
 rednose
 coverage
 nosexcover
-pylint
 tox
-
+pytz
+flake8
+wheel
+twine
