@@ -16,8 +16,8 @@ def get_routing_keys(*args, **kwargs):
 
     Will return all possible routing keys to get a message to a particular system.
 
-    *args is used to specify routing words. The correct order is
-        System, Version, Instance, Clone ID
+    args is used to specify routing words. The correct order is
+       System, Version, Instance, Clone ID
 
     For instance:
 
