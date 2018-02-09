@@ -42,7 +42,7 @@ def main():
 
     spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
     parser = ArgumentParser()
-    spec.add_arguments_to_parser(parser)
+    spec.add_arguments(parser)
     args = parser.parse_args(sys.argv[1:])
 
     bartender.setup_bartender(spec=spec, cli_args=vars(args))
