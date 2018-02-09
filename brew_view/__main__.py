@@ -57,7 +57,7 @@ def main():
 
     spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
     parser = ArgumentParser()
-    spec.add_arguments_to_parser(parser)
+    spec.add_arguments(parser)
     args = parser.parse_args(sys.argv[1:])
 
     brew_view.setup_brew_view(spec, vars(args))
