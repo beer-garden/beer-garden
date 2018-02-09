@@ -1,7 +1,3 @@
-import itertools
-
-from future.utils import listvalues
-
 from bg_utils.local_plugin import LocalPlugin
 from brewtils.decorators import command, system, parameter
 
@@ -22,10 +18,12 @@ class DynamicClient(object):
         'a': ['r', 's', 't'],
         'b': ['u', 'v', 'w'],
         'c': ['x', 'y', 'z'],
+        None: []
     }
 
     # Make the 'null' value the union of all values
-    STATIC_CHOICES_DICTIONARY[None] = list(itertools.chain.from_iterable(listvalues(STATIC_CHOICES_DICTIONARY)))
+    for value in STATIC_CHOICES_DICTIONARY.values():
+        STATIC_CHOICES_DICTIONARY[None] = STATIC_CHOICES_DICTIONARY[None] + value
 
     @command
     def _get_attribute(self, attribute):
@@ -68,12 +66,12 @@ class DynamicClient(object):
         return message
 
     @parameter(key="message", type="String", description="Say what we want", optional=False,
-               choices={'type': 'url', 'value': ''})
+               choices={'type': 'url', 'value': 'http://example.com/api'})
     def say_specific_from_url(self, message):
         return message
 
     @parameter(key="message", type="String", description="Say what we want", optional=False, nullable=True,
-               choices={'type': 'url', 'value': ''})
+               choices={'type': 'url', 'value': 'http://example.com/api'})
     def say_specific_from_url_nullable(self, message):
         return message
 
@@ -103,7 +101,7 @@ class DynamicClient(object):
     @parameter(key="index", type="String", choices=STATIC_CHOICES, default='a', is_kwarg=True)
     @parameter(key="message", type="String", description="Say what we want", optional=False,
                choices={'type': 'url', 'display': 'select', 'strict': True,
-                        'value': ''})
+                        'value': 'http://example.com/api'})
     def say_specific_from_url_with_parameter(self, message):
         return message
 
@@ -117,6 +115,7 @@ class DynamicClient(object):
 def main():
     plugin = LocalPlugin(DynamicClient())
     plugin.run()
+
 
 if __name__ == '__main__':
     main()
