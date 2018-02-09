@@ -48,17 +48,20 @@ class DynamicTest(unittest.TestCase):
                                                           parameters={"message": "NOT_IN_CHOICES"})
         assert_validation_error(self, self.easy_client, request, regex='not a valid choice')
 
+    @unittest.skip("Skipping until we find a URL to demonstrate the capability.")
     def test_say_specific_from_url_good_choice(self):
         request = self.request_generator.generate_request(command="say_specific_from_url",
                                                           parameters={"message": "Kentucky"})
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response, output="Kentucky")
 
+    @unittest.skip("Skipping until we find a URL to demonstrate the capability.")
     def test_say_specific_from_url_bad_choice(self):
         request = self.request_generator.generate_request(command="say_specific_from_url",
                                                           parameters={"message": "NOT_IN_CHOICES"})
         assert_validation_error(self, self.easy_client, request, regex='not a valid choice')
 
+    @unittest.skip("Skipping until we find a URL to demonstrate the capability.")
     def test_say_specific_from_url_nullable(self):
         request = self.request_generator.generate_request(command="say_specific_from_url_nullable",
                                                           parameters={"message": None})

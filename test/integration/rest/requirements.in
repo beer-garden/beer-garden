@@ -1,6 +1,6 @@
 
 # Dependencies
-brewtils
+-e git+https://github.com/beer-garden/brewtils@master#egg=brewtils
 
 # Build/Deploy Dependencies
 pip-tools
