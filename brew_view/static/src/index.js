@@ -34,10 +34,12 @@ import 'angular-datatables/dist/angular-datatables.js';
 import 'angular-datatables/dist/plugins/light-columnfilter/angular-datatables.light-columnfilter.js';
 import 'angular-datatables/dist/plugins/bootstrap/angular-datatables.bootstrap.js';
 import 'angular-schema-form-bootstrap/dist/angular-schema-form-bootstrap-bundled.js';
-import '@devlife/addons';
 import 'ace-builds/src-noconflict/ace.js';
 import 'ace-builds/src-noconflict/mode-json.js';
 import 'ace-builds/src-noconflict/theme-dawn.js';
+
+// Our ASF addons
+import '@beer-garden/addons';
 
 // TODO - This needs to be served separately right now, something about WebWorkers?
 // require('ace-builds/src-noconflict/worker-json.js');
