@@ -61,3 +61,6 @@ target/
 # python configuration file
 .python-version
 .venv
+
+# node files
+node_modules/
