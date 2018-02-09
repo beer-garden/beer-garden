@@ -46,7 +46,8 @@ class DynamicClient(object):
     def get_choices_with_argument(self, key):
         return self.STATIC_CHOICES_DICTIONARY[key]
 
-    @parameter(key="message", type="String", description="Say what we want", optional=False, choices=STATIC_CHOICES)
+    @parameter(key="message", type="String", description="Say what we want",
+               optional=False, choices=STATIC_CHOICES)
     def say_specific(self, message):
         return message
 
@@ -56,12 +57,14 @@ class DynamicClient(object):
         return message
 
     @parameter(key="message", type="String", description="Say what we want", optional=False,
-               choices={'type': 'static', 'value': STATIC_CHOICES, 'display': 'typeahead', 'strict': False})
+               choices={'type': 'static', 'value': STATIC_CHOICES, 'display': 'typeahead',
+                        'strict': False})
     def say_specific_non_strict_typeahead(self, message):
         return message
 
     @parameter(key="message", type="String", description="Say what we want", optional=False,
-               choices={'type': 'static', 'value': STATIC_CHOICES, 'display': 'typeahead', 'strict': True})
+               choices={'type': 'static', 'value': STATIC_CHOICES, 'display': 'typeahead',
+                        'strict': True})
     def say_specific_strict_typeahead(self, message):
         return message
 
@@ -70,7 +73,8 @@ class DynamicClient(object):
     def say_specific_from_url(self, message):
         return message
 
-    @parameter(key="message", type="String", description="Say what we want", optional=False, nullable=True,
+    @parameter(key="message", type="String", description="Say what we want", optional=False,
+               nullable=True,
                choices={'type': 'url', 'value': 'http://example.com/api'})
     def say_specific_from_url_nullable(self, message):
         return message
@@ -82,11 +86,13 @@ class DynamicClient(object):
 
     @parameter(key="message", type="String", description="Say what we want", optional=False,
                choices={'type': 'command', 'value': {'command': 'get_choices', 'system': 'dynamic',
-                                                     'version': '1.0.0.dev', 'instance_name': 'default'}})
+                                                     'version': '1.0.0.dev',
+                                                     'instance_name': 'default'}})
     def say_specific_from_command_fully_specified(self, message):
         return message
 
-    @parameter(key="message", type="String", description="Say what we want", optional=False, nullable=True,
+    @parameter(key="message", type="String", description="Say what we want", optional=False,
+               nullable=True,
                choices={'type': 'command', 'value': 'get_choices'})
     def say_specific_from_command_nullable(self, message):
         return message
@@ -105,9 +111,11 @@ class DynamicClient(object):
     def say_specific_from_url_with_parameter(self, message):
         return message
 
-    @parameter(key="dict_key", type="String", nullable=True, is_kwarg=True, choices=list(STATIC_CHOICES_DICTIONARY))
+    @parameter(key="dict_key", type="String", nullable=True, is_kwarg=True,
+               choices=list(STATIC_CHOICES_DICTIONARY))
     @parameter(key="message", type="String", description="I depend on 'dict_key'", nullable=True,
-               choices={'type': 'static', 'value': STATIC_CHOICES_DICTIONARY, 'key_reference': '${dict_key}'})
+               choices={'type': 'static', 'value': STATIC_CHOICES_DICTIONARY,
+                        'key_reference': '${dict_key}'})
     def say_specific_dictionary_with_key_reference(self, message, **_):
         return message
 

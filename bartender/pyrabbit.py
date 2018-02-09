@@ -9,7 +9,8 @@ from bg_utils.parser import BeerGardenSchemaParser
 class PyrabbitClient(object):
     """Class that implements a connection to RabbitMQ Management HTTP API"""
 
-    def __init__(self, host='localhost', port=15672, user='guest', password='guest', virtual_host='/'):
+    def __init__(self, host='localhost', port=15672, user='guest', password='guest',
+                 virtual_host='/'):
         self.logger = logging.getLogger(__name__)
 
         # Pyrabbit won't infer the default virtual host ('/'). So we need to enforce it
@@ -59,11 +60,13 @@ class PyrabbitClient(object):
 
         while number_of_messages > 0:
             self.logger.debug("Getting the Next Message")
-            messages = self._client.get_messages(self._virtual_host, queue_name, count=1, requeue=False)
+            messages = self._client.get_messages(self._virtual_host, queue_name, count=1,
+                                                 requeue=False)
             if messages and len(messages) > 0:
                 message = messages[0]
                 try:
-                    request = BeerGardenSchemaParser.parse_request(message['payload'], from_string=True)
+                    request = BeerGardenSchemaParser.parse_request(message['payload'],
+                                                                   from_string=True)
                     self.logger.debug("Canceling Request: %s", request.id)
                     request.status = 'CANCELED'
                     request.save()
@@ -71,8 +74,9 @@ class PyrabbitClient(object):
                     self.logger.error('Error removing message:')
                     self.logger.exception(ex)
             else:
-                self.logger.debug("Race condition: The while loop thought there were more messages to ingest "
-                                  "but no more messages could be received.")
+                self.logger.debug("Race condition: The while loop thought there were "
+                                  "more messages to ingest but no more messages could "
+                                  "be received.")
                 break
 
             number_of_messages -= 1
@@ -86,7 +90,9 @@ class PyrabbitClient(object):
         self._client.delete_queue(self._virtual_host, queue_name)
 
     def destroy_queue(self, queue_name, force_disconnect=False):
-        """Remove all remnants of a queue. Ignores exceptions and ensures all aspects of the queue are deleted.
+        """Remove all remnants of a queue.
+
+        Ignores exceptions and ensures all aspects of the queue are deleted.
 
         :param queue_name: The queue name
         :param force_disconnect: Attempt to forcefully disconnect consumers of this queue
@@ -130,4 +136,6 @@ class PyrabbitClient(object):
 
             for consumer_details in channel_details['consumer_details']:
                 if queue_name == consumer_details['queue']['name']:
-                    self._client.delete_connection(consumer_details['channel_details']['connection_name'])
+                    self._client.delete_connection(
+                        consumer_details['channel_details']['connection_name']
+                    )

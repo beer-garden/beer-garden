@@ -31,9 +31,11 @@ class PluginLoaderTest(unittest.TestCase):
         self.mock_registry = Mock()
         self.plugin_path = '/path/to/plugins'
         self.loader = LocalPluginLoader(self.plugin_path, self.mock_validator, self.mock_registry,
-                                        "web_host", 123, False, "db_host", "db_name", 1234, None, None, False, None)
+                                        "web_host", 123, False, "db_host", "db_name", 1234,
+                                        None, None, False, None)
 
-    @patch('bartender.local_plugins.loader.LocalPluginLoader.scan_plugin_path', Mock(return_value=['pl1', 'pl2']))
+    @patch('bartender.local_plugins.loader.LocalPluginLoader.scan_plugin_path',
+           Mock(return_value=['pl1', 'pl2']))
     @patch('bartender.local_plugins.loader.LocalPluginLoader.validate_plugin_requirements')
     @patch('bartender.local_plugins.loader.LocalPluginLoader.load_plugin')
     def test_load_plugins(self, load_plugin_mock, validate_mock):
@@ -41,7 +43,8 @@ class PluginLoaderTest(unittest.TestCase):
         load_plugin_mock.assert_has_calls([call('pl1'), call('pl2')], any_order=False)
         validate_mock.assert_called_once_with()
 
-    @patch('bartender.local_plugins.loader.LocalPluginLoader.scan_plugin_path', Mock(return_value=[]))
+    @patch('bartender.local_plugins.loader.LocalPluginLoader.scan_plugin_path',
+           Mock(return_value=[]))
     @patch('bartender.local_plugins.loader.LocalPluginLoader.validate_plugin_requirements')
     @patch('bartender.local_plugins.loader.LocalPluginLoader.load_plugin')
     def test_load_plugins_empty(self, load_plugin_mock, validate_mock):
@@ -81,8 +84,11 @@ class PluginLoaderTest(unittest.TestCase):
         self.assertEqual(self.mock_registry.remove.call_count, 0)
 
     def test_validate_plugin_requirements_not_found(self):
-        self.mock_registry.get_all_plugins = Mock(return_value=[Mock(requirements=[], plugin_name='foo'), Mock(
-            requirements=['NOT_FOUND'], plugin_name='bar', unique_name='bar')])
+        self.mock_registry.get_all_plugins = Mock(return_value=[Mock(requirements=[],
+                                                                     plugin_name='foo'),
+                                                                Mock(requirements=['NOT_FOUND'],
+                                                                     plugin_name='bar',
+                                                                     unique_name='bar')])
         self.mock_registry.get_unique_plugin_names = Mock(return_value=['foo', 'bar'])
         self.loader.validate_plugin_requirements()
         self.assertEqual(self.mock_registry.remove.call_count, 1)
@@ -189,7 +195,8 @@ class PluginLoaderTest(unittest.TestCase):
 
         path_mock = Mock()
         config_mock = Mock(INSTANCES=['instance1', 'instance2'],
-                           PLUGIN_ARGS=None, NAME='name', VERSION='0.0.1', PLUGIN_ENTRY='/path/to/file')
+                           PLUGIN_ARGS=None, NAME='name', VERSION='0.0.1',
+                           PLUGIN_ENTRY='/path/to/file')
         load_source_mock.return_value = config_mock
 
         config = self.loader._load_plugin_config(path_mock)
@@ -199,13 +206,15 @@ class PluginLoaderTest(unittest.TestCase):
 
     @patch('bartender.local_plugins.loader.sys')
     @patch('bartender.local_plugins.loader.load_source')
-    def test_load_plugin_config_plugin_args_list_provided_no_instances(self, load_source_mock, sys_mock):
+    def test_load_plugin_config_plugin_args_list_provided_no_instances(self, load_source_mock,
+                                                                       sys_mock):
         module_name = 'BGPLUGINCONFIG'
         sys_mock.modules = {module_name: ''}
 
         path_mock = Mock()
         config_mock = Mock(INSTANCES=None,
-                           PLUGIN_ARGS=['arg1'], NAME='name', VERSION='0.0.1', PLUGIN_ENTRY='/path/to/file')
+                           PLUGIN_ARGS=['arg1'], NAME='name', VERSION='0.0.1',
+                           PLUGIN_ENTRY='/path/to/file')
         load_source_mock.return_value = config_mock
 
         config = self.loader._load_plugin_config(path_mock)
@@ -221,13 +230,15 @@ class PluginLoaderTest(unittest.TestCase):
 
         path_mock = Mock()
         config_mock = Mock(INSTANCES=None,
-                           PLUGIN_ARGS={'foo': ['arg1'], 'bar': ['arg2']}, NAME='name', VERSION='0.0.1', PLUGIN_ENTRY='/path/to/file')
+                           PLUGIN_ARGS={'foo': ['arg1'], 'bar': ['arg2']}, NAME='name',
+                           VERSION='0.0.1', PLUGIN_ENTRY='/path/to/file')
         load_source_mock.return_value = config_mock
 
         config = self.loader._load_plugin_config(path_mock)
 
         expected = ['foo', 'bar']
-        self.assertTrue(len(config['INSTANCES']) == len(expected) and sorted(config['INSTANCES']) == sorted(expected))
+        self.assertTrue(len(config['INSTANCES']) == len(expected))
+        self.assertTrue(sorted(config['INSTANCES']) == sorted(expected))
         self.assertEqual(config['PLUGIN_ARGS'], {'foo': ['arg1'], 'bar': ['arg2']})
 
     @patch('bartender.local_plugins.loader.sys')
@@ -238,24 +249,29 @@ class PluginLoaderTest(unittest.TestCase):
 
         path_mock = Mock()
         config_mock = Mock(INSTANCES=None,
-                           PLUGIN_ARGS='invalid', NAME='name', VERSION='0.0.1', PLUGIN_ENTRY='/path/to/file')
+                           PLUGIN_ARGS='invalid', NAME='name', VERSION='0.0.1',
+                           PLUGIN_ENTRY='/path/to/file')
         load_source_mock.return_value = config_mock
 
         self.assertRaises(ValueError, self.loader._load_plugin_config, path_mock)
 
     @patch('bartender.local_plugins.loader.sys')
     @patch('bartender.local_plugins.loader.load_source')
-    def test_load_plugin_config_instance_and_args_provided_args_list(self, load_source_mock, sys_mock):
+    def test_load_plugin_config_instance_and_args_provided_args_list(self,
+                                                                     load_source_mock,
+                                                                     sys_mock):
         module_name = 'BGPLUGINCONFIG'
         sys_mock.modules = {module_name: ''}
 
         path_mock = Mock()
         config_mock = Mock(INSTANCES=['foo', 'bar'],
-                           PLUGIN_ARGS=['arg1'], NAME='name', VERSION='0.0.1', PLUGIN_ENTRY='/path/to/file')
+                           PLUGIN_ARGS=['arg1'], NAME='name', VERSION='0.0.1',
+                           PLUGIN_ENTRY='/path/to/file')
         load_source_mock.return_value = config_mock
 
         config = self.loader._load_plugin_config(path_mock)
 
         expected = ['foo', 'bar']
-        self.assertTrue(len(config['INSTANCES']) == len(expected) and sorted(config['INSTANCES']) == sorted(expected))
+        self.assertTrue(len(config['INSTANCES']) == len(expected))
+        self.assertTrue(sorted(config['INSTANCES']) == sorted(expected))
         self.assertEqual(config['PLUGIN_ARGS'], {'foo': ['arg1'], 'bar': ['arg1']})

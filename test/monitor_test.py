@@ -37,7 +37,8 @@ class PluginStatusMonitorTest(unittest.TestCase):
     def test_request_status(self):
         self.monitor.request_status()
         expiration = str(self.monitor.heartbeat_interval * 1000)
-        self.clients['pika'].publish_request.assert_called_once_with(self.monitor.status_request, routing_key='admin',
+        self.clients['pika'].publish_request.assert_called_once_with(self.monitor.status_request,
+                                                                     routing_key='admin',
                                                                      expiration=expiration)
 
     @patch('bartender.monitor.PluginStatusMonitor.stopped')
@@ -48,16 +49,19 @@ class PluginStatusMonitorTest(unittest.TestCase):
     @patch('bartender.monitor.PluginStatusMonitor.stopped')
     def test_check_status_break_on_stop(self, stopped_mock):
         stopped_mock.return_value = True
-        instance_mock = Mock(status='RUNNING', status_info={'heartbeat': datetime.datetime(2017, 1, 1)})
+        instance_mock = Mock(status='RUNNING',
+                             status_info={'heartbeat': datetime.datetime(2017, 1, 1)})
         self.instance_patch.objects = [instance_mock]
 
         self.monitor.check_status()
         self.assertTrue(stopped_mock.called)
 
     @patch('bartender.monitor.PluginStatusMonitor.stopped', Mock(side_effect=[False, True]))
-    @patch('bartender.monitor.datetime', Mock(utcnow=Mock(return_value=datetime.datetime(2017, 1, 1, second=45))))
+    @patch('bartender.monitor.datetime',
+           Mock(utcnow=Mock(return_value=datetime.datetime(2017, 1, 1, second=45))))
     def test_check_status_mark_as_unresponsive(self):
-        instance_mock = Mock(status='RUNNING', status_info={'heartbeat': datetime.datetime(2017, 1, 1)})
+        instance_mock = Mock(status='RUNNING',
+                             status_info={'heartbeat': datetime.datetime(2017, 1, 1)})
         self.instance_patch.objects = [instance_mock]
 
         self.monitor.check_status()
@@ -65,9 +69,11 @@ class PluginStatusMonitorTest(unittest.TestCase):
         self.assertTrue(instance_mock.save.called)
 
     @patch('bartender.monitor.PluginStatusMonitor.stopped', Mock(side_effect=[False, True]))
-    @patch('bartender.monitor.datetime', Mock(utcnow=Mock(return_value=datetime.datetime(2017, 1, 1))))
+    @patch('bartender.monitor.datetime',
+           Mock(utcnow=Mock(return_value=datetime.datetime(2017, 1, 1))))
     def test_check_status_mark_as_running(self):
-        instance_mock = Mock(status='UNRESPONSIVE', status_info={'heartbeat': datetime.datetime(2017, 1, 1)})
+        instance_mock = Mock(status='UNRESPONSIVE',
+                             status_info={'heartbeat': datetime.datetime(2017, 1, 1)})
         self.instance_patch.objects = [instance_mock]
 
         self.monitor.check_status()

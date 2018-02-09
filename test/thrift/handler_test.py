@@ -17,7 +17,8 @@ class BartenderHandlerTest(unittest.TestCase):
         self.plugin_manager = Mock()
         self.request_validator = Mock()
 
-        self.handler = BartenderHandler(self.registry, self.clients, self.plugin_manager, self.request_validator)
+        self.handler = BartenderHandler(self.registry, self.clients, self.plugin_manager,
+                                        self.request_validator)
         self.handler.parser = Mock()
 
     @patch('bg_utils.models.Request.find_or_none', Mock(side_effect=mongoengine.ValidationError))
@@ -68,7 +69,8 @@ class BartenderHandlerTest(unittest.TestCase):
     @patch('bartender.thrift.handler.BartenderHandler._get_plugin_from_instance_id')
     def test_start_instance_not_found(self, plugin_mock):
         plugin_mock.side_effect = bg_utils.bg_thrift.InvalidSystem('', 'ERROR MESSAGE')
-        self.assertRaises(bg_utils.bg_thrift.InvalidSystem, self.handler.startInstance, 'instance_id')
+        self.assertRaises(bg_utils.bg_thrift.InvalidSystem, self.handler.startInstance,
+                          'instance_id')
         plugin_mock.assert_called_once_with('instance_id')
 
     @patch('bartender.thrift.handler.BartenderHandler._get_instance', Mock())
@@ -92,7 +94,8 @@ class BartenderHandlerTest(unittest.TestCase):
     @patch('bartender.thrift.handler.BartenderHandler._get_plugin_from_instance_id')
     def test_stop_instance_error(self, plugin_mock):
         plugin_mock.side_effect = bg_utils.bg_thrift.InvalidSystem('', 'ERROR MESSAGE')
-        self.assertRaises(bg_utils.bg_thrift.InvalidSystem, self.handler.stopInstance, 'instance_id')
+        self.assertRaises(bg_utils.bg_thrift.InvalidSystem, self.handler.stopInstance,
+                          'instance_id')
         plugin_mock.assert_called_once_with('instance_id')
 
     @patch('bartender.thrift.handler.BartenderHandler.stopInstance')
@@ -134,15 +137,18 @@ class BartenderHandlerTest(unittest.TestCase):
         fake_system = MagicMock(version='0.0.1')
         type(fake_system).name = PropertyMock(return_value='name')
         fake_system.instances = [Mock(name='default', status='STOPPED',
-                                      queue_info={'admin': {'name': 'admin'}, 'request': {'name': 'request'}})]
+                                      queue_info={'admin': {'name': 'admin'},
+                                                  'request': {'name': 'request'}})]
         system_mock.objects.get = Mock(return_value=fake_system)
 
         fake_plugin = Mock(unique_name='name[default]-0.0.1')
         self.registry.get_plugins_by_system.return_value = [fake_plugin]
 
         self.handler.removeSystem('id')
-        self.clients['pyrabbit'].destroy_queue.assert_has_calls([call('request', force_disconnect=False),
-                                                                 call('admin', force_disconnect=False)])
+        self.clients['pyrabbit'].destroy_queue.assert_has_calls([call('request',
+                                                                      force_disconnect=False),
+                                                                 call('admin',
+                                                                      force_disconnect=False)])
         self.assertTrue(fake_system.deep_delete.called)
 
     @patch('bartender.config', Mock(plugin_shutdown_timeout=1))
@@ -152,15 +158,18 @@ class BartenderHandlerTest(unittest.TestCase):
         fake_system = MagicMock(version='0.0.1')
         type(fake_system).name = PropertyMock(return_value='name')
         fake_system.instances = [Mock(name='default', status='RUNNING',
-                                      queue_info={'admin': {'name': 'admin'}, 'request': {'name': 'request'}})]
+                                      queue_info={'admin': {'name': 'admin'},
+                                                  'request': {'name': 'request'}})]
         system_mock.objects.get = Mock(return_value=fake_system)
 
         self.registry.get_plugins_by_system.return_value = []
 
         self.handler.removeSystem('id')
         self.assertTrue(self.clients['pika'].stop.called)
-        self.clients['pyrabbit'].destroy_queue.assert_has_calls([call('request', force_disconnect=True),
-                                                                 call('admin', force_disconnect=True)])
+        self.clients['pyrabbit'].destroy_queue.assert_has_calls([call('request',
+                                                                      force_disconnect=True),
+                                                                 call('admin',
+                                                                      force_disconnect=True)])
         self.assertTrue(fake_system.deep_delete.called)
 
     @patch('bartender.thrift.handler.System')
@@ -168,7 +177,8 @@ class BartenderHandlerTest(unittest.TestCase):
         fake_system = MagicMock(version='0.0.1')
         type(fake_system).name = PropertyMock(return_value='name')
         fake_system.instances = [Mock(name='default', queue_info={'admin': {'name': 'admin_queue'},
-                                                                  'request': {'name': 'request_queue'}})]
+                                                                  'request':
+                                                                      {'name': 'request_queue'}})]
         system_mock.objects.get = Mock(return_value=fake_system)
 
         fake_plugin = Mock(unique_name='name[default]-0.0.1')
@@ -186,7 +196,8 @@ class BartenderHandlerTest(unittest.TestCase):
         fake_system = MagicMock(version='0.0.1')
         type(fake_system).name = PropertyMock(return_value='name')
         fake_system.instances = [Mock(name='default', queue_info={'admin': {'name': 'admin_queue'},
-                                                                  'request': {'name': 'request_queue'}})]
+                                                                  'request':
+                                                                      {'name': 'request_queue'}})]
         system_mock.objects.get = Mock(return_value=fake_system)
 
         fake_plugin = Mock(unique_name='name[default]-0.0.1')
@@ -277,7 +288,8 @@ class BartenderHandlerTest(unittest.TestCase):
     def test_get_plugin_from_instance_id(self, get_system_mock, get_instance_mock):
         id_mock = Mock()
 
-        self.assertEqual(self.registry.get_plugin.return_value, self.handler._get_plugin_from_instance_id(id_mock))
+        self.assertEqual(self.registry.get_plugin.return_value,
+                         self.handler._get_plugin_from_instance_id(id_mock))
         get_instance_mock.assert_called_once_with(id_mock)
         get_system_mock.assert_called_once_with(get_instance_mock.return_value)
         self.registry.get_plugin.assert_called_once_with(self.registry.get_unique_name.return_value)

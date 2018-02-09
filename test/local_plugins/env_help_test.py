@@ -1,7 +1,9 @@
 import os
 import unittest
 
-from bartender.local_plugins.env_help import *
+from bartender.local_plugins.env_help import string_contains_environment_var, \
+    is_string_environment_variable, get_environment_var_name_from_string, \
+    expand_string_with_environment_var
 
 
 class EnvHelpTest(unittest.TestCase):

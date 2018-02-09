@@ -12,9 +12,11 @@ class EchoSleeperClient:
 
     @parameter(key="message", description="The Message to be Echoed", optional=True, type="String",
                default=DEFAULT_MESSAGE)
-    @parameter(key="loud", description="Determines if Exclamation marks are added", optional=True, type="Boolean",
+    @parameter(key="loud", description="Determines if Exclamation marks are added", optional=True,
+               type="Boolean",
                default=False)
-    @parameter(key="amount", description="How long to sleep", optional=True, type="Integer", default=10)
+    @parameter(key="amount", description="How long to sleep", optional=True, type="Integer",
+               default=10)
     def say_sleep(self, message=DEFAULT_MESSAGE, loud=False, amount=10):
         """Echos using Echo and sleeps using Multi-Sleeper"""
 

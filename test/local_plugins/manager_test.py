@@ -21,8 +21,10 @@ class LocalPluginsManagerTest(unittest.TestCase):
         self.system_mock = Mock(version='1.0.0', instances=[self.instance_mock])
         type(self.system_mock).name = PropertyMock(return_value='system_name')
 
-        self.fake_plugin = Mock(system=self.system_mock, unique_name='unique_name', path_to_plugin='path/name-0.0.1',
-                                requirements=[], entry_point='main.py', plugin_args=[], instance_name='default',
+        self.fake_plugin = Mock(system=self.system_mock, unique_name='unique_name',
+                                path_to_plugin='path/name-0.0.1',
+                                requirements=[], entry_point='main.py', plugin_args=[],
+                                instance_name='default',
                                 status='RUNNING')
 
         self.registry = Mock(get_plugin=Mock(return_value=self.fake_plugin),
@@ -30,8 +32,10 @@ class LocalPluginsManagerTest(unittest.TestCase):
                              get_all_plugins=Mock(return_value=[self.fake_plugin]),
                              get_plugins_by_system=Mock(return_value=[self.fake_plugin]))
 
-        self.manager = LocalPluginsManager(self.fake_plugin_loader, self.fake_plugin_validator, self.registry,
-                                           self.clients, plugin_startup_timeout=5, plugin_shutdown_timeout=10)
+        self.manager = LocalPluginsManager(self.fake_plugin_loader, self.fake_plugin_validator,
+                                           self.registry,
+                                           self.clients, plugin_startup_timeout=5,
+                                           plugin_shutdown_timeout=10)
 
     def test_start_plugin_initializing(self):
         self.fake_plugin.status = 'INITIALIZING'
@@ -129,29 +133,40 @@ class LocalPluginsManagerTest(unittest.TestCase):
         self.manager.start_all_plugins()
         start_multiple_mock.assert_called_once_with([self.fake_plugin])
 
-    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_all_system_names', Mock(return_value=[]))
-    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names', Mock(return_value=[]))
-    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names', Mock(return_value=[]))
+    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_all_system_names',
+           Mock(return_value=[]))
+    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names',
+           Mock(return_value=[]))
+    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names',
+           Mock(return_value=[]))
     @patch('bartender.local_plugins.manager.LocalPluginsManager.start_plugin')
     def test_start_multiple_plugins_empty(self, start_mock):
         self.manager._start_multiple_plugins([])
         self.assertEqual(start_mock.call_count, 0)
 
-    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_all_system_names', Mock(return_value=[]))
-    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names', Mock(return_value=[]))
-    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names', Mock(return_value=[]))
+    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_all_system_names',
+           Mock(return_value=[]))
+    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names',
+           Mock(return_value=[]))
+    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names',
+           Mock(return_value=[]))
     @patch('bartender.local_plugins.manager.LocalPluginsManager.start_plugin')
     def test_start_multiple_plugins_no_requirements(self, start_mock):
-        fake_plugin_2 = Mock(system=self.system_mock, unique_name='unique_name2', path_to_plugin='path/name-0.0.1',
-                             requirements=[], entry_point='main.py', plugin_args=[], instance_name='default2',
+        fake_plugin_2 = Mock(system=self.system_mock, unique_name='unique_name2',
+                             path_to_plugin='path/name-0.0.1',
+                             requirements=[], entry_point='main.py', plugin_args=[],
+                             instance_name='default2',
                              status='RUNNING')
 
         self.manager._start_multiple_plugins([self.fake_plugin, fake_plugin_2])
         start_mock.assert_has_calls([call(self.fake_plugin), call(fake_plugin_2)], any_order=True)
 
-    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_all_system_names', Mock(return_value=[]))
-    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names', Mock(return_value=[]))
-    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names', Mock(return_value=[]))
+    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_all_system_names',
+           Mock(return_value=[]))
+    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names',
+           Mock(return_value=[]))
+    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names',
+           Mock(return_value=[]))
     @patch('bartender.local_plugins.manager.LocalPluginsManager._mark_as_failed')
     def test_start_multiple_plugins_invalid_requirements(self, fail_mock):
         self.fake_plugin.requirements = ['DNE']
@@ -160,13 +175,16 @@ class LocalPluginsManagerTest(unittest.TestCase):
 
     @patch('bartender.local_plugins.manager.LocalPluginsManager._get_all_system_names',
            Mock(return_value=['system_name', 'system_name_2']))
-    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names', Mock(return_value=[]))
-    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names', Mock(return_value=[]))
+    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names',
+           Mock(return_value=[]))
+    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names',
+           Mock(return_value=[]))
     @patch('bartender.local_plugins.manager.LocalPluginsManager.start_plugin')
     def test_start_multiple_plugins(self, start_mock):
         system_mock_2 = Mock(version='1.0.0', instances=[Mock(name='default')])
         type(system_mock_2).name = PropertyMock(return_value='system_name_2')
-        fake_plugin_2 = Mock(system=system_mock_2, unique_name='unique_name2', path_to_plugin='path/name-0.0.1',
+        fake_plugin_2 = Mock(system=system_mock_2, unique_name='unique_name2',
+                             path_to_plugin='path/name-0.0.1',
                              requirements=['system_name'], entry_point='main.py', plugin_args=[],
                              instance_name='default2', status='RUNNING')
 
@@ -175,14 +193,17 @@ class LocalPluginsManagerTest(unittest.TestCase):
 
     @patch('bartender.local_plugins.manager.LocalPluginsManager._get_all_system_names',
            Mock(return_value=['system_name', 'system_name_2']))
-    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names', Mock(return_value=[]))
-    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names', Mock(return_value=[]))
+    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names',
+           Mock(return_value=[]))
+    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names',
+           Mock(return_value=[]))
     @patch('bartender.local_plugins.manager.LocalPluginsManager.start_plugin')
     def test_start_multiple_plugins_skip_first(self, start_mock):
 
         system_mock_2 = Mock(version='1.0.0', instances=[Mock(name='default')])
         type(system_mock_2).name = PropertyMock(return_value='system_name_2')
-        fake_plugin_2 = Mock(system=system_mock_2, unique_name='unique_name2', path_to_plugin='path/name-0.0.1',
+        fake_plugin_2 = Mock(system=system_mock_2, unique_name='unique_name2',
+                             path_to_plugin='path/name-0.0.1',
                              requirements=['system_name'], entry_point='main.py', plugin_args=[],
                              instance_name='default2', status='RUNNING')
 
@@ -193,13 +214,15 @@ class LocalPluginsManagerTest(unittest.TestCase):
            Mock(return_value=['system_name', 'system_name_2']))
     @patch('bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names',
            Mock(return_value=['system_name']))
-    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names', Mock(return_value=[]))
+    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names',
+           Mock(return_value=[]))
     @patch('bartender.local_plugins.manager.LocalPluginsManager.start_plugin')
     def test_start_multiple_plugins_requirement_already_running(self, start_mock):
 
         system_mock_2 = Mock(version='1.0.0', instances=[Mock(name='default')])
         type(system_mock_2).name = PropertyMock(return_value='system_name_2')
-        fake_plugin_2 = Mock(system=system_mock_2, unique_name='unique_name2', path_to_plugin='path/name-0.0.1',
+        fake_plugin_2 = Mock(system=system_mock_2, unique_name='unique_name2',
+                             path_to_plugin='path/name-0.0.1',
                              requirements=['system_name'], entry_point='main.py', plugin_args=[],
                              instance_name='default2', status='RUNNING')
 
@@ -208,15 +231,18 @@ class LocalPluginsManagerTest(unittest.TestCase):
 
     @patch('bartender.local_plugins.manager.LocalPluginsManager._get_all_system_names',
            Mock(return_value=['system_name', 'system_name_2']))
-    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names', Mock(return_value=[]))
-    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names', Mock(return_value=[]))
+    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names',
+           Mock(return_value=[]))
+    @patch('bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names',
+           Mock(return_value=[]))
     @patch('bartender.local_plugins.manager.LocalPluginsManager._mark_as_failed')
     @patch('bartender.local_plugins.manager.LocalPluginsManager.start_plugin')
     def test_start_multiple_plugins_failed_requirement_start(self, start_mock, fail_mock):
 
         system_mock_2 = Mock(version='1.0.0', instances=[Mock(name='default')])
         type(system_mock_2).name = PropertyMock(return_value='system_name_2')
-        fake_plugin_2 = Mock(system=system_mock_2, unique_name='unique_name2', path_to_plugin='path/name-0.0.1',
+        fake_plugin_2 = Mock(system=system_mock_2, unique_name='unique_name2',
+                             path_to_plugin='path/name-0.0.1',
                              requirements=['system_name'], entry_point='main.py', plugin_args=[],
                              instance_name='default2', status='RUNNING')
 
@@ -255,14 +281,16 @@ class LocalPluginsManagerTest(unittest.TestCase):
 
     @patch('bartender.local_plugins.manager.LocalPluginsManager._start_multiple_plugins', Mock())
     def test_scan_plugin_path_no_change(self):
-        self.fake_plugin_loader.scan_plugin_path = Mock(return_value=[self.fake_plugin.path_to_plugin])
+        self.fake_plugin_loader.scan_plugin_path = Mock(
+            return_value=[self.fake_plugin.path_to_plugin])
         self.registry.get_all_plugins = Mock(return_value=[self.fake_plugin])
         self.manager.scan_plugin_path()
         self.assertEqual(0, self.fake_plugin_loader.load_plugin.call_count)
 
     @patch('bartender.local_plugins.manager.LocalPluginsManager._start_multiple_plugins')
     def test_scan_plugin_path_one_new(self, start_mock):
-        self.fake_plugin_loader.scan_plugin_path = Mock(return_value=[self.fake_plugin.path_to_plugin])
+        self.fake_plugin_loader.scan_plugin_path = Mock(
+            return_value=[self.fake_plugin.path_to_plugin])
         self.fake_plugin_loader.load_plugin = Mock(return_value=[self.fake_plugin])
         self.registry.get_all_plugins = Mock(return_value=[])
 
@@ -272,24 +300,28 @@ class LocalPluginsManagerTest(unittest.TestCase):
 
     @patch('bartender.local_plugins.manager.LocalPluginsManager._start_multiple_plugins')
     def test_scan_plugin_path_two_new_could_not_load_one(self, start_mock):
-        self.fake_plugin_loader.scan_plugin_path = Mock(return_value=[self.fake_plugin.path_to_plugin, 'path/tw-0.0.1'])
+        self.fake_plugin_loader.scan_plugin_path = Mock(
+            return_value=[self.fake_plugin.path_to_plugin, 'path/tw-0.0.1'])
         self.fake_plugin_loader.load_plugin = Mock(side_effect=[[self.fake_plugin], []])
         self.registry.get_all_plugins = Mock(return_value=[])
 
         self.manager.scan_plugin_path()
         self.fake_plugin_loader.load_plugin.assert_has_calls([call(self.fake_plugin.path_to_plugin),
-                                                              call('path/tw-0.0.1')], any_order=True)
+                                                              call('path/tw-0.0.1')],
+                                                             any_order=True)
         start_mock.assert_called_once_with([self.fake_plugin])
 
     @patch('bartender.local_plugins.manager.LocalPluginsManager._start_multiple_plugins')
     def test_scan_plugin_path_one_exception(self, start_mock):
-        self.fake_plugin_loader.scan_plugin_path = Mock(return_value=[self.fake_plugin.path_to_plugin, 'path/tw-0.0.1'])
+        self.fake_plugin_loader.scan_plugin_path = Mock(
+            return_value=[self.fake_plugin.path_to_plugin, 'path/tw-0.0.1'])
         self.fake_plugin_loader.load_plugin = Mock(side_effect=[[self.fake_plugin], Exception])
         self.registry.get_all_plugins = Mock(return_value=[])
 
         self.manager.scan_plugin_path()
         self.fake_plugin_loader.load_plugin.assert_has_calls([call(self.fake_plugin.path_to_plugin),
-                                                              call('path/tw-0.0.1')], any_order=True)
+                                                              call('path/tw-0.0.1')],
+                                                             any_order=True)
         start_mock.assert_called_once_with([self.fake_plugin])
 
     def test_pause_plugin_none(self):

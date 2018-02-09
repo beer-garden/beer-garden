@@ -45,14 +45,14 @@ def string_contains_environment_var(string):
 
 
 def is_string_environment_variable(string):
-    """Determines whether or not the particular string being sent in without the $ is a valid environmnet variable"""
+    """Determines if string being sent in without the $ is a valid environmnet variable"""
     if len(string) == 0:
         return False
 
     return string[0].isalpha()
 
 
-def get_environment_var_name_from_string(string): #pylint: disable=invalid-name
+def get_environment_var_name_from_string(string):
     """ Strips out the Variable name from a string
     :param string: e.g. $MY_PATH:$YOUR_PATH
     :return string: e.g. MY_PATH
@@ -67,7 +67,7 @@ def get_environment_var_name_from_string(string): #pylint: disable=invalid-name
     return key
 
 
-def expand_string_with_environment_var(string, env_copy=None): #pylint: disable=invalid-name
+def expand_string_with_environment_var(string, env_copy=None):
     """Expands a String with a $VAR style var in it."""
     import os
 

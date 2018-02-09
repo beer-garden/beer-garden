@@ -39,16 +39,20 @@ class BartenderHandler(object):
         try:
             request = Request.find_or_none(request_id)
             if request is None:
-                raise BrewmasterModelValidationError("Could not find Request with ID '%s'" % str(request_id))
+                raise BrewmasterModelValidationError("Could not find Request with ID '%s'" %
+                                                     str(request_id))
 
-            # Validates the request based on what is in the database. This includes the validation of the request
-            # parameters, systems are there, commands are there etc.
+            # Validates the request based on what is in the database.
+            # This includes the validation of the request parameters,
+            # systems are there, commands are there etc.
             request = self.request_validator.validate_request(request)
             request.save()
 
             self.clients['pika'].publish_request(request)
 
-        except (mongoengine.ValidationError, BrewmasterModelValidationError, BrewmasterRestError) as ex:
+        except (mongoengine.ValidationError,
+                BrewmasterModelValidationError,
+                BrewmasterRestError) as ex:
             self.logger.exception(ex)
             raise bg_utils.bg_thrift.InvalidRequest(request_id, str(ex))
 
@@ -61,14 +65,16 @@ class BartenderHandler(object):
         instance = self._get_instance(instance_id)
         system = self._get_system(instance)
 
-        self.logger.info("Initializing instance %s[%s]-%s", system.name, instance.name, system.version)
+        self.logger.info("Initializing instance %s[%s]-%s",
+                         system.name, instance.name, system.version)
 
         routing_words = [system.name, system.version, instance.name]
         req_name = get_routing_key(*routing_words)
         req_args = {'durable': True, 'arguments': {'x-max-priority': 1}}
         req_queue = self.clients['pika'].setup_queue(req_name, req_args, [req_name])
 
-        routing_words.append(''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(10)))
+        routing_words.append(''.join(random.choice(string.ascii_lowercase + string.digits)
+                                     for _ in range(10)))
         admin_keys = get_routing_keys(*routing_words, is_admin=True)
         admin_args = {'auto_delete': True}
         admin_queue = self.clients['pika'].setup_queue(admin_keys[-1], admin_args, admin_keys)
@@ -84,7 +90,8 @@ class BartenderHandler(object):
         instance.save()
 
         # Send a request to start to the plugin on the plugin's admin queue
-        self.clients['pika'].start(system=system.name, version=system.version, instance=instance.name)
+        self.clients['pika'].start(system=system.name, version=system.version,
+                                   instance=instance.name)
 
         return self.parser.serialize_instance(instance, to_string=True)
 
@@ -111,8 +118,9 @@ class BartenderHandler(object):
         else:
             system = self._get_system(instance)
 
-            # Send a stop request. This causes the request consumer to terminate itself, which ends the plugin
-            self.clients['pika'].stop(system=system.name, version=system.version, instance=instance.name)
+            # This causes the request consumer to terminate itself, which ends the plugin
+            self.clients['pika'].stop(system=system.name, version=system.version,
+                                      instance=instance.name)
 
         return self.parser.serialize_instance(instance, to_string=True)
 
@@ -159,8 +167,9 @@ class BartenderHandler(object):
         else:
             self.clients['pika'].stop(system=system.name, version=system.version)
             count = 0
-            while any(instance.status != 'STOPPED' for instance in system.instances) and \
-                    count < bartender.config.plugin_shutdown_timeout:
+            while (
+                    any(instance.status != 'STOPPED' for instance in system.instances) and
+                    count < bartender.config.plugin_shutdown_timeout):
                 sleep(1)
                 count += 1
                 system.reload()
@@ -175,8 +184,10 @@ class BartenderHandler(object):
             request_queue = instance.queue_info.get('request', {}).get('name')
             admin_queue = instance.queue_info.get('admin', {}).get('name')
 
-            self.clients['pyrabbit'].destroy_queue(request_queue, force_disconnect=(instance.status != 'STOPPED'))
-            self.clients['pyrabbit'].destroy_queue(admin_queue, force_disconnect=(instance.status != 'STOPPED'))
+            self.clients['pyrabbit'].destroy_queue(request_queue,
+                                                   force_disconnect=(instance.status != 'STOPPED'))
+            self.clients['pyrabbit'].destroy_queue(admin_queue,
+                                                   force_disconnect=(instance.status != 'STOPPED'))
 
         # Finally, actually delete the system
         system.deep_delete()
@@ -198,7 +209,8 @@ class BartenderHandler(object):
         routing_key = get_routing_key(system_name, system_version, instance_name)
         self.logger.debug("Get the queue state for %s", routing_key)
 
-        return bg_utils.bg_thrift.QueueInfo(routing_key, self.clients['pyrabbit'].get_queue_size(routing_key))
+        return bg_utils.bg_thrift.QueueInfo(routing_key,
+                                            self.clients['pyrabbit'].get_queue_size(routing_key))
 
     def clearQueue(self, queue_name):
         """Clear all Requests in the given queue
@@ -259,4 +271,5 @@ class BartenderHandler(object):
         try:
             return System.objects.get(instances__contains=instance)
         except mongoengine.DoesNotExist:
-            raise bg_utils.bg_thrift.InvalidSystem('', "Couldn't find system with instance %s" % instance.id)
+            raise bg_utils.bg_thrift.InvalidSystem('', "Couldn't find system "
+                                                       "with instance %s" % instance.id)

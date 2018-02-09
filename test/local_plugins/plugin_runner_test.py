@@ -17,16 +17,19 @@ class PluginRunnerTest(unittest.TestCase):
         self.system_mock = Mock(version='1.0.0', instances=[self.instance_mock])
         type(self.system_mock).name = PropertyMock(return_value='system_name')
 
-        self.plugin = LocalPluginRunner('entry_point', self.system_mock, 'default', '/path/to/plugin/name',
+        self.plugin = LocalPluginRunner('entry_point', self.system_mock, 'default',
+                                        '/path/to/plugin/name',
                                         "web_host", 123, False)
 
     def test_init_executable_script(self):
-        plugin = LocalPluginRunner('entry_point', self.system_mock, 'instance_name', '/path/to/plugin/name',
+        plugin = LocalPluginRunner('entry_point', self.system_mock, 'instance_name',
+                                   '/path/to/plugin/name',
                                    "web_host", 123, False, plugin_args=['arg1', 'arg2'])
         self.assertEqual(plugin.executable, [sys.executable, 'entry_point', 'arg1', 'arg2'])
 
     def test_init_executable_package(self):
-        plugin = LocalPluginRunner('-m package', self.system_mock, 'instance_name', '/path/to/plugin/name',
+        plugin = LocalPluginRunner('-m package', self.system_mock, 'instance_name',
+                                   '/path/to/plugin/name',
                                    "web_host", 123, False, plugin_args=['arg1', 'arg2'])
         self.assertEqual(plugin.executable, [sys.executable, '-m', 'package', 'arg1', 'arg2'])
 
@@ -83,7 +86,8 @@ class PluginRunnerTest(unittest.TestCase):
         plugin_env = self.plugin._generate_plugin_environment()
         self.assertEqual(plugin_env.get('FOO'), 'BAR')
 
-    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner._generate_plugin_environment', Mock(return_value=1))
+    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner._generate_plugin_environment',
+           Mock(return_value=1))
     @patch('bartender.local_plugins.plugin_runner.Thread', Mock())
     @patch('bartender.local_plugins.plugin_runner.subprocess.Popen')
     def test_process_creation(self, process_mock):
@@ -91,11 +95,15 @@ class PluginRunnerTest(unittest.TestCase):
         process_mock.return_value = Mock(poll=Mock(return_value="Not None"), stdout=stdout_mock)
 
         self.plugin.run()
-        process_mock.assert_called_with(self.plugin.executable, env=1, bufsize=0, stderr=subprocess.STDOUT,
-                                        stdout=subprocess.PIPE, preexec_fn=ANY, cwd=self.plugin.path_to_plugin)
+        process_mock.assert_called_with(self.plugin.executable, env=1, bufsize=0,
+                                        stderr=subprocess.STDOUT,
+                                        stdout=subprocess.PIPE, preexec_fn=ANY,
+                                        cwd=self.plugin.path_to_plugin)
 
-    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner._generate_plugin_environment', Mock())
-    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner.stopped', Mock(return_value=True))
+    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner._generate_plugin_environment',
+           Mock())
+    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner.stopped',
+           Mock(return_value=True))
     @patch('bartender.local_plugins.plugin_runner.subprocess.Popen')
     @patch('bartender.local_plugins.plugin_runner.sleep')
     @patch('bartender.local_plugins.plugin_runner.Thread')
@@ -107,13 +115,16 @@ class PluginRunnerTest(unittest.TestCase):
 
         self.plugin.run()
         self.assertEqual(0, self.plugin.logger.error.call_count)
-        thread_mock.assert_called_with(name=self.plugin.unique_name+'_io_thread', target=self.plugin._check_io)
+        thread_mock.assert_called_with(name=self.plugin.unique_name+'_io_thread',
+                                       target=self.plugin._check_io)
         sleep_mock.assert_called_once_with(0.1)
         fake_thread.start.assert_called_with()
         fake_thread.join.assert_called_once_with()
 
-    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner._generate_plugin_environment', Mock())
-    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner.stopped', Mock(return_value=False))
+    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner._generate_plugin_environment',
+           Mock())
+    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner.stopped',
+           Mock(return_value=False))
     @patch('bartender.local_plugins.plugin_runner.subprocess.Popen')
     @patch('bartender.local_plugins.plugin_runner.sleep')
     @patch('bartender.local_plugins.plugin_runner.Thread')
@@ -125,32 +136,40 @@ class PluginRunnerTest(unittest.TestCase):
 
         self.plugin.run()
         self.plugin.logger.error.assert_called()
-        thread_mock.assert_called_with(name=self.plugin.unique_name+'_io_thread', target=self.plugin._check_io)
+        thread_mock.assert_called_with(name=self.plugin.unique_name+'_io_thread',
+                                       target=self.plugin._check_io)
         sleep_mock.assert_called_once_with(0.1)
         fake_thread.start.assert_called_with()
         fake_thread.join.assert_called_once_with()
 
-    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner._generate_plugin_environment', Mock(return_value={}))
-    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner.stopped', Mock(return_value=True))
+    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner._generate_plugin_environment',
+           Mock(return_value={}))
+    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner.stopped',
+           Mock(return_value=True))
     @patch('bartender.local_plugins.plugin_runner.subprocess.Popen')
     @patch('bartender.local_plugins.plugin_runner.Thread')
     def test_check_io_no_custom_logger_used(self, thread_mock, process_mock):
         stdout_mock = Mock(name='stdout mock', readline=Mock(side_effect=[b"no logger", b""]))
-        process_mock.return_value = Mock(name='process mock', poll=Mock(return_value=0), stdout=stdout_mock)
+        process_mock.return_value = Mock(name='process mock', poll=Mock(return_value=0),
+                                         stdout=stdout_mock)
         thread_mock.return_value = Mock(name='thread mock', join=self.plugin._check_io)
         self.plugin.logger = Mock()
 
         self.plugin.run()
         self.plugin.logger.info.assert_any_call('no logger'.rstrip())
 
-    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner._generate_plugin_environment', Mock(return_value={}))
-    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner.stopped', Mock(return_value=True))
+    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner._generate_plugin_environment',
+           Mock(return_value={}))
+    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner.stopped',
+           Mock(return_value=True))
     @patch('bartender.local_plugins.plugin_runner.subprocess.Popen')
     @patch('bartender.local_plugins.plugin_runner.Thread')
     def test_check_io_custom_logger_being_used(self, thread_mock, process_mock):
-        stdout_mock = Mock(name='stdout mock', readline=Mock(side_effect=[
-                           b"ERROR: this is my error logger", b"INFO: this is my info logger", b""]))
-        process_mock.return_value = Mock(name='process mock', poll=Mock(return_value=0), stdout=stdout_mock)
+        stdout_mock = Mock(name='stdout mock', readline=Mock(
+            side_effect=[
+                b"ERROR: this is my error logger", b"INFO: this is my info logger", b""]))
+        process_mock.return_value = Mock(name='process mock', poll=Mock(return_value=0),
+                                         stdout=stdout_mock)
         thread_mock.return_value = Mock(name='thread mock', join=self.plugin._check_io)
         self.plugin.logger = Mock()
 
@@ -159,11 +178,13 @@ class PluginRunnerTest(unittest.TestCase):
         self.plugin.logger.log.assert_any_call(logging.INFO, "INFO: this is my info logger")
 
     def test_check_io_multiple_calls(self):
-        stdout_mock = Mock(name='stdout mock', readline=Mock(side_effect=[
-                           b"ERROR: this is my error logger", b"INFO: this is my info logger", b"", b""]))
+        stdout_mock = Mock(name='stdout mock', readline=Mock(
+            side_effect=[
+                b"ERROR: this is my error logger", b"INFO: this is my info logger", b"", b""]))
         check_io_mock = Mock(wraps=self.plugin._check_io)
         logger_mock = Mock()
-        self.plugin.process = Mock(name='process mock', poll=Mock(side_effect=[None, 0, 0]), stdout=stdout_mock)
+        self.plugin.process = Mock(name='process mock', poll=Mock(side_effect=[None, 0, 0]),
+                                   stdout=stdout_mock)
         self.plugin._check_io = check_io_mock
         self.plugin.logger = logger_mock
 
@@ -172,8 +193,10 @@ class PluginRunnerTest(unittest.TestCase):
         logger_mock.log.assert_any_call(logging.ERROR, "ERROR: this is my error logger")
         logger_mock.log.assert_any_call(logging.INFO, "INFO: this is my info logger")
 
-    @patch('bartender.local_plugins.plugin_runner.subprocess.Popen', Mock(side_effect=ValueError('error_message')))
-    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner._generate_plugin_environment', Mock())
+    @patch('bartender.local_plugins.plugin_runner.subprocess.Popen',
+           Mock(side_effect=ValueError('error_message')))
+    @patch('bartender.local_plugins.plugin_runner.LocalPluginRunner._generate_plugin_environment',
+           Mock())
     def test_run_call_throw_exception(self):
         self.plugin.logger.error = Mock()
         self.plugin.run()

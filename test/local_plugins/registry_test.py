@@ -15,11 +15,14 @@ class RegistryTest(unittest.TestCase):
         type(self.fake_system_1).name = PropertyMock(return_value='plugin1')
         type(self.fake_system_2).name = PropertyMock(return_value='plugin2')
 
-        self.mock_plugin_1 = Mock(system=self.fake_system_1, unique_name='plugin1[inst1]-0.0.1', instance_name='inst1',
+        self.mock_plugin_1 = Mock(system=self.fake_system_1, unique_name='plugin1[inst1]-0.0.1',
+                                  instance_name='inst1',
                                   status='INITIALIZING')
-        self.mock_plugin_2 = Mock(system=self.fake_system_2, unique_name='plugin2[inst1]-0.0.1', instance_name='inst1',
+        self.mock_plugin_2 = Mock(system=self.fake_system_2, unique_name='plugin2[inst1]-0.0.1',
+                                  instance_name='inst1',
                                   status='INITIALIZING')
-        self.mock_plugin_3 = Mock(system=self.fake_system_2, unique_name='plugin2[inst2]-0.0.1', instance_name='inst2',
+        self.mock_plugin_3 = Mock(system=self.fake_system_2, unique_name='plugin2[inst2]-0.0.1',
+                                  instance_name='inst2',
                                   status='INITIALIZING')
 
         self.registry._registry = [self.mock_plugin_1, self.mock_plugin_2, self.mock_plugin_3]
@@ -67,7 +70,8 @@ class RegistryTest(unittest.TestCase):
         self.assertEqual(3, len(self.registry._registry))
 
     def test_register_plugin(self):
-        mock_plugin = Mock(system=self.fake_system_1, unique_name='plugin1[inst2]-0.0.1', instance_name='inst2',
+        mock_plugin = Mock(system=self.fake_system_1, unique_name='plugin1[inst2]-0.0.1',
+                           instance_name='inst2',
                            status='INITIALIZING')
 
         self.assertEqual(3, len(self.registry._registry))
@@ -81,11 +85,15 @@ class RegistryTest(unittest.TestCase):
         self.assertEqual(3, len(self.registry._registry))
 
     def test_plugin_exists_true(self):
-        self.assertTrue(self.registry.plugin_exists(plugin_name=self.mock_plugin_1.system.name,
-                                                    plugin_version=self.mock_plugin_1.system.version))
+        self.assertTrue(self.registry.plugin_exists(
+            plugin_name=self.mock_plugin_1.system.name,
+            plugin_version=self.mock_plugin_1.system.version))
 
     def test_plugin_exists_false(self):
-        self.assertFalse(self.registry.plugin_exists(plugin_name='bad_plugin', plugin_version='0.0.1'))
+        self.assertFalse(self.registry.plugin_exists(plugin_name='bad_plugin',
+                                                     plugin_version='0.0.1'))
 
     def test_get_unique_name(self):
-        self.assertEqual('echo[default]-0.0.1', self.registry.get_unique_name('echo', '0.0.1', 'default'))
+        self.assertEqual('echo[default]-0.0.1', self.registry.get_unique_name('echo',
+                                                                              '0.0.1',
+                                                                              'default'))

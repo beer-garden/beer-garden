@@ -8,7 +8,8 @@ class EchoClient:
 
     @parameter(key="message", description="The Message to be Echoed", optional=True, type="String",
                default=DEFAULT_MESSAGE)
-    @parameter(key="loud", description="Determines if Exclamation marks are added", optional=True, type="Boolean",
+    @parameter(key="loud", description="Determines if Exclamation marks are added",
+               optional=True, type="Boolean",
                default=False)
     def say(self, message=DEFAULT_MESSAGE, loud=False):
         if loud:

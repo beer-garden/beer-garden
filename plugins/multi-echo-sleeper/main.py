@@ -10,8 +10,10 @@ def main():
 
     plugin = LocalPlugin(
         EchoSleeperClient(
-            SystemClient(os.getenv("BG_WEB_HOST"), os.getenv("BG_WEB_PORT"), 'echo', ssl_enabled=ssl_enabled),
-            SystemClient(os.getenv("BG_WEB_HOST"), os.getenv("BG_WEB_PORT"), 'sleeper', ssl_enabled=ssl_enabled)),
+            SystemClient(os.getenv("BG_WEB_HOST"), os.getenv("BG_WEB_PORT"),
+                         'echo', ssl_enabled=ssl_enabled),
+            SystemClient(os.getenv("BG_WEB_HOST"), os.getenv("BG_WEB_PORT"),
+                         'sleeper', ssl_enabled=ssl_enabled)),
         max_concurrent=5)
     plugin.run()
 

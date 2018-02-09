@@ -80,7 +80,8 @@ class ThriftServerTest(unittest.TestCase):
         self.trans_mock.accept.assert_called_once_with()
         self.assertTrue(logger_mock.exception.called)
 
-    @patch('bartender.thrift.server.BartenderThriftServer.stopped', Mock(side_effect=[False, True, True]))
+    @patch('bartender.thrift.server.BartenderThriftServer.stopped',
+           Mock(side_effect=[False, True, True]))
     def test_serve_exit_exception(self):
         error = OSError()
         error.errno = 22

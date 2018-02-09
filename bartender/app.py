@@ -26,7 +26,7 @@ from brewtils.stoppable_thread import StoppableThread
 
 
 class BartenderApp(StoppableThread):
-    """Main Application that Runs the Beergarden Backend. Just instantiate and call .start() then join it."""
+    """Main Application that Runs the Beergarden Backend."""
 
     def __init__(self, config):
         self.logger = logging.getLogger(__name__)
@@ -50,39 +50,49 @@ class BartenderApp(StoppableThread):
                                                ca_cert=config.ca_cert)
 
         self.clients = {
-            'pika': PikaClient(host=config.amq_host, port=config.amq_port, user=config.amq_admin_user,
-                               password=config.amq_admin_password, virtual_host=config.amq_virtual_host,
-                               connection_attempts=config.amq_connection_attempts, exchange=config.amq_exchange),
+            'pika': PikaClient(host=config.amq_host, port=config.amq_port,
+                               user=config.amq_admin_user,
+                               password=config.amq_admin_password,
+                               virtual_host=config.amq_virtual_host,
+                               connection_attempts=config.amq_connection_attempts,
+                               exchange=config.amq_exchange),
             'pyrabbit': PyrabbitClient(host=config.amq_admin_host, port=config.amq_admin_port,
-                                       user=config.amq_admin_user, password=config.amq_admin_password,
+                                       user=config.amq_admin_user,
+                                       password=config.amq_admin_password,
                                        virtual_host=config.amq_virtual_host),
-            'public': ClientBase(host=config.amq_publish_host, port=config.amq_port, user=config.amq_user,
-                                 password=config.amq_password, virtual_host=config.amq_virtual_host)
+            'public': ClientBase(host=config.amq_publish_host, port=config.amq_port,
+                                 user=config.amq_user, password=config.amq_password,
+                                 virtual_host=config.amq_virtual_host)
         }
 
-        self.plugin_manager = LocalPluginsManager(loader=self.plugin_loader, validator=self.plugin_validator,
-                                                  registry=self.plugin_registry, clients=self.clients,
-                                                  plugin_startup_timeout=config.plugin_startup_timeout,
-                                                  plugin_shutdown_timeout=config.plugin_shutdown_timeout)
+        self.plugin_manager = LocalPluginsManager(
+            loader=self.plugin_loader, validator=self.plugin_validator,
+            registry=self.plugin_registry, clients=self.clients,
+            plugin_startup_timeout=config.plugin_startup_timeout,
+            plugin_shutdown_timeout=config.plugin_shutdown_timeout)
 
         self.handler = BartenderHandler(registry=self.plugin_registry, clients=self.clients,
-                                        plugin_manager=self.plugin_manager, request_validator=self.request_validator)
+                                        plugin_manager=self.plugin_manager,
+                                        request_validator=self.request_validator)
 
         self.helper_threads = [
 
-            HelperThread(make_server, service=bg_utils.bg_thrift.BartenderBackend, handler=self.handler,
-                         host=config.thrift_host, port=config.thrift_port),
+            HelperThread(make_server, service=bg_utils.bg_thrift.BartenderBackend,
+                         handler=self.handler, host=config.thrift_host, port=config.thrift_port),
 
-            HelperThread(LocalPluginMonitor, plugin_manager=self.plugin_manager, registry=self.plugin_registry),
+            HelperThread(LocalPluginMonitor, plugin_manager=self.plugin_manager,
+                         registry=self.plugin_registry),
 
-            HelperThread(PluginStatusMonitor, self.clients, timeout_seconds=config.plugin_status_timeout,
+            HelperThread(PluginStatusMonitor, self.clients,
+                         timeout_seconds=config.plugin_status_timeout,
                          heartbeat_interval=config.plugin_status_heartbeat)
         ]
 
         # Only want to run the MongoPruner if it would do anything
         tasks, run_every = self._setup_pruning_tasks(config)
         if run_every:
-            self.helper_threads.append(HelperThread(MongoPruner, tasks=tasks, run_every=timedelta(minutes=run_every)))
+            self.helper_threads.append(HelperThread(MongoPruner, tasks=tasks,
+                                                    run_every=timedelta(minutes=run_every)))
 
         super(BartenderApp, self).__init__(logger=self.logger, name="BartenderApp")
 
@@ -142,21 +152,27 @@ class BartenderApp(StoppableThread):
                 'collection': Request, 'field': 'created_at',
                 'delete_after': timedelta(minutes=config.info_request_ttl),
                 'additional_query':
-                    (Q(status="SUCCESS") | Q(status='CANCELED') | Q(status='ERROR')) & Q(command_type='INFO')})
+                    (Q(status="SUCCESS") |
+                     Q(status='CANCELED') |
+                     Q(status='ERROR')) & Q(command_type='INFO')})
 
         if config.action_request_ttl > 0:
             prune_tasks.append({
                 'collection': Request, 'field': 'created_at',
                 'delete_after': timedelta(minutes=config.action_request_ttl),
                 'additional_query':
-                    (Q(status="SUCCESS") | Q(status='CANCELED') | Q(status='ERROR')) & Q(command_type='ACTION')})
+                    (Q(status="SUCCESS") |
+                     Q(status='CANCELED') |
+                     Q(status='ERROR')) & Q(command_type='ACTION')})
 
         if config.event_mongo_ttl > 0:
             prune_tasks.append({'collection': Event, 'field': 'timestamp',
                                 'delete_after': timedelta(minutes=config.event_mongo_ttl)})
 
         # Look at the various TTLs to determine how often to run the MongoPruner
-        real_ttls = [x for x in (config.info_request_ttl, config.action_request_ttl, config.event_mongo_ttl) if x > 0]
+        real_ttls = [x for x in
+                     (config.info_request_ttl, config.action_request_ttl, config.event_mongo_ttl)
+                     if x > 0]
         run_every = min(real_ttls) // 2 if real_ttls else None
 
         return prune_tasks, run_every
@@ -177,7 +193,8 @@ class HelperThread(object):
 
     def stop(self):
         if not self.thread.isAlive():
-            self.logger.warning("Uh-oh. Looks like a bad shutdown - the %s was already stopped", self.display_name)
+            self.logger.warning("Uh-oh. Looks like a bad shutdown - the %s "
+                                "was already stopped", self.display_name)
         else:
             self.logger.debug("%s is being requested to stop", self.display_name)
             self.thread.stop()

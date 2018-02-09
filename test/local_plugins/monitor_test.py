@@ -11,7 +11,8 @@ class LocalPluginMonitorTest(unittest.TestCase):
     def setUp(self):
         self.fake_system = Mock(version='0.0.1')
         type(self.fake_system).name = PropertyMock(return_value='plugin1')
-        self.fake_plugin = Mock(system=self.fake_system, unique_name='plugin1[inst1]-0.0.1', instance_name='inst1',
+        self.fake_plugin = Mock(system=self.fake_system, unique_name='plugin1[inst1]-0.0.1',
+                                instance_name='inst1',
                                 status='INITIALIZING')
 
         self.manager = Mock()
@@ -44,9 +45,11 @@ class LocalPluginMonitorTest(unittest.TestCase):
         self.assertFalse(fake_plugin.process.poll.called)
 
     def test_multiple_plugins_alive(self):
-        fake_plugin_1 = Mock(system=self.fake_system, unique_name='plugin1[inst1]-0.0.1', instance_name='inst1',
+        fake_plugin_1 = Mock(system=self.fake_system, unique_name='plugin1[inst1]-0.0.1',
+                             instance_name='inst1',
                              status='RUNNING', process=Mock(poll=Mock(return_value=None)))
-        fake_plugin_2 = Mock(system=self.fake_system, unique_name='plugin1[inst2]-0.0.1', instance_name='inst2',
+        fake_plugin_2 = Mock(system=self.fake_system, unique_name='plugin1[inst2]-0.0.1',
+                             instance_name='inst2',
                              status='RUNNING', process=Mock(poll=Mock(return_value=None)))
         self.registry.get_all_plugins = Mock(return_value=[fake_plugin_1, fake_plugin_2])
 

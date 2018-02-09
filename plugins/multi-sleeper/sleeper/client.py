@@ -19,7 +19,8 @@ class SleeperClient:
             self.logger.info("I'm Awake!")
         self.logger.info("Done with Sleep!")
 
-    @parameter(key="amount", type="Float", description="Amount of time (in seconds) to sleep before erroring.")
+    @parameter(key="amount", type="Float",
+               description="Amount of time (in seconds) to sleep before erroring.")
     def sleep_and_error(self, amount):
         self.logger.info("In Sleep")
         for i in range(self.number_of_times):

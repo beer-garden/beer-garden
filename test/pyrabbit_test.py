@@ -17,7 +17,8 @@ class PyrabbitClientTest(unittest.TestCase):
         self.password = 'password'
         self.virtual_host = '/'
 
-        self.client = PyrabbitClient(host=self.host, port=self.port, user=self.user, password=self.password)
+        self.client = PyrabbitClient(host=self.host, port=self.port, user=self.user,
+                                     password=self.password)
         self.client._client = self.client_mock
 
     def test_is_alive(self):
@@ -169,7 +170,8 @@ class PyrabbitClientTest(unittest.TestCase):
         self.assertFalse(delete_queue.called)
 
     def test_disconnect_consumers(self):
-        consumer_details = [{'queue': {'name': 'queue_name'}, 'channel_details': {'connection_name': 'conn'}}]
+        consumer_details = [{'queue': {'name': 'queue_name'},
+                             'channel_details': {'connection_name': 'conn'}}]
         self.client_mock.get_channels.return_value = [{'name': 'channel_name'}]
         self.client_mock.get_channel.return_value = {'consumer_details': consumer_details}
 

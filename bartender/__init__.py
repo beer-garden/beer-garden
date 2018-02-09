@@ -40,13 +40,16 @@ def setup_bartender(spec, cli_args):
     config['url_prefix'] = prefix
     config.url_prefix = prefix
 
-    bg_utils.setup_application_logging(config, get_default_logging_config(config.log_level, config.log_file))
+    bg_utils.setup_application_logging(config,
+                                       get_default_logging_config(config.log_level,
+                                                                  config.log_file))
     logger = logging.getLogger(__name__)
 
     bg_utils.setup_database(config)
 
     bv_client = EasyClient(config.web_host, config.web_port, ssl_enabled=config.ssl_enabled,
-                           ca_cert=config.ca_cert, url_prefix=config.url_prefix, ca_verify=config.ca_verify)
+                           ca_cert=config.ca_cert, url_prefix=config.url_prefix,
+                           ca_verify=config.ca_verify)
 
     application = BartenderApp(config)
 
@@ -71,6 +74,7 @@ def _connect_to_brew_view():
 def _progressive_backoff(func, name):
     wait_time = 0.1
     while not func():
-        logger.warning('Could not connect to %s, waiting %f seconds before next attempt', name, wait_time)
+        logger.warning('Could not connect to %s, waiting %f seconds before next attempt',
+                       name, wait_time)
         time.sleep(wait_time)
         wait_time = min(wait_time*2, 30)

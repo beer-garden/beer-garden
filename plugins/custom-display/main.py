@@ -24,25 +24,29 @@ class CustomDisplayClient(object):
         """form='./resources/say_form.json'"""
         return message + '!!!!!!!!!' if loud else message
 
-    @command(schema={"message": {'type': 'string', 'readonly': True, 'default': 'Default in schema!'}})
+    @command(schema={"message": {'type': 'string', 'readonly': True,
+                                 'default': 'Default in schema!'}})
     @parameter(key="message", type="String", optional=False, nullable=False)
     def echo_message_custom_schema(self, message="Can't change me! Hahaha!"):
-        """schema={"message": {'type': 'string', 'readonly': True, 'default': 'Default in schema!'}}"""
+        """schema={"message":{'type': 'string','readonly': True,'default':'Default in schema!'}}"""
         return message
 
     @command(template='./resources/minimalist.html')
     def echo_minimalist(self, message):
         return message
 
-    @parameter(key="message", type="String", optional=False, nullable=False, form_input_type="textarea")
+    @parameter(key="message", type="String", optional=False, nullable=False,
+               form_input_type="textarea")
     def echo_message_textarea(self, message):
         return message
 
-    @parameter(key="messages", type="String", multi=True, optional=False, nullable=False, form_input_type="textarea")
+    @parameter(key="messages", type="String", multi=True, optional=False, nullable=False,
+               form_input_type="textarea")
     def echo_message_list_textarea(self, messages):
         return messages
 
-    @parameter(key='message', type='Dictionary', optional=False, nullable=False, form_input_type='textarea')
+    @parameter(key='message', type='Dictionary', optional=False, nullable=False,
+               form_input_type='textarea')
     def echo_message_dictionary(self, message):
         return message
 
@@ -50,6 +54,7 @@ class CustomDisplayClient(object):
 def main():
     plugin = LocalPlugin(CustomDisplayClient())
     plugin.run()
+
 
 if __name__ == '__main__':
     main()

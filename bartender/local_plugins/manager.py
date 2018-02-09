@@ -8,7 +8,8 @@ from bg_utils.models import System
 class LocalPluginsManager(object):
     """LocalPluginsManager that is capable of stopping/starting and restarting plugins"""
 
-    def __init__(self, loader, validator, registry, clients, plugin_startup_timeout=5, plugin_shutdown_timeout=10):
+    def __init__(self, loader, validator, registry, clients,
+                 plugin_startup_timeout=5, plugin_shutdown_timeout=10):
         self.logger = logging.getLogger(__name__)
         self.loader = loader
         self.validator = validator
@@ -22,11 +23,12 @@ class LocalPluginsManager(object):
 
         If a plugin cannot Be found (i.e. it was not loaded) then it will not do anything
         If the plugin is already running, it will do nothing.
-        If a plugin instance has not started after the PLUGIN_STARTUP_TIMEOUT it will mark that instance as stopped
+        If a plugin instance has not started after the PLUGIN_STARTUP_TIMEOUT it will mark that
+        instance as stopped
 
         :param plugin: The plugin to start
-        :return: True if any plugin instances successfully started. False if the plugin does not exist or all
-        instances failed to start
+        :return: True if any plugin instances successfully started. False if the plugin does
+            not exist or all instances failed to start
         """
         self.logger.info("Starting plugin %s", plugin.unique_name)
 
@@ -38,8 +40,10 @@ class LocalPluginsManager(object):
             new_plugin = plugin
         elif plugin.status in ['DEAD', 'STOPPED']:
             new_plugin = LocalPluginRunner(plugin.entry_point, plugin.system, plugin.instance_name,
-                                           plugin.path_to_plugin, plugin.web_host, plugin.web_port, plugin.ssl_enabled,
-                                           plugin_args=plugin.plugin_args, environment=plugin.environment,
+                                           plugin.path_to_plugin, plugin.web_host,
+                                           plugin.web_port, plugin.ssl_enabled,
+                                           plugin_args=plugin.plugin_args,
+                                           environment=plugin.environment,
                                            requirements=plugin.requirements,
                                            plugin_log_directory=plugin.plugin_log_directory,
                                            url_prefix=plugin.url_prefix, ca_verify=plugin.ca_verify,
@@ -70,8 +74,8 @@ class LocalPluginsManager(object):
                 self.logger.info("Plugin %s was already stopped", plugin.unique_name)
                 return
             elif plugin.status == 'UNKNOWN':
-                self.logger.warning("Couldn't determine status of plugin %s, still attempting to stop",
-                                    plugin.unique_name)
+                self.logger.warning("Couldn't determine status of plugin %s, "
+                                    "still attempting to stop", plugin.unique_name)
             else:
                 plugin.status = 'STOPPING'
 
@@ -99,7 +103,8 @@ class LocalPluginsManager(object):
 
         # Local plugins will set their status to STOPPED in their stop handler
         if not clean_shutdown:
-            self.logger.warning('Plugin %s did not shutdown cleanly, marking as DEAD', plugin.unique_name)
+            self.logger.warning('Plugin %s did not shutdown cleanly, '
+                                'marking as DEAD', plugin.unique_name)
             plugin.status = 'DEAD'
 
     def restart_plugin(self, plugin):
@@ -115,21 +120,25 @@ class LocalPluginsManager(object):
         """
         plugins = self.registry.get_plugins_by_system(system_name, system_version)
         if len(plugins) < 1:
-            message = "Could not reload system %s-%s: not found in the registry" % (system_name, system_version)
+            message = ("Could not reload system %s-%s: not found in the registry" %
+                       (system_name, system_version))
             self.logger.error(message)
             raise Exception(message)
 
         path_to_plugin = plugins[0].path_to_plugin
 
-        # Verify the new configuration is valid before we remove the current plugins from the registry
+        # Verify the new configuration is valid before we remove the
+        # current plugins from the registry
         if not self.validator.validate_plugin(path_to_plugin):
-            message = "Could not reload system %s-%s: new configuration is not valid" % (system_name, system_version)
+            message = ("Could not reload system %s-%s: new configuration is not valid" %
+                       (system_name, system_version))
             self.logger.warning(message)
             raise Exception(message)
 
         for plugin in plugins:
             if plugin.status == 'RUNNING':
-                message = "Could not reload system %s-%s: running instances" % (system_name, system_version)
+                message = ("Could not reload system %s-%s: running instances" %
+                           (system_name, system_version))
                 self.logger.warning(message)
                 raise Exception(message)
 
@@ -146,8 +155,8 @@ class LocalPluginsManager(object):
     def _start_multiple_plugins(self, plugins_to_start):
         """Starts multiple plugins, respecting required plugin dependencies.
 
-        It will consider requirements of other plugins. If the plugin requires others, then it will be
-        skipped until its requirements are loaded.
+        It will consider requirements of other plugins. If the plugin requires others, then it
+        will be skipped until its requirements are loaded.
 
         Failure is a little tricky.
 
@@ -168,7 +177,8 @@ class LocalPluginsManager(object):
             for required_plugin_name in plugin.requirements:
                 if required_plugin_name not in system_names:
                     self.logger.warning(
-                        "Plugin %s lists system %s as a required system, but that system is not available.",
+                        "Plugin %s lists system %s as a required system, "
+                        "but that system is not available.",
                         plugin.unique_name, required_plugin_name)
                     self._mark_as_failed(plugin)
                     failed_system_names.append(plugin.system.name)
@@ -176,8 +186,10 @@ class LocalPluginsManager(object):
                     break
 
                 elif required_plugin_name in failed_system_names:
-                    self.logger.warning("Plugin %s lists plugin %s as a required plugin, but plugin %s failed to start,"
-                                        " thus plugin %s cannot start.", plugin.unique_name, required_plugin_name,
+                    self.logger.warning("Plugin %s lists plugin %s as a required plugin, "
+                                        "but plugin %s failed to start,"
+                                        " thus plugin %s cannot start.",
+                                        plugin.unique_name, required_plugin_name,
                                         required_plugin_name, plugin.unique_name)
                     self._mark_as_failed(plugin)
                     failed_system_names.append(plugin.system.name)
@@ -185,7 +197,8 @@ class LocalPluginsManager(object):
                     break
 
                 elif required_plugin_name not in started_plugin_names:
-                    self.logger.debug("Skipping Starting Plugin %s because its requirements have yet to be started.",
+                    self.logger.debug("Skipping Starting Plugin %s because its "
+                                      "requirements have yet to be started.",
                                       plugin.unique_name)
                     start_list.insert(0, plugin)
                     attempt_to_start = False
@@ -248,7 +261,8 @@ class LocalPluginsManager(object):
         :return: None
         """
         scanned_plugins_paths = set(self.loader.scan_plugin_path())
-        existing_plugin_paths = set([plugin.path_to_plugin for plugin in self.registry.get_all_plugins()])
+        existing_plugin_paths = set([plugin.path_to_plugin
+                                     for plugin in self.registry.get_all_plugins()])
 
         new_plugins = []
         for plugin_path in scanned_plugins_paths.difference(existing_plugin_paths):

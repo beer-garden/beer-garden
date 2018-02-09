@@ -57,7 +57,8 @@ class BartenderAppTest(unittest.TestCase):
         self.app.clients = self.clients
         self.app.plugin_manager = self.plugin_manager
         self.app.queue_manager = self.queue_manager
-        self.app.helper_threads = [self.mongo_pruner, self.thrift_server, self.local_monitor, self.status_monitor]
+        self.app.helper_threads = [self.mongo_pruner, self.thrift_server, self.local_monitor,
+                                   self.status_monitor]
 
         self.app.run()
         self.app.plugin_loader.load_plugins.assert_called_once_with()
@@ -71,7 +72,8 @@ class BartenderAppTest(unittest.TestCase):
     def test_shutdown(self):
         self.app.stopped = Mock(return_value=True)
         self.app.plugin_manager = self.plugin_manager
-        self.app.helper_threads = [self.mongo_pruner, self.thrift_server, self.local_monitor, self.status_monitor]
+        self.app.helper_threads = [self.mongo_pruner, self.thrift_server, self.local_monitor,
+                                   self.status_monitor]
 
         self.app.run()
         self.plugin_manager.stop_all_plugins.assert_called_once_with()

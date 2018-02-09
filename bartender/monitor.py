@@ -41,10 +41,11 @@ class PluginStatusMonitor(StoppableThread):
             last_heartbeat = instance.status_info['heartbeat']
 
             if last_heartbeat:
-                if instance.status == 'RUNNING' and datetime.utcnow() - last_heartbeat >= self.timeout:
+                if (instance.status == 'RUNNING' and
+                        datetime.utcnow() - last_heartbeat >= self.timeout):
                     instance.status = 'UNRESPONSIVE'
                     instance.save()
-                elif instance.status in ['UNRESPONSIVE', 'STARTING', 'INITIALIZING', 'UNKNOWN'] and \
-                        datetime.utcnow() - last_heartbeat < self.timeout:
+                elif (instance.status in ['UNRESPONSIVE', 'STARTING', 'INITIALIZING', 'UNKNOWN']
+                      and datetime.utcnow() - last_heartbeat < self.timeout):
                     instance.status = 'RUNNING'
                     instance.save()

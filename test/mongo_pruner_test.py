@@ -17,7 +17,8 @@ class MongoPrunerTest(unittest.TestCase):
         self.additional_query_mock = Mock()
 
         self.task = {'collection': self.collection_mock, 'field': self.field_mock,
-                     'delete_after': self.delete_after_mock, 'additional_query': self.additional_query_mock}
+                     'delete_after': self.delete_after_mock,
+                     'additional_query': self.additional_query_mock}
 
         self.mongo_pruner.add_task(**self.task)
 

@@ -13,15 +13,15 @@ class LocalPluginLoader(object):
 
     logger = logging.getLogger(__name__)
 
-    def __init__(self, path_to_plugins, validator, registry, web_host, web_port, ssl_enabled, db_host,
-                 db_name, db_port, plugin_log_directory, url_prefix, ca_verify, ca_cert):
+    def __init__(self, path_to_plugins, validator, registry, web_host, web_port, ssl_enabled,
+                 db_host, db_name, db_port, plugin_log_directory, url_prefix, ca_verify, ca_cert):
         self.validator = validator
         self.registry = registry
         self.path_to_plugins = path_to_plugins
         self.web_host = web_host
         self.web_port = web_port
         self.ssl_enabled = ssl_enabled
-        # TODO: We no longer use the database information (See issue/217)
+        # TODO: We no longer use the database information
         self.db_host = db_host
         self.db_name = db_name
         self.db_port = db_port
@@ -31,8 +31,10 @@ class LocalPluginLoader(object):
         self.ca_cert = ca_cert
 
     def load_plugins(self):
-        """Loads all plugins it can find in path_to_plugins. After each has been loaded, it checks the requirements
-        to ensure Plugins can be loaded correctly.
+        """Load all plugins
+
+        After each has been loaded, it checks the requirements to ensure
+        the plugin can be loaded correctly.
         """
         for plugin_path in self.scan_plugin_path():
             self.load_plugin(plugin_path)
@@ -42,9 +44,11 @@ class LocalPluginLoader(object):
     def scan_plugin_path(self, path=None):
         """Find valid plugin directories in a given path.
 
-        Note: This scan does not walk the directory tree - all plugins must be in the top level of the given path.
+        Note: This scan does not walk the directory tree - all plugins must be in the top
+        level of the given path.
 
-        :param path: The path to scan for plugins. If none will default to the plugin path specified at initialization.
+        :param path: The path to scan for plugins. If none will default to the plugin path
+            specified at initialization.
         :return: A list containing paths specifying plugins
         """
         path = path or self.path_to_plugins
@@ -52,10 +56,14 @@ class LocalPluginLoader(object):
         if path is None:
             return []
         else:
-            return [abspath(join(path, plugin)) for plugin in listdir(path) if not isfile(join(path, plugin))]
+            return [
+                abspath(join(path, plugin))
+                for plugin in listdir(path)
+                if not isfile(join(path, plugin))
+            ]
 
     def validate_plugin_requirements(self):
-        """Validates that all the listed requirements for each plugin can be satisfied by one of the loaded plugins"""
+        """Validates requirements for each plugin can be satisfied by one of the loaded plugins"""
         plugin_list = self.registry.get_all_plugins()
         plugin_names = self.registry.get_unique_plugin_names()
         plugins_to_remove = []
@@ -63,7 +71,8 @@ class LocalPluginLoader(object):
         for plugin in plugin_list:
             for required_plugin in plugin.requirements:
                 if required_plugin not in plugin_names:
-                    self.logger.warning("Plugin %s requires plugin %s which is not one of the known plugins.",
+                    self.logger.warning("Plugin %s requires plugin %s which is "
+                                        "not one of the known plugins.",
                                         plugin.system.name, required_plugin)
                     self.logger.warning("Plugin %s will not be loaded.", plugin.system.name)
                     plugins_to_remove.append(plugin)
@@ -72,8 +81,10 @@ class LocalPluginLoader(object):
             self.registry.remove(plugin.unique_name)
 
     def load_plugin(self, plugin_path):
-        """Loads a plugin given a path to a plugin directory. It will use the validator to validate the plugin
-        before registering the plugin in the database as well as adding an entry to the plugin map
+        """Loads a plugin given a path to a plugin directory.
+
+        It will use the validator to validate the plugin before registering the plugin in the
+        database as well as adding an entry to the plugin map
 
         :param plugin_path: The path of the plugin to load
         :return: The loaded plugin
@@ -93,33 +104,43 @@ class LocalPluginLoader(object):
         # If this system already exists we need to do some stuff
         plugin_id = None
         plugin_commands = []
-        # TODO: replace this with a call from the EasyClient (issue/217)
-        # plugin_system = self.easy_client.find_unique_system(name=plugin_name, version=plugin_version)
+        # TODO: replace this with a call from the EasyClient
+        # plugin_system = self.easy_client.find_unique_system(name=plugin_name,
+        #                                                     version=plugin_version)
         plugin_system = System.find_unique(plugin_name, plugin_version)
         if plugin_system:
             # Remove the current instances so they aren't left dangling
-            # TODO: This should be replaced with a network call (issue/217)
+            # TODO: This should be replaced with a network call
             plugin_system.delete_instances()
 
             # Carry these over to the new system
             plugin_id = plugin_system.id
             plugin_commands = plugin_system.commands
 
-        plugin_system = System(id=plugin_id, name=plugin_name, version=plugin_version, commands=plugin_commands,
-                               instances=[Instance(name=instance_name) for instance_name in plugin_instances],
-                               max_instances=len(plugin_instances), description=config.get('DESCRIPTION'),
-                               icon_name=config.get('ICON_NAME'), display_name=config.get('DISPLAY_NAME'),
+        plugin_system = System(id=plugin_id, name=plugin_name, version=plugin_version,
+                               commands=plugin_commands,
+                               instances=[Instance(name=instance_name)
+                                          for instance_name in plugin_instances],
+                               max_instances=len(plugin_instances),
+                               description=config.get('DESCRIPTION'),
+                               icon_name=config.get('ICON_NAME'),
+                               display_name=config.get('DISPLAY_NAME'),
                                metadata=config.get('METADATA'))
-        # TODO: Right now, we have to save this system because the LocalPluginRunner uses the database to determine
-        # status, specifically, it calls reload on the instance object which we need to change to satisfy issue/217
+        # TODO: Right now, we have to save this system because the LocalPluginRunner
+        # uses the database to determine status, specifically, it calls reload on the
+        # instance object which we need to change to satisfy
         plugin_system.deep_save()
 
         plugin_list = []
         for instance_name in plugin_instances:
-            plugin = LocalPluginRunner(plugin_entry, plugin_system, instance_name, abspath(plugin_path), self.web_host,
-                                       self.web_port, self.ssl_enabled, plugin_args=plugin_args.get(instance_name),
-                                       environment=config['ENVIRONMENT'], requirements=config['REQUIRES'],
-                                       plugin_log_directory=self.plugin_log_directory, url_prefix=self.url_prefix,
+            plugin = LocalPluginRunner(plugin_entry, plugin_system, instance_name,
+                                       abspath(plugin_path), self.web_host,
+                                       self.web_port, self.ssl_enabled,
+                                       plugin_args=plugin_args.get(instance_name),
+                                       environment=config['ENVIRONMENT'],
+                                       requirements=config['REQUIRES'],
+                                       plugin_log_directory=self.plugin_log_directory,
+                                       url_prefix=self.url_prefix,
                                        ca_verify=self.ca_verify, ca_cert=self.ca_cert)
 
             self.registry.register_plugin(plugin)

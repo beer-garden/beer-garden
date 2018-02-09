@@ -6,5 +6,6 @@ def main():
     plugin = LocalPlugin(ErrorClient())
     plugin.run()
 
+
 if __name__ == '__main__':
     main()

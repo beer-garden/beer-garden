@@ -127,7 +127,8 @@ SPECIFICATION = {
     "event_mongo_ttl": {
         "type": "int",
         "default": 15,
-        "description": "Number of minutes to wait before deleting events (negative number for never)"
+        "description": "Number of minutes to wait before deleting "
+                       "events (negative number for never)"
     },
     "log_config": {
         "type": "str",
@@ -154,7 +155,8 @@ SPECIFICATION = {
     "action_request_ttl": {
         "type": "int",
         "default": -1,
-        "description": "Number of minutes to wait before deleting ACTION requests (negative number for never)"
+        "description": "Number of minutes to wait before deleting "
+                       "ACTION requests (negative number for never)"
     },
     "info_request_ttl": {
         "type": "int",
