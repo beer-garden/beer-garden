@@ -65,12 +65,15 @@ class ChoicesTest(unittest.TestCase):
         self.assertNotEqual(-1, repr(choices).find('[1]'))
 
     def test_clean_value_types(self):
-        self.assertRaises(BrewmasterModelValidationError, Choices(type='static', value='SHOULD_BE_A_LIST').clean)
+        self.assertRaises(BrewmasterModelValidationError, Choices(type='static',
+                                                                  value='SHOULD_BE_A_LIST').clean)
         self.assertRaises(BrewmasterModelValidationError, Choices(type='url', value=[1, 2]).clean)
-        self.assertRaises(BrewmasterModelValidationError, Choices(type='command', value=[1, 2]).clean)
+        self.assertRaises(BrewmasterModelValidationError, Choices(type='command',
+                                                                  value=[1, 2]).clean)
 
     def test_clean_missing_dict_keys(self):
-        self.assertRaises(BrewmasterModelValidationError, Choices(type='command', value={'command': 'foo'}).clean)
+        self.assertRaises(BrewmasterModelValidationError, Choices(type='command',
+                                                                  value={'command': 'foo'}).clean)
 
     def test_clean_static(self):
         choice = Choices(type='static', value=['a', 'b', 'c'])
@@ -94,11 +97,15 @@ class ChoicesTest(unittest.TestCase):
         self.assertNotEqual({}, choice.details)
 
     def test_clean_bad_parse(self):
-        command_dict = {'command': 'foo${arg', 'system': 'foo', 'version': '1.0.0', 'instance_name': 'default'}
+        command_dict = {'command': 'foo${arg', 'system': 'foo', 'version': '1.0.0',
+                        'instance_name': 'default'}
 
-        self.assertRaises(BrewmasterModelValidationError, Choices(type='command', value=command_dict['command']).clean)
-        self.assertRaises(BrewmasterModelValidationError, Choices(type='command', value=command_dict).clean)
-        self.assertRaises(BrewmasterModelValidationError, Choices(type='url', value='http://foo?arg=${val').clean)
+        self.assertRaises(BrewmasterModelValidationError,
+                          Choices(type='command', value=command_dict['command']).clean)
+        self.assertRaises(BrewmasterModelValidationError,
+                          Choices(type='command', value=command_dict).clean)
+        self.assertRaises(BrewmasterModelValidationError,
+                          Choices(type='url', value='http://foo?arg=${val').clean)
 
 
 class ParameterTest(unittest.TestCase):
@@ -162,7 +169,8 @@ class RequestTest(unittest.TestCase):
 
     @patch('mongoengine.Document.save', Mock())
     def test_save_update_updated_at(self):
-        request = Request(system='foo', command='bar', status='CREATED', updated_at='this_will_be_updated')
+        request = Request(system='foo', command='bar', status='CREATED',
+                          updated_at='this_will_be_updated')
         request.save()
         self.assertNotEqual(request.updated_at, 'this_will_be_updated')
 
@@ -180,7 +188,8 @@ class SystemTest(unittest.TestCase):
         self.default_instance.validate = Mock()
         self.default_instance.delete = Mock()
 
-        self.default_system = System(id='1234', name='foo', version='1.0.0', instances=[self.default_instance],
+        self.default_system = System(id='1234', name='foo', version='1.0.0',
+                                     instances=[self.default_instance],
                                      commands=[self.default_command])
         self.default_system.save = Mock()
         self.default_system.validate = Mock()
@@ -268,7 +277,8 @@ class SystemTest(unittest.TestCase):
         self.assertEqual(self.default_command.delete.call_count, 1)
         self.assertEqual(self.default_instance.delete.call_count, 1)
 
-    # FYI - Have to mock out System.commands here or else MongoEngine blows up trying to dereference them
+    # FYI - Have to mock out System.commands here or else MongoEngine
+    # blows up trying to dereference them
     @patch('bg_utils.models.System.commands', Mock())
     @patch('bg_utils.models.Command.objects')
     def test_upsert_commands_new(self, objects_mock):

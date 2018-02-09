@@ -23,31 +23,41 @@ class ParserTest(unittest.TestCase):
                            'url': 'amqp://guest:guest@localhost:5672/'},
             'status_info': {'heartbeat': 1451606400000}
         }
-        self.instance = Instance(id='584f11af55a38e64799fd1d4', name='default', description='desc', status='RUNNING',
-                                 icon_name='icon!', status_info=StatusInfo(heartbeat=datetime(2016, 1, 1)),
+        self.instance = Instance(id='584f11af55a38e64799fd1d4', name='default', description='desc',
+                                 status='RUNNING',
+                                 icon_name='icon!',
+                                 status_info=StatusInfo(heartbeat=datetime(2016, 1, 1)),
                                  queue_info={'type': 'rabbitmq', 'queue': 'echo[default]-0.0.1',
                                              'url': 'amqp://guest:guest@localhost:5672/'})
 
     def test_parse_none(self):
-        self.assertRaises(BrewmasterModelValidationError, self.parser.parse_instance, None, from_string=True)
-        self.assertRaises(BrewmasterModelValidationError, self.parser.parse_instance, None, from_string=False)
+        self.assertRaises(BrewmasterModelValidationError, self.parser.parse_instance, None,
+                          from_string=True)
+        self.assertRaises(BrewmasterModelValidationError, self.parser.parse_instance, None,
+                          from_string=False)
 
     def test_parse_empty(self):
         self.parser.parse_instance({}, from_string=False)
         self.parser.parse_instance('{}', from_string=True)
 
     def test_parse_error(self):
-        self.assertRaises(BrewmasterModelValidationError, self.parser.parse_instance, '', from_string=True)
-        self.assertRaises(BrewmasterModelValidationError, self.parser.parse_instance, 'bad bad bad', from_string=True)
+        self.assertRaises(BrewmasterModelValidationError, self.parser.parse_instance, '',
+                          from_string=True)
+        self.assertRaises(BrewmasterModelValidationError, self.parser.parse_instance, 'bad bad bad',
+                          from_string=True)
 
     def test_parse_bad_input_type(self):
-        self.assertRaises(BrewmasterModelValidationError, self.parser.parse_instance, ['list', 'bad'], from_string=True)
-        self.assertRaises(BrewmasterModelValidationError, self.parser.parse_instance, {'bad': 'bad'}, from_string=True)
+        self.assertRaises(BrewmasterModelValidationError, self.parser.parse_instance,
+                          ['list', 'bad'], from_string=True)
+        self.assertRaises(BrewmasterModelValidationError, self.parser.parse_instance,
+                          {'bad': 'bad'}, from_string=True)
 
     def test_parse_fail_validation(self):
         self.serialized_instance_dict['name'] = None
-        self.assertRaises(BrewmasterModelValidationError, self.parser.parse_instance, self.serialized_instance_dict)
-        self.assertRaises(BrewmasterModelValidationError, self.parser.parse_instance, 'bad bad bad', from_string=False)
+        self.assertRaises(BrewmasterModelValidationError, self.parser.parse_instance,
+                          self.serialized_instance_dict)
+        self.assertRaises(BrewmasterModelValidationError, self.parser.parse_instance,
+                          'bad bad bad', from_string=False)
 
     def test_parse_non_strict_failure(self):
         self.serialized_instance_dict['name'] = None
@@ -104,7 +114,9 @@ class ParserTest(unittest.TestCase):
         self.assertEqual('default', instance['name'])
         self.assertEqual('INITIALIZING', instance['status'])
         self.assertDictEqual({}, instance['queue_info'])
-        self.assertDictEqual({'heartbeat': None}, instance['status_info'])  # This is different than BREWTILS
+
+        # This is different than BREWTILS
+        self.assertDictEqual({'heartbeat': None}, instance['status_info'])
 
     def test_serialize_instance_full(self):
         instance = self.parser.serialize_instance(self.instance, to_string=False)

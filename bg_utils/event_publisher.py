@@ -32,7 +32,8 @@ class EventPublishers(MutableMapping):
             try:
                 connection.publish_event(event, **kwargs)
             except Exception as ex:
-                self._logger.exception("Exception while publishing event to '%s' connection: %s", name, ex)
+                self._logger.exception("Exception while publishing event to '%s' connection: %s",
+                                       name, ex)
 
     # Delegate all container operations to _connections
     def __getitem__(self, item):
@@ -56,7 +57,8 @@ class EventPublisher(object):
 
     def publish_event(self, event, **kwargs):
         event = self._event_prepare(event, **kwargs)
-        self.publish(self._event_serialize(event, **kwargs), **self._event_publish_args(event, **kwargs))
+        self.publish(self._event_serialize(event, **kwargs), **self._event_publish_args(event,
+                                                                                        **kwargs))
 
     def publish(self, message, **kwargs):
         pass

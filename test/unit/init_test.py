@@ -1,8 +1,6 @@
-import json
 import unittest
 
 from yapconf import YapconfSpec
-from yapconf.exceptions import YapconfLoadError
 from box import Box
 from mock import Mock, patch, MagicMock
 
@@ -23,7 +21,8 @@ class BgutilsTest(unittest.TestCase):
                     "--log_file", "/path/to/log/file",
                     "--log_level", "INFO",
                     "--config", "/path/to/config/file"]
-        args = bg_utils.parse_args(self.spec, ['log_config', 'log_file', 'log_level', 'config'], cli_args)
+        args = bg_utils.parse_args(self.spec, ['log_config', 'log_file', 'log_level', 'config'],
+                                   cli_args)
         self.assertEqual(args.log_config, "/path/to/log/config")
         self.assertEqual(args.log_level, "INFO")
         self.assertEqual(args.log_file, "/path/to/log/file")
@@ -88,7 +87,7 @@ class BgutilsTest(unittest.TestCase):
         config_generator.assert_called_with('INFO', None)
         self.assertEqual(logging_config, generated_config)
         self.assertFalse(open_mock.called)
- 
+
     @patch('bg_utils.logging.config.dictConfig')
     def test_setup_application_logging_no_log_config(self, config_mock):
         app_config = Mock(log_config=None)

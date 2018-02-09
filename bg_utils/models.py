@@ -4,8 +4,9 @@ import logging
 
 import six
 from lark.common import ParseError
-from mongoengine import BooleanField, DateTimeField, DictField, Document, DynamicField, GenericReferenceField, \
-    EmbeddedDocument, EmbeddedDocumentField, IntField, ListField, ReferenceField, StringField, PULL
+from mongoengine import BooleanField, DateTimeField, DictField, Document, DynamicField, \
+    GenericReferenceField, EmbeddedDocument, EmbeddedDocumentField, IntField, ListField, \
+    ReferenceField, StringField, PULL
 from mongoengine.errors import DoesNotExist
 
 from bg_utils.fields import DummyField, StatusInfo
@@ -41,21 +42,25 @@ class Choices(EmbeddedDocument, BrewtilsChoices):
 
     def clean(self):
         if self.type == 'static' and not isinstance(self.value, (list, dict)):
-            raise BrewmasterModelValidationError("Error saving choices '%s' - type was 'static' but the value was not "
-                                                 "a list or dictionary" % self.value)
+            raise BrewmasterModelValidationError("Error saving choices '%s' - type was 'static' "
+                                                 "but the value was not a list or dictionary" %
+                                                 self.value)
         elif self.type == 'url' and not isinstance(self.value, six.string_types):
-            raise BrewmasterModelValidationError("Error saving choices '%s' - type was 'url' but the value was not a "
-                                                 "string" % self.value)
+            raise BrewmasterModelValidationError("Error saving choices '%s' - type was 'url' but "
+                                                 "the value was not a string" %
+                                                 self.value)
         elif self.type == 'command' and not isinstance(self.value, (six.string_types, dict)):
-            raise BrewmasterModelValidationError("Error saving choices '%s' - type was 'command' but the value was "
-                                                 "not a string or dict" % self.value)
+            raise BrewmasterModelValidationError("Error saving choices '%s' - type was 'command' "
+                                                 "but the value was not a string or dict" %
+                                                 self.value)
 
         if self.type == 'command' and isinstance(self.value, dict):
             value_keys = self.value.keys()
             for required_key in ('command', 'system', 'version'):
                 if required_key not in value_keys:
-                    raise BrewmasterModelValidationError("Error saving choices '%s' - specifying value as a dictionary "
-                                                         "requires a '%s' item" % (self.value, required_key))
+                    raise BrewmasterModelValidationError("Error saving choices '%s' - specifying "
+                                                         "value as a dictionary requires a '%s' "
+                                                         "item" % (self.value, required_key))
 
         try:
             if self.details == {}:
@@ -64,7 +69,8 @@ class Choices(EmbeddedDocument, BrewtilsChoices):
                 elif isinstance(self.value, dict):
                     self.details = parse(self.value['command'])
         except ParseError:
-            raise BrewmasterModelValidationError("Error saving choices '%s' - unable to parse" % self.value)
+            raise BrewmasterModelValidationError("Error saving choices '%s' - unable to parse" %
+                                                 self.value)
 
 
 class Parameter(EmbeddedDocument, BrewtilsParameter):
@@ -102,12 +108,13 @@ class Parameter(EmbeddedDocument, BrewtilsParameter):
         """Validate before saving to the database"""
 
         if not self.nullable and self.optional and self.default is None:
-            raise BrewmasterModelValidationError('Can not save Parameter %s: For this Parameter nulls are not allowed, '
-                                                 'but the parameter is optional with no default defined.' % self.key)
+            raise BrewmasterModelValidationError('Can not save Parameter %s: For this Parameter '
+                                                 'nulls are not allowed, but the parameter is '
+                                                 'optional with no default defined.' % self.key)
 
         if len(self.parameters) != len(set(parameter.key for parameter in self.parameters)):
-            raise BrewmasterModelValidationError('Can not save Parameter %s: Contains Parameters with duplicate keys' %
-                                                 self.key)
+            raise BrewmasterModelValidationError('Can not save Parameter %s: Contains Parameters '
+                                                 'with duplicate keys' % self.key)
 
 
 class Command(Document, BrewtilsCommand):
@@ -135,19 +142,20 @@ class Command(Document, BrewtilsCommand):
 
         if not self.name:
             raise BrewmasterModelValidationError('Can not save Command%s: Empty name' %
-                                                 (' for system ' + self.system.name if self.system else ''))
+                                                 (' for system ' + (
+                                                     self.system.name if self.system else '')))
 
         if self.command_type not in BrewtilsCommand.COMMAND_TYPES:
-            raise BrewmasterModelValidationError('Can not save Command %s: Invalid command type "%s"' %
-                                                 (self.name, self.command_type))
+            raise BrewmasterModelValidationError('Can not save Command %s: Invalid command type '
+                                                 '"%s"' % (self.name, self.command_type))
 
         if self.output_type not in BrewtilsCommand.OUTPUT_TYPES:
-            raise BrewmasterModelValidationError('Can not save Command %s: Invalid output type "%s"' %
-                                                 (self.name, self.output_type))
+            raise BrewmasterModelValidationError('Can not save Command %s: Invalid output type "%s"'
+                                                 % (self.name, self.output_type))
 
         if len(self.parameters) != len(set(parameter.key for parameter in self.parameters)):
-            raise BrewmasterModelValidationError('Can not save Command %s: Contains Parameters with duplicate keys' %
-                                                 self.name)
+            raise BrewmasterModelValidationError('Can not save Command %s: Contains Parameters '
+                                                 'with duplicate keys' % self.name)
 
 
 class Instance(Document, BrewtilsInstance):
@@ -172,8 +180,8 @@ class Instance(Document, BrewtilsInstance):
         """Validate before saving to the database"""
 
         if self.status not in BrewtilsInstance.INSTANCE_STATUSES:
-            raise BrewmasterModelValidationError("Can not save Instance %s: Invalid status '%s' provided." %
-                                                 (self.name, self.status))
+            raise BrewmasterModelValidationError("Can not save Instance %s: Invalid status '%s' "
+                                                 "provided." % (self.name, self.status))
 
 
 class Request(Document, BrewtilsRequest):
@@ -210,7 +218,8 @@ class Request(Document, BrewtilsRequest):
             {'name': 'parent_index', 'fields': ['parent']},
             {
                 'name': 'text_index',
-                'fields': ['$system', '$command', '$command_type', '$comment', '$status', '$instance_name']
+                'fields': ['$system', '$command', '$command_type',
+                           '$comment', '$status', '$instance_name']
             }
         ]
     }
@@ -235,11 +244,13 @@ class Request(Document, BrewtilsRequest):
                                                  (str(self), self.status))
 
         if self.command_type is not None and self.command_type not in BrewtilsRequest.COMMAND_TYPES:
-            raise BrewmasterModelValidationError('Can not save Request %s: Invalid command type "%s"' %
+            raise BrewmasterModelValidationError('Can not save Request %s: Invalid '
+                                                 'command type "%s"' %
                                                  (str(self), self.command_type))
 
         if self.output_type is not None and self.output_type not in BrewtilsRequest.OUTPUT_TYPES:
-            raise BrewmasterModelValidationError('Can not save Request %s: Invalid output type "%s"' %
+            raise BrewmasterModelValidationError('Can not save Request %s: Invalid output '
+                                                 'type "%s"' %
                                                  (str(self), self.output_type))
 
     @staticmethod
@@ -288,17 +299,20 @@ class System(Document, BrewtilsSystem):
         """Validate before saving to the database"""
 
         if len(self.instances) > self.max_instances:
-            raise BrewmasterModelValidationError('Can not save System %s: Number of instances (%s) exceeds system limit'
-                                                 ' (%s)' % (str(self), len(self.instances), self.max_instances))
+            raise BrewmasterModelValidationError('Can not save System %s: Number of instances (%s) '
+                                                 'exceeds system limit (%s)' %
+                                                 (str(self), len(self.instances),
+                                                  self.max_instances))
 
         if len(self.instances) != len(set(instance.name for instance in self.instances)):
-            raise BrewmasterModelValidationError('Can not save System %s: Duplicate instance names' % str(self))
+            raise BrewmasterModelValidationError('Can not save System %s: Duplicate instance names'
+                                                 % str(self))
 
     def upsert_commands(self, commands):
         """Updates or inserts a list of commands.
 
-        Assumes the commands passed in are more important than what is currently in the db. It will delete commands
-        that are not listed in the dictionary.
+        Assumes the commands passed in are more important than what is currently in the db. It
+        will delete commands that are not listed in the dictionary.
 
         :param commands: The list of new commands
         :return: None
@@ -325,12 +339,14 @@ class System(Document, BrewtilsSystem):
         self.save()
 
     def deep_save(self):
-        """Deep save. Sets the System reference to self for all Commands. Saves Commands, Instances, and the System"""
+        """Deep save. Saves Commands, Instances, and the System
 
-        # Mongoengine cannot save bidirectional references in one shot because
-        # 'You can only reference documents once they have been saved to the database'
-        # So we must mangle the System to have no Commands, save it, save the individual Commands with the System
-        # reference, update the System with the Command list, and then save the System again
+        Mongoengine cannot save bidirectional references in one shot because
+        'You can only reference documents once they have been saved to the database'
+        So we must mangle the System to have no Commands, save it, save the individual Commands
+        with the System reference, update the System with the Command list, and then save the
+        System again
+        """
 
         # Note if this system is already saved
         delete_on_error = self.id is None
@@ -341,12 +357,13 @@ class System(Document, BrewtilsSystem):
 
         try:
             # Before we start saving things try to make sure everything will validate correctly
-            # This means multiple passes through the collections, but we want to minimize the chances of having to
-            # bail out after saving something since we don't have transactions
+            # This means multiple passes through the collections, but we want to minimize the
+            # chances of having to bail out after saving something since we don't have transactions
 
-            # However, we have to start by saving the System. We need it in the database so the Commands will
-            # validate against it correctly (the ability to undo this is why we saved off delete_on_error earlier)
-            # The reference lists must be empty or else we encounter the bidirectional reference issue
+            # However, we have to start by saving the System. We need it in the database so the
+            # Commands will validate against it correctly (the ability to undo this is why we
+            # saved off delete_on_error earlier) The reference lists must be empty or else we
+            # encounter the bidirectional reference issue
             self.commands = []
             self.instances = []
             self.save()
@@ -370,7 +387,8 @@ class System(Document, BrewtilsSystem):
             self.instances = temp_instances
             self.save()
 
-        # Since we don't have actual transactions we are not in a good position here, try our best to 'roll back'
+        # Since we don't have actual transactions we are not in a good position here, try our
+        # best to 'roll back'
         except Exception:
             self.commands = temp_commands
             self.instances = temp_instances

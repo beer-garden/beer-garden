@@ -24,6 +24,7 @@ class BeerGardenSchemaParser(SchemaParser):
     @classmethod
     def _do_parse(cls, data, schema, from_string=False):
         try:
-            return super(BeerGardenSchemaParser, cls)._do_parse(data, schema, from_string=from_string)
+            return super(BeerGardenSchemaParser, cls)._do_parse(data, schema,
+                                                                from_string=from_string)
         except (TypeError, ValueError, MarshmallowError) as ex:
             raise BrewmasterModelValidationError(str(ex))

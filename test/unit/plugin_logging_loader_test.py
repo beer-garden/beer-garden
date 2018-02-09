@@ -174,7 +174,7 @@ class PluginLoggingLoaderTest(unittest.TestCase):
                             "keyfile": None,
                             "database_path": "test.sql",
                             "formatter": "default"
-                        })
+                         })
 
     @patch('bg_utils.plugin_logging_loader.open')
     @patch('json.load')

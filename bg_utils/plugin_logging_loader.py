@@ -79,13 +79,14 @@ class PluginLoggingLoader(object):
 
     @classmethod
     def _parse_python_logging_config(cls, python_logging_config, level):
-        """Used to convert a python logging configuration dictionary into a plugin logging configuration.
+        """Used to convert a python logging configuration into a plugin logging configuration.
 
         :param python_logging_config:
         :param level:
         :return:
         """
-        cls.logger.debug("Loading plugin logging configuration from python logger information specified in beer-garden")
+        cls.logger.debug("Loading plugin logging configuration from python logger information "
+                         "specified in beer-garden")
         default_level = python_logging_config.get('root', {}).get("level", level)
 
         handlers = cls._parse_python_handlers(python_logging_config.get('handlers'), level)
@@ -112,10 +113,12 @@ class PluginLoggingLoader(object):
         handlers_to_return = {}
         for handler_name, handler_config in six.iteritems(handlers):
             if handler_name in LoggingConfig.SUPPORTED_HANDLERS:
-                handlers_to_return[handler_name] = cls._parse_python_handler_config(handler_config, level)
+                handlers_to_return[handler_name] = cls._parse_python_handler_config(
+                    handler_config, level)
             elif handler_config.get("class") in cls.KNOWN_HANDLERS:
                 standardized_name = cls._get_standardized_handler_name(handler_config['class'])
-                handlers_to_return[standardized_name] = cls._parse_python_handler_config(handler_config, level)
+                handlers_to_return[standardized_name] = cls._parse_python_handler_config(
+                    handler_config, level)
 
         if not handlers_to_return:
             handlers_to_return['stdout'] = LoggingConfig.DEFAULT_HANDLER
@@ -179,8 +182,9 @@ class PluginLoggingLoader(object):
                 if isinstance(logger_info.get("handlers"), list):
                     for handler_name in logger_info.get("handlers"):
                         if handler_name not in LoggingConfig.SUPPORTED_HANDLERS:
-                            raise LoggingLoadingError("Invalid handler specified (%s). Supported handlers are: %s" %
-                                                      (handler_name, LoggingConfig.SUPPORTED_HANDLERS))
+                            raise LoggingLoadingError(
+                                "Invalid handler specified (%s). Supported handlers are: %s" %
+                                (handler_name, LoggingConfig.SUPPORTED_HANDLERS))
                 else:
                     cls._validate_handlers(logger_info.get("handlers"))
 
@@ -204,8 +208,11 @@ class PluginLoggingLoader(object):
         for formatter_name, formatter_info in six.iteritems(formatters):
 
             if formatter_name not in LoggingConfig.SUPPORTED_HANDLERS + ('default',):
-                raise LoggingLoadingError("Invalid formatters specified (%s). Supported formatters are: %s" %
-                                          (formatter_name, LoggingConfig.SUPPORTED_HANDLERS + ('default',)))
+                raise LoggingLoadingError("Invalid formatters specified (%s). Supported "
+                                          "formatters are: %s" %
+                                          (formatter_name,
+                                           LoggingConfig.SUPPORTED_HANDLERS +
+                                           ('default',)))
 
         return formatters
 
@@ -223,7 +230,8 @@ class PluginLoggingLoader(object):
 
         for handler_name, handler_config in six.iteritems(handlers):
             if handler_name not in LoggingConfig.SUPPORTED_HANDLERS:
-                raise LoggingLoadingError("Invalid handler specified (%s). Supported handlers are: %s" %
+                raise LoggingLoadingError("Invalid handler specified (%s). "
+                                          "Supported handlers are: %s" %
                                           (handler_name, LoggingConfig.SUPPORTED_HANDLERS))
 
         return handlers

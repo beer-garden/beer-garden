@@ -12,7 +12,7 @@ def get_routing_key(*args, **kwargs):
 
 
 def get_routing_keys(*args, **kwargs):
-    """Get a list of routing keys for a specific plugin in order from least specific to most specific.
+    """Get a list of routing keys for a plugin in order from least specific to most specific.
 
     Will return all possible routing keys to get a message to a particular system.
 
@@ -28,13 +28,15 @@ def get_routing_keys(*args, **kwargs):
             ['admin', 'admin.test_system', 'admin.test_system.1-0-0']
 
         ['test_system', '1.0.0', 'default'], is_admin=True:
-            ['admin', 'admin.test_system', 'admin.test_system.1-0-0', 'admin.test_system.1-0-0.default']
+            ['admin', 'admin.test_system', 'admin.test_system.1-0-0',
+                'admin.test_system.1-0-0.default']
 
         ['test_system', '1.0.0', 'default', 'random_text'], is_admin=True:
-            ['admin', 'admin.test_system', 'admin.test_system.1-0-0', 'admin.test_system.1-0-0.default',
-             'admin.test_system.1-0-0.default.random_text']
+            ['admin', 'admin.test_system', 'admin.test_system.1-0-0',
+                'admin.test_system.1-0-0.default', 'admin.test_system.1-0-0.default.random_text']
 
-    NOTE: Because RabbitMQ uses '.' as the word delimiter all '.' in routing words will be replaced with '-'
+    NOTE: Because RabbitMQ uses '.' as the word delimiter all '.' in routing words will be
+        replaced with '-'
 
     :param args: List of routing key words to include in the routing keys
     :param kwargs: is_admin: Will prepend 'admin' to all generated keys if True
@@ -54,20 +56,26 @@ def get_routing_keys(*args, **kwargs):
 class ClientBase(object):
     """Base class for connection to RabbitMQ."""
 
-    def __init__(self, host='localhost', port=5672, user='guest', password='guest', connection_attempts=3,
-                 heartbeat_interval=3600, virtual_host='/', exchange='beer_garden'):
+    def __init__(self, host='localhost', port=5672, user='guest', password='guest',
+                 connection_attempts=3, heartbeat_interval=3600, virtual_host='/',
+                 exchange='beer_garden'):
 
         # The parameters needed for interacting with RabbitMQ
         self._exchange = exchange
-        self._conn_params = ConnectionParameters(host=host, port=port, connection_attempts=connection_attempts,
-                                                 virtual_host=virtual_host, heartbeat_interval=heartbeat_interval,
-                                                 credentials=PlainCredentials(username=user, password=password))
+        self._conn_params = ConnectionParameters(host=host, port=port,
+                                                 connection_attempts=connection_attempts,
+                                                 virtual_host=virtual_host,
+                                                 heartbeat_interval=heartbeat_interval,
+                                                 credentials=PlainCredentials(username=user,
+                                                                              password=password))
 
     @property
     def connection_url(self):
         return 'amqp://%s:%s@%s:%s/%s' % \
-               (self._conn_params.credentials.username, self._conn_params.credentials.password, self._conn_params.host,
-                self._conn_params.port, '' if self._conn_params.virtual_host == '/' else self._conn_params.virtual_host)
+               (self._conn_params.credentials.username, self._conn_params.credentials.password,
+                self._conn_params.host,
+                self._conn_params.port,
+                '' if self._conn_params.virtual_host == '/' else self._conn_params.virtual_host)
 
 
 class TransientPikaClient(ClientBase):
@@ -79,7 +87,9 @@ class TransientPikaClient(ClientBase):
 
     def declare_exchange(self):
         with BlockingConnection(self._conn_params) as conn:
-            conn.channel().exchange_declare(exchange=self._exchange, exchange_type='topic', durable=True)
+            conn.channel().exchange_declare(exchange=self._exchange,
+                                            exchange_type='topic',
+                                            durable=True)
 
     def setup_queue(self, queue_name, queue_args, routing_keys):
         """Will create a new queue with the given args and bind it to the given routing keys"""
@@ -110,8 +120,11 @@ class TransientPikaClient(ClientBase):
         :return: None
         """
         with BlockingConnection(self._conn_params) as conn:
-            conn.channel().basic_publish(exchange=self._exchange, routing_key=kwargs['routing_key'], body=message,
-                                         properties=BasicProperties(app_id='beer-garden',
-                                                                    content_type='text/plain',
-                                                                    headers=kwargs.pop('headers', None),
-                                                                    expiration=kwargs.pop('expiration', None)))
+            conn.channel().basic_publish(exchange=self._exchange,
+                                         routing_key=kwargs['routing_key'],
+                                         body=message,
+                                         properties=BasicProperties(
+                                             app_id='beer-garden',
+                                             content_type='text/plain',
+                                             headers=kwargs.pop('headers', None),
+                                             expiration=kwargs.pop('expiration', None)))

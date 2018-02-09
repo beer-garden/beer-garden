@@ -6,11 +6,8 @@ from argparse import ArgumentParser
 from io import open
 
 import thriftpy
-from yapconf.exceptions import YapconfLoadError
 
 from ._version import __version__ as generated_version
-from .fields import DummyField, StatusInfo
-from .models import Command, Instance, Parameter, Request, System, Event
 
 __version__ = generated_version
 
@@ -105,7 +102,8 @@ def generate_logging_config_file(spec, logging_config_generator, cli_args):
                 level (str): Logging level to use
                 filename (str): File to use in RotatingFileHandler configuration
         cli_args (List[str]): Command line arguments
-            --log_config: Configuration will be written to this file (will print to stdout if missing)
+            --log_config: Configuration will be written to this file (will print to stdout
+                if missing)
             --log_file: Logs will be written to this file (used in a RotatingFileHandler)
             --log_level: Handlers will be configured with this logging level
 
@@ -184,11 +182,12 @@ def _generate_config(spec, cli_args):
 
 
 def _verify_db():
-    """Ensures indexes are correct and attempts to rebuild ALL OF THEM if any aren't (blame MongoEngine).
-    If anything goes wrong with the rebuild kill the app since the database is in a bad state.
+    """Ensures indexes are correct and attempts to rebuild ALL OF THEM if any aren't
+    (blame MongoEngine). If anything goes wrong with the rebuild kill the app since the database
+    is in a bad state.
     """
 
-    from .models import Command, Instance, Parameter, Request, System, Event
+    from .models import Request, System
     logger = logging.getLogger(__name__)
 
     def check_indexes(collection):
@@ -196,41 +195,48 @@ def _verify_db():
         from mongoengine.connection import get_db
 
         try:
-            # Building the indexes could take a while so it'd be nice to give some indication of what's happening.
-            # This would be perfect but can't use it! It's broken for text indexes!! MongoEngine is awesome!!
+            # Building the indexes could take a while so it'd be nice to give some indication
+            # of what's happening. This would be perfect but can't use it! It's broken for text
+            # indexes!! MongoEngine is awesome!!
             # index_diff = collection.compare_indexes(); if index_diff['missing'] is not None...
 
-            # Since we can't ACTUALLY compare the index spec with what already exists without ridiculous effort:
+            # Since we can't ACTUALLY compare the index spec with what already exists without
+            # ridiculous effort:
             spec = collection.list_indexes()
             existing = collection._get_collection().index_information()
 
             if len(spec) > len(existing):
-                logger.info('Found missing %s indexes, about to build them. This could take a while :)',
+                logger.info('Found missing %s indexes, about to build them. '
+                            'This could take a while :)',
                             collection.__name__)
 
             collection.ensure_indexes()
 
         except OperationFailure:
-            logger.warning('%s collection indexes verification failed, attempting to rebuild', collection.__name__)
+            logger.warning('%s collection indexes verification failed, attempting to rebuild',
+                           collection.__name__)
 
-            # Unfortunately mongoengine sucks. The index that failed is only returned as part of the error message.
-            # I REALLY don't want to parse an error string to find the index to drop. Also, ME only verifies / creates
-            # the indexes in bulk - there's no way to iterate through the index definitions and try them one by one.
-            # Since our indexes should be small and built in the background anyway we're just gonna redo all of them
+            # Unfortunately mongoengine sucks. The index that failed is only returned as part of
+            # the error message. I REALLY don't want to parse an error string to find the index to
+            # drop. Also, ME only verifies / creates the indexes in bulk - there's no way to
+            # iterate through the index definitions and try them one by one. Since our indexes
+            # should be small and built in the background anyway we're just gonna redo all of them
 
             try:
                 db = get_db()
                 db[collection.__name__.lower()].drop_indexes()
                 logger.info('Dropped indexes for %s collection', collection.__name__)
             except OperationFailure:
-                logger.error('Dropping %s indexes failed, please check the database configuration', collection.__name__)
+                logger.error('Dropping %s indexes failed, please check the database configuration',
+                             collection.__name__)
                 raise
 
             try:
                 collection.ensure_indexes()
                 logger.warning('%s indexes rebuilt successfully', collection.__name__)
             except OperationFailure:
-                logger.error('%s index rebuild failed, please check the database configuration', collection.__name__)
+                logger.error('%s index rebuild failed, please check the database configuration',
+                             collection.__name__)
                 raise
 
     check_indexes(Request)

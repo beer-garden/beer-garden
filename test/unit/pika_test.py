@@ -13,7 +13,8 @@ class ClientBaseTest(unittest.TestCase):
         self.user = 'user'
         self.password = 'password'
 
-        self.client = ClientBase(host=self.host, port=self.port, user=self.user, password=self.password)
+        self.client = ClientBase(host=self.host, port=self.port, user=self.user,
+                                 password=self.password)
 
     def test_connection_url(self):
         url = self.client.connection_url
@@ -29,20 +30,23 @@ class TransientPikaClientTest(unittest.TestCase):
 
     def setUp(self):
         self.channel_mock = Mock(name='channel_mock')
-        self.connection_mock = Mock(name='client_mock', channel=Mock(return_value=self.channel_mock))
+        self.connection_mock = Mock(name='client_mock',
+                                    channel=Mock(return_value=self.channel_mock))
 
         connection_patcher = patch('bg_utils.pika.BlockingConnection')
         self.addCleanup(connection_patcher.stop)
         connection_patch = connection_patcher.start()
-        connection_patch.return_value = MagicMock(__enter__=Mock(return_value=self.connection_mock),
-                                                  __exit__=Mock(return_value=False))
+        connection_patch.return_value = MagicMock(
+            __enter__=Mock(return_value=self.connection_mock),
+            __exit__=Mock(return_value=False))
 
         self.host = 'localhost'
         self.port = 5672
         self.user = 'user'
         self.password = 'password'
 
-        self.client = TransientPikaClient(host=self.host, port=self.port, user=self.user, password=self.password)
+        self.client = TransientPikaClient(host=self.host, port=self.port, user=self.user,
+                                          password=self.password)
 
     def test_declare_exchange(self):
         self.client.declare_exchange()
@@ -55,8 +59,10 @@ class TransientPikaClientTest(unittest.TestCase):
         self.assertEqual({'name': queue_name, 'args': queue_args},
                          self.client.setup_queue(queue_name, queue_args, routing_keys))
         self.channel_mock.queue_declare.assert_called_once_with(queue_name, **queue_args)
-        self.channel_mock.queue_bind.assert_has_calls([call(queue_name, ANY, routing_key=routing_keys[0]),
-                                                       call(queue_name, ANY, routing_key=routing_keys[1])])
+        self.channel_mock.queue_bind.assert_has_calls([call(queue_name, ANY,
+                                                            routing_key=routing_keys[0]),
+                                                       call(queue_name, ANY,
+                                                            routing_key=routing_keys[1])])
 
     @patch('bg_utils.pika.BasicProperties')
     def test_publish(self, props_mock):
@@ -64,8 +70,10 @@ class TransientPikaClientTest(unittest.TestCase):
         message_mock = Mock(id='id', command='foo', status=None)
 
         self.client.publish(message_mock, routing_key='queue_name', expiration=10)
-        props_mock.assert_called_with(app_id='beer-garden', content_type='text/plain', headers=None, expiration=10)
-        self.channel_mock.basic_publish.assert_called_with(exchange='beer_garden', routing_key='queue_name',
+        props_mock.assert_called_with(app_id='beer-garden', content_type='text/plain',
+                                      headers=None, expiration=10)
+        self.channel_mock.basic_publish.assert_called_with(exchange='beer_garden',
+                                                           routing_key='queue_name',
                                                            body=message_mock, properties={})
 
     def test_get_routing_key(self):
@@ -79,10 +87,12 @@ class TransientPikaClientTest(unittest.TestCase):
         self.assertEqual(['admin'], get_routing_keys(is_admin=True))
 
     def test_get_routing_keys_admin_no_clone_id(self):
-        self.assertEqual(['admin', 'admin.system', 'admin.system.1-0-0', 'admin.system.1-0-0.instance'],
+        self.assertEqual(['admin', 'admin.system', 'admin.system.1-0-0',
+                          'admin.system.1-0-0.instance'],
                          get_routing_keys('system', '1.0.0', 'instance', is_admin=True))
 
     def test_get_routing_keys_admin_clone_id(self):
-        self.assertEqual(['admin', 'admin.system', 'admin.system.1-0-0', 'admin.system.1-0-0.instance',
+        self.assertEqual(['admin', 'admin.system', 'admin.system.1-0-0',
+                          'admin.system.1-0-0.instance',
                           'admin.system.1-0-0.instance.clone'],
                          get_routing_keys('system', '1.0.0', 'instance', 'clone', is_admin=True))
