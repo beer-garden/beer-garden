@@ -2,6 +2,10 @@
 # yarn lockfile v1
 
 
+"@beer-garden/addons@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@beer-garden/addons/-/addons-0.4.0.tgz#3426e0f7610c7a3233bc1fc5a0aa9a5ab13573e1"
+
 "@uirouter/angularjs@^1.0.3":
   version "1.0.14"
   resolved "https://registry.yarnpkg.com/@uirouter/angularjs/-/angularjs-1.0.14.tgz#00e6b4652d6df9a4fbdffff9c31e0d17b4841d78"
