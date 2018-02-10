@@ -134,7 +134,7 @@ def _setup_tornado_app(app_config):
         (r'{0}api/v1/spec/?'.format(app_config['url_prefix']), SpecHandler),
         (r'{0}'.format(app_config['url_prefix'][:-1]), RedirectHandler, {"url": app_config['url_prefix']}),
         (r'{0}swagger/(.*)'.format(app_config['url_prefix']), StaticFileHandler,
-            {'path': os.path.join(static_base, 'swagger-ui-dist')}),
+            {'path': os.path.join(static_base, 'dist', 'swagger')}),
         (r'{0}(.*)'.format(app_config['url_prefix']), StaticFileHandler,
             {'path': static_base, 'default_filename': 'index.html'})
     ]

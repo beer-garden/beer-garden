@@ -1,6 +1,7 @@
 const path = require('path');
 const webpack = require('webpack');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const VisualizerPlugin = require('webpack-visualizer-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
@@ -30,7 +31,10 @@ module.exports = {
           && module.context.indexOf('bootswatch') === -1;
       }
     }),
-    new ExtractTextPlugin("[name].css")
+    new ExtractTextPlugin("[name].css"),
+    new CopyWebpackPlugin([
+        { from: 'node_modules/swagger-ui-dist', to: 'swagger' }
+    ])
     // new VisualizerPlugin()
     // new BundleAnalyzerPlugin({openAnalyzer: false})
   ],
