@@ -42,7 +42,7 @@ module.exports = {
     },
     modules: [
       path.resolve(__dirname, 'node_modules'),
-      path.resolve(__dirname, 'bower_components'),
+      path.resolve(__dirname, 'node_modules', '@bower_components'),
       'node_modules'
     ]
   },

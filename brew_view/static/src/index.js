@@ -28,8 +28,7 @@ import 'metismenu';
 import 'startbootstrap-sb-admin-2/js/sb-admin-2.js';
 import 'datatables.net';
 import 'datatables.net-bs';
-import 'datatables-light-columnfilter/dist/dataTables.lightColumnFilter.js';
-import 'datatables-light-columnfilter/dist/dataTables.lcf.datetimepicker.fr.js';
+import 'datatables-light-columnfilter';
 import 'angular-datatables/dist/angular-datatables.js';
 import 'angular-datatables/dist/plugins/light-columnfilter/angular-datatables.light-columnfilter.js';
 import 'angular-datatables/dist/plugins/bootstrap/angular-datatables.bootstrap.js';
@@ -64,6 +63,7 @@ import emptyDirective from './js/directives/empty.js';
 import loadingDirective from './js/directives/loading.js';
 import serverErrorDirective from './js/directives/server_error.js';
 import bgStatusDirective from './js/directives/system_status.js';
+import './js/directives/dataTables.lcf.datetimepicker.fr.js';
 
 import adminService from './js/services/admin_service.js';
 import commandService from './js/services/command_service.js';
