@@ -21,15 +21,11 @@ setup(
     author='The beer-garden Team',
     author_email=' ',
     license='MIT',
-    packages=(find_packages(exclude=['tests', 'tests.*'])),
-    package_data={
-        '': ['*.txt', '*.js', '*.html', '*.css', '*.scss', '*.less', '*.otf', '*.eot', '*.svg', '*.gif', '*.png',
-             '*.ttf', '*.woff', '*.woff2']
-    },
+    packages=(find_packages(exclude=['test', 'test.*'])),
     include_package_data=True,
     install_requires=[
         "apispec==0.25.4",
-        "bg-utils==2.4.0",
+        "bg-utils>=2.3.1",
         "tornado==4.5.2",
         'futures==3.1.1;python_version<"3.0"'
     ],

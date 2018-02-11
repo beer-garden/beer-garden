@@ -33,7 +33,8 @@ module.exports = {
     }),
     new ExtractTextPlugin("[name].css"),
     new CopyWebpackPlugin([
-        { from: 'node_modules/swagger-ui-dist', to: 'swagger' }
+        { from: 'node_modules/swagger-ui-dist', to: 'swagger' },
+        { from: 'src/image', to: 'image' }
     ])
     // new VisualizerPlugin()
     // new BundleAnalyzerPlugin({openAnalyzer: false})

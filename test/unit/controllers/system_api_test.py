@@ -5,7 +5,7 @@ from mongoengine.errors import DoesNotExist
 from tornado.gen import Future
 
 from . import TestHandlerBase
-from test.python.utils import TestUtils
+from test.unit.utils import TestUtils
 
 
 class SystemAPITest(TestHandlerBase, TestUtils):

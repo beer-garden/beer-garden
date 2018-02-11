@@ -3,7 +3,7 @@ import json
 
 from . import TestHandlerBase
 from mock import Mock, patch
-from test.python.utils import TestUtils
+from test.unit.utils import TestUtils
 
 
 class LoggingApiTest(TestHandlerBase, TestUtils):
