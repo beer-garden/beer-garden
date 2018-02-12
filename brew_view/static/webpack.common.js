@@ -40,7 +40,7 @@ module.exports = {
     alias: {
       'datatables': 'datatables.net',
       'datatables-light-columnfilter$':
-      'datatables-light-columnfilter/dist/dataTables.lightColumnFilter.js',
+        'datatables-light-columnfilter/dist/dataTables.lightColumnFilter.js',
     },
     modules: [
       path.resolve(__dirname, 'node_modules'),
@@ -50,6 +50,16 @@ module.exports = {
   },
   module: {
     rules: [
+      {
+        test: /\.js$/,
+        exclude: /(node_modules)/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['env'],
+          },
+        },
+      },
       {
         test: /\.html$/,
         use: ['ng-cache-loader?prefix=[dir]'],
