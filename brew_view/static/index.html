@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang='en' ng-app="bgApp">
   <head>
-    <title ng-bind="config.application_name"></title>
+    <title ng-bind="config.applicationName"></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" charset="utf-8">
 
     <link href="dist/vendor.css" rel="stylesheet">
@@ -9,7 +9,7 @@
     <link ng-if="themes.slate" ng-href="dist/dark.css" rel="stylesheet">
 
     <!-- Favicon -->
-    <link ng-if="config.icon_default" ng-href="dist/image/{{config.icon_default}}.png" rel="shortcut icon">
+    <link ng-if="config.iconDefault" ng-href="dist/image/{{config.iconDefault}}.png" rel="shortcut icon">
   </head>
 
   <body ng-cloak ng-controller="ApplicationController">
@@ -25,8 +25,8 @@
           <span class='icon-bar'></span>
         </button>
         <a class="navbar-brand" href="#/">
-          <i ng-class="getIcon(config.icon_default)"></i>
-          <span ng-cloak>{{config.application_name}}</span>
+          <i ng-class="getIcon(config.iconDefault)"></i>
+          <span ng-cloak>{{config.applicationName}}</span>
         </a>
       </div>
 

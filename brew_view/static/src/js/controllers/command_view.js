@@ -1,25 +1,59 @@
 import angular from 'angular';
 
-commandViewController.$inject = ['$location', '$scope', '$state', '$stateParams', '$sce', 'CommandService',
-   'RequestService', 'SystemService', 'SFBuilderService', 'UtilityService'];
-export default function commandViewController($location, $scope, $state, $stateParams, $sce, CommandService,
-    RequestService, SystemService, SFBuilderService, UtilityService ) {
-  $scope.schema         = {};
-  $scope.form           = [];
-  $scope.model          = $stateParams.request || {};
-  $scope.createError    = false;
-  $scope.alerts         = [];
-  $scope.baseModel      = {};
-  $scope.system         = {};
-  $scope.template       = '';
+commandViewController.$inject = [
+  '$location',
+  '$scope',
+  '$state',
+  '$stateParams',
+  '$sce',
+  'CommandService',
+  'RequestService',
+  'SystemService',
+  'SFBuilderService',
+  'UtilityService',
+];
+
+
+/**
+ * commandViewController - Angular controller for a specific command.
+ * @param  {$location} $location       Angular's $location object.
+ * @param  {$scope} $scope             Angular's $scope object.
+ * @param  {$state} $state             Angular's $state object.
+ * @param  {$stateParams} $stateParams Angular's $stateParams object.
+ * @param  {$sce} $sce                 Angular's $sce object.
+ * @param  {Object} CommandService     Beer-Garden's command service object.
+ * @param  {Object} RequestService     Beer-Garden's request service object.
+ * @param  {Object} SystemService      Beer-Garden's system service object.
+ * @param  {Object} SFBuilderService   Beer-Garden's schema-form builder service object.
+ * @param  {Object} UtilityService     Beer-Garden's utility service object.
+ */
+export default function commandViewController(
+  $location,
+  $scope,
+  $state,
+  $stateParams,
+  $sce,
+  CommandService,
+  RequestService,
+  SystemService,
+  SFBuilderService,
+  UtilityService ) {
+  $scope.schema = {};
+  $scope.form = [];
+  $scope.model = $stateParams.request || {};
+  $scope.createError = false;
+  $scope.alerts = [];
+  $scope.baseModel = {};
+  $scope.system = {};
+  $scope.template = '';
   $scope.manualOverride = false;
-  $scope.manualModel    = '';
+  $scope.manualModel = '';
 
   $scope.jsonValues = {
-    model: "",
-    command: "",
-    schema: "",
-    form: ""
+    model: '',
+    command: '',
+    schema: '',
+    form: '',
   };
 
   $scope.command = {
@@ -29,59 +63,61 @@ export default function commandViewController($location, $scope, $state, $stateP
     error: false,
     errorMessage: '',
     errorMap: {
-      'empty' : {
-        'solutions' : [
+      'empty': {
+        'solutions': [
           {
-            problem     : 'ID is incorrect',
-            description : 'The Backend has restarted and the ID changed of the command you were looking at',
-            resolution  : 'Click the ' + $scope.config.application_name + ' logo at the top left and refresh the page'
+            problem: 'ID is incorrect',
+            description: 'The Backend has restarted and the ID changed of the command you were ' +
+                         'looking at',
+            resolution: 'Click the ' + $scope.config.applicationName + ' logo at the top left ' +
+                        'and refresh the page',
           },
           {
-            problem     : 'The Plugin Stopped',
-            description : 'The plugin could have been stopped. You should probably contact the plugin ' +
-                          'maintainer. You should be able to tell what\'s wrong by their logs. Plugins' +
-                          ' are located at <code>$APP_HOME/plugins</code>',
-            resolution  : '<kbd>less $APP_HOME/log/my-plugin.log</kbd>'
-          }
-        ]
-      }
-    }
+            problem: 'The Plugin Stopped',
+            description: 'The plugin could have been stopped. You should probably contact the ' +
+                         'plugin maintainer. You should be able to tell what\'s wrong by their ' +
+                         'logs. Plugins are located at <code>$APP_HOME/plugins</code>',
+            resolution: '<kbd>less $APP_HOME/log/my-plugin.log</kbd>',
+          },
+        ],
+      },
+    },
   };
 
-  $scope.createRequestWrapper = function(requestPrototype) {
-    var request = {
+  $scope.createRequestWrapper = function(requestPrototype, ...args) {
+    let request = {
       command: requestPrototype['command'],
       system: requestPrototype['system'] || $scope.system.name,
       system_version: requestPrototype['system_version'] || $scope.system.version,
-      instance_name: requestPrototype['instance_name'] || 'default'
+      instance_name: requestPrototype['instance_name'] || 'default',
     };
 
     // If parameters are specified we need to use the model value
-    if(angular.isDefined(requestPrototype['parameterNames'])) {
+    if (angular.isDefined(requestPrototype['parameterNames'])) {
       request['parameters'] = {};
-      var nameList = requestPrototype['parameterNames'];
-      for(var i=0; i<nameList.length; i++) {
-        request['parameters'][nameList[i]] = arguments[i+1]; // Skip the requestPrototype
+      let nameList = requestPrototype['parameterNames'];
+      for (let i=0; i<nameList.length; i++) {
+        request['parameters'][nameList[i]] = args[i+1]; // Skip the requestPrototype
       };
     }
 
     return RequestService.createRequestWait(request).then(
-      function(response) { return response.data; }
+      function(response) {
+        return response.data;
+      }
     );
   };
 
-  $scope.checkInstance = function(){
-
+  $scope.checkInstance = function() {
     // Loops through all system instances to find status of the model.instance
-    for(var i=0; i < $scope.system.instances.length; i++){
-        var instance = $scope.system.instances[i];
+    for (let i=0; i < $scope.system.instances.length; i++) {
+        let instance = $scope.system.instances[i];
 
         // Checks status to show banner if not running, hide banner if running
-        if(instance.name == $scope.model.instance_name){
-            if(instance.status != "RUNNING"){
+        if (instance.name == $scope.model.instance_name) {
+            if (instance.status != 'RUNNING') {
                 return true;
-            }
-            else{
+            } else {
                 return false;
             }
         }
@@ -89,7 +125,6 @@ export default function commandViewController($location, $scope, $state, $stateP
   };
 
   $scope.submitForm = function(form, model) {
-
     // Remove all the old alerts so they don't just stack up
     $scope.alerts.splice(0);
 
@@ -99,12 +134,12 @@ export default function commandViewController($location, $scope, $state, $stateP
     // This is gross, but tv4 does not handle arrays well and throws errors
     // where it shouldn't. I don't think it's possible to fix without a patch
     // to tv4 or ASF so for now just ignore the false positive.
-    var valid = true;
-    if(!form.$valid) {
+    let valid = true;
+    if (!form.$valid) {
       angular.forEach(form.$error, function(errorGroup, errorKey) {
-        if(errorKey !== 'schemaForm') {
+        if (errorKey !== 'schemaForm') {
           angular.forEach(errorGroup, function(error) {
-            if(errorKey !== 'tv4-0' || !Array.isArray(error.$modelValue)) {
+            if (errorKey !== 'tv4-0' || !Array.isArray(error.$modelValue)) {
               valid = false;
             }
           });
@@ -112,26 +147,26 @@ export default function commandViewController($location, $scope, $state, $stateP
       });
     }
 
-    if(valid) {
-      $scope.createRequest(model)
+    if (valid) {
+      $scope.createRequest(model);
     } else {
-      $scope.alerts.push("Looks like there was an error validating the request.");
+      $scope.alerts.push('Looks like there was an error validating the request.');
     }
   };
 
   $scope.createRequest = function(request) {
-    if (typeof(request) === "string") {
+    if (typeof(request) === 'string') {
       try {
-        request = JSON.parse(request)
-      } catch(err) {
+        request = JSON.parse(request);
+      } catch (err) {
         $scope.alerts.push(err);
-        return
+        return;
       }
     }
-    var newRequest = angular.copy(request);
+    let newRequest = angular.copy(request);
 
     newRequest['system'] = $scope.system['name'];
-    if($scope.system['display_name']) {
+    if ($scope.system['display_name']) {
       newRequest['metadata'] = {system_display_name: $scope.system['display_name']};
     }
 
@@ -144,7 +179,7 @@ export default function commandViewController($location, $scope, $state, $stateP
         $scope.createErrorMessage = response.data.message;
       }
     );
-  }
+  };
 
   $scope.reset = function(form, model, system, command) {
     $scope.alerts.splice(0);
@@ -167,14 +202,14 @@ export default function commandViewController($location, $scope, $state, $stateP
     UtilityService.formatJsonDisplay(_editor, false);
   };
 
-  $scope.toggleManualOverride = function(){
+  $scope.toggleManualOverride = function() {
     $scope.alerts.splice(0);
     $scope.manualOverride = !$scope.manualOverride;
     $scope.manualModel = $scope.jsonValues.model;
   };
 
-  var generateSF = function() {
-    var sf = SFBuilderService.build($scope.system, $scope.command.data);
+  let generateSF = function() {
+    let sf = SFBuilderService.build($scope.system, $scope.command.data);
     $scope.schema = sf['schema'];
     $scope.form = sf['form'];
 
@@ -191,21 +226,16 @@ export default function commandViewController($location, $scope, $state, $stateP
     $scope.jsonValues.command = JSON.stringify($scope.command.data, undefined, 2);
 
     // If this command has a custom template then we're done!
-    if($scope.command.data.template) {
-
+    if ($scope.command.data.template) {
       // This is necessary for things like scripts and forms
-      if($scope.config.allow_unsafe_templates) {
+      if ($scope.config.allowUnsafeTemplates) {
         $scope.template = $sce.trustAsHtml($scope.command.data.template);
-      }
-      else {
+      } else {
         $scope.template = $scope.command.data.template;
       }
 
       $scope.command.loaded = true;
-    }
-
-    // Otherwise request the system and then generate the schema-form
-    else {
+    } else {
       SystemService.getSystem(response.data.system.id, false).then(
         function(response) {
           $scope.system = response.data;
@@ -225,33 +255,37 @@ export default function commandViewController($location, $scope, $state, $stateP
   };
 
   $scope.$watch('model', function(val, old) {
-    if(val && val !== old) {
-      if($scope.system['display_name']) {
+    if (val && val !== old) {
+      if ($scope.system['display_name']) {
         val['system'] = $scope.system['display_name'];
       }
 
       try {
         $scope.jsonValues.model = angular.toJson(val, 2);
-      } catch(e) {
-        console.error("Error attempting to stringify the model");
+      } catch (e) {
+        console.error('Error attempting to stringify the model');
       }
     }
   }, true);
 
   // This process of stringify / parse will break the optional model
   // functionality. It's only useful in dev mode so only enable it then
-  if($scope.config.debug_mode === true) {
+  if ($scope.config.debugMode === true) {
     $scope.$watch('jsonValues', function(val, old) {
-      if(val && old) {
-        if(val.schema !== old.schema) {
+      if (val && old) {
+        if (val.schema !== old.schema) {
           try {
             $scope.schema = JSON.parse(val.schema);
-          } catch(e) { console.log("schema doesn't parse"); }
+          } catch (e) {
+            console.log('schema doesn\'t parse');
+          }
         }
-        if(val.form !== old.form) {
+        if (val.form !== old.form) {
           try {
             $scope.form = JSON.parse(val.form);
-          } catch(e) { console.log("form doesn't parse"); }
+          } catch (e) {
+            console.log('form doesn\'t parse');
+          }
         }
       }
     }, true);
@@ -261,7 +295,9 @@ export default function commandViewController($location, $scope, $state, $stateP
   $scope.$on('generateSF', generateSF);
 
   // Stop the loading animation after the schema form is done
-  $scope.$on('sf-render-finished', function(){$scope.command.loaded = true;});
+  $scope.$on('sf-render-finished', function() {
+    $scope.command.loaded = true;
+  });
 
   CommandService.getCommand($stateParams.command_id)
     .then($scope.successCallback, $scope.failureCallback);

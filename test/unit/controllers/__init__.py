@@ -1,4 +1,4 @@
-from mock import patch, Mock
+from mock import patch
 from mongoengine import connect
 from tornado.testing import AsyncHTTPTestCase
 from yapconf import YapconfSpec

@@ -45,19 +45,20 @@ class SystemAPI(BaseHandler):
         """
         self.logger.debug("Getting System: %s", system_id)
 
-        include_commands = self.get_query_argument('include_commands', default='true').lower() != 'false'
+        include_commands = self.get_query_argument(
+            'include_commands', default='true').lower() != 'false'
         self.write(self.parser.serialize_system(System.objects.get(id=system_id), to_string=False,
                                                 include_commands=include_commands))
 
     @coroutine
     def delete(self, system_id):
         """
-        Will give Bartender a chance to remove instances of this system from the registry but will always delete the
-        system regardless of whether the Bartender operation succeeds.
+        Will give Bartender a chance to remove instances of this system from the registry but will
+        always delete the system regardless of whether the Bartender operation succeeds.
         ---
         summary: Delete a specific System
-        description: Will remove instances of local plugins from the registry, clear and remove message queues, and
-          remove the system from the database.
+        description: Will remove instances of local plugins from the registry, clear and remove
+            message queues, and remove the system from the database.
         parameters:
           - name: system_id
             in: path
@@ -88,7 +89,8 @@ class SystemAPI(BaseHandler):
         ---
         summary: Partially update a System
         description: |
-          The body of the request needs to contain a set of instructions detailing the updates to apply.
+          The body of the request needs to contain a set of instructions detailing the updates to
+          apply.
           Currently supported operations are below:
           ```JSON
           {
@@ -139,7 +141,8 @@ class SystemAPI(BaseHandler):
                     new_commands = self.parser.parse_command(op.value, many=True)
                     if system.has_different_commands(new_commands):
                         if system.commands and 'dev' not in system.version:
-                            raise BrewmasterModelValidationError('System %s-%s already exists with different commands' %
+                            raise BrewmasterModelValidationError('System %s-%s already exists with '
+                                                                 'different commands' %
                                                                  (system.name, system.version))
                         else:
                             system.upsert_commands(new_commands)

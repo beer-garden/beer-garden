@@ -1,3 +1,4 @@
+# flake8: noqa
 """Module to make imports of Controllers easier"""
 from brew_view.controllers.request_list_api import RequestListAPI
 from brew_view.controllers.request_api import RequestAPI
@@ -9,6 +10,7 @@ from brew_view.controllers.queue_list_api import QueueListAPI, OldQueueListAPI
 from brew_view.controllers.queue_api import QueueAPI, OldQueueAPI
 from brew_view.controllers.admin_api import AdminAPI, OldAdminAPI
 from brew_view.controllers.instance_api import InstanceAPI
-from brew_view.controllers.misc_controllers import ConfigHandler, VersionHandler, SpecHandler, SwaggerConfigHandler
+from brew_view.controllers.misc_controllers import ConfigHandler, VersionHandler, SpecHandler, \
+    SwaggerConfigHandler
 from brew_view.controllers.logging_api import LoggingConfigAPI
 from brew_view.controllers.event_api import EventPublisherAPI

@@ -60,7 +60,9 @@ class BeerGardenTest(unittest.TestCase):
         self.assertIsInstance(app, Application)
 
     def test_setup_tornado_app_debug_true(self):
-        config = self.spec.load_config({'debug_mode': True, 'application_name': 'Beergarden', 'url_prefix': '/'})
+        config = self.spec.load_config({'debug_mode': True,
+                                        'application_name': 'Beergarden',
+                                        'url_prefix': '/'})
         app = bg._setup_tornado_app(config)
         self.assertTrue(app.settings.get('autoreload'))
 
@@ -72,13 +74,15 @@ class BeerGardenTest(unittest.TestCase):
 
     @patch('brew_view.ssl')
     def test_setup_ssl_context_ssl_enabled(self, ssl_mock):
-        config = self.spec.load_config({'ssl_enabled': True, 'ssl_public_key': '/path/to/public.key',
-                                            'ssl_private_key': '/path/to/private.key'})
+        config = self.spec.load_config({'ssl_enabled': True,
+                                        'ssl_public_key': '/path/to/public.key',
+                                        'ssl_private_key': '/path/to/private.key'})
         context_mock = Mock()
         ssl_mock.create_default_context.return_value = context_mock
 
         bg._setup_ssl_context(config)
-        context_mock.load_cert_chain.assert_called_with(certfile='/path/to/public.key', keyfile='/path/to/private.key')
+        context_mock.load_cert_chain.assert_called_with(certfile='/path/to/public.key',
+                                                        keyfile='/path/to/private.key')
 
     @patch('brew_view.PluginLoggingLoader')
     def test_load_plugin_logging_config(self, PluginLoggingLoaderMock):

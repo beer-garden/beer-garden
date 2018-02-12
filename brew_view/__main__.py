@@ -24,9 +24,9 @@ def shutdown():
     # Publish shutdown notification
     brew_view.event_publishers.publish_event(Event(name=Events.BREWVIEW_STOPPED.name))
 
-    # This is ... not great. Ideally we'd call shutdown() on event_publishers and it would be invoked on each of them.
-    # That's causing issues because we currently don't make a distinction between async an sync publishers, so for now
-    # just wait on the publisher we really care about
+    # This is ... not great. Ideally we'd call shutdown() on event_publishers and it would be
+    # invoked on each of them. That's causing issues because we currently don't make a distinction
+    # between async an sync publishers, so for now just wait on the publisher we really care about
     pika_shutdown_future = brew_view.event_publishers['pika'].shutdown()
 
     def do_stop(_):

@@ -19,7 +19,8 @@ class SystemAPITest(TestHandlerBase, TestUtils):
         self.get_mock.return_value.get.return_value = self.system_mock
 
         self.client_mock = Mock(name='client_mock')
-        self.fake_context = MagicMock(__enter__=Mock(return_value=self.client_mock), __exit__=Mock(return_value=False))
+        self.fake_context = MagicMock(__enter__=Mock(return_value=self.client_mock),
+                                      __exit__=Mock(return_value=False))
         self.future_mock = Future()
 
         super(SystemAPITest, self).setUp()
@@ -55,7 +56,8 @@ class SystemAPITest(TestHandlerBase, TestUtils):
     @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.parse_command', Mock())
     @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.serialize_system')
     def test_patch_replace_commands_ok(self, serialize_mock):
-        body = json.dumps({"operations": [{"operation": "replace", "path": "/commands", "value": "output"}]})
+        body = json.dumps({"operations": [{"operation": "replace", "path": "/commands",
+                                           "value": "output"}]})
         serialize_mock.return_value = 'serialized_system'
 
         response = self.fetch('/api/v1/systems/id', method='PATCH', body=body,
@@ -68,7 +70,8 @@ class SystemAPITest(TestHandlerBase, TestUtils):
     @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.serialize_system')
     def test_patch_replace_commands_bad(self, serialize_mock):
         self.system_mock.commands = ['a command']
-        body = json.dumps({"operations": [{"operation": "replace", "path": "/commands", "value": "output"}]})
+        body = json.dumps({"operations": [{"operation": "replace", "path": "/commands",
+                                           "value": "output"}]})
         serialize_mock.return_value = 'serialized_system'
 
         response = self.fetch('/api/v1/systems/id', method='PATCH', body=body,
@@ -84,7 +87,8 @@ class SystemAPITest(TestHandlerBase, TestUtils):
         self.future_mock.set_result(None)
         serialize_mock.return_value = 'serialized_system'
 
-        response = self.fetch('/api/v1/systems/id', method='PATCH', body='{"operations": [{"operation": "reload"}]}',
+        response = self.fetch('/api/v1/systems/id', method='PATCH',
+                              body='{"operations": [{"operation": "reload"}]}',
                               headers={'content-type': 'application/json'})
         self.assertEqual(200, response.code)
         self.assertEqual('serialized_system', response.body.decode('utf-8'))
@@ -94,7 +98,8 @@ class SystemAPITest(TestHandlerBase, TestUtils):
     @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.serialize_system')
     def test_patch_update_metadata(self, serialize_mock):
         self.system_mock.metadata = {"foo": "baz"}
-        body = json.dumps({"operations": [{"operation": "update", "path": "/metadata", "value": {"foo": "bar"}}]})
+        body = json.dumps({"operations": [{"operation": "update", "path": "/metadata",
+                                           "value": {"foo": "bar"}}]})
         serialize_mock.return_value = 'serialized_system'
 
         response = self.fetch('/api/v1/systems/id', method='PATCH', body=body,
@@ -107,7 +112,8 @@ class SystemAPITest(TestHandlerBase, TestUtils):
     @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.serialize_system')
     def test_patch_replace_description(self, serialize_mock):
         self.system_mock.description = "old_description"
-        body = json.dumps({"operations": [{"operation": "replace", "path": "/description", "value": "new_description"}]})
+        body = json.dumps({"operations": [{"operation": "replace", "path": "/description",
+                                           "value": "new_description"}]})
         serialize_mock.return_value = 'serialized_system'
 
         response = self.fetch('/api/v1/systems/id', method='PATCH', body=body,
@@ -120,7 +126,8 @@ class SystemAPITest(TestHandlerBase, TestUtils):
     @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.serialize_system')
     def test_patch_replace_null_empty_string(self, serialize_mock):
         self.system_mock.description = "old_description"
-        body = json.dumps({"operations": [{"operation": "replace", "path": "/description", "value": None}]})
+        body = json.dumps({"operations": [{"operation": "replace", "path": "/description",
+                                           "value": None}]})
         serialize_mock.return_value = 'serialized_system'
 
         response = self.fetch('/api/v1/systems/id', method='PATCH', body=body,
@@ -132,7 +139,8 @@ class SystemAPITest(TestHandlerBase, TestUtils):
     @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.parse_command', Mock())
     @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.serialize_system')
     def test_patch_invalid_path_for_update(self, serialize_mock):
-        body = json.dumps({"operations": [{"operation": "update", "path": "/INVALID", "value": "doesnt_matter"}]})
+        body = json.dumps({"operations": [{"operation": "update", "path": "/INVALID",
+                                           "value": "doesnt_matter"}]})
         serialize_mock.return_value = 'serialized_system'
 
         response = self.fetch('/api/v1/systems/id', method='PATCH', body=body,
@@ -142,17 +150,20 @@ class SystemAPITest(TestHandlerBase, TestUtils):
     def test_patch_no_system(self):
         self.get_mock.return_value.get.side_effect = DoesNotExist
 
-        response = self.fetch('/api/v1/systems/id', method='PATCH', body='{"operations": [{"operation": "fake"}]}',
+        response = self.fetch('/api/v1/systems/id', method='PATCH',
+                              body='{"operations": [{"operation": "fake"}]}',
                               headers={'content-type': 'application/json'})
         self.assertGreaterEqual(response.code, 400)
 
     def test_patch_replace_bad_path(self):
-        body = json.dumps({"operations": [{"operation": "replace", "path": "/bad", "value": "error"}]})
+        body = json.dumps({"operations": [{"operation": "replace",
+                                           "path": "/bad", "value": "error"}]})
         response = self.fetch('/api/v1/systems/id', method='PATCH', body=body,
                               headers={'content-type': 'application/json'})
         self.assertGreaterEqual(response.code, 400)
 
     def test_patch_bad_operation(self):
-        response = self.fetch('/api/v1/systems/id', method='PATCH', body='{"operations": [{"operation": "fake"}]}',
+        response = self.fetch('/api/v1/systems/id', method='PATCH',
+                              body='{"operations": [{"operation": "fake"}]}',
                               headers={'content-type': 'application/json'})
         self.assertGreaterEqual(response.code, 400)

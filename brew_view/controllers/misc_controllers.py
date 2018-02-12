@@ -12,9 +12,9 @@ class ConfigHandler(BaseHandler):
     def get(self):
         """Subset of configuration options that the frontend needs"""
         self.write({k: brew_view.config[k] for k in
-                    ['allow_unsafe_templates', 'application_name', 'amq_admin_port', 'amq_host', 'amq_port',
-                     'amq_virtual_host', 'backend_host', 'backend_port', 'db_host', 'db_name', 'db_port',
-                     'icon_default', 'debug_mode', 'url_prefix']})
+                    ['allow_unsafe_templates', 'application_name', 'amq_admin_port', 'amq_host',
+                     'amq_port', 'amq_virtual_host', 'backend_host', 'backend_port', 'db_host',
+                     'db_name', 'db_port', 'icon_default', 'debug_mode', 'url_prefix']})
 
 
 class VersionHandler(BaseHandler):

@@ -26,7 +26,8 @@ class BaseHandler(RequestHandler):
             DoesNotExist: {'status_code': 404, 'message': 'Resource does not exist'},
             NotUniqueError: {'status_code': 409, 'message': 'Resource already exists'},
 
-            bg_utils.bg_thrift.BaseException: {'status_code': 502, 'message': 'An error occurred on the backend'},
+            bg_utils.bg_thrift.BaseException: {'status_code': 502, 'message': 'An error occurred '
+                                                                              'on the backend'},
             TException: {'status_code': 503, 'message': 'Could not connect to Bartender'},
             socket.timeout: {'status_code': 504, 'message': 'Backend request timed out'},
         }
@@ -51,10 +52,11 @@ class BaseHandler(RequestHandler):
             content_type = content_type.split(';')
 
             self.request.mime_type = content_type[0]
-            if self.request.mime_type not in ['application/json', 'application/x-www-form-urlencoded']:
+            if self.request.mime_type not in ['application/json',
+                                              'application/x-www-form-urlencoded']:
                 raise BrewmasterModelValidationError('Unsupported or missing content-type header')
 
-            # Attempt to parse out the charset and decode the body for the handlers, default to utf-8
+            # Attempt to parse out the charset and decode the body, default to utf-8
             charset = 'utf-8'
             if len(content_type) > 1:
                 search_result = self.charset_re.search(content_type[1])
@@ -66,7 +68,8 @@ class BaseHandler(RequestHandler):
     def on_finish(self):
         """Called after a handler completes processing"""
         if self.request.event.name:
-            brew_view.event_publishers.publish_event(self.request.event, **self.request.event_extras)
+            brew_view.event_publishers.publish_event(self.request.event,
+                                                     **self.request.event_extras)
 
     def options(self, *args, **kwargs):
 
@@ -78,24 +81,27 @@ class BaseHandler(RequestHandler):
     def write_error(self, status_code, **kwargs):
         """Transform an exception into a response.
 
-        This protects controllers from having to write a lot of the same code over and over and over. Controllers can,
-        of course, overwrite error handlers and return their own responses if necessary, but generally, this is where
-        error handling should occur.
+        This protects controllers from having to write a lot of the same code over and over and
+        over. Controllers can, of course, overwrite error handlers and return their own responses
+        if necessary, but generally, this is where error handling should occur.
 
-        When an exception is handled this function makes two passes through error_map. The first pass is to see if the
-        exception type can be matched exactly. If there is no exact type match the second pass will attempt to match
-        using isinstance. If a message is provided in the error_map it takes precedence over the exception message.
+        When an exception is handled this function makes two passes through error_map. The first
+        pass is to see if the exception type can be matched exactly. If there is no exact type
+        match the second pass will attempt to match using isinstance. If a message is provided in
+        the error_map it takes precedence over the exception message.
 
-        ***NOTE*** Nontrivial inheritance trees will almost definitely break. This is a BEST EFFORT using a simple
-        isinstance check on an unordered data structure. So if an exception class has both a parent and a grandparent in
-        the error_map there is no guarantee about which message / status code will be chosen. The same applies to
-        exceptions that use multiple inheritance.
+        ***NOTE*** Nontrivial inheritance trees will almost definitely break. This is a BEST EFFORT
+        using a simple isinstance check on an unordered data structure. So if an exception class
+        has both a parent and a grandparent in the error_map there is no guarantee about which
+        message / status code will be chosen. The same applies to exceptions that use multiple
+        inheritance.
 
         ***LOGGING***
-        An exception raised in a controller method will generate logging to the tornado.application logger that
-        includes a stacktrace. That logging occurs before this method is invoked.
+        An exception raised in a controller method will generate logging to the tornado.application
+        logger that includes a stacktrace. That logging occurs before this method is invoked.
         The result of this method will generate logging to the tornado.access logger as usual.
-        So there is no need to do additional logging here as the 'real' exception will already have been logged.
+        So there is no need to do additional logging here as the 'real' exception will already have
+        been logged.
 
         :param status_code: a status_code that will be used if no match is found in the error map
         :return: None
@@ -124,7 +130,8 @@ class BaseHandler(RequestHandler):
                 message = str(e)
 
         code = code or 500
-        message = message or 'Encountered unknown exception. Please check with your System Administrator.'
+        message = message or ('Encountered unknown exception. Please check with your '
+                              'System Administrator.')
 
         self.request.event.error = True
         self.request.event.payload = {'message': message}

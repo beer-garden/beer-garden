@@ -62,7 +62,8 @@ class QueueListAPI(BaseHandler):
 
                 with thrift_context() as client:
                     try:
-                        queue_info = yield client.getQueueInfo(system.name, system.version, instance.name)
+                        queue_info = yield client.getQueueInfo(system.name, system.version,
+                                                               instance.name)
                         queue['name'] = queue_info.name
                         queue['size'] = queue_info.size
                     except Exception:

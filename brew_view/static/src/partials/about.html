@@ -1,4 +1,4 @@
-<h1 class="page-header" ng-cloak>About {{config.application_name}}</h1>
+<h1 class="page-header" ng-cloak>About {{config.applicationName}}</h1>
 
 <div class="container-fluid">
   <div class="row">
@@ -6,9 +6,9 @@
       <div class="panel panel-default">
         <div class="panel-heading">Rest API Documentation</div>
         <div class="panel-body">
-          <p>{{config.application_name}} uses Swagger to provide API documentation. The Swagger UI is actually pretty
+          <p>{{config.applicationName}} uses Swagger to provide API documentation. The Swagger UI is actually pretty
             nice. The Swagger UI will help you explore the commands available to you in the REST Interface.</p>
-          <a class="btn btn-default center-block" href="{{config.url_prefix}}swagger/index.html?config={{config.url_prefix}}config/swagger">Check it out!</a>
+          <a class="btn btn-default center-block" href="{{config.urlPrefix}}swagger/index.html?config={{config.urlPrefix}}config/swagger">Check it out!</a>
         </div>
       </div>
     </div>
@@ -17,7 +17,7 @@
       <div class="panel panel-default animate-if" ng-if="version.loaded">
         <div class="panel-heading">Version Information</div>
         <div class="panel-body">
-          <p>{{config.application_name}} is made up of multiple components. Their versions are listed below</p>
+          <p>{{config.applicationName}} is made up of multiple components. Their versions are listed below</p>
         </div>
         <table class="table table-hover">
           <tr>

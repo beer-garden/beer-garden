@@ -23,7 +23,8 @@ class BeergardenPublisher(EventPublisher):
 
     def __init__(self):
         self._client = RestClient(brew_view.config.public_fqdn, brew_view.config.web_port,
-                                  ssl_enabled=brew_view.config.ssl_enabled, url_prefix=brew_view.config.url_prefix)
+                                  ssl_enabled=brew_view.config.ssl_enabled,
+                                  url_prefix=brew_view.config.url_prefix)
 
     def _event_prepare(self, event, **kwargs):
 
@@ -52,23 +53,27 @@ class BeergardenPublisher(EventPublisher):
 class HttpPublisher(EventPublisher):
 
     def __init__(self, urls, ssl_context=None):
-        self._client = AsyncHTTPClient(defaults={'ssl_options': ssl_context} if ssl_context else None)
+        self._client = AsyncHTTPClient(
+            defaults={'ssl_options': ssl_context} if ssl_context else None)
         self._urls = urls
 
     def publish(self, message, **kwargs):
         for url in self._urls:
-            self._client.fetch(url, raise_error=False, method='POST', headers={'content-type': 'application/json'},
+            self._client.fetch(url, raise_error=False, method='POST',
+                               headers={'content-type': 'application/json'},
                                body=message)
 
 
 class RequestPublisher(EventPublisher):
 
     def __init__(self, ssl_context=None):
-        self._client = AsyncHTTPClient(defaults={'ssl_options': ssl_context} if ssl_context else None)
+        self._client = AsyncHTTPClient(
+            defaults={'ssl_options': ssl_context} if ssl_context else None)
 
     def publish(self, message, **kwargs):
         for url in kwargs.get('urls', []):
-            self._client.fetch(url, raise_error=False, method='POST', headers={'content-type': 'application/json'},
+            self._client.fetch(url, raise_error=False, method='POST',
+                               headers={'content-type': 'application/json'},
                                body=message)
 
     def _event_publish_args(self, event, **kwargs):
@@ -83,7 +88,8 @@ class RequestPublisher(EventPublisher):
 
                 # Additionally do some quick translation for success / failure completion events
                 if event.name == Events.REQUEST_COMPLETED.name:
-                    urls += webhook_dict.get('REQUEST_FAILURE' if event.error else 'REQUEST_SUCCESS', [])
+                    urls += webhook_dict.get(
+                        'REQUEST_FAILURE' if event.error else 'REQUEST_SUCCESS', [])
 
         return {'urls': urls} if urls else {}
 
@@ -95,7 +101,9 @@ class MongoPublisher(BeergardenPublisher):
         message.save()
 
     def _event_serialize(self, event, **kwargs):
-        return BeerGardenSchemaParser.parse_event(BeerGardenSchemaParser.serialize_event(event, to_string=False))
+        return BeerGardenSchemaParser.parse_event(
+            BeerGardenSchemaParser.serialize_event(event, to_string=False)
+        )
 
 
 class TornadoPikaPublisher(BeergardenPublisher, ClientBase):
@@ -124,8 +132,9 @@ class TornadoPikaPublisher(BeergardenPublisher, ClientBase):
 
     @coroutine
     def _open_connection(self):
-        self._connection = yield self.coroutiner.convert(TornadoConnection)(parameters=self._conn_params,
-                                                                            stop_ioloop_on_close=False)
+        self._connection = yield self.coroutiner.convert(TornadoConnection)(
+            parameters=self._conn_params,
+            stop_ioloop_on_close=False)
 
     @coroutine
     def _open_channel(self):
@@ -187,13 +196,14 @@ class TornadoPikaPublisher(BeergardenPublisher, ClientBase):
 class CoroutineMaker(object):
     """Helper class to wrap functions in Tornado futures
 
-    Tornado has a nice @return_future decorator that converts a callback-based function into a Tornado async one. The
-    issue is that it expects the wrapped function to take a `callback` argument and invoke that argument when execution
-    is completed.
+    Tornado has a nice @return_future decorator that converts a callback-based function into a
+    Tornado async one. The issue is that it expects the wrapped function to take a `callback`
+    argument and invoke that argument when execution is completed.
 
-    We need to convert a couple of pika functions in this way. Unfortunately, they're expecting a callback function to
-    be provided with the `on_open_callback` keyword parameter. So we use this class to wrap the functions and mangle the
-    arguments when the function is called to pass the Tornado-provided callback to the function like it's expecting.
+    We need to convert a couple of pika functions in this way. Unfortunately, they're expecting a
+    callback function to be provided with the `on_open_callback` keyword parameter. So we use this
+    class to wrap the functions and mangle the arguments when the function is called to pass the
+    Tornado-provided callback to the function like it's expecting.
     """
 
     def __init__(self, config):

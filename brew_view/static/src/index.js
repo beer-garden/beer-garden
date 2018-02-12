@@ -30,7 +30,7 @@ import 'datatables.net';
 import 'datatables.net-bs';
 import 'datatables-light-columnfilter';
 import 'angular-datatables/dist/angular-datatables.js';
-import 'angular-datatables/dist/plugins/light-columnfilter/angular-datatables.light-columnfilter.js';
+import 'angular-datatables/dist/plugins/light-columnfilter/angular-datatables.light-columnfilter.js'; // eslint-disable-line max-len
 import 'angular-datatables/dist/plugins/bootstrap/angular-datatables.bootstrap.js';
 import 'angular-schema-form-bootstrap/dist/angular-schema-form-bootstrap-bundled.js';
 import 'ace-builds/src-noconflict/ace.js';
@@ -73,7 +73,7 @@ import requestService from './js/services/request_service.js';
 import systemService from './js/services/system_service.js';
 import utilityService from './js/services/utility_service.js';
 import versionService from './js/services/version_service.js';
-import {sfPostProcessor, sfErrorMessageConfig, sfBuilderService} from './js/services/sf_builder_service.js';
+import {sfPostProcessor, sfErrorMessageConfig, sfBuilderService} from './js/services/sf_builder_service.js'; // eslint-disable-line max-len
 
 import aboutController from './js/controllers/about.js';
 import adminQueueController from './js/controllers/admin_queue.js';
@@ -117,7 +117,7 @@ angular.module('bgApp',
   'ngAnimate',
   'frapontillo.bootstrap-switch',
   'mgcrea.ngStrap',
-  'ngCookies'
+  'ngCookies',
 ])
 .run(appRun)
 .run(sfPostProcessor)

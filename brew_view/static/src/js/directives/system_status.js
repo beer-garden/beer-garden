@@ -1,15 +1,19 @@
 import template from '../../templates/system_status.html';
 
+/**
+ * systemStatusDirective - Directive for rendering system status.
+ * @return {Object}  Directive for Angular.
+ */
 export default function systemStatusDirective() {
   return {
     restrict: 'E',
     scope: {
-      status: '=target'
+      status: '=target',
     },
     template: template,
     link: function(scope, element, attrs) {
       scope.$watch('status', function() {
-        switch(scope.status) {
+        switch (scope.status) {
           case 'RUNNING':
             scope.labelClass = 'label-success';
             break;
@@ -30,6 +34,6 @@ export default function systemStatusDirective() {
             break;
         }
       });
-    }
+    },
   };
 };

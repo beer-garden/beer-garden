@@ -1,36 +1,66 @@
 
 utilityService.$inject = ['$rootScope', '$http'];
+
+/**
+ * utilityService - Used for getting configurations/icons and formatting
+ * @param  {$rootScope} $rootScope Angular's $rootScope object
+ * @param  {$http} $http           Angular's $http object
+ * @return {Object}                For use by a controller.
+ */
 export default function utilityService($rootScope, $http) {
-  var UtilityService = {};
+  let UtilityService = {};
+
+  UtilityService.camelCaseKeys = function(o) {
+    if (o instanceof Array) {
+      return o.map(function(value) {
+        if (typeof value === 'object') {
+          value = camelCaseKeys(value);
+        }
+        return value;
+      });
+    } else {
+      let newO = {};
+      for (const origKey in o) {
+        if (o.hasOwnProperty(origKey)) {
+          let value = o[origKey];
+          let newKey = origKey.replace(/(\_\w)/g, function(m) {
+            return m[1].toUpperCase();
+          });
+          newO[newKey] = value;
+        }
+      }
+      return newO;
+    }
+  };
 
   UtilityService.getConfig = function() {
     return $http.get('config');
   };
 
-  UtilityService.getIcon = function(icon_name) {
-    if(icon_name === undefined || icon_name == null) {
-      if($rootScope.config === undefined || $rootScope.config.icon_default === undefined) {
-        return "";
+  UtilityService.getIcon = function(iconName) {
+    if (iconName === undefined || iconName == null) {
+      if ($rootScope.config === undefined || $rootScope.config.iconDefault === undefined) {
+        return '';
       } else {
-        icon_name = $rootScope.config.icon_default;
+        iconName = $rootScope.config.iconDefault;
       }
     }
 
-    return icon_name.substring(0, icon_name.indexOf('-')) + ' ' + icon_name;
+    return iconName.substring(0, iconName.indexOf('-')) + ' ' + iconName;
   };
 
-  var re = /[&<>"'/]/g;
-  var entityMap = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "\"": "&quot;",
-    "'": "&#39;",
-    "/": "&#x2F;",
+  let re = /[&<>"'/]/g;
+  let entityMap = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    '\'': '&#39;',
+    '/': '&#x2F;',
   };
 
   UtilityService.escapeHtml = function(html) {
-    if(html) {
+    if (html) {
       return String(html).replace(re, function(s) {
         return entityMap[s];
       });
@@ -46,7 +76,7 @@ export default function utilityService($rootScope, $http) {
       maxLines: 30,
       readOnly: readOnly,
       showLineNumbers: false,
-      showPrintMargin: false
+      showPrintMargin: false,
     });
     _editor.setTheme('ace/theme/dawn');
     _editor.session.setMode('ace/mode/json');
@@ -54,7 +84,7 @@ export default function utilityService($rootScope, $http) {
     _editor.session.setUseWorker(!readOnly);
     _editor.$blockScrolling = Infinity;
 
-    if(readOnly) {
+    if (readOnly) {
       _editor.renderer.$cursorLayer.element.style.opacity = 0;
     }
   };

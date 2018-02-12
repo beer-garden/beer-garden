@@ -46,8 +46,9 @@ class RequestAPI(BaseHandler):
         ---
         summary: Partially update a Request
         description: |
-          The body of the request needs to contain a set of instructions detailing the updates to apply. Currently the
-          only operation supported is `replace`, with paths `/status`, `/output`, and `/error_class`:
+          The body of the request needs to contain a set of instructions detailing the updates to
+          apply. Currently the only operation supported is `replace`, with paths `/status`,
+          `/output`, and `/error_class`:
           ```JSON
           {
             "operations": [
@@ -84,10 +85,10 @@ class RequestAPI(BaseHandler):
         req = Request.objects.get(id=request_id)
         operations = self.parser.parse_patch(self.request.decoded_body, many=True, from_string=True)
 
-        # We note the status before the operations, because it is possible for the operations to update
-        # the status of the request. In that case, because the updates are coming in in a single request
-        # it is okay to update the output or error_class. Ideally this would be handled correctly when
-        # we better integrate PatchOperations with their models.
+        # We note the status before the operations, because it is possible for the operations to
+        # update the status of the request. In that case, because the updates are coming in in a
+        # single request it is okay to update the output or error_class. Ideally this would be
+        # handled correctly when we better integrate PatchOperations with their models.
         status_before = req.status
 
         for op in operations:
@@ -111,8 +112,8 @@ class RequestAPI(BaseHandler):
                     req.output = op.value
                 elif op.path == '/error_class':
                     if status_before in Request.COMPLETED_STATUSES:
-                        raise BrewmasterModelValidationError("Cannot update error_class for a request "
-                                                             "that is already completed")
+                        raise BrewmasterModelValidationError("Cannot update error_class for a "
+                                                             "request that is already completed")
                     req.error_class = op.value
                     self.request.event.error = True
                 else:

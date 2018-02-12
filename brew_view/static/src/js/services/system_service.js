@@ -1,46 +1,54 @@
 
 systemService.$inject = ['$http'];
+
+
+/**
+ * systemService - Service for getting systems from the API.
+ * @param  {$http} $http Angular's $http object.
+ * @return {Object}      Object for interacting with the system API.
+ */
 export default function systemService($http) {
-  var SystemService = {};
+  let SystemService = {};
 
   SystemService.startSystem = function(system) {
     return $http.patch('api/v1/instances/' + system.instances[0].id,
       {operations: [{operation: 'replace', path: '/status', value: 'starting'}]}
     );
-  }
+  };
 
   SystemService.stopSystem = function(system) {
     return $http.patch('api/v1/instances/' + system.instances[0].id,
       {operations: [{operation: 'replace', path: '/status', value: 'stopping'}]}
     );
-  }
+  };
 
   SystemService.reloadSystem = function(system) {
     return $http.patch('api/v1/systems/' + system.id,
       {operations: [{operation: 'reload', path: '', value: ''}]}
     );
-  }
+  };
 
   SystemService.deleteSystem = function(system) {
     return $http.delete('api/v1/systems/' + system.id);
-  }
+  };
 
   SystemService.getSystems = function() {
     return $http.get('api/v1/systems');
-  }
+  };
 
-  SystemService.getSystem = function(id, include_commands) {
-    return $http.get('api/v1/systems/' + id, {params: {include_commands: include_commands}});
-  }
+  SystemService.getSystem = function(id, includeCommands) {
+    return $http.get('api/v1/systems/' + id, {params: {include_commands: includeCommands}});
+  };
 
   SystemService.getSystemID = function(request) {
-    var promise = $http.get('api/v1/systems', {params: {name: request.system, include_commands: true} })
+    const promise = $http.get('api/v1/systems',
+      {params: {name: request.system, include_commands: true}})
       .then(function(response) {
-        var systemId = null;
-        if(response.data.length > 0) {
-          for(var i = 0; i < response.data[0].commands.length; i++) {
-            var command = response.data[0].commands[i]
-            if(command.name === request.command) {
+        let systemId = null;
+        if (response.data.length > 0) {
+          for (let i = 0; i < response.data[0].commands.length; i++) {
+            let command = response.data[0].commands[i];
+            if (command.name === request.command) {
               systemId = command.system.id;
               break;
             }

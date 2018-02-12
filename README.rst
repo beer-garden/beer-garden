@@ -38,28 +38,44 @@ Prerequisites
 * Python (2.7.9+ or 3.4+)
 * Node.js (Stable, 6+) with `yarn` installed globally
 * Connectivity to a MongoDB Server
+* Connectivity to a RabbitMQ Server
 
 Get Up and Running
 ------------------
 
-```bash
-# Clone the repository
-git clone https://github.com/beer-garden.git
-cd beer-garden/brew-view
+A full installation guide for RabbitMQ and Mongo is outside the scope of this document. Below is a small snippet to get you up and running if you have ``docker`` installed..
 
-# Install node dependencies and build frontend
-pushd brew_view/static
-yarn install && yarn build
-popd
+.. code-block:: console
 
-# Install Python dependencies
-pip install -r requirements.txt
+    $ docker run -d -p 27017:27017 --name bg-mongo mongo
+    $ docker run -d -p 5672:5672 -p 15672:15672 --name bg-rmq rabbitmq:3-management-alpine
 
-# Run the application
-bin/app.sh
-```
 
-Sweet! Everything should now be up and running. Visit http://localhost:2337/ in a browser to check it out. Hit Ctrl-c to stop the web server.
+To do development locally, it is important to note that brew-view is a combination of a python API powered by ``tornado`` and an AngularJS App. So we will start them both up!
+
+.. code-block:: console
+
+    $ git clone https://github.com/beer-garden/brew-view.git
+    $ cd brew-view
+    $ make deps # just a simple way to do pip install -r requirements.txt and yarn install
+
+Start up the JavaScript Application:
+
+.. code-block:: console
+
+    $ cd brew_view/static
+    $ yarn serve
+
+Now start up the Python API:
+
+.. code-block:: console
+
+    $ cd /path/to/brew-view
+    $ python -m brew_view -c ./dev_conf/config.json
+
+Sweet! Everything should now be up and running. Visit http://localhost:8080/ in a browser to check it out. Hit Ctrl-c to stop the web server.
+
+NOTE: It's worth noting that the JavaScript App is served on 8080 but the python application is running on 2337.
 
 
 Configuration
@@ -76,20 +92,57 @@ Brew-view's most visible job is to serve the frontend application, but it also p
 Testing and Code Coverage
 =========================
 
+You can run the testing yourself.
+
 Python
 ------
 
-```bash
-# In the 'brew-view' directory
-# To run the tests:
-nosetests
+.. code-block:: console
 
-# To generate code coverage:
-bin/generate_coverage.sh
-```
+    $ make test
 
-Running the code coverage script will:
-* Print results to STDOUT
-* Generate Cobertura and xUnit test result reports in the `output/python` directory
-* Generate an html report at `output/python/html/index.html`
+This will run the tests for the python application. You can run against multiple python versions using tox:
+
+.. code-block:: console
+
+    $ make test-all
+
+To generate coverage:
+
+.. code-block:: console
+
+    $ make coverage
+
+We use ``flake8`` for linting:
+
+.. code-block:: console
+
+    $ make lint
+
+JavaScript
+----------
+
+The JavaScript application has its own ``Makefile`` so to run these commands you'll need to be in the ``brew_view/static`` directory.
+
+We are currently lacking in good JavaScript tests since we switched to webpack. We are hoping to remedy this in the near-term future. You __should__ be able to run tests:
+
+.. code-block:: console
+
+    $ make test
+
+To run ESLint:
+
+.. code-block:: console
+
+    make lint
+
+Distribution
+============
+
+Creating the brew-view distribution is simple. Simply go to the git root directory and run the following:
+
+.. code-block:: console
+
+    $ make dist
+
 

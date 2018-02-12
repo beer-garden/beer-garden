@@ -14,14 +14,16 @@ class ConfigHandlerTest(TestHandlerBase):
         brew_view.config['application_name'] = 'Rock Garden'
 
         response = self.fetch('/config')
-        self.assertEqual('Rock Garden', json.loads(response.body.decode('utf-8'))['application_name'])
+        self.assertEqual('Rock Garden',
+                         json.loads(response.body.decode('utf-8'))['application_name'])
 
 
 class VersionHandlerTest(TestHandlerBase):
 
     def setUp(self):
         self.client_mock = Mock(name='client_mock')
-        self.fake_context = MagicMock(__enter__=Mock(return_value=self.client_mock), __exit__=Mock(return_value=False))
+        self.fake_context = MagicMock(__enter__=Mock(return_value=self.client_mock),
+                                      __exit__=Mock(return_value=False))
         self.future_mock = Future()
 
         super(VersionHandlerTest, self).setUp()

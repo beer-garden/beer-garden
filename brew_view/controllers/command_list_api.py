@@ -32,9 +32,10 @@ class CommandListAPI(BaseHandler):
 
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
         try:
-            self.write(self.parser.serialize_command(Command.objects.all(), many=True, to_string=True))
+            self.write(self.parser.serialize_command(Command.objects.all(), many=True,
+                                                     to_string=True))
         except mongoengine.errors.DoesNotExist as ex:
-            self.logger.error("Got an error while attempting to serialize commands. This error usually indicates "
+            self.logger.error("Got an error while attempting to serialize commands. "
+                              "This error usually indicates "
                               "there are orphans in the database.")
             raise mongoengine.errors.InvalidDocumentError(ex)
-

@@ -22,13 +22,16 @@ class RequestListAPITest(TestHandlerBase):
         self.mongo_mock = mongo_patcher.start()
         self.mongo_mock.count.return_value = 1
 
-        serialize_patcher = patch('brew_view.controllers.request_list_api.BeerGardenSchemaParser.serialize_request')
+        serialize_patcher = patch(
+            'brew_view.controllers.request_list_api.BeerGardenSchemaParser.serialize_request'
+        )
         self.addCleanup(serialize_patcher.stop)
         self.serialize_mock = serialize_patcher.start()
         self.serialize_mock.return_value = 'serialized_request'
 
         self.client_mock = Mock(name='client_mock')
-        self.fake_context = MagicMock(__enter__=Mock(return_value=self.client_mock), __exit__=Mock(return_value=False))
+        self.fake_context = MagicMock(__enter__=Mock(return_value=self.client_mock),
+                                      __exit__=Mock(return_value=False))
         self.future_mock = Future()
 
         super(RequestListAPITest, self).setUp()
@@ -39,7 +42,8 @@ class RequestListAPITest(TestHandlerBase):
 
         response = self.fetch('/api/v1/requests?draw=1')
         self.assertEqual(200, response.code)
-        self.serialize_mock.assert_called_once_with(['request'], many=True, only=None, to_string=True)
+        self.serialize_mock.assert_called_once_with(['request'], many=True, only=None,
+                                                    to_string=True)
         self.assertEqual('0', response.headers['start'])
         self.assertEqual('1', response.headers['length'])
         self.assertEqual('1', response.headers['recordsFiltered'])
@@ -60,7 +64,8 @@ class RequestListAPITest(TestHandlerBase):
         type(instance_mock).name = PropertyMock(return_value='default')
         system_mock.get.return_value = Mock(instances=[instance_mock])
 
-        response = self.fetch('/api/v1/requests', method='POST', body='', headers={'content-type': 'application/json'})
+        response = self.fetch('/api/v1/requests', method='POST', body='',
+                              headers={'content-type': 'application/json'})
         self.assertEqual(201, response.code)
         self.assertEqual('RUNNING', response.headers['Instance-Status'])
         self.assertTrue(self.request_mock.save.called)
@@ -74,7 +79,8 @@ class RequestListAPITest(TestHandlerBase):
         self.future_mock.set_exception(bg_utils.bg_thrift.InvalidRequest())
         parse_mock.return_value = self.request_mock
 
-        response = self.fetch('/api/v1/requests', method='POST', body='', headers={'content-type': 'application/json'})
+        response = self.fetch('/api/v1/requests', method='POST', body='',
+                              headers={'content-type': 'application/json'})
         self.assertGreaterEqual(response.code, 400)
         self.assertTrue(self.request_mock.delete.called)
         self.assertTrue(self.client_mock.processRequest.called)
@@ -86,12 +92,14 @@ class RequestListAPITest(TestHandlerBase):
         self.future_mock.set_exception(Exception())
         parse_mock.return_value = self.request_mock
 
-        response = self.fetch('/api/v1/requests', method='POST', body='', headers={'content-type': 'application/json'})
+        response = self.fetch('/api/v1/requests', method='POST', body='',
+                              headers={'content-type': 'application/json'})
         self.assertGreaterEqual(response.code, 400)
         self.assertTrue(self.request_mock.delete.called)
 
     def test_post_no_content_type(self):
-        response = self.fetch('/api/v1/requests', method='POST', body='', headers={'content-type': 'text/plain'})
+        response = self.fetch('/api/v1/requests', method='POST', body='',
+                              headers={'content-type': 'text/plain'})
         self.assertEqual(response.code, 400)
 
     @patch('brew_view.controllers.request_list_api.BeerGardenSchemaParser.parse_request')
@@ -103,7 +111,8 @@ class RequestListAPITest(TestHandlerBase):
         parse_mock.return_value = self.request_mock
         self.mongo_mock.get.return_value = self.request_mock
 
-        response = self.fetch('/api/v1/requests', method='POST', body='', headers={'content-type': 'application/json'})
+        response = self.fetch('/api/v1/requests', method='POST', body='',
+                              headers={'content-type': 'application/json'})
         self.assertEqual(201, response.code)
         self.assertIn('Instance-Status', response.headers)
         self.assertEqual('UNKNOWN', response.headers['Instance-Status'])

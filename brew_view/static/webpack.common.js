@@ -2,18 +2,16 @@ const path = require('path');
 const webpack = require('webpack');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-const VisualizerPlugin = require('webpack-visualizer-plugin');
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = {
   entry: {
     index: ['babel-polyfill', path.join(__dirname, 'src', 'index')],
-    dark: path.join(__dirname, 'src/styles/dark', 'dark')
+    dark: path.join(__dirname, 'src/styles/dark', 'dark'),
   },
   output: {
     filename: '[name].js',
     path: path.resolve(__dirname, 'dist'),
-    publicPath: '/dist/'
+    publicPath: '/dist/',
   },
   plugins: [
     new webpack.ProvidePlugin({
@@ -21,7 +19,7 @@ module.exports = {
       '$': 'jquery',
       'jQuery': 'jquery',
       'window.jQuery': 'jquery',
-      'moment': 'moment'
+      'moment': 'moment',
     }),
     new webpack.optimize.CommonsChunkPlugin({
       name: 'vendor',
@@ -29,45 +27,44 @@ module.exports = {
         return module.context
           && module.context.indexOf('node_modules') !== -1
           && module.context.indexOf('bootswatch') === -1;
-      }
+      },
     }),
-    new ExtractTextPlugin("[name].css"),
+    new ExtractTextPlugin('[name].css'),
     new CopyWebpackPlugin([
-        { from: 'node_modules/swagger-ui-dist', to: 'swagger' },
-        { from: 'src/image', to: 'image' }
-    ])
-    // new VisualizerPlugin()
-    // new BundleAnalyzerPlugin({openAnalyzer: false})
+        {from: 'node_modules/swagger-ui-dist', to: 'swagger'},
+        {from: 'src/image', to: 'image'},
+    ]),
   ],
   resolve: {
     symlinks: false,
     alias: {
       'datatables': 'datatables.net',
-      'datatables-light-columnfilter$': 'datatables-light-columnfilter/dist/dataTables.lightColumnFilter.js'
+      'datatables-light-columnfilter$':
+      'datatables-light-columnfilter/dist/dataTables.lightColumnFilter.js',
     },
     modules: [
       path.resolve(__dirname, 'node_modules'),
       path.resolve(__dirname, 'node_modules', '@bower_components'),
-      'node_modules'
-    ]
+      'node_modules',
+    ],
   },
   module: {
     rules: [
       {
         test: /\.html$/,
-        use: ['ng-cache-loader?prefix=[dir]']
+        use: ['ng-cache-loader?prefix=[dir]'],
       },
       {
         test: /\.css$/,
         use: ExtractTextPlugin.extract({
           fallback: 'style-loader',
-          use: 'css-loader?sourceMap'
-        })
+          use: 'css-loader?sourceMap',
+        }),
       },
       {
         test: /\.(eot|svg|ttf|woff|woff2|gif|png)$/,
-        use: ['url-loader']
-      }
-    ]
-  }
+        use: ['url-loader'],
+      },
+    ],
+  },
 };

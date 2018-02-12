@@ -1,26 +1,34 @@
 
 requestService.$inject = ['$q', '$http', '$timeout'];
-export default function requestService($q, $http, $timeout) {
-  var RequestService = {};
 
-  RequestService.complete_statuses = ['SUCCESS', 'ERROR', 'CANCELED'];
+/**
+ * requestService - Service for accessing the Request API.
+ * @param  {$q} $q             Angular's $q object.
+ * @param  {$http} $http       Angular's $http object.
+ * @param  {$timeout} $timeout Angular's $timeout object.
+ * @return {Object}            An Object for interacting with the Request API.
+ */
+export default function requestService($q, $http, $timeout) {
+  let RequestService = {};
+
+  RequestService.completeStatuses = ['SUCCESS', 'ERROR', 'CANCELED'];
 
   RequestService.errorMap = {
     'empty': {
-      'solutions' : [
+      'solutions': [
         {
           problem: 'Request was removed',
           description: 'INFO-type requests are removed after several minutes',
-          resolution:  'Go back to the list of all requests'
+          resolution: 'Go back to the list of all requests',
         },
         {
           problem: 'ID is Incorrect',
           description: 'The ID Specified is incorrect. It does not refer to a valid request',
-          resolution:  'Go back to the list of all requests'
-        }
-      ]
-    }
-  }
+          resolution: 'Go back to the list of all requests',
+        },
+      ],
+    },
+  };
 
   RequestService.getRequests = function(data) {
     return $http.get('api/v1/requests', {params: data});
@@ -35,16 +43,15 @@ export default function requestService($q, $http, $timeout) {
   };
 
   RequestService.createRequestWait = function(request) {
-    var deferred = $q.defer();
-    var timeoutRequest;
+    let deferred = $q.defer();
 
     // Create our checker function and immediately invoke it
-    var checkForCompletion = function(id) {
+    const checkForCompletion = function(id) {
       RequestService.getRequest(id).then(
         function(response) {
-          if(RequestService.complete_statuses.indexOf(response.data.status) == -1) {
+          if (RequestService.completeStatuses.indexOf(response.data.status) == -1) {
             // If request isn't done then we need to keep checking
-            timeoutRequest = $timeout(function() {
+            $timeout(function() {
               checkForCompletion(id);
             }, 500);
           } else {
@@ -65,20 +72,22 @@ export default function requestService($q, $http, $timeout) {
   };
 
   RequestService.getCommandId = function(request) {
-    var promise = $http.get('api/v1/systems', {params: {name: request.system, include_commands: true} })
-      .then(function(response) {
-        var commandId = null;
-        if(response.data.length > 0) {
-          for(var i = 0; i < response.data[0].commands.length; i++) {
-            var command = response.data[0].commands[i]
-            if(command.name === request.command) {
-              commandId = command.id;
-              break;
-            }
+    const promise = $http.get(
+      'api/v1/systems', {params: {name: request.system, include_commands: true}}
+    )
+    .then(function(response) {
+      let commandId = null;
+      if (response.data.length > 0) {
+        for (let i = 0; i < response.data[0].commands.length; i++) {
+          let command = response.data[0].commands[i];
+          if (command.name === request.command) {
+            commandId = command.id;
+            break;
           }
         }
-        return commandId;
-      });
+      }
+      return commandId;
+    });
     return promise;
   };
 

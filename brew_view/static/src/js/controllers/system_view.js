@@ -1,7 +1,33 @@
 import angular from 'angular';
 
-systemViewController.$inject = ['$scope', '$stateParams', '$interval', 'SystemService', 'CommandService', 'UtilityService', 'DTOptionsBuilder'];
-export default function systemViewController($scope, $stateParams, $interval, SystemService, CommandService, UtilityService, DTOptionsBuilder) {
+systemViewController.$inject = [
+  '$scope',
+  '$stateParams',
+  '$interval',
+  'SystemService',
+  'CommandService',
+  'UtilityService',
+  'DTOptionsBuilder',
+];
+
+/**
+ * systemViewController - Angular Controller for viewing a single system.
+ * @param  {$scope} $scope             Angular's $scope object.
+ * @param  {$stateParams} $stateParams Angular's $stateParams object.
+ * @param  {$interval} $interval       Angular's $interval object.
+ * @param  {Object} SystemService      Beer-Garden System Service.
+ * @param  {Object} CommandService     Beer-Garden Command Service.
+ * @param  {Object} UtilityService     Beer-Garden Utility Service.
+ * @param  {Object} DTOptionsBuilder   Object for building Data-Tables objects.
+ */
+export default function systemViewController(
+  $scope,
+  $stateParams,
+  $interval,
+  SystemService,
+  CommandService,
+  UtilityService,
+  DTOptionsBuilder) {
   $scope.util = UtilityService;
 
   $scope.system = {
@@ -12,23 +38,25 @@ export default function systemViewController($scope, $stateParams, $interval, Sy
     forceReload: false,
     status: null,
     errorMap: {
-      'empty' : {
-        'solutions' : [
+      'empty': {
+        'solutions': [
           {
-            problem     : 'ID is incorrect',
-            description : 'The Backend has restarted and the ID changed of the system you were looking at',
-            resolution  : 'Click the ' + $scope.config.application_name + ' logo at the top left and refresh the page'
+            problem: 'ID is incorrect',
+            description: 'The Backend has restarted and the ID changed of the system you ' +
+                         'were looking at',
+            resolution: 'Click the ' + $scope.config.applicationName + ' logo at the top ' +
+                        'left and refresh the page',
           },
           {
-            problem     : 'The Plugin Stopped',
-            description : 'The plugin could have been stopped. You should probably contact the plugin ' +
-                          'maintainer. You should be able to tell what\'s wrong by their logs. Plugins ' +
-                          'are located at <code>$APP_HOME/plugins</code>',
-            resolution  : '<kbd>less $APP_HOME/log/my-plugin.log</kbd>'
-          }
-        ]
-      }
-    }
+            problem: 'The Plugin Stopped',
+            description: 'The plugin could have been stopped. You should probably contact the ' +
+                         'plugin maintainer. You should be able to tell what\'s wrong by their ' +
+                         'logs. Plugins are located at <code>$APP_HOME/plugins</code>',
+            resolution: '<kbd>less $APP_HOME/log/my-plugin.log</kbd>',
+          },
+        ],
+      },
+    },
   };
 
   $scope.dtOptions = DTOptionsBuilder.newOptions()
@@ -42,7 +70,7 @@ export default function systemViewController($scope, $stateParams, $interval, Sy
     $scope.system.error = false;
     $scope.system.status = response.status;
     $scope.system.errorMessage = '';
-  }
+  };
 
   $scope.failureCallback = function(response) {
     $scope.system.data = {};
@@ -50,21 +78,23 @@ export default function systemViewController($scope, $stateParams, $interval, Sy
     $scope.system.error = true;
     $scope.system.status = response.status;
     $scope.system.errorMessage = data.message;
-  }
+  };
 
   // Register a function that polls if the system is in a transition status
-  var status_update = $interval(function() {
-    if(['STOPPING', 'STARTING'].indexOf($scope.system.data.status) != -1) {
-      SystemService.getSystem($scope.system.data.id, false, function(data, status, headers, config) {
-        $scope.system.data.status = data.status;
+  let statusUpdate = $interval(function() {
+    if (['STOPPING', 'STARTING'].indexOf($scope.system.data.status) != -1) {
+      SystemService.getSystem(
+        $scope.system.data.id, false,
+        function(data, status, headers, config) {
+          $scope.system.data.status = data.status;
       });
     }
   }, 1000);
 
   $scope.$on('$destroy', function() {
-    if(angular.isDefined(status_update)) {
-      $interval.cancel(status_update);
-      status_update = undefined;
+    if (angular.isDefined(statusUpdate)) {
+      $interval.cancel(statusUpdate);
+      statusUpdate = undefined;
     }
   });
 

@@ -49,19 +49,21 @@ class SystemListAPI(BaseHandler):
             if key in SystemSchema.get_attribute_names():
                 filter_params[key] = self.get_query_argument(key)
 
-        include_commands = self.get_query_argument('include_commands', default='true').lower() != 'false'
+        include_commands = self.get_query_argument(
+            'include_commands', default='true').lower() != 'false'
 
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
-        self.write(self.parser.serialize_system(System.objects.filter(**filter_params).order_by('name'),
-                   to_string=True, many=True, include_commands=include_commands))
+        self.write(self.parser.serialize_system(
+            System.objects.filter(**filter_params).order_by('name'),
+            to_string=True, many=True, include_commands=include_commands))
 
     @coroutine
     def post(self):
         """
         ---
         summary: Create a new System or update an existing System
-        description: If the System does not exist it will be created. If the System already exists it will be updated
-          (assuming it passes validation).
+        description: If the System does not exist it will be created. If the System already exists
+            it will be updated (assuming it passes validation).
         parameters:
           - name: system
             in: body
@@ -98,14 +100,16 @@ class SystemListAPI(BaseHandler):
             else:
                 self.logger.debug("System %s already exists. Updating it." % system_model.name)
                 self.request.event.name = Events.SYSTEM_UPDATED.name
-                saved_system, status_code = self._update_existing_system(existing_system, system_model)
+                saved_system, status_code = self._update_existing_system(existing_system,
+                                                                         system_model)
 
             saved_system.deep_save()
 
         self.request.event_extras = {'system': saved_system}
 
         self.set_status(status_code)
-        self.write(self.parser.serialize_system(saved_system, to_string=False, include_commands=True))
+        self.write(self.parser.serialize_system(saved_system, to_string=False,
+                                                include_commands=True))
 
     @staticmethod
     def _create_new_system(system_model):
@@ -118,7 +122,8 @@ class SystemListAPI(BaseHandler):
                 new_system.max_instances = 1
             else:
                 raise BrewmasterModelValidationError('Could not create system %s-%s: Systems with '
-                                                     'max_instances > 1 must also define their instances' %
+                                                     'max_instances > 1 must also define their '
+                                                     'instances' %
                                                      (system_model.name, system_model.version))
         else:
             if not new_system.max_instances:
@@ -128,11 +133,12 @@ class SystemListAPI(BaseHandler):
 
     @staticmethod
     def _update_existing_system(existing_system, system_model):
-        # Raise an exception if commands already exist for this system and they differ from what's already in
-        # the database in a significant way
+        # Raise an exception if commands already exist for this system and they differ from what's
+        # already in the database in a significant way
         if existing_system.commands and 'dev' not in existing_system.version and \
                 existing_system.has_different_commands(system_model.commands):
-            raise BrewmasterModelValidationError('System %s-%s already exists with different commands' %
+            raise BrewmasterModelValidationError('System %s-%s already exists with different '
+                                                 'commands' %
                                                  (system_model.name, system_model.version))
         else:
             existing_system.upsert_commands(system_model.commands)
@@ -155,8 +161,10 @@ class SystemListAPI(BaseHandler):
         new_metadata = system_model.metadata or {}
         existing_system.metadata.update(new_metadata)
 
-        old_instances = [inst for inst in existing_system.instances if system_model.has_instance(inst.name)]
-        new_instances = [inst for inst in system_model.instances if not existing_system.has_instance(inst.name)]
+        old_instances = [inst for inst in existing_system.instances
+                         if system_model.has_instance(inst.name)]
+        new_instances = [inst for inst in system_model.instances
+                         if not existing_system.has_instance(inst.name)]
         existing_system.instances = old_instances + new_instances
 
         return existing_system, 200

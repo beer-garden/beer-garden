@@ -2,7 +2,7 @@ import unittest
 import json
 
 from . import TestHandlerBase
-from mock import Mock, patch
+from mock import patch
 from test.unit.utils import TestUtils
 
 

@@ -34,4 +34,5 @@ class CommandAPI(BaseHandler):
         """
         self.logger.debug("Getting Command: %s", command_id)
 
-        self.write(self.parser.serialize_command(Command.objects.get(id=str(command_id)), to_string=False))
+        self.write(self.parser.serialize_command(Command.objects.get(id=str(command_id)),
+                                                 to_string=False))

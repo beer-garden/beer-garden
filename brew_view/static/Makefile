@@ -4,7 +4,7 @@ MODULE_NAME   = brew_view
 PYTHON_TEST_DIR = test/unit
 JS_DIR = brew_view/static
 
-.PHONY: clean clean-build clean-test help test
+.PHONY: clean clean-build clean-test help test deps
 .DEFAULT_GOAL := help
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
@@ -42,7 +42,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -f yarn-error.log
 
 lint: ## check style with eslit
-	echo "TODO: run ESLint"
+	npm run lint
 
 test: ## run tests
 	echo "TODO: run javascript tests"
@@ -53,3 +53,5 @@ coverage: ## check code coverage
 dist: clean ## builds distribution
 	npm run build
 
+deps: ## install javascript dependencies
+	yarn install

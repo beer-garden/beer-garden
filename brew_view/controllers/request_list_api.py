@@ -25,35 +25,55 @@ class RequestListAPI(BaseHandler):
         ---
         summary: Retrieve a page of all Requests
         description: |
-          This endpoint queries multiple requests at once. Because it's intended to be used with Datatables the query
-          parameters are ... complicated. Here are things to keep in mind:
+          This endpoint queries multiple requests at once. Because it's intended to be used with
+          Datatables the query parameters are ... complicated. Here are things to keep in mind:
 
-          * With no query parameters this endpoint will return the first 100 non-child requests. This can be controlled
-            by passing the `start` and `length` query parameters.
+          * With no query parameters this endpoint will return the first 100 non-child requests.
+            This can be controlled by passing the `start` and `length` query parameters.
 
-          * This endpoint does NOT return child request definitions. If you want to see child requests you must use the
-            /api/v1/requests/{request_id} endpoint.
+          * This endpoint does NOT return child request definitions. If you want to see child
+            requests you must use the /api/v1/requests/{request_id} endpoint.
 
-          * By default this endpoint also does not include child requests in the response. That is, if a request has a
-            non-null `parent` field it will not be included in the response array. Use the `include_children` query
-            parameter to change this behavior.
+          * By default this endpoint also does not include child requests in the response. That
+            is, if a request has a non-null `parent` field it will not be included in the response
+            array. Use the `include_children` query parameter to change this behavior.
 
-          To filter, search, and order you need to conform to how Datatables structures its query parameters.
+          To filter, search, and order you need to conform to how Datatables structures its query
+          parameters.
 
-          * To indicate fields that should be included in the response specify multiple `columns` query parameters:
+          * To indicate fields that should be included in the response specify multiple `columns`
+            query parameters:
           ```JSON
-          {"data":"command","name":"","searchable":true,"orderable":true,"search":{"value":"","regex":false}}
-          {"data":"system","name":"","searchable":true,"orderable":true,"search":{"value":"","regex":false}}
+          {
+            "data": "command",
+            "name": "",
+            "searchable": true,
+            "orderable": true,
+            "search": {"value":"","regex":false}
+          }
+          {
+            "data": "system",
+            "name": "",
+            "searchable": true,
+            "orderable": true,
+            "search": {"value": "","regex": false}
+          }
           ```
           * To filter a specific field set the value in the `search` key of its `column` definition:
           ```JSON
-          {"data":"status","name":"","searchable":true,"orderable":true,"search":{"value":"SUCCESS","regex":false}}
+          {
+            "data": "status",
+            "name": "",
+            "searchable": true,
+            "orderable": true,
+            "search": {"value": "SUCCESS", "regex":false}
+          }
           ```
 
-          * To sort by a field use the `order` parameter. The `column` value should be the index of the column to sort
-            and the `dir` value can be either "asc" or "desc."
+          * To sort by a field use the `order` parameter. The `column` value should be the index
+            of the column to sort and the `dir` value can be either "asc" or "desc."
           ```JSON
-          {"column":3,"dir":"asc"}
+          {"column": 3,"dir": "asc"}
           ```
 
           * To perform a text-based search across all fields use the `search` parameter:
@@ -154,8 +174,8 @@ class RequestListAPI(BaseHandler):
 
         # Sweet, we have data. Now setup some headers for the response
         response_headers = {
-            # These are a courtesy for non-datatables requests. We want people making a request with no headers to
-            # realize they probably aren't getting the full dataset
+            # These are a courtesy for non-datatables requests. We want people making a request
+            # with no headers to realize they probably aren't getting the full dataset
             'start': start,
             'length': len(requests),
 
@@ -170,7 +190,8 @@ class RequestListAPI(BaseHandler):
             self.add_header('Access-Control-Expose-Headers', key)
 
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
-        self.write(self.parser.serialize_request(requests, to_string=True, many=True, only=requested_fields))
+        self.write(self.parser.serialize_request(requests, to_string=True, many=True,
+                                                 only=requested_fields))
 
     @coroutine
     def post(self):
@@ -210,7 +231,8 @@ class RequestListAPI(BaseHandler):
             args = {'parameters': {}}
             for key, value in self.request.body_arguments.items():
                 if key.startswith('parameters.'):
-                    args['parameters'][key.replace('parameters.', '')] = value[0].decode(self.request.charset)
+                    args['parameters'][key.replace('parameters.', '')] = value[0].decode(
+                        self.request.charset)
                 else:
                     args[key] = value[0].decode(self.request.charset)
             request_model = Request(**args)
@@ -244,14 +266,17 @@ class RequestListAPI(BaseHandler):
             # Since request has system info we can query for a system object
             system = System.objects.get(name=req.system, version=req.system_version)
 
-            # Loop through all instances in the system until we find the instance that matches the request instance
+            # Loop through all instances in the system until we find the instance that matches
+            # the request instance
             for instance in system.instances:
                 if instance.name == req.instance_name:
                     self.set_header("Instance-Status", instance.status)
 
-        # The Request is already created at this point so adding the Instance status header is a best-effort thing
+        # The Request is already created at this point so adding the Instance status header is a
+        # best-effort thing
         except Exception as ex:
-            self.logger.exception('Unable to get Instance status for Request %s: %s', str(request_model.id), ex)
+            self.logger.exception('Unable to get Instance status for Request %s: %s',
+                                  str(request_model.id), ex)
 
         self.request.event_extras = {'request': req}
 
@@ -295,7 +320,8 @@ class RequestListAPI(BaseHandler):
                     else:
                         search_query = Q(**{column['data']+'__contains': column['search']['value']})
 
-                        # Little hacky but whatever, need this because we combine system and instance in the same column
+                        # Little hacky but whatever, need this because we combine system and
+                        # instance in the same column
                         if column['data'] == 'system':
                             search_query |= Q(instance_name__contains=column['search']['value'])
 

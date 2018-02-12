@@ -41,9 +41,15 @@
     "ui-select": "^0.19.8"
   },
   "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-preset-env": "^1.6.1",
     "chai": "^4.1.2",
     "copy-webpack-plugin": "^4.4.1",
     "css-loader": "^0.28.4",
+    "eslint": "^4.17.0",
+    "eslint-config-google": "^0.9.1",
+    "eslint-loader": "^1.9.0",
     "extract-text-webpack-plugin": "^3.0.0",
     "file-loader": "^1.1.5",
     "html-loader": "^0.5.0",
@@ -75,7 +81,8 @@
     "watch": "webpack --watch --config webpack.dev.js",
     "serve": "webpack-dev-server --config webpack.dev.js",
     "pretest": "rm -rf output/js/",
-    "test": "grunt test:jenkins"
+    "lint": "eslint src/",
+    "test": "karma start karma-conf.js --single-run"
   },
   "repository": {
     "type": "git",

@@ -46,7 +46,8 @@ class InstanceAPI(BaseHandler):
         """
         self.logger.debug("Getting Instance: %s", instance_id)
 
-        self.write(self.parser.serialize_instance(Instance.objects.get(id=instance_id), to_string=False))
+        self.write(self.parser.serialize_instance(Instance.objects.get(id=instance_id),
+                                                  to_string=False))
 
     @coroutine
     def patch(self, instance_id):
@@ -54,8 +55,8 @@ class InstanceAPI(BaseHandler):
         ---
         summary: Partially update an Instance
         description: |
-          The body of the request needs to contain a set of instructions detailing the updates to apply. Currently the
-          only operations are:
+          The body of the request needs to contain a set of instructions detailing the updates to
+          apply. Currently the only operations are:
 
           * initialize
           * start

@@ -1,26 +1,55 @@
 import angular from 'angular';
 
-queueIndexController.$inject = ['$scope', '$compile', '$window', '$location', '$interval', '$http',
-                                'DTOptionsBuilder', 'DTColumnBuilder', 'QueueService'];
-export default function queueIndexController($scope, $compile, $window, $location, $interval, $http,
-                                             DTOptionsBuilder, DTColumnBuilder, QueueService) {
+queueIndexController.$inject = [
+  '$scope',
+  '$compile',
+  '$window',
+  '$location',
+  '$interval',
+  '$http',
+  'DTOptionsBuilder',
+  'DTColumnBuilder',
+  'QueueService',
+];
+
+/**
+ * queueIndexController - Angular controller for queue index page.
+ * @param  {$scope} $scope           Angular's $scope object.
+ * @param  {$compile} $compile       Angular's $compile object.
+ * @param  {$window} $window         Angular's $window object.
+ * @param  {$location} $location     Angular's $location object.
+ * @param  {$interval} $interval     Angular's $interval object.
+ * @param  {$http} $http             Angular's $http object.
+ * @param  {Object} DTOptionsBuilder Datatables' options builder object.
+ * @param  {Object} DTColumnBuilder  Datatables' column builder object.
+ * @param  {Object} QueueService     Beer-Garden's queue service object.
+ */
+export default function queueIndexController(
+  $scope,
+  $compile,
+  $window,
+  $location,
+  $interval,
+  $http,
+  DTOptionsBuilder,
+  DTColumnBuilder,
+  QueueService) {
   $scope.alerts = [];
   $scope.dtInstance = null;
 
-  $scope.setQueueValues = function(){
-    $scope.queueHost = $scope.config.amq_host;
-    $scope.queuePort = $scope.config.amq_port;
-    $scope.queueAdminPort = $scope.config.amq_admin_port;
-    $scope.queueVirtualHost = encodeURIComponent($scope.config.amq_virtual_host);
-  }
+  $scope.setQueueValues = function() {
+    $scope.queueHost = $scope.config.amqHost;
+    $scope.queuePort = $scope.config.amqPort;
+    $scope.queueAdminPort = $scope.config.amqAdminPort;
+    $scope.queueVirtualHost = encodeURIComponent($scope.config.amqVirtualHost);
+  };
 
   // Make sure config is loaded before attempting to set scope objects to undefined
-  if($scope.config.amq_host == null){
-    $scope.$on('configLoaded', function(){
+  if ($scope.config.amqHost == null) {
+    $scope.$on('configLoaded', function() {
       $scope.setQueueValues();
     });
-  }
-  else{
+  } else {
     $scope.setQueueValues();
   }
 
@@ -30,7 +59,7 @@ export default function queueIndexController($scope, $compile, $window, $locatio
     error: false,
     errorMessage: '',
     status: null,
-    errorMap: QueueService.errorMap
+    errorMap: QueueService.errorMap,
   };
 
   $scope.dtOptions = DTOptionsBuilder
@@ -53,15 +82,20 @@ export default function queueIndexController($scope, $compile, $window, $locatio
       .withOption('width', '15px')
       .notSortable()
       .renderWith(function(data, type, full) {
-        return '<a ng-href="http://{{queueHost}}:{{queueAdminPort}}/#/queues/{{queueVirtualHost}}/' + full.name + '" target="_blank">' +
-          '<i class="fa fa-database fa-fw icon-color"></i>' +
-        '</a>';
+        const baseUrl = 'http://{{queueHost}}:{{queueAdminPort}}';
+        const path = '/#/queues/{{queueVirtualHost}}/' + full.name;
+        const fullUrl = baseUrl + path;
+        return '<a ng-href="' + fullUrl + '" target="_blank">' +
+                 '<i class="fa fa-database fa-fw icon-color"></i>' +
+               '</a>';
       }),
     DTColumnBuilder
       .newColumn('system')
       .withTitle('System')
       .renderWith(function(data, type, full) {
-        return '<a ui-sref="system({id: \'' + full.system_id + '\'})">' + (full.display || data) + '</a>';
+        return '<a ui-sref=' +
+               '"system({id: \'' + full.system_id + '\'})">' +
+               (full.display || data) + '</a>';
       }),
     DTColumnBuilder
       .newColumn('version')
@@ -81,8 +115,9 @@ export default function queueIndexController($scope, $compile, $window, $locatio
       .withOption('width', '10%')
       .notSortable()
       .renderWith(function(data, type, full) {
-        return '<button class="btn btn-danger btn-block word-wrap-button" ng-click="clearQueue(\'' + full.name + '\')">Clear Queue</button>';
-      })
+        return '<button class="btn btn-danger btn-block word-wrap-button" ' +
+                        'ng-click="clearQueue(\'' + full.name + '\')">Clear Queue</button>';
+      }),
   ];
 
   $scope.instanceCreated = function(_instance) {
@@ -103,30 +138,30 @@ export default function queueIndexController($scope, $compile, $window, $locatio
 
   $scope.addSuccessAlert = function(response) {
     $scope.alerts.push({
-      type: "success",
-      msg: "Success! Please allow 5 seconds for the message counts to update."
+      type: 'success',
+      msg: 'Success! Please allow 5 seconds for the message counts to update.',
     });
   };
 
   $scope.addErrorAlert = function(response) {
-    var msg = "Uh oh! It looks like there was a problem clearing the queue.\n";
-    if(response.data !== undefined && response.data !== null) {
+    let msg = 'Uh oh! It looks like there was a problem clearing the queue.\n';
+    if (response.data !== undefined && response.data !== null) {
       msg += response.data;
     }
     $scope.alerts.push({
-      type: "danger",
-      msg: msg
+      type: 'danger',
+      msg: msg,
     });
   };
 
-  var poller = $interval(function() {
-    if($scope.dtInstance) {
+  let poller = $interval(function() {
+    if ($scope.dtInstance) {
       $scope.dtInstance.reloadData(function() {}, false);
     }
   }, 5000);
 
   $scope.$on('$destroy', function() {
-    if(angular.isDefined(poller)) {
+    if (angular.isDefined(poller)) {
       $interval.cancel(poller);
       poller = undefined;
     }

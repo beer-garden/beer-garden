@@ -11,12 +11,15 @@ class QueueListAPITest(TestHandlerBase):
     def setUp(self):
         self.instance_mock = Mock(status='RUNNING')
         type(self.instance_mock).name = PropertyMock(return_value='default')
-        self.system_mock = Mock(id='1234', display_name='display', version='1.0.0', instances=[self.instance_mock])
+        self.system_mock = Mock(id='1234', display_name='display', version='1.0.0',
+                                instances=[self.instance_mock])
         type(self.system_mock).name = PropertyMock(return_value='system_name')
-        self.queue_name = "%s[%s]-%s" % (self.system_mock.name, self.instance_mock.name, self.system_mock.version)
+        self.queue_name = "%s[%s]-%s" % (self.system_mock.name, self.instance_mock.name,
+                                         self.system_mock.version)
 
         self.client_mock = Mock(name='client_mock')
-        self.fake_context = MagicMock(__enter__=Mock(return_value=self.client_mock), __exit__=Mock(return_value=False))
+        self.fake_context = MagicMock(__enter__=Mock(return_value=self.client_mock),
+                                      __exit__=Mock(return_value=False))
         self.future_mock = Future()
 
         super(QueueListAPITest, self).setUp()
@@ -41,7 +44,8 @@ class QueueListAPITest(TestHandlerBase):
 
         response = self.fetch('/api/v1/queues')
         output = json.loads(response.body.decode('utf-8'))
-        self.client_mock.getQueueInfo.assert_called_once_with(self.system_mock.name, self.system_mock.version,
+        self.client_mock.getQueueInfo.assert_called_once_with(self.system_mock.name,
+                                                              self.system_mock.version,
                                                               self.instance_mock.name)
         self.assertEqual(1, len(output))
         self.assertDictEqual({

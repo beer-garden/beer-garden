@@ -1,5 +1,22 @@
 
-appRun.$inject = ['$rootScope', '$state', '$stateParams', '$cookies', 'UtilityService', 'SystemService'];
+appRun.$inject = [
+  '$rootScope',
+  '$state',
+  '$stateParams',
+  '$cookies',
+  'UtilityService',
+  'SystemService',
+];
+
+/**
+ * appRun - Runs the front-end application.
+ * @param  {$rootScope} $rootScope         Angular's $rootScope object.
+ * @param  {$state} $state                 Angular's $state object.
+ * @param  {$stateParams} $stateParams     Angular's $stateParams object.
+ * @param  {$cookies} $cookies             Angular's $cookies object.
+ * @param  {UtilityService} UtilityService UtilityService for getting configuration/icons.
+ * @param  {SystemService} SystemService   SystemService for getting all System information.
+ */
 export function appRun($rootScope, $state, $stateParams, $cookies, UtilityService, SystemService) {
   $rootScope.$state = $state;
   $rootScope.$stateParams = $stateParams;
@@ -10,7 +27,8 @@ export function appRun($rootScope, $state, $stateParams, $cookies, UtilityServic
   // Set a default config and update it with config from the server
   $rootScope.config = {};
   UtilityService.getConfig().then(function(response) {
-    angular.extend($rootScope.config, response.data);
+    let camelData = UtilityService.camelCaseKeys(response.data);
+    angular.extend($rootScope.config, camelData);
     $rootScope.$broadcast('configLoaded');
   });
 
@@ -21,22 +39,27 @@ export function appRun($rootScope, $state, $stateParams, $cookies, UtilityServic
   });
 
   $rootScope.themes = {
-    "default": false,
-    "slate": false
+    'default': false,
+    'slate': false,
   };
 
-  $rootScope.changeTheme = function(theme){
+  $rootScope.changeTheme = function(theme) {
     $cookies.put('currentTheme', theme);
-    for (var key in $rootScope.themes) {
+    for (const key of Object.keys($rootScope.themes)) {
       $rootScope.themes[key] = (key == theme);
-    }
+    };
   };
 
   // Uses cookies to get the current theme
   $rootScope.changeTheme($cookies.get('currentTheme') || 'default');
 };
 
+
 dtLoadingTemplate.$inject = ['DTDefaultOptions'];
+/**
+ * dtLoadingTemplate - Loading Template for datatabales
+ * @param  {Object} DTDefaultOptions Data-tables default options.
+ */
 export function dtLoadingTemplate(DTDefaultOptions) {
   DTDefaultOptions.setLoadingTemplate('<div class="row"><loading loader="queues"></loading></div>');
 };

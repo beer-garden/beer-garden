@@ -16,7 +16,9 @@ class SystemListAPITest(TestHandlerBase, TestUtils):
         self.get_mock = mongo_patcher.start()
         self.get_mock.return_value = self.system_mock
 
-        serialize_patcher = patch('brew_view.controllers.system_list_api.BeerGardenSchemaParser.serialize_system')
+        serialize_patcher = patch(
+            'brew_view.controllers.system_list_api.BeerGardenSchemaParser.serialize_system'
+        )
         self.addCleanup(serialize_patcher.stop)
         self.serialize_mock = serialize_patcher.start()
         self.serialize_mock.return_value = 'serialized_system'

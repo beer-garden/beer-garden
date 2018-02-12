@@ -181,7 +181,8 @@ SPECIFICATION = {
     },
     "plugin_log_level": {
         "type": "str",
-        "description": "Default log level for plugins (could be overwritten by plugin_log_config value)",
+        "description": "Default log level for plugins (could be "
+                       "overwritten by plugin_log_config value)",
         "default": "INFO",
         "choices": ["DEBUG", "INFO", "WARN", "WARNING", "ERROR", "CRITICAL"]
     },

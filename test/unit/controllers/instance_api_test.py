@@ -13,13 +13,16 @@ class InstanceAPITest(TestHandlerBase):
         get_mock = mongo_patcher.start()
         get_mock.return_value.get.return_value = self.instance_mock
 
-        serialize_patcher = patch('brew_view.controllers.instance_api.BeerGardenSchemaParser.serialize_instance')
+        serialize_patcher = patch(
+            'brew_view.controllers.instance_api.BeerGardenSchemaParser.serialize_instance'
+        )
         self.addCleanup(serialize_patcher.stop)
         self.serialize_mock = serialize_patcher.start()
         self.serialize_mock.return_value = 'serialized_instance'
 
         self.client_mock = Mock(name='client_mock')
-        self.fake_context = MagicMock(__enter__=Mock(return_value=self.client_mock), __exit__=Mock(return_value=False))
+        self.fake_context = MagicMock(__enter__=Mock(return_value=self.client_mock),
+                                      __exit__=Mock(return_value=False))
 
         super(InstanceAPITest, self).setUp()
 
@@ -33,7 +36,8 @@ class InstanceAPITest(TestHandlerBase):
     def test_patch_initialize(self, context_mock):
         context_mock.return_value = self.fake_context
 
-        self.fetch('/api/v1/instances/id', method='PATCH', body='{"operations": [{"operation": "initialize"}]}',
+        self.fetch('/api/v1/instances/id', method='PATCH',
+                   body='{"operations": [{"operation": "initialize"}]}',
                    headers={'content-type': 'application/json'})
         self.client_mock.initializeInstance.assert_called_once_with('id')
 
@@ -41,7 +45,8 @@ class InstanceAPITest(TestHandlerBase):
     def test_patch_start(self, context_mock):
         context_mock.return_value = self.fake_context
 
-        self.fetch('/api/v1/instances/id', method='PATCH', body='{"operations": [{"operation": "start"}]}',
+        self.fetch('/api/v1/instances/id', method='PATCH',
+                   body='{"operations": [{"operation": "start"}]}',
                    headers={'content-type': 'application/json'})
         self.client_mock.startInstance.assert_called_once_with('id')
 
@@ -49,7 +54,8 @@ class InstanceAPITest(TestHandlerBase):
     def test_patch_stop(self, context_mock):
         context_mock.return_value = self.fake_context
 
-        self.fetch('/api/v1/instances/id', method='PATCH', body='{"operations": [{"operation": "stop"}]}',
+        self.fetch('/api/v1/instances/id', method='PATCH',
+                   body='{"operations": [{"operation": "stop"}]}',
                    headers={'content-type': 'application/json'})
         self.client_mock.stopInstance.assert_called_once_with('id')
 
@@ -58,7 +64,8 @@ class InstanceAPITest(TestHandlerBase):
     def test_patch_heartbeat(self, context_mock):
         context_mock.return_value = self.fake_context
 
-        self.fetch('/api/v1/instances/id', method='PATCH', body='{"operations": [{"operation": "heartbeat"}]}',
+        self.fetch('/api/v1/instances/id', method='PATCH',
+                   body='{"operations": [{"operation": "heartbeat"}]}',
                    headers={'content-type': 'application/json'})
         self.assertEqual('now', self.instance_mock.status_info.heartbeat)
 
@@ -66,6 +73,7 @@ class InstanceAPITest(TestHandlerBase):
     def test_patch_bad_operation(self, context_mock):
         context_mock.return_value = self.fake_context
 
-        response = self.fetch('/api/v1/instances/id', method='PATCH', body='{"operations": [{"operation": "fake"}]}',
+        response = self.fetch('/api/v1/instances/id', method='PATCH',
+                              body='{"operations": [{"operation": "fake"}]}',
                               headers={'content-type': 'application/json'})
         self.assertGreaterEqual(response.code, 400)

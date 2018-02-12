@@ -19,8 +19,8 @@ class AdminAPI(BaseHandler):
         ---
         summary: Initiate a rescan of the plugin directory
         description: |
-          The body of the request needs to contain a set of instructions detailing the operations to perform. Currently
-          the only operation supported is `rescan`:
+          The body of the request needs to contain a set of instructions detailing the operations
+          to perform. Currently the only operation supported is `rescan`:
           ```JSON
           {
             "operations": [
@@ -28,7 +28,8 @@ class AdminAPI(BaseHandler):
             ]
           }
           ```
-          * Will remove from the registry and database any currently stopped plugins who's directory has been removed.
+          * Will remove from the registry and database any currently stopped plugins who's
+            directory has been removed.
           * Will add and start any new plugin directories.
         parameters:
           - name: patch
@@ -71,7 +72,8 @@ class OldAdminAPI(BaseHandler):
           This endpoint is DEPRECATED - Use PATCH /api/v1/admin instead.
 
           Will initiate a rescan of the plugins directory.
-          * Will remove from the registry and database any currently stopped plugins who's directory has been removed.
+          * Will remove from the registry and database any currently stopped plugins who's
+            directory has been removed.
           * Will add and start any new plugin directories.
         responses:
           204:

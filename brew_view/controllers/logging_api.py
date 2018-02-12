@@ -42,8 +42,8 @@ class LoggingConfigAPI(BaseHandler):
         ---
         summary: Reload the plugin logging configuration
         description: |
-          The body of the request needs to contain a set of instructions detailing the operation to make.
-          Currently supported operations are below:
+          The body of the request needs to contain a set of instructions detailing the operation
+          to make. Currently supported operations are below:
           ```JSON
           {
             "operations": [
@@ -79,4 +79,5 @@ class LoggingConfigAPI(BaseHandler):
                 raise BrewmasterModelValidationError('value', error_msg)
 
         self.set_status(200)
-        self.write(self.parser.serialize_logging_config(brew_view.plugin_logging_config, to_string=False))
+        self.write(self.parser.serialize_logging_config(brew_view.plugin_logging_config,
+                                                        to_string=False))

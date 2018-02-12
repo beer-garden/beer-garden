@@ -1,57 +1,63 @@
 
 routeConfig.$inject = ['$stateProvider', '$urlRouterProvider'];
-export default function routeConfig($stateProvider, $urlRouterProvider) {
-  var basePath = 'partials/';
 
-  $urlRouterProvider.otherwise("/");
+/**
+ * routeConfig - routing config for the application.
+ * @param  {type} $stateProvider     Angular's $stateProvider object.
+ * @param  {type} $urlRouterProvider Angular's $urlRouterProvider object.
+ */
+export default function routeConfig($stateProvider, $urlRouterProvider) {
+  const basePath = 'partials/';
+
+  $urlRouterProvider.otherwise('/');
 
   $stateProvider
     .state('landing', {
         url: '/',
         templateUrl: basePath + 'landing.html',
-        controller: 'LandingController'
+        controller: 'LandingController',
     })
     .state('system', {
       url: '/systems/:id',
       templateUrl: basePath + 'system_view.html',
-      controller: 'SystemViewController'
+      controller: 'SystemViewController',
     })
     .state('about', {
       url: '/about',
       templateUrl: basePath + 'about.html',
-      controller: 'AboutController'
+      controller: 'AboutController',
     })
     .state('queues', {
       url: '/admin/queues',
       templateUrl: basePath + 'admin_queue.html',
-      controller: 'QueueIndexController'
+      controller: 'QueueIndexController',
     })
     .state('commands', {
       url: '/commands',
       templateUrl: basePath + 'command_index.html',
-      controller: 'CommandIndexController'
+      controller: 'CommandIndexController',
     })
     .state('command', {
       url: '/commands/:command_id',
       templateUrl: basePath + 'command_view.html',
       controller: 'CommandViewController',
       params: {
-        request: null
-      }
+        request: null,
+      },
     })
     .state('requests', {
       url: '/requests',
       templateUrl: basePath + 'request_index.html',
-      controller: 'RequestIndexController'
+      controller: 'RequestIndexController',
     })
     .state('request', {
       url: '/requests/:request_id',
       templateUrl: basePath + 'request_view.html',
-      controller: 'RequestViewController'
+      controller: 'RequestViewController',
     })
     .state('system_admin', {
       url: '/admin/systems',
       templateUrl: basePath + 'admin_system.html',
-      controller: 'SystemAdminController'
+      controller: 'SystemAdminController',
     });
 };
