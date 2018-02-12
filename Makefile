@@ -74,17 +74,15 @@ coverage: ## check code coverage quickly with the default Python
 	$(BROWSER) htmlcov/index.html
 
 test-release: dist ## package and upload a release to the testpypi
-	$(MAKE) dist
 	twine upload --repository testpypi dist/*
 
 release: dist ## package and upload a release
-	$(MAKE) dist
 	twine upload dist/*
 
 dist: clean ## builds source and wheel package
 	$(MAKE) -C $(JS_DIR) dist
 	python setup.py sdist
-	python setup.py bdist_wheel
+	python setup.py bdist_wheel --universal
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
