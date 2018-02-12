@@ -44,26 +44,34 @@ Get Up and Running
 
 These are the minimum required steps once you have all the pre-requisites up and running.
 
-* `git clone https://github.com/beer-garden/bartender.git`
-* `cd bartender`
-* `pip install -r requirements.txt`
-* Ensure that Brew View is running
-* `./bin/app.sh`
-* Visit: http://localhost:2337/api/v1/systems
+.. code-block:: console
 
-There are several plugins that are loaded by default.
+    $ git clone https://github.com/beer-garden/bartender.git
+    $ cd bartender
+    $ pip install -r requirements.txt
+    $ ./bin/app.sh # Requires brew-view to be running
+
+
+There are several plugins that are loaded by default. You can view them in the brew-view UI.
 
 
 Testing
 =======
 
-* `cd bartender`
-* `nosetests`
+Running the tests:
 
-Code Coverage
-================
+.. code-block:: console
 
-* `cd beer-garden`
-* `./bin/generate_coverage.sh`
-* `Open Firefox`
-* Navigate to: `file:///path/to/beer-garden/bartender/output/python/html/index.html`
+    $ make test
+
+Generating coverage:
+
+.. code-block:: console
+
+    $ make coverage
+
+Linting:
+
+.. code-block:: console
+
+    $ make lint
