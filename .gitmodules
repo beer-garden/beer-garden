@@ -1,0 +1,9 @@
+[submodule "brew-view"]
+	path = brew-view
+	url = https://github.com/beer-garden/brew-view
+[submodule "bartender"]
+	path = bartender
+	url = https://github.com/beer-garden/bartender
+[submodule "bg-utils"]
+	path = bg-utils
+	url = https://github.com/beer-garden/bg-utils
