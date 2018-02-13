@@ -1,9 +1,9 @@
 # Makefile for bartender
 
 MODULE_NAME   = bartender
-TEST_DIR      = tests
+TEST_DIR      = test
 
-.PHONY: clean clean-build clean-docs clean-test clean-pyc docs help test
+.PHONY: clean clean-build clean-test clean-pyc help test
 .DEFAULT_GOAL := help
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
@@ -32,7 +32,7 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
-clean: clean-build clean-docs clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
+clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
 
 
 clean-build: ## remove build artifacts
@@ -41,11 +41,6 @@ clean-build: ## remove build artifacts
 	rm -fr .eggs/
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '*.egg' -exec rm -f {} +
-
-clean-docs: ## remove doc artifacts
-	rm -f docs/$(MODULE_NAME).rst
-	rm -f docs/modules.rst
-	$(MAKE) -C docs clean
 
 clean-pyc: ## remove Python file artifacts
 	find . -name '*.pyc' -exec rm -f {} +
@@ -62,24 +57,16 @@ lint: ## check style with flake8
 	flake8 $(MODULE_NAME) $(TEST_DIR)
 
 test: ## run tests quickly with the default Python
-	nosetests
+	nosetests $(TEST_DIR)
 
 test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source $(MODULE_NAME) -m nose
+	coverage run --source $(MODULE_NAME) -m nose $(TEST_DIR)
 	coverage report -m
 	coverage html
 	$(BROWSER) htmlcov/index.html
-
-docs: ## generate Sphinx HTML documentation, including API docs
-	sphinx-apidoc -f -o docs/ $(MODULE_NAME)
-	$(MAKE) -C docs html
-	$(BROWSER) docs/_build/html/index.html
-
-servedocs: docs ## compile the docs watching for changes
-	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
 test-release: dist ## package and upload a release to the testpypi
 	twine upload --repository testpypi dist/*
