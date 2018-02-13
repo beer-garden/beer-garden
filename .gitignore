@@ -25,6 +25,7 @@ eggs/
 *.rpm
 .installed.cfg
 .Python
+.python-version
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
