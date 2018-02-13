@@ -2,7 +2,7 @@ version: '2'
 
 services:
     brew-view:
-        image: beer-garden/brew-view:release
+        image: bgio/brew-view
         command: brew-view -c /conf/brew-view-config.json
         networks:
             - bg-network
@@ -15,7 +15,7 @@ services:
             - rabbitmq
 
     bartender:
-        image: beer-garden/bartender:release
+        image: bgio/bartender
         command: bartender -c /conf/bartender-config.json
         networks:
             - bg-network
@@ -36,7 +36,7 @@ services:
             - mongo-config:/data/configdb
 
     rabbitmq:
-        image: rabbitmq:management-alpine
+        image: rabbitmq:3.6-management-alpine
         networks:
             - bg-network
         environment:
