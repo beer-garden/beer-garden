@@ -3,17 +3,16 @@ Beer Garden
 
 Beer Garden is a Framework that provides a standardized interface for Command and Control of systems through the use of plugins or services. In general, Beer Garden Services should be stateless (or as stateless as it can be) and should operate in terms of requests, systems and commands.
 
-
 ## Getting Started
 
-If you would like to run your own Beer Garden, you may follow these steps. If you are a Beer Garden Developer, you may want to check out the Developer Wiki for some helpful hints on how to set up your environment.
+If you would like to run your own Beer Garden, you may follow these steps. If you are a Beer Garden Developer, you will probably want to work on the individual submodules.
 
 ### Pre-requisites:
 
 * Python2.7 or 3.6
 * pip
-* MongoDB Server  - (Tested on 2.4.13)
-* Rabbitmq-Server - (Tested on 3.1.5)
+* MongoDB Server  >= 3.2.0
+* Rabbitmq-Server >= 3.0.0
 
 or
 
@@ -61,12 +60,4 @@ The Rest services beer-garden provides is documented by swagger which will come 
 
 ## Testing
 
-* `cd beer-garden`
-* `nosetests`
-
-## Code Coverage
-
-* `cd beer-garden`
-* `./bin/generate_coverage.sh`
-* `Open Firefox`
-* Navigate to: `file:///path/to/beer-garden/cover/index.html`
+Each of the individual submodules has ways to test individual portison of the application.
