@@ -60,4 +60,4 @@ The Rest services beer-garden provides is documented by swagger which will come 
 
 ## Testing
 
-Each of the individual submodules has ways to test individual portison of the application.
+Each of the individual submodules has ways to test individual portions of the application.
