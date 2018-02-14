@@ -1,4 +1,4 @@
-FROM beer-garden/plugins:python2
+FROM bgio/plugins:python2
 
 ONBUILD COPY install-prereqs*.sh requirements*.txt /tmp/
 ONBUILD RUN bash -c " \

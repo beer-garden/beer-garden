@@ -1,4 +1,4 @@
-FROM beer-garden/pyenv
+FROM themattrix/pyenv
 
 RUN pyenv local 2.7.13 && \
     python -m pip install -U pip && \

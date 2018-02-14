@@ -1,6 +1,6 @@
-FROM beer-garden/pyenv
+FROM themattrix/pyenv
 
-RUN pyenv local 3.6.1 && \
+RUN pyenv local 3.6.0 && \
     python -m pip install -U pip && \
     python -m pip install brewtils
 
