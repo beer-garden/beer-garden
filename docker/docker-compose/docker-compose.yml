@@ -1,34 +1,47 @@
 version: '2'
 
+x-environment: &env
+    BG_AMQ_ADMIN_HOST: rabbitmq
+    BG_AMQ_ADMIN_USER: beer_garden
+    BG_AMQ_ADMIN_PASSWORD: password
+    BG_AMQ_HOST: rabbitmq
+    BG_AMQ_USER: beer_garden
+    BG_AMQ_PASSWORD: password
+    BG_BACKEND_HOST: bartender
+    BG_DB_HOST: mongodb
+    BG_WEB_HOST: brew-view
+
 services:
     brew-view:
         image: bgio/brew-view
-        command: brew-view -c /conf/brew-view-config.json
         networks:
             - bg-network
         ports:
             - "2337:2337"
-        volumes:
-            - ./conf:/conf
+        environment:
+            <<: *env
         depends_on:
             - mongodb
             - rabbitmq
 
     bartender:
         image: bgio/bartender
-        command: bartender -c /conf/bartender-config.json
         networks:
             - bg-network
         volumes:
             - ./plugins:/plugins
-            - ./conf:/conf
+        environment:
+            <<: *env
+            # This must be changed to support remote plugins
+            # The value must be universally resolvable
+            BG_AMQ_PUBLISH_HOST: rabbitmq
         depends_on:
             - mongodb
             - rabbitmq
             - brew-view
 
     mongodb:
-        image: mongo:3.4
+        image: mongo:3.6
         networks:
             - bg-network
         volumes:
