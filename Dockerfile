@@ -1,13 +1,16 @@
 FROM python:2-alpine
 ARG VERSION
 
-ADD dist/bartender-$VERSION-py2.py3-none-any.whl /root/
+ENV BG_PLUGIN_DIRECTORY /plugins
+
+ENV BG_LOG_CONFIG /logging-config.json
+ADD dev_conf/logging-config.json /logging-config.json
 
 RUN set -ex \
     && apk add --no-cache --virtual .build-deps \
         gcc make musl-dev libffi-dev openssl-dev \
-    # && pip install --no-cache-dir bartender==$VERSION \
-    && pip install --no-cache-dir /root/bartender-$VERSION-py2.py3-none-any.whl \
+    && pip install --no-cache-dir bartender==$VERSION \
     && apk del .build-deps
 
-CMD ["bartender", "-c", "/config.json"]
+CMD ["bartender"]
+
