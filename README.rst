@@ -42,6 +42,12 @@ Pre-requisites
 Get Up and Running
 ------------------
 
+When installed from pip you can simply:
+
+.. code-block:: console
+
+    $ bartender -c /path/to/config.json
+
 These are the minimum required steps once you have all the pre-requisites up and running.
 
 .. code-block:: console
