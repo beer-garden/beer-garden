@@ -81,3 +81,8 @@ Linting:
 .. code-block:: console
 
     $ make lint
+
+Credits
+=======
+
+* Doug Hellmann (@doughellmann) - Doug originally owned the bartender name but was willing to allow us to have it so that we didn't have to change a lot of documentation. Thanks very much Doug!
