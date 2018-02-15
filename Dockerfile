@@ -1,4 +1,4 @@
-FROM python:2-alpine
+FROM python:3-alpine
 ARG VERSION
 
 ENV BG_LOG_CONFIG=/logging-config.json
