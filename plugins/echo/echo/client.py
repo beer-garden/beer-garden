@@ -1,5 +1,6 @@
 from brewtils.decorators import command, system, parameter
-from echo.config import DEFAULT_MESSAGE
+
+DEFAULT_MESSAGE = "Hello, World!"
 
 
 @system

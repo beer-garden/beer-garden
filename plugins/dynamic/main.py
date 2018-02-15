@@ -1,4 +1,4 @@
-from bg_utils.local_plugin import LocalPlugin
+from brewtils.plugin import PluginBase
 from brewtils.decorators import command, system, parameter
 
 
@@ -121,7 +121,7 @@ class DynamicClient(object):
 
 
 def main():
-    plugin = LocalPlugin(DynamicClient())
+    plugin = PluginBase(DynamicClient())
     plugin.run()
 
 

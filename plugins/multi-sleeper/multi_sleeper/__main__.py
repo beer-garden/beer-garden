@@ -1,7 +1,9 @@
+from __future__ import absolute_import
+
 import sys
 
-from bg_utils.local_plugin import LocalPlugin
-from sleeper.client import SleeperClient
+from brewtils.plugin import PluginBase
+from .client import SleeperClient
 
 
 def main():
@@ -14,7 +16,7 @@ def main():
     else:
         number_of_times_to_sleep = None
 
-    plugin = LocalPlugin(SleeperClient(number_of_times_to_sleep), max_concurrent=5)
+    plugin = PluginBase(SleeperClient(number_of_times_to_sleep), max_concurrent=5)
     plugin.run()
 
 

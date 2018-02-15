@@ -1,10 +1,11 @@
+from __future__ import absolute_import
+
 import json
 import logging
 import os
 
-from complex.model import MyModel, MyNestedModel, MyListModel, MyModelWithDefaults
-
 from brewtils.decorators import command, system, parameter
+from .model import MyModel, MyNestedModel, MyListModel, MyModelWithDefaults
 
 
 @system

@@ -1,5 +1,6 @@
 from brewtils.decorators import system, parameter
-from echo_sleeper.config import DEFAULT_MESSAGE
+
+DEFAULT_MESSAGE = "Happy World!"
 
 
 @system

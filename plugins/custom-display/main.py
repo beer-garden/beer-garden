@@ -1,4 +1,4 @@
-from bg_utils.local_plugin import LocalPlugin
+from brewtils.plugin import PluginBase
 from brewtils.decorators import command, system, parameter
 
 
@@ -52,7 +52,7 @@ class CustomDisplayClient(object):
 
 
 def main():
-    plugin = LocalPlugin(CustomDisplayClient())
+    plugin = PluginBase(CustomDisplayClient())
     plugin.run()
 
 

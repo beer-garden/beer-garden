@@ -1,10 +1,11 @@
 import os
 from concurrent.futures import wait
 
-from echo_sleeper.config import DEFAULT_MESSAGE
-
+from brewtils import get_bg_connection_parameters
 from brewtils.decorators import system, parameter
 from brewtils.rest.system_client import SystemClient
+
+DEFAULT_MESSAGE = "Happy World!"
 
 
 @system
@@ -12,15 +13,12 @@ class EchoSleeperClient:
     """A client that delegates to the Echo and Sleeper plugins"""
 
     def __init__(self):
-        host = os.getenv("BG_WEB_HOST")
-        port = os.getenv("BG_WEB_PORT")
-        ssl_enabled = os.getenv('BG_SSL_ENABLED', '').lower() != "false"
+        params = get_bg_connection_parameters()
 
-        self.echo_client = SystemClient(host, port, 'echo', ssl_enabled=ssl_enabled)
-        self.sleeper_client = SystemClient(host, port, 'sleeper', ssl_enabled=ssl_enabled)
-        self.multi_sleeper_client = SystemClient(host, port, 'multi-sleeper',
-                                                 ssl_enabled=ssl_enabled, blocking=False)
-        self.error_client = SystemClient(host, port, 'error', ssl_enabled=ssl_enabled)
+        self.echo_client = SystemClient(system_name='echo', **params)
+        self.sleeper_client = SystemClient(system_name='sleeper', **params)
+        self.multi_sleeper_client = SystemClient(system_name='multi-sleeper', **params)
+        self.error_client = SystemClient(system_name='error', **params)
 
     @parameter(key="message", description="The message", optional=True, type="String",
                default=DEFAULT_MESSAGE)

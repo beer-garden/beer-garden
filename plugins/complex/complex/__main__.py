@@ -1,8 +1,10 @@
+from __future__ import absolute_import
+
 import sys
 
-from bg_utils.local_plugin import LocalPlugin
-from complex.client import ComplexClient
-from complex.errors import StartupError
+from brewtils.plugin import PluginBase
+from .client import ComplexClient
+from .errors import StartupError
 
 
 def main():
@@ -13,7 +15,7 @@ def main():
     host = sys.argv[1]
     port = sys.argv[2]
 
-    plugin = LocalPlugin(ComplexClient(host, port))
+    plugin = PluginBase(ComplexClient(host, port))
     plugin.run()
 
 
