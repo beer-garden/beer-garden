@@ -4,10 +4,11 @@ import signal
 import sys
 from argparse import ArgumentParser
 
-import bg_utils
 from yapconf import YapconfSpec
 
 import bartender
+import bg_utils
+from bartender import connect_to_brew_view, progressive_backoff
 from bartender.specification import SPECIFICATION, get_default_logging_config
 
 
@@ -16,7 +17,8 @@ def signal_handler(signal_number, stack_frame):
     bartender.application.stop()
 
     bartender.logger.info("Closing time! You don't have to go home, but you can't stay here.")
-    bartender.application.join()
+    if bartender.application.is_alive():
+        bartender.application.join()
 
     bartender.logger.info("Looks like the Application is shut down. Have a good night!")
 
@@ -47,15 +49,30 @@ def main():
 
     bartender.setup_bartender(spec=spec, cli_args=vars(args))
 
-    bartender.logger.info("Hi, what can I get you to drink?")
-    bartender.application.start()
+    # Ensure we have a message queue connection
+    progressive_backoff(bartender.application.clients['pyrabbit'].is_alive, 'message queue',
+                        bartender.application)
 
-    # You may be wondering why we don't just call bartender.application.join(), if we do
-    # that, we never yield to the signal handler and thus the application cannot be stopped.
-    # So, we enter a never-ending loop so that someone can set bartender.application.stopped
-    # to True and we can exit out.
-    while not bartender.application.stopped() and bartender.application.isAlive():
-        bartender.application.join(1)
+    # Ensure we have a brew-view connection
+    progressive_backoff(connect_to_brew_view, 'brew-view', bartender.application)
+
+    # Since we wait for RabbitMQ and brew-view we could already be shutting down
+    # In that case we don't want to start
+    if not bartender.application.stopped():
+        bartender.logger.info("Hi, what can I get you to drink?")
+        bartender.application.start()
+
+        bartender.logger.info("Let me know if you need anything else!")
+
+        # You may be wondering why we don't just call bartender.application.join() or .wait().
+        # Well, you're in luck because I'm going to tell you why. Either of these methods
+        # cause the main python thread to lock out our signal handler, which means we cannot
+        # shut down gracefully in some circumstances. So instead we simply use pause() to wait
+        # for a signal to be sent to us. If you choose to change this please test thoroughly
+        # when deployed via system packages (apt/yum) as well as python packages and docker.
+        # Thanks!
+        signal.pause()
+
     bartender.logger.info("Don't forget to drive safe!")
 
 

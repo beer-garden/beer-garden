@@ -23,14 +23,12 @@ class BartenderTest(unittest.TestCase):
 
     @patch('bg_utils.setup_application_logging', Mock())
     @patch('bg_utils.setup_database', Mock())
-    @patch('bartender._progressive_backoff', Mock())
     def test_setup_no_file_given(self):
         bg.setup_bartender(self.spec, {})
         self.assertIsInstance(bg.config, Box)
         self.assertIsInstance(bg.logger, logging.Logger)
         self.assertIsInstance(bg.application, BartenderApp)
 
-    @patch('bartender._progressive_backoff', Mock())
     @patch('bg_utils.setup_database', Mock())
     @patch('bartender.logging.config')
     @patch('bartender.open')
@@ -47,24 +45,24 @@ class BartenderTest(unittest.TestCase):
         json_mock.assert_called_with(fake_file)
         logging_mock.dictConfig.assert_called_with(get_default_logging_config('WARN', None))
 
-    @patch('bartender.time')
-    def test_progressive_backoff(self, time_mock):
+    def test_progressive_backoff(self):
         bg.logger = Mock()
+        stop_mock = Mock(stopped=Mock(return_value=False))
         func_mock = Mock(side_effect=[False, False, False, True])
 
-        bg._progressive_backoff(func_mock, 'test_func')
-        time_mock.sleep.assert_has_calls([call(0.1), call(0.2), call(0.4)])
+        bg.progressive_backoff(func_mock, 'test_func', stop_mock)
+        stop_mock.wait.assert_has_calls([call(0.1), call(0.2), call(0.4)])
 
-    @patch('bartender.time')
-    def test_progressive_backoff_max_timeout(self, time_mock):
+    def test_progressive_backoff_max_timeout(self):
         bg.logger = Mock()
+        stop_mock = Mock(stopped=Mock(return_value=False))
 
         side_effect = [False]*10
         side_effect[-1] = True
         func_mock = Mock(side_effect=side_effect)
 
-        bg._progressive_backoff(func_mock, 'test_func')
-        max_val = max([mock_call[0][0] for mock_call in time_mock.sleep.call_args_list])
+        bg.progressive_backoff(func_mock, 'test_func', stop_mock)
+        max_val = max([mock_call[0][0] for mock_call in stop_mock.wait.call_args_list])
         self.assertLessEqual(max_val, 30)
 
     def test_connect_to_brew_view_success(self):
@@ -72,7 +70,7 @@ class BartenderTest(unittest.TestCase):
         bg.bv_client = client_mock
         bg.logger = Mock()
 
-        ret_val = bg._connect_to_brew_view()
+        ret_val = bg.connect_to_brew_view()
         client_mock.find_systems.assert_called_once()
         self.assertTrue(ret_val)
 
@@ -83,6 +81,6 @@ class BartenderTest(unittest.TestCase):
         bg.bv_client = client_mock
         bg.logger = Mock()
 
-        ret_val = bg._connect_to_brew_view()
+        ret_val = bg.connect_to_brew_view()
         client_mock.find_systems.assert_called_once()
         self.assertFalse(ret_val)

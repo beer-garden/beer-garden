@@ -1,7 +1,6 @@
 import json
 import logging
 import logging.config
-import time
 from io import open
 
 from requests.exceptions import RequestException
@@ -12,11 +11,9 @@ from bartender.app import BartenderApp
 from bartender.specification import get_default_logging_config
 from brewtils.rest.easy_client import EasyClient
 
-# DEFAULTS #
-config = None
-
 # COMPONENTS #
 application = None
+config = None
 logger = None
 bv_client = None
 
@@ -53,16 +50,10 @@ def setup_bartender(spec, cli_args):
 
     application = BartenderApp(config)
 
-    # Ensure we have a message queue connection
-    _progressive_backoff(application.clients['pyrabbit'].is_alive, 'message queue')
-
-    # Ensure we have a brew-view connection
-    _progressive_backoff(_connect_to_brew_view, 'Brew-View')
-
     logger.debug("Successfully loaded the bartender application")
 
 
-def _connect_to_brew_view():
+def connect_to_brew_view():
     try:
         logger.debug("Attempting to connect to Brew View")
         bv_client.find_systems()
@@ -71,10 +62,10 @@ def _connect_to_brew_view():
         return False
 
 
-def _progressive_backoff(func, name):
+def progressive_backoff(func, name, stoppable_thread):
     wait_time = 0.1
-    while not func():
+    while not stoppable_thread.stopped() and not func():
         logger.warning('Could not connect to %s, waiting %f seconds before next attempt',
                        name, wait_time)
-        time.sleep(wait_time)
+        stoppable_thread.wait(wait_time)
         wait_time = min(wait_time*2, 30)
