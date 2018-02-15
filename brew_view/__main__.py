@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import signal
 import sys
 from argparse import ArgumentParser
@@ -24,16 +25,17 @@ def shutdown():
     # Publish shutdown notification
     brew_view.event_publishers.publish_event(Event(name=Events.BREWVIEW_STOPPED.name))
 
-    # This is ... not great. Ideally we'd call shutdown() on event_publishers and it would be
-    # invoked on each of them. That's causing issues because we currently don't make a distinction
-    # between async an sync publishers, so for now just wait on the publisher we really care about
-    pika_shutdown_future = brew_view.event_publishers['pika'].shutdown()
-
-    def do_stop(_):
+    def do_stop(*_):
         brew_view.application.stop()
         brew_view.logger.info("Application has stopped. Just waiting for start() to return.")
 
-    brew_view.application.add_future(pika_shutdown_future, do_stop)
+    # This is ... not great. Ideally we'd call shutdown() on event_publishers and it would be
+    # invoked on each of them. That's causing issues because we currently don't make a distinction
+    # between async an sync publishers, so for now just wait on the publisher we really care about
+    if 'pika' in brew_view.event_publishers:
+        brew_view.application.add_future(brew_view.event_publishers['pika'].shutdown(), do_stop)
+    else:
+        brew_view.application.add_callback(do_stop)
 
 
 def generate_logging_config():
