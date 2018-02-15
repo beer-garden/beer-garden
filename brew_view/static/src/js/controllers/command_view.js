@@ -165,8 +165,9 @@ export default function commandViewController(
     }
     let newRequest = angular.copy(request);
 
-    newRequest['system'] = $scope.system['name'];
-    if ($scope.system['display_name']) {
+    if ($scope.system['display_name'] &&
+        $scope.system['display_name'] === newRequest['system']) {
+      newRequest['system'] = $scope.system['name'];
       newRequest['metadata'] = {system_display_name: $scope.system['display_name']};
     }
 
