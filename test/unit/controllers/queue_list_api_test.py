@@ -76,7 +76,7 @@ class QueueListAPITest(TestHandlerBase):
             'system_id': self.system_mock.id,
             'instance': self.instance_mock.name,
             'name': 'UNKNOWN',
-            'size': 'UNKNOWN'
+            'size': -1
         }, output[0])
 
     @patch('brew_view.controllers.queue_list_api.thrift_context')

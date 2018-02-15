@@ -21,8 +21,7 @@ from bg_utils.plugin_logging_loader import PluginLoggingLoader
 from brew_view.publishers import MongoPublisher, RequestPublisher, TornadoPikaPublisher
 from brew_view.specification import get_default_logging_config
 from brewtils.schemas import ParameterSchema, CommandSchema, InstanceSchema, SystemSchema, \
-    RequestSchema, PatchSchema, \
-    LoggingConfigSchema, EventSchema
+    RequestSchema, PatchSchema, LoggingConfigSchema, EventSchema, QueueSchema
 
 config = None
 application = None
@@ -238,6 +237,7 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition('System', schema=SystemSchema)
     api_spec.definition('LoggingConfig', schema=LoggingConfigSchema)
     api_spec.definition('Event', schema=EventSchema)
+    api_spec.definition('Queue', schema=QueueSchema)
     api_spec.definition('_patch', schema=PatchSchema)
     api_spec.definition('Patch', properties={"operations": {
         "type": "array", "items": {"$ref": "#/definitions/_patch"}}

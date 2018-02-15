@@ -68,10 +68,4 @@ class OldQueueAPI(BaseHandler):
         tags:
           - Deprecated
         """
-        self.request.event.name = Events.QUEUE_CLEARED.name
-        self.request.event.payload = {'queue_name': queue_name}
-
-        with thrift_context() as client:
-            yield client.clearQueue(queue_name)
-
-        self.set_status(204)
+        self.redirect('/api/v1/queues/' + queue_name, permanent=True)

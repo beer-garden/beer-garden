@@ -1,16 +1,17 @@
-import json
 import logging
 
 from tornado.gen import coroutine
 
 from bg_utils.models import System
+from bg_utils.parser import BeerGardenSchemaParser
 from brew_view import thrift_context
 from brew_view.base_handler import BaseHandler
-from brewtils.models import Events
+from brewtils.models import Events, Queue
 
 
 class QueueListAPI(BaseHandler):
 
+    parser = BeerGardenSchemaParser()
     logger = logging.getLogger(__name__)
 
     @coroutine
@@ -24,21 +25,7 @@ class QueueListAPI(BaseHandler):
             schema:
               type: array
               items:
-                properties:
-                  system:
-                    type: string
-                  display:
-                    type: string
-                  version:
-                    type: string
-                  system_id:
-                    type: string
-                  instance:
-                    type: string
-                  name:
-                    type: string
-                  size:
-                    type: integer
+                $ref: '#/definitions/Queue'
           50x:
             $ref: '#/definitions/50xError'
         tags:
@@ -52,30 +39,24 @@ class QueueListAPI(BaseHandler):
         for system in systems:
             for instance in system.instances:
 
-                queue = {
-                    'system': system.name,
-                    'display': system.display_name,
-                    'version': system.version,
-                    'system_id': str(system.id),
-                    'instance': instance.name,
-                }
+                queue = Queue(name='UNKNOWN', system=system.name, version=system.version,
+                              instance=instance.name, system_id=str(system.id),
+                              display=system.display_name, size=-1)
 
                 with thrift_context() as client:
                     try:
                         queue_info = yield client.getQueueInfo(system.name, system.version,
                                                                instance.name)
-                        queue['name'] = queue_info.name
-                        queue['size'] = queue_info.size
+                        queue.name = queue_info.name
+                        queue.size = queue_info.size
                     except Exception:
                         self.logger.error("Error getting queue size for %s[%s]-%s" %
                                           (system.name, instance.name, system.version))
-                        queue['name'] = "UNKNOWN"
-                        queue['size'] = "UNKNOWN"
 
                 queues.append(queue)
 
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
-        self.write(json.dumps(queues))
+        self.write(self.parser.serialize_queue(queues, to_string=True, many=True))
 
     @coroutine
     def delete(self):
@@ -115,21 +96,7 @@ class OldQueueListAPI(BaseHandler):
             schema:
               type: array
               items:
-                properties:
-                  system:
-                    type: string
-                  display:
-                    type: string
-                  version:
-                    type: string
-                  system_id:
-                    type: string
-                  instance:
-                    type: string
-                  name:
-                    type: string
-                  size:
-                    type: integer
+                $ref: '#/definitions/Queue'
           50x:
             $ref: '#/definitions/50xError'
         tags:
@@ -152,9 +119,4 @@ class OldQueueListAPI(BaseHandler):
         tags:
           - Deprecated
         """
-        self.request.event.name = Events.ALL_QUEUES_CLEARED.name
-
-        with thrift_context() as client:
-            yield client.clearAllQueues()
-
-        self.set_status(204)
+        self.redirect('/api/v1/queues/', permanent=True)
