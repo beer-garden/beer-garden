@@ -25,17 +25,17 @@ def signal_handler(signal_number, stack_frame):
 
 def generate_logging_config():
     spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
-    bg_utils.generate_logging_config(spec, get_default_logging_config, sys.argv[1:])
+    bg_utils.generate_logging_config_file(spec, get_default_logging_config, sys.argv[1:])
 
 
 def generate_config():
     spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
-    bg_utils.generate_config(spec, sys.argv[1:])
+    bg_utils.generate_config_file(spec, sys.argv[1:])
 
 
 def migrate_config():
     spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
-    bg_utils.migrate_config(spec, sys.argv[1:])
+    bg_utils.update_config_file(spec, sys.argv[1:])
 
 
 def main():
