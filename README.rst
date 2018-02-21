@@ -5,7 +5,11 @@ Brew View
 
 Brew View is the beer-garden application frontend. It uses Tornado to serve some REST endpoints and the AngularJS application, and it communicates with the beer-garden backend (Bartender) through Thrift.
 
-|pypi| |travis| |codecov| |docs| |pyup|
+|slack| |pypi| |travis| |codecov| |docs| |pyup|
+
+.. |slack| image:: https://img.shields.io/badge/slack-Join%20Us!-3e313c.svg
+   :target: https://beer-garden-io.slack.com/
+   :alt: Slack
 
 .. |pypi| image:: https://img.shields.io/pypi/v/brew-view.svg
    :target: https://pypi.python.org/pypi/brew-view
