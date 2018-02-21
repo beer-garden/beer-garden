@@ -54,7 +54,6 @@ class BgutilsTest(unittest.TestCase):
                         "config": "/path/to/config"})
 
         bg_utils.update_config_file(self.spec, ["--config", "/path/to/config"])
-        self.spec.update_defaults.assert_called_once_with(expected)
         self.assertTrue(self.spec.migrate_config_file.called)
 
     def test_update_config_no_config_specified(self):

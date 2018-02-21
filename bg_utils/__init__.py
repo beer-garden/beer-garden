@@ -84,12 +84,7 @@ def update_config_file(spec, cli_args):
     spec.get_item("config").required = True
     config = _generate_config(spec, cli_args)
 
-    spec.update_defaults(config)
-    spec.migrate_config_file(config.config, override_current=False,
-                             current_config_file_type="json",
-                             output_file_name=config.config,
-                             output_file_type="json", create=True,
-                             update_defaults=True)
+    spec.migrate_config_file(config.config, update_defaults=True)
 
 
 def generate_logging_config_file(spec, logging_config_generator, cli_args):
