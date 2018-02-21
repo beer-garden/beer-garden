@@ -1,22 +1,18 @@
-FROM centos7
+FROM centos:7
 
-RUN yum clean all && \
-    yum update -y && \
-        localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
+ENV LANG=en_US.UTF-8 \
+    PYTHON_VERSION=3.6.1 \
+    PYTHON_MINOR_VERSION=3.6 \
+    APP_HOME=/opt/beer-garden
 
-ENV LANG en_US.UTF-8
-ENV PYTHON_VERSION 3.6.1
-ENV PYTHON_MINOR_VERSION 3.6
-ENV APP_HOME /opt/beer-garden
-
-RUN yum clean all && \
-    yum update -y && \
+RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 && \
     yum install -y \
         gcc \
         gcc-c++ \
         zlib \
         zlib-devel \
         curl-devel \
+	libffi-devel \
         openssl-devel \
         readline-devel \
         rpm-build \
