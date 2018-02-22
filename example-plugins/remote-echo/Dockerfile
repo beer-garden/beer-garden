@@ -1,8 +1,9 @@
-FROM python:2-alpine
-ARG VERSION
+FROM python:alpine
 
-RUN set -ex \
- && pip install --no-cache-dir --pre remote_echo
+WORKDIR /src
+COPY remote_echo ./remote_echo
+COPY setup.py .
 
-ENTRYPOINT ["/usr/local/bin/python", "-m", "remote_echo"]
+RUN pip install --no-cache-dir .
 
+ENTRYPOINT ["python", "-m", "remote_echo"]

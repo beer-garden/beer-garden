@@ -23,8 +23,8 @@ setup(
     license='MIT',
     packages=['remote_echo'],
     install_requires=[
-        'brewtils==2.2.0',
-        'click==6.7'
+        'brewtils',
+        'click'
     ],
     classifiers=[
         "Intended Audience :: Developers",

@@ -1,5 +1,6 @@
 from brewtils.decorators import register, command_registrar, plugin_param
-from config import DEFAULT_MESSAGE
+
+DEFAULT_MESSAGE = "Hello, World!"
 
 
 @command_registrar

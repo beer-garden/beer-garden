@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import
+
 import click
 
-from _version import __version__
 from brewtils.plugin import RemotePlugin
-from client import EchoClient
+from ._version import __version__
+from .client import EchoClient
 
 
 @click.command()
