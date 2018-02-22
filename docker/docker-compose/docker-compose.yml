@@ -32,6 +32,7 @@ services:
             - ./plugins:/plugins
         environment:
             <<: *env
+
             # This must be changed to support remote plugins
             # The value must be universally resolvable
             BG_AMQ_PUBLISH_HOST: rabbitmq
@@ -39,6 +40,19 @@ services:
             - mongodb
             - rabbitmq
             - brew-view
+
+    remote-echo:
+        image: bgio/example-plugin:echo
+        restart: on-failure
+        networks:
+            - bg-network
+        environment:
+            <<: *env
+        depends_on:
+            - mongodb
+            - rabbitmq
+            - brew-view
+            - bartender
 
     mongodb:
         image: mongo:3.6
