@@ -5,6 +5,7 @@ TEST_DIR      = test
 
 .PHONY: clean clean-build clean-docs clean-test clean-pyc docs help test
 .DEFAULT_GOAL := help
+
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
 try:
