@@ -12,5 +12,5 @@ RUN set -ex \
     && pip install --no-cache-dir bartender==$VERSION \
     && apk del .build-deps
 
-CMD ["bartender"]
+ENTRYPOINT ["bartender"]
 
