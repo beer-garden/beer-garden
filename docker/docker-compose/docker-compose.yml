@@ -1,4 +1,4 @@
-version: '2'
+version: '3.5'
 
 x-environment: &env
     BG_AMQ_ADMIN_HOST: rabbitmq
@@ -77,6 +77,7 @@ services:
 networks:
     bg-network:
         driver: bridge
+        name: bg-network
 
 volumes:
     plugins:
