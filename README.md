@@ -30,13 +30,7 @@ git clone git@github.com:beer-garden/beer-garden.git
 cd beer-garden/docker/docker-compose
 ```
 
-Open up the `conf/bartender-config.json` file and find the line that looks like this:
-
-```
-"amq_publish_host": "CHANGE_ME_PLEASE"
-```
-
-Change `CHANGE_ME_PLEASE` to the _external_ IP address of your system. If you use something like `localhost` or `127.0.0.1` that will be fine for plugins running on your machine, but only your machine.
+Beer Garden needs to inform remote plugins the hostname of the RabbitMQ instance that they should connect to for message. This value is set as the `BG_AMQ_PUBLISH_HOST` in the environment or `amq_publish_host` in config/command-line arguments. By default in the `docker-compose.yml` it will be `rabbitmq`. This will work for containers running on the same network, but if a truly remote plugin exists, you may need to change the value to a resolvable hostname or IP address on the network.
 
 Run this command to start beer-garden:
 
