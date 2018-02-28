@@ -4,8 +4,10 @@ from functools import reduce
 
 from mongoengine import Q
 from tornado.gen import coroutine
+from tornado.locks import Condition
 
 import bg_utils
+import brew_view
 from bg_utils.models import Request
 from bg_utils.models import System
 from bg_utils.parser import BeerGardenSchemaParser
@@ -204,6 +206,12 @@ class RequestListAPI(BaseHandler):
             description: The Request definition
             schema:
               $ref: '#/definitions/Request'
+          - name: wait
+            in: query
+            required: false
+            description: Flag indicating whether to wait for request completion
+            type: boolean
+            default: false
         consumes:
           - application/json
           - application/x-www-form-urlencoded
@@ -249,7 +257,7 @@ class RequestListAPI(BaseHandler):
             try:
                 request_model.save()
                 yield client.processRequest(str(request_model.id))
-                request_model.reload()
+
             except bg_utils.bg_thrift.InvalidRequest as ex:
                 request_model.delete()
                 raise ModelValidationError(ex.message)
@@ -260,6 +268,12 @@ class RequestListAPI(BaseHandler):
                 if request_model.id:
                     request_model.delete()
                 raise
+            else:
+                if self.get_argument('wait', default='').lower() == 'true':
+                    brew_view.request_map[str(request_model.id)] = Condition()
+                    yield brew_view.request_map[str(request_model.id)].wait()
+
+        request_model.reload()
 
         # Query for request from body id
         req = Request.objects.get(id=str(request_model.id))

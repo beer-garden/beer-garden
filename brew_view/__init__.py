@@ -33,6 +33,7 @@ api_spec = None
 plugin_logging_config = None
 app_log_config = None
 notification_meta = None
+request_map = {}
 
 
 def setup_brew_view(spec, cli_args):
