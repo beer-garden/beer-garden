@@ -236,7 +236,7 @@ class LocalPluginsManager(object):
 
     @staticmethod
     def _mark_as_failed(plugin):
-        system = System.find_unique(plugin.system.name, plugin.plugin_version)
+        system = System.find_unique(plugin.system.name, plugin.system.version)
         for instance in system.instances:
             if instance.name == plugin.instance_name:
                 instance.status = 'DEAD'
