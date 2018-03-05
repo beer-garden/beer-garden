@@ -49,9 +49,11 @@ def main():
 
     bartender.setup_bartender(spec=spec, cli_args=vars(args))
 
-    # Ensure we have a message queue connection
-    progressive_backoff(bartender.application.clients['pyrabbit'].is_alive, 'message queue',
-                        bartender.application)
+    # Ensure we have message queue connections
+    progressive_backoff(bartender.application.clients['pika'].is_alive,
+                        'message queue', bartender.application)
+    progressive_backoff(bartender.application.clients['pyrabbit'].is_alive,
+                        'message queue management interface', bartender.application)
 
     # Ensure we have a brew-view connection
     progressive_backoff(connect_to_brew_view, 'brew-view', bartender.application)
