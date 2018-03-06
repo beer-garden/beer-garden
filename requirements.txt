@@ -17,7 +17,6 @@ docutils==0.14            # via sphinx
 enum34==1.1.6             # via flake8
 flake8==3.5.0
 funcsigs==1.0.2           # via mock
-futures==3.2.0 ; python_version < "3.0"
 idna==2.6                 # via requests
 imagesize==0.7.1          # via sphinx
 jinja2==2.9.6             # via sphinx
