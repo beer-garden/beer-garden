@@ -27,8 +27,12 @@ setup(
         "apispec==0.25.4",
         "bg-utils>=2.3.1",
         "tornado==4.5.2",
-        'futures==3.1.1;python_version<"3.0"'
     ],
+    extras_require={
+        ':python_version=="2.7"': [
+            'futures==3.1.1',
+        ]
+    },
     entry_points={
         'console_scripts': [
             'generate_brew_view_config=brew_view.__main__:generate_config',
