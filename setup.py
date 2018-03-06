@@ -30,9 +30,13 @@ setup(
         'bg-utils>=2.3.1',
         'pika==0.11.0',
         'pyrabbit2==1.0.0',
-        'futures==3.1.1;python_version<"3.0"',
-        'subprocess32==3.2.7;python_version<"3.0"'
     ],
+    extras_require={
+        ':python_version=="2.7"': [
+            'futures==3.1.1',
+            'subprocess32==3.2.7',
+        ]
+    },
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
