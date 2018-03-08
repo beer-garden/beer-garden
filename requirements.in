@@ -18,6 +18,7 @@ rednose
 coverage
 nosexcover
 tox
+pytest
 pytz
 flake8
 wheel

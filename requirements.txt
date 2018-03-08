@@ -7,6 +7,7 @@
 -e git+https://github.com/beer-garden/brewtils@master#egg=brewtils
 alabaster==0.7.10         # via sphinx
 argh==0.26.2              # via watchdog
+attrs==17.4.0             # via pytest
 babel==2.5.1              # via sphinx
 certifi==2017.7.27.1      # via requests
 chardet==3.0.4            # via requests
@@ -16,7 +17,8 @@ coverage==4.4.1
 docutils==0.14            # via sphinx
 enum34==1.1.6             # via flake8
 flake8==3.5.0
-funcsigs==1.0.2           # via mock
+funcsigs==1.0.2           # via mock, pytest
+futures==3.2.0 ; python_version < "3.0"
 idna==2.6                 # via requests
 imagesize==0.7.1          # via sphinx
 jinja2==2.9.6             # via sphinx
@@ -32,20 +34,21 @@ pathtools==0.1.2          # via watchdog
 pbr==3.1.1                # via mock
 pika==0.11.0
 pkginfo==1.4.1            # via twine
-pluggy==0.5.2             # via tox
+pluggy==0.5.2             # via pytest, tox
 ply==3.10                 # via thriftpy
-py==1.4.34                # via tox
+py==1.5.2                 # via pytest, tox
 pycodestyle==2.3.1        # via flake8
 pyflakes==1.6.0           # via flake8
 pygments==2.2.0           # via sphinx
 pymongo==3.5.1            # via mongoengine
+pytest==3.4.2
 python-box==3.1.1         # via yapconf
 pytz==2017.2
 pyyaml==3.12              # via watchdog
 rednose==1.2.2
 requests-toolbelt==0.8.0  # via twine
 requests==2.18.4          # via requests-toolbelt, sphinx, twine
-six==1.11.0               # via mock, mongoengine, sphinx, tox, yapconf
+six==1.11.0               # via mock, mongoengine, pytest, sphinx, tox, yapconf
 snowballstemmer==1.2.1    # via sphinx
 sphinx-rtd-theme==0.2.4
 sphinx==1.6.4
