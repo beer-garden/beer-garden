@@ -62,10 +62,11 @@ def connect_to_brew_view():
         return False
 
 
-def progressive_backoff(func, name, stoppable_thread):
+def progressive_backoff(func, stoppable_thread, failure_message):
     wait_time = 0.1
     while not stoppable_thread.stopped() and not func():
-        logger.warning('Could not connect to %s, waiting %f seconds before next attempt',
-                       name, wait_time)
+        logger.warning(failure_message)
+        logger.warning('Waiting %.1f seconds before next attempt', wait_time)
+
         stoppable_thread.wait(wait_time)
         wait_time = min(wait_time*2, 30)
