@@ -4,12 +4,12 @@
     <title ng-bind="config.applicationName"></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" charset="utf-8">
 
-    <link href="dist/vendor.css" rel="stylesheet">
-    <link href="dist/index.css" rel="stylesheet">
-    <link ng-if="themes.slate" ng-href="dist/dark.css" rel="stylesheet">
+    <link href="vendor.css" rel="stylesheet">
+    <link href="index.css" rel="stylesheet">
+    <link ng-if="themes.slate" ng-href="dark.css" rel="stylesheet">
 
     <!-- Favicon -->
-    <link ng-if="config.iconDefault" ng-href="dist/image/{{config.iconDefault}}.png" rel="shortcut icon">
+    <link ng-if="config.iconDefault" ng-href="image/{{config.iconDefault}}.png" rel="shortcut icon">
   </head>
 
   <body ng-cloak ng-controller="ApplicationController">
@@ -127,8 +127,8 @@
       </div>
     </div>
 
-    <script src="dist/vendor.js"></script>
-    <script src="dist/index.js"></script>
+    <script src="vendor.js"></script>
+    <script src="index.js"></script>
 
   </body>
 </html>

@@ -31,8 +31,10 @@ module.exports = {
     }),
     new ExtractTextPlugin('[name].css'),
     new CopyWebpackPlugin([
-        {from: 'node_modules/swagger-ui-dist', to: 'swagger'},
+        {from: 'src/index.html'},
         {from: 'src/image', to: 'image'},
+        {from: 'node_modules/swagger-ui-dist', to: 'swagger'},
+        {from: 'node_modules/ace-builds/src-noconflict/worker-json.js'},
     ]),
   ],
   resolve: {

@@ -1,9 +1,1 @@
-prune brew_view/static/node_modules
-prune brew_view/static/src
-prune brew_view/static/test
-prune brew_view/static/etc
-recursive-exclude brew_view/static *.json *.js *.lock *.log
-
-include brew_view/static/*.html
-include brew_view/static/*.ico
 graft brew_view/static/dist

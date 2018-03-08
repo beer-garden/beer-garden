@@ -51,7 +51,7 @@ coverage: ## check code coverage
 	echo "TODO: run coverage reports"
 
 dist: clean ## builds distribution
-	npm run build
+	yarn build
 
 deps: ## install javascript dependencies
 	yarn install

@@ -104,7 +104,7 @@ def _setup_tornado_app(app_config):
         VersionHandler, SpecHandler, SwaggerConfigHandler, OldAdminAPI, OldQueueAPI, \
         OldQueueListAPI, LoggingConfigAPI, EventPublisherAPI
 
-    static_base = os.path.join(os.path.dirname(__file__), 'static')
+    static_base = os.path.join(os.path.dirname(__file__), 'static', 'dist')
 
     # These get documented in our OpenAPI (fka Swagger) documentation
     published_url_specs = [
@@ -138,7 +138,7 @@ def _setup_tornado_app(app_config):
         (r'{0}'.format(app_config['url_prefix'][:-1]), RedirectHandler,
             {"url": app_config['url_prefix']}),
         (r'{0}swagger/(.*)'.format(app_config['url_prefix']), StaticFileHandler,
-            {'path': os.path.join(static_base, 'dist', 'swagger')}),
+            {'path': os.path.join(static_base, 'swagger')}),
         (r'{0}(.*)'.format(app_config['url_prefix']), StaticFileHandler,
             {'path': static_base, 'default_filename': 'index.html'})
     ]
