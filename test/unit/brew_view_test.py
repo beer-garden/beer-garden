@@ -76,13 +76,28 @@ class BeerGardenTest(unittest.TestCase):
     def test_setup_ssl_context_ssl_enabled(self, ssl_mock):
         config = self.spec.load_config({'ssl_enabled': True,
                                         'ssl_public_key': '/path/to/public.key',
-                                        'ssl_private_key': '/path/to/private.key'})
-        context_mock = Mock()
-        ssl_mock.create_default_context.return_value = context_mock
+                                        'ssl_private_key': '/path/to/private.key',
+                                        'ca_cert': '/path/to/ca/file',
+                                        'ca_path': '/path/to/ca/path',})
+        server_context = Mock()
+        client_context = Mock()
+        ssl_mock.create_default_context.side_effect = [server_context, client_context]
 
         bg._setup_ssl_context(config)
-        context_mock.load_cert_chain.assert_called_with(certfile='/path/to/public.key',
-                                                        keyfile='/path/to/private.key')
+        server_context.load_cert_chain.assert_called_with(certfile='/path/to/public.key',
+                                                          keyfile='/path/to/private.key')
+        client_context.load_cert_chain.assert_called_with(certfile='/path/to/public.key',
+                                                          keyfile='/path/to/private.key')
+        server_context.load_verify_locations.assert_called_with(cafile='/path/to/ca/file',
+                                                                capath='/path/to/ca/path')
+        client_context.load_verify_locations.assert_called_with(cafile='/path/to/ca/file',
+                                                                capath='/path/to/ca/path')
+    @patch('brew_view.ssl')
+    def test_setup_ssl_context_bad_client_verify_value(self, ssl_mock):
+        config = self.spec.load_config({'ssl_enabled': True,
+                                        'client_cert_verify': 'BAD'})
+
+        self.assertRaises(Exception, bg._setup_ssl_context, config)
 
     @patch('brew_view.PluginLoggingLoader')
     def test_load_plugin_logging_config(self, PluginLoggingLoaderMock):
