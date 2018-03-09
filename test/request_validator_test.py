@@ -1,6 +1,6 @@
 import unittest
 
-from mock import Mock, call, patch, PropertyMock
+from mock import MagicMock, Mock, call, patch, PropertyMock
 
 from bartender.request_validator import RequestValidator
 from bg_utils.models import Command, Instance, Parameter, Request, System, Choices
@@ -10,8 +10,9 @@ from brewtils.errors import BrewmasterModelValidationError
 class RequestTest(unittest.TestCase):
 
     def setUp(self):
-        self.validator = RequestValidator(Mock(web_host='web_host', web_port=123, ca_verify=False,
-                                               ssl_enabled=False, url_prefix=None, ca_cert=None))
+        config = MagicMock(web_host='web_host', web_port=123, ca_verify=False, ssl_enabled=False,
+                           url_prefix=None, ca_cert=None)
+        self.validator = RequestValidator(config)
 
     @patch('bg_utils.models.System.find_unique', Mock(return_value=None))
     def test_get_and_validate_system_no_system(self):
