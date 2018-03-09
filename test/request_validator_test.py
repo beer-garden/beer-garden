@@ -10,9 +10,8 @@ from brewtils.errors import BrewmasterModelValidationError
 class RequestTest(unittest.TestCase):
 
     def setUp(self):
-        self.validator = RequestValidator(Mock(web_host='web_host', web_port=123,
-                                               ssl_enabled=False, url_prefix=None,
-                                               ca_verify=False, ca_cert=None))
+        self.validator = RequestValidator(Mock(web_host='web_host', web_port=123, ca_verify=False,
+                                               ssl_enabled=False, url_prefix=None, ca_cert=None))
 
     @patch('bg_utils.models.System.find_unique', Mock(return_value=None))
     def test_get_and_validate_system_no_system(self):

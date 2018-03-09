@@ -18,8 +18,8 @@ class RequestValidator(object):
     def __init__(self, config):
         self.logger = logging.getLogger(__name__)
         self._client = SystemClient(config.web_host, config.web_port, None,
-                                    ssl_enabled=config.ssl_enabled,
-                                    url_prefix=config.url_prefix, ca_cert=config.ca_cert)
+                                    ssl_enabled=config.ssl_enabled, ca_cert=config.ca_cert,
+                                    url_prefix=config.url_prefix, ca_verify=config.ca_verify)
 
         self._session = Session()
 
