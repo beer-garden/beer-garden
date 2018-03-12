@@ -71,7 +71,7 @@
           <td><div>{{child.status}}</div></td>
           <td ng-if="showColumn('error_class')"><div>{{child.error_class}}</div></td>
           <td><div>{{formatDate(child.created_at)}}</div></td>
-          <td><div>{{formatDate(request.data.updated_at)}}</div></td>
+          <td><div>{{formatDate(child.updated_at)}}</div></td>
           <td><div>{{child.comment}}</div></td>
         </tr>
       </tbody>
