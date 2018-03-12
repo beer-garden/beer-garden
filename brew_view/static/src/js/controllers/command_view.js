@@ -97,7 +97,7 @@ export default function commandViewController(
       request['parameters'] = {};
       let nameList = requestPrototype['parameterNames'];
       for (let i=0; i<nameList.length; i++) {
-        request['parameters'][nameList[i]] = args[i+1]; // Skip the requestPrototype
+        request['parameters'][nameList[i]] = args[i];
       };
     }
 
