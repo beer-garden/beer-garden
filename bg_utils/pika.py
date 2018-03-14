@@ -4,6 +4,7 @@ import logging
 
 from pika import BasicProperties, ConnectionParameters, PlainCredentials
 from pika import BlockingConnection
+from pika.exceptions import AMQPError
 
 
 def get_routing_key(*args, **kwargs):
@@ -60,22 +61,51 @@ class ClientBase(object):
                  connection_attempts=3, heartbeat_interval=3600, virtual_host='/',
                  exchange='beer_garden'):
 
-        # The parameters needed for interacting with RabbitMQ
+        self._host = host
+        self._port = port
+        self._user = user
+        self._password = password
+        self._connection_attempts = connection_attempts
+        self._heartbeat_interval = heartbeat_interval
+        self._virtual_host = virtual_host
         self._exchange = exchange
-        self._conn_params = ConnectionParameters(host=host, port=port,
-                                                 connection_attempts=connection_attempts,
-                                                 virtual_host=virtual_host,
-                                                 heartbeat_interval=heartbeat_interval,
-                                                 credentials=PlainCredentials(username=user,
-                                                                              password=password))
+
+        # Save off the 'normal' connection params so they don't need to be constructed every time
+        self._conn_params = self.connection_parameters()
 
     @property
     def connection_url(self):
+        """str: Get the connection URL associated with this client's connection information"""
+
         return 'amqp://%s:%s@%s:%s/%s' % \
                (self._conn_params.credentials.username, self._conn_params.credentials.password,
                 self._conn_params.host,
                 self._conn_params.port,
                 '' if self._conn_params.virtual_host == '/' else self._conn_params.virtual_host)
+
+    def connection_parameters(self, **kwargs):
+        """Get ``ConnectionParameters`` associated with this client
+
+        Will construct a ``ConnectionParameters`` object using parameters passed at initialization
+        as defaults. Any parameters passed in \*\*kwargs will override initialization parameters.
+
+        Args:
+            **kwargs: Overrides for specific parameters
+
+        Returns:
+            :obj:`pika.ConnectionParameters`: Generated ConnectionParameters object
+        """
+        credentials = PlainCredentials(username=kwargs.get('user', self._user),
+                                       password=kwargs.get('password', self._password))
+
+        return ConnectionParameters(host=kwargs.get('host', self._host),
+                                    port=kwargs.get('port', self._port),
+                                    virtual_host=kwargs.get('virtual_host', self._virtual_host),
+                                    connection_attempts=kwargs.get('connection_attempts',
+                                                                   self._connection_attempts),
+                                    heartbeat_interval=kwargs.get('heartbeat_interval',
+                                                                  self._heartbeat_interval),
+                                    credentials=credentials)
 
 
 class TransientPikaClient(ClientBase):
@@ -84,6 +114,13 @@ class TransientPikaClient(ClientBase):
     def __init__(self, **kwargs):
         super(TransientPikaClient, self).__init__(**kwargs)
         self.logger = logging.getLogger(__name__)
+
+    def is_alive(self):
+        try:
+            with BlockingConnection(self.connection_parameters(connection_attempts=1)) as conn:
+                return conn.is_open
+        except AMQPError:
+            return False
 
     def declare_exchange(self):
         with BlockingConnection(self._conn_params) as conn:

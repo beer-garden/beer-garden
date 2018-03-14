@@ -1,8 +1,9 @@
 import unittest
 
-from mock import ANY, MagicMock, Mock, call, patch
+from mock import ANY, MagicMock, Mock, PropertyMock, call, patch
 
 from bg_utils.pika import ClientBase, TransientPikaClient, get_routing_key, get_routing_keys
+from pika.exceptions import AMQPError
 
 
 class ClientBaseTest(unittest.TestCase):
@@ -15,6 +16,15 @@ class ClientBaseTest(unittest.TestCase):
 
         self.client = ClientBase(host=self.host, port=self.port, user=self.user,
                                  password=self.password)
+
+    def test_connection_parameters(self):
+        params = self.client.connection_parameters()
+        self.assertEqual(self.host, params.host)
+        self.assertEqual(self.port, params.port)
+
+        params = self.client.connection_parameters(host='another_host')
+        self.assertEqual('another_host', params.host)
+        self.assertEqual(self.port, params.port)
 
     def test_connection_url(self):
         url = self.client.connection_url
@@ -47,6 +57,15 @@ class TransientPikaClientTest(unittest.TestCase):
 
         self.client = TransientPikaClient(host=self.host, port=self.port, user=self.user,
                                           password=self.password)
+
+    def test_is_alive(self):
+        self.connection_mock.is_open.return_value = True
+        self.assertTrue(self.client.is_alive())
+
+    def test_is_alive_exception(self):
+        is_open_mock = PropertyMock(side_effect=AMQPError)
+        type(self.connection_mock).is_open = is_open_mock
+        self.assertFalse(self.client.is_alive())
 
     def test_declare_exchange(self):
         self.client.declare_exchange()
