@@ -77,7 +77,6 @@
         <h3>Schema</h3>
         <div ui-ace="{
           onLoad: loadEditor,
-          workerPath: 'bower_components/ace-builds/src-min-noconflict',
           theme: 'dawn',
           mode: 'json'
         }" ng-model="jsonValues.schema" ng-model-options="{ debounce: 1000 }" style="width: 100%; height: 500px;"></div>
@@ -86,7 +85,6 @@
         <h3>Form</h3>
         <div ui-ace="{
           onLoad: loadEditor,
-          workerPath: 'bower_components/ace-builds/src-min-noconflict',
           theme: 'dawn',
           mode: 'json'
         }" ng-model="jsonValues.form" ng-model-options="{ debounce: 1000 }" style="width: 100%; height: 500px;"></div>

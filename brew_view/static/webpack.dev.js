@@ -10,6 +10,7 @@ module.exports = merge(common, {
     // disableHostCheck: true,
 
     contentBase: path.resolve(__dirname, 'dist'),
+    publicPath: '/',
     stats: 'minimal',
     proxy: [{
       context: ['/api', '/config', '/version'],
