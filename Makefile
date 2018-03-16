@@ -73,7 +73,7 @@ coverage: ## check code coverage quickly with the default Python
 	coverage report -m
 	coverage html
 
-coverage-view: coverage # view coverage report in a browser
+coverage-view: coverage ## view coverage report in a browser
 	$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs

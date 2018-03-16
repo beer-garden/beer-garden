@@ -1,11 +1,11 @@
 
 # Runtime Dependencies
 -e git+https://github.com/beer-garden/brewtils@master#egg=brewtils
+futures ; python_version < "3.0"
 mongoengine
 pika
 thriftpy
 yapconf
-futures ; python_version < "3.0"
 
 # Documentation Dependencies
 sphinx
