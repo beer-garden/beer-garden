@@ -66,6 +66,8 @@ coverage: ## check code coverage quickly with the default Python
 	coverage run --source $(MODULE_NAME) -m pytest $(TEST_DIR)
 	coverage report -m
 	coverage html
+
+coverage-view: coverage ## view coverage report in a browser
 	$(BROWSER) htmlcov/index.html
 
 test-release: dist ## package and upload a release to the testpypi
