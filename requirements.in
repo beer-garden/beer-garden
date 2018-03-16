@@ -13,13 +13,11 @@ sphinx_rtd_theme
 watchdog
 
 # Build / Test Dependencies
-mock
-nose
-rednose
 coverage
-nosexcover
-tox
-pytz
 flake8
-wheel
+mock
+pytest
+pytz
+tox
 twine
+wheel

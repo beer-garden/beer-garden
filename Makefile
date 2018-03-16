@@ -57,13 +57,13 @@ lint: ## check style with flake8
 	flake8 $(MODULE_NAME) $(TEST_DIR)
 
 test: ## run tests quickly with the default Python
-	nosetests $(TEST_DIR)
+	pytest $(TEST_DIR)
 
 test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source $(MODULE_NAME) -m nose $(TEST_DIR)
+	coverage run --source $(MODULE_NAME) -m pytest $(TEST_DIR)
 	coverage report -m
 	coverage html
 	$(BROWSER) htmlcov/index.html
