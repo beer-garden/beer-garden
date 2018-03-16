@@ -63,13 +63,13 @@ lint-all:
 	$(MAKE) -C $(JS_DIR) lint
 
 test: ## run tests quickly with the default Python
-	nosetests $(PYTHON_TEST_DIR)
+	pytest $(PYTHON_TEST_DIR)
 
 test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source $(MODULE_NAME) -m nose test/unit/
+	coverage run --source $(MODULE_NAME) -m pytest test/unit/
 	coverage report -m
 	coverage html
 	$(BROWSER) htmlcov/index.html

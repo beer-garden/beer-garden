@@ -12,14 +12,12 @@ sphinx_rtd_theme
 watchdog
 
 # Test Dependencies
-mongomock
-mock
-nose
-rednose
 coverage
-nosexcover
-tox
-pytz
 flake8
-wheel
+mock
+mongomock
+pytest
+pytz
+tox
 twine
+wheel
