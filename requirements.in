@@ -5,6 +5,7 @@ mongoengine
 pika
 thriftpy
 yapconf
+futures ; python_version < "3.0"
 
 # Documentation Dependencies
 sphinx
@@ -12,14 +13,11 @@ sphinx_rtd_theme
 watchdog
 
 # Build / Test Dependencies
-mock
-nose
-rednose
 coverage
-nosexcover
-tox
+flake8
+mock
 pytest
 pytz
-flake8
-wheel
+tox
 twine
+wheel
