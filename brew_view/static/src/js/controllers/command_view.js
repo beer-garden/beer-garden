@@ -89,7 +89,8 @@ export default function commandViewController(
       command: requestPrototype['command'],
       system: requestPrototype['system'] || $scope.system.name,
       system_version: requestPrototype['system_version'] || $scope.system.version,
-      instance_name: requestPrototype['instance_name'] || 'default',
+      instance_name: requestPrototype['instance_name'] || $scope.model['instance_name'] ||
+          'default',
     };
 
     // If parameters are specified we need to use the model value
