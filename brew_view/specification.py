@@ -101,7 +101,8 @@ SPECIFICATION = {
     },
     "client_cert_verify": {
         "type": "str",
-        "description": "Client certificate mode to use when handling requests (NONE, OPTIONAL, or REQUIRED)",
+        "description": "Client certificate mode to use when handling requests "
+                       "(NONE, OPTIONAL, or REQUIRED)",
         "default": "NONE",
     },
     "config": {
