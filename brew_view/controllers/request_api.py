@@ -106,11 +106,17 @@ class RequestAPI(BaseHandler):
                         self.logger.warning(error_msg)
                         raise BrewmasterModelValidationError(error_msg)
                 elif op.path == '/output':
+                    if req.output == op.value:
+                        continue
+
                     if status_before in Request.COMPLETED_STATUSES:
                         raise BrewmasterModelValidationError("Cannot update output for a request "
                                                              "that is already completed")
                     req.output = op.value
                 elif op.path == '/error_class':
+                    if req.error_class == op.value:
+                        continue
+
                     if status_before in Request.COMPLETED_STATUSES:
                         raise BrewmasterModelValidationError("Cannot update error_class for a "
                                                              "request that is already completed")
