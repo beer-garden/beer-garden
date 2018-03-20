@@ -30,6 +30,32 @@ class RequestAPITest(TestHandlerBase):
         self.assertEqual(200, response.code)
         self.assertEqual(self.serialize_mock.return_value, response.body.decode('utf-8'))
 
+    def test_patch_replace_duplicate(self):
+        body = json.dumps({
+                "operations": [
+                        {
+                            "operation": "replace",
+                            "path": "/output",
+                            "value": "output"
+                        },
+                        {
+                            "operation": "replace",
+                            "path": "/status",
+                            "value": "SUCCESS"
+                        },
+                ]
+        })
+        self.request_mock.status = "SUCCESS"
+        self.request_mock.output = "output"
+
+        response = self.fetch('/api/v1/requests/id', method='PATCH', body=body,
+                              headers={'content-type': 'application/json'})
+        self.assertEqual(200, response.code)
+        self.assertEqual(self.serialize_mock.return_value, response.body.decode('utf-8'))
+        self.assertEqual("SUCCESS", self.request_mock.status)
+        self.assertEqual("output", self.request_mock.output)
+        self.assertTrue(self.request_mock.save.called)
+
     def test_patch_replace_status(self):
         body = json.dumps({"operations": [{"operation": "replace", "path": "/status",
                                            "value": "SUCCESS"}]})
