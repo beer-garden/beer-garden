@@ -8,6 +8,7 @@ import urllib3
 from requests import Session
 
 from bg_utils.models import System, Choices
+from brewtils import get_bg_connection_parameters
 from brewtils.choices import parse
 from brewtils.errors import BrewmasterModelValidationError
 from brewtils.rest.system_client import SystemClient
@@ -17,12 +18,14 @@ class RequestValidator(object):
 
     def __init__(self, config):
         self.logger = logging.getLogger(__name__)
-        self._client = SystemClient(config.web_host, config.web_port, None,
-                                    ssl_enabled=config.ssl_enabled, ca_cert=config.ca_cert,
-                                    url_prefix=config.url_prefix, ca_verify=config.ca_verify)
+
+        # We have to translate the host/port kwarg names, just pass though everything else
+        conn_params = get_bg_connection_parameters(bg_host=config.web_host,
+                                                   bg_port=config.web_port,
+                                                   **config)
+        self._client = SystemClient(system_name=None, **conn_params)
 
         self._session = Session()
-
         if not config.ca_verify:
             urllib3.disable_warnings()
             self._session.verify = False
