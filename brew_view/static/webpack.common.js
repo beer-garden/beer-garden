@@ -41,13 +41,10 @@ module.exports = {
     symlinks: false,
     alias: {
       'datatables': 'datatables.net',
-      'datatables-light-columnfilter$':
-        'datatables-light-columnfilter/dist/dataTables.lightColumnFilter.js',
+      'datatables-columnfilter$': 'datatables-columnfilter/dist/dataTables.lightColumnFilter.js',
     },
     modules: [
       path.resolve(__dirname, 'node_modules'),
-      path.resolve(__dirname, 'node_modules', '@bower_components'),
-      'node_modules',
     ],
   },
   module: {
