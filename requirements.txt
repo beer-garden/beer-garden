@@ -39,7 +39,7 @@ pycodestyle==2.3.1        # via flake8
 pyflakes==1.6.0           # via flake8
 pygments==2.2.0           # via sphinx
 pymongo==3.5.1            # via mongoengine
-pyrabbit2==1.0.0
+pyrabbit2==1.0.3
 pytest==3.4.2
 python-box==3.1.1         # via yapconf
 pytz==2017.3
