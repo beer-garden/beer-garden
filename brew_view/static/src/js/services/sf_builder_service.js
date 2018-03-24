@@ -414,7 +414,10 @@ export function sfBuilderService($rootScope, sfPath, UtilityService) {
       // Then populate the choices
       // Simple case - static list of choices
       if (parameter.choices.type === 'static') {
-        form['choices'] = {titleMap: parameter.choices.value};
+        form['choices'] = {
+          updateOn: [],
+          titleMap: parameter.choices.value,
+        };
 
         if (parameter.choices.details && parameter.choices.details.key_reference) {
           let field = parentKey + '.' + parameter.choices.details.key_reference;
@@ -440,7 +443,7 @@ export function sfBuilderService($rootScope, sfPath, UtilityService) {
         }
       } else if (parameter.choices.type === 'command') {
         form['choices'] = {
-          updateOn: [],
+          updateOn: ['instance_name'],
           callback: {
             function: 'createRequestWrapper',
             arguments: [{
