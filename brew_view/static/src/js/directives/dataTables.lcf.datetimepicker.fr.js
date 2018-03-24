@@ -72,14 +72,14 @@
   if (typeof define === 'function' && define.amd) {
     define([
       'jquery',
-      'datatables-light-columnfilter',
+      'datatables-columnfilter',
       'eonasdan-bootstrap-datetimepicker',
     ], factory);
   } else if (typeof exports === 'object') {
     // Node/CommonJS
     factory(
       require('jquery'),
-      require('datatables-light-columnfilter'),
+      require('datatables-columnfilter'),
       require('eonasdan-bootstrap-datetimepicker')
     );
   } else if (jQuery) {
