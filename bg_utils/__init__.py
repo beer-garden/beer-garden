@@ -20,8 +20,8 @@ def parse_args(spec, item_names, cli_args):
     """Parse command-line arguments for specific item names
 
     Args:
-        spec (yapconf.YapconfSpec) Specification for the application
-        item_names(List[str]) Names to parse
+        spec (yapconf.YapconfSpec): Specification for the application
+        item_names(List[str]): Names to parse
         cli_args (List[str]): Command line arguments
 
     Returns:
@@ -49,7 +49,7 @@ def generate_config_file(spec, cli_args):
     be printed to stdout.
 
     Args:
-        spec (yapconf.YapconfSpec) Specification for the application
+        spec (yapconf.YapconfSpec): Specification for the application
         cli_args (List[str]): Command line arguments
 
     Returns:
@@ -72,7 +72,7 @@ def update_config_file(spec, cli_args):
     cli_args must contain a 'config' argument that specifies the config file to update.
 
     Args:
-        spec (yapconf.YapconfSpec) Specification for the application
+        spec (yapconf.YapconfSpec): Specification for the application
         cli_args (List[str]): Command line arguments
 
     Returns:
@@ -91,8 +91,8 @@ def generate_logging_config_file(spec, logging_config_generator, cli_args):
     """Generate and save logging configuration file.
 
     Args:
-        spec (yapconf.YapconfSpec) Specification for the application
-        logging_config_generator (method) Method to generate default logging configuration
+        spec (yapconf.YapconfSpec): Specification for the application
+        logging_config_generator (method): Method to generate default logging configuration
             Args:
                 level (str): Logging level to use
                 filename (str): File to use in RotatingFileHandler configuration
@@ -124,8 +124,8 @@ def setup_application_logging(config, default_config):
     If config.log_config is not set then the default_logging_config will be used.
 
     Args:
-        config (box.Box) The application configuration object
-        default_config (dict) Dictionary configuration to use if config.log_config is missing
+        config (box.Box): The application configuration object
+        default_config (dict): Dictionary configuration to use if config.log_config is missing
 
     Returns:
         dict: The logging configuration used
@@ -163,7 +163,7 @@ def _generate_config(spec, cli_args):
     """Generate a configuration from a spec and command line arguments.
 
     Args:
-        spec (yapconf.YapconfSpec) Specification for the application
+        spec (yapconf.YapconfSpec): Specification for the application
         cli_args (List[str]): Command line arguments
 
     Returns:
