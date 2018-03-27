@@ -1,8 +1,9 @@
 import unittest
 
-from yapconf import YapconfSpec
 from box import Box
 from mock import Mock, patch, MagicMock
+from pymongo.errors import ServerSelectionTimeoutError
+from yapconf import YapconfSpec
 
 import bg_utils
 
@@ -110,15 +111,20 @@ class BgutilsTest(unittest.TestCase):
     @patch('mongoengine.connect')
     @patch('bg_utils._verify_db', Mock())
     def test_setup_database_connect(self, connect_mock):
-        app_config = Mock(db_name="db_name",
-                          db_username="db_username",
-                          db_password="db_password",
-                          db_host="db_host",
-                          db_port="db_port")
-        bg_utils.setup_database(app_config)
+        app_config = Mock(db_name="db_name", db_username="db_username", db_password="db_password",
+                          db_host="db_host", db_port="db_port")
+        self.assertTrue(bg_utils.setup_database(app_config))
         connect_mock.assert_called_with(db='db_name', username='db_username',
-                                        password='db_password', host='db_host',
-                                        port='db_port')
+                                        password='db_password', host='db_host', port='db_port',
+                                        serverSelectionTimeoutMS=1000, socketTimeoutMS=1000)
+
+    @patch('mongoengine.connect')
+    @patch('bg_utils._verify_db', Mock())
+    def test_setup_database_connect_error(self, connect_mock):
+        app_config = Mock(db_name="db_name", db_username="db_username", db_password="db_password",
+                          db_host="db_host", db_port="db_port")
+        connect_mock.side_effect = ServerSelectionTimeoutError
+        self.assertFalse(bg_utils.setup_database(app_config))
 
     @patch('mongoengine.connect', Mock())
     @patch('bg_utils.models.System')
