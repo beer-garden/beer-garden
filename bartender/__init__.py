@@ -42,8 +42,6 @@ def setup_bartender(spec, cli_args):
                                                                   config.log_file))
     logger = logging.getLogger(__name__)
 
-    bg_utils.setup_database(config)
-
     bv_client = EasyClient(config.web_host, config.web_port, ssl_enabled=config.ssl_enabled,
                            ca_cert=config.ca_cert, url_prefix=config.url_prefix,
                            ca_verify=config.ca_verify)

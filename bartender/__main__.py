@@ -3,6 +3,7 @@
 import signal
 import sys
 from argparse import ArgumentParser
+from functools import partial
 
 from yapconf import YapconfSpec
 
@@ -48,6 +49,10 @@ def main():
     args = parser.parse_args(sys.argv[1:])
 
     bartender.setup_bartender(spec=spec, cli_args=vars(args))
+
+    # Ensure we have a mongo connection
+    progressive_backoff(partial(bg_utils.setup_database, bartender.config), bartender.application,
+                        'Unable to connect to mongo, is it started?')
 
     # Ensure we have message queue connections
     progressive_backoff(bartender.application.clients['pika'].is_alive, bartender.application,
