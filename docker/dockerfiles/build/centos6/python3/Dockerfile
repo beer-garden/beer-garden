@@ -1,7 +1,7 @@
 FROM centos:6
 
 ENV LANG=en_US.UTF-8 \
-    PYTHON_VERSION=3.6.1 \
+    PYTHON_VERSION=3.6.5 \
     PYTHON_MINOR_VERSION=3.6 \
     APP_HOME=/opt/beer-garden \
     PATH=/opt/rh/ruby193/root/usr/bin/:/opt/rh/ruby193/root/usr/local/bin/:$PATH \

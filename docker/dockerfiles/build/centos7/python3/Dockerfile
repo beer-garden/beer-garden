@@ -1,7 +1,7 @@
 FROM centos:7
 
 ENV LANG=en_US.UTF-8 \
-    PYTHON_VERSION=3.6.1 \
+    PYTHON_VERSION=3.6.5 \
     PYTHON_MINOR_VERSION=3.6 \
     APP_HOME=/opt/beer-garden
 
@@ -12,7 +12,7 @@ RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
         zlib \
         zlib-devel \
         curl-devel \
-	libffi-devel \
+        libffi-devel \
         openssl-devel \
         readline-devel \
         rpm-build \
