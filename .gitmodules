@@ -7,3 +7,6 @@
 [submodule "bg-utils"]
 	path = bg-utils
 	url = https://github.com/beer-garden/bg-utils
+[submodule "example-plugins"]
+	path = example-plugins
+	url = https://github.com/beer-garden/example-plugins
