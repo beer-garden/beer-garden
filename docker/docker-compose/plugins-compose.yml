@@ -1,0 +1,46 @@
+version: '3.5'
+
+x-definitions: &plugin
+    image: bgio/example-plugins
+    networks:
+        - bg-network
+    environment:
+        BG_HOST: brew-view
+        BG_SSL_ENABLED: "False"
+
+services:
+    complex-c1:
+        command: ["complex", "c1", "c1-host", "c1-port"]
+        <<: *plugin
+
+    complex-c2:
+        command: ["complex", "c2", "c2-host", "c2-port"]
+        <<: *plugin
+
+    custom-display:
+        command: ["custom_display"]
+        <<: *plugin
+
+    dynamic:
+        command: ["dynamic"]
+        <<: *plugin
+
+    echo:
+        command: ["echo"]
+        <<: *plugin
+
+    echo-sleeper:
+        command: ["echo_sleeper"]
+        <<: *plugin
+
+    error:
+        command: ["error"]
+        <<: *plugin
+
+    sleeper:
+        command: ["sleeper"]
+        <<: *plugin
+
+networks:
+    bg-network:
+        external: true
