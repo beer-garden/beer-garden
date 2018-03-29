@@ -42,7 +42,17 @@ class BartenderHandlerTest(unittest.TestCase):
 
         self.handler.processRequest('id')
         find_mock.assert_called_once_with('id')
-        self.clients['pika'].publish_request.assert_called_once_with(request)
+        self.clients['pika'].publish_request.assert_called_once_with(request, confirm=True,
+                                                                     mandatory=True)
+
+    @patch('bg_utils.models.Request.find_or_none')
+    def test_process_request_fail(self, find_mock):
+        request = Mock()
+        find_mock.return_value = request
+        self.request_validator.validate_request.return_value = request
+        self.clients['pika'].publish_request.return_value = False
+
+        self.assertRaises(bg_utils.bg_thrift.PublishException, self.handler.processRequest, 'id')
 
     @patch('bartender.thrift.handler.get_routing_key', Mock(return_value='a'))
     @patch('bartender.thrift.handler.get_routing_keys', Mock(return_value=['b']))

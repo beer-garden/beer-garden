@@ -34,13 +34,14 @@ class BartenderHandler(object):
         :raises InvalidRequest: If the Request is invalid in some way
         :return: None
         """
-        self.logger.info("Processing Request: %s", str(request_id))
+        request_id = str(request_id)
+        self.logger.info("Processing Request: %s", request_id)
 
         try:
             request = Request.find_or_none(request_id)
             if request is None:
-                raise BrewmasterModelValidationError("Could not find Request with ID '%s'" %
-                                                     str(request_id))
+                raise BrewmasterModelValidationError("Could not find request with ID '%s'" %
+                                                     request_id)
 
             # Validates the request based on what is in the database.
             # This includes the validation of the request parameters,
@@ -48,7 +49,11 @@ class BartenderHandler(object):
             request = self.request_validator.validate_request(request)
             request.save()
 
-            self.clients['pika'].publish_request(request)
+            if not self.clients['pika'].publish_request(request, confirm=True, mandatory=True):
+                msg = "Error while publishing request to queue (%s[%s]-%s %s)" % (
+                      request.system, request.system_version, request.instance_name,
+                      request.command)
+                raise bg_utils.bg_thrift.PublishException(msg)
 
         except (mongoengine.ValidationError,
                 BrewmasterModelValidationError,

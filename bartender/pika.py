@@ -7,14 +7,15 @@ class PikaClient(TransientPikaClient):
     """Pika client that exposes additional Bartender-specific operations"""
 
     def publish_request(self, request, **kwargs):
-        kwargs['headers'] = kwargs.pop('headers', {})
-        kwargs['headers'].update({'request_id': str(request.id)})
-        kwargs['routing_key'] = (kwargs.pop('routing_key', None) or
-                                 get_routing_key(request.system,
-                                                 request.system_version,
-                                                 request.instance_name))
+        if 'headers' not in kwargs:
+            kwargs['headers'] = {}
+        kwargs['headers']['request_id'] = str(request.id)
 
-        self.publish(SchemaParser.serialize_request(request), **kwargs)
+        if 'routing_key' not in kwargs:
+            kwargs['routing_key'] = get_routing_key(request.system, request.system_version,
+                                                    request.instance_name)
+
+        return self.publish(SchemaParser.serialize_request(request), **kwargs)
 
     def start(self, system=None, version=None, instance=None, clone_id=None):
         self.publish_request(Request(system=system, system_version=version, instance_name=instance,
