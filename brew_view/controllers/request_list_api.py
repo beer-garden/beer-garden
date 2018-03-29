@@ -11,7 +11,7 @@ from bg_utils.models import System
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view import thrift_context
 from brew_view.base_handler import BaseHandler
-from brewtils.errors import ModelValidationError
+from brewtils.errors import ModelValidationError, RequestPublishException
 from brewtils.models import Events
 
 
@@ -250,6 +250,9 @@ class RequestListAPI(BaseHandler):
             except bg_utils.bg_thrift.InvalidRequest as ex:
                 request_model.delete()
                 raise ModelValidationError(ex.message)
+            except bg_utils.bg_thrift.PublishException as ex:
+                request_model.delete()
+                raise RequestPublishException(ex.message)
             except Exception:
                 if request_model.id:
                     request_model.delete()
