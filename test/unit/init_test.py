@@ -18,9 +18,9 @@ class BgutilsTest(unittest.TestCase):
         self.spec = YapconfSpec(self.spec_base)
 
     def test_parse_args(self):
-        cli_args = ["--log_config", "/path/to/log/config",
-                    "--log_file", "/path/to/log/file",
-                    "--log_level", "INFO",
+        cli_args = ["--log-config", "/path/to/log/config",
+                    "--log-file", "/path/to/log/file",
+                    "--log-level", "INFO",
                     "--config", "/path/to/config/file"]
         args = bg_utils.parse_args(self.spec, ['log_config', 'log_file', 'log_level', 'config'],
                                    cli_args)
@@ -74,7 +74,7 @@ class BgutilsTest(unittest.TestCase):
         config_generator = Mock(return_value=generated_config)
 
         logging_config = bg_utils.generate_logging_config_file(
-            self.spec, config_generator, ["--log_config", "/path/to/log/config"])
+            self.spec, config_generator, ["--log-config", "/path/to/log/config"])
         self.assertEqual(logging_config, generated_config)
         self.assertTrue(open_mock.called)
 

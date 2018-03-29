@@ -59,4 +59,4 @@ virtualenv==15.1.0        # via tox
 watchdog==0.8.3
 wheel==0.30.0
 wrapt==1.10.11
-yapconf==0.1.1
+yapconf==0.2.2
