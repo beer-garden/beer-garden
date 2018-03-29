@@ -141,22 +141,34 @@ def setup_application_logging(config, default_config):
     return logging_config
 
 
-def setup_database(app_config):
+def setup_database(config):
+    """Attempt connection to a Mongo database and verify necessary indexes
+
+    Args:
+        config (box.Box): Yapconf-generated configuration object
+
+    Returns:
+        bool: True if successful, False otherwise (unable to connect)
+
+    Raises:
+        Any mongoengine or pymongo error *except* ConnectionFailure, ServerSelectionTimeoutError
+    """
     from mongoengine import connect
-    logger = logging.getLogger(__name__)
+    from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 
-    logger.debug("Connecting to database.")
-    logger.debug("Name: %s" % app_config.db_name)
-    logger.debug("Username: %s" % app_config.db_username)
-    logger.debug("Host: %s" % app_config.db_host)
-    logger.debug("Port: %s" % app_config.db_port)
+    try:
+        connect(db=config.db_name, username=config.db_username,
+                password=config.db_password, host=config.db_host,
+                port=config.db_port, socketTimeoutMS=1000,
+                serverSelectionTimeoutMS=1000)
 
-    connect(db=app_config.db_name,
-            username=app_config.db_username,
-            password=app_config.db_password,
-            host=app_config.db_host,
-            port=app_config.db_port)
-    _verify_db()
+        # The 'connect' method won't actually fail
+        # An exception won't be raised until we actually try to do something
+        _verify_db()
+    except (ConnectionFailure, ServerSelectionTimeoutError):
+        return False
+
+    return True
 
 
 def _generate_config(spec, cli_args):
