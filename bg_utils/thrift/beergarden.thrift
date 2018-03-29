@@ -5,6 +5,10 @@ exception BaseException {
   1: string message
 }
 
+exception PublishException {
+  1: string message
+}
+
 exception InvalidRequest {
   1: string id,
   2: string message
@@ -41,7 +45,8 @@ service BartenderBackend {
 
 
   // Requests
-  void processRequest(1:string id) throws (1:InvalidRequest ex, 2:BaseException baseEx);
+  void processRequest(1:string id) throws (1:InvalidRequest ex, 2: PublishException pubEx,
+    3:BaseException baseEx);
 
 
   // Queues
