@@ -3,6 +3,7 @@
 import signal
 import sys
 from argparse import ArgumentParser
+from functools import partial
 
 from yapconf import YapconfSpec
 
@@ -49,12 +50,20 @@ def main():
 
     bartender.setup_bartender(spec=spec, cli_args=vars(args))
 
-    # Ensure we have a message queue connection
-    progressive_backoff(bartender.application.clients['pyrabbit'].is_alive, 'message queue',
-                        bartender.application)
+    # Ensure we have a mongo connection
+    progressive_backoff(partial(bg_utils.setup_database, bartender.config), bartender.application,
+                        'Unable to connect to mongo, is it started?')
+
+    # Ensure we have message queue connections
+    progressive_backoff(bartender.application.clients['pika'].is_alive, bartender.application,
+                        'Unable to connect to rabbitmq, is it started?')
+    progressive_backoff(bartender.application.clients['pyrabbit'].is_alive, bartender.application,
+                        'Unable to connect to rabbitmq admin interface. '
+                        'Is the management plugin enabled?')
 
     # Ensure we have a brew-view connection
-    progressive_backoff(connect_to_brew_view, 'brew-view', bartender.application)
+    progressive_backoff(connect_to_brew_view, bartender.application,
+                        'Unable to connect to brew-view, is it started?')
 
     # Since we wait for RabbitMQ and brew-view we could already be shutting down
     # In that case we don't want to start
