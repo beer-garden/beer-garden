@@ -37,7 +37,8 @@ import 'ace-builds/src-noconflict/ace.js';
 import 'ace-builds/src-noconflict/mode-json.js';
 import 'ace-builds/src-noconflict/theme-dawn.js';
 
-// Our ASF addons
+// Our ASF addons and builder
+import '@beer-garden/builder';
 import '@beer-garden/addons';
 
 // TODO - This needs to be served separately right now, something about WebWorkers?
@@ -73,7 +74,6 @@ import requestService from './js/services/request_service.js';
 import systemService from './js/services/system_service.js';
 import utilityService from './js/services/utility_service.js';
 import versionService from './js/services/version_service.js';
-import {sfPostProcessor, sfErrorMessageConfig, sfBuilderService} from './js/services/sf_builder_service.js'; // eslint-disable-line max-len
 
 import aboutController from './js/controllers/about.js';
 import adminQueueController from './js/controllers/admin_queue.js';
@@ -118,13 +118,12 @@ angular.module('bgApp',
   'frapontillo.bootstrap-switch',
   'mgcrea.ngStrap',
   'ngCookies',
+  'beer-garden.builder',
 ])
 .run(appRun)
-.run(sfPostProcessor)
 .run(dtLoadingTemplate)
 .config(routeConfig)
 .config(interceptorConfig)
-.config(sfErrorMessageConfig)
 .service('APIInterceptor', interceptorService)
 .animation('.slide', slideAnimation)
 
@@ -138,7 +137,6 @@ angular.module('bgApp',
 .factory('InstanceService', instanceService)
 .factory('QueueService', queueService)
 .factory('RequestService', requestService)
-.factory('SFBuilderService', sfBuilderService)
 .factory('SystemService', systemService)
 .factory('UtilityService', utilityService)
 .factory('VersionService', versionService)
