@@ -1,5 +1,4 @@
 import pytest
-from yapconf import YapconfSpec
 from box import Box
 from mock import Mock, patch, MagicMock
 from pymongo.errors import ServerSelectionTimeoutError
@@ -19,9 +18,9 @@ def spec():
 class TestBgUtils(object):
 
     def test_parse_args(self, spec):
-        cli_args = ["--log_config", "/path/to/log/config",
-                    "--log_file", "/path/to/log/file",
-                    "--log_level", "INFO",
+        cli_args = ["--log-config", "/path/to/log/config",
+                    "--log-file", "/path/to/log/file",
+                    "--log-level", "INFO",
                     "--config", "/path/to/config/file"]
         args = bg_utils.parse_args(spec, ['log_config', 'log_file', 'log_level', 'config'],
                                    cli_args)
@@ -115,7 +114,7 @@ class TestBgUtils(object):
         config_generator = Mock(return_value=generated_config)
 
         logging_config = bg_utils.generate_logging_config_file(
-            spec, config_generator, ['--log_config', str(config_path)])
+            spec, config_generator, ['--log-config', str(config_path)])
 
         assert logging_config == generated_config
 
@@ -124,7 +123,7 @@ class TestBgUtils(object):
     def test_setup_database_connect(self, connect_mock):
         app_config = Mock(db_name="db_name", db_username="db_username", db_password="db_password",
                           db_host="db_host", db_port="db_port")
-        self.assertTrue(bg_utils.setup_database(app_config))
+        assert bg_utils.setup_database(app_config) is True
         connect_mock.assert_called_with(db='db_name', username='db_username',
                                         password='db_password', host='db_host', port='db_port',
                                         serverSelectionTimeoutMS=1000, socketTimeoutMS=1000)
@@ -135,7 +134,7 @@ class TestBgUtils(object):
         app_config = Mock(db_name="db_name", db_username="db_username", db_password="db_password",
                           db_host="db_host", db_port="db_port")
         connect_mock.side_effect = ServerSelectionTimeoutError
-        self.assertFalse(bg_utils.setup_database(app_config))
+        assert bg_utils.setup_database(app_config) is False
 
     @patch('mongoengine.connect', Mock())
     @patch('bg_utils.models.System')
