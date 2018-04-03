@@ -2,6 +2,7 @@ import json
 import logging
 import logging.config
 import os
+import six
 from argparse import ArgumentParser
 from io import open
 
@@ -111,7 +112,8 @@ def generate_logging_config_file(spec, logging_config_generator, cli_args):
 
     if args.log_config is not None:
         with open(args.log_config, 'w') as f:
-            json.dump(logging_config, f, indent=4, sort_keys=True)
+            dumped = json.dumps(logging_config, indent=4, sort_keys=True)
+            f.write(six.u(dumped))
     else:
         print(json.dumps(logging_config, indent=4, sort_keys=True))
 
