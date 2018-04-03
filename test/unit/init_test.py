@@ -109,6 +109,16 @@ class TestBgUtils(object):
         bg_utils.setup_application_logging(app_config, {})
         config_mock.assert_called_with({'foo': 'bar'})
 
+    def test_generate_logging_config_no_mock(self, tmpdir, spec):
+        config_path = tmpdir.join('logging-config.json')
+        generated_config = {'foo': 'bar'}
+        config_generator = Mock(return_value=generated_config)
+
+        logging_config = bg_utils.generate_logging_config_file(
+            spec, config_generator, ['--log_config', str(config_path)])
+
+        assert logging_config == generated_config
+
     @patch('mongoengine.connect')
     @patch('bg_utils._verify_db', Mock())
     def test_setup_database_connect(self, connect_mock):
