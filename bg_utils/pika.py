@@ -154,14 +154,27 @@ class TransientPikaClient(ClientBase):
               Headers to be included as part of the message properties
             * *expiration* --
               Expiration to be included as part of the message properties
-        :return: None
+            * *confirm* --
+              If set to True return False if the message fails to be delivered to the broker
+            * *mandatory* --
+              If set to True return False if the message can not be routed to any queues
+        :return:
+            Boolean, behavior depends on setting of the confirm and mandatory flags.
+            If both are False then this method will always return True
         """
         with BlockingConnection(self._conn_params) as conn:
-            conn.channel().basic_publish(exchange=self._exchange,
+            channel = conn.channel()
+
+            if kwargs.get('confirm'):
+                channel.confirm_delivery()
+
+            properties = BasicProperties(app_id='beer-garden',
+                                         content_type='text/plain',
+                                         headers=kwargs.get('headers'),
+                                         expiration=kwargs.get('expiration'))
+
+            return channel.basic_publish(exchange=self._exchange,
                                          routing_key=kwargs['routing_key'],
                                          body=message,
-                                         properties=BasicProperties(
-                                             app_id='beer-garden',
-                                             content_type='text/plain',
-                                             headers=kwargs.pop('headers', None),
-                                             expiration=kwargs.pop('expiration', None)))
+                                         properties=properties,
+                                         mandatory=kwargs.get('mandatory'))

@@ -88,12 +88,13 @@ class TransientPikaClientTest(unittest.TestCase):
         props_mock.return_value = {}
         message_mock = Mock(id='id', command='foo', status=None)
 
-        self.client.publish(message_mock, routing_key='queue_name', expiration=10)
+        self.client.publish(message_mock, routing_key='queue_name', expiration=10, mandatory=True)
         props_mock.assert_called_with(app_id='beer-garden', content_type='text/plain',
                                       headers=None, expiration=10)
         self.channel_mock.basic_publish.assert_called_with(exchange='beer_garden',
                                                            routing_key='queue_name',
-                                                           body=message_mock, properties={})
+                                                           body=message_mock, properties={},
+                                                           mandatory=True)
 
     def test_get_routing_key(self):
         self.assertEqual('system.1-0-0.instance', get_routing_key('system', '1.0.0', 'instance'))
