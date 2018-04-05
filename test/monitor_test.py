@@ -41,6 +41,14 @@ class PluginStatusMonitorTest(unittest.TestCase):
                                                                      routing_key='admin',
                                                                      expiration=expiration)
 
+    def test_request_status_exception(self):
+        self.clients['pika'].publish_request.side_effect = IOError
+        self.monitor.request_status()
+        expiration = str(self.monitor.heartbeat_interval * 1000)
+        self.clients['pika'].publish_request.assert_called_once_with(self.monitor.status_request,
+                                                                     routing_key='admin',
+                                                                     expiration=expiration)
+
     @patch('bartender.monitor.PluginStatusMonitor.stopped')
     def test_check_status_empty(self, stopped_mock):
         self.monitor.check_status()
