@@ -5,7 +5,7 @@ from tornado.gen import coroutine
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view import thrift_context
 from brew_view.base_handler import BaseHandler
-from brewtils.errors import BrewmasterModelValidationError
+from brewtils.errors import ModelValidationError
 
 
 class AdminAPI(BaseHandler):
@@ -55,7 +55,7 @@ class AdminAPI(BaseHandler):
             else:
                 error_msg = "Unsupported operation '%s'" % op.operation
                 self.logger.warning(error_msg)
-                raise BrewmasterModelValidationError(error_msg)
+                raise ModelValidationError(error_msg)
 
         self.set_status(204)
 

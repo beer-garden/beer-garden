@@ -6,7 +6,7 @@ from bg_utils.models import System
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view import thrift_context
 from brew_view.base_handler import BaseHandler
-from brewtils.errors import BrewmasterModelValidationError
+from brewtils.errors import ModelValidationError
 from brewtils.models import Events
 
 
@@ -141,9 +141,9 @@ class SystemAPI(BaseHandler):
                     new_commands = self.parser.parse_command(op.value, many=True)
                     if system.has_different_commands(new_commands):
                         if system.commands and 'dev' not in system.version:
-                            raise BrewmasterModelValidationError('System %s-%s already exists with '
-                                                                 'different commands' %
-                                                                 (system.name, system.version))
+                            raise ModelValidationError('System %s-%s already exists with '
+                                                       'different commands' %
+                                                       (system.name, system.version))
                         else:
                             system.upsert_commands(new_commands)
                 elif op.path in ['/description', '/icon_name', '/display_name']:
@@ -162,7 +162,7 @@ class SystemAPI(BaseHandler):
                 else:
                     error_msg = "Unsupported path '%s'" % op.path
                     self.logger.warning(error_msg)
-                    raise BrewmasterModelValidationError('value', error_msg)
+                    raise ModelValidationError('value', error_msg)
             elif op.operation == 'update':
                 if op.path == '/metadata':
                     self.logger.debug("Updating system metadata")
@@ -173,14 +173,14 @@ class SystemAPI(BaseHandler):
                 else:
                     error_msg = "Unsupported path for update '%s'" % op.path
                     self.logger.warning(error_msg)
-                    raise BrewmasterModelValidationError('path', error_msg)
+                    raise ModelValidationError('path', error_msg)
             elif op.operation == 'reload':
                 with thrift_context() as client:
                     yield client.reloadSystem(system_id)
             else:
                 error_msg = "Unsupported operation '%s'" % op.operation
                 self.logger.warning(error_msg)
-                raise BrewmasterModelValidationError('value', error_msg)
+                raise ModelValidationError('value', error_msg)
 
         system.reload()
 

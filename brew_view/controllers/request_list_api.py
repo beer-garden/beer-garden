@@ -11,7 +11,7 @@ from bg_utils.models import System
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view import thrift_context
 from brew_view.base_handler import BaseHandler
-from brewtils.errors import BrewmasterModelValidationError
+from brewtils.errors import ModelValidationError
 from brewtils.models import Events
 
 
@@ -237,7 +237,7 @@ class RequestListAPI(BaseHandler):
                     args[key] = value[0].decode(self.request.charset)
             request_model = Request(**args)
         else:
-            raise BrewmasterModelValidationError('Unsupported or missing content-type header')
+            raise ModelValidationError('Unsupported or missing content-type header')
 
         if request_model.parent:
             request_model.parent = Request.objects.get(id=str(request_model.parent.id))
@@ -249,7 +249,7 @@ class RequestListAPI(BaseHandler):
                 request_model.reload()
             except bg_utils.bg_thrift.InvalidRequest as ex:
                 request_model.delete()
-                raise BrewmasterModelValidationError(ex.message)
+                raise ModelValidationError(ex.message)
             except Exception:
                 if request_model.id:
                     request_model.delete()

@@ -6,7 +6,7 @@ from tornado.locks import Lock
 from bg_utils.models import System, Instance
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view.base_handler import BaseHandler
-from brewtils.errors import BrewmasterModelValidationError
+from brewtils.errors import ModelValidationError
 from brewtils.models import Events
 from brewtils.schemas import SystemSchema
 
@@ -121,10 +121,9 @@ class SystemListAPI(BaseHandler):
                 new_system.instances = [Instance(name='default')]
                 new_system.max_instances = 1
             else:
-                raise BrewmasterModelValidationError('Could not create system %s-%s: Systems with '
-                                                     'max_instances > 1 must also define their '
-                                                     'instances' %
-                                                     (system_model.name, system_model.version))
+                raise ModelValidationError('Could not create system %s-%s: Systems with '
+                                           'max_instances > 1 must also define their instances' %
+                                           (system_model.name, system_model.version))
         else:
             if not new_system.max_instances:
                 new_system.max_instances = len(new_system.instances)
@@ -137,9 +136,8 @@ class SystemListAPI(BaseHandler):
         # already in the database in a significant way
         if existing_system.commands and 'dev' not in existing_system.version and \
                 existing_system.has_different_commands(system_model.commands):
-            raise BrewmasterModelValidationError('System %s-%s already exists with different '
-                                                 'commands' %
-                                                 (system_model.name, system_model.version))
+            raise ModelValidationError('System %s-%s already exists with different commands' %
+                                       (system_model.name, system_model.version))
         else:
             existing_system.upsert_commands(system_model.commands)
 

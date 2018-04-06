@@ -2,7 +2,7 @@ import logging
 import brew_view
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view.base_handler import BaseHandler
-from brewtils.errors import BrewmasterModelValidationError
+from brewtils.errors import ModelValidationError
 
 from tornado.gen import coroutine
 
@@ -76,7 +76,7 @@ class LoggingConfigAPI(BaseHandler):
             else:
                 error_msg = "Unsupported operation '%s'" % op.operation
                 self.logger.warning(error_msg)
-                raise BrewmasterModelValidationError('value', error_msg)
+                raise ModelValidationError('value', error_msg)
 
         self.set_status(200)
         self.write(self.parser.serialize_logging_config(brew_view.plugin_logging_config,

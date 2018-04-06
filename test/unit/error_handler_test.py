@@ -3,7 +3,7 @@ import json
 from mock import patch
 from mongoengine.errors import DoesNotExist
 
-from brewtils.errors import BrewmasterModelValidationError
+from brewtils.errors import ModelValidationError
 from .controllers import TestHandlerBase
 
 
@@ -17,7 +17,7 @@ class ErrorHandlerTest(TestHandlerBase):
         super(ErrorHandlerTest, self).setUp()
 
     def test_type_match(self):
-        e = BrewmasterModelValidationError('error message')
+        e = ModelValidationError('error message')
         self.objects_mock.get.side_effect = e
 
         response = self.fetch('/api/v1/commands/id')
@@ -25,7 +25,7 @@ class ErrorHandlerTest(TestHandlerBase):
         self.assertEqual(json.dumps({'message': str(e)}), response.body.decode('utf-8'))
 
     def test_subtype_match(self):
-        class TestValidationError(BrewmasterModelValidationError):
+        class TestValidationError(ModelValidationError):
             pass
 
         e = TestValidationError('key', 'error message')

@@ -4,7 +4,7 @@ from mock import MagicMock, Mock, patch
 
 import brew_view
 from brewtils.models import Command, Instance, System
-from brewtils.schema_parser import BrewmasterSchemaParser
+from brewtils.schema_parser import SchemaParser
 
 
 @unittest.skip('TODO')
@@ -14,7 +14,7 @@ class InstanceAPITest(unittest.TestCase):
     def setUpClass(cls):
         # brew_view.load_app(environment="test")
 
-        cls.parser = BrewmasterSchemaParser()
+        cls.parser = SchemaParser()
 
     def setUp(self):
         self.app = brew_view.app.test_client()

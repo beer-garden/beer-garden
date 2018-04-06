@@ -7,7 +7,7 @@ from bg_utils.models import Instance
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view import thrift_context
 from brew_view.base_handler import BaseHandler
-from brewtils.errors import BrewmasterModelValidationError
+from brewtils.errors import ModelValidationError
 from brewtils.models import Events
 
 
@@ -136,15 +136,15 @@ class InstanceAPI(BaseHandler):
                     else:
                         error_msg = "Unsupported status value '%s'" % op.value
                         self.logger.warning(error_msg)
-                        raise BrewmasterModelValidationError('value', error_msg)
+                        raise ModelValidationError('value', error_msg)
                 else:
                     error_msg = "Unsupported path '%s'" % op.path
                     self.logger.warning(error_msg)
-                    raise BrewmasterModelValidationError('value', error_msg)
+                    raise ModelValidationError('value', error_msg)
             else:
                 error_msg = "Unsupported operation '%s'" % op.operation
                 self.logger.warning(error_msg)
-                raise BrewmasterModelValidationError('value', error_msg)
+                raise ModelValidationError('value', error_msg)
 
         if self.request.event.name:
             self.request.event_extras = {'instance': instance}

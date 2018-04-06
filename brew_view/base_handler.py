@@ -7,7 +7,7 @@ from tornado.web import HTTPError, RequestHandler
 
 import bg_utils
 import brew_view
-from brewtils.errors import BrewmasterModelError, BrewmasterModelValidationError
+from brewtils.errors import ModelError, ModelValidationError
 from brewtils.models import Event
 
 
@@ -21,7 +21,7 @@ class BaseHandler(RequestHandler):
 
         self.error_map = {
             MongoValidationError: {'status_code': 400},
-            BrewmasterModelError: {'status_code': 400},
+            ModelError: {'status_code': 400},
             bg_utils.bg_thrift.InvalidSystem: {'status_code': 400},
             DoesNotExist: {'status_code': 404, 'message': 'Resource does not exist'},
             NotUniqueError: {'status_code': 409, 'message': 'Resource already exists'},
@@ -54,7 +54,7 @@ class BaseHandler(RequestHandler):
             self.request.mime_type = content_type[0]
             if self.request.mime_type not in ['application/json',
                                               'application/x-www-form-urlencoded']:
-                raise BrewmasterModelValidationError('Unsupported or missing content-type header')
+                raise ModelValidationError('Unsupported or missing content-type header')
 
             # Attempt to parse out the charset and decode the body, default to utf-8
             charset = 'utf-8'

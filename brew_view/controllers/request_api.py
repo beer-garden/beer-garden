@@ -3,7 +3,7 @@ import logging
 from bg_utils.models import Request
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view.base_handler import BaseHandler
-from brewtils.errors import BrewmasterModelValidationError
+from brewtils.errors import ModelValidationError
 from brewtils.models import Events, Request as BrewtilsRequest
 
 
@@ -104,32 +104,32 @@ class RequestAPI(BaseHandler):
                     else:
                         error_msg = "Unsupported status value '%s'" % op.value
                         self.logger.warning(error_msg)
-                        raise BrewmasterModelValidationError(error_msg)
+                        raise ModelValidationError(error_msg)
                 elif op.path == '/output':
                     if req.output == op.value:
                         continue
 
                     if status_before in Request.COMPLETED_STATUSES:
-                        raise BrewmasterModelValidationError("Cannot update output for a request "
-                                                             "that is already completed")
+                        raise ModelValidationError("Cannot update output for a request "
+                                                   "that is already completed")
                     req.output = op.value
                 elif op.path == '/error_class':
                     if req.error_class == op.value:
                         continue
 
                     if status_before in Request.COMPLETED_STATUSES:
-                        raise BrewmasterModelValidationError("Cannot update error_class for a "
-                                                             "request that is already completed")
+                        raise ModelValidationError("Cannot update error_class for a "
+                                                   "request that is already completed")
                     req.error_class = op.value
                     self.request.event.error = True
                 else:
                     error_msg = "Unsupported path '%s'" % op.path
                     self.logger.warning(error_msg)
-                    raise BrewmasterModelValidationError(error_msg)
+                    raise ModelValidationError(error_msg)
             else:
                 error_msg = "Unsupported operation '%s'" % op.operation
                 self.logger.warning(error_msg)
-                raise BrewmasterModelValidationError(error_msg)
+                raise ModelValidationError(error_msg)
 
         req.save()
 
