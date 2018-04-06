@@ -7,7 +7,7 @@ from tornado.web import HTTPError, RequestHandler
 
 import bg_utils
 import brew_view
-from brewtils.errors import ModelError, ModelValidationError
+from brewtils.errors import ModelError, ModelValidationError, RequestPublishException
 from brewtils.models import Event
 
 
@@ -26,6 +26,7 @@ class BaseHandler(RequestHandler):
             DoesNotExist: {'status_code': 404, 'message': 'Resource does not exist'},
             NotUniqueError: {'status_code': 409, 'message': 'Resource already exists'},
 
+            RequestPublishException: {'status_code': 502},
             bg_utils.bg_thrift.BaseException: {'status_code': 502, 'message': 'An error occurred '
                                                                               'on the backend'},
             TException: {'status_code': 503, 'message': 'Could not connect to Bartender'},
