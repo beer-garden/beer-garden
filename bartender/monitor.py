@@ -28,8 +28,11 @@ class PluginStatusMonitor(StoppableThread):
         self.logger.info(self.display_name + " is stopped")
 
     def request_status(self):
-        self.clients['pika'].publish_request(self.status_request, routing_key='admin',
-                                             expiration=str(self.heartbeat_interval * 1000))
+        try:
+            self.clients['pika'].publish_request(self.status_request, routing_key='admin',
+                                                 expiration=str(self.heartbeat_interval * 1000))
+        except Exception as ex:
+            self.logger.warning("Unable to publish status request: %s", str(ex))
 
     def check_status(self):
         """Update instance status if necessary"""
