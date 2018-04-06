@@ -4,8 +4,9 @@ All notable changes should be documented in this file.
 
 
 ## [2.3.6]
-Brew-view 2.3.6, Bartender 2.3.5, BG-utils 2.3.3
 4/6/18
+
+Brew-view 2.3.6, Bartender 2.3.5, BG-utils 2.3.3
 #### Added Features
 - Using RabbitMQ publisher confirms when publishing requests (#37)
 - Brew-view accepts ca_cert, ca_path, and client_cert_verify configuration options (beer-garden/brew-view#43)
@@ -24,8 +25,9 @@ Brew-view 2.3.6, Bartender 2.3.5, BG-utils 2.3.3
 
 
 ## [2.3.5]
-Brew-view 2.3.5, Bartender 2.3.4, BG-utils 2.3.3
 4/3/18
+
+Brew-view 2.3.5, Bartender 2.3.4, BG-utils 2.3.3
 #### Added Features
 - Attempting to update a completed request without actually modifiying data is no longer an error (beer-garden/brew-view#49)
 
@@ -34,8 +36,9 @@ Brew-view 2.3.5, Bartender 2.3.4, BG-utils 2.3.3
 
 
 ## 2.3.3
-Brew-view 2.3.3, Bartender 2.3.3, BG-utils 2.3.2
 2/21/18
+
+Brew-view 2.3.3, Bartender 2.3.3, BG-utils 2.3.2
 #### Bug Fixes
 - Bartender shutdown will now be clean even before making Brew-view and RabbitMQ connections
 
@@ -45,8 +48,9 @@ Brew-view 2.3.3, Bartender 2.3.3, BG-utils 2.3.2
 
 
 ## 2.3.1
-Brew-view 2.3.1, Bartender 2.3.0, BG-utils 2.3.0
 2/5/18
+
+Brew-view 2.3.1, Bartender 2.3.0, BG-utils 2.3.0
 #### Bug Fixes
 - Fixing issue with manual request creation targeting incorrect system
 
@@ -285,5 +289,6 @@ Brew-view 2.3.1, Bartender 2.3.0, BG-utils 2.3.0
 - Support for easily generating logging and configuration files
 
 
-[Yapconf]: https://github.com/loganasherjones/yapconf
+[2.3.6]: https://github.com/beer-garden/beer-garden/compare/2.3.5...2.3.6
 [2.3.5]: https://github.com/beer-garden/beer-garden/compare/2.3.3...2.3.5
+[Yapconf]: https://github.com/loganasherjones/yapconf
