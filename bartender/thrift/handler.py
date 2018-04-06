@@ -12,7 +12,7 @@ import bartender._version
 import bg_utils
 from bg_utils.models import Instance, Request, System, StatusInfo
 from bg_utils.pika import get_routing_key, get_routing_keys
-from brewtils.errors import BrewmasterModelValidationError, BrewmasterRestError
+from brewtils.errors import ModelValidationError, RestError
 from brewtils.schema_parser import SchemaParser
 
 
@@ -40,8 +40,7 @@ class BartenderHandler(object):
         try:
             request = Request.find_or_none(request_id)
             if request is None:
-                raise BrewmasterModelValidationError("Could not find request with ID '%s'" %
-                                                     request_id)
+                raise ModelValidationError("Could not find request with ID '%s'" % request_id)
 
             # Validates the request based on what is in the database.
             # This includes the validation of the request parameters,
@@ -55,9 +54,7 @@ class BartenderHandler(object):
                       request.command)
                 raise bg_utils.bg_thrift.PublishException(msg)
 
-        except (mongoengine.ValidationError,
-                BrewmasterModelValidationError,
-                BrewmasterRestError) as ex:
+        except (mongoengine.ValidationError, ModelValidationError, RestError) as ex:
             self.logger.exception(ex)
             raise bg_utils.bg_thrift.InvalidRequest(request_id, str(ex))
 
