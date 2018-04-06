@@ -4,7 +4,7 @@ from mock import MagicMock, Mock, call, patch, PropertyMock
 
 from bartender.request_validator import RequestValidator
 from bg_utils.models import Command, Instance, Parameter, Request, System, Choices
-from brewtils.errors import BrewmasterModelValidationError
+from brewtils.errors import ModelValidationError
 
 
 class RequestTest(unittest.TestCase):
@@ -17,7 +17,7 @@ class RequestTest(unittest.TestCase):
     @patch('bg_utils.models.System.find_unique', Mock(return_value=None))
     def test_get_and_validate_system_no_system(self):
         req = Request(system='foo', command='bar', parameters={})
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_system, req)
 
     @patch('bg_utils.models.System.find_unique')
@@ -32,11 +32,11 @@ class RequestTest(unittest.TestCase):
         system = System(name="foo", instances=[Instance(name="instance1")])
         find_mock.return_value = system
         req = Request(system='foo', command='bar', instance_name='INVALID', parameters={})
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_system, req)
 
     def test_get_and_validate_command_none_provided(self):
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_command_for_system,
                           Request(system='foo', parameters={}), Mock())
 
@@ -63,7 +63,7 @@ class RequestTest(unittest.TestCase):
         command = Mock()
         type(command).name = mock_name
         system = Mock(commands=[command])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_command_for_system,
                           Request(system='foo', command='command2', parameters={}), system)
 
@@ -81,7 +81,7 @@ class RequestTest(unittest.TestCase):
         command = Mock()
         type(command).name = mock_name
         system = Mock(commands=[command])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_command_for_system,
                           Request(system='foo', command='command1', parameters={},
                                   command_type='BAD'), system)
@@ -100,7 +100,7 @@ class RequestTest(unittest.TestCase):
         command = Mock()
         type(command).name = mock_name
         system = Mock(commands=[command])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_command_for_system,
                           Request(system='foo', command='command1', parameters={},
                                   output_type='BAD'), system)
@@ -120,7 +120,7 @@ class RequestTest(unittest.TestCase):
     def test_get_and_validate_parameters_bad_key_in_request_parameters(self):
         req = Request(system='foo', command='command1', parameters={'bad_key': 'bad_value'})
         command = Mock(parameters=[])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_get_and_validate_parameters_for_command_required_key_not_provided(self):
@@ -129,7 +129,7 @@ class RequestTest(unittest.TestCase):
         command = Mock()
         type(command).name = mock_name
         command.parameters = [Mock(key='key1', optional=False, default=None, nullable=False)]
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_get_and_validate_parameters_for_command_with_nested_parameters_not_provided(self):
@@ -138,7 +138,7 @@ class RequestTest(unittest.TestCase):
         command_parameter = Mock(key="key1", multi=False, type="Dictionary",
                                  parameters=[nested_parameter])
         command = Mock(parameters=[command_parameter])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_get_and_validate_parameters_required_key_not_provided_but_default_provided(self):
@@ -182,14 +182,14 @@ class RequestTest(unittest.TestCase):
         req = Request(system='foo', command='command1', parameters={"key1": 'NOT A LIST'})
         command_parameter = Mock(key="key1", multi=True)
         command = Mock(parameters=[command_parameter])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_update_and_validate_parameter_extract_parameter_optional_and_no_default(self):
         req = Request(system='foo', command='command1', parameters={})
         command_parameter = Parameter(key="key1", multi=False, optional=True, default=None)
         command = Mock(parameters=[command_parameter])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_update_and_validate_parameter_extract_parameter_nullable_and_no_default(self):
@@ -203,7 +203,7 @@ class RequestTest(unittest.TestCase):
         req = Request(system='foo', command='command1', parameters={'key1': None})
         command_parameter = Mock(key="key1", multi=False, type="String", nullable=False)
         command = Mock(parameters=[command_parameter])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_parameter_based_on_type_good_string(self):
@@ -217,7 +217,7 @@ class RequestTest(unittest.TestCase):
         req = Request(system='foo', command='command1', parameters={'key1': 1})
         command_parameter = Mock(key="key1", multi=False, type="String")
         command = Mock(parameters=[command_parameter])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_parameter_based_on_type_good_integer(self):
@@ -231,7 +231,7 @@ class RequestTest(unittest.TestCase):
         req = Request(system='foo', command='command1', parameters={'key1': 1.1})
         command_parameter = Mock(key="key1", multi=False, type="Integer")
         command = Mock(parameters=[command_parameter])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_parameter_based_on_type_good_float(self):
@@ -266,7 +266,7 @@ class RequestTest(unittest.TestCase):
         req = Request(system='foo', command='command1', parameters={'key1': "not true or false"})
         command_parameter = Mock(key="key1", multi=False, type="Boolean")
         command = Mock(parameters=[command_parameter])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_parameter_based_on_type_good_dictionary(self):
@@ -289,21 +289,21 @@ class RequestTest(unittest.TestCase):
         req = Request(system='foo', command='command1', parameters={'key1': {'foo': 'bar'}})
         command_parameter = Mock(key="key1", multi=False, type="UH OH THIS IS BAD")
         command = Mock(parameters=[command_parameter])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_parameter_based_on_type_type_conversion_error(self):
         req = Request(system='foo', command='command1', parameters={'key1': ["this isnt a int"]})
         command_parameter = Mock(key="key1", multi=False, type="Integer")
         command = Mock(parameters=[command_parameter])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_parameter_based_on_type_value_conversion_error(self):
         req = Request(system='foo', command='command1', parameters={'key1': "this isn't an int"})
         command_parameter = Mock(key="key1", multi=False, type="Integer")
         command = Mock(parameters=[command_parameter])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_value_in_choices_no_choices(self):
@@ -324,7 +324,7 @@ class RequestTest(unittest.TestCase):
         command_parameter = Mock(key='key1', multi=False, type='String', optional=False,
                                  choices=Mock(type='static', value=['not value']))
         command = Mock(parameters=[command_parameter])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_value_in_choices_multi_valid_choice(self):
@@ -339,7 +339,7 @@ class RequestTest(unittest.TestCase):
         command_parameter = Mock(key='key1', multi=True, type='String', optional=False,
                                  choices=Mock(type='static', value=['v1', 'v3']))
         command = Mock(parameters=[command_parameter])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_value_in_choices_optional_none_allowed(self):
@@ -369,7 +369,7 @@ class RequestTest(unittest.TestCase):
         bad_req = Request(system='foo', command='command1', parameters={'key1': '4', 'key2': 'a'})
 
         self.validator.get_and_validate_parameters(good_req, command)
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, bad_req, command)
 
     def test_validate_choices_static_dictionary_no_key_reference(self):
@@ -388,7 +388,7 @@ class RequestTest(unittest.TestCase):
 
         req = Request(system='foo', command='command1', parameters={'key1': '1', 'key2': 'a'})
 
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_choicesno_key_reference_parameter_in_request_null_in_choices(self):
@@ -427,7 +427,7 @@ class RequestTest(unittest.TestCase):
 
         req = Request(system='foo', command='command1', parameters={'key1': '1'})
 
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_choices_static_dictionary_invalid_key_reference(self):
@@ -447,7 +447,7 @@ class RequestTest(unittest.TestCase):
 
         req = Request(system='foo', command='command1', parameters={'key1': '1', 'key2': 'c'})
 
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_choices_static_bad_type(self):
@@ -460,7 +460,7 @@ class RequestTest(unittest.TestCase):
 
         req = Request(system='foo', command='command1', parameters={'key1': '1'})
 
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_url_choices(self):
@@ -505,7 +505,7 @@ class RequestTest(unittest.TestCase):
         command = Mock(parameters=[Parameter(key='key1', optional=False,
                                              choices=Choices(type='command', value=1))])
 
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, request, command)
 
     def test_validate_command_choices_simple_list_response(self):
@@ -551,7 +551,7 @@ class RequestTest(unittest.TestCase):
                                                                          value='command_name'),
                                              optional=False)])
 
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, request, command)
 
     def test_validate_command_choices_empty_list_output(self):
@@ -565,7 +565,7 @@ class RequestTest(unittest.TestCase):
                                                                          value='command_name'),
                                              optional=False)])
 
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, request, command)
 
     def test_validate_command_choices_bad_output_type(self):
@@ -579,7 +579,7 @@ class RequestTest(unittest.TestCase):
                                                                          value='command_name'),
                                              optional=False)])
 
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, request, command)
 
     def test_validate_maximum_sequence(self):
@@ -593,7 +593,7 @@ class RequestTest(unittest.TestCase):
         command_parameter = Parameter(key='key1', multi=False, type='String', optional=False,
                                       maximum=3)
         command = Command('test', parameters=[command_parameter])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_maximum_non_sequence(self):
@@ -607,7 +607,7 @@ class RequestTest(unittest.TestCase):
         command_parameter = Parameter(key='key1', multi=False, type='Integer', optional=False,
                                       maximum=3)
         command = Command('test', parameters=[command_parameter])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_minimum_sequence(self):
@@ -621,7 +621,7 @@ class RequestTest(unittest.TestCase):
         command_parameter = Parameter(key='key1', multi=False, type='String', optional=False,
                                       minimum=10)
         command = Command('test', parameters=[command_parameter])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_minimum_non_sequence(self):
@@ -635,7 +635,7 @@ class RequestTest(unittest.TestCase):
         command_parameter = Parameter(key='key1', multi=False, type='Integer', optional=False,
                                       minimum=10)
         command = Command('test', parameters=[command_parameter])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_regex(self):
@@ -649,7 +649,7 @@ class RequestTest(unittest.TestCase):
         command_parameter = Parameter(key='key1', multi=False, type='String', optional=False,
                                       regex=r'^Hello.*')
         command = Command('test', parameters=[command_parameter])
-        self.assertRaises(BrewmasterModelValidationError,
+        self.assertRaises(ModelValidationError,
                           self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_regex_nullable(self):

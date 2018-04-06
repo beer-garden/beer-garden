@@ -6,7 +6,7 @@ from pyrabbit2.http import HTTPError
 
 import bg_utils
 from bartender.thrift.handler import BartenderHandler
-from brewtils.errors import BrewmasterModelValidationError
+from brewtils.errors import ModelValidationError
 
 
 class BartenderHandlerTest(unittest.TestCase):
@@ -31,7 +31,7 @@ class BartenderHandlerTest(unittest.TestCase):
 
     @patch('bg_utils.models.Request.find_or_none', Mock())
     def test_process_request_bad_backend(self):
-        self.request_validator.validate_request = Mock(side_effect=BrewmasterModelValidationError)
+        self.request_validator.validate_request = Mock(side_effect=ModelValidationError)
         self.assertRaises(bg_utils.bg_thrift.InvalidRequest, self.handler.processRequest, 'id')
 
     @patch('bg_utils.models.Request.find_or_none')

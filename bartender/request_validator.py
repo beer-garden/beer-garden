@@ -10,7 +10,7 @@ from requests import Session
 from bg_utils.models import System, Choices
 from brewtils import get_bg_connection_parameters
 from brewtils.choices import parse
-from brewtils.errors import BrewmasterModelValidationError
+from brewtils.errors import ModelValidationError
 from brewtils.rest.system_client import SystemClient
 
 
@@ -51,16 +51,16 @@ class RequestValidator(object):
 
         :param request: The request to validate
         :return: The system corresponding to this Request
-        :raises BrewmasterModelValidationError: There is no system that corresponds to this Request
+        :raises ModelValidationError: There is no system that corresponds to this Request
         """
         system = System.find_unique(request.system, request.system_version)
         if system is None:
-            raise BrewmasterModelValidationError(
+            raise ModelValidationError(
                 "Could not find System named '%s' matching version '%s'" %
                 (request.system, request.system_version))
 
         if request.instance_name not in system.instance_names:
-            raise BrewmasterModelValidationError(
+            raise ModelValidationError(
                 "Could not find instance with name '%s' in system '%s'" %
                 (request.instance_name, system.name))
 
@@ -73,7 +73,7 @@ class RequestValidator(object):
         :param request: The request to validate
         :param system: Specifies a System to use. If None a system lookup will be attempted.
         :return: The database command
-        :raises BrewmasterValidationError: if the request or command is invalid
+        :raises ValidationError: if the request or command is invalid
         """
         self.logger.debug("Getting and Validating Command for System")
         if system is None:
@@ -82,7 +82,7 @@ class RequestValidator(object):
 
         if request.command is None:
             self.logger.error("Could not validate command because it was none")
-            raise BrewmasterModelValidationError("Could not validate command because it was None.")
+            raise ModelValidationError("Could not validate command because it was None.")
 
         self.logger.debug("Looking through Command Names to find the Command Specified.")
         command_names = []
@@ -96,7 +96,7 @@ class RequestValidator(object):
                     self.logger.error("Command Type for Request was %s but the command "
                                       "specified the command_type as %s" %
                                       (request.command_type, command.command_type))
-                    raise BrewmasterModelValidationError(
+                    raise ModelValidationError(
                         "Command Type for Request was %s but the command specified "
                         "the type as %s" %
                         (request.command_type, command.command_type))
@@ -107,7 +107,7 @@ class RequestValidator(object):
                     self.logger.error("Output Type for Request was %s but the command specified "
                                       "the output_type as %s" %
                                       (request.output_type, command.output_type))
-                    raise BrewmasterModelValidationError(
+                    raise ModelValidationError(
                         "Output Type for Request was %s but the command specified "
                         "the type as %s" %
                         (request.output_type, command.output_type))
@@ -118,7 +118,7 @@ class RequestValidator(object):
 
         self.logger.error("No Command with name: %s could be found. Valid Commands for %s "
                           "are: %s" % (request.command, system.name, command_names))
-        raise BrewmasterModelValidationError(
+        raise ModelValidationError(
             "No Command with name: %s could be found. Valid Commands for %s are: %s" %
             (request.command, system.name, command_names))
 
@@ -187,7 +187,7 @@ class RequestValidator(object):
                 elif isinstance(choices.value, dict):
                     key = choices.details.get('key_reference')
                     if key is None:
-                        raise BrewmasterModelValidationError(
+                        raise ModelValidationError(
                             "Unable to validate choices for parameter '%s' - Choices"
                             " with a dictionary value must specify a key_reference" %
                             command_parameter.key)
@@ -197,12 +197,12 @@ class RequestValidator(object):
 
                     allowed_values = choices.value.get(key_reference_value)
                     if allowed_values is None:
-                        raise BrewmasterModelValidationError(
+                        raise ModelValidationError(
                             "Unable to validate choices for parameter '%s' - Choices"
                             " dictionary doesn't contain an entry with key '%s'" %
                             (command_parameter.key, key_reference_value))
                 else:
-                    raise BrewmasterModelValidationError(
+                    raise ModelValidationError(
                         "Unable to validate choices for parameter '%s' - Choices value"
                         " must be a list or dictionary " % command_parameter.key)
             elif choices.type == 'url':
@@ -235,14 +235,14 @@ class RequestValidator(object):
                                                             **map_param_values(
                                                                 parsed_value['args']))
                 else:
-                    raise BrewmasterModelValidationError(
+                    raise ModelValidationError(
                         "Unable to validate choices for parameter '%s' - Choices value"
                         " must be a string or dictionary " % command_parameter.key)
 
                 parsed_output = json.loads(response.output)
                 if isinstance(parsed_output, list):
                     if len(parsed_output) < 1:
-                        raise BrewmasterModelValidationError(
+                        raise ModelValidationError(
                             "Unable to validate choices for parameter '%s' - Result "
                             "of choices query was empty list" % command_parameter.key)
 
@@ -251,11 +251,11 @@ class RequestValidator(object):
                     else:
                         allowed_values = parsed_output
                 else:
-                    raise BrewmasterModelValidationError(
+                    raise ModelValidationError(
                         "Unable to validate choices for parameter '%s' - Result of "
                         " choices query must be a list" % command_parameter.key)
             else:
-                raise BrewmasterModelValidationError(
+                raise ModelValidationError(
                     "Unable to validate choices for parameter '%s' - No valid type "
                     "specified (valid types are %s)" %
                     (command_parameter.key, Choices.TYPES))
@@ -267,14 +267,14 @@ class RequestValidator(object):
                                "Valid choices are: %s" %
                                (single_value, command_parameter.key, allowed_values))
                         self.logger.error(msg)
-                        raise BrewmasterModelValidationError(msg)
+                        raise ModelValidationError(msg)
             else:
                 if value not in allowed_values:
                     msg = ("Value '%s' is not a valid choice for parameter with key '%s'. "
                            "Valid choices are: %s" %
                            (value, command_parameter.key, allowed_values))
                     self.logger.error(msg)
-                    raise BrewmasterModelValidationError(msg)
+                    raise ModelValidationError(msg)
 
     def _validate_maximum(self, value, command_parameter):
         """Validate that the value(s) are below the specified maximum"""
@@ -286,14 +286,14 @@ class RequestValidator(object):
                                      "for parameter %s" %
                                      (len(value), command_parameter.maximum, command_parameter.key))
                         self.logger.error(error_msg)
-                        raise BrewmasterModelValidationError(error_msg)
+                        raise ModelValidationError(error_msg)
                 else:
                     if value > command_parameter.maximum:
                         error_msg = ("Value %s is greater than the maximum allowed value (%s) "
                                      "for parameter %s" %
                                      (value, command_parameter.maximum, command_parameter.key))
                         self.logger.error(error_msg)
-                        raise BrewmasterModelValidationError(error_msg)
+                        raise ModelValidationError(error_msg)
 
     def _validate_minimum(self, value, command_parameter):
         """Validate that the value(s) are above the specified minimum"""
@@ -305,14 +305,14 @@ class RequestValidator(object):
                                      "for parameter %s" %
                                      (len(value), command_parameter.minimum, command_parameter.key))
                         self.logger.error(error_msg)
-                        raise BrewmasterModelValidationError(error_msg)
+                        raise ModelValidationError(error_msg)
                 else:
                     if value < command_parameter.minimum:
                         error_msg = ("Value %s is less than the minimum allowed value (%s) "
                                      "for parameter %s" %
                                      (value, command_parameter.minimum, command_parameter.key))
                         self.logger.error(error_msg)
-                        raise BrewmasterModelValidationError(error_msg)
+                        raise ModelValidationError(error_msg)
 
     def _validate_regex(self, value, command_parameter):
         """Validate that the value matches the regex"""
@@ -322,7 +322,7 @@ class RequestValidator(object):
                     error_msg = ("Value %s does not match regular expression %s" %
                                  (value, command_parameter.regex))
                     self.logger.error(error_msg)
-                    raise BrewmasterModelValidationError(error_msg)
+                    raise ModelValidationError(error_msg)
 
     def _extract_parameter_value_from_request(self, request, command_parameter, request_parameters,
                                               command):
@@ -336,9 +336,9 @@ class RequestValidator(object):
         if command_parameter.multi:
             request_values = request_value
             if not isinstance(request_values, list):
-                raise BrewmasterModelValidationError("%s was specified as a list, "
-                                                     "but was not provided as such" %
-                                                     command_parameter.key)
+                raise ModelValidationError("%s was specified as a list, "
+                                           "but was not provided as such" %
+                                           command_parameter.key)
 
             value_to_return = []
             for value in request_values:
@@ -362,7 +362,7 @@ class RequestValidator(object):
                     and command_parameter.default is None):
                 self.logger.error("Required key: %s not provided in request. Parameters are: %s" %
                                   (command_parameter.key, request.parameters))
-                raise BrewmasterModelValidationError(
+                raise ModelValidationError(
                     "Required key: %s not provided in request. Parameters are: %s" % (
                         command_parameter.key, request.parameters))
 
@@ -377,7 +377,7 @@ class RequestValidator(object):
                 self.logger.error(
                     "Unknown Key: %s provided in the parameters. Valid Keys are: %s" %
                     (key, valid_keys))
-                raise BrewmasterModelValidationError(
+                raise ModelValidationError(
                     "Unknown Key: %s provided in the parameters. Valid Keys are: %s" %
                     (key, valid_keys))
 
@@ -387,9 +387,9 @@ class RequestValidator(object):
 
         try:
             if value is None and not parameter.nullable:
-                raise BrewmasterModelValidationError("There is no value for parameter '%s' "
-                                                     "and this field is not nullable." %
-                                                     parameter.key)
+                raise ModelValidationError("There is no value for parameter '%s' "
+                                           "and this field is not nullable." %
+                                           parameter.key)
             elif parameter.type.upper() == "STRING":
                 if isinstance(value, six.string_types):
                     return str(value)
@@ -420,15 +420,15 @@ class RequestValidator(object):
             elif parameter.type.upper() == "DATETIME":
                 return int(value)
             else:
-                raise BrewmasterModelValidationError(
+                raise ModelValidationError(
                     "Unknown type for parameter. Please contact a system administrator.")
         except TypeError as ex:
             self.logger.exception(ex)
-            raise BrewmasterModelValidationError(
+            raise ModelValidationError(
                 "Value for key: %s is not the correct type. Should be: %s" %
                 (parameter.key, parameter.type))
         except ValueError as ex:
             self.logger.exception(ex)
-            raise BrewmasterModelValidationError(
+            raise ModelValidationError(
                 "Value for key: %s is not the correct type. Should be: %s" %
                 (parameter.key, parameter.type))
