@@ -81,9 +81,22 @@ class RequestListAPITest(TestHandlerBase):
 
         response = self.fetch('/api/v1/requests', method='POST', body='',
                               headers={'content-type': 'application/json'})
-        self.assertGreaterEqual(response.code, 400)
+        self.assertEqual(response.code, 400)
         self.assertTrue(self.request_mock.delete.called)
         self.assertTrue(self.client_mock.processRequest.called)
+
+    @patch('brew_view.controllers.request_list_api.BeerGardenSchemaParser.parse_request')
+    @patch('brew_view.controllers.request_list_api.thrift_context')
+    def test_post_publishing_exception(self, context_mock, parse_mock):
+        context_mock.return_value = self.fake_context
+        self.client_mock.processRequest.return_value = self.future_mock
+        self.future_mock.set_exception(bg_utils.bg_thrift.PublishException())
+        parse_mock.return_value = self.request_mock
+
+        response = self.fetch('/api/v1/requests', method='POST', body='',
+                              headers={'content-type': 'application/json'})
+        self.assertEqual(response.code, 502)
+        self.assertTrue(self.request_mock.delete.called)
 
     @patch('brew_view.controllers.request_list_api.BeerGardenSchemaParser.parse_request')
     @patch('brew_view.controllers.request_list_api.thrift_context')
@@ -94,7 +107,7 @@ class RequestListAPITest(TestHandlerBase):
 
         response = self.fetch('/api/v1/requests', method='POST', body='',
                               headers={'content-type': 'application/json'})
-        self.assertGreaterEqual(response.code, 400)
+        self.assertEqual(response.code, 500)
         self.assertTrue(self.request_mock.delete.called)
 
     def test_post_no_content_type(self):
