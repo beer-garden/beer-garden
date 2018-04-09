@@ -65,3 +65,6 @@ target/
 
 # node files
 node_modules/
+
+# IDE
+.idea/
