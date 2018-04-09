@@ -63,3 +63,6 @@ target/
 # python configuration file
 .python-version
 .venv
+
+# IDE
+.idea/
