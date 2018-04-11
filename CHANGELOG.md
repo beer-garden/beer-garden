@@ -3,7 +3,7 @@
 All notable changes should be documented in this file.
 
 
-## [2.3.6]
+## 2.3.6
 4/6/18
 
 Brew-view 2.3.6, Bartender 2.3.5, BG-utils 2.3.3
@@ -24,7 +24,7 @@ Brew-view 2.3.6, Bartender 2.3.5, BG-utils 2.3.3
 - Using pytest instead of nose to run tests
 
 
-## [2.3.5]
+## 2.3.5
 4/3/18
 
 Brew-view 2.3.5, Bartender 2.3.4, BG-utils 2.3.3
@@ -289,6 +289,4 @@ Brew-view 2.3.1, Bartender 2.3.0, BG-utils 2.3.0
 - Support for easily generating logging and configuration files
 
 
-[2.3.6]: https://github.com/beer-garden/beer-garden/compare/2.3.5...2.3.6
-[2.3.5]: https://github.com/beer-garden/beer-garden/compare/2.3.3...2.3.5
 [Yapconf]: https://github.com/loganasherjones/yapconf
