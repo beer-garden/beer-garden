@@ -14,3 +14,4 @@ from brew_view.controllers.misc_controllers import ConfigHandler, VersionHandler
     SwaggerConfigHandler
 from brew_view.controllers.logging_api import LoggingConfigAPI
 from brew_view.controllers.event_api import EventPublisherAPI
+from brew_view.controllers.login import BasicAuthHandler

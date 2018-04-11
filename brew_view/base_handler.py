@@ -1,3 +1,4 @@
+import base64
 import re
 import socket
 
@@ -13,6 +14,8 @@ from brewtils.models import Event
 
 class BaseHandler(RequestHandler):
     """Base handler from which all handlers inherit. Enables CORS and error handling."""
+
+    passwords = {'matt': 'password', 'logan': 'password'}
 
     def __init__(self, *args, **kwargs):
         super(BaseHandler, self).__init__(*args, **kwargs)
@@ -33,6 +36,11 @@ class BaseHandler(RequestHandler):
             socket.timeout: {'status_code': 504, 'message': 'Backend request timed out'},
         }
 
+    def _request_auth(self):
+        self.set_header('WWW-Authenticate', 'Basic realm=beergarden')
+        self.set_status(401)
+        self.finish()
+
     def set_default_headers(self):
         """Enable CORS by setting the access control header"""
 
@@ -41,12 +49,26 @@ class BaseHandler(RequestHandler):
             self.set_header("Access-Control-Allow-Headers", "Content-Type")
             self.set_header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
 
+    def get_current_user(self):
+        user_cookie = self.get_secure_cookie('user')
+        return user_cookie.decode('utf-8') if user_cookie else None
+
     def prepare(self):
         """Called before each verb handler"""
-
         # This is used for sending event notifications
         self.request.event = Event()
         self.request.event_extras = {}
+
+        auth_header = self.request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Basic '):
+            auth_decoded = base64.b64decode(auth_header[6:]).decode()
+            username, password = auth_decoded.split(':')
+
+            if self.passwords[username] == password:
+                self.current_user = username
+                self.set_secure_cookie("user", username)
+            else:
+                raise HTTPError(403, reason='Nah son')
 
         content_type = self.request.headers.get('content-type', '')
         if self.request.method.upper() in ['POST', 'PATCH'] and content_type:
