@@ -1,5 +1,6 @@
 install: pip install -U tox-travis codecov
 language: python
+cache: pip
 python:
 - 3.6
 - 3.5
