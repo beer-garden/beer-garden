@@ -16,7 +16,7 @@ PLUGIN_MAP = {
     'dynamic': {'running': False},
     'echo': {'running': False},
     'error': {'running': False},
-    'multi-sleeper': {'running': False},
+    'concurrent-sleeper': {'running': False},
     'sleeper': {'running': False}
 }
 

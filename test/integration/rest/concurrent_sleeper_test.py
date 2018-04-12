@@ -3,13 +3,13 @@ import time
 from helper import RequestGenerator, setup_easy_client, wait_for_in_progress, COMPLETED_STATUSES
 
 
-class MultiSleeperTest(unittest.TestCase):
+class ConcurrentSleeperTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.easy_client = setup_easy_client()
 
     def setUp(self):
-        self.system = "multi-sleeper"
+        self.system = "concurrent-sleeper"
         self.command = "sleep"
         self.system_version = "1.0.0.dev0"
         self.instance_name = "default"
