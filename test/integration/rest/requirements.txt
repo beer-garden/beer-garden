@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file requirements.txt requirements.in
 #
--e git+https://github.com/beer-garden/brewtils@master#egg=brewtils
+https://github.com/beer-garden/brewtils/archive/master.zip
 astroid==1.5.3            # via pylint
 certifi==2017.7.27.1      # via requests
 chardet==3.0.4            # via requests

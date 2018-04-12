@@ -12,7 +12,7 @@ from urllib3.exceptions import TimeoutError
 COMPLETED_STATUSES = ['SUCCESS', 'ERROR', 'CANCELED']
 CONFIG = None
 PLUGIN_MAP = {
-    'complex': {'version': '1.0.0.dev', 'running': False},
+    'complex': {'running': False},
     'dynamic': {'running': False},
     'echo': {'running': False},
     'error': {'running': False},

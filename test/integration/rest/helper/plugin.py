@@ -1,6 +1,8 @@
-import helper
+import os
 import time
 from threading import Thread
+
+import helper
 from brewtils.plugin import RemotePlugin
 from brewtils.decorators import system, parameter
 
@@ -50,14 +52,11 @@ def stop_plugin(plugin):
 
 def create_plugin(name, version, clazz, **kwargs):
     client = clazz()
-    if helper.CONFIG is None:
-        helper.get_config()
-    return RemotePlugin(client=client,
-                        bg_host=helper.CONFIG['host'],
-                        bg_port=helper.CONFIG['port'],
-                        ssl_enabled=False,
-                        name=name,
-                        version=version, **kwargs)
+    config = helper.get_config()
+    host = os.environ.get("BG_TEST_HOST", config['host'])
+    port = int(os.environ.get("BG_TEST_PORT", config['port']))
+    return RemotePlugin(client=client, bg_host=host, bg_port=port,
+                        ssl_enabled=False, name=name, version=version, **kwargs)
 
 
 @system

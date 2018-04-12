@@ -11,7 +11,7 @@ class ComplexText(unittest.TestCase):
 
     def setUp(self):
         self.system = "complex"
-        self.system_version = "1.0.0.dev"
+        self.system_version = "1.0.0.dev0"
         self.instance_name = "c1"
         self.request_generator = RequestGenerator(system=self.system, system_version=self.system_version,
                                                   instance_name=self.instance_name)

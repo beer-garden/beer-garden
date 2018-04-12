@@ -11,7 +11,7 @@ class SleeperTest(unittest.TestCase):
     def setUp(self):
         self.system = "sleeper"
         self.command = "sleep"
-        self.system_version = "1.0.0.dev"
+        self.system_version = "1.0.0.dev0"
         self.instance_name = "default"
         self.request_generator = RequestGenerator(system=self.system, system_version=self.system_version,
                                                   command=self.command,

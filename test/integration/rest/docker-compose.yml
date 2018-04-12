@@ -1,9 +1,21 @@
-version: '2'
+version: '3.5'
+
+x-definitions: &env
+    BG_AMQ_ADMIN_HOST: rabbitmq
+    BG_AMQ_ADMIN_USER: beer_garden
+    BG_AMQ_ADMIN_PASSWORD: password
+    BG_AMQ_HOST: rabbitmq
+    BG_AMQ_USER: beer_garden
+    BG_AMQ_PASSWORD: password
+    BG_AMQ_PUBLISH_HOST: rabbitmq
+    BG_BACKEND_HOST: bartender
+    BG_DB_HOST: mongodb
+    BG_WEB_HOST: brew-view
 
 services:
     test:
         build: .
-        command: nosetests
+        command: python -B -m nose
         networks:
             - bg-network
         volumes:
@@ -16,26 +28,31 @@ services:
             - bartender
 
     brew-view:
-        image: beer-garden/brew-view:develop
-        command: brew-view -c /conf/brew-view-config.json
+        image: bgio/brew-view:unstable
+        build:
+            context: ../../../brew-view
+            dockerfile: Dockerfile.unstable
+        environment:
+            <<: *env
         networks:
             - bg-network
         ports:
             - "2337:2337"
-        volumes:
-            - ./conf:/conf
         depends_on:
             - mongodb
             - rabbitmq
 
     bartender:
-        image: beer-garden/bartender:develop
-        command: bartender -c /conf/bartender-config.json
-        networks:
-            - bg-network
+        image: bgio/bartender:unstable
+        build:
+            context: ../../../bartender
+            dockerfile: Dockerfile.unstable
+        environment:
+            <<: *env
         volumes:
             - ./plugins:/plugins
-            - ./conf:/conf
+        networks:
+            - bg-network
         depends_on:
             - mongodb
             - rabbitmq

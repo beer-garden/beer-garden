@@ -4,7 +4,7 @@ from helper import setup_easy_client, RequestGenerator, wait_for_response
 from helper.assertions import *
 
 
-class EchoClientTest(unittest.TestCase):
+class EchoTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -12,7 +12,7 @@ class EchoClientTest(unittest.TestCase):
 
     def setUp(self):
         self.system = "echo"
-        self.system_version = "1.0.0.dev"
+        self.system_version = "1.0.0.dev0"
         self.instance_name = "default"
         self.command = "say"
         self.request_generator = RequestGenerator(system=self.system, system_version=self.system_version,
