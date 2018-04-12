@@ -2,6 +2,7 @@ install:
   - pip install -U tox-travis codecov
   - npm install --cwd brew_view/static --prefix brew_view/static eslint eslint-config-google
 language: python
+cache: pip
 python:
   - 3.6
   - 3.5
