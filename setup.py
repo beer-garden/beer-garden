@@ -33,8 +33,8 @@ setup(
     ],
     extras_require={
         ':python_version=="2.7"': [
-            'futures==3.1.1',
-            'subprocess32==3.2.7',
+            'futures>=3.1.1',
+            'subprocess32>=3.2.7',
         ]
     },
     classifiers=[
