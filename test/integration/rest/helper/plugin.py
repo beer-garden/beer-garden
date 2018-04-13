@@ -1,4 +1,3 @@
-import os
 import time
 from threading import Thread
 
@@ -86,8 +85,10 @@ class TestPluginV2(object):
 @system
 class TestPluginV1BetterDescriptions(object):
 
-    @parameter(key="x", type="Integer", description="X, which represents an integer")
-    @parameter(key="y", type="Integer", description="Y, will be added to X (also an integer)")
+    @parameter(key="x", type="Integer",
+               description="X, which represents an integer")
+    @parameter(key="y", type="Integer",
+               description="Y, will be added to X (also an integer)")
     def add(self, x, y):
         """Add two numbers together, this description is much better"""
         return x + y

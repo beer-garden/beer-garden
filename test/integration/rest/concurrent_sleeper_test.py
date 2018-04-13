@@ -1,24 +1,20 @@
-import unittest
+import pytest
 import time
+
 from helper import RequestGenerator, setup_easy_client, wait_for_in_progress, COMPLETED_STATUSES
 
 
-class ConcurrentSleeperTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.easy_client = setup_easy_client()
+@pytest.fixture(scope="class")
+def system_spec():
+    return {'system': 'concurrent-sleeper', 'system_version': '1.0.0.dev0',
+            'instance_name': 'default', 'command': 'sleep'}
 
-    def setUp(self):
-        self.system = "concurrent-sleeper"
-        self.command = "sleep"
-        self.system_version = "1.0.0.dev0"
-        self.instance_name = "default"
-        self.request_generator = RequestGenerator(system=self.system, system_version=self.system_version,
-                                                  command=self.command,
-                                                  instance_name=self.instance_name)
+
+@pytest.mark.usefixtures('easy_client', 'request_generator')
+class TestConcurrentSleeper(object):
 
     def test_process_multiple_request(self):
-        """This tests ensures that a multi-threaded plugin can process and complete multiple-requests at once"""
+        """A plugin with max_concurrent > 1 can process more than one request at a time."""
 
         # The amount here means that it is impossible for this test to complete in less than 2 seconds.
         amounts = [2, 1]
@@ -33,7 +29,7 @@ class ConcurrentSleeperTest(unittest.TestCase):
 
         # Now that the second request is in progress, the first one should still be in progress
         first_request = self.easy_client.find_unique_request(id=first_request.id)
-        self.assertEqual(first_request.status, "IN_PROGRESS")
+        assert first_request.status == "IN_PROGRESS"
 
         # Now we go through and wait for both requests to be finished.
         completed = False
@@ -49,7 +45,3 @@ class ConcurrentSleeperTest(unittest.TestCase):
             time_waited += 0.1
             if time_waited > total_timeout:
                 raise ValueError("Waited too long for the requests to complete.")
-
-
-if __name__ == '__main__':
-    unittest.main()

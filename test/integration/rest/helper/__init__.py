@@ -1,12 +1,10 @@
 import json
-import os
 import time
 import re
 
 from brewtils import get_easy_client, load_config
-from brewtils.errors import BrewmasterValidationError, BrewmasterSaveError
+from brewtils.errors import ValidationError, SaveError
 from brewtils.models import PatchOperation
-from brewtils.rest.easy_client import EasyClient
 from urllib3.exceptions import TimeoutError
 
 
@@ -127,9 +125,9 @@ def stop_system(client, system, timeout=1, max_delay=1):
 def stop_instance(client, instance, timeout=1, max_delay=1):
     response = client.client.patch_instance(instance.id, client.parser.serialize_patch(PatchOperation('stop')))
     if 400 <= response.status_code < 500:
-        raise BrewmasterValidationError(response.json())
+        raise ValidationError(response.json())
     elif response.status_code >= 500:
-        raise BrewmasterSaveError(response.json())
+        raise SaveError(response.json())
     else:
         instance = client.parser.parse_instance(response.json())
 
@@ -164,7 +162,7 @@ def get_config():
         try:
             with open('config.json') as config_file:
                 file_config = json.load(config_file)
-        except:
+        except Exception:
             file_config = {}
 
         CONFIG = load_config(**file_config)

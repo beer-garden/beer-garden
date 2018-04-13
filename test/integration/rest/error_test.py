@@ -1,23 +1,17 @@
-import unittest
 import json
+import pytest
 
 from helper import RequestGenerator, setup_easy_client, wait_for_response
-from helper.assertions import *
+from helper.assertion import assert_errored_request
+
+@pytest.fixture(scope="class")
+def system_spec():
+    return {'system': 'error', 'system_version': '1.0.0.dev0', 'instance_name': 'default',
+            'command': 'string_error_message'}
 
 
-class ErrorTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.easy_client = setup_easy_client()
-
-    def setUp(self):
-        self.system = "error"
-        self.command = "string_error_message"
-        self.system_version = "1.0.0.dev0"
-        self.instance_name = "default"
-        self.request_generator = RequestGenerator(system=self.system, system_version=self.system_version,
-                                                  command=self.command,
-                                                  instance_name=self.instance_name)
+@pytest.mark.usefixtures('easy_client', 'request_generator')
+class TestError(object):
 
     def test_error_on_request(self):
         request = self.request_generator.generate_request()
@@ -28,8 +22,4 @@ class ErrorTest(unittest.TestCase):
         request = self.request_generator.generate_request(command="error_string_output_type_json")
         response = wait_for_response(self.easy_client, request)
         assert_errored_request(response)
-        self.assertDictEqual({"message": "This is a string", "attributes": {}}, json.loads(response.output))
-
-
-if __name__ == '__main__':
-    unittest.main()
+        assert {"message": "This is a string", "attributes": {}} == json.loads(response.output)

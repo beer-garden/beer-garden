@@ -1,24 +1,20 @@
-import unittest
+import pytest
 import time
+
 from helper import RequestGenerator, setup_easy_client, wait_for_in_progress, COMPLETED_STATUSES
 
 
-class SleeperTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.easy_client = setup_easy_client()
+@pytest.fixture(scope="class")
+def system_spec():
+    return {'system': 'sleeper', 'system_version': '1.0.0.dev0', 'instance_name': 'default',
+            'command': 'sleep'}
 
-    def setUp(self):
-        self.system = "sleeper"
-        self.command = "sleep"
-        self.system_version = "1.0.0.dev0"
-        self.instance_name = "default"
-        self.request_generator = RequestGenerator(system=self.system, system_version=self.system_version,
-                                                  command=self.command,
-                                                  instance_name=self.instance_name)
+
+@pytest.mark.usefixtures('easy_client', 'request_generator')
+class TestSleeper(object):
 
     def test_only_process_single_request_at_a_time(self):
-        """This tests ensures that a single-threaded plugin cannot process more than one request at a time."""
+        """A single-threaded plugin shouldn't process more than one request at a time."""
 
         # The amount here means that it is impossible for this test to complete in less than 2.1 seconds.
         amounts = [2, 0.1]
@@ -52,7 +48,3 @@ class SleeperTest(unittest.TestCase):
             time_waited += 0.1
             if time_waited > total_timeout:
                 raise ValueError("Waited too long for the requests to complete.")
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -1,20 +1,17 @@
-import unittest
 import json
+import pytest
+
 from helper import RequestGenerator, setup_easy_client, wait_for_response
-from helper.assertions import *
+from helper.assertion import assert_successful_request, assert_validation_error
 
 
-class ComplexText(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.easy_client = setup_easy_client()
+@pytest.fixture(scope="class")
+def system_spec():
+    return {'system': 'complex', 'system_version': '1.0.0.dev0', 'instance_name': 'c1'}
 
-    def setUp(self):
-        self.system = "complex"
-        self.system_version = "1.0.0.dev0"
-        self.instance_name = "c1"
-        self.request_generator = RequestGenerator(system=self.system, system_version=self.system_version,
-                                                  instance_name=self.instance_name)
+
+@pytest.mark.usefixtures('easy_client', 'request_generator')
+class TestComplex(object):
 
     def test_invalid_instance_name(self):
         request = self.request_generator.generate_request(instance_name="INVALID_NAME", command="ping")
@@ -47,16 +44,19 @@ class ComplexText(unittest.TestCase):
         assert_successful_request(response, comment="comment_text")
 
     def test_boolean_good(self):
-        request = self.request_generator.generate_request(command="echo_bool", parameters={"b": True})
+        request = self.request_generator.generate_request(command="echo_bool",
+                                                          parameters={"b": True})
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response, output="true")
 
     def test_boolean_bad_type(self):
-        request = self.request_generator.generate_request(command="echo_bool", parameters={"b": "NOT_A_BOOL"})
+        request = self.request_generator.generate_request(command="echo_bool",
+                                                          parameters={"b": "NOT_A_BOOL"})
         assert_validation_error(self, self.easy_client, request)
 
     def test_nullable_boolean_as_null(self):
-        request = self.request_generator.generate_request(command="echo_boolean_nullable", parameters={"b": None})
+        request = self.request_generator.generate_request(command="echo_boolean_nullable",
+                                                          parameters={"b": None})
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response, output="null")
 
@@ -121,7 +121,7 @@ class ComplexText(unittest.TestCase):
                                                           parameters=parameters)
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response)
-        self.assertDictEqual(parameters['model'], json.loads(response.output))
+        assert parameters['model'] == json.loads(response.output)
 
     def test_echo_list_model_invalid_model_type(self):
         request = self.request_generator.generate_request(command="echo_list_model",
@@ -240,7 +240,7 @@ class ComplexText(unittest.TestCase):
                                                           parameters=parameters)
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response)
-        self.assertDictEqual(parameters['model'], json.loads(response.output))
+        assert parameters['model'] == json.loads(response.output)
 
     def test_echo_model_optional_not_provided(self):
         request = self.request_generator.generate_request(command="echo_model_optional")
@@ -255,19 +255,20 @@ class ComplexText(unittest.TestCase):
                 {'my_nested_string': "baz", "my_nested_int": 3}
             ]
         }
-        request = self.request_generator.generate_request(command="echo_model_simple_list", parameters=parameters)
+        request = self.request_generator.generate_request(command="echo_model_simple_list",
+                                                          parameters=parameters)
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response)
-        self.assertListEqual(parameters['models'], json.loads(response.output))
+        assert parameters['models'] == json.loads(response.output)
 
     def test_echo_model_simple_list_with_default(self):
         request = self.request_generator.generate_request(command="echo_model_simple_list_with_default")
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response)
-        self.assertListEqual(json.loads(response.output), [
+        assert json.loads(response.output) == [
             {"my_nested_string": "str1", "my_nested_int": 1},
             {"my_nested_string": "str2", "my_nested_int": 2}
-        ])
+        ]
 
     def test_echo_model_with_nested_defaults_override(self):
         model = {"my_foo": "foo", "my_bar": "bar"}
@@ -320,7 +321,7 @@ class ComplexText(unittest.TestCase):
                                                           parameters=parameters)
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response)
-        self.assertListEqual(json.loads(response.output), parameters['messages'])
+        assert json.loads(response.output) == parameters['messages']
 
     def test_echo_optional_message_nullable_false_null_provided(self):
         request = self.request_generator.generate_request(command="echo_optional_message_nullable_false",
@@ -407,14 +408,14 @@ class ComplexText(unittest.TestCase):
                                                           parameters=parameters)
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response)
-        self.assertListEqual(parameters['param'], json.loads(response.output))
+        assert parameters['param'] == json.loads(response.output)
 
     def test_echo_optional_multi_nullable_model_with_both_defaults(self):
         request = self.request_generator.generate_request(
             command="echo_optional_multi_nullable_model_with_both_defaults")
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response)
-        self.assertListEqual([{'my_foo': 'foo', 'my_bar': 'bar'}], json.loads(response.output))
+        assert [{'my_foo': 'foo', 'my_bar': 'bar'}] == json.loads(response.output)
 
     def test_echo_optional_multi_nullable_model_with_partial_default_provided(self):
         parameters = {
@@ -428,8 +429,7 @@ class ComplexText(unittest.TestCase):
         )
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response)
-        self.assertListEqual([{'my_foo': 'foo_from_client', 'my_bar': 'defaultBarFromModel'}],
-                             json.loads(response.output))
+        assert [{'my_foo': 'foo_from_client', 'my_bar': 'defaultBarFromModel'}] == json.loads(response.output)
 
     def test_echo_optional_multi_nullable_model_with_model_defaults(self):
         request = self.request_generator.generate_request(
@@ -438,8 +438,7 @@ class ComplexText(unittest.TestCase):
         )
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response)
-        self.assertListEqual([{'my_foo': 'defaultFooFromModel', 'my_bar': 'defaultBarFromModel'}],
-                             json.loads(response.output))
+        assert [{'my_foo': 'defaultFooFromModel', 'my_bar': 'defaultBarFromModel'}] == json.loads(response.output)
 
     def test_echo_optional_multi_nullable_model_with_multi_defaults(self):
         request = self.request_generator.generate_request(
@@ -447,8 +446,7 @@ class ComplexText(unittest.TestCase):
         )
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response)
-        self.assertListEqual([{'my_nested_string': 'hi', 'my_nested_int': 2}],
-                             json.loads(response.output))
+        assert [{'my_nested_string': 'hi', 'my_nested_int': 2}] == json.loads(response.output)
 
     def test_echo_optional_multi_nullable_model_with_multi_defaults_partial(self):
         request = self.request_generator.generate_request(
@@ -524,7 +522,7 @@ class ComplexText(unittest.TestCase):
                                                           parameters={"messages": [{'foo': 'bar'}]})
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response)
-        self.assertListEqual([{'foo': 'bar'}], json.loads(response.output))
+        assert [{'foo': 'bar'}] == json.loads(response.output)
 
     def test_echo_required_message(self):
         request = self.request_generator.generate_request(command="echo_required_message")
@@ -586,13 +584,13 @@ class ComplexText(unittest.TestCase):
                                                           }})
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response)
-        self.assertDictEqual({"my_nested_string": "str1", "my_nested_int": 1}, json.loads(response.output))
+        assert {"my_nested_string": "str1", "my_nested_int": 1} == json.loads(response.output)
 
     def test_echo_simple_model_with_default(self):
         request = self.request_generator.generate_request(command="echo_simple_model_with_default")
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response)
-        self.assertDictEqual({"my_nested_string": "foo", "my_nested_int": 1}, json.loads(response.output))
+        assert {"my_nested_string": "foo", "my_nested_int": 1} == json.loads(response.output)
 
     def test_echo_max_value_too_high(self):
         request = self.request_generator.generate_request(command="echo_with_max_value",
@@ -620,7 +618,7 @@ class ComplexText(unittest.TestCase):
         request = self.request_generator.generate_request(command="prove_env")
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response)
-        self.assertDictEqual({"DB_NAME": "complex", "DB_PASS": "supersecret"}, json.loads(response.output))
+        assert {"DB_NAME": "complex", "DB_PASS": "supersecret"} == json.loads(response.output)
 
     def test_weird_parameters(self):
         parameters = {
@@ -635,8 +633,4 @@ class ComplexText(unittest.TestCase):
                                                           parameters=parameters)
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response)
-        self.assertDictEqual(parameters, json.loads(response.output))
-
-
-if __name__ == '__main__':
-    unittest.main()
+        assert parameters == json.loads(response.output)
