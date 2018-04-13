@@ -1,0 +1,59 @@
+
+# This needs to use a host network rather than a bridge
+# This needs to support both local and remote plugins, and we don't know a
+# resolvable address that would support both (in the Travis case).
+# So we just use a host network and point everything at localhost
+
+version: '3.5'
+
+x-definitions: &env
+    BG_AMQ_ADMIN_HOST: localhost
+    BG_AMQ_ADMIN_USER: beer_garden
+    BG_AMQ_ADMIN_PASSWORD: password
+    BG_AMQ_HOST: localhost
+    BG_AMQ_USER: beer_garden
+    BG_AMQ_PASSWORD: password
+    BG_AMQ_PUBLISH_HOST: localhost
+    BG_BACKEND_HOST: localhost
+    BG_DB_HOST: localhost
+    BG_WEB_HOST: localhost
+
+services:
+    brew-view:
+        image: bgio/brew-view:unstable
+        build:
+            context: ../../brew-view
+            dockerfile: Dockerfile.unstable
+        network_mode: "host"
+        environment:
+            <<: *env
+        depends_on:
+            - mongodb
+            - rabbitmq
+
+    bartender:
+        image: bgio/bartender:unstable
+        build:
+            context: ../../bartender
+            dockerfile: Dockerfile.unstable
+        network_mode: "host"
+        environment:
+            <<: *env
+        volumes:
+            - ./plugins:/plugins
+        depends_on:
+            - mongodb
+            - rabbitmq
+            - brew-view
+
+    mongodb:
+        image: mongo:3.6
+        network_mode: "host"
+
+    rabbitmq:
+        image: rabbitmq:management-alpine
+        network_mode: "host"
+        environment:
+            - RABBITMQ_DEFAULT_USER=beer_garden
+            - RABBITMQ_DEFAULT_PASS=password
+

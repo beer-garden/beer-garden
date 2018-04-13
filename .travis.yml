@@ -10,7 +10,11 @@ addons:
       - docker-ce
 
 env:
-  - DOCKER_COMPOSE_VERSION=1.19.0
+  global:
+    - DOCKER_COMPOSE_VERSION=1.19.0
+    - BG_HOST=localhost
+    - BG_PORT=2337
+    - BG_SSL_ENABLED=false
 
 before_install:
   - sudo rm /usr/local/bin/docker-compose
@@ -19,6 +23,14 @@ before_install:
   - sudo mv docker-compose /usr/local/bin
 
   # Now start up our services
-  - docker-compose -f test/integration/rest/docker-compose.yml up -d mongodb rabbitmq brew-view bartender
+  - docker-compose -f test/integration/docker-compose.yml up -d
 
-script: docker-compose -f test/integration/rest/docker-compose.yml up test
+language: python
+python:
+  - "2.7"
+  - "3.6"
+
+install:
+  - pip install -r test/integration/rest/requirements.txt
+
+script: pytest test/integration/rest

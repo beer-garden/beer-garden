@@ -1,4 +1,5 @@
 {
-  "host": "localhost",
-  "port": 2337
+  "bg_host": "localhost",
+  "bg_port": 2337,
+  "ssl_enabled": false
 }

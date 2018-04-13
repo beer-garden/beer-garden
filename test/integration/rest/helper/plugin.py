@@ -51,12 +51,10 @@ def stop_plugin(plugin):
 
 
 def create_plugin(name, version, clazz, **kwargs):
-    client = clazz()
     config = helper.get_config()
-    host = os.environ.get("BG_TEST_HOST", config['host'])
-    port = int(os.environ.get("BG_TEST_PORT", config['port']))
-    return RemotePlugin(client=client, bg_host=host, bg_port=port,
-                        ssl_enabled=False, name=name, version=version, **kwargs)
+    return RemotePlugin(client=clazz(), name=name, version=version,
+                        bg_host=config.bg_host, bg_port=config.bg_port,
+                        ssl_enabled=config.ssl_enabled, **kwargs)
 
 
 @system

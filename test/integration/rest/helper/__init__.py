@@ -3,6 +3,7 @@ import os
 import time
 import re
 
+from brewtils import get_easy_client, load_config
 from brewtils.errors import BrewmasterValidationError, BrewmasterSaveError
 from brewtils.models import PatchOperation
 from brewtils.rest.easy_client import EasyClient
@@ -158,7 +159,16 @@ def get_instance(client, instance_id):
 
 def get_config():
     global CONFIG
-    CONFIG = json.load(open('config.json'))
+
+    if CONFIG is None:
+        try:
+            with open('config.json') as config_file:
+                file_config = json.load(config_file)
+        except:
+            file_config = {}
+
+        CONFIG = load_config(**file_config)
+
     return CONFIG
 
 
@@ -208,10 +218,8 @@ def wait_for_plugins(client, timeout=30, max_delay=5):
 
 
 def setup_easy_client():
-    config = get_config()
-    host = os.environ.get("BG_TEST_HOST", config['host'])
-    port = int(os.environ.get("BG_TEST_PORT", config['port']))
-    client = EasyClient(host=host, port=port)
+    client = get_easy_client(**get_config())
     wait_for_connection(client)
     wait_for_plugins(client)
+
     return client

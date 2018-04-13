@@ -1,6 +1,6 @@
+import pytest
 import unittest
 
-from nose.tools import nottest
 from helper.plugin import *
 from helper import setup_easy_client, delete_plugins
 from helper.assertions import assert_system_running
@@ -81,9 +81,8 @@ class SystemRegistrationTest(unittest.TestCase):
         with self.assertRaises(BGConflictError):
             self.easy_client.create_system(new_plugin.system)
 
-    @nottest
+    @pytest.mark.skip(reason="Depends on beer-garden/bartender#7")
     def test_system_register_same_instance_name(self):
-        # TODO: Once issue/227
         plugin = create_plugin("test", "1.0.0", TestPluginV1)
         start_plugin(plugin, self.easy_client)
         assert_system_running(self.easy_client, "test", "1.0.0")
