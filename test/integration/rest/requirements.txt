@@ -3,5 +3,5 @@
 https://github.com/beer-garden/brewtils/archive/master.zip
 
 mock
-pytest
+pytest>=3.5.0
 
