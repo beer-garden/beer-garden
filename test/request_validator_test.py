@@ -1,18 +1,152 @@
 import unittest
 
 from mock import MagicMock, Mock, call, patch, PropertyMock
+import pytest
 
 from bartender.request_validator import RequestValidator
 from bg_utils.models import Command, Instance, Parameter, Request, System, Choices
 from brewtils.errors import ModelValidationError
 
 
-class RequestTest(unittest.TestCase):
+@pytest.fixture(scope="class")
+def config_mock():
+    return MagicMock(web_host='web_host', web_port=123, ca_verify=False,
+                     ssl_enabled=False, url_prefix=None, ca_cert=None)
 
-    def setUp(self):
-        config = MagicMock(web_host='web_host', web_port=123, ca_verify=False, ssl_enabled=False,
-                           url_prefix=None, ca_cert=None)
-        self.validator = RequestValidator(config)
+
+@pytest.fixture(scope="class")
+def unittest_validator(request, config_mock):
+    request.cls.validator = RequestValidator(config_mock)
+
+
+@pytest.fixture
+def validator(request, config_mock):
+    return RequestValidator(config_mock)
+
+
+def make_param(**kwargs):
+    defaults = {'type': 'Any', 'multi': False, 'display_name': None, 'optional': True,
+                'default': None, 'description': None, 'choices': None, 'nullable': False,
+                'maximum': None, 'minimum': None, 'regex': None, 'form_input_type': None,
+                'parameters': []}
+    defaults.update(**kwargs)
+    return Mock(spec=Parameter, **defaults)
+
+
+def make_request(**kwargs):
+    defaults = {'system': 's1', 'system_version': '1', 'instance_name': 'i1', 'command': 'c1',
+                'parameters': {}}
+    defaults.update(**kwargs)
+    return Mock(spec=Request, **defaults)
+
+
+class TestChoices(object):
+
+    @pytest.mark.parametrize("req", [
+        make_request(parameters={'p2': '7'}),
+        make_request(parameters={'p1': 'a', 'p2': '1'}),
+    ])
+    def test_validate_choices_dictionary(self, validator, req):
+        choices_value = {'a': ['1', '2', '3'], 'b': ['4', '5', '6'], 'null': ['7']}
+
+        command = Mock(parameters=[
+            make_param(key='p1', choices=Mock(type='static', value=['a', 'b']), nullable=True),
+            make_param(key='p2', optional=False,
+                       choices=Mock(type='static', value=choices_value,
+                                    details={'key_reference': 'p1'})),
+        ])
+
+        validator.get_and_validate_parameters(req, command)
+
+    @pytest.mark.parametrize("req", [
+        make_request(parameters={'p2': '1'}),
+        make_request(parameters={'p1': 'a', 'p2': '4'}),
+        make_request(parameters={'p1': 'c', 'p2': '1'}),
+    ])
+    def test_validate_choices_dictionary_bad_parameters(self, validator, req):
+        choices_value = {'a': ['1', '2', '3'], 'b': ['4', '5', '6']}
+
+        command = Mock(parameters=[
+            make_param(key='p1', choices=Mock(type='static', value=['a', 'b'])),
+            make_param(key='p2', optional=False,
+                       choices=Mock(type='static', value=choices_value,
+                                    details={'key_reference': 'p1'})),
+        ])
+
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_parameters(req, command)
+
+    def test_validate_choices_invalid_parameters(self, validator):
+        command = Mock(parameters=[
+            make_param(key='p1', choices=Mock(type='static', value=['a', 'b'])),
+            make_param(key='p2', optional=False,
+                       choices=Mock(type='static', value={}, details={})),
+        ])
+
+        with pytest.raises(ModelValidationError):
+            req = make_request(parameters={'p1': '1', 'p2': 'a'})
+            validator.get_and_validate_parameters(req, command)
+
+    @pytest.mark.parametrize("req", [
+        make_request(instance_name='i1', parameters={'p1': '1'}),
+        make_request(instance_name='i2', parameters={'p1': '4'}),
+        pytest.param(make_request(instance_name='i1', parameters={'p1': '4'}),
+                     marks=pytest.mark.xfail(raises=ModelValidationError)),
+    ])
+    def test_validate_choices_instance_name_key(self, validator, req):
+        choices_value = {'i1': ['1', '2', '3'], 'i2': ['4', '5', '6']}
+
+        command = Mock(parameters=[
+            make_param(key='p1', optional=False,
+                       choices=Mock(type='static', value=choices_value,
+                                    details={'key_reference': 'instance_name'})),
+        ])
+        validator.get_and_validate_parameters(req, command)
+
+    @pytest.mark.parametrize("req", [
+        make_request(parameters={'p1': 'a', 'p2': '1'}),
+        pytest.param(make_request(parameters={'p1': 'Fail'}),
+                     marks=pytest.mark.xfail(raises=ModelValidationError)),
+    ])
+    def test_validate_choices_command_using_parameter_argument(self, validator, req):
+        mock_client = Mock()
+        mock_client.send_bg_request.return_value.output = '["1"]'
+        validator._client = mock_client
+
+        command = Mock(parameters=[
+            make_param(key='p1', choices=Mock(type='static', value=['a', 'b'])),
+            make_param(key='p2', optional=False, choices=Mock(type='command', value='c2(p=${p1})'))
+        ])
+        validator.get_and_validate_parameters(req, command)
+        mock_client.send_bg_request.assert_called_with(_command='c2', _system_name='s1',
+                                                       _system_version='1', _instance_name='i1',
+                                                       p='a')
+
+    @pytest.mark.parametrize("req", [
+        make_request(parameters={'p1': '1'}),
+        make_request(instance_name='i2', parameters={'p1': '1'}),
+        pytest.param(make_request(parameters={'p1': 'Fail'}),
+                     marks=pytest.mark.xfail(raises=ModelValidationError)),
+    ])
+    def test_validate_choices_command_using_instance_name_argument(self, validator, req):
+        mock_client = Mock()
+        mock_client.send_bg_request.return_value.output = '["1"]'
+        validator._client = mock_client
+
+        command = Mock(parameters=[
+            make_param(key='p1', optional=False, choices=Mock(type='command',
+                                                              value='c2(p=${instance_name})'))
+        ])
+
+        validator.get_and_validate_parameters(req, command)
+        mock_client.send_bg_request.assert_called_with(_command='c2', _system_name='s1',
+                                                       _system_version='1',
+                                                       _instance_name=req.instance_name,
+                                                       p=req.instance_name)
+
+
+@pytest.mark.usefixtures('unittest_validator')
+class RequestTest(unittest.TestCase):
 
     @patch('bg_utils.models.System.find_unique', Mock(return_value=None))
     def test_get_and_validate_system_no_system(self):
@@ -349,106 +483,6 @@ class RequestTest(unittest.TestCase):
                                  choices=Mock(type='static', value=['value1', 'value3']))
         command = Mock(parameters=[command_parameter])
         self.validator.get_and_validate_parameters(req, command)
-
-    def test_validate_choices_static_dictionary_with_key_reference(self):
-        choices_value = {'a': ['1', '2', '3'], 'b': ['4', '5', '6']}
-
-        command_parameter_1 = Mock(key='key1', multi=False, type='String', optional=False,
-                                   default=None,
-                                   choices=Mock(type='static', value=choices_value,
-                                                details={'key_reference': 'key2'}),
-                                   minimum=None, maximum=None, regex=None)
-        command_parameter_2 = Mock(key='key2', multi=False, type='String', optional=False,
-                                   default=None,
-                                   choices=Mock(type='static', value=['a', 'b']),
-                                   minimum=None, maximum=None,
-                                   regex=None)
-        command = Mock(parameters=[command_parameter_1, command_parameter_2])
-
-        good_req = Request(system='foo', command='command1', parameters={'key1': '1', 'key2': 'a'})
-        bad_req = Request(system='foo', command='command1', parameters={'key1': '4', 'key2': 'a'})
-
-        self.validator.get_and_validate_parameters(good_req, command)
-        self.assertRaises(ModelValidationError,
-                          self.validator.get_and_validate_parameters, bad_req, command)
-
-    def test_validate_choices_static_dictionary_no_key_reference(self):
-        choices_value = {'a': ['1', '2', '3'], 'b': ['4', '5', '6']}
-
-        command_parameter_1 = Mock(key='key1', multi=False, type='String', optional=False,
-                                   default=None,
-                                   choices=Mock(type='static', value=choices_value, details={}),
-                                   minimum=None, maximum=None, regex=None)
-        command_parameter_2 = Mock(key='key2', multi=False, type='String', optional=False,
-                                   default=None,
-                                   choices=Mock(type='static', value=['a', 'b']), minimum=None,
-                                   maximum=None,
-                                   regex=None)
-        command = Mock(parameters=[command_parameter_1, command_parameter_2])
-
-        req = Request(system='foo', command='command1', parameters={'key1': '1', 'key2': 'a'})
-
-        self.assertRaises(ModelValidationError,
-                          self.validator.get_and_validate_parameters, req, command)
-
-    def test_validate_choicesno_key_reference_parameter_in_request_null_in_choices(self):
-        choices_value = {'a': ['1', '2', '3'], 'b': ['4', '5', '6'], 'null': ['1']}
-
-        command_parameter_1 = Mock(key='key1', multi=False, type='String', optional=False,
-                                   default=None,
-                                   choices=Mock(type='static', value=choices_value,
-                                                details={'key_reference': 'key2'}),
-                                   minimum=None, maximum=None, regex=None)
-        command_parameter_2 = Mock(key='key2', multi=False, type='String', optional=True,
-                                   default=None, nullable=True,
-                                   choices=Mock(type='static', value=['a', 'b']),
-                                   minimum=None, maximum=None,
-                                   regex=None)
-        command = Mock(parameters=[command_parameter_1, command_parameter_2])
-
-        req = Request(system='foo', command='command1', parameters={'key1': '1'})
-
-        self.validator.get_and_validate_parameters(req, command)
-
-    def test_validate_choices_no_key_reference_parameter_in_request_no_null_in_choices(self):
-        choices_value = {'a': ['1', '2', '3'], 'b': ['4', '5', '6']}
-
-        command_parameter_1 = Mock(key='key1', multi=False, type='String', optional=False,
-                                   default=None,
-                                   choices=Mock(type='static', value=choices_value,
-                                                details={'key_reference': 'key2'}),
-                                   minimum=None, maximum=None, regex=None)
-        command_parameter_2 = Mock(key='key2', multi=False, type='String', optional=False,
-                                   default=None,
-                                   choices=Mock(type='static', value=['a', 'b']),
-                                   minimum=None, maximum=None,
-                                   regex=None)
-        command = Mock(parameters=[command_parameter_1, command_parameter_2])
-
-        req = Request(system='foo', command='command1', parameters={'key1': '1'})
-
-        self.assertRaises(ModelValidationError,
-                          self.validator.get_and_validate_parameters, req, command)
-
-    def test_validate_choices_static_dictionary_invalid_key_reference(self):
-        choices_value = {'a': ['1', '2', '3'], 'b': ['4', '5', '6']}
-
-        command_parameter_1 = Mock(key='key1', multi=False, type='String', optional=False,
-                                   default=None,
-                                   choices=Mock(type='static', value=choices_value,
-                                                details={'key_reference': 'key2'}),
-                                   minimum=None, maximum=None, regex=None)
-        command_parameter_2 = Mock(key='key2', multi=False, type='String', optional=False,
-                                   default=None,
-                                   choices=Mock(type='static', value=['a', 'b']),
-                                   minimum=None, maximum=None,
-                                   regex=None)
-        command = Mock(parameters=[command_parameter_1, command_parameter_2])
-
-        req = Request(system='foo', command='command1', parameters={'key1': '1', 'key2': 'c'})
-
-        self.assertRaises(ModelValidationError,
-                          self.validator.get_and_validate_parameters, req, command)
 
     def test_validate_choices_static_bad_type(self):
         command_parameter = Mock(key='key1', multi=False, type='String', optional=False,

@@ -179,7 +179,14 @@ class RequestValidator(object):
             choices = command_parameter.choices
 
             def map_param_values(kv_pair_list):
-                return {x[0]: request.parameters[x[1]] for x in kv_pair_list}
+                param_map = {}
+                for param_name, param_ref in kv_pair_list:
+                    if param_ref == 'instance_name':
+                        param_map[param_name] = request.instance_name
+                    else:
+                        param_map[param_name] = request.parameters[param_ref]
+
+                return param_map
 
             if choices.type == 'static':
                 if isinstance(choices.value, list):
@@ -192,8 +199,11 @@ class RequestValidator(object):
                             " with a dictionary value must specify a key_reference" %
                             command_parameter.key)
 
-                    # Mongoengine stores None keys as 'null', so use that instead of None
-                    key_reference_value = request.parameters.get(key) or 'null'
+                    if key == 'instance_name':
+                        key_reference_value = request.instance_name
+                    else:
+                        # Mongoengine stores None keys as 'null', so use that instead of None
+                        key_reference_value = request.parameters.get(key) or 'null'
 
                     allowed_values = choices.value.get(key_reference_value)
                     if allowed_values is None:
