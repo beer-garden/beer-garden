@@ -1,7 +1,0 @@
-
-# Grab the latest brewtils master
-https://github.com/beer-garden/brewtils/archive/master.zip
-
-mock
-pytest>=3.5.0
-
