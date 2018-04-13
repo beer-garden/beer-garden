@@ -30,7 +30,7 @@ setup(
     ],
     extras_require={
         ':python_version=="2.7"': [
-            'futures==3.1.1',
+            'futures>=3.1.1',
         ]
     },
     entry_points={
