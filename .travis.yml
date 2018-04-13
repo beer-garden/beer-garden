@@ -3,7 +3,22 @@ sudo: required
 services:
   - docker
 
+# Install the newest docker and compose
+addons:
+  apt:
+    packages:
+      - docker-ce
+
+env:
+  - DOCKER_COMPOSE_VERSION=1.19.0
+
 before_install:
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+
+  # Now start up our services
   - docker-compose -f test/integration/rest/docker-compose.yml up -d mongodb rabbitmq brew-view bartender
 
 script: docker-compose -f test/integration/rest/docker-compose.yml up test
