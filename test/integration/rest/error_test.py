@@ -22,4 +22,6 @@ class TestError(object):
         request = self.request_generator.generate_request(command="error_string_output_type_json")
         response = wait_for_response(self.easy_client, request)
         assert_errored_request(response)
-        assert {"message": "This is a string", "attributes": {}} == json.loads(response.output)
+        assert json.loads(response.output) == {
+            "message": "This is a string", "arguments": ["This is a string"], "attributes": {}
+        }
