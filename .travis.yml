@@ -1,0 +1,9 @@
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker-compose -f test/integration/rest/docker-compose.yml up -d mongodb rabbitmq brew-view bartender
+
+script: docker-compose -f test/integration/rest/docker-compose.yml up test
