@@ -1,3 +1,4 @@
+import json
 import pytest
 
 from brewtils.errors import ValidationError
@@ -56,5 +57,12 @@ def assert_request(request, **kwargs):
         if key == "error_class" and not isinstance(expected, str):
             expected = type(expected).__name__
 
-        assert actual == expected,\
-            "%s did not match. Expected (%s) got (%s)" % (key, expected, actual)
+        if key == "output":
+            try:
+                assert actual == expected
+            except AssertionError:
+                assert json.loads(actual) == json.loads(expected), \
+                    "%s did not match. Expected (%s) got (%s)" % (key, expected, actual)
+        else:
+            assert actual == expected, \
+                "%s did not match. Expected (%s) got (%s)" % (key, expected, actual)
