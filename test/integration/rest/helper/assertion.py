@@ -50,9 +50,9 @@ def assert_errored_request(request, **kwargs):
 
 
 def assert_request(request, **kwargs):
-    for key in kwargs.keys():
+    for (key, expected) in kwargs.items():
         actual = getattr(request, key)
-        expected = kwargs[key]
+
         if key == "error_class" and not isinstance(expected, str):
             expected = type(expected).__name__
 
