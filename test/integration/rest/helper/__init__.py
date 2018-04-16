@@ -134,7 +134,7 @@ def stop_instance(client, instance, timeout=1, max_delay=1):
     instance = get_instance(client, instance.id)
     delay_time = 0.01
     total_wait_time = 0
-    while instance.status not in ['DEAD', 'STOPPED']:
+    while instance.status not in ['DEAD', 'STOPPED', 'UNRESPONSIVE']:
 
         if timeout and total_wait_time > timeout:
             raise TimeoutError("Timed out waiting for instance to stop")
