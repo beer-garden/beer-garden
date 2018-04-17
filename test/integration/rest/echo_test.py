@@ -1,23 +1,17 @@
-import unittest
+import pytest
 
 from helper import setup_easy_client, RequestGenerator, wait_for_response
-from helper.assertions import *
+from helper.assertion import assert_successful_request, assert_validation_error
 
 
-class EchoClientTest(unittest.TestCase):
+@pytest.fixture(scope="class")
+def system_spec():
+    return {'system': 'echo', 'system_version': '1.0.0.dev0', 'instance_name': 'default',
+            'command': 'say'}
 
-    @classmethod
-    def setUpClass(cls):
-        cls.easy_client = setup_easy_client()
 
-    def setUp(self):
-        self.system = "echo"
-        self.system_version = "1.0.0.dev"
-        self.instance_name = "default"
-        self.command = "say"
-        self.request_generator = RequestGenerator(system=self.system, system_version=self.system_version,
-                                                  command=self.command,
-                                                  instance_name=self.instance_name)
+@pytest.mark.usefixtures('easy_client', 'request_generator')
+class TestEcho(object):
 
     def test_say_custom_string_and_loud(self):
         request = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
@@ -36,7 +30,3 @@ class EchoClientTest(unittest.TestCase):
     def test_non_nullable_bool_set_to_null(self):
         request = self.request_generator.generate_request(parameters={"message": "test_string", "loud": None})
         assert_validation_error(self, self.easy_client, request)
-
-
-if __name__ == '__main__':
-    unittest.main()

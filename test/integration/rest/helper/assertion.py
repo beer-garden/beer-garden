@@ -1,4 +1,7 @@
-from brewtils.errors import BrewmasterValidationError
+import json
+import pytest
+
+from brewtils.errors import ValidationError
 
 
 def assert_system_running(client, system_name, system_version, **kwargs):
@@ -13,24 +16,26 @@ def assert_system_running(client, system_name, system_version, **kwargs):
 
 
 def assert_instance_running(instance, **kwargs):
-    assert instance.status == "RUNNING", "status did not match. Expected (RUNNING) got (%s)" % instance.status
+    assert instance.status == "RUNNING", \
+        "status did not match. Expected (RUNNING) got (%s)" % instance.status
 
 
 def assert_validation_error(testcase, client, request, **kwargs):
-    assert_error_creating_request(testcase, client, request, BrewmasterValidationError, **kwargs)
+    assert_error_creating_request(testcase, client, request, ValidationError, **kwargs)
 
 
 def assert_error_creating_request(testcase, client, request, exc_class, regex=None, **kwargs):
     if regex is None:
-        with testcase.assertRaises(exc_class) as ex:
+        with pytest.raises(exc_class) as ex:
             created_request = client.create_request(request)
             print("Uh-oh. Request (%s) should have errored, but didn't." % created_request.id)
     else:
-        with testcase.assertRaisesRegexp(exc_class, regex) as ex:
+        with pytest.raises(exc_class) as ex:
             created_request = client.create_request(request)
             print("Uh-oh. Request (%s) should have errored, but didn't." % created_request.id)
+        ex.match(regex)
 
-    the_exception = ex.exception
+    the_exception = ex.value
     for k in kwargs.keys():
         assert getattr(the_exception, k) == kwargs[k], "Exception was thrown, but %s did " \
                                                        "not match. Expected (%s) got (%s)" % \
@@ -46,10 +51,18 @@ def assert_errored_request(request, **kwargs):
 
 
 def assert_request(request, **kwargs):
-    for key in kwargs.keys():
+    for (key, expected) in kwargs.items():
         actual = getattr(request, key)
-        expected = kwargs[key]
+
         if key == "error_class" and not isinstance(expected, str):
             expected = type(expected).__name__
 
-        assert actual == expected, "%s did not match. Expected (%s) got (%s)" % (key, expected, actual)
+        if key == "output":
+            try:
+                assert actual == expected
+            except AssertionError:
+                assert json.loads(actual) == json.loads(expected), \
+                    "%s did not match. Expected (%s) got (%s)" % (key, expected, actual)
+        else:
+            assert actual == expected, \
+                "%s did not match. Expected (%s) got (%s)" % (key, expected, actual)

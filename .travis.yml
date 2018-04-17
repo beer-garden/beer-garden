@@ -1,0 +1,42 @@
+sudo: required
+
+language: python
+cache: pip
+python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+
+services:
+  - mongodb
+  - rabbitmq
+
+env:
+  global:
+    - BG_HOST=localhost
+    - BG_PORT=2337
+    - BG_SSL_ENABLED=false
+    - BG_AMQ_ADMIN_USER=guest
+    - BG_AMQ_ADMIN_PASSWORD=guest
+    - BG_AMQ_USER=guest
+    - BG_AMQ_PASSWORD=guest
+    - BG_AMQ_PUBLISH_HOST=localhost
+    - BG_DB_HOST=localhost
+    - BG_PLUGIN_DIRECTORY=/home/travis/build/beer-garden/beer-garden/example-plugins
+    - BG_WEB_HOST=localhost
+
+before_install:
+  - sudo rabbitmq-plugins enable rabbitmq_management
+
+install:
+  - pip install -r test/integration/requirements.txt
+
+before_script:
+  - brew-view &
+  - bartender &
+
+  # Give the plugins some time to come up
+  - sleep 10
+
+script: pytest test/integration/rest

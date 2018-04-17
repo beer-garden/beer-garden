@@ -1,22 +1,21 @@
 import json
-import os
 import time
 import re
 
-from brewtils.errors import BrewmasterValidationError, BrewmasterSaveError
+from brewtils import get_easy_client, load_config
+from brewtils.errors import ValidationError, SaveError
 from brewtils.models import PatchOperation
-from brewtils.rest.easy_client import EasyClient
 from urllib3.exceptions import TimeoutError
 
 
 COMPLETED_STATUSES = ['SUCCESS', 'ERROR', 'CANCELED']
 CONFIG = None
 PLUGIN_MAP = {
-    'complex': {'version': '1.0.0.dev', 'running': False},
+    'complex': {'running': False},
     'dynamic': {'running': False},
     'echo': {'running': False},
     'error': {'running': False},
-    'multi-sleeper': {'running': False},
+    'concurrent-sleeper': {'running': False},
     'sleeper': {'running': False}
 }
 
@@ -126,16 +125,16 @@ def stop_system(client, system, timeout=1, max_delay=1):
 def stop_instance(client, instance, timeout=1, max_delay=1):
     response = client.client.patch_instance(instance.id, client.parser.serialize_patch(PatchOperation('stop')))
     if 400 <= response.status_code < 500:
-        raise BrewmasterValidationError(response.json())
+        raise ValidationError(response.json())
     elif response.status_code >= 500:
-        raise BrewmasterSaveError(response.json())
+        raise SaveError(response.json())
     else:
         instance = client.parser.parse_instance(response.json())
 
     instance = get_instance(client, instance.id)
     delay_time = 0.01
     total_wait_time = 0
-    while instance.status not in ['DEAD', 'STOPPED']:
+    while instance.status not in ['DEAD', 'STOPPED', 'UNRESPONSIVE']:
 
         if timeout and total_wait_time > timeout:
             raise TimeoutError("Timed out waiting for instance to stop")
@@ -158,7 +157,16 @@ def get_instance(client, instance_id):
 
 def get_config():
     global CONFIG
-    CONFIG = json.load(open('config.json'))
+
+    if CONFIG is None:
+        try:
+            with open('config.json') as config_file:
+                file_config = json.load(config_file)
+        except Exception:
+            file_config = {}
+
+        CONFIG = load_config(**file_config)
+
     return CONFIG
 
 
@@ -208,10 +216,8 @@ def wait_for_plugins(client, timeout=30, max_delay=5):
 
 
 def setup_easy_client():
-    config = get_config()
-    host = os.environ.get("BG_TEST_HOST", config['host'])
-    port = int(os.environ.get("BG_TEST_PORT", config['port']))
-    client = EasyClient(host=host, port=port)
+    client = get_easy_client(**get_config())
     wait_for_connection(client)
     wait_for_plugins(client)
+
     return client

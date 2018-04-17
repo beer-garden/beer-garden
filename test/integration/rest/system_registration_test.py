@@ -1,20 +1,21 @@
-import unittest
+import pytest
 
-from nose.tools import nottest
-from helper.plugin import *
-from helper import setup_easy_client, delete_plugins
-from helper.assertions import assert_system_running
-from brewtils.errors import BrewmasterValidationError, BGConflictError
+from brewtils.errors import ValidationError, ConflictError
+from helper import delete_plugins
+from helper.assertion import assert_system_running
+from helper.plugin import (create_plugin, start_plugin, stop_plugin,
+                           TestPluginV1, TestPluginV2,
+                           TestPluginV1BetterDescriptions)
 
 
-class SystemRegistrationTest(unittest.TestCase):
+@pytest.mark.usefixtures('easy_client')
+class TestSystemRegistration(object):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.easy_client = setup_easy_client()
-        delete_plugins(cls.easy_client, "test")
-
-    def tearDown(self):
+    @pytest.fixture(autouse=True)
+    def delete_test_plugin(self):
+        """Ensure there are no "test" plugins before or after the test"""
+        delete_plugins(self.easy_client, "test")
+        yield
         delete_plugins(self.easy_client, "test")
 
     def test_system_register_successful(self):
@@ -24,15 +25,17 @@ class SystemRegistrationTest(unittest.TestCase):
         stop_plugin(plugin)
 
     def test_system_register_update_data(self):
-        # Register the first plugin first.
+        # Register the standard plugin, then stop it
         plugin = create_plugin("test", "1.0.0", TestPluginV1)
         start_plugin(plugin, self.easy_client)
         assert_system_running(self.easy_client, "test", "1.0.0")
-        # We shut down this plugin so we can start a different one with updated descriptions
         stop_plugin(plugin)
 
-        plugin = create_plugin("test", "1.0.0", TestPluginV1BetterDescriptions, description="A better description",
-                               metadata={"foo": "bar"}, icon_name="fa-coffee", display_name="new_display_name")
+        # Now create the new plugin and register that one
+        plugin = create_plugin("test", "1.0.0", TestPluginV1BetterDescriptions,
+                               description="A better description",
+                               metadata={"foo": "bar"}, icon_name="fa-coffee",
+                               display_name="new_display_name")
         start_plugin(plugin, self.easy_client)
         assert_system_running(self.easy_client, "test", "1.0.0",
                               system={"description": "A better description",
@@ -41,12 +44,13 @@ class SystemRegistrationTest(unittest.TestCase):
         stop_plugin(plugin)
 
     def test_system_register_dev_different_commands(self):
+        # Register the standard plugin, then stop it
         plugin = create_plugin("test", "1.0.0.dev", TestPluginV1)
         start_plugin(plugin, self.easy_client)
         assert_system_running(self.easy_client, "test", "1.0.0.dev")
-        # We shut down this plugin so we can start a different one with updated descriptions
         stop_plugin(plugin)
 
+        # Now create the new plugin and register that one
         plugin = create_plugin("test", "1.0.0.dev", TestPluginV2)
         start_plugin(plugin, self.easy_client)
         assert_system_running(self.easy_client, "test", "1.0.0.dev")
@@ -59,7 +63,7 @@ class SystemRegistrationTest(unittest.TestCase):
         stop_plugin(plugin)
 
         plugin = create_plugin("test", "1.0.0", TestPluginV2)
-        with self.assertRaises(BrewmasterValidationError):
+        with pytest.raises(ValidationError):
             self.easy_client.create_system(plugin.system)
 
     def test_system_register_different_versions(self):
@@ -78,20 +82,15 @@ class SystemRegistrationTest(unittest.TestCase):
         assert_system_running(self.easy_client, "test", "1.0.0")
 
         new_plugin = create_plugin("new_test", "1.0.0", TestPluginV1, display_name="TEST")
-        with self.assertRaises(BGConflictError):
+        with pytest.raises(ConflictError):
             self.easy_client.create_system(new_plugin.system)
 
-    @nottest
+    @pytest.mark.xfail(reason="Depends on beer-garden/bartender#7")
     def test_system_register_same_instance_name(self):
-        # TODO: Once issue/227
         plugin = create_plugin("test", "1.0.0", TestPluginV1)
         start_plugin(plugin, self.easy_client)
         assert_system_running(self.easy_client, "test", "1.0.0")
 
         plugin = create_plugin("test", "1.0.0", TestPluginV1)
-        with self.assertRaises(BrewmasterValidationError):
+        with pytest.raises(ValidationError):
             self.easy_client.create_system(plugin.system)
-
-
-if __name__ == '__main__':
-    unittest.main()

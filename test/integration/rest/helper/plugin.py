@@ -1,6 +1,7 @@
-import helper
 import time
 from threading import Thread
+
+import helper
 from brewtils.plugin import RemotePlugin
 from brewtils.decorators import system, parameter
 
@@ -49,15 +50,10 @@ def stop_plugin(plugin):
 
 
 def create_plugin(name, version, clazz, **kwargs):
-    client = clazz()
-    if helper.CONFIG is None:
-        helper.get_config()
-    return RemotePlugin(client=client,
-                        bg_host=helper.CONFIG['host'],
-                        bg_port=helper.CONFIG['port'],
-                        ssl_enabled=False,
-                        name=name,
-                        version=version, **kwargs)
+    config = helper.get_config()
+    return RemotePlugin(client=clazz(), name=name, version=version,
+                        bg_host=config.bg_host, bg_port=config.bg_port,
+                        ssl_enabled=config.ssl_enabled, **kwargs)
 
 
 @system
@@ -89,8 +85,10 @@ class TestPluginV2(object):
 @system
 class TestPluginV1BetterDescriptions(object):
 
-    @parameter(key="x", type="Integer", description="X, which represents an integer")
-    @parameter(key="y", type="Integer", description="Y, will be added to X (also an integer)")
+    @parameter(key="x", type="Integer",
+               description="X, which represents an integer")
+    @parameter(key="y", type="Integer",
+               description="Y, will be added to X (also an integer)")
     def add(self, x, y):
         """Add two numbers together, this description is much better"""
         return x + y
