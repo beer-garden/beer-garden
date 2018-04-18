@@ -16,7 +16,7 @@ Brew-view 2.3.6, Bartender 2.3.5, BG-utils 2.3.3
 - Status monitor no longer continuously restarts when RabbitMQ connectivity is lost
 - Clearing queues now works with Rabbit 3.7
 - Child rows in nested request display now show correct created time
-- Command-based dynamic choices now work without a 'default' instance
+- Command-based dynamic choices now work without a 'default' instance (#47)
 
 #### Other Changes
 - Adding explict support for Python 3.4
