@@ -18,6 +18,11 @@ class TestEcho(object):
         response = wait_for_response(self.easy_client, request)
         assert_successful_request(response, output="test_string!!!!!!!!!")
 
+    def test_say_custom_string_unicode(self):
+        request = self.request_generator.generate_request(parameters={"message": u"\U0001F4A9"})
+        response = wait_for_response(self.easy_client, request)
+        assert_successful_request(response, output=u"\U0001F4A9")
+
     def test_say_no_parameters_provided(self):
         request = self.request_generator.generate_request()
         response = wait_for_response(self.easy_client, request)
