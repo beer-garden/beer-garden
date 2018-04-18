@@ -1,20 +1,36 @@
 version: '3.5'
 
+x-definitions: &common-env
+    BG_HOST: brew-view
+    BG_SSL_ENABLED: "False"
+
+x-definitions: &complex-env
+    DB_NAME: complex
+    DB_PASS: supersecret
+
 x-definitions: &plugin
     image: bgio/example-plugins
     networks:
         - bg-network
     environment:
-        BG_HOST: brew-view
-        BG_SSL_ENABLED: "False"
+        <<: *common-env
+
 
 services:
     complex-c1:
         command: ["complex", "c1", "c1-host", "c1-port"]
+        environment:
+            <<: [*common-env, *complex-env]
         <<: *plugin
 
     complex-c2:
         command: ["complex", "c2", "c2-host", "c2-port"]
+        environment:
+            <<: [*common-env, *complex-env]
+        <<: *plugin
+
+    concurrent-sleeper:
+        command: ["concurrent_sleeper"]
         <<: *plugin
 
     custom-display:
@@ -40,6 +56,7 @@ services:
     sleeper:
         command: ["sleeper"]
         <<: *plugin
+
 
 networks:
     bg-network:
