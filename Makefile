@@ -78,12 +78,11 @@ release: dist ## package and upload a release
 
 dist: clean ## builds source and wheel package
 	python setup.py sdist
-	python2 setup.py bdist_wheel
-	python3 setup.py bdist_wheel
+	python setup.py bdist_wheel --universal
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
 	python setup.py install
 
 deps:
-	        pip install -r requirements.txt
+	pip install -r requirements.txt
