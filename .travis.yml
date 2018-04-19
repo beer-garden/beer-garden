@@ -1,4 +1,3 @@
-install: pip install -U tox-travis codecov
 language: python
 cache: pip
 python:
@@ -6,8 +5,21 @@ python:
 - 3.5
 - 3.4
 - 2.7
+
+install: pip install -U tox-travis codecov
 script: tox
 after_success: codecov
+
+deploy:
+  provider: pypi
+  distributions: "sdist bdist_wheel"
+  on:
+    tags: true
+    python: 3.6
+  user: beerbuildbot
+  password:
+    secure: kI9qu3EF6gmyRyPN6dTWMAJ9hWu58zv4mJVJ/9qiwX00V/jKN/LkuNGKYA8vSxBGkkVjvCWaTj5KThYJBOgx2VnevIuApF/oGAImDgYflQyMttZcZRPPOCMmGT5P8Tp7uLFpjfiRZVa/Sz+YaRHuUaYC0c+diyW2AM25nr2l1534ZP+/FGnasQdxSGc6QPQL6QLHAl/ijitDgAMudH5PIxBZuxQ+l9w7c1VFI8sBeFO//FOkpspt8u8hfJ//Vo0YjN6KZ1Bsvp3uskRKCKCf2Et1TXvpOqAV9+BG4g2b3m8jmaZw9jjYoT3glcMiwJZ9O3D5VfeLx69qXKXIwHZyEgOrYJOUXD5TJtlQU3J9K++BbAvALm2goU3WIAFJWE41N8hF3eljE+782fsA5/oEXh8CQ51vy0QDgD1UgNv+d3iS3NZjmJRgTS1eq7QJmq7V83cXzu6P1zCdHjTGtwD3wkWAWUcoJ1eAY8cfAq8HgcvwqhgEyUE72miMLG2X0jnN/QaTJxHxxuec35ECuN6o3/b/35UIgUoXqFTCLzQMdf/aI0q4kVovWsnbbcHeIZfh8GVpANwdIX5kN7/YcNrihaFiYjdmCyriJvQboJsIyMWTB+W9KjalTn3XNQJyieWLGuIdyY7ZDZ7Gdvu8IpKoYgCL7GTIJNhI8gwx9qvgf7Y=
+
 notifications:
   slack:
     secure: VF5UDvw6N2S4/umJronGPklBT4U0IMWGCRRPeD9o4tTHzV4pCiR3enrx+QkXdlArE7YlN6Ba0M+627hWr8wvSerbMQtJa/QIVp4c1ZxBrp5T8bg8ADnH1WJ9GNh5wkbrGd0DFusAL0nfqb7BvmnO1NGA7+dmT5JGjSNu5Z3yPsKE0V1BuN4o9YVveaVgIepdAA3oWkNayh6xxcBg1VXmyme0960pNttX0+ZQkPoyTApDGGw/k3U6BhK9DpIkkHrN5XoM5wZPMONBJJNn4rKLJSwkV+VsCbSeHS0WO06BnPjng7oojWiSNVY0uMXetBEMQKxhvHaBPVtD9GO3WrJGpcIA2kzZxV51BNhOD2eKSQLyA7x4Kq9fUJNxblI9ppxUq0RZYp/IhvjVxsB1jAxyisBNTtTzoqPFfNk9lpWriiODwAF+5jidR+KcWH5BMvjz+bg47GJ+fwWpiaqjb8X4iNMiYu9l3r5GcXR6iXsSopTlnptJYas1jm4A1Vdj0D2Lz7iCl94Bt92ClFTDdRxFxS9rV2IzhlTu7AtkAyzZHA8OnBveJH5h8xnWl2WNEFdA/Kw74ngrE01TeDTNDSMFo+5dW2X0bkgGBtScmBhMNlLCQ9PCpIs7c0SdSaWLkQQhetIgs4NIjNfVmRryR5tuZInBlk1oW8Z8gCggepgBt2o=
