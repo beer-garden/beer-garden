@@ -4,7 +4,8 @@
   "description": "Front End to a Command and Control Framework",
   "main": "app.py",
   "dependencies": {
-    "@beer-garden/addons": "^0.4.0",
+    "@beer-garden/addons": "^0.5.0",
+    "@beer-garden/builder": "^0.0.3",
     "@uirouter/angularjs": "^1.0.3",
     "ace-builds": "^1.2.8",
     "angular": "^1.6.5",
