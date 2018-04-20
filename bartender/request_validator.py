@@ -2,6 +2,7 @@ import collections
 import json
 import logging
 import re
+from builtins import str
 
 import six
 import urllib3
