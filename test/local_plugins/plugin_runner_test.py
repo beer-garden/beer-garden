@@ -3,7 +3,7 @@ import subprocess
 import sys
 import pytest
 
-from mock import Mock, PropertyMock, call, patch, ANY
+from mock import Mock, PropertyMock, call, ANY
 from mongoengine import DoesNotExist
 
 from bartender.local_plugins.plugin_runner import LocalPluginRunner
@@ -27,6 +27,7 @@ def system_mock(instance_mock):
 def plugin(system_mock):
     return LocalPluginRunner('entry_point', system_mock, 'default',
                              '/path/to/plugin/name', 'web_host', 123, False)
+
 
 class TestPluginRunner(object):
 
@@ -90,8 +91,9 @@ class TestPluginRunner(object):
 
     def test_process_creation(self, mocker, plugin):
         mocker.patch('bartender.local_plugins.plugin_runner.Thread')
-        env_mock = mocker.patch('bartender.local_plugins.plugin_runner.LocalPluginRunner._generate_plugin_environment')
         process_mock = mocker.patch('bartender.local_plugins.plugin_runner.subprocess.Popen')
+        env_mock = mocker.patch('bartender.local_plugins.plugin_runner.'
+                                'LocalPluginRunner._generate_plugin_environment')
 
         stdout_mock = Mock(readline=Mock(return_value=b""))
         process_mock.return_value = Mock(poll=Mock(return_value="Not None"), stdout=stdout_mock)
@@ -107,12 +109,14 @@ class TestPluginRunner(object):
         ([None, 1, 1], False, True),  # Bad stop
     ])
     def test_run_plugin_io_thread_stop(self, mocker, plugin, process_poll, stopped, error_called):
-        mocker.patch('bartender.local_plugins.plugin_runner.LocalPluginRunner._generate_plugin_environment')
+        mocker.patch('bartender.local_plugins.plugin_runner.'
+                     'LocalPluginRunner._generate_plugin_environment')
+        mocker.patch('bartender.local_plugins.plugin_runner.'
+                     'LocalPluginRunner.stopped',
+                     Mock(return_value=stopped))
         thread_mock = mocker.patch('bartender.local_plugins.plugin_runner.Thread')
         sleep_mock = mocker.patch('bartender.local_plugins.plugin_runner.sleep')
         process_mock = mocker.patch('bartender.local_plugins.plugin_runner.subprocess.Popen')
-        stopped_mock = mocker.patch('bartender.local_plugins.plugin_runner.LocalPluginRunner.stopped',
-                                    Mock(return_value=stopped))
 
         plugin.logger.error = Mock()
         fake_thread = Mock()
@@ -127,19 +131,33 @@ class TestPluginRunner(object):
                                        target=plugin._check_io)
         sleep_mock.assert_called_once_with(0.1)
 
-    @pytest.mark.parametrize('plugin_output,logger_calls', [
-        ([b"no logger", b""],
-            [call(logging.INFO, 'no logger')]
-        ),
-        ([b"ERROR: this is my error logger", b"INFO: this is my info logger", b""],
+    @pytest.mark.parametrize('plugin_output,logger_and_calls', [
+        (
+            [b"no logger", b""],
             [
-                call(logging.ERROR, 'ERROR: this is my error logger'),
-                call(logging.INFO, 'INFO: this is my info logger'),
+                ('timestamp_logger', call(logging.ERROR, 'no logger'))
+            ]
+        ),
+        (
+            [b"ERROR: this is my error logger", b"INFO: this is my info logger", b""],
+            [
+                ('unformatted_logger', call(logging.ERROR, 'ERROR: this is my error logger')),
+                ('unformatted_logger', call(logging.INFO, 'INFO: this is my info logger')),
             ]
         ),
     ])
-    def test_check_io(self, mocker, plugin, plugin_output, logger_calls):
-        mocker.patch('bartender.local_plugins.plugin_runner.LocalPluginRunner._generate_plugin_environment',
+    def test_check_io(self, mocker, plugin, plugin_output, logger_and_calls):
+        """Ensure output comming from the subprocess is logged correctly
+
+        The plugin_output param specifies what is returned from each call
+        to ``readline``. It should end with ``b""``.
+
+        The logger_and_calls param should be a tuple. The first item should
+        specify which logger should be used to handle that output, and the
+        second item should be a ``call`` describing how the logger was called
+        """
+        mocker.patch('bartender.local_plugins.plugin_runner.'
+                     'LocalPluginRunner._generate_plugin_environment',
                      Mock(return_value={}))
         mocker.patch('bartender.local_plugins.plugin_runner.LocalPluginRunner.stopped',
                      Mock(return_value=True))
@@ -150,29 +168,32 @@ class TestPluginRunner(object):
         process_mock.return_value = Mock(name='process mock', poll=Mock(return_value=0),
                                          stdout=stdout_mock)
         thread_mock.return_value = Mock(name='thread mock', join=plugin._check_io)
-        plugin.logger = Mock()
+
+        plugin.unformatted_logger = Mock(name='unformatted')
+        plugin.timestamp_logger = Mock(name='timestamp')
 
         plugin.run()
-        plugin.logger.log.assert_has_calls(logger_calls)
+
+        for logger_name, logger_call in logger_and_calls:
+            assert logger_call in getattr(plugin, logger_name).log.mock_calls
 
     def test_check_io_multiple_calls(self, plugin):
         stdout_mock = Mock(name='stdout mock', readline=Mock(
             side_effect=[
                 b"ERROR: this is my error logger", b"INFO: this is my info logger", b"", b""]))
         check_io_mock = Mock(wraps=plugin._check_io)
-        logger_mock = Mock()
         plugin.process = Mock(name='process mock', poll=Mock(side_effect=[None, 0, 0]),
                               stdout=stdout_mock)
         plugin._check_io = check_io_mock
-        plugin.logger = logger_mock
 
         plugin._check_io()
         assert check_io_mock.call_count > 1
 
     def test_run_call_throw_exception(self, mocker, plugin):
         mocker.patch('bartender.local_plugins.plugin_runner.subprocess.Popen',
-            Mock(side_effect=ValueError('error_message')))
-        mocker.patch('bartender.local_plugins.plugin_runner.LocalPluginRunner._generate_plugin_environment')
+                     Mock(side_effect=ValueError('error_message')))
+        mocker.patch('bartender.local_plugins.plugin_runner.'
+                     'LocalPluginRunner._generate_plugin_environment')
 
         plugin.logger.error = Mock()
         plugin.run()

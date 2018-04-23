@@ -57,8 +57,14 @@ class LocalPluginRunner(StoppableThread):
         self.executable += self.plugin_args
 
         self.unique_name = '%s[%s]-%s' % (self.system.name, self.instance_name, self.system.version)
-        self.logger = getPluginLogger(self.unique_name, formatted=False,
-                                      log_directory=self.plugin_log_directory)
+
+        log_config = {'log_directory': self.plugin_log_directory, 'log_name': self.unique_name}
+        self.logger = getPluginLogger(self.unique_name, formatted=True,
+                                      **log_config)
+        self.unformatted_logger = getPluginLogger(self.unique_name+'-uf',
+                                                  formatted=False, **log_config)
+        self.timestamp_logger = getPluginLogger(self.unique_name+'-ts',
+                                                formatted='timestamp', **log_config)
         self.log_levels = getLogLevels()
 
         StoppableThread.__init__(self, logger=self.logger, name=self.unique_name)
@@ -135,34 +141,31 @@ class LocalPluginRunner(StoppableThread):
     def _check_io(self):
         """Helper function thread target to read IO from the plugin's subprocess
 
-        This method will read from STDERR. If the lines include one of the logging Levels that the
-        python logger knows about we assume that the plugin has its own logger and its own
-        formatter. As such, we will log to our unformatted logger so that we preserve the original
-        formatting.
+        This will read line by line from STDOUT & STDERR. If the line includes
+        one of the log levels that the python logger knows about we assume that
+        the plugin has its own logger and formatter. In that case we log to our
+        unformatted logger at the same level to keep the original formatting.
 
-        If the plugin is just using STDOUT with no logging then generally the logging level will
-        not be included and so we just add the normal log formatting.
+        If we can't determine the log level then we'll add a timestamp to the
+        start and log the message at the ERROR level. That way we guarantee
+        messages are outputted (this is usually caused by a plugin writing to
+        STDOUT / STDOUT directly or raising an exception with a stacktrace).
         """
         stdout_iterator = iter(self.process.stdout.readline, b"")
 
         for raw_line in stdout_iterator:
-            line = raw_line.decode('utf-8')
+            line = raw_line.decode('utf-8').rstrip()
 
-            # Find correct Logging Level
             level_to_log = None
             for level in self.log_levels:
                 if line.find(level) != -1:
-                    level_to_log = level
+                    level_to_log = getattr(logging, level)
                     break
 
-            # If they are not using a logger themselves, then we will simply log to
-            # our standard logger
-            if level_to_log is None:
-                self.logger.log(logging.INFO, line.rstrip())
-            # If they are using their own logger, then we will keep the format they have
-            # by using a completely unformatted logger and logging at the level specified
+            if level_to_log:
+                self.unformatted_logger.log(level_to_log, line)
             else:
-                self.logger.log(getattr(logging, level_to_log), line.rstrip())
+                self.timestamp_logger.log(logging.ERROR, line)
 
         if self.process.poll() is None:
             self.logger.info("Process isn't quite dead yet, reading IO again")
