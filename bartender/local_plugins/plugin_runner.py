@@ -158,7 +158,7 @@ class LocalPluginRunner(StoppableThread):
             # If they are not using a logger themselves, then we will simply log to
             # our standard logger
             if level_to_log is None:
-                self.logger.info(line.rstrip())
+                self.logger.log(logging.INFO, line.rstrip())
             # If they are using their own logger, then we will keep the format they have
             # by using a completely unformatted logger and logging at the level specified
             else:
