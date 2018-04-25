@@ -5,6 +5,7 @@ requestIndexController.$inject = [
   'DTOptionsBuilder',
   'DTColumnBuilder',
   'DTRendererService',
+  'UtilityService',
   'RequestService',
 ];
 
@@ -14,6 +15,7 @@ requestIndexController.$inject = [
  * @param  {Object} DTOptionsBuilder  Data-tables' options builder object.
  * @param  {Object} DTColumnBuilder   Data-tables' column builder object.
  * @param  {Object} DTRendererService Data-tables' rendering service.
+ * @param  {Object} UtilityService    Beer-Garden Utility Service.
  * @param  {Object} RequestService    Beer-Garden Request Service.
  */
 export default function requestIndexController(
@@ -21,6 +23,7 @@ export default function requestIndexController(
   DTOptionsBuilder,
   DTColumnBuilder,
   DTRendererService,
+  UtilityService,
   RequestService) {
   $scope.requests = {};
   $scope.requests.errorMap = RequestService.errorMap;
@@ -113,7 +116,7 @@ export default function requestIndexController(
       .withOption('type', 'date')
       .withOption('width', '25%')
       .renderWith(function(data, type, full) {
-        return new Date(data);
+        return UtilityService.formatDate(data);
       }),
     DTColumnBuilder
       .newColumn('comment')

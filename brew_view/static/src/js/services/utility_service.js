@@ -89,5 +89,11 @@ export default function utilityService($rootScope, $http) {
     }
   };
 
+  UtilityService.formatDate = function(timestamp) {
+    if (timestamp) {
+      return new Date(timestamp).toUTCString();
+    }
+  };
+
   return UtilityService;
 };
