@@ -2,6 +2,7 @@ import logging
 import os
 import unittest
 
+import requests.exceptions
 from mock import Mock, patch, call
 from box import Box
 from yapconf import YapconfSpec
@@ -70,17 +71,20 @@ class BartenderTest(unittest.TestCase):
         bg.bv_client = client_mock
         bg.logger = Mock()
 
-        ret_val = bg.connect_to_brew_view()
+        self.assertTrue(bg.connect_to_brew_view())
         client_mock.find_systems.assert_called_once()
-        self.assertTrue(ret_val)
 
     def test_connect_to_brew_view_failure(self):
-        from requests.exceptions import RequestException
-
-        client_mock = Mock(find_systems=Mock(side_effect=RequestException))
+        client_mock = Mock(find_systems=Mock(side_effect=requests.exceptions.ConnectionError))
         bg.bv_client = client_mock
         bg.logger = Mock()
 
-        ret_val = bg.connect_to_brew_view()
+        self.assertFalse(bg.connect_to_brew_view())
         client_mock.find_systems.assert_called_once()
-        self.assertFalse(ret_val)
+
+    def test_connect_to_brew_view_error(self):
+        client_mock = Mock(find_systems=Mock(side_effect=requests.exceptions.SSLError))
+        bg.bv_client = client_mock
+        bg.logger = Mock()
+
+        self.assertRaises(requests.exceptions.SSLError, bg.connect_to_brew_view)
