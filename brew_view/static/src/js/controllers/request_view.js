@@ -115,11 +115,7 @@ export default function requestViewController(
     }
   };
 
-  $scope.formatDate = function(timestamp) {
-    if (timestamp) {
-      return new Date(timestamp).toUTCString();
-    }
-  };
+  $scope.formatDate = UtilityService.formatDate;
 
   $scope.successCallback = function(response) {
     $scope.request.data = response.data;
