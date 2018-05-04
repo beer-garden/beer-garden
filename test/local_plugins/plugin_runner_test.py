@@ -1,8 +1,8 @@
 import logging
 import subprocess
 import sys
-import pytest
 
+import pytest
 from mock import Mock, PropertyMock, call, ANY
 from mongoengine import DoesNotExist
 
@@ -95,13 +95,16 @@ class TestPluginRunner(object):
         env_mock = mocker.patch('bartender.local_plugins.plugin_runner.'
                                 'LocalPluginRunner._generate_plugin_environment')
 
-        stdout_mock = Mock(readline=Mock(return_value=b""))
-        process_mock.return_value = Mock(poll=Mock(return_value="Not None"), stdout=stdout_mock)
+        process_mock.return_value = Mock(poll=Mock(return_value="Not None"))
 
         plugin.run()
-        process_mock.assert_called_with(plugin.executable, env=env_mock(),
-                                        bufsize=0, stderr=subprocess.STDOUT,
-                                        stdout=subprocess.PIPE, preexec_fn=ANY,
+        process_mock.assert_called_with(plugin.executable,
+                                        bufsize=0,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        universal_newlines=True,
+                                        env=env_mock(),
+                                        preexec_fn=ANY,
                                         cwd=plugin.path_to_plugin)
 
     @pytest.mark.parametrize('process_poll,stopped,error_called', [
@@ -109,14 +112,10 @@ class TestPluginRunner(object):
         ([None, 1, 1], False, True),  # Bad stop
     ])
     def test_run_plugin_io_thread_stop(self, mocker, plugin, process_poll, stopped, error_called):
-        mocker.patch('bartender.local_plugins.plugin_runner.'
-                     'LocalPluginRunner._generate_plugin_environment')
-        mocker.patch('bartender.local_plugins.plugin_runner.'
-                     'LocalPluginRunner.stopped',
-                     Mock(return_value=stopped))
         thread_mock = mocker.patch('bartender.local_plugins.plugin_runner.Thread')
         sleep_mock = mocker.patch('bartender.local_plugins.plugin_runner.sleep')
         process_mock = mocker.patch('bartender.local_plugins.plugin_runner.subprocess.Popen')
+        plugin.stopped = Mock(return_value=stopped)
 
         plugin.logger.error = Mock()
         fake_thread = Mock()
@@ -127,73 +126,68 @@ class TestPluginRunner(object):
         assert plugin.logger.error.called == error_called
         assert fake_thread.start.called
         assert fake_thread.join.called
-        thread_mock.assert_called_with(name=plugin.unique_name+'_io_thread',
-                                       target=plugin._check_io)
         sleep_mock.assert_called_once_with(0.1)
 
-    @pytest.mark.parametrize('plugin_output,logger_and_calls', [
+    @pytest.mark.parametrize('stdout,stderr,logger_calls', [
         (
-            [b"no logger", b""],
-            [
-                ('timestamp_logger', call(logging.ERROR, 'no logger'))
-            ]
-        ),
-        (
-            [b"ERROR: this is my error logger", b"INFO: this is my info logger", b""],
-            [
-                ('unformatted_logger', call(logging.ERROR, 'ERROR: this is my error logger')),
-                ('unformatted_logger', call(logging.INFO, 'INFO: this is my info logger')),
-            ]
+            ['print to stdout', 'INFO: hello', 'ERROR: world', ''],
+            ['print to stderr', 'WARNING: - on stderr', ''],
+            {
+                'timestamp_logger': [
+                    call(logging.INFO, 'print to stdout'),
+                    call(logging.ERROR, 'print to stderr'),
+                ],
+                'unformatted_logger': [
+                    call(logging.INFO, 'INFO: hello'),
+                    call(logging.WARNING, 'WARNING: - on stderr'),
+                    call(logging.ERROR, 'ERROR: world'),
+                ],
+            },
         ),
     ])
-    def test_check_io(self, mocker, plugin, plugin_output, logger_and_calls):
-        """Ensure output comming from the subprocess is logged correctly
+    def test_check_io(self, mocker, plugin, stdout, stderr, logger_calls):
+        """Ensure output coming from the subprocess is logged correctly
 
         The plugin_output param specifies what is returned from each call
-        to ``readline``. It should end with ``b""``.
+        to ``readline``. It should end with ``""``.
 
         The logger_and_calls param should be a tuple. The first item should
         specify which logger should be used to handle that output, and the
         second item should be a ``call`` describing how the logger was called
         """
-        mocker.patch('bartender.local_plugins.plugin_runner.'
-                     'LocalPluginRunner._generate_plugin_environment',
-                     Mock(return_value={}))
-        mocker.patch('bartender.local_plugins.plugin_runner.LocalPluginRunner.stopped',
-                     Mock(return_value=True))
-        thread_mock = mocker.patch('bartender.local_plugins.plugin_runner.Thread')
         process_mock = mocker.patch('bartender.local_plugins.plugin_runner.subprocess.Popen')
+        plugin.stopped = Mock(return_value=True)
 
-        stdout_mock = Mock(name='stdout mock', readline=Mock(side_effect=plugin_output))
+        stdout_mock = Mock(name='stdout mock', readline=Mock(side_effect=stdout))
+        stderr_mock = Mock(name='stderr mock', readline=Mock(side_effect=stderr))
+
         process_mock.return_value = Mock(name='process mock', poll=Mock(return_value=0),
-                                         stdout=stdout_mock)
-        thread_mock.return_value = Mock(name='thread mock', join=plugin._check_io)
+                                         stdout=stdout_mock, stderr=stderr_mock)
 
         plugin.unformatted_logger = Mock(name='unformatted')
         plugin.timestamp_logger = Mock(name='timestamp')
 
         plugin.run()
 
-        for logger_name, logger_call in logger_and_calls:
-            assert logger_call in getattr(plugin, logger_name).log.mock_calls
+        for logger_name, logger_calls in logger_calls.items():
+            for logger_call in logger_calls:
+                assert logger_call in getattr(plugin, logger_name).log.mock_calls
 
     def test_check_io_multiple_calls(self, plugin):
         stdout_mock = Mock(name='stdout mock', readline=Mock(
             side_effect=[
-                b"ERROR: this is my error logger", b"INFO: this is my info logger", b"", b""]))
+                "ERROR: this is my error logger", "INFO: this is my info logger", "", ""]))
         check_io_mock = Mock(wraps=plugin._check_io)
         plugin.process = Mock(name='process mock', poll=Mock(side_effect=[None, 0, 0]),
                               stdout=stdout_mock)
         plugin._check_io = check_io_mock
 
-        plugin._check_io()
+        plugin._check_io(stdout_mock, logging.INFO)
         assert check_io_mock.call_count > 1
 
     def test_run_call_throw_exception(self, mocker, plugin):
         mocker.patch('bartender.local_plugins.plugin_runner.subprocess.Popen',
                      Mock(side_effect=ValueError('error_message')))
-        mocker.patch('bartender.local_plugins.plugin_runner.'
-                     'LocalPluginRunner._generate_plugin_environment')
 
         plugin.logger.error = Mock()
         plugin.run()

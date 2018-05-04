@@ -108,17 +108,26 @@ class LocalPluginRunner(StoppableThread):
         """
         try:
             self.logger.info("Starting plugin %s subprocess: %s", self.unique_name, self.executable)
-            self.process = subprocess.Popen(self.executable, bufsize=0,
+            self.process = subprocess.Popen(self.executable,
+                                            bufsize=0,
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE,
+                                            universal_newlines=True,
                                             env=self._generate_plugin_environment(),
-                                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                             cwd=os.path.abspath(self.path_to_plugin),
                                             preexec_fn=lambda: signal.signal(signal.SIGINT,
                                                                              signal.SIG_IGN))
 
-            # Reading the process IO is blocking and we want to be able to shutdown gracefully
-            # when requested so reading the IO needs to be in its own thread
-            io_thread = Thread(target=self._check_io, name=self.unique_name+'_io_thread')
-            io_thread.start()
+            # Reading the process IO is blocking and we need to shutdown
+            # gracefully, so reading IO needs to be its own thread
+            stdout_thread = Thread(target=self._check_io,
+                                   name=self.unique_name+'_stdout_thread',
+                                   args=(self.process.stdout, logging.INFO))
+            stderr_thread = Thread(target=self._check_io,
+                                   name=self.unique_name+'_stderr_thread',
+                                   args=(self.process.stderr, logging.ERROR))
+            stdout_thread.start()
+            stderr_thread.start()
 
             # Just spin here until until the process is no longer alive
             while self.process.poll() is None:
@@ -126,7 +135,8 @@ class LocalPluginRunner(StoppableThread):
 
             self.logger.info("Plugin %s subprocess has stopped with exit status %s, "
                              "performing final IO read(s)", self.unique_name, self.process.poll())
-            io_thread.join()
+            stdout_thread.join()
+            stderr_thread.join()
 
             # If stopped wasn't set then this was not expected
             if not self.stopped():
@@ -138,23 +148,23 @@ class LocalPluginRunner(StoppableThread):
             self.logger.error("Plugin %s died", self.unique_name)
             self.logger.error(str(ex))
 
-    def _check_io(self):
+    def _check_io(self, stream, default_level):
         """Helper function thread target to read IO from the plugin's subprocess
 
-        This will read line by line from STDOUT & STDERR. If the line includes
+        This will read line by line from STDOUT or STDERR. If the line includes
         one of the log levels that the python logger knows about we assume that
         the plugin has its own logger and formatter. In that case we log to our
         unformatted logger at the same level to keep the original formatting.
 
         If we can't determine the log level then we'll add a timestamp to the
-        start and log the message at the ERROR level. That way we guarantee
+        start and log the message at ``default_level``. That way we guarantee
         messages are outputted (this is usually caused by a plugin writing to
-        STDOUT / STDOUT directly or raising an exception with a stacktrace).
+        STDOUT / STDERR directly or raising an exception with a stacktrace).
         """
-        stdout_iterator = iter(self.process.stdout.readline, b"")
+        stream_reader = iter(stream.readline, "")
 
-        for raw_line in stdout_iterator:
-            line = raw_line.decode('utf-8').rstrip()
+        for raw_line in stream_reader:
+            line = raw_line.rstrip()
 
             level_to_log = None
             for level in self.log_levels:
@@ -165,11 +175,11 @@ class LocalPluginRunner(StoppableThread):
             if level_to_log:
                 self.unformatted_logger.log(level_to_log, line)
             else:
-                self.timestamp_logger.log(logging.ERROR, line)
+                self.timestamp_logger.log(default_level, line)
 
         if self.process.poll() is None:
-            self.logger.info("Process isn't quite dead yet, reading IO again")
-            self._check_io()
+            self.logger.debug("Process isn't quite dead yet, reading IO again")
+            self._check_io(stream, default_level)
 
     def _generate_plugin_environment(self):
 
