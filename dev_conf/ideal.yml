@@ -1,0 +1,59 @@
+
+bartender:
+
+  publish_hostname: "localhost"
+
+  amq:
+    host: "localhost"
+    heartbeat_interval: 3600
+    connection_attempts: 3
+    exchange: "beer_garden"
+    virtual_host: "/"
+    connections:
+      admin:
+        user: "guest"
+        password: "guest"
+        port: 15672
+      message:
+        user: "guest"
+        password: "guest"
+        port: 5672
+
+  db:
+    name: "beer_garden"
+    connection:
+      user: null
+      password: null
+      host: "localhost"
+      port: 27017
+    ttl:
+      action: -1
+      event: 15
+      info: 15
+
+  log:
+    config_file: "dev_conf/logging-config.json"
+    file: null
+    level: "INFO"
+
+  thrift:
+    host: "0.0.0.0"
+    port: 9090
+    max_workers: 25
+
+  web:
+    host: "localhost"
+    port: 2337
+    ssl_enabled: false
+    ca_verify: false
+
+  plugin:
+    status_heartbeat: 5
+    status_timeout: 15
+    local:
+      directory: "./plugins"
+      log_directory: null
+      timeout:
+        startup: 2
+        shutdown: 10
+
