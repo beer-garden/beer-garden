@@ -30,7 +30,8 @@ before_install:
   - sudo rabbitmq-plugins enable rabbitmq_management
 
 install:
-  - pip install -r test/integration/requirements.txt
+  #- pip install -r test/integration/requirements.txt
+  - make -C test/integration deps
 
 before_script:
   - brew-view &
