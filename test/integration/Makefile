@@ -1,6 +1,6 @@
 # Makefile for integration tests
 
-.PHONY: clean clean-build clean-test clean-pyc help test
+.PHONY: clean clean-build clean-test clean-pyc help test-all
 .DEFAULT_GOAL := help
 
 define PRINT_HELP_PYSCRIPT
@@ -25,8 +25,22 @@ deps:
 lint: ## check style with flake8
 	flake8 $(MODULE_NAME) $(TEST_DIR)
 
-test-rest: ## run rest integration tests
-	pytest rest/
+start: ## start brew-view and bartender
+	brew-view &
+	bartender &
 
-test-all: ## run all the tests
-	pytest
+stop: ## kill brew-view and bartender
+	pkill bartender
+	sleep 3
+	pkill brew-view
+
+test-lifecycle: ## run lifecycle integration tests
+	pytest lifecycle/
+
+test-rest: ## run rest integration tests
+	$(MAKE) start
+	sleep 10
+	pytest rest/
+	$(MAKE) stop
+
+test-all: test-lifecycle test-rest ## run all the tests
