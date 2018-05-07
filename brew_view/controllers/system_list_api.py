@@ -16,6 +16,8 @@ class SystemListAPI(BaseHandler):
     parser = BeerGardenSchemaParser()
     logger = logging.getLogger(__name__)
 
+    REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
+
     # Need to ensure that Systems are updated atomically
     system_lock = Lock()
 
@@ -42,20 +44,48 @@ class SystemListAPI(BaseHandler):
         tags:
           - Systems
         """
-        self.logger.debug("Getting all Systems")
+        query_set = System.objects.order_by(self.request.headers.get('order_by', 'name'))
+        serialize_params = {'to_string': True, 'many': True}
 
-        filter_params = {}
-        for key in self.request.arguments.keys():
-            if key in SystemSchema.get_attribute_names():
-                filter_params[key] = self.get_query_argument(key)
+        include_fields = set(self.request.headers.get_list('include_field'))
+        exclude_fields = set(self.request.headers.get_list('exclude_field'))
+        include_commands = self.get_query_argument('include_commands', None)
 
-        include_commands = self.get_query_argument(
-            'include_commands', default='true').lower() != 'false'
+        if include_fields and exclude_fields:
+            raise Exception('Headers "include_field" and "exclude_field" can'
+                            'not exist on the same request')
+        elif include_commands and (include_fields or exclude_fields):
+            raise Exception('Headers "include_field" and "exclude_field" can'
+                            'not be used with "include_commands"')
+        elif include_fields:
+            # include_fields = include_fields & self.REQUEST_FIELDS
+            query_set = query_set.only(*include_fields)
+        elif exclude_fields:
+            exclude_fields = exclude_fields & self.REQUEST_FIELDS
+            query_set = query_set.exclude(*exclude_fields)
+            serialize_params['exclude'] = exclude_fields
+
+        # Convert the legacy include_commands into a bool:
+        if include_commands:
+            include_commands = include_commands.lower() != 'false'
+
+            if not include_commands:
+                query_set = query_set.exclude('commands')
+                serialize_params['include_commands'] = False
+
+        # Need to use self.request.query_arguments to get ALL the query args
+        # Once we know the name use get_query_argument to get the decoded value
+        # TODO Handle multiple query arguments with the same key
+        filter_params = {
+            key: self.get_query_argument(key) for key in self.request.query_arguments
+        }
+        # TODO IN Python 3 views have set operations
+        # query_set = query_set.order_by(self.request.headers.get('order_by', 'name'))
+
+        result_set = query_set.filter(**filter_params)
 
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
-        self.write(self.parser.serialize_system(
-            System.objects.filter(**filter_params).order_by('name'),
-            to_string=True, many=True, include_commands=include_commands))
+        self.write(self.parser.serialize_system(result_set, **serialize_params))
 
     @coroutine
     def post(self):
