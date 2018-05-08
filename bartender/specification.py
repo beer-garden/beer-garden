@@ -1,12 +1,4 @@
 SPECIFICATION = {
-
-    #"amq_admin_host": {
-    #    "type": "str",
-    #    "default": "localhost",
-    #    "description": "Hostname of the AMQ Admin host",
-    #    "previous_names": ["amq_admin_host"]
-    #},
-
     "config": {
         "type": "str",
         "description": "Path to configuration file to use",
@@ -252,7 +244,7 @@ SPECIFICATION = {
             "max_workers": {
                 "type": "int",
                 "default": 25,
-                "description": "Maximum number of threads available to service incoming thrift calls",
+                "description": "Maximum number of threads for handling incoming thrift calls",
                 "previous_names": ["max_thrift_workers"],
             },
             "host": {
@@ -306,13 +298,13 @@ SPECIFICATION = {
                             "shutdown": {
                                 "type": "int",
                                 "default": 10,
-                                "description": "How long to wait for a local plugin to stop before killing it",
+                                "description": "Seconds to wait for a plugin to stop gracefully",
                                 "previous_names": ["plugin_shutdown_timeout"],
                             },
                             "startup": {
                                 "type": "int",
                                 "default": 5,
-                                "description": "How long to wait for a local plugin to start before determining it is dead",
+                                "description": "Seconds to wait for a plugin to start",
                                 "previous_names": ["plugin_startup_timeout"],
                             },
                         },

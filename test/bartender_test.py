@@ -9,7 +9,7 @@ from yapconf import YapconfSpec
 
 import bartender as bg
 from bartender.app import BartenderApp
-from bartender.specification import SPECIFICATION, get_default_logging_config
+from bartender.specification import SPECIFICATION
 
 
 class BartenderTest(unittest.TestCase):

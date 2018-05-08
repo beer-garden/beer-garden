@@ -120,6 +120,7 @@ class LocalPluginLoader(object):
         plugin_system.deep_save()
 
         plugin_list = []
+        plugin_log_directory = bartender.config.plugin.local.log_directory
         for instance_name in plugin_instances:
             plugin = LocalPluginRunner(plugin_entry, plugin_system, instance_name,
                                        abspath(plugin_path),
@@ -129,7 +130,7 @@ class LocalPluginLoader(object):
                                        plugin_args=plugin_args.get(instance_name),
                                        environment=config['ENVIRONMENT'],
                                        requirements=config['REQUIRES'],
-                                       plugin_log_directory=bartender.config.plugin.local.log_directory,
+                                       plugin_log_directory=plugin_log_directory,
                                        url_prefix=bartender.config.web.url_prefix,
                                        ca_verify=bartender.config.web.ca_verify,
                                        ca_cert=bartender.config.web.ca_cert)

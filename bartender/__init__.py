@@ -1,7 +1,5 @@
-import json
 import logging
 import logging.config
-from io import open
 
 import requests.exceptions
 
