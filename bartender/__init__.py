@@ -21,17 +21,16 @@ bv_client = None
 def setup_bartender(spec, cli_args):
     global application, config, logger, bv_client
 
-    # We load the config once just to see if there is a config file we should load from.
-    temp_config = spec.load_config(cli_args, 'ENVIRONMENT')
+    config_sources = [cli_args, 'ENVIRONMENT']
 
-    # If they specified a config file, we should load it up
+    # Load bootstrap items to see if there's a config file
+    temp_config = spec.load_config(*config_sources, bootstrap=True)
+
     if temp_config.config:
-        with open(temp_config.config) as config_file:
-            config_from_file = json.load(config_file)
-    else:
-        config_from_file = {}
+        file_type = 'yaml' if temp_config.config.endswith(('yaml', 'yml')) else 'json'
+        config_sources.insert(1, ('config file', temp_config.config, file_type))
 
-    config = spec.load_config(cli_args, config_from_file, 'ENVIRONMENT')
+    config = spec.load_config(*config_sources)
 
     prefix = brewtils.rest.normalize_url_prefix(config.url_prefix)
     config['url_prefix'] = prefix
