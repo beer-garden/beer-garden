@@ -11,7 +11,8 @@ SPECIFICATION = {
         "type": "str",
         "description": "Path to configuration file to use",
         "required": False,
-        "cli_short_name": "c"
+        "cli_short_name": "c",
+        "bootstrap": True,
     },
     "publish_hostname": {
         "type": "str",
