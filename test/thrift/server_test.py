@@ -17,7 +17,7 @@ class ThriftServerTest(unittest.TestCase):
         self.pool_mock = Mock()
 
         with patch('bartender.config') as config_mock:
-            config_mock.max_thrift_workers = 25
+            config_mock.thrift.max_workers = 25
             self.server = BartenderThriftServer(self.processor_mock, self.trans_mock)
             self.server.pool = self.pool_mock
 
@@ -97,15 +97,15 @@ class ThriftServerTest(unittest.TestCase):
 
 class MakeServerTest(unittest.TestCase):
 
-    @patch('bartender.config', Mock(max_thrift_workers=1))
+    @patch('bartender.config', Mock(thrift=Mock(max_workers=1)))
     def test_make_server_no_cert(self):
         server = make_server(Mock(), Mock())
         self.assertIsInstance(server.trans, TServerSocket)
         self.assertNotIsInstance(server.trans, TSSLServerSocket)
 
+    @patch('bartender.config', Mock(thrift=Mock(max_workers=1)))
     @patch('thriftpy.transport.sslsocket.os', Mock())
     @patch('thriftpy.transport.sslsocket.create_thriftpy_context', Mock())
-    @patch('bartender.config', Mock(max_thrift_workers=1))
     def test_make_server_with_cert(self):
         server = make_server(Mock(), Mock(), cert_file=Mock())
         self.assertIsInstance(server.trans, TSSLServerSocket)

@@ -161,10 +161,11 @@ class BartenderHandlerTest(unittest.TestCase):
                                                                       force_disconnect=False)])
         self.assertTrue(fake_system.deep_delete.called)
 
-    @patch('bartender.config', Mock(plugin_shutdown_timeout=1))
     @patch('bartender.thrift.handler.sleep', Mock())
+    @patch('bartender.config')
     @patch('bartender.thrift.handler.System')
-    def test_remove_remote_system(self, system_mock):
+    def test_remove_remote_system(self, system_mock, config_mock):
+        config_mock.plugin.local.timeout.shutdown = 1
         fake_system = MagicMock(version='0.0.1')
         type(fake_system).name = PropertyMock(return_value='name')
         fake_system.instances = [Mock(name='default', status='RUNNING',

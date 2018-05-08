@@ -82,7 +82,10 @@ class BartenderAppTest(unittest.TestCase):
             helper.stop.assert_called_once_with()
 
     def test_setup_pruning_tasks(self):
-        config = Mock(info_request_ttl=5, action_request_ttl=10, event_mongo_ttl=15)
+        config = Mock()
+        config.db.ttl.info = 5
+        config.db.ttl.action = 10
+        config.db.ttl.event = 15
 
         prune_tasks, run_every = BartenderApp._setup_pruning_tasks(config)
         self.assertEqual(3, len(prune_tasks))
@@ -105,14 +108,20 @@ class BartenderAppTest(unittest.TestCase):
         self.assertEqual(timedelta(minutes=15), event_task['delete_after'])
 
     def test_setup_pruning_tasks_empty(self):
-        config = Mock(info_request_ttl=-1, action_request_ttl=-1, event_mongo_ttl=-1)
+        config = Mock()
+        config.db.ttl.info = -1
+        config.db.ttl.action = -1
+        config.db.ttl.event = -1
 
         prune_tasks, run_every = BartenderApp._setup_pruning_tasks(config)
         self.assertEqual([], prune_tasks)
         self.assertIsNone(run_every)
 
     def test_setup_pruning_tasks_mixed(self):
-        config = Mock(info_request_ttl=5, action_request_ttl=-1, event_mongo_ttl=15)
+        config = Mock()
+        config.db.ttl.info = 5
+        config.db.ttl.action = -1
+        config.db.ttl.event = 15
 
         prune_tasks, run_every = BartenderApp._setup_pruning_tasks(config)
         self.assertEqual(2, len(prune_tasks))
