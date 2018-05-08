@@ -4,6 +4,7 @@ from imp import load_source
 from os import listdir
 from os.path import isfile, join, abspath
 
+import bartender
 from bartender.local_plugins.plugin_runner import LocalPluginRunner
 from bg_utils.models import Instance, System
 
@@ -13,22 +14,9 @@ class LocalPluginLoader(object):
 
     logger = logging.getLogger(__name__)
 
-    def __init__(self, path_to_plugins, validator, registry, web_host, web_port, ssl_enabled,
-                 db_host, db_name, db_port, plugin_log_directory, url_prefix, ca_verify, ca_cert):
+    def __init__(self, validator, registry):
         self.validator = validator
         self.registry = registry
-        self.path_to_plugins = path_to_plugins
-        self.web_host = web_host
-        self.web_port = web_port
-        self.ssl_enabled = ssl_enabled
-        # TODO: We no longer use the database information
-        self.db_host = db_host
-        self.db_name = db_name
-        self.db_port = db_port
-        self.plugin_log_directory = plugin_log_directory
-        self.url_prefix = url_prefix
-        self.ca_verify = ca_verify
-        self.ca_cert = ca_cert
 
     def load_plugins(self):
         """Load all plugins
@@ -51,7 +39,7 @@ class LocalPluginLoader(object):
             specified at initialization.
         :return: A list containing paths specifying plugins
         """
-        path = path or self.path_to_plugins
+        path = path or bartender.config.plugin.local.directory
 
         if path is None:
             return []
@@ -134,14 +122,17 @@ class LocalPluginLoader(object):
         plugin_list = []
         for instance_name in plugin_instances:
             plugin = LocalPluginRunner(plugin_entry, plugin_system, instance_name,
-                                       abspath(plugin_path), self.web_host,
-                                       self.web_port, self.ssl_enabled,
+                                       abspath(plugin_path),
+                                       bartender.config.web.host,
+                                       bartender.config.web.port,
+                                       bartender.config.web.ssl_enabled,
                                        plugin_args=plugin_args.get(instance_name),
                                        environment=config['ENVIRONMENT'],
                                        requirements=config['REQUIRES'],
-                                       plugin_log_directory=self.plugin_log_directory,
-                                       url_prefix=self.url_prefix,
-                                       ca_verify=self.ca_verify, ca_cert=self.ca_cert)
+                                       plugin_log_directory=bartender.config.plugin.local.log_directory,
+                                       url_prefix=bartender.config.web.url_prefix,
+                                       ca_verify=bartender.config.web.ca_verify,
+                                       ca_cert=bartender.config.web.ca_cert)
 
             self.registry.register_plugin(plugin)
             plugin_list.append(plugin)

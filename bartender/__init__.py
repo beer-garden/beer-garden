@@ -31,19 +31,14 @@ def setup_bartender(spec, cli_args):
         config_sources.insert(1, ('config file', temp_config.config, file_type))
 
     config = spec.load_config(*config_sources)
-
-    prefix = brewtils.rest.normalize_url_prefix(config.url_prefix)
-    config['url_prefix'] = prefix
-    config.url_prefix = prefix
+    config.web.url_prefix = brewtils.rest.normalize_url_prefix(config.web.url_prefix)
 
     bg_utils.setup_application_logging(config,
-                                       get_default_logging_config(config.log_level,
-                                                                  config.log_file))
+                                       get_default_logging_config(config.log.level,
+                                                                  config.log.file))
     logger = logging.getLogger(__name__)
 
-    bv_client = EasyClient(config.web_host, config.web_port, ssl_enabled=config.ssl_enabled,
-                           ca_cert=config.ca_cert, url_prefix=config.url_prefix,
-                           ca_verify=config.ca_verify)
+    bv_client = EasyClient(**config.web)
 
     application = BartenderApp(config)
 

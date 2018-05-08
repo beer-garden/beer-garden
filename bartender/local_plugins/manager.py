@@ -1,5 +1,6 @@
 import logging
 
+import bartender
 from bartender.errors import PluginStartupError
 from bartender.local_plugins.plugin_runner import LocalPluginRunner
 from bg_utils.models import System
@@ -8,15 +9,12 @@ from bg_utils.models import System
 class LocalPluginsManager(object):
     """LocalPluginsManager that is capable of stopping/starting and restarting plugins"""
 
-    def __init__(self, loader, validator, registry, clients,
-                 plugin_startup_timeout=5, plugin_shutdown_timeout=10):
+    def __init__(self, loader, validator, registry, clients):
         self.logger = logging.getLogger(__name__)
         self.loader = loader
         self.validator = validator
         self.registry = registry
         self.clients = clients
-        self.plugin_startup_timeout = plugin_startup_timeout
-        self.plugin_shutdown_timeout = plugin_shutdown_timeout
 
     def start_plugin(self, plugin):
         """Start a specific plugin.
@@ -88,7 +86,7 @@ class LocalPluginsManager(object):
 
             # Now just wait for the plugin thread to die
             self.logger.info("Waiting for plugin %s to stop...", plugin.unique_name)
-            plugin.join(self.plugin_shutdown_timeout)
+            plugin.join(bartender.config.plugin.local.timeout.shutdown)
 
         except Exception as ex:
             clean_shutdown = False

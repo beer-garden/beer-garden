@@ -20,7 +20,7 @@ class BartenderThriftServer(TThreadedServer, StoppableThread):
     def __init__(self, *args, **kwargs):
         self.logger = logging.getLogger(__name__)
         self.display_name = 'Thrift Server'
-        self.pool = ThreadPoolExecutor(max_workers=bartender.config.max_thrift_workers)
+        self.pool = ThreadPoolExecutor(max_workers=bartender.config.thrift.max_workers)
         self.futures = set()
         self.finished = Event()
 

@@ -171,7 +171,7 @@ class BartenderHandler(object):
             count = 0
             while (
                     any(instance.status != 'STOPPED' for instance in system.instances) and
-                    count < bartender.config.plugin_shutdown_timeout):
+                    count < bartender.config.plugin.local.timeout.shutdown):
                 sleep(1)
                 count += 1
                 system.reload()
