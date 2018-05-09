@@ -90,7 +90,7 @@ class TestBgUtils(object):
 
     @patch('bg_utils.logging.config.dictConfig')
     def test_setup_application_logging_no_log_config(self, config_mock):
-        app_config = Mock(log_config=None)
+        app_config = Box({'log': {'config_file': None}})
         bg_utils.setup_application_logging(app_config, {})
         config_mock.assert_called_with({})
 
@@ -121,8 +121,17 @@ class TestBgUtils(object):
     @patch('mongoengine.connect')
     @patch('bg_utils._verify_db', Mock())
     def test_setup_database_connect(self, connect_mock):
-        app_config = Mock(db_name="db_name", db_username="db_username", db_password="db_password",
-                          db_host="db_host", db_port="db_port")
+        app_config = Box({
+            'db': {
+                'name': 'db_name',
+                'connection': {
+                    'username': 'db_username',
+                    'password': 'db_password',
+                    'host': 'db_host',
+                    'port': 'db_port',
+                },
+            },
+        })
         assert bg_utils.setup_database(app_config) is True
         connect_mock.assert_called_with(db='db_name', username='db_username',
                                         password='db_password', host='db_host', port='db_port',
@@ -131,10 +140,8 @@ class TestBgUtils(object):
     @patch('mongoengine.connect')
     @patch('bg_utils._verify_db', Mock())
     def test_setup_database_connect_error(self, connect_mock):
-        app_config = Mock(db_name="db_name", db_username="db_username", db_password="db_password",
-                          db_host="db_host", db_port="db_port")
         connect_mock.side_effect = ServerSelectionTimeoutError
-        assert bg_utils.setup_database(app_config) is False
+        assert bg_utils.setup_database(MagicMock()) is False
 
     @patch('mongoengine.connect', Mock())
     @patch('bg_utils.models.System')
@@ -149,7 +156,7 @@ class TestBgUtils(object):
         system_mock._get_collection = Mock(return_value=Mock(
             index_information=Mock(return_value=['index1'])))
 
-        bg_utils.setup_database(Mock())
+        bg_utils.setup_database(MagicMock())
         assert system_mock.ensure_indexes.call_count == 1
         assert request_mock.ensure_indexes.call_count == 1
 
@@ -166,7 +173,7 @@ class TestBgUtils(object):
         system_mock._get_collection = Mock(return_value=Mock(
             index_information=Mock(return_value=['index1'])))
 
-        bg_utils.setup_database(Mock())
+        bg_utils.setup_database(MagicMock())
         assert system_mock.ensure_indexes.call_count == 1
         assert request_mock.ensure_indexes.call_count == 1
 
@@ -188,7 +195,7 @@ class TestBgUtils(object):
         db_mock = MagicMock()
         get_db_mock.return_value = db_mock
 
-        bg_utils.setup_database(Mock())
+        bg_utils.setup_database(MagicMock())
         assert db_mock['request'].drop_indexes.call_count == 1
         assert request_mock.ensure_indexes.called is True
 
@@ -205,7 +212,7 @@ class TestBgUtils(object):
         get_db_mock.side_effect = OperationFailure("")
 
         with pytest.raises(OperationFailure):
-            bg_utils.setup_database(Mock())
+            bg_utils.setup_database(MagicMock())
 
     @patch('mongoengine.connect', Mock())
     @patch('mongoengine.connection.get_db', MagicMock())
@@ -219,4 +226,4 @@ class TestBgUtils(object):
         system_mock.ensure_indexes = Mock(side_effect=OperationFailure(""))
 
         with pytest.raises(OperationFailure):
-            bg_utils.setup_database(Mock())
+            bg_utils.setup_database(MagicMock())

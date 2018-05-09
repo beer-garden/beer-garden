@@ -132,8 +132,8 @@ def setup_application_logging(config, default_config):
     Returns:
         dict: The logging configuration used
     """
-    if config.log_config:
-        with open(config.log_config, 'rt') as f:
+    if config.log.config_file:
+        with open(config.log.config_file, 'rt') as f:
             logging_config = json.load(f)
     else:
         logging_config = default_config
@@ -159,10 +159,9 @@ def setup_database(config):
     from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 
     try:
-        connect(db=config.db_name, username=config.db_username,
-                password=config.db_password, host=config.db_host,
-                port=config.db_port, socketTimeoutMS=1000,
-                serverSelectionTimeoutMS=1000)
+        connect(db=config.db.name,
+                socketTimeoutMS=1000, serverSelectionTimeoutMS=1000,
+                **config.db.connection)
 
         # The 'connect' method won't actually fail
         # An exception won't be raised until we actually try to do something
