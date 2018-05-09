@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from box import Box
 from mock import Mock, patch, MagicMock
@@ -36,17 +38,19 @@ class TestBgUtils(object):
         assert config.log_level == 'INFO'
         assert config.config == '/path/to/config'
 
-    def test_generate_config_file(self, spec):
-        spec._write_dict_to_file = Mock()
-        bg_utils.generate_config_file(spec, ["--config", "/path/to/config"])
-        expected = Box({"log_file": None, "log_level": "INFO", "log_config": None,
-                        "config": "/path/to/config"})
-        spec._write_dict_to_file.assert_called_with(expected, '/path/to/config', 'json')
+    @pytest.mark.parametrize('file_type', ['json', 'yaml'])
+    def test_generate_config_file(self, spec, tmpdir, file_type):
+        filename = os.path.join(str(tmpdir), 'temp.'+file_type)
 
-    def test_generate_config_file_no_config(self, spec):
-        spec._write_dict_to_file = Mock()
-        bg_utils.generate_config_file(spec, [])
-        assert spec._write_dict_to_file.called is False
+        bg_utils.generate_config_file(spec, ["--config", filename], file_type=file_type)
+        assert os.path.getsize(filename) > 0
+
+    @pytest.mark.parametrize('file_type', ['json', 'yaml'])
+    def test_generate_config_file_print(self, spec, capsys, file_type):
+        bg_utils.generate_config_file(spec, [], file_type=file_type)
+
+        # Just make sure we printed something
+        assert capsys.readouterr().out
 
     def test_update_config(self, spec):
         spec.update_defaults = Mock()

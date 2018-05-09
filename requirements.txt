@@ -44,6 +44,9 @@ pytz==2017.2
 pyyaml==3.12              # via watchdog
 requests-toolbelt==0.8.0  # via twine
 requests==2.18.4          # via requests-toolbelt, sphinx, twine
+ruamel.ordereddict==0.4.13 ; python_version < "3.0" # via ruamel.yaml
+ruamel.yaml==0.15.37
+simplejson==3.14.0
 six==1.11.0               # via mock, mongoengine, pytest, sphinx, tox, yapconf
 snowballstemmer==1.2.1    # via sphinx
 sphinx-rtd-theme==0.2.4

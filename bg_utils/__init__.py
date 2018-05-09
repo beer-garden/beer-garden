@@ -3,6 +3,7 @@ import logging
 import logging.config
 import os
 import six
+import sys
 from argparse import ArgumentParser
 from io import open
 
@@ -42,7 +43,7 @@ def parse_args(spec, item_names, cli_args):
     return args
 
 
-def generate_config_file(spec, cli_args):
+def generate_config_file(spec, cli_args, file_type='json'):
     """Generate a configuration file.
 
     Takes a specification and a series of command line arguments. Will create a file at the
@@ -59,12 +60,29 @@ def generate_config_file(spec, cli_args):
     Raises:
         YapconfLoadError: Missing 'config' configuration option (file location)
     """
-    config = _generate_config(spec, cli_args)
+    config_dict = _generate_config(spec, cli_args).to_dict()
+    config_file = config_dict.get('config')
 
-    if config.get('config', None):
-        spec._write_dict_to_file(config, config.config, 'json')
-    else:
-        print(config)
+    if file_type == 'json':
+        dumped = json.dumps(config_dict, sort_keys=True, indent=4)
+        unicoded = six.u(dumped)
+
+        if config_file:
+            with open(config_file, 'w', encoding='utf-8') as f:
+                f.write(unicoded)
+        else:
+            print(unicoded)
+    elif file_type == 'yaml':
+        from ruamel.yaml import YAML
+
+        yaml = YAML()
+        yaml.default_flow_style = False
+
+        if config_file:
+            with open(config_file, 'w', encoding='utf-8') as f:
+                yaml.dump(config_dict, f)
+        else:
+            yaml.dump(config_dict, sys.stdout)
 
 
 def update_config_file(spec, cli_args):
