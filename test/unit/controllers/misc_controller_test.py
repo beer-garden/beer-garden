@@ -11,7 +11,7 @@ class ConfigHandlerTest(TestHandlerBase):
 
     def test_config(self):
         import brew_view
-        brew_view.config['application_name'] = 'Rock Garden'
+        brew_view.config['application']['name'] = 'Rock Garden'
 
         response = self.fetch('/config')
         self.assertEqual('Rock Garden',

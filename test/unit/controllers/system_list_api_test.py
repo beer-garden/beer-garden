@@ -1,10 +1,9 @@
 from mock import Mock, patch
 
 from . import TestHandlerBase
-from test.unit.utils import TestUtils
 
 
-class SystemListAPITest(TestHandlerBase, TestUtils):
+class SystemListAPITest(TestHandlerBase):
 
     def setUp(self):
         self.system_mock = Mock(name="System Mock")

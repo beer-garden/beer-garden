@@ -5,10 +5,9 @@ from mongoengine.errors import DoesNotExist
 from tornado.gen import Future
 
 from . import TestHandlerBase
-from test.unit.utils import TestUtils
 
 
-class SystemAPITest(TestHandlerBase, TestUtils):
+class SystemAPITest(TestHandlerBase):
 
     def setUp(self):
         self.system_mock = Mock(version='1.0', commands=[])
