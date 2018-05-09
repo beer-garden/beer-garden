@@ -5,5 +5,7 @@ https://github.com/beer-garden/bg-utils/archive/master.zip
 https://github.com/beer-garden/bartender/archive/master.zip
 https://github.com/beer-garden/brew-view/archive/master.zip
 
+flake8
 mock
 pytest>=3.5.0
+pytest-timeout

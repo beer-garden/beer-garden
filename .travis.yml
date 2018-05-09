@@ -30,13 +30,7 @@ before_install:
   - sudo rabbitmq-plugins enable rabbitmq_management
 
 install:
-  - pip install -r test/integration/requirements.txt
+  - make -C test/integration deps
 
-before_script:
-  - brew-view &
-  - bartender &
-
-  # Give the plugins some time to come up
-  - sleep 10
-
-script: pytest test/integration/rest
+script:
+  - make -C test/integration test-all
