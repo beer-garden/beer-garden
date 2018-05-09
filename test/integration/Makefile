@@ -23,7 +23,7 @@ deps:
 	pip install -r requirements.txt
 
 lint: ## check style with flake8
-	flake8 $(MODULE_NAME) $(TEST_DIR)
+	flake8
 
 start: ## start brew-view and bartender
 	brew-view &
@@ -34,6 +34,9 @@ stop: ## kill brew-view and bartender
 	sleep 3
 	pkill brew-view
 
+test-config: ## run configuration integration tests
+	pytest config/
+
 test-lifecycle: ## run lifecycle integration tests
 	pytest lifecycle/
 
@@ -43,4 +46,4 @@ test-rest: ## run rest integration tests
 	pytest rest/
 	$(MAKE) stop
 
-test-all: test-lifecycle test-rest ## run all the tests
+test-all: test-config test-lifecycle test-rest ## run all the tests

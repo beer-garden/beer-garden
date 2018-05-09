@@ -12,3 +12,5 @@ If you're running Beer-garden locally you can also run these tests yourself. Jus
 ## Parts
 - Lifecycle: These test that bartender and brew-view can correctly start up and shut down
 - Rest: These test the brew-view rest interface
+- Config: These make sure that configuration file generation / upgrades work properly
+- Upgrade: These test upgrading beer-garden from one version to another
