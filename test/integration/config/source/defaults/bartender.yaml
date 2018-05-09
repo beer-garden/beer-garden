@@ -1,0 +1,52 @@
+config: ./bartender.yaml
+publish_hostname: localhost
+amq:
+  host: localhost
+  heartbeat_interval: 3600
+  connection_attempts: 3
+  exchange: beer_garden
+  virtual_host: /
+  connections:
+    admin:
+      port: 15672
+      user: guest
+      password: guest
+    message:
+      port: 5672
+      password: guest
+      user: guest
+db:
+  name: beer_garden
+  connection:
+    host: localhost
+    password:
+    port: 27017
+    username:
+  ttl:
+    event: 15
+    action: -1
+    info: 15
+log:
+  config_file:
+  file:
+  level: INFO
+web:
+  ca_cert:
+  ca_verify: true
+  host: localhost
+  port: 2337
+  ssl_enabled: false
+  url_prefix:
+thrift:
+  max_workers: 25
+  host: 0.0.0.0
+  port: 9090
+plugin:
+  status_heartbeat: 10
+  status_timeout: 30
+  local:
+    directory:
+    log_directory:
+    timeout:
+      shutdown: 10
+      startup: 5

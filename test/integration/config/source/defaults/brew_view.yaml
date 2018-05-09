@@ -1,0 +1,59 @@
+config: ./brew_view.yaml
+amq:
+  host: localhost
+  heartbeat_interval: 3600
+  connection_attempts: 3
+  exchange: beer_garden
+  virtual_host: /
+  connections:
+    admin:
+      port: 15672
+      user: guest
+      password: guest
+    message:
+      port: 5672
+      password: guest
+      user: guest
+application:
+  name: Beer Garden
+  icon_default: fa-beer
+  allow_unsafe_templates: false
+backend:
+  host: localhost
+  port: 9090
+  socket_timeout: 3000
+db:
+  name: beer_garden
+  connection:
+    host: localhost
+    password:
+    port: 27017
+    username:
+cors_enabled: false
+debug_mode: false
+event:
+  amq:
+    enable: true
+    exchange:
+    virtual_host: /
+  mongo:
+    enable: true
+  public_fqdn: localhost
+log:
+  config_file:
+  file:
+  level: INFO
+plugin_logging:
+  config_file:
+  level: INFO
+web:
+  ssl:
+    enabled: false
+    private_key:
+    public_key:
+    ca_cert:
+    ca_path:
+    client_cert_verify: NONE
+  port: 2337
+  url_prefix:
+shutdown_timeout: 5
