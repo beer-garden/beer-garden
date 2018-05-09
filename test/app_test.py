@@ -1,6 +1,7 @@
 import unittest
 from datetime import timedelta
 
+import requests.exceptions
 from mock import MagicMock, Mock, patch
 from yapconf import YapconfSpec
 
@@ -67,6 +68,16 @@ class BartenderAppTest(unittest.TestCase):
         for helper in self.app.helper_threads:
             helper.start.assert_called_once_with()
 
+    @patch('bartender.bv_client')
+    def test_startup_notification_error(self, client_mock):
+        self.app.plugin_manager = self.plugin_manager
+        self.app.clients = self.clients
+        self.app.helper_threads = []
+
+        client_mock.publish_event.side_effect = requests.exceptions.ConnectionError
+
+        self.app._startup()
+
     @patch('bartender.bv_client', Mock())
     @patch('bartender.app.BartenderApp._startup', Mock())
     def test_shutdown(self):
@@ -80,6 +91,16 @@ class BartenderAppTest(unittest.TestCase):
 
         for helper in self.app.helper_threads:
             helper.stop.assert_called_once_with()
+
+    @patch('bartender.bv_client')
+    def test_shutdown_notification_error(self, client_mock):
+        self.app.plugin_manager = self.plugin_manager
+        self.app.clients = self.clients
+        self.app.helper_threads = []
+
+        client_mock.publish_event.side_effect = requests.exceptions.ConnectionError
+
+        self.app._shutdown()
 
     def test_setup_pruning_tasks(self):
         config = Mock(info_request_ttl=5, action_request_ttl=10, event_mongo_ttl=15)
