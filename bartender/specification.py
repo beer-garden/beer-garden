@@ -84,7 +84,7 @@ SPECIFICATION = {
                                 "type": "str",
                                 "default": "guest",
                                 "description": "Password to login to the AMQ host",
-                                "previous_names": ["amq_pw"],
+                                "previous_names": ["amq_password"],
                             },
                             "user": {
                                 "type": "str",
