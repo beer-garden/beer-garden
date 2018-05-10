@@ -43,7 +43,7 @@ def parse_args(spec, item_names, cli_args):
     return args
 
 
-def generate_config_file(spec, cli_args, file_type='json'):
+def generate_config_file(spec, cli_args):
     """Generate a configuration file.
 
     Takes a specification and a series of command line arguments. Will create a file at the
@@ -60,10 +60,20 @@ def generate_config_file(spec, cli_args, file_type='json'):
     Raises:
         YapconfLoadError: Missing 'config' configuration option (file location)
     """
-    config_dict = _generate_config(spec, cli_args).to_dict()
-    config_file = config_dict.get('config')
+    config = _generate_config(spec, cli_args)
+    config_dict = config.to_dict()
 
-    if file_type == 'json':
+    config_file = config.configuration.file or None
+    config_type = config.configuration.type or None
+
+    # Default to yaml, but try to use file extension if we have one
+    if config_type is None:
+        if config_file and config_file.endswith('json'):
+            config_type = 'json'
+        else:
+            config_type = 'yaml'
+
+    if config_type == 'json':
         dumped = json.dumps(config_dict, sort_keys=True, indent=4)
         unicoded = six.u(dumped)
 
@@ -72,7 +82,7 @@ def generate_config_file(spec, cli_args, file_type='json'):
                 f.write(unicoded)
         else:
             print(unicoded)
-    elif file_type == 'yaml':
+    elif config_type == 'yaml':
         from ruamel.yaml import YAML
 
         yaml = YAML()
@@ -88,7 +98,7 @@ def generate_config_file(spec, cli_args, file_type='json'):
 def update_config_file(spec, cli_args):
     """Updates a configuration file in-place.
 
-    cli_args must contain a 'config' argument that specifies the config file to update.
+    cli_args must contain an argument that specifies the config file to update ('-c').
 
     Args:
         spec (yapconf.YapconfSpec): Specification for the application
@@ -100,10 +110,12 @@ def update_config_file(spec, cli_args):
     Raises:
         YapconfLoadError: Missing 'config' configuration option (file location)
     """
-    spec.get_item("config").required = True
-    config = _generate_config(spec, cli_args)
+    conf = _generate_config(spec, cli_args)
 
-    spec.migrate_config_file(config.config, update_defaults=True)
+    if not conf.configuration.file:
+        raise SystemExit('Please specify a config file to update in the CLI arguments (-c)')
+
+    spec.migrate_config_file(conf.configuration.file, update_defaults=True)
 
 
 def generate_logging_config_file(spec, logging_config_generator, cli_args):

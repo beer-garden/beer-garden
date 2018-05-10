@@ -11,10 +11,17 @@ import bg_utils
 
 @pytest.fixture
 def spec():
-    return YapconfSpec({'log_config': {'required': False, 'default': None},
-                        'log_file': {'required': False, 'default': None},
-                        'log_level': {'required': False, 'default': 'INFO'},
-                        'config': {'required': False, 'default': None}})
+    return YapconfSpec({
+        'log_config': {'required': False, 'default': None},
+        'log_file': {'required': False, 'default': None},
+        'log_level': {'required': False, 'default': 'INFO'},
+        'configuration': {
+            'type': 'dict', 'items': {
+                'file': {'required': False, 'cli_short_name': 'c'},
+                'type': {'required': False, 'cli_short_name': 't'},
+            },
+        },
+    })
 
 
 class TestBgUtils(object):
@@ -22,32 +29,34 @@ class TestBgUtils(object):
     def test_parse_args(self, spec):
         cli_args = ["--log-config", "/path/to/log/config",
                     "--log-file", "/path/to/log/file",
-                    "--log-level", "INFO",
-                    "--config", "/path/to/config/file"]
-        args = bg_utils.parse_args(spec, ['log_config', 'log_file', 'log_level', 'config'],
-                                   cli_args)
+                    "--log-level", "INFO"]
+        args = bg_utils.parse_args(spec, ['log_config', 'log_file', 'log_level'], cli_args)
         assert args.log_config == "/path/to/log/config"
         assert args.log_level == "INFO"
         assert args.log_file == "/path/to/log/file"
-        assert args.config == "/path/to/config/file"
 
     def test_generate_config(self, spec):
-        config = bg_utils._generate_config(spec, ["--config", "/path/to/config"])
+        config = bg_utils._generate_config(spec, ["-c", "/path/to/config"])
         assert config.log_file is None
         assert config.log_config is None
         assert config.log_level == 'INFO'
-        assert config.config == '/path/to/config'
+        assert config.configuration.file == '/path/to/config'
 
     @pytest.mark.parametrize('file_type', ['json', 'yaml'])
     def test_generate_config_file(self, spec, tmpdir, file_type):
         filename = os.path.join(str(tmpdir), 'temp.'+file_type)
+        bg_utils.generate_config_file(spec, ['-c', filename, '-t', file_type])
 
-        bg_utils.generate_config_file(spec, ["--config", filename], file_type=file_type)
+        # For this case we don't tell generate the file type
+        filename2 = os.path.join(str(tmpdir), 'temp2.'+file_type)
+        bg_utils.generate_config_file(spec, ['-c', filename2])
+
         assert os.path.getsize(filename) > 0
+        assert os.path.getsize(filename2) > 0
 
     @pytest.mark.parametrize('file_type', ['json', 'yaml'])
     def test_generate_config_file_print(self, spec, capsys, file_type):
-        bg_utils.generate_config_file(spec, [], file_type=file_type)
+        bg_utils.generate_config_file(spec, ['-t', file_type])
 
         # Just make sure we printed something
         assert capsys.readouterr().out
@@ -55,11 +64,12 @@ class TestBgUtils(object):
     def test_update_config(self, spec):
         spec.update_defaults = Mock()
         spec.migrate_config_file = Mock()
-        bg_utils.update_config_file(spec, ["--config", "/path/to/config"])
+        bg_utils.update_config_file(spec, ["-c", "/path/to/config"])
 
         expected = Box({"log_file": None, "log_level": "INFO", "log_config": None,
-                        "config": "/path/to/config"})
-        spec.migrate_config_file.assert_called_once_with(expected.config, update_defaults=True)
+                        "configuration": {"file": "/path/to/config"}})
+        spec.migrate_config_file.assert_called_once_with(expected.configuration.file,
+                                                         update_defaults=True)
 
     def test_update_config_no_config_specified(self, spec):
         spec.migrate_config_file = Mock()
