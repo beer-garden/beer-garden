@@ -36,13 +36,15 @@ class BartenderTest(unittest.TestCase):
     @patch('bg_utils.setup_database', Mock())
     @patch('bartender.logging.config')
     def test_setup_with_config_file(self, logging_mock):
-        cli_args = {'config': 'path/to/config.json'}
-        fake_config = MagicMock(config=cli_args['config'], web=MagicMock(url_prefix=None))
+        fake_path = 'path/to/config.json'
+        cli_args = {'configuration': {'file': fake_path}}
 
+        fake_config = MagicMock(configuration=MagicMock(file=fake_path, type='json'),
+                                web=MagicMock(url_prefix=None))
         load_config_mock = Mock(return_value=fake_config)
         self.spec.load_config = load_config_mock
 
-        bg.setup_bartender(self.spec, {'config': 'path/to/config.json'})
+        bg.setup_bartender(self.spec, cli_args)
         load_config_mock.assert_called_with(cli_args,
                                             ('config file', 'path/to/config.json', 'json'),
                                             'ENVIRONMENT')

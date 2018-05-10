@@ -1,6 +1,7 @@
 SPECIFICATION = {
     "configuration": {
         'type': 'dict',
+        "bootstrap": True,
         'items': {
             "file": {
                 "type": "str",

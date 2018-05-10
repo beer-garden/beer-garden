@@ -18,7 +18,10 @@
         "host": "localhost",
         "virtual_host": "/"
     },
-    "config": null,
+    "configuration": {
+      "file": "dev_conf/config.json",
+      "type": "json"
+    },
     "db": {
         "connection": {
             "host": "localhost",

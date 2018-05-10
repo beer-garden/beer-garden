@@ -13,6 +13,9 @@ amq:
   heartbeat_interval: 3600
   host: localhost
   virtual_host: /
+configuration:
+  file: dev_conf/config.yml
+  type: yaml
 db:
   connection:
     host: localhost
