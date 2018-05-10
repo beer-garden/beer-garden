@@ -1,10 +1,24 @@
 SPECIFICATION = {
-    "config": {
-        "type": "str",
-        "description": "Path to configuration file to use",
-        "required": False,
-        "cli_short_name": "c",
-        "bootstrap": True,
+    "configuration": {
+        'type': 'dict',
+        'items': {
+            "file": {
+                "type": "str",
+                "description": "Path to configuration file to use",
+                "required": False,
+                "cli_short_name": "c",
+                "bootstrap": True,
+                "previous_names": ["config"],
+            },
+            "type": {
+                "type": "str",
+                "description": "Configuration file type",
+                "required": False,
+                "cli_short_name": "t",
+                "bootstrap": True,
+                "choices": ["json", "yaml"],
+            },
+        },
     },
     "publish_hostname": {
         "type": "str",
