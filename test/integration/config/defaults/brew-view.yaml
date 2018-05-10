@@ -1,4 +1,6 @@
-config: ./brew_view.yaml
+configuration:
+  file: ./brew-view.yaml
+  type: yaml
 amq:
   host: localhost
   heartbeat_interval: 3600

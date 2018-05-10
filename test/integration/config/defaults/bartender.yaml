@@ -1,4 +1,6 @@
-config: ./bartender.yaml
+configuration:
+  file: ./bartender.yaml
+  type: yaml
 publish_hostname: localhost
 amq:
   host: localhost

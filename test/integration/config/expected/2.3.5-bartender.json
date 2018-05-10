@@ -18,7 +18,10 @@
         "host": "localhost",
         "virtual_host": "/"
     },
-    "config": "./bartender.json",
+    "configuration": {
+      "file": "dev_conf/config.json",
+      "type": null
+    },
     "db": {
         "connection": {
             "host": "localhost",
@@ -34,20 +37,20 @@
         }
     },
     "log": {
-        "config_file": null,
+        "config_file": "dev_conf/logging-config.json",
         "file": null,
         "level": "INFO"
     },
     "plugin": {
         "local": {
-            "directory": null,
+            "directory": "./plugins",
             "log_directory": null,
             "timeout": {
                 "shutdown": 10,
-                "startup": 5
+                "startup": 2
             }
         },
-        "status_heartbeat": 10,
+        "status_heartbeat": 5,
         "status_timeout": 30
     },
     "publish_hostname": "localhost",
@@ -58,7 +61,7 @@
     },
     "web": {
         "ca_cert": null,
-        "ca_verify": true,
+        "ca_verify": false,
         "host": "localhost",
         "port": 2337,
         "ssl_enabled": false,

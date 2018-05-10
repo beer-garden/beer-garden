@@ -13,7 +13,7 @@ from brew_view.specification import SPECIFICATION as bv_spec
 from yapconf import YapconfSpec
 
 
-generate_config_file(YapconfSpec(bt_spec), ['--config', './bartender.json'], file_type='json')
-generate_config_file(YapconfSpec(bt_spec), ['--config', './bartender.yaml'], file_type='yaml')
-generate_config_file(YapconfSpec(bv_spec), ['--config', './brew_view.json'], file_type='json')
-generate_config_file(YapconfSpec(bv_spec), ['--config', './brew_view.yaml'], file_type='yaml')
+generate_config_file(YapconfSpec(bt_spec), ['-c', './bartender.json', '-t', 'json'])
+generate_config_file(YapconfSpec(bt_spec), ['-c', './bartender.yaml', '-t', 'yaml'])
+generate_config_file(YapconfSpec(bv_spec), ['-c', './brew-view.json', '-t', 'json'])
+generate_config_file(YapconfSpec(bv_spec), ['-c', './brew-view.yaml', '-t', 'yaml'])
