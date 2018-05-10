@@ -41,13 +41,14 @@ class BeerGardenTest(unittest.TestCase):
     @patch('brew_view.load_plugin_logging_config', Mock())
     @patch('brew_view._setup_application', Mock())
     def test_setup_with_config_file(self):
-        cli_args = {'config': 'path/to/config.json'}
-        fake_config = MagicMock(config=cli_args['config'])
+        fake_path = 'path/to/config.json'
+        cli_args = {'configuration': {'file': fake_path}}
 
+        fake_config = MagicMock(configuration=MagicMock(file=fake_path, type='json'))
         load_config_mock = Mock(return_value=fake_config)
         self.spec.load_config = load_config_mock
 
-        bg.setup_brew_view(self.spec, {'config': 'path/to/config.json'})
+        bg.setup_brew_view(self.spec, cli_args)
         load_config_mock.assert_called_with(cli_args,
                                             ('config file', 'path/to/config.json', 'json'),
                                             'ENVIRONMENT')

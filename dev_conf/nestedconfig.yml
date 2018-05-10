@@ -21,7 +21,9 @@ backend:
   host: localhost
   port: 9090
   socket_timeout: 3000
-config: dev_conf/config.json
+config:
+  file: dev_conf/config.yml
+  type: yaml
 cors_enabled: true
 db:
   connection:
