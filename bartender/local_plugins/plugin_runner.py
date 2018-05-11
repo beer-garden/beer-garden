@@ -58,14 +58,16 @@ class LocalPluginRunner(StoppableThread):
 
         self.unique_name = '%s[%s]-%s' % (self.system.name, self.instance_name, self.system.version)
 
-        log_config = {'log_directory': self.plugin_log_directory, 'log_name': self.unique_name}
-        self.logger = getPluginLogger(self.unique_name, formatted=True,
-                                      **log_config)
-        self.unformatted_logger = getPluginLogger(self.unique_name+'-uf',
-                                                  formatted=False, **log_config)
-        self.timestamp_logger = getPluginLogger(self.unique_name+'-ts',
-                                                formatted='timestamp', **log_config)
         self.log_levels = getLogLevels()
+        log_config = {'log_directory': self.plugin_log_directory, 'log_name': self.unique_name}
+        self.unformatted_logger = getPluginLogger(self.unique_name+'-uf', **log_config)
+        self.timestamp_logger = getPluginLogger(self.unique_name+'-ts',
+                                                format_string='%(asctime)s - %(message)s',
+                                                **log_config)
+        self.logger = getPluginLogger(self.unique_name,
+                                      format_string='%(asctime)s - %(name)s - '
+                                                    '%(levelname)s - %(message)s',
+                                      **log_config)
 
         StoppableThread.__init__(self, logger=self.logger, name=self.unique_name)
 

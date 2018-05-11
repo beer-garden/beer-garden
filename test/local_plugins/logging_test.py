@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import logging
 import os
 import pytest
@@ -49,8 +51,8 @@ def reset_foo_handlers():
 class TestLogging(object):
 
     def test_get_plugin_logger_already_instantiated(self):
-        log1 = bg_logging.getPluginLogger('foo', formatted=False)
-        log2 = bg_logging.getPluginLogger('foo', formatted=False)
+        log1 = bg_logging.getPluginLogger('foo')
+        log2 = bg_logging.getPluginLogger('foo')
         assert log1 == log2
 
     @pytest.mark.parametrize('log_dir,log_name,base_handler', [
@@ -77,14 +79,15 @@ class TestLogging(object):
             else:
                 assert os.path.exists(os.path.join(log_dir, 'foo.log'))
 
-    @pytest.mark.parametrize('formatted,level,message', [
-        (True, 'ERROR', 'this should be formatted'),
-        (False, 'INFO', 'this should be unformatted'),
-        ('timestamp', 'WARNING', 'this should have only a timestamp'),
+    @pytest.mark.parametrize('format_string,level,message', [
+        ('%(asctime)s - %(name)s - %(levelname)s - %(message)s', 'ERROR', 'Hello, World'),
+        ('%(asctime)s - %(message)s', 'WARNING', 'Hello, World'),
+        (None, 'INFO', 'Hello, World'),
+        (None, 'INFO', u'🍺'),
     ])
-    def test_formatting(self, tmpdir, caplog, formatted, level, message):
+    def test_formatting(self, tmpdir, caplog, format_string, level, message):
         log = bg_logging.getPluginLogger('foo', log_directory=str(tmpdir),
-                                         formatted=formatted)
+                                         format_string=format_string)
 
         # Pytest normally captures logs at WARNING, we need to change
         # The levels in parametrize must be higher than DEBUG!
@@ -95,14 +98,12 @@ class TestLogging(object):
         with open(os.path.join(str(tmpdir), 'foo.log')) as f:
             line = f.readline().rstrip()
 
-        if formatted is True:
-            assert 'foo' in line
-            assert level in line
-            assert message in line
-            assert not line.startswith(message)
-        elif formatted == 'timestamp':
-            assert level not in line
-            assert message in line
-            assert not line.startswith(message)
-        else:
+        if not format_string:
             assert line == message
+        else:
+            assert message in line
+
+            if 'name' in format_string:
+                assert 'foo' in line
+            if 'levelname' in format_string:
+                assert level in line
