@@ -59,7 +59,7 @@ class ClientBase(object):
 
     def __init__(self, host='localhost', port=5672, user='guest', password='guest',
                  connection_attempts=3, heartbeat_interval=3600, virtual_host='/',
-                 exchange='beer_garden'):
+                 exchange='beer_garden', ssl_enabled=False):
 
         self._host = host
         self._port = port
@@ -69,6 +69,7 @@ class ClientBase(object):
         self._heartbeat_interval = heartbeat_interval
         self._virtual_host = virtual_host
         self._exchange = exchange
+        self._ssl_enabled = ssl_enabled
 
         # Save off the 'normal' connection params so they don't need to be constructed every time
         self._conn_params = self.connection_parameters()
@@ -77,8 +78,9 @@ class ClientBase(object):
     def connection_url(self):
         """str: Get the connection URL associated with this client's connection information"""
 
-        return 'amqp://%s:%s@%s:%s/%s' % \
-               (self._conn_params.credentials.username, self._conn_params.credentials.password,
+        return 'amqp%s://%s:%s@%s:%s/%s' % \
+               ('s' if self._ssl_enabled else '',
+                self._conn_params.credentials.username, self._conn_params.credentials.password,
                 self._conn_params.host,
                 self._conn_params.port,
                 '' if self._conn_params.virtual_host == '/' else self._conn_params.virtual_host)
@@ -100,6 +102,7 @@ class ClientBase(object):
 
         return ConnectionParameters(host=kwargs.get('host', self._host),
                                     port=kwargs.get('port', self._port),
+                                    ssl=kwargs.get('ssl_enabled', self._ssl_enabled),
                                     virtual_host=kwargs.get('virtual_host', self._virtual_host),
                                     connection_attempts=kwargs.get('connection_attempts',
                                                                    self._connection_attempts),
