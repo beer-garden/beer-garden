@@ -59,7 +59,8 @@ class ClientBase(object):
 
     def __init__(self, host='localhost', port=5672, user='guest', password='guest',
                  connection_attempts=3, heartbeat_interval=3600, virtual_host='/',
-                 exchange='beer_garden', ssl_enabled=False):
+                 exchange='beer_garden', ssl_enabled=False, ca_verify=True,
+                 ca_cert=None, client_cert=None):
 
         self._host = host
         self._port = port
