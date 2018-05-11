@@ -1,14 +1,23 @@
+ssl:
+  enabled: false
+  ca_verify: true
+  ca_cert: /etc/pki/tls/result/ca_certificate.pem
+  client_cert: /etc/pki/tls/result/client_combined.pem
 amq:
   connection_attempts: 3
   connections:
     admin:
-      password: guest
-      port: 15672
+      port: 15671
       user: guest
+      password: guest
+      ssl:
+        enabled: true
     message:
-      password: guest
-      port: 5672
+      port: 5671
       user: guest
+      password: guest
+      ssl:
+        enabled: true
   exchange: beer_garden
   heartbeat_interval: 3600
   host: localhost

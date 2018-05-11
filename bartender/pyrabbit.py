@@ -11,14 +11,20 @@ class PyrabbitClient(object):
     """Class that implements a connection to RabbitMQ Management HTTP API"""
 
     def __init__(self, host='localhost', port=15672, user='guest', password='guest',
-                 virtual_host='/'):
+                 virtual_host='/', ssl=None):
         self.logger = logging.getLogger(__name__)
 
         # Pyrabbit won't infer the default virtual host ('/'). So we need to enforce it
         self._virtual_host = virtual_host or '/'
 
+        ssl = ssl or {}
+        verify = ssl.get('ca_cert', True) if ssl.get('ca_verify') else False
+
         # The client for doing Admin things over the HTTP API
-        self._client = Client("%s:%s" % (host, port), user, password)
+        self._client = Client("%s:%s" % (host, port), user, password,
+                              scheme='https' if ssl.get('enabled') else 'http',
+                              verify=verify,
+                              cert=ssl.get('client_cert'))
 
     def is_alive(self):
         try:

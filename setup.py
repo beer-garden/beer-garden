@@ -28,7 +28,7 @@ setup(
     keywords='bartender beer beer-garden beergarden',
     install_requires=[
         'bg-utils>=2.3.6',
-        'pika==0.11.2',
+        'pika==0.12.0',
         'pyrabbit2==1.0.5',
     ],
     extras_require={

@@ -1,3 +1,44 @@
+
+def specifize(source_dict, fallback_prefix):
+    new_dict = source_dict.copy()
+    for k, v in new_dict['items'].items():
+        v['fallback'] = '.'.join([fallback_prefix, k])
+        if v.get('default'):
+            del v['default']
+
+    return new_dict
+
+
+ssl_base = {
+    'type': 'dict',
+    'items': {
+        "enabled": {
+            "type": "bool",
+            "default": False,
+            "description": "Is the API server using SSL",
+            "cli_separator": "_",
+        },
+        "ca_cert": {
+            "type": "str",
+            "description": "Path to CA certificate file to use",
+            "required": False,
+            "previous_names": ["ca_cert"],
+        },
+        "ca_verify": {
+            "type": "bool",
+            "default": True,
+            "description": "Verify external certificates",
+            "required": False,
+        },
+        "client_cert": {
+            "type": "str",
+            "description": "Path to client combined key / certificate file",
+            "required": False,
+        },
+    },
+}
+
+
 SPECIFICATION = {
     "configuration": {
         'type': 'dict',
@@ -29,6 +70,9 @@ SPECIFICATION = {
         "previous_names": ["amq_publish_host"],
         "alt_env_names": ["AMQ_PUBLISH_HOST"],
     },
+
+    'ssl': ssl_base,
+
     'amq': {
         'type': 'dict',
         'items': {
@@ -94,6 +138,7 @@ SPECIFICATION = {
                                 "previous_names": ["amq_admin_password", "amq_admin_pw"],
                                 "alt_env_names": ["AMQ_ADMIN_PASSWORD", "AMQ_ADMIN_PW"],
                             },
+                            'ssl': specifize(ssl_base, 'ssl'),
                         },
                     },
                     'message': {
@@ -120,6 +165,7 @@ SPECIFICATION = {
                                 "previous_names": ["amq_user"],
                                 "alt_env_names": ["AMQ_USER"],
                             },
+                            'ssl': specifize(ssl_base, 'ssl'),
                         },
                     },
                 },
