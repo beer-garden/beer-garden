@@ -21,7 +21,7 @@ def test_generate(tmpdir, file_name, file_type):
                                   file_name+'.'+file_type)
 
     spec = YapconfSpec(bt_spec if file_name == 'bartender' else bv_spec)
-    generate_config_file(spec, ["-c", generated_file, "-t", file_type])
+    generate_config_file(spec, ['-c', generated_file, '-t', file_type])
 
     with open(generated_file, 'r') as f, open(reference_file, 'r') as g:
         if file_type == 'json':
@@ -39,7 +39,7 @@ def test_generate(tmpdir, file_name, file_type):
     assert generated_config == reference_config
 
 
-@pytest.mark.parametrize('start_version', ['2.3.5'])
+@pytest.mark.parametrize('start_version', ['2.3.5', '2.3.6'])
 @pytest.mark.parametrize('file_name', ['brew-view', 'bartender'])
 @pytest.mark.parametrize('file_type', ['json', 'yaml'])
 def test_update(tmpdir, start_version, file_name, file_type):
@@ -63,7 +63,7 @@ def test_update(tmpdir, start_version, file_name, file_type):
     test_file = os.path.join(tmpdir, file_name+'.'+file_type)
     copyfile(source_file, test_file)
 
-    update_config_file(spec, ['-c', test_file])
+    update_config_file(spec, ['-c', test_file, '-t', file_type])
 
     with open(test_file, 'r') as f, open(expected_file, 'r') as g:
         if file_type == 'json':
