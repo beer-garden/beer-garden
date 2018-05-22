@@ -7,7 +7,7 @@ from io import open
 
 import six
 import thriftpy
-from yapconf import dump_data
+import yapconf
 
 from ._version import __version__ as generated_version
 
@@ -61,18 +61,10 @@ def generate_config_file(spec, cli_args):
         YapconfLoadError: Missing 'config' configuration option (file location)
     """
     config = _generate_config(spec, cli_args)
+    config_file, config_type = _get_config_values(config)
 
-    config_file = config.configuration.file or None
-    config_type = config.configuration.type or None
-
-    # Default to yaml, but try to use file extension if we have one
-    if config_type is None:
-        if config_file and config_file.endswith('json'):
-            config_type = 'json'
-        else:
-            config_type = 'yaml'
-
-    dump_data(config.to_dict(), filename=config_file, file_type=config_type)
+    yapconf.dump_data(config.to_dict(), filename=config_file,
+                      file_type=config_type)
 
 
 def update_config_file(spec, cli_args):
@@ -88,13 +80,16 @@ def update_config_file(spec, cli_args):
     Raises:
         YapconfLoadError: Missing 'config' configuration option (file location)
     """
-    conf = _generate_config(spec, cli_args)
+    config = _generate_config(spec, cli_args)
+    config_file, config_type = _get_config_values(config)
 
-    if not conf.configuration.file:
+    if not config_file:
         raise SystemExit('Please specify a config file to update'
                          ' in the CLI arguments (-c)')
 
-    spec.migrate_config_file(conf.configuration.file, update_defaults=True)
+    spec.migrate_config_file(config_file, update_defaults=True,
+                             current_file_type=config_type,
+                             output_file_type=config_type)
 
 
 def generate_logging_config_file(spec, logging_config_generator, cli_args):
@@ -196,6 +191,22 @@ def _generate_config(spec, cli_args):
     args = parser.parse_args(cli_args)
 
     return spec.load_config(vars(args), 'ENVIRONMENT')
+
+
+def _get_config_values(config):
+    """Get the configuration file name and type from a configuration"""
+
+    config_file = config.configuration.file or None
+    config_type = config.configuration.type or None
+
+    # Default to yaml, but try to use file extension if we have one
+    if config_type is None:
+        if config_file and config_file.endswith('json'):
+            config_type = 'json'
+        else:
+            config_type = 'yaml'
+
+    return config_file, config_type
 
 
 def _verify_db():

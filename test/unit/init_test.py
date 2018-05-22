@@ -61,15 +61,18 @@ class TestBgUtils(object):
         # Just make sure we printed something
         assert capsys.readouterr().out
 
-    def test_update_config(self, spec):
+    @pytest.mark.parametrize('file_type', ['json', 'yaml'])
+    def test_update_config(self, spec, file_type):
         spec.update_defaults = Mock()
         spec.migrate_config_file = Mock()
-        bg_utils.update_config_file(spec, ["-c", "/path/to/config"])
+        bg_utils.update_config_file(spec, ["-c", "/path/to/config."+file_type])
 
         expected = Box({"log_file": None, "log_level": "INFO", "log_config": None,
-                        "configuration": {"file": "/path/to/config"}})
+                        "configuration": {"file": "/path/to/config."+file_type}})
         spec.migrate_config_file.assert_called_once_with(expected.configuration.file,
-                                                         update_defaults=True)
+                                                         update_defaults=True,
+                                                         current_file_type=file_type,
+                                                         output_file_type=file_type)
 
     def test_update_config_no_config_specified(self, spec):
         spec.migrate_config_file = Mock()
