@@ -2,12 +2,12 @@ import json
 import logging
 import logging.config
 import os
-import six
-import sys
 from argparse import ArgumentParser
 from io import open
 
+import six
 import thriftpy
+from yapconf import dump_data
 
 from ._version import __version__ as generated_version
 
@@ -46,9 +46,9 @@ def parse_args(spec, item_names, cli_args):
 def generate_config_file(spec, cli_args):
     """Generate a configuration file.
 
-    Takes a specification and a series of command line arguments. Will create a file at the
-    location specified by the resolved `config` value. If none exists the configuration will
-    be printed to stdout.
+    Takes a specification and a series of command line arguments. Will create a
+    file at the location specified by the resolved `config` value. If none
+    exists the configuration will be printed to stdout.
 
     Args:
         spec (yapconf.YapconfSpec): Specification for the application
@@ -61,7 +61,6 @@ def generate_config_file(spec, cli_args):
         YapconfLoadError: Missing 'config' configuration option (file location)
     """
     config = _generate_config(spec, cli_args)
-    config_dict = config.to_dict()
 
     config_file = config.configuration.file or None
     config_type = config.configuration.type or None
@@ -73,37 +72,16 @@ def generate_config_file(spec, cli_args):
         else:
             config_type = 'yaml'
 
-    if config_type == 'json':
-        dumped = json.dumps(config_dict, sort_keys=True, indent=4)
-        unicoded = six.u(dumped)
-
-        if config_file:
-            with open(config_file, 'w', encoding='utf-8') as f:
-                f.write(unicoded)
-        else:
-            print(unicoded)
-    elif config_type == 'yaml':
-        from ruamel.yaml import YAML
-
-        yaml = YAML()
-        yaml.default_flow_style = False
-
-        if config_file:
-            with open(config_file, 'w', encoding='utf-8') as f:
-                yaml.dump(config_dict, f)
-        else:
-            yaml.dump(config_dict, sys.stdout)
+    dump_data(config.to_dict(), filename=config_file, file_type=config_type)
 
 
 def update_config_file(spec, cli_args):
     """Updates a configuration file in-place.
 
-    cli_args must contain an argument that specifies the config file to update ('-c').
-
     Args:
         spec (yapconf.YapconfSpec): Specification for the application
-        cli_args (List[str]): Command line arguments
-
+        cli_args (List[str]): Command line arguments. Must contain an argument
+            that specifies the config file to update ('-c')
     Returns:
         None
 
@@ -113,7 +91,8 @@ def update_config_file(spec, cli_args):
     conf = _generate_config(spec, cli_args)
 
     if not conf.configuration.file:
-        raise SystemExit('Please specify a config file to update in the CLI arguments (-c)')
+        raise SystemExit('Please specify a config file to update'
+                         ' in the CLI arguments (-c)')
 
     spec.migrate_config_file(conf.configuration.file, update_defaults=True)
 
