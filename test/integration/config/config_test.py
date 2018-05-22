@@ -54,12 +54,12 @@ def test_update(tmpdir, start_version, file_name, file_type):
         return
 
     # This is the file that we expect to generate
-    expected_file = os.path.join(os.path.dirname(__file__), 'expected',
-                                 start_version+'-'+file_name+'.'+file_type)
+    expected_file = os.path.join(os.path.dirname(__file__), 'migration', 'expected',
+                                 start_version, file_name+'.'+file_type)
 
     # This is the starting file. First copy to tmpdir since update modifies
-    source_file = os.path.join(os.path.dirname(__file__), start_version,
-                               file_name+'.'+file_type)
+    source_file = os.path.join(os.path.dirname(__file__), 'migration', 'sources',
+                               start_version, file_name+'.'+file_type)
     test_file = os.path.join(tmpdir, file_name+'.'+file_type)
     copyfile(source_file, test_file)
 
