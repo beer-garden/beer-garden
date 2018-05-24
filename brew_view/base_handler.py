@@ -3,19 +3,19 @@ import re
 import socket
 
 from mongoengine.errors import DoesNotExist, NotUniqueError, ValidationError as MongoValidationError
+from passlib.apps import custom_app_context
 from thriftpy.thrift import TException
 from tornado.web import HTTPError, RequestHandler
 
 import bg_utils
 import brew_view
+from bg_utils.models import Principal
 from brewtils.errors import ModelError, ModelValidationError, RequestPublishException
 from brewtils.models import Event
 
 
 class BaseHandler(RequestHandler):
     """Base handler from which all handlers inherit. Enables CORS and error handling."""
-
-    passwords = {'matt': 'password', 'logan': 'password'}
 
     def __init__(self, *args, **kwargs):
         super(BaseHandler, self).__init__(*args, **kwargs)
@@ -64,7 +64,9 @@ class BaseHandler(RequestHandler):
             auth_decoded = base64.b64decode(auth_header[6:]).decode()
             username, password = auth_decoded.split(':')
 
-            if self.passwords[username] == password:
+            user = Principal.objects.get(username=username)
+
+            if custom_app_context.verify(password, user.hash):
                 self.current_user = username
                 self.set_secure_cookie("user", username)
             else:
