@@ -439,3 +439,9 @@ class Event(Document, BrewtilsEvent):
 
     def __repr__(self):
         return BrewtilsEvent.__repr__(self)
+
+
+class Principal(Document):
+
+    username = StringField(required=True)
+    hash = StringField()
