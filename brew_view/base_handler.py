@@ -152,9 +152,9 @@ class BaseHandler(RequestHandler):
             elif brew_view.config.debug_mode:
                 message = str(e)
 
-        code = code or 500
-        message = message or ('Encountered unknown exception. Please check with your '
-                              'System Administrator.')
+        code = code or status_code or 500
+        message = message or ('Encountered unknown exception. Please check '
+                              'with your System Administrator.')
 
         self.request.event.error = True
         self.request.event.payload = {'message': message}
