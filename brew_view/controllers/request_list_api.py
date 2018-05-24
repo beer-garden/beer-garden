@@ -6,6 +6,7 @@ from functools import reduce
 from mongoengine import Q
 from tornado.gen import coroutine
 from tornado.locks import Condition
+from tornado.web import HTTPError
 
 import bg_utils
 import brew_view
@@ -284,7 +285,7 @@ class RequestListAPI(BaseHandler):
 
                     wait_result = yield wait_condition.wait(max_wait)
                     if not wait_result:
-                        raise Exception('Timed out!')
+                        raise HTTPError(status_code=408, reason='Max wait time exceeded')
 
         request_model.reload()
 
