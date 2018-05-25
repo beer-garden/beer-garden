@@ -4,6 +4,7 @@
 futures ; python_version < "3.0"
 mongoengine
 pika
+ruamel.yaml
 thriftpy
 yapconf
 
