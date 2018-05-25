@@ -23,7 +23,7 @@ env:
     - BG_AMQ_PASSWORD=guest
     - BG_AMQ_PUBLISH_HOST=localhost
     - BG_DB_HOST=localhost
-    - BG_PLUGIN_DIRECTORY=/home/travis/build/beer-garden/beer-garden/example-plugins
+    - BG_PLUGIN_LOCAL_DIRECTORY=/home/travis/build/beer-garden/beer-garden/example-plugins
     - BG_WEB_HOST=localhost
 
 before_install:
