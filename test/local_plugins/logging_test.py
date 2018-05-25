@@ -1,14 +1,17 @@
+# -*- coding: utf-8 -*-
+
 import logging
 import os
-import unittest
+import pytest
+from io import open
 
-from mock import Mock, patch
+from mock import Mock
 
-import bartender.local_plugins.logger as bglogging
+import bartender.local_plugins.logger as bg_logging
 from bartender.local_plugins.logger import PluginHandler
 
 
-class PluginHandlerTest(unittest.TestCase):
+class TestPluginHandler(object):
 
     def test_init_no_log_directory(self):
         fake_factory = Mock()
@@ -32,55 +35,75 @@ class PluginHandlerTest(unittest.TestCase):
         fake_handler = Mock(spec=[])
         fake_factory = Mock(return_value=fake_handler)
         handler = PluginHandler(fake_factory, 'name')
-        self.assertRaises(AttributeError, handler.__getattr__, 'foo')
+        with pytest.raises(AttributeError):
+            handler.foo()
 
 
-class LoggingTest(unittest.TestCase):
+@pytest.fixture
+def reset_foo_handlers():
+    log = logging.getLogger('foo')
+    if len(log.handlers) > 0:
+        for h in log.handlers:
+            log.removeHandler(h)
 
-    def setUp(self):
-        log = logging.getLogger('foo')
-        if len(log.handlers) > 0:
-            for h in log.handlers:
-                log.removeHandler(h)
 
-    def tearDown(self):
-        self.fake_formatter = None
+@pytest.mark.usefixtures('reset_foo_handlers')
+class TestLogging(object):
 
     def test_get_plugin_logger_already_instantiated(self):
-        log = bglogging.getPluginLogger('foo', formatted=False)
-        log2 = bglogging.getPluginLogger('foo', formatted=False)
-        self.assertEqual(log, log2)
+        log1 = bg_logging.getPluginLogger('foo')
+        log2 = bg_logging.getPluginLogger('foo')
+        assert log1 == log2
 
-    def test_get_plugin_logger_no_log_directory(self):
-        log = bglogging.getPluginLogger('foo')
-        self.assertEqual(len(log.handlers), 1)
-        self.assertEqual(log.handlers[0], logging.getLogger().handlers[0])
+    @pytest.mark.parametrize('log_dir,log_name,base_handler', [
+        (None, None, logging.StreamHandler),
+        (None, 'unused', logging.StreamHandler),
+        ('some/directory', None, PluginHandler),
+        ('some/directory', 'bar', PluginHandler),
+    ])
+    def test_get_plugin_logger(self, tmpdir, log_dir, log_name, base_handler):
+        if log_dir:
+            log_dir = os.path.join(str(tmpdir), log_dir)
+            os.makedirs(log_dir)
 
-    @patch('bartender.local_plugins.logger.PluginHandler')
-    def test_get_plugin_logger_with_log_directory_and_formatted(self, handler_mock):
-        def side_effect(f):
-            self.fake_formatter = f
+        log = bg_logging.getPluginLogger('foo', log_directory=log_dir,
+                                         log_name=log_name)
 
-        fake_handler = Mock(setFormatter=Mock(side_effect=side_effect))
-        handler_mock.return_value = fake_handler
+        assert not log.propagate
+        assert len(log.handlers) == 1
+        assert isinstance(log.handlers[0], base_handler)
 
-        log = bglogging.getPluginLogger('foo', formatted=True, log_directory="log_directory")
-        fake_handler.setLevel.assert_called_with(logging.INFO)
-        self.assertEqual(log.propagate, False)
-        self.assertEqual(len(log.handlers), 1)
-        self.assertEqual(self.fake_formatter._fmt,
-                         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        if base_handler == PluginHandler:
+            if log_name:
+                assert os.path.exists(os.path.join(log_dir, log_name+'.log'))
+            else:
+                assert os.path.exists(os.path.join(log_dir, 'foo.log'))
 
-    @patch('bartender.local_plugins.logger.PluginHandler')
-    def test_get_plugin_logger_with_log_directory_not_formatted(self, handler_mock):
-        def side_effect(f):
-            self.fake_formatter = f
+    @pytest.mark.parametrize('format_string,level,message', [
+        ('%(asctime)s - %(name)s - %(levelname)s - %(message)s', 'ERROR', 'Hello, World'),
+        ('%(asctime)s - %(message)s', 'WARNING', 'Hello, World'),
+        (None, 'INFO', 'Hello, World'),
+        (None, 'INFO', u'🍺'),
+    ])
+    def test_formatting(self, tmpdir, caplog, format_string, level, message):
+        log = bg_logging.getPluginLogger('foo', log_directory=str(tmpdir),
+                                         format_string=format_string)
 
-        fake_handler = Mock(setFormatter=Mock(side_effect=side_effect))
-        handler_mock.return_value = fake_handler
+        # Pytest normally captures logs at WARNING, we need to change
+        # The levels in parametrize must be higher than DEBUG!
+        caplog.set_level(logging.DEBUG, logger="foo")
 
-        log = bglogging.getPluginLogger('foo', formatted=False, log_directory="log_directory")
-        fake_handler.setLevel.assert_called_with(logging.INFO)
-        self.assertEqual(log.propagate, False)
-        self.assertEqual(len(log.handlers), 1)
-        self.assertEqual(self.fake_formatter._fmt, '%(asctime)s - %(message)s')
+        log.log(getattr(logging, level), message)
+
+        with open(os.path.join(str(tmpdir), 'foo.log')) as f:
+            line = f.readline().rstrip()
+
+        if not format_string:
+            assert line == message
+        else:
+            assert message in line
+
+            if 'name' in format_string:
+                assert 'foo' in line
+            if 'levelname' in format_string:
+                assert level in line

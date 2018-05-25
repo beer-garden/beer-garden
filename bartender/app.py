@@ -4,6 +4,7 @@ from datetime import timedelta
 from functools import partial
 
 from mongoengine import Q
+from requests.exceptions import RequestException
 
 import bartender
 import bg_utils
@@ -116,7 +117,11 @@ class BartenderApp(StoppableThread):
         self.logger.info("Starting all local plugins...")
         self.plugin_manager.start_all_plugins()
 
-        bartender.bv_client.publish_event(name=Events.BARTENDER_STARTED.name)
+        try:
+            bartender.bv_client.publish_event(name=Events.BARTENDER_STARTED.name)
+        except RequestException as ex:
+            self.logger.warning('Unable to publish startup notification')
+
         self.logger.info("Bartender started")
 
     def _shutdown(self):
@@ -128,7 +133,11 @@ class BartenderApp(StoppableThread):
         for helper_thread in reversed(self.helper_threads):
             helper_thread.stop()
 
-        bartender.bv_client.publish_event(name=Events.BARTENDER_STOPPED.name)
+        try:
+            bartender.bv_client.publish_event(name=Events.BARTENDER_STOPPED.name)
+        except RequestException as ex:
+            self.logger.warning('Unable to publish shutdown notification')
+
         self.logger.info("Successfully shut down Bartender")
 
     @staticmethod

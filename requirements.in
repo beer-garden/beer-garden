@@ -18,6 +18,7 @@ coverage
 flake8
 mock
 pytest
+pytest-mock
 pytz
 tox
 twine
