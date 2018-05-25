@@ -60,7 +60,7 @@ def test_update(tmpdir, start_version, file_name, file_type):
     # This is the starting file. First copy to tmpdir since update modifies
     source_file = os.path.join(os.path.dirname(__file__), 'migration', 'sources',
                                start_version, file_name+'.'+file_type)
-    test_file = os.path.join(tmpdir, file_name+'.'+file_type)
+    test_file = os.path.join(str(tmpdir), file_name+'.'+file_type)
     copyfile(source_file, test_file)
 
     update_config_file(spec, ['-c', test_file, '-t', file_type])
