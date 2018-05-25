@@ -124,6 +124,25 @@ def generate_logging_config_file(spec, logging_config_generator, cli_args):
     return logging_config
 
 
+def load_application_config(spec, cli_args):
+
+    config_sources = [cli_args, 'ENVIRONMENT']
+
+    # Load bootstrap items to see if there's a config file
+    temp_config = spec.load_config(*config_sources, bootstrap=True)
+
+    if temp_config.configuration.file:
+        if temp_config.configuration.type:
+            file_type = temp_config.configuration.type
+        elif temp_config.configuration.file.endswith('json'):
+            file_type = 'json'
+        else:
+            file_type = 'yaml'
+        config_sources.insert(1, ('config file', temp_config.configuration.file, file_type))
+
+    return spec.load_config(*config_sources)
+
+
 def setup_application_logging(config, default_config):
     """Setup the application logging based on the config object.
 

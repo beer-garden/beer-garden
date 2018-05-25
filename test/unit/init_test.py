@@ -1,8 +1,11 @@
+from __future__ import unicode_literals
+
 import os
+from io import open
 
 import pytest
 from box import Box
-from mock import Mock, patch, MagicMock
+from mock import patch, MagicMock, Mock
 from pymongo.errors import ServerSelectionTimeoutError
 from yapconf import YapconfSpec
 
@@ -16,9 +19,19 @@ def spec():
         'log_file': {'required': False, 'default': None},
         'log_level': {'required': False, 'default': 'INFO'},
         'configuration': {
-            'type': 'dict', 'items': {
-                'file': {'required': False, 'cli_short_name': 'c'},
-                'type': {'required': False, 'cli_short_name': 't'},
+            'type': 'dict',
+            'bootstrap': True,
+            'items': {
+                'file': {
+                    'required': False,
+                    'bootstrap': True,
+                    'cli_short_name': 'c'
+                },
+                'type': {
+                    'required': False,
+                    'bootstrap': True,
+                    'cli_short_name': 't'
+                },
             },
         },
     })
@@ -104,6 +117,30 @@ class TestBgUtils(object):
         config_generator.assert_called_with('INFO', None)
         assert logging_config == generated_config
         assert open_mock.called is False
+
+    @pytest.mark.parametrize('config', [
+        # (file extension, file type, file contents)
+        ('yaml', 'yaml', 'log_level: DEBUG'),
+        ('yaml', None, 'log_level: DEBUG'),
+        ('json', None, '{"log_level": "DEBUG"}'),
+        ('json', 'json', '{"log_level": "DEBUG"}'),
+        ('', 'yaml', 'log_level: DEBUG'),
+        ('', None, 'log_level: DEBUG'),
+    ])
+    def test_setup_with_config_file(self, tmpdir, spec, config):
+
+        config_file = os.path.join(str(tmpdir), 'config.'+config[0])
+        cli_args = {'configuration': {'file': config_file, 'type': config[1]}}
+
+        with open(config_file, 'w') as f:
+            f.write(config[2])
+
+        generated_config = bg_utils.load_application_config(spec, cli_args)
+        assert generated_config.log_level == 'DEBUG'
+
+    def test_load_application_config_no_file_given(self, spec):
+        config = bg_utils.load_application_config(spec, {})
+        assert type(config) == Box
 
     @patch('bg_utils.logging.config.dictConfig')
     def test_setup_application_logging_no_log_config(self, config_mock):
