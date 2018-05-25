@@ -3,7 +3,7 @@ import logging.config
 import unittest
 
 from box import Box
-from mock import MagicMock, Mock, patch
+from mock import Mock, patch
 from tornado.ioloop import IOLoop
 from tornado.web import Application
 from yapconf import YapconfSpec
@@ -35,23 +35,6 @@ class BeerGardenTest(unittest.TestCase):
         self.assertIsInstance(bg.logger, logging.Logger)
         self.assertIsNotNone(bg.thrift_context)
         self.assertIsInstance(bg.application, IOLoop)
-
-    @patch('bg_utils.setup_database', Mock())
-    @patch('bg_utils.setup_application_logging', Mock())
-    @patch('brew_view.load_plugin_logging_config', Mock())
-    @patch('brew_view._setup_application', Mock())
-    def test_setup_with_config_file(self):
-        fake_path = 'path/to/config.json'
-        cli_args = {'configuration': {'file': fake_path}}
-
-        fake_config = MagicMock(configuration=MagicMock(file=fake_path, type='json'))
-        load_config_mock = Mock(return_value=fake_config)
-        self.spec.load_config = load_config_mock
-
-        bg.setup_brew_view(self.spec, cli_args)
-        load_config_mock.assert_called_with(cli_args,
-                                            ('config file', 'path/to/config.json', 'json'),
-                                            'ENVIRONMENT')
 
     def test_setup_tornado_app(self):
         bg.config = self.spec.load_config({'web': {'url_prefix': '/'}})

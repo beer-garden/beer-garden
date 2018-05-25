@@ -38,26 +38,11 @@ notification_meta = None
 def setup_brew_view(spec, cli_args):
     global config, logger, app_log_config, event_publishers, notification_meta
 
-    config_sources = [cli_args, 'ENVIRONMENT']
-
-    # Load bootstrap items to see if there's a config file
-    temp_config = spec.load_config(*config_sources, bootstrap=True)
-
-    if temp_config.configuration.file:
-        if temp_config.configuration.type:
-            file_type = temp_config.configuration.type
-        elif temp_config.configuration.file.endswith(('yaml', 'yml')):
-            file_type = 'yaml'
-        else:
-            file_type = 'json'
-        config_sources.insert(1, ('config file', temp_config.configuration.file, file_type))
-
-    config = spec.load_config(*config_sources)
+    config = bg_utils.load_application_config(spec, cli_args)
     config.web.url_prefix = brewtils.rest.normalize_url_prefix(config.web.url_prefix)
 
-    app_log_config = bg_utils.setup_application_logging(config,
-                                                        get_default_logging_config(config.log.level,
-                                                                                   config.log.file))
+    log_default = get_default_logging_config(config.log.level, config.log.file)
+    app_log_config = bg_utils.setup_application_logging(config, log_default)
     logger = logging.getLogger(__name__)
 
     bg_utils.setup_database(config)
