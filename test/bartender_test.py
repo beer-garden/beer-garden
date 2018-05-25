@@ -3,12 +3,11 @@ import os
 import unittest
 
 import requests.exceptions
-from mock import MagicMock, Mock, patch, call
 from box import Box
+from mock import Mock, call, patch
 from yapconf import YapconfSpec
 
 import bartender as bg
-from bartender.app import BartenderApp
 from bartender.specification import SPECIFICATION
 
 
@@ -24,30 +23,10 @@ class BartenderTest(unittest.TestCase):
 
     @patch('bg_utils.setup_application_logging', Mock())
     @patch('bg_utils.setup_database', Mock())
-    def test_setup_no_file_given(self):
+    def test_setup(self):
         bg.setup_bartender(self.spec, {})
         self.assertIsInstance(bg.config, Box)
         self.assertIsInstance(bg.logger, logging.Logger)
-        self.assertIsInstance(bg.application, BartenderApp)
-
-    @patch('bartender.EasyClient', Mock())
-    @patch('bartender.BartenderApp', Mock())
-    @patch('bg_utils.setup_application_logging', Mock())
-    @patch('bg_utils.setup_database', Mock())
-    @patch('bartender.logging.config')
-    def test_setup_with_config_file(self, logging_mock):
-        fake_path = 'path/to/config.json'
-        cli_args = {'configuration': {'file': fake_path}}
-
-        fake_config = MagicMock(configuration=MagicMock(file=fake_path, type='json'),
-                                web=MagicMock(url_prefix=None))
-        load_config_mock = Mock(return_value=fake_config)
-        self.spec.load_config = load_config_mock
-
-        bg.setup_bartender(self.spec, cli_args)
-        load_config_mock.assert_called_with(cli_args,
-                                            ('config file', 'path/to/config.json', 'json'),
-                                            'ENVIRONMENT')
 
     def test_progressive_backoff(self):
         bg.logger = Mock()
