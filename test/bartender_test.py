@@ -3,13 +3,12 @@ import os
 import unittest
 
 import requests.exceptions
-from mock import Mock, patch, call
 from box import Box
+from mock import Mock, call, patch
 from yapconf import YapconfSpec
 
 import bartender as bg
-from bartender.app import BartenderApp
-from bartender.specification import SPECIFICATION, get_default_logging_config
+from bartender.specification import SPECIFICATION
 
 
 class BartenderTest(unittest.TestCase):
@@ -24,27 +23,10 @@ class BartenderTest(unittest.TestCase):
 
     @patch('bg_utils.setup_application_logging', Mock())
     @patch('bg_utils.setup_database', Mock())
-    def test_setup_no_file_given(self):
+    def test_setup(self):
         bg.setup_bartender(self.spec, {})
         self.assertIsInstance(bg.config, Box)
         self.assertIsInstance(bg.logger, logging.Logger)
-        self.assertIsInstance(bg.application, BartenderApp)
-
-    @patch('bg_utils.setup_database', Mock())
-    @patch('bartender.logging.config')
-    @patch('bartender.open')
-    @patch('json.load')
-    def test_setup_with_config_file(self, json_mock, open_mock, logging_mock):
-        fake_file = Mock()
-        fake_file.__exit__ = Mock()
-        fake_file.__enter__ = Mock(return_value=fake_file)
-        open_mock.return_value = fake_file
-        fake_config = {"log_level": "WARN"}
-        json_mock.return_value = fake_config
-        bg.setup_bartender(self.spec, {'config': 'path/to/config.json'})
-        self.assertEqual(open_mock.call_count, 1)
-        json_mock.assert_called_with(fake_file)
-        logging_mock.dictConfig.assert_called_with(get_default_logging_config('WARN', None))
 
     def test_progressive_backoff(self):
         bg.logger = Mock()

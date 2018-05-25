@@ -1,7 +1,5 @@
-import json
 import logging
 import logging.config
-from io import open
 
 import requests.exceptions
 
@@ -21,30 +19,14 @@ bv_client = None
 def setup_bartender(spec, cli_args):
     global application, config, logger, bv_client
 
-    # We load the config once just to see if there is a config file we should load from.
-    temp_config = spec.load_config(cli_args, 'ENVIRONMENT')
+    config = bg_utils.load_application_config(spec, cli_args)
+    config.web.url_prefix = brewtils.rest.normalize_url_prefix(config.web.url_prefix)
 
-    # If they specified a config file, we should load it up
-    if temp_config.config:
-        with open(temp_config.config) as config_file:
-            config_from_file = json.load(config_file)
-    else:
-        config_from_file = {}
-
-    config = spec.load_config(cli_args, config_from_file, 'ENVIRONMENT')
-
-    prefix = brewtils.rest.normalize_url_prefix(config.url_prefix)
-    config['url_prefix'] = prefix
-    config.url_prefix = prefix
-
-    bg_utils.setup_application_logging(config,
-                                       get_default_logging_config(config.log_level,
-                                                                  config.log_file))
+    log_default = get_default_logging_config(config.log.level, config.log.file)
+    bg_utils.setup_application_logging(config, log_default)
     logger = logging.getLogger(__name__)
 
-    bv_client = EasyClient(config.web_host, config.web_port, ssl_enabled=config.ssl_enabled,
-                           ca_cert=config.ca_cert, url_prefix=config.url_prefix,
-                           ca_verify=config.ca_verify)
+    bv_client = EasyClient(**config.web)
 
     application = BartenderApp(config)
 

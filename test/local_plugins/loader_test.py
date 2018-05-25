@@ -22,17 +22,22 @@ class PluginLoaderTest(unittest.TestCase):
             'ENVIRONMENT': {}
         }
 
+        self.mock_validator = Mock()
+        self.mock_registry = Mock()
+        self.plugin_path = '/path/to/plugins'
+
         system_patcher = patch('bartender.local_plugins.loader.System')
         self.addCleanup(system_patcher.stop)
         self.system_mock = system_patcher.start()
         self.system_mock.find_unique = Mock(return_value=None)
 
-        self.mock_validator = Mock()
-        self.mock_registry = Mock()
-        self.plugin_path = '/path/to/plugins'
-        self.loader = LocalPluginLoader(self.plugin_path, self.mock_validator, self.mock_registry,
-                                        "web_host", 123, False, "db_host", "db_name", 1234,
-                                        None, None, False, None)
+        config_patcher = patch('bartender.config')
+        self.addCleanup(config_patcher.stop)
+        self.config_mock = config_patcher.start()
+        self.config_mock.plugin.local.directory = self.plugin_path
+        self.config_mock.plugin.local.log_directory = None
+
+        self.loader = LocalPluginLoader(self.mock_validator, self.mock_registry)
 
     @patch('bartender.local_plugins.loader.LocalPluginLoader.scan_plugin_path',
            Mock(return_value=['pl1', 'pl2']))
@@ -63,7 +68,7 @@ class PluginLoaderTest(unittest.TestCase):
         self.assertEqual([], self.loader.scan_plugin_path())
 
     def test_scan_plugin_path_no_path(self):
-        self.loader.path_to_plugins = None
+        self.config_mock.plugin.local.directory = None
         self.assertEqual([], self.loader.scan_plugin_path())
 
     def test_validate_plugin_requirements_no_plugins(self):

@@ -21,17 +21,17 @@ class RequestValidator(object):
         self.logger = logging.getLogger(__name__)
 
         # We have to translate the host/port kwarg names, just pass though everything else
-        conn_params = get_bg_connection_parameters(bg_host=config.web_host,
-                                                   bg_port=config.web_port,
+        conn_params = get_bg_connection_parameters(bg_host=config.web.host,
+                                                   bg_port=config.web.port,
                                                    **config)
         self._client = SystemClient(system_name=None, **conn_params)
 
         self._session = Session()
-        if not config.ca_verify:
+        if not config.web.ca_verify:
             urllib3.disable_warnings()
             self._session.verify = False
-        elif config.ca_cert:
-            self._session.verify = config.ca_cert
+        elif config.web.ca_cert:
+            self._session.verify = config.web.ca_cert
 
     def validate_request(self, request):
         """Validation to be called before you save a request from a user

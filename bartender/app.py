@@ -36,41 +36,28 @@ class BartenderApp(StoppableThread):
         self.plugin_registry = LocalPluginRegistry()
         self.plugin_validator = LocalPluginValidator()
 
-        self.plugin_loader = LocalPluginLoader(path_to_plugins=config.plugin_directory,
-                                               validator=self.plugin_validator,
-                                               registry=self.plugin_registry,
-                                               web_host=config.web_host,
-                                               web_port=config.web_port,
-                                               ssl_enabled=config.ssl_enabled,
-                                               db_host=config.db_host,
-                                               db_name=config.db_name,
-                                               db_port=config.db_port,
-                                               plugin_log_directory=config.plugin_log_directory,
-                                               url_prefix=config.url_prefix,
-                                               ca_verify=config.ca_verify,
-                                               ca_cert=config.ca_cert)
+        self.plugin_loader = LocalPluginLoader(validator=self.plugin_validator,
+                                               registry=self.plugin_registry)
 
         self.clients = {
-            'pika': PikaClient(host=config.amq_host, port=config.amq_port,
-                               user=config.amq_admin_user,
-                               password=config.amq_admin_password,
-                               virtual_host=config.amq_virtual_host,
-                               connection_attempts=config.amq_connection_attempts,
-                               exchange=config.amq_exchange),
-            'pyrabbit': PyrabbitClient(host=config.amq_admin_host, port=config.amq_admin_port,
-                                       user=config.amq_admin_user,
-                                       password=config.amq_admin_password,
-                                       virtual_host=config.amq_virtual_host),
-            'public': ClientBase(host=config.amq_publish_host, port=config.amq_port,
-                                 user=config.amq_user, password=config.amq_password,
-                                 virtual_host=config.amq_virtual_host)
+            'pika': PikaClient(host=config.amq.host,
+                               port=config.amq.connections.message.port,
+                               user=config.amq.connections.admin.user,
+                               password=config.amq.connections.admin.password,
+                               virtual_host=config.amq.virtual_host,
+                               connection_attempts=config.amq.connection_attempts,
+                               exchange=config.amq.exchange),
+            'pyrabbit': PyrabbitClient(host=config.amq.host,
+                                       virtual_host=config.amq.virtual_host,
+                                       **config.amq.connections.admin),
+            'public': ClientBase(host=config.publish_hostname,
+                                 virtual_host=config.amq.virtual_host,
+                                 **config.amq.connections.message),
         }
 
         self.plugin_manager = LocalPluginsManager(
             loader=self.plugin_loader, validator=self.plugin_validator,
-            registry=self.plugin_registry, clients=self.clients,
-            plugin_startup_timeout=config.plugin_startup_timeout,
-            plugin_shutdown_timeout=config.plugin_shutdown_timeout)
+            registry=self.plugin_registry, clients=self.clients)
 
         self.handler = BartenderHandler(registry=self.plugin_registry, clients=self.clients,
                                         plugin_manager=self.plugin_manager,
@@ -79,14 +66,15 @@ class BartenderApp(StoppableThread):
         self.helper_threads = [
 
             HelperThread(make_server, service=bg_utils.bg_thrift.BartenderBackend,
-                         handler=self.handler, host=config.thrift_host, port=config.thrift_port),
+                         handler=self.handler, host=config.thrift.host,
+                         port=config.thrift.port),
 
             HelperThread(LocalPluginMonitor, plugin_manager=self.plugin_manager,
                          registry=self.plugin_registry),
 
             HelperThread(PluginStatusMonitor, self.clients,
-                         timeout_seconds=config.plugin_status_timeout,
-                         heartbeat_interval=config.plugin_status_heartbeat)
+                         timeout_seconds=config.plugin.status_timeout,
+                         heartbeat_interval=config.plugin.status_heartbeat)
         ]
 
         # Only want to run the MongoPruner if it would do anything
@@ -156,31 +144,31 @@ class BartenderApp(StoppableThread):
     def _setup_pruning_tasks(config):
 
         prune_tasks = []
-        if config.info_request_ttl > 0:
+        if config.db.ttl.info > 0:
             prune_tasks.append({
                 'collection': Request, 'field': 'created_at',
-                'delete_after': timedelta(minutes=config.info_request_ttl),
+                'delete_after': timedelta(minutes=config.db.ttl.info),
                 'additional_query':
                     (Q(status="SUCCESS") |
                      Q(status='CANCELED') |
                      Q(status='ERROR')) & Q(command_type='INFO')})
 
-        if config.action_request_ttl > 0:
+        if config.db.ttl.action > 0:
             prune_tasks.append({
                 'collection': Request, 'field': 'created_at',
-                'delete_after': timedelta(minutes=config.action_request_ttl),
+                'delete_after': timedelta(minutes=config.db.ttl.action),
                 'additional_query':
                     (Q(status="SUCCESS") |
                      Q(status='CANCELED') |
                      Q(status='ERROR')) & Q(command_type='ACTION')})
 
-        if config.event_mongo_ttl > 0:
+        if config.db.ttl.event > 0:
             prune_tasks.append({'collection': Event, 'field': 'timestamp',
-                                'delete_after': timedelta(minutes=config.event_mongo_ttl)})
+                                'delete_after': timedelta(minutes=config.db.ttl.event)})
 
         # Look at the various TTLs to determine how often to run the MongoPruner
         real_ttls = [x for x in
-                     (config.info_request_ttl, config.action_request_ttl, config.event_mongo_ttl)
+                     (config.db.ttl.info, config.db.ttl.action, config.db.ttl.event)
                      if x > 0]
         run_every = min(real_ttls) // 2 if real_ttls else None
 

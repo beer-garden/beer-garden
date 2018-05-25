@@ -1,5 +1,6 @@
 import unittest
 
+from box import Box
 from mock import call, patch, MagicMock, Mock, PropertyMock
 
 import bartender
@@ -10,7 +11,7 @@ from bartender.local_plugins.manager import LocalPluginsManager
 class LocalPluginsManagerTest(unittest.TestCase):
 
     def setUp(self):
-        bartender.PLUGIN_STARTUP_TIMEOUT = 1
+        bartender.config = Box(default_box=True)
 
         self.fake_plugin_loader = Mock()
         self.fake_plugin_validator = Mock()
@@ -33,9 +34,7 @@ class LocalPluginsManagerTest(unittest.TestCase):
                              get_plugins_by_system=Mock(return_value=[self.fake_plugin]))
 
         self.manager = LocalPluginsManager(self.fake_plugin_loader, self.fake_plugin_validator,
-                                           self.registry,
-                                           self.clients, plugin_startup_timeout=5,
-                                           plugin_shutdown_timeout=10)
+                                           self.registry, self.clients)
 
     def test_start_plugin_initializing(self):
         self.fake_plugin.status = 'INITIALIZING'
