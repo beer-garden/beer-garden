@@ -6,7 +6,7 @@ from mock import Mock, patch
 import brew_view
 from bg_utils.models import Command, Instance, System
 from bg_utils.parser import BeerGardenSchemaParser
-from test.python.utils import TestUtils
+from ...utils import TestUtils
 
 
 @unittest.skip('TODO')

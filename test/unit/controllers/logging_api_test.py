@@ -3,10 +3,9 @@ import json
 
 from . import TestHandlerBase
 from mock import patch
-from test.unit.utils import TestUtils
 
 
-class LoggingApiTest(TestHandlerBase, TestUtils):
+class LoggingApiTest(TestHandlerBase):
 
     def setUp(self):
         super(LoggingApiTest, self).setUp()
