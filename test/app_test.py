@@ -5,6 +5,7 @@ import requests.exceptions
 from mock import MagicMock, Mock, patch
 from yapconf import YapconfSpec
 
+import bartender
 from bartender.app import BartenderApp, HelperThread
 from bartender.specification import SPECIFICATION
 from bg_utils.models import Event, Request
@@ -15,6 +16,7 @@ class BartenderAppTest(unittest.TestCase):
 
     def setUp(self):
         self.config = YapconfSpec(SPECIFICATION).load_config()
+        bartender.config = self.config
 
         self.app = BartenderApp(self.config)
         self.thrift_server = Mock()
