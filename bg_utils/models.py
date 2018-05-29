@@ -203,6 +203,7 @@ class Request(Document, BrewtilsRequest):
     updated_at = DateTimeField(default=None, required=True)
     error_class = StringField(required=False)
     metadata = DictField()
+    requester = StringField(required=False)
 
     meta = {
         'auto_create_index': False,  # We need to manage this ourselves
@@ -445,3 +446,4 @@ class Principal(Document):
 
     username = StringField(required=True)
     hash = StringField()
+    theme = StringField()
