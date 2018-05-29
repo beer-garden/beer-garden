@@ -43,6 +43,13 @@ export function appRun($rootScope, $state, $stateParams, $cookies, UtilityServic
     'slate': false,
   };
 
+  $rootScope.login = function() {
+    UtilityService.login().then(function(response) {
+      $rootScope.userName = $cookies.get('user_name');
+      $rootScope.changeTheme($cookies.get('currentTheme') || 'default');
+    });
+  };
+
   $rootScope.changeTheme = function(theme) {
     $cookies.put('currentTheme', theme);
     for (const key of Object.keys($rootScope.themes)) {
@@ -50,7 +57,8 @@ export function appRun($rootScope, $state, $stateParams, $cookies, UtilityServic
     };
   };
 
-  // Uses cookies to get the current theme
+  // Load up some cookies
+  $rootScope.userName = $cookies.get('user_name');
   $rootScope.changeTheme($cookies.get('currentTheme') || 'default');
 };
 

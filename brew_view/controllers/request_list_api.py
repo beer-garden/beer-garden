@@ -242,6 +242,9 @@ class RequestListAPI(BaseHandler):
         if request_model.parent:
             request_model.parent = Request.objects.get(id=str(request_model.parent.id))
 
+        if self.current_user:
+            request_model.requester = self.current_user.username
+
         with thrift_context() as client:
             try:
                 request_model.save()
@@ -346,6 +349,12 @@ class RequestListAPI(BaseHandler):
         # Default to only top-level requests
         if self.get_query_argument('include_children', default='false').lower() != 'true':
             search_params.append(Q(parent__exists=False))
+
+        # Temporary for demonstration
+        requester_params = Q(requester__not__exists=True)
+        if self.current_user:
+            requester_params |= Q(requester__exact=self.current_user.username)
+        search_params.append(requester_params)
 
         requests = Request.objects(reduce(lambda x, y: x & y, search_params, Q()))
         filtered_count = requests.count()

@@ -13,7 +13,7 @@ module.exports = merge(common, {
     publicPath: '/',
     stats: 'minimal',
     proxy: [{
-      context: ['/api', '/config', '/version'],
+      context: ['/api', '/config', '/login', '/version'],
       target: 'http://localhost:2337/',
     }],
   },
