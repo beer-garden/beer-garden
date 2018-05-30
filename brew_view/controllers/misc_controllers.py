@@ -55,7 +55,7 @@ class SwaggerConfigHandler(BaseHandler):
     def get(self):
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.write({
-            'url': brew_view.config['url_prefix'] + 'api/v1/spec',
+            'url': brew_view.config.web.url_prefix + 'api/v1/spec',
             'validatorUrl': None
         })
 
