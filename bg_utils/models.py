@@ -447,3 +447,5 @@ class Principal(Document):
     username = StringField(required=True)
     hash = StringField()
     theme = StringField()
+    roles = ListField(field=StringField)
+    preferences = DictField()
