@@ -4,6 +4,8 @@ appRun.$inject = [
   '$state',
   '$stateParams',
   '$cookies',
+  '$http',
+  'localStorageService',
   'UtilityService',
   'SystemService',
 ];
@@ -17,7 +19,8 @@ appRun.$inject = [
  * @param  {UtilityService} UtilityService UtilityService for getting configuration/icons.
  * @param  {SystemService} SystemService   SystemService for getting all System information.
  */
-export function appRun($rootScope, $state, $stateParams, $cookies, UtilityService, SystemService) {
+export function appRun($rootScope, $state, $stateParams, $cookies, $http,
+    localStorageService, UtilityService, SystemService) {
   $rootScope.$state = $state;
   $rootScope.$stateParams = $stateParams;
 
@@ -44,12 +47,23 @@ export function appRun($rootScope, $state, $stateParams, $cookies, UtilityServic
   };
 
   $rootScope.login = function() {
-    let func = $rootScope.userName ? UtilityService.logout : UtilityService.login;
+    UtilityService.login().then(function(response) {
+      let token = response.data.token;
+      localStorageService.set('token', token);
+      $http.defaults.headers.common.Authorization = 'Bearer ' + token;
 
-    func().then(function(response) {
-      $rootScope.userName = $cookies.get('user_name');
-      $rootScope.changeTheme($cookies.get('currentTheme') || 'default');
+      $http.get('api/v1/users/' + response.data.id).then(function(response) {
+        $rootScope.userName = response.data.username;
+        $rootScope.changeTheme(response.data.preferences.theme || 'default');
+      });
     });
+  };
+
+  $rootScope.logout = function() {
+    localStorageService.remove('token');
+    $http.defaults.headers.common.Authorization = undefined;
+
+    $rootScope.userName = '';
   };
 
   $rootScope.changeTheme = function(theme) {

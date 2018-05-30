@@ -2,6 +2,7 @@ import base64
 import re
 import socket
 
+import jwt
 from mongoengine.errors import DoesNotExist, NotUniqueError, ValidationError as MongoValidationError
 from passlib.apps import custom_app_context
 from thriftpy.thrift import TException
@@ -53,6 +54,10 @@ class BaseHandler(RequestHandler):
         if principal:
             return principal
 
+        principal = self.parse_bearer_auth()
+        if principal:
+            return principal
+
     def parse_basic_auth(self):
         auth_header = self.request.headers.get('Authorization')
         if auth_header and auth_header.startswith('Basic '):
@@ -69,6 +74,21 @@ class BaseHandler(RequestHandler):
             except DoesNotExist:
                 pass
 
+        return None
+
+    def parse_bearer_auth(self):
+        auth_header = self.request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+
+            decoded = jwt.decode(token,
+                                 brew_view.tornado_app.settings["cookie_secret"],
+                                 algorithm='HS256')
+
+            try:
+                return Principal.objects.get(id=decoded['id'])
+            except DoesNotExist:
+                pass
         return None
 
     def prepare(self):

@@ -19,7 +19,7 @@ from bg_utils.plugin_logging_loader import PluginLoggingLoader
 from brew_view.publishers import MongoPublisher, RequestPublisher, TornadoPikaPublisher
 from brew_view.specification import get_default_logging_config
 from brewtils.schemas import ParameterSchema, CommandSchema, InstanceSchema, SystemSchema, \
-    RequestSchema, PatchSchema, LoggingConfigSchema, EventSchema, QueueSchema
+    RequestSchema, PatchSchema, LoggingConfigSchema, EventSchema, QueueSchema, PrincipalSchema
 
 config = None
 application = None
@@ -87,7 +87,7 @@ def _setup_tornado_app():
         QueueAPI, QueueListAPI, RequestAPI, RequestListAPI, SystemAPI,
         SystemListAPI, VersionHandler, SpecHandler, SwaggerConfigHandler,
         OldAdminAPI, OldQueueAPI, OldQueueListAPI, LoggingConfigAPI,
-        EventPublisherAPI, BasicAuthHandler, UsersHandler, LogoutHandler)
+        EventPublisherAPI, BasicAuthHandler, UserAPI, UsersAPI, LogoutHandler)
 
     prefix = config.web.url_prefix
     static_base = os.path.join(os.path.dirname(__file__), 'static', 'dist')
@@ -98,12 +98,14 @@ def _setup_tornado_app():
         (r'{0}api/v1/requests/?'.format(prefix), RequestListAPI),
         (r'{0}api/v1/systems/?'.format(prefix), SystemListAPI),
         (r'{0}api/v1/queues/?'.format(prefix), QueueListAPI),
+        (r'{0}api/v1/users/?'.format(prefix), UsersAPI),
         (r'{0}api/v1/admin/?'.format(prefix), AdminAPI),
         (r'{0}api/v1/commands/(\w+)/?'.format(prefix), CommandAPI),
         (r'{0}api/v1/instances/(\w+)/?'.format(prefix), InstanceAPI),
         (r'{0}api/v1/requests/(\w+)/?'.format(prefix), RequestAPI),
         (r'{0}api/v1/systems/(\w+)/?'.format(prefix), SystemAPI),
         (r'{0}api/v1/queues/([\w\.-]+)/?'.format(prefix), QueueAPI),
+        (r'{0}api/v1/users/(\w+)/?'.format(prefix), UserAPI),
         (r'{0}api/v1/config/logging/?'.format(prefix), LoggingConfigAPI),
 
         # Beta
@@ -119,7 +121,6 @@ def _setup_tornado_app():
     unpublished_url_specs = [
         (r'{0}login/?'.format(prefix), BasicAuthHandler),
         (r'{0}logout/?'.format(prefix), LogoutHandler),
-        (r'{0}users/?'.format(prefix), UsersHandler),
         (r'{0}config/?'.format(prefix), ConfigHandler),
         (r'{0}config/swagger/?'.format(prefix), SwaggerConfigHandler),
         (r'{0}version/?'.format(prefix), VersionHandler),
@@ -235,6 +236,7 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition('System', schema=SystemSchema)
     api_spec.definition('LoggingConfig', schema=LoggingConfigSchema)
     api_spec.definition('Event', schema=EventSchema)
+    api_spec.definition('User', schema=PrincipalSchema)
     api_spec.definition('Queue', schema=QueueSchema)
     api_spec.definition('_patch', schema=PatchSchema)
     api_spec.definition('Patch', properties={"operations": {

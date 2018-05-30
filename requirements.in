@@ -5,6 +5,7 @@
 futures ; python_version < "3.0"
 apispec
 passlib
+pyjwt
 tornado
 
 # Documentation Dependencies

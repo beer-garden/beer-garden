@@ -19,6 +19,7 @@ import 'angular-ui-bootstrap';
 import '@uirouter/angularjs';
 import 'angular-bootstrap-switch';
 import 'angular-strap';
+import 'angular-local-storage';
 
 import 'bootstrap';
 import 'bootstrap-switch';
@@ -117,6 +118,7 @@ angular.module('bgApp',
   'frapontillo.bootstrap-switch',
   'mgcrea.ngStrap',
   'ngCookies',
+  'LocalStorageModule',
   'beer-garden.addons',
   'beer-garden.builder',
 ])

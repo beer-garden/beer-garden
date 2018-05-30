@@ -1,33 +1,34 @@
+import json
+
+import jwt
+
+import brew_view
 from brew_view.base_handler import BaseHandler
 
 
 class BasicAuthHandler(BaseHandler):
+
+    def get(self):
+        # Get the current user and generate from that
+        principal = self.get_current_user()
+        if principal:
+            pid = str(principal.id)
+            payload = {'id': pid, 'username': principal.username}
+            token = jwt.encode(payload,
+                               brew_view.tornado_app.settings["cookie_secret"],
+                               algorithm='HS256')
+            self.write(json.dumps({'id': pid, 'token': token.decode()}))
+        else:
+            self._request_basic_auth()
 
     def _request_basic_auth(self):
         self.set_header('WWW-Authenticate', 'Basic realm="Beergarden"')
         self.set_status(401)
         self.finish()
 
-    def get(self):
-        # "Logged in" is the presence of a session so if we already have one...
-        if self.get_secure_cookie('session'):
-            return
 
-        # Otherwise we try to get the current user and generate from that
-        principal = self.get_current_user()
-
-        if principal:
-            self.set_cookie('user_name', principal.username)
-            self.set_cookie('currentTheme', principal.theme)
-            self.set_secure_cookie('session', str(principal.id), httponly=True)
-        else:
-            self._request_basic_auth()
-
-
+# TODO
 class LogoutHandler(BaseHandler):
 
     def get(self):
-        if not self.get_secure_cookie('session'):
-            return
-
-        self.clear_all_cookies()
+        pass

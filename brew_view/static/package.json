@@ -15,6 +15,7 @@
     "angular-cookies": "^1.6.5",
     "angular-datatables": "^0.6.0",
     "angular-filter": "^0.5.17",
+    "angular-local-storage": "^0.7.1",
     "angular-sanitize": "^1.6.5",
     "angular-schema-form": "1.0.0-alpha.4",
     "angular-schema-form-bootstrap": "1.0.0-alpha.4",
