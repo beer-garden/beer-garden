@@ -33,7 +33,11 @@
       <ul class="nav navbar-nav navbar-top-links navbar-right">
 
         <li>
-          <a href="" ng-click="login()">{{userName || "Login"}}</a>
+          <a ng-show=userName>Hello, {{userName}}!</a>
+        </li>
+
+        <li>
+          <a href="" ng-click="login()">{{userName ? "Logout" : "Login"}}</a>
         </li>
 
         <li class="dropdown">

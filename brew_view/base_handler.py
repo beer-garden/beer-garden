@@ -48,8 +48,10 @@ class BaseHandler(RequestHandler):
         session_cookie = self.get_secure_cookie('session')
         if session_cookie:
             return Principal.objects.get(id=session_cookie.decode('utf-8'))
-        else:
-            return self.parse_basic_auth()
+
+        principal = self.parse_basic_auth()
+        if principal:
+            return principal
 
     def parse_basic_auth(self):
         auth_header = self.request.headers.get('Authorization')
@@ -58,18 +60,16 @@ class BaseHandler(RequestHandler):
             username, password = auth_decoded.split(':')
 
             # In this case return 403 to prevent an attacker from being able to
-            # enumerate a list of usernames
+            # enumerate a list of user names
             try:
                 principal = Principal.objects.get(username=username)
-            except DoesNotExist:
-                raise HTTPError(403, reason='Nah son')
 
-            if custom_app_context.verify(password, principal.hash):
-                return principal
-            else:
-                raise HTTPError(403, reason='Nah son')
-        else:
-            return None
+                if custom_app_context.verify(password, principal.hash):
+                    return principal
+            except DoesNotExist:
+                pass
+
+        return None
 
     def prepare(self):
         """Called before each verb handler"""

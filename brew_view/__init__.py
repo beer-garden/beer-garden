@@ -82,10 +82,12 @@ def _setup_application():
 def _setup_tornado_app():
 
     # Import these here so we don't have a problem importing thrift_context
-    from brew_view.controllers import AdminAPI, CommandAPI, CommandListAPI, ConfigHandler, \
-        InstanceAPI, QueueAPI, QueueListAPI, RequestAPI, RequestListAPI, SystemAPI, SystemListAPI, \
-        VersionHandler, SpecHandler, SwaggerConfigHandler, OldAdminAPI, OldQueueAPI, \
-        OldQueueListAPI, LoggingConfigAPI, EventPublisherAPI, BasicAuthHandler, UsersHandler
+    from brew_view.controllers import (
+        AdminAPI, CommandAPI, CommandListAPI, ConfigHandler, InstanceAPI,
+        QueueAPI, QueueListAPI, RequestAPI, RequestListAPI, SystemAPI,
+        SystemListAPI, VersionHandler, SpecHandler, SwaggerConfigHandler,
+        OldAdminAPI, OldQueueAPI, OldQueueListAPI, LoggingConfigAPI,
+        EventPublisherAPI, BasicAuthHandler, UsersHandler, LogoutHandler)
 
     prefix = config.web.url_prefix
     static_base = os.path.join(os.path.dirname(__file__), 'static', 'dist')
@@ -116,6 +118,7 @@ def _setup_tornado_app():
     # And these do not
     unpublished_url_specs = [
         (r'{0}login/?'.format(prefix), BasicAuthHandler),
+        (r'{0}logout/?'.format(prefix), LogoutHandler),
         (r'{0}users/?'.format(prefix), UsersHandler),
         (r'{0}config/?'.format(prefix), ConfigHandler),
         (r'{0}config/swagger/?'.format(prefix), SwaggerConfigHandler),

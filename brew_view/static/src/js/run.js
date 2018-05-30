@@ -44,7 +44,9 @@ export function appRun($rootScope, $state, $stateParams, $cookies, UtilityServic
   };
 
   $rootScope.login = function() {
-    UtilityService.login().then(function(response) {
+    let func = $rootScope.userName ? UtilityService.logout : UtilityService.login;
+
+    func().then(function(response) {
       $rootScope.userName = $cookies.get('user_name');
       $rootScope.changeTheme($cookies.get('currentTheme') || 'default');
     });
