@@ -30,6 +30,7 @@ import 'startbootstrap-sb-admin-2/js/sb-admin-2.js';
 import 'datatables.net';
 import 'datatables.net-bs';
 import 'datatables-columnfilter';
+import 'jwt-decode';
 import 'angular-datatables/dist/angular-datatables.js';
 import 'angular-datatables/dist/plugins/light-columnfilter/angular-datatables.light-columnfilter.js'; // eslint-disable-line max-len
 import 'angular-datatables/dist/plugins/bootstrap/angular-datatables.bootstrap.js';
@@ -126,6 +127,9 @@ angular.module('bgApp',
 .run(dtLoadingTemplate)
 .config(routeConfig)
 .config(interceptorConfig)
+.config(['localStorageServiceProvider', function(localStorageServiceProvider) {
+  localStorageServiceProvider.setStorageType('sessionStorage');
+}])
 .service('APIInterceptor', interceptorService)
 .animation('.slide', slideAnimation)
 
