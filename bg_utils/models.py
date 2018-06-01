@@ -442,10 +442,15 @@ class Event(Document, BrewtilsEvent):
         return BrewtilsEvent.__repr__(self)
 
 
+class Role(Document):
+
+    name = StringField(required=True)
+
+
 class Principal(Document):
 
     username = StringField(required=True)
     hash = StringField()
     theme = StringField()
-    roles = ListField(field=StringField)
+    roles = ListField(field=ReferenceField('Role', reverse_delete_rule=PULL))
     preferences = DictField()
