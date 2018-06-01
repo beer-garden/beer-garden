@@ -78,6 +78,7 @@ import utilityService from './js/services/utility_service.js';
 import versionService from './js/services/version_service.js';
 
 import aboutController from './js/controllers/about.js';
+import loginController from './js/controllers/login.js';
 import adminQueueController from './js/controllers/admin_queue.js';
 import adminSystemController from './js/controllers/admin_system.js';
 import applicationController from './js/controllers/application.js';
@@ -90,6 +91,7 @@ import systemViewController from './js/controllers/system_view.js';
 
 // Partials
 import './partials/about.html';
+import './partials/login.html';
 import './partials/admin_queue.html';
 import './partials/admin_system.html';
 import './partials/command_index.html';
@@ -148,6 +150,7 @@ angular.module('bgApp',
 .factory('VersionService', versionService)
 
 .controller('AboutController', aboutController)
+.controller('LoginController', loginController)
 .controller('QueueIndexController', adminQueueController)
 .controller('SystemAdminController', adminSystemController)
 .controller('ApplicationController', applicationController)

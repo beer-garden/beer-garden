@@ -37,7 +37,7 @@
         </li>
 
         <li>
-          <a href="" ng-click="userName ? logout() : login()">{{userName ? "Logout" : "Login"}}</a>
+          <a ui-sref="login" ng-show=!userName>Login</a>
         </li>
 
         <li class="dropdown">

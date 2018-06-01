@@ -17,6 +17,11 @@ export default function routeConfig($stateProvider, $urlRouterProvider) {
         templateUrl: basePath + 'landing.html',
         controller: 'LandingController',
     })
+    .state('login', {
+      url: '/login',
+      templateUrl: basePath + 'login.html',
+      controller: 'LoginController',
+    })
     .state('system', {
       url: '/systems/:id',
       templateUrl: basePath + 'system_view.html',
