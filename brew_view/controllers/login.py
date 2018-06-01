@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import jwt
 from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
+from tornado.web import HTTPError
 
 import brew_view
 from bg_utils.models import Principal
@@ -22,15 +23,20 @@ class LoginHandler(BaseHandler):
 
     def post(self):
         try:
-            principal = Principal.objects.get(username=self.get_body_argument('username'))
+            parsed_body = json.loads(self.request.decoded_body)
 
-            if custom_app_context.verify(self.get_body_argument('password'), principal.hash):
+            principal = Principal.objects.get(username=parsed_body['username'])
+
+            if custom_app_context.verify(parsed_body['password'], principal.hash):
                 self.write(json.dumps({'token': self._generate_token(principal).decode()}))
+                return
         except DoesNotExist:
             pass
 
+        raise HTTPError(status_code=401, log_message='Bad credentials')
+
     def _generate_token(self, principal):
-        current_time = datetime.now()
+        current_time = datetime.utcnow()
 
         payload = {
             'sub': str(principal.id),

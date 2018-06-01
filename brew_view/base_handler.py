@@ -86,7 +86,7 @@ class BaseHandler(RequestHandler):
                                  algorithm='HS256')
 
             try:
-                return Principal.objects.get(id=decoded['id'])
+                return Principal.objects.get(id=decoded['sub'])
             except DoesNotExist:
                 pass
         return None
