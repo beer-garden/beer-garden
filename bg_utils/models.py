@@ -12,13 +12,14 @@ from mongoengine.errors import DoesNotExist
 from bg_utils.fields import DummyField, StatusInfo
 from brewtils.choices import parse
 from brewtils.errors import BrewmasterModelValidationError
-from brewtils.models import Choices as BrewtilsChoices
-from brewtils.models import Command as BrewtilsCommand
-from brewtils.models import Instance as BrewtilsInstance
-from brewtils.models import Parameter as BrewtilsParameter
-from brewtils.models import Request as BrewtilsRequest
-from brewtils.models import System as BrewtilsSystem
-from brewtils.models import Event as BrewtilsEvent
+from brewtils.models import (
+    Choices as BrewtilsChoices, Command as BrewtilsCommand,
+    Instance as BrewtilsInstance, Parameter as BrewtilsParameter,
+    Request as BrewtilsRequest, System as BrewtilsSystem,
+    Event as BrewtilsEvent)
+
+__all__ = ['System', 'Instance', 'Command', 'Parameter', 'Request', 'Choices',
+           'Event']
 
 
 # MongoEngine needs all EmbeddedDocuments to be defined before any Documents that reference them
