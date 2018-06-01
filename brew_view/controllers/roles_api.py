@@ -24,8 +24,8 @@ class RolesAPI(BaseHandler):
           - Roles
         """
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
-        self.write(self.parser.serialize_command(Role.objects.all(), many=True,
-                                                 to_string=True))
+        self.write(BeerGardenSchemaParser.serialize_role(Role.objects.all(),
+                                                         many=True, to_string=True))
 
     def post(self):
         """
@@ -51,7 +51,9 @@ class RolesAPI(BaseHandler):
         tags:
           - Roles
         """
-        parsed = json.loads(self.request.decoded_body)
-
-        role = Role(**parsed)
+        role = BeerGardenSchemaParser.parse_role(self.request.decoded_body,
+                                                 from_string=True)
         role.save()
+
+        self.set_status(201)
+        self.write(BeerGardenSchemaParser.serialize_role(role, to_string=False))
