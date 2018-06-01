@@ -234,7 +234,7 @@ def _verify_db():
     is in a bad state.
     """
 
-    from .models import Request, System
+    from .models import Request, Role, System
     logger = logging.getLogger(__name__)
 
     def check_indexes(collection):
@@ -288,3 +288,4 @@ def _verify_db():
 
     check_indexes(Request)
     check_indexes(System)
+    check_indexes(Role)
