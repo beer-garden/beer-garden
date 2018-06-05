@@ -27,6 +27,6 @@ setup(
         'brewtils>=2.3.0',
         'mongoengine',
         'thriftpy',
-        'yapconf'
+        'yapconf<=0.2.3',
     ]
 )
