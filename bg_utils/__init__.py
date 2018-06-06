@@ -212,6 +212,13 @@ def _verify_db():
     from .models import Request, System
     logger = logging.getLogger(__name__)
 
+    def update_request_model():
+        raw_collection = Request._get_collection()
+        raw_collection.update_many({'parent':  None},
+                                   {'$set': {'has_parent': False}})
+        raw_collection.update_many({'parent': {'$not': {'$eq': None}}},
+                                   {'$set': {'has_parent': True}},)
+
     def check_indexes(collection):
         from pymongo.errors import OperationFailure
         from mongoengine.connection import get_db
@@ -228,15 +235,15 @@ def _verify_db():
             existing = collection._get_collection().index_information()
 
             if len(spec) > len(existing):
-                logger.info('Found missing %s indexes, about to build them. '
-                            'This could take a while :)',
-                            collection.__name__)
+                logger.warning('Found missing %s indexes, about to build them. '
+                               'This could take a while :)',
+                               collection.__name__)
 
             collection.ensure_indexes()
 
         except OperationFailure:
-            logger.warning('%s collection indexes verification failed, attempting to rebuild',
-                           collection.__name__)
+            logger.warning('%s collection indexes verification failed, '
+                           'attempting to rebuild', collection.__name__)
 
             # Unfortunately mongoengine sucks. The index that failed is only returned as part of
             # the error message. I REALLY don't want to parse an error string to find the index to
@@ -247,11 +254,17 @@ def _verify_db():
             try:
                 db = get_db()
                 db[collection.__name__.lower()].drop_indexes()
-                logger.info('Dropped indexes for %s collection', collection.__name__)
+                logger.warning('Dropped indexes for %s collection', collection.__name__)
             except OperationFailure:
                 logger.error('Dropping %s indexes failed, please check the database configuration',
                              collection.__name__)
                 raise
+
+            # For bg-utils 2.3.3 -> 2.3.4 upgrade
+            # We need to create the `has_parent` field
+            if collection == Request:
+                logger.warning('Request definition is out of date, updating')
+                update_request_model()
 
             try:
                 collection.ensure_indexes()
