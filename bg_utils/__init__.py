@@ -2,11 +2,12 @@ import json
 import logging
 import logging.config
 import os
-import six
 from argparse import ArgumentParser
 from io import open
 
+import six
 import thriftpy
+import yapconf
 
 from ._version import __version__ as generated_version
 
@@ -45,9 +46,9 @@ def parse_args(spec, item_names, cli_args):
 def generate_config_file(spec, cli_args):
     """Generate a configuration file.
 
-    Takes a specification and a series of command line arguments. Will create a file at the
-    location specified by the resolved `config` value. If none exists the configuration will
-    be printed to stdout.
+    Takes a specification and a series of command line arguments. Will create a
+    file at the location specified by the resolved `config` value. If none
+    exists the configuration will be printed to stdout.
 
     Args:
         spec (yapconf.YapconfSpec): Specification for the application
@@ -60,32 +61,35 @@ def generate_config_file(spec, cli_args):
         YapconfLoadError: Missing 'config' configuration option (file location)
     """
     config = _generate_config(spec, cli_args)
+    config_file, config_type = _get_config_values(config)
 
-    if config.get('config', None):
-        spec._write_dict_to_file(config, config.config, 'json')
-    else:
-        print(config)
+    yapconf.dump_data(config.to_dict(), filename=config_file,
+                      file_type=config_type)
 
 
 def update_config_file(spec, cli_args):
     """Updates a configuration file in-place.
 
-    cli_args must contain a 'config' argument that specifies the config file to update.
-
     Args:
         spec (yapconf.YapconfSpec): Specification for the application
-        cli_args (List[str]): Command line arguments
-
+        cli_args (List[str]): Command line arguments. Must contain an argument
+            that specifies the config file to update ('-c')
     Returns:
         None
 
     Raises:
         YapconfLoadError: Missing 'config' configuration option (file location)
     """
-    spec.get_item("config").required = True
     config = _generate_config(spec, cli_args)
+    config_file, config_type = _get_config_values(config)
 
-    spec.migrate_config_file(config.config, update_defaults=True)
+    if not config_file:
+        raise SystemExit('Please specify a config file to update'
+                         ' in the CLI arguments (-c)')
+
+    spec.migrate_config_file(config_file, update_defaults=True,
+                             current_file_type=config_type,
+                             output_file_type=config_type)
 
 
 def generate_logging_config_file(spec, logging_config_generator, cli_args):
@@ -120,6 +124,25 @@ def generate_logging_config_file(spec, logging_config_generator, cli_args):
     return logging_config
 
 
+def load_application_config(spec, cli_args):
+
+    config_sources = [cli_args, 'ENVIRONMENT']
+
+    # Load bootstrap items to see if there's a config file
+    temp_config = spec.load_config(*config_sources, bootstrap=True)
+
+    if temp_config.configuration.file:
+        if temp_config.configuration.type:
+            file_type = temp_config.configuration.type
+        elif temp_config.configuration.file.endswith('json'):
+            file_type = 'json'
+        else:
+            file_type = 'yaml'
+        config_sources.insert(1, ('config file', temp_config.configuration.file, file_type))
+
+    return spec.load_config(*config_sources)
+
+
 def setup_application_logging(config, default_config):
     """Setup the application logging based on the config object.
 
@@ -132,8 +155,8 @@ def setup_application_logging(config, default_config):
     Returns:
         dict: The logging configuration used
     """
-    if config.log_config:
-        with open(config.log_config, 'rt') as f:
+    if config.log.config_file:
+        with open(config.log.config_file, 'rt') as f:
             logging_config = json.load(f)
     else:
         logging_config = default_config
@@ -161,10 +184,9 @@ def setup_database(config):
     try:
         # Set timeouts here to a low value - we don't want to wait 30
         # seconds if there's no database
-        conn = connect(alias='aliveness', db=config.db_name,
-                       username=config.db_username, password=config.db_password,
-                       host=config.db_host, port=config.db_port,
-                       socketTimeoutMS=1000, serverSelectionTimeoutMS=1000)
+        conn = connect(alias='aliveness', db=config.db.name,
+                       socketTimeoutMS=1000, serverSelectionTimeoutMS=1000,
+                       **config.db.connection)
 
         # The 'connect' method won't actually fail
         # An exception won't be raised until we actually try to do something
@@ -177,9 +199,7 @@ def setup_database(config):
 
     # Now register the default connection with real timeouts
     # Yes, mongoengine uses 'db' in connect and 'name' in register_connection
-    register_connection('default', name=config.db_name, host=config.db_host,
-                        port=config.db_port, username=config.db_username,
-                        password=config.db_password)
+    register_connection('default', name=config.db.name, **config.db.connection)
 
     _verify_db()
 
@@ -201,6 +221,22 @@ def _generate_config(spec, cli_args):
     args = parser.parse_args(cli_args)
 
     return spec.load_config(vars(args), 'ENVIRONMENT')
+
+
+def _get_config_values(config):
+    """Get the configuration file name and type from a configuration"""
+
+    config_file = config.configuration.file or None
+    config_type = config.configuration.type or None
+
+    # Default to yaml, but try to use file extension if we have one
+    if config_type is None:
+        if config_file and config_file.endswith('json'):
+            config_type = 'json'
+        else:
+            config_type = 'yaml'
+
+    return config_file, config_type
 
 
 def _verify_db():

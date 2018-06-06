@@ -18,7 +18,7 @@ class BeerGardenSchemaParser(SchemaParser):
         'ParameterSchema': Parameter,
         'RequestSchema': Request,
         'ChoicesSchema': Choices,
-        'EventSchema': Event
+        'EventSchema': Event,
     })
 
     @classmethod
