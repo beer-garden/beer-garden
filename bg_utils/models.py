@@ -204,19 +204,20 @@ class Request(Document, BrewtilsRequest):
     updated_at = DateTimeField(default=None, required=True)
     error_class = StringField(required=False)
     metadata = DictField()
+    has_parent = BooleanField(required=False)
 
     meta = {
         'auto_create_index': False,  # We need to manage this ourselves
         'index_background': True,
         'indexes': [
-            {'name': 'command_index', 'fields': ['command']},
+            {'name': 'command_index', 'fields': ['has_parent', 'command']},
             {'name': 'command_type_index', 'fields': ['command_type']},
-            {'name': 'system_index', 'fields': ['system', 'instance_name']},
-            {'name': 'status_index', 'fields': ['status']},
-            {'name': 'created_at_index', 'fields': ['created_at']},
+            {'name': 'system_index', 'fields': ['has_parent', 'system', 'instance_name']},
+            {'name': 'status_index', 'fields': ['has_parent', 'status']},
+            {'name': 'created_at_index', 'fields': ['has_parent', 'created_at']},
             {'name': 'updated_at_index', 'fields': ['updated_at']},
-            {'name': 'comment_index', 'fields': ['comment']},
-            {'name': 'parent_index', 'fields': ['parent']},
+            {'name': 'comment_index', 'fields': ['has_parent', 'comment']},
+            {'name': 'parent_index', 'fields': ['has_parent']},
             {
                 'name': 'text_index',
                 'fields': ['$system', '$command', '$command_type',
