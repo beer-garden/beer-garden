@@ -2,8 +2,11 @@
 
 MODULE_NAME   = bartender
 TEST_DIR      = test
+DOCKER_NAME   = bgio/bartender
+VERSION      ?= 0.0.0
 
 .PHONY: clean clean-build clean-test clean-pyc help test
+
 .DEFAULT_GOAL := help
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
@@ -29,12 +32,18 @@ export PRINT_HELP_PYSCRIPT
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
 
+# Misc
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
-clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
+install: clean ## install the package to the active Python's site-packages
+	python setup.py install
+
+deps: ## install python dependencies
+	pip install -r requirements.txt
 
 
+# Cleaning
 clean-build: ## remove build artifacts
 	rm -fr build/
 	rm -fr dist/
@@ -42,7 +51,7 @@ clean-build: ## remove build artifacts
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '*.egg' -exec rm -f {} +
 
-clean-pyc: ## remove Python file artifacts
+clean-python: ## remove Python file artifacts
 	find . -name '*.pyc' -exec rm -f {} +
 	find . -name '*.pyo' -exec rm -f {} +
 	find . -name '*~' -exec rm -f {} +
@@ -53,13 +62,21 @@ clean-test: ## remove test and coverage artifacts
 	rm -f .coverage
 	rm -fr htmlcov/
 
+clean-all: clean-build clean-python clean-test ## remove all python
+
+clean: clean-all ## alias of clean-all
+
+
+# Linting
 lint: ## check style with flake8
 	flake8 $(MODULE_NAME) $(TEST_DIR)
 
+
+# Testing / Coverage
 test: ## run tests quickly with the default Python
 	pytest $(TEST_DIR)
 
-test-all: ## run tests on every Python version with tox
+test-tox: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
@@ -70,18 +87,33 @@ coverage: ## check code coverage quickly with the default Python
 coverage-view: coverage ## view coverage report in a browser
 	$(BROWSER) htmlcov/index.html
 
-test-release: dist ## package and upload a release to the testpypi
-	twine upload --repository testpypi dist/*
 
-release: dist ## package and upload a release
-	twine upload dist/*
-
-dist: clean ## builds source and wheel package
+# Packaging
+package: clean ## builds source and wheel python package
 	python setup.py sdist bdist_wheel
 	ls -l dist
 
-install: clean ## install the package to the active Python's site-packages
-	python setup.py install
 
-deps:
-	pip install -r requirements.txt
+# Docker
+docker-build: ## build the docker images
+	docker build -t $(DOCKER_NAME):latest --build-arg VERSION=$(VERSION) -f Dockerfile .
+	docker build -t $(DOCKER_NAME):latest-python2 --build-arg VERSION=$(VERSION) -f Dockerfile.2 .
+	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)
+	docker tag $(DOCKER_NAME):latest-python2 $(DOCKER_NAME):$(VERSION)-python2
+
+docker-build-unstable: package clean-python ## build nightly docker image
+	docker build -t $(DOCKER_NAME):unstable -f Dockerfile.unstable .
+
+
+# Publishing
+publish-package-test: package ## upload a package to the testpypi
+	twine upload --repository testpypi dist/*
+
+publish-package: package ## upload a package
+	twine upload dist/*
+
+publish-docker: docker-build ## push the docker images
+	docker push $(DOCKER_NAME):latest
+	docker push $(DOCKER_NAME):latest-python2
+	docker push $(DOCKER_NAME):$(VERSION)
+	docker push $(DOCKER_NAME):$(VERSION)-python2
