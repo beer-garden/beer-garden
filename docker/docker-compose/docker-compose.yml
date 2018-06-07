@@ -42,7 +42,7 @@ services:
             - brew-view
 
     mongodb:
-        image: mongo:3.6
+        image: mongo
         networks:
             - bg-network
         volumes:
@@ -50,7 +50,7 @@ services:
             - mongo-config:/data/configdb
 
     rabbitmq:
-        image: rabbitmq:3.6-management-alpine
+        image: rabbitmq:management-alpine
         networks:
             - bg-network
         environment:
