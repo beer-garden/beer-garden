@@ -296,6 +296,7 @@ class RequestListAPI(BaseHandler):
         requested_fields = []
         order_by = None
         overall_search = None
+        query = Request.objects
 
         raw_columns = self.get_query_arguments('columns')
         if raw_columns:
@@ -345,20 +346,22 @@ class RequestListAPI(BaseHandler):
 
         # Default to only top-level requests
         if self.get_query_argument('include_children', default='false').lower() != 'true':
-            search_params.append(Q(parent__exists=False))
+            search_params.append(Q(has_parent=False))
 
-        requests = Request.objects(reduce(lambda x, y: x & y, search_params, Q()))
+        # Now we can construct the actual query parameters
+        query_params = reduce(lambda x, y: x & y, search_params, Q())
+
+        # Further modify the query itself
+        if requested_fields:
+            query = query.only(*requested_fields)
+        if overall_search:
+            query = query.search_text(overall_search)
+        if order_by:
+            query = query.order_by(order_by)
+
+        # Execute the query / count
+        requests = query.filter(query_params)
         filtered_count = requests.count()
 
-        if requested_fields:
-            requests = requests.only(*requested_fields)
-
-        if overall_search:
-            requests = requests.search_text(overall_search)
-
-        if order_by:
-            requests = requests.order_by(order_by)
-
-        # We only return a slice of the requests.
-        # This prevents object serialization on the server side from slowing everything down.
+        # Only return the correct slice of the QuerySet
         return requests[start:end], filtered_count, requested_fields

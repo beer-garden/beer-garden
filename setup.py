@@ -25,7 +25,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "apispec==0.25.4",
-        "bg-utils>=2.3.1",
+        "bg-utils>=2.3.4",
         "tornado==4.5.2",
     ],
     extras_require={
