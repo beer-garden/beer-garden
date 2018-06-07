@@ -53,9 +53,6 @@ clean-build: ## remove build artifacts
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '*.egg' -exec rm -f {} +
 
-clean-js: ## remove javascript artifacts
-	$(MAKE) -C $(JS_DIR) clean
-
 clean-python: ## remove Python file artifacts
 	find . -name '*.pyc' -exec rm -f {} +
 	find . -name '*.pyo' -exec rm -f {} +
@@ -67,7 +64,12 @@ clean-test: ## remove test and coverage artifacts
 	rm -f .coverage
 	rm -fr htmlcov/
 
-clean-all: clean-build clean-js clean-python clean-test ## remove everything
+clean-all-python: clean-build clean-python clean-test ## remove all python
+
+clean-js: ## remove javascript artifacts
+	$(MAKE) -C $(JS_DIR) clean
+
+clean-all: clean-all-python clean-js ## remove everything
 
 clean: clean-all ## alias of clean-all
 
@@ -103,7 +105,7 @@ coverage-view: coverage ## view coverage report in a browser
 
 
 # Packaging
-package-python: clean-python ## builds source and wheel python package
+package-python: clean-all-python ## builds source and wheel python package
 	python setup.py sdist bdist_wheel
 	ls -l dist
 
@@ -119,6 +121,9 @@ docker-build: ## build the docker images
 	docker build -t $(DOCKER_NAME):latest-python2 --build-arg VERSION=$(VERSION) -f Dockerfile.2 .
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)
 	docker tag $(DOCKER_NAME):latest-python2 $(DOCKER_NAME):$(VERSION)-python2
+
+docker-build-unstable: package clean-python ## build nightly docker image
+	docker build -t $(DOCKER_NAME):unstable -f Dockerfile.unstable .
 
 
 # Publishing
