@@ -127,10 +127,10 @@ docker-build-unstable: package clean-python ## build nightly docker image
 
 
 # Publishing
-publish-package-test: package ## package and upload a release to the testpypi
+publish-package-test: package ## upload a package to the testpypi
 	twine upload --repository testpypi dist/*
 
-publish-package: package ## package and upload a release
+publish-package: package ## upload a package
 	twine upload dist/*
 
 publish-docker: docker-build ## push the docker images
