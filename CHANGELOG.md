@@ -3,6 +3,24 @@
 All notable changes should be documented in this file.
 
 
+## 2.3.7
+6/7/18
+
+Brew-view 2.3.8, Bartender 2.3.6, BG-utils 2.3.4
+
+This release addresses two critical problems with database performance. To support the fix an additional field was added to the Request model and the indexes for the Request collection were updated.
+
+**When updating to this version the Request collection will be updated to reflect these changes.** This will happen automatically and requires no action on the part of administrator. Status messages will be logged at the WARNING level as the upgrade occurs.
+
+See issue #84 for a detailed explanation.
+
+#### Bug Fixes
+- Database operations sometimes timed out on slow networks due to configuration error (#84)
+
+#### Other Changes
+- Reworked database indexes so Request queries are more efficient (#84)
+
+
 ## 2.3.6
 4/6/18
 
