@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import timedelta
 from functools import reduce
 
 from mongoengine import Q
@@ -212,6 +213,12 @@ class RequestListAPI(BaseHandler):
             description: Flag indicating whether to wait for request completion
             type: boolean
             default: false
+          - name: max_wait
+            in: query
+            required: false
+            description: Maximum time (seconds) to wait for request completion
+            type: integer
+            default: 30
         consumes:
           - application/json
           - application/x-www-form-urlencoded
@@ -270,8 +277,14 @@ class RequestListAPI(BaseHandler):
                 raise
             else:
                 if self.get_argument('wait', default='').lower() == 'true':
-                    brew_view.request_map[str(request_model.id)] = Condition()
-                    yield brew_view.request_map[str(request_model.id)].wait()
+                    max_wait = timedelta(seconds=int(self.get_argument('max_wait', default=30)))
+
+                    wait_condition = Condition()
+                    brew_view.request_map[str(request_model.id)] = wait_condition
+
+                    wait_result = yield wait_condition.wait(max_wait)
+                    if not wait_result:
+                        raise Exception('Timed out!')
 
         request_model.reload()
 
