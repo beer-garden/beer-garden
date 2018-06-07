@@ -12,7 +12,7 @@ install:
 
 script:
 - tox
-- make -C brew_view/static/ lint
+- make lint-js
 
 after_success: codecov
 

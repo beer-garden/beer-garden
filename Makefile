@@ -3,8 +3,11 @@
 MODULE_NAME   = brew_view
 PYTHON_TEST_DIR = test/unit
 JS_DIR = brew_view/static
+DOCKER_NAME = bgio/brew-view
+VERSION ?= 0.0.0
 
 .PHONY: clean clean-build clean-test clean-pyc help test deps
+
 .DEFAULT_GOAL := help
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
@@ -30,13 +33,19 @@ export PRINT_HELP_PYSCRIPT
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
 
+# Misc
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
-clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
-	$(MAKE) -C $(JS_DIR) clean
+install: clean ## install the package to the active Python's site-packages
+	python setup.py install
+
+deps: ## install python and js dependencies
+	pip install -r requirements.txt
+	$(MAKE) -C $(JS_DIR) deps
 
 
+# Cleaning
 clean-build: ## remove build artifacts
 	rm -fr build/
 	rm -fr dist/
@@ -44,7 +53,10 @@ clean-build: ## remove build artifacts
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '*.egg' -exec rm -f {} +
 
-clean-pyc: ## remove Python file artifacts
+clean-js: ## remove javascript artifacts
+	$(MAKE) -C $(JS_DIR) clean
+
+clean-python: ## remove Python file artifacts
 	find . -name '*.pyc' -exec rm -f {} +
 	find . -name '*.pyo' -exec rm -f {} +
 	find . -name '*~' -exec rm -f {} +
@@ -55,18 +67,31 @@ clean-test: ## remove test and coverage artifacts
 	rm -f .coverage
 	rm -fr htmlcov/
 
-lint: ## check style with flake8
+clean-all: clean-build clean-js clean-python clean-test ## remove everything
+
+clean: clean-all ## alias of clean-all
+
+
+# Linting
+lint-python: ## check python style with flake8
 	flake8 $(MODULE_NAME) $(PYTHON_TEST_DIR)
 
-lint-all:
-	$(MAKE) lint
+lint-js: ## check javascript style with eslint
 	$(MAKE) -C $(JS_DIR) lint
 
-test: ## run tests quickly with the default Python
+lint-all: lint-python lint-js ## lint everything
+
+lint: lint-python ## alias of lint-python
+
+
+# Testing / Coverage
+test-python: ## run tests quickly with the default Python
 	pytest $(PYTHON_TEST_DIR)
 
-test-all: ## run tests on every Python version with tox
+test-tox: ## run tests on every Python version with tox
 	tox
+
+test: test-python ## alias of test-python
 
 coverage: ## check code coverage quickly with the default Python
 	coverage run --source $(MODULE_NAME) -m pytest test/unit/
@@ -76,20 +101,35 @@ coverage: ## check code coverage quickly with the default Python
 coverage-view: coverage ## view coverage report in a browser
 	$(BROWSER) htmlcov/index.html
 
-test-release: dist ## package and upload a release to the testpypi
-	twine upload --repository testpypi dist/*
 
-release: dist ## package and upload a release
-	twine upload dist/*
-
-dist: clean ## builds source and wheel package
-	$(MAKE) -C $(JS_DIR) dist
+# Packaging
+package-python: clean-python ## builds source and wheel python package
 	python setup.py sdist bdist_wheel
 	ls -l dist
 
-install: clean ## install the package to the active Python's site-packages
-	python setup.py install
+package-js: clean-js ## builds javascript package
+	$(MAKE) -C $(JS_DIR) package
 
-deps:
-	pip install -r requirements.txt
-	$(MAKE) -C $(JS_DIR) deps
+package: package-js package-python ## build everything
+
+
+# Docker
+docker-build: ## build the docker images
+	docker build -t $(DOCKER_NAME):latest --build-arg VERSION=$(VERSION) -f Dockerfile .
+	docker build -t $(DOCKER_NAME):latest-python2 --build-arg VERSION=$(VERSION) -f Dockerfile.2 .
+	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)
+	docker tag $(DOCKER_NAME):latest-python2 $(DOCKER_NAME):$(VERSION)-python2
+
+
+# Publishing
+publish-package-test: package ## package and upload a release to the testpypi
+	twine upload --repository testpypi dist/*
+
+publish-package: package ## package and upload a release
+	twine upload dist/*
+
+publish-docker: docker-build ## push the docker images
+	docker push $(DOCKER_NAME):latest
+	docker push $(DOCKER_NAME):latest-python2
+	docker push $(DOCKER_NAME):$(VERSION)
+	docker push $(DOCKER_NAME):$(VERSION)-python2
