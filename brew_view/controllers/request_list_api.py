@@ -241,6 +241,9 @@ class RequestListAPI(BaseHandler):
 
         if request_model.parent:
             request_model.parent = Request.objects.get(id=str(request_model.parent.id))
+            request_model.has_parent = True
+        else:
+            request_model.has_parent = False
 
         with thrift_context() as client:
             try:
