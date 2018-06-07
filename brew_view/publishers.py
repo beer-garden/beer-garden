@@ -95,6 +95,18 @@ class RequestPublisher(EventPublisher):
         return {'urls': urls} if urls else {}
 
 
+class WebsocketPublisher(BeergardenPublisher):
+    """Publisher implementation that publishes to a websocket"""
+
+    def __init__(self, socket_class):
+        BeergardenPublisher.__init__(self)
+
+        self._socket = socket_class
+
+    def publish(self, message, **kwargs):
+        self._socket.publish(message)
+
+
 class MongoPublisher(BeergardenPublisher):
     """Publisher implementation that 'publishes' to Mongo"""
 
