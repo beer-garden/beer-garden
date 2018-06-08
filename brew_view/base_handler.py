@@ -1,16 +1,13 @@
-import base64
 import re
 import socket
 
-import jwt
 from mongoengine.errors import DoesNotExist, NotUniqueError, ValidationError as MongoValidationError
-from passlib.apps import custom_app_context
 from thriftpy.thrift import TException
 from tornado.web import HTTPError, RequestHandler
 
 import bg_utils
 import brew_view
-from bg_utils.models import Principal
+from brew_view.authorization import basic_auth, bearer_auth
 from brewtils.errors import ModelError, ModelValidationError, RequestPublishException
 from brewtils.models import Event
 
@@ -46,49 +43,13 @@ class BaseHandler(RequestHandler):
             self.set_header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
 
     def get_current_user(self):
-        session_cookie = self.get_secure_cookie('session')
-        if session_cookie:
-            return Principal.objects.get(id=session_cookie.decode('utf-8'))
-
-        principal = self.parse_basic_auth()
-        if principal:
-            return principal
-
-        principal = self.parse_bearer_auth()
-        if principal:
-            return principal
-
-    def parse_basic_auth(self):
         auth_header = self.request.headers.get('Authorization')
-        if auth_header and auth_header.startswith('Basic '):
-            auth_decoded = base64.b64decode(auth_header[6:]).decode()
-            username, password = auth_decoded.split(':')
+        if auth_header:
+            if auth_header.startswith('Bearer '):
+                return bearer_auth(auth_header)
+            elif auth_header.startswith('Basic '):
+                return basic_auth(auth_header)
 
-            # In this case return 403 to prevent an attacker from being able to
-            # enumerate a list of user names
-            try:
-                principal = Principal.objects.get(username=username)
-
-                if custom_app_context.verify(password, principal.hash):
-                    return principal
-            except DoesNotExist:
-                pass
-
-        return None
-
-    def parse_bearer_auth(self):
-        auth_header = self.request.headers.get('Authorization')
-        if auth_header and auth_header.startswith('Bearer '):
-            token = auth_header.split(' ')[1]
-
-            decoded = jwt.decode(token,
-                                 brew_view.tornado_app.settings["cookie_secret"],
-                                 algorithm='HS256')
-
-            try:
-                return Principal.objects.get(id=decoded['sub'])
-            except DoesNotExist:
-                pass
         return None
 
     def prepare(self):
