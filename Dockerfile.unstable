@@ -4,10 +4,10 @@ ENTRYPOINT ["brew-view"]
 
 ENV BG_LOG_CONFIG=/src/dev_conf/logging-config.json
 
-ADD . .
+ADD ./dist/*.whl .
 
 RUN set -ex \
     && apk add --no-cache --virtual .build-deps \
        gcc make musl-dev libffi-dev openssl-dev \
-    && pip install --no-cache-dir -e . \
+    && pip install --no-cache-dir ./*.whl \
     && apk del .build-deps
