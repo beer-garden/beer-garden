@@ -1,13 +1,11 @@
 import json
-from datetime import datetime, timedelta
 
-import jwt
 from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
 from tornado.web import HTTPError
 
-import brew_view
 from bg_utils.models import Principal
+from brew_view.authorization import generate_token
 from brew_view.base_handler import BaseHandler
 
 
@@ -17,45 +15,26 @@ class LoginHandler(BaseHandler):
         principal = self.get_current_user()
 
         if principal:
-            self.write(json.dumps({'token': self._generate_token(principal).decode()}))
+            self.write(json.dumps({'token': generate_token(principal).decode()}))
         else:
             self._request_basic_auth()
 
     def post(self):
-        try:
-            parsed_body = json.loads(self.request.decoded_body)
+        parsed_body = json.loads(self.request.decoded_body)
 
+        try:
             principal = Principal.objects.get(username=parsed_body['username'])
 
             if custom_app_context.verify(parsed_body['password'], principal.hash):
-                self.write(json.dumps({'token': self._generate_token(principal).decode()}))
+                self.write(json.dumps({'token': generate_token(principal).decode()}))
                 return
         except DoesNotExist:
-            pass
+            # Still attempt to verify something so the request takes a while
+            custom_app_context.verify('', None)
 
         raise HTTPError(status_code=401, log_message='Bad credentials')
-
-    def _generate_token(self, principal):
-        current_time = datetime.utcnow()
-
-        payload = {
-            'sub': str(principal.id),
-            'iat': current_time,
-            'exp': current_time + timedelta(minutes=20),
-            'roles': [role['name'] for role in principal.roles],
-        }
-        return jwt.encode(payload,
-                          brew_view.tornado_app.settings["cookie_secret"],
-                          algorithm='HS256')
 
     def _request_basic_auth(self):
         self.set_header('WWW-Authenticate', 'Basic realm="Beergarden"')
         self.set_status(401)
         self.finish()
-
-
-# TODO
-class LogoutHandler(BaseHandler):
-
-    def get(self):
-        pass

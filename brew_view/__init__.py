@@ -88,8 +88,7 @@ def _setup_tornado_app():
         QueueAPI, QueueListAPI, RequestAPI, RequestListAPI, SystemAPI,
         SystemListAPI, VersionHandler, SpecHandler, SwaggerConfigHandler,
         OldAdminAPI, OldQueueAPI, OldQueueListAPI, LoggingConfigAPI,
-        EventPublisherAPI, LoginHandler, UserAPI, UsersAPI, LogoutHandler,
-        RolesAPI)
+        EventPublisherAPI, LoginHandler, UserAPI, UsersAPI, RolesAPI)
 
     prefix = config.web.url_prefix
     static_base = os.path.join(os.path.dirname(__file__), 'static', 'dist')
@@ -123,7 +122,6 @@ def _setup_tornado_app():
     # And these do not
     unpublished_url_specs = [
         (r'{0}login/?'.format(prefix), LoginHandler),
-        (r'{0}logout/?'.format(prefix), LogoutHandler),
         (r'{0}config/?'.format(prefix), ConfigHandler),
         (r'{0}config/swagger/?'.format(prefix), SwaggerConfigHandler),
         (r'{0}version/?'.format(prefix), VersionHandler),
