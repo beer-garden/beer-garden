@@ -1,13 +1,15 @@
 import re
 import socket
 
-from mongoengine.errors import DoesNotExist, NotUniqueError, ValidationError as MongoValidationError
+from mongoengine.errors import (DoesNotExist, NotUniqueError,
+                                ValidationError as MongoValidationError)
 from thriftpy.thrift import TException
 from tornado.web import HTTPError, RequestHandler
 
 import bg_utils
 import brew_view
-from brewtils.errors import ModelError, ModelValidationError, RequestPublishException
+from brewtils.errors import (ModelError, ModelValidationError,
+                             RequestPublishException, WaitExceededError)
 from brewtils.models import Event
 
 
@@ -24,6 +26,7 @@ class BaseHandler(RequestHandler):
             ModelError: {'status_code': 400},
             bg_utils.bg_thrift.InvalidSystem: {'status_code': 400},
             DoesNotExist: {'status_code': 404, 'message': 'Resource does not exist'},
+            WaitExceededError: {'status_code': 408, 'message': 'Max wait time exceeded'},
             NotUniqueError: {'status_code': 409, 'message': 'Resource already exists'},
 
             RequestPublishException: {'status_code': 502},
@@ -114,7 +117,6 @@ class BaseHandler(RequestHandler):
             typ3 = kwargs['exc_info'][0]
             e = kwargs['exc_info'][1]
 
-            # First search the error dictionary for a match
             error_dict = None
             if typ3 in self.error_map.keys():
                 error_dict = self.error_map[typ3]
@@ -128,18 +130,12 @@ class BaseHandler(RequestHandler):
                 code = error_dict.get('status_code', 500)
                 message = error_dict.get('message', str(e))
 
-            # HTTPError is a special case - can be raised by Tornado itself
-            elif isinstance(e, HTTPError):
-                code = e.status_code
-                message = e.reason
-
-            # Make a last-ditch effort if in debug mode
             elif brew_view.config.debug_mode:
                 message = str(e)
 
-        code = code or status_code or 500
-        message = message or ('Encountered unknown exception. Please check '
-                              'with your System Administrator.')
+        code = code or 500
+        message = message or ('Encountered unknown exception. Please check with your '
+                              'System Administrator.')
 
         self.request.event.error = True
         self.request.event.payload = {'message': message}
