@@ -4,6 +4,7 @@ from functools import reduce
 
 from mongoengine import Q
 from tornado.gen import coroutine
+from tornado.web import authenticated
 
 import bg_utils
 from bg_utils.models import Request
@@ -194,6 +195,7 @@ class RequestListAPI(BaseHandler):
                                                  only=requested_fields))
 
     @coroutine
+    @authenticated
     def post(self):
         """
         ---
@@ -353,12 +355,6 @@ class RequestListAPI(BaseHandler):
         # Default to only top-level requests
         if self.get_query_argument('include_children', default='false').lower() != 'true':
             search_params.append(Q(has_parent=False))
-
-        # Temporary for demonstration
-        requester_params = Q(requester__not__exists=True)
-        if self.current_user:
-            requester_params |= Q(requester__exact=self.current_user.username)
-        search_params.append(requester_params)
 
         # Now we can construct the actual query parameters
         query_params = reduce(lambda x, y: x & y, search_params, Q())
