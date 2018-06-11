@@ -4,6 +4,7 @@ import signal
 import sys
 from argparse import ArgumentParser
 
+from prometheus_client import start_http_server
 from yapconf import YapconfSpec
 
 import bg_utils
@@ -69,6 +70,7 @@ def main():
     brew_view.event_publishers.publish_event(Event(name=Events.BREWVIEW_STARTED.name))
 
     brew_view.logger.info("Starting up the application.")
+    start_http_server(brew_view.config.metrics.port)
     brew_view.application.start()
 
     brew_view.logger.info("Application is shut down.")

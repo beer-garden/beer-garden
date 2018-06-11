@@ -287,6 +287,10 @@ class RequestListAPI(BaseHandler):
         self.request.event_extras = {'request': req}
 
         self.set_status(201)
+        self.queued_request_gauge.labels(
+            system=request_model.system,
+            instance=request_model.instance_name
+        ).inc()
         self.write(self.parser.serialize_request(request_model, to_string=False))
 
     def _get_requests(self, start, end):
