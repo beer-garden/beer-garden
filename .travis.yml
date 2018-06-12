@@ -6,6 +6,7 @@ python:
   - 3.4
   - 2.7
 
+
 install:
 - pip install -U tox-travis codecov
 - npm install --cwd brew_view/static --prefix brew_view/static eslint eslint-config-google
@@ -16,9 +17,13 @@ script:
 
 after_success: codecov
 
+
+before_deploy: "make deps-js package-js"
+
 deploy:
   provider: pypi
   distributions: "sdist bdist_wheel"
+  skip_cleanup: true
   on:
     tags: true
     python: 3.6
