@@ -11,6 +11,7 @@ sphinx_rtd_theme
 watchdog
 
 # Test Dependencies
+codecov
 coverage
 flake8
 mock

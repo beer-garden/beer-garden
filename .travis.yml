@@ -7,19 +7,12 @@ python:
   - 2.7
 
 
-install:
-- pip install -U tox-travis codecov
-- npm install --cwd brew_view/static --prefix brew_view/static eslint eslint-config-google
-
-script:
-- tox
-- make lint-js
-
-after_success: codecov
+install: "make deps deps-python-master"
+script: "make lint coverage"
+after_success: "codecov"
 
 
 before_deploy: "make deps-js package-js"
-
 deploy:
   provider: pypi
   distributions: "sdist bdist_wheel"

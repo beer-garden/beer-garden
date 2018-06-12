@@ -14,6 +14,7 @@ bg-utils==2.3.4
 brewtils==2.3.6           # via bg-utils
 certifi==2017.7.27.1      # via requests, tornado
 chardet==3.0.4            # via requests
+codecov==2.0.15
 configparser==3.5.0       # via flake8
 coverage==4.4.1
 docutils==0.14            # via sphinx
@@ -47,7 +48,7 @@ python-box==3.1.1         # via yapconf
 pytz==2017.3
 pyyaml==3.12              # via apispec, watchdog
 requests-toolbelt==0.8.0  # via twine
-requests==2.18.4          # via brewtils, requests-toolbelt, sphinx, twine
+requests==2.18.4          # via brewtils, codecov, requests-toolbelt, sphinx, twine
 sentinels==1.0.0          # via mongomock
 simplejson==3.15.0        # via brewtils
 singledispatch==3.4.0.3   # via tornado
