@@ -355,12 +355,18 @@ class RequestListAPI(BaseHandler):
         query_params = reduce(lambda x, y: x & y, search_params, Q())
 
         # Further modify the query itself
-        if requested_fields:
-            query = query.only(*requested_fields)
         if overall_search:
             query = query.search_text(overall_search)
+
         if order_by:
             query = query.order_by(order_by)
+
+        # Marshmallow treats [] as 'serialize nothing' which is not what we
+        # want, so translate to None
+        if requested_fields:
+            query = query.only(*requested_fields)
+        else:
+            requested_fields = None
 
         # Execute the query / count
         requests = query.filter(query_params)
