@@ -119,7 +119,7 @@ class BartenderApp(StoppableThread):
 
         try:
             bartender.bv_client.publish_event(name=Events.BARTENDER_STARTED.name)
-        except RequestException as ex:
+        except RequestException:
             self.logger.warning('Unable to publish startup notification')
 
         self.logger.info("Bartender started")
@@ -135,7 +135,7 @@ class BartenderApp(StoppableThread):
 
         try:
             bartender.bv_client.publish_event(name=Events.BARTENDER_STOPPED.name)
-        except RequestException as ex:
+        except RequestException:
             self.logger.warning('Unable to publish shutdown notification')
 
         self.logger.info("Successfully shut down Bartender")
