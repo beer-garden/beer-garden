@@ -29,7 +29,7 @@ setup(
     install_requires=[
         'bg-utils>=2.3.4',
         'pika==0.11.2',
-        'pyrabbit2==1.0.3',
+        'pyrabbit2==1.0.5',
     ],
     extras_require={
         ':python_version=="2.7"': [
