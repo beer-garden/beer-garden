@@ -3,6 +3,15 @@
 All notable changes should be documented in this file.
 
 
+## 2.3.8
+6/12/18
+
+Brew-view 2.3.9, Bartender 2.3.6, BG-utils 2.3.4
+
+#### Bug Fixes
+- Fixed problem with new versions of Marshmallow causing empty requests to be returned from the request list endpoint
+
+
 ## 2.3.7
 6/7/18
 
