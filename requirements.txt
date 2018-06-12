@@ -12,6 +12,7 @@ babel==2.6.0              # via sphinx
 brewtils==2.3.6
 certifi==2018.4.16        # via requests
 chardet==3.0.4            # via requests
+codecov==2.0.15
 configparser==3.5.0       # via flake8
 coverage==4.5.1
 docutils==0.14            # via sphinx
@@ -47,7 +48,7 @@ python-box==3.2.0         # via yapconf
 pytz==2018.4
 pyyaml==3.12              # via watchdog
 requests-toolbelt==0.8.0  # via twine
-requests==2.19.0          # via brewtils, requests-toolbelt, sphinx, twine
+requests==2.19.0          # via brewtils, codecov, requests-toolbelt, sphinx, twine
 ruamel.yaml==0.15.37      # via yapconf
 simplejson==3.15.0        # via brewtils
 six==1.11.0               # via brewtils, mock, mongoengine, more-itertools, packaging, pytest, sphinx, tox, yapconf

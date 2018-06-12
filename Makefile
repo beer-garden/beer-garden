@@ -38,8 +38,13 @@ help:
 install: clean ## install the package to the active Python's site-packages
 	python setup.py install
 
+
+# Dependencies
 deps: ## install python dependencies
 	pip install -r requirements.txt
+
+deps-python-master: ## install bg dependencies from master
+	pip install -e git+https://github.com/beer-garden/brewtils@master#egg=brewtils
 
 
 # Cleaning
