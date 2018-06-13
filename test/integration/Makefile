@@ -41,9 +41,13 @@ test-lifecycle: ## run lifecycle integration tests
 	pytest lifecycle/
 
 test-rest: ## run rest integration tests
-	$(MAKE) start
-	sleep 10
 	pytest rest/
-	$(MAKE) stop
 
 test-all: test-config test-lifecycle test-rest ## run all the tests
+	$(MAKE) test-config
+	$(MAKE) test-lifecycle
+
+	$(MAKE) start
+	sleep 10
+	$(MAKE) test-rest
+	$(MAKE) stop
