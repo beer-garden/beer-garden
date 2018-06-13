@@ -43,7 +43,7 @@ test-lifecycle: ## run lifecycle integration tests
 test-rest: ## run rest integration tests
 	pytest rest/
 
-test-all: test-config test-lifecycle test-rest ## run all the tests
+test-all: ## run all the tests
 	$(MAKE) test-config
 	$(MAKE) test-lifecycle
 
