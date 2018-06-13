@@ -1,7 +1,7 @@
 import json
 import pytest
 
-from helper import RequestGenerator, setup_easy_client, wait_for_response
+from helper import wait_for_response
 from helper.assertion import assert_successful_request, assert_validation_error
 
 

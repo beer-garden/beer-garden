@@ -1,7 +1,6 @@
 import pytest
 
-from helper import setup_easy_client, RequestGenerator, wait_for_response
-from helper.assertion import assert_successful_request, assert_validation_error
+from helper import wait_for_response
 
 
 @pytest.fixture(scope="class")
@@ -17,8 +16,8 @@ class TestRequestListApi(object):
         # Make a couple of requests just to ensure there are some
         request_1 = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
         request_2 = self.request_generator.generate_request(parameters={"message": "test_string", "loud": False})
-        response_1 = wait_for_response(self.easy_client, request_1)
-        response_2 = wait_for_response(self.easy_client, request_2)
+        wait_for_response(self.easy_client, request_1)
+        wait_for_response(self.easy_client, request_2)
 
         response = self.easy_client.find_requests(length=2)
         assert len(response) == 2

@@ -1,7 +1,7 @@
 import pytest
 import time
 
-from helper import RequestGenerator, setup_easy_client, wait_for_in_progress, COMPLETED_STATUSES
+from helper import wait_for_in_progress, COMPLETED_STATUSES
 
 
 @pytest.fixture(scope="class")

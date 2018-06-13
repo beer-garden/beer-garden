@@ -1,16 +1,14 @@
 import json
 import os
-import sys
 from ruamel.yaml import YAML
 from shutil import copyfile
+
+import pytest
 
 from bartender.specification import SPECIFICATION as bt_spec
 from bg_utils import generate_config_file, update_config_file
 from brew_view.specification import SPECIFICATION as bv_spec
-import brew_view
-import pytest
 from yapconf import YapconfSpec
-from pprint import pprint
 
 
 @pytest.mark.parametrize('file_name', ['brew-view', 'bartender'])
@@ -75,4 +73,3 @@ def test_update(tmpdir, start_version, file_name, file_type):
             expected_config = yaml.load(g)
 
     assert test_config == expected_config
-

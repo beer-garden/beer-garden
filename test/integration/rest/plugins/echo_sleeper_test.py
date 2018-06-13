@@ -1,6 +1,6 @@
 import pytest
 
-from helper import setup_easy_client, RequestGenerator, wait_for_response
+from helper import wait_for_response
 from helper.assertion import assert_successful_request, assert_errored_request
 
 

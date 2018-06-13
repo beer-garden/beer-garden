@@ -1,8 +1,9 @@
 import json
 import pytest
 
-from helper import RequestGenerator, setup_easy_client, wait_for_response
+from helper import wait_for_response
 from helper.assertion import assert_errored_request
+
 
 @pytest.fixture(scope="class")
 def system_spec():
