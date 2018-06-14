@@ -59,6 +59,9 @@
         "file": null,
         "level": "INFO"
     },
+    "metrics": {
+      "port": 2338
+    },
     "plugin_logging": {
         "config_file": null,
         "level": "INFO"
