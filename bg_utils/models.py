@@ -209,14 +209,25 @@ class Request(Document, BrewtilsRequest):
         'auto_create_index': False,  # We need to manage this ourselves
         'index_background': True,
         'indexes': [
-            {'name': 'command_index', 'fields': ['has_parent', 'command']},
+            # These are used for ... something
+            {'name': 'command_index', 'fields': ['command']},
             {'name': 'command_type_index', 'fields': ['command_type']},
-            {'name': 'system_index', 'fields': ['has_parent', 'system', 'instance_name']},
-            {'name': 'status_index', 'fields': ['has_parent', 'status']},
-            {'name': 'created_at_index', 'fields': ['has_parent', 'created_at']},
+            {'name': 'system_index', 'fields': ['system', 'instance_name']},
+            {'name': 'status_index', 'fields': ['status']},
+            {'name': 'created_at_index', 'fields': ['created_at']},
             {'name': 'updated_at_index', 'fields': ['updated_at']},
-            {'name': 'comment_index', 'fields': ['has_parent', 'comment']},
-            {'name': 'parent_index', 'fields': ['has_parent']},
+            {'name': 'comment_index', 'fields': ['comment']},
+            {'name': 'parent_index', 'fields': ['parent']},
+            {'name': 'has_parent_index', 'fields': ['has_parent']},
+
+            # These are for sorting on the request index page
+            {'name': 'parent_command_index', 'fields': ['has_parent', 'command']},
+            {'name': 'parent_system_index', 'fields': ['has_parent', 'system', 'instance_name']},
+            {'name': 'parent_status_index', 'fields': ['has_parent', 'status']},
+            {'name': 'parent_created_at_index', 'fields': ['has_parent', 'created_at']},
+            {'name': 'parent_comment_index', 'fields': ['has_parent', 'comment']},
+
+            # This is used for text searching
             {
                 'name': 'text_index',
                 'fields': ['$system', '$command', '$command_type',
