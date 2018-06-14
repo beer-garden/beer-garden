@@ -10,7 +10,7 @@ argh==0.26.2              # via watchdog
 attrs==17.4.0             # via pytest
 babel==2.5.3              # via sphinx
 backports-abc==0.5        # via tornado
-bg-utils==2.3.4
+bg-utils==2.3.6
 brewtils==2.3.6           # via bg-utils
 certifi==2017.7.27.1      # via requests, tornado
 chardet==3.0.4            # via requests
