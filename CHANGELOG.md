@@ -3,6 +3,15 @@
 All notable changes should be documented in this file.
 
 
+## 2.3.9
+6/14/18
+
+Brew-view 2.3.10, Bartender 2.3.7, BG-utils 2.3.6
+
+#### Bug Fixes
+- Re-added Request indexes that were removed in 2.3.7
+
+
 ## 2.3.8
 6/12/18
 
