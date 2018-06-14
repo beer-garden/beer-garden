@@ -1,9 +1,9 @@
 
 # Grab the latest stuff
-https://github.com/beer-garden/brewtils/archive/master.zip
-https://github.com/beer-garden/bg-utils/archive/master.zip
-https://github.com/beer-garden/bartender/archive/master.zip
-https://github.com/beer-garden/brew-view/archive/master.zip
+https://github.com/beer-garden/brewtils/archive/develop.zip
+https://github.com/beer-garden/bg-utils/archive/develop.zip
+https://github.com/beer-garden/bartender/archive/develop.zip
+https://github.com/beer-garden/brew-view/archive/develop.zip
 
 flake8
 mock
