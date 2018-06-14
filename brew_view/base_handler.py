@@ -1,7 +1,9 @@
 import re
 import socket
 
+import time
 from mongoengine.errors import DoesNotExist, NotUniqueError, ValidationError as MongoValidationError
+from prometheus_client import Histogram, Gauge
 from thriftpy.thrift import TException
 from tornado.web import HTTPError, RequestHandler
 
@@ -13,6 +15,18 @@ from brewtils.models import Event
 
 class BaseHandler(RequestHandler):
     """Base handler from which all handlers inherit. Enables CORS and error handling."""
+
+    MONGO_ID_PATTERN = r'.*/([0-9a-f]{24}).*'
+    queued_request_gauge = Gauge(
+        'bg_waiting_requests',
+        'Number of requests that have not been completed',
+        ['system', 'instance']
+    )
+    http_api_latency = Histogram(
+        'bg_http_api_latency_millis',
+        'Testing out http totals.',
+        ['method', 'endpoint']
+    )
 
     def __init__(self, *args, **kwargs):
         super(BaseHandler, self).__init__(*args, **kwargs)
@@ -41,8 +55,22 @@ class BaseHandler(RequestHandler):
             self.set_header("Access-Control-Allow-Headers", "Content-Type")
             self.set_header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
 
+    @property
+    def current_time_millis(self):
+        """Current time in Milliseconds."""
+        return int(round(time.time() * 1000))
+
+    @property
+    def prometheus_endpoint(self):
+        """Removes Mongo ID from endpoint."""
+        to_return = self.request.path
+        for mongo_id in re.findall(self.MONGO_ID_PATTERN, self.request.path):
+            to_return = to_return.replace(mongo_id, '<ID>')
+        return to_return
+
     def prepare(self):
         """Called before each verb handler"""
+        self.request.created_time_ms = self.current_time_millis
 
         # This is used for sending event notifications
         self.request.event = Event()
@@ -68,9 +96,17 @@ class BaseHandler(RequestHandler):
 
     def on_finish(self):
         """Called after a handler completes processing"""
+        self.http_api_latency.labels(
+            method=self.request.method.upper(),
+            endpoint=self.prometheus_endpoint,
+        ).observe(self._measure_latency())
+
         if self.request.event.name:
             brew_view.event_publishers.publish_event(self.request.event,
                                                      **self.request.event_extras)
+
+    def _measure_latency(self):
+        return self.current_time_millis - self.request.created_time_ms
 
     def options(self, *args, **kwargs):
 

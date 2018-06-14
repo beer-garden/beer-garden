@@ -27,6 +27,7 @@ setup(
         "apispec==0.38.0",
         "bg-utils>=2.3.4",
         "tornado==5.0.2",
+        "prometheus_client<1.0.0",
     ],
     extras_require={
         ':python_version=="2.7"': [

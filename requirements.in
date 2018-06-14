@@ -4,6 +4,7 @@ bg-utils
 futures ; python_version < "3.0"
 apispec
 tornado
+prometheus_client
 
 # Documentation Dependencies
 sphinx
