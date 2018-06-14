@@ -25,7 +25,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "apispec==0.38.0",
-        "bg-utils>=2.3.4",
+        "bg-utils>=2.3.6",
         "tornado==5.0.2",
         "prometheus_client<1.0.0",
     ],

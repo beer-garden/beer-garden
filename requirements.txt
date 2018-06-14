@@ -11,7 +11,7 @@ atomicwrites==1.1.5       # via pytest
 attrs==18.1.0             # via pytest
 babel==2.6.0              # via sphinx
 backports-abc==0.5        # via tornado
-bg-utils==2.3.4
+bg-utils==2.3.6
 brewtils==2.3.6           # via bg-utils
 certifi==2018.4.16        # via requests
 chardet==3.0.4            # via requests
