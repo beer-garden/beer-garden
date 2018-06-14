@@ -4,67 +4,74 @@
 #
 #    pip-compile --output-file requirements.txt requirements.in
 #
--e git+https://github.com/beer-garden/bg-utils@master#egg=bg-utils
--e git+https://github.com/beer-garden/brewtils@master#egg=brewtils
 alabaster==0.7.10         # via sphinx
-apispec==0.25.4
+apispec==0.38.0
 argh==0.26.2              # via watchdog
-attrs==17.4.0             # via pytest
-babel==2.5.3              # via sphinx
+atomicwrites==1.1.5       # via pytest
+attrs==18.1.0             # via pytest
+babel==2.6.0              # via sphinx
 backports-abc==0.5        # via tornado
-certifi==2017.7.27.1      # via requests, tornado
+bg-utils==2.3.4
+brewtils==2.3.6           # via bg-utils
+certifi==2018.4.16        # via requests
 chardet==3.0.4            # via requests
+codecov==2.0.15
 configparser==3.5.0       # via flake8
-coverage==4.4.1
+coverage==4.5.1
 docutils==0.14            # via sphinx
-enum34==1.1.6             # via flake8
+enum34==1.1.6             # via brewtils, flake8
 flake8==3.5.0
 funcsigs==1.0.2           # via mock, pytest
-futures==3.1.1 ; python_version < "3.0"
-idna==2.6                 # via requests
-imagesize==0.7.1          # via sphinx
+futures==3.2.0 ; python_version < "3.0"
+idna==2.7                 # via requests
+imagesize==1.0.0          # via sphinx
 jinja2==2.10              # via sphinx
-lark-parser==0.3.7
+lark-parser==0.5.6        # via brewtils
 markupsafe==1.0           # via jinja2
-marshmallow==2.13.6
+marshmallow==2.15.3       # via brewtils
 mccabe==0.6.1             # via flake8
 mock==2.0.0
-mongoengine==0.14.3
-mongomock==3.8.0
+mongoengine==0.15.0       # via bg-utils
+mongomock==3.10.0
+more-itertools==4.2.0     # via pytest
+packaging==17.1           # via sphinx
 pathtools==0.1.2          # via watchdog
-pbr==3.1.1                # via mock
-pika==0.11.0
-pkginfo==1.4.1            # via twine
+pbr==4.0.4                # via mock
+pika==0.11.2              # via brewtils
+pkginfo==1.4.2            # via twine
+pluggy==0.6.0             # via pytest, tox
+ply==3.11                 # via thriftpy
 prometheus-client==0.2.0
-pluggy==0.5.2             # via pytest, tox
-ply==3.10                 # via thriftpy
-py==1.5.2                 # via pytest, tox
+py==1.5.3                 # via pytest, tox
 pycodestyle==2.3.1        # via flake8
 pyflakes==1.6.0           # via flake8
 pygments==2.2.0           # via sphinx
-pymongo==3.5.1            # via mongoengine
-pytest==3.4.2
-python-box==3.1.1         # via yapconf
-pytz==2017.3
+pymongo==3.6.1            # via mongoengine
+pyparsing==2.2.0          # via packaging
+pytest==3.6.1
+python-box==3.2.0         # via yapconf
+pytz==2018.4
 pyyaml==3.12              # via apispec, watchdog
 requests-toolbelt==0.8.0  # via twine
-requests==2.18.4          # via requests-toolbelt, sphinx, twine
+requests==2.19.0          # via brewtils, codecov, requests-toolbelt, sphinx, twine
+ruamel.yaml==0.15.37      # via bg-utils
 sentinels==1.0.0          # via mongomock
+simplejson==3.15.0        # via brewtils
 singledispatch==3.4.0.3   # via tornado
-six==1.11.0               # via mock, mongoengine, mongomock, pytest, singledispatch, sphinx, tox, yapconf
+six==1.11.0               # via brewtils, mock, mongoengine, mongomock, more-itertools, packaging, pytest, singledispatch, sphinx, tox, yapconf
 snowballstemmer==1.2.1    # via sphinx
-sphinx-rtd-theme==0.2.4
-sphinx==1.6.7
-sphinxcontrib-websupport==1.0.1  # via sphinx
-thriftpy==0.3.9
-tornado==4.5.2
-tox==2.9.1
-tqdm==4.19.5              # via twine
-twine==1.9.1
+sphinx-rtd-theme==0.4.0
+sphinx==1.7.5
+sphinxcontrib-websupport==1.1.0  # via sphinx
+thriftpy==0.3.9           # via bg-utils
+tornado==5.0.2
+tox==3.0.0
+tqdm==4.23.4              # via twine
+twine==1.11.0
 typing==3.6.4             # via sphinx
-urllib3==1.22             # via requests
-virtualenv==15.1.0        # via tox
+urllib3==1.23             # via requests
+virtualenv==16.0.0        # via tox
 watchdog==0.8.3
-wheel==0.30.0
-wrapt==1.10.11
-yapconf==0.2.3
+wheel==0.31.1
+wrapt==1.10.11            # via brewtils
+yapconf==0.3.2            # via bg-utils, brewtils

@@ -24,9 +24,9 @@ setup(
     packages=(find_packages(exclude=['test', 'test.*'])),
     include_package_data=True,
     install_requires=[
-        "apispec==0.25.4",
+        "apispec==0.38.0",
         "bg-utils>=2.3.4",
-        "tornado==4.5.2",
+        "tornado==5.0.2",
         "prometheus_client<1.0.0",
     ],
     extras_require={
