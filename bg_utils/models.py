@@ -217,8 +217,8 @@ class Request(Document, BrewtilsRequest):
             {'name': 'created_at_index', 'fields': ['created_at']},
             {'name': 'updated_at_index', 'fields': ['updated_at']},
             {'name': 'comment_index', 'fields': ['comment']},
-            {'name': 'parent_index', 'fields': ['parent']},
-            {'name': 'has_parent_index', 'fields': ['has_parent']},
+            {'name': 'parent_ref_index', 'fields': ['parent']},
+            {'name': 'parent_index', 'fields': ['has_parent']},
 
             # These are for sorting on the request index page
             {'name': 'parent_command_index', 'fields': ['has_parent', 'command']},
