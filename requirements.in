@@ -1,6 +1,6 @@
 
 # Runtime Dependencies
--e git+https://github.com/beer-garden/brewtils@master#egg=brewtils
+brewtils
 futures ; python_version < "3.0"
 mongoengine
 pika
