@@ -70,7 +70,7 @@ class BaseHandler(RequestHandler):
 
     def prepare(self):
         """Called before each verb handler"""
-        self.request.headers['created_time_ms'] = self.current_time_millis
+        self.request.created_time_ms = self.current_time_millis
 
         # This is used for sending event notifications
         self.request.event = Event()
@@ -106,10 +106,7 @@ class BaseHandler(RequestHandler):
                                                      **self.request.event_extras)
 
     def _measure_latency(self):
-        end_time = self.current_time_millis
-        begin_time = self.request.headers['created_time_ms']
-        del self.request.headers['created_time_ms']
-        return end_time - begin_time
+        return self.current_time_millis - self.request.created_time_ms
 
     def options(self, *args, **kwargs):
 
