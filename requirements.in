@@ -1,7 +1,6 @@
 
 # Dependencies
--e git+https://github.com/beer-garden/brewtils@master#egg=brewtils
--e git+https://github.com/beer-garden/bg-utils@master#egg=bg-utils
+bg-utils
 futures ; python_version < "3.0"
 subprocess32 ; python_version < "3.0"
 pika
