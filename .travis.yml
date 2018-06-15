@@ -33,4 +33,4 @@ install:
   - make -C test/integration deps
 
 script:
-  - make -C test/integration test-all
+  - (cd test/integration && ./travis_tests.sh)

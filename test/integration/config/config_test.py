@@ -11,32 +11,6 @@ from brew_view.specification import SPECIFICATION as bv_spec
 from yapconf import YapconfSpec
 
 
-@pytest.mark.parametrize('file_name', ['brew-view', 'bartender'])
-@pytest.mark.parametrize('file_type', ['json', 'yaml'])
-def test_generate(tmpdir, file_name, file_type):
-    generated_file = os.path.join(str(tmpdir), file_name+'.'+file_type)
-    reference_file = os.path.join(os.path.dirname(__file__), 'defaults',
-                                  file_name+'.'+file_type)
-
-    spec = YapconfSpec(bt_spec if file_name == 'bartender' else bv_spec)
-    generate_config_file(spec, ['-c', generated_file, '-t', file_type])
-
-    with open(generated_file, 'r') as f, open(reference_file, 'r') as g:
-        if file_type == 'json':
-            generated_config = json.load(f)
-            reference_config = json.load(g)
-        elif file_type == 'yaml':
-            yaml = YAML()
-            generated_config = yaml.load(f)
-            reference_config = yaml.load(g)
-
-    # These are always going to be different
-    del generated_config['configuration']['file']
-    del reference_config['configuration']['file']
-
-    assert generated_config == reference_config
-
-
 @pytest.mark.parametrize('start_version', ['2.3.5', '2.3.6'])
 @pytest.mark.parametrize('file_name', ['brew-view', 'bartender'])
 @pytest.mark.parametrize('file_type', ['json', 'yaml'])
