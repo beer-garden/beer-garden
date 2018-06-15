@@ -28,7 +28,7 @@ def setup_bartender(spec, cli_args):
 
     bv_client = EasyClient(**config.web)
 
-    application = BartenderApp(config)
+    application = BartenderApp()
 
     logger.debug("Successfully loaded the bartender application")
 

@@ -2,14 +2,14 @@ import collections
 import json
 import logging
 import re
-from builtins import str
 
 import six
 import urllib3
+from builtins import str
 from requests import Session
 
+import bartender
 from bg_utils.models import System, Choices
-from brewtils import get_bg_connection_parameters
 from brewtils.choices import parse
 from brewtils.errors import ModelValidationError
 from brewtils.rest.system_client import SystemClient
@@ -17,21 +17,17 @@ from brewtils.rest.system_client import SystemClient
 
 class RequestValidator(object):
 
-    def __init__(self, config):
+    def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-        # We have to translate the host/port kwarg names, just pass though everything else
-        conn_params = get_bg_connection_parameters(bg_host=config.web.host,
-                                                   bg_port=config.web.port,
-                                                   **config)
-        self._client = SystemClient(system_name=None, **conn_params)
+        self._client = SystemClient(system_name=None, **bartender.config.web)
 
         self._session = Session()
-        if not config.web.ca_verify:
+        if not bartender.config.web.ca_verify:
             urllib3.disable_warnings()
             self._session.verify = False
-        elif config.web.ca_cert:
-            self._session.verify = config.web.ca_cert
+        elif bartender.config.web.ca_cert:
+            self._session.verify = bartender.config.web.ca_cert
 
     def validate_request(self, request):
         """Validation to be called before you save a request from a user

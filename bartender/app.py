@@ -29,10 +29,10 @@ from brewtils.stoppable_thread import StoppableThread
 class BartenderApp(StoppableThread):
     """Main Application that Runs the Beergarden Backend."""
 
-    def __init__(self, config):
+    def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-        self.request_validator = RequestValidator(config)
+        self.request_validator = RequestValidator()
         self.plugin_registry = LocalPluginRegistry()
         self.plugin_validator = LocalPluginValidator()
 
@@ -40,19 +40,19 @@ class BartenderApp(StoppableThread):
                                                registry=self.plugin_registry)
 
         self.clients = {
-            'pika': PikaClient(host=config.amq.host,
-                               port=config.amq.connections.message.port,
-                               user=config.amq.connections.admin.user,
-                               password=config.amq.connections.admin.password,
-                               virtual_host=config.amq.virtual_host,
-                               connection_attempts=config.amq.connection_attempts,
-                               exchange=config.amq.exchange),
-            'pyrabbit': PyrabbitClient(host=config.amq.host,
-                                       virtual_host=config.amq.virtual_host,
-                                       **config.amq.connections.admin),
-            'public': ClientBase(host=config.publish_hostname,
-                                 virtual_host=config.amq.virtual_host,
-                                 **config.amq.connections.message),
+            'pika': PikaClient(host=bartender.config.amq.host,
+                               port=bartender.config.amq.connections.message.port,
+                               user=bartender.config.amq.connections.admin.user,
+                               password=bartender.config.amq.connections.admin.password,
+                               virtual_host=bartender.config.amq.virtual_host,
+                               connection_attempts=bartender.config.amq.connection_attempts,
+                               exchange=bartender.config.amq.exchange),
+            'pyrabbit': PyrabbitClient(host=bartender.config.amq.host,
+                                       virtual_host=bartender.config.amq.virtual_host,
+                                       **bartender.config.amq.connections.admin),
+            'public': ClientBase(host=bartender.config.publish_hostname,
+                                 virtual_host=bartender.config.amq.virtual_host,
+                                 **bartender.config.amq.connections.message),
         }
 
         self.plugin_manager = LocalPluginsManager(
@@ -66,19 +66,19 @@ class BartenderApp(StoppableThread):
         self.helper_threads = [
 
             HelperThread(make_server, service=bg_utils.bg_thrift.BartenderBackend,
-                         handler=self.handler, host=config.thrift.host,
-                         port=config.thrift.port),
+                         handler=self.handler, host=bartender.config.thrift.host,
+                         port=bartender.config.thrift.port),
 
             HelperThread(LocalPluginMonitor, plugin_manager=self.plugin_manager,
                          registry=self.plugin_registry),
 
             HelperThread(PluginStatusMonitor, self.clients,
-                         timeout_seconds=config.plugin.status_timeout,
-                         heartbeat_interval=config.plugin.status_heartbeat)
+                         timeout_seconds=bartender.config.plugin.status_timeout,
+                         heartbeat_interval=bartender.config.plugin.status_heartbeat)
         ]
 
         # Only want to run the MongoPruner if it would do anything
-        tasks, run_every = self._setup_pruning_tasks(config)
+        tasks, run_every = self._setup_pruning_tasks()
         if run_every:
             self.helper_threads.append(HelperThread(MongoPruner, tasks=tasks,
                                                     run_every=timedelta(minutes=run_every)))
@@ -141,34 +141,36 @@ class BartenderApp(StoppableThread):
         self.logger.info("Successfully shut down Bartender")
 
     @staticmethod
-    def _setup_pruning_tasks(config):
+    def _setup_pruning_tasks():
 
         prune_tasks = []
-        if config.db.ttl.info > 0:
+        if bartender.config.db.ttl.info > 0:
             prune_tasks.append({
                 'collection': Request, 'field': 'created_at',
-                'delete_after': timedelta(minutes=config.db.ttl.info),
+                'delete_after': timedelta(minutes=bartender.config.db.ttl.info),
                 'additional_query':
                     (Q(status="SUCCESS") |
                      Q(status='CANCELED') |
                      Q(status='ERROR')) & Q(command_type='INFO')})
 
-        if config.db.ttl.action > 0:
+        if bartender.config.db.ttl.action > 0:
             prune_tasks.append({
                 'collection': Request, 'field': 'created_at',
-                'delete_after': timedelta(minutes=config.db.ttl.action),
+                'delete_after': timedelta(minutes=bartender.config.db.ttl.action),
                 'additional_query':
                     (Q(status="SUCCESS") |
                      Q(status='CANCELED') |
                      Q(status='ERROR')) & Q(command_type='ACTION')})
 
-        if config.db.ttl.event > 0:
+        if bartender.config.db.ttl.event > 0:
             prune_tasks.append({'collection': Event, 'field': 'timestamp',
-                                'delete_after': timedelta(minutes=config.db.ttl.event)})
+                                'delete_after': timedelta(minutes=bartender.config.db.ttl.event)})
 
         # Look at the various TTLs to determine how often to run the MongoPruner
         real_ttls = [x for x in
-                     (config.db.ttl.info, config.db.ttl.action, config.db.ttl.event)
+                     (bartender.config.db.ttl.info,
+                      bartender.config.db.ttl.action,
+                      bartender.config.db.ttl.event)
                      if x > 0]
         run_every = min(real_ttls) // 2 if real_ttls else None
 

@@ -18,7 +18,7 @@ class BartenderAppTest(unittest.TestCase):
         self.config = YapconfSpec(SPECIFICATION).load_config()
         bartender.config = self.config
 
-        self.app = BartenderApp(self.config)
+        self.app = BartenderApp()
         self.thrift_server = Mock()
         self.queue_manager = Mock()
         self.local_monitor = Mock()
@@ -105,12 +105,11 @@ class BartenderAppTest(unittest.TestCase):
         self.app._shutdown()
 
     def test_setup_pruning_tasks(self):
-        config = Mock()
-        config.db.ttl.info = 5
-        config.db.ttl.action = 10
-        config.db.ttl.event = 15
+        bartender.config.db.ttl.info = 5
+        bartender.config.db.ttl.action = 10
+        bartender.config.db.ttl.event = 15
 
-        prune_tasks, run_every = BartenderApp._setup_pruning_tasks(config)
+        prune_tasks, run_every = BartenderApp._setup_pruning_tasks()
         self.assertEqual(3, len(prune_tasks))
         self.assertEqual(2, run_every)
 
@@ -131,22 +130,20 @@ class BartenderAppTest(unittest.TestCase):
         self.assertEqual(timedelta(minutes=15), event_task['delete_after'])
 
     def test_setup_pruning_tasks_empty(self):
-        config = Mock()
-        config.db.ttl.info = -1
-        config.db.ttl.action = -1
-        config.db.ttl.event = -1
+        bartender.config.db.ttl.info = -1
+        bartender.config.db.ttl.action = -1
+        bartender.config.db.ttl.event = -1
 
-        prune_tasks, run_every = BartenderApp._setup_pruning_tasks(config)
+        prune_tasks, run_every = BartenderApp._setup_pruning_tasks()
         self.assertEqual([], prune_tasks)
         self.assertIsNone(run_every)
 
     def test_setup_pruning_tasks_mixed(self):
-        config = Mock()
-        config.db.ttl.info = 5
-        config.db.ttl.action = -1
-        config.db.ttl.event = 15
+        bartender.config.db.ttl.info = 5
+        bartender.config.db.ttl.action = -1
+        bartender.config.db.ttl.event = 15
 
-        prune_tasks, run_every = BartenderApp._setup_pruning_tasks(config)
+        prune_tasks, run_every = BartenderApp._setup_pruning_tasks()
         self.assertEqual(2, len(prune_tasks))
         self.assertEqual(2, run_every)
 
