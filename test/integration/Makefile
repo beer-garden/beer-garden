@@ -25,15 +25,6 @@ deps:
 lint: ## check style with flake8
 	flake8
 
-start: ## start brew-view and bartender
-	brew-view &
-	bartender &
-
-stop: ## kill brew-view and bartender
-	pkill bartender
-	sleep 3
-	pkill brew-view
-
 test-config: ## run configuration integration tests
 	pytest config/
 
@@ -42,12 +33,3 @@ test-lifecycle: ## run lifecycle integration tests
 
 test-rest: ## run rest integration tests
 	pytest rest/
-
-test-all: ## run all the tests
-	$(MAKE) test-config
-	$(MAKE) test-lifecycle
-
-	$(MAKE) start
-	sleep 10
-	$(MAKE) test-rest
-	$(MAKE) stop
