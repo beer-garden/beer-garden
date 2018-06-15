@@ -282,6 +282,17 @@ SPECIFICATION = {
         },
     },
 
+    'metrics': {
+        'type': 'dict',
+        'items': {
+            'port': {
+                'type': 'int',
+                'description': 'Port for prometheus server to listen on.',
+                'default': 2338
+            }
+        }
+    },
+
     'plugin_logging': {
         'type': 'dict',
         'items': {

@@ -4,7 +4,7 @@
 
 APP_ROOT=$(realpath $(dirname $0)/..)
 
-python -m brew_view -c $APP_ROOT/dev_conf/config.json &
+python -m brew_view -c $APP_ROOT/dev_conf/config.yml &
 P1=$!
 
 npm run watch --prefix $APP_ROOT/brew_view/static &

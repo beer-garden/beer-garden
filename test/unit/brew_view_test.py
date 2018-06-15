@@ -29,6 +29,7 @@ class BeerGardenTest(unittest.TestCase):
     @patch('bg_utils.setup_application_logging', Mock())
     @patch('bg_utils.setup_database', Mock())
     @patch('brew_view.load_plugin_logging_config', Mock())
+    @patch('brew_view.HTTPServer.listen', Mock())
     def test_setup_no_file(self):
         bg.setup_brew_view(self.spec, {})
         self.assertIsInstance(bg.config, Box)

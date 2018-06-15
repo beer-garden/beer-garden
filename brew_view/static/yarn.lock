@@ -6,9 +6,9 @@
   version "0.5.0"
   resolved "https://registry.yarnpkg.com/@beer-garden/addons/-/addons-0.5.0.tgz#e349ac404e98870375be31871da456767bf19b1b"
 
-"@beer-garden/builder@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@beer-garden/builder/-/builder-0.0.3.tgz#ca9b7ff5b6fc945e0c1d9ac1f1d69003ade8612a"
+"@beer-garden/builder@^0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@beer-garden/builder/-/builder-0.0.4.tgz#1839bcc8307557751ea2b010a4d3823259511bdf"
   dependencies:
     objectpath "^1.2.1"
 

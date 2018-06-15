@@ -1,12 +1,12 @@
 
 # Dependencies
--e git+https://github.com/beer-garden/brewtils@master#egg=brewtils
--e git+https://github.com/beer-garden/bg-utils@master#egg=bg-utils
+bg-utils
 futures ; python_version < "3.0"
 apispec
 passlib
 pyjwt
 tornado
+prometheus_client
 
 # Documentation Dependencies
 sphinx
@@ -14,6 +14,7 @@ sphinx_rtd_theme
 watchdog
 
 # Test Dependencies
+codecov
 coverage
 flake8
 mock

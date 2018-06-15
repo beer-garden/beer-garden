@@ -1,3 +1,4 @@
+import datetime
 import json
 
 from mock import Mock, patch
@@ -47,6 +48,7 @@ class RequestAPITest(TestHandlerBase):
         })
         self.request_mock.status = "SUCCESS"
         self.request_mock.output = "output"
+        self.request_mock.updated_at = datetime.datetime.utcnow()
 
         response = self.fetch('/api/v1/requests/id', method='PATCH', body=body,
                               headers={'content-type': 'application/json'})
@@ -60,6 +62,7 @@ class RequestAPITest(TestHandlerBase):
         body = json.dumps({"operations": [{"operation": "replace", "path": "/status",
                                            "value": "SUCCESS"}]})
 
+        self.request_mock.updated_at = datetime.datetime.utcnow()
         response = self.fetch('/api/v1/requests/id', method='PATCH', body=body,
                               headers={'content-type': 'application/json'})
         self.assertEqual(200, response.code)
@@ -124,3 +127,11 @@ class RequestAPITest(TestHandlerBase):
                               body='{"operations": [{"operation": "fake"}]}',
                               headers={'content-type': 'application/json'})
         self.assertGreaterEqual(response.code, 400)
+
+    def test_prometheus_endpoint(self):
+        handler = self.app.find_handler(request=Mock(path='/api/v1/requests'))
+        c = handler.handler_class(
+            self.app,
+            Mock(path='/api/v1/requests/111111111111111111111111')
+        )
+        assert c.prometheus_endpoint == '/api/v1/requests/<ID>'
