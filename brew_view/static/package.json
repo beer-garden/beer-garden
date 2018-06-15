@@ -5,7 +5,7 @@
   "main": "app.py",
   "dependencies": {
     "@beer-garden/addons": "^0.5.0",
-    "@beer-garden/builder": "^0.0.3",
+    "@beer-garden/builder": "^0.0.4",
     "@uirouter/angularjs": "^1.0.3",
     "ace-builds": "^1.2.8",
     "angular": "^1.6.5",
