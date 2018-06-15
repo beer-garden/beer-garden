@@ -1,4 +1,7 @@
+import datetime
 import logging
+
+from prometheus_client import Histogram, Gauge
 
 import brew_view
 from bg_utils.models import Request
@@ -12,6 +15,16 @@ class RequestAPI(BaseHandler):
 
     parser = BeerGardenSchemaParser()
     logger = logging.getLogger(__name__)
+    plugin_request_latency = Histogram(
+        'bg_plugin_request_latency_millis',
+        'Measures latency of individual system/commands',
+        ['system', 'instance', 'command', 'version'],
+    )
+    in_progress_request_gauge = Gauge(
+        'bg_in_progress_requests',
+        'Number of requests IN_PROGRESS',
+        ['system', 'instance', 'version'],
+    )
 
     def get(self, request_id):
         """
@@ -41,6 +54,27 @@ class RequestAPI(BaseHandler):
         req.children = Request.objects(parent=req)
 
         self.write(self.parser.serialize_request(req, to_string=False))
+
+    def _update_completed_request_metrics(self, request):
+        latency = (
+            (datetime.datetime.utcnow() - request.updated_at).total_seconds() * 1000
+        )
+
+        self.plugin_request_latency.labels(
+            system=request.system,
+            instance=request.instance_name,
+            version=request.system_version,
+            command=request.command,
+        ).observe(latency)
+        self.in_progress_request_gauge.labels(
+            system=request.system,
+            instance=request.instance_name,
+            version=request.system_version
+        ).dec()
+        self.queued_request_gauge.labels(
+            system=request.system,
+            instance=request.instance_name
+        ).dec()
 
     def patch(self, request_id):
         """
@@ -101,11 +135,18 @@ class RequestAPI(BaseHandler):
 
                         if op.value.upper() == 'IN_PROGRESS':
                             self.request.event.name = Events.REQUEST_STARTED.name
+                            self.in_progress_request_gauge.labels(
+                                system=req.system,
+                                instance=req.instance_name,
+                                version=req.system_version
+                            ).inc()
                         elif op.value.upper() in BrewtilsRequest.COMPLETED_STATUSES:
                             self.request.event.name = Events.REQUEST_COMPLETED.name
 
                             if request_id in brew_view.request_map:
                                 wait_condition = brew_view.request_map[request_id]
+
+                            self._update_completed_request_metrics(req)
                     else:
                         error_msg = "Unsupported status value '%s'" % op.value
                         self.logger.warning(error_msg)

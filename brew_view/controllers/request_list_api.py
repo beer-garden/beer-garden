@@ -314,6 +314,10 @@ class RequestListAPI(BaseHandler):
         self.request.event_extras = {'request': req}
 
         self.set_status(201)
+        self.queued_request_gauge.labels(
+            system=request_model.system,
+            instance=request_model.instance_name
+        ).inc()
         self.write(self.parser.serialize_request(request_model, to_string=False))
 
     def _get_requests(self, start, end):
@@ -382,12 +386,18 @@ class RequestListAPI(BaseHandler):
         query_params = reduce(lambda x, y: x & y, search_params, Q())
 
         # Further modify the query itself
-        if requested_fields:
-            query = query.only(*requested_fields)
         if overall_search:
             query = query.search_text(overall_search)
+
         if order_by:
             query = query.order_by(order_by)
+
+        # Marshmallow treats [] as 'serialize nothing' which is not what we
+        # want, so translate to None
+        if requested_fields:
+            query = query.only(*requested_fields)
+        else:
+            requested_fields = None
 
         # Execute the query / count
         requests = query.filter(query_params)
