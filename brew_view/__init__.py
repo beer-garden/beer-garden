@@ -123,14 +123,23 @@ def _setup_tornado_app():
 
     # And these do not
     unpublished_url_specs = [
+        # These are a little special - unpublished but still versioned
+        # The swagger spec
+        (r'{0}api/v1/spec/?'.format(prefix), SpecHandler),
+        # Events websocket
+        (r'{0}api/v1/socket/events/?'.format(prefix), EventSocket),
+
+        # Version / configs
+        (r'{0}version/?'.format(prefix), VersionHandler),
         (r'{0}config/?'.format(prefix), ConfigHandler),
         (r'{0}config/swagger/?'.format(prefix), SwaggerConfigHandler),
-        (r'{0}version/?'.format(prefix), VersionHandler),
-        (r'{0}api/v1/spec/?'.format(prefix), SpecHandler),
-        (r'{0}events/?'.format(prefix), EventSocket),
+
+        # Not sure if these are really necessary
         (r'{0}'.format(prefix[:-1]), RedirectHandler, {"url": prefix}),
         (r'{0}swagger/(.*)'.format(prefix), StaticFileHandler,
             {'path': os.path.join(static_base, 'swagger')}),
+
+        # Static content
         (r'{0}(.*)'.format(prefix), StaticFileHandler,
             {'path': static_base, 'default_filename': 'index.html'})
     ]
