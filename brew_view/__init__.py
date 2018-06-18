@@ -53,6 +53,7 @@ def setup_brew_view(spec, cli_args):
 
 
 def shutdown():
+    """Close any open websocket connections"""
     from brew_view.controllers import EventSocket
     EventSocket.shutdown()
 

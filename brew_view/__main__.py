@@ -23,7 +23,8 @@ def shutdown():
     brew_view.logger.info("Stopping server.")
     brew_view.server.stop()
 
-    # Close any open websocket connections
+    # Shutdown everything short of the event loop
+    # (we need the event loop to publish the shutdown event)
     brew_view.shutdown()
 
     # Publish shutdown notification
