@@ -16,7 +16,8 @@ import brewtils.rest
 from bg_utils.event_publisher import EventPublishers
 from bg_utils.pika import TransientPikaClient
 from bg_utils.plugin_logging_loader import PluginLoggingLoader
-from brew_view.publishers import MongoPublisher, RequestPublisher, TornadoPikaPublisher
+from brew_view.publishers import (MongoPublisher, RequestPublisher,
+                                  TornadoPikaPublisher, WebsocketPublisher)
 from brew_view.specification import get_default_logging_config
 from brewtils.schemas import ParameterSchema, CommandSchema, InstanceSchema, SystemSchema, \
     RequestSchema, PatchSchema, LoggingConfigSchema, EventSchema, QueueSchema
@@ -49,6 +50,12 @@ def setup_brew_view(spec, cli_args):
     bg_utils.setup_database(config)
     load_plugin_logging_config(config)
     _setup_application()
+
+
+def shutdown():
+    """Close any open websocket connections"""
+    from brew_view.controllers import EventSocket
+    EventSocket.shutdown()
 
 
 def load_plugin_logging_config(input_config):
@@ -86,7 +93,7 @@ def _setup_tornado_app():
     from brew_view.controllers import AdminAPI, CommandAPI, CommandListAPI, ConfigHandler, \
         InstanceAPI, QueueAPI, QueueListAPI, RequestAPI, RequestListAPI, SystemAPI, SystemListAPI, \
         VersionHandler, SpecHandler, SwaggerConfigHandler, OldAdminAPI, OldQueueAPI, \
-        OldQueueListAPI, LoggingConfigAPI, EventPublisherAPI
+        OldQueueListAPI, LoggingConfigAPI, EventPublisherAPI, EventSocket
 
     prefix = config.web.url_prefix
     static_base = os.path.join(os.path.dirname(__file__), 'static', 'dist')
@@ -116,13 +123,23 @@ def _setup_tornado_app():
 
     # And these do not
     unpublished_url_specs = [
+        # These are a little special - unpublished but still versioned
+        # The swagger spec
+        (r'{0}api/v1/spec/?'.format(prefix), SpecHandler),
+        # Events websocket
+        (r'{0}api/v1/socket/events/?'.format(prefix), EventSocket),
+
+        # Version / configs
+        (r'{0}version/?'.format(prefix), VersionHandler),
         (r'{0}config/?'.format(prefix), ConfigHandler),
         (r'{0}config/swagger/?'.format(prefix), SwaggerConfigHandler),
-        (r'{0}version/?'.format(prefix), VersionHandler),
-        (r'{0}api/v1/spec/?'.format(prefix), SpecHandler),
+
+        # Not sure if these are really necessary
         (r'{0}'.format(prefix[:-1]), RedirectHandler, {"url": prefix}),
         (r'{0}swagger/(.*)'.format(prefix), StaticFileHandler,
             {'path': os.path.join(static_base, 'swagger')}),
+
+        # Static content
         (r'{0}(.*)'.format(prefix), StaticFileHandler,
             {'path': static_base, 'default_filename': 'index.html'})
     ]
@@ -184,9 +201,13 @@ def _setup_thrift_context():
 
 
 def _setup_event_publishers(ssl_context):
+    from brew_view.controllers.event_api import EventSocket
 
     # Create the collection of event publishers and add concrete publishers to it
-    pubs = EventPublishers({'request': RequestPublisher(ssl_context=ssl_context)})
+    pubs = EventPublishers({
+        'request': RequestPublisher(ssl_context=ssl_context),
+        'websocket': WebsocketPublisher(EventSocket)
+    })
 
     if config.event.mongo.enable:
         pubs['mongo'] = MongoPublisher()

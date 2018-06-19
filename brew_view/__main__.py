@@ -23,6 +23,10 @@ def shutdown():
     brew_view.logger.info("Stopping server.")
     brew_view.server.stop()
 
+    # Shutdown everything short of the event loop
+    # (we need the event loop to publish the shutdown event)
+    brew_view.shutdown()
+
     # Publish shutdown notification
     brew_view.event_publishers.publish_event(Event(name=Events.BREWVIEW_STOPPED.name))
 
