@@ -79,15 +79,15 @@ class PyrabbitClientTest(unittest.TestCase):
         self.assertFalse(self.client_mock.get_messages.called)
 
     @patch('bartender.pyrabbit.BeerGardenSchemaParser')
-    def test_clear_queue(self, parser_mock):
+    @patch('bartender.bv_client')
+    def test_clear_queue(self, bv_client_mock, parser_mock):
         fake_request = Mock(id='id', status='CREATED')
         parser_mock.parse_request.return_value = fake_request
         self.client_mock.get_queue.return_value = {'messages_ready': 1}
         self.client_mock.get_messages.return_value = [{'payload': fake_request}]
 
         self.client.clear_queue('queue')
-        self.assertEqual(fake_request.status, 'CANCELED')
-        self.assertTrue(fake_request.save.called)
+        bv_client_mock.update_request.assert_called_with('id', status='CANCELED')
         parser_mock.parse_request.assert_called_with(fake_request, from_string=True)
 
     @patch('bartender.pyrabbit.BeerGardenSchemaParser')

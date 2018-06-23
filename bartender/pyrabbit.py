@@ -5,6 +5,8 @@ from pyrabbit2.http import HTTPError, NetworkError
 
 from bg_utils.parser import BeerGardenSchemaParser
 
+import bartender
+
 
 class PyrabbitClient(object):
     """Class that implements a connection to RabbitMQ Management HTTP API"""
@@ -68,8 +70,7 @@ class PyrabbitClient(object):
                     request = BeerGardenSchemaParser.parse_request(message['payload'],
                                                                    from_string=True)
                     self.logger.debug("Canceling Request: %s", request.id)
-                    request.status = 'CANCELED'
-                    request.save()
+                    bartender.bv_client.update_request(request.id, status='CANCELED')
                 except Exception as ex:
                     self.logger.error('Error removing message:')
                     self.logger.exception(ex)
