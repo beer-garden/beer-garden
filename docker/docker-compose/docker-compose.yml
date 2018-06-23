@@ -1,6 +1,9 @@
 version: '3.5'
 
 x-definitions: &env
+    BG_AMQ_ADMIN_HOST: rabbitmq
+    BG_AMQ_ADMIN_USER: beer_garden
+    BG_AMQ_ADMIN_PASSWORD: password
     BG_AMQ_HOST: rabbitmq
     BG_AMQ_USER: beer_garden
     BG_AMQ_PASSWORD: password
