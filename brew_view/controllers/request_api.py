@@ -1,9 +1,9 @@
 import datetime
 import logging
 
+import brew_view
 from bg_utils.models import Request
 from bg_utils.parser import BeerGardenSchemaParser
-
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events, Request as BrewtilsRequest
@@ -113,6 +113,7 @@ class RequestAPI(BaseHandler):
         """
         req = Request.objects.get(id=request_id)
         operations = self.parser.parse_patch(self.request.decoded_body, many=True, from_string=True)
+        wait_condition = None
 
         # We note the status before the operations, because it is possible for the operations to
         # update the status of the request. In that case, because the updates are coming in in a
@@ -136,6 +137,9 @@ class RequestAPI(BaseHandler):
                         elif op.value.upper() in BrewtilsRequest.COMPLETED_STATUSES:
                             self.request.event.name = Events.REQUEST_COMPLETED.name
                             self._update_completed_request_metrics(req, status_before)
+
+                            if request_id in brew_view.request_map:
+                                wait_condition = brew_view.request_map[request_id]
                     else:
                         error_msg = "Unsupported status value '%s'" % op.value
                         self.logger.warning(error_msg)
@@ -167,6 +171,9 @@ class RequestAPI(BaseHandler):
                 raise ModelValidationError(error_msg)
 
         req.save()
+
+        if wait_condition:
+            wait_condition.notify()
 
         self.request.event_extras = {'request': req, 'patch': operations}
 

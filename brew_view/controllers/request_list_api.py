@@ -1,17 +1,20 @@
 import json
 import logging
+from datetime import timedelta
 from functools import reduce
 
 from mongoengine import Q
 from tornado.gen import coroutine
+from tornado.locks import Condition
 
 import bg_utils
-from bg_utils.models import Request
-from bg_utils.models import System
+import brew_view
+from bg_utils.models import Request, System
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view import thrift_context
 from brew_view.base_handler import BaseHandler
-from brewtils.errors import ModelValidationError, RequestPublishException
+from brewtils.errors import (ModelValidationError, RequestPublishException,
+                             WaitExceededError)
 from brewtils.models import Events
 
 
@@ -204,6 +207,18 @@ class RequestListAPI(BaseHandler):
             description: The Request definition
             schema:
               $ref: '#/definitions/Request'
+          - name: wait
+            in: query
+            required: false
+            description: Flag indicating whether to wait for request completion
+            type: boolean
+            default: false
+          - name: max_wait
+            in: query
+            required: false
+            description: Maximum time (seconds) to wait for request completion
+            type: integer
+            default: 30
         consumes:
           - application/json
           - application/x-www-form-urlencoded
@@ -249,7 +264,7 @@ class RequestListAPI(BaseHandler):
             try:
                 request_model.save()
                 yield client.processRequest(str(request_model.id))
-                request_model.reload()
+
             except bg_utils.bg_thrift.InvalidRequest as ex:
                 request_model.delete()
                 raise ModelValidationError(ex.message)
@@ -260,6 +275,18 @@ class RequestListAPI(BaseHandler):
                 if request_model.id:
                     request_model.delete()
                 raise
+            else:
+                if self.get_argument('wait', default='').lower() == 'true':
+                    max_wait = timedelta(seconds=int(self.get_argument('max_wait', default=30)))
+
+                    wait_condition = Condition()
+                    brew_view.request_map[str(request_model.id)] = wait_condition
+
+                    wait_result = yield wait_condition.wait(max_wait)
+                    if not wait_result:
+                        raise WaitExceededError()
+
+        request_model.reload()
 
         # Query for request from body id
         req = Request.objects.get(id=str(request_model.id))

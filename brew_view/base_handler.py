@@ -2,14 +2,16 @@ import re
 import socket
 
 import time
-from mongoengine.errors import DoesNotExist, NotUniqueError, ValidationError as MongoValidationError
+from mongoengine.errors import (DoesNotExist, NotUniqueError,
+                                ValidationError as MongoValidationError)
 from prometheus_client import Gauge, Counter, Summary
 from thriftpy.thrift import TException
 from tornado.web import HTTPError, RequestHandler
 
 import bg_utils
 import brew_view
-from brewtils.errors import ModelError, ModelValidationError, RequestPublishException
+from brewtils.errors import (ModelError, ModelValidationError,
+                             RequestPublishException, WaitExceededError)
 from brewtils.models import Event
 
 
@@ -65,6 +67,7 @@ class BaseHandler(RequestHandler):
             ModelError: {'status_code': 400},
             bg_utils.bg_thrift.InvalidSystem: {'status_code': 400},
             DoesNotExist: {'status_code': 404, 'message': 'Resource does not exist'},
+            WaitExceededError: {'status_code': 408, 'message': 'Max wait time exceeded'},
             NotUniqueError: {'status_code': 409, 'message': 'Resource already exists'},
 
             RequestPublishException: {'status_code': 502},
