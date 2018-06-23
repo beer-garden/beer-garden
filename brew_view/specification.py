@@ -289,6 +289,11 @@ SPECIFICATION = {
                 'type': 'int',
                 'description': 'Port for prometheus server to listen on.',
                 'default': 2338
+            },
+            'url': {
+                'type': 'str',
+                'description': 'URL to prometheus/grafana server.',
+                'required': False,
             }
         }
     },

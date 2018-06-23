@@ -4,11 +4,22 @@
   <div class="row">
     <div class="col-md-4">
       <div class="panel panel-default">
-        <div class="panel-heading">Rest API Documentation</div>
+        <div class="panel-heading">Heplful Links</div>
         <div class="panel-body">
-          <p>{{config.applicationName}} uses Swagger to provide API documentation. The Swagger UI is actually pretty
-            nice. The Swagger UI will help you explore the commands available to you in the REST Interface.</p>
-          <a class="btn btn-default center-block" href="{{config.urlPrefix}}swagger/index.html?config={{config.urlPrefix}}config/swagger">Check it out!</a>
+          <ul>
+            <li>
+              <a href="{{config.urlPrefix}}swagger/index.html?config={{config.urlPrefix}}config/swagger">Open API documentation</a> - {{config.applicationName}} uses OpenAPI Documentation for our ReST Interface.
+            </li>
+            <li ng-if="config.metricsUrl">
+              <a href="{{config.metricsUrl}}">Metrics</a> - Link to the configured metrics backend.
+            </li>
+            <li>
+              <a href="https://grafana.com/dashboards/6621">Grafana Dashboard (Beer Garden)</a> - A grafana dashboard for monitoring Beer Garden Performance.
+            </li>
+            <li>
+              <a href="https://grafana.com/dashboards/6624">Grafana Dashboard (Plugins)</a> - A grafana dashboard for monitoring Beer Garden plugin performance.
+            </li>
+          </ul>
         </div>
       </div>
     </div>
