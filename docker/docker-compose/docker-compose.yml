@@ -1,9 +1,6 @@
 version: '3.5'
 
 x-definitions: &env
-    BG_AMQ_ADMIN_HOST: rabbitmq
-    BG_AMQ_ADMIN_USER: beer_garden
-    BG_AMQ_ADMIN_PASSWORD: password
     BG_AMQ_HOST: rabbitmq
     BG_AMQ_USER: beer_garden
     BG_AMQ_PASSWORD: password
@@ -18,8 +15,13 @@ services:
             - bg-network
         ports:
             - "2337:2337"
+            - "2338:2338"
         environment:
             <<: *env
+            # We expose grafana for you, but you can change this to an
+            # external grafana URL if you would like. It just adds a
+            # link in our About section if it is defined.
+            BG_METRICS_URL: http://localhost:3000
         depends_on:
             - mongodb
             - rabbitmq
@@ -41,13 +43,37 @@ services:
             - rabbitmq
             - brew-view
 
+    grafana:
+        image: grafana/grafana
+        ports:
+            - "3000:3000"
+        volumes:
+            - ./grafana/provisioning:/etc/grafana/provisioning
+            - ./grafana/dashboards:/var/lib/grafana/dashboards
+        networks:
+            - bg-network
+        depends_on:
+            - prometheus
+
     mongodb:
-        image: mongo
+        image: mongo:3.6
         networks:
             - bg-network
         volumes:
             - mongo-data:/data/db
             - mongo-config:/data/configdb
+        restart: always
+
+    prometheus:
+        image: prom/prometheus
+        ports:
+          - "9091:9090"
+        networks:
+            - bg-network
+        volumes:
+            - ./prometheus:/prometheus-data
+        command:
+            --config.file=/prometheus-data/prometheus.yml
 
     rabbitmq:
         image: rabbitmq:management-alpine
