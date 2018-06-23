@@ -43,7 +43,7 @@ class RequestAPI(BaseHandler):
 
         self.write(self.parser.serialize_request(req, to_string=False))
 
-    def _update_completed_request_metrics(self, request):
+    def _update_completed_request_metrics(self, request, status_before):
         # We don't use _measure_latency here because the request times are
         # stored in UTC and we need to make sure we're comparing apples to
         # apples.
@@ -65,8 +65,10 @@ class RequestAPI(BaseHandler):
             **common_labels
         ).observe(latency)
 
-        self.in_progress_request_gauge.labels(**common_labels).dec()
         self.queued_request_gauge.labels(**common_labels).dec()
+
+        if status_before == 'IN_PROGRESS':
+            self.in_progress_request_gauge.labels(**common_labels).dec()
 
     def patch(self, request_id):
         """
@@ -133,7 +135,7 @@ class RequestAPI(BaseHandler):
                             ).inc()
                         elif op.value.upper() in BrewtilsRequest.COMPLETED_STATUSES:
                             self.request.event.name = Events.REQUEST_COMPLETED.name
-                            self._update_completed_request_metrics(req)
+                            self._update_completed_request_metrics(req, status_before)
                     else:
                         error_msg = "Unsupported status value '%s'" % op.value
                         self.logger.warning(error_msg)
