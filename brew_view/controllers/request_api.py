@@ -3,7 +3,6 @@ import logging
 
 from bg_utils.models import Request
 from bg_utils.parser import BeerGardenSchemaParser
-from prometheus_client import Histogram, Gauge
 
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
@@ -14,16 +13,6 @@ class RequestAPI(BaseHandler):
 
     parser = BeerGardenSchemaParser()
     logger = logging.getLogger(__name__)
-    plugin_request_latency = Histogram(
-        'bg_plugin_request_latency_millis',
-        'Measures latency of individual system/commands',
-        ['system', 'instance', 'command', 'version'],
-    )
-    in_progress_request_gauge = Gauge(
-        'bg_in_progress_requests',
-        'Number of requests IN_PROGRESS',
-        ['system', 'instance', 'version'],
-    )
 
     def get(self, request_id):
         """
@@ -55,25 +44,29 @@ class RequestAPI(BaseHandler):
         self.write(self.parser.serialize_request(req, to_string=False))
 
     def _update_completed_request_metrics(self, request):
-        latency = (
-            (datetime.datetime.utcnow() - request.updated_at).total_seconds() * 1000
-        )
+        # We don't use _measure_latency here because the request times are
+        # stored in UTC and we need to make sure we're comparing apples to
+        # apples.
+        latency = (datetime.datetime.utcnow() - request.updated_at).total_seconds()
+        common_labels = {
+            'system': request.system,
+            'system_version': request.system_version,
+            'instance_name': request.instance_name,
+        }
 
-        self.plugin_request_latency.labels(
-            system=request.system,
-            instance=request.instance_name,
-            version=request.system_version,
+        self.completed_request_counter.labels(
             command=request.command,
+            status=request.status,
+            **common_labels
+        ).inc()
+        self.plugin_command_latency.labels(
+            command=request.command,
+            status=request.status,
+            **common_labels
         ).observe(latency)
-        self.in_progress_request_gauge.labels(
-            system=request.system,
-            instance=request.instance_name,
-            version=request.system_version
-        ).dec()
-        self.queued_request_gauge.labels(
-            system=request.system,
-            instance=request.instance_name
-        ).dec()
+
+        self.in_progress_request_gauge.labels(**common_labels).dec()
+        self.queued_request_gauge.labels(**common_labels).dec()
 
     def patch(self, request_id):
         """
@@ -135,8 +128,8 @@ class RequestAPI(BaseHandler):
                             self.request.event.name = Events.REQUEST_STARTED.name
                             self.in_progress_request_gauge.labels(
                                 system=req.system,
-                                instance=req.instance_name,
-                                version=req.system_version
+                                system_version=req.system_version,
+                                instance_name=req.instance_name,
                             ).inc()
                         elif op.value.upper() in BrewtilsRequest.COMPLETED_STATUSES:
                             self.request.event.name = Events.REQUEST_COMPLETED.name
