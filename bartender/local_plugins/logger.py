@@ -21,7 +21,13 @@ class PluginHandler(object):
 
 
 # Since we are imitating the logging module, we will allow camel case method names
-def getPluginLogger(name, format_string=None, log_directory=None, log_name=None):
+def getPluginLogger(
+        name,
+        format_string=None,
+        log_directory=None,
+        log_name=None,
+        log_level=None,
+):
     """Get a logger for a plugin
 
     Args:
@@ -33,10 +39,14 @@ def getPluginLogger(name, format_string=None, log_directory=None, log_name=None)
         log_name (str, optional): The name of the log file
             * If ``log_directory`` is not provided this is not used
             * If not provided the ``name`` value will be used
+        log_level (int, optional): Log level for this logger/handler pair.
+            If none are set, then the current effective level will be used.
 
      Returns:
         The configured logger instance
     """
+    if log_level is None:
+        log_level = logging.getLogger(__name__).getEffectiveLevel()
     log = logging.getLogger(name)
     log.propagate = False
     if len(log.handlers) > 0:
@@ -48,9 +58,10 @@ def getPluginLogger(name, format_string=None, log_directory=None, log_name=None)
     else:
         handler = logging.StreamHandler(sys.stdout)
 
-    handler.setLevel(logging.INFO)
+    handler.setLevel(log_level)
     handler.setFormatter(logging.Formatter(format_string))
     log.addHandler(handler)
+    log.setLevel(log_level)
 
     return log
 

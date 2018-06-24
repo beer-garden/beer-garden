@@ -55,23 +55,26 @@ class TestLogging(object):
         log2 = bg_logging.getPluginLogger('foo')
         assert log1 == log2
 
-    @pytest.mark.parametrize('log_dir,log_name,base_handler', [
-        (None, None, logging.StreamHandler),
-        (None, 'unused', logging.StreamHandler),
-        ('some/directory', None, PluginHandler),
-        ('some/directory', 'bar', PluginHandler),
+    @pytest.mark.parametrize('log_dir,log_name,base_handler,log_level', [
+        (None, None, logging.StreamHandler, None),
+        (None, 'unused', logging.StreamHandler, None),
+        ('some/directory', None, PluginHandler, None),
+        ('some/directory', 'bar', PluginHandler, None),
+        (None, None, logging.StreamHandler, logging.DEBUG),
     ])
-    def test_get_plugin_logger(self, tmpdir, log_dir, log_name, base_handler):
+    def test_get_plugin_logger(self, tmpdir, log_dir, log_name, base_handler, log_level):
         if log_dir:
             log_dir = os.path.join(str(tmpdir), log_dir)
             os.makedirs(log_dir)
 
         log = bg_logging.getPluginLogger('foo', log_directory=log_dir,
-                                         log_name=log_name)
+                                         log_name=log_name, log_level=log_level)
 
         assert not log.propagate
         assert len(log.handlers) == 1
         assert isinstance(log.handlers[0], base_handler)
+        if log_level is not None:
+            assert log.handlers[0].level == log_level
 
         if base_handler == PluginHandler:
             if log_name:
@@ -87,7 +90,8 @@ class TestLogging(object):
     ])
     def test_formatting(self, tmpdir, caplog, format_string, level, message):
         log = bg_logging.getPluginLogger('foo', log_directory=str(tmpdir),
-                                         format_string=format_string)
+                                         format_string=format_string,
+                                         log_level=level)
 
         # Pytest normally captures logs at WARNING, we need to change
         # The levels in parametrize must be higher than DEBUG!

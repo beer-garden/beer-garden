@@ -133,7 +133,8 @@ class LocalPluginLoader(object):
                                        plugin_log_directory=plugin_log_directory,
                                        url_prefix=bartender.config.web.url_prefix,
                                        ca_verify=bartender.config.web.ca_verify,
-                                       ca_cert=bartender.config.web.ca_cert)
+                                       ca_cert=bartender.config.web.ca_cert,
+                                       log_level=config['LOG_LEVEL'])
 
             self.registry.register_plugin(plugin)
             plugin_list.append(plugin)
@@ -148,6 +149,8 @@ class LocalPluginLoader(object):
 
         instances = getattr(config_module, 'INSTANCES', None)
         plugin_args = getattr(config_module, 'PLUGIN_ARGS', None)
+        user_log_level = getattr(config_module, 'LOG_LEVEL', 'INFO')
+        log_level = self._convert_log_level(user_log_level)
 
         if instances is None and plugin_args is None:
             instances = ['default']
@@ -185,10 +188,17 @@ class LocalPluginLoader(object):
             'DISPLAY_NAME': getattr(config_module, 'DISPLAY_NAME', None),
             'REQUIRES': getattr(config_module, 'REQUIRES', []),
             'ENVIRONMENT': getattr(config_module, 'ENVIRONMENT', {}),
-            'METADATA': getattr(config_module, 'METADATA', {})
+            'METADATA': getattr(config_module, 'METADATA', {}),
+            'LOG_LEVEL': log_level,
         }
 
         if 'BGPLUGINCONFIG' in sys.modules:
             del sys.modules['BGPLUGINCONFIG']
 
         return config
+
+    def _convert_log_level(self, level_name):
+        try:
+            return getattr(logging, str(level_name).upper())
+        except AttributeError:
+            return logging.INFO
