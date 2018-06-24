@@ -126,7 +126,10 @@ def generate_logging_config_file(spec, logging_config_generator, cli_args):
 
 def load_application_config(spec, cli_args):
 
-    config_sources = [cli_args, 'ENVIRONMENT']
+    spec.add_source('cli_args', 'dict', data=cli_args)
+    spec.add_source('ENVIRONMENT', 'environment')
+
+    config_sources = ['cli_args', 'ENVIRONMENT']
 
     # Load bootstrap items to see if there's a config file
     temp_config = spec.load_config(*config_sources, bootstrap=True)
@@ -138,7 +141,9 @@ def load_application_config(spec, cli_args):
             file_type = 'json'
         else:
             file_type = 'yaml'
-        config_sources.insert(1, ('config file', temp_config.configuration.file, file_type))
+        filename = temp_config.configuration.file
+        spec.add_source(filename, file_type, filename=filename)
+        config_sources.insert(1, filename)
 
     return spec.load_config(*config_sources)
 
