@@ -42,10 +42,7 @@ class LocalPluginRunner(StoppableThread):
         self.url_prefix = url_prefix
         self.ca_verify = ca_verify
         self.ca_cert = ca_cert
-        if 'log_level' in kwargs:
-            self.plugin_default_log_level = kwargs['log_level']
-        else:
-            self.plugin_default_log_level = logging.INFO
+        self.plugin_default_log_level = kwargs.get('log_level', logging.INFO)
 
         for instance in self.system.instances:
             if instance.name == self.instance_name:
