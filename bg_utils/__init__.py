@@ -126,7 +126,10 @@ def generate_logging_config_file(spec, logging_config_generator, cli_args):
 
 def load_application_config(spec, cli_args):
 
-    config_sources = [cli_args, 'ENVIRONMENT']
+    spec.add_source('cli_args', 'dict', data=cli_args)
+    spec.add_source('ENVIRONMENT', 'environment')
+
+    config_sources = ['cli_args', 'ENVIRONMENT']
 
     # Load bootstrap items to see if there's a config file
     temp_config = spec.load_config(*config_sources, bootstrap=True)
@@ -138,7 +141,9 @@ def load_application_config(spec, cli_args):
             file_type = 'json'
         else:
             file_type = 'yaml'
-        config_sources.insert(1, ('config file', temp_config.configuration.file, file_type))
+        filename = temp_config.configuration.file
+        spec.add_source(filename, file_type, filename=filename)
+        config_sources.insert(1, filename)
 
     return spec.load_config(*config_sources)
 
@@ -178,19 +183,30 @@ def setup_database(config):
     Raises:
         Any mongoengine or pymongo error *except* ConnectionFailure, ServerSelectionTimeoutError
     """
-    from mongoengine import connect
+    from mongoengine import connect, register_connection
     from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 
     try:
-        connect(db=config.db.name,
-                socketTimeoutMS=1000, serverSelectionTimeoutMS=1000,
-                **config.db.connection)
+        # Set timeouts here to a low value - we don't want to wait 30
+        # seconds if there's no database
+        conn = connect(alias='aliveness', db=config.db.name,
+                       socketTimeoutMS=1000, serverSelectionTimeoutMS=1000,
+                       **config.db.connection)
 
         # The 'connect' method won't actually fail
         # An exception won't be raised until we actually try to do something
-        _verify_db()
+        conn.server_info()
+
+        # Close the aliveness connection - the timeouts are too low
+        conn.close()
     except (ConnectionFailure, ServerSelectionTimeoutError):
         return False
+
+    # Now register the default connection with real timeouts
+    # Yes, mongoengine uses 'db' in connect and 'name' in register_connection
+    register_connection('default', name=config.db.name, **config.db.connection)
+
+    _verify_db()
 
     return True
 
@@ -237,6 +253,13 @@ def _verify_db():
     from .models import Request, System
     logger = logging.getLogger(__name__)
 
+    def update_request_model():
+        raw_collection = Request._get_collection()
+        raw_collection.update_many({'parent':  None},
+                                   {'$set': {'has_parent': False}})
+        raw_collection.update_many({'parent': {'$not': {'$eq': None}}},
+                                   {'$set': {'has_parent': True}},)
+
     def check_indexes(collection):
         from pymongo.errors import OperationFailure
         from mongoengine.connection import get_db
@@ -253,15 +276,15 @@ def _verify_db():
             existing = collection._get_collection().index_information()
 
             if len(spec) > len(existing):
-                logger.info('Found missing %s indexes, about to build them. '
-                            'This could take a while :)',
-                            collection.__name__)
+                logger.warning('Found missing %s indexes, about to build them. '
+                               'This could take a while :)',
+                               collection.__name__)
 
             collection.ensure_indexes()
 
         except OperationFailure:
-            logger.warning('%s collection indexes verification failed, attempting to rebuild',
-                           collection.__name__)
+            logger.warning('%s collection indexes verification failed, '
+                           'attempting to rebuild', collection.__name__)
 
             # Unfortunately mongoengine sucks. The index that failed is only returned as part of
             # the error message. I REALLY don't want to parse an error string to find the index to
@@ -272,11 +295,17 @@ def _verify_db():
             try:
                 db = get_db()
                 db[collection.__name__.lower()].drop_indexes()
-                logger.info('Dropped indexes for %s collection', collection.__name__)
+                logger.warning('Dropped indexes for %s collection', collection.__name__)
             except OperationFailure:
                 logger.error('Dropping %s indexes failed, please check the database configuration',
                              collection.__name__)
                 raise
+
+            # For bg-utils 2.3.3 -> 2.3.4 upgrade
+            # We need to create the `has_parent` field
+            if collection == Request:
+                logger.warning('Request definition is out of date, updating')
+                update_request_model()
 
             try:
                 collection.ensure_indexes()

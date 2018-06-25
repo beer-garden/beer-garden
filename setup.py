@@ -29,6 +29,6 @@ setup(
         'pika<1.0',
         'ruamel.yaml',
         'thriftpy',
-        'yapconf>=0.2.4',
+        'yapconf>=0.3.1',
     ]
 )

@@ -12,13 +12,14 @@ from mongoengine.errors import DoesNotExist
 from bg_utils.fields import DummyField, StatusInfo
 from brewtils.choices import parse
 from brewtils.errors import BrewmasterModelValidationError
-from brewtils.models import Choices as BrewtilsChoices
-from brewtils.models import Command as BrewtilsCommand
-from brewtils.models import Instance as BrewtilsInstance
-from brewtils.models import Parameter as BrewtilsParameter
-from brewtils.models import Request as BrewtilsRequest
-from brewtils.models import System as BrewtilsSystem
-from brewtils.models import Event as BrewtilsEvent
+from brewtils.models import (
+    Choices as BrewtilsChoices, Command as BrewtilsCommand,
+    Instance as BrewtilsInstance, Parameter as BrewtilsParameter,
+    Request as BrewtilsRequest, System as BrewtilsSystem,
+    Event as BrewtilsEvent)
+
+__all__ = ['System', 'Instance', 'Command', 'Parameter', 'Request', 'Choices',
+           'Event']
 
 
 # MongoEngine needs all EmbeddedDocuments to be defined before any Documents that reference them
@@ -203,11 +204,13 @@ class Request(Document, BrewtilsRequest):
     updated_at = DateTimeField(default=None, required=True)
     error_class = StringField(required=False)
     metadata = DictField()
+    has_parent = BooleanField(required=False)
 
     meta = {
         'auto_create_index': False,  # We need to manage this ourselves
         'index_background': True,
         'indexes': [
+            # These are used for ... something
             {'name': 'command_index', 'fields': ['command']},
             {'name': 'command_type_index', 'fields': ['command_type']},
             {'name': 'system_index', 'fields': ['system', 'instance_name']},
@@ -215,7 +218,17 @@ class Request(Document, BrewtilsRequest):
             {'name': 'created_at_index', 'fields': ['created_at']},
             {'name': 'updated_at_index', 'fields': ['updated_at']},
             {'name': 'comment_index', 'fields': ['comment']},
-            {'name': 'parent_index', 'fields': ['parent']},
+            {'name': 'parent_ref_index', 'fields': ['parent']},
+            {'name': 'parent_index', 'fields': ['has_parent']},
+
+            # These are for sorting on the request index page
+            {'name': 'parent_command_index', 'fields': ['has_parent', 'command']},
+            {'name': 'parent_system_index', 'fields': ['has_parent', 'system', 'instance_name']},
+            {'name': 'parent_status_index', 'fields': ['has_parent', 'status']},
+            {'name': 'parent_created_at_index', 'fields': ['has_parent', 'created_at']},
+            {'name': 'parent_comment_index', 'fields': ['has_parent', 'comment']},
+
+            # This is used for text searching
             {
                 'name': 'text_index',
                 'fields': ['$system', '$command', '$command_type',
