@@ -137,10 +137,12 @@ class TestBgUtils(object):
 
         generated_config = bg_utils.load_application_config(spec, cli_args)
         assert generated_config.log_level == 'DEBUG'
+        assert len(spec.sources) == 3
 
     def test_load_application_config_no_file_given(self, spec):
         config = bg_utils.load_application_config(spec, {})
         assert type(config) == Box
+        assert len(spec.sources) == 2
 
     @patch('bg_utils.logging.config.dictConfig')
     def test_setup_application_logging_no_log_config(self, config_mock):
