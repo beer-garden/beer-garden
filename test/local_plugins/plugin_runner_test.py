@@ -63,6 +63,18 @@ class TestPluginRunner(object):
         plugin.status = 'STOPPED'
         assert not instance_mock.save.called
 
+    def test_plugin_loggers_levels(self, plugin, system_mock):
+        # We have to null out the handlers, otherwise we will end up
+        # using a cached handler.
+        plugin.unformatted_logger.handlers = []
+        plugin.timestamp_logger.handlers = []
+        runner = LocalPluginRunner(
+            'entry_point', system_mock, 'default', '/path/to/plugin/name',
+            'web_host', 123, False, log_level=logging.DEBUG)
+        assert runner.logger.level == logging.getLogger(__name__).getEffectiveLevel()
+        assert runner.unformatted_logger.level == logging.DEBUG
+        assert runner.timestamp_logger.level == logging.DEBUG
+
     def test_generate_plugin_environment(self, plugin):
         plugin_env = {
             'BG_NAME': plugin.system.name,
@@ -74,7 +86,8 @@ class TestPluginRunner(object):
             'BG_SSL_ENABLED': 'False',
             'BG_URL_PREFIX': 'None',
             'BG_CA_VERIFY': 'True',
-            'BG_CA_CERT': 'None'
+            'BG_CA_CERT': 'None',
+            'BG_LOG_LEVEL': 'INFO',
         }
 
         assert plugin._generate_plugin_environment() == plugin_env

@@ -1,3 +1,4 @@
+import logging
 import os
 import copy
 import unittest
@@ -19,7 +20,8 @@ class PluginLoaderTest(unittest.TestCase):
             'PLUGIN_ARGS': {'default': None},
             'REQUIRES': [],
             'METADATA': {},
-            'ENVIRONMENT': {}
+            'ENVIRONMENT': {},
+            'LOG_LEVEL': 'INFO',
         }
 
         self.mock_validator = Mock()
@@ -162,7 +164,8 @@ class PluginLoaderTest(unittest.TestCase):
             'ENVIRONMENT': config_mock.ENVIRONMENT,
             'INSTANCES': config_mock.INSTANCES,
             'METADATA': config_mock.METADATA,
-            'PLUGIN_ARGS': config_mock.PLUGIN_ARGS
+            'PLUGIN_ARGS': config_mock.PLUGIN_ARGS,
+            'LOG_LEVEL': logging.INFO,
         })
 
     @patch('bartender.local_plugins.loader.sys')
@@ -189,7 +192,8 @@ class PluginLoaderTest(unittest.TestCase):
             'ENVIRONMENT': {},
             'INSTANCES': ['default'],
             'METADATA': {},
-            'PLUGIN_ARGS': {'default': None}
+            'PLUGIN_ARGS': {'default': None},
+            'LOG_LEVEL': logging.INFO,
         })
 
     @patch('bartender.local_plugins.loader.sys')
@@ -280,3 +284,35 @@ class PluginLoaderTest(unittest.TestCase):
         self.assertTrue(len(config['INSTANCES']) == len(expected))
         self.assertTrue(sorted(config['INSTANCES']) == sorted(expected))
         self.assertEqual(config['PLUGIN_ARGS'], {'foo': ['arg1'], 'bar': ['arg1']})
+
+    @patch('bartender.local_plugins.loader.sys')
+    @patch('bartender.local_plugins.loader.load_source')
+    def test_load_plugin_config_log_level(self, load_source_mock, sys_mock):
+        module_name = 'BGPLUGINCONFIG'
+        sys_mock.modules = {module_name: ''}
+
+        path_mock = Mock()
+        config_mock = Mock(INSTANCES=['foo', 'bar'],
+                           PLUGIN_ARGS=['arg1'], NAME='name', VERSION='0.0.1',
+                           PLUGIN_ENTRY='/path/to/file',
+                           LOG_LEVEL='DEBUG')
+        load_source_mock.return_value = config_mock
+
+        config = self.loader._load_plugin_config(path_mock)
+        self.assertEqual(config['LOG_LEVEL'], logging.DEBUG)
+
+    @patch('bartender.local_plugins.loader.sys')
+    @patch('bartender.local_plugins.loader.load_source')
+    def test_load_plugin_config_log_level_bad(self, load_source_mock, sys_mock):
+        module_name = 'BGPLUGINCONFIG'
+        sys_mock.modules = {module_name: ''}
+
+        path_mock = Mock()
+        config_mock = Mock(INSTANCES=['foo', 'bar'],
+                           PLUGIN_ARGS=['arg1'], NAME='name', VERSION='0.0.1',
+                           PLUGIN_ENTRY='/path/to/file',
+                           LOG_LEVEL='INVALID')
+        load_source_mock.return_value = config_mock
+
+        config = self.loader._load_plugin_config(path_mock)
+        self.assertEqual(config['LOG_LEVEL'], logging.INFO)

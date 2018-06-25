@@ -25,7 +25,8 @@ class LocalPluginRunner(StoppableThread):
 
     def __init__(self, entry_point, system, instance_name, path_to_plugin, web_host, web_port,
                  ssl_enabled, plugin_args=None, environment=None, requirements=None,
-                 plugin_log_directory=None, url_prefix=None, ca_verify=True, ca_cert=None):
+                 plugin_log_directory=None, url_prefix=None, ca_verify=True, ca_cert=None,
+                 **kwargs):
 
         self.entry_point = entry_point
         self.system = system
@@ -41,6 +42,7 @@ class LocalPluginRunner(StoppableThread):
         self.url_prefix = url_prefix
         self.ca_verify = ca_verify
         self.ca_cert = ca_cert
+        self.plugin_default_log_level = kwargs.get('log_level', logging.INFO)
 
         for instance in self.system.instances:
             if instance.name == self.instance_name:
@@ -60,14 +62,19 @@ class LocalPluginRunner(StoppableThread):
 
         self.log_levels = getLogLevels()
         log_config = {'log_directory': self.plugin_log_directory, 'log_name': self.unique_name}
+
+        # Logger used for bartender purposes.
+        self.logger = getPluginLogger(
+            self.unique_name,
+            format_string='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            **log_config
+        )
+
+        log_config['log_level'] = self.plugin_default_log_level
         self.unformatted_logger = getPluginLogger(self.unique_name+'-uf', **log_config)
         self.timestamp_logger = getPluginLogger(self.unique_name+'-ts',
                                                 format_string='%(asctime)s - %(message)s',
                                                 **log_config)
-        self.logger = getPluginLogger(self.unique_name,
-                                      format_string='%(asctime)s - %(name)s - '
-                                                    '%(levelname)s - %(message)s',
-                                      **log_config)
 
         StoppableThread.__init__(self, logger=self.logger, name=self.unique_name)
 
@@ -195,7 +202,8 @@ class LocalPluginRunner(StoppableThread):
             'BG_SSL_ENABLED': self.ssl_enabled,
             'BG_URL_PREFIX': self.url_prefix,
             'BG_CA_VERIFY': self.ca_verify,
-            'BG_CA_CERT': self.ca_cert
+            'BG_CA_CERT': self.ca_cert,
+            'BG_LOG_LEVEL': logging.getLevelName(self.plugin_default_log_level),
         }
 
         for key, value in plugin_env.items():
