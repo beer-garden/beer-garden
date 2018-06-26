@@ -43,33 +43,6 @@ class RequestAPI(BaseHandler):
 
         self.write(self.parser.serialize_request(req, to_string=False))
 
-    def _update_completed_request_metrics(self, request, status_before):
-        # We don't use _measure_latency here because the request times are
-        # stored in UTC and we need to make sure we're comparing apples to
-        # apples.
-        latency = (datetime.datetime.utcnow() - request.updated_at).total_seconds()
-        common_labels = {
-            'system': request.system,
-            'system_version': request.system_version,
-            'instance_name': request.instance_name,
-        }
-
-        self.completed_request_counter.labels(
-            command=request.command,
-            status=request.status,
-            **common_labels
-        ).inc()
-        self.plugin_command_latency.labels(
-            command=request.command,
-            status=request.status,
-            **common_labels
-        ).observe(latency)
-
-        self.queued_request_gauge.labels(**common_labels).dec()
-
-        if status_before == 'IN_PROGRESS':
-            self.in_progress_request_gauge.labels(**common_labels).dec()
-
     def patch(self, request_id):
         """
         ---
@@ -129,14 +102,9 @@ class RequestAPI(BaseHandler):
 
                         if op.value.upper() == 'IN_PROGRESS':
                             self.request.event.name = Events.REQUEST_STARTED.name
-                            self.in_progress_request_gauge.labels(
-                                system=req.system,
-                                system_version=req.system_version,
-                                instance_name=req.instance_name,
-                            ).inc()
+
                         elif op.value.upper() in BrewtilsRequest.COMPLETED_STATUSES:
                             self.request.event.name = Events.REQUEST_COMPLETED.name
-                            self._update_completed_request_metrics(req, status_before)
 
                             if request_id in brew_view.request_map:
                                 wait_condition = brew_view.request_map[request_id]
@@ -171,6 +139,7 @@ class RequestAPI(BaseHandler):
                 raise ModelValidationError(error_msg)
 
         req.save()
+        self._update_metrics(req, status_before)
 
         if wait_condition:
             wait_condition.notify()
@@ -178,3 +147,44 @@ class RequestAPI(BaseHandler):
         self.request.event_extras = {'request': req, 'patch': operations}
 
         self.write(self.parser.serialize_request(req, to_string=False))
+
+    def _update_metrics(self, request, status_before):
+        """Update metrics associated with this new request.
+
+        We have already confirmed that this request has had a valid state
+        transition because updating the status verifies that the updates are
+        correct.
+
+        In addition, this call is happening after the save to the
+        database. Now we just need to update the metrics.
+        """
+        if (
+            status_before == request.status or
+            status_before in BrewtilsRequest.COMPLETED_STATUSES
+        ):
+            return
+
+        labels = {
+            'system': request.system,
+            'system_version': request.system_version,
+            'instance_name': request.instance_name,
+        }
+
+        if status_before == 'CREATED':
+            self.queued_request_gauge.labels(**labels).dec()
+        elif status_before == 'IN_PROGRESS':
+            self.in_progress_request_gauge(**labels).dec()
+
+        if request.status == 'IN_PROGRESS':
+            self.in_progress_request_gauge.labels(**labels).inc()
+
+        elif request.status in BrewtilsRequest.COMPLETED_STATUSES:
+            # We don't use _measure_latency here because the request times are
+            # stored in UTC and we need to make sure we're comparing apples to
+            # apples.
+            latency = (datetime.datetime.utcnow() - request.created_at).total_seconds()
+            labels['command'] = request.command
+            labels['status'] = request.status
+
+            self.completed_request_counter.labels(**labels).inc()
+            self.plugin_command_latency.labels(**labels).observe(latency)
