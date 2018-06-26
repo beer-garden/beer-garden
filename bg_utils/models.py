@@ -16,10 +16,11 @@ from brewtils.models import (
     Choices as BrewtilsChoices, Command as BrewtilsCommand,
     Instance as BrewtilsInstance, Parameter as BrewtilsParameter,
     Request as BrewtilsRequest, System as BrewtilsSystem,
-    Event as BrewtilsEvent)
+    Event as BrewtilsEvent, Principal as BrewtilsPrincipal,
+    Role as BrewtilsRole)
 
 __all__ = ['System', 'Instance', 'Command', 'Parameter', 'Request', 'Choices',
-           'Event']
+           'Event', 'Principal', 'Role']
 
 
 # MongoEngine needs all EmbeddedDocuments to be defined before any Documents that reference them
@@ -455,9 +456,10 @@ class Event(Document, BrewtilsEvent):
         return BrewtilsEvent.__repr__(self)
 
 
-class Role(Document):
+class Role(Document, BrewtilsRole):
 
     name = StringField(required=True)
+    permissions = ListField(field=StringField())
 
     meta = {
         'auto_create_index': False,  # We need to manage this ourselves
@@ -468,10 +470,11 @@ class Role(Document):
     }
 
 
-class Principal(Document):
+class Principal(Document, BrewtilsPrincipal):
 
     username = StringField(required=True)
     hash = StringField()
     theme = StringField()
     roles = ListField(field=ReferenceField('Role', reverse_delete_rule=PULL))
+    permissions = ListField(field=StringField())
     preferences = DictField()
