@@ -46,13 +46,21 @@ def has_permission(principal, required_permissions):
 def generate_token(principal):
     current_time = datetime.utcnow()
 
+    # Permissions are a union of all role's permissions and specific permissions
+    role_names = []
+    permissions = set()
+    for role in principal.roles:
+        role_names.append(role.name)
+        permissions |= set(role.permissions)
+    permissions |= set(principal.permissions)
+
     payload = {
         'sub': str(principal.id),
         'iat': current_time,
         'exp': current_time + timedelta(minutes=20),
         'username': principal.username,
-        'roles': [role['name'] for role in principal.roles],
-        'permissions': principal.permissions,
+        'roles': role_names,
+        'permissions': list(permissions),
     }
     return jwt.encode(payload,
                       brew_view.tornado_app.settings["cookie_secret"],
