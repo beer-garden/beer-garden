@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import json
 import os
 from io import open
 
@@ -7,6 +8,7 @@ import pytest
 from box import Box
 from mock import patch, MagicMock, Mock
 from pymongo.errors import ServerSelectionTimeoutError
+from ruamel import yaml
 from yapconf import YapconfSpec
 
 import bg_utils
@@ -17,7 +19,11 @@ def spec():
     return YapconfSpec({
         'log_config': {'required': False, 'default': None},
         'log_file': {'required': False, 'default': None},
-        'log_level': {'required': False, 'default': 'INFO'},
+        'log_level': {
+            'required': False,
+            'default': 'INFO',
+            'previous_names': ['old_log_level'],
+        },
         'configuration': {
             'type': 'dict',
             'bootstrap': True,
@@ -35,6 +41,18 @@ def spec():
             },
         },
     })
+
+
+@pytest.fixture
+def old_config():
+    return {
+            'log_config': None,
+            'log_file': None,
+            'old_log_level': 'INFO',
+            'configuration': {
+                'type': 'json',
+            }
+        }
 
 
 class TestBgUtils(object):
@@ -295,3 +313,81 @@ class TestBgUtils(object):
 
         with pytest.raises(OperationFailure):
             bg_utils._verify_db()
+
+    def test_safe_migrate_migration_failure(self, tmpdir, spec, old_config):
+        old_filename = os.path.join(str(tmpdir), 'config.json')
+        old_config['configuration']['file'] = old_filename
+        cli_args = {'configuration': {'file': old_filename, 'type': 'json'}}
+
+        with open(old_filename, 'w') as f:
+            f.write(json.dumps(old_config, ensure_ascii=False))
+
+        spec.migrate_config_file = Mock(side_effect=ValueError)
+        generated_config = bg_utils.load_application_config(spec, cli_args)
+        assert generated_config.log_level == 'INFO'
+
+        # If the migration fails, we should still have JSON file.
+        with open(old_filename) as f:
+            new_config_value = json.load(f)
+
+        assert new_config_value == old_config
+
+    def test_safe_migrate_initial_rename_failure(self, tmpdir, spec, old_config):
+        old_filename = os.path.join(str(tmpdir), 'config.json')
+        old_config['configuration']['file'] = old_filename
+        cli_args = {'configuration': {'file': old_filename, 'type': 'json'}}
+
+        with open(old_filename, 'w') as f:
+            f.write(json.dumps(old_config, ensure_ascii=False))
+
+        with patch('os.rename', Mock(side_effect=ValueError)):
+            generated_config = bg_utils.load_application_config(spec, cli_args)
+
+        assert generated_config.log_level == 'INFO'
+
+        # The tmp file should still be there.
+        with open(old_filename + '.tmp') as f:
+            yaml.safe_load(f)
+
+        # However the loaded config, should be a JSON file.
+        with open(old_filename) as f:
+            new_config_value = json.load(f)
+
+        assert new_config_value == old_config
+
+    def test_safe_migrate_catastrophe(self, tmpdir, spec, old_config):
+        old_filename = os.path.join(str(tmpdir), 'config.json')
+        old_config['configuration']['file'] = old_filename
+        cli_args = {'configuration': {'file': old_filename, 'type': 'json'}}
+
+        with open(old_filename, 'w') as f:
+            f.write(json.dumps(old_config, ensure_ascii=False))
+
+        with patch('os.rename', Mock(side_effect=[Mock(), ValueError])):
+            with pytest.raises(ValueError):
+                bg_utils.load_application_config(spec, cli_args)
+
+    def test_safe_migrate_success(self, tmpdir, spec, old_config):
+        old_filename = os.path.join(str(tmpdir), 'config.json')
+        old_config['configuration']['file'] = old_filename
+        cli_args = {'configuration': {'file': old_filename, 'type': 'json'}}
+        expected_new_config = {
+            'log_config': None,
+            'log_file': None,
+            'log_level': 'INFO',
+            'configuration': {
+                'file': old_filename,
+                'type': 'json'
+            }
+        }
+
+        with open(old_filename, 'w') as f:
+            f.write(json.dumps(old_config, ensure_ascii=False))
+
+        generated_config = bg_utils.load_application_config(spec, cli_args)
+        assert generated_config.log_level == 'INFO'
+
+        with open(old_filename) as f:
+            new_config_value = yaml.safe_load(f)
+
+        assert new_config_value == expected_new_config

@@ -66,4 +66,4 @@ virtualenv==16.0.0        # via tox
 watchdog==0.8.3
 wheel==0.31.1
 wrapt==1.10.11            # via brewtils
-yapconf[yaml]==0.3.2
+yapconf[yaml]==0.3.3
