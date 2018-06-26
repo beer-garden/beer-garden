@@ -1,6 +1,7 @@
 import base64
 import functools
 from datetime import datetime, timedelta
+from enum import Enum
 
 import jwt
 from mongoengine.errors import DoesNotExist
@@ -15,20 +16,52 @@ from brewtils.models import (
 )
 
 
+class Permissions(Enum):
+    ALL = 'all'
+    COMMAND_ALL = 'command_all'
+    COMMAND_CREATE = 'command_create'
+    COMMAND_READ = 'command_read'
+    COMMAND_UPDATE = 'command_update'
+    COMMAND_DELETE = 'command_delete'
+    REQUEST_ALL = 'request_all'
+    REQUEST_CREATE = 'request_create'
+    REQUEST_READ = 'request_read'
+    REQUEST_UPDATE = 'request_update'
+    REQUEST_DELETE = 'request_delete'
+    SYSTEM_ALL = 'system_all'
+    SYSTEM_CREATE = 'system_create'
+    SYSTEM_READ = 'system_read'
+    SYSTEM_UPDATE = 'system_update'
+    SYSTEM_DELETE = 'system_delete'
+    INSTANCE_ALL = 'instance_all'
+    INSTANCE_CREATE = 'instance_create'
+    INSTANCE_READ = 'instance_read'
+    INSTANCE_UPDATE = 'instance_update'
+    INSTANCE_DELETE = 'instance_delete'
+    QUEUE_ALL = 'queue_all'
+    QUEUE_CREATE = 'queue_create'
+    QUEUE_READ = 'queue_read'
+    QUEUE_UPDATE = 'queue_update'
+    QUEUE_DELETE = 'queue_delete'
+    USER_ALL = 'user_all'
+    USER_CREATE = 'user_create'
+    USER_READ = 'user_read'
+    USER_UPDATE = 'user_update'
+    USER_DELETE = 'user_delete'
+
+
 def authenticated(method=None, permissions=None):
     """Decorate methods with this to require various permissions"""
 
     if method is None:
         return functools.partial(authenticated, permissions=permissions)
 
+    # Convert to strings for easier comparison
+    permission_strings = set(p.name for p in permissions)
+
     @functools.wraps(method)
     def wrapper(self, *args, **kwargs):
-        # If no user don't even bother
-        if not self.current_user:
-            raise HTTPError(403)
-
-        # User permissions must contain ALL specified permissions
-        if not has_permission(self.current_user, permissions):
+        if not has_permission(self.current_user, permission_strings):
             raise HTTPError(403)
 
         return method(self, *args, **kwargs)
@@ -37,10 +70,19 @@ def authenticated(method=None, permissions=None):
 
 
 def has_permission(principal, required_permissions):
-    if 'all' in principal.permissions:
+    """Determine if a principal has access to a resource
+
+    :param principal: the principal to test
+    :param required_permissions: set of strings
+    :return: bool yes or no
+    """
+    if not principal:
+        return False
+
+    if Permissions.ALL.value in principal.permissions:
         return True
 
-    return set(required_permissions).issubset(principal.permissions)
+    return bool(required_permissions.intersection(principal.permissions))
 
 
 def generate_token(principal):

@@ -1,11 +1,12 @@
 import json
 import logging
 
-from passlib.apps import custom_app_context
 from mongoengine.errors import DoesNotExist
+from passlib.apps import custom_app_context
 
 from bg_utils.models import Principal, Role
 from bg_utils.parser import BeerGardenSchemaParser
+from brew_view.authorization import Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 
@@ -132,10 +133,15 @@ class UserAPI(BaseHandler):
                     raise ModelValidationError(error_msg)
 
             elif op.path == '/permissions':
+                if op.value.upper() not in Permissions.__members__:
+                    error_msg = "Permission '%s' does not exist" % op.value
+                    self.logger.warning(error_msg)
+                    raise ModelValidationError(error_msg)
+
                 if op.operation == 'add':
-                    principal.permissions.append(op.value)
+                    principal.permissions.append(op.value.upper())
                 elif op.operation == 'remove':
-                    principal.permissions.remove(op.value)
+                    principal.permissions.remove(op.value.upper())
                 else:
                     error_msg = "Unsupported operation '%s'" % op.operation
                     self.logger.warning(error_msg)
