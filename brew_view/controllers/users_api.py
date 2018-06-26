@@ -38,19 +38,45 @@ class UserAPI(BaseHandler):
         """
         principal = Principal.objects.get(id=str(user_id))
 
+        self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.write(BeerGardenSchemaParser.serialize_principal(principal))
+
+    def delete(self, user_id):
+        """
+        ---
+        summary: Delete a specific User
+        parameters:
+          - name: user_id
+            in: path
+            required: true
+            description: The ID of the User
+            type: string
+        responses:
+          204:
+            description: User has been successfully deleted
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Users
+        """
+        principal = Principal.objects.get(id=str(user_id))
+        principal.delete()
+
+        self.set_status(204)
 
     def patch(self, user_id):
         """
         ---
         summary: Partially update a User
         description: |
-          The body of the request needs to contain a set of instructions detailing the updates to
-          apply:
+          The body of the request needs to contain a set of instructions
+          detailing the updates to apply:
           ```JSON
           {
             "operations": [
-              { "operation": "add", "path": "/role", "value": "admin" }
+              { "operation": "add", "path": "/roles", "value": "admin" }
             ]
           }
           ```
@@ -81,11 +107,14 @@ class UserAPI(BaseHandler):
           - Users
         """
         principal = Principal.objects.get(id=str(user_id))
-        operations = BeerGardenSchemaParser.parse_patch(self.request.decoded_body,
-                                                        many=True, from_string=True)
+        operations = BeerGardenSchemaParser.parse_patch(
+            self.request.decoded_body,
+            many=True,
+            from_string=True
+        )
 
         for op in operations:
-            if op.path == '/role':
+            if op.path == '/roles':
                 try:
                     role = Role.objects.get(name=op.value)
                 except DoesNotExist:
@@ -101,6 +130,17 @@ class UserAPI(BaseHandler):
                     error_msg = "Unsupported operation '%s'" % op.operation
                     self.logger.warning(error_msg)
                     raise ModelValidationError(error_msg)
+
+            elif op.path == '/permissions':
+                if op.operation == 'add':
+                    principal.permissions.append(op.value)
+                elif op.operation == 'remove':
+                    principal.permissions.remove(op.value)
+                else:
+                    error_msg = "Unsupported operation '%s'" % op.operation
+                    self.logger.warning(error_msg)
+                    raise ModelValidationError(error_msg)
+
             else:
                 error_msg = "Unsupported path '%s'" % op.path
                 self.logger.warning(error_msg)
@@ -108,10 +148,36 @@ class UserAPI(BaseHandler):
 
         principal.save()
 
+        self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.write(BeerGardenSchemaParser.serialize_principal(principal))
 
 
 class UsersAPI(BaseHandler):
+
+    def get(self):
+        """
+        ---
+        summary: Retrieve all Users
+        responses:
+          200:
+            description: All Users
+            schema:
+              type: array
+              items:
+                $ref: '#/definitions/User'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Users
+        """
+        principals = Principal.objects.all().select_related(max_depth=1)
+
+        self.set_header('Content-Type', 'application/json; charset=UTF-8')
+        self.write(BeerGardenSchemaParser.serialize_principal(
+            principals,
+            to_string=True,
+            many=True
+        ))
 
     def post(self):
         """
@@ -120,9 +186,19 @@ class UsersAPI(BaseHandler):
         parameters:
           - name: user
             in: body
-            description: The User definition
+            description: The user
             schema:
-              $ref: '#/definitions/User'
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: the name
+                password:
+                  type: string
+                  description: the password
+              required:
+                - username
+                - password
         consumes:
           - application/json
         responses:
@@ -139,7 +215,8 @@ class UsersAPI(BaseHandler):
         """
         parsed = json.loads(self.request.decoded_body)
 
-        hash = custom_app_context.hash(parsed['password'])
-
-        user = Principal(username=parsed['username'], hash=hash)
+        user = Principal(username=parsed['username'],
+                         hash=custom_app_context.hash(parsed['password']))
         user.save()
+
+        self.set_status(204)
