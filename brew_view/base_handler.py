@@ -10,7 +10,7 @@ from tornado.web import HTTPError, RequestHandler
 
 import bg_utils
 import brew_view
-from brew_view.authorization import basic_auth, bearer_auth
+from brew_view.authorization import anonymous_user, basic_auth, bearer_auth
 from brewtils.errors import (ModelError, ModelValidationError,
                              RequestPublishException, WaitExceededError)
 from brewtils.models import Event
@@ -67,7 +67,7 @@ class BaseHandler(RequestHandler):
             elif auth_header.startswith('Basic '):
                 return basic_auth(auth_header)
 
-        return None
+        return anonymous_user()
 
     @property
     def current_time_millis(self):

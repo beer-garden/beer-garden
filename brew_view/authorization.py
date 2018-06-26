@@ -9,7 +9,7 @@ from passlib.apps import custom_app_context
 from tornado.web import HTTPError
 
 import brew_view
-from bg_utils.models import Principal
+from bg_utils.models import Principal, Role
 from brewtils.models import (
     Principal as BrewtilsPrincipal,
     Role as BrewtilsRole
@@ -107,6 +107,16 @@ def generate_token(principal):
     return jwt.encode(payload,
                       brew_view.tornado_app.settings["cookie_secret"],
                       algorithm='HS256')
+
+
+def anonymous_user():
+    try:
+        # TODO - These won't change, so we should just load them on startup
+        anonymous_permissions = Role.objects.get(name='anonymous').permissions
+    except DoesNotExist:
+        anonymous_permissions = []
+
+    return BrewtilsPrincipal(permissions=anonymous_permissions)
 
 
 def basic_auth(auth_header):
