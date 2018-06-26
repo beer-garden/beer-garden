@@ -28,6 +28,6 @@ setup(
         'mongoengine',
         'ruamel.yaml',
         'thriftpy',
-        'yapconf>=0.3.1',
+        'yapconf>=0.3.3',
     ]
 )

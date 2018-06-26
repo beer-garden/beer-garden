@@ -320,7 +320,7 @@ class TestBgUtils(object):
         cli_args = {'configuration': {'file': old_filename, 'type': 'json'}}
 
         with open(old_filename, 'w') as f:
-            f.write(json.dumps(old_config))
+            f.write(json.dumps(old_config, ensure_ascii=False))
 
         spec.migrate_config_file = Mock(side_effect=ValueError)
         generated_config = bg_utils.load_application_config(spec, cli_args)
@@ -338,7 +338,7 @@ class TestBgUtils(object):
         cli_args = {'configuration': {'file': old_filename, 'type': 'json'}}
 
         with open(old_filename, 'w') as f:
-            f.write(json.dumps(old_config))
+            f.write(json.dumps(old_config, ensure_ascii=False))
 
         with patch('os.rename', Mock(side_effect=ValueError)):
             generated_config = bg_utils.load_application_config(spec, cli_args)
@@ -361,7 +361,7 @@ class TestBgUtils(object):
         cli_args = {'configuration': {'file': old_filename, 'type': 'json'}}
 
         with open(old_filename, 'w') as f:
-            f.write(json.dumps(old_config))
+            f.write(json.dumps(old_config, ensure_ascii=False))
 
         with patch('os.rename', Mock(side_effect=[Mock(), ValueError])):
             with pytest.raises(ValueError):
@@ -382,7 +382,7 @@ class TestBgUtils(object):
         }
 
         with open(old_filename, 'w') as f:
-            f.write(json.dumps(old_config))
+            f.write(json.dumps(old_config, ensure_ascii=False))
 
         generated_config = bg_utils.load_application_config(spec, cli_args)
         assert generated_config.log_level == 'INFO'
