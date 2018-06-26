@@ -89,7 +89,7 @@ def _setup_tornado_app():
         QueueAPI, QueueListAPI, RequestAPI, RequestListAPI, SystemAPI,
         SystemListAPI, VersionHandler, SpecHandler, SwaggerConfigHandler,
         OldAdminAPI, OldQueueAPI, OldQueueListAPI, LoggingConfigAPI,
-        EventPublisherAPI, LoginHandler, UserAPI, UsersAPI, RolesAPI)
+        EventPublisherAPI, LoginHandler, UserAPI, UsersAPI, RoleAPI, RolesAPI)
 
     prefix = config.web.url_prefix
     static_base = os.path.join(os.path.dirname(__file__), 'static', 'dist')
@@ -109,6 +109,7 @@ def _setup_tornado_app():
         (r'{0}api/v1/systems/(\w+)/?'.format(prefix), SystemAPI),
         (r'{0}api/v1/queues/([\w\.-]+)/?'.format(prefix), QueueAPI),
         (r'{0}api/v1/users/(\w+)/?'.format(prefix), UserAPI),
+        (r'{0}api/v1/roles/(\w+)/?'.format(prefix), RoleAPI),
         (r'{0}api/v1/config/logging/?'.format(prefix), LoggingConfigAPI),
 
         # Beta

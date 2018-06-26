@@ -37,10 +37,10 @@ class UserAPI(BaseHandler):
         tags:
           - Users
         """
-        principal = Principal.objects.get(id=str(user_id))
-
-        self.set_header('Content-Type', 'application/json; charset=UTF-8')
-        self.write(BeerGardenSchemaParser.serialize_principal(principal))
+        self.write(BeerGardenSchemaParser.serialize_principal(
+            Principal.objects.get(id=str(user_id)),
+            to_string=False
+        ))
 
     def delete(self, user_id):
         """
@@ -154,8 +154,8 @@ class UserAPI(BaseHandler):
 
         principal.save()
 
-        self.set_header('Content-Type', 'application/json; charset=UTF-8')
-        self.write(BeerGardenSchemaParser.serialize_principal(principal))
+        self.write(BeerGardenSchemaParser.serialize_principal(principal,
+                                                              to_string=False))
 
 
 class UsersAPI(BaseHandler):
