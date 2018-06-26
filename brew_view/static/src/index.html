@@ -33,14 +33,14 @@
       <ul class="nav navbar-nav navbar-top-links navbar-right">
 
         <li>
-          <a ng-show=userName>Hello, {{userName}}!</a>
+          <a ng-show=userName href="">Hello, {{userName}}!</a>
         </li>
 
         <li>
           <a ui-sref="login" ng-show=!userName>Login</a>
         </li>
         <li>
-          <a ng-click="logout()" ng-show=userName>Logout</a>
+          <a ng-click="logout()" ng-show=userName href="">Logout</a>
         </li>
 
         <li class="dropdown">
