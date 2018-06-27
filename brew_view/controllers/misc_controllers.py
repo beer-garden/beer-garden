@@ -23,6 +23,7 @@ class ConfigHandler(BaseHandler):
             'icon_default': brew_view.config.application.icon_default,
             'debug_mode': brew_view.config.debug_mode,
             'url_prefix': brew_view.config.web.url_prefix,
+            'metrics_url': brew_view.config.metrics.url,
         }
         self.write(configs)
 

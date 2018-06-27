@@ -1,8 +1,6 @@
 import datetime
 import logging
 
-from prometheus_client import Histogram, Gauge
-
 import brew_view
 from bg_utils.models import Request
 from bg_utils.parser import BeerGardenSchemaParser
@@ -15,16 +13,6 @@ class RequestAPI(BaseHandler):
 
     parser = BeerGardenSchemaParser()
     logger = logging.getLogger(__name__)
-    plugin_request_latency = Histogram(
-        'bg_plugin_request_latency_millis',
-        'Measures latency of individual system/commands',
-        ['system', 'instance', 'command', 'version'],
-    )
-    in_progress_request_gauge = Gauge(
-        'bg_in_progress_requests',
-        'Number of requests IN_PROGRESS',
-        ['system', 'instance', 'version'],
-    )
 
     def get(self, request_id):
         """
@@ -54,27 +42,6 @@ class RequestAPI(BaseHandler):
         req.children = Request.objects(parent=req)
 
         self.write(self.parser.serialize_request(req, to_string=False))
-
-    def _update_completed_request_metrics(self, request):
-        latency = (
-            (datetime.datetime.utcnow() - request.updated_at).total_seconds() * 1000
-        )
-
-        self.plugin_request_latency.labels(
-            system=request.system,
-            instance=request.instance_name,
-            version=request.system_version,
-            command=request.command,
-        ).observe(latency)
-        self.in_progress_request_gauge.labels(
-            system=request.system,
-            instance=request.instance_name,
-            version=request.system_version
-        ).dec()
-        self.queued_request_gauge.labels(
-            system=request.system,
-            instance=request.instance_name
-        ).dec()
 
     def patch(self, request_id):
         """
@@ -135,18 +102,12 @@ class RequestAPI(BaseHandler):
 
                         if op.value.upper() == 'IN_PROGRESS':
                             self.request.event.name = Events.REQUEST_STARTED.name
-                            self.in_progress_request_gauge.labels(
-                                system=req.system,
-                                instance=req.instance_name,
-                                version=req.system_version
-                            ).inc()
+
                         elif op.value.upper() in BrewtilsRequest.COMPLETED_STATUSES:
                             self.request.event.name = Events.REQUEST_COMPLETED.name
 
                             if request_id in brew_view.request_map:
                                 wait_condition = brew_view.request_map[request_id]
-
-                            self._update_completed_request_metrics(req)
                     else:
                         error_msg = "Unsupported status value '%s'" % op.value
                         self.logger.warning(error_msg)
@@ -178,6 +139,7 @@ class RequestAPI(BaseHandler):
                 raise ModelValidationError(error_msg)
 
         req.save()
+        self._update_metrics(req, status_before)
 
         if wait_condition:
             wait_condition.notify()
@@ -185,3 +147,44 @@ class RequestAPI(BaseHandler):
         self.request.event_extras = {'request': req, 'patch': operations}
 
         self.write(self.parser.serialize_request(req, to_string=False))
+
+    def _update_metrics(self, request, status_before):
+        """Update metrics associated with this new request.
+
+        We have already confirmed that this request has had a valid state
+        transition because updating the status verifies that the updates are
+        correct.
+
+        In addition, this call is happening after the save to the
+        database. Now we just need to update the metrics.
+        """
+        if (
+            status_before == request.status or
+            status_before in BrewtilsRequest.COMPLETED_STATUSES
+        ):
+            return
+
+        labels = {
+            'system': request.system,
+            'system_version': request.system_version,
+            'instance_name': request.instance_name,
+        }
+
+        if status_before == 'CREATED':
+            self.queued_request_gauge.labels(**labels).dec()
+        elif status_before == 'IN_PROGRESS':
+            self.in_progress_request_gauge(**labels).dec()
+
+        if request.status == 'IN_PROGRESS':
+            self.in_progress_request_gauge.labels(**labels).inc()
+
+        elif request.status in BrewtilsRequest.COMPLETED_STATUSES:
+            # We don't use _measure_latency here because the request times are
+            # stored in UTC and we need to make sure we're comparing apples to
+            # apples.
+            latency = (datetime.datetime.utcnow() - request.created_at).total_seconds()
+            labels['command'] = request.command
+            labels['status'] = request.status
+
+            self.completed_request_counter.labels(**labels).inc()
+            self.plugin_command_latency.labels(**labels).observe(latency)
