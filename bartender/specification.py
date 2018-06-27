@@ -10,6 +10,7 @@ SPECIFICATION = {
                 "cli_short_name": "c",
                 "bootstrap": True,
                 "previous_names": ["config"],
+                "alt_env_names": ["BG_CONFIG"],
             },
             "type": {
                 "type": "str",
@@ -26,6 +27,7 @@ SPECIFICATION = {
         "default": "localhost",
         "description": "Publicly accessible hostname for plugins to connect to",
         "previous_names": ["amq_publish_host"],
+        "alt_env_names": ["BG_AMQ_PUBLISH_HOST"],
     },
     'amq': {
         'type': 'dict',
@@ -71,18 +73,21 @@ SPECIFICATION = {
                                 "default": 15672,
                                 "description": "Port of the AMQ Admin host",
                                 "previous_names": ["amq_admin_port"],
+                                "alt_env_names": ["BG_AMQ_ADMIN_PORT"],
                             },
                             "user": {
                                 "type": "str",
                                 "default": "guest",
                                 "description": "Username to login to the AMQ admin",
                                 "previous_names": ["amq_admin_user"],
+                                "alt_env_names": ["BG_AMQ_ADMIN_USER"],
                             },
                             "password": {
                                 "type": "str",
                                 "default": "guest",
                                 "description": "Password to login to the AMQ admin",
                                 "previous_names": ["amq_admin_pw"],
+                                "alt_env_names": ["BG_AMQ_ADMIN_PW"],
                             },
                         },
                     },
@@ -94,18 +99,21 @@ SPECIFICATION = {
                                 "default": 5672,
                                 "description": "Port of the AMQ host",
                                 "previous_names": ["amq_port"],
+                                "alt_env_names": ["BG_AMQ_PORT"],
                             },
                             "password": {
                                 "type": "str",
                                 "default": "guest",
                                 "description": "Password to login to the AMQ host",
                                 "previous_names": ["amq_password"],
+                                "alt_env_names": ["BG_AMQ_PASSWORD"],
                             },
                             "user": {
                                 "type": "str",
                                 "default": "guest",
                                 "description": "Username to login to the AMQ host",
                                 "previous_names": ["amq_user"],
+                                "alt_env_names": ["BG_AMQ_USER"],
                             },
                         },
                     },
@@ -131,6 +139,7 @@ SPECIFICATION = {
                         "default": "localhost",
                         "description": "Hostname/IP of the database server",
                         "previous_names": ["db_host"],
+                        "alt_env_names": ["BG_DB_HOST"],
                     },
                     "password": {
                         "type": "str",
@@ -138,12 +147,14 @@ SPECIFICATION = {
                         "required": False,
                         "description": "Password to connect to the database",
                         "previous_names": ["db_password"],
+                        "alt_env_names": ["BG_DB_PASSWORD"],
                     },
                     "port": {
                         "type": "int",
                         "default": 27017,
                         "description": "Port of the database server",
                         "previous_names": ["db_port"],
+                        "alt_env_names": ["BG_DB_PORT"],
                     },
                     "username": {
                         "type": "str",
@@ -151,6 +162,7 @@ SPECIFICATION = {
                         "required": False,
                         "description": "Username to connect to the database",
                         "previous_names": ["db_username"],
+                        "alt_env_names": ["BG_DB_USERNAME"],
                     },
                 },
             },
@@ -163,6 +175,7 @@ SPECIFICATION = {
                         "description": "Number of minutes to wait before deleting "
                                        "events (negative number for never)",
                         "previous_names": ["event_mongo_ttl"],
+                        "alt_env_names": ["BG_EVENT_MONGO_TTL"],
                     },
                     "action": {
                         "type": "int",
@@ -170,12 +183,14 @@ SPECIFICATION = {
                         "description": "Number of minutes to wait before deleting "
                                        "ACTION requests (negative number for never)",
                         "previous_names": ["action_request_ttl"],
+                        "alt_env_names": ["BG_ACTION_REQUEST_TTL"],
                     },
                     "info": {
                         "type": "int",
                         "default": 15,
                         "description": "Number of minutes to wait before deleting INFO request",
                         "previous_names": ["info_request_ttl"],
+                        "alt_env_names": ["BG_INFO_REQUEST_TTL"],
                     },
                 },
             },
@@ -191,6 +206,7 @@ SPECIFICATION = {
                 "required": False,
                 "cli_short_name": "l",
                 "previous_names": ["log_config"],
+                "alt_env_names": ["BG_LOG_CONFIG"],
             },
             "file": {
                 "type": "str",
@@ -216,6 +232,7 @@ SPECIFICATION = {
                 "description": "Path to CA certificate file to use",
                 "required": False,
                 "previous_names": ["ca_cert"],
+                "alt_env_names": ["BG_CA_CERT"],
             },
             "ca_verify": {
                 "type": "bool",
@@ -223,6 +240,7 @@ SPECIFICATION = {
                 "description": "Verify external certificates",
                 "required": False,
                 "previous_names": ["ca_verify"],
+                "alt_env_names": ["BG_CA_VERIFY"],
             },
             "host": {
                 "type": "str",
@@ -241,6 +259,7 @@ SPECIFICATION = {
                 "default": False,
                 "description": "Is the API server using SSL",
                 "previous_names": ["ssl_enabled"],
+                "alt_env_names": ["BG_SSL_ENABLED"],
                 "cli_separator": "_",
             },
             "url_prefix": {
@@ -249,6 +268,7 @@ SPECIFICATION = {
                 "description": "URL prefix of the API server",
                 "required": False,
                 "previous_names": ["url_prefix"],
+                "alt_env_names": ["BG_URL_PREFIX"],
             },
         },
     },
@@ -261,6 +281,7 @@ SPECIFICATION = {
                 "default": 25,
                 "description": "Maximum number of threads for handling incoming thrift calls",
                 "previous_names": ["max_thrift_workers"],
+                "alt_env_names": ["BG_MAX_THRIFT_WORKERS"],
             },
             "host": {
                 "type": "str",
@@ -300,12 +321,14 @@ SPECIFICATION = {
                         "description": "Directory where local plugins are located",
                         "required": False,
                         "previous_names": ["plugins_directory", "plugin_directory"],
+                        "alt_env_names": ["BG_PLUGINS_DIRECTORY", "BG_PLUGIN_DIRECTORY"],
                     },
                     "log_directory": {
                         "type": "str",
                         "description": "Directory where local plugin logs should go",
                         "required": False,
                         "previous_names": ["plugin_log_directory"],
+                        "alt_env_names": ["BG_PLUGIN_LOG_DIRECTORY"],
                     },
                     'timeout': {
                         'type': 'dict',
@@ -315,12 +338,14 @@ SPECIFICATION = {
                                 "default": 10,
                                 "description": "Seconds to wait for a plugin to stop gracefully",
                                 "previous_names": ["plugin_shutdown_timeout"],
+                                "alt_env_names": ["BG_PLUGIN_SHUTDOWN_TIMEOUT"],
                             },
                             "startup": {
                                 "type": "int",
                                 "default": 5,
                                 "description": "Seconds to wait for a plugin to start",
                                 "previous_names": ["plugin_startup_timeout"],
+                                "alt_env_names": ["BG_PLUGIN_STARTUP_TIMEOUT"],
                             },
                         },
                     },
