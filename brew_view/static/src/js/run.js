@@ -5,7 +5,6 @@ appRun.$inject = [
   '$rootScope',
   '$state',
   '$stateParams',
-  '$cookies',
   '$http',
   'localStorageService',
   'UtilityService',
@@ -17,11 +16,12 @@ appRun.$inject = [
  * @param  {$rootScope} $rootScope         Angular's $rootScope object.
  * @param  {$state} $state                 Angular's $state object.
  * @param  {$stateParams} $stateParams     Angular's $stateParams object.
- * @param  {$cookies} $cookies             Angular's $cookies object.
+ * @param  {$http} $http                   Angular's $http object.
+ * @param  {localStorageService} 'localStorageService' Storage service
  * @param  {UtilityService} UtilityService UtilityService for getting configuration/icons.
  * @param  {SystemService} SystemService   SystemService for getting all System information.
  */
-export function appRun($rootScope, $state, $stateParams, $cookies, $http,
+export function appRun($rootScope, $state, $stateParams, $http,
     localStorageService, UtilityService, SystemService) {
   $rootScope.$state = $state;
   $rootScope.$stateParams = $stateParams;
@@ -56,15 +56,15 @@ export function appRun($rootScope, $state, $stateParams, $cookies, $http,
   };
 
   $rootScope.changeTheme = function(theme) {
-    $cookies.put('currentTheme', theme);
+    localStorageService.set('currentTheme', theme);
     for (const key of Object.keys($rootScope.themes)) {
       $rootScope.themes[key] = (key == theme);
     };
   };
 
-  // Load up some cookies
-  $rootScope.userName = $cookies.get('user_name');
-  $rootScope.changeTheme($cookies.get('currentTheme') || 'default');
+  // Load up some settings
+  $rootScope.userName = localStorageService.get('user_name');
+  $rootScope.changeTheme(localStorageService.get('currentTheme') || 'default');
 };
 
 
