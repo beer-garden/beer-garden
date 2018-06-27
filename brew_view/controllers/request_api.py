@@ -6,6 +6,7 @@ from prometheus_client import Histogram, Gauge
 import brew_view
 from bg_utils.models import Request
 from bg_utils.parser import BeerGardenSchemaParser
+from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events, Request as BrewtilsRequest
@@ -26,6 +27,7 @@ class RequestAPI(BaseHandler):
         ['system', 'instance', 'version'],
     )
 
+    @authenticated(permissions=[Permissions.REQUEST_ALL, Permissions.REQUEST_READ])
     def get(self, request_id):
         """
         ---
@@ -76,6 +78,7 @@ class RequestAPI(BaseHandler):
             instance=request.instance_name
         ).dec()
 
+    @authenticated(permissions=[Permissions.REQUEST_ALL, Permissions.REQUEST_UPDATE])
     def patch(self, request_id):
         """
         ---

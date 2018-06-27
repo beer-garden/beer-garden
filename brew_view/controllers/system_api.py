@@ -5,6 +5,7 @@ from tornado.gen import coroutine
 from bg_utils.models import System
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view import thrift_context
+from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events
@@ -15,6 +16,7 @@ class SystemAPI(BaseHandler):
     parser = BeerGardenSchemaParser()
     logger = logging.getLogger(__name__)
 
+    @authenticated(permissions=[Permissions.SYSTEM_ALL, Permissions.SYSTEM_READ])
     def get(self, system_id):
         """
         ---
@@ -51,6 +53,7 @@ class SystemAPI(BaseHandler):
                                                 include_commands=include_commands))
 
     @coroutine
+    @authenticated(permissions=[Permissions.SYSTEM_ALL, Permissions.SYSTEM_DELETE])
     def delete(self, system_id):
         """
         Will give Bartender a chance to remove instances of this system from the registry but will
@@ -84,6 +87,7 @@ class SystemAPI(BaseHandler):
         self.set_status(204)
 
     @coroutine
+    @authenticated(permissions=[Permissions.SYSTEM_ALL, Permissions.SYSTEM_UPDATE])
     def patch(self, system_id):
         """
         ---

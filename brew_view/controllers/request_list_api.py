@@ -6,13 +6,13 @@ from functools import reduce
 from mongoengine import Q
 from tornado.gen import coroutine
 from tornado.locks import Condition
-from tornado.web import authenticated
 
 import bg_utils
 import brew_view
 from bg_utils.models import Request, System
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view import thrift_context
+from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import (ModelValidationError, RequestPublishException,
                              WaitExceededError)
@@ -24,6 +24,7 @@ class RequestListAPI(BaseHandler):
     parser = BeerGardenSchemaParser()
     logger = logging.getLogger(__name__)
 
+    @authenticated(permissions=[Permissions.REQUEST_ALL, Permissions.REQUEST_READ])
     def get(self):
         """
         ---
@@ -198,7 +199,7 @@ class RequestListAPI(BaseHandler):
                                                  only=requested_fields))
 
     @coroutine
-    @authenticated
+    @authenticated(permissions=[Permissions.REQUEST_ALL, Permissions.REQUEST_CREATE])
     def post(self):
         """
         ---

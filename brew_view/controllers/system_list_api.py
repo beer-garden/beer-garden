@@ -5,6 +5,7 @@ from tornado.locks import Lock
 
 from bg_utils.models import System, Instance
 from bg_utils.parser import BeerGardenSchemaParser
+from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events
@@ -19,6 +20,7 @@ class SystemListAPI(BaseHandler):
     # Need to ensure that Systems are updated atomically
     system_lock = Lock()
 
+    @authenticated(permissions=[Permissions.SYSTEM_ALL, Permissions.SYSTEM_READ])
     def get(self):
         """
         ---
@@ -58,6 +60,7 @@ class SystemListAPI(BaseHandler):
             to_string=True, many=True, include_commands=include_commands))
 
     @coroutine
+    @authenticated(permissions=[Permissions.SYSTEM_ALL, Permissions.SYSTEM_CREATE])
     def post(self):
         """
         ---

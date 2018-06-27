@@ -7,6 +7,7 @@ from passlib.apps import custom_app_context
 from bg_utils.models import Principal, Role
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view.authorization import Permissions
+from brew_view.authorization import authenticated
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 
@@ -42,6 +43,7 @@ class UserAPI(BaseHandler):
             to_string=False
         ))
 
+    @authenticated(permissions=[Permissions.USER_ALL, Permissions.USER_DELETE])
     def delete(self, user_id):
         """
         ---
@@ -160,6 +162,7 @@ class UserAPI(BaseHandler):
 
 class UsersAPI(BaseHandler):
 
+    @authenticated(permissions=[Permissions.USER_ALL, Permissions.USER_READ])
     def get(self):
         """
         ---
@@ -185,6 +188,7 @@ class UsersAPI(BaseHandler):
             many=True
         ))
 
+    @authenticated(permissions=[Permissions.USER_ALL, Permissions.USER_CREATE])
     def post(self):
         """
         ---

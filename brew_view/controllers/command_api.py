@@ -2,6 +2,7 @@ import logging
 
 from bg_utils.models import Command
 from bg_utils.parser import BeerGardenSchemaParser
+from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 
 
@@ -10,6 +11,7 @@ class CommandAPI(BaseHandler):
     parser = BeerGardenSchemaParser()
     logger = logging.getLogger(__name__)
 
+    @authenticated(permissions=[Permissions.COMMAND_ALL, Permissions.COMMAND_READ])
     def get(self, command_id):
         """
         ---
