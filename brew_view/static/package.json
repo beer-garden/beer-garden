@@ -12,7 +12,6 @@
     "angular-animate": "^1.6.5",
     "angular-bootstrap-switch": "^0.5.2",
     "angular-confirm": "^1.2.6",
-    "angular-cookies": "^1.6.5",
     "angular-datatables": "^0.6.0",
     "angular-filter": "^0.5.17",
     "angular-local-storage": "^0.7.1",

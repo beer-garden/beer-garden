@@ -129,10 +129,6 @@ angular-confirm@^1.2.6:
   version "1.2.6"
   resolved "https://registry.yarnpkg.com/angular-confirm/-/angular-confirm-1.2.6.tgz#7988e5ee0bd7929142e6f6219f5baccc28b5199b"
 
-angular-cookies@^1.6.5:
-  version "1.6.9"
-  resolved "https://registry.yarnpkg.com/angular-cookies/-/angular-cookies-1.6.9.tgz#7cadddab1eda8a2fce6901d19e651be5cd320758"
-
 angular-datatables@^0.6.0:
   version "0.6.2"
   resolved "https://registry.yarnpkg.com/angular-datatables/-/angular-datatables-0.6.2.tgz#c01880afb79e5b27682e0ed12b1dc1a2f980f4de"

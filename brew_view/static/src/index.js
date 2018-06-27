@@ -10,7 +10,6 @@ import 'jquery';
 // Angular
 import angular from 'angular';
 import 'angular-animate';
-import 'angular-cookies';
 import 'angular-confirm';
 import 'angular-filter';
 import 'angular-sanitize';
@@ -120,7 +119,6 @@ angular.module('bgApp',
   'ngAnimate',
   'frapontillo.bootstrap-switch',
   'mgcrea.ngStrap',
-  'ngCookies',
   'LocalStorageModule',
   'beer-garden.addons',
   'beer-garden.builder',
