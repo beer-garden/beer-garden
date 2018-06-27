@@ -36,7 +36,7 @@
     "object-assign": "^4.1.1",
     "objectpath": "^1.2.1",
     "startbootstrap-sb-admin-2": "^3.3.7",
-    "swagger-ui-dist": "^3.9.3",
+    "swagger-ui-dist": "^3.17.1",
     "tv4": "~1.0.15",
     "ui-select": "^0.19.8"
   },

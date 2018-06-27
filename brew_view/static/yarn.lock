@@ -6062,9 +6062,9 @@ svgo@^0.7.0:
     sax "~1.2.1"
     whet.extend "~0.9.9"
 
-swagger-ui-dist@^3.9.3:
-  version "3.9.3"
-  resolved "https://registry.yarnpkg.com/swagger-ui-dist/-/swagger-ui-dist-3.9.3.tgz#caba91e8550d7d2464a08456bd936d7c430f0dd3"
+swagger-ui-dist@^3.17.1:
+  version "3.17.1"
+  resolved "https://registry.yarnpkg.com/swagger-ui-dist/-/swagger-ui-dist-3.17.1.tgz#db08ed681bcfba13149f7e610f48b36cd4c17de8"
 
 table@^4.0.1:
   version "4.0.2"
