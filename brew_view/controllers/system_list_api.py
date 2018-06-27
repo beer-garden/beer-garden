@@ -6,7 +6,7 @@ from tornado.locks import Lock
 from bg_utils.models import System, Instance
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view.base_handler import BaseHandler
-from brewtils.errors import ModelValidationError
+from brewtils.errors import ModelError, ModelValidationError
 from brewtils.models import Events
 from brewtils.schemas import SystemSchema
 
@@ -30,8 +30,27 @@ class SystemListAPI(BaseHandler):
             in: query
             required: false
             description: Include System's commands in the response
-            type: boolean
-            default: true
+            type: string
+            enum:
+              - true
+              - false
+              - count
+          - name: include_fields
+            in: header
+            required: false
+            description: Specify fields to include in the response
+            type: array
+            collectionFormat: csv
+            items:
+              type: string
+          - name: exclude_fields
+            in: header
+            required: false
+            description: Specify fields to exclude from the response
+            type: array
+            collectionFormat: csv
+            items:
+              type: string
         responses:
           200:
             description: All Systems
@@ -47,40 +66,40 @@ class SystemListAPI(BaseHandler):
         query_set = System.objects.order_by(self.request.headers.get('order_by', 'name'))
         serialize_params = {'to_string': True, 'many': True}
 
-        include_fields = set(self.request.headers.get_list('include_field'))
-        exclude_fields = set(self.request.headers.get_list('exclude_field'))
+        include_fields = self.request.headers.get('include_fields')
+        exclude_fields = self.request.headers.get('exclude_fields')
         include_commands = self.get_query_argument('include_commands', None)
 
         if include_fields and exclude_fields:
-            raise Exception('Headers "include_field" and "exclude_field" can'
-                            'not exist on the same request')
+            raise ModelError("Headers 'include_fields' and 'exclude_fields' "
+                             "cannot exist on the same request")
         elif include_commands and (include_fields or exclude_fields):
-            raise Exception('Headers "include_field" and "exclude_field" can'
-                            'not be used with "include_commands"')
+            raise ModelError("Headers 'include_fields' and 'exclude_fields' "
+                             "cannot be used with 'include_commands'")
         elif include_fields:
-            # include_fields = include_fields & self.REQUEST_FIELDS
+            include_fields = set(include_fields.split(',')) & self.REQUEST_FIELDS
             query_set = query_set.only(*include_fields)
+            serialize_params['only'] = include_fields
         elif exclude_fields:
-            exclude_fields = exclude_fields & self.REQUEST_FIELDS
+            exclude_fields = set(exclude_fields.split(',')) & self.REQUEST_FIELDS
             query_set = query_set.exclude(*exclude_fields)
             serialize_params['exclude'] = exclude_fields
 
-        # Convert the legacy include_commands into a bool:
+        # Deal with include_commands
         if include_commands:
-            include_commands = include_commands.lower() != 'false'
-
-            if not include_commands:
+            if include_commands.lower() == 'false':
                 query_set = query_set.exclude('commands')
                 serialize_params['include_commands'] = False
+            elif include_commands.lower() == 'count':
+                query_set = query_set.no_dereference()
 
         # Need to use self.request.query_arguments to get ALL the query args
         # Once we know the name use get_query_argument to get the decoded value
         # TODO Handle multiple query arguments with the same key
-        filter_params = {
-            key: self.get_query_argument(key) for key in self.request.query_arguments
-        }
-        # TODO IN Python 3 views have set operations
-        # query_set = query_set.order_by(self.request.headers.get('order_by', 'name'))
+        filter_params = {}
+        for key in self.request.query_arguments:
+            if key not in ('include_commands', ):
+                filter_params[key] = self.get_query_argument(key)
 
         result_set = query_set.filter(**filter_params)
 
