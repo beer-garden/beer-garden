@@ -1,6 +1,7 @@
 
 # Dependencies
-bg-utils
+-e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
+-e git+https://github.com/beer-garden/bg-utils@develop#egg=bg-utils
 futures ; python_version < "3.0"
 apispec
 passlib

@@ -13,6 +13,7 @@ from brew_view.controllers.instance_api import InstanceAPI
 from brew_view.controllers.misc_controllers import ConfigHandler, VersionHandler, SpecHandler, \
     SwaggerConfigHandler
 from brew_view.controllers.logging_api import LoggingConfigAPI
+from brew_view.controllers.event_api import EventPublisherAPI, EventSocket
 from brew_view.controllers.event_api import EventPublisherAPI
 from brew_view.controllers.login import LoginHandler
 from brew_view.controllers.users_api import UserAPI, UsersAPI

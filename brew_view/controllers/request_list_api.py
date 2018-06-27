@@ -322,7 +322,14 @@ class RequestListAPI(BaseHandler):
         self.set_status(201)
         self.queued_request_gauge.labels(
             system=request_model.system,
-            instance=request_model.instance_name
+            system_version=request_model.system_version,
+            instance_name=request_model.instance_name,
+        ).inc()
+        self.request_counter_total.labels(
+            system=request_model.system,
+            system_version=request_model.system_version,
+            instance_name=request_model.instance_name,
+            command=request_model.command,
         ).inc()
         self.write(self.parser.serialize_request(request_model, to_string=False))
 

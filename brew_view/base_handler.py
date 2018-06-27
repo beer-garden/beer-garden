@@ -4,7 +4,7 @@ import socket
 import time
 from mongoengine.errors import (DoesNotExist, NotUniqueError,
                                 ValidationError as MongoValidationError)
-from prometheus_client import Histogram, Gauge
+from prometheus_client import Gauge, Counter, Summary
 from thriftpy.thrift import TException
 from tornado.web import HTTPError, RequestHandler
 
@@ -20,15 +20,42 @@ class BaseHandler(RequestHandler):
     """Base handler from which all handlers inherit. Enables CORS and error handling."""
 
     MONGO_ID_PATTERN = r'.*/([0-9a-f]{24}).*'
-    queued_request_gauge = Gauge(
-        'bg_waiting_requests',
-        'Number of requests that have not been completed',
-        ['system', 'instance']
+
+    # Prometheus metrics.
+    # Summaries:
+    http_api_latency_total = Summary(
+        'bg_http_api_latency_seconds',
+        'Total number of seconds each API endpoint is taking to respond.',
+        ['method', 'route', 'status']
     )
-    http_api_latency = Histogram(
-        'bg_http_api_latency_millis',
-        'Testing out http totals.',
-        ['method', 'endpoint']
+    plugin_command_latency = Summary(
+        'bg_plugin_command_latency_seconds',
+        'Total time taken for a command to complete in seconds.',
+        ['system', 'instance_name', 'system_version', 'command', 'status'],
+    )
+
+    # Counters:
+    completed_request_counter = Counter(
+        'bg_completed_requests_total',
+        'Number of completed requests.',
+        ['system', 'instance_name', 'system_version', 'command', 'status'],
+    )
+    request_counter_total = Counter(
+        'bg_requests_total',
+        'Number of requests.',
+        ['system', 'instance_name', 'system_version', 'command'],
+    )
+
+    # Gauges:
+    queued_request_gauge = Gauge(
+        'bg_queued_requests',
+        'Number of requests waiting to be processed.',
+        ['system', 'instance_name', 'system_version'],
+    )
+    in_progress_request_gauge = Gauge(
+        'bg_in_progress_requests',
+        'Number of requests IN_PROGRESS',
+        ['system', 'instance_name', 'system_version'],
     )
 
     def __init__(self, *args, **kwargs):
@@ -70,21 +97,20 @@ class BaseHandler(RequestHandler):
         return anonymous_user()
 
     @property
-    def current_time_millis(self):
-        """Current time in Milliseconds."""
-        return int(round(time.time() * 1000))
-
-    @property
     def prometheus_endpoint(self):
         """Removes Mongo ID from endpoint."""
-        to_return = self.request.path
+        to_return = self.request.path.rstrip('/')
         for mongo_id in re.findall(self.MONGO_ID_PATTERN, self.request.path):
             to_return = to_return.replace(mongo_id, '<ID>')
         return to_return
 
     def prepare(self):
         """Called before each verb handler"""
-        self.request.created_time_ms = self.current_time_millis
+
+        # Used for recording prometheus metrics.
+        # We keep this time in seconds, also time-zone does not matter
+        # because we are just calculating a duration.
+        self.request.created_time = time.time()
 
         # This is used for sending event notifications
         self.request.event = Event()
@@ -110,9 +136,10 @@ class BaseHandler(RequestHandler):
 
     def on_finish(self):
         """Called after a handler completes processing"""
-        self.http_api_latency.labels(
+        self.http_api_latency_total.labels(
             method=self.request.method.upper(),
-            endpoint=self.prometheus_endpoint,
+            route=self.prometheus_endpoint,
+            status=self.get_status(),
         ).observe(self._measure_latency())
 
         if self.request.event.name:
@@ -120,7 +147,8 @@ class BaseHandler(RequestHandler):
                                                      **self.request.event_extras)
 
     def _measure_latency(self):
-        return self.current_time_millis - self.request.created_time_ms
+        """We measure the latency in seconds as a float."""
+        return time.time() - self.request.created_time
 
     def options(self, *args, **kwargs):
 

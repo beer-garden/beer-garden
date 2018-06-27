@@ -63,6 +63,7 @@ class RequestAPITest(TestHandlerBase):
                                            "value": "SUCCESS"}]})
 
         self.request_mock.updated_at = datetime.datetime.utcnow()
+        self.request_mock.created_at = datetime.datetime.utcnow()
         response = self.fetch('/api/v1/requests/id', method='PATCH', body=body,
                               headers={'content-type': 'application/json'})
         self.assertEqual(200, response.code)
