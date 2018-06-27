@@ -30,28 +30,40 @@ export PRINT_HELP_PYSCRIPT
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
 
+# Misc
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
-clean: clean-build clean-test
+deps: ## install javascript dependencies
+	yarn install
 
+
+# Cleaning
 clean-build: ## Remove dist
 	rm -rf dist
 
 clean-test: ## remove test and coverage artifacts
+	echo "TODO: clean javascript tests"
+
+clean-all: clean-build clean-test ## clean everything
 	rm -f yarn-error.log
 
-lint: ## check style with eslit
-	npm run lint
+clean: clean-all ## alias of clean-all
 
+
+# Linting
+lint: ## check style with eslit
+	yarn lint
+
+
+# Testing / Coverage
 test: ## run tests
 	echo "TODO: run javascript tests"
 
 coverage: ## check code coverage
 	echo "TODO: run coverage reports"
 
-dist: clean ## builds distribution
-	yarn build
 
-deps: ## install javascript dependencies
-	yarn install
+# Packaging
+package: ## builds distribution
+	yarn build

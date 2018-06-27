@@ -1,10 +1,8 @@
 import contextlib
-import json
 import logging
 import os
 import ssl
 from concurrent.futures import ThreadPoolExecutor
-from io import open
 
 from apispec import APISpec
 from thriftpy.rpc import client_context
@@ -18,7 +16,8 @@ import brewtils.rest
 from bg_utils.event_publisher import EventPublishers
 from bg_utils.pika import TransientPikaClient
 from bg_utils.plugin_logging_loader import PluginLoggingLoader
-from brew_view.publishers import MongoPublisher, RequestPublisher, TornadoPikaPublisher
+from brew_view.publishers import (MongoPublisher, RequestPublisher,
+                                  TornadoPikaPublisher, WebsocketPublisher)
 from brew_view.specification import get_default_logging_config
 from brewtils.schemas import ParameterSchema, CommandSchema, InstanceSchema, SystemSchema, \
     RequestSchema, PatchSchema, LoggingConfigSchema, EventSchema, QueueSchema
@@ -35,137 +34,137 @@ api_spec = None
 plugin_logging_config = None
 app_log_config = None
 notification_meta = None
+request_map = {}
 
 
 def setup_brew_view(spec, cli_args):
     global config, logger, app_log_config, event_publishers, notification_meta
 
-    # We load the config once just to see if there is a config file we should load
-    temp_config = spec.load_config(cli_args, 'ENVIRONMENT')
+    config = bg_utils.load_application_config(spec, cli_args)
+    config.web.url_prefix = brewtils.rest.normalize_url_prefix(config.web.url_prefix)
 
-    # If they specified a config file, we should load it up
-    if temp_config.config:
-        with open(temp_config.config) as config_file:
-            config_from_file = json.load(config_file)
-    else:
-        config_from_file = {}
-
-    config = spec.load_config(cli_args, config_from_file, 'ENVIRONMENT')
-
-    # This is a little weird - just being slightly redundant here to avoid needing to change
-    # application-configuration
-    prefix = brewtils.rest.normalize_url_prefix(config.url_prefix)
-    config['url_prefix'] = prefix
-    config.url_prefix = prefix
-
-    app_log_config = bg_utils.setup_application_logging(config,
-                                                        get_default_logging_config(config.log_level,
-                                                                                   config.log_file))
+    log_default = get_default_logging_config(config.log.level, config.log.file)
+    app_log_config = bg_utils.setup_application_logging(config, log_default)
     logger = logging.getLogger(__name__)
 
-    load_plugin_logging_config(config)
     bg_utils.setup_database(config)
-    setup_application(config)
+    load_plugin_logging_config(config)
+    _setup_application()
 
 
-def load_plugin_logging_config(app_config):
+def shutdown():
+    """Close any open websocket connections"""
+    from brew_view.controllers import EventSocket
+    EventSocket.shutdown()
+
+
+def load_plugin_logging_config(input_config):
     global plugin_logging_config
 
     plugin_logging_config = PluginLoggingLoader().load(
-        filename=app_config.plugin_log_config,
-        level=app_config.plugin_log_level,
+        filename=input_config.plugin_logging.config_file,
+        level=input_config.plugin_logging.level,
         default_config=app_log_config
     )
 
 
-def setup_application(app_config):
+def _setup_application():
     global application, server, tornado_app, public_url, thrift_context, event_publishers
 
-    public_url = Url(scheme='https' if config.ssl_enabled else 'http', host=config.public_fqdn,
-                     port=config.web_port,
-                     path=config.url_prefix).url
+    public_url = Url(scheme='https' if config.web.ssl.enabled else 'http',
+                     host=config.event.public_fqdn,
+                     port=config.web.port,
+                     path=config.web.url_prefix).url
 
-    thrift_context = _setup_thrift_context(app_config)
-    tornado_app = _setup_tornado_app(app_config)
-    server_ssl, client_ssl = _setup_ssl_context(app_config)
-    event_publishers = _setup_event_publishers(app_config, client_ssl)
+    thrift_context = _setup_thrift_context()
+    tornado_app = _setup_tornado_app()
+    server_ssl, client_ssl = _setup_ssl_context()
+    event_publishers = _setup_event_publishers(client_ssl)
 
     server = HTTPServer(tornado_app, ssl_options=server_ssl)
-    server.listen(app_config.web_port)
+    server.listen(config.web.port)
 
     application = IOLoop.current()
 
 
-def _setup_tornado_app(app_config):
+def _setup_tornado_app():
 
     # Import these here so we don't have a problem importing thrift_context
     from brew_view.controllers import AdminAPI, CommandAPI, CommandListAPI, ConfigHandler, \
         InstanceAPI, QueueAPI, QueueListAPI, RequestAPI, RequestListAPI, SystemAPI, SystemListAPI, \
         VersionHandler, SpecHandler, SwaggerConfigHandler, OldAdminAPI, OldQueueAPI, \
-        OldQueueListAPI, LoggingConfigAPI, EventPublisherAPI
+        OldQueueListAPI, LoggingConfigAPI, EventPublisherAPI, EventSocket
 
+    prefix = config.web.url_prefix
     static_base = os.path.join(os.path.dirname(__file__), 'static', 'dist')
 
     # These get documented in our OpenAPI (fka Swagger) documentation
     published_url_specs = [
-        (r'{0}api/v1/commands/?'.format(app_config['url_prefix']), CommandListAPI),
-        (r'{0}api/v1/commands/(\w+)/?'.format(app_config['url_prefix']), CommandAPI),
-        (r'{0}api/v1/instances/(\w+)/?'.format(app_config['url_prefix']), InstanceAPI),
-        (r'{0}api/v1/requests/?'.format(app_config['url_prefix']), RequestListAPI),
-        (r'{0}api/v1/requests/(\w+)/?'.format(app_config['url_prefix']), RequestAPI),
-        (r'{0}api/v1/systems/?'.format(app_config['url_prefix']), SystemListAPI),
-        (r'{0}api/v1/systems/(\w+)/?'.format(app_config['url_prefix']), SystemAPI),
-        (r'{0}api/v1/queues/?'.format(app_config['url_prefix']), QueueListAPI),
-        (r'{0}api/v1/queues/([\w\.-]+)/?'.format(app_config['url_prefix']), QueueAPI),
-        (r'{0}api/v1/admin/?'.format(app_config['url_prefix']), AdminAPI),
-        (r'{0}api/v1/config/logging/?'.format(app_config['url_prefix']), LoggingConfigAPI),
+        (r'{0}api/v1/commands/?'.format(prefix), CommandListAPI),
+        (r'{0}api/v1/requests/?'.format(prefix), RequestListAPI),
+        (r'{0}api/v1/systems/?'.format(prefix), SystemListAPI),
+        (r'{0}api/v1/queues/?'.format(prefix), QueueListAPI),
+        (r'{0}api/v1/admin/?'.format(prefix), AdminAPI),
+        (r'{0}api/v1/commands/(\w+)/?'.format(prefix), CommandAPI),
+        (r'{0}api/v1/instances/(\w+)/?'.format(prefix), InstanceAPI),
+        (r'{0}api/v1/requests/(\w+)/?'.format(prefix), RequestAPI),
+        (r'{0}api/v1/systems/(\w+)/?'.format(prefix), SystemAPI),
+        (r'{0}api/v1/queues/([\w\.-]+)/?'.format(prefix), QueueAPI),
+        (r'{0}api/v1/config/logging/?'.format(prefix), LoggingConfigAPI),
 
         # Beta
-        (r'{0}api/vbeta/events/?'.format(app_config['url_prefix']), EventPublisherAPI),
+        (r'{0}api/vbeta/events/?'.format(prefix), EventPublisherAPI),
 
         # Deprecated
-        (r'{0}api/v1/admin/system/?'.format(app_config['url_prefix']), OldAdminAPI),
-        (r'{0}api/v1/admin/queues/?'.format(app_config['url_prefix']), OldQueueListAPI),
-        (r'{0}api/v1/admin/queues/([\w\.-]+)/?'.format(app_config['url_prefix']), OldQueueAPI)
+        (r'{0}api/v1/admin/system/?'.format(prefix), OldAdminAPI),
+        (r'{0}api/v1/admin/queues/?'.format(prefix), OldQueueListAPI),
+        (r'{0}api/v1/admin/queues/([\w\.-]+)/?'.format(prefix), OldQueueAPI)
     ]
 
     # And these do not
     unpublished_url_specs = [
-        (r'{0}config/?'.format(app_config['url_prefix']), ConfigHandler),
-        (r'{0}config/swagger/?'.format(app_config['url_prefix']), SwaggerConfigHandler),
-        (r'{0}version/?'.format(app_config['url_prefix']), VersionHandler),
-        (r'{0}api/v1/spec/?'.format(app_config['url_prefix']), SpecHandler),
-        (r'{0}'.format(app_config['url_prefix'][:-1]), RedirectHandler,
-            {"url": app_config['url_prefix']}),
-        (r'{0}swagger/(.*)'.format(app_config['url_prefix']), StaticFileHandler,
+        # These are a little special - unpublished but still versioned
+        # The swagger spec
+        (r'{0}api/v1/spec/?'.format(prefix), SpecHandler),
+        # Events websocket
+        (r'{0}api/v1/socket/events/?'.format(prefix), EventSocket),
+
+        # Version / configs
+        (r'{0}version/?'.format(prefix), VersionHandler),
+        (r'{0}config/?'.format(prefix), ConfigHandler),
+        (r'{0}config/swagger/?'.format(prefix), SwaggerConfigHandler),
+
+        # Not sure if these are really necessary
+        (r'{0}'.format(prefix[:-1]), RedirectHandler, {"url": prefix}),
+        (r'{0}swagger/(.*)'.format(prefix), StaticFileHandler,
             {'path': os.path.join(static_base, 'swagger')}),
-        (r'{0}(.*)'.format(app_config['url_prefix']), StaticFileHandler,
+
+        # Static content
+        (r'{0}(.*)'.format(prefix), StaticFileHandler,
             {'path': static_base, 'default_filename': 'index.html'})
     ]
-    _load_swagger(published_url_specs, title=app_config.application_name)
+    _load_swagger(published_url_specs, title=config.application.name)
 
-    return Application(published_url_specs + unpublished_url_specs, debug=app_config.debug_mode)
+    return Application(published_url_specs + unpublished_url_specs, debug=config.debug_mode)
 
 
-def _setup_ssl_context(app_config):
+def _setup_ssl_context():
 
-    if app_config.ssl_enabled:
-        if app_config.client_cert_verify.upper() not in ('NONE', 'OPTIONAL', 'REQUIRED'):
-            raise Exception('Resolved value for configuation client_cert_verify (%s) must be '
-                            '"NONE", "OPTIONAL", or "REQUIRED"' % app_config.client_cert_verify)
-
+    if config.web.ssl.enabled:
         server_ssl = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        server_ssl.load_cert_chain(certfile=app_config.ssl_public_key,
-                                   keyfile=app_config.ssl_private_key)
-        server_ssl.verify_mode = getattr(ssl, 'CERT_'+app_config.client_cert_verify.upper())
+        server_ssl.load_cert_chain(certfile=config.web.ssl.public_key,
+                                   keyfile=config.web.ssl.private_key)
+        server_ssl.verify_mode = getattr(ssl, 'CERT_'+config.web.ssl.client_cert_verify.upper())
 
         client_ssl = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-        client_ssl.load_cert_chain(certfile=app_config.ssl_public_key,
-                                   keyfile=app_config.ssl_private_key)
+        client_ssl.load_cert_chain(certfile=config.web.ssl.public_key,
+                                   keyfile=config.web.ssl.private_key)
 
-        if app_config.ca_cert or app_config.ca_path:
-            server_ssl.load_verify_locations(cafile=app_config.ca_cert, capath=app_config.ca_path)
-            client_ssl.load_verify_locations(cafile=app_config.ca_cert, capath=app_config.ca_path)
+        if config.web.ssl.ca_cert or config.web.ssl.ca_path:
+            server_ssl.load_verify_locations(cafile=config.web.ssl.ca_cert,
+                                             capath=config.web.ssl.ca_path)
+            client_ssl.load_verify_locations(cafile=config.web.ssl.ca_cert,
+                                             capath=config.web.ssl.ca_path)
     else:
         server_ssl = None
         client_ssl = None
@@ -173,7 +172,7 @@ def _setup_ssl_context(app_config):
     return server_ssl, client_ssl
 
 
-def _setup_thrift_context(app_config):
+def _setup_thrift_context():
 
     class BgClient(object):
         """Helper class that wraps a thriftpy TClient"""
@@ -192,38 +191,43 @@ def _setup_thrift_context(app_config):
     @contextlib.contextmanager
     def bg_thrift_context(async=True, **kwargs):
         with client_context(bg_utils.bg_thrift.BartenderBackend,
-                            host=app_config.backend_host,
-                            port=app_config.backend_port,
-                            socket_timeout=app_config.backend_socket_timeout,
+                            host=config.backend.host,
+                            port=config.backend.port,
+                            socket_timeout=config.backend.socket_timeout,
                             **kwargs) as client:
             yield BgClient(client) if async else client
 
     return bg_thrift_context
 
 
-def _setup_event_publishers(app_config, ssl_context):
+def _setup_event_publishers(ssl_context):
+    from brew_view.controllers.event_api import EventSocket
 
     # Create the collection of event publishers and add concrete publishers to it
-    pubs = EventPublishers({'request': RequestPublisher(ssl_context=ssl_context)})
+    pubs = EventPublishers({
+        'request': RequestPublisher(ssl_context=ssl_context),
+        'websocket': WebsocketPublisher(EventSocket)
+    })
 
-    if app_config.event_persist_mongo:
+    if config.event.mongo.enable:
         pubs['mongo'] = MongoPublisher()
 
-    if app_config.event_amq_virtual_host and app_config.event_amq_exchange:
+    if config.event.amq.enable and config.event.amq.virtual_host and config.event.amq.exchange:
         pika_params = {
-            'host': app_config.amq_host, 'port': app_config.amq_port,
-            'user': app_config.amq_admin_user,
-            'password': app_config.amq_admin_password,
-            'exchange': app_config.event_amq_exchange,
-            'virtual_host': app_config.event_amq_virtual_host,
-            'connection_attempts': app_config.amq_connection_attempts
+            'host': config.amq.host,
+            'port': config.amq.connections.message.port,
+            'user': config.amq.connections.admin.user,
+            'password': config.amq.connections.admin.password,
+            'exchange': config.event.amq.exchange,
+            'virtual_host': config.event.amq.virtual_host,
+            'connection_attempts': config.amq.connection_attempts
         }
 
         # Make sure the exchange exists
         TransientPikaClient(**pika_params).declare_exchange()
 
         pubs['pika'] = TornadoPikaPublisher(
-            shutdown_timeout=app_config.shutdown_timeout,
+            shutdown_timeout=config.shutdown_timeout,
             **pika_params)
 
     # Add metadata functions - additional metadata that will be included with each event
