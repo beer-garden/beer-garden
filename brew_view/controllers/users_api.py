@@ -137,15 +137,17 @@ class UserAPI(BaseHandler):
                     raise ModelValidationError(error_msg)
 
             elif op.path == '/permissions':
-                if op.value.upper() not in Permissions.__members__:
+                try:
+                    perm = Permissions(op.value)
+                except ValueError:
                     error_msg = "Permission '%s' does not exist" % op.value
                     self.logger.warning(error_msg)
                     raise ModelValidationError(error_msg)
 
                 if op.operation == 'add':
-                    principal.permissions.append(op.value.upper())
+                    principal.permissions.append(perm.value)
                 elif op.operation == 'remove':
-                    principal.permissions.remove(op.value.upper())
+                    principal.permissions.remove(perm.value)
                 else:
                     error_msg = "Unsupported operation '%s'" % op.operation
                     self.logger.warning(error_msg)

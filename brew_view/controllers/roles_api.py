@@ -112,15 +112,17 @@ class RoleAPI(BaseHandler):
 
         for op in operations:
             if op.path == '/permissions':
-                if op.value.upper() not in Permissions.__members__:
+                try:
+                    perm = Permissions(op.value)
+                except ValueError:
                     error_msg = "Permission '%s' does not exist" % op.value
                     self.logger.warning(error_msg)
                     raise ModelValidationError(error_msg)
 
                 if op.operation == 'add':
-                    role.permissions.append(op.value.upper())
+                    role.permissions.append(perm.value)
                 elif op.operation == 'remove':
-                    role.permissions.remove(op.value.upper())
+                    role.permissions.remove(perm.value)
                 else:
                     error_msg = "Unsupported operation '%s'" % op.operation
                     self.logger.warning(error_msg)
