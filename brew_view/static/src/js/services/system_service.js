@@ -32,8 +32,16 @@ export default function systemService($http) {
     return $http.delete('api/v1/systems/' + system.id);
   };
 
-  SystemService.getSystems = function() {
-    return $http.get('api/v1/systems');
+  SystemService.getSystems = function(includeCommands, includeFields, excludeFields) {
+    return $http.get('api/v1/systems', {
+      params: {
+        include_commands: includeCommands,
+      },
+      headers: {
+        include_fields: includeFields,
+        exclude_fields: excludeFields,
+      }
+    });
   };
 
   SystemService.getSystem = function(id, includeCommands) {

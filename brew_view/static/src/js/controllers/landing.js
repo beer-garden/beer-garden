@@ -88,5 +88,5 @@ export default function landingController(
     $location.path('/systems/' + systemId);
   };
 
-  SystemService.getSystems().then($scope.successCallback, $scope.failureCallback);
+  SystemService.getSystems('count').then($scope.successCallback, $scope.failureCallback);
 };

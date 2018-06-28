@@ -120,7 +120,8 @@ export default function systemAdminController(
 
   // Register a function that polls for system status
   let statusUpdate = $interval(function() {
-    SystemService.getSystems().then($scope.successCallback, $scope.failureCallback);
+    SystemService.getSystems(undefined, 'id,name,display_name,version,instances')
+      .then($scope.successCallback, $scope.failureCallback);
   }, 5000);
 
   $scope.$on('$destroy', function() {
@@ -166,5 +167,6 @@ export default function systemAdminController(
     $scope.systems.errorMessage = response.data.message;
   };
 
-  SystemService.getSystems().then($scope.successCallback, $scope.failureCallback);
+  SystemService.getSystems(undefined, 'name,display_name,version,instances')
+    .then($scope.successCallback, $scope.failureCallback);
 };
