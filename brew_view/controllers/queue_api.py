@@ -13,7 +13,7 @@ class QueueAPI(BaseHandler):
     logger = logging.getLogger(__name__)
 
     @coroutine
-    @authenticated(permissions=[Permissions.QUEUE_ALL, Permissions.QUEUE_DELETE])
+    @authenticated(permissions=[Permissions.QUEUE_DELETE])
     def delete(self, queue_name):
         """
         ---

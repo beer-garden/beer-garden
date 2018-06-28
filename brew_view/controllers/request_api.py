@@ -15,7 +15,7 @@ class RequestAPI(BaseHandler):
     parser = BeerGardenSchemaParser()
     logger = logging.getLogger(__name__)
 
-    @authenticated(permissions=[Permissions.REQUEST_ALL, Permissions.REQUEST_READ])
+    @authenticated(permissions=[Permissions.REQUEST_READ])
     def get(self, request_id):
         """
         ---
@@ -45,7 +45,7 @@ class RequestAPI(BaseHandler):
 
         self.write(self.parser.serialize_request(req, to_string=False))
 
-    @authenticated(permissions=[Permissions.REQUEST_ALL, Permissions.REQUEST_UPDATE])
+    @authenticated(permissions=[Permissions.REQUEST_UPDATE])
     def patch(self, request_id):
         """
         ---

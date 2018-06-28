@@ -24,7 +24,7 @@ class RequestListAPI(BaseHandler):
     parser = BeerGardenSchemaParser()
     logger = logging.getLogger(__name__)
 
-    @authenticated(permissions=[Permissions.REQUEST_ALL, Permissions.REQUEST_READ])
+    @authenticated(permissions=[Permissions.REQUEST_READ])
     def get(self):
         """
         ---
@@ -199,7 +199,7 @@ class RequestListAPI(BaseHandler):
                                                  only=requested_fields))
 
     @coroutine
-    @authenticated(permissions=[Permissions.REQUEST_ALL, Permissions.REQUEST_CREATE])
+    @authenticated(permissions=[Permissions.REQUEST_CREATE])
     def post(self):
         """
         ---

@@ -16,6 +16,7 @@ class UserAPI(BaseHandler):
 
     logger = logging.getLogger(__name__)
 
+    @authenticated(permissions=[Permissions.USER_READ])
     def get(self, user_id):
         """
         ---
@@ -43,7 +44,7 @@ class UserAPI(BaseHandler):
             to_string=False
         ))
 
-    @authenticated(permissions=[Permissions.USER_ALL, Permissions.USER_DELETE])
+    @authenticated(permissions=[Permissions.USER_DELETE])
     def delete(self, user_id):
         """
         ---
@@ -69,6 +70,7 @@ class UserAPI(BaseHandler):
 
         self.set_status(204)
 
+    @authenticated(permissions=[Permissions.USER_UPDATE])
     def patch(self, user_id):
         """
         ---
@@ -162,7 +164,7 @@ class UserAPI(BaseHandler):
 
 class UsersAPI(BaseHandler):
 
-    @authenticated(permissions=[Permissions.USER_ALL, Permissions.USER_READ])
+    @authenticated(permissions=[Permissions.USER_READ])
     def get(self):
         """
         ---
@@ -188,7 +190,7 @@ class UsersAPI(BaseHandler):
             many=True
         ))
 
-    @authenticated(permissions=[Permissions.USER_ALL, Permissions.USER_CREATE])
+    @authenticated(permissions=[Permissions.USER_CREATE])
     def post(self):
         """
         ---

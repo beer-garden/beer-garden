@@ -16,7 +16,7 @@ class SystemAPI(BaseHandler):
     parser = BeerGardenSchemaParser()
     logger = logging.getLogger(__name__)
 
-    @authenticated(permissions=[Permissions.SYSTEM_ALL, Permissions.SYSTEM_READ])
+    @authenticated(permissions=[Permissions.SYSTEM_READ])
     def get(self, system_id):
         """
         ---
@@ -53,7 +53,7 @@ class SystemAPI(BaseHandler):
                                                 include_commands=include_commands))
 
     @coroutine
-    @authenticated(permissions=[Permissions.SYSTEM_ALL, Permissions.SYSTEM_DELETE])
+    @authenticated(permissions=[Permissions.SYSTEM_DELETE])
     def delete(self, system_id):
         """
         Will give Bartender a chance to remove instances of this system from the registry but will
@@ -87,7 +87,7 @@ class SystemAPI(BaseHandler):
         self.set_status(204)
 
     @coroutine
-    @authenticated(permissions=[Permissions.SYSTEM_ALL, Permissions.SYSTEM_UPDATE])
+    @authenticated(permissions=[Permissions.SYSTEM_UPDATE])
     def patch(self, system_id):
         """
         ---

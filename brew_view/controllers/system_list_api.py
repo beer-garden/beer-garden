@@ -20,7 +20,7 @@ class SystemListAPI(BaseHandler):
     # Need to ensure that Systems are updated atomically
     system_lock = Lock()
 
-    @authenticated(permissions=[Permissions.SYSTEM_ALL, Permissions.SYSTEM_READ])
+    @authenticated(permissions=[Permissions.SYSTEM_READ])
     def get(self):
         """
         ---
@@ -60,7 +60,7 @@ class SystemListAPI(BaseHandler):
             to_string=True, many=True, include_commands=include_commands))
 
     @coroutine
-    @authenticated(permissions=[Permissions.SYSTEM_ALL, Permissions.SYSTEM_CREATE])
+    @authenticated(permissions=[Permissions.SYSTEM_CREATE])
     def post(self):
         """
         ---

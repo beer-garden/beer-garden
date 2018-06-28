@@ -16,7 +16,7 @@ class QueueListAPI(BaseHandler):
     logger = logging.getLogger(__name__)
 
     @coroutine
-    @authenticated(permissions=[Permissions.QUEUE_ALL, Permissions.QUEUE_READ])
+    @authenticated(permissions=[Permissions.QUEUE_READ])
     def get(self):
         """
         ---
@@ -61,7 +61,7 @@ class QueueListAPI(BaseHandler):
         self.write(self.parser.serialize_queue(queues, to_string=True, many=True))
 
     @coroutine
-    @authenticated(permissions=[Permissions.QUEUE_ALL, Permissions.QUEUE_DELETE])
+    @authenticated(permissions=[Permissions.QUEUE_DELETE])
     def delete(self):
         """
         ---

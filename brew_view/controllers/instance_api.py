@@ -23,7 +23,7 @@ class InstanceAPI(BaseHandler):
         'stop': Events.INSTANCE_STOPPED.name
     }
 
-    @authenticated(permissions=[Permissions.INSTANCE_ALL, Permissions.INSTANCE_READ])
+    @authenticated(permissions=[Permissions.INSTANCE_READ])
     def get(self, instance_id):
         """
         ---
@@ -52,7 +52,7 @@ class InstanceAPI(BaseHandler):
                                                   to_string=False))
 
     @coroutine
-    @authenticated(permissions=[Permissions.INSTANCE_ALL, Permissions.INSTANCE_UPDATE])
+    @authenticated(permissions=[Permissions.INSTANCE_UPDATE])
     def patch(self, instance_id):
         """
         ---
