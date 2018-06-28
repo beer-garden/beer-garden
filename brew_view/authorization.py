@@ -17,37 +17,37 @@ from brewtils.models import (
 
 
 class Permissions(Enum):
-    ALL = 'all'
-    COMMAND_ALL = 'command_all'
-    COMMAND_CREATE = 'command_create'
-    COMMAND_READ = 'command_read'
-    COMMAND_UPDATE = 'command_update'
-    COMMAND_DELETE = 'command_delete'
-    REQUEST_ALL = 'request_all'
-    REQUEST_CREATE = 'request_create'
-    REQUEST_READ = 'request_read'
-    REQUEST_UPDATE = 'request_update'
-    REQUEST_DELETE = 'request_delete'
-    SYSTEM_ALL = 'system_all'
-    SYSTEM_CREATE = 'system_create'
-    SYSTEM_READ = 'system_read'
-    SYSTEM_UPDATE = 'system_update'
-    SYSTEM_DELETE = 'system_delete'
-    INSTANCE_ALL = 'instance_all'
-    INSTANCE_CREATE = 'instance_create'
-    INSTANCE_READ = 'instance_read'
-    INSTANCE_UPDATE = 'instance_update'
-    INSTANCE_DELETE = 'instance_delete'
-    QUEUE_ALL = 'queue_all'
-    QUEUE_CREATE = 'queue_create'
-    QUEUE_READ = 'queue_read'
-    QUEUE_UPDATE = 'queue_update'
-    QUEUE_DELETE = 'queue_delete'
-    USER_ALL = 'user_all'
-    USER_CREATE = 'user_create'
-    USER_READ = 'user_read'
-    USER_UPDATE = 'user_update'
-    USER_DELETE = 'user_delete'
+    ALL = 'bg-all'
+    COMMAND_ALL = 'bg-command-all'
+    COMMAND_CREATE = 'bg-command-create'
+    COMMAND_READ = 'bg-command-read'
+    COMMAND_UPDATE = 'bg-command-update'
+    COMMAND_DELETE = 'bg-command-delete'
+    REQUEST_ALL = 'bg-request-all'
+    REQUEST_CREATE = 'bg-request-create'
+    REQUEST_READ = 'bg-request-read'
+    REQUEST_UPDATE = 'bg-request-update'
+    REQUEST_DELETE = 'bg-request-delete'
+    SYSTEM_ALL = 'bg-system-all'
+    SYSTEM_CREATE = 'bg-system-create'
+    SYSTEM_READ = 'bg-system-read'
+    SYSTEM_UPDATE = 'bg-system-update'
+    SYSTEM_DELETE = 'bg-system-delete'
+    INSTANCE_ALL = 'bg-instance-all'
+    INSTANCE_CREATE = 'bg-instance-create'
+    INSTANCE_READ = 'bg-instance-read'
+    INSTANCE_UPDATE = 'bg-instance-update'
+    INSTANCE_DELETE = 'bg-instance-delete'
+    QUEUE_ALL = 'bg-queue-all'
+    QUEUE_CREATE = 'bg-queue-create'
+    QUEUE_READ = 'bg-queue-read'
+    QUEUE_UPDATE = 'bg-queue-update'
+    QUEUE_DELETE = 'bg-queue-delete'
+    USER_ALL = 'bg-user-all'
+    USER_CREATE = 'bg-user-create'
+    USER_READ = 'bg-user-read'
+    USER_UPDATE = 'bg-user-update'
+    USER_DELETE = 'bg-user-delete'
 
 
 def authenticated(method=None, permissions=None):
@@ -57,7 +57,7 @@ def authenticated(method=None, permissions=None):
         return functools.partial(authenticated, permissions=permissions)
 
     # Convert to strings for easier comparison
-    permission_strings = set(p.name for p in permissions)
+    permission_strings = set(p.value for p in permissions)
 
     @functools.wraps(method)
     def wrapper(self, *args, **kwargs):
@@ -72,9 +72,12 @@ def authenticated(method=None, permissions=None):
 def has_permission(principal, required_permissions):
     """Determine if a principal has access to a resource
 
-    :param principal: the principal to test
-    :param required_permissions: set of strings
-    :return: bool yes or no
+    Args:
+        principal: the principal to test
+        required_permissions: set of strings
+
+    Returns:
+        bool yes or no
     """
     if not principal:
         return False
@@ -112,7 +115,7 @@ def generate_token(principal):
 def anonymous_user():
     try:
         # TODO - These won't change, so we should just load them on startup
-        anonymous_permissions = Role.objects.get(name='anonymous').permissions
+        anonymous_permissions = Role.objects.get(name='bg-anonymous').permissions
     except DoesNotExist:
         anonymous_permissions = []
 
