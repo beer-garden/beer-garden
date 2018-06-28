@@ -98,7 +98,7 @@ class SystemListAPI(BaseHandler):
         # TODO Handle multiple query arguments with the same key
         filter_params = {}
         for key in self.request.query_arguments:
-            if key not in ('include_commands', ):
+            if key in self.REQUEST_FIELDS:
                 filter_params[key] = self.get_query_argument(key)
 
         result_set = query_set.filter(**filter_params)
