@@ -170,7 +170,6 @@ export default function systemAdminController(
 
   function handleWebsocketMessage(message) {
     let event = JSON.parse(message.data);
-    console.log(event);
 
     switch(event.name) {
       case 'INSTANCE_INITIALIZED':
