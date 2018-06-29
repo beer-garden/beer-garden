@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import logging.config
@@ -6,6 +7,7 @@ from argparse import ArgumentParser
 from io import open
 
 import six
+import sys
 import thriftpy
 import yapconf
 
@@ -126,7 +128,10 @@ def generate_logging_config_file(spec, logging_config_generator, cli_args):
 
 def load_application_config(spec, cli_args):
 
-    config_sources = [cli_args, 'ENVIRONMENT']
+    spec.add_source('cli_args', 'dict', data=cli_args)
+    spec.add_source('ENVIRONMENT', 'environment')
+
+    config_sources = ['cli_args', 'ENVIRONMENT']
 
     # Load bootstrap items to see if there's a config file
     temp_config = spec.load_config(*config_sources, bootstrap=True)
@@ -138,9 +143,62 @@ def load_application_config(spec, cli_args):
             file_type = 'json'
         else:
             file_type = 'yaml'
-        config_sources.insert(1, ('config file', temp_config.configuration.file, file_type))
+        filename = temp_config.configuration.file
+        _safe_migrate(spec, filename, file_type)
+        spec.add_source(filename, 'yaml', filename=filename)
+        config_sources.insert(1, filename)
 
     return spec.load_config(*config_sources)
+
+
+def _safe_migrate(spec, filename, file_type):
+    tmp_filename = filename + '.tmp'
+    try:
+        spec.migrate_config_file(
+            filename,
+            current_file_type=file_type,
+            output_file_name=tmp_filename,
+            output_file_type='yaml',
+        )
+    except Exception:
+        sys.stderr.write(
+            'Could not successfully migrate application configuration.'
+            'will attempt to load the previous configuration.'
+        )
+        return
+    if _is_new_config(spec, filename, file_type, tmp_filename):
+        _swap_files(filename, tmp_filename)
+    else:
+        os.remove(tmp_filename)
+
+
+def _is_new_config(spec, filename, file_type, tmp_filename):
+    old_config = spec.load_config(('old_config', filename, file_type))
+    new_config = spec.load_config(('new_config', tmp_filename, 'yaml'))
+    return old_config != new_config or file_type != 'yaml'
+
+
+def _swap_files(filename, tmp_filename):
+    try:
+        os.rename(filename, filename + '_' + datetime.datetime.utcnow().isoformat())
+    except Exception:
+        sys.stderr.write(
+            'Could not backup the old configuration. Cowardly refusing to overwrite '
+            'the current configuration with the old configuration. This could cause '
+            'problems later. Please see %s for the new configuration file' % tmp_filename
+        )
+        return
+
+    try:
+        os.rename(tmp_filename, filename)
+    except Exception:
+        sys.stderr.write(
+            'ERROR: Config migration was a success, but we could not move the '
+            'new config into the old config value. Maybe a permission issue? '
+            'Beer Garden cannot start now. To resolve this, you need to rename '
+            '%s to %s' % (tmp_filename, filename)
+        )
+        raise
 
 
 def setup_application_logging(config, default_config):
