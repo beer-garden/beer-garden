@@ -45,6 +45,7 @@ def spec():
 
 @pytest.fixture
 def old_config():
+    """Represent an un-migrated config with previous default values."""
     return {
             'log_config': None,
             'log_file': None,
@@ -53,6 +54,19 @@ def old_config():
                 'type': 'json',
             }
         }
+
+
+@pytest.fixture
+def new_config():
+    """Represents a up-to-date config with all new values."""
+    return {
+        'log_config': None,
+        'log_file': None,
+        'log_level': 'WARN',
+        'configuration': {
+            'type': 'yaml',
+        }
+    }
 
 
 class TestBgUtils(object):
@@ -330,6 +344,7 @@ class TestBgUtils(object):
         with open(old_filename) as f:
             new_config_value = json.load(f)
 
+        assert len(os.listdir(str(tmpdir))) == 1
         assert new_config_value == old_config
 
     def test_safe_migrate_initial_rename_failure(self, tmpdir, spec, old_config):
@@ -353,6 +368,7 @@ class TestBgUtils(object):
         with open(old_filename) as f:
             new_config_value = json.load(f)
 
+        assert len(os.listdir(str(tmpdir))) == 2
         assert new_config_value == old_config
 
     def test_safe_migrate_catastrophe(self, tmpdir, spec, old_config):
@@ -366,6 +382,7 @@ class TestBgUtils(object):
         with patch('os.rename', Mock(side_effect=[Mock(), ValueError])):
             with pytest.raises(ValueError):
                 bg_utils.load_application_config(spec, cli_args)
+        assert len(os.listdir(str(tmpdir))) == 2
 
     def test_safe_migrate_success(self, tmpdir, spec, old_config):
         old_filename = os.path.join(str(tmpdir), 'config.json')
@@ -391,3 +408,17 @@ class TestBgUtils(object):
             new_config_value = yaml.safe_load(f)
 
         assert new_config_value == expected_new_config
+        assert len(os.listdir(str(tmpdir))) == 2
+
+    def test_safe_migrate_no_change(self, tmpdir, spec, new_config):
+        filename = os.path.join(str(tmpdir), 'config.yaml')
+        new_config['configuration']['file'] = filename
+        cli_args = {'configuration': {'file': filename, 'type': 'yaml'}}
+
+        with open(filename, 'w', encoding='utf-8') as f:
+            yaml.safe_dump(new_config, f, default_flow_style=False, encoding='utf-8')
+
+        generated_config = bg_utils.load_application_config(spec, cli_args)
+        assert generated_config == new_config
+
+        assert len(os.listdir(str(tmpdir))) == 1
