@@ -350,9 +350,6 @@ class RequestListAPI(BaseHandler):
                 if column['data']:
                     requested_fields.append(column['data'])
 
-                    if column['data'] == 'system':
-                        requested_fields.append('instance_name')
-
                 if 'searchable' in column and column['searchable'] and column['search']['value']:
                     if column['data'] in ['created_at', 'updated_at']:
                         search_dates = column['search']['value'].split('~')
@@ -364,12 +361,6 @@ class RequestListAPI(BaseHandler):
                             search_params.append(Q(**{column['data']+'__lte': search_dates[1]}))
                     else:
                         search_query = Q(**{column['data']+'__contains': column['search']['value']})
-
-                        # Little hacky but whatever, need this because we combine system and
-                        # instance in the same column
-                        if column['data'] == 'system':
-                            search_query |= Q(instance_name__contains=column['search']['value'])
-
                         search_params.append(search_query)
 
             raw_order = self.get_query_argument('order', default=None)
