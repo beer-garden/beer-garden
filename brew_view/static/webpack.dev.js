@@ -12,9 +12,16 @@ module.exports = merge(common, {
     contentBase: path.resolve(__dirname, 'dist'),
     publicPath: '/',
     stats: 'minimal',
-    proxy: [{
-      context: ['/api', '/config', '/version'],
-      target: 'http://localhost:2337/',
-    }],
+    proxy: [
+      {
+        context: ['/api', '/config', '/version'],
+        target: 'http://localhost:2337/',
+      },
+      {
+        context: ['/api/v1/socket/events'],
+        target: 'ws://localhost:2337/',
+        ws: true,
+      },
+    ],
   },
 });
