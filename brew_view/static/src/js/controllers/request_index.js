@@ -59,7 +59,8 @@ export default function requestIndexController(
     .withLightColumnFilter({
       0: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
       1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      2: {
+      2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
+      3: {
         html: 'select',
         type: 'text',
         cssClass: 'form-inline form-control',
@@ -73,14 +74,14 @@ export default function requestIndexController(
           {value: 'ERROR', label: 'ERROR'},
         ],
       },
-      3: {
+      4: {
         html: 'range', type: 'text',
         attr: {class: 'form-inline form-control', style: 'width: 50%;'},
       },
-      4: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
+      5: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
     })
     .withDataProp('data')
-    .withOption('order', [3, 'desc'])
+    .withOption('order', [4, 'desc'])
     .withOption('serverSide', true)
     .withPaginationType('full_numbers')
     .withBootstrap();
@@ -100,13 +101,11 @@ export default function requestIndexController(
         if (full['metadata'] && full['metadata']['system_display_name']) {
           systemName = full['metadata']['system_display_name'];
         }
-
-        if (angular.isDefined(full.instance_name) && full.instance_name !== null) {
-          return systemName + ' [' + full.instance_name + ']';
-        } else {
-          return systemName;
-        }
+        return systemName;
       }),
+    DTColumnBuilder
+      .newColumn('instance_name')
+      .withTitle('Instance'),
     DTColumnBuilder
       .newColumn('status')
       .withTitle('Status'),
