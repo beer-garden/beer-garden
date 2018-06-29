@@ -166,7 +166,16 @@ def _safe_migrate(spec, filename, file_type):
             'will attempt to load the previous configuration.'
         )
         return
-    _swap_files(filename, tmp_filename)
+    if _is_new_config(spec, filename, file_type, tmp_filename):
+        _swap_files(filename, tmp_filename)
+    else:
+        os.remove(tmp_filename)
+
+
+def _is_new_config(spec, filename, file_type, tmp_filename):
+    old_config = spec.load_config(('old_config', filename, file_type))
+    new_config = spec.load_config(('new_config', tmp_filename, 'yaml'))
+    return old_config != new_config or file_type != 'yaml'
 
 
 def _swap_files(filename, tmp_filename):
