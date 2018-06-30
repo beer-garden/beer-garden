@@ -77,7 +77,7 @@ export default function systemViewController(
     $scope.system.loaded = false;
     $scope.system.error = true;
     $scope.system.status = response.status;
-    $scope.system.errorMessage = data.message;
+    $scope.system.errorMessage = response.data.message;
   };
 
   // Register a function that polls if the system is in a transition status
