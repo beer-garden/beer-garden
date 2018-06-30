@@ -1,6 +1,7 @@
 import angular from 'angular';
 
 systemViewController.$inject = [
+  '$rootScope',
   '$scope',
   '$stateParams',
   '$interval',
@@ -12,6 +13,7 @@ systemViewController.$inject = [
 
 /**
  * systemViewController - Angular Controller for viewing a single system.
+ * @param  {$rootScope} $rootScope     Angular's $rootScope object.
  * @param  {$scope} $scope             Angular's $scope object.
  * @param  {$stateParams} $stateParams Angular's $stateParams object.
  * @param  {$interval} $interval       Angular's $interval object.
@@ -21,6 +23,7 @@ systemViewController.$inject = [
  * @param  {Object} DTOptionsBuilder   Object for building Data-Tables objects.
  */
 export default function systemViewController(
+  $rootScope,
   $scope,
   $stateParams,
   $interval,
@@ -98,6 +101,29 @@ export default function systemViewController(
     }
   });
 
-  SystemService.getSystem($stateParams.id, true)
-    .then($scope.successCallback, $scope.failureCallback);
+  const loadSystem = function(stateParams) {
+    let systemId;
+    if (!angular.isDefined(stateParams.id)) {
+      let system = $rootScope.findSystem($stateParams.name, $stateParams.version);
+      if (!angular.isDefined(system)) {
+        $scope.failureCallback({status: 404, message: 'Invalid system ID'});
+        return;
+      }
+      systemId = system.id;
+    } else {
+      systemId = $stateParams.id;
+    }
+
+    SystemService.getSystem(systemId, true).
+      then($scope.successCallback, $scope.failureCallback);
+  };
+
+  if (angular.isDefined($rootScope.systems)) {
+    loadSystem($stateParams);
+  } else {
+    $scope.$on('systemsLoaded', function() {
+      loadSystem($stateParams);
+    });
+  }
+
 };
