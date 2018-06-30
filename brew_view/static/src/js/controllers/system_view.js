@@ -98,6 +98,21 @@ export default function systemViewController(
     }
   });
 
+  /**
+   * Get the state params required for the $stateProvider to route this command.
+   *
+   * @param {Object} command - command from server.
+   * @return {Object} params for routing.
+   */
+  $scope.getCommandStateParams = function(command) {
+    return {
+      systemName: $scope.system.data.name,
+      systemVersion: $rootScope.getVersionForUrl($scope.system.data),
+      name: command.name,
+      id: command.id,
+    };
+  };
+
   const loadSystem = function(stateParams) {
     let systemId;
     if (!angular.isDefined(stateParams.id)) {
@@ -122,5 +137,4 @@ export default function systemViewController(
       loadSystem($stateParams);
     });
   }
-
 };

@@ -17,12 +17,17 @@ export default function commandService($http, $rootScope, SystemService) {
   },
 
   CommandService.findSystem = function(command) {
-    const systemId = command.system.id;
-    for ( let index in $rootScope.systems ) {
-      if ( systemId == $rootScope.systems[index].id ) {
-        return $rootScope.systems[index];
-      }
-    }
+    return $rootScope.findSystemByID(command.system.id);
+  },
+
+  CommandService.getStateParams = function(command) {
+    let system = $rootScope.findSystemByID(command.system.id);
+    return {
+      systemName: system.name,
+      systemVersion: $rootScope.getVersionForUrl(command.system),
+      name: command.name,
+      id: command.id,
+    };
   },
 
   CommandService.getCommands = function() {
