@@ -6,7 +6,6 @@ systemViewController.$inject = [
   '$stateParams',
   '$interval',
   'SystemService',
-  'CommandService',
   'UtilityService',
   'DTOptionsBuilder',
 ];
@@ -18,7 +17,6 @@ systemViewController.$inject = [
  * @param  {$stateParams} $stateParams Angular's $stateParams object.
  * @param  {$interval} $interval       Angular's $interval object.
  * @param  {Object} SystemService      Beer-Garden System Service.
- * @param  {Object} CommandService     Beer-Garden Command Service.
  * @param  {Object} UtilityService     Beer-Garden Utility Service.
  * @param  {Object} DTOptionsBuilder   Object for building Data-Tables objects.
  */
@@ -28,7 +26,6 @@ export default function systemViewController(
   $stateParams,
   $interval,
   SystemService,
-  CommandService,
   UtilityService,
   DTOptionsBuilder) {
   $scope.util = UtilityService;
