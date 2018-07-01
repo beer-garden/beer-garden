@@ -16,7 +16,7 @@ from brewtils.models import (
     Choices as BrewtilsChoices, Command as BrewtilsCommand,
     Instance as BrewtilsInstance, Parameter as BrewtilsParameter,
     Request as BrewtilsRequest, System as BrewtilsSystem,
-    Event as BrewtilsEvent)
+    Event as BrewtilsEvent, Job as BrewtilsJob)
 
 __all__ = ['System', 'Instance', 'Command', 'Parameter', 'Request', 'Choices',
            'Event']
@@ -452,3 +452,20 @@ class Event(Document, BrewtilsEvent):
 
     def __repr__(self):
         return BrewtilsEvent.__repr__(self)
+
+
+class Job(Document, BrewtilsJob):
+
+    name = StringField(required=True)
+    trigger_type = StringField(required=True, choices=BrewtilsJob.TRIGGER_TYPES)
+    trigger_args = DictField(required=True)
+    request_payload = DictField(required=True)
+    misfire_grace_time = IntField()
+    coalesce = BooleanField(default=True)
+    max_instances = IntField(default=3)
+
+    def __str__(self):
+        return BrewtilsJob.__str__(self)
+
+    def __repr__(self):
+        return BrewtilsJob.__repr__(self)
