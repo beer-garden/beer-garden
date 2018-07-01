@@ -5,6 +5,10 @@ import ssl
 from concurrent.futures import ThreadPoolExecutor
 
 from apispec import APISpec
+from apscheduler.jobstores.mongodb import MongoDBJobStore
+from apscheduler.schedulers.tornado import TornadoScheduler
+from apscheduler.executors.pool import ThreadPoolExecutor as APTPExecutor
+from pytz import utc
 from thriftpy.rpc import client_context
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
@@ -34,6 +38,7 @@ api_spec = None
 plugin_logging_config = None
 app_log_config = None
 notification_meta = None
+scheduler = None
 request_map = {}
 
 
@@ -69,7 +74,7 @@ def load_plugin_logging_config(input_config):
 
 
 def _setup_application():
-    global application, server, tornado_app, public_url, thrift_context, event_publishers
+    global application, server, tornado_app, public_url, thrift_context, event_publishers, scheduler
 
     public_url = Url(scheme='https' if config.web.ssl.enabled else 'http',
                      host=config.event.public_fqdn,
@@ -80,11 +85,35 @@ def _setup_application():
     tornado_app = _setup_tornado_app()
     server_ssl, client_ssl = _setup_ssl_context()
     event_publishers = _setup_event_publishers(client_ssl)
+    scheduler = _setup_scheduler()
 
     server = HTTPServer(tornado_app, ssl_options=server_ssl)
     server.listen(config.web.port)
 
     application = IOLoop.current()
+
+
+def _setup_scheduler():
+    # TODO: Create our own JobStore
+    # https://apscheduler.readthedocs.io/en/latest/extending.html#custom-job-stores
+    jobstores = {
+        'mongo': MongoDBJobStore(config.db.name, **config.db.connection),
+    }
+    # TODO: Explore different executors (maybe process pool?)
+    executors = {
+        'default': APTPExecutor(20),
+    }
+    job_defaults = {
+        'coalesce': True,
+        'max_instances': 3,
+    }
+
+    return TornadoScheduler(
+        jobstores=jobstores,
+        executors=executors,
+        job_defaults=job_defaults,
+        timezone=utc
+    )
 
 
 def _setup_tornado_app():
@@ -93,7 +122,7 @@ def _setup_tornado_app():
     from brew_view.controllers import AdminAPI, CommandAPI, CommandListAPI, ConfigHandler, \
         InstanceAPI, QueueAPI, QueueListAPI, RequestAPI, RequestListAPI, SystemAPI, SystemListAPI, \
         VersionHandler, SpecHandler, SwaggerConfigHandler, OldAdminAPI, OldQueueAPI, \
-        OldQueueListAPI, LoggingConfigAPI, EventPublisherAPI, EventSocket
+        OldQueueListAPI, LoggingConfigAPI, EventPublisherAPI, EventSocket, JobListAPI, JobAPI
 
     prefix = config.web.url_prefix
     static_base = os.path.join(os.path.dirname(__file__), 'static', 'dist')
@@ -123,6 +152,9 @@ def _setup_tornado_app():
 
     # And these do not
     unpublished_url_specs = [
+        # TODO: Move these to published_url.
+        (r'{0}api/v1/jobs/?'.format(prefix), JobListAPI),
+        (r'{0}api/v1/jobs/(\w+)/?'.format(prefix), JobAPI),
         # These are a little special - unpublished but still versioned
         # The swagger spec
         (r'{0}api/v1/spec/?'.format(prefix), SpecHandler),

@@ -72,6 +72,7 @@ def main():
 
     brew_view.logger.debug("Publishing application startup event.")
     brew_view.event_publishers.publish_event(Event(name=Events.BREWVIEW_STARTED.name))
+    brew_view.scheduler.start()
 
     brew_view.logger.info("Starting up the application.")
     start_http_server(brew_view.config.metrics.port)
