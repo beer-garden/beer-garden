@@ -1,6 +1,7 @@
 import angular from 'angular';
 
 queueIndexController.$inject = [
+  '$rootScope',
   '$scope',
   '$compile',
   '$window',
@@ -14,6 +15,7 @@ queueIndexController.$inject = [
 
 /**
  * queueIndexController - Angular controller for queue index page.
+ * @param  {$rootScope} $rootScope   Angular's $rootScope object.
  * @param  {$scope} $scope           Angular's $scope object.
  * @param  {$compile} $compile       Angular's $compile object.
  * @param  {$window} $window         Angular's $window object.
@@ -25,6 +27,7 @@ queueIndexController.$inject = [
  * @param  {Object} QueueService     Beer-Garden's queue service object.
  */
 export default function queueIndexController(
+  $rootScope,
   $scope,
   $compile,
   $window,
@@ -93,8 +96,9 @@ export default function queueIndexController(
       .newColumn('system')
       .withTitle('System')
       .renderWith(function(data, type, full) {
+        let version = $rootScope.getVersionForUrl($rootScope.findSystemByID(full.system_id));
         return '<a ui-sref=' +
-               '"system({id: \'' + full.system_id + '\'})">' +
+               '"system({name: \'' + full.system+ '\', version: \'' + version + '\'})">' +
                (full.display || data) + '</a>';
       }),
     DTColumnBuilder

@@ -22,7 +22,13 @@
         <td>{{command.name}}</td>
         <td>{{service.findSystem(command).version}}</td>
         <td>{{ command.description || "No Description Provided" }}</td>
-        <td><a class="btn btn-primary center-block word-wrap-button" ui-sref="command({command_id: command.id})">Make it Happen!</a></td>
+        <td>
+          <a
+            class="btn btn-primary center-block word-wrap-button"
+            ui-sref="command(service.getStateParams(command))">
+            Make it Happen!
+          </a>
+        </td>
       </tr>
     </tbody>
     </table>

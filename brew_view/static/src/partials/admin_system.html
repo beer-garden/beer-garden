@@ -24,7 +24,7 @@
         <div class="list-group">
           <div class="list-group-item clearfix" style="font-size: 18px;">
             <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
-              <a ui-sref="system({id: system.id})">
+              <a ui-sref="system({name: system.name, version: getVersionForUrl(system)})">
                 <span class="icon-color" ng-class="util.getIcon(system.icon_name)"></span>
                 <span style="font-size: 18px;">{{system.version}}</span>
               </a>
