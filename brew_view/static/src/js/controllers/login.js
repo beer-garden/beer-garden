@@ -22,10 +22,10 @@ export default function LoginController($scope, $rootScope, $http, $state, local
       let decoded = jwtDecode(token);
       let userId = decoded.sub;
 
-      // Finally, grab the user definition from the API so we can read prefs
+      // Finally, grab the user definition from the API
       $http.get('api/v1/users/' + userId).then(function(response) {
-        $rootScope.userName = response.data.username;
-        $rootScope.changeTheme(response.data.preferences.theme || 'default');
+        $rootScope.user = response.data;
+        $rootScope.changeTheme($rootScope.user.preferences.theme || 'default');
       });
 
       $state.go('landing');

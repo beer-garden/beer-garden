@@ -153,6 +153,14 @@ class UserAPI(BaseHandler):
                     self.logger.warning(error_msg)
                     raise ModelValidationError(error_msg)
 
+            elif op.path == '/preferences/theme':
+                if op.operation == 'set':
+                    principal.preferences['theme'] = op.value
+                else:
+                    error_msg = "Unsupported operation '%s'" % op.operation
+                    self.logger.warning(error_msg)
+                    raise ModelValidationError(error_msg)
+
             else:
                 error_msg = "Unsupported path '%s'" % op.path
                 self.logger.warning(error_msg)
