@@ -104,6 +104,9 @@ class BartenderApp(StoppableThread):
         self.logger.info("Verifying message virtual host...")
         self.clients['pyrabbit'].verify_virtual_host()
 
+        self.logger.info("Ensuring admin queue expiration policy...")
+        self.clients['pyrabbit'].ensure_admin_expiry()
+
         self.logger.info("Declaring message exchange...")
         self.clients['pika'].declare_exchange()
 

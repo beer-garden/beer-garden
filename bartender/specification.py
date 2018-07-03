@@ -38,6 +38,11 @@ SPECIFICATION = {
                 "description": "Hostname of AMQ to use",
                 "previous_names": ["amq_host"],
             },
+            "admin_queue_expiry": {
+                "type": "int",
+                "default": 3600000,     # One hour
+                "description": "Time before unused admin queues are removed",
+            },
             "heartbeat_interval": {
                 "type": "int",
                 "default": 3600,

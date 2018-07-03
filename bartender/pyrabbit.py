@@ -3,9 +3,8 @@ import logging
 from pyrabbit2.api import Client
 from pyrabbit2.http import HTTPError, NetworkError
 
-from bg_utils.parser import BeerGardenSchemaParser
-
 import bartender
+from bg_utils.parser import BeerGardenSchemaParser
 
 
 class PyrabbitClient(object):
@@ -28,10 +27,25 @@ class PyrabbitClient(object):
             return False
 
     def verify_virtual_host(self):
+        """Ensure the virtual host exists"""
         try:
             return self._client.get_vhost(self._virtual_host)
         except Exception:
             self.logger.error("Error verifying virtual host %s, does it exist?", self._virtual_host)
+            raise
+
+    def ensure_admin_expiry(self):
+        """Ensure that the admin queue expiration policy exists"""
+        try:
+            kwargs = {
+                'pattern': '^admin.*',
+                'definition': {'expires': bartender.config.amq.admin_queue_expiry},
+                'priority': 1,
+                'apply-to': 'queues',
+            }
+            self._client.create_policy(self._virtual_host, 'admin_expiry', **kwargs)
+        except Exception:
+            self.logger.error("Error creating admin queue expiration policy")
             raise
 
     def get_queue_size(self, queue_name):

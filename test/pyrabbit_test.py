@@ -1,193 +1,219 @@
-import unittest
-
-from mock import Mock, patch
+import pytest
+from box import Box
+from mock import Mock
 from pyrabbit2.http import HTTPError, NetworkError
 
 from bartender.pyrabbit import PyrabbitClient
 
 
-class PyrabbitClientTest(unittest.TestCase):
+@pytest.fixture
+def pyrabbit_client():
+    return Mock()
 
-    def setUp(self):
-        self.client_mock = Mock(name='client_mock')
 
-        self.host = 'localhost'
-        self.port = 15672
-        self.user = 'user'
-        self.password = 'password'
-        self.virtual_host = '/'
+@pytest.fixture
+def client(pyrabbit_client):
+    the_client = PyrabbitClient(
+        host='localhost',
+        port=15672,
+        user='user',
+        password='password'
+    )
+    the_client._client = pyrabbit_client
 
-        self.client = PyrabbitClient(host=self.host, port=self.port, user=self.user,
-                                     password=self.password)
-        self.client._client = self.client_mock
+    return the_client
 
-    def test_is_alive(self):
-        self.client_mock.is_alive.return_value = True
-        self.assertTrue(self.client.is_alive())
 
-    def test_not_alive(self):
-        self.client_mock.is_alive.side_effect = NetworkError
-        self.assertFalse(self.client.is_alive())
+@pytest.fixture(autouse=True)
+def config(monkeypatch):
+    monkeypatch.setattr('bartender.config', Box(amq={'admin_queue_expiry': 1}))
 
-    def test_verify_virtual_host(self):
+
+class TestPyrabbitClient(object):
+
+    def test_is_alive(self, client, pyrabbit_client):
+        pyrabbit_client.is_alive.return_value = True
+        assert client.is_alive() is True
+
+    def test_not_alive(self, client, pyrabbit_client):
+        pyrabbit_client.is_alive.side_effect = NetworkError
+        assert client.is_alive() is False
+
+    def test_verify_virtual_host(self, client, pyrabbit_client):
         virtual_host_mock = Mock()
-        self.client_mock.get_vhost.return_value = virtual_host_mock
+        pyrabbit_client.get_vhost.return_value = virtual_host_mock
 
-        self.assertEqual(virtual_host_mock, self.client.verify_virtual_host())
-        self.client_mock.get_vhost.assert_called_once_with(self.client._virtual_host)
+        assert client.verify_virtual_host() == virtual_host_mock
+        pyrabbit_client.get_vhost.assert_called_once_with('/')
 
-    def test_verify_virtual_host_exception(self):
-        self.client_mock.get_vhost.side_effect = ValueError
+    def test_verify_virtual_host_exception(self, client, pyrabbit_client):
+        pyrabbit_client.get_vhost.side_effect = ValueError
 
-        self.assertRaises(ValueError, self.client.verify_virtual_host)
-        self.client_mock.get_vhost.assert_called_once_with(self.client._virtual_host)
+        with pytest.raises(ValueError):
+            client.verify_virtual_host()
+        pyrabbit_client.get_vhost.assert_called_once_with('/')
 
-    def test_get_queue_size_good(self):
-        self.client_mock.get_queue.return_value = {'messages': 1}
+    def test_ensure_admin_expiry(self, client, pyrabbit_client):
+        client.ensure_admin_expiry()
+        assert pyrabbit_client.create_policy.called is True
 
-        self.assertEqual(1, self.client.get_queue_size('queue'))
-        self.assertEqual(self.client_mock.get_queue.call_count, 1)
-        self.client_mock.get_queue.assert_called_with('/', 'queue')
+    def test_ensure_admin_expiry_exception(self, client, pyrabbit_client):
+        pyrabbit_client.create_policy.side_effect = ValueError
+        with pytest.raises(ValueError):
+            client.ensure_admin_expiry()
 
-    def test_get_queue_idle(self):
-        self.client_mock.get_queue.return_value = {}
+    def test_get_queue_size_good(self, client, pyrabbit_client):
+        pyrabbit_client.get_queue.return_value = {'messages': 1}
 
-        self.assertEqual(0, self.client.get_queue_size('queue'))
-        self.assertEqual(self.client_mock.get_queue.call_count, 1)
-        self.client_mock.get_queue.assert_called_with('/', 'queue')
+        assert client.get_queue_size('queue') == 1
+        pyrabbit_client.get_queue.assert_called_with('/', 'queue')
 
-    def test_get_queue_size_no_queue(self):
-        self.client_mock.get_queue.side_effect = HTTPError({}, status=404, reason='something')
-        self.assertRaises(HTTPError, self.client.get_queue_size, 'queue')
+    def test_get_queue_idle(self, client, pyrabbit_client):
+        pyrabbit_client.get_queue.return_value = {}
 
-    def test_get_queue_size_bad_exception(self):
-        self.client_mock.get_queue.side_effect = HTTPError({}, status=500, reason='something')
-        self.assertRaises(HTTPError, self.client.get_queue_size, 'queue')
+        assert client.get_queue_size('queue') == 0
+        pyrabbit_client.get_queue.assert_called_with('/', 'queue')
 
-    def test_clear_queue_no_messages(self):
-        self.client_mock.get_queue.return_value = {'messages_ready': 0}
+    def test_get_queue_size_no_queue(self, client, pyrabbit_client):
+        pyrabbit_client.get_queue.side_effect = HTTPError({}, status=404, reason='something')
+        with pytest.raises(HTTPError):
+            client.get_queue_size('queue')
 
-        self.client.clear_queue('queue')
-        self.assertTrue(self.client_mock.get_queue.called)
-        self.assertFalse(self.client_mock.get_messages.called)
+    def test_get_queue_size_bad_exception(self, client, pyrabbit_client):
+        pyrabbit_client.get_queue.side_effect = HTTPError({}, status=500, reason='something')
+        with pytest.raises(HTTPError):
+            client.get_queue_size('queue')
 
-    def test_clear_queue_idle_queue(self):
-        self.client_mock.get_queue.return_value = {}
+    def test_clear_queue_no_messages(self, client, pyrabbit_client):
+        pyrabbit_client.get_queue.return_value = {'messages_ready': 0}
 
-        self.client.clear_queue('queue')
-        self.assertTrue(self.client_mock.get_queue.called)
-        self.assertFalse(self.client_mock.get_messages.called)
+        client.clear_queue('queue')
+        assert pyrabbit_client.get_queue.called is True
+        assert pyrabbit_client.get_messages.called is False
 
-    @patch('bartender.pyrabbit.BeerGardenSchemaParser')
-    @patch('bartender.bv_client')
-    def test_clear_queue(self, bv_client_mock, parser_mock):
+    def test_clear_queue_idle_queue(self, client, pyrabbit_client):
+        pyrabbit_client.get_queue.return_value = {}
+
+        client.clear_queue('queue')
+        assert pyrabbit_client.get_queue.called is True
+        assert pyrabbit_client.get_messages.called is False
+
+    def test_clear_queue(self, monkeypatch, client, pyrabbit_client):
         fake_request = Mock(id='id', status='CREATED')
-        parser_mock.parse_request.return_value = fake_request
-        self.client_mock.get_queue.return_value = {'messages_ready': 1}
-        self.client_mock.get_messages.return_value = [{'payload': fake_request}]
+        pyrabbit_client.get_queue.return_value = {'messages_ready': 1}
+        pyrabbit_client.get_messages.return_value = [{'payload': fake_request}]
 
-        self.client.clear_queue('queue')
+        parser_mock = Mock(parse_request=Mock(return_value=fake_request))
+        monkeypatch.setattr('bartender.pyrabbit.BeerGardenSchemaParser', parser_mock)
+
+        bv_client_mock = Mock()
+        monkeypatch.setattr('bartender.bv_client', bv_client_mock)
+
+        client.clear_queue('queue')
         bv_client_mock.update_request.assert_called_with('id', status='CANCELED')
         parser_mock.parse_request.assert_called_with(fake_request, from_string=True)
 
-    @patch('bartender.pyrabbit.BeerGardenSchemaParser')
-    def test_clear_queue_bad_payload(self, parser_mock):
+    def test_clear_queue_bad_payload(self, monkeypatch, client, pyrabbit_client):
         fake_request = Mock(id='id', status='CREATED')
-        parser_mock.parse_request.side_effect = ValueError
-        self.client_mock.get_queue.return_value = {'messages_ready': 1}
-        self.client_mock.get_messages.return_value = [{'payload': fake_request}]
+        pyrabbit_client.get_queue.return_value = {'messages_ready': 1}
+        pyrabbit_client.get_messages.return_value = [{'payload': fake_request}]
 
-        self.client.clear_queue('queue')
-        self.assertEqual(fake_request.status, 'CREATED')
-        self.assertFalse(fake_request.save.called)
-        self.assertTrue(self.client_mock.get_messages.called)
-        self.client_mock.get_messages.assert_called_with('/', 'queue', count=1, requeue=False)
+        parser_mock = Mock(parse_request=Mock(side_effect=ValueError))
+        monkeypatch.setattr('bartender.pyrabbit.BeerGardenSchemaParser', parser_mock)
+
+        client.clear_queue('queue')
+        assert fake_request.status == 'CREATED'
+        assert fake_request.save.called is False
+        assert pyrabbit_client.get_messages.called is True
+        pyrabbit_client.get_messages.assert_called_with('/', 'queue', count=1, requeue=False)
         parser_mock.parse_request.assert_called_once_with(fake_request, from_string=True)
 
-    @patch('bartender.pyrabbit.BeerGardenSchemaParser')
-    def test_clear_queue_race_condition_met(self, parser_mock):
-        self.client_mock.get_queue.return_value = {'messages_ready': 1}
-        self.client_mock.get_messages.return_value = []
+    def test_clear_queue_race_condition(self, monkeypatch, client, pyrabbit_client):
+        pyrabbit_client.get_queue.return_value = {'messages_ready': 1}
+        pyrabbit_client.get_messages.return_value = []
 
-        self.client.clear_queue('queue')
-        self.assertTrue(self.client_mock.get_messages.called)
-        self.assertFalse(parser_mock.parse_request.called)
+        parser_mock = Mock()
+        monkeypatch.setattr('bartender.pyrabbit.BeerGardenSchemaParser', parser_mock)
 
-    def test_delete_queue(self):
-        self.client.delete_queue('queue')
-        self.assertTrue(self.client_mock.delete_queue.called)
+        client.clear_queue('queue')
+        assert pyrabbit_client.get_messages.called is True
+        assert parser_mock.parse_request.called is False
 
-    def test_destroy_queue_all_exceptions(self):
+    def test_delete_queue(self, client, pyrabbit_client):
+        client.delete_queue('queue')
+        assert pyrabbit_client.delete_queue.called is True
+
+    def test_destroy_queue_all_exceptions(self, client):
         disconnect_consumers_mock = Mock(side_effect=ValueError)
         clear_queue_mock = Mock(side_effect=ValueError)
         delete_queue = Mock(side_effect=ValueError)
-        self.client.disconnect_consumers = disconnect_consumers_mock
-        self.client.clear_queue = clear_queue_mock
-        self.client.delete_queue = delete_queue
+        client.disconnect_consumers = disconnect_consumers_mock
+        client.clear_queue = clear_queue_mock
+        client.delete_queue = delete_queue
 
-        self.client.destroy_queue('queue_name', True)
-        self.assertTrue(disconnect_consumers_mock.called)
-        self.assertTrue(clear_queue_mock.called)
-        self.assertTrue(delete_queue.called)
+        client.destroy_queue('queue_name', True)
+        assert disconnect_consumers_mock.called is True
+        assert clear_queue_mock.called is True
+        assert delete_queue.called is True
 
-    def test_destroy_queue_with_http_errors(self):
+    def test_destroy_queue_with_http_errors(self, client):
         disconnect_consumers_mock = Mock(side_effect=HTTPError({}, status=500))
         clear_queue_mock = Mock(side_effect=HTTPError({}, status=500))
         delete_queue = Mock(side_effect=HTTPError({}, status=500))
-        self.client.disconnect_consumers = disconnect_consumers_mock
-        self.client.clear_queue = clear_queue_mock
-        self.client.delete_queue = delete_queue
+        client.disconnect_consumers = disconnect_consumers_mock
+        client.clear_queue = clear_queue_mock
+        client.delete_queue = delete_queue
 
-        self.client.destroy_queue('queue_name', True)
-        self.assertTrue(disconnect_consumers_mock.called)
-        self.assertTrue(clear_queue_mock.called)
-        self.assertTrue(delete_queue.called)
+        client.destroy_queue('queue_name', True)
+        assert disconnect_consumers_mock.called is True
+        assert clear_queue_mock.called is True
+        assert delete_queue.called is True
 
-    def test_destroy_queue_no_errors(self):
+    def test_destroy_queue_no_errors(self, client):
         disconnect_consumers_mock = Mock()
         clear_queue_mock = Mock()
         delete_queue = Mock()
-        self.client.disconnect_consumers = disconnect_consumers_mock
-        self.client.clear_queue = clear_queue_mock
-        self.client.delete_queue = delete_queue
+        client.disconnect_consumers = disconnect_consumers_mock
+        client.clear_queue = clear_queue_mock
+        client.delete_queue = delete_queue
 
-        self.client.destroy_queue('queue_name', True)
-        self.assertTrue(disconnect_consumers_mock.called)
-        self.assertTrue(clear_queue_mock.called)
-        self.assertTrue(delete_queue.called)
+        client.destroy_queue('queue_name', True)
+        assert disconnect_consumers_mock.called is True
+        assert clear_queue_mock.called is True
+        assert delete_queue.called is True
 
-    def test_destroy_queue_none_queue_name(self):
+    def test_destroy_queue_none_queue_name(self, client, pyrabbit_client):
         disconnect_consumers_mock = Mock()
         clear_queue_mock = Mock()
         delete_queue = Mock()
-        self.client.disconnect_consumers = disconnect_consumers_mock
-        self.client.clear_queue = clear_queue_mock
-        self.client.delete_queue = delete_queue
+        client.disconnect_consumers = disconnect_consumers_mock
+        client.clear_queue = clear_queue_mock
+        client.delete_queue = delete_queue
 
-        self.client.destroy_queue(None)
-        self.assertFalse(disconnect_consumers_mock.called)
-        self.assertFalse(clear_queue_mock.called)
-        self.assertFalse(delete_queue.called)
+        client.destroy_queue(None)
+        assert disconnect_consumers_mock.called is False
+        assert clear_queue_mock.called is False
+        assert delete_queue.called is False
 
-    def test_disconnect_consumers(self):
+    def test_disconnect_consumers(self, client, pyrabbit_client):
         consumer_details = [{'queue': {'name': 'queue_name'},
                              'channel_details': {'connection_name': 'conn'}}]
-        self.client_mock.get_channels.return_value = [{'name': 'channel_name'}]
-        self.client_mock.get_channel.return_value = {'consumer_details': consumer_details}
+        pyrabbit_client.get_channels.return_value = [{'name': 'channel_name'}]
+        pyrabbit_client.get_channel.return_value = {'consumer_details': consumer_details}
 
-        self.client.disconnect_consumers('queue_name')
-        self.client_mock.delete_connection.assert_called_once_with('conn')
+        client.disconnect_consumers('queue_name')
+        pyrabbit_client.delete_connection.assert_called_once_with('conn')
 
-    def test_disconnect_consumers_no_channels(self):
-        self.client_mock.get_channels.return_value = None
+    def test_disconnect_consumers_no_channels(self, client, pyrabbit_client):
+        pyrabbit_client.get_channels.return_value = None
 
-        self.client.disconnect_consumers('queue_name')
-        self.assertFalse(self.client_mock.delete_connection.called)
+        client.disconnect_consumers('queue_name')
+        assert pyrabbit_client.delete_connection.called is False
 
-    def test_disconnect_consumers_no_channel(self):
+    def test_disconnect_consumers_no_channel(self, client, pyrabbit_client):
         channel = {'name': 'channel_name'}
-        self.client_mock.get_channels.return_value = [channel]
-        self.client_mock.get_channel.return_value = None
+        pyrabbit_client.get_channels.return_value = [channel]
+        pyrabbit_client.get_channel.return_value = None
 
-        self.client.disconnect_consumers('queue_name')
-        self.assertFalse(self.client_mock.delete_connection.called)
+        client.disconnect_consumers('queue_name')
+        assert pyrabbit_client.delete_connection.called is False
