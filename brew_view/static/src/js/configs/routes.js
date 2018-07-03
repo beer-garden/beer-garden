@@ -22,10 +22,16 @@ export default function routeConfig($stateProvider, $urlRouterProvider) {
       templateUrl: basePath + 'login.html',
       controller: 'LoginController',
     })
-    .state('system', {
+    // Unused by our UI, but helpful for external links.
+    .state('systemID', {
       url: '/systems/:id',
       templateUrl: basePath + 'system_view.html',
       controller: 'SystemViewController',
+    })
+    .state('system', {
+      'url': '/systems/:name/:version',
+      'templateUrl': basePath + 'system_view.html',
+      'controller': 'SystemViewController',
     })
     .state('about', {
       url: '/about',
@@ -43,6 +49,16 @@ export default function routeConfig($stateProvider, $urlRouterProvider) {
       controller: 'CommandIndexController',
     })
     .state('command', {
+      url: '/systems/:systemName/:systemVersion/commands/:name',
+      templateUrl: basePath + 'command_view.html',
+      controller: 'CommandViewController',
+      params: {
+        request: null,
+        id: null,
+      },
+    })
+    // Unused by our UI, but helpful for external links.
+    .state('commandID', {
       url: '/commands/:command_id',
       templateUrl: basePath + 'command_view.html',
       controller: 'CommandViewController',

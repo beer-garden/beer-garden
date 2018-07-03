@@ -176,7 +176,7 @@ class RequestAPI(BaseHandler):
         if status_before == 'CREATED':
             self.queued_request_gauge.labels(**labels).dec()
         elif status_before == 'IN_PROGRESS':
-            self.in_progress_request_gauge(**labels).dec()
+            self.in_progress_request_gauge.labels(**labels).dec()
 
         if request.status == 'IN_PROGRESS':
             self.in_progress_request_gauge.labels(**labels).inc()

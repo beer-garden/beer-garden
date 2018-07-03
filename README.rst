@@ -75,7 +75,7 @@ Now start up the Python API:
 .. code-block:: console
 
     $ cd /path/to/brew-view
-    $ python -m brew_view -c ./dev_conf/config.json
+    $ python -m brew_view -c ./dev_conf/config.yml
 
 Sweet! Everything should now be up and running. Visit http://localhost:8080/ in a browser to check it out. Hit Ctrl-c to stop the web server.
 
@@ -85,7 +85,7 @@ NOTE: It's worth noting that the JavaScript App is served on 8080 but the python
 Configuration
 =============
 
-There's a conf/config.json file that comes with the installation. It comes with sensible default values but feel free to change them if you'd like. You'll need to restart the web server after making any changes.
+There's a conf/config.yml file that comes with the installation. It comes with sensible default values but feel free to change them if you'd like. You'll need to restart the web server after making any changes.
 
 
 REST Services

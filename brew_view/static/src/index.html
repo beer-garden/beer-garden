@@ -72,7 +72,7 @@
 
               <ul class="nav nav-second-level">
                 <li ng-repeat="(name, arr) in systems | groupBy:'name'" ng-init="collapsed=false">
-                  <a ng-if="arr.length == 1" ui-sref="system({id: arr[0].id})" ui-sref-active="active">
+                  <a ng-if="arr.length == 1" ui-sref="system({name: arr[0].name, version: getVersionForUrl(arr[0])})" ui-sref-active="active">
                     <i class="fa fa-cog"></i>
                     <span>{{arr[0].display_name || arr[0].name}}</span>
                   </a>
@@ -83,7 +83,7 @@
                   </a>
                   <ul ng-if="arr.length > 1" ng-style="{'max-height': (!collapsed) ? (arr.length*40 + 'px') : '0px'}" class="nav nav-third-level show-more">
                     <li ng-repeat="system in arr">
-                      <a ui-sref="system({id: system.id})" ui-sref-active="active">
+                      <a ui-sref="system({name: system.name, version: getVersionForUrl(system)})" ui-sref-active="active">
                         <span>{{system.version}}</span>
                       </a>
                     </li>

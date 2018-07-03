@@ -2,6 +2,7 @@ import angular from 'angular';
 
 commandViewController.$inject = [
   '$location',
+  '$rootScope',
   '$scope',
   '$state',
   '$stateParams',
@@ -17,6 +18,7 @@ commandViewController.$inject = [
 /**
  * commandViewController - Angular controller for a specific command.
  * @param  {$location} $location       Angular's $location object.
+ * @param  {$rootScope} $rootScope     Angular's $rootScope object.
  * @param  {$scope} $scope             Angular's $scope object.
  * @param  {$state} $state             Angular's $state object.
  * @param  {$stateParams} $stateParams Angular's $stateParams object.
@@ -29,6 +31,7 @@ commandViewController.$inject = [
  */
 export default function commandViewController(
   $location,
+  $rootScope,
   $scope,
   $state,
   $stateParams,
@@ -238,13 +241,7 @@ export default function commandViewController(
 
       $scope.command.loaded = true;
     } else {
-      SystemService.getSystem(response.data.system.id, false).then(
-        function(response) {
-          $scope.system = response.data;
-          generateSF();
-        },
-        $scope.failureCallback
-      );
+      generateSF();
     }
   };
 
@@ -301,6 +298,91 @@ export default function commandViewController(
     $scope.command.loaded = true;
   });
 
-  CommandService.getCommand($stateParams.command_id)
-    .then($scope.successCallback, $scope.failureCallback);
+
+  /**
+   * Search the system for the given command name.
+   *
+   * @param {string} commandName - Command Name
+   * @return {string} Command ID
+   */
+  const findCommandID = function(commandName) {
+    for (let command of $scope.system.commands) {
+      if (command.name === commandName) {
+        return command.id;
+      }
+    }
+  };
+
+  /**
+   * Success callback after getting a system.
+   *
+   * @param {Object} response - http response
+   */
+  const systemSuccessCallback = function(response) {
+    $scope.system = response.data;
+    findAndLoadCommand($stateParams.name);
+  };
+
+  /**
+   * Fetch data from the server with the correct callbacks.
+   *
+   * @param {string} commandID - Command ID to load
+   */
+  const loadCommandByID = function(commandID) {
+    CommandService.getCommand(commandID).
+      then($scope.successCallback, $scope.failureCallback);
+  };
+
+  /**
+   * Find a command, then load that command from the server.
+   * @param {string} commandName - command name to load.
+   */
+  const findAndLoadCommand = function(commandName) {
+    let commandID = findCommandID(commandName);
+    if (!angular.isDefined(commandID) || commandID === null) {
+      $scope.failureCallback({status: 404, data: {message: 'Invalid command Name.'}});
+      return;
+    }
+    loadCommandByID(commandID);
+  };
+
+  /**
+   * Find a system in $rootScope, then request all of its commands from the API.
+   * @param {string} systemName - Name of the system to load.
+   * @param {string} systemVersion - Version of the system to load.
+   */
+  const findAndLoadSystem = function(systemName, systemVersion) {
+    let bareSystem = $rootScope.findSystem(systemName, systemVersion);
+    if (!angular.isDefined(bareSystem) || bareSystem === null) {
+      $scope.failureCallback({status: 404, data: {message: 'Invalid System ID'}});
+      return;
+    }
+
+    SystemService.getSystem(bareSystem.id, true).
+      then(systemSuccessCallback, $scope.failureCallback);
+  };
+
+  /**
+   * Load data based on state.
+   * @param {Object} stateParams - State params.
+   */
+  const loadData = function(stateParams) {
+    if (Object.keys($scope.system).length === 0) {
+      findAndLoadSystem(stateParams.systemName, stateParams.systemVersion);
+    } else if (angular.isDefined(stateParams.id) && stateParams.id !== null) {
+      loadCommandByID(stateParams.id);
+    } else {
+      findAndLoadCommand(stateParams.name);
+    }
+  };
+
+  // If we haven't loaded the systems, then we wait for the initial load
+  // before attempting to load a command.
+  if (angular.isDefined($rootScope.systems)) {
+    loadData($stateParams);
+  } else {
+    $scope.$on('systemsLoaded', function() {
+      loadData($stateParams);
+    });
+  }
 };
