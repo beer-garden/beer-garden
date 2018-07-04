@@ -5,6 +5,7 @@ from mock import Mock, PropertyMock, patch
 
 from bg_utils.models import Command, Instance, Parameter, Request, System, Choices
 from brewtils.errors import BrewmasterModelValidationError
+from brewtils.schemas import RequestTemplateSchema
 
 
 class CommandTest(unittest.TestCase):
@@ -173,6 +174,12 @@ class RequestTest(unittest.TestCase):
                           updated_at='this_will_be_updated')
         request.save()
         self.assertNotEqual(request.updated_at, 'this_will_be_updated')
+
+    def test_template_check(self):
+        self.assertEqual(
+            len(Request.TEMPLATE_FIELDS),
+            len(RequestTemplateSchema.get_attribute_names())
+        )
 
 
 class SystemTest(unittest.TestCase):

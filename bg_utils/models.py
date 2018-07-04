@@ -188,14 +188,23 @@ class Instance(Document, BrewtilsInstance):
 class Request(Document, BrewtilsRequest):
     """Mongo-Backed BREWMASTER Request Object"""
 
-    system = StringField(required=True)
-    system_version = StringField(required=True)
-    instance_name = StringField(required=True)
-    command = StringField(required=True)
+    # These fields are duplicated for job types, changes to this field
+    # necessitate a change to the RequestTemplateSchema in brewtils.
+    TEMPLATE_FIELDS = {
+        'system': {'field': StringField, 'kwargs': {'required': True}},
+        'system_version': {'field': StringField, 'kwargs': {'required': True}},
+        'instance_name': {'field': StringField, 'kwargs': {'required': True}},
+        'command': {'field': StringField, 'kwargs': {'required': True}},
+        'parameters': {'field': DictField, 'kwargs': {}},
+        'comment': {'field': StringField, 'kwargs': {'required': False}},
+        'metadata': {'field': DictField, 'kwargs': {}},
+    }
+
+    for field_name, field_info in TEMPLATE_FIELDS.items():
+        locals()[field_name] = field_info['field'](**field_info['kwargs'])
+
     parent = GenericReferenceField(required=False)
     children = DummyField(required=False)
-    parameters = DictField()
-    comment = StringField(required=False)
     output = StringField()
     output_type = StringField(choices=BrewtilsCommand.OUTPUT_TYPES)
     status = StringField(choices=BrewtilsRequest.STATUS_LIST, default='CREATED')
@@ -203,7 +212,6 @@ class Request(Document, BrewtilsRequest):
     created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     updated_at = DateTimeField(default=None, required=True)
     error_class = StringField(required=False)
-    metadata = DictField()
     has_parent = BooleanField(required=False)
 
     meta = {
@@ -454,12 +462,18 @@ class Event(Document, BrewtilsEvent):
         return BrewtilsEvent.__repr__(self)
 
 
+class RequestTemplate(EmbeddedDocument):
+
+    for field_name, field_info in Request.TEMPLATE_FIELDS.items():
+        locals()[field_name] = field_info['field'](**field_info['kwargs'])
+
+
 class Job(Document, BrewtilsJob):
 
     name = StringField(required=True)
     trigger_type = StringField(required=True, choices=BrewtilsJob.TRIGGER_TYPES)
     trigger_args = DictField(required=True)
-    request_template = EmbeddedDocumentField('Request')
+    request_template = EmbeddedDocumentField('RequestTemplate')
     misfire_grace_time = IntField()
     coalesce = BooleanField(default=True)
     max_instances = IntField(default=3)
