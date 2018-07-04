@@ -19,7 +19,7 @@ from brewtils.models import (
     Event as BrewtilsEvent, Job as BrewtilsJob)
 
 __all__ = ['System', 'Instance', 'Command', 'Parameter', 'Request', 'Choices',
-           'Event']
+           'Event', 'Job']
 
 
 # MongoEngine needs all EmbeddedDocuments to be defined before any Documents that reference them
@@ -459,10 +459,11 @@ class Job(Document, BrewtilsJob):
     name = StringField(required=True)
     trigger_type = StringField(required=True, choices=BrewtilsJob.TRIGGER_TYPES)
     trigger_args = DictField(required=True)
-    request_payload = DictField(required=True)
+    request_template = EmbeddedDocumentField('Request')
     misfire_grace_time = IntField()
     coalesce = BooleanField(default=True)
     max_instances = IntField(default=3)
+    next_run_time = DateTimeField()
 
     def __str__(self):
         return BrewtilsJob.__str__(self)
