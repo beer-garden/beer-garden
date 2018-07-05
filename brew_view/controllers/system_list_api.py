@@ -26,15 +26,6 @@ class SystemListAPI(BaseHandler):
         ---
         summary: Retrieve all Systems
         parameters:
-          - name: include_commands
-            in: query
-            required: false
-            description: Include System's commands in the response
-            type: string
-            enum:
-              - true
-              - false
-              - count
           - name: include_fields
             in: query
             required: false
@@ -51,6 +42,18 @@ class SystemListAPI(BaseHandler):
             collectionFormat: csv
             items:
               type: string
+          - name: dereference_nested
+            in: query
+            required: false
+            description: Commands and instances will be an object id
+            type: boolean
+            default: true
+          - name: include_commands
+            in: query
+            required: false
+            description: __DEPRECATED__ Include commands in the response
+            type: boolean
+            default: true
         responses:
           200:
             description: All Systems
@@ -68,6 +71,7 @@ class SystemListAPI(BaseHandler):
 
         include_fields = self.get_query_argument('include_fields', None)
         exclude_fields = self.get_query_argument('exclude_fields', None)
+        dereference_nested = self.get_query_argument('dereference_nested', None)
         include_commands = self.get_query_argument('include_commands', None)
 
         if include_fields and exclude_fields:
@@ -86,12 +90,12 @@ class SystemListAPI(BaseHandler):
             serialize_params['exclude'] = exclude_fields
 
         # Deal with include_commands
-        if include_commands:
-            if include_commands.lower() == 'false':
-                query_set = query_set.exclude('commands')
-                serialize_params['include_commands'] = False
-            elif include_commands.lower() == 'count':
-                query_set = query_set.no_dereference()
+        if include_commands and include_commands.lower() == 'false':
+            query_set = query_set.exclude('commands')
+            serialize_params['include_commands'] = False
+
+        if dereference_nested and dereference_nested.lower() == 'false':
+            query_set = query_set.no_dereference()
 
         # Need to use self.request.query_arguments to get ALL the query args
         # Once we know the name use get_query_argument to get the decoded value

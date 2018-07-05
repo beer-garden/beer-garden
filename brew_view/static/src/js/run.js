@@ -33,7 +33,7 @@ export function appRun($rootScope, $state, $stateParams, $cookies, UtilityServic
   });
 
   // Use the SystemService to build the side bar.
-  SystemService.getSystems(undefined, 'id,name,version').then(function(response) {
+  SystemService.getSystems(false, 'id,name,version').then(function(response) {
     $rootScope.systems = response.data;
     $rootScope.$broadcast('systemsLoaded');
   });
