@@ -19,7 +19,7 @@ from brewtils.models import (
     Event as BrewtilsEvent, Job as BrewtilsJob)
 
 __all__ = ['System', 'Instance', 'Command', 'Parameter', 'Request', 'Choices',
-           'Event', 'Job']
+           'Event', 'Job', 'RequestTemplate']
 
 
 # MongoEngine needs all EmbeddedDocuments to be defined before any Documents that reference them

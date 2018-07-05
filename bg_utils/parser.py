@@ -2,7 +2,8 @@ from copy import copy
 
 from marshmallow.exceptions import MarshmallowError
 
-from bg_utils.models import System, Instance, Command, Parameter, Request, Choices, Event, Job
+from bg_utils.models import System, Instance, Command, Parameter, Request, Choices, Event, Job, \
+    RequestTemplate
 from brewtils.errors import BrewmasterModelValidationError
 from brewtils.schema_parser import SchemaParser
 
@@ -17,6 +18,7 @@ class BeerGardenSchemaParser(SchemaParser):
         'CommandSchema': Command,
         'ParameterSchema': Parameter,
         'RequestSchema': Request,
+        'RequestTemplateSchema': RequestTemplate,
         'ChoicesSchema': Choices,
         'EventSchema': Event,
         'JobSchema': Job,
