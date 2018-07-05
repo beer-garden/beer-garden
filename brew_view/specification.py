@@ -402,6 +402,11 @@ SPECIFICATION = {
                 "previous_names": ["url_prefix"],
                 "alt_env_names": ["URL_PREFIX"],
             },
+            'host': {
+                'type': 'str',
+                'default': '0.0.0.0',
+                'description': 'Host for the HTTP Server to bind to',
+            },
         },
     },
 

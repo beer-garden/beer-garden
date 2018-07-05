@@ -5,7 +5,6 @@ import ssl
 from concurrent.futures import ThreadPoolExecutor
 
 from apispec import APISpec
-from apscheduler.jobstores.mongodb import MongoDBJobStore
 from apscheduler.schedulers.tornado import TornadoScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor as APTPExecutor
 from pytz import utc
@@ -20,11 +19,13 @@ import brewtils.rest
 from bg_utils.event_publisher import EventPublishers
 from bg_utils.pika import TransientPikaClient
 from bg_utils.plugin_logging_loader import PluginLoggingLoader
+from brew_view.scheduler.jobstore import BGJobStore
 from brew_view.publishers import (MongoPublisher, RequestPublisher,
                                   TornadoPikaPublisher, WebsocketPublisher)
 from brew_view.specification import get_default_logging_config
+from brewtils.rest.easy_client import EasyClient
 from brewtils.schemas import ParameterSchema, CommandSchema, InstanceSchema, SystemSchema, \
-    RequestSchema, PatchSchema, LoggingConfigSchema, EventSchema, QueueSchema
+    RequestSchema, PatchSchema, LoggingConfigSchema, EventSchema, QueueSchema, JobSchema
 
 config = None
 application = None
@@ -40,6 +41,7 @@ app_log_config = None
 notification_meta = None
 scheduler = None
 request_map = {}
+easy_client = None
 
 
 def setup_brew_view(spec, cli_args):
@@ -74,7 +76,8 @@ def load_plugin_logging_config(input_config):
 
 
 def _setup_application():
-    global application, server, tornado_app, public_url, thrift_context, event_publishers, scheduler
+    global application, server, tornado_app, public_url, thrift_context, event_publishers
+    global scheduler, easy_client
 
     public_url = Url(scheme='https' if config.web.ssl.enabled else 'http',
                      host=config.event.public_fqdn,
@@ -85,10 +88,11 @@ def _setup_application():
     tornado_app = _setup_tornado_app()
     server_ssl, client_ssl = _setup_ssl_context()
     event_publishers = _setup_event_publishers(client_ssl)
+    easy_client = EasyClient(bg_host=config.web.host, **config.web)
     scheduler = _setup_scheduler()
 
     server = HTTPServer(tornado_app, ssl_options=server_ssl)
-    server.listen(config.web.port)
+    server.listen(config.web.port, config.web.host)
 
     application = IOLoop.current()
 
@@ -97,7 +101,7 @@ def _setup_scheduler():
     # TODO: Create our own JobStore
     # https://apscheduler.readthedocs.io/en/latest/extending.html#custom-job-stores
     jobstores = {
-        'mongo': MongoDBJobStore(config.db.name, **config.db.connection),
+        'beer_garden': BGJobStore(),
     }
     # TODO: Explore different executors (maybe process pool?)
     executors = {
@@ -134,11 +138,13 @@ def _setup_tornado_app():
         (r'{0}api/v1/systems/?'.format(prefix), SystemListAPI),
         (r'{0}api/v1/queues/?'.format(prefix), QueueListAPI),
         (r'{0}api/v1/admin/?'.format(prefix), AdminAPI),
+        (r'{0}api/v1/jobs/?'.format(prefix), JobListAPI),
         (r'{0}api/v1/commands/(\w+)/?'.format(prefix), CommandAPI),
         (r'{0}api/v1/instances/(\w+)/?'.format(prefix), InstanceAPI),
         (r'{0}api/v1/requests/(\w+)/?'.format(prefix), RequestAPI),
         (r'{0}api/v1/systems/(\w+)/?'.format(prefix), SystemAPI),
         (r'{0}api/v1/queues/([\w\.-]+)/?'.format(prefix), QueueAPI),
+        (r'{0}api/v1/jobs/(\w+)/?'.format(prefix), JobAPI),
         (r'{0}api/v1/config/logging/?'.format(prefix), LoggingConfigAPI),
 
         # Beta
@@ -152,9 +158,6 @@ def _setup_tornado_app():
 
     # And these do not
     unpublished_url_specs = [
-        # TODO: Move these to published_url.
-        (r'{0}api/v1/jobs/?'.format(prefix), JobListAPI),
-        (r'{0}api/v1/jobs/(\w+)/?'.format(prefix), JobAPI),
         # These are a little special - unpublished but still versioned
         # The swagger spec
         (r'{0}api/v1/spec/?'.format(prefix), SpecHandler),
@@ -287,6 +290,7 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition('Patch', properties={"operations": {
         "type": "array", "items": {"$ref": "#/definitions/_patch"}}
     })
+    api_spec.definition('Job', schema=JobSchema)
 
     error = {'message': {'type': 'string'}}
     api_spec.definition('400Error', properties=error, description='Parameter validation error')

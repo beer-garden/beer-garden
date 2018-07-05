@@ -72,10 +72,17 @@ def main():
 
     brew_view.logger.debug("Publishing application startup event.")
     brew_view.event_publishers.publish_event(Event(name=Events.BREWVIEW_STARTED.name))
-    brew_view.scheduler.start()
 
     brew_view.logger.info("Starting up the application.")
+    brew_view.logger.info('Starting up metrics server on: %d' % brew_view.config.metrics.port)
     start_http_server(brew_view.config.metrics.port)
+
+    brew_view.scheduler.start()
+
+    brew_view.logger.info(
+        'Starting up HTTP server on: %s:%d' %
+        (brew_view.config.web.host, brew_view.config.web.port)
+    )
     brew_view.application.start()
 
     brew_view.logger.info("Application is shut down.")

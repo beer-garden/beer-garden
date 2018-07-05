@@ -53,6 +53,7 @@ plugin_logging:
   level: INFO
 shutdown_timeout: 5
 web:
+  host: 0.0.0.0
   port: 2337
   ssl:
     ca_cert: null

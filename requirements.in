@@ -4,6 +4,7 @@
 -e git+https://github.com/beer-garden/bg-utils@develop#egg=bg-utils
 futures ; python_version < "3.0"
 apispec
+apscheduler
 tornado
 prometheus_client
 
