@@ -25,11 +25,33 @@ class SystemListAPI(BaseHandler):
         """
         ---
         summary: Retrieve all Systems
+        description: |
+          This endpoint allows for querying Systems.
+
+          There are several parameters that control which fields are returned
+          and what information is available. Things to be aware of:
+
+          * The `include_commands` parameter is __deprecated__. Don't use it.
+
+          * It's possible to specify `include_fields` _and_ `exclude_fields`.
+            This doesn't make a lot of sense, but you can do it. If the same
+            field is in both `exclude_fields` takes priority (the field will
+            NOT be included in the response).
+
+          Systems matching specific criteria can be filtered using additional
+          query parameters. This is a very basic capability:
+
+          * ?name=foo&version=1.0.0
+            This will return the system named 'foo' with version '1.0.0'
+          * ?name=foo&name=bar
+            This will not do what you expect: only return the system named
+            'bar' will be returned.
         parameters:
           - name: include_fields
             in: query
             required: false
-            description: Specify fields to include in the response
+            description: Specify fields to include in the response. All other
+              fields will be excluded.
             type: array
             collectionFormat: csv
             items:
@@ -74,35 +96,34 @@ class SystemListAPI(BaseHandler):
         dereference_nested = self.get_query_argument('dereference_nested', None)
         include_commands = self.get_query_argument('include_commands', None)
 
-        if include_fields and exclude_fields:
-            raise ModelError("Headers 'include_fields' and 'exclude_fields' "
-                             "cannot exist on the same request")
-        elif include_commands and (include_fields or exclude_fields):
-            raise ModelError("Headers 'include_fields' and 'exclude_fields' "
-                             "cannot be used with 'include_commands'")
-        elif include_fields:
+        if include_fields:
             include_fields = set(include_fields.split(',')) & self.REQUEST_FIELDS
             query_set = query_set.only(*include_fields)
             serialize_params['only'] = include_fields
-        elif exclude_fields:
+
+        if exclude_fields:
             exclude_fields = set(exclude_fields.split(',')) & self.REQUEST_FIELDS
             query_set = query_set.exclude(*exclude_fields)
             serialize_params['exclude'] = exclude_fields
 
-        # Deal with include_commands
         if include_commands and include_commands.lower() == 'false':
             query_set = query_set.exclude('commands')
-            serialize_params['include_commands'] = False
+
+            if 'exclude' not in serialize_params:
+                serialize_params['exclude'] = set()
+            serialize_params['exclude'].add('commands')
 
         if dereference_nested and dereference_nested.lower() == 'false':
             query_set = query_set.no_dereference()
 
-        # Need to use self.request.query_arguments to get ALL the query args
-        # Once we know the name use get_query_argument to get the decoded value
-        # TODO Handle multiple query arguments with the same key
+        # TODO - Handle multiple query arguments with the same key
+        # for example: (?name=foo&name=bar) ... what should that mean?
         filter_params = {}
+
+        # Need to use self.request.query_arguments to get all the query args
         for key in self.request.query_arguments:
             if key in self.REQUEST_FIELDS:
+                # Now use get_query_argument to get the decoded value
                 filter_params[key] = self.get_query_argument(key)
 
         result_set = query_set.filter(**filter_params)
