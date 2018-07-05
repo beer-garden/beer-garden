@@ -8,6 +8,12 @@ userService.$inject = ['$http'];
  */
 export default function userService($http) {
   return {
+    createUser: function(userName, password) {
+      return $http.post('api/v1/users/', {
+        username: userName,
+        password: password,
+      });
+    },
     setTheme: function(userId, theme) {
       return $http.patch('api/v1/users/'+userId, {
         operations: [

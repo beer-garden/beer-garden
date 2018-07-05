@@ -1,7 +1,16 @@
 <h1 class='page-header'>Login</h1>
 
 <form>
-  <label>Username: <input type="text" ng-model="model.username" /></label><br>
-  <label>Password: <input type="password" ng-model="model.password" /></label><br>
-  <input type="submit" ng-click="doSubmit(model)" value="Login">
+  <label>Username: <input type="text" ng-model="login.username" /></label><br>
+  <label>Password: <input type="password" ng-model="login.password" /></label><br>
+  <input type="submit" ng-click="doLogin(login)" value="Login">
+</form>
+
+<div><h1>OR<h1></div>
+
+<h2>Create a new user</h2>
+<form>
+  <label>Username: <input type="text" ng-model="create.username" /></label><br>
+  <label>Password: <input type="password" ng-model="create.password" /></label><br>
+  <input type="submit" ng-click="doCreate(create)" value="Create">
 </form>

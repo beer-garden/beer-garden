@@ -128,6 +128,23 @@ class RoleAPI(BaseHandler):
                     self.logger.warning(error_msg)
                     raise ModelValidationError(error_msg)
 
+            elif op.path == '/roles':
+                try:
+                    nested_role = Role.objects.get(name=op.value).to_dbref()
+                except ValueError:
+                    error_msg = "Role '%s' does not exist" % op.value
+                    self.logger.warning(error_msg)
+                    raise ModelValidationError(error_msg)
+
+                if op.operation == 'add':
+                    role.roles.append(nested_role)
+                elif op.operation == 'remove':
+                    role.permissions.remove(nested_role)
+                else:
+                    error_msg = "Unsupported operation '%s'" % op.operation
+                    self.logger.warning(error_msg)
+                    raise ModelValidationError(error_msg)
+
             else:
                 error_msg = "Unsupported path '%s'" % op.path
                 self.logger.warning(error_msg)

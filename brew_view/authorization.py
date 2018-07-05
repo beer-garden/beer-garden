@@ -85,20 +85,33 @@ def has_permission(principal, required_permissions):
 def generate_token(principal):
     current_time = datetime.utcnow()
 
-    # Permissions are a union of all role's permissions and specific permissions
-    role_names = []
-    permissions = set()
-    for role in principal.roles:
-        role_names.append(role.name)
-        permissions |= set(role.permissions)
-    permissions |= set(principal.permissions)
+    def coalesce_permissions(role_list):
+        """Determine permissions"""
+
+        if not role_list:
+            return set(), set()
+
+        aggregate_roles = set()
+        aggregate_perms = set()
+
+        for role in role_list:
+            aggregate_roles.add(role.name)
+            aggregate_perms |= set(role.permissions)
+
+            nested_roles, nested_perms = coalesce_permissions(role.roles)
+            aggregate_roles |= nested_roles
+            aggregate_perms |= nested_perms
+
+        return aggregate_roles, aggregate_perms
+
+    roles, permissions = coalesce_permissions(principal.roles)
 
     payload = {
         'sub': str(principal.id),
         'iat': current_time,
         'exp': current_time + timedelta(minutes=20),
         'username': principal.username,
-        'roles': role_names,
+        'roles': list(roles),
         'permissions': list(permissions),
     }
     return jwt.encode(payload,

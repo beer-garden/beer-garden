@@ -1,13 +1,15 @@
 import jwtDecode from 'jwt-decode';
 
-LoginController.$inject = ['$scope', '$rootScope', '$http', '$state', 'localStorageService'];
+LoginController.$inject = ['$scope', '$rootScope', '$http', '$state',
+  'localStorageService', 'UserService'];
 
 /**
  * LoginController - Angular controller for the login page.
  */
-export default function LoginController($scope, $rootScope, $http, $state, localStorageService) {
+export default function LoginController($scope, $rootScope, $http, $state,
+    localStorageService, userService) {
 
-  $scope.doSubmit = function(model) {
+  $scope.doLogin = function(model) {
     $http.post('login', {username: model.username, password: model.password})
     .then(function(response) {
       let token = response.data.token;
@@ -30,5 +32,9 @@ export default function LoginController($scope, $rootScope, $http, $state, local
 
       $state.go('landing');
     });
+  };
+
+  $scope.doCreate = function(user) {
+    userService.createUser(user.username, user.password);
   };
 };
