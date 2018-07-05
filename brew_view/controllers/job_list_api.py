@@ -8,7 +8,7 @@ from bg_utils.parser import BeerGardenSchemaParser
 from tornado.gen import coroutine
 
 from brew_view.base_handler import BaseHandler
-from brew_view.job_runner import run_job
+from brew_view.scheduler.runner import run_job
 from brew_view.scheduler.trigger import HoldTrigger
 from brewtils.schemas import JobSchema
 

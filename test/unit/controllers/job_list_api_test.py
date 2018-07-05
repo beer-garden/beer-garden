@@ -2,7 +2,7 @@
 import json
 from datetime import datetime
 
-from mock import Mock, patch
+from mock import patch
 
 from bg_utils.models import Job
 from . import TestHandlerBase
@@ -71,16 +71,3 @@ class JobListAPITest(TestHandlerBase):
             self.job_dict
         )
         self.assertEqual(scheduler_mock.add_job.call_count, 1)
-
-    @patch('bg_utils.models.System.find_unique')
-    @patch('brew_view.controllers.system_list_api.SystemListAPI._update_existing_system')
-    @patch('brew_view.controllers.system_list_api.BeerGardenSchemaParser.parse_system')
-    def test_post_existing_system(self, parse_mock, update_mock, find_mock):
-        parse_mock.return_value = self.system_mock
-        db_system_mock = Mock()
-        find_mock.return_value = db_system_mock
-        update_mock.return_value = Mock(), 200
-
-        response = self.fetch('/api/v1/systems', method='POST', body='')
-        self.assertEqual(200, response.code)
-        update_mock.assert_called_once_with(db_system_mock, self.system_mock)
