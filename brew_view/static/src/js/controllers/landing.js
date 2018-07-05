@@ -84,8 +84,8 @@ export default function landingController(
     $scope.systems.errorMessage = response.data.message;
   };
 
-  $scope.exploreSystem = function(systemId) {
-    $location.path('/systems/' + systemId);
+  $scope.exploreSystem = function(system) {
+    $location.path($rootScope.getSystemUrl(system.id));
   };
 
   SystemService.getSystems('count').then($scope.successCallback, $scope.failureCallback);

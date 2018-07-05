@@ -1,10 +1,12 @@
 import angular from 'angular';
+import _ from 'lodash';
 
 systemAdminController.$inject = [
   '$scope',
   '$rootScope',
   '$interval',
   '$http',
+  '$websocket',
   'SystemService',
   'InstanceService',
   'UtilityService',
@@ -17,20 +19,22 @@ systemAdminController.$inject = [
  * @param  {$rootScope} $rootScope  Angular's $rootScope object.
  * @param  {$interval} $interval    Angular's $interval object.
  * @param  {$http} $http            Angular's $http object.
+ * @param  {$websocket} $websocket  Angular's $websocket object.
  * @param  {Object} SystemService   Beer-Garden's system service object.
  * @param  {Object} InstanceService Beer-Garden's instance service object.
  * @param  {Object} UtilityService  Beer-Garden's utility service object.
  * @param  {Object} AdminService    Beer-Garden's admin service object.
  */
 export default function systemAdminController(
-  $scope,
-  $rootScope,
-  $interval,
-  $http,
-  SystemService,
-  InstanceService,
-  UtilityService,
-  AdminService) {
+    $scope,
+    $rootScope,
+    $interval,
+    $http,
+    $websocket,
+    SystemService,
+    InstanceService,
+    UtilityService,
+    AdminService) {
   $scope.util = UtilityService;
 
   $scope.systems = {
@@ -80,21 +84,14 @@ export default function systemAdminController(
   };
 
   $scope.startSystem = function(system) {
-    for (let i=0; i<system.instances.length; i++) {
-      system.instances[i].status = 'STARTING';
-      InstanceService.startInstance(system.instances[i]);
-    }
+    _.forEach(system.instances, $scope.startInstance);
   };
 
   $scope.stopSystem = function(system) {
-    for (let i=0; i<system.instances.length; i++) {
-      system.instances[i].status = 'STOPPING';
-      InstanceService.stopInstance(system.instances[i]);
-    }
+    _.forEach(system.instances, $scope.stopInstance);
   };
 
   $scope.reloadSystem = function(system) {
-    system.status = 'RELOADING';
     SystemService.reloadSystem(system);
   };
 
@@ -118,32 +115,6 @@ export default function systemAdminController(
     InstanceService.stopInstance(instance);
   };
 
-  // Register a function that polls for system status
-  let statusUpdate = $interval(function() {
-    SystemService.getSystems(undefined, 'id,name,display_name,version,instances')
-      .then($scope.successCallback, $scope.failureCallback);
-  }, 5000);
-
-  $scope.$on('$destroy', function() {
-    if (angular.isDefined(statusUpdate)) {
-      $interval.cancel(statusUpdate);
-      statusUpdate = undefined;
-    }
-  });
-
-  let groupSystems = function(rawSystems) {
-    let systems = {};
-    for (let i=0; i<rawSystems.length; i++) {
-      let system = rawSystems[i];
-      let systemName = system.display_name || system.name;
-      if (!(systemName in systems)) {
-        systems[systemName] = {};
-      }
-      systems[systemName][system.version] = system;
-    }
-    return systems;
-  };
-
   $scope.successCallback = function(response) {
     $rootScope.systems = response.data;
     $scope.systems.loaded = true;
@@ -151,7 +122,9 @@ export default function systemAdminController(
     $scope.systems.status = response.status;
     $scope.systems.errorMessage = '';
 
-    $scope.systems.data = groupSystems(response.data);
+    $scope.systems.data = _.groupBy(response.data, function(value) {
+      return value.display_name || value.name;
+    });
 
     // Extra kick for the 'empty' directive
     if (Object.keys($scope.systems.data).length === 0) {
@@ -167,6 +140,94 @@ export default function systemAdminController(
     $scope.systems.errorMessage = response.data.message;
   };
 
+  let socketError = false;
+
+  function websocketConnect() {
+    if (window.WebSocket && !socketError) {
+      let proto = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+      let event_url = proto + window.location.host + '/api/v1/socket/events';
+
+      let socketConnection = $websocket(event_url);
+      socketConnection.onMessage(handleWebsocketMessage);
+
+      // If the connection is broken attempt to reconnect.
+      // If this is caused by brew-view stopping the reconnect attempt will
+      // probably error. This isn't ideal, but we can't distinguish between a
+      // 'real' error and brew-view being down, so we live with this for now.
+      socketConnection.onClose(websocketConnect);
+      socketConnection.onError(function() {
+        socketError = true;
+      });
+
+      $scope.$on('destroy', function() {
+        if (angular.isDefined(socketConnection)) {
+          socketConnection.close();
+          socketConnection = undefined;
+        }
+      });
+    }
+  }
+
+  function handleWebsocketMessage(message) {
+    let event = JSON.parse(message.data);
+
+    switch(event.name) {
+      case 'INSTANCE_INITIALIZED':
+        updateInstanceStatus(event.payload.id, 'RUNNING');
+        break;
+      case 'INSTANCE_STOPPED':
+        updateInstanceStatus(event.payload.id, 'STOPPED');
+        break;
+      case 'SYSTEM_REMOVED':
+        removeSystem(event.payload.id);
+        break;
+    }
+  }
+
+  function updateInstanceStatus(id, newStatus) {
+    if (newStatus === undefined) return;
+
+    for (let system_name in $scope.systems.data) {
+      for (let system of $scope.systems.data[system_name]) {
+        for (let instance of system.instances) {
+          if (instance.id === id) {
+            instance.status = newStatus;
+          }
+        }
+      }
+    }
+  }
+
+  function removeSystem(id) {
+    for (let system_name in $scope.systems.data) {
+      for (let system of $scope.systems.data[system_name]) {
+        if (system.id === id) {
+          _.pull($scope.systems.data[system_name], system);
+
+          if ($scope.systems.data[system_name].length === 0) {
+            delete $scope.systems.data[system_name];
+          }
+        }
+      }
+    }
+  }
+
+  // Attempt to connect to the event websocket
+  websocketConnect();
+
+  // Register a function that polls for systems...
+  let systemsUpdate = $interval(function() {
+    SystemService.getSystems(undefined, 'name,display_name,version,instances')
+      .then($scope.successCallback, $scope.failureCallback);
+  }, 5000);
+  $scope.$on('$destroy', function() {
+    if (angular.isDefined(systemsUpdate)) {
+      $interval.cancel(systemsUpdate);
+      systemsUpdate = undefined;
+    }
+  });
+
+  // ...but go immediately so we don't have to wait for first interval
   SystemService.getSystems(undefined, 'name,display_name,version,instances')
     .then($scope.successCallback, $scope.failureCallback);
 };

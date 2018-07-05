@@ -47,6 +47,11 @@ module.exports = {
       path.resolve(__dirname, 'node_modules'),
     ],
   },
+  externals: {
+    // This is intended for running on node. angular-websockets is requiring
+    // it but not actually using it in the browser, so just stub it out
+    'ws': 'self',
+  },
   module: {
     rules: [
       {

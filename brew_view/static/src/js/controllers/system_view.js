@@ -1,31 +1,31 @@
 import angular from 'angular';
 
 systemViewController.$inject = [
+  '$rootScope',
   '$scope',
   '$stateParams',
   '$interval',
   'SystemService',
-  'CommandService',
   'UtilityService',
   'DTOptionsBuilder',
 ];
 
 /**
  * systemViewController - Angular Controller for viewing a single system.
+ * @param  {$rootScope} $rootScope     Angular's $rootScope object.
  * @param  {$scope} $scope             Angular's $scope object.
  * @param  {$stateParams} $stateParams Angular's $stateParams object.
  * @param  {$interval} $interval       Angular's $interval object.
  * @param  {Object} SystemService      Beer-Garden System Service.
- * @param  {Object} CommandService     Beer-Garden Command Service.
  * @param  {Object} UtilityService     Beer-Garden Utility Service.
  * @param  {Object} DTOptionsBuilder   Object for building Data-Tables objects.
  */
 export default function systemViewController(
+  $rootScope,
   $scope,
   $stateParams,
   $interval,
   SystemService,
-  CommandService,
   UtilityService,
   DTOptionsBuilder) {
   $scope.util = UtilityService;
@@ -77,7 +77,7 @@ export default function systemViewController(
     $scope.system.loaded = false;
     $scope.system.error = true;
     $scope.system.status = response.status;
-    $scope.system.errorMessage = data.message;
+    $scope.system.errorMessage = response.data.message;
   };
 
   // Register a function that polls if the system is in a transition status
@@ -98,6 +98,43 @@ export default function systemViewController(
     }
   });
 
-  SystemService.getSystem($stateParams.id, true)
-    .then($scope.successCallback, $scope.failureCallback);
+  /**
+   * Get the state params required for the $stateProvider to route this command.
+   *
+   * @param {Object} command - command from server.
+   * @return {Object} params for routing.
+   */
+  $scope.getCommandStateParams = function(command) {
+    return {
+      systemName: $scope.system.data.name,
+      systemVersion: $rootScope.getVersionForUrl($scope.system.data),
+      name: command.name,
+      id: command.id,
+    };
+  };
+
+  const loadSystem = function(stateParams) {
+    let systemId;
+    if (!angular.isDefined(stateParams.id)) {
+      let system = $rootScope.findSystem($stateParams.name, $stateParams.version);
+      if (!angular.isDefined(system)) {
+        $scope.failureCallback({status: 404, message: 'Invalid system ID'});
+        return;
+      }
+      systemId = system.id;
+    } else {
+      systemId = $stateParams.id;
+    }
+
+    SystemService.getSystem(systemId, true).
+      then($scope.successCallback, $scope.failureCallback);
+  };
+
+  if (angular.isDefined($rootScope.systems)) {
+    loadSystem($stateParams);
+  } else {
+    $scope.$on('systemsLoaded', function() {
+      loadSystem($stateParams);
+    });
+  }
 };

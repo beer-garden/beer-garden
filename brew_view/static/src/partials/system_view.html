@@ -31,7 +31,7 @@
           <td>{{command.name}}</td>
           <td>{{system.data.version}}</td>
           <td>{{ command.description || "No Description Provided" }}</td>
-          <td><a class="btn btn-primary center-block" ui-sref="command({command_id: command.id})">Make it Happen!</a></td>
+          <td><a class="btn btn-primary center-block" ui-sref="command(getCommandStateParams(command))">Make it Happen!</a></td>
         </tr>
       </tbody>
       </table>

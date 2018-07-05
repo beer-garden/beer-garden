@@ -22,7 +22,13 @@
         <td>{{entry.name}}</td>
         <td>{{entry.version}}</td>
         <td>{{entry.description}}</td>
-        <td><a class="btn btn-primary center-block word-wrap-button" ui-sref="command({command_id: entry.id})">Make it Happen!</a></td>
+        <td>
+          <a
+            class="btn btn-primary center-block word-wrap-button"
+            ui-sref="command(service.getStateParams(entry))">
+            Make it Happen!
+          </a>
+        </td>
       </tr>
     </tbody>
     </table>

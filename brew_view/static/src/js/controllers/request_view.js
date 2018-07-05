@@ -178,25 +178,21 @@ export default function requestViewController(
   };
 
   $scope.redoRequest = function(request) {
-    RequestService.getCommandId(request).then(
-      function(id) {
-        if (id !== null) {
-          const newRequest = {
-            system: request.system,
-            system_version: request.system_version,
-            command: request.command,
-            instance_name: request.instance_name,
-            comment: request.comment || '',
-            parameters: request.parameters,
-          };
-
-          $state.go('command', {command_id: id, request: newRequest});
-        } else {
-          alert('We\'re sorry, but this command no longer seems to exist.');
-        }
-      },
-      function(data, status, headers, config) {
-        alert('We\'re sorry, but a server error occurred trying to redirect you.');
+    const newRequest = {
+      system: request.system,
+      system_version: request.system_version,
+      command: request.command,
+      instance_name: request.instance_name,
+      comment: request.comment || '',
+      parameters: request.parameters,
+    };
+    $state.go(
+      'command',
+      {
+        name: request.command,
+        systemName: request.system,
+        systemVersion: request.system_version,
+        request: newRequest,
       }
     );
   };
