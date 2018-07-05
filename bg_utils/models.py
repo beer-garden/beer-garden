@@ -459,6 +459,7 @@ class Event(Document, BrewtilsEvent):
 class Role(Document, BrewtilsRole):
 
     name = StringField(required=True)
+    roles = ListField(field=ReferenceField('Role'))
     permissions = ListField(field=StringField())
 
     meta = {
@@ -474,7 +475,5 @@ class Principal(Document, BrewtilsPrincipal):
 
     username = StringField(required=True)
     hash = StringField()
-    theme = StringField()
     roles = ListField(field=ReferenceField('Role', reverse_delete_rule=PULL))
-    permissions = ListField(field=StringField())
     preferences = DictField()
