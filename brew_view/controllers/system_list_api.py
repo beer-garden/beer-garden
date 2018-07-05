@@ -36,7 +36,7 @@ class SystemListAPI(BaseHandler):
               - false
               - count
           - name: include_fields
-            in: header
+            in: query
             required: false
             description: Specify fields to include in the response
             type: array
@@ -44,7 +44,7 @@ class SystemListAPI(BaseHandler):
             items:
               type: string
           - name: exclude_fields
-            in: header
+            in: query
             required: false
             description: Specify fields to exclude from the response
             type: array
@@ -66,8 +66,8 @@ class SystemListAPI(BaseHandler):
         query_set = System.objects.order_by(self.request.headers.get('order_by', 'name'))
         serialize_params = {'to_string': True, 'many': True}
 
-        include_fields = self.request.headers.get('include_fields')
-        exclude_fields = self.request.headers.get('exclude_fields')
+        include_fields = self.get_query_argument('include_fields', None)
+        exclude_fields = self.get_query_argument('exclude_fields', None)
         include_commands = self.get_query_argument('include_commands', None)
 
         if include_fields and exclude_fields:

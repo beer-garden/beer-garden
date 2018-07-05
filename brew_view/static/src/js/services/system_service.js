@@ -36,8 +36,6 @@ export default function systemService($http) {
     return $http.get('api/v1/systems', {
       params: {
         include_commands: includeCommands,
-      },
-      headers: {
         include_fields: includeFields,
         exclude_fields: excludeFields,
       }
