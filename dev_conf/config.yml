@@ -17,6 +17,12 @@ application:
   allow_unsafe_templates: false
   icon_default: fa-beer
   name: Beer Garden
+auth:
+  enabled: False
+  token:
+    algorithm: HS256
+    lifetime: 1200
+    secret: IAMSUPERSECRET
 backend:
   host: localhost
   port: 9090

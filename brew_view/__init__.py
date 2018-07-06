@@ -157,8 +157,7 @@ def _setup_tornado_app():
     _load_swagger(published_url_specs, title=config.application.name)
 
     return Application(published_url_specs + unpublished_url_specs,
-                       debug=config.debug_mode,
-                       cookie_secret='IAMSUPERSECRET')
+                       debug=config.debug_mode)
 
 
 def _setup_ssl_context():

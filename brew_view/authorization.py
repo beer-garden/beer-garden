@@ -73,6 +73,9 @@ def has_permission(principal, required_permissions):
     Returns:
         bool yes or no
     """
+    if not brew_view.config.auth.enabled:
+        return True
+
     if not principal:
         return False
 
@@ -83,40 +86,41 @@ def has_permission(principal, required_permissions):
 
 
 def generate_token(principal):
-    current_time = datetime.utcnow()
 
-    def coalesce_permissions(role_list):
-        """Determine permissions"""
-
-        if not role_list:
-            return set(), set()
-
-        aggregate_roles = set()
-        aggregate_perms = set()
-
-        for role in role_list:
-            aggregate_roles.add(role.name)
-            aggregate_perms |= set(role.permissions)
-
-            nested_roles, nested_perms = coalesce_permissions(role.roles)
-            aggregate_roles |= nested_roles
-            aggregate_perms |= nested_perms
-
-        return aggregate_roles, aggregate_perms
-
+    now = datetime.utcnow()
     roles, permissions = coalesce_permissions(principal.roles)
 
     payload = {
         'sub': str(principal.id),
-        'iat': current_time,
-        'exp': current_time + timedelta(minutes=20),
+        'iat': now,
+        'exp': now + timedelta(seconds=brew_view.config.auth.token.lifetime),
         'username': principal.username,
         'roles': list(roles),
         'permissions': list(permissions),
     }
     return jwt.encode(payload,
-                      brew_view.tornado_app.settings["cookie_secret"],
-                      algorithm='HS256')
+                      key=brew_view.config.auth.token.secret,
+                      algorithm=brew_view.config.auth.token.algorithm)
+
+
+def coalesce_permissions(role_list):
+    """Determine permissions"""
+
+    if not role_list:
+        return set(), set()
+
+    aggregate_roles = set()
+    aggregate_perms = set()
+
+    for role in role_list:
+        aggregate_roles.add(role.name)
+        aggregate_perms |= set(role.permissions)
+
+        nested_roles, nested_perms = coalesce_permissions(role.roles)
+        aggregate_roles |= nested_roles
+        aggregate_perms |= nested_perms
+
+    return aggregate_roles, aggregate_perms
 
 
 def anonymous_user():
@@ -150,8 +154,8 @@ def bearer_auth(auth_header):
     token = auth_header.split(' ')[1]
 
     decoded = jwt.decode(token,
-                         brew_view.tornado_app.settings["cookie_secret"],
-                         algorithm='HS256')
+                         key=brew_view.config.auth.token.secret,
+                         algorithm=brew_view.config.auth.token.algorithm)
 
     return BrewtilsPrincipal(
         id=decoded['sub'],

@@ -141,6 +141,37 @@ SPECIFICATION = {
         },
     },
 
+    "auth": {
+        'type': 'dict',
+        'items': {
+            "enabled": {
+                "type": "bool",
+                "default": False,
+                "description": "Use role-based authentication / authorization",
+            },
+            "token": {
+                'type': 'dict',
+                'items': {
+                    "algorithm": {
+                        "type": "str",
+                        "default": "HS256",
+                        "description": "Algorithm to use when signing tokens",
+                    },
+                    "lifetime": {
+                        "type": "int",
+                        "default": 1200,
+                        "description": "Time (seconds) before a token expires",
+                    },
+                    "secret": {
+                        "type": "str",
+                        "required": False,
+                        "description": "Secret to use when signing tokens",
+                    },
+                },
+            },
+        },
+    },
+
     'backend': {
         'type': 'dict',
         'items': {
