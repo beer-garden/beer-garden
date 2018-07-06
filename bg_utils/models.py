@@ -2,11 +2,12 @@ import copy
 import datetime
 import logging
 
+import pytz
 import six
 from lark.common import ParseError
 from mongoengine import BooleanField, DateTimeField, DictField, Document, DynamicField, \
     GenericReferenceField, EmbeddedDocument, EmbeddedDocumentField, IntField, ListField, \
-    ReferenceField, StringField, PULL
+    ReferenceField, StringField, PULL, GenericEmbeddedDocumentField
 from mongoengine.errors import DoesNotExist
 
 from bg_utils.fields import DummyField, StatusInfo
@@ -16,10 +17,18 @@ from brewtils.models import (
     Choices as BrewtilsChoices, Command as BrewtilsCommand,
     Instance as BrewtilsInstance, Parameter as BrewtilsParameter,
     Request as BrewtilsRequest, System as BrewtilsSystem,
-    Event as BrewtilsEvent, Job as BrewtilsJob)
+    Event as BrewtilsEvent, Job as BrewtilsJob,
+    RequestTemplate as BrewtilsRequestTemplate,
+    DateTrigger as BrewtilsDateTrigger,
+    CronTrigger as BrewtilsCronTrigger,
+    IntervalTrigger as BrewtilsIntervalTrigger,
+)
 
-__all__ = ['System', 'Instance', 'Command', 'Parameter', 'Request', 'Choices',
-           'Event', 'Job', 'RequestTemplate']
+__all__ = [
+    'System', 'Instance', 'Command', 'Parameter', 'Request', 'Choices',
+    'Event', 'Job', 'RequestTemplate', 'DateTrigger', 'CronTrigger',
+    'IntervalTrigger'
+]
 
 
 # MongoEngine needs all EmbeddedDocuments to be defined before any Documents that reference them
@@ -462,17 +471,94 @@ class Event(Document, BrewtilsEvent):
         return BrewtilsEvent.__repr__(self)
 
 
-class RequestTemplate(EmbeddedDocument):
+class RequestTemplate(EmbeddedDocument, BrewtilsRequestTemplate):
 
     for field_name, field_info in Request.TEMPLATE_FIELDS.items():
         locals()[field_name] = field_info['field'](**field_info['kwargs'])
+        
+    def __str__(self):
+        return BrewtilsRequestTemplate.__str__(self)
+
+    def __repr__(self):
+        return BrewtilsRequestTemplate.__repr__(self)
+
+
+class DateTrigger(EmbeddedDocument, BrewtilsDateTrigger):
+
+    run_date = DateTimeField(required=True)
+    timezone = StringField(
+        required=False, 
+        default=pytz.utc, 
+        chocies=pytz.all_timezones
+    )
+    
+    def __str__(self):
+        return BrewtilsDateTrigger.__str__(self)
+
+    def __repr__(self):
+        return BrewtilsDateTrigger.__repr__(self)
+
+
+class IntervalTrigger(EmbeddedDocument, BrewtilsIntervalTrigger):
+
+    weeks = IntField(default=0)
+    days = IntField(default=0)
+    hours = IntField(default=0)
+    minutes = IntField(default=0)
+    seconds = IntField(default=0)
+    start_date = DateTimeField(required=False)
+    end_date = DateTimeField(required=False)
+    timezone = StringField(
+        required=False,
+        default=pytz.utc,
+        chocies=pytz.all_timezones
+    )
+    jitter = IntField(required=False)
+
+    def __str__(self):
+        return BrewtilsIntervalTrigger.__str__(self)
+
+    def __repr__(self):
+        return BrewtilsIntervalTrigger.__repr__(self)
+
+
+class CronTrigger(EmbeddedDocument, BrewtilsCronTrigger):
+
+    year = StringField(default='*')
+    month = StringField(default='1')
+    day = StringField(default='1')
+    week = StringField(default='*')
+    day_of_week = StringField(default='*')
+    hour = StringField(default='0')
+    minute = StringField(default='0')
+    second = StringField(default='0')
+    start_date = DateTimeField(required=False)
+    end_date = DateTimeField(required=False)
+    timezone = StringField(
+        required=False,
+        default=pytz.utc,
+        chocies=pytz.all_timezones
+    )
+    jitter = IntField(required=False)
+
+    def __str__(self):
+        return BrewtilsCronTrigger.__str__(self)
+
+    def __repr__(self):
+        return BrewtilsCronTrigger.__repr__(self)
 
 
 class Job(Document, BrewtilsJob):
 
+    TRIGGER_MODEL_MAPPING = {
+        'date': DateTrigger,
+        'cron': CronTrigger,
+        'interval': IntervalTrigger
+    }
+
     name = StringField(required=True)
     trigger_type = StringField(required=True, choices=BrewtilsJob.TRIGGER_TYPES)
-    trigger_args = DictField(required=True)
+    trigger = GenericEmbeddedDocumentField(choices=list(TRIGGER_MODEL_MAPPING.values()))
     request_template = EmbeddedDocumentField('RequestTemplate')
     misfire_grace_time = IntField()
     coalesce = BooleanField(default=True)
@@ -484,3 +570,18 @@ class Job(Document, BrewtilsJob):
 
     def __repr__(self):
         return BrewtilsJob.__repr__(self)
+
+    def clean(self):
+        """Validate before saving to the database"""
+
+        if self.trigger_type not in self.TRIGGER_MODEL_MAPPING:
+            raise BrewmasterModelValidationError(
+                'Cannot save job. No matching model for trigger type: %s' %
+                self.trigger_type
+            )
+
+        if not isinstance(self.trigger, self.TRIGGER_MODEL_MAPPING[self.trigger_type]):
+            raise BrewmasterModelValidationError(
+                'Cannot save job. Trigger type: %s but got trigger: %s' %
+                (self.trigger_type, type(self.trigger))
+            )

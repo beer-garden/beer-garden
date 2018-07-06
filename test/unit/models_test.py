@@ -1,9 +1,10 @@
 import unittest
 
 import mongoengine
+import pytest
 from mock import Mock, PropertyMock, patch
 
-from bg_utils.models import Command, Instance, Parameter, Request, System, Choices
+from bg_utils.models import Command, Instance, Parameter, Request, System, Choices, Job, DateTrigger
 from brewtils.errors import BrewmasterModelValidationError
 from brewtils.schemas import RequestTemplateSchema
 
@@ -326,3 +327,17 @@ class SystemTest(unittest.TestCase):
         self.assertEqual([new_command], self.default_system.commands)
         self.assertEqual(old_command.id, self.default_system.commands[0].id)
         self.assertEqual(new_command.description, self.default_system.commands[0].description)
+
+
+class JobTest(unittest.TestCase):
+
+    def test_invalid_trigger_type(self):
+        job = Job(trigger_type='INVALID_TRIGGER_TYPE')
+        with self.assertRaises(BrewmasterModelValidationError):
+            job.clean()
+
+    def test_trigger_mismatch(self):
+        date_trigger = DateTrigger()
+        job = Job(trigger_type='cron', trigger=date_trigger)
+        with self.assertRaises(BrewmasterModelValidationError):
+            job.clean()
