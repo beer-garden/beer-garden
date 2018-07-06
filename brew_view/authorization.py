@@ -6,10 +6,10 @@ from enum import Enum
 import jwt
 from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
-from tornado.web import HTTPError
 
 import brew_view
 from bg_utils.models import Principal, Role
+from brewtils.errors import RequestForbidden
 from brewtils.models import (
     Principal as BrewtilsPrincipal,
     Role as BrewtilsRole
@@ -56,7 +56,8 @@ def authenticated(method=None, permissions=None):
     @functools.wraps(method)
     def wrapper(self, *args, **kwargs):
         if not has_permission(self.current_user, permission_strings):
-            raise HTTPError(403)
+            raise RequestForbidden('Action requires permission %s' %
+                                   permissions[0].value)
 
         return method(self, *args, **kwargs)
 

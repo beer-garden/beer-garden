@@ -11,8 +11,9 @@ from tornado.web import HTTPError, RequestHandler
 import bg_utils
 import brew_view
 from brew_view.authorization import anonymous_user, basic_auth, bearer_auth
-from brewtils.errors import (ModelError, ModelValidationError,
-                             RequestPublishException, WaitExceededError)
+from brewtils.errors import (
+    ModelError, ModelValidationError, RequestForbidden, RequestPublishException,
+    WaitExceededError)
 from brewtils.models import Event
 
 
@@ -67,6 +68,7 @@ class BaseHandler(RequestHandler):
             MongoValidationError: {'status_code': 400},
             ModelError: {'status_code': 400},
             bg_utils.bg_thrift.InvalidSystem: {'status_code': 400},
+            RequestForbidden: {'status_code': 403},
             DoesNotExist: {'status_code': 404, 'message': 'Resource does not exist'},
             WaitExceededError: {'status_code': 408, 'message': 'Max wait time exceeded'},
             NotUniqueError: {'status_code': 409, 'message': 'Resource already exists'},
