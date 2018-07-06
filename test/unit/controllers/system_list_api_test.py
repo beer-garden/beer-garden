@@ -34,7 +34,7 @@ class SystemListAPITest(TestHandlerBase):
         response = self.fetch('/api/v1/systems?include_commands=False')
         self.assertEqual(200, response.code)
         self.assertEqual(self.serialize_mock.return_value, response.body.decode('utf-8'))
-        self.assertFalse(self.serialize_mock.call_args[1]['include_commands'])
+        self.assertEqual(self.serialize_mock.call_args[1]['exclude'], {'commands'})
 
     @patch('brew_view.controllers.system_list_api.BeerGardenSchemaParser.serialize_system', Mock())
     def test_get_with_filter_param(self):
