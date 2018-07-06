@@ -71,16 +71,40 @@ export default function commandIndexController(
     .withBootstrap();
 
   $scope.successCallback = function(response) {
-    // Make sure systems load before moving on with the sorting
-    if ($scope.systems == null) {
-      $scope.$on('systemsLoaded', function() {
-        response.data.sort(CommandService.comparison);
-      });
-    } else {
-      response.data.sort(CommandService.comparison);
-    }
+    let systems = response.data;
+    let commands = [];
 
-    $scope.commands.data = response.data;
+    // Sort the systems
+    systems.sort((a, b) => {
+      let aName = a.display_name || a.name;
+      let bName = b.display_name || b.name;
+
+      if (aName < bName) return -1;
+      if (aName > bName) return 1;
+      return 0;
+    });
+
+    systems.forEach((system) => {
+      // Sort the commands
+      system.commands.sort((a, b) => {
+        if (a.name < b.name) return -1;
+        if (a.name > b.name) return 1;
+        return 0;
+      });
+
+      // Then pull out what we care about
+      system.commands.forEach((command) => {
+        commands = commands.concat({
+          id: command.id,
+          name: command.name,
+          system: system.name,
+          version: system.version,
+          description: command.description || 'No Description Provided',
+        });
+      });
+    });
+
+    $scope.commands.data = commands;
     $scope.commands.loaded = true;
     $scope.commands.status = response.status;
     $scope.commands.error = false;
@@ -95,5 +119,5 @@ export default function commandIndexController(
     $scope.commands.errorMessage = response.data.message;
   };
 
-  CommandService.getCommands().then($scope.successCallback, $scope.failureCallback);
+  SystemService.getSystems().then($scope.successCallback, $scope.failureCallback);
 };

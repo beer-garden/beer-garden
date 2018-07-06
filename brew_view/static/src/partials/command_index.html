@@ -17,15 +17,15 @@
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="command in commands.data | filter:query">
-        <td>{{service.getSystemName(command)}}</td>
-        <td>{{command.name}}</td>
-        <td>{{service.findSystem(command).version}}</td>
-        <td>{{ command.description || "No Description Provided" }}</td>
+      <tr ng-repeat="entry in commands.data | filter:query">
+        <td>{{entry.system}}</td>
+        <td>{{entry.name}}</td>
+        <td>{{entry.version}}</td>
+        <td>{{entry.description}}</td>
         <td>
           <a
             class="btn btn-primary center-block word-wrap-button"
-            ui-sref="command(service.getStateParams(command))">
+            ui-sref="command(service.getStateParams(entry))">
             Make it Happen!
           </a>
         </td>
