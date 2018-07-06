@@ -6,7 +6,7 @@ from tornado.locks import Lock
 from bg_utils.models import System, Instance
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view.base_handler import BaseHandler
-from brewtils.errors import ModelError, ModelValidationError
+from brewtils.errors import ModelValidationError
 from brewtils.models import Events
 from brewtils.schemas import SystemSchema
 

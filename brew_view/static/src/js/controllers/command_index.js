@@ -84,7 +84,7 @@ export default function commandIndexController(
       return 0;
     });
 
-    systems.forEach(system => {
+    systems.forEach((system) => {
       // Sort the commands
       system.commands.sort((a, b) => {
         if (a.name < b.name) return -1;
@@ -93,13 +93,13 @@ export default function commandIndexController(
       });
 
       // Then pull out what we care about
-      system.commands.forEach(command => {
+      system.commands.forEach((command) => {
         commands = commands.concat({
           id: command.id,
           name: command.name,
           system: system.name,
           version: system.version,
-          description: command.description || "No Description Provided",
+          description: command.description || 'No Description Provided',
         });
       });
     });
