@@ -237,7 +237,7 @@ export default function systemAdminController(
 
   // Register a function that polls for systems...
   let systemsUpdate = $interval(function() {
-    SystemService.getSystems(true, 'name,display_name,version,instances')
+    SystemService.getSystems(true, 'id,name,display_name,version,instances')
       .then($scope.successCallback, $scope.failureCallback);
   }, 5000);
   $scope.$on('$destroy', function() {
@@ -248,6 +248,6 @@ export default function systemAdminController(
   });
 
   // ...but go immediately so we don't have to wait for first interval
-  SystemService.getSystems(true, 'name,display_name,version,instances')
+  SystemService.getSystems(true, 'id,name,display_name,version,instances')
     .then($scope.successCallback, $scope.failureCallback);
 };
