@@ -32,6 +32,7 @@ class SystemListAPI(BaseHandler):
           and what information is available. Things to be aware of:
 
           * The `include_commands` parameter is __deprecated__. Don't use it.
+            Use `exclude_fields=commands` instead.
 
           * It's possible to specify `include_fields` _and_ `exclude_fields`.
             This doesn't make a lot of sense, but you can do it. If the same
@@ -73,7 +74,8 @@ class SystemListAPI(BaseHandler):
           - name: include_commands
             in: query
             required: false
-            description: __DEPRECATED__ Include commands in the response
+            description: __DEPRECATED__ Include commands in the response.
+              Use `exclude_fields=commands` instead.
             type: boolean
             default: true
         responses:
