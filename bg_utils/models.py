@@ -488,7 +488,7 @@ class DateTrigger(EmbeddedDocument, BrewtilsDateTrigger):
     run_date = DateTimeField(required=True)
     timezone = StringField(
         required=False, 
-        default=pytz.utc, 
+        default='utc',
         chocies=pytz.all_timezones
     )
     
@@ -497,6 +497,19 @@ class DateTrigger(EmbeddedDocument, BrewtilsDateTrigger):
 
     def __repr__(self):
         return BrewtilsDateTrigger.__repr__(self)
+
+    @staticmethod
+    def get_scheduler_attribute_names():
+        return ['run_date', 'timezone']
+
+    def get_scheduler_kwargs(self):
+        """Get kwargs for schedulers version of this trigger."""
+        tz = pytz.timezone(self.timezone)
+        localized_date = tz.localize(self.run_date)
+        return {
+            'run_date': localized_date,
+            'timezone': tz
+        }
 
 
 class IntervalTrigger(EmbeddedDocument, BrewtilsIntervalTrigger):
@@ -510,7 +523,7 @@ class IntervalTrigger(EmbeddedDocument, BrewtilsIntervalTrigger):
     end_date = DateTimeField(required=False)
     timezone = StringField(
         required=False,
-        default=pytz.utc,
+        default='utc',
         chocies=pytz.all_timezones
     )
     jitter = IntField(required=False)
@@ -520,6 +533,37 @@ class IntervalTrigger(EmbeddedDocument, BrewtilsIntervalTrigger):
 
     def __repr__(self):
         return BrewtilsIntervalTrigger.__repr__(self)
+
+    @staticmethod
+    def get_scheduler_attribute_names():
+        return [
+            'weeks',
+            'days',
+            'hours',
+            'minutes',
+            'seconds',
+            'start_date',
+            'end_date',
+            'timezone',
+            'jitter',
+        ]
+
+    def get_scheduler_kwargs(self):
+        """Get kwargs for schedulers version of this trigger."""
+        tz = pytz.timezone(self.timezone)
+        start_date = tz.localize(self.start_date) if self.start_date else None
+        end_date = tz.localize(self.start_date) if self.start_date else None
+        kwargs = {
+            'timezone': tz,
+            'start_date': start_date,
+            'end_date': end_date,
+        }
+        for key in self.get_scheduler_attribute_names():
+            if key in ['timezone', 'start_date', 'end_date']:
+                continue
+
+            kwargs[key] = getattr(self, key)
+        return kwargs
 
 
 class CronTrigger(EmbeddedDocument, BrewtilsCronTrigger):
@@ -536,7 +580,7 @@ class CronTrigger(EmbeddedDocument, BrewtilsCronTrigger):
     end_date = DateTimeField(required=False)
     timezone = StringField(
         required=False,
-        default=pytz.utc,
+        default='utc',
         chocies=pytz.all_timezones
     )
     jitter = IntField(required=False)
@@ -546,6 +590,40 @@ class CronTrigger(EmbeddedDocument, BrewtilsCronTrigger):
 
     def __repr__(self):
         return BrewtilsCronTrigger.__repr__(self)
+
+    @staticmethod
+    def get_scheduler_attribute_names():
+        return [
+            'year',
+            'month',
+            'day',
+            'week',
+            'day_of_week',
+            'hour',
+            'minute',
+            'second',
+            'start_date',
+            'end_date',
+            'timezone',
+            'jitter',
+        ]
+
+    def get_scheduler_kwargs(self):
+        """Get kwargs for schedulers version of this trigger."""
+        tz = pytz.timezone(self.timezone)
+        start_date = tz.localize(self.start_date) if self.start_date else None
+        end_date = tz.localize(self.start_date) if self.start_date else None
+        kwargs = {
+            'timezone': tz,
+            'start_date': start_date,
+            'end_date': end_date,
+        }
+        for key in self.get_scheduler_attribute_names():
+            if key in ['timezone', 'start_date', 'end_date']:
+                continue
+
+            kwargs[key] = getattr(self, key)
+        return kwargs
 
 
 class Job(Document, BrewtilsJob):
