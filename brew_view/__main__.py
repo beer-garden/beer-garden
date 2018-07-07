@@ -77,7 +77,7 @@ def main():
     brew_view.logger.info('Starting up metrics server on: %d' % brew_view.config.metrics.port)
     start_http_server(brew_view.config.metrics.port)
 
-    brew_view.scheduler.start()
+    brew_view.request_scheduler.start()
 
     brew_view.logger.info(
         'Starting up HTTP server on: %s:%d' %

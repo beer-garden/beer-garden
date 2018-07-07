@@ -25,7 +25,8 @@ from brew_view.publishers import (MongoPublisher, RequestPublisher,
 from brew_view.specification import get_default_logging_config
 from brewtils.rest.easy_client import EasyClient
 from brewtils.schemas import ParameterSchema, CommandSchema, InstanceSchema, SystemSchema, \
-    RequestSchema, PatchSchema, LoggingConfigSchema, EventSchema, QueueSchema, JobSchema
+    RequestSchema, PatchSchema, LoggingConfigSchema, EventSchema, QueueSchema, JobSchema, \
+    DateTriggerSchema, IntervalTriggerSchema, CronTriggerSchema
 
 config = None
 application = None
@@ -39,7 +40,7 @@ api_spec = None
 plugin_logging_config = None
 app_log_config = None
 notification_meta = None
-scheduler = None
+request_scheduler = None
 request_map = {}
 easy_client = None
 
@@ -77,7 +78,7 @@ def load_plugin_logging_config(input_config):
 
 def _setup_application():
     global application, server, tornado_app, public_url, thrift_context, event_publishers
-    global scheduler, easy_client
+    global request_scheduler, easy_client
 
     public_url = Url(scheme='https' if config.web.ssl.enabled else 'http',
                      host=config.event.public_fqdn,
@@ -89,7 +90,7 @@ def _setup_application():
     server_ssl, client_ssl = _setup_ssl_context()
     event_publishers = _setup_event_publishers(client_ssl)
     easy_client = EasyClient(bg_host=config.web.host, **config.web)
-    scheduler = _setup_scheduler()
+    request_scheduler = _setup_scheduler()
 
     server = HTTPServer(tornado_app, ssl_options=server_ssl)
     server.listen(config.web.port, config.web.host)
@@ -98,8 +99,6 @@ def _setup_application():
 
 
 def _setup_scheduler():
-    # TODO: Create our own JobStore
-    # https://apscheduler.readthedocs.io/en/latest/extending.html#custom-job-stores
     jobstores = {
         'beer_garden': BGJobStore(),
     }
@@ -290,7 +289,18 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition('Patch', properties={"operations": {
         "type": "array", "items": {"$ref": "#/definitions/_patch"}}
     })
+    api_spec.definition('DateTrigger', schema=DateTriggerSchema)
+    api_spec.definition('CronTrigger', schema=CronTriggerSchema)
+    api_spec.definition('IntervalTrigger', schema=IntervalTriggerSchema)
     api_spec.definition('Job', schema=JobSchema)
+    trigger_properties = {
+        'allOf': [
+            {'$ref': '#/definitions/CronTrigger'},
+            {'$ref': '#/definitions/DateTrigger'},
+            {'$ref': '#/definitions/IntervalTrigger'},
+        ],
+    }
+    api_spec._definitions['Job']['properties']['trigger'] = trigger_properties
 
     error = {'message': {'type': 'string'}}
     api_spec.definition('400Error', properties=error, description='Parameter validation error')

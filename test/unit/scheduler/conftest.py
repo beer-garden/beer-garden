@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 import pytest
 from apscheduler.schedulers.base import BaseScheduler
-from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.triggers.date import DateTrigger
 from mock import Mock
 from mongoengine import connect
 from apscheduler.job import Job as APJob
 from pytz import utc
 
 from brew_view import BGJobStore
-from brew_view.scheduler.trigger import HoldTrigger
 
 
 @pytest.fixture
@@ -21,15 +20,14 @@ def jobstore():
 
 
 @pytest.fixture
-def ap_job(bg_job, request_template):
-    trigger = HoldTrigger(bg_job.trigger_type, bg_job.trigger_args)
+def ap_job(bg_job, bg_request_template):
     job_kwargs = {
         'func': Mock(),
         'scheduler': Mock(BaseScheduler, timezone=utc),
-        'trigger': trigger,
+        'trigger': DateTrigger(),
         'executor': 'default',
-        'args': (request_template,),
-        'kwargs': {},
+        'args': (),
+        'kwargs': {'request_template': bg_request_template},
         'id': str(bg_job.id),
         'misfire_grace_time': bg_job.misfire_grace_time,
         'coalesce': bg_job.coalesce,

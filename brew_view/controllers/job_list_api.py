@@ -9,7 +9,6 @@ from tornado.gen import coroutine
 
 from brew_view.base_handler import BaseHandler
 from brew_view.scheduler.runner import run_job
-from brew_view.scheduler.trigger import HoldTrigger
 from brewtils.schemas import JobSchema
 
 
@@ -51,17 +50,18 @@ class JobListAPI(BaseHandler):
         """
         ---
         summary: Schedules a Job to be run.
-        description: Given a job, it will be scheduled to run on the interval
-            set in the trigger argument.
+        description: |
+          Given a job, it will be scheduled to run on the interval
+          set in the trigger argument.
         parameters:
           - name: job
             in: body
-            description: The Job to create/schedule.
+            description: The Job to create/schedule
             schema:
               $ref: '#/definitions/Job'
         responses:
           201:
-            description: A new job has been created.
+            description: A new job has been created
             schema:
               $ref: '#/definitions/Job'
           400:
@@ -71,24 +71,26 @@ class JobListAPI(BaseHandler):
         tags:
           - Jobs
         """
-        job_model = self.parser.parse_job(
+        document = self.parser.parse_job(
             self.request.decoded_body,
             from_string=True
         )
-        trigger = HoldTrigger(job_model.trigger_type, job_model.trigger_args)
+        # We have to save here, because we need an ID to pass
+        # to the scheduler.
+        document.save()
 
-        brew_view.scheduler.add_job(
+        brew_view.request_scheduler.add_job(
             run_job,
-            trigger,
-            args=(job_model.request_template, ),
-            name=job_model.name,
-            misfire_grace_time=job_model.misfire_grace_time,
-            coalesce=job_model.coalesce,
-            max_instances=job_model.max_instances,
+            None,
+            kwargs={'request_template': document.request_template},
+            name=document.name,
+            misfire_grace_time=document.misfire_grace_time,
+            coalesce=document.coalesce,
+            max_instances=document.max_instances,
             jobstore='beer_garden',
             replace_existing=False,
-            id=job_model.id,
+            id=str(document.id),
         )
 
         self.set_status(201)
-        self.write(self.parser.serialize_job(job_model, to_string=False))
+        self.write(self.parser.serialize_job(document, to_string=False))

@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
+import copy
 import json
 from datetime import datetime
 
 from mock import patch
 
-from bg_utils.models import Job
+from bg_utils.models import Job, RequestTemplate, DateTrigger
 from . import TestHandlerBase
 
 
@@ -15,8 +16,11 @@ class JobAPITest(TestHandlerBase):
         self.ts_dt = datetime(2016, 1, 1)
         self.job_dict = {
             'name': 'job_name',
-            'trigger_type': 'cron',
-            'trigger_args': {'minute': '*/5'},
+            'trigger_type': 'date',
+            'trigger': {
+                'run_date': self.ts_epoch,
+                'timezone': 'utc',
+            },
             'request_template': {
                 'system': 'system',
                 'system_version': '1.0.0',
@@ -31,8 +35,12 @@ class JobAPITest(TestHandlerBase):
             'max_instances': 2,
             'next_run_time': self.ts_epoch,
         }
-        self.job = Job(**self.job_dict)
-        self.job.next_run_time = self.ts_dt
+        db_dict = copy.deepcopy(self.job_dict)
+        db_dict['request_template'] = RequestTemplate(**db_dict['request_template'])
+        db_dict['trigger']['run_date'] = self.ts_dt
+        db_dict['trigger'] = DateTrigger(**db_dict['trigger'])
+        db_dict['next_run_time'] = self.ts_dt
+        self.job = Job(**db_dict)
         super(JobAPITest, self).setUp()
 
     def tearDown(self):
@@ -53,7 +61,7 @@ class JobAPITest(TestHandlerBase):
         self.assertEqual(200, response.code)
         self.assertEqual(json.loads(response.body.decode('utf-8')), self.job_dict)
 
-    @patch('brew_view.scheduler')
+    @patch('brew_view.request_scheduler')
     def test_delete(self, scheduler_mock):
         self.job.save()
         response = self.fetch('/api/v1/jobs/' + str(self.job.id), method='DELETE')

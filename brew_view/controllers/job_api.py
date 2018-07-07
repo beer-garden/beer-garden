@@ -63,5 +63,5 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
-        brew_view.scheduler.remove_job(job_id, jobstore='beer_garden')
+        brew_view.request_scheduler.remove_job(job_id, jobstore='beer_garden')
         self.set_status(204)
