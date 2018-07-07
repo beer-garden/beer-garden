@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from apispec import APISpec
 from apscheduler.schedulers.tornado import TornadoScheduler
-from apscheduler.executors.pool import ThreadPoolExecutor as APTPExecutor
+from apscheduler.executors.pool import ProcessPoolExecutor as APPPExecutor
 from pytz import utc
 from thriftpy.rpc import client_context
 from tornado.httpserver import HTTPServer
@@ -99,17 +99,9 @@ def _setup_application():
 
 
 def _setup_scheduler():
-    jobstores = {
-        'beer_garden': BGJobStore(),
-    }
-    # TODO: Explore different executors (maybe process pool?)
-    executors = {
-        'default': APTPExecutor(20),
-    }
-    job_defaults = {
-        'coalesce': True,
-        'max_instances': 3,
-    }
+    jobstores = {'beer_garden': BGJobStore()}
+    executors = {'default': APPPExecutor(config.scheduler.max_workers)}
+    job_defaults = config.scheduler.job_defaults.to_dict()
 
     return TornadoScheduler(
         jobstores=jobstores,
