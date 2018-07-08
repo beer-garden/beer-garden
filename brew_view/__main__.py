@@ -19,6 +19,8 @@ def signal_handler(signal_number, stack_frame):
 
 
 def shutdown():
+    brew_view.logger.info('Stopping scheduler.')
+    brew_view.request_scheduler.shutdown(wait=False)
     # Stop the server so we don't process any more requests
     brew_view.logger.info("Stopping server.")
     brew_view.server.stop()

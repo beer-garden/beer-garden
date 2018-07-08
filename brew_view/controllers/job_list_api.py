@@ -46,7 +46,7 @@ class JobListAPI(BaseHandler):
         ))
 
     @coroutine
-    def post(self, *args, **kwargs):
+    def post(self):
         """
         ---
         summary: Schedules a Job to be run.

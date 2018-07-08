@@ -10,4 +10,5 @@ def run_job(request_template):
     Args:
         request_template: Request template specified by the job.
     """
+    # TODO: Track and possibly cancel jobs
     brew_view.easy_client.create_request(request_template)
