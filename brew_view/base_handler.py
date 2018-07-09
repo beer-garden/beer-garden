@@ -2,6 +2,7 @@ import re
 import socket
 
 import time
+from jwt.exceptions import ExpiredSignatureError
 from mongoengine.errors import (DoesNotExist, NotUniqueError,
                                 ValidationError as MongoValidationError)
 from prometheus_client import Gauge, Counter, Summary
@@ -68,6 +69,7 @@ class BaseHandler(RequestHandler):
             MongoValidationError: {'status_code': 400},
             ModelError: {'status_code': 400},
             bg_utils.bg_thrift.InvalidSystem: {'status_code': 400},
+            ExpiredSignatureError: {'status_code': 401},
             RequestForbidden: {'status_code': 403},
             DoesNotExist: {'status_code': 404, 'message': 'Resource does not exist'},
             WaitExceededError: {'status_code': 408, 'message': 'Max wait time exceeded'},
