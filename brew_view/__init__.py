@@ -101,7 +101,7 @@ def _setup_tornado_app():
         SystemListAPI, VersionHandler, SpecHandler, SwaggerConfigHandler,
         OldAdminAPI, OldQueueAPI, OldQueueListAPI, LoggingConfigAPI,
         EventPublisherAPI, EventSocket, TokenAPI, UserAPI, UsersAPI,
-        RoleAPI, RolesAPI)
+        RoleAPI, RolesAPI, RefreshAPI)
 
     prefix = config.web.url_prefix
     static_base = os.path.join(os.path.dirname(__file__), 'static', 'dist')
@@ -148,6 +148,7 @@ def _setup_tornado_app():
 
         # Login
         (r'{0}login/?'.format(prefix), TokenAPI),
+        (r'{0}refresh/?'.format(prefix), RefreshAPI),
 
         # Not sure if these are really necessary
         (r'{0}'.format(prefix[:-1]), RedirectHandler, {"url": prefix}),

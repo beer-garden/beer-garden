@@ -15,6 +15,6 @@ from brew_view.controllers.misc_controllers import ConfigHandler, VersionHandler
 from brew_view.controllers.logging_api import LoggingConfigAPI
 from brew_view.controllers.event_api import EventPublisherAPI, EventSocket
 from brew_view.controllers.event_api import EventPublisherAPI
-from brew_view.controllers.token_api import TokenAPI
+from brew_view.controllers.token_api import RefreshAPI, TokenAPI
 from brew_view.controllers.users_api import UserAPI, UsersAPI
 from brew_view.controllers.roles_api import RoleAPI, RolesAPI

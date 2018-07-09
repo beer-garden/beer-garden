@@ -7,7 +7,7 @@ from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
 
 import brew_view
-from bg_utils.models import Principal, Role
+from bg_utils.models import Principal
 from brewtils.errors import RequestForbidden
 from brewtils.models import (
     Principal as BrewtilsPrincipal,
