@@ -20,7 +20,7 @@ from brewtils.models import (
     Role as BrewtilsRole)
 
 __all__ = ['System', 'Instance', 'Command', 'Parameter', 'Request', 'Choices',
-           'Event', 'Principal', 'Role']
+           'Event', 'Principal', 'Role', 'RefreshToken']
 
 
 # MongoEngine needs all EmbeddedDocuments to be defined before any Documents that reference them
@@ -477,3 +477,10 @@ class Principal(Document, BrewtilsPrincipal):
     hash = StringField()
     roles = ListField(field=ReferenceField('Role', reverse_delete_rule=PULL))
     preferences = DictField()
+
+
+class RefreshToken(Document):
+
+    issued_at = DateTimeField(required=True)
+    expires = DateTimeField(required=True)
+    payload = DictField(required=True)
