@@ -14,6 +14,7 @@ from urllib3.util.url import Url
 import bg_utils
 import brewtils.rest
 from bg_utils.event_publisher import EventPublishers
+from bg_utils.models import Role
 from bg_utils.pika import TransientPikaClient
 from bg_utils.plugin_logging_loader import PluginLoggingLoader
 from brew_view.publishers import (MongoPublisher, RequestPublisher,
@@ -36,6 +37,7 @@ plugin_logging_config = None
 app_log_config = None
 notification_meta = None
 request_map = {}
+anonymous_permissions = []
 
 
 def setup_brew_view(spec, cli_args):
@@ -70,7 +72,8 @@ def load_plugin_logging_config(input_config):
 
 
 def _setup_application():
-    global application, server, tornado_app, public_url, thrift_context, event_publishers
+    global application, server, tornado_app, public_url, thrift_context,\
+        event_publishers, anonymous_permissions
 
     public_url = Url(scheme='https' if config.web.ssl.enabled else 'http',
                      host=config.event.public_fqdn,
@@ -81,6 +84,7 @@ def _setup_application():
     tornado_app = _setup_tornado_app()
     server_ssl, client_ssl = _setup_ssl_context()
     event_publishers = _setup_event_publishers(client_ssl)
+    anonymous_permissions = _get_anonymous_permissions()
 
     server = HTTPServer(tornado_app, ssl_options=server_ssl)
     server.listen(config.web.port)
@@ -96,7 +100,7 @@ def _setup_tornado_app():
         QueueAPI, QueueListAPI, RequestAPI, RequestListAPI, SystemAPI,
         SystemListAPI, VersionHandler, SpecHandler, SwaggerConfigHandler,
         OldAdminAPI, OldQueueAPI, OldQueueListAPI, LoggingConfigAPI,
-        EventPublisherAPI, EventSocket, LoginHandler, UserAPI, UsersAPI,
+        EventPublisherAPI, EventSocket, TokenAPI, UserAPI, UsersAPI,
         RoleAPI, RolesAPI)
 
     prefix = config.web.url_prefix
@@ -143,7 +147,7 @@ def _setup_tornado_app():
         (r'{0}config/swagger/?'.format(prefix), SwaggerConfigHandler),
 
         # Login
-        (r'{0}login/?'.format(prefix), LoginHandler),
+        (r'{0}login/?'.format(prefix), TokenAPI),
 
         # Not sure if these are really necessary
         (r'{0}'.format(prefix[:-1]), RedirectHandler, {"url": prefix}),
@@ -279,3 +283,12 @@ def _load_swagger(url_specs, title=None):
     # Finally, add documentation for all our published paths
     for url_spec in url_specs:
         api_spec.add_path(urlspec=url_spec)
+
+
+def _get_anonymous_permissions():
+    """Load correct anonymous permissions"""
+
+    if config.auth.enabled:
+        return Role.objects.get(name='bg-anonymous').permissions
+    else:
+        return ['bg-all']

@@ -1,6 +1,5 @@
 import base64
 import functools
-from datetime import datetime, timedelta
 from enum import Enum
 
 import jwt
@@ -44,6 +43,16 @@ class Permissions(Enum):
     USER_DELETE = 'bg-user-delete'
 
 
+def anonymous_user():
+    """Get a Principal representing an anonymous user
+
+    Returns:
+        BrewtilsPrincipal
+    """
+    return BrewtilsPrincipal(roles=['bg-anonymous'],
+                             permissions=brew_view.anonymous_permissions)
+
+
 def authenticated(method=None, permissions=None):
     """Decorate methods with this to require various permissions"""
 
@@ -74,34 +83,10 @@ def has_permission(principal, required_permissions):
     Returns:
         bool yes or no
     """
-    if not brew_view.config.auth.enabled:
-        return True
-
-    if not principal:
-        return False
-
     if Permissions.ALL.value in principal.permissions:
         return True
 
     return bool(required_permissions.intersection(principal.permissions))
-
-
-def generate_token(principal):
-
-    now = datetime.utcnow()
-    roles, permissions = coalesce_permissions(principal.roles)
-
-    payload = {
-        'sub': str(principal.id),
-        'iat': now,
-        'exp': now + timedelta(seconds=brew_view.config.auth.token.lifetime),
-        'username': principal.username,
-        'roles': list(roles),
-        'permissions': list(permissions),
-    }
-    return jwt.encode(payload,
-                      key=brew_view.config.auth.token.secret,
-                      algorithm=brew_view.config.auth.token.algorithm)
 
 
 def coalesce_permissions(role_list):
@@ -124,17 +109,15 @@ def coalesce_permissions(role_list):
     return aggregate_roles, aggregate_perms
 
 
-def anonymous_user():
-    try:
-        # TODO - These won't change, so we should just load them on startup
-        anonymous_permissions = Role.objects.get(name='bg-anonymous').permissions
-    except DoesNotExist:
-        anonymous_permissions = []
-
-    return BrewtilsPrincipal(permissions=anonymous_permissions)
-
-
 def basic_auth(auth_header):
+    """Determine if a basic authorization header is valid
+
+    Args:
+        auth_header: The Authorization header. Should start with 'Basic '.
+
+    Returns:
+        Brewtils principal if auth_header is valid, None otherwise
+    """
     auth_decoded = base64.b64decode(auth_header[6:]).decode()
     username, password = auth_decoded.split(':')
 
@@ -152,6 +135,14 @@ def basic_auth(auth_header):
 
 
 def bearer_auth(auth_header):
+    """Determine if a bearer authorization header is valid
+
+    Args:
+        auth_header: The Authorization header. Should start with 'Bearer '.
+
+    Returns:
+        Brewtils principal if auth_header is valid, None otherwise
+    """
     token = auth_header.split(' ')[1]
 
     decoded = jwt.decode(token,
