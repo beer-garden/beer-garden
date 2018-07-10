@@ -4,7 +4,7 @@ from marshmallow.exceptions import MarshmallowError
 
 from bg_utils.models import (
     System, Instance, Command, Parameter, Request, Choices, Event, Principal,
-    Role)
+    Role, RefreshToken)
 from brewtils.errors import BrewmasterModelValidationError
 from brewtils.schema_parser import SchemaParser
 
@@ -23,6 +23,7 @@ class BeerGardenSchemaParser(SchemaParser):
         'EventSchema': Event,
         'PrincipalSchema': Principal,
         'RoleSchema': Role,
+        'RefreshTokenSchema': RefreshToken,
     })
 
     @classmethod
