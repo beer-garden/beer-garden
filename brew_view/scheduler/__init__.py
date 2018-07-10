@@ -39,7 +39,7 @@ def db_to_scheduler(document, scheduler, alias='beer_garden'):
         'name': document.name,
         'misfire_grace_time': document.misfire_grace_time,
         'coalesce': document.coalesce,
-        'max_instances': document.max_instances,
+        'max_instances': 3,
         'next_run_time': next_run_time,
     }
     job.__setstate__(state)

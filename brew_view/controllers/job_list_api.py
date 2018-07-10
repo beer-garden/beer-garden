@@ -86,7 +86,7 @@ class JobListAPI(BaseHandler):
             name=document.name,
             misfire_grace_time=document.misfire_grace_time,
             coalesce=document.coalesce,
-            max_instances=document.max_instances,
+            max_instances=3,
             jobstore='beer_garden',
             replace_existing=False,
             id=str(document.id),

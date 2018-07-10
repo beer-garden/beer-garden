@@ -32,7 +32,6 @@ class JobListAPITest(TestHandlerBase):
             },
             'misfire_grace_time': 3,
             'coalesce': True,
-            'max_instances': 2,
             'next_run_time': self.ts_epoch,
         }
         db_dict = copy.deepcopy(self.job_dict)

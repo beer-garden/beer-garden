@@ -33,7 +33,7 @@ def test_lookup_job_state(jobstore, bg_job):
     assert state['name'] == bg_job.name
     assert state['misfire_grace_time'] == bg_job.misfire_grace_time
     assert state['coalesce'] == bg_job.coalesce
-    assert state['max_instances'] == bg_job.max_instances
+    assert state['max_instances'] == 3
     assert state['next_run_time'] == utc.localize(bg_job.next_run_time)
 
     assert isinstance(state['trigger'], DateTrigger)

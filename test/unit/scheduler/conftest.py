@@ -32,7 +32,7 @@ def ap_job(bg_job, bg_request_template):
         'misfire_grace_time': bg_job.misfire_grace_time,
         'coalesce': bg_job.coalesce,
         'name': bg_job.name,
-        'max_instances': bg_job.max_instances,
+        'max_instances': 3,
     }
     job_kwargs.setdefault('next_run_time', None)
     return APJob(**job_kwargs)
