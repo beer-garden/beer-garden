@@ -51,6 +51,12 @@ export function appRun($rootScope, $state, $stateParams, $http,
   };
 
   $rootScope.logout = function() {
+    let refreshToken = localStorageService.get('refresh');
+    if (refreshToken) {
+      $http.delete('api/v1/tokens/' + refreshToken);
+      localStorageService.remove('refresh');
+    }
+
     localStorageService.remove('token');
     $http.defaults.headers.common.Authorization = undefined;
 
