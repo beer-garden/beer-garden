@@ -20,9 +20,11 @@ from bg_utils.plugin_logging_loader import PluginLoggingLoader
 from brew_view.publishers import (MongoPublisher, RequestPublisher,
                                   TornadoPikaPublisher, WebsocketPublisher)
 from brew_view.specification import get_default_logging_config
-from brewtils.schemas import ParameterSchema, CommandSchema, InstanceSchema, SystemSchema, \
-    RequestSchema, PatchSchema, LoggingConfigSchema, EventSchema, QueueSchema, PrincipalSchema, \
-    RoleSchema
+from brewtils.schemas import (
+    ParameterSchema, CommandSchema, InstanceSchema, SystemSchema, RequestSchema,
+    PatchSchema, LoggingConfigSchema, EventSchema, QueueSchema, PrincipalSchema,
+    RoleSchema, RefreshTokenSchema
+)
 
 config = None
 application = None
@@ -101,7 +103,7 @@ def _setup_tornado_app():
         SystemListAPI, VersionHandler, SpecHandler, SwaggerConfigHandler,
         OldAdminAPI, OldQueueAPI, OldQueueListAPI, LoggingConfigAPI,
         EventPublisherAPI, EventSocket, TokenAPI, UserAPI, UsersAPI,
-        RoleAPI, RolesAPI, RefreshAPI)
+        RoleAPI, RolesAPI, TokenListAPI)
 
     prefix = config.web.url_prefix
     static_base = os.path.join(os.path.dirname(__file__), 'static', 'dist')
@@ -114,6 +116,7 @@ def _setup_tornado_app():
         (r'{0}api/v1/queues/?'.format(prefix), QueueListAPI),
         (r'{0}api/v1/users/?'.format(prefix), UsersAPI),
         (r'{0}api/v1/roles/?'.format(prefix), RolesAPI),
+        (r'{0}api/v1/tokens/?'.format(prefix), TokenListAPI),
         (r'{0}api/v1/admin/?'.format(prefix), AdminAPI),
         (r'{0}api/v1/commands/(\w+)/?'.format(prefix), CommandAPI),
         (r'{0}api/v1/instances/(\w+)/?'.format(prefix), InstanceAPI),
@@ -122,7 +125,9 @@ def _setup_tornado_app():
         (r'{0}api/v1/queues/([\w\.-]+)/?'.format(prefix), QueueAPI),
         (r'{0}api/v1/users/(\w+)/?'.format(prefix), UserAPI),
         (r'{0}api/v1/roles/(\w+)/?'.format(prefix), RoleAPI),
+        (r'{0}api/v1/tokens/(\w+)/?'.format(prefix), TokenAPI),
         (r'{0}api/v1/config/logging/?'.format(prefix), LoggingConfigAPI),
+
 
         # Beta
         (r'{0}api/vbeta/events/?'.format(prefix), EventPublisherAPI),
@@ -145,10 +150,6 @@ def _setup_tornado_app():
         (r'{0}version/?'.format(prefix), VersionHandler),
         (r'{0}config/?'.format(prefix), ConfigHandler),
         (r'{0}config/swagger/?'.format(prefix), SwaggerConfigHandler),
-
-        # Login
-        (r'{0}login/?'.format(prefix), TokenAPI),
-        (r'{0}refresh/?'.format(prefix), RefreshAPI),
 
         # Not sure if these are really necessary
         (r'{0}'.format(prefix[:-1]), RedirectHandler, {"url": prefix}),
@@ -270,6 +271,7 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition('User', schema=PrincipalSchema)
     api_spec.definition('Role', schema=RoleSchema)
     api_spec.definition('Queue', schema=QueueSchema)
+    api_spec.definition('RefreshToken', schema=RefreshTokenSchema)
     api_spec.definition('_patch', schema=PatchSchema)
     api_spec.definition('Patch', properties={"operations": {
         "type": "array", "items": {"$ref": "#/definitions/_patch"}}

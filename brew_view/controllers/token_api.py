@@ -8,24 +8,112 @@ from tornado.web import HTTPError
 
 import brew_view
 from bg_utils.models import Principal, RefreshToken
+from bg_utils.parser import BeerGardenSchemaParser
 from brew_view.authorization import coalesce_permissions
 from brew_view.base_handler import BaseHandler
 
 
 class TokenAPI(BaseHandler):
 
-    def get(self):
-        principal = self.get_current_user()
+    def get(self, token_id):
+        """
+        ---
+        summary: Use a refresh token to retrieve a new access token
+        parameters:
+          - name: token_id
+            in: path
+            required: true
+            description: The ID of the Token
+            type: string
+        responses:
+          200:
+            description: System with the given ID
+            schema:
+              $ref: '#/definitions/System'
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Tokens
+        """
+        try:
+            refresh = RefreshToken.objects.get(id=token_id)
 
-        if principal:
-            self.write(json.dumps(generate_tokens(principal)))
-        else:
-            # Request Basic Auth
-            self.set_header('WWW-Authenticate', 'Basic realm="Beergarden"')
-            self.set_status(401)
-            self.finish()
+            now = datetime.utcnow()
+            if now < refresh.expires:
+                self.write(json.dumps({
+                    'token': generate_access_token(refresh.payload)
+                }))
+                return
+        except DoesNotExist:
+            pass
+
+        raise HTTPError(status_code=401, log_message='Bad credentials')
+
+    def delete(self, token_id):
+        """
+        ---
+        summary: Remove a refresh token
+        parameters:
+          - name: token_id
+            in: path
+            required: true
+            description: The ID of the Token
+            type: string
+        responses:
+          204:
+            description: Token has been successfully deleted
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Tokens
+        """
+        RefreshToken.objects.get(id=token_id).delete()
+
+        self.set_status(204)
+
+
+class TokenListAPI(BaseHandler):
+
+    def get(self):
+        """
+        ---
+        summary: Retrieve all Tokens
+        responses:
+          200:
+            description: All Tokens
+            schema:
+              type: array
+              items:
+                $ref: '#/definitions/RefreshToken'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Tokens
+        """
+        self.set_header('Content-Type', 'application/json; charset=UTF-8')
+        self.write(BeerGardenSchemaParser.serialize_refresh_token(
+            RefreshToken.objects.all(), to_string=True, many=True))
 
     def post(self):
+        """
+        ---
+        summary: Use credentials to generate access and refresh tokens
+        responses:
+          200:
+            description: All Tokens
+            schema:
+              type: array
+              items:
+                $ref: '#/definitions/Command'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Tokens
+        """
         parsed_body = json.loads(self.request.decoded_body)
 
         try:
@@ -39,26 +127,6 @@ class TokenAPI(BaseHandler):
             custom_app_context.verify('', None)
 
         raise HTTPError(status_code=401, log_message='Bad credentials')
-
-
-class RefreshAPI(BaseHandler):
-
-    def get(self):
-
-        refresh_token = self.get_query_argument('refresh_token')
-
-        try:
-            refresh = RefreshToken.objects.get(id=refresh_token)
-        except Exception as ex:
-            raise HTTPError(status_code=401, log_message='Bad credentials')
-
-        now = datetime.utcnow()
-        if now < refresh.expires:
-            self.write(json.dumps({
-                'token': generate_access_token(refresh.payload)
-            }))
-        else:
-            raise HTTPError(status_code=401, log_message='Bad credentials')
 
 
 def generate_tokens(principal):
