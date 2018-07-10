@@ -641,6 +641,8 @@ class Job(Document, BrewtilsJob):
     misfire_grace_time = IntField()
     coalesce = BooleanField(default=True)
     next_run_time = DateTimeField()
+    success_count = IntField(required=True, default=0, min_value=0)
+    error_count = IntField(required=True, default=0, min_value=0)
 
     def __str__(self):
         return BrewtilsJob.__str__(self)
