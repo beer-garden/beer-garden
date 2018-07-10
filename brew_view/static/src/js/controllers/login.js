@@ -10,12 +10,16 @@ export default function LoginController($scope, $rootScope, $http, $state,
     localStorageService, userService) {
 
   $scope.doLogin = function(model) {
-    $http.post('login', {username: model.username, password: model.password})
+    $http.post('/api/v1/tokens', {
+      username: model.username,
+      password: model.password
+    })
     .then(function(response) {
       let token = response.data.token;
 
       // Save the token to session storage in case we need it later
       localStorageService.set('token', token);
+      localStorageService.set('refresh', response.data.refresh);
 
       // Use the token for all subsequent requests
       $http.defaults.headers.common.Authorization = 'Bearer ' + token;
