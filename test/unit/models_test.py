@@ -2,7 +2,6 @@ import unittest
 from datetime import datetime
 
 import mongoengine
-import pytest
 import pytz
 from mock import Mock, PropertyMock, patch
 

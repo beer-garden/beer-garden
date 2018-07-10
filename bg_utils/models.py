@@ -475,7 +475,7 @@ class RequestTemplate(EmbeddedDocument, BrewtilsRequestTemplate):
 
     for field_name, field_info in Request.TEMPLATE_FIELDS.items():
         locals()[field_name] = field_info['field'](**field_info['kwargs'])
-        
+
     def __str__(self):
         return BrewtilsRequestTemplate.__str__(self)
 
@@ -487,11 +487,11 @@ class DateTrigger(EmbeddedDocument, BrewtilsDateTrigger):
 
     run_date = DateTimeField(required=True)
     timezone = StringField(
-        required=False, 
+        required=False,
         default='utc',
         chocies=pytz.all_timezones
     )
-    
+
     def __str__(self):
         return BrewtilsDateTrigger.__str__(self)
 
@@ -640,7 +640,6 @@ class Job(Document, BrewtilsJob):
     request_template = EmbeddedDocumentField('RequestTemplate')
     misfire_grace_time = IntField()
     coalesce = BooleanField(default=True)
-    max_instances = IntField(default=3)
     next_run_time = DateTimeField()
 
     def __str__(self):
