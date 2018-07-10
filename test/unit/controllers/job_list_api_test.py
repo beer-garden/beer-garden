@@ -33,6 +33,8 @@ class JobListAPITest(TestHandlerBase):
             'misfire_grace_time': 3,
             'coalesce': True,
             'next_run_time': self.ts_epoch,
+            'success_count': 0,
+            'error_count': 0,
         }
         db_dict = copy.deepcopy(self.job_dict)
         db_dict['request_template'] = RequestTemplate(**db_dict['request_template'])

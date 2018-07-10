@@ -82,7 +82,10 @@ class JobListAPI(BaseHandler):
         brew_view.request_scheduler.add_job(
             run_job,
             None,
-            kwargs={'request_template': document.request_template},
+            kwargs={
+                'request_template': document.request_template,
+                'job_id': str(document.id),
+            },
             name=document.name,
             misfire_grace_time=document.misfire_grace_time,
             coalesce=document.coalesce,

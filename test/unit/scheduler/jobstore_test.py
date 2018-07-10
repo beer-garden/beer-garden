@@ -29,7 +29,10 @@ def test_lookup_job_state(jobstore, bg_job):
     assert state['func'] == 'brew_view.scheduler.runner:run_job'
     assert state['executor'] == 'default'
     assert state['args'] == ()
-    assert state['kwargs'] == {'request_template': bg_job.request_template}
+    assert state['kwargs'] == {
+        'request_template': bg_job.request_template,
+        'job_id': str(bg_job.id),
+    }
     assert state['name'] == bg_job.name
     assert state['misfire_grace_time'] == bg_job.misfire_grace_time
     assert state['coalesce'] == bg_job.coalesce

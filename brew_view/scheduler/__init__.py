@@ -35,7 +35,10 @@ def db_to_scheduler(document, scheduler, alias='beer_garden'):
         'trigger': construct_trigger(document.trigger_type, document.trigger),
         'executor': 'default',
         'args': (),
-        'kwargs': {'request_template': document.request_template},
+        'kwargs': {
+            'request_template': document.request_template,
+            'job_id': str(document.id),
+        },
         'name': document.name,
         'misfire_grace_time': document.misfire_grace_time,
         'coalesce': document.coalesce,
