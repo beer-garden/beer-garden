@@ -643,6 +643,7 @@ class Job(Document, BrewtilsJob):
     next_run_time = DateTimeField()
     success_count = IntField(required=True, default=0, min_value=0)
     error_count = IntField(required=True, default=0, min_value=0)
+    status = StringField(required=True, choices=BrewtilsJob.STATUS_TYPES, default='RUNNING')
 
     def __str__(self):
         return BrewtilsJob.__str__(self)
