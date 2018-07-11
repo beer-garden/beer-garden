@@ -3,7 +3,12 @@ import datetime
 import logging
 
 import six
-from lark.common import ParseError
+try:
+    from lark import ParseError
+    from lark.exceptions import LarkError
+except ImportError:
+    from lark.common import ParseError
+    LarkError = ParseError
 from mongoengine import BooleanField, DateTimeField, DictField, Document, DynamicField, \
     GenericReferenceField, EmbeddedDocument, EmbeddedDocumentField, IntField, ListField, \
     ReferenceField, StringField, PULL
@@ -69,7 +74,7 @@ class Choices(EmbeddedDocument, BrewtilsChoices):
                     self.details = parse(self.value)
                 elif isinstance(self.value, dict):
                     self.details = parse(self.value['command'])
-        except ParseError:
+        except (LarkError, ParseError):
             raise BrewmasterModelValidationError("Error saving choices '%s' - unable to parse" %
                                                  self.value)
 
