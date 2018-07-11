@@ -481,6 +481,12 @@ class Principal(Document, BrewtilsPrincipal):
 
 class RefreshToken(Document):
 
-    issued_at = DateTimeField(required=True)
+    issued = DateTimeField(required=True)
     expires = DateTimeField(required=True)
     payload = DictField(required=True)
+
+    meta = {
+        'indexes': [
+            {'fields': ['expires'], 'expireAfterSeconds': 0}
+        ]
+    }
