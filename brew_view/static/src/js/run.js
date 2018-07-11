@@ -53,7 +53,9 @@ export function appRun($rootScope, $state, $stateParams, $http,
   $rootScope.logout = function() {
     let refreshToken = localStorageService.get('refresh');
     if (refreshToken) {
-      $http.delete('api/v1/tokens/' + refreshToken);
+      // It's possible the refresh token was already removed from the database
+      // We don't care if that's the case, so set some empty callbacks
+      $http.delete('api/v1/tokens/' + refreshToken).then(() => {}, () => {});
       localStorageService.remove('refresh');
     }
 
