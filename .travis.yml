@@ -7,7 +7,7 @@ python:
   - 2.7
 
 
-install: "make deps deps-python-master"
+install: "make deps"
 script: "make lint coverage"
 after_success: "codecov"
 
