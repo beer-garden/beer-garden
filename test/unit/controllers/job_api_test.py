@@ -35,6 +35,7 @@ class JobAPITest(TestHandlerBase):
             'next_run_time': self.ts_epoch,
             'success_count': 0,
             'error_count': 0,
+            'status': 'RUNNING',
         }
         db_dict = copy.deepcopy(self.job_dict)
         db_dict['request_template'] = RequestTemplate(**db_dict['request_template'])
@@ -68,3 +69,87 @@ class JobAPITest(TestHandlerBase):
         response = self.fetch('/api/v1/jobs/' + str(self.job.id), method='DELETE')
         self.assertEqual(204, response.code)
         scheduler_mock.remove_job.assert_called_with(str(self.job.id), jobstore='beer_garden')
+
+    @patch('brew_view.request_scheduler')
+    def test_pause(self, scheduler_mock):
+        self.job.save()
+        body = json.dumps({
+            'operations': [
+                {'operation': 'update', 'path': '/status', 'value': 'PAUSED'},
+            ]
+        })
+        response = self.fetch(
+            '/api/v1/jobs/' + str(self.job.id),
+            method='PATCH',
+            body=body,
+            headers={'content-type': 'application/json'}
+        )
+        self.assertEqual(200, response.code)
+        scheduler_mock.pause_job.assert_called_with(str(self.job.id), jobstore='beer_garden')
+        self.job.reload()
+        self.assertEqual(self.job.status, 'PAUSED')
+
+    @patch('brew_view.request_scheduler')
+    def test_resume(self, scheduler_mock):
+        self.job.status = 'PAUSED'
+        self.job.save()
+        body = json.dumps({
+            'operations': [
+                {'operation': 'update', 'path': '/status', 'value': 'RUNNING'},
+            ]
+        })
+        response = self.fetch(
+            '/api/v1/jobs/' + str(self.job.id),
+            method='PATCH',
+            body=body,
+            headers={'content-type': 'application/json'}
+        )
+        self.assertEqual(200, response.code)
+        scheduler_mock.resume_job.assert_called_with(str(self.job.id), jobstore='beer_garden')
+        self.job.reload()
+        self.assertEqual(self.job.status, 'RUNNING')
+
+    def test_invalid_operation(self):
+        self.job.save()
+        body = json.dumps({
+            'operations': [
+                {'operation': 'INVALID', 'path': '/status', 'value': 'RUNNING'},
+            ]
+        })
+        response = self.fetch(
+            '/api/v1/jobs/' + str(self.job.id),
+            method='PATCH',
+            body=body,
+            headers={'content-type': 'application/json'},
+        )
+        self.assertGreaterEqual(400, response.code)
+
+    def test_invalid_path(self):
+        self.job.save()
+        body = json.dumps({
+            'operations': [
+                {'operation': 'update', 'path': '/INVALID', 'value': 'RUNNING'},
+            ]
+        })
+        response = self.fetch(
+            '/api/v1/jobs/' + str(self.job.id),
+            method='PATCH',
+            body=body,
+            headers={'content-type': 'application/json'},
+        )
+        self.assertGreaterEqual(400, response.code)
+
+    def test_invalid_value(self):
+        self.job.save()
+        body = json.dumps({
+            'operations': [
+                {'operation': 'update', 'path': '/status', 'value': 'INVALID'},
+            ]
+        })
+        response = self.fetch(
+            '/api/v1/jobs/' + str(self.job.id),
+            method='PATCH',
+            body=body,
+            headers={'content-type': 'application/json'},
+        )
+        self.assertGreaterEqual(400, response.code)
