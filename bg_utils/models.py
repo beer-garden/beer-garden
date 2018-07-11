@@ -245,7 +245,8 @@ class Request(Document, BrewtilsRequest):
 
             # These are for sorting on the request index page
             {'name': 'parent_command_index', 'fields': ['has_parent', 'command']},
-            {'name': 'parent_system_index', 'fields': ['has_parent', 'system', 'instance_name']},
+            {'name': 'parent_system_index', 'fields': ['has_parent', 'system']},
+            {'name': 'parent_instance_index', 'fields': ['has_parent', 'instance_name']},
             {'name': 'parent_status_index', 'fields': ['has_parent', 'status']},
             {'name': 'parent_created_at_index', 'fields': ['has_parent', 'created_at']},
             {'name': 'parent_comment_index', 'fields': ['has_parent', 'comment']},
