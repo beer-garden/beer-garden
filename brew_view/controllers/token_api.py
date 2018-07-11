@@ -165,7 +165,7 @@ def generate_refresh_token(payload, issue_time=None):
     issue_time = issue_time or datetime.utcnow()
 
     token = RefreshToken(
-        issued_at=issue_time,
+        issued=issue_time,
         expires=issue_time + timedelta(hours=24),
         payload=payload,
     )
