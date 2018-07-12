@@ -28,6 +28,7 @@ setup(
         "bg-utils>=2.3.6",
         "tornado==5.0.2",
         "prometheus_client<1.0.0",
+        "apscheduler<=3.5.1",
     ],
     extras_require={
         ':python_version=="2.7"': [

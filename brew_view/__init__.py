@@ -5,6 +5,9 @@ import ssl
 from concurrent.futures import ThreadPoolExecutor
 
 from apispec import APISpec
+from apscheduler.schedulers.tornado import TornadoScheduler
+from apscheduler.executors.tornado import TornadoExecutor
+from pytz import utc
 from thriftpy.rpc import client_context
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
@@ -16,11 +19,14 @@ import brewtils.rest
 from bg_utils.event_publisher import EventPublishers
 from bg_utils.pika import TransientPikaClient
 from bg_utils.plugin_logging_loader import PluginLoggingLoader
+from brew_view.scheduler.jobstore import BGJobStore
 from brew_view.publishers import (MongoPublisher, RequestPublisher,
                                   TornadoPikaPublisher, WebsocketPublisher)
 from brew_view.specification import get_default_logging_config
+from brewtils.rest.easy_client import EasyClient
 from brewtils.schemas import ParameterSchema, CommandSchema, InstanceSchema, SystemSchema, \
-    RequestSchema, PatchSchema, LoggingConfigSchema, EventSchema, QueueSchema
+    RequestSchema, PatchSchema, LoggingConfigSchema, EventSchema, QueueSchema, JobSchema, \
+    DateTriggerSchema, IntervalTriggerSchema, CronTriggerSchema
 
 config = None
 application = None
@@ -34,7 +40,9 @@ api_spec = None
 plugin_logging_config = None
 app_log_config = None
 notification_meta = None
+request_scheduler = None
 request_map = {}
+easy_client = None
 
 
 def setup_brew_view(spec, cli_args):
@@ -70,6 +78,7 @@ def load_plugin_logging_config(input_config):
 
 def _setup_application():
     global application, server, tornado_app, public_url, thrift_context, event_publishers
+    global request_scheduler, easy_client
 
     public_url = Url(scheme='https' if config.web.ssl.enabled else 'http',
                      host=config.event.public_fqdn,
@@ -80,11 +89,27 @@ def _setup_application():
     tornado_app = _setup_tornado_app()
     server_ssl, client_ssl = _setup_ssl_context()
     event_publishers = _setup_event_publishers(client_ssl)
+    easy_client = EasyClient(**config.web)
+    request_scheduler = _setup_scheduler()
 
     server = HTTPServer(tornado_app, ssl_options=server_ssl)
-    server.listen(config.web.port)
+    server.listen(config.web.port, config.web.host)
 
     application = IOLoop.current()
+
+
+def _setup_scheduler():
+    jobstores = {'beer_garden': BGJobStore()}
+    # TODO: Look at creating a custom executor using process pools
+    executors = {'default': TornadoExecutor(config.scheduler.max_workers)}
+    job_defaults = config.scheduler.job_defaults.to_dict()
+
+    return TornadoScheduler(
+        jobstores=jobstores,
+        executors=executors,
+        job_defaults=job_defaults,
+        timezone=utc
+    )
 
 
 def _setup_tornado_app():
@@ -93,7 +118,7 @@ def _setup_tornado_app():
     from brew_view.controllers import AdminAPI, CommandAPI, CommandListAPI, ConfigHandler, \
         InstanceAPI, QueueAPI, QueueListAPI, RequestAPI, RequestListAPI, SystemAPI, SystemListAPI, \
         VersionHandler, SpecHandler, SwaggerConfigHandler, OldAdminAPI, OldQueueAPI, \
-        OldQueueListAPI, LoggingConfigAPI, EventPublisherAPI, EventSocket
+        OldQueueListAPI, LoggingConfigAPI, EventPublisherAPI, EventSocket, JobListAPI, JobAPI
 
     prefix = config.web.url_prefix
     static_base = os.path.join(os.path.dirname(__file__), 'static', 'dist')
@@ -105,11 +130,13 @@ def _setup_tornado_app():
         (r'{0}api/v1/systems/?'.format(prefix), SystemListAPI),
         (r'{0}api/v1/queues/?'.format(prefix), QueueListAPI),
         (r'{0}api/v1/admin/?'.format(prefix), AdminAPI),
+        (r'{0}api/v1/jobs/?'.format(prefix), JobListAPI),
         (r'{0}api/v1/commands/(\w+)/?'.format(prefix), CommandAPI),
         (r'{0}api/v1/instances/(\w+)/?'.format(prefix), InstanceAPI),
         (r'{0}api/v1/requests/(\w+)/?'.format(prefix), RequestAPI),
         (r'{0}api/v1/systems/(\w+)/?'.format(prefix), SystemAPI),
         (r'{0}api/v1/queues/([\w\.-]+)/?'.format(prefix), QueueAPI),
+        (r'{0}api/v1/jobs/(\w+)/?'.format(prefix), JobAPI),
         (r'{0}api/v1/config/logging/?'.format(prefix), LoggingConfigAPI),
 
         # Beta
@@ -255,6 +282,18 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition('Patch', properties={"operations": {
         "type": "array", "items": {"$ref": "#/definitions/_patch"}}
     })
+    api_spec.definition('DateTrigger', schema=DateTriggerSchema)
+    api_spec.definition('CronTrigger', schema=CronTriggerSchema)
+    api_spec.definition('IntervalTrigger', schema=IntervalTriggerSchema)
+    api_spec.definition('Job', schema=JobSchema)
+    trigger_properties = {
+        'allOf': [
+            {'$ref': '#/definitions/CronTrigger'},
+            {'$ref': '#/definitions/DateTrigger'},
+            {'$ref': '#/definitions/IntervalTrigger'},
+        ],
+    }
+    api_spec._definitions['Job']['properties']['trigger'] = trigger_properties
 
     error = {'message': {'type': 'string'}}
     api_spec.definition('400Error', properties=error, description='Parameter validation error')
