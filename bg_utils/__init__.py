@@ -3,13 +3,15 @@ import json
 import logging
 import logging.config
 import os
+import sys
 from argparse import ArgumentParser
 from io import open
 
 import six
-import sys
 import thriftpy
 import yapconf
+from mongoengine.errors import DoesNotExist
+from passlib.apps import custom_app_context
 
 from ._version import __version__ as generated_version
 
@@ -302,8 +304,7 @@ def _verify_db():
     (blame MongoEngine). If anything goes wrong with the rebuild kill the app since the database
     is in a bad state.
     """
-
-    from .models import Request, Role, System
+    from .models import Principal, Request, Role, System
     logger = logging.getLogger(__name__)
 
     def update_request_model():
@@ -312,6 +313,38 @@ def _verify_db():
                                    {'$set': {'has_parent': False}})
         raw_collection.update_many({'parent': {'$not': {'$eq': None}}},
                                    {'$set': {'has_parent': True}},)
+
+    def ensure_special_roles():
+        """Two roles need to exist - admin and anonymous"""
+        try:
+            Role.objects.get(name='bg-admin')
+        except DoesNotExist:
+            admin_role = Role(name='bg-admin', permissions=['bg-all'])
+            admin_role.save()
+
+        try:
+            Role.objects.get(name='bg-anonymous')
+        except DoesNotExist:
+            anonymous_role = Role(name='bg-anonymous',
+                                  permissions=[
+                                      'bg-command-read',
+                                      'bg-request-read',
+                                      'bg-system-read',
+                                      'bg-instance-read',
+                                      'bg-queue-read',
+                                      'bg-user-read',
+                                  ])
+            anonymous_role.save()
+
+    def ensure_user():
+        """Create an admin user if no other users exist"""
+        if Principal.objects.count() == 0:
+            logger.warning('No users found: creating admin user with '
+                           'username "admin" and password "password"')
+            admin_user = Principal(username='admin',
+                                   hash=custom_app_context.hash('password'),
+                                   roles=[Role.objects.get(name='bg-admin')])
+            admin_user.save()
 
     def check_indexes(collection):
         from pymongo.errors import OperationFailure
@@ -371,3 +404,6 @@ def _verify_db():
     check_indexes(Request)
     check_indexes(System)
     check_indexes(Role)
+
+    ensure_special_roles()
+    ensure_user()

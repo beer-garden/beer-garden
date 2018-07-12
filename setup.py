@@ -26,6 +26,7 @@ setup(
     install_requires=[
         'brewtils>=2.3.0',
         'mongoengine',
+        'passlib',
         'ruamel.yaml',
         'thriftpy',
         'yapconf>=0.3.3',

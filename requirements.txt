@@ -31,6 +31,7 @@ mock==2.0.0
 mongoengine==0.15.0
 more-itertools==4.2.0     # via pytest
 packaging==17.1           # via sphinx
+passlib==1.7.1
 pathtools==0.1.2          # via watchdog
 pbr==4.0.4                # via mock
 pika==0.11.2
