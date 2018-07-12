@@ -1,10 +1,12 @@
 import json
 import logging
+from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timedelta
 
 import jwt
 from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
+from tornado.gen import coroutine
 from tornado.web import HTTPError
 
 import brew_view
@@ -12,6 +14,10 @@ from bg_utils.models import Principal, RefreshToken
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view.authorization import coalesce_permissions
 from brew_view.base_handler import BaseHandler
+
+
+def verify(password, password_hash):
+    return custom_app_context.verify(password, password_hash)
 
 
 class TokenAPI(BaseHandler):
@@ -83,6 +89,11 @@ class TokenListAPI(BaseHandler):
 
     logger = logging.getLogger(__name__)
 
+    def __init__(self, *args, **kwargs):
+        super(BaseHandler, self).__init__(*args, **kwargs)
+
+        self.executor = ProcessPoolExecutor()
+
     def get(self):
         """
         ---
@@ -103,6 +114,7 @@ class TokenListAPI(BaseHandler):
         self.write(BeerGardenSchemaParser.serialize_refresh_token(
             RefreshToken.objects.all(), to_string=True, many=True))
 
+    @coroutine
     def post(self):
         """
         ---
@@ -124,7 +136,11 @@ class TokenListAPI(BaseHandler):
         try:
             principal = Principal.objects.get(username=parsed_body['username'])
 
-            if custom_app_context.verify(parsed_body['password'], principal.hash):
+            verified = yield self.executor.submit(verify,
+                                                  str(parsed_body['password']),
+                                                  str(principal.hash))
+
+            if verified:
                 self.write(json.dumps(generate_tokens(principal)))
                 return
         except DoesNotExist:
