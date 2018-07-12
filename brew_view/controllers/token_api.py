@@ -90,7 +90,7 @@ class TokenListAPI(BaseHandler):
     logger = logging.getLogger(__name__)
 
     def __init__(self, *args, **kwargs):
-        super(BaseHandler, self).__init__(*args, **kwargs)
+        super(TokenListAPI, self).__init__(*args, **kwargs)
 
         self.executor = ProcessPoolExecutor()
 
