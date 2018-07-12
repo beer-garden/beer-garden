@@ -43,6 +43,9 @@ class Permissions(Enum):
     USER_DELETE = 'bg-user-delete'
 
 
+Permissions.values = {p.value for p in Permissions}
+
+
 def authenticated(method=None, permissions=None):
     """Decorate methods with this to require various permissions"""
 

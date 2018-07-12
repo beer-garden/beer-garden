@@ -115,9 +115,8 @@ class RoleAPI(BaseHandler):
                 try:
                     perm = Permissions(op.value)
                 except ValueError:
-                    error_msg = "Permission '%s' does not exist" % op.value
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError(error_msg)
+                    raise ModelValidationError("Permission '%s' does not exist"
+                                               % op.value)
 
                 if op.operation == 'add':
                     role.permissions.append(perm.value)
@@ -203,6 +202,12 @@ class RolesAPI(BaseHandler):
         """
         role = BeerGardenSchemaParser.parse_role(self.request.decoded_body,
                                                  from_string=True)
+
+        # Make sure all new permissions are real
+        if not set(role.permissions).issubset(Permissions.values):
+            invalid = set(role.permissions).difference(Permissions.values)
+            raise ModelValidationError("Permissions %s do not exist" % invalid)
+
         role.save()
 
         self.set_status(201)
