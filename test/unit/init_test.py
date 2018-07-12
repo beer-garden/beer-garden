@@ -244,7 +244,13 @@ class TestBgUtils(object):
     @patch('mongoengine.register_connection', Mock())
     @patch('bg_utils.models.System')
     @patch('bg_utils.models.Request')
-    def test_verify_db_same_indexes(self, request_mock, system_mock):
+    @patch('bg_utils.models.Job')
+    def test_verify_db_same_indexes(self, job_mock, request_mock, system_mock):
+        job_mock.__name__ = 'Job'
+        job_mock.list_indexes = Mock(return_value=['index1'])
+        job_mock._get_collection = Mock(return_value=Mock(
+            index_information=Mock(return_value=['index1'])
+        ))
         request_mock.__name__ = 'Request'
         request_mock.list_indexes = Mock(return_value=['index1'])
         request_mock._get_collection = Mock(return_value=Mock(
@@ -257,12 +263,18 @@ class TestBgUtils(object):
         bg_utils._verify_db()
         assert system_mock.ensure_indexes.call_count == 1
         assert request_mock.ensure_indexes.call_count == 1
+        assert job_mock.ensure_indexes.call_count == 1
 
     @patch('mongoengine.connect', Mock())
     @patch('mongoengine.register_connection', Mock())
     @patch('bg_utils.models.System')
     @patch('bg_utils.models.Request')
-    def test_verify_db_missing_index(self, request_mock, system_mock):
+    @patch('bg_utils.models.Job')
+    def test_verify_db_missing_index(self, job_mock, request_mock, system_mock):
+        job_mock.__name__ = 'Job'
+        job_mock.list_indexes = Mock(return_value=['index1', 'index2'])
+        job_mock._get_collection = Mock(return_value=Mock(
+            index_information=Mock(return_value=['index1'])))
         request_mock.__name__ = 'Request'
         request_mock.list_indexes = Mock(return_value=['index1', 'index2'])
         request_mock._get_collection = Mock(return_value=Mock(
@@ -275,14 +287,22 @@ class TestBgUtils(object):
         bg_utils._verify_db()
         assert system_mock.ensure_indexes.call_count == 1
         assert request_mock.ensure_indexes.call_count == 1
+        assert job_mock.ensure_indexes.call_count == 1
 
     @patch('mongoengine.connection.get_db')
     @patch('mongoengine.connect', Mock())
     @patch('mongoengine.register_connection', Mock())
     @patch('bg_utils.models.System')
     @patch('bg_utils.models.Request')
-    def test_verify_db_successful_index_rebuild(self, request_mock, system_mock, get_db_mock):
+    @patch('bg_utils.models.Job')
+    def test_verify_db_successful_index_rebuild(
+            self, job_mock, request_mock, system_mock, get_db_mock
+    ):
         from pymongo.errors import OperationFailure
+        job_mock.__name__ = 'Job'
+        job_mock.list_indexes = Mock(return_value=['index1'])
+        job_mock._get_collection = Mock(return_value=Mock(
+            index_information=Mock(return_value=['index1'])))
         request_mock.__name__ = 'Request'
         request_mock.list_indexes = Mock(side_effect=OperationFailure(""))
         request_mock._get_collection = Mock(return_value=Mock(
@@ -298,6 +318,7 @@ class TestBgUtils(object):
         bg_utils._verify_db()
         assert db_mock['request'].drop_indexes.call_count == 1
         assert request_mock.ensure_indexes.called is True
+        assert job_mock.ensure_indexes.called is True
 
     @patch('mongoengine.connect', Mock())
     @patch('mongoengine.connection.get_db')

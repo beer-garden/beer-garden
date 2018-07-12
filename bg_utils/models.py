@@ -634,6 +634,18 @@ class CronTrigger(EmbeddedDocument, BrewtilsCronTrigger):
 
 class Job(Document, BrewtilsJob):
 
+    meta = {
+        'auto_create_index': False,
+        'index_background': True,
+        'indexes': [
+            {
+                'name': 'next_run_time_index',
+                'fields': ['next_run_time'],
+                'sparse': True,
+            },
+        ]
+    }
+
     TRIGGER_MODEL_MAPPING = {
         'date': DateTrigger,
         'cron': CronTrigger,
