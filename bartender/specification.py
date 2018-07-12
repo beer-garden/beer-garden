@@ -262,6 +262,16 @@ SPECIFICATION = {
                 "alt_env_names": ["SSL_ENABLED"],
                 "cli_separator": "_",
             },
+            "username": {
+                "type": "str",
+                "description": "Username for authentication",
+                "required": False,
+            },
+            "password": {
+                "type": "str",
+                "description": "Password for authentication",
+                "required": False,
+            },
             "url_prefix": {
                 "type": "str",
                 "default": None,

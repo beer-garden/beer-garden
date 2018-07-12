@@ -23,11 +23,24 @@ class LocalPluginRunner(StoppableThread):
 
     Can be stopped/started and killed like a normal process"""
 
-    def __init__(self, entry_point, system, instance_name, path_to_plugin, web_host, web_port,
-                 ssl_enabled, plugin_args=None, environment=None, requirements=None,
-                 plugin_log_directory=None, url_prefix=None, ca_verify=True, ca_cert=None,
-                 **kwargs):
-
+    def __init__(
+            self,
+            entry_point,
+            system,
+            instance_name,
+            path_to_plugin,
+            web_host,
+            web_port,
+            ssl_enabled,
+            plugin_args=None,
+            environment=None,
+            requirements=None,
+            plugin_log_directory=None,
+            url_prefix=None,
+            ca_verify=True,
+            ca_cert=None,
+            **kwargs
+    ):
         self.entry_point = entry_point
         self.system = system
         self.instance_name = instance_name
@@ -42,6 +55,8 @@ class LocalPluginRunner(StoppableThread):
         self.url_prefix = url_prefix
         self.ca_verify = ca_verify
         self.ca_cert = ca_cert
+        self.username = kwargs.get('username', None)
+        self.password = kwargs.get('password', None)
         self.plugin_default_log_level = kwargs.get('log_level', logging.INFO)
 
         for instance in self.system.instances:
@@ -203,6 +218,8 @@ class LocalPluginRunner(StoppableThread):
             'BG_URL_PREFIX': self.url_prefix,
             'BG_CA_VERIFY': self.ca_verify,
             'BG_CA_CERT': self.ca_cert,
+            'BG_USERNAME': self.username,
+            'BG_PASSWORD': self.password,
             'BG_LOG_LEVEL': logging.getLevelName(self.plugin_default_log_level),
         }
 
