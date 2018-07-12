@@ -303,7 +303,7 @@ def _verify_db():
     is in a bad state.
     """
 
-    from .models import Request, System
+    from .models import Request, System, Job
     logger = logging.getLogger(__name__)
 
     def update_request_model():
@@ -370,3 +370,4 @@ def _verify_db():
 
     check_indexes(Request)
     check_indexes(System)
+    check_indexes(Job)
