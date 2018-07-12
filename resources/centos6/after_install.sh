@@ -92,15 +92,16 @@ read -d '' service << EOF
 BEERGARDEN_HOME="\${BEERGARDEN_HOME:-$APP_HOME}"
 PROCESS_NAME="beer-garden"
 CONFIG_HOME="\$BEERGARDEN_HOME/conf"
+PID_HOME="/var/run/\$PROCESS_NAME"
 
 BT_CONFIG_FILE="\$CONFIG_HOME/bartender-config.json"
 BT_EXEC="\$BEERGARDEN_HOME/bin/bartender -c \$BT_CONFIG_FILE"
-BT_PID_FILE="/var/run/beer-garden/bartender.pid"
+BT_PID_FILE="\$PID_HOME/bartender.pid"
 BT_LOCK_FILE="/var/lock/subsys/bartender"
 
 BV_CONFIG_FILE="\$CONFIG_HOME/brew-view-config.json"
 BV_EXEC="\$BEERGARDEN_HOME/bin/brew-view -c \$BV_CONFIG_FILE"
-BV_PID_FILE="/var/run/beer-garden/brew-view.pid"
+BV_PID_FILE="\$PID_HOME/brew-view.pid"
 BV_LOCK_FILE="/var/lock/subsys/brew-view"
 
 
@@ -137,6 +138,11 @@ start_app() {
       echo "Start failed. Check \$process_name application logs"
       ret=1
     fi
+
+    if [ ! -d "\$PID_HOME" ]; then
+      mkdir -p "\$PID_HOME"
+    fi
+
 
     if [ \$ret -eq 0 ]; then
       action $"Starting \$process_name" /bin/true
