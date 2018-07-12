@@ -11,10 +11,10 @@ from tornado.web import HTTPError, RequestHandler
 
 import bg_utils
 import brew_view
-from brew_view.authorization import anonymous_user, basic_auth, bearer_auth
+from brew_view.authorization import basic_auth, bearer_auth
 from brewtils.errors import (
     ModelError, ModelValidationError, RequestForbidden, RequestPublishException,
-    WaitExceededError)
+    WaitExceededError, AuthorizationRequired)
 from brewtils.models import Event
 
 
@@ -70,6 +70,7 @@ class BaseHandler(RequestHandler):
             ModelError: {'status_code': 400},
             bg_utils.bg_thrift.InvalidSystem: {'status_code': 400},
             ExpiredSignatureError: {'status_code': 401},
+            AuthorizationRequired: {'status_code': 401},
             RequestForbidden: {'status_code': 403},
             DoesNotExist: {'status_code': 404, 'message': 'Resource does not exist'},
             WaitExceededError: {'status_code': 408, 'message': 'Max wait time exceeded'},
@@ -98,7 +99,7 @@ class BaseHandler(RequestHandler):
             elif auth_header.startswith('Basic '):
                 return basic_auth(auth_header)
 
-        return anonymous_user()
+        return brew_view.anonymous_principal
 
     @property
     def prometheus_endpoint(self):

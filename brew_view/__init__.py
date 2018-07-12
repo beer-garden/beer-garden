@@ -17,9 +17,11 @@ from bg_utils.event_publisher import EventPublishers
 from bg_utils.models import Role
 from bg_utils.pika import TransientPikaClient
 from bg_utils.plugin_logging_loader import PluginLoggingLoader
+from brew_view.authorization import coalesce_permissions
 from brew_view.publishers import (MongoPublisher, RequestPublisher,
                                   TornadoPikaPublisher, WebsocketPublisher)
 from brew_view.specification import get_default_logging_config
+from brewtils.models import Principal
 from brewtils.schemas import (
     ParameterSchema, CommandSchema, InstanceSchema, SystemSchema, RequestSchema,
     PatchSchema, LoggingConfigSchema, EventSchema, QueueSchema, PrincipalSchema,
@@ -39,7 +41,7 @@ plugin_logging_config = None
 app_log_config = None
 notification_meta = None
 request_map = {}
-anonymous_permissions = []
+anonymous_principal = None
 
 
 def setup_brew_view(spec, cli_args):
@@ -75,7 +77,7 @@ def load_plugin_logging_config(input_config):
 
 def _setup_application():
     global application, server, tornado_app, public_url, thrift_context,\
-        event_publishers, anonymous_permissions
+        event_publishers, anonymous_principal
 
     public_url = Url(scheme='https' if config.web.ssl.enabled else 'http',
                      host=config.event.public_fqdn,
@@ -86,7 +88,7 @@ def _setup_application():
     tornado_app = _setup_tornado_app()
     server_ssl, client_ssl = _setup_ssl_context()
     event_publishers = _setup_event_publishers(client_ssl)
-    anonymous_permissions = _get_anonymous_permissions()
+    anonymous_principal = _get_anonymous_principal()
 
     server = HTTPServer(tornado_app, ssl_options=server_ssl)
     server.listen(config.web.port)
@@ -288,10 +290,15 @@ def _load_swagger(url_specs, title=None):
         api_spec.add_path(urlspec=url_spec)
 
 
-def _get_anonymous_permissions():
+def _get_anonymous_principal():
     """Load correct anonymous permissions"""
 
     if config.auth.enabled:
-        return Role.objects.get(name='bg-anonymous').permissions
+        anon_role = Role.objects.get(name='bg-anonymous')
+        roles, permissions = coalesce_permissions([anon_role])
     else:
-        return ['bg-all']
+        roles, permissions = (Role(name='bg-anonymous'), ['bg-all'])
+
+    return Principal(username='bg-anonymous',
+                     roles=roles,
+                     permissions=permissions)

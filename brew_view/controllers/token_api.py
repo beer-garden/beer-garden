@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime, timedelta
 
 import jwt
@@ -14,6 +15,8 @@ from brew_view.base_handler import BaseHandler
 
 
 class TokenAPI(BaseHandler):
+
+    logger = logging.getLogger(__name__)
 
     def get(self, token_id):
         """
@@ -77,6 +80,8 @@ class TokenAPI(BaseHandler):
 
 
 class TokenListAPI(BaseHandler):
+
+    logger = logging.getLogger(__name__)
 
     def get(self):
         """

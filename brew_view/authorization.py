@@ -8,7 +8,7 @@ from passlib.apps import custom_app_context
 
 import brew_view
 from bg_utils.models import Principal
-from brewtils.errors import RequestForbidden
+from brewtils.errors import AuthorizationRequired, RequestForbidden
 from brewtils.models import (
     Principal as BrewtilsPrincipal,
     Role as BrewtilsRole
@@ -43,16 +43,6 @@ class Permissions(Enum):
     USER_DELETE = 'bg-user-delete'
 
 
-def anonymous_user():
-    """Get a Principal representing an anonymous user
-
-    Returns:
-        BrewtilsPrincipal
-    """
-    return BrewtilsPrincipal(roles=['bg-anonymous'],
-                             permissions=brew_view.anonymous_permissions)
-
-
 def authenticated(method=None, permissions=None):
     """Decorate methods with this to require various permissions"""
 
@@ -65,8 +55,13 @@ def authenticated(method=None, permissions=None):
     @functools.wraps(method)
     def wrapper(self, *args, **kwargs):
         if not has_permission(self.current_user, permission_strings):
-            raise RequestForbidden('Action requires permission %s' %
-                                   permissions[0].value)
+            # Need to make a distinction between "you need to be authenticated
+            # to do this" and "you've been authenticated and denied"
+            if self.current_user == brew_view.anonymous_principal:
+                raise AuthorizationRequired()
+            else:
+                raise RequestForbidden('Action requires permission %s' %
+                                       permissions[0].value)
 
         return method(self, *args, **kwargs)
 
