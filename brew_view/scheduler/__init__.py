@@ -9,7 +9,7 @@ from pytz import utc
 
 
 def construct_trigger(trigger_type, bg_trigger):
-    """Construct an apcheduler trigger based on type and mongo document."""
+    """Construct an apscheduler trigger based on type and mongo document."""
     trigger_type = trigger_type
     trigger_kwargs = bg_trigger.get_scheduler_kwargs()
     if trigger_type == 'date':

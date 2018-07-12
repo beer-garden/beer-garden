@@ -89,7 +89,7 @@ def _setup_application():
     tornado_app = _setup_tornado_app()
     server_ssl, client_ssl = _setup_ssl_context()
     event_publishers = _setup_event_publishers(client_ssl)
-    easy_client = EasyClient(bg_host=config.web.host, **config.web)
+    easy_client = EasyClient(**config.web)
     request_scheduler = _setup_scheduler()
 
     server = HTTPServer(tornado_app, ssl_options=server_ssl)

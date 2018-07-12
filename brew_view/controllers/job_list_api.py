@@ -79,21 +79,26 @@ class JobListAPI(BaseHandler):
         # to the scheduler.
         document.save()
 
-        brew_view.request_scheduler.add_job(
-            run_job,
-            None,
-            kwargs={
-                'request_template': document.request_template,
-                'job_id': str(document.id),
-            },
-            name=document.name,
-            misfire_grace_time=document.misfire_grace_time,
-            coalesce=document.coalesce,
-            max_instances=3,
-            jobstore='beer_garden',
-            replace_existing=False,
-            id=str(document.id),
-        )
+        try:
+            brew_view.request_scheduler.add_job(
+                run_job,
+                None,
+                kwargs={
+                    'request_template': document.request_template,
+                    'job_id': str(document.id),
+                },
+                name=document.name,
+                misfire_grace_time=document.misfire_grace_time,
+                coalesce=document.coalesce,
+                max_instances=3,
+                jobstore='beer_garden',
+                replace_existing=False,
+                id=str(document.id),
+            )
+        except Exception:
+            document.delete()
+            raise
 
         self.set_status(201)
+        self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.write(self.parser.serialize_job(document, to_string=False))

@@ -35,6 +35,7 @@ class JobListAPITest(TestHandlerBase):
             'next_run_time': self.ts_epoch,
             'success_count': 0,
             'error_count': 0,
+            'status': 'RUNNING',
         }
         db_dict = copy.deepcopy(self.job_dict)
         db_dict['request_template'] = RequestTemplate(**db_dict['request_template'])
@@ -82,3 +83,11 @@ class JobListAPITest(TestHandlerBase):
             self.job_dict
         )
         self.assertEqual(scheduler_mock.add_job.call_count, 1)
+
+    @patch('brew_view.request_scheduler')
+    def test_post_error_delete(self, scheduler_mock):
+        body = json.dumps(self.job_dict)
+        self.job_dict['id'] = None
+        scheduler_mock.add_job.side_effect = ValueError
+        response = self.fetch('/api/v1/jobs', method='POST', body=body)
+        self.assertGreaterEqual(response.code, 500)

@@ -160,9 +160,9 @@ class RequestAPI(BaseHandler):
         try:
             job_id = request.metadata.get('_bg_job_id')
             document = Job.objects.get(id=job_id)
-            if request.status in ['CANCELED', 'ERROR']:
+            if request.status == 'ERROR':
                 document.error_count += 1
-            else:
+            elif request.status == 'SUCCESS':
                 document.success_count += 1
             document.save()
         except Exception as exc:

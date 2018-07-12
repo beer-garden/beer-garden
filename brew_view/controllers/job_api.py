@@ -38,6 +38,7 @@ class JobAPI(BaseHandler):
           - Jobs
         """
         document = Job.objects.get(id=job_id)
+        self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.write(self.parser.serialize_job(document, to_string=False))
 
     def patch(self, job_id):
@@ -127,6 +128,7 @@ class JobAPI(BaseHandler):
                 raise ModelValidationError(error_msg)
 
         job.save()
+        self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.write(self.parser.serialize_job(job, to_string=False))
 
     @coroutine
