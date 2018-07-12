@@ -16,6 +16,8 @@ class SystemListAPI(BaseHandler):
     parser = BeerGardenSchemaParser()
     logger = logging.getLogger(__name__)
 
+    REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
+
     # Need to ensure that Systems are updated atomically
     system_lock = Lock()
 
@@ -23,11 +25,57 @@ class SystemListAPI(BaseHandler):
         """
         ---
         summary: Retrieve all Systems
+        description: |
+          This endpoint allows for querying Systems.
+
+          There are several parameters that control which fields are returned
+          and what information is available. Things to be aware of:
+
+          * The `include_commands` parameter is __deprecated__. Don't use it.
+            Use `exclude_fields=commands` instead.
+
+          * It's possible to specify `include_fields` _and_ `exclude_fields`.
+            This doesn't make a lot of sense, but you can do it. If the same
+            field is in both `exclude_fields` takes priority (the field will
+            NOT be included in the response).
+
+          Systems matching specific criteria can be filtered using additional
+          query parameters. This is a very basic capability:
+
+          * ?name=foo&version=1.0.0
+            This will return the system named 'foo' with version '1.0.0'
+          * ?name=foo&name=bar
+            This will not do what you expect: only return the system named
+            'bar' will be returned.
         parameters:
+          - name: include_fields
+            in: query
+            required: false
+            description: Specify fields to include in the response. All other
+              fields will be excluded.
+            type: array
+            collectionFormat: csv
+            items:
+              type: string
+          - name: exclude_fields
+            in: query
+            required: false
+            description: Specify fields to exclude from the response
+            type: array
+            collectionFormat: csv
+            items:
+              type: string
+          - name: dereference_nested
+            in: query
+            required: false
+            description: Commands and instances will be an object id
+            type: boolean
+            default: true
           - name: include_commands
             in: query
             required: false
-            description: Include System's commands in the response
+            description: __DEPRECATED__ Include commands in the response.
+              Use `exclude_fields=commands` instead.
             type: boolean
             default: true
         responses:
@@ -42,20 +90,48 @@ class SystemListAPI(BaseHandler):
         tags:
           - Systems
         """
-        self.logger.debug("Getting all Systems")
+        query_set = System.objects.order_by(self.request.headers.get('order_by', 'name'))
+        serialize_params = {'to_string': True, 'many': True}
 
+        include_fields = self.get_query_argument('include_fields', None)
+        exclude_fields = self.get_query_argument('exclude_fields', None)
+        dereference_nested = self.get_query_argument('dereference_nested', None)
+        include_commands = self.get_query_argument('include_commands', None)
+
+        if include_fields:
+            include_fields = set(include_fields.split(',')) & self.REQUEST_FIELDS
+            query_set = query_set.only(*include_fields)
+            serialize_params['only'] = include_fields
+
+        if exclude_fields:
+            exclude_fields = set(exclude_fields.split(',')) & self.REQUEST_FIELDS
+            query_set = query_set.exclude(*exclude_fields)
+            serialize_params['exclude'] = exclude_fields
+
+        if include_commands and include_commands.lower() == 'false':
+            query_set = query_set.exclude('commands')
+
+            if 'exclude' not in serialize_params:
+                serialize_params['exclude'] = set()
+            serialize_params['exclude'].add('commands')
+
+        if dereference_nested and dereference_nested.lower() == 'false':
+            query_set = query_set.no_dereference()
+
+        # TODO - Handle multiple query arguments with the same key
+        # for example: (?name=foo&name=bar) ... what should that mean?
         filter_params = {}
-        for key in self.request.arguments.keys():
-            if key in SystemSchema.get_attribute_names():
+
+        # Need to use self.request.query_arguments to get all the query args
+        for key in self.request.query_arguments:
+            if key in self.REQUEST_FIELDS:
+                # Now use get_query_argument to get the decoded value
                 filter_params[key] = self.get_query_argument(key)
 
-        include_commands = self.get_query_argument(
-            'include_commands', default='true').lower() != 'false'
+        result_set = query_set.filter(**filter_params)
 
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
-        self.write(self.parser.serialize_system(
-            System.objects.filter(**filter_params).order_by('name'),
-            to_string=True, many=True, include_commands=include_commands))
+        self.write(self.parser.serialize_system(result_set, **serialize_params))
 
     @coroutine
     def post(self):

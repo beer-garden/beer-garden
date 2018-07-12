@@ -32,12 +32,21 @@ export default function systemService($http) {
     return $http.delete('api/v1/systems/' + system.id);
   };
 
-  SystemService.getSystems = function() {
-    return $http.get('api/v1/systems');
+  SystemService.getSystems = function(dereferenceNested, includeFields,
+      excludeFields) {
+    return $http.get('api/v1/systems', {
+      params: {
+        dereference_nested: dereferenceNested,
+        include_fields: includeFields,
+        exclude_fields: excludeFields,
+      },
+    });
   };
 
   SystemService.getSystem = function(id, includeCommands) {
-    return $http.get('api/v1/systems/' + id, {params: {include_commands: includeCommands}});
+    return $http.get('api/v1/systems/' + id, {
+      params: {include_commands: includeCommands},
+    });
   };
 
   SystemService.getSystemID = function(request) {

@@ -53,3 +53,8 @@
 .panel-danger > .panel-heading{
     background-image: none;
 }
+
+/* Stuff for child rows in the request table */
+.child-row {
+    background-color: rgb(58, 63, 68);
+}

@@ -142,12 +142,15 @@ export default function systemAdminController(
 
   let socketError = false;
 
+  /**
+   * websocketConnect - Open a websocket connection.
+   */
   function websocketConnect() {
     if (window.WebSocket && !socketError) {
       let proto = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-      let event_url = proto + window.location.host + '/api/v1/socket/events';
+      let eventUrl = proto + window.location.host + '/api/v1/socket/events';
 
-      let socketConnection = $websocket(event_url);
+      let socketConnection = $websocket(eventUrl);
       socketConnection.onMessage(handleWebsocketMessage);
 
       // If the connection is broken attempt to reconnect.
@@ -168,10 +171,14 @@ export default function systemAdminController(
     }
   }
 
+  /**
+   * handleWebsocketMessage - Handle a message
+   * @param {string} message  The event message
+   */
   function handleWebsocketMessage(message) {
     let event = JSON.parse(message.data);
 
-    switch(event.name) {
+    switch (event.name) {
       case 'INSTANCE_INITIALIZED':
         updateInstanceStatus(event.payload.id, 'RUNNING');
         break;
@@ -184,28 +191,41 @@ export default function systemAdminController(
     }
   }
 
+  /**
+   * updateInstanceStatus - Change the status of an instance
+   * @param {string} id  The instance ID
+   * @param {string} newStatus  The new status
+   */
   function updateInstanceStatus(id, newStatus) {
     if (newStatus === undefined) return;
 
-    for (let system_name in $scope.systems.data) {
-      for (let system of $scope.systems.data[system_name]) {
-        for (let instance of system.instances) {
-          if (instance.id === id) {
-            instance.status = newStatus;
+    for (let systemName in $scope.systems.data) {
+      if ({}.hasOwnProperty.call($scope.systems.data, systemName)) {
+        for (let system of $scope.systems.data[systemName]) {
+          for (let instance of system.instances) {
+            if (instance.id === id) {
+              instance.status = newStatus;
+            }
           }
         }
       }
     }
   }
 
+  /**
+   * removeSystem - Remove a system from the list of systems
+   * @param {string} id  The system ID
+   */
   function removeSystem(id) {
-    for (let system_name in $scope.systems.data) {
-      for (let system of $scope.systems.data[system_name]) {
-        if (system.id === id) {
-          _.pull($scope.systems.data[system_name], system);
+    for (let systemName in $scope.systems.data) {
+      if ({}.hasOwnProperty.call($scope.systems.data, systemName)) {
+        for (let system of $scope.systems.data[systemName]) {
+          if (system.id === id) {
+            _.pull($scope.systems.data[systemName], system);
 
-          if ($scope.systems.data[system_name].length === 0) {
-            delete $scope.systems.data[system_name];
+            if ($scope.systems.data[systemName].length === 0) {
+              delete $scope.systems.data[systemName];
+            }
           }
         }
       }
@@ -217,8 +237,8 @@ export default function systemAdminController(
 
   // Register a function that polls for systems...
   let systemsUpdate = $interval(function() {
-    SystemService.getSystems().then($scope.successCallback,
-                                    $scope.failureCallback);
+    SystemService.getSystems(true, 'id,name,display_name,version,instances')
+      .then($scope.successCallback, $scope.failureCallback);
   }, 5000);
   $scope.$on('$destroy', function() {
     if (angular.isDefined(systemsUpdate)) {
@@ -228,6 +248,6 @@ export default function systemAdminController(
   });
 
   // ...but go immediately so we don't have to wait for first interval
-  SystemService.getSystems().then($scope.successCallback,
-                                  $scope.failureCallback);
+  SystemService.getSystems(true, 'id,name,display_name,version,instances')
+    .then($scope.successCallback, $scope.failureCallback);
 };
