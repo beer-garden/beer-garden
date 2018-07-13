@@ -1,5 +1,7 @@
 import logging
 
+from mongoengine.errors import DoesNotExist
+
 from bg_utils.models import Role
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view.authorization import Permissions
@@ -113,41 +115,33 @@ class RoleAPI(BaseHandler):
         for op in operations:
             if op.path == '/permissions':
                 try:
-                    perm = Permissions(op.value)
+                    if op.operation == 'add':
+                        role.permissions.append(Permissions(op.value).value)
+                    elif op.operation == 'remove':
+                        role.permissions.remove(Permissions(op.value).value)
+                    elif op.operation == 'set':
+                        role.permissions = [Permissions(perm).value for perm in op.value]
+                    else:
+                        raise ModelValidationError("Unsupported operation '%s'" % op.operation)
                 except ValueError:
                     raise ModelValidationError("Permission '%s' does not exist"
                                                % op.value)
 
-                if op.operation == 'add':
-                    role.permissions.append(perm.value)
-                elif op.operation == 'remove':
-                    role.permissions.remove(perm.value)
-                else:
-                    error_msg = "Unsupported operation '%s'" % op.operation
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError(error_msg)
-
             elif op.path == '/roles':
                 try:
-                    nested_role = Role.objects.get(name=op.value).to_dbref()
-                except ValueError:
-                    error_msg = "Role '%s' does not exist" % op.value
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError(error_msg)
-
-                if op.operation == 'add':
-                    role.roles.append(nested_role)
-                elif op.operation == 'remove':
-                    role.permissions.remove(nested_role)
-                else:
-                    error_msg = "Unsupported operation '%s'" % op.operation
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError(error_msg)
+                    if op.operation == 'add':
+                        role.roles.append(Role.objects.get(name=op.value).to_dbref())
+                    elif op.operation == 'remove':
+                        role.roles.remove(Role.objects.get(name=op.value).to_dbref())
+                    elif op.operation == 'set':
+                        role.roles = [Role.objects.get(name=name).to_dbref() for name in op.value]
+                    else:
+                        raise ModelValidationError("Unsupported operation '%s'" % op.operation)
+                except DoesNotExist:
+                    raise ModelValidationError("Role '%s' does not exist" % op.value)
 
             else:
-                error_msg = "Unsupported path '%s'" % op.path
-                self.logger.warning(error_msg)
-                raise ModelValidationError(error_msg)
+                raise ModelValidationError("Unsupported path '%s'" % op.path)
 
         role.save()
 
@@ -207,6 +201,15 @@ class RolesAPI(BaseHandler):
         if not set(role.permissions).issubset(Permissions.values):
             invalid = set(role.permissions).difference(Permissions.values)
             raise ModelValidationError("Permissions %s do not exist" % invalid)
+
+        # And the same for nested roles
+        nested_roles = []
+        for nested_role in role.roles:
+            try:
+                nested_roles.append(Role.objects.get(name=nested_role.name).to_dbref())
+            except DoesNotExist:
+                raise ModelValidationError("Role '%s' does not exist" % nested_role.name)
+        role.roles = nested_roles
 
         role.save()
 

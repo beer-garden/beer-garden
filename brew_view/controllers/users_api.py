@@ -121,50 +121,25 @@ class UserAPI(BaseHandler):
         for op in operations:
             if op.path == '/roles':
                 try:
-                    role = Role.objects.get(name=op.value)
+                    if op.operation == 'add':
+                        principal.roles.append(Role.objects.get(name=op.value))
+                    elif op.operation == 'remove':
+                        principal.roles.remove(Role.objects.get(name=op.value))
+                    elif op.operation == 'set':
+                        principal.roles = [Role.objects.get(name=name) for name in op.value]
+                    else:
+                        raise ModelValidationError("Unsupported operation '%s'" % op.operation)
                 except DoesNotExist:
-                    error_msg = "Role '%s' does not exist" % op.value
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError(error_msg)
-
-                if op.operation == 'add':
-                    principal.roles.append(role)
-                elif op.operation == 'remove':
-                    principal.roles.remove(role)
-                else:
-                    error_msg = "Unsupported operation '%s'" % op.operation
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError(error_msg)
-
-            elif op.path == '/permissions':
-                try:
-                    perm = Permissions(op.value)
-                except ValueError:
-                    error_msg = "Permission '%s' does not exist" % op.value
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError(error_msg)
-
-                if op.operation == 'add':
-                    principal.permissions.append(perm.value)
-                elif op.operation == 'remove':
-                    principal.permissions.remove(perm.value)
-                else:
-                    error_msg = "Unsupported operation '%s'" % op.operation
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError(error_msg)
+                    raise ModelValidationError("Role '%s' does not exist" % op.value)
 
             elif op.path == '/preferences/theme':
                 if op.operation == 'set':
                     principal.preferences['theme'] = op.value
                 else:
-                    error_msg = "Unsupported operation '%s'" % op.operation
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError(error_msg)
+                    raise ModelValidationError("Unsupported operation '%s'" % op.operation)
 
             else:
-                error_msg = "Unsupported path '%s'" % op.path
-                self.logger.warning(error_msg)
-                raise ModelValidationError(error_msg)
+                raise ModelValidationError("Unsupported path '%s'" % op.path)
 
         principal.save()
 
