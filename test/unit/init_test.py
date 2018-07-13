@@ -74,19 +74,23 @@ class TestBgUtils(object):
         request_mock = Mock()
         system_mock = Mock()
         role_mock = Mock()
+        job_mock = Mock()
 
         request_mock.__name__ = 'Request'
         system_mock.__name__ = 'System'
         role_mock.__name__ = 'Role'
+        job_mock.__name__ = 'Job'
 
         monkeypatch.setattr(bg_utils.models, 'Request', request_mock)
         monkeypatch.setattr(bg_utils.models, 'System', system_mock)
         monkeypatch.setattr(bg_utils.models, 'Role', role_mock)
+        monkeypatch.setattr(bg_utils.models, 'Job', job_mock)
 
         return {
             'request': request_mock,
             'system': system_mock,
             'role': role_mock,
+            'job': job_mock,
         }
 
     def test_parse_args(self, spec):

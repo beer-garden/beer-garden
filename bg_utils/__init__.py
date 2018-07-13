@@ -304,7 +304,8 @@ def _verify_db():
     (blame MongoEngine). If anything goes wrong with the rebuild kill the app since the database
     is in a bad state.
     """
-    from .models import Principal, Request, Role, System
+    from .models import Job, Principal, Request, Role, System
+
     logger = logging.getLogger(__name__)
 
     def update_request_model():
@@ -404,6 +405,7 @@ def _verify_db():
     check_indexes(Request)
     check_indexes(System)
     check_indexes(Role)
+    check_indexes(Job)
 
     ensure_special_roles()
     ensure_user()

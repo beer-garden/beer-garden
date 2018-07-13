@@ -2,11 +2,20 @@ import copy
 import datetime
 import logging
 
+import pytz
 import six
-from lark.common import ParseError
-from mongoengine import BooleanField, DateTimeField, DictField, Document, DynamicField, \
-    GenericReferenceField, EmbeddedDocument, EmbeddedDocumentField, IntField, ListField, \
-    ReferenceField, StringField, PULL
+
+try:
+    from lark import ParseError
+    from lark.exceptions import LarkError
+except ImportError:
+    from lark.common import ParseError
+    LarkError = ParseError
+from mongoengine import (
+    BooleanField, DateTimeField, DictField, Document, DynamicField,
+    GenericReferenceField, EmbeddedDocument, EmbeddedDocumentField, IntField,
+    ListField, ReferenceField, StringField, PULL, GenericEmbeddedDocumentField
+)
 from mongoengine.errors import DoesNotExist
 
 from bg_utils.fields import DummyField, StatusInfo
@@ -17,10 +26,30 @@ from brewtils.models import (
     Instance as BrewtilsInstance, Parameter as BrewtilsParameter,
     Request as BrewtilsRequest, System as BrewtilsSystem,
     Event as BrewtilsEvent, Principal as BrewtilsPrincipal,
-    Role as BrewtilsRole)
+    Role as BrewtilsRole, Job as BrewtilsJob,
+    RequestTemplate as BrewtilsRequestTemplate,
+    DateTrigger as BrewtilsDateTrigger,
+    CronTrigger as BrewtilsCronTrigger,
+    IntervalTrigger as BrewtilsIntervalTrigger,
+)
 
-__all__ = ['System', 'Instance', 'Command', 'Parameter', 'Request', 'Choices',
-           'Event', 'Principal', 'Role', 'RefreshToken']
+__all__ = [
+    'System',
+    'Instance',
+    'Command',
+    'Parameter',
+    'Request',
+    'Choices',
+    'Event',
+    'Principal',
+    'Role',
+    'RefreshToken',
+    'Job',
+    'RequestTemplate',
+    'DateTrigger',
+    'CronTrigger',
+    'IntervalTrigger',
+]
 
 
 # MongoEngine needs all EmbeddedDocuments to be defined before any Documents that reference them
@@ -70,7 +99,7 @@ class Choices(EmbeddedDocument, BrewtilsChoices):
                     self.details = parse(self.value)
                 elif isinstance(self.value, dict):
                     self.details = parse(self.value['command'])
-        except ParseError:
+        except (LarkError, ParseError):
             raise BrewmasterModelValidationError("Error saving choices '%s' - unable to parse" %
                                                  self.value)
 
@@ -189,14 +218,23 @@ class Instance(Document, BrewtilsInstance):
 class Request(Document, BrewtilsRequest):
     """Mongo-Backed BREWMASTER Request Object"""
 
-    system = StringField(required=True)
-    system_version = StringField(required=True)
-    instance_name = StringField(required=True)
-    command = StringField(required=True)
+    # These fields are duplicated for job types, changes to this field
+    # necessitate a change to the RequestTemplateSchema in brewtils.
+    TEMPLATE_FIELDS = {
+        'system': {'field': StringField, 'kwargs': {'required': True}},
+        'system_version': {'field': StringField, 'kwargs': {'required': True}},
+        'instance_name': {'field': StringField, 'kwargs': {'required': True}},
+        'command': {'field': StringField, 'kwargs': {'required': True}},
+        'parameters': {'field': DictField, 'kwargs': {}},
+        'comment': {'field': StringField, 'kwargs': {'required': False}},
+        'metadata': {'field': DictField, 'kwargs': {}},
+    }
+
+    for field_name, field_info in TEMPLATE_FIELDS.items():
+        locals()[field_name] = field_info['field'](**field_info['kwargs'])
+
     parent = GenericReferenceField(required=False)
     children = DummyField(required=False)
-    parameters = DictField()
-    comment = StringField(required=False)
     output = StringField()
     output_type = StringField(choices=BrewtilsCommand.OUTPUT_TYPES)
     status = StringField(choices=BrewtilsRequest.STATUS_LIST, default='CREATED')
@@ -204,7 +242,6 @@ class Request(Document, BrewtilsRequest):
     created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     updated_at = DateTimeField(default=None, required=True)
     error_class = StringField(required=False)
-    metadata = DictField()
     has_parent = BooleanField(required=False)
     requester = StringField(required=False)
 
@@ -225,7 +262,8 @@ class Request(Document, BrewtilsRequest):
 
             # These are for sorting on the request index page
             {'name': 'parent_command_index', 'fields': ['has_parent', 'command']},
-            {'name': 'parent_system_index', 'fields': ['has_parent', 'system', 'instance_name']},
+            {'name': 'parent_system_index', 'fields': ['has_parent', 'system']},
+            {'name': 'parent_instance_index', 'fields': ['has_parent', 'instance_name']},
             {'name': 'parent_status_index', 'fields': ['has_parent', 'status']},
             {'name': 'parent_created_at_index', 'fields': ['has_parent', 'created_at']},
             {'name': 'parent_comment_index', 'fields': ['has_parent', 'comment']},
@@ -490,3 +528,211 @@ class RefreshToken(Document):
             {'fields': ['expires'], 'expireAfterSeconds': 0}
         ]
     }
+
+
+class RequestTemplate(EmbeddedDocument, BrewtilsRequestTemplate):
+
+    for field_name, field_info in Request.TEMPLATE_FIELDS.items():
+        locals()[field_name] = field_info['field'](**field_info['kwargs'])
+
+    def __str__(self):
+        return BrewtilsRequestTemplate.__str__(self)
+
+    def __repr__(self):
+        return BrewtilsRequestTemplate.__repr__(self)
+
+
+class DateTrigger(EmbeddedDocument, BrewtilsDateTrigger):
+
+    run_date = DateTimeField(required=True)
+    timezone = StringField(
+        required=False,
+        default='utc',
+        chocies=pytz.all_timezones
+    )
+
+    def __str__(self):
+        return BrewtilsDateTrigger.__str__(self)
+
+    def __repr__(self):
+        return BrewtilsDateTrigger.__repr__(self)
+
+    @staticmethod
+    def get_scheduler_attribute_names():
+        return ['run_date', 'timezone']
+
+    def get_scheduler_kwargs(self):
+        """Get kwargs for schedulers version of this trigger."""
+        tz = pytz.timezone(self.timezone)
+        localized_date = tz.localize(self.run_date)
+        return {
+            'run_date': localized_date,
+            'timezone': tz
+        }
+
+
+class IntervalTrigger(EmbeddedDocument, BrewtilsIntervalTrigger):
+
+    weeks = IntField(default=0)
+    days = IntField(default=0)
+    hours = IntField(default=0)
+    minutes = IntField(default=0)
+    seconds = IntField(default=0)
+    start_date = DateTimeField(required=False)
+    end_date = DateTimeField(required=False)
+    timezone = StringField(
+        required=False,
+        default='utc',
+        chocies=pytz.all_timezones
+    )
+    jitter = IntField(required=False)
+
+    def __str__(self):
+        return BrewtilsIntervalTrigger.__str__(self)
+
+    def __repr__(self):
+        return BrewtilsIntervalTrigger.__repr__(self)
+
+    @staticmethod
+    def get_scheduler_attribute_names():
+        return [
+            'weeks',
+            'days',
+            'hours',
+            'minutes',
+            'seconds',
+            'start_date',
+            'end_date',
+            'timezone',
+            'jitter',
+        ]
+
+    def get_scheduler_kwargs(self):
+        """Get kwargs for schedulers version of this trigger."""
+        tz = pytz.timezone(self.timezone)
+        start_date = tz.localize(self.start_date) if self.start_date else None
+        end_date = tz.localize(self.start_date) if self.start_date else None
+        kwargs = {
+            'timezone': tz,
+            'start_date': start_date,
+            'end_date': end_date,
+        }
+        for key in self.get_scheduler_attribute_names():
+            if key in ['timezone', 'start_date', 'end_date']:
+                continue
+
+            kwargs[key] = getattr(self, key)
+        return kwargs
+
+
+class CronTrigger(EmbeddedDocument, BrewtilsCronTrigger):
+
+    year = StringField(default='*')
+    month = StringField(default='1')
+    day = StringField(default='1')
+    week = StringField(default='*')
+    day_of_week = StringField(default='*')
+    hour = StringField(default='0')
+    minute = StringField(default='0')
+    second = StringField(default='0')
+    start_date = DateTimeField(required=False)
+    end_date = DateTimeField(required=False)
+    timezone = StringField(
+        required=False,
+        default='utc',
+        chocies=pytz.all_timezones
+    )
+    jitter = IntField(required=False)
+
+    def __str__(self):
+        return BrewtilsCronTrigger.__str__(self)
+
+    def __repr__(self):
+        return BrewtilsCronTrigger.__repr__(self)
+
+    @staticmethod
+    def get_scheduler_attribute_names():
+        return [
+            'year',
+            'month',
+            'day',
+            'week',
+            'day_of_week',
+            'hour',
+            'minute',
+            'second',
+            'start_date',
+            'end_date',
+            'timezone',
+            'jitter',
+        ]
+
+    def get_scheduler_kwargs(self):
+        """Get kwargs for schedulers version of this trigger."""
+        tz = pytz.timezone(self.timezone)
+        start_date = tz.localize(self.start_date) if self.start_date else None
+        end_date = tz.localize(self.start_date) if self.start_date else None
+        kwargs = {
+            'timezone': tz,
+            'start_date': start_date,
+            'end_date': end_date,
+        }
+        for key in self.get_scheduler_attribute_names():
+            if key in ['timezone', 'start_date', 'end_date']:
+                continue
+
+            kwargs[key] = getattr(self, key)
+        return kwargs
+
+
+class Job(Document, BrewtilsJob):
+
+    meta = {
+        'auto_create_index': False,
+        'index_background': True,
+        'indexes': [
+            {
+                'name': 'next_run_time_index',
+                'fields': ['next_run_time'],
+                'sparse': True,
+            },
+        ]
+    }
+
+    TRIGGER_MODEL_MAPPING = {
+        'date': DateTrigger,
+        'cron': CronTrigger,
+        'interval': IntervalTrigger
+    }
+
+    name = StringField(required=True)
+    trigger_type = StringField(required=True, choices=BrewtilsJob.TRIGGER_TYPES)
+    trigger = GenericEmbeddedDocumentField(choices=list(TRIGGER_MODEL_MAPPING.values()))
+    request_template = EmbeddedDocumentField('RequestTemplate')
+    misfire_grace_time = IntField()
+    coalesce = BooleanField(default=True)
+    next_run_time = DateTimeField()
+    success_count = IntField(required=True, default=0, min_value=0)
+    error_count = IntField(required=True, default=0, min_value=0)
+    status = StringField(required=True, choices=BrewtilsJob.STATUS_TYPES, default='RUNNING')
+
+    def __str__(self):
+        return BrewtilsJob.__str__(self)
+
+    def __repr__(self):
+        return BrewtilsJob.__repr__(self)
+
+    def clean(self):
+        """Validate before saving to the database"""
+
+        if self.trigger_type not in self.TRIGGER_MODEL_MAPPING:
+            raise BrewmasterModelValidationError(
+                'Cannot save job. No matching model for trigger type: %s' %
+                self.trigger_type
+            )
+
+        if not isinstance(self.trigger, self.TRIGGER_MODEL_MAPPING[self.trigger_type]):
+            raise BrewmasterModelValidationError(
+                'Cannot save job. Trigger type: %s but got trigger: %s' %
+                (self.trigger_type, type(self.trigger))
+            )
