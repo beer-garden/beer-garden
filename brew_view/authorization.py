@@ -5,10 +5,11 @@ from enum import Enum
 import jwt
 from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
+from tornado.web import HTTPError
 
 import brew_view
 from bg_utils.models import Principal
-from brewtils.errors import AuthorizationRequired, RequestForbidden
+from brewtils.errors import RequestForbidden
 from brewtils.models import (
     Principal as BrewtilsPrincipal,
     Role as BrewtilsRole
@@ -61,7 +62,7 @@ def authenticated(method=None, permissions=None):
             # Need to make a distinction between "you need to be authenticated
             # to do this" and "you've been authenticated and denied"
             if self.current_user == brew_view.anonymous_principal:
-                raise AuthorizationRequired()
+                raise HTTPError(status_code=401)
             else:
                 raise RequestForbidden('Action requires permission %s' %
                                        permissions[0].value)
