@@ -50,5 +50,7 @@ web:
   ca_verify: false
   host: localhost
   port: 2337
+  username: null
+  password: null
   ssl_enabled: false
   url_prefix: null

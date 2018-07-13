@@ -2,7 +2,6 @@ import logging
 import os
 import unittest
 
-import requests.exceptions
 from box import Box
 from mock import Mock, call, patch
 from yapconf import YapconfSpec
@@ -47,26 +46,3 @@ class BartenderTest(unittest.TestCase):
         bg.progressive_backoff(func_mock, stop_mock, 'test_func')
         max_val = max([mock_call[0][0] for mock_call in stop_mock.wait.call_args_list])
         self.assertLessEqual(max_val, 30)
-
-    def test_connect_to_brew_view_success(self):
-        client_mock = Mock()
-        bg.bv_client = client_mock
-        bg.logger = Mock()
-
-        self.assertTrue(bg.connect_to_brew_view())
-        client_mock.find_systems.assert_called_once()
-
-    def test_connect_to_brew_view_failure(self):
-        client_mock = Mock(find_systems=Mock(side_effect=requests.exceptions.ConnectionError))
-        bg.bv_client = client_mock
-        bg.logger = Mock()
-
-        self.assertFalse(bg.connect_to_brew_view())
-        client_mock.find_systems.assert_called_once()
-
-    def test_connect_to_brew_view_error(self):
-        client_mock = Mock(find_systems=Mock(side_effect=requests.exceptions.SSLError))
-        bg.bv_client = client_mock
-        bg.logger = Mock()
-
-        self.assertRaises(requests.exceptions.SSLError, bg.connect_to_brew_view)

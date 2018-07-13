@@ -1,8 +1,6 @@
 import logging
 import logging.config
 
-import requests.exceptions
-
 import bg_utils
 import brewtils.rest
 from bartender.app import BartenderApp
@@ -31,20 +29,6 @@ def setup_bartender(spec, cli_args):
     application = BartenderApp()
 
     logger.debug("Successfully loaded the bartender application")
-
-
-def connect_to_brew_view():
-    try:
-        logger.debug("Attempting to connect to Brew View")
-        bv_client.find_systems()
-        return True
-
-    # This is a little annoying - we want to retry (return False) on a
-    # ConnectionError but raise on subclasses (e.g. SSLError)
-    except requests.exceptions.ConnectionError as ex:
-        if type(ex) == requests.exceptions.ConnectionError:
-            return False
-        raise
 
 
 def progressive_backoff(func, stoppable_thread, failure_message):

@@ -9,7 +9,7 @@ from yapconf import YapconfSpec
 
 import bartender
 import bg_utils
-from bartender import connect_to_brew_view, progressive_backoff
+from bartender import progressive_backoff
 from bartender.specification import SPECIFICATION, get_default_logging_config
 
 
@@ -62,7 +62,7 @@ def main():
                         'Is the management plugin enabled?')
 
     # Ensure we have a brew-view connection
-    progressive_backoff(connect_to_brew_view, bartender.application,
+    progressive_backoff(bartender.bv_client.can_connect, bartender.application,
                         'Unable to connect to brew-view, is it started?')
 
     # Since we wait for RabbitMQ and brew-view we could already be shutting down

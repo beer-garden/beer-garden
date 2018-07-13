@@ -87,6 +87,8 @@ class TestPluginRunner(object):
             'BG_URL_PREFIX': 'None',
             'BG_CA_VERIFY': 'True',
             'BG_CA_CERT': 'None',
+            'BG_USERNAME': 'None',
+            'BG_PASSWORD': 'None',
             'BG_LOG_LEVEL': 'INFO',
         }
 
