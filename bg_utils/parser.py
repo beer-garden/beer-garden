@@ -2,8 +2,11 @@ from copy import copy
 
 from marshmallow.exceptions import MarshmallowError
 
-from bg_utils.models import System, Instance, Command, Parameter, Request, Choices, Event, Job, \
-    RequestTemplate, DateTrigger, IntervalTrigger, CronTrigger
+from bg_utils.models import (
+    System, Instance, Command, Parameter, Request, Choices, Event, Principal,
+    Role, RefreshToken, Job, RequestTemplate, DateTrigger, IntervalTrigger,
+    CronTrigger
+)
 from brewtils.errors import BrewmasterModelValidationError
 from brewtils.schema_parser import SchemaParser
 
@@ -21,6 +24,9 @@ class BeerGardenSchemaParser(SchemaParser):
         'RequestTemplateSchema': RequestTemplate,
         'ChoicesSchema': Choices,
         'EventSchema': Event,
+        'PrincipalSchema': Principal,
+        'RoleSchema': Role,
+        'RefreshTokenSchema': RefreshToken,
         'JobSchema': Job,
         'DateTriggerSchema': DateTrigger,
         'IntervalTriggerSchema': IntervalTrigger,

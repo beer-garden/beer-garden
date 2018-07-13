@@ -4,15 +4,18 @@ import logging
 
 import pytz
 import six
+
 try:
     from lark import ParseError
     from lark.exceptions import LarkError
 except ImportError:
     from lark.common import ParseError
     LarkError = ParseError
-from mongoengine import BooleanField, DateTimeField, DictField, Document, DynamicField, \
-    GenericReferenceField, EmbeddedDocument, EmbeddedDocumentField, IntField, ListField, \
-    ReferenceField, StringField, PULL, GenericEmbeddedDocumentField
+from mongoengine import (
+    BooleanField, DateTimeField, DictField, Document, DynamicField,
+    GenericReferenceField, EmbeddedDocument, EmbeddedDocumentField, IntField,
+    ListField, ReferenceField, StringField, PULL, GenericEmbeddedDocumentField
+)
 from mongoengine.errors import DoesNotExist
 
 from bg_utils.fields import DummyField, StatusInfo
@@ -22,7 +25,8 @@ from brewtils.models import (
     Choices as BrewtilsChoices, Command as BrewtilsCommand,
     Instance as BrewtilsInstance, Parameter as BrewtilsParameter,
     Request as BrewtilsRequest, System as BrewtilsSystem,
-    Event as BrewtilsEvent, Job as BrewtilsJob,
+    Event as BrewtilsEvent, Principal as BrewtilsPrincipal,
+    Role as BrewtilsRole, Job as BrewtilsJob,
     RequestTemplate as BrewtilsRequestTemplate,
     DateTrigger as BrewtilsDateTrigger,
     CronTrigger as BrewtilsCronTrigger,
@@ -30,9 +34,21 @@ from brewtils.models import (
 )
 
 __all__ = [
-    'System', 'Instance', 'Command', 'Parameter', 'Request', 'Choices',
-    'Event', 'Job', 'RequestTemplate', 'DateTrigger', 'CronTrigger',
-    'IntervalTrigger'
+    'System',
+    'Instance',
+    'Command',
+    'Parameter',
+    'Request',
+    'Choices',
+    'Event',
+    'Principal',
+    'Role',
+    'RefreshToken',
+    'Job',
+    'RequestTemplate',
+    'DateTrigger',
+    'CronTrigger',
+    'IntervalTrigger',
 ]
 
 
@@ -227,6 +243,7 @@ class Request(Document, BrewtilsRequest):
     updated_at = DateTimeField(default=None, required=True)
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
+    requester = StringField(required=False)
 
     meta = {
         'auto_create_index': False,  # We need to manage this ourselves
@@ -475,6 +492,42 @@ class Event(Document, BrewtilsEvent):
 
     def __repr__(self):
         return BrewtilsEvent.__repr__(self)
+
+
+class Role(Document, BrewtilsRole):
+
+    name = StringField(required=True)
+    roles = ListField(field=ReferenceField('Role'))
+    permissions = ListField(field=StringField())
+
+    meta = {
+        'auto_create_index': False,  # We need to manage this ourselves
+        'index_background': True,
+        'indexes': [
+            {'name': 'unique_index', 'fields': ['name'], 'unique': True},
+        ]
+    }
+
+
+class Principal(Document, BrewtilsPrincipal):
+
+    username = StringField(required=True)
+    hash = StringField()
+    roles = ListField(field=ReferenceField('Role', reverse_delete_rule=PULL))
+    preferences = DictField()
+
+
+class RefreshToken(Document):
+
+    issued = DateTimeField(required=True)
+    expires = DateTimeField(required=True)
+    payload = DictField(required=True)
+
+    meta = {
+        'indexes': [
+            {'fields': ['expires'], 'expireAfterSeconds': 0}
+        ]
+    }
 
 
 class RequestTemplate(EmbeddedDocument, BrewtilsRequestTemplate):

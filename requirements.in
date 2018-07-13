@@ -3,6 +3,7 @@
 -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
 futures ; python_version < "3.0"
 mongoengine
+passlib
 pika
 thriftpy
 yapconf[yaml]
