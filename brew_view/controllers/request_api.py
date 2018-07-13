@@ -2,7 +2,7 @@ import datetime
 import logging
 
 import brew_view
-from bg_utils.models import Request
+from bg_utils.models import Request, Job
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
@@ -143,6 +143,7 @@ class RequestAPI(BaseHandler):
 
         req.save()
         self._update_metrics(req, status_before)
+        self._update_job_numbers(req, status_before)
 
         if wait_condition:
             wait_condition.notify()
@@ -150,6 +151,26 @@ class RequestAPI(BaseHandler):
         self.request.event_extras = {'request': req, 'patch': operations}
 
         self.write(self.parser.serialize_request(req, to_string=False))
+
+    def _update_job_numbers(self, request, status_before):
+        if (
+            not request.metadata.get('_bg_job_id') or
+            status_before == request.status or
+            request.status not in Request.COMPLETED_STATUSES
+        ):
+            return
+
+        try:
+            job_id = request.metadata.get('_bg_job_id')
+            document = Job.objects.get(id=job_id)
+            if request.status == 'ERROR':
+                document.error_count += 1
+            elif request.status == 'SUCCESS':
+                document.success_count += 1
+            document.save()
+        except Exception as exc:
+            self.logger.warning('Could not update job counts.')
+            self.logger.exception(exc)
 
     def _update_metrics(self, request, status_before):
         """Update metrics associated with this new request.

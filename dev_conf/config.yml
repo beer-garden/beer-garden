@@ -57,8 +57,14 @@ metrics:
 plugin_logging:
   config_file: null
   level: INFO
+scheduler:
+  max_workers: 10
+  job_defaults:
+    coalesce: True
+    max_instances: 3
 shutdown_timeout: 5
 web:
+  host: 0.0.0.0
   port: 2337
   ssl:
     ca_cert: null
