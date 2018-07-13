@@ -34,6 +34,7 @@ class RequestAPITest(TestHandlerBase):
             'error_class': None,
             'metadata': {},
             'has_parent': True,
+            'requester': None
         }
         self.job_dict = {
             'name': 'job_name',
