@@ -75,6 +75,7 @@ import queueService from './js/services/queue_service.js';
 import requestService from './js/services/request_service.js';
 import systemService from './js/services/system_service.js';
 import userService from './js/services/user_service.js';
+import roleService from './js/services/role_service.js';
 import utilityService from './js/services/utility_service.js';
 import versionService from './js/services/version_service.js';
 
@@ -150,6 +151,7 @@ angular.module('bgApp',
 .factory('RequestService', requestService)
 .factory('SystemService', systemService)
 .factory('UserService', userService)
+.factory('RoleService', roleService)
 .factory('UtilityService', utilityService)
 .factory('VersionService', versionService)
 
