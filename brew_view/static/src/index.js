@@ -82,6 +82,7 @@ import aboutController from './js/controllers/about.js';
 import loginController from './js/controllers/login.js';
 import adminQueueController from './js/controllers/admin_queue.js';
 import adminSystemController from './js/controllers/admin_system.js';
+import userAdminController from './js/controllers/admin_user.js';
 import applicationController from './js/controllers/application.js';
 import commandIndexController from './js/controllers/command_index.js';
 import commandViewController from './js/controllers/command_view.js';
@@ -95,6 +96,7 @@ import './partials/about.html';
 import './partials/login.html';
 import './partials/admin_queue.html';
 import './partials/admin_system.html';
+import './partials/admin_user.html';
 import './partials/command_index.html';
 import './partials/command_view.html';
 import './partials/landing.html';
@@ -155,6 +157,7 @@ angular.module('bgApp',
 .controller('LoginController', loginController)
 .controller('QueueIndexController', adminQueueController)
 .controller('SystemAdminController', adminSystemController)
+.controller('UserAdminController', userAdminController)
 .controller('ApplicationController', applicationController)
 .controller('CommandIndexController', commandIndexController)
 .controller('CommandViewController', commandViewController)
