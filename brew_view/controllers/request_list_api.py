@@ -12,6 +12,7 @@ import brew_view
 from bg_utils.models import Request, System
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view import thrift_context
+from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import (ModelValidationError, RequestPublishException,
                              WaitExceededError)
@@ -23,6 +24,7 @@ class RequestListAPI(BaseHandler):
     parser = BeerGardenSchemaParser()
     logger = logging.getLogger(__name__)
 
+    @authenticated(permissions=[Permissions.REQUEST_READ])
     def get(self):
         """
         ---
@@ -197,6 +199,7 @@ class RequestListAPI(BaseHandler):
                                                  only=requested_fields))
 
     @coroutine
+    @authenticated(permissions=[Permissions.REQUEST_CREATE])
     def post(self):
         """
         ---
@@ -259,6 +262,9 @@ class RequestListAPI(BaseHandler):
             request_model.has_parent = True
         else:
             request_model.has_parent = False
+
+        if self.current_user:
+            request_model.requester = self.current_user.username
 
         with thrift_context() as client:
             try:

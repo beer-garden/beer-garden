@@ -1,11 +1,15 @@
 
+import jwtDecode from 'jwt-decode';
+
 appRun.$inject = [
   '$rootScope',
   '$state',
   '$stateParams',
-  '$cookies',
+  '$http',
+  'localStorageService',
   'UtilityService',
   'SystemService',
+  'UserService',
 ];
 
 /**
@@ -13,11 +17,14 @@ appRun.$inject = [
  * @param  {$rootScope} $rootScope         Angular's $rootScope object.
  * @param  {$state} $state                 Angular's $state object.
  * @param  {$stateParams} $stateParams     Angular's $stateParams object.
- * @param  {$cookies} $cookies             Angular's $cookies object.
+ * @param  {$http} $http                   Angular's $http object.
+ * @param  {localStorageService} 'localStorageService' Storage service
  * @param  {UtilityService} UtilityService UtilityService for getting configuration/icons.
  * @param  {SystemService} SystemService   SystemService for getting all System information.
+ * @param  {UserService} UserService       UserService for getting all User information.
  */
-export function appRun($rootScope, $state, $stateParams, $cookies, UtilityService, SystemService) {
+export function appRun($rootScope, $state, $stateParams, $http,
+    localStorageService, UtilityService, SystemService, UserService) {
   $rootScope.$state = $state;
   $rootScope.$stateParams = $stateParams;
 
@@ -43,15 +50,35 @@ export function appRun($rootScope, $state, $stateParams, $cookies, UtilityServic
     'slate': false,
   };
 
+  $rootScope.logout = function() {
+    let refreshToken = localStorageService.get('refresh');
+    if (refreshToken) {
+      // It's possible the refresh token was already removed from the database
+      // We don't care if that's the case, so set some empty callbacks
+      $http.delete('api/v1/tokens/' + refreshToken).then(() => {}, () => {});
+      localStorageService.remove('refresh');
+    }
+
+    localStorageService.remove('token');
+    $http.defaults.headers.common.Authorization = undefined;
+
+    $rootScope.user = undefined;
+  };
+
   $rootScope.changeTheme = function(theme) {
-    $cookies.put('currentTheme', theme);
+    localStorageService.set('currentTheme', theme);
     for (const key of Object.keys($rootScope.themes)) {
       $rootScope.themes[key] = (key == theme);
     };
+
+    if ($rootScope.user) {
+      UserService.setTheme($rootScope.user.id, theme);
+    }
   };
 
-  // Uses cookies to get the current theme
-  $rootScope.changeTheme($cookies.get('currentTheme') || 'default');
+  // Load up some settings
+  $rootScope.userName = localStorageService.get('user_name');
+  $rootScope.changeTheme(localStorageService.get('currentTheme') || 'default');
 
   const isLaterVersion = function(system1, system2) {
     let versionParts1 = system1.version.split('.');

@@ -5,6 +5,7 @@ from tornado.gen import coroutine
 from bg_utils.models import System
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view import thrift_context
+from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.models import Events, Queue
 
@@ -15,6 +16,7 @@ class QueueListAPI(BaseHandler):
     logger = logging.getLogger(__name__)
 
     @coroutine
+    @authenticated(permissions=[Permissions.QUEUE_READ])
     def get(self):
         """
         ---
@@ -59,6 +61,7 @@ class QueueListAPI(BaseHandler):
         self.write(self.parser.serialize_queue(queues, to_string=True, many=True))
 
     @coroutine
+    @authenticated(permissions=[Permissions.QUEUE_DELETE])
     def delete(self):
         """
         ---
@@ -83,7 +86,6 @@ class OldQueueListAPI(BaseHandler):
 
     logger = logging.getLogger(__name__)
 
-    @coroutine
     def get(self):
         """
         ---
@@ -104,7 +106,6 @@ class OldQueueListAPI(BaseHandler):
         """
         self.redirect('/api/v1/queues/', permanent=True)
 
-    @coroutine
     def delete(self):
         """
         ---

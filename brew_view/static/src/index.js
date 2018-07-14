@@ -10,7 +10,6 @@ import 'jquery';
 // Angular
 import angular from 'angular';
 import 'angular-animate';
-import 'angular-cookies';
 import 'angular-confirm';
 import 'angular-filter';
 import 'angular-sanitize';
@@ -20,6 +19,7 @@ import 'angular-ui-bootstrap';
 import '@uirouter/angularjs';
 import 'angular-bootstrap-switch';
 import 'angular-strap';
+import 'angular-local-storage';
 
 import 'bootstrap';
 import 'bootstrap-switch';
@@ -30,6 +30,7 @@ import 'startbootstrap-sb-admin-2/js/sb-admin-2.js';
 import 'datatables.net';
 import 'datatables.net-bs';
 import 'datatables-columnfilter';
+import 'jwt-decode';
 import 'angular-datatables/dist/angular-datatables.js';
 import 'angular-datatables/dist/plugins/light-columnfilter/angular-datatables.light-columnfilter.js'; // eslint-disable-line max-len
 import 'angular-datatables/dist/plugins/bootstrap/angular-datatables.bootstrap.js';
@@ -73,12 +74,16 @@ import instanceService from './js/services/instance_service.js';
 import queueService from './js/services/queue_service.js';
 import requestService from './js/services/request_service.js';
 import systemService from './js/services/system_service.js';
+import userService from './js/services/user_service.js';
+import roleService from './js/services/role_service.js';
 import utilityService from './js/services/utility_service.js';
 import versionService from './js/services/version_service.js';
 
 import aboutController from './js/controllers/about.js';
+import loginController from './js/controllers/login.js';
 import adminQueueController from './js/controllers/admin_queue.js';
 import adminSystemController from './js/controllers/admin_system.js';
+import userAdminController from './js/controllers/admin_user.js';
 import applicationController from './js/controllers/application.js';
 import commandIndexController from './js/controllers/command_index.js';
 import commandViewController from './js/controllers/command_view.js';
@@ -89,8 +94,10 @@ import systemViewController from './js/controllers/system_view.js';
 
 // Partials
 import './partials/about.html';
+import './partials/login.html';
 import './partials/admin_queue.html';
 import './partials/admin_system.html';
+import './partials/admin_user.html';
 import './partials/command_index.html';
 import './partials/command_view.html';
 import './partials/landing.html';
@@ -118,7 +125,7 @@ angular.module('bgApp',
   'ngAnimate',
   'frapontillo.bootstrap-switch',
   'mgcrea.ngStrap',
-  'ngCookies',
+  'LocalStorageModule',
   'beer-garden.addons',
   'beer-garden.builder',
 ])
@@ -126,6 +133,9 @@ angular.module('bgApp',
 .run(dtLoadingTemplate)
 .config(routeConfig)
 .config(interceptorConfig)
+.config(['localStorageServiceProvider', function(localStorageServiceProvider) {
+  localStorageServiceProvider.setStorageType('sessionStorage');
+}])
 .service('APIInterceptor', interceptorService)
 .animation('.slide', slideAnimation)
 
@@ -140,12 +150,16 @@ angular.module('bgApp',
 .factory('QueueService', queueService)
 .factory('RequestService', requestService)
 .factory('SystemService', systemService)
+.factory('UserService', userService)
+.factory('RoleService', roleService)
 .factory('UtilityService', utilityService)
 .factory('VersionService', versionService)
 
 .controller('AboutController', aboutController)
+.controller('LoginController', loginController)
 .controller('QueueIndexController', adminQueueController)
 .controller('SystemAdminController', adminSystemController)
+.controller('UserAdminController', userAdminController)
 .controller('ApplicationController', applicationController)
 .controller('CommandIndexController', commandIndexController)
 .controller('CommandViewController', commandViewController)
