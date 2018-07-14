@@ -47,7 +47,6 @@ class OldQueueAPI(BaseHandler):
 
     logger = logging.getLogger(__name__)
 
-    @coroutine
     def delete(self, queue_name):
         """
         ---

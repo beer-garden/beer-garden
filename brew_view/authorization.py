@@ -1,8 +1,8 @@
 import base64
-import functools
 from enum import Enum
 
 import jwt
+import wrapt
 from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
 from tornado.web import HTTPError
@@ -47,27 +47,29 @@ class Permissions(Enum):
 Permissions.values = {p.value for p in Permissions}
 
 
-def authenticated(method=None, permissions=None):
+def authenticated(permissions=None):
     """Decorate methods with this to require various permissions"""
-
-    if method is None:
-        return functools.partial(authenticated, permissions=permissions)
 
     # Convert to strings for easier comparison
     permission_strings = set(p.value for p in permissions)
 
-    @functools.wraps(method)
-    def wrapper(self, *args, **kwargs):
-        if not has_permission(self.current_user, permission_strings):
+    @wrapt.decorator
+    def wrapper(wrapped, instance, args, kwargs):
+
+        # The interplay between wrapt and gen.coroutine causes things to get
+        # a little confused, so we have to be flexible
+        handler = instance or args[0]
+
+        if not has_permission(handler.current_user, permission_strings):
             # Need to make a distinction between "you need to be authenticated
             # to do this" and "you've been authenticated and denied"
-            if self.current_user == brew_view.anonymous_principal:
+            if handler.current_user == brew_view.anonymous_principal:
                 raise HTTPError(status_code=401)
             else:
                 raise RequestForbidden('Action requires permission %s' %
                                        permissions[0].value)
 
-        return method(self, *args, **kwargs)
+        return wrapped(*args, **kwargs)
 
     return wrapper
 

@@ -86,7 +86,6 @@ class OldQueueListAPI(BaseHandler):
 
     logger = logging.getLogger(__name__)
 
-    @coroutine
     def get(self):
         """
         ---
@@ -107,7 +106,6 @@ class OldQueueListAPI(BaseHandler):
         """
         self.redirect('/api/v1/queues/', permanent=True)
 
-    @coroutine
     def delete(self):
         """
         ---
