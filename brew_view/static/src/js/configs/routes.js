@@ -33,6 +33,24 @@ export default function routeConfig($stateProvider, $urlRouterProvider) {
       templateUrl: basePath + 'about.html',
       controller: 'AboutController',
     })
+    .state('jobs', {
+      url: '/jobs',
+      templateUrl: basePath + 'job_index.html',
+      controller: 'JobIndexController',
+    })
+    .state('jobsCreate', {
+      url: '/jobs/create',
+      templateUrl: basePath + 'job_create.html',
+      controller: 'JobCreateController',
+      params: {
+        'request': null,
+      },
+    })
+    .state('job', {
+      'url': '/jobs/:id',
+      'templateUrl': basePath + 'job_view.html',
+      'controller': 'JobViewController',
+    })
     .state('queues', {
       url: '/admin/queues',
       templateUrl: basePath + 'admin_queue.html',

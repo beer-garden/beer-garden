@@ -75,6 +75,7 @@ import requestService from './js/services/request_service.js';
 import systemService from './js/services/system_service.js';
 import utilityService from './js/services/utility_service.js';
 import versionService from './js/services/version_service.js';
+import jobService from './js/services/job_service.js';
 
 import aboutController from './js/controllers/about.js';
 import adminQueueController from './js/controllers/admin_queue.js';
@@ -86,6 +87,9 @@ import landingController from './js/controllers/landing.js';
 import requestIndexController from './js/controllers/request_index.js';
 import requestViewController, {slideAnimation} from './js/controllers/request_view.js';
 import systemViewController from './js/controllers/system_view.js';
+import jobIndexController from './js/controllers/job_index.js';
+import jobViewController from './js/controllers/job_view.js';
+import jobCreateController from './js/controllers/job_create.js';
 
 // Partials
 import './partials/about.html';
@@ -97,6 +101,9 @@ import './partials/landing.html';
 import './partials/request_index.html';
 import './partials/request_view.html';
 import './partials/system_view.html';
+import './partials/job_index.html';
+import './partials/job_view.html';
+import './partials/job_create.html';
 
 // Images
 import './image/fa-beer.png';
@@ -142,6 +149,7 @@ angular.module('bgApp',
 .factory('SystemService', systemService)
 .factory('UtilityService', utilityService)
 .factory('VersionService', versionService)
+.factory('JobService', jobService)
 
 .controller('AboutController', aboutController)
 .controller('QueueIndexController', adminQueueController)
@@ -152,4 +160,7 @@ angular.module('bgApp',
 .controller('LandingController', landingController)
 .controller('RequestIndexController', requestIndexController)
 .controller('RequestViewController', requestViewController)
-.controller('SystemViewController', systemViewController);
+.controller('SystemViewController', systemViewController)
+.controller('JobIndexController', jobIndexController)
+.controller('JobViewController', jobViewController)
+.controller('JobCreateController', jobCreateController);
