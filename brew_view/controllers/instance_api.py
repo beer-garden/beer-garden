@@ -6,6 +6,7 @@ from tornado.gen import coroutine
 from bg_utils.models import Instance
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view import thrift_context
+from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events
@@ -22,6 +23,7 @@ class InstanceAPI(BaseHandler):
         'stop': Events.INSTANCE_STOPPED.name
     }
 
+    @authenticated(permissions=[Permissions.INSTANCE_READ])
     def get(self, instance_id):
         """
         ---
@@ -50,6 +52,7 @@ class InstanceAPI(BaseHandler):
                                                   to_string=False))
 
     @coroutine
+    @authenticated(permissions=[Permissions.INSTANCE_UPDATE])
     def patch(self, instance_id):
         """
         ---

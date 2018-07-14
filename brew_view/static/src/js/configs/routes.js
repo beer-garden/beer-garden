@@ -17,6 +17,11 @@ export default function routeConfig($stateProvider, $urlRouterProvider) {
         templateUrl: basePath + 'landing.html',
         controller: 'LandingController',
     })
+    .state('login', {
+      url: '/login',
+      templateUrl: basePath + 'login.html',
+      controller: 'LoginController',
+    })
     // Unused by our UI, but helpful for external links.
     .state('systemID', {
       url: '/systems/:id',
@@ -93,5 +98,10 @@ export default function routeConfig($stateProvider, $urlRouterProvider) {
       url: '/admin/systems',
       templateUrl: basePath + 'admin_system.html',
       controller: 'SystemAdminController',
+    })
+    .state('user_admin', {
+      url: '/admin/users',
+      templateUrl: basePath + 'admin_user.html',
+      controller: 'UserAdminController',
     });
 };

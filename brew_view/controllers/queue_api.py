@@ -3,6 +3,7 @@ import logging
 from tornado.gen import coroutine
 
 from brew_view import thrift_context
+from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.models import Events
 
@@ -12,6 +13,7 @@ class QueueAPI(BaseHandler):
     logger = logging.getLogger(__name__)
 
     @coroutine
+    @authenticated(permissions=[Permissions.QUEUE_DELETE])
     def delete(self, queue_name):
         """
         ---
@@ -45,7 +47,6 @@ class OldQueueAPI(BaseHandler):
 
     logger = logging.getLogger(__name__)
 
-    @coroutine
     def delete(self, queue_name):
         """
         ---

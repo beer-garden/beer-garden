@@ -37,6 +37,14 @@ export default function utilityService($rootScope, $http) {
     return $http.get('config');
   };
 
+  UtilityService.login = function() {
+    return $http.get('login');
+  };
+
+  UtilityService.logout = function() {
+    return $http.get('logout');
+  };
+
   UtilityService.getIcon = function(iconName) {
     if (iconName === undefined || iconName == null) {
       if ($rootScope.config === undefined || $rootScope.config.iconDefault === undefined) {

@@ -4,6 +4,7 @@ import logging
 import brew_view
 from bg_utils.models import Request, Job
 from bg_utils.parser import BeerGardenSchemaParser
+from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events, Request as BrewtilsRequest
@@ -14,6 +15,7 @@ class RequestAPI(BaseHandler):
     parser = BeerGardenSchemaParser()
     logger = logging.getLogger(__name__)
 
+    @authenticated(permissions=[Permissions.REQUEST_READ])
     def get(self, request_id):
         """
         ---
@@ -43,6 +45,7 @@ class RequestAPI(BaseHandler):
 
         self.write(self.parser.serialize_request(req, to_string=False))
 
+    @authenticated(permissions=[Permissions.REQUEST_UPDATE])
     def patch(self, request_id):
         """
         ---

@@ -31,6 +31,18 @@
       </div>
 
       <ul class="nav navbar-nav navbar-top-links navbar-right">
+
+        <li>
+          <a ng-show=user href="">Hello, {{user.username}}!</a>
+        </li>
+
+        <li>
+          <a ui-sref="login" ng-show=!user>Login</a>
+        </li>
+        <li>
+          <a ng-click="logout()" ng-show=user href="">Logout</a>
+        </li>
+
         <li class="dropdown">
           <a href="" class="dropdown-toggle" data-toggle="dropdown"> Themes <span class="caret"></span></a>
           <ul class="dropdown-menu">
@@ -117,6 +129,12 @@
                     <span>Queue Management</span>
                   </a>
                 </li>
+                  <li>
+                    <a ui-sref="user_admin" ui-sref-active="active">
+                      <i class="fa fa-user"></i>
+                      <span>User Management</span>
+                    </a>
+                  </li>
               </ul>
             </li>
           </ul>
