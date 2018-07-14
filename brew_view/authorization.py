@@ -110,15 +110,19 @@ def coalesce_permissions(role_list):
     return aggregate_roles, aggregate_perms
 
 
-def basic_auth(auth_header):
+def basic_auth(request):
     """Determine if a basic authorization header is valid
 
     Args:
-        auth_header: The Authorization header. Should start with 'Basic '.
+        request: The request to authenticate
 
     Returns:
         Brewtils principal if auth_header is valid, None otherwise
     """
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Basic '):
+        return None
+
     auth_decoded = base64.b64decode(auth_header[6:]).decode()
     username, password = auth_decoded.split(':')
 
@@ -135,15 +139,19 @@ def basic_auth(auth_header):
     return None
 
 
-def bearer_auth(auth_header):
+def bearer_auth(request):
     """Determine if a bearer authorization header is valid
 
     Args:
-        auth_header: The Authorization header. Should start with 'Bearer '.
+        request: The request to authenticate
 
     Returns:
         Brewtils principal if auth_header is valid, None otherwise
     """
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return None
+
     token = auth_header.split(' ')[1]
 
     decoded = jwt.decode(token,

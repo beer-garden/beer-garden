@@ -60,10 +60,15 @@ class BaseHandler(RequestHandler):
         ['system', 'instance_name', 'system_version'],
     )
 
+    auth_providers = []
+
     def __init__(self, *args, **kwargs):
         super(BaseHandler, self).__init__(*args, **kwargs)
 
         self.charset_re = re.compile(r'charset=(.*)$')
+
+        self.auth_providers.append(bearer_auth)
+        self.auth_providers.append(basic_auth)
 
         self.error_map = {
             MongoValidationError: {'status_code': 400},
@@ -92,12 +97,13 @@ class BaseHandler(RequestHandler):
             self.set_header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
 
     def get_current_user(self):
-        auth_header = self.request.headers.get('Authorization')
-        if auth_header:
-            if auth_header.startswith('Bearer '):
-                return bearer_auth(auth_header)
-            elif auth_header.startswith('Basic '):
-                return basic_auth(auth_header)
+        """Use registered handlers to determine current user"""
+
+        for provider in self.auth_providers:
+            principal = provider(self.request)
+
+            if principal is not None:
+                return principal
 
         return brew_view.anonymous_principal
 
