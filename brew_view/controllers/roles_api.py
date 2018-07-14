@@ -60,8 +60,7 @@ class RoleAPI(BaseHandler):
         tags:
           - Roles
         """
-        role = Role.objects.get(id=str(role_id))
-        role.delete()
+        Role.objects.get(id=str(role_id)).delete()
 
         self.set_status(204)
 
