@@ -225,7 +225,7 @@ export default function jobCreateController(
       let valid = extraValidate(model);
 
       if (form.$valid && valid) {
-        let serverModel = JobService.formToServerModel(model, $scope.requestModel);
+        let serverModel = JobService.formToServerModel(model, $scope.requestTemplate);
         JobService.createJob(serverModel).then(
           function(response) {
             $location.path('/jobs/' + response.data.id);
