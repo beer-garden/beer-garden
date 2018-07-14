@@ -49,6 +49,8 @@ export default function routeConfig($stateProvider, $urlRouterProvider) {
       controller: 'JobCreateController',
       params: {
         'request': null,
+        'system': null,
+        'command': null,
       },
     })
     .state('job', {

@@ -1,8 +1,10 @@
 <h1 class='page-header'>Create a Job</h1>
 
-<loading      loader="systems"></loading>
-<server-error loader="systems"></server-error>
-<empty        loader="systems" label="systems"></empty>
+<div ng-if="requestModel === null">
+    <loading      loader="systems"></loading>
+    <server-error loader="systems"></server-error>
+    <empty        loader="systems" label="systems"></empty>
+</div>
 
 <!-- System Table -->
 <div id="systems-container" class="animate-if" ng-if="system == null && systems.loaded && !systems.error">

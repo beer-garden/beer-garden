@@ -72,8 +72,8 @@ export default function jobCreateController(
         },
       },
     };
-    $scope.system = null;
-    $scope.command = null;
+    $scope.system = $stateParams.system || null;
+    $scope.command = $stateParams.command || null;
     $scope.instanceName = null;
     $scope.requestTemplate = null;
     $scope.jobAlerts = [];
@@ -311,5 +311,10 @@ export default function jobCreateController(
       }
     };
 
-    SystemService.getSystems().then($scope.successCallback, $scope.failureCallback);
+    if ($stateParams.request) {
+      generateRequestSF();
+      $scope.jsonValues.requestModel = angular.toJson($stateParams.request, 2);
+    } else {
+      SystemService.getSystems().then($scope.successCallback, $scope.failureCallback);
+    }
 };
