@@ -213,6 +213,16 @@ export default function commandViewController(
     $scope.manualModel = $scope.jsonValues.model;
   };
 
+  $scope.scheduleRequest = function() {
+    $state.go('jobsCreate',
+      {
+        'request': $scope.model,
+        'system': $scope.system,
+        'command': $scope.command.data,
+      }
+    );
+  };
+
   let generateSF = function() {
     let sf = SFBuilderService.build($scope.system, $scope.command.data);
     $scope.schema = sf['schema'];

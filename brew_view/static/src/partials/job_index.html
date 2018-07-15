@@ -1,0 +1,57 @@
+
+<loading      loader="jobs"></loading>
+<server-error loader="jobs"></server-error>
+
+<div ng-if="jobs.loaded && !jobs.error && jobs.data.length == 0" class="container-fluid animate-if">
+  <br />
+  <div class="jumbotron">
+    <h1>Welcome to the Request Scheduler</h1>
+    <p>
+      The request scheduler is a way to take your favorite plugin's command 
+      and schedule it to run at a later date. In Beer Garden, we call these
+      scheduled requests, "Jobs". Jobs can have many different triggers. This
+      page will help guide you through creating your very own job.
+    </p>
+    <br />
+    <p>
+      <a class="btn btn-primary btn-block btn-lg" ui-sref="jobsCreate()" role="button">Create Your First Job</a>
+    </p>
+  </div>
+</div>
+
+<div ng-if="jobs.loaded && !jobs.error && jobs.data.length > 0" class="container-fluid animate-if">
+  <h1 class='page-header'>
+    Request Scheduler
+    <a class="btn btn-primary btn-lg pull-right" ui-sref="jobsCreate()" role="button">Schedule a Job</a>
+  </h1>
+  <div>
+    <table datatable="ng" dt-options="dtOptions" class="table table-striped table-bordered" style="width: 100%">
+    <thead>
+      <tr>
+        <th id="th_job_name">Job Name</th>
+        <th id="th_job_status">Job Status</th>
+        <th id="th_system">System</th>
+        <th id="th_instance">Instance</th>
+        <th id="th_command">Command</th>
+        <th id="th_next_run_time">Next Run Time</th>
+        <th id="th_success_count">Sucess Count</th>
+        <th id="th_error_count">Error Count</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="job in jobs.data | filter:query">
+        <td>
+          <a href="#!/jobs/{{job.id}}">{{job.name}}</a>
+        </td>
+        <td>{{job.status}}</td>
+        <td>{{job.request_template.system}}</td>
+        <td>{{job.request_template.instance_name}}</td>
+        <td>{{job.request_template.command}}</td>
+        <td>{{formatDate(job.next_run_time)}}</td>
+        <td>{{job.success_count}}</td>
+        <td>{{job.error_count}}</td>
+      </tr>
+    </tbody>
+    </table>
+  </div>
+</div>

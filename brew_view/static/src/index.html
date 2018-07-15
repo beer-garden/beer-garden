@@ -105,6 +105,12 @@
               </a>
             </li>
             <li>
+              <a ui-sref="jobs" ng-class="{active: ($state.current.name.startsWith('job'))}">
+                <i class="fa fa-fw fa-calendar"></i>
+                <span>Scheduler</span>
+              </a>
+            </li>
+            <li>
               <a ui-sref-active="active">
                 <i class="fa fa-wrench fa-fw"></i>
                 <span>Administration</span>

@@ -1,0 +1,112 @@
+<h1 class='page-header'>Create a Job</h1>
+
+<div ng-if="requestModel === null">
+    <loading      loader="systems"></loading>
+    <server-error loader="systems"></server-error>
+    <empty        loader="systems" label="systems"></empty>
+</div>
+
+<!-- System Table -->
+<div id="systems-container" class="animate-if" ng-if="system == null && systems.loaded && !systems.error">
+    <h3>First, pick a system. Choose from the list below</h3>
+
+    <table datatable="ng" dt-options="dtOptions" class="table table-striped table-bordered" style="width: 100%">
+    <thead>
+      <tr>
+        <th id="th_system_name">System Name</th>
+        <th id="th_system_version">System Version</th>
+        <th id="th_selector">Select this System</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="system in systems.data | filter:query">
+        <td>{{system.name}}</td>
+        <td>{{system.version}}</td>
+        <td>
+            <a class="btn btn-primary btn-block btn-sm" ng-click="selectSystem(system)" role="button">Select</a>
+        </td>
+    </tbody>
+    </table>
+
+</div>
+
+<!-- Command Table -->
+<div id="foo-container" class="animate-if" ng-if="system != null && requestSchema == null">
+  <h3 class="text-center">Now select the command you would like</h3>
+
+    <table datatable="ng" dt-options="dtOptions" class="table table-striped table-bordered" style="width: 100%">
+    <thead>
+      <tr>
+        <th id="th_command_name">Command Name</th>
+        <th id="th_command_description">Description</th>
+        <th id="th_selector">Select this Command</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="command in system.commands | filter:query">
+        <td>{{command.name}}</td>
+        <td>{{command.description || "No Description Given"}}</td>
+        <td>
+            <a class="btn btn-primary btn-block btn-sm" ng-click="selectCommand(command)" role="button">Select</a>
+        </td>
+    </tbody>
+    </table>
+
+</div>
+
+<!-- Request Form -->
+<div ng-show="requestSchema != null && !template && requestTemplate == null">
+  <h3 class='page-header'>
+    <span>Fill out the request you would like to schedule</span>
+  </h3>
+  <div ng-show=command.description style="margin:-15px 3px 20px">
+    {{command.description}}
+  </div>
+
+  <div class="container-fluid">
+
+    <div class="row">
+      <div class="col-md-8">
+        <form 
+          name="ngform" 
+          sf-schema="requestSchema" 
+          sf-form="requestForm" 
+          sf-model="requestModel" 
+          ng-submit="submitRequestForm(ngform, model)"
+        />
+        <div uib-alert ng-repeat="alert in requestAlerts" class="alert-danger" close="closeRequestAlert($index)">
+          <strong>Uh-oh!</strong>
+          <span ng-bind=alert></span>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <h3 class="col-md-4" style="margin-top: 0px">Preview</h3>
+        <div ui-ace="{ onLoad: loadPreview }" ng-model="jsonValues.requestModel" style="width: 100%;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Job Form -->
+<div ng-show="requestTemplate != null">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8">
+                <form 
+                    name="jobform" 
+                    sf-schema="jobSchema" 
+                    sf-form="jobForm" 
+                    sf-model="jobModel" 
+                    ng-submit="submitJobForm(jobform, jobModel)"/>
+                <div uib-alert ng-repeat="alert in jobAlerts" class="alert-danger" close="closeJobAlert($index)">
+                    <strong>Uh-oh!</strong>
+                    <span ng-bind=alert></span>
+                </div>
+            </div>
+            <div class="col-md-4">
+              <h3 class="col-md-4" style="margin-top: 0px">Preview</h3>
+              <div ui-ace="{ onLoad: loadPreview }" ng-model="jsonValues.jobModel" style="width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
