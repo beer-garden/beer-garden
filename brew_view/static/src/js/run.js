@@ -18,10 +18,10 @@ appRun.$inject = [
  * @param  {$state} $state                 Angular's $state object.
  * @param  {$stateParams} $stateParams     Angular's $stateParams object.
  * @param  {$http} $http                   Angular's $http object.
- * @param  {localStorageService} 'localStorageService' Storage service
- * @param  {UtilityService} UtilityService UtilityService for getting configuration/icons.
- * @param  {SystemService} SystemService   SystemService for getting all System information.
- * @param  {UserService} UserService       UserService for getting all User information.
+ * @param  {localStorageService} localStorageService Storage service
+ * @param  {UtilityService} UtilityService Service for configuration/icons.
+ * @param  {SystemService} SystemService   Service for System information.
+ * @param  {UserService} UserService       Service for User information.
  */
 export function appRun($rootScope, $state, $stateParams, $http,
     localStorageService, UtilityService, SystemService, UserService) {
