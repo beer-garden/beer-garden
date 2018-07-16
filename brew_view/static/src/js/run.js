@@ -1,6 +1,4 @@
 
-import jwtDecode from 'jwt-decode';
-
 appRun.$inject = [
   '$rootScope',
   '$state',

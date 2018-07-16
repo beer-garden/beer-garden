@@ -8,7 +8,6 @@ userService.$inject = ['$http'];
  * @return {Object}      Service for interacting with the user API.
  */
 export default function userService($http) {
-
   let service = {
     getUser: (userId) => {
       return $http.get('api/v1/users/' + userId);
@@ -33,22 +32,22 @@ export default function userService($http) {
   _.assign(service, {
     addRole: (userId, role) => {
       return service.updateUser(userId, [
-        {operation: 'add', path: '/roles', value: role}
+        {operation: 'add', path: '/roles', value: role},
       ]);
     },
     removeRole: (userId, role) => {
       return service.updateUser(userId, [
-        {operation: 'remove', path: '/roles', value: role}
+        {operation: 'remove', path: '/roles', value: role},
       ]);
     },
     setRoles: (userId, roles) => {
       return service.updateUser(userId, [
-        {operation: 'set', path: '/roles', value: roles}
+        {operation: 'set', path: '/roles', value: roles},
       ]);
     },
     setTheme: (userId, theme) => {
       return service.updateUser(userId, [
-        {operation: 'set', path: '/preferences/theme', value: theme}
+        {operation: 'set', path: '/preferences/theme', value: theme},
       ]);
     },
   });

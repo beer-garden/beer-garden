@@ -8,7 +8,6 @@ roleService.$inject = ['$http'];
  * @return {Object}      Service for interacting with the role API.
  */
 export default function roleService($http) {
-
   let service = {
     getRole: (roleId) => {
       return $http.get('api/v1/roles/' + roleId);
@@ -34,32 +33,32 @@ export default function roleService($http) {
   _.assign(service, {
     addPermission: (roleId, permission) => {
       return service.updateRole(roleId, [
-        {operation: 'add', path: '/permissions', value: permission}
+        {operation: 'add', path: '/permissions', value: permission},
       ]);
     },
     removePermission: (roleId, permission) => {
       return service.updateRole(roleId, [
-        {operation: 'remove', path: '/permissions', value: permission}
+        {operation: 'remove', path: '/permissions', value: permission},
       ]);
     },
     setPermission: (roleId, permissions) => {
       return service.updateRole(roleId, [
-        {operation: 'set', path: '/permissions', value: permissions}
+        {operation: 'set', path: '/permissions', value: permissions},
       ]);
     },
     addRole: (roleId, role) => {
       return service.updateRole(roleId, [
-        {operation: 'add', path: '/roles', value: role}
+        {operation: 'add', path: '/roles', value: role},
       ]);
     },
     removeRole: (roleId, role) => {
       return service.updateRole(roleId, [
-        {operation: 'remove', path: '/roles', value: role}
+        {operation: 'remove', path: '/roles', value: role},
       ]);
     },
     setRoles: (roleId, roles) => {
       return service.updateRole(roleId, [
-        {operation: 'set', path: '/roles', value: roles}
+        {operation: 'set', path: '/roles', value: roles},
       ]);
     },
   });
