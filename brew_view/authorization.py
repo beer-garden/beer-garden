@@ -48,11 +48,16 @@ Permissions.values = {p.value for p in Permissions}
 
 
 def authenticated(permissions=None):
-    """Decorate methods with this to require various permissions"""
+    """Decorator used to require permissions for access to a resource.
 
-    # Convert to strings for easier comparison
-    permission_strings = set(p.value for p in permissions)
+    Args:
+        permissions: Collection of Permissions enums. Note that if multiple
+            permissions are specified then a principal must have all of them
+            to access the resource.
 
+    Returns:
+        The wrapper function
+    """
     @wrapt.decorator
     def wrapper(wrapped, instance, args, kwargs):
 
@@ -60,34 +65,42 @@ def authenticated(permissions=None):
         # a little confused, so we have to be flexible
         handler = instance or args[0]
 
-        if not has_permission(handler.current_user, permission_strings):
-            # Need to make a distinction between "you need to be authenticated
-            # to do this" and "you've been authenticated and denied"
-            if handler.current_user == brew_view.anonymous_principal:
-                raise HTTPError(status_code=401)
-            else:
-                raise RequestForbidden('Action requires permission %s' %
-                                       permissions[0].value)
+        check_permission(handler.current_user, permissions)
 
         return wrapped(*args, **kwargs)
 
     return wrapper
 
 
-def has_permission(principal, required_permissions):
+def check_permission(principal, required_permissions):
     """Determine if a principal has access to a resource
 
     Args:
         principal: the principal to test
-        required_permissions: set of strings
+        required_permissions: collection of strings
 
     Returns:
-        bool yes or no
+        None
+
+    Raises:
+        HTTPError(status_code=401): The requested resource requires auth
+        RequestForbidden(status_code=403): The current principal does not have
+            permission to access the requested resource
     """
     if Permissions.ALL.value in principal.permissions:
         return True
 
-    return bool(required_permissions.intersection(principal.permissions))
+    # Convert to strings for easier comparison
+    permission_strings = set(p.value for p in required_permissions)
+
+    if not permission_strings.intersection(principal.permissions):
+        # Need to make a distinction between "you need to be authenticated
+        # to do this" and "you've been authenticated and denied"
+        if principal == brew_view.anonymous_principal:
+            raise HTTPError(status_code=401)
+        else:
+            raise RequestForbidden('Action requires permissions %s' %
+                                   permission_strings)
 
 
 def coalesce_permissions(role_list):

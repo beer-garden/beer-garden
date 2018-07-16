@@ -6,8 +6,7 @@ from passlib.apps import custom_app_context
 
 from bg_utils.models import Principal, Role
 from bg_utils.parser import BeerGardenSchemaParser
-from brew_view.authorization import Permissions
-from brew_view.authorization import authenticated
+from brew_view.authorization import authenticated, check_permission, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 
@@ -16,7 +15,6 @@ class UserAPI(BaseHandler):
 
     logger = logging.getLogger(__name__)
 
-    @authenticated(permissions=[Permissions.USER_READ])
     def get(self, user_id):
         """
         ---
@@ -39,6 +37,10 @@ class UserAPI(BaseHandler):
         tags:
           - Users
         """
+        # Need fine-grained access control here
+        if user_id != self.current_user.id:
+            check_permission(self.current_user, [Permissions.USER_READ])
+
         self.write(BeerGardenSchemaParser.serialize_principal(
             Principal.objects.get(id=str(user_id)),
             to_string=False
