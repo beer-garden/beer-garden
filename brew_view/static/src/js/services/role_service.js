@@ -30,6 +30,27 @@ export default function roleService($http) {
     },
   };
 
+  function coalesce_permissions(role_list) {
+
+    if (!role_list) {
+      return [[], []];
+    }
+
+    let aggregate_roles = [];
+    let aggregate_perms = [];
+
+    for (let role of role_list) {
+      aggregate_roles.push(role.name);
+      aggregate_perms = _.union(aggregate_perms, role.permissions);
+
+      let recursed = coalesce_permissions(role.roles);
+      aggregate_roles = _.union(aggregate_roles, recursed[0]);
+      aggregate_perms = _.union(aggregate_perms, recursed[1]);
+    }
+
+    return [aggregate_roles, aggregate_perms];
+  }
+
   _.assign(service, {
     addPermission: (roleId, permission) => {
       return service.updateRole(roleId, [
@@ -61,6 +82,7 @@ export default function roleService($http) {
         {operation: 'set', path: '/roles', value: roles},
       ]);
     },
+    coalesce_permissions: coalesce_permissions,
   });
 
   return service;
