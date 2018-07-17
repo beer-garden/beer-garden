@@ -5,14 +5,19 @@ LoginController.$inject = ['$scope', '$rootScope', '$http', '$state',
 
 /**
  * LoginController - Angular controller for the login page.
+ * @param  {$scope} $scope                 Angular's $scope object.
+ * @param  {$rootScope} $rootScope         Angular's $rootScope object.
+ * @param  {$http} $http                   Angular's $http object.
+ * @param  {$state} $state                 Angular's $state object.
+ * @param  {localStorageService} localStorageService Storage service
+ * @param  {UserService} UserService       Service for User information.
  */
 export default function LoginController($scope, $rootScope, $http, $state,
-    localStorageService, userService) {
-
+    localStorageService, UserService) {
   $scope.doLogin = function(model) {
     $http.post('/api/v1/tokens', {
       username: model.username,
-      password: model.password
+      password: model.password,
     })
     .then(function(response) {
       let token = response.data.token;
@@ -39,6 +44,6 @@ export default function LoginController($scope, $rootScope, $http, $state,
   };
 
   $scope.doCreate = function(user) {
-    userService.createUser(user.username, user.password);
+    UserService.createUser(user.username, user.password);
   };
 };

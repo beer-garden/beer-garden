@@ -6,8 +6,8 @@ from tornado.gen import coroutine
 import brew_view
 from bg_utils.models import Job
 from bg_utils.parser import BeerGardenSchemaParser
+from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
-
 from brewtils.errors import ModelValidationError
 
 
@@ -15,6 +15,7 @@ class JobAPI(BaseHandler):
     logger = logging.getLogger(__name__)
     parser = BeerGardenSchemaParser()
 
+    @authenticated(permissions=[Permissions.JOB_READ])
     def get(self, job_id):
         """
         ---
@@ -41,6 +42,7 @@ class JobAPI(BaseHandler):
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.write(self.parser.serialize_job(document, to_string=False))
 
+    @authenticated(permissions=[Permissions.JOB_UPDATE])
     def patch(self, job_id):
         """
         ---
@@ -132,6 +134,7 @@ class JobAPI(BaseHandler):
         self.write(self.parser.serialize_job(job, to_string=False))
 
     @coroutine
+    @authenticated(permissions=[Permissions.JOB_DELETE])
     def delete(self, job_id):
         """
         ---

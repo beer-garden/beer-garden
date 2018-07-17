@@ -2,11 +2,12 @@
 """module for controller for /jobs endpoint."""
 import logging
 
+from tornado.gen import coroutine
+
 import brew_view
 from bg_utils.models import Job
 from bg_utils.parser import BeerGardenSchemaParser
-from tornado.gen import coroutine
-
+from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brew_view.scheduler.runner import run_job
 from brewtils.schemas import JobSchema
@@ -17,6 +18,7 @@ class JobListAPI(BaseHandler):
     parser = BeerGardenSchemaParser()
     logger = logging.getLogger(__name__)
 
+    @authenticated(permissions=[Permissions.JOB_READ])
     def get(self):
         """
         ---
@@ -46,6 +48,7 @@ class JobListAPI(BaseHandler):
         ))
 
     @coroutine
+    @authenticated(permissions=[Permissions.JOB_CREATE])
     def post(self):
         """
         ---

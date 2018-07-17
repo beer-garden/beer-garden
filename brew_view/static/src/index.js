@@ -60,7 +60,8 @@ import './styles/custom.css';
 // Now load our actual application components
 import {appRun, dtLoadingTemplate} from './js/run.js';
 import routeConfig from './js/configs/routes.js';
-import {interceptorService, interceptorConfig} from './js/configs/http_interceptor.js';
+import {interceptorService, authInterceptorService, interceptorConfig}
+  from './js/configs/http_interceptor.js';
 
 import emptyDirective from './js/directives/empty.js';
 import loadingDirective from './js/directives/loading.js';
@@ -144,6 +145,7 @@ angular.module('bgApp',
   localStorageServiceProvider.setStorageType('sessionStorage');
 }])
 .service('APIInterceptor', interceptorService)
+.service('authInterceptorService', authInterceptorService)
 .animation('.slide', slideAnimation)
 
 .directive('empty', emptyDirective)
