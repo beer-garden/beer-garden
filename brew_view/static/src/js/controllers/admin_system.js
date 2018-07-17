@@ -1,7 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 
-systemAdminController.$inject = [
+adminSystemController.$inject = [
   '$scope',
   '$rootScope',
   '$interval',
@@ -14,7 +14,7 @@ systemAdminController.$inject = [
 ];
 
 /**
- * systemAdminController - System management controller.
+ * adminSystemController - System management controller.
  * @param  {$scope} $scope          Angular's $scope object.
  * @param  {$rootScope} $rootScope  Angular's $rootScope object.
  * @param  {$interval} $interval    Angular's $interval object.
@@ -25,7 +25,7 @@ systemAdminController.$inject = [
  * @param  {Object} UtilityService  Beer-Garden's utility service object.
  * @param  {Object} AdminService    Beer-Garden's admin service object.
  */
-export default function systemAdminController(
+export default function adminSystemController(
     $scope,
     $rootScope,
     $interval,

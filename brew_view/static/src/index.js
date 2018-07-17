@@ -77,6 +77,7 @@ import requestService from './js/services/request_service.js';
 import systemService from './js/services/system_service.js';
 import userService from './js/services/user_service.js';
 import roleService from './js/services/role_service.js';
+import permissionService from './js/services/permission_service.js';
 import utilityService from './js/services/utility_service.js';
 import versionService from './js/services/version_service.js';
 import jobService from './js/services/job_service.js';
@@ -85,7 +86,8 @@ import aboutController from './js/controllers/about.js';
 import loginController from './js/controllers/login.js';
 import adminQueueController from './js/controllers/admin_queue.js';
 import adminSystemController from './js/controllers/admin_system.js';
-import userAdminController from './js/controllers/admin_user.js';
+import adminUserController from './js/controllers/admin_user.js';
+import adminRoleController from './js/controllers/admin_role.js';
 import applicationController from './js/controllers/application.js';
 import commandIndexController from './js/controllers/command_index.js';
 import commandViewController from './js/controllers/command_view.js';
@@ -103,6 +105,7 @@ import './partials/login.html';
 import './partials/admin_queue.html';
 import './partials/admin_system.html';
 import './partials/admin_user.html';
+import './partials/admin_role.html';
 import './partials/command_index.html';
 import './partials/command_view.html';
 import './partials/landing.html';
@@ -161,15 +164,17 @@ angular.module('bgApp',
 .factory('SystemService', systemService)
 .factory('UserService', userService)
 .factory('RoleService', roleService)
+.factory('PermissionService', permissionService)
 .factory('UtilityService', utilityService)
 .factory('VersionService', versionService)
 .factory('JobService', jobService)
 
 .controller('AboutController', aboutController)
 .controller('LoginController', loginController)
-.controller('QueueIndexController', adminQueueController)
-.controller('SystemAdminController', adminSystemController)
-.controller('UserAdminController', userAdminController)
+.controller('AdminQueueController', adminQueueController)
+.controller('AdminSystemController', adminSystemController)
+.controller('AdminUserController', adminUserController)
+.controller('AdminRoleController', adminRoleController)
 .controller('ApplicationController', applicationController)
 .controller('CommandIndexController', commandIndexController)
 .controller('CommandViewController', commandViewController)

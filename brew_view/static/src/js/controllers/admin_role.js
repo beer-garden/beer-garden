@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-adminUserController.$inject = [
+adminRoleController.$inject = [
   '$scope',
   'RoleService',
   'UserService',
@@ -8,13 +8,13 @@ adminUserController.$inject = [
 ];
 
 /**
- * adminUserController - System management controller.
+ * adminRoleController - System management controller.
  * @param  {$scope} $scope            Angular's $scope object.
  * @param  {Object} RoleService       Beer-Garden's role service object.
  * @param  {Object} UserService       Beer-Garden's user service object.
  * @param  {Object} PermissionService Beer-Garden's permission service object.
  */
-export default function adminUserController(
+export default function adminRoleController(
     $scope,
     RoleService,
     UserService,
@@ -22,11 +22,6 @@ export default function adminUserController(
   RoleService.getRoles()
   .then((response) => {
     $scope.roles = response.data;
-  });
-
-  UserService.getUsers()
-  .then((response) => {
-    $scope.users = response.data;
   });
 
   PermissionService.getPermissions()

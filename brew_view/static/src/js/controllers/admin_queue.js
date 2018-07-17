@@ -1,6 +1,6 @@
 import angular from 'angular';
 
-queueIndexController.$inject = [
+adminQueueController.$inject = [
   '$rootScope',
   '$scope',
   '$compile',
@@ -14,7 +14,7 @@ queueIndexController.$inject = [
 ];
 
 /**
- * queueIndexController - Angular controller for queue index page.
+ * adminQueueController - Angular controller for queue index page.
  * @param  {$rootScope} $rootScope   Angular's $rootScope object.
  * @param  {$scope} $scope           Angular's $scope object.
  * @param  {$compile} $compile       Angular's $compile object.
@@ -26,7 +26,7 @@ queueIndexController.$inject = [
  * @param  {Object} DTColumnBuilder  Datatables' column builder object.
  * @param  {Object} QueueService     Beer-Garden's queue service object.
  */
-export default function queueIndexController(
+export default function adminQueueController(
   $rootScope,
   $scope,
   $compile,

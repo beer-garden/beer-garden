@@ -2,13 +2,13 @@
 
 <div class="row">
   <div class="col-md-2">
-    <h3>Users</h3>
-    <div ng-repeat="user in users">
-      <span>{{user.username}}</span>
+    <h3>Roles</h3>
+    <div ng-repeat="role in roles">
+      <span>{{role.name}}</span>
     </div>
   </div>
   <div class="col-md-2">
-    <h3>Roles</h3>
+    <h3>Nested Roles</h3>
     <div ng-repeat="role in roles">
       <input type="checkbox"></input>
       <span>{{role.name}}</span>
@@ -24,15 +24,3 @@
     </div>
   </div>
 </div>
-
-
-
-
-
-
-<!-- <h2>Create a new user</h2>
-<form>
-  <label>Username: <input type="text" ng-model="create.username" /></label><br>
-  <label>Password: <input type="password" ng-model="create.password" /></label><br>
-  <input type="submit" ng-click="doCreate(create)" value="Create">
-</form> -->
