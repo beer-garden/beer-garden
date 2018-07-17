@@ -1,7 +1,11 @@
 Beer Garden
 =================================
 
+Looking for better documentation? Check out [our home page beer-garden.io](https://beer-garden.io)
+
 Beer Garden is a Framework that provides a standardized interface for Command and Control of systems through the use of plugins or services. In general, Beer Garden Services should be stateless (or as stateless as it can be) and should operate in terms of requests, systems and commands.
+
+![Beer Garden Demo](https://github.com/beer-garden/beer-garden/raw/master/demo.gif)
 
 ## Getting Started
 
