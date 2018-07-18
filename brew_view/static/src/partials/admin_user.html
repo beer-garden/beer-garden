@@ -1,8 +1,5 @@
 <h1 class='page-header'>
   <span>User Management</span>
-  <span class="pull-right">
-    <button class="btn btn-success" type="button" ng-click="addUser()">Add User</button>
-  </span>
 </h1>
 
 <div class="row">
@@ -17,26 +14,17 @@
   </div>
 </div>
 <form>
-  <div class="row">
+  <div class="row form-group">
     <div class="col-md-2">
-      <div ng-show="showModify">
-        <select size="3" style="width: 100%;" ng-model="currentUser"
-          ng-options="user.username for user in users track by user.id">
-        </select>
-      </div>
-      <div ng-hide="showModify">
-        <form>
-          <label for="username">Username:</label><input type="text" ng-model="create.username" id="username" /><br>
-          <label for="password">Password:</label><input type="password" ng-model="create.password" id="password" /><br>
-          <label for="verify">Verify:</label><input type="password" ng-model="create.verify" id="verify" /><br>
-        </form>
-      </div>
-      <input bs-switch ng-model="showModify" switch-size="mini" type="checkbox" switch-label-width="50"
-             switch-handle-width="70" switch-on-text="Modify" switch-off-text="Create">
+      <select size="3" style="width: 100%;" ng-model="currentUser"
+        ng-options="user.username for user in users track by user.id">
+      <!-- <select size="3" style="width: 100%;" ng-model="currentUser"
+        ng-options="user as user.username for user in users track by user.id"> -->
+      </select>
     </div>
     <div class="col-md-2">
       <div ng-repeat="roleName in roleNames">
-        <input type="checkbox" ng-model="currentUser.roles[roleName]" id="{{roleName}}" />
+        <input type="checkbox" ng-model="currentUser.roles[roleName]" ng-click="roleChange(roleName)" id="{{roleName}}" />
         <label for="{{roleName}}" ng-style="color('roles.'+roleName)">{{roleName}}</label>
       </div>
     </div>
@@ -44,22 +32,21 @@
       <div ng-repeat="permGroup in permissions" class="row">
         <span ng-repeat="permission in permGroup" class="col-sm-3">
           <input type="checkbox" ng-model="currentUser.permissions[permission]" id="{{permission}}" disabled />
-          <label for="{{permission}}">{{permission}}</label>
+          <label for="{{permission}}" ng-style="color('permissions.'+permission)">{{permission}}</label>
         </span>
       </div>
     </div>
   </div>
-  <div class="row">
-    <input type="submit" ng-click="doUpdate()" value="Update" style="margin-top: 15px;"></input>
+  <div class="row form-group">
+    <div class="col-md-2">
+      <input type="submit" class="btn btn-success w-100" ng-click="doCreate()" value="Add User"></input>
+    </div>
+    <div class="col-md-2">
+      <input type="submit" class="btn btn-danger w-100" ng-click="doDelete()" value="Remove User"
+        confirm="Are you sure you want to remove this user?"></input>
+    </div>
+    <div class="col-md-8">
+      <input type="submit" class="btn btn-primary w-100" ng-click="doUpdate()" value="Update User"></input>
+    </div>
   </div>
 </form>
-
-<hr>
-
-<!-- <h2>Create a new user</h2>
-<form>
-  <label>Username: <input type="text" ng-model="create.username" /></label><br>
-  <label>Password: <input type="password" ng-model="create.password" /></label><br>
-  <label>Verify: <input type="password" ng-model="create.verify" /></label><br>
-  <input type="submit" ng-click="doCreate(create)" value="Create">
-</form> -->
