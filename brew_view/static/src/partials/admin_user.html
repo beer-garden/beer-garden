@@ -16,37 +16,50 @@
 <form>
   <div class="row form-group">
     <div class="col-md-2">
-      <select size="3" style="width: 100%;" ng-model="currentUser"
-        ng-options="user.username for user in users track by user.id">
-      <!-- <select size="3" style="width: 100%;" ng-model="currentUser"
-        ng-options="user as user.username for user in users track by user.id"> -->
+      <select size="3" style="width: 100%;" ng-model="selectedUser"
+        ng-options="user.username for user in users">
+      <!-- <select size="3" style="width: 100%;" ng-model="selectedUser"
+        ng-options="user.username for user in users track by user.id"> -->
       </select>
     </div>
     <div class="col-md-2">
       <div ng-repeat="roleName in roleNames">
-        <input type="checkbox" ng-model="currentUser.roles[roleName]" ng-click="roleChange(roleName)" id="{{roleName}}" />
-        <label for="{{roleName}}" ng-style="color('roles.'+roleName)">{{roleName}}</label>
+        <input type="checkbox" id="{{roleName}}"
+          ng-model="selectedUser.roles[roleName]"
+          ng-click="roleChange(selectedUser)" />
+        <label for="{{roleName}}"
+          ng-style="color(selectedUser.id, 'roles.'+roleName)"
+          >{{roleName}}</label>
       </div>
     </div>
     <div class="col-md-8">
       <div ng-repeat="permGroup in permissions" class="row">
         <span ng-repeat="permission in permGroup" class="col-sm-3">
-          <input type="checkbox" ng-model="currentUser.permissions[permission]" id="{{permission}}" disabled />
-          <label for="{{permission}}" ng-style="color('permissions.'+permission)">{{permission}}</label>
+          <input type="checkbox" id="{{permission}}"
+            ng-model="selectedUser.permissions[permission]" disabled />
+          <label for="{{permission}}"
+            ng-style="color(selectedUser.id, 'permissions.'+permission)"
+            >{{permission}}</label>
         </span>
       </div>
     </div>
   </div>
   <div class="row form-group">
     <div class="col-md-2">
-      <input type="submit" class="btn btn-success w-100" ng-click="doCreate()" value="Add User"></input>
+      <input type="submit" class="btn btn-success w-100"
+        ng-click="doCreate()"
+        value="Add User" />
     </div>
     <div class="col-md-2">
-      <input type="submit" class="btn btn-danger w-100" ng-click="doDelete()" value="Remove User"
-        confirm="Are you sure you want to remove this user?"></input>
+      <input type="submit" class="btn btn-danger w-100"
+        ng-click="doDelete(selectedUser.id)"
+        value="Remove User"
+        confirm="Are you sure you want to remove this user?" />
     </div>
     <div class="col-md-8">
-      <input type="submit" class="btn btn-primary w-100" ng-click="doUpdate()" value="Update User"></input>
+      <input type="submit" class="btn btn-primary w-100"
+        ng-click="doUpdate(selectedUser.id, selectedUser.roles)"
+        value="Update User" />
     </div>
   </div>
 </form>

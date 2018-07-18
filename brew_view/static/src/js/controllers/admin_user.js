@@ -27,11 +27,14 @@ export function adminUserController(
     RoleService,
     UserService,
     PermissionService) {
+  // This holds the raw responses from the backend
+  $scope.raws = {};
+
+  // This is the list that gets changed as the user interacts
   $scope.users = [];
+
+  // This is used for comparing changes
   $scope.serverUsers = [];
-  $scope.rawPermissions = [];
-  $scope.rawRoles = [];
-  $scope.showModify = true;
 
   $scope.doCreate = function() {
     let modalInstance = $uibModal.open({
@@ -42,95 +45,69 @@ export function adminUserController(
     modalInstance.result.then(
       create => {
         if (create.password === create.verify) {
-          UserService.createUser(create.username, create.password);
+          UserService.createUser(create.username, create.password).then(loadUsers);
         }
-        console.log(username);
       },
-      () => {
-        console.log('bye');
-      }
+      // We don't really need to do anything if canceled
+      () => {}
     );
   };
 
-  $scope.doDelete = function() {
-    UserService.deleteUser($scope.currentUser.id);
+  $scope.doDelete = function(userId) {
+    UserService.deleteUser(userId).then(loadUsers);
   };
 
-  $scope.doUpdate = function() {
-    let newRoles = _.transform(
-      $scope.currentUser.roles,
-      (accumulator, value, key, obj) => {
-        if (value) {
-          accumulator.push(key);
-        }
-      },
-      []
-    );
-    // let newRoles = _.filter($scope.rawRoles, value => {
-    //   return $scope.currentUser.roles[value.name];
-    // });
-    UserService.setRoles($scope.currentUser.id, newRoles).then(loadAll);
+  $scope.doUpdate = function(userId, newRoles) {
+    // newRoles is an object with roleName -> boolean mapping
+    // This transform creates an array of 'true' roles
+    let roleList = _.transform(newRoles, (accumulator, value, key, obj) => {
+      if (value) { accumulator.push(key); }
+    }, []);
 
-    // Pull the correct user based on the current selected id
-    // let currServerUser = _.find($scope.serverUsers,
-    //   {'id': $scope.currentUser.id});
-    //
-    //     let userRoleNames = _.map(user.roles, 'name');
-    //
-    //     let userRoles = {};
-    //     for (let roleName of $scope.roleNames) {
-    //       userRoles[roleName] = _.indexOf(userRoleNames, roleName) !== -1;
-    //     }
-    //
-    //     let userPermissionList = RoleService.coalesce_permissions(user.roles)[1];
-    //
-    //     let userPermissions = {};
-    //     for (let permission of $scope.rawPermissions) {
-    //       userPermissions[permission] = _.indexOf(userPermissionList, permission) !== -1;
-    //     }
-    //
-    // currServerUser.roles = userRoles;
-    // currServerUser.permissions = userPermissions;
+    // Send the update and then reload the user definitions
+    UserService.setRoles(userId, roleList).then(loadUsers);
   };
 
-  $scope.color = function(path) {
-    // Pull the correct user based on the current selected id
-    let currServerUser = _.find($scope.serverUsers,
-      {'id': $scope.currentUser.id});
+  $scope.color = function(userId, path) {
+    // Pull the correct users based on the current selected user's id
+    let originalSelectedUser = _.find($scope.serverUsers, {'id': userId});
+    let changedSelectedUser = _.find($scope.users, {'id': userId});
 
-    let serverValue = _.get(currServerUser, path);
-    let newValue = _.get($scope.currentUser, path);
+    // Now pull the original and changed values out
+    let originalValue = _.get(originalSelectedUser, path);
+    let changedValue = _.get(changedSelectedUser, path);
 
-    if (newValue && !serverValue) {
+    if (changedValue && !originalValue) {
       return {'color': 'green'};
     }
-    else if (!newValue && serverValue) {
+    else if (!changedValue && originalValue) {
       return {'color': 'red'};
     }
 
     return {};
   };
 
-  $scope.roleChange = function(roleName) {
-    let newRoles = _.filter($scope.rawRoles, value => {
-      return $scope.currentUser.roles[value.name];
+  $scope.roleChange = function(user) {
+    // Whenever a role changes we need to recalculate permissions
+    let roleList = _.filter($scope.raws.roles, value => {
+      return user.roles[value.name];
     });
-    let newPermissions = RoleService.coalesce_permissions(newRoles)[1];
+    let newPermissions = RoleService.coalesce_permissions(roleList)[1];
 
     let userPermissions = {};
-    for (let permission of $scope.rawPermissions) {
+    for (let permission of $scope.raws.permissions) {
       userPermissions[permission] = _.indexOf(newPermissions, permission) !== -1;
     }
-    $scope.currentUser.permissions = userPermissions;
+
+    user.permissions = userPermissions;
   };
 
   function handleUsersResponse(response) {
-    $scope.rawUsers = response.data;
-    $scope.users = [];
+    $scope.raws.users = response.data;
 
     let thaUsers = [];
 
-    for (let user of $scope.rawUsers) {
+    for (let user of $scope.raws.users) {
       let userRoleNames = _.map(user.roles, 'name');
 
       let userRoles = {};
@@ -141,7 +118,7 @@ export function adminUserController(
       let userPermissionList = RoleService.coalesce_permissions(user.roles)[1];
 
       let userPermissions = {};
-      for (let permission of $scope.rawPermissions) {
+      for (let permission of $scope.raws.permissions) {
         userPermissions[permission] = _.indexOf(userPermissionList, permission) !== -1;
       }
 
@@ -151,12 +128,13 @@ export function adminUserController(
         roles: userRoles,
         permissions: userPermissions,
       });
-
-      $scope.serverUsers = _.cloneDeep(thaUsers);
-      $scope.users = _.cloneDeep(thaUsers);
-      // $scope.users = _.cloneDeep($scope.serverUsers);
-      $scope.currentUser = $scope.users[0];
     }
+
+    $scope.serverUsers = _.cloneDeep(thaUsers);
+    $scope.users = _.cloneDeep(thaUsers);
+
+    // TODO - This would be nice, but issues
+    // $scope.selectedUser = $scope.users[0];
   }
 
   function loadUsers() {
@@ -165,19 +143,21 @@ export function adminUserController(
 
   function loadAll() {
     $q.all({
+      permissions: PermissionService.getPermissions(),
       roles: RoleService.getRoles(),
       users: UserService.getUsers(),
-      permissions: PermissionService.getPermissions(),
     })
     .then(responses => {
-      $scope.rawPermissions = responses.permissions.data;
+      $scope.raws = {
+        permissions: responses.permissions.data,
+        roles: responses.roles.data,
+        users: responses.users.data,
+      };
 
-      $scope.permissions = _.groupBy(responses.permissions.data, value => {
+      $scope.roleNames = _.map($scope.raws.roles, "name");
+      $scope.permissions = _.groupBy($scope.raws.permissions, value => {
         return value.split('-').slice(0, 2).join('-');
       });
-
-      $scope.rawRoles = responses.roles.data;
-      $scope.roleNames = _.map($scope.rawRoles, "name");
 
       handleUsersResponse(responses.users);
     });
