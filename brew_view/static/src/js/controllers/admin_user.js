@@ -36,6 +36,9 @@ export function adminUserController(
   // This is used for comparing changes
   $scope.serverUsers = [];
 
+  // This is the user that's currently under selection
+  $scope.selectedUser = {};
+
   $scope.doCreate = function() {
     let modalInstance = $uibModal.open({
       template: template,
@@ -130,11 +133,19 @@ export function adminUserController(
       });
     }
 
+    // This is super annoying, but I can't find a better way
+    // Save off the current selection ID so we can keep it selected
+    let selectedId = $scope.selectedUser['id'];
+
     $scope.serverUsers = _.cloneDeep(thaUsers);
     $scope.users = _.cloneDeep(thaUsers);
 
-    // TODO - This would be nice, but issues
-    // $scope.selectedUser = $scope.users[0];
+    if (selectedId) {
+      $scope.selectedUser = _.find($scope.users, {'id': selectedId});
+    }
+    else {
+      $scope.selectedUser = $scope.users[0];
+    }
   }
 
   function loadUsers() {
