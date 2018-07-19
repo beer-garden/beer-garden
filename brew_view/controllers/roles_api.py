@@ -129,11 +129,19 @@ class RoleAPI(BaseHandler):
             elif op.path == '/roles':
                 try:
                     if op.operation == 'add':
-                        role.roles.append(Role.objects.get(name=op.value).to_dbref())
+                        new_nested = Role.objects.get(name=op.value)
+                        ensure_no_cycles(role, new_nested)
+                        role.roles.append(new_nested)
                     elif op.operation == 'remove':
-                        role.roles.remove(Role.objects.get(name=op.value).to_dbref())
+                        role.roles.remove(Role.objects.get(name=op.value))
                     elif op.operation == 'set':
-                        role.roles = [Role.objects.get(name=name).to_dbref() for name in op.value]
+                        # Do this one at a time to be super sure about cycles
+                        role.roles = []
+
+                        for role_name in op.value:
+                            new_role = Role.objects.get(name=role_name)
+                            ensure_no_cycles(role, new_role)
+                            role.roles.append(new_role)
                     else:
                         raise ModelValidationError("Unsupported operation '%s'" % op.operation)
                 except DoesNotExist:
@@ -205,7 +213,13 @@ class RolesAPI(BaseHandler):
         nested_roles = []
         for nested_role in role.roles:
             try:
-                nested_roles.append(Role.objects.get(name=nested_role.name).to_dbref())
+                db_role = Role.objects.get(name=nested_role.name)
+
+                # There shouldn't be any way to construct a cycle with a new
+                # role, but check just to be sure
+                ensure_no_cycles(role, db_role)
+
+                nested_roles.append(db_role)
             except DoesNotExist:
                 raise ModelValidationError("Role '%s' does not exist" % nested_role.name)
         role.roles = nested_roles
@@ -214,3 +228,26 @@ class RolesAPI(BaseHandler):
 
         self.set_status(201)
         self.write(BeerGardenSchemaParser.serialize_role(role, to_string=False))
+
+
+def ensure_no_cycles(base_role, new_role):
+    """Make sure there are no nested role cycles
+
+    Do this by looking through new_roles's nested roles and making sure
+    base_role doesn't appear
+
+    Args:
+        base_role: The role that is being modified
+        new_role: The new nested role
+
+    Returns:
+        None
+
+    Raises:
+        ModelValidationError: A cycle was detected
+    """
+    for role in new_role.roles:
+        if role == base_role:
+            raise ModelValidationError('NOT GOOD')
+
+        ensure_no_cycles(base_role, role)
