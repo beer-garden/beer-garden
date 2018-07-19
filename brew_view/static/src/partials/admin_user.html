@@ -18,8 +18,6 @@
     <div class="col-md-2">
       <select size="3" style="width: 100%;" ng-model="selectedUser"
         ng-options="user.username for user in users">
-      <!-- <select size="3" style="width: 100%;" ng-model="selectedUser"
-        ng-options="user.username for user in users track by user.id"> -->
       </select>
     </div>
     <div class="col-md-2">
@@ -56,7 +54,12 @@
         value="Remove User"
         confirm="Are you sure you want to remove this user?" />
     </div>
-    <div class="col-md-8">
+    <div class="col-md-2">
+      <input type="submit" class="btn btn-warning w-100"
+        ng-click="doReset(selectedUser.id)"
+        value="Reset" />
+    </div>
+    <div class="col-md-6">
       <input type="submit" class="btn btn-primary w-100"
         ng-click="doUpdate(selectedUser.id, selectedUser.roles)"
         value="Update User" />

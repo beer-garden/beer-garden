@@ -60,6 +60,14 @@ export function adminUserController(
     UserService.deleteUser(userId).then(loadUsers);
   };
 
+  $scope.doReset = function(userId) {
+    let original = _.find($scope.serverUsers, {'id': userId});
+    let changed = _.find($scope.users, {'id': userId});
+
+    changed.roles = _.cloneDeep(original.roles);
+    changed.permissions = _.cloneDeep(original.permissions);
+  };
+
   $scope.doUpdate = function(userId, newRoles) {
     // newRoles is an object with roleName -> boolean mapping
     // This transform creates an array of 'true' roles

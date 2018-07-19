@@ -55,6 +55,14 @@ export function adminRoleController(
     RoleService.deleteRole(roleId).then(loadAll);
   };
 
+  $scope.doReset = function(roleId) {
+    let original = _.find($scope.serverRoles, {'id': roleId});
+    let changed = _.find($scope.roles, {'id': roleId});
+
+    changed.roles = _.cloneDeep(original.roles);
+    changed.permissions = _.cloneDeep(original.permissions);
+  };
+
   $scope.doUpdate = function(roleId, newRoles, newPermissions) {
     // newRoles, newPermissions are objects with name -> boolean mapping
     // This transforms them into arrays

@@ -46,18 +46,26 @@
     </div>
   </div>
   <div class="row form-group">
-    <div class="col-md-2">
-      <input type="submit" class="btn btn-success w-100"
-        ng-click="doCreate()"
-        value="Add Role" />
+    <div class="row col-md-3">
+      <div class="col-md-6">
+        <input type="submit" class="btn btn-success w-100"
+          ng-click="doCreate()"
+          value="Add Role" />
+      </div>
+      <div class="col-md-6">
+        <input type="submit" class="btn btn-danger w-100"
+          ng-click="doDelete(selectedRole.id)"
+          value="Remove Role"
+          confirm="Are you sure you want to remove this role?" />
+      </div>
     </div>
+    <div class="col-md-3"></div>
     <div class="col-md-2">
-      <input type="submit" class="btn btn-danger w-100"
-        ng-click="doDelete(selectedRole.id)"
-        value="Remove Role"
-        confirm="Are you sure you want to remove this role?" />
+      <input type="submit" class="btn btn-warning w-100"
+        ng-click="doReset(selectedRole.id)"
+        value="Reset" />
     </div>
-    <div class="col-md-8">
+    <div class="col-md-4">
       <input type="submit" class="btn btn-primary w-100"
         ng-click="doUpdate(selectedRole.id, selectedRole.roles, selectedRole.permissions)"
         value="Update Role" />
