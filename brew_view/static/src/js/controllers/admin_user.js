@@ -172,7 +172,7 @@ newUserController.$inject = [
 ];
 
 /**
- * newUserController - System management controller.
+ * newUserController - New User controller.
  * @param  {$scope} $scope                        Angular's $scope object.
  * @param  {$uibModalInstance} $uibModalInstance  Angular UI's $uibModalInstance object.
  */

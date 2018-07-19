@@ -62,7 +62,7 @@ export default function roleService($http) {
         {operation: 'remove', path: '/permissions', value: permission},
       ]);
     },
-    setPermission: (roleId, permissions) => {
+    setPermissions: (roleId, permissions) => {
       return service.updateRole(roleId, [
         {operation: 'set', path: '/permissions', value: permissions},
       ]);
