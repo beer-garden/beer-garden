@@ -91,6 +91,10 @@ export function adminRoleController(
     return {};
   };
 
+  $scope.isDisabled = function(nestedRoleName) {
+    return $scope.selectedRole.name === nestedRoleName;
+  };
+
   $scope.roleChange = function(user) {
     // Whenever a role changes we need to recalculate permissions
     let roleList = _.filter($scope.raws.roles, value => {
