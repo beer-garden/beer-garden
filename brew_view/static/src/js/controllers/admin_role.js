@@ -66,15 +66,32 @@ export function adminRoleController(
     changed.permissions = _.cloneDeep(original.permissions);
   };
 
-  $scope.doUpdate = function(roleId, newRoles, newPermissions) {
-    let roleList = UtilityService.mapToArray(newRoles);
-    let permissionList = UtilityService.mapToArray(newPermissions);
+  $scope.doUpdate = function() {
+    let roleId = $scope.selectedRole.id;
 
-    // Send the update and then reload
-    $q.all([
-      RoleService.setRoles(roleId, roleList),
-      RoleService.setPermissions(roleId, permissionList)
-    ]).then(loadAll);
+    if ($scope.selectedRole.rolesChanged) {
+      let roleList = UtilityService.mapToArray($scope.selectedRole.roles);
+      RoleService.setRoles($scope.selectedRole.id, roleList).then(loadAll);
+    }
+    else if ($scope.selectedRole.permissionsChanged) {
+      let original = _.find($scope.serverRoles, {'id': roleId});
+
+      let originalList = UtilityService.mapToArray(original.permissions);
+      let changedList = UtilityService.mapToArray($scope.selectedRole.permissions);
+
+      let additions = _.difference(changedList, originalList);
+      let removals = _.difference(originalList, changedList);
+
+      let promises = [];
+      if (additions.length) {
+        promises.push(RoleService.addPermissions(roleId, additions));
+      }
+      if (removals.length) {
+        promises.push(RoleService.removePermissions(roleId, removals));
+      }
+
+      $q.all(promises).then(loadAll);
+    }
   };
 
   $scope.color = function(roleId, path) {

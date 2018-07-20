@@ -52,30 +52,30 @@ export default function roleService($http) {
   }
 
   _.assign(service, {
-    addPermission: (roleId, permission) => {
-      return service.updateRole(roleId, [
-        {operation: 'add', path: '/permissions', value: permission},
-      ]);
+    addPermissions: (roleId, permissions) => {
+      return service.updateRole(roleId, _.map(permissions, value => {
+        return {operation: 'add', path: '/permissions', value: value};
+      }));
     },
-    removePermission: (roleId, permission) => {
-      return service.updateRole(roleId, [
-        {operation: 'remove', path: '/permissions', value: permission},
-      ]);
+    removePermissions: (roleId, permissions) => {
+      return service.updateRole(roleId, _.map(permissions, value => {
+        return {operation: 'remove', path: '/permissions', value: value};
+      }));
     },
     setPermissions: (roleId, permissions) => {
       return service.updateRole(roleId, [
         {operation: 'set', path: '/permissions', value: permissions},
       ]);
     },
-    addRole: (roleId, role) => {
-      return service.updateRole(roleId, [
-        {operation: 'add', path: '/roles', value: role},
-      ]);
+    addRoles: (roleId, roles) => {
+      return service.updateRole(roleId, _.map(roles, value => {
+        return {operation: 'add', path: '/roles', value: value};
+      }));
     },
-    removeRole: (roleId, role) => {
-      return service.updateRole(roleId, [
-        {operation: 'remove', path: '/roles', value: role},
-      ]);
+    removeRoles: (roleId, roles) => {
+      return service.updateRole(roleId, _.map(roles, value => {
+        return {operation: 'remove', path: '/roles', value: value};
+      }));
     },
     setRoles: (roleId, roles) => {
       return service.updateRole(roleId, [
