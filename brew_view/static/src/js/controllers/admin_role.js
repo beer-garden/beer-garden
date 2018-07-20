@@ -8,6 +8,7 @@ adminRoleController.$inject = [
   '$uibModal',
   'RoleService',
   'PermissionService',
+  'UtilityService',
 ];
 
 /**
@@ -17,13 +18,15 @@ adminRoleController.$inject = [
  * @param  {$scope} $uibModal         Angular UI's $uibModal object.
  * @param  {Object} RoleService       Beer-Garden's role service object.
  * @param  {Object} PermissionService Beer-Garden's permission service object.
+ * @param  {Object} UtilityService    Beer-Garden's utility service object.
  */
 export function adminRoleController(
     $scope,
     $q,
     $uibModal,
     RoleService,
-    PermissionService) {
+    PermissionService,
+    UtilityService) {
   // This holds the raw responses from the backend
   $scope.raws = {};
 
@@ -64,14 +67,8 @@ export function adminRoleController(
   };
 
   $scope.doUpdate = function(roleId, newRoles, newPermissions) {
-    // newRoles, newPermissions are objects with name -> boolean mapping
-    // This transforms them into arrays
-    let roleList = _.transform(newRoles, (accumulator, value, key, obj) => {
-      if (value) { accumulator.push(key); }
-    }, []);
-    let permissionList = _.transform(newPermissions, (accumulator, value, key, obj) => {
-      if (value) { accumulator.push(key); }
-    }, []);
+    let roleList = UtilityService.mapToArray(newRoles);
+    let permissionList = UtilityService.mapToArray(newPermissions);
 
     // Send the update and then reload
     $q.all([
@@ -103,19 +100,21 @@ export function adminRoleController(
     return $scope.selectedRole.name === nestedRoleName;
   };
 
-  $scope.roleChange = function(user) {
+  $scope.roleChange = function(role) {
+    let primaryPermissions = _.transform(role.permissions, (accumulator, value, key, obj) => {
+      if (value) { accumulator.push(key); }
+    }, []);
+
     // Whenever a role changes we need to recalculate permissions
     let roleList = _.filter($scope.raws.roles, value => {
-      return user.roles[value.name];
+      return role.roles[value.name];
     });
-    let newPermissions = RoleService.coalesce_permissions(roleList)[1];
+    let nestedPermissions = RoleService.coalesce_permissions(roleList)[1];
 
-    let userPermissions = {};
-    for (let permission of $scope.raws.permissions) {
-      userPermissions[permission] = _.indexOf(newPermissions, permission) !== -1;
-    }
+    let newPermissions = _.union(nestedPermissions, primaryPermissions);
+    let permissionMap = UtilityService.arrayToMap(newPermissions, $scope.raws.permissions);
 
-    user.permissions = userPermissions;
+    role.permissions = rolePermissions;
   };
 
   function loadAll() {
@@ -138,26 +137,24 @@ export function adminRoleController(
       let thaRoles = [];
 
       for (let role of $scope.raws.roles) {
-        let nestedRoleNames = _.map(role.roles, 'name');
+        // Need to make a distinction between roles / permissions that are
+        // attached to this role (that will be editable) and those that are
+        // inherited because of nested roles
+        let primaryRoleNames = _.map(role.roles, 'name');
+        let primaryPermissionNames = role.permissions;
 
-        let nestedRoles = {};
-        for (let roleName of $scope.roleNames) {
-          nestedRoles[roleName] = _.indexOf(nestedRoleNames, roleName) !== -1;
-        }
+        let coalesced = RoleService.coalesce_permissions(role.roles);
+        let allRoleNames = coalesced[0];
+        let allPermissionNames = _.union(primaryPermissionNames, coalesced[1]);
 
-        // let nestedPermissionList = RoleService.coalesce_permissions(user.roles)[1];
-        let primaryPermissionList = role.permissions;
-
-        let rolePermissions = {};
-        for (let permission of $scope.raws.permissions) {
-          rolePermissions[permission] = _.indexOf(primaryPermissionList, permission) !== -1;
-        }
+        let roleMap = UtilityService.arrayToMap(allRoleNames, $scope.roleNames);
+        let permissionMap = UtilityService.arrayToMap(allPermissionNames, $scope.raws.permissions);
 
         thaRoles.push({
           id: role.id,
           name: role.name,
-          roles: nestedRoles,
-          permissions: rolePermissions,
+          roles: roleMap,
+          permissions: permissionMap,
         });
       }
 

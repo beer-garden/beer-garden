@@ -9,6 +9,7 @@ adminUserController.$inject = [
   'RoleService',
   'UserService',
   'PermissionService',
+  'UtilityService',
 ];
 
 /**
@@ -19,6 +20,7 @@ adminUserController.$inject = [
  * @param  {Object} RoleService       Beer-Garden's role service object.
  * @param  {Object} UserService       Beer-Garden's user service object.
  * @param  {Object} PermissionService Beer-Garden's permission service object.
+ * @param  {Object} UtilityService    Beer-Garden's utility service object.
  */
 export function adminUserController(
     $scope,
@@ -26,7 +28,8 @@ export function adminUserController(
     $uibModal,
     RoleService,
     UserService,
-    PermissionService) {
+    PermissionService,
+    UtilityService) {
   // This holds the raw responses from the backend
   $scope.raws = {};
 
@@ -69,11 +72,7 @@ export function adminUserController(
   };
 
   $scope.doUpdate = function(userId, newRoles) {
-    // newRoles is an object with roleName -> boolean mapping
-    // This transform creates an array of 'true' roles
-    let roleList = _.transform(newRoles, (accumulator, value, key, obj) => {
-      if (value) { accumulator.push(key); }
-    }, []);
+    let roleList = UtilityService.mapToArray(newRoles);
 
     // Send the update and then reload the user definitions
     UserService.setRoles(userId, roleList).then(loadUsers);
@@ -120,18 +119,10 @@ export function adminUserController(
 
     for (let user of $scope.raws.users) {
       let userRoleNames = _.map(user.roles, 'name');
-
-      let userRoles = {};
-      for (let roleName of $scope.roleNames) {
-        userRoles[roleName] = _.indexOf(userRoleNames, roleName) !== -1;
-      }
+      let userRoles = UtilityService.arrayToMap(userRoleNames, $scope.roleNames);
 
       let userPermissionList = RoleService.coalesce_permissions(user.roles)[1];
-
-      let userPermissions = {};
-      for (let permission of $scope.raws.permissions) {
-        userPermissions[permission] = _.indexOf(userPermissionList, permission) !== -1;
-      }
+      let userPermissions = UtilityService.arrayToMap(userPermissionList, $scope.raws.permissions);
 
       thaUsers.push({
         id: user.id,
