@@ -96,26 +96,63 @@ export function adminRoleController(
     return {};
   };
 
-  $scope.isDisabled = function(nestedRoleName) {
-    return $scope.selectedRole.name === nestedRoleName;
+  $scope.isRoleDisabled = function(nestedRoleName) {
+    return $scope.selectedRole.permissionsChanged ||
+      $scope.selectedRole.name === nestedRoleName;
   };
 
-  $scope.roleChange = function(role) {
-    let primaryPermissions = _.transform(role.permissions, (accumulator, value, key, obj) => {
-      if (value) { accumulator.push(key); }
-    }, []);
+  $scope.isPermissionDisabled = function(nestedRoleName) {
+    return $scope.selectedRole.rolesChanged;
+  };
 
-    // Whenever a role changes we need to recalculate permissions
-    let roleList = _.filter($scope.raws.roles, value => {
-      return role.roles[value.name];
+  $scope.roleChange = function(roleId) {
+    let original = _.find($scope.serverRoles, {'id': roleId});
+    let changed = _.find($scope.roles, {'id': roleId});
+
+    changed.rolesChanged = false;
+    for (let key in changed.roles) {
+      if (changed.roles[key] != original.roles[key]) {
+       changed.rolesChanged = true;
+      }
+    }
+
+    // Ok, so if a role is changing that means that the 'primary' permissions
+    // have not changed. So recalculate the coalesced permissions (the
+    // permissions that are a result of nested roles) and then add the primary
+    // permissions back
+    // First, let's get the list of primary permissions
+    let primaryPermissionNames = UtilityService.mapToArray(changed.primaryPermissions);
+
+    // Then get the list of roles that are checked
+    let nestedRoleNames = UtilityService.mapToArray(changed.roles);
+
+    // Now we need the actual role definitions for those roles...
+    let nestedRoleList = _.filter($scope.raws.roles, (value, key, collection) => {
+      return _.indexOf(nestedRoleNames, value.name) !== -1;
     });
-    let nestedPermissions = RoleService.coalesce_permissions(roleList)[1];
 
-    let newPermissions = _.union(nestedPermissions, primaryPermissions);
-    let permissionMap = UtilityService.arrayToMap(newPermissions, $scope.raws.permissions);
+    // ...so that we can calculate nested permissions...
+    let nestedPermissionNames = RoleService.coalesce_permissions(nestedRoleList)[1];
 
-    role.permissions = rolePermissions;
+    // And then combine them into one big list o' permissions
+    let allPermissionNames = _.union(primaryPermissionNames, nestedPermissionNames);
+
+    // Finally, convert that list back into the map angular wants
+    let permissionMap = UtilityService.arrayToMap(allPermissionNames, $scope.raws.permissions);
+    changed.permissions = permissionMap;
   };
+
+  $scope.permissionChange = function(roleId) {
+    let original = _.find($scope.serverRoles, {'id': roleId});
+    let changed = _.find($scope.roles, {'id': roleId});
+
+    changed.permissionsChanged = false;
+    for (let key in changed.permissions) {
+      if (changed.permissions[key] != original.permissions[key]) {
+       changed.permissionsChanged = true;
+      }
+    }
+  }
 
   function loadAll() {
     $q.all({
@@ -140,6 +177,7 @@ export function adminRoleController(
         // Need to make a distinction between roles / permissions that are
         // attached to this role (that will be editable) and those that are
         // inherited because of nested roles
+
         let primaryRoleNames = _.map(role.roles, 'name');
         let primaryPermissionNames = role.permissions;
 
@@ -150,11 +188,19 @@ export function adminRoleController(
         let roleMap = UtilityService.arrayToMap(allRoleNames, $scope.roleNames);
         let permissionMap = UtilityService.arrayToMap(allPermissionNames, $scope.raws.permissions);
 
+        let primaryRoleMap = UtilityService.arrayToMap(primaryRoleNames, $scope.roleNames);
+        let primaryPermissionMap = UtilityService.arrayToMap(primaryPermissionNames, $scope.raws.permissions);
+
         thaRoles.push({
           id: role.id,
           name: role.name,
           roles: roleMap,
           permissions: permissionMap,
+          primaryRoles: primaryRoleMap,
+          primaryPermissions: primaryPermissionMap,
+
+          rolesChanged: false,
+          permissionsChanged: false,
         });
       }
 
