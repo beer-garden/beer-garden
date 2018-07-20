@@ -118,8 +118,11 @@ export function adminRoleController(
       $scope.selectedRole.name === nestedRoleName;
   };
 
-  $scope.isPermissionDisabled = function(nestedRoleName) {
-    return $scope.selectedRole.rolesChanged;
+  $scope.isPermissionDisabled = function(nestedPermissionName) {
+    // Permissions need to be disabled if a role is changed
+    // or the permission is enabled as a result of a nested role
+    return $scope.selectedRole.rolesChanged ||
+      $scope.selectedRole.nestedPermissions[nestedPermissionName];
   };
 
   $scope.roleChange = function(roleId) {
@@ -199,7 +202,11 @@ export function adminRoleController(
         let primaryPermissionNames = role.permissions;
 
         let coalesced = RoleService.coalesce_permissions(role.roles);
+
         let allRoleNames = coalesced[0];
+        let nestedPermissionNames = coalesced[1];
+
+        let nestedRoleNames = _.difference(allRoleNames, primaryRoleNames);
         let allPermissionNames = _.union(primaryPermissionNames, coalesced[1]);
 
         let roleMap = UtilityService.arrayToMap(allRoleNames, $scope.roleNames);
@@ -208,13 +215,21 @@ export function adminRoleController(
         let primaryRoleMap = UtilityService.arrayToMap(primaryRoleNames, $scope.roleNames);
         let primaryPermissionMap = UtilityService.arrayToMap(primaryPermissionNames, $scope.raws.permissions);
 
+        let nestedRoleMap = UtilityService.arrayToMap(nestedRoleNames, $scope.roleNames);
+        let nestedPermissionMap = UtilityService.arrayToMap(nestedPermissionNames, $scope.raws.permissions);
+
         thaRoles.push({
           id: role.id,
           name: role.name,
+
           roles: roleMap,
           permissions: permissionMap,
+
           primaryRoles: primaryRoleMap,
           primaryPermissions: primaryPermissionMap,
+
+          nestedRoles: nestedRoleMap,
+          nestedPermissions: nestedPermissionMap,
 
           rolesChanged: false,
           permissionsChanged: false,

@@ -39,7 +39,7 @@
           <input type="checkbox" id="{{permission}}"
             ng-model="selectedRole.permissions[permission]"
             ng-click="permissionChange(selectedRole.id)"
-            ng-disabled="isPermissionDisabled(roleName)" />
+            ng-disabled="isPermissionDisabled(permission)" />
           <label for="{{permission}}"
             ng-style="color(selectedRole.id, 'permissions.'+permission)"
             >{{permission}}</label>
