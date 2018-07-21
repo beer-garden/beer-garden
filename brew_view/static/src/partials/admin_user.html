@@ -24,7 +24,8 @@
       <div ng-repeat="roleName in roleNames">
         <input type="checkbox" id="{{roleName}}"
           ng-model="selectedUser.roles[roleName]"
-          ng-click="roleChange(selectedUser)" />
+          ng-click="roleChange(roleName)"
+          ng-disabled="isRoleDisabled(roleName)" />
         <label for="{{roleName}}"
           ng-style="color(selectedUser.id, 'roles.'+roleName)"
           >{{roleName}}</label>

@@ -95,19 +95,45 @@ export function adminUserController(
     return {};
   };
 
-  $scope.roleChange = function(user) {
-    // Whenever a role changes we need to recalculate permissions
-    let roleList = _.filter($scope.raws.roles, value => {
-      return user.roles[value.name];
+  $scope.isRoleDisabled = function(roleName) {
+    // Roles need to be disabled if it's enabled because it's nested
+    return $scope.selectedUser.roles[roleName] &&
+      $scope.selectedUser.nestedRoles[roleName];
+  };
+
+  $scope.roleChange = function(roleName) {
+    let changed = $scope.selectedUser;
+    let original = _.find($scope.serverUsers, {'id': changed.id});
+
+    // Since this is a result of a click, we need to update primary roles
+    changed.primaryRoles[roleName] = changed.roles[roleName];
+
+    // Then get the list of roles that are checked
+    let primaryRoleNames = mapToArray(changed.primaryRoles);
+
+    // Now we need the actual role definitions for those roles...
+    let primaryRoleList = _.filter($scope.raws.roles, (value, key, collection) => {
+      return _.indexOf(primaryRoleNames, value.name) !== -1;
     });
-    let newPermissions = RoleService.coalesce_permissions(roleList)[1];
 
-    let userPermissions = {};
-    for (let permission of $scope.raws.permissions) {
-      userPermissions[permission] = _.indexOf(newPermissions, permission) !== -1;
-    }
+    // ...so that we can calculate nested permissions...
+    let coalesced = RoleService.coalesce_permissions(primaryRoleList);
+    let permissionNames = coalesced[1];
 
-    user.permissions = userPermissions;
+    // Finally, convert that list back into the map angular wants
+    let permissionMap = arrayToMap(permissionNames, $scope.raws.permissions);
+    changed.permissions = permissionMap;
+
+
+    // Now deal with roles too
+    let allRoleNames = coalesced[0];
+    let nestedRoleNames = _.difference(allRoleNames, primaryRoleNames);
+
+    let roleMap = arrayToMap(allRoleNames, $scope.roleNames);
+    changed.roles = roleMap;
+
+    let nestedRoleMap = arrayToMap(nestedRoleNames, $scope.roleNames);
+    changed.nestedRoles = nestedRoleMap;
   };
 
   function handleUsersResponse(response) {
@@ -116,17 +142,31 @@ export function adminUserController(
     let thaUsers = [];
 
     for (let user of $scope.raws.users) {
-      let userRoleNames = _.map(user.roles, 'name');
-      let userRoles = arrayToMap(userRoleNames, $scope.roleNames);
+      let primaryRoleNames = _.map(user.roles, 'name');
 
-      let userPermissionList = RoleService.coalesce_permissions(user.roles)[1];
-      let userPermissions = arrayToMap(userPermissionList, $scope.raws.permissions);
+      let coalesced = RoleService.coalesce_permissions(user.roles);
+
+      let allRoleNames = coalesced[0];
+      let nestedPermissionNames = coalesced[1];
+
+      let nestedRoleNames = _.difference(allRoleNames, primaryRoleNames);
+      let allPermissionNames = coalesced[1];
+
+      let roleMap = arrayToMap(allRoleNames, $scope.roleNames);
+      let permissionMap = arrayToMap(allPermissionNames, $scope.raws.permissions);
+
+      let primaryRoleMap = arrayToMap(primaryRoleNames, $scope.roleNames);
+      let nestedRoleMap = arrayToMap(nestedRoleNames, $scope.roleNames);
 
       thaUsers.push({
         id: user.id,
         username: user.username,
-        roles: userRoles,
-        permissions: userPermissions,
+
+        roles: roleMap,
+        permissions: permissionMap,
+
+        primaryRoles: primaryRoleMap,
+        nestedRoles: nestedRoleMap,
       });
     }
 
