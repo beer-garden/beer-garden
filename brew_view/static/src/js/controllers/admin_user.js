@@ -69,11 +69,25 @@ export function adminUserController(
     changed.permissions = _.cloneDeep(original.permissions);
   };
 
-  $scope.doUpdate = function(userId, newRoles) {
-    let roleList = mapToArray(newRoles);
+  $scope.doUpdate = function() {
+    let userId = $scope.selectedUser.id;
+    let original = _.find($scope.serverUsers, {'id': userId});
+    let promises = [];
 
-    // Send the update and then reload the user definitions
-    UserService.setRoles(userId, roleList).then(loadUsers);
+    let originalList = mapToArray(original.primaryRoles);
+    let changedList = mapToArray($scope.selectedUser.primaryRoles);
+
+    let additions = _.difference(changedList, originalList);
+    let removals = _.difference(originalList, changedList);
+
+    if (additions.length) {
+      promises.push(UserService.addRoles(userId, additions));
+    }
+    if (removals.length) {
+      promises.push(UserService.removeRoles(userId, removals));
+    }
+
+    $q.all(promises).then(loadUsers);
   };
 
   $scope.color = function(userId, path) {
