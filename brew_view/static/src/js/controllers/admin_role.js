@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import {arrayToMap, mapToArray} from '../services/utility_service.js';
 
 import template from '../../templates/new_role.html';
 
@@ -8,7 +9,6 @@ adminRoleController.$inject = [
   '$uibModal',
   'RoleService',
   'PermissionService',
-  'UtilityService',
 ];
 
 /**
@@ -18,15 +18,13 @@ adminRoleController.$inject = [
  * @param  {$scope} $uibModal         Angular UI's $uibModal object.
  * @param  {Object} RoleService       Beer-Garden's role service object.
  * @param  {Object} PermissionService Beer-Garden's permission service object.
- * @param  {Object} UtilityService    Beer-Garden's utility service object.
  */
 export function adminRoleController(
     $scope,
     $q,
     $uibModal,
     RoleService,
-    PermissionService,
-    UtilityService) {
+    PermissionService) {
   // This holds the raw responses from the backend
   $scope.raws = {};
 
@@ -68,30 +66,39 @@ export function adminRoleController(
 
   $scope.doUpdate = function() {
     let roleId = $scope.selectedRole.id;
+    let original = _.find($scope.serverRoles, {'id': roleId});
+    let promises = [];
 
     if ($scope.selectedRole.rolesChanged) {
-      let roleList = UtilityService.mapToArray($scope.selectedRole.roles);
-      RoleService.setRoles($scope.selectedRole.id, roleList).then(loadAll);
-    }
-    else if ($scope.selectedRole.permissionsChanged) {
-      let original = _.find($scope.serverRoles, {'id': roleId});
-
-      let originalList = UtilityService.mapToArray(original.permissions);
-      let changedList = UtilityService.mapToArray($scope.selectedRole.permissions);
+      let originalList = mapToArray(original.roles);
+      let changedList = mapToArray($scope.selectedRole.roles);
 
       let additions = _.difference(changedList, originalList);
       let removals = _.difference(originalList, changedList);
 
-      let promises = [];
+      if (additions.length) {
+        promises.push(RoleService.addRoles(roleId, additions));
+      }
+      if (removals.length) {
+        promises.push(RoleService.removeRoles(roleId, removals));
+      }
+    }
+    else if ($scope.selectedRole.permissionsChanged) {
+      let originalList = mapToArray(original.permissions);
+      let changedList = mapToArray($scope.selectedRole.permissions);
+
+      let additions = _.difference(changedList, originalList);
+      let removals = _.difference(originalList, changedList);
+
       if (additions.length) {
         promises.push(RoleService.addPermissions(roleId, additions));
       }
       if (removals.length) {
         promises.push(RoleService.removePermissions(roleId, removals));
       }
-
-      $q.all(promises).then(loadAll);
     }
+
+    $q.all(promises).then(loadAll);
   };
 
   $scope.color = function(roleId, path) {
@@ -114,7 +121,11 @@ export function adminRoleController(
   };
 
   $scope.isRoleDisabled = function(nestedRoleName) {
+    // Roles need to be disabled if a permission is changed
+    // or the role is enabled as a result of a double-nested role
+    // or the role is the actual role being modified
     return $scope.selectedRole.permissionsChanged ||
+      $scope.selectedRole.nestedRoles[nestedRoleName] ||
       $scope.selectedRole.name === nestedRoleName;
   };
 
@@ -141,10 +152,10 @@ export function adminRoleController(
     // permissions that are a result of nested roles) and then add the primary
     // permissions back
     // First, let's get the list of primary permissions
-    let primaryPermissionNames = UtilityService.mapToArray(changed.primaryPermissions);
+    let primaryPermissionNames = mapToArray(changed.primaryPermissions);
 
     // Then get the list of roles that are checked
-    let nestedRoleNames = UtilityService.mapToArray(changed.roles);
+    let nestedRoleNames = mapToArray(changed.roles);
 
     // Now we need the actual role definitions for those roles...
     let nestedRoleList = _.filter($scope.raws.roles, (value, key, collection) => {
@@ -158,7 +169,7 @@ export function adminRoleController(
     let allPermissionNames = _.union(primaryPermissionNames, nestedPermissionNames);
 
     // Finally, convert that list back into the map angular wants
-    let permissionMap = UtilityService.arrayToMap(allPermissionNames, $scope.raws.permissions);
+    let permissionMap = arrayToMap(allPermissionNames, $scope.raws.permissions);
     changed.permissions = permissionMap;
   };
 
@@ -209,14 +220,14 @@ export function adminRoleController(
         let nestedRoleNames = _.difference(allRoleNames, primaryRoleNames);
         let allPermissionNames = _.union(primaryPermissionNames, coalesced[1]);
 
-        let roleMap = UtilityService.arrayToMap(allRoleNames, $scope.roleNames);
-        let permissionMap = UtilityService.arrayToMap(allPermissionNames, $scope.raws.permissions);
+        let roleMap = arrayToMap(allRoleNames, $scope.roleNames);
+        let permissionMap = arrayToMap(allPermissionNames, $scope.raws.permissions);
 
-        let primaryRoleMap = UtilityService.arrayToMap(primaryRoleNames, $scope.roleNames);
-        let primaryPermissionMap = UtilityService.arrayToMap(primaryPermissionNames, $scope.raws.permissions);
+        let primaryRoleMap = arrayToMap(primaryRoleNames, $scope.roleNames);
+        let primaryPermissionMap = arrayToMap(primaryPermissionNames, $scope.raws.permissions);
 
-        let nestedRoleMap = UtilityService.arrayToMap(nestedRoleNames, $scope.roleNames);
-        let nestedPermissionMap = UtilityService.arrayToMap(nestedPermissionNames, $scope.raws.permissions);
+        let nestedRoleMap = arrayToMap(nestedRoleNames, $scope.roleNames);
+        let nestedPermissionMap = arrayToMap(nestedPermissionNames, $scope.raws.permissions);
 
         thaRoles.push({
           id: role.id,

@@ -1,4 +1,32 @@
 
+/**
+ * mapToArray - Transform two arrays, one of all possible values, one of
+ * actual values, into an object with name -> boolean mapping
+ * @param  {Array} array        Array with value list
+ * @param  {Array} allPossible  Array with all possible values
+ * @return {Object}             Object with name -> boolean mapping
+ */
+export function arrayToMap(array, allPossible) {
+  let map = {};
+  for (let itemName of allPossible) {
+    map[itemName] = _.indexOf(array, itemName) !== -1;
+  }
+  return map;
+};
+
+/**
+ * mapToArray - Transform an object with name -> boolean mapping into an array
+ * of the 'true' value names
+ * @param  {Object} map  The object with name -> boolean mapping
+ * @return {Array}       Array of 'true' value names
+ */
+export function mapToArray(map) {
+  return _.transform(map, (accumulator, value, key, obj) => {
+    if (value) { accumulator.push(key); }
+  }, []);
+};
+
+
 utilityService.$inject = ['$rootScope', '$http'];
 
 /**
@@ -101,33 +129,6 @@ export default function utilityService($rootScope, $http) {
     if (timestamp) {
       return new Date(timestamp).toUTCString();
     }
-  };
-
-  /**
-   * mapToArray - Transform two arrays, one of all possible values, one of
-   * actual values, into an object with name -> boolean mapping
-   * @param  {Array} array        Array with value list
-   * @param  {Array} allPossible  Array with all possible values
-   * @return {Object}             Object with name -> boolean mapping
-   */
-  UtilityService.arrayToMap = function(array, allPossible) {
-    let map = {};
-    for (let itemName of allPossible) {
-      map[itemName] = _.indexOf(array, itemName) !== -1;
-    }
-    return map;
-  };
-
-  /**
-   * mapToArray - Transform an object with name -> boolean mapping into an array
-   * of the 'true' value names
-   * @param  {Object} map  The object with name -> boolean mapping
-   * @return {Array}       Array of 'true' value names
-   */
-  UtilityService.mapToArray = function(map) {
-    return _.transform(map, (accumulator, value, key, obj) => {
-      if (value) { accumulator.push(key); }
-    }, []);
   };
 
   return UtilityService;

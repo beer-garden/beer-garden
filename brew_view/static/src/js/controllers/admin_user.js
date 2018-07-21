@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import {arrayToMap, mapToArray} from '../services/utility_service.js';
 
 import template from '../../templates/new_user.html';
 
@@ -9,7 +10,6 @@ adminUserController.$inject = [
   'RoleService',
   'UserService',
   'PermissionService',
-  'UtilityService',
 ];
 
 /**
@@ -20,7 +20,6 @@ adminUserController.$inject = [
  * @param  {Object} RoleService       Beer-Garden's role service object.
  * @param  {Object} UserService       Beer-Garden's user service object.
  * @param  {Object} PermissionService Beer-Garden's permission service object.
- * @param  {Object} UtilityService    Beer-Garden's utility service object.
  */
 export function adminUserController(
     $scope,
@@ -28,8 +27,7 @@ export function adminUserController(
     $uibModal,
     RoleService,
     UserService,
-    PermissionService,
-    UtilityService) {
+    PermissionService) {
   // This holds the raw responses from the backend
   $scope.raws = {};
 
@@ -72,7 +70,7 @@ export function adminUserController(
   };
 
   $scope.doUpdate = function(userId, newRoles) {
-    let roleList = UtilityService.mapToArray(newRoles);
+    let roleList = mapToArray(newRoles);
 
     // Send the update and then reload the user definitions
     UserService.setRoles(userId, roleList).then(loadUsers);
@@ -119,10 +117,10 @@ export function adminUserController(
 
     for (let user of $scope.raws.users) {
       let userRoleNames = _.map(user.roles, 'name');
-      let userRoles = UtilityService.arrayToMap(userRoleNames, $scope.roleNames);
+      let userRoles = arrayToMap(userRoleNames, $scope.roleNames);
 
       let userPermissionList = RoleService.coalesce_permissions(user.roles)[1];
-      let userPermissions = UtilityService.arrayToMap(userPermissionList, $scope.raws.permissions);
+      let userPermissions = arrayToMap(userPermissionList, $scope.raws.permissions);
 
       thaUsers.push({
         id: user.id,
