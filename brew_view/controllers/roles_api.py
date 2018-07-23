@@ -2,6 +2,7 @@ import logging
 
 from mongoengine.errors import DoesNotExist
 
+import brew_view
 from bg_utils.models import Role
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view.authorization import Permissions
@@ -151,6 +152,9 @@ class RoleAPI(BaseHandler):
                 raise ModelValidationError("Unsupported path '%s'" % op.path)
 
         role.save()
+
+        # Any modification to roles will possibly modify the 'anonymous' user
+        brew_view.anonymous_principal = brew_view._get_anonymous_principal()
 
         self.write(BeerGardenSchemaParser.serialize_role(role, to_string=False))
 
