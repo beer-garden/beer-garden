@@ -20,10 +20,8 @@
   <form>
     <div class="row form-group">
       <div class="col-md-2">
-        <select size="7" style="width: 100%;" ng-model="selectedRole"
+        <select size="{{roles.length}}" style="width: 100%;" ng-model="selectedRole"
           ng-options="role.name for role in roles">
-        <!-- <select size="3" style="width: 100%;" ng-model="selectedUser"
-          ng-options="user.username for user in users track by user.id"> -->
         </select>
       </div>
       <div class="col-md-2">
