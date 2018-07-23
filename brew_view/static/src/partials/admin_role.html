@@ -2,75 +2,80 @@
   <span>Role Management</span>
 </h1>
 
-<div class="row">
-  <div class="col-md-2">
-    <h3 style="text-align: center;">Roles</h3>
-  </div>
-  <div class="col-md-2">
-    <h3 style="text-align: center;">Nested Roles</h3>
-  </div>
-  <div class="col-md-8">
-    <h3 style="text-align: center;">Permissions</h3>
-  </div>
-</div>
-<form>
-  <div class="row form-group">
+<loading      loader="loader"></loading>
+<server-error loader="loader"></server-error>
+
+<div ng-if="loader.loaded && !loader.error" class="container-fluid animate-if">
+  <div class="row">
     <div class="col-md-2">
-      <select size="7" style="width: 100%;" ng-model="selectedRole"
-        ng-options="role.name for role in roles">
-      <!-- <select size="3" style="width: 100%;" ng-model="selectedUser"
-        ng-options="user.username for user in users track by user.id"> -->
-      </select>
+      <h3 style="text-align: center;">Roles</h3>
     </div>
     <div class="col-md-2">
-      <div ng-repeat="roleName in roleNames">
-        <input type="checkbox" id="{{roleName}}"
-          ng-model="selectedRole.roles[roleName]"
-          ng-click="roleChange(roleName)"
-          ng-disabled="isRoleDisabled(roleName)" />
-        <label for="{{roleName}}"
-          ng-style="color(selectedRole.id, 'roles.'+roleName)"
-          >{{roleName}}</label>
-      </div>
+      <h3 style="text-align: center;">Nested Roles</h3>
     </div>
     <div class="col-md-8">
-      <div ng-repeat="permGroup in permissions" class="row">
-        <span ng-repeat="permission in permGroup" class="col-sm-3">
-          <input type="checkbox" id="{{permission}}"
-            ng-model="selectedRole.permissions[permission]"
-            ng-click="permissionChange(selectedRole.id)"
-            ng-disabled="isPermissionDisabled(permission)" />
-          <label for="{{permission}}"
-            ng-style="color(selectedRole.id, 'permissions.'+permission)"
-            >{{permission}}</label>
-        </span>
-      </div>
+      <h3 style="text-align: center;">Permissions</h3>
     </div>
   </div>
-  <div class="row form-group">
-    <div class="row col-md-3">
-      <div class="col-md-6">
-        <input type="submit" class="btn btn-success w-100"
-          ng-click="doCreate()"
-          value="Add Role" />
+  <form>
+    <div class="row form-group">
+      <div class="col-md-2">
+        <select size="7" style="width: 100%;" ng-model="selectedRole"
+          ng-options="role.name for role in roles">
+        <!-- <select size="3" style="width: 100%;" ng-model="selectedUser"
+          ng-options="user.username for user in users track by user.id"> -->
+        </select>
       </div>
-      <div class="col-md-6">
-        <input type="submit" class="btn btn-danger w-100"
-          ng-click="doDelete(selectedRole.id)"
-          value="Remove Role"
-          confirm="Are you sure you want to remove this role?" />
+      <div class="col-md-2">
+        <div ng-repeat="roleName in roleNames">
+          <input type="checkbox" id="{{roleName}}"
+            ng-model="selectedRole.roles[roleName]"
+            ng-click="roleChange(roleName)"
+            ng-disabled="isRoleDisabled(roleName)" />
+          <label for="{{roleName}}"
+            ng-style="color(selectedRole.id, 'roles.'+roleName)"
+            >{{roleName}}</label>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div ng-repeat="permGroup in permissions" class="row">
+          <span ng-repeat="permission in permGroup" class="col-sm-3">
+            <input type="checkbox" id="{{permission}}"
+              ng-model="selectedRole.permissions[permission]"
+              ng-click="permissionChange(selectedRole.id)"
+              ng-disabled="isPermissionDisabled(permission)" />
+            <label for="{{permission}}"
+              ng-style="color(selectedRole.id, 'permissions.'+permission)"
+              >{{permission}}</label>
+          </span>
+        </div>
       </div>
     </div>
-    <div class="col-md-3"></div>
-    <div class="col-md-2">
-      <input type="submit" class="btn btn-warning w-100"
-        ng-click="doReset(selectedRole.id)"
-        value="Reset" />
+    <div class="row form-group">
+      <div class="row col-md-3">
+        <div class="col-md-6">
+          <input type="submit" class="btn btn-success w-100"
+            ng-click="doCreate()"
+            value="Add Role" />
+        </div>
+        <div class="col-md-6">
+          <input type="submit" class="btn btn-danger w-100"
+            ng-click="doDelete(selectedRole.id)"
+            value="Remove Role"
+            confirm="Are you sure you want to remove this role?" />
+        </div>
+      </div>
+      <div class="col-md-3"></div>
+      <div class="col-md-2">
+        <input type="submit" class="btn btn-warning w-100"
+          ng-click="doReset(selectedRole.id)"
+          value="Reset" />
+      </div>
+      <div class="col-md-4">
+        <input type="submit" class="btn btn-primary w-100"
+          ng-click="doUpdate()"
+          value="Update Role" />
+      </div>
     </div>
-    <div class="col-md-4">
-      <input type="submit" class="btn btn-primary w-100"
-        ng-click="doUpdate()"
-        value="Update Role" />
-    </div>
-  </div>
-</form>
+  </form>
+</div>

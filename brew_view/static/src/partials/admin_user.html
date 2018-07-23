@@ -2,68 +2,73 @@
   <span>User Management</span>
 </h1>
 
-<div class="row">
-  <div class="col-md-2">
-    <h3 style="text-align: center;">Users</h3>
-  </div>
-  <div class="col-md-2">
-    <h3 style="text-align: center;">Roles</h3>
-  </div>
-  <div class="col-md-8">
-    <h3 style="text-align: center;">Effective Permissions</h3>
-  </div>
-</div>
-<form>
-  <div class="row form-group">
+<loading      loader="loader"></loading>
+<server-error loader="loader"></server-error>
+
+<div ng-if="loader.loaded && !loader.error" class="container-fluid animate-if">
+  <div class="row">
     <div class="col-md-2">
-      <select size="3" style="width: 100%;" ng-model="selectedUser"
-        ng-options="user.username for user in users">
-      </select>
+      <h3 style="text-align: center;">Users</h3>
     </div>
     <div class="col-md-2">
-      <div ng-repeat="roleName in roleNames">
-        <input type="checkbox" id="{{roleName}}"
-          ng-model="selectedUser.roles[roleName]"
-          ng-click="roleChange(roleName)"
-          ng-disabled="isRoleDisabled(roleName)" />
-        <label for="{{roleName}}"
-          ng-style="color(selectedUser.id, 'roles.'+roleName)"
-          >{{roleName}}</label>
-      </div>
+      <h3 style="text-align: center;">Roles</h3>
     </div>
     <div class="col-md-8">
-      <div ng-repeat="permGroup in permissions" class="row">
-        <span ng-repeat="permission in permGroup" class="col-sm-3">
-          <input type="checkbox" id="{{permission}}"
-            ng-model="selectedUser.permissions[permission]" disabled />
-          <label for="{{permission}}"
-            ng-style="color(selectedUser.id, 'permissions.'+permission)"
-            >{{permission}}</label>
-        </span>
+      <h3 style="text-align: center;">Effective Permissions</h3>
+    </div>
+  </div>
+  <form>
+    <div class="row form-group">
+      <div class="col-md-2">
+        <select size="3" style="width: 100%;" ng-model="selectedUser"
+          ng-options="user.username for user in users">
+        </select>
+      </div>
+      <div class="col-md-2">
+        <div ng-repeat="roleName in roleNames">
+          <input type="checkbox" id="{{roleName}}"
+            ng-model="selectedUser.roles[roleName]"
+            ng-click="roleChange(roleName)"
+            ng-disabled="isRoleDisabled(roleName)" />
+          <label for="{{roleName}}"
+            ng-style="color(selectedUser.id, 'roles.'+roleName)"
+            >{{roleName}}</label>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div ng-repeat="permGroup in permissions" class="row">
+          <span ng-repeat="permission in permGroup" class="col-sm-3">
+            <input type="checkbox" id="{{permission}}"
+              ng-model="selectedUser.permissions[permission]" disabled />
+            <label for="{{permission}}"
+              ng-style="color(selectedUser.id, 'permissions.'+permission)"
+              >{{permission}}</label>
+          </span>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="row form-group">
-    <div class="col-md-2">
-      <input type="submit" class="btn btn-success w-100"
-        ng-click="doCreate()"
-        value="Add User" />
+    <div class="row form-group">
+      <div class="col-md-2">
+        <input type="submit" class="btn btn-success w-100"
+          ng-click="doCreate()"
+          value="Add User" />
+      </div>
+      <div class="col-md-2">
+        <input type="submit" class="btn btn-danger w-100"
+          ng-click="doDelete(selectedUser.id)"
+          value="Remove User"
+          confirm="Are you sure you want to remove this user?" />
+      </div>
+      <div class="col-md-2">
+        <input type="submit" class="btn btn-warning w-100"
+          ng-click="doReset(selectedUser.id)"
+          value="Reset" />
+      </div>
+      <div class="col-md-6">
+        <input type="submit" class="btn btn-primary w-100"
+          ng-click="doUpdate()"
+          value="Update User" />
+      </div>
     </div>
-    <div class="col-md-2">
-      <input type="submit" class="btn btn-danger w-100"
-        ng-click="doDelete(selectedUser.id)"
-        value="Remove User"
-        confirm="Are you sure you want to remove this user?" />
-    </div>
-    <div class="col-md-2">
-      <input type="submit" class="btn btn-warning w-100"
-        ng-click="doReset(selectedUser.id)"
-        value="Reset" />
-    </div>
-    <div class="col-md-6">
-      <input type="submit" class="btn btn-primary w-100"
-        ng-click="doUpdate()"
-        value="Update User" />
-    </div>
-  </div>
-</form>
+  </form>
+</div>

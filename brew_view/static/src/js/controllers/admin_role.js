@@ -37,6 +37,9 @@ export function adminRoleController(
   // This is the role that's currently under selection
   $scope.selectedRole = {};
 
+  // Normal loader
+  $scope.loader = {};
+
   $scope.doCreate = function() {
     let modalInstance = $uibModal.open({
       template: template,
@@ -275,6 +278,12 @@ export function adminRoleController(
       else {
         $scope.selectedRole = $scope.roles[0];
       }
+
+      $scope.loader.loaded = true;
+    }, responses => {
+      $scope.loader.loaded = false;
+      $scope.loader.error = true;
+      $scope.loader.errorMessage = responses.data.message;
     });
   };
 

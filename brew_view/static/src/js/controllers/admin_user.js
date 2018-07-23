@@ -40,6 +40,9 @@ export function adminUserController(
   // This is the user that's currently under selection
   $scope.selectedUser = {};
 
+  // Normal loader
+  $scope.loader = {};
+
   $scope.doCreate = function() {
     let modalInstance = $uibModal.open({
       template: template,
@@ -222,6 +225,12 @@ export function adminUserController(
       });
 
       handleUsersResponse(responses.users);
+
+      $scope.loader.loaded = true;
+    }, responses => {
+      $scope.loader.loaded = false;
+      $scope.loader.error = true;
+      $scope.loader.errorMessage = responses.data.message;
     });
   };
 
