@@ -8,6 +8,7 @@ appRun.$inject = [
   'UtilityService',
   'SystemService',
   'UserService',
+  'TokenService',
 ];
 
 /**
@@ -20,9 +21,18 @@ appRun.$inject = [
  * @param  {UtilityService} UtilityService Service for configuration/icons.
  * @param  {SystemService} SystemService   Service for System information.
  * @param  {UserService} UserService       Service for User information.
+ * @param  {TokenService} TokenService     Service for User information.
  */
-export function appRun($rootScope, $state, $stateParams, $http,
-    localStorageService, UtilityService, SystemService, UserService) {
+export function appRun(
+    $rootScope,
+    $state,
+    $stateParams,
+    $http,
+    localStorageService,
+    UtilityService,
+    SystemService,
+    UserService,
+    TokenService) {
   $rootScope.$state = $state;
   $rootScope.$stateParams = $stateParams;
 
@@ -75,8 +85,14 @@ export function appRun($rootScope, $state, $stateParams, $http,
   };
 
   // Load up some settings
-  $rootScope.userName = localStorageService.get('user_name');
-  $rootScope.changeTheme(localStorageService.get('currentTheme') || 'default');
+  // If we have a token use it to load a user
+  // If not, try to load a persistent theme
+  let token = localStorageService.get('token');
+  if (token) {
+    TokenService.handleToken(token);
+  } else {
+    $rootScope.changeTheme(localStorageService.get('currentTheme') || 'default');
+  }
 
   const isLaterVersion = function(system1, system2) {
     let versionParts1 = system1.version.split('.');

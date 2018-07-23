@@ -78,6 +78,7 @@ import systemService from './js/services/system_service.js';
 import userService from './js/services/user_service.js';
 import roleService from './js/services/role_service.js';
 import permissionService from './js/services/permission_service.js';
+import tokenService from './js/services/token_service.js';
 import utilityService from './js/services/utility_service.js';
 import versionService from './js/services/version_service.js';
 import jobService from './js/services/job_service.js';
@@ -165,6 +166,7 @@ angular.module('bgApp',
 .factory('UserService', userService)
 .factory('RoleService', roleService)
 .factory('PermissionService', permissionService)
+.factory('TokenService', tokenService)
 .factory('UtilityService', utilityService)
 .factory('VersionService', versionService)
 .factory('JobService', jobService)

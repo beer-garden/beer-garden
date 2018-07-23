@@ -1,7 +1,13 @@
-import jwtDecode from 'jwt-decode';
 
-LoginController.$inject = ['$scope', '$rootScope', '$http', '$state',
-  'localStorageService', 'UserService'];
+LoginController.$inject = [
+  '$scope',
+  '$rootScope',
+  '$http',
+  '$state',
+  'localStorageService',
+  'UserService',
+  'TokenService',
+];
 
 /**
  * LoginController - Angular controller for the login page.
@@ -11,35 +17,25 @@ LoginController.$inject = ['$scope', '$rootScope', '$http', '$state',
  * @param  {$state} $state                 Angular's $state object.
  * @param  {localStorageService} localStorageService Storage service
  * @param  {UserService} UserService       Service for User information.
+ * @param  {TokenService} TokenService     Service for Token information.
  */
-export default function LoginController($scope, $rootScope, $http, $state,
-    localStorageService, UserService) {
-  $scope.doLogin = function(model) {
-    $http.post('/api/v1/tokens', {
-      username: model.username,
-      password: model.password,
-    })
-    .then(function(response) {
-      let token = response.data.token;
-
-      // Save the token to session storage in case we need it later
-      localStorageService.set('token', token);
-      localStorageService.set('refresh', response.data.refresh);
-
-      // Use the token for all subsequent requests
-      $http.defaults.headers.common.Authorization = 'Bearer ' + token;
-
-      // Now grab the user id and roles from the token
-      let decoded = jwtDecode(token);
-      let userId = decoded.sub;
-
-      // Finally, grab the user definition from the API
-      $http.get('api/v1/users/' + userId).then(function(response) {
-        $rootScope.user = response.data;
-        $rootScope.changeTheme($rootScope.user.preferences.theme || 'default');
-      });
+export default function LoginController(
+    $scope,
+    $rootScope,
+    $http,
+    $state,
+    localStorageService,
+    UserService,
+    TokenService) {
+  $scope.doLogin = function(user) {
+    TokenService.doLogin(user.username, user.password)
+    .then(response => {
+      TokenService.handleRefresh(response.data.refresh);
+      TokenService.handleToken(response.data.token);
 
       $state.go('landing');
+    }, response => {
+      console.log(response.data);
     });
   };
 

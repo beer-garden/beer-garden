@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import jwtDecode from 'jwt-decode';
 
 userService.$inject = ['$http'];
 
@@ -44,6 +45,13 @@ export default function userService($http) {
       return service.updateUser(userId, [
         {operation: 'set', path: '/roles', value: roles},
       ]);
+    },
+
+    loadUser: (token) => {
+      let decoded = jwtDecode(token);
+      let userId = decoded.sub;
+
+      return service.getUser(userId);
     },
     setTheme: (userId, theme) => {
       return service.updateUser(userId, [
