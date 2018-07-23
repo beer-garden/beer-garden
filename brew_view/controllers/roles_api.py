@@ -63,7 +63,11 @@ class RoleAPI(BaseHandler):
         tags:
           - Roles
         """
-        Role.objects.get(id=str(role_id)).delete()
+        role = Role.objects.get(id=str(role_id))
+        if role.name in ('bg-admin', 'bg-anonymous'):
+            raise ModelValidationError("Unable to remove '%s' role" % role.name)
+
+        role.delete()
 
         self.set_status(204)
 
@@ -257,6 +261,6 @@ def ensure_no_cycles(base_role, new_role):
     """
     for role in new_role.roles:
         if role == base_role:
-            raise ModelValidationError('NOT GOOD')
+            raise ModelValidationError('Cycle Detected!')
 
         ensure_no_cycles(base_role, role)

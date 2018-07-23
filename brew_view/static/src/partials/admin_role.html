@@ -20,7 +20,8 @@
   <form>
     <div class="row form-group">
       <div class="col-md-2">
-        <select size="{{roles.length}}" style="width: 100%;" ng-model="selectedRole"
+        <select class="w-100" size="{{roles.length}}"
+          ng-model="selectedRole"
           ng-options="role.name for role in roles">
         </select>
       </div>
@@ -58,8 +59,10 @@
         </div>
         <div class="col-md-6">
           <input type="submit" class="btn btn-danger w-100"
-            ng-click="doDelete(selectedRole.id)"
             value="Remove Role"
+            ng-click="doDelete(selectedRole.id)"
+            ng-disabled="selectedRole.name == 'bg-admin' ||
+                         selectedRole.name == 'bg-anonymous'"
             confirm="Are you sure you want to remove this role?" />
         </div>
       </div>
