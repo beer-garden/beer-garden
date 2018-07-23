@@ -5,7 +5,7 @@ from mongoengine.errors import DoesNotExist
 import brew_view
 from bg_utils.models import Role
 from bg_utils.parser import BeerGardenSchemaParser
-from brew_view.authorization import Permissions
+from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 
@@ -14,6 +14,7 @@ class RoleAPI(BaseHandler):
 
     logger = logging.getLogger(__name__)
 
+    @authenticated(permissions=[Permissions.USER_READ])
     def get(self, role_id):
         """
         ---
@@ -41,6 +42,7 @@ class RoleAPI(BaseHandler):
             to_string=False
         ))
 
+    @authenticated(permissions=[Permissions.USER_DELETE])
     def delete(self, role_id):
         """
         ---
@@ -65,6 +67,7 @@ class RoleAPI(BaseHandler):
 
         self.set_status(204)
 
+    @authenticated(permissions=[Permissions.USER_UPDATE])
     def patch(self, role_id):
         """
         ---
@@ -161,6 +164,7 @@ class RoleAPI(BaseHandler):
 
 class RolesAPI(BaseHandler):
 
+    @authenticated(permissions=[Permissions.USER_READ])
     def get(self):
         """
         ---
@@ -181,6 +185,7 @@ class RolesAPI(BaseHandler):
         self.write(BeerGardenSchemaParser.serialize_role(Role.objects.all(),
                                                          many=True, to_string=True))
 
+    @authenticated(permissions=[Permissions.USER_CREATE])
     def post(self):
         """
         ---
