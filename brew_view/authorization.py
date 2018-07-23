@@ -8,7 +8,7 @@ from passlib.apps import custom_app_context
 from tornado.web import HTTPError
 
 import brew_view
-from bg_utils.models import Principal
+from bg_utils.models import Principal, Role
 from brewtils.errors import RequestForbidden
 from brewtils.models import (
     Principal as BrewtilsPrincipal,
@@ -105,6 +105,19 @@ def check_permission(principal, required_permissions):
         else:
             raise RequestForbidden('Action requires permissions %s' %
                                    permission_strings)
+
+
+def anonymous_principal():
+    """Load correct anonymous permissions"""
+
+    if brew_view.config.auth.enabled:
+        anon_role = Role.objects.get(name='bg-anonymous')
+        roles, permissions = coalesce_permissions([anon_role])
+    else:
+        roles, permissions = (Role(name='bg-anonymous'), ['bg-all'])
+
+    return BrewtilsPrincipal(username='bg-anonymous', roles=roles,
+                             permissions=permissions)
 
 
 def coalesce_permissions(role_list):

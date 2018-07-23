@@ -16,16 +16,14 @@ from urllib3.util.url import Url
 
 import bg_utils
 import brewtils.rest
+import brew_view.authorization
 from bg_utils.event_publisher import EventPublishers
-from bg_utils.models import Role
 from bg_utils.pika import TransientPikaClient
 from bg_utils.plugin_logging_loader import PluginLoggingLoader
-from brew_view.authorization import coalesce_permissions
 from brew_view.publishers import (MongoPublisher, RequestPublisher,
                                   TornadoPikaPublisher, WebsocketPublisher)
 from brew_view.scheduler.jobstore import BGJobStore
 from brew_view.specification import get_default_logging_config
-from brewtils.models import Principal
 from brewtils.rest.easy_client import EasyClient
 from brewtils.schemas import (
     ParameterSchema, CommandSchema, InstanceSchema, SystemSchema, RequestSchema,
@@ -96,7 +94,7 @@ def _setup_application():
     tornado_app = _setup_tornado_app()
     server_ssl, client_ssl = _setup_ssl_context()
     event_publishers = _setup_event_publishers(client_ssl)
-    anonymous_principal = _get_anonymous_principal()
+    anonymous_principal = brew_view.authorization.anonymous_principal()
     easy_client = EasyClient(**config.web)
     request_scheduler = _setup_scheduler()
 
@@ -327,17 +325,3 @@ def _load_swagger(url_specs, title=None):
     # Finally, add documentation for all our published paths
     for url_spec in url_specs:
         api_spec.add_path(urlspec=url_spec)
-
-
-def _get_anonymous_principal():
-    """Load correct anonymous permissions"""
-
-    if config.auth.enabled:
-        anon_role = Role.objects.get(name='bg-anonymous')
-        roles, permissions = coalesce_permissions([anon_role])
-    else:
-        roles, permissions = (Role(name='bg-anonymous'), ['bg-all'])
-
-    return Principal(username='bg-anonymous',
-                     roles=roles,
-                     permissions=permissions)

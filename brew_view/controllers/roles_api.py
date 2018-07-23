@@ -5,7 +5,7 @@ from mongoengine.errors import DoesNotExist
 import brew_view
 from bg_utils.models import Role
 from bg_utils.parser import BeerGardenSchemaParser
-from brew_view.authorization import authenticated, Permissions
+from brew_view.authorization import anonymous_principal, authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 
@@ -156,8 +156,8 @@ class RoleAPI(BaseHandler):
 
         role.save()
 
-        # Any modification to roles will possibly modify the 'anonymous' user
-        brew_view.anonymous_principal = brew_view._get_anonymous_principal()
+        # Any modification to roles will possibly modify the anonymous user
+        brew_view.anonymous_principal = anonymous_principal()
 
         self.write(BeerGardenSchemaParser.serialize_role(role, to_string=False))
 
