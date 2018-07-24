@@ -47,7 +47,7 @@ pyparsing==2.2.0          # via packaging
 pytest==3.6.1
 python-box==3.2.0         # via yapconf
 pytz==2018.4
-pyyaml==3.12              # via watchdog
+pyyaml==3.13              # via watchdog
 requests-toolbelt==0.8.0  # via twine
 requests==2.19.0          # via brewtils, codecov, requests-toolbelt, sphinx, twine
 ruamel.yaml==0.15.37      # via yapconf
