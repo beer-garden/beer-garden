@@ -332,7 +332,6 @@ def _ensure_special_roles():
                                   'bg-queue-read',
                                   'bg-request-read',
                                   'bg-system-read',
-                                  'bg-user-read',
                               ])
         anonymous_role.save()
 
