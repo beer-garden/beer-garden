@@ -58,3 +58,11 @@
 .child-row {
     background-color: rgb(58, 63, 68);
 }
+
+/* Select boxes need a better color scheme */
+select {
+  background-color: rgb(153, 153, 153);
+}
+select option {
+  color: rgb(255, 255, 255);
+}
