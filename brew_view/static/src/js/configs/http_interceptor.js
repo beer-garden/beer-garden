@@ -18,7 +18,11 @@ export function interceptorService($rootScope, $templateCache) {
   };
 };
 
-authInterceptorService.$inject = ['$q', '$injector', 'localStorageService'];
+authInterceptorService.$inject = [
+  '$q',
+  '$injector',
+  'localStorageService',
+];
 /**
  * authInterceptorService - Used to intercept API requests.
  * @param  {$q} $q                                   $q object
@@ -26,7 +30,10 @@ authInterceptorService.$inject = ['$q', '$injector', 'localStorageService'];
  * @param  {localStorageService} localStorageService Storage service
  * @return {Object}                                  Interceptor object
  */
-export function authInterceptorService($q, $injector, localStorageService) {
+export function authInterceptorService(
+    $q,
+    $injector,
+    localStorageService) {
   return {
     responseError: (rejection) => {
       // This attempts to handle the condition where an access token has expired
@@ -36,20 +43,35 @@ export function authInterceptorService($q, $injector, localStorageService) {
         let refreshToken = localStorageService.get('refresh');
 
         if (refreshToken) {
-          // Thanks for this angular - can't inject this as it causes a cycle
+          // Can't use normal dependency injection as it causes a cycle
           let $http = $injector.get('$http');
+          let tokenService = $injector.get('TokenService');
 
-          return $http.get('/api/v1/tokens/'+refreshToken)
-          .then((response) => {
-            let newToken = response.data.token;
-            localStorageService.set('token', newToken);
+          return tokenService.doRefresh(refreshToken).then(
+            response => {
+              tokenService.handleToken(response.data.token);
 
-            let newHeader = 'Bearer ' + newToken;
-            $http.defaults.headers.common.Authorization = newHeader;
-            rejection.config.headers.Authorization = newHeader;
+              // Set the Authorization header to the updated default
+              rejection.config.headers.Authorization =
+                $http.defaults.headers.common.Authorization;
 
-            return $http(rejection.config);
-          });
+              // And then retry the original request
+              return $http(rejection.config);
+            },
+            response => {
+              // Refresh didn't work. Maybe it was expired / removed
+              // We're going to retry so clear the bad refresh token so we
+              // don't get stuck in an infinite retry cycle
+              let $rootScope = $injector.get('$rootScope');
+              $rootScope.logout();
+
+              // Clear the Authorization header
+              rejection.config.headers.Authorization = undefined;
+
+              // And then retry the original request
+              return $http(rejection.config);
+            }
+          );
         }
       }
 

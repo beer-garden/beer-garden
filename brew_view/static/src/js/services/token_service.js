@@ -27,14 +27,17 @@ export default function tokenService(
         password: password,
       });
     },
+    doRefresh: (refreshToken) => {
+      return $http.get('/api/v1/tokens/' + refreshToken);
+    },
+    clearRefresh: (refreshToken) => {
+      // It's possible the refresh token was already removed from the database
+      // We usually don't care if that's the case, so set a noop error handler
+      return $http.delete('api/v1/tokens/' + refreshToken).catch(() => {});
+    },
     handleToken: (token) => {
       localStorageService.set('token', token);
       $http.defaults.headers.common.Authorization = 'Bearer ' + token;
-
-      UserService.loadUser(token).then(response => {
-        $rootScope.user = response.data;
-        $rootScope.changeTheme($rootScope.user.preferences.theme || 'default');
-      });
     },
     handleRefresh: (refreshToken) => {
       localStorageService.set('refresh', refreshToken);
