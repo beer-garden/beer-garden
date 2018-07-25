@@ -188,9 +188,12 @@ def bearer_auth(request):
 
     token = auth_header.split(' ')[1]
 
-    decoded = jwt.decode(token,
-                         key=brew_view.config.auth.token.secret,
-                         algorithm=brew_view.config.auth.token.algorithm)
+    try:
+        decoded = jwt.decode(token,
+                             key=brew_view.config.auth.token.secret,
+                             algorithm=brew_view.config.auth.token.algorithm)
+    except jwt.exceptions.ExpiredSignatureError:
+        raise HTTPError(status_code=401, log_message='Signature expired')
 
     return BrewtilsPrincipal(
         id=decoded['sub'],
