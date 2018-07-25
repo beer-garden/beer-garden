@@ -312,7 +312,7 @@ def _update_request_model():
 
 
 def _ensure_special_roles():
-    """Two roles need to exist - admin and anonymous"""
+    """These roles should exist"""
     from .models import Role
 
     try:
@@ -322,7 +322,7 @@ def _ensure_special_roles():
         admin_role.save()
 
     try:
-        Role.objects.get(name='bg-anonymous')
+        anonymous_role = Role.objects.get(name='bg-anonymous')
     except DoesNotExist:
         anonymous_role = Role(name='bg-anonymous',
                               permissions=[
@@ -334,6 +334,20 @@ def _ensure_special_roles():
                                   'bg-system-read',
                               ])
         anonymous_role.save()
+
+    try:
+        Role.objects.get(name='bg-plugin')
+    except DoesNotExist:
+        plugin_role = Role(name='bg-plugin',
+                           roles=[anonymous_role],
+                           permissions=[
+                               'bg-instance-update',
+                               'bg-request-create',
+                               'bg-request-update',
+                               'bg-system-create',
+                               'bg-system-update',
+                           ])
+        plugin_role.save()
 
 
 def _ensure_user():
