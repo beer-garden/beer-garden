@@ -190,16 +190,15 @@ export function adminUserController(
     // This is super annoying, but I can't find a better way
     // Save off the current selection ID so we can keep it selected
     let selectedId = $scope.selectedUser['id'];
+    let selectedUser = undefined;
 
     $scope.serverUsers = _.cloneDeep(thaUsers);
     $scope.users = _.cloneDeep(thaUsers);
 
     if (selectedId) {
-      $scope.selectedUser = _.find($scope.users, {'id': selectedId});
+      selectedUser = _.find($scope.users, {'id': selectedId});
     }
-    else {
-      $scope.selectedUser = $scope.users[0];
-    }
+    $scope.selectedUser = selectedUser || $scope.users[0];
   }
 
   function loadUsers() {

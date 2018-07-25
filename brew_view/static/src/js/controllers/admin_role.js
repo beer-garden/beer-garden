@@ -268,16 +268,15 @@ export function adminRoleController(
       // This is super annoying, but I can't find a better way
       // Save off the current selection ID so we can keep it selected
       let selectedId = $scope.selectedRole['id'];
+      let selectedRole = undefined;
 
       $scope.serverRoles = _.cloneDeep(thaRoles);
       $scope.roles = _.cloneDeep(thaRoles);
 
       if (selectedId) {
-        $scope.selectedRole = _.find($scope.roles, {'id': selectedId});
+        selectedRole = _.find($scope.roles, {'id': selectedId});
       }
-      else {
-        $scope.selectedRole = $scope.roles[0];
-      }
+      $scope.selectedRole = selectedRole || $scope.roles[0];
 
       $scope.loader.loaded = true;
     }, responses => {
