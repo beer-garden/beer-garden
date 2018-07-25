@@ -88,6 +88,14 @@ export function appRun(
   let token = localStorageService.get('token');
   if (token) {
     TokenService.handleToken(token);
+    UserService.loadUser(token).then(
+      response => {
+        $rootScope.user = response.data;
+        $rootScope.changeTheme($rootScope.user.preferences.theme || 'default');
+      }, response => {
+        console.log('error loading user');
+      }
+    );
   } else {
     $rootScope.changeTheme(localStorageService.get('currentTheme') || 'default');
   }
