@@ -58,7 +58,7 @@ class TokenAPI(BaseHandler):
         except DoesNotExist:
             pass
 
-        raise HTTPError(status_code=401, log_message='Bad credentials')
+        raise HTTPError(status_code=403, log_message='Bad credentials')
 
     def delete(self, token_id):
         """
@@ -147,7 +147,7 @@ class TokenListAPI(BaseHandler):
             # Still attempt to verify something so the request takes a while
             custom_app_context.verify('', None)
 
-        raise HTTPError(status_code=401, log_message='Bad credentials')
+        raise HTTPError(status_code=403, log_message='Bad credentials')
 
 
 def generate_tokens(principal):
