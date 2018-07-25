@@ -25,10 +25,12 @@ setup(
     package_data={'': ['README.md'], 'bg_utils': ['thrift/*.thrift']},
     install_requires=[
         'brewtils>=2.3.0',
-        'mongoengine',
+        'mongoengine<0.16',
+        'passlib<1.8',
         'pika<1.0',
-        'ruamel.yaml',
-        'thriftpy',
-        'yapconf>=0.3.1',
+        'pytz<2019',
+        'ruamel.yaml<0.16',
+        'thriftpy<0.4',
+        'yapconf>=0.3.3',
     ]
 )

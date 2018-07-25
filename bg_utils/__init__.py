@@ -1,17 +1,23 @@
+import datetime
 import json
 import logging
 import logging.config
 import os
+import sys
 from argparse import ArgumentParser
 from io import open
 
 import six
 import thriftpy
 import yapconf
+from mongoengine.errors import DoesNotExist
+from passlib.apps import custom_app_context
 
 from ._version import __version__ as generated_version
 
 __version__ = generated_version
+
+logger = logging.getLogger(__name__)
 
 bg_thrift = thriftpy.load(os.path.join(os.path.dirname(__file__), 'thrift', 'beergarden.thrift'),
                           include_dirs=[os.path.join(os.path.dirname(__file__), 'thrift')],
@@ -142,10 +148,61 @@ def load_application_config(spec, cli_args):
         else:
             file_type = 'yaml'
         filename = temp_config.configuration.file
-        spec.add_source(filename, file_type, filename=filename)
+        _safe_migrate(spec, filename, file_type)
+        spec.add_source(filename, 'yaml', filename=filename)
         config_sources.insert(1, filename)
 
     return spec.load_config(*config_sources)
+
+
+def _safe_migrate(spec, filename, file_type):
+    tmp_filename = filename + '.tmp'
+    try:
+        spec.migrate_config_file(
+            filename,
+            current_file_type=file_type,
+            output_file_name=tmp_filename,
+            output_file_type='yaml',
+        )
+    except Exception:
+        sys.stderr.write(
+            'Could not successfully migrate application configuration.'
+            'will attempt to load the previous configuration.'
+        )
+        return
+    if _is_new_config(spec, filename, file_type, tmp_filename):
+        _swap_files(filename, tmp_filename)
+    else:
+        os.remove(tmp_filename)
+
+
+def _is_new_config(spec, filename, file_type, tmp_filename):
+    old_config = spec.load_config(('old_config', filename, file_type))
+    new_config = spec.load_config(('new_config', tmp_filename, 'yaml'))
+    return old_config != new_config or file_type != 'yaml'
+
+
+def _swap_files(filename, tmp_filename):
+    try:
+        os.rename(filename, filename + '_' + datetime.datetime.utcnow().isoformat())
+    except Exception:
+        sys.stderr.write(
+            'Could not backup the old configuration. Cowardly refusing to overwrite '
+            'the current configuration with the old configuration. This could cause '
+            'problems later. Please see %s for the new configuration file' % tmp_filename
+        )
+        return
+
+    try:
+        os.rename(tmp_filename, filename)
+    except Exception:
+        sys.stderr.write(
+            'ERROR: Config migration was a success, but we could not move the '
+            'new config into the old config value. Maybe a permission issue? '
+            'Beer Garden cannot start now. To resolve this, you need to rename '
+            '%s to %s' % (tmp_filename, filename)
+        )
+        raise
 
 
 def setup_application_logging(config, default_config):
@@ -244,76 +301,147 @@ def _get_config_values(config):
     return config_file, config_type
 
 
-def _verify_db():
-    """Ensures indexes are correct and attempts to rebuild ALL OF THEM if any aren't
-    (blame MongoEngine). If anything goes wrong with the rebuild kill the app since the database
-    is in a bad state.
+def _update_request_model():
+    from .models import Request
+
+    raw_collection = Request._get_collection()
+    raw_collection.update_many({'parent':  None},
+                               {'$set': {'has_parent': False}})
+    raw_collection.update_many({'parent': {'$not': {'$eq': None}}},
+                               {'$set': {'has_parent': True}},)
+
+
+def _ensure_special_roles():
+    """These roles should exist"""
+    from .models import Role
+
+    try:
+        Role.objects.get(name='bg-admin')
+    except DoesNotExist:
+        admin_role = Role(name='bg-admin', permissions=['bg-all'])
+        admin_role.save()
+
+    try:
+        anonymous_role = Role.objects.get(name='bg-anonymous')
+    except DoesNotExist:
+        anonymous_role = Role(name='bg-anonymous',
+                              permissions=[
+                                  'bg-command-read',
+                                  'bg-instance-read',
+                                  'bg-job-read',
+                                  'bg-queue-read',
+                                  'bg-request-read',
+                                  'bg-system-read',
+                              ])
+        anonymous_role.save()
+
+    try:
+        Role.objects.get(name='bg-plugin')
+    except DoesNotExist:
+        plugin_role = Role(name='bg-plugin',
+                           roles=[anonymous_role],
+                           permissions=[
+                               'bg-instance-update',
+                               'bg-request-create',
+                               'bg-request-update',
+                               'bg-system-create',
+                               'bg-system-update',
+                           ])
+        plugin_role.save()
+
+
+def _ensure_user():
+    """Create an admin user if no other users exist"""
+    from .models import Principal, Role
+
+    if Principal.objects.count() == 0:
+        logger.warning('No users found: creating admin user with '
+                       'username "admin" and password "password"')
+        admin_user = Principal(username='admin',
+                               hash=custom_app_context.hash('password'),
+                               roles=[Role.objects.get(name='bg-admin')])
+        admin_user.save()
+
+
+def _check_indexes(document_class):
+    """Ensures indexes are correct.
+
+    If any indexes are missing they will be created.
+
+    If any of them are 'wrong' (fields have changed, etc.) all the indexes for
+    that collection will be dropped and rebuilt.
+
+    Args:
+        document_class (Document): The document class
+
+    Returns:
+        None
+
+    Raises:
+        mongoengine.OperationFailure: Unhandled mongo error
     """
+    from pymongo.errors import OperationFailure
+    from mongoengine.connection import get_db
+    from .models import Request
 
-    from .models import Request, System
-    logger = logging.getLogger(__name__)
+    try:
+        # Building the indexes could take a while so it'd be nice to give some indication
+        # of what's happening. This would be perfect but can't use it! It's broken for text
+        # indexes!! MongoEngine is awesome!!
+        # index_diff = collection.compare_indexes(); if index_diff['missing'] is not None...
 
-    def update_request_model():
-        raw_collection = Request._get_collection()
-        raw_collection.update_many({'parent':  None},
-                                   {'$set': {'has_parent': False}})
-        raw_collection.update_many({'parent': {'$not': {'$eq': None}}},
-                                   {'$set': {'has_parent': True}},)
+        # Since we can't ACTUALLY compare the index spec with what already exists without
+        # ridiculous effort:
+        spec = document_class.list_indexes()
+        existing = document_class._get_collection().index_information()
 
-    def check_indexes(collection):
-        from pymongo.errors import OperationFailure
-        from mongoengine.connection import get_db
+        if len(spec) > len(existing):
+            logger.warning('Found missing %s indexes, about to build them. '
+                           'This could take a while :)',
+                           document_class.__name__)
+
+        document_class.ensure_indexes()
+
+    except OperationFailure:
+        logger.warning('%s collection indexes verification failed, '
+                       'attempting to rebuild', document_class.__name__)
+
+        # Unfortunately mongoengine sucks. The index that failed is only returned as part of
+        # the error message. I REALLY don't want to parse an error string to find the index to
+        # drop. Also, ME only verifies / creates the indexes in bulk - there's no way to
+        # iterate through the index definitions and try them one by one. Since our indexes
+        # should be small and built in the background anyway we're just gonna redo all of them
 
         try:
-            # Building the indexes could take a while so it'd be nice to give some indication
-            # of what's happening. This would be perfect but can't use it! It's broken for text
-            # indexes!! MongoEngine is awesome!!
-            # index_diff = collection.compare_indexes(); if index_diff['missing'] is not None...
-
-            # Since we can't ACTUALLY compare the index spec with what already exists without
-            # ridiculous effort:
-            spec = collection.list_indexes()
-            existing = collection._get_collection().index_information()
-
-            if len(spec) > len(existing):
-                logger.warning('Found missing %s indexes, about to build them. '
-                               'This could take a while :)',
-                               collection.__name__)
-
-            collection.ensure_indexes()
-
+            db = get_db()
+            db[document_class.__name__.lower()].drop_indexes()
+            logger.warning('Dropped indexes for %s collection', document_class.__name__)
         except OperationFailure:
-            logger.warning('%s collection indexes verification failed, '
-                           'attempting to rebuild', collection.__name__)
+            logger.error('Dropping %s indexes failed, please check the database configuration',
+                         document_class.__name__)
+            raise
 
-            # Unfortunately mongoengine sucks. The index that failed is only returned as part of
-            # the error message. I REALLY don't want to parse an error string to find the index to
-            # drop. Also, ME only verifies / creates the indexes in bulk - there's no way to
-            # iterate through the index definitions and try them one by one. Since our indexes
-            # should be small and built in the background anyway we're just gonna redo all of them
+        # For bg-utils 2.3.3 -> 2.3.4 upgrade
+        # We need to create the `has_parent` field
+        if document_class == Request:
+            logger.warning('Request definition is out of date, updating')
+            _update_request_model()
 
-            try:
-                db = get_db()
-                db[collection.__name__.lower()].drop_indexes()
-                logger.warning('Dropped indexes for %s collection', collection.__name__)
-            except OperationFailure:
-                logger.error('Dropping %s indexes failed, please check the database configuration',
-                             collection.__name__)
-                raise
+        try:
+            document_class.ensure_indexes()
+            logger.warning('%s indexes rebuilt successfully', document_class.__name__)
+        except OperationFailure:
+            logger.error('%s index rebuild failed, please check the database configuration',
+                         document_class.__name__)
+            raise
 
-            # For bg-utils 2.3.3 -> 2.3.4 upgrade
-            # We need to create the `has_parent` field
-            if collection == Request:
-                logger.warning('Request definition is out of date, updating')
-                update_request_model()
 
-            try:
-                collection.ensure_indexes()
-                logger.warning('%s indexes rebuilt successfully', collection.__name__)
-            except OperationFailure:
-                logger.error('%s index rebuild failed, please check the database configuration',
-                             collection.__name__)
-                raise
+def _verify_db():
+    """Do everything necessary to ensure the database is in a 'good' state"""
+    from .models import Job, Request, Role, System
 
-    check_indexes(Request)
-    check_indexes(System)
+    for doc in (Job, Request, Role, System):
+        _check_indexes(doc)
+
+    _ensure_special_roles()
+    _ensure_user()

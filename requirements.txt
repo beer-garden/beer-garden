@@ -4,12 +4,12 @@
 #
 #    pip-compile --output-file requirements.txt requirements.in
 #
+-e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
 alabaster==0.7.10         # via sphinx
 argh==0.26.2              # via watchdog
 atomicwrites==1.1.5       # via pytest
 attrs==18.1.0             # via pytest
 babel==2.6.0              # via sphinx
-brewtils==2.3.6
 certifi==2018.4.16        # via requests
 chardet==3.0.4            # via requests
 codecov==2.0.15
@@ -31,6 +31,7 @@ mock==2.0.0
 mongoengine==0.15.0
 more-itertools==4.2.0     # via pytest
 packaging==17.1           # via sphinx
+passlib==1.7.1
 pathtools==0.1.2          # via watchdog
 pbr==4.0.4                # via mock
 pika==0.12.0
@@ -46,7 +47,7 @@ pyparsing==2.2.0          # via packaging
 pytest==3.6.1
 python-box==3.2.0         # via yapconf
 pytz==2018.4
-pyyaml==3.12              # via watchdog
+pyyaml==3.13              # via watchdog
 requests-toolbelt==0.8.0  # via twine
 requests==2.19.0          # via brewtils, codecov, requests-toolbelt, sphinx, twine
 ruamel.yaml==0.15.37      # via yapconf
@@ -66,4 +67,4 @@ virtualenv==16.0.0        # via tox
 watchdog==0.8.3
 wheel==0.31.1
 wrapt==1.10.11            # via brewtils
-yapconf[yaml]==0.3.2
+yapconf[yaml]==0.3.3

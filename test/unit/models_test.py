@@ -1,10 +1,14 @@
 import unittest
+from datetime import datetime
 
 import mongoengine
+import pytz
 from mock import Mock, PropertyMock, patch
 
-from bg_utils.models import Command, Instance, Parameter, Request, System, Choices
+from bg_utils.models import Command, Instance, Parameter, Request, System, Choices, Job, \
+    DateTrigger, IntervalTrigger, CronTrigger
 from brewtils.errors import BrewmasterModelValidationError
+from brewtils.schemas import RequestTemplateSchema
 
 
 class CommandTest(unittest.TestCase):
@@ -174,6 +178,12 @@ class RequestTest(unittest.TestCase):
         request.save()
         self.assertNotEqual(request.updated_at, 'this_will_be_updated')
 
+    def test_template_check(self):
+        self.assertEqual(
+            len(Request.TEMPLATE_FIELDS),
+            len(RequestTemplateSchema.get_attribute_names())
+        )
+
 
 class SystemTest(unittest.TestCase):
 
@@ -319,3 +329,75 @@ class SystemTest(unittest.TestCase):
         self.assertEqual([new_command], self.default_system.commands)
         self.assertEqual(old_command.id, self.default_system.commands[0].id)
         self.assertEqual(new_command.description, self.default_system.commands[0].description)
+
+
+class JobTest(unittest.TestCase):
+
+    def test_invalid_trigger_type(self):
+        job = Job(trigger_type='INVALID_TRIGGER_TYPE')
+        with self.assertRaises(BrewmasterModelValidationError):
+            job.clean()
+
+    def test_trigger_mismatch(self):
+        date_trigger = DateTrigger()
+        job = Job(trigger_type='cron', trigger=date_trigger)
+        with self.assertRaises(BrewmasterModelValidationError):
+            job.clean()
+
+
+class TriggerTest(unittest.TestCase):
+
+    def setUp(self):
+        self.interval = IntervalTrigger()
+        self.cron = CronTrigger()
+        self.date = DateTrigger(run_date=datetime.now())
+
+    def test_scheduler_kwargs_interval(self):
+        expected = {
+            'weeks': 0,
+            'days': 0,
+            'hours': 0,
+            'minutes': 0,
+            'seconds': 0,
+            'start_date': None,
+            'end_date': None,
+            'timezone': pytz.utc,
+            'jitter': None,
+        }
+        self.assertEqual(self.interval.get_scheduler_kwargs(), expected)
+
+        self.interval.start_date = datetime.now()
+        start_date = self.interval.get_scheduler_kwargs()['start_date']
+        self.assertEqual(start_date.tzinfo, pytz.utc)
+
+    def test_scheduler_kwargs_cron(self):
+        expected = {
+            'year': '*',
+            'month': '1',
+            'day': '1',
+            'week': '*',
+            'day_of_week': '*',
+            'hour': '0',
+            'minute': '0',
+            'second': '0',
+            'start_date': None,
+            'end_date': None,
+            'timezone': pytz.utc,
+            'jitter': None,
+        }
+        self.assertEqual(self.cron.get_scheduler_kwargs(), expected)
+
+        self.cron.start_date = datetime.now()
+        start_date = self.cron.get_scheduler_kwargs()['start_date']
+        self.assertEqual(start_date.tzinfo, pytz.utc)
+
+    def test_scheduler_kwargs_date(self):
+        expected = {
+            'run_date': pytz.utc.localize(self.date.run_date),
+            'timezone': pytz.utc,
+        }
+        self.assertEqual(self.date.get_scheduler_kwargs(), expected)
+
+        self.date.run_date = datetime.now()
+        start_date = self.date.get_scheduler_kwargs()['run_date']
+        self.assertEqual(start_date.tzinfo, pytz.utc)

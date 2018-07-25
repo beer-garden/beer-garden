@@ -1,7 +1,9 @@
 from __future__ import unicode_literals
 
+import json
 import os
 from io import open
+from ruamel import yaml
 
 import pytest
 from box import Box
@@ -10,34 +12,86 @@ from pymongo.errors import ServerSelectionTimeoutError
 from yapconf import YapconfSpec
 
 import bg_utils
-
-
-@pytest.fixture
-def spec():
-    return YapconfSpec({
-        'log_config': {'required': False, 'default': None},
-        'log_file': {'required': False, 'default': None},
-        'log_level': {'required': False, 'default': 'INFO'},
-        'configuration': {
-            'type': 'dict',
-            'bootstrap': True,
-            'items': {
-                'file': {
-                    'required': False,
-                    'bootstrap': True,
-                    'cli_short_name': 'c'
-                },
-                'type': {
-                    'required': False,
-                    'bootstrap': True,
-                    'cli_short_name': 't'
-                },
-            },
-        },
-    })
+import bg_utils.models
 
 
 class TestBgUtils(object):
+
+    @pytest.fixture
+    def spec(self):
+        return YapconfSpec({
+            'log_config': {'required': False, 'default': None},
+            'log_file': {'required': False, 'default': None},
+            'log_level': {
+                'required': False,
+                'default': 'INFO',
+                'previous_names': ['old_log_level'],
+            },
+            'configuration': {
+                'type': 'dict',
+                'bootstrap': True,
+                'items': {
+                    'file': {
+                        'required': False,
+                        'bootstrap': True,
+                        'cli_short_name': 'c'
+                    },
+                    'type': {
+                        'required': False,
+                        'bootstrap': True,
+                        'cli_short_name': 't'
+                    },
+                },
+            },
+        })
+
+    @pytest.fixture
+    def old_config(self):
+        """Represent an un-migrated config with previous default values."""
+        return {
+                'log_config': None,
+                'log_file': None,
+                'old_log_level': 'INFO',
+                'configuration': {
+                    'type': 'json',
+                }
+            }
+
+    @pytest.fixture
+    def new_config(self):
+        """Represents a up-to-date config with all new values."""
+        return {
+            'log_config': None,
+            'log_file': None,
+            'log_level': 'WARN',
+            'configuration': {
+                'type': 'yaml',
+            }
+        }
+
+    @pytest.fixture
+    def model_mocks(self, monkeypatch):
+        request_mock = Mock()
+        system_mock = Mock()
+        role_mock = Mock()
+        job_mock = Mock()
+
+        request_mock.__name__ = 'Request'
+        system_mock.__name__ = 'System'
+        role_mock.__name__ = 'Role'
+        job_mock.__name__ = 'Job'
+
+        monkeypatch.setattr(bg_utils.models, 'Request', request_mock)
+        monkeypatch.setattr(bg_utils.models, 'System', system_mock)
+        monkeypatch.setattr(bg_utils.models, 'Role', role_mock)
+        monkeypatch.setattr(bg_utils.models, 'Job', job_mock)
+
+        return {
+            'request': request_mock,
+            'system': system_mock,
+            'role': role_mock,
+            'job': job_mock,
+        }
 
     def test_parse_args(self, spec):
         cli_args = ["--log-config", "/path/to/log/config",
@@ -210,88 +264,177 @@ class TestBgUtils(object):
 
     @patch('mongoengine.connect', Mock())
     @patch('mongoengine.register_connection', Mock())
-    @patch('bg_utils.models.System')
-    @patch('bg_utils.models.Request')
-    def test_verify_db_same_indexes(self, request_mock, system_mock):
-        request_mock.__name__ = 'Request'
-        request_mock.list_indexes = Mock(return_value=['index1'])
-        request_mock._get_collection = Mock(return_value=Mock(
-            index_information=Mock(return_value=['index1'])))
-        system_mock.__name__ = 'System'
-        system_mock.list_indexes = Mock(return_value=['index1'])
-        system_mock._get_collection = Mock(return_value=Mock(
-            index_information=Mock(return_value=['index1'])))
+    def test_check_indexes_same_indexes(self, model_mocks):
 
-        bg_utils._verify_db()
-        assert system_mock.ensure_indexes.call_count == 1
-        assert request_mock.ensure_indexes.call_count == 1
+        for model_mock in model_mocks.values():
+            model_mock.list_indexes = Mock(return_value=['index1'])
+            model_mock._get_collection = Mock(return_value=Mock(
+                index_information=Mock(return_value=['index1'])))
+
+        [bg_utils._check_indexes(doc) for doc in model_mocks.values()]
+        for model_mock in model_mocks.values():
+            assert model_mock.ensure_indexes.call_count == 1
 
     @patch('mongoengine.connect', Mock())
     @patch('mongoengine.register_connection', Mock())
-    @patch('bg_utils.models.System')
-    @patch('bg_utils.models.Request')
-    def test_verify_db_missing_index(self, request_mock, system_mock):
-        request_mock.__name__ = 'Request'
-        request_mock.list_indexes = Mock(return_value=['index1', 'index2'])
-        request_mock._get_collection = Mock(return_value=Mock(
-            index_information=Mock(return_value=['index1'])))
-        system_mock.__name__ = 'System'
-        system_mock.list_indexes = Mock(return_value=['index1', 'index2'])
-        system_mock._get_collection = Mock(return_value=Mock(
-            index_information=Mock(return_value=['index1'])))
+    def test_check_indexes_missing_index(self, model_mocks):
 
-        bg_utils._verify_db()
-        assert system_mock.ensure_indexes.call_count == 1
-        assert request_mock.ensure_indexes.call_count == 1
+        for model_mock in model_mocks.values():
+            model_mock.list_indexes = Mock(return_value=['index1', 'index2'])
+            model_mock._get_collection = Mock(return_value=Mock(
+                index_information=Mock(return_value=['index1'])))
+
+        [bg_utils._check_indexes(doc) for doc in model_mocks.values()]
+        for model_mock in model_mocks.values():
+            assert model_mock.ensure_indexes.call_count == 1
 
     @patch('mongoengine.connection.get_db')
     @patch('mongoengine.connect', Mock())
     @patch('mongoengine.register_connection', Mock())
-    @patch('bg_utils.models.System')
-    @patch('bg_utils.models.Request')
-    def test_verify_db_successful_index_rebuild(self, request_mock, system_mock, get_db_mock):
+    def test_check_indexes_successful_index_rebuild(self, get_db_mock, model_mocks):
         from pymongo.errors import OperationFailure
-        request_mock.__name__ = 'Request'
-        request_mock.list_indexes = Mock(side_effect=OperationFailure(""))
-        request_mock._get_collection = Mock(return_value=Mock(
-            index_information=Mock(return_value=['index1'])))
-        system_mock.__name__ = 'System'
-        system_mock.list_indexes = Mock(return_value=['index1'])
-        system_mock._get_collection = Mock(return_value=Mock(
-            index_information=Mock(return_value=['index1'])))
+
+        # 'normal' return values
+        for model_mock in model_mocks.values():
+            model_mock.list_indexes = Mock(return_value=['index1'])
+            model_mock._get_collection = Mock(return_value=Mock(
+                index_information=Mock(return_value=['index1'])))
+
+        # ... except for this one
+        model_mocks['request'].list_indexes.side_effect = OperationFailure("")
 
         db_mock = MagicMock()
         get_db_mock.return_value = db_mock
 
-        bg_utils._verify_db()
+        [bg_utils._check_indexes(doc) for doc in model_mocks.values()]
         assert db_mock['request'].drop_indexes.call_count == 1
-        assert request_mock.ensure_indexes.called is True
+        assert model_mocks['request'].ensure_indexes.called is True
 
     @patch('mongoengine.connect', Mock())
     @patch('mongoengine.connection.get_db')
-    @patch('bg_utils.models.System')
-    @patch('bg_utils.models.Request')
-    def test_verify_db_unsuccessful_index_drop(self, request_mock, system_mock, get_db_mock):
+    def test_check_indexes_unsuccessful_index_drop(self, get_db_mock, model_mocks):
         from pymongo.errors import OperationFailure
-        request_mock.__name__ = 'Request'
-        request_mock.ensure_indexes = Mock(side_effect=OperationFailure(""))
-        system_mock.__name__ = 'System'
-        system_mock.ensure_indexes = Mock(side_effect=OperationFailure(""))
+
+        for model_mock in model_mocks.values():
+            model_mock.list_indexes = Mock(return_value=['index1'])
+            model_mock._get_collection = Mock(return_value=Mock(
+                index_information=Mock(return_value=['index1'])))
+
+            model_mock.ensure_indexes.side_effect = OperationFailure("")
+
         get_db_mock.side_effect = OperationFailure("")
 
-        with pytest.raises(OperationFailure):
-            bg_utils._verify_db()
+        for doc in model_mocks.values():
+            with pytest.raises(OperationFailure):
+                bg_utils._check_indexes(doc)
 
     @patch('mongoengine.connect', Mock())
     @patch('mongoengine.connection.get_db', MagicMock())
-    @patch('bg_utils.models.System')
-    @patch('bg_utils.models.Request')
-    def test_verify_db_unsuccessful_index_rebuild(self, request_mock, system_mock):
+    def test_check_indexes_unsuccessful_index_rebuild(self, model_mocks):
         from pymongo.errors import OperationFailure
-        request_mock.__name__ = 'Request'
-        request_mock.ensure_indexes = Mock(side_effect=OperationFailure(""))
-        system_mock.__name__ = 'System'
-        system_mock.ensure_indexes = Mock(side_effect=OperationFailure(""))
 
-        with pytest.raises(OperationFailure):
-            bg_utils._verify_db()
+        for model_mock in model_mocks.values():
+            model_mock.list_indexes = Mock(return_value=['index1'])
+            model_mock._get_collection = Mock(return_value=Mock(
+                index_information=Mock(return_value=['index1'])))
+
+            model_mock.ensure_indexes.side_effect = OperationFailure("")
+
+        for doc in model_mocks.values():
+            with pytest.raises(OperationFailure):
+                bg_utils._check_indexes(doc)
+
+    def test_safe_migrate_migration_failure(self, tmpdir, spec, old_config):
+        old_filename = os.path.join(str(tmpdir), 'config.json')
+        old_config['configuration']['file'] = old_filename
+        cli_args = {'configuration': {'file': old_filename, 'type': 'json'}}
+
+        with open(old_filename, 'w') as f:
+            f.write(json.dumps(old_config, ensure_ascii=False))
+
+        spec.migrate_config_file = Mock(side_effect=ValueError)
+        generated_config = bg_utils.load_application_config(spec, cli_args)
+        assert generated_config.log_level == 'INFO'
+
+        # If the migration fails, we should still have JSON file.
+        with open(old_filename) as f:
+            new_config_value = json.load(f)
+
+        assert len(os.listdir(str(tmpdir))) == 1
+        assert new_config_value == old_config
+
+    def test_safe_migrate_initial_rename_failure(self, tmpdir, spec, old_config):
+        old_filename = os.path.join(str(tmpdir), 'config.json')
+        old_config['configuration']['file'] = old_filename
+        cli_args = {'configuration': {'file': old_filename, 'type': 'json'}}
+
+        with open(old_filename, 'w') as f:
+            f.write(json.dumps(old_config, ensure_ascii=False))
+
+        with patch('os.rename', Mock(side_effect=ValueError)):
+            generated_config = bg_utils.load_application_config(spec, cli_args)
+
+        assert generated_config.log_level == 'INFO'
+
+        # The tmp file should still be there.
+        with open(old_filename + '.tmp') as f:
+            yaml.safe_load(f)
+
+        # However the loaded config, should be a JSON file.
+        with open(old_filename) as f:
+            new_config_value = json.load(f)
+
+        assert len(os.listdir(str(tmpdir))) == 2
+        assert new_config_value == old_config
+
+    def test_safe_migrate_catastrophe(self, tmpdir, spec, old_config):
+        old_filename = os.path.join(str(tmpdir), 'config.json')
+        old_config['configuration']['file'] = old_filename
+        cli_args = {'configuration': {'file': old_filename, 'type': 'json'}}
+
+        with open(old_filename, 'w') as f:
+            f.write(json.dumps(old_config, ensure_ascii=False))
+
+        with patch('os.rename', Mock(side_effect=[Mock(), ValueError])):
+            with pytest.raises(ValueError):
+                bg_utils.load_application_config(spec, cli_args)
+        assert len(os.listdir(str(tmpdir))) == 2
+
+    def test_safe_migrate_success(self, tmpdir, spec, old_config):
+        old_filename = os.path.join(str(tmpdir), 'config.json')
+        old_config['configuration']['file'] = old_filename
+        cli_args = {'configuration': {'file': old_filename, 'type': 'json'}}
+        expected_new_config = {
+            'log_config': None,
+            'log_file': None,
+            'log_level': 'INFO',
+            'configuration': {
+                'file': old_filename,
+                'type': 'json'
+            }
+        }
+
+        with open(old_filename, 'w') as f:
+            f.write(json.dumps(old_config, ensure_ascii=False))
+
+        generated_config = bg_utils.load_application_config(spec, cli_args)
+        assert generated_config.log_level == 'INFO'
+
+        with open(old_filename) as f:
+            new_config_value = yaml.safe_load(f)
+
+        assert new_config_value == expected_new_config
+        assert len(os.listdir(str(tmpdir))) == 2
+
+    def test_safe_migrate_no_change(self, tmpdir, spec, new_config):
+        filename = os.path.join(str(tmpdir), 'config.yaml')
+        new_config['configuration']['file'] = filename
+        cli_args = {'configuration': {'file': filename, 'type': 'yaml'}}
+
+        with open(filename, 'w', encoding='utf-8') as f:
+            yaml.safe_dump(new_config, f, default_flow_style=False, encoding='utf-8')
+
+        generated_config = bg_utils.load_application_config(spec, cli_args)
+        assert generated_config == new_config
+
+        assert len(os.listdir(str(tmpdir))) == 1
