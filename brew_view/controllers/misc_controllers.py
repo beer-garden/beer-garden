@@ -24,6 +24,7 @@ class ConfigHandler(BaseHandler):
             'debug_mode': brew_view.config.debug_mode,
             'url_prefix': brew_view.config.web.url_prefix,
             'metrics_url': brew_view.config.metrics.url,
+            'auth_enabled': brew_view.config.auth.enabled,
         }
         self.write(configs)
 

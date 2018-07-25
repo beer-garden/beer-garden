@@ -6,6 +6,11 @@
 <server-error loader="loader"></server-error>
 
 <div ng-show="loader.loaded && !loader.error" class="container-fluid animate-if">
+  <div ng-show="!config.authEnabled" uib-alert class="alert alert-danger">
+    Warning - Beergarden authorization is currently disabled. Changes made here
+    will be persisted, but permissions will not be enforced. Contact your
+    administator to enable this feature.
+  </div>
   <div class="row">
     <div class="col-md-2">
       <h3 style="text-align: center;">Roles</h3>
