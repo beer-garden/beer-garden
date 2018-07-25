@@ -1,12 +1,5 @@
 
-def specifize(source_dict, fallback_prefix):
-    new_dict = source_dict.copy()
-    for k, v in new_dict['items'].items():
-        v['fallback'] = '.'.join([fallback_prefix, k])
-        if v.get('default'):
-            del v['default']
-
-    return new_dict
+from bg_utils import specifize
 
 
 ssl_base = {
