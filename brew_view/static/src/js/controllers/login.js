@@ -23,21 +23,21 @@ export default function LoginController(
     TokenService) {
   $scope.doLogin = function(user) {
     TokenService.doLogin(user.username, user.password).then(
-      response => {
+      (response) => {
         TokenService.handleRefresh(response.data.refresh);
         TokenService.handleToken(response.data.token);
 
         UserService.loadUser(response.data.token).then(
-          response => {
+          (response) => {
             $rootScope.user = response.data;
             $rootScope.changeTheme($rootScope.user.preferences.theme || 'default');
 
             $state.go('landing');
-          }, response => {
+          }, (response) => {
             console.log('error loading user');
           }
         );
-      }, response => {
+      }, (response) => {
         console.log('bad login');
       }
     );

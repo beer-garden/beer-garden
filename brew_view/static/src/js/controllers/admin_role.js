@@ -47,7 +47,7 @@ export function adminRoleController(
     });
 
     modalInstance.result.then(
-      create => {
+      (create) => {
         RoleService.createRole(create.name).then(loadAll);
       },
       // We don't really need to do anything if canceled
@@ -85,8 +85,7 @@ export function adminRoleController(
       if (removals.length) {
         promises.push(RoleService.removeRoles(roleId, removals));
       }
-    }
-    else if ($scope.selectedRole.permissionsChanged) {
+    } else if ($scope.selectedRole.permissionsChanged) {
       let originalList = mapToArray(original.permissions);
       let changedList = mapToArray($scope.selectedRole.permissions);
 
@@ -115,8 +114,7 @@ export function adminRoleController(
 
     if (changedValue && !originalValue) {
       return {'color': 'green'};
-    }
-    else if (!changedValue && originalValue) {
+    } else if (!changedValue && originalValue) {
       return {'color': 'red'};
     }
 
@@ -169,7 +167,7 @@ export function adminRoleController(
     });
 
     // ...so that we can calculate nested permissions...
-    let coalesced = RoleService.coalesce_permissions(primaryRoleList);
+    let coalesced = RoleService.coalescePermissions(primaryRoleList);
     let nestedPermissionNames = coalesced[1];
 
     // And then combine them into one big list o' permissions
@@ -201,21 +199,24 @@ export function adminRoleController(
        changed.permissionsChanged = true;
       }
     }
-  }
+  };
 
+  /**
+   * loadAll - load everything this controller needs
+   */
   function loadAll() {
     $q.all({
       permissions: PermissionService.getPermissions(),
       roles: RoleService.getRoles(),
     })
-    .then(responses => {
+    .then((responses) => {
       $scope.raws = {
         permissions: responses.permissions.data,
         roles: responses.roles.data,
       };
 
-      $scope.roleNames = _.map($scope.raws.roles, "name");
-      $scope.permissions = _.groupBy($scope.raws.permissions, value => {
+      $scope.roleNames = _.map($scope.raws.roles, 'name');
+      $scope.permissions = _.groupBy($scope.raws.permissions, (value) => {
         return value.split('-').slice(0, 2).join('-');
       });
 
@@ -230,7 +231,7 @@ export function adminRoleController(
         let primaryRoleNames = _.map(role.roles, 'name');
         let primaryPermissionNames = role.permissions;
 
-        let coalesced = RoleService.coalesce_permissions(role.roles);
+        let coalesced = RoleService.coalescePermissions(role.roles);
 
         let allRoleNames = coalesced[0];
         let nestedPermissionNames = coalesced[1];
@@ -279,7 +280,7 @@ export function adminRoleController(
       $scope.selectedRole = selectedRole || $scope.roles[0];
 
       $scope.loader.loaded = true;
-    }, responses => {
+    }, (responses) => {
       $scope.loader.loaded = false;
       $scope.loader.error = true;
       $scope.loader.errorMessage = responses.data.message;
@@ -302,11 +303,11 @@ newRoleController.$inject = [
 export function newRoleController($scope, $uibModalInstance) {
   $scope.create = {};
 
-  $scope.ok = function () {
+  $scope.ok = function() {
     $uibModalInstance.close($scope.create);
   };
 
-  $scope.cancel = function () {
+  $scope.cancel = function() {
     $uibModalInstance.dismiss('cancel');
   };
 };

@@ -30,35 +30,39 @@ export default function roleService($http) {
     },
   };
 
-  function coalesce_permissions(role_list) {
-
-    if (!role_list) {
+  /**
+   * coalescePermissions - Determine effective permissions
+   * @param  {Array} roleList Array of roles
+   * @return {Array}          Array [set(all roles), set(all permissions)]
+   */
+  function coalescePermissions(roleList) {
+    if (!roleList) {
       return [[], []];
     }
 
-    let aggregate_roles = [];
-    let aggregate_perms = [];
+    let aggregateRoles = [];
+    let aggregatePerms = [];
 
-    for (let role of role_list) {
-      aggregate_roles.push(role.name);
-      aggregate_perms = _.union(aggregate_perms, role.permissions);
+    for (let role of roleList) {
+      aggregateRoles.push(role.name);
+      aggregatePerms = _.union(aggregatePerms, role.permissions);
 
-      let recursed = coalesce_permissions(role.roles);
-      aggregate_roles = _.union(aggregate_roles, recursed[0]);
-      aggregate_perms = _.union(aggregate_perms, recursed[1]);
+      let recursed = coalescePermissions(role.roles);
+      aggregateRoles = _.union(aggregateRoles, recursed[0]);
+      aggregatePerms = _.union(aggregatePerms, recursed[1]);
     }
 
-    return [aggregate_roles, aggregate_perms];
+    return [aggregateRoles, aggregatePerms];
   }
 
   _.assign(service, {
     addPermissions: (roleId, permissions) => {
-      return service.updateRole(roleId, _.map(permissions, value => {
+      return service.updateRole(roleId, _.map(permissions, (value) => {
         return {operation: 'add', path: '/permissions', value: value};
       }));
     },
     removePermissions: (roleId, permissions) => {
-      return service.updateRole(roleId, _.map(permissions, value => {
+      return service.updateRole(roleId, _.map(permissions, (value) => {
         return {operation: 'remove', path: '/permissions', value: value};
       }));
     },
@@ -68,12 +72,12 @@ export default function roleService($http) {
       ]);
     },
     addRoles: (roleId, roles) => {
-      return service.updateRole(roleId, _.map(roles, value => {
+      return service.updateRole(roleId, _.map(roles, (value) => {
         return {operation: 'add', path: '/roles', value: value};
       }));
     },
     removeRoles: (roleId, roles) => {
-      return service.updateRole(roleId, _.map(roles, value => {
+      return service.updateRole(roleId, _.map(roles, (value) => {
         return {operation: 'remove', path: '/roles', value: value};
       }));
     },
@@ -82,7 +86,7 @@ export default function roleService($http) {
         {operation: 'set', path: '/roles', value: roles},
       ]);
     },
-    coalesce_permissions: coalesce_permissions,
+    coalescePermissions: coalescePermissions,
   });
 
   return service;

@@ -50,7 +50,7 @@ export function adminUserController(
     });
 
     modalInstance.result.then(
-      create => {
+      (create) => {
         if (create.password === create.verify) {
           UserService.createUser(create.username, create.password).then(loadUsers);
         }
@@ -104,8 +104,7 @@ export function adminUserController(
 
     if (changedValue && !originalValue) {
       return {'color': 'green'};
-    }
-    else if (!changedValue && originalValue) {
+    } else if (!changedValue && originalValue) {
       return {'color': 'red'};
     }
 
@@ -120,7 +119,6 @@ export function adminUserController(
 
   $scope.roleChange = function(roleName) {
     let changed = $scope.selectedUser;
-    let original = _.find($scope.serverUsers, {'id': changed.id});
 
     // Since this is a result of a click, we need to update primary roles
     changed.primaryRoles[roleName] = changed.roles[roleName];
@@ -134,7 +132,7 @@ export function adminUserController(
     });
 
     // ...so that we can calculate nested permissions...
-    let coalesced = RoleService.coalesce_permissions(primaryRoleList);
+    let coalesced = RoleService.coalescePermissions(primaryRoleList);
     let permissionNames = coalesced[1];
 
     // Finally, convert that list back into the map angular wants
@@ -153,6 +151,10 @@ export function adminUserController(
     changed.nestedRoles = nestedRoleMap;
   };
 
+  /**
+   * handleUsersResponse - Parse and translate users response
+   * @param  {Object} response The response
+   */
   function handleUsersResponse(response) {
     $scope.raws.users = response.data;
 
@@ -161,10 +163,9 @@ export function adminUserController(
     for (let user of $scope.raws.users) {
       let primaryRoleNames = _.map(user.roles, 'name');
 
-      let coalesced = RoleService.coalesce_permissions(user.roles);
+      let coalesced = RoleService.coalescePermissions(user.roles);
 
       let allRoleNames = coalesced[0];
-      let nestedPermissionNames = coalesced[1];
 
       let nestedRoleNames = _.difference(allRoleNames, primaryRoleNames);
       let allPermissionNames = coalesced[1];
@@ -201,36 +202,44 @@ export function adminUserController(
     $scope.selectedUser = selectedUser || $scope.users[0];
   }
 
+  /**
+   * loadUsers - load all users
+   */
   function loadUsers() {
     UserService.getUsers().then(handleUsersResponse);
   }
 
+  /**
+   * loadAll - load everything this controller needs
+   */
   function loadAll() {
     $q.all({
       permissions: PermissionService.getPermissions(),
       roles: RoleService.getRoles(),
       users: UserService.getUsers(),
-    })
-    .then(responses => {
-      $scope.raws = {
-        permissions: responses.permissions.data,
-        roles: responses.roles.data,
-        users: responses.users.data,
-      };
+    }).then(
+      (responses) => {
+        $scope.raws = {
+          permissions: responses.permissions.data,
+          roles: responses.roles.data,
+          users: responses.users.data,
+        };
 
-      $scope.roleNames = _.map($scope.raws.roles, "name");
-      $scope.permissions = _.groupBy($scope.raws.permissions, value => {
-        return value.split('-').slice(0, 2).join('-');
-      });
+        $scope.roleNames = _.map($scope.raws.roles, 'name');
+        $scope.permissions = _.groupBy($scope.raws.permissions, (value) => {
+          return value.split('-').slice(0, 2).join('-');
+        });
 
-      handleUsersResponse(responses.users);
+        handleUsersResponse(responses.users);
 
-      $scope.loader.loaded = true;
-    }, responses => {
-      $scope.loader.loaded = false;
-      $scope.loader.error = true;
-      $scope.loader.errorMessage = responses.data.message;
-    });
+        $scope.loader.loaded = true;
+      },
+      (responses) => {
+        $scope.loader.loaded = false;
+        $scope.loader.error = true;
+        $scope.loader.errorMessage = responses.data.message;
+      }
+    );
   };
 
   loadAll();
@@ -249,11 +258,11 @@ newUserController.$inject = [
 export function newUserController($scope, $uibModalInstance) {
   $scope.create = {};
 
-  $scope.ok = function () {
+  $scope.ok = function() {
     $uibModalInstance.close($scope.create);
   };
 
-  $scope.cancel = function () {
+  $scope.cancel = function() {
     $uibModalInstance.dismiss('cancel');
   };
 };

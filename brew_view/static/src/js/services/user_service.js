@@ -32,12 +32,12 @@ export default function userService($http) {
 
   _.assign(service, {
     addRoles: (userId, roles) => {
-      return service.updateUser(userId, _.map(roles, value => {
+      return service.updateUser(userId, _.map(roles, (value) => {
         return {operation: 'add', path: '/roles', value: value};
       }));
     },
     removeRoles: (userId, roles) => {
-      return service.updateUser(userId, _.map(roles, value => {
+      return service.updateUser(userId, _.map(roles, (value) => {
         return {operation: 'remove', path: '/roles', value: value};
       }));
     },

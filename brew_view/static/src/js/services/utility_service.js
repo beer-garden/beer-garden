@@ -22,7 +22,9 @@ export function arrayToMap(array, allPossible) {
  */
 export function mapToArray(map) {
   return _.transform(map, (accumulator, value, key, obj) => {
-    if (value) { accumulator.push(key); }
+    if (value) {
+      accumulator.push(key);
+    }
   }, []);
 };
 

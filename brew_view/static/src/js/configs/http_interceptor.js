@@ -48,7 +48,7 @@ export function authInterceptorService(
           let tokenService = $injector.get('TokenService');
 
           return tokenService.doRefresh(refreshToken).then(
-            response => {
+            (response) => {
               tokenService.handleToken(response.data.token);
 
               // Set the Authorization header to the updated default
@@ -58,7 +58,7 @@ export function authInterceptorService(
               // And then retry the original request
               return $http(rejection.config);
             },
-            response => {
+            (response) => {
               // Refresh didn't work. Maybe it was expired / removed
               // We're going to retry so clear the bad refresh token so we
               // don't get stuck in an infinite retry cycle

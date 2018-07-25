@@ -89,10 +89,10 @@ export function appRun(
   if (token) {
     TokenService.handleToken(token);
     UserService.loadUser(token).then(
-      response => {
+      (response) => {
         $rootScope.user = response.data;
         $rootScope.changeTheme($rootScope.user.preferences.theme || 'default');
-      }, response => {
+      }, (response) => {
         console.log('error loading user');
       }
     );
