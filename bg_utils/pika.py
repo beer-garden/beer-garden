@@ -58,9 +58,18 @@ def get_routing_keys(*args, **kwargs):
 class ClientBase(object):
     """Base class for connection to RabbitMQ."""
 
-    def __init__(self, host='localhost', port=5672, user='guest', password='guest',
-                 connection_attempts=3, heartbeat_interval=3600, virtual_host='/',
-                 exchange='beer_garden', ssl=None):
+    def __init__(
+            self,
+            host='localhost',
+            port=5672,
+            user='guest',
+            password='guest',
+            connection_attempts=3,
+            heartbeat_interval=3600,
+            virtual_host='/',
+            exchange='beer_garden',
+            ssl=None
+    ):
 
         self._host = host
         self._port = port
@@ -72,7 +81,7 @@ class ClientBase(object):
         self._exchange = exchange
 
         ssl = ssl or {}
-        self._ssl_enabled = ssl.get('enabled')
+        self._ssl_enabled = ssl.get('enabled', False)
         self._ssl_options = SSLOptions(
             cafile=ssl.get('ca_cert', None),
             verify_mode=pyssl.CERT_REQUIRED if ssl.get('ca_verify') else pyssl.CERT_NONE,

@@ -1,118 +1,134 @@
-import unittest
-
-from mock import ANY, MagicMock, Mock, PropertyMock, call, patch
-
-from bg_utils.pika import ClientBase, TransientPikaClient, get_routing_key, get_routing_keys
+import pytest
+from mock import ANY, MagicMock, Mock, PropertyMock, call
 from pika.exceptions import AMQPError
 
+import bg_utils.pika
+from bg_utils.pika import ClientBase, TransientPikaClient, get_routing_key, get_routing_keys
 
-class ClientBaseTest(unittest.TestCase):
-
-    def setUp(self):
-        self.host = 'localhost'
-        self.port = 5672
-        self.user = 'user'
-        self.password = 'password'
-
-        self.client = ClientBase(host=self.host, port=self.port, user=self.user,
-                                 password=self.password)
-
-    def test_connection_parameters(self):
-        params = self.client.connection_parameters()
-        self.assertEqual(self.host, params.host)
-        self.assertEqual(self.port, params.port)
-
-        params = self.client.connection_parameters(host='another_host')
-        self.assertEqual('another_host', params.host)
-        self.assertEqual(self.port, params.port)
-
-    def test_connection_url(self):
-        url = self.client.connection_url
-
-        self.assertTrue(url.startswith('amqp://'))
-        self.assertIn(self.user, url)
-        self.assertIn(self.password, url)
-        self.assertIn(self.host, url)
-        self.assertIn(str(self.port), url)
+host = 'localhost'
+port = 5672
+user = 'user'
+password = 'password'
 
 
-class TransientPikaClientTest(unittest.TestCase):
+class TestClientBase(object):
 
-    def setUp(self):
-        self.channel_mock = Mock(name='channel_mock')
-        self.connection_mock = Mock(name='client_mock',
-                                    channel=Mock(return_value=self.channel_mock))
+    @pytest.fixture
+    def client(self):
+        return ClientBase(host=host, port=port, user=user, password=password)
 
-        connection_patcher = patch('bg_utils.pika.BlockingConnection')
-        self.addCleanup(connection_patcher.stop)
-        connection_patch = connection_patcher.start()
-        connection_patch.return_value = MagicMock(
-            __enter__=Mock(return_value=self.connection_mock),
-            __exit__=Mock(return_value=False))
+    def test_connection_parameters(self, client):
+        params = client.connection_parameters()
+        assert params.host == host
+        assert params.port == port
 
-        self.host = 'localhost'
-        self.port = 5672
-        self.user = 'user'
-        self.password = 'password'
+        params = client.connection_parameters(host='another_host')
+        assert params.host == 'another_host'
+        assert params.port == port
 
-        self.client = TransientPikaClient(host=self.host, port=self.port, user=self.user,
-                                          password=self.password)
+    def test_connection_url(self, client):
+        url = client.connection_url
 
-    def test_is_alive(self):
-        self.connection_mock.is_open.return_value = True
-        self.assertTrue(self.client.is_alive())
+        assert url.startswith('amqp://') is True
+        assert user in url
+        assert password in url
+        assert host in url
+        assert str(port) in url
 
-    def test_is_alive_exception(self):
+
+class TestTransientPikaClient(object):
+
+    @pytest.fixture
+    def do_patching(self, monkeypatch, _connection_mock):
+        context_mock = MagicMock(
+            name='context mock',
+            __enter__=Mock(return_value=_connection_mock),
+            __exit__=Mock(return_value=False)
+        )
+
+        monkeypatch.setattr(bg_utils.pika, 'BlockingConnection',
+                            Mock(name='bc mock', return_value=context_mock))
+
+    @pytest.fixture
+    def client(self):
+        return TransientPikaClient(host=host, port=port, user=user,
+                                   password=password)
+
+    @pytest.fixture
+    def _channel_mock(self):
+        return Mock(name='channel_mock')
+
+    @pytest.fixture
+    def _connection_mock(self, _channel_mock):
+        return Mock(name='connection_mock',
+                    channel=Mock(return_value=_channel_mock))
+
+    @pytest.fixture
+    def connection_mock(self, _connection_mock, do_patching):
+        return _connection_mock
+
+    @pytest.fixture
+    def channel_mock(self, _channel_mock, do_patching):
+        return _channel_mock
+
+    def test_is_alive(self, client, connection_mock):
+        connection_mock.is_open = True
+        assert client.is_alive() is True
+
+    def test_is_alive_exception(self, client, connection_mock):
         is_open_mock = PropertyMock(side_effect=AMQPError)
-        type(self.connection_mock).is_open = is_open_mock
-        self.assertFalse(self.client.is_alive())
+        type(connection_mock).is_open = is_open_mock
 
-    def test_declare_exchange(self):
-        self.client.declare_exchange()
-        self.assertTrue(self.channel_mock.exchange_declare.called)
+        assert client.is_alive() is False
 
-    def test_setup_queue(self):
+    def test_declare_exchange(self, client, channel_mock):
+        client.declare_exchange()
+        assert channel_mock.exchange_declare.called is True
+
+    def test_setup_queue(self, client, channel_mock):
         queue_name = Mock()
         queue_args = {'test': 'args'}
         routing_keys = ['key1', 'key2']
-        self.assertEqual({'name': queue_name, 'args': queue_args},
-                         self.client.setup_queue(queue_name, queue_args, routing_keys))
-        self.channel_mock.queue_declare.assert_called_once_with(queue_name, **queue_args)
-        self.channel_mock.queue_bind.assert_has_calls([call(queue_name, ANY,
-                                                            routing_key=routing_keys[0]),
-                                                       call(queue_name, ANY,
-                                                            routing_key=routing_keys[1])])
 
-    @patch('bg_utils.pika.BasicProperties')
-    def test_publish(self, props_mock):
-        props_mock.return_value = {}
+        assert {'name': queue_name, 'args': queue_args} ==\
+            client.setup_queue(queue_name, queue_args, routing_keys)
+        channel_mock.queue_declare.assert_called_once_with(queue_name, **queue_args)
+        channel_mock.queue_bind.assert_has_calls([
+            call(queue_name, ANY, routing_key=routing_keys[0]),
+            call(queue_name, ANY, routing_key=routing_keys[1])
+        ])
+
+    def test_publish(self, monkeypatch, client, channel_mock):
+        props_mock = Mock(return_value={})
         message_mock = Mock(id='id', command='foo', status=None)
 
-        self.client.publish(message_mock, routing_key='queue_name', expiration=10, mandatory=True)
+        monkeypatch.setattr(bg_utils.pika, 'BasicProperties', props_mock)
+
+        client.publish(message_mock, routing_key='queue_name', expiration=10, mandatory=True)
         props_mock.assert_called_with(app_id='beer-garden', content_type='text/plain',
                                       headers=None, expiration=10)
-        self.channel_mock.basic_publish.assert_called_with(exchange='beer_garden',
-                                                           routing_key='queue_name',
-                                                           body=message_mock, properties={},
-                                                           mandatory=True)
+        channel_mock.basic_publish.assert_called_with(exchange='beer_garden',
+                                                      routing_key='queue_name',
+                                                      body=message_mock, properties={},
+                                                      mandatory=True)
 
     def test_get_routing_key(self):
-        self.assertEqual('system.1-0-0.instance', get_routing_key('system', '1.0.0', 'instance'))
+        assert 'system.1-0-0.instance' == get_routing_key('system', '1.0.0', 'instance')
 
     def test_get_routing_keys(self):
-        self.assertEqual(['system', 'system.1-0-0', 'system.1-0-0.instance'],
-                         get_routing_keys('system', '1.0.0', 'instance'))
+        assert ['system', 'system.1-0-0', 'system.1-0-0.instance'] ==\
+                         get_routing_keys('system', '1.0.0', 'instance')
 
     def test_get_routing_keys_admin_basic(self):
-        self.assertEqual(['admin'], get_routing_keys(is_admin=True))
+        assert ['admin'] == get_routing_keys(is_admin=True)
 
     def test_get_routing_keys_admin_no_clone_id(self):
-        self.assertEqual(['admin', 'admin.system', 'admin.system.1-0-0',
-                          'admin.system.1-0-0.instance'],
-                         get_routing_keys('system', '1.0.0', 'instance', is_admin=True))
+        assert ['admin', 'admin.system', 'admin.system.1-0-0',
+                'admin.system.1-0-0.instance'] ==\
+                         get_routing_keys('system', '1.0.0', 'instance', is_admin=True)
 
     def test_get_routing_keys_admin_clone_id(self):
-        self.assertEqual(['admin', 'admin.system', 'admin.system.1-0-0',
-                          'admin.system.1-0-0.instance',
-                          'admin.system.1-0-0.instance.clone'],
-                         get_routing_keys('system', '1.0.0', 'instance', 'clone', is_admin=True))
+        expected = ['admin', 'admin.system', 'admin.system.1-0-0',
+                    'admin.system.1-0-0.instance',
+                    'admin.system.1-0-0.instance.clone']
+        assert expected == get_routing_keys('system', '1.0.0', 'instance', 'clone', is_admin=True)
