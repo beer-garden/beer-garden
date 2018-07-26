@@ -1,8 +1,3 @@
-ssl:
-  enabled: false
-  ca_verify: true
-  ca_cert: /etc/pki/tls/result/ca_certificate.pem
-  client_cert: /etc/pki/tls/result/client_combined.pem
 amq:
   connection_attempts: 3
   connections:
@@ -11,13 +6,19 @@ amq:
       user: guest
       password: guest
       ssl:
-        enabled: true
+        ca_cert: null
+        ca_verify: false
+        client_cert: null
+        enabled: false
     message:
       port: 5671
       user: guest
       password: guest
       ssl:
-        enabled: true
+        ca_cert: null
+        ca_verify: false
+        client_cert: null
+        enabled: false
   exchange: beer_garden
   heartbeat_interval: 3600
   host: localhost
@@ -50,6 +51,11 @@ plugin:
   status_heartbeat: 5
   status_timeout: 30
 publish_hostname: localhost
+ssl:
+  ca_cert: null
+  ca_verify: false
+  client_cert: null
+  enabled: false
 thrift:
   host: 0.0.0.0
   max_workers: 25
