@@ -124,7 +124,7 @@ class ClientBase(object):
         return ConnectionParameters(host=kwargs.get('host', self._host),
                                     port=kwargs.get('port', self._port),
                                     ssl=kwargs.get('ssl_enabled', self._ssl_enabled),
-                                    ssl_options=self._ssl_options,
+                                    ssl_options=kwargs.get('ssl_options', self._ssl_options),
                                     virtual_host=kwargs.get('virtual_host', self._virtual_host),
                                     connection_attempts=kwargs.get('connection_attempts',
                                                                    self._connection_attempts),
