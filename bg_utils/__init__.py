@@ -33,18 +33,41 @@ def parse_args(spec, item_names, cli_args):
         cli_args (List[str]): Command line arguments
 
     Returns:
-        Namespace: Arguments object
+        dict: Argument values
     """
+    def find_item(spec, item_name):
+        name_parts = item_name.split(spec._separator)
+        base_name = name_parts[0]
+        to_return = spec.get_item(base_name)
+        for name in name_parts[1:]:
+            to_return = to_return.children[name]
+        return to_return
+
     parser = ArgumentParser()
     for item_name in item_names:
-        item = spec.get_item(item_name)
+        item = find_item(spec, item_name)
         item.add_argument(parser)
 
-    args = parser.parse_args(cli_args)
+    args = vars(parser.parse_args(cli_args))
     for item_name in item_names:
-        if getattr(args, item_name) is None:
-            item = spec.get_item(item_name)
-            setattr(args, item_name, item.default)
+        name_parts = item_name.split(spec._separator)
+        if len(name_parts) <= 1:
+            if args[name_parts[0]] is None:
+                args[name_parts[0]] = find_item(spec, item_name).default
+            continue
+
+        current_arg_value = args.get(name_parts[0], {})
+        default_value = {}
+        item = spec.get_item(name_parts[0])
+        for name in name_parts[1:]:
+            default_value[name] = {}
+            item = item.children[name]
+            current_arg_value = current_arg_value.get(name, {})
+        default_value[name_parts[-1]] = item.default
+        if not current_arg_value:
+            if not args.get(name_parts[0]):
+                args[name_parts[0]] = {}
+            args[name_parts[0]].update(default_value)
 
     return args
 
@@ -108,20 +131,22 @@ def generate_logging_config_file(spec, logging_config_generator, cli_args):
                 level (str): Logging level to use
                 filename (str): File to use in RotatingFileHandler configuration
         cli_args (List[str]): Command line arguments
-            --log_config: Configuration will be written to this file (will print to stdout
-                if missing)
-            --log_file: Logs will be written to this file (used in a RotatingFileHandler)
-            --log_level: Handlers will be configured with this logging level
+            --log-config-file: Configuration will be written to this file (will print to
+                stdout if missing)
+            --log-file: Logs will be written to this file (used in a RotatingFileHandler)
+            --log-level: Handlers will be configured with this logging level
 
     Returns:
         str: The logging configuration dictionary
     """
-    args = parse_args(spec, ["log_config", "log_file", "log_level"], cli_args)
+    args = parse_args(spec, ["log.config_file", "log.file", "log.level"], cli_args)
 
-    logging_config = logging_config_generator(args.log_level, args.log_file)
+    log = args.get('log', {})
+    logging_config = logging_config_generator(log.get('level'), log.get('file'))
+    log_config_file = log.get('config_file')
 
-    if args.log_config is not None:
-        with open(args.log_config, 'w') as f:
+    if log_config_file is not None:
+        with open(log_config_file, 'w') as f:
             dumped = json.dumps(logging_config, indent=4, sort_keys=True)
             f.write(six.u(dumped))
     else:
