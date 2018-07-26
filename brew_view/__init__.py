@@ -249,34 +249,40 @@ def _setup_thrift_context():
 def _setup_event_publishers(ssl_context):
     from brew_view.controllers.event_api import EventSocket
 
-    # Create the collection of event publishers and add concrete publishers to it
+    # Create the collection of event publishers and add concrete publishers
     pubs = EventPublishers({
         'request': RequestPublisher(ssl_context=ssl_context),
         'websocket': WebsocketPublisher(EventSocket)
     })
 
     if config.event.mongo.enable:
-        pubs['mongo'] = MongoPublisher()
+        try:
+            pubs['mongo'] = MongoPublisher()
+        except Exception as ex:
+            logger.warning('Error starting Mongo event publisher: %s', ex)
 
-    if config.event.amq.enable and config.event.amq.virtual_host and config.event.amq.exchange:
-        pika_params = {
-            'host': config.amq.host,
-            'port': config.amq.connections.message.port,
-            'user': config.amq.connections.admin.user,
-            'password': config.amq.connections.admin.password,
-            'exchange': config.event.amq.exchange,
-            'virtual_host': config.event.amq.virtual_host,
-            'connection_attempts': config.amq.connection_attempts
-        }
+    if config.event.amq.enable:
+        try:
+            pika_params = {
+                'host': config.amq.host,
+                'port': config.amq.connections.message.port,
+                'user': config.amq.connections.admin.user,
+                'password': config.amq.connections.admin.password,
+                'exchange': config.event.amq.exchange,
+                'virtual_host': config.event.amq.virtual_host,
+                'connection_attempts': config.amq.connection_attempts
+            }
 
-        # Make sure the exchange exists
-        TransientPikaClient(**pika_params).declare_exchange()
+            # Make sure the exchange exists
+            TransientPikaClient(**pika_params).declare_exchange()
 
-        pubs['pika'] = TornadoPikaPublisher(
-            shutdown_timeout=config.shutdown_timeout,
-            **pika_params)
+            pubs['pika'] = TornadoPikaPublisher(
+                shutdown_timeout=config.shutdown_timeout,
+                **pika_params)
+        except Exception as ex:
+            logger.exception('Error starting RabbitMQ event publisher: %s', ex)
 
-    # Add metadata functions - additional metadata that will be included with each event
+    # Metadata functions - additional metadata to be included with each event
     pubs.metadata_funcs['public_url'] = lambda: public_url
 
     return pubs
