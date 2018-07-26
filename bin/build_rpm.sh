@@ -71,16 +71,24 @@ install_apps() {
 
     if [[ "$LOCAL" == "true" ]]; then
 
+        brewtils_package="brewtils"
+        brewtils_module="brewtils"
+        brewtils_version=$(get_version $brewtils_package $brewtils_module)
+
         bg_utils_package="bg-utils"
         bg_utils_module="bg_utils"
         bg_utils_version=$(get_version $bg_utils_package $bg_utils_module)
 
+        build_local_egg $brewtils_package $brewtils_version $SRC_PATH/$brewtils_package
         build_local_egg $bg_utils_package $bg_utils_version $SRC_PATH/$bg_utils_package
         build_local_egg $bartender_package $bartender_version $SRC_PATH/$bartender_package
         build_local_egg $brew_view_package $brew_view_version $SRC_PATH/$brew_view_package
 
         $APP_PATH/bin/pip install \
-                "$SRC_PATH/$bg_utils_package/dist/$bg_utils_package-$bg_utils_version.tar.gz" \
+                "$SRC_PATH/$brewtils_package/dist/$brewtils_package-$brewtils_version.tar.gz" \
+                "$SRC_PATH/$bg_utils_package/dist/$bg_utils_package-$bg_utils_version.tar.gz"
+
+        $APP_PATH/bin/pip install \
                 "$SRC_PATH/$bartender_package/dist/$bartender_package-$bartender_version.tar.gz" \
                 "$SRC_PATH/$brew_view_package/dist/$brew_view_package-$brew_view_version.tar.gz"
     else
