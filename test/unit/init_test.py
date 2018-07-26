@@ -20,12 +20,31 @@ class TestBgUtils(object):
     @pytest.fixture
     def spec(self):
         return YapconfSpec({
-            'log_config': {'required': False, 'default': None},
-            'log_file': {'required': False, 'default': None},
-            'log_level': {
-                'required': False,
-                'default': 'INFO',
-                'previous_names': ['old_log_level'],
+            'log': {
+                'type': 'dict',
+                'items': {
+                    "config_file": {
+                        "type": "str",
+                        "description": "Path to a logging config file.",
+                        "required": False,
+                        "cli_short_name": "l",
+                        "previous_names": ["log_config"],
+                        "alt_env_names": ["LOG_CONFIG"],
+                    },
+                    "file": {
+                        "type": "str",
+                        "description": "File you would like the application to log to",
+                        "required": False,
+                        "previous_names": ["log_file"],
+                    },
+                    "level": {
+                        "type": "str",
+                        "description": "Log level for the application",
+                        "default": "INFO",
+                        "choices": ["DEBUG", "INFO", "WARN", "WARNING", "ERROR", "CRITICAL"],
+                        "previous_names": ["log_level"],
+                    },
+                },
             },
             'configuration': {
                 'type': 'dict',
@@ -61,9 +80,11 @@ class TestBgUtils(object):
     def new_config(self):
         """Represents a up-to-date config with all new values."""
         return {
-            'log_config': None,
-            'log_file': None,
-            'log_level': 'WARN',
+            'log': {
+                'config_file': None,
+                'file': None,
+                'level': 'WARN',
+            },
             'configuration': {
                 'type': 'yaml',
             }
@@ -94,19 +115,23 @@ class TestBgUtils(object):
         }
 
     def test_parse_args(self, spec):
-        cli_args = ["--log-config", "/path/to/log/config",
+        cli_args = ["--log-config-file", "/path/to/log/config",
                     "--log-file", "/path/to/log/file",
                     "--log-level", "INFO"]
-        args = bg_utils.parse_args(spec, ['log_config', 'log_file', 'log_level'], cli_args)
-        assert args.log_config == "/path/to/log/config"
-        assert args.log_level == "INFO"
-        assert args.log_file == "/path/to/log/file"
+        data = bg_utils.parse_args(spec, ['log.config_file', 'log.file', 'log.level'], cli_args)
+        assert data == {
+            'log': {
+                'config_file': '/path/to/log/config',
+                'file': '/path/to/log/file',
+                'level': 'INFO',
+            }
+        }
 
     def test_generate_config(self, spec):
         config = bg_utils._generate_config(spec, ["-c", "/path/to/config"])
-        assert config.log_file is None
-        assert config.log_config is None
-        assert config.log_level == 'INFO'
+        assert config.log.file is None
+        assert config.log.config_file is None
+        assert config.log.level == 'INFO'
         assert config.configuration.file == '/path/to/config'
 
     @pytest.mark.parametrize('file_type', ['json', 'yaml'])
@@ -158,7 +183,7 @@ class TestBgUtils(object):
         config_generator = Mock(return_value=generated_config)
 
         logging_config = bg_utils.generate_logging_config_file(
-            spec, config_generator, ["--log-config", "/path/to/log/config"])
+            spec, config_generator, ["--log-config-file", "/path/to/log/config"])
         assert logging_config == generated_config
         assert open_mock.called is True
 
@@ -190,7 +215,7 @@ class TestBgUtils(object):
             f.write(config[2])
 
         generated_config = bg_utils.load_application_config(spec, cli_args)
-        assert generated_config.log_level == 'DEBUG'
+        assert generated_config.log.level == 'DEBUG'
         assert len(spec.sources) == 3
 
     def test_load_application_config_no_file_given(self, spec):
@@ -354,7 +379,7 @@ class TestBgUtils(object):
 
         spec.migrate_config_file = Mock(side_effect=ValueError)
         generated_config = bg_utils.load_application_config(spec, cli_args)
-        assert generated_config.log_level == 'INFO'
+        assert generated_config.log.level == 'INFO'
 
         # If the migration fails, we should still have JSON file.
         with open(old_filename) as f:
@@ -374,7 +399,7 @@ class TestBgUtils(object):
         with patch('os.rename', Mock(side_effect=ValueError)):
             generated_config = bg_utils.load_application_config(spec, cli_args)
 
-        assert generated_config.log_level == 'INFO'
+        assert generated_config.log.level == 'INFO'
 
         # The tmp file should still be there.
         with open(old_filename + '.tmp') as f:
@@ -405,9 +430,11 @@ class TestBgUtils(object):
         old_config['configuration']['file'] = old_filename
         cli_args = {'configuration': {'file': old_filename, 'type': 'json'}}
         expected_new_config = {
-            'log_config': None,
-            'log_file': None,
-            'log_level': 'INFO',
+            'log': {
+                'config_file': None,
+                'file': None,
+                'level': 'INFO',
+            },
             'configuration': {
                 'file': old_filename,
                 'type': 'json'
@@ -418,7 +445,7 @@ class TestBgUtils(object):
             f.write(json.dumps(old_config, ensure_ascii=False))
 
         generated_config = bg_utils.load_application_config(spec, cli_args)
-        assert generated_config.log_level == 'INFO'
+        assert generated_config.log.level == 'INFO'
 
         with open(old_filename) as f:
             new_config_value = yaml.safe_load(f)
@@ -435,6 +462,6 @@ class TestBgUtils(object):
             yaml.safe_dump(new_config, f, default_flow_style=False, encoding='utf-8')
 
         generated_config = bg_utils.load_application_config(spec, cli_args)
-        assert generated_config == new_config
+        assert generated_config.to_dict() == new_config
 
         assert len(os.listdir(str(tmpdir))) == 1
