@@ -92,14 +92,19 @@ class ClientBase(object):
 
     @property
     def connection_url(self):
-        """str: Get the connection URL associated with this client's connection information"""
+        """str: Connection URL for this client's connection information"""
+
+        virtual_host = self._conn_params.virtual_host
+        if virtual_host == '/':
+            virtual_host = ''
 
         return 'amqp%s://%s:%s@%s:%s/%s' % \
                ('s' if self._ssl_enabled else '',
-                self._conn_params.credentials.username, self._conn_params.credentials.password,
+                self._conn_params.credentials.username,
+                self._conn_params.credentials.password,
                 self._conn_params.host,
                 self._conn_params.port,
-                '' if self._conn_params.virtual_host == '/' else self._conn_params.virtual_host)
+                virtual_host)
 
     def connection_parameters(self, **kwargs):
         """Get ``ConnectionParameters`` associated with this client
