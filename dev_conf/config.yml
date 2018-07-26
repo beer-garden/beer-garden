@@ -8,6 +8,11 @@ amq:
     message:
       password: guest
       port: 5672
+      ssl:
+        ca_cert: null
+        ca_verify: true
+        client_cert: null
+        enabled: false
       user: guest
   exchange: beer_garden
   heartbeat_interval: 3600

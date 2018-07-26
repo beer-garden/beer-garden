@@ -266,6 +266,7 @@ def _setup_event_publishers(ssl_context):
             pika_params = {
                 'host': config.amq.host,
                 'port': config.amq.connections.message.port,
+                'ssl': config.amq.connections.message.ssl,
                 'user': config.amq.connections.admin.user,
                 'password': config.amq.connections.admin.password,
                 'exchange': config.event.amq.exchange,
