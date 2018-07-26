@@ -277,6 +277,7 @@ SPECIFICATION = {
                 "required": False,
                 "previous_names": ["ca_cert"],
                 "alt_env_names": ["CA_CERT"],
+                "fallback": "ssl.ca_cert",
             },
             "ca_verify": {
                 "type": "bool",
@@ -285,6 +286,7 @@ SPECIFICATION = {
                 "required": False,
                 "previous_names": ["ca_verify"],
                 "alt_env_names": ["CA_VERIFY"],
+                "fallback": "ssl.ca_verify",
             },
             "host": {
                 "type": "str",
@@ -305,6 +307,7 @@ SPECIFICATION = {
                 "previous_names": ["ssl_enabled"],
                 "alt_env_names": ["SSL_ENABLED"],
                 "cli_separator": "_",
+                "fallback": "ssl.enabled",
             },
             "username": {
                 "type": "str",
