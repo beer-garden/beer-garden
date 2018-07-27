@@ -7,7 +7,7 @@ amq:
       password: guest
       ssl:
         ca_cert: null
-        ca_verify: false
+        ca_verify: true
         client_cert: null
         enabled: false
     message:
@@ -16,7 +16,7 @@ amq:
       password: guest
       ssl:
         ca_cert: null
-        ca_verify: false
+        ca_verify: true
         client_cert: null
         enabled: false
   exchange: beer_garden
@@ -51,18 +51,13 @@ plugin:
   status_heartbeat: 5
   status_timeout: 30
 publish_hostname: localhost
-ssl:
-  ca_cert: null
-  ca_verify: false
-  client_cert: null
-  enabled: false
 thrift:
   host: 0.0.0.0
   max_workers: 25
   port: 9090
 web:
   ca_cert: null
-  ca_verify: false
+  ca_verify: true
   host: localhost
   port: 2337
   username: null

@@ -1,37 +1,4 @@
 
-from bg_utils import specifize
-
-
-ssl_base = {
-    'type': 'dict',
-    'items': {
-        "enabled": {
-            "type": "bool",
-            "default": False,
-            "description": "Is the API server using SSL",
-            "cli_separator": "_",
-        },
-        "ca_cert": {
-            "type": "str",
-            "description": "Path to CA certificate file to use",
-            "required": False,
-            "previous_names": ["ca_cert"],
-        },
-        "ca_verify": {
-            "type": "bool",
-            "default": True,
-            "description": "Verify external certificates",
-            "required": False,
-        },
-        "client_cert": {
-            "type": "str",
-            "description": "Path to client combined key / certificate file",
-            "required": False,
-        },
-    },
-}
-
-
 SPECIFICATION = {
     "configuration": {
         'type': 'dict',
@@ -63,9 +30,6 @@ SPECIFICATION = {
         "previous_names": ["amq_publish_host"],
         "alt_env_names": ["AMQ_PUBLISH_HOST"],
     },
-
-    'ssl': ssl_base,
-
     'amq': {
         'type': 'dict',
         'items': {
@@ -131,7 +95,32 @@ SPECIFICATION = {
                                 "previous_names": ["amq_admin_password", "amq_admin_pw"],
                                 "alt_env_names": ["AMQ_ADMIN_PASSWORD", "AMQ_ADMIN_PW"],
                             },
-                            'ssl': specifize(ssl_base, 'ssl'),
+                            "ssl": {
+                                "type": "dict",
+                                "items": {
+                                    "enabled": {
+                                        "type": "bool",
+                                        "default": False,
+                                        "description": "Should the connection use SSL",
+                                    },
+                                    "ca_cert": {
+                                        "type": "str",
+                                        "description": "Path to CA certificate file to use",
+                                        "required": False,
+                                    },
+                                    "ca_verify": {
+                                        "type": "bool",
+                                        "default": True,
+                                        "description": "Verify external certificates",
+                                        "required": False,
+                                    },
+                                    "client_cert": {
+                                        "type": "str",
+                                        "description": "Path to client combined key / certificate",
+                                        "required": False,
+                                    },
+                                },
+                            },
                         },
                     },
                     'message': {
@@ -158,7 +147,32 @@ SPECIFICATION = {
                                 "previous_names": ["amq_user"],
                                 "alt_env_names": ["AMQ_USER"],
                             },
-                            'ssl': specifize(ssl_base, 'ssl'),
+                            "ssl": {
+                                "type": "dict",
+                                "items": {
+                                    "enabled": {
+                                        "type": "bool",
+                                        "default": False,
+                                        "description": "Should the connection use SSL",
+                                    },
+                                    "ca_cert": {
+                                        "type": "str",
+                                        "description": "Path to CA certificate file to use",
+                                        "required": False,
+                                    },
+                                    "ca_verify": {
+                                        "type": "bool",
+                                        "default": True,
+                                        "description": "Verify external certificates",
+                                        "required": False,
+                                    },
+                                    "client_cert": {
+                                        "type": "str",
+                                        "description": "Path to client combined key / certificate",
+                                        "required": False,
+                                    },
+                                },
+                            },
                         },
                     },
                 },
@@ -277,7 +291,6 @@ SPECIFICATION = {
                 "required": False,
                 "previous_names": ["ca_cert"],
                 "alt_env_names": ["CA_CERT"],
-                "fallback": "ssl.ca_cert",
             },
             "ca_verify": {
                 "type": "bool",
@@ -286,7 +299,6 @@ SPECIFICATION = {
                 "required": False,
                 "previous_names": ["ca_verify"],
                 "alt_env_names": ["CA_VERIFY"],
-                "fallback": "ssl.ca_verify",
             },
             "host": {
                 "type": "str",
@@ -307,7 +319,6 @@ SPECIFICATION = {
                 "previous_names": ["ssl_enabled"],
                 "alt_env_names": ["SSL_ENABLED"],
                 "cli_separator": "_",
-                "fallback": "ssl.enabled",
             },
             "username": {
                 "type": "str",
