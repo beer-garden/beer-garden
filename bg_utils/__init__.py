@@ -268,25 +268,6 @@ def setup_database(config):
     return True
 
 
-def specifize(source_dict, fallback_prefix):
-    """Construct a spec dictionary based on a more general entry
-
-    Args:
-        source_dict: Dictionary containing 'base' specification
-        fallback_prefix: Prefix to use when determining fallback spec item
-
-    Returns:
-        The new specification dictionary
-    """
-    new_dict = source_dict.copy()
-    for k, v in new_dict['items'].items():
-        v['fallback'] = '.'.join([fallback_prefix, k])
-        if v.get('default'):
-            del v['default']
-
-    return new_dict
-
-
 def _generate_config(spec, cli_args):
     """Generate a configuration from a spec and command line arguments.
 
