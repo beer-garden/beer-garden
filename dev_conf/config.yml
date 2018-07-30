@@ -2,13 +2,23 @@ amq:
   connection_attempts: 3
   connections:
     admin:
-      password: guest
-      port: 15672
+      port: 15671
       user: guest
+      password: guest
+      ssl:
+        ca_cert: null
+        ca_verify: true
+        client_cert: null
+        enabled: false
     message:
-      password: guest
-      port: 5672
+      port: 5671
       user: guest
+      password: guest
+      ssl:
+        ca_cert: null
+        ca_verify: true
+        client_cert: null
+        enabled: false
   exchange: beer_garden
   heartbeat_interval: 3600
   host: localhost
@@ -47,7 +57,7 @@ thrift:
   port: 9090
 web:
   ca_cert: null
-  ca_verify: false
+  ca_verify: true
   host: localhost
   port: 2337
   username: null

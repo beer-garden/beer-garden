@@ -42,6 +42,7 @@ class BartenderApp(StoppableThread):
         self.clients = {
             'pika': PikaClient(host=bartender.config.amq.host,
                                port=bartender.config.amq.connections.message.port,
+                               ssl=bartender.config.amq.connections.message.ssl,
                                user=bartender.config.amq.connections.admin.user,
                                password=bartender.config.amq.connections.admin.password,
                                virtual_host=bartender.config.amq.virtual_host,

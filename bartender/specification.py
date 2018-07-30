@@ -1,3 +1,4 @@
+
 SPECIFICATION = {
     "configuration": {
         'type': 'dict',
@@ -94,6 +95,32 @@ SPECIFICATION = {
                                 "previous_names": ["amq_admin_password", "amq_admin_pw"],
                                 "alt_env_names": ["AMQ_ADMIN_PASSWORD", "AMQ_ADMIN_PW"],
                             },
+                            "ssl": {
+                                "type": "dict",
+                                "items": {
+                                    "enabled": {
+                                        "type": "bool",
+                                        "default": False,
+                                        "description": "Should the connection use SSL",
+                                    },
+                                    "ca_cert": {
+                                        "type": "str",
+                                        "description": "Path to CA certificate file to use",
+                                        "required": False,
+                                    },
+                                    "ca_verify": {
+                                        "type": "bool",
+                                        "default": True,
+                                        "description": "Verify external certificates",
+                                        "required": False,
+                                    },
+                                    "client_cert": {
+                                        "type": "str",
+                                        "description": "Path to client combined key / certificate",
+                                        "required": False,
+                                    },
+                                },
+                            },
                         },
                     },
                     'message': {
@@ -119,6 +146,32 @@ SPECIFICATION = {
                                 "description": "Username to login to the AMQ host",
                                 "previous_names": ["amq_user"],
                                 "alt_env_names": ["AMQ_USER"],
+                            },
+                            "ssl": {
+                                "type": "dict",
+                                "items": {
+                                    "enabled": {
+                                        "type": "bool",
+                                        "default": False,
+                                        "description": "Should the connection use SSL",
+                                    },
+                                    "ca_cert": {
+                                        "type": "str",
+                                        "description": "Path to CA certificate file to use",
+                                        "required": False,
+                                    },
+                                    "ca_verify": {
+                                        "type": "bool",
+                                        "default": True,
+                                        "description": "Verify external certificates",
+                                        "required": False,
+                                    },
+                                    "client_cert": {
+                                        "type": "str",
+                                        "description": "Path to client combined key / certificate",
+                                        "required": False,
+                                    },
+                                },
                             },
                         },
                     },
