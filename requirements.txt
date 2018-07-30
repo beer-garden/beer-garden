@@ -39,7 +39,7 @@ packaging==17.1           # via sphinx
 passlib==1.7.1            # via bg-utils
 pathtools==0.1.2          # via watchdog
 pbr==4.0.4                # via mock
-pika==0.11.2              # via brewtils
+pika==0.12.0              # via brewtils
 pkginfo==1.4.2            # via twine
 pluggy==0.6.0             # via pytest, tox
 ply==3.11                 # via thriftpy
@@ -54,7 +54,7 @@ pyparsing==2.2.0          # via packaging
 pytest==3.6.1
 python-box==3.2.0         # via yapconf
 pytz==2018.4
-pyyaml==3.12              # via apispec, watchdog
+pyyaml==3.13              # via apispec, watchdog
 requests-toolbelt==0.8.0  # via twine
 requests==2.19.0          # via brewtils, codecov, requests-toolbelt, sphinx, twine
 ruamel.yaml==0.15.37      # via bg-utils

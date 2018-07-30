@@ -13,10 +13,15 @@ def find_version(version_file):
     return match_object.group(1)
 
 
+with open('README.rst') as readme_file:
+    readme = readme_file.read()
+
+
 setup(
     name='brew-view',
     version=find_version('brew_view/_version.py'),
     description='Beergarden Frontend',
+    long_description=readme,
     url=' ',
     author='The beer-garden Team',
     author_email=' ',

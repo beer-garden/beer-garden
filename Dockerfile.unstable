@@ -1,8 +1,9 @@
-FROM python:3-alpine
+FROM python:3.6-alpine
 WORKDIR /src
 ENTRYPOINT ["brew-view"]
 
 ENV BG_LOG_CONFIG=/src/dev_conf/logging-config.json
+ADD ./dev_conf/logging-config.json /src/dev_conf/
 
 ADD ./dist/*.whl ./
 
@@ -12,4 +13,3 @@ RUN set -ex \
     && pip install --no-cache-dir ./*.whl \
     && apk del .build-deps
 
-ADD ./dev_conf/logging-config.json /src/dev_conf/

@@ -1,3 +1,4 @@
+import _ from 'lodash';
 
 requestService.$inject = ['$q', '$http', '$timeout'];
 
@@ -89,6 +90,10 @@ export default function requestService($q, $http, $timeout) {
       return commandId;
     });
     return promise;
+  };
+
+  RequestService.isComplete = function(request) {
+    return _.includes(RequestService.completeStatuses, request.status);
   };
 
   return RequestService;

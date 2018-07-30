@@ -1,3 +1,4 @@
+import _ from 'lodash';
 
 requestViewController.$inject = [
   '$scope',
@@ -47,13 +48,15 @@ export default function requestViewController(
 
   $scope.instanceStatus = '';
   $scope.statusDescriptions = {
-    'CREATED': 'The request has been validated by beer-garden and is on the queue ' +
-               'awaiting processing.',
+    'CREATED': 'The request has been validated by beer-garden and is on the ' +
+               'queue awaiting processing.',
     'RECEIVED': 'Not used.',
-    'IN_PROGRESS': 'The request has been received by the plugin and is actively being processed.',
+    'IN_PROGRESS': 'The request has been received by the plugin and is ' +
+                   'actively being processed.',
     'CANCELED': 'The request has been canceled and will not be processed.',
     'SUCCESS': 'The request has completed successfully',
-    'ERROR': 'The request encountered an error during processing and will not be reprocessed.',
+    'ERROR': 'The request encountered an error during processing and will ' +
+             'not be reprocessed.',
   };
 
   $scope.loadPreview = function(_editor) {
@@ -130,7 +133,7 @@ export default function requestViewController(
     // If request is not yet successful
     // We need to find system attached to request
     // And find out if the status of that instance is up
-    if (RequestService.completeStatuses.indexOf(response.data.status) == -1) {
+    if (!RequestService.isComplete(response.data)) {
       // Get promise to get id of system associated with the response
       SystemService.getSystemID(response.data).then(function(systemId) {
         // Using the system ID we can then get the system and instances
@@ -152,8 +155,9 @@ export default function requestViewController(
       $scope.children = response.data.children;
     }
 
-    // If request isn't done then we need to keep checking
-    if (RequestService.completeStatuses.indexOf(response.data.status) == -1) {
+    // If any request isn't done then we need to keep checking
+    if ((!RequestService.isComplete(response.data)) ||
+        (!_.every(response.data.children, RequestService.isComplete))) {
       $scope.timeoutRequest = $timeout(function() {
         RequestService.getRequest($stateParams.request_id)
           .then($scope.successCallback, $scope.failureCallback);

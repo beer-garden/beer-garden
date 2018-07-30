@@ -108,6 +108,32 @@ SPECIFICATION = {
                                 "previous_names": ["amq_user"],
                                 "alt_env_names": ["AMQ_USER"],
                             },
+                            'ssl': {
+                                'type': 'dict',
+                                'items': {
+                                    "enabled": {
+                                        "type": "bool",
+                                        "default": False,
+                                        "description": "Should the connection use SSL",
+                                    },
+                                    "ca_cert": {
+                                        "type": "str",
+                                        "description": "Path to CA certificate file to use",
+                                        "required": False,
+                                    },
+                                    "ca_verify": {
+                                        "type": "bool",
+                                        "default": True,
+                                        "description": "Verify external certificates",
+                                        "required": False,
+                                    },
+                                    "client_cert": {
+                                        "type": "str",
+                                        "description": "Path to client combined key / certificate",
+                                        "required": False,
+                                    },
+                                },
+                            },
                         },
                     },
                 },
@@ -262,7 +288,7 @@ SPECIFICATION = {
                 'items': {
                     "enable": {
                         "type": "bool",
-                        "default": True,
+                        "default": False,
                         "description": "Publish events to RabbitMQ",
                     },
                     "exchange": {
