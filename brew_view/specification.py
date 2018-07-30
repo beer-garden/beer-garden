@@ -288,7 +288,7 @@ SPECIFICATION = {
                 'items': {
                     "enable": {
                         "type": "bool",
-                        "default": True,
+                        "default": False,
                         "description": "Publish events to RabbitMQ",
                     },
                     "exchange": {
