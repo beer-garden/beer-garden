@@ -2,7 +2,7 @@ amq:
   connection_attempts: 3
   connections:
     admin:
-      port: 15671
+      port: 15672
       user: guest
       password: guest
       ssl:
@@ -11,7 +11,7 @@ amq:
         client_cert: null
         enabled: false
     message:
-      port: 5671
+      port: 5672
       user: guest
       password: guest
       ssl:
