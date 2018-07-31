@@ -8,6 +8,7 @@ export default function loginDirective() {
   return {
     restrict: 'E',
     scope: {
+      login: '=loginInfo',
       submitFunc: '<',
     },
     template: template,
