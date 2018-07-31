@@ -85,7 +85,6 @@ import versionService from './js/services/version_service.js';
 import jobService from './js/services/job_service.js';
 
 import aboutController from './js/controllers/about.js';
-import loginController from './js/controllers/login.js';
 import adminQueueController from './js/controllers/admin_queue.js';
 import adminSystemController from './js/controllers/admin_system.js';
 import {adminUserController, newUserController} from './js/controllers/admin_user.js';
@@ -103,7 +102,6 @@ import jobCreateController from './js/controllers/job_create.js';
 
 // Partials
 import './partials/about.html';
-import './partials/login.html';
 import './partials/admin_queue.html';
 import './partials/admin_system.html';
 import './partials/admin_user.html';
@@ -174,7 +172,6 @@ angular.module('bgApp',
 .factory('JobService', jobService)
 
 .controller('AboutController', aboutController)
-.controller('LoginController', loginController)
 .controller('AdminQueueController', adminQueueController)
 .controller('AdminSystemController', adminSystemController)
 .controller('AdminUserController', adminUserController)
