@@ -7,6 +7,7 @@ adminSystemController.$inject = [
   '$interval',
   '$http',
   '$websocket',
+  'localStorageService',
   'SystemService',
   'InstanceService',
   'UtilityService',
@@ -20,6 +21,7 @@ adminSystemController.$inject = [
  * @param  {$interval} $interval    Angular's $interval object.
  * @param  {$http} $http            Angular's $http object.
  * @param  {$websocket} $websocket  Angular's $websocket object.
+ * @param  {localStorageService} localStorageService Storage service
  * @param  {Object} SystemService   Beer-Garden's system service object.
  * @param  {Object} InstanceService Beer-Garden's instance service object.
  * @param  {Object} UtilityService  Beer-Garden's utility service object.
@@ -31,6 +33,7 @@ export default function adminSystemController(
     $interval,
     $http,
     $websocket,
+    localStorageService,
     SystemService,
     InstanceService,
     UtilityService,
@@ -140,26 +143,43 @@ export default function adminSystemController(
     $scope.systems.errorMessage = response.data.message;
   };
 
-  let socketError = false;
+  let socketConnection = undefined;
 
   /**
    * websocketConnect - Open a websocket connection.
    */
   function websocketConnect() {
-    if (window.WebSocket && !socketError) {
+    if (window.WebSocket && !socketConnection) {
       let proto = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
       let eventUrl = proto + window.location.host + '/api/v1/socket/events';
 
-      let socketConnection = $websocket(eventUrl);
-      socketConnection.onMessage(handleWebsocketMessage);
+      let token = localStorageService.get('token');
+      if (token) {
+        eventUrl += '?token=' + token;
+      }
 
-      // If the connection is broken attempt to reconnect.
-      // If this is caused by brew-view stopping the reconnect attempt will
-      // probably error. This isn't ideal, but we can't distinguish between a
-      // 'real' error and brew-view being down, so we live with this for now.
-      socketConnection.onClose(websocketConnect);
-      socketConnection.onError(function() {
-        socketError = true;
+      socketConnection = $websocket(eventUrl);
+
+      socketConnection.onClose((message) => {
+        console.log('Websocket closed: ' + message.reason);
+      });
+      socketConnection.onError((message) => {
+        console.log('Websocket error: ' + message.reason);
+      });
+      socketConnection.onMessage((message) => {
+        let event = JSON.parse(message.data);
+
+        switch (event.name) {
+          case 'INSTANCE_INITIALIZED':
+            updateInstanceStatus(event.payload.id, 'RUNNING');
+            break;
+          case 'INSTANCE_STOPPED':
+            updateInstanceStatus(event.payload.id, 'STOPPED');
+            break;
+          case 'SYSTEM_REMOVED':
+            removeSystem(event.payload.id);
+            break;
+        }
       });
 
       $scope.$on('destroy', function() {
@@ -168,26 +188,6 @@ export default function adminSystemController(
           socketConnection = undefined;
         }
       });
-    }
-  }
-
-  /**
-   * handleWebsocketMessage - Handle a message
-   * @param {string} message  The event message
-   */
-  function handleWebsocketMessage(message) {
-    let event = JSON.parse(message.data);
-
-    switch (event.name) {
-      case 'INSTANCE_INITIALIZED':
-        updateInstanceStatus(event.payload.id, 'RUNNING');
-        break;
-      case 'INSTANCE_STOPPED':
-        updateInstanceStatus(event.payload.id, 'STOPPED');
-        break;
-      case 'SYSTEM_REMOVED':
-        removeSystem(event.payload.id);
-        break;
     }
   }
 
@@ -232,20 +232,12 @@ export default function adminSystemController(
     }
   }
 
-  // Attempt to connect to the event websocket
-  websocketConnect();
-
   let loadSystems = function() {
     SystemService.getSystems(true, 'id,name,display_name,version,instances')
       .then($scope.successCallback, $scope.failureCallback);
   };
 
-  // Normal retry on new login
-  $scope.$on('newLogin', function() {
-    loadSystems();
-  });
-
-  // Also periodically poll for changes (in case of websocket failure)
+  // Periodically poll for changes (in case of websocket failure)
   let systemsUpdate = $interval(function() {
     loadSystems();
   }, 5000);
@@ -256,5 +248,14 @@ export default function adminSystemController(
     }
   });
 
-  loadSystems();
+  let loadAll = function() {
+    loadSystems();
+    websocketConnect();
+  };
+
+  $scope.$on('newLogin', function() {
+    loadAll();
+  });
+
+  loadAll();
 };
