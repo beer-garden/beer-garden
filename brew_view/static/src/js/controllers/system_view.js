@@ -130,6 +130,10 @@ export default function systemViewController(
       then($scope.successCallback, $scope.failureCallback);
   };
 
+  $scope.$on('newLogin', function() {
+    loadSystem($stateParams);
+  });
+
   if (angular.isDefined($rootScope.systems)) {
     loadSystem($stateParams);
   } else {

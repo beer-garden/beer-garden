@@ -144,4 +144,14 @@ export default function requestIndexController(
       });
     },
   });
+
+  $scope.instanceCreated = function(_instance) {
+    $scope.dtInstance = _instance;
+  };
+
+  $scope.$on('newLogin', function() {
+    if ($scope.dtInstance) {
+      $scope.dtInstance.reloadData(() => {}, false);
+    }
+  });
 };

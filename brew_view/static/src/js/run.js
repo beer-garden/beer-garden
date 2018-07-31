@@ -106,6 +106,8 @@ export function appRun(
           (response) => {
             $rootScope.user = response.data;
             $rootScope.changeTheme($rootScope.user.preferences.theme || 'default');
+
+            $rootScope.$broadcast('newLogin');
           }, (response) => {
             console.log('error loading user');
           }

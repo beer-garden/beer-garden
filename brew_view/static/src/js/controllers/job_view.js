@@ -98,5 +98,14 @@ export default function jobViewController(
     $scope.job.errorMessage = response.data.message;
   };
 
-  JobService.getJob($stateParams.id).then($scope.successCallback, $scope.failureCallback);
+  function loadJob() {
+    JobService.getJob($stateParams.id)
+      .then($scope.successCallback, $scope.failureCallback);
+  }
+
+  $scope.$on('newLogin', () => {
+    loadJob();
+  });
+
+  loadJob();
 };

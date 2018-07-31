@@ -55,5 +55,14 @@ export default function jobIndexController(
     return UtilityService.formatDate(data);
   };
 
-  JobService.getJobs().then($scope.successCallback, $scope.failureCallback);
+  function loadJobs() {
+    JobService.getJobs()
+      .then($scope.successCallback, $scope.failureCallback);
+  }
+
+  $scope.$on('newLogin', () => {
+    loadJobs();
+  });
+
+  loadJobs();
 };

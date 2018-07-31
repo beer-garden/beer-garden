@@ -235,10 +235,19 @@ export default function adminSystemController(
   // Attempt to connect to the event websocket
   websocketConnect();
 
-  // Register a function that polls for systems...
-  let systemsUpdate = $interval(function() {
+  let loadSystems = function() {
     SystemService.getSystems(true, 'id,name,display_name,version,instances')
       .then($scope.successCallback, $scope.failureCallback);
+  };
+
+  // Normal retry on new login
+  $scope.$on('newLogin', function() {
+    loadSystems();
+  });
+
+  // Also periodically poll for changes (in case of websocket failure)
+  let systemsUpdate = $interval(function() {
+    loadSystems();
   }, 5000);
   $scope.$on('$destroy', function() {
     if (angular.isDefined(systemsUpdate)) {
@@ -247,7 +256,5 @@ export default function adminSystemController(
     }
   });
 
-  // ...but go immediately so we don't have to wait for first interval
-  SystemService.getSystems(true, 'id,name,display_name,version,instances')
-    .then($scope.successCallback, $scope.failureCallback);
+  loadSystems();
 };

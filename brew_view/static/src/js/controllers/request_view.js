@@ -274,8 +274,16 @@ export default function requestViewController(
     return total;
   };
 
-  RequestService.getRequest($stateParams.request_id)
-    .then($scope.successCallback, $scope.failureCallback);
+  function loadRequest() {
+    RequestService.getRequest($stateParams.request_id)
+      .then($scope.successCallback, $scope.failureCallback);
+  }
+
+  $scope.$on('newLogin', function() {
+    loadRequest();
+  });
+
+  loadRequest();
 };
 
 

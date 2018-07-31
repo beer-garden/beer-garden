@@ -280,12 +280,18 @@ export function adminRoleController(
       $scope.selectedRole = selectedRole || $scope.roles[0];
 
       $scope.loader.loaded = true;
+      $scope.loader.error = false;
+      $scope.loader.errorMessage = undefined;
     }, (responses) => {
       $scope.loader.loaded = false;
       $scope.loader.error = true;
       $scope.loader.errorMessage = responses.data.message;
     });
   };
+
+  $scope.$on('newLogin', () => {
+    loadAll();
+  });
 
   loadAll();
 };

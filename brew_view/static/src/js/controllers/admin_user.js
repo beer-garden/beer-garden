@@ -233,6 +233,8 @@ export function adminUserController(
         handleUsersResponse(responses.users);
 
         $scope.loader.loaded = true;
+        $scope.loader.error = false;
+        $scope.loader.errorMessage = undefined;
       },
       (responses) => {
         $scope.loader.loaded = false;
@@ -241,6 +243,10 @@ export function adminUserController(
       }
     );
   };
+
+  $scope.$on('newLogin', () => {
+    loadAll();
+  });
 
   loadAll();
 };

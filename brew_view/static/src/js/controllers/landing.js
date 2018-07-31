@@ -88,6 +88,14 @@ export default function landingController(
     $location.path($rootScope.getSystemUrl(system.id));
   };
 
-  SystemService.getSystems(false)
-    .then($scope.successCallback, $scope.failureCallback);
+  function loadSystems() {
+    SystemService.getSystems(false)
+      .then($scope.successCallback, $scope.failureCallback);
+  }
+
+  $scope.$on('newLogin', () => {
+    loadSystems();
+  });
+
+  loadSystems();
 };

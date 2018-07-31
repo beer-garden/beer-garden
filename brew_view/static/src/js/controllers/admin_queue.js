@@ -160,7 +160,7 @@ export default function adminQueueController(
 
   let poller = $interval(function() {
     if ($scope.dtInstance) {
-      $scope.dtInstance.reloadData(function() {}, false);
+      $scope.dtInstance.reloadData(() => {}, false);
     }
   }, 5000);
 
@@ -188,4 +188,10 @@ export default function adminQueueController(
     $scope.queues.status = response.status;
     $scope.queues.errorMessage = response.data.message;
   };
+
+  $scope.$on('newLogin', function() {
+    if ($scope.dtInstance) {
+      $scope.dtInstance.reloadData(() => {}, false);
+    }
+  });
 };

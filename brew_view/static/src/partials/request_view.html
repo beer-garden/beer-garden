@@ -1,10 +1,7 @@
-<loading      loader="request"></loading>
-<server-error loader="request"></server-error>
-<empty        loader="request" label="request"></empty>
+<h1 class="page-header">
+  <span>Request View</span>
 
-<div ng-if="request.loaded && !request.error">
-  <h1 class="page-header">
-    <span>Viewing Request</span>
+  <span ng-if="request.loaded && !request.error">
     <small>{{request.data.id}}</small>
     <span class="pull-right" ng-if="canRepeat(request.data)">
       <button class="btn btn-success" type="button" ng-click="redoRequest(request.data)">Pour it Again</button>
@@ -12,8 +9,14 @@
     <span class="pull-right" ng-if="!canRepeat(request.data) && instanceStatus != 'RUNNING'">
         Error: Instance {{instanceStatus}}
     </span>
-  </h1>
+  </span>
+</h1>
 
+<loading      loader="request"></loading>
+<server-error loader="request"></server-error>
+<empty        loader="request" label="request"></empty>
+
+<div ng-if="request.loaded && !request.error">
   <ol id="breadcrumbs" class="breadcrumb" ng-show="request_tree.length > 1">
     <li ng-repeat="request in request_tree = getParentTree(request.data)" ng-class="{active: $last}"
       ><span ng-if="!$last"><a ng-href="#!/requests/{{request.id}}">{{request.command}}</a></span

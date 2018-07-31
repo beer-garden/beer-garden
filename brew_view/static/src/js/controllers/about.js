@@ -42,5 +42,6 @@ export default function AboutController($scope, VersionService) {
     $scope.version.errorMessage = response.data.message;
   },
 
-  VersionService.getVersionInfo().then($scope.successCallback, $scope.failureCallback);
+  VersionService.getVersionInfo()
+    .then($scope.successCallback, $scope.failureCallback);
 };
