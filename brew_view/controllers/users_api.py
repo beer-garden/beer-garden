@@ -72,7 +72,6 @@ class UserAPI(BaseHandler):
 
         self.set_status(204)
 
-    @authenticated(permissions=[Permissions.USER_UPDATE])
     def patch(self, user_id):
         """
         ---
@@ -122,6 +121,8 @@ class UserAPI(BaseHandler):
 
         for op in operations:
             if op.path == '/roles':
+                check_permission(self.current_user, [Permissions.USER_UPDATE])
+
                 try:
                     if op.operation == 'add':
                         principal.roles.append(Role.objects.get(name=op.value))
@@ -135,12 +136,16 @@ class UserAPI(BaseHandler):
                     raise ModelValidationError("Role '%s' does not exist" % op.value)
 
             elif op.path == '/preferences/theme':
+                if user_id != self.current_user.id:
+                    check_permission(self.current_user, [Permissions.USER_UPDATE])
+
                 if op.operation == 'set':
                     principal.preferences['theme'] = op.value
                 else:
                     raise ModelValidationError("Unsupported operation '%s'" % op.operation)
 
             else:
+                check_permission(self.current_user, [Permissions.USER_UPDATE])
                 raise ModelValidationError("Unsupported path '%s'" % op.path)
 
         principal.save()
