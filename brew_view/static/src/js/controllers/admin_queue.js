@@ -189,7 +189,7 @@ export default function adminQueueController(
     $scope.queues.errorMessage = response.data.message;
   };
 
-  $scope.$on('newLogin', function() {
+  $scope.$on('userChange', function() {
     if ($scope.dtInstance) {
       $scope.dtInstance.reloadData(() => {}, false);
     }

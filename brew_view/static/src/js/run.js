@@ -62,19 +62,6 @@ export function appRun(
     'slate': false,
   };
 
-  $rootScope.logout = function() {
-    let refreshToken = localStorageService.get('refresh');
-    if (refreshToken) {
-      TokenService.clearRefresh(refreshToken);
-      localStorageService.remove('refresh');
-    }
-
-    localStorageService.remove('token');
-    $http.defaults.headers.common.Authorization = undefined;
-
-    $rootScope.user = undefined;
-  };
-
   $rootScope.changeTheme = function(theme) {
     localStorageService.set('currentTheme', theme);
     for (const key of Object.keys($rootScope.themes)) {
@@ -105,9 +92,9 @@ export function appRun(
         UserService.loadUser(response.data.token).then(
           (response) => {
             $rootScope.user = response.data;
-            $rootScope.changeTheme($rootScope.user.preferences.theme || 'default');
+            $rootScope.$broadcast('userChange');
 
-            $rootScope.$broadcast('newLogin');
+            $rootScope.changeTheme($rootScope.user.preferences.theme || 'default');
           }, (response) => {
             console.log('error loading user');
           }
@@ -117,6 +104,20 @@ export function appRun(
         $rootScope.loginInfo.password = undefined;
       }
     );
+  };
+
+  $rootScope.doLogout = function() {
+    let refreshToken = localStorageService.get('refresh');
+    if (refreshToken) {
+      TokenService.clearRefresh(refreshToken);
+      localStorageService.remove('refresh');
+    }
+
+    localStorageService.remove('token');
+    $http.defaults.headers.common.Authorization = undefined;
+
+    $rootScope.user = undefined;
+    $rootScope.$broadcast('userChange');
   };
 
   // Load up some settings

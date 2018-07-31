@@ -60,7 +60,7 @@ export default function jobIndexController(
       .then($scope.successCallback, $scope.failureCallback);
   }
 
-  $scope.$on('newLogin', () => {
+  $scope.$on('userChange', () => {
     loadJobs();
   });
 

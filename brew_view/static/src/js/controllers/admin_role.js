@@ -289,7 +289,7 @@ export function adminRoleController(
     });
   };
 
-  $scope.$on('newLogin', () => {
+  $scope.$on('userChange', () => {
     loadAll();
   });
 

@@ -244,7 +244,7 @@ export function adminUserController(
     );
   };
 
-  $scope.$on('newLogin', () => {
+  $scope.$on('userChange', () => {
     loadAll();
   });
 

@@ -103,7 +103,7 @@ export default function jobViewController(
       .then($scope.successCallback, $scope.failureCallback);
   }
 
-  $scope.$on('newLogin', () => {
+  $scope.$on('userChange', () => {
     loadJob();
   });
 

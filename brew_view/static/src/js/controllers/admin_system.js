@@ -253,7 +253,7 @@ export default function adminSystemController(
     websocketConnect();
   };
 
-  $scope.$on('newLogin', function() {
+  $scope.$on('userChange', function() {
     loadAll();
   });
 

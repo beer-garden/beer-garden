@@ -279,7 +279,7 @@ export default function requestViewController(
       .then($scope.successCallback, $scope.failureCallback);
   }
 
-  $scope.$on('newLogin', function() {
+  $scope.$on('userChange', function() {
     loadRequest();
   });
 

@@ -149,7 +149,7 @@ export default function requestIndexController(
     $scope.dtInstance = _instance;
   };
 
-  $scope.$on('newLogin', function() {
+  $scope.$on('userChange', function() {
     if ($scope.dtInstance) {
       $scope.dtInstance.reloadData(() => {}, false);
     }

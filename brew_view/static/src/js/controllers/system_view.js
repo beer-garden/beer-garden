@@ -130,7 +130,7 @@ export default function systemViewController(
       then($scope.successCallback, $scope.failureCallback);
   };
 
-  $scope.$on('newLogin', function() {
+  $scope.$on('userChange', function() {
     loadSystem($stateParams);
   });
 
