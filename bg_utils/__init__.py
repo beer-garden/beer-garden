@@ -352,6 +352,7 @@ def _ensure_special_roles():
         anonymous_role = Role(name='bg-anonymous',
                               permissions=[
                                   'bg-command-read',
+                                  'bg-event-read',
                                   'bg-instance-read',
                                   'bg-job-read',
                                   'bg-queue-read',
