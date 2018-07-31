@@ -36,6 +36,8 @@ export function appRun(
   $rootScope.$state = $state;
   $rootScope.$stateParams = $stateParams;
 
+  $rootScope.showLogin = false;
+
   // Change this to point to the Brew-View backend if it's at another location
   $rootScope.apiBaseUrl = '';
 
@@ -80,6 +82,31 @@ export function appRun(
     if ($rootScope.user) {
       UserService.setTheme($rootScope.user.id, theme);
     }
+  };
+
+  $rootScope.toggleLogin = function() {
+    $rootScope.showLogin = !$rootScope.showLogin;
+  };
+
+  $rootScope.doLogin = function(username, password) {
+    TokenService.doLogin(username, password).then(
+      (response) => {
+        TokenService.handleRefresh(response.data.refresh);
+        TokenService.handleToken(response.data.token);
+
+        UserService.loadUser(response.data.token).then(
+          (response) => {
+            $rootScope.user = response.data;
+            $rootScope.changeTheme($rootScope.user.preferences.theme || 'default');
+            $rootScope.showLogin = false;
+          }, (response) => {
+            console.log('error loading user');
+          }
+        );
+      }, (response) => {
+        console.log('bad login');
+      }
+    );
   };
 
   // Load up some settings

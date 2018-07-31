@@ -67,6 +67,7 @@ import emptyDirective from './js/directives/empty.js';
 import loadingDirective from './js/directives/loading.js';
 import serverErrorDirective from './js/directives/server_error.js';
 import bgStatusDirective from './js/directives/system_status.js';
+import loginDirective from './js/directives/login.js';
 import './js/directives/dataTables.lcf.datetimepicker.fr.js';
 
 import adminService from './js/services/admin_service.js';
@@ -156,6 +157,7 @@ angular.module('bgApp',
 .directive('loading', loadingDirective)
 .directive('serverError', serverErrorDirective)
 .directive('bgStatus', bgStatusDirective)
+.directive('login', loginDirective)
 
 .factory('AdminService', adminService)
 .factory('CommandService', commandService)

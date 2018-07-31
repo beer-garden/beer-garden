@@ -37,7 +37,11 @@
         </li>
 
         <li>
-          <a ui-sref="login" ng-show=!user>Login</a>
+          <a href="" ng-show=!user ng-click="toggleLogin()">Login</a>
+
+          <div ng-show="showLogin">
+            <login submit-func="doLogin"></login>
+          </div>
         </li>
         <li>
           <a ng-click="logout()" ng-show=user href="">Logout</a>
