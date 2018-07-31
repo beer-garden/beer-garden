@@ -11,14 +11,14 @@ from tornado.web import HTTPError, RequestHandler
 
 import bg_utils
 import brew_view
-from brew_view.authorization import basic_auth, bearer_auth
+from brew_view.authorization import basic_auth, bearer_auth, AuthMixin
 from brewtils.errors import (
     ModelError, ModelValidationError, RequestForbidden, RequestPublishException,
     WaitExceededError, AuthorizationRequired)
 from brewtils.models import Event
 
 
-class BaseHandler(RequestHandler):
+class BaseHandler(AuthMixin, RequestHandler):
     """Base handler from which all handlers inherit. Enables CORS and error handling."""
 
     MONGO_ID_PATTERN = r'.*/([0-9a-f]{24}).*'
@@ -60,8 +60,6 @@ class BaseHandler(RequestHandler):
         ['system', 'instance_name', 'system_version'],
     )
 
-    auth_providers = []
-
     def __init__(self, *args, **kwargs):
         super(BaseHandler, self).__init__(*args, **kwargs)
 
@@ -95,17 +93,6 @@ class BaseHandler(RequestHandler):
             self.set_header("Access-Control-Allow-Origin", "*")
             self.set_header("Access-Control-Allow-Headers", "Content-Type")
             self.set_header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
-
-    def get_current_user(self):
-        """Use registered handlers to determine current user"""
-
-        for provider in self.auth_providers:
-            principal = provider(self.request)
-
-            if principal is not None:
-                return principal
-
-        return brew_view.anonymous_principal
 
     @property
     def prometheus_endpoint(self):

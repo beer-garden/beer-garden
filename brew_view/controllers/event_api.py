@@ -1,10 +1,14 @@
 import logging
 
+from tornado.web import HTTPError
 from tornado.websocket import WebSocketHandler
 
 import brew_view
 from bg_utils.parser import BeerGardenSchemaParser
+from brew_view.authorization import (authenticated, check_permission,
+                                     query_token_auth, AuthMixin, Permissions)
 from brew_view.base_handler import BaseHandler
+from brewtils.errors import RequestForbidden
 from brewtils.schema_parser import SchemaParser
 
 
@@ -13,10 +17,11 @@ class EventPublisherAPI(BaseHandler):
     logger = logging.getLogger(__name__)
     parser = SchemaParser()
 
+    @authenticated(permissions=[Permissions.EVENT_CREATE])
     def post(self):
         """
         ---
-        summary: Publish a new notification
+        summary: Publish a new event
         parameters:
           - name: event
             in: body
@@ -55,7 +60,7 @@ class EventPublisherAPI(BaseHandler):
         self.set_status(204)
 
 
-class EventSocket(WebSocketHandler):
+class EventSocket(AuthMixin, WebSocketHandler):
 
     logger = logging.getLogger(__name__)
     parser = BeerGardenSchemaParser()
@@ -63,14 +68,27 @@ class EventSocket(WebSocketHandler):
     closing = False
     listeners = set()
 
+    def __init__(self, *args, **kwargs):
+        super(EventSocket, self).__init__(*args, **kwargs)
+
+        self.auth_providers.append(query_token_auth)
+
     def check_origin(self, origin):
         return True
 
     def open(self):
         if EventSocket.closing:
             self.close(reason='Shutting down')
-        else:
-            EventSocket.listeners.add(self)
+            return
+
+        # We can't go though the 'normal' BaseHandler exception translation
+        try:
+            check_permission(self.current_user, [Permissions.EVENT_READ])
+        except (HTTPError, RequestForbidden) as ex:
+            self.close(reason=str(ex))
+            return
+
+        EventSocket.listeners.add(self)
 
     def on_close(self):
         EventSocket.listeners.discard(self)
