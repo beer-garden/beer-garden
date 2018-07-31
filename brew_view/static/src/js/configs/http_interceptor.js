@@ -36,12 +36,13 @@ export function authInterceptorService(
     localStorageService) {
   return {
     responseError: (rejection) => {
-      // This attempts to handle the condition where an access token has expired
-      // but there's a refresh token in storage. We use the refresh token to get
-      // a new access token and then re-attempt the original request.
+      // 401 means 'needs authentication'
       if (rejection.status === 401) {
-        let refreshToken = localStorageService.get('refresh');
 
+        // This attempts to handle the condition where an access token has
+        // expired but there's a refresh token in storage. We use the refresh
+        // token to get a new access token then re-attempt the original request.
+        let refreshToken = localStorageService.get('refresh');
         if (refreshToken) {
           // Can't use normal dependency injection as it causes a cycle
           let $http = $injector.get('$http');
@@ -73,9 +74,13 @@ export function authInterceptorService(
             }
           );
         }
+        else {
+          // Highlight the login button
+          $injector.get('$rootScope').loginError = true;
+        }
       }
 
-      // Some other error, just return the rejection
+      // We've done all we can, so return the rejection
       return $q.reject(rejection);
     },
   };

@@ -206,3 +206,8 @@ table.dataTable{
     position: relative;
     cursor: default;
 }
+
+.red-border{
+  border: 2px solid red;
+  margin: -2px;
+}

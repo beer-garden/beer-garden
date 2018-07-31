@@ -38,6 +38,7 @@ export function appRun(
 
   $rootScope.loginInfo = {};
   $rootScope.showLogin = false;
+  $rootScope.loginError = false;
 
   // Change this to point to the Brew-View backend if it's at another location
   $rootScope.apiBaseUrl = '';
@@ -86,6 +87,8 @@ export function appRun(
   };
 
   $rootScope.toggleLogin = function() {
+    // Clicking should always clear the red outline
+    $rootScope.loginError = false;
     $rootScope.showLogin = !$rootScope.showLogin;
   };
 

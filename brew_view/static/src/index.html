@@ -32,19 +32,20 @@
 
       <ul class="nav navbar-nav navbar-top-links navbar-right">
 
-        <li>
-          <a ng-show=user href="">Hello, {{user.username}}!</a>
-        </li>
-
-        <li>
-          <a href="" ng-show=!user ng-click="toggleLogin()">Login</a>
+        <li ng-show=!user ng-class="{'red-border': loginError}" class="">
+          <a href="" ng-click="toggleLogin()">Login</a>
 
           <div ng-show="showLogin">
             <login login-info="loginInfo" submit-func="doLogin"></login>
           </div>
         </li>
-        <li>
-          <a ng-click="logout()" ng-show=user href="">Logout</a>
+
+        <li ng-show=user>
+          <a href="">Hello, {{user.username}}!</a>
+        </li>
+
+        <li ng-show=user>
+          <a ng-click="logout()" href="">Logout</a>
         </li>
 
         <li class="dropdown">
