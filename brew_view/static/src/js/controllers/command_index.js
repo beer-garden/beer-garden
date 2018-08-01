@@ -1,28 +1,26 @@
 
 commandIndexController.$inject = [
+  '$rootScope',
   '$scope',
   'SystemService',
   'CommandService',
-  'UtilityService',
   'DTOptionsBuilder',
 ];
 
 /**
  * commandIndexController - Angular controller for all commands page.
+ * @param  {$rootScope} $rootScope     Angular's $rootScope object.
  * @param  {$scope} $scope           Angular's $scope object.
  * @param  {Object} SystemService    Beer-Garden system service.
  * @param  {Object} CommandService   Beer-Garden command service.
- * @param  {Object} UtilityService   Beer-Garden utility service.
  * @param  {Object} DTOptionsBuilder Data-tables' builder for options.
  */
 export default function commandIndexController(
+  $rootScope,
   $scope,
   SystemService,
   CommandService,
-  UtilityService,
   DTOptionsBuilder) {
-  $scope.service = CommandService;
-  $scope.util = UtilityService;
 
   $scope.commands = {
     data: [],
@@ -69,6 +67,15 @@ export default function commandIndexController(
     .withOption('order', [4, 'asc'])
     .withOption('autoWidth', false)
     .withBootstrap();
+
+  $scope.stateParams = function(entry) {
+    return {
+      id: entry.id,
+      name: entry.name,
+      systemName: entry.system,
+      systemVersion: $rootScope.getVersionForUrl(entry.version),
+    };
+  };
 
   $scope.successCallback = function(response) {
     let systems = response.data;
@@ -119,5 +126,21 @@ export default function commandIndexController(
     $scope.commands.errorMessage = response.data.message;
   };
 
-  SystemService.getSystems().then($scope.successCallback, $scope.failureCallback);
+  const loadCommands = function() {
+    $rootScope.systemsPromise.then(
+      () => {
+        SystemService.getSystems().then(
+          $scope.successCallback,
+          $scope.failureCallback
+        );
+      },
+      $scope.failureCallback
+    );
+  };
+
+  $scope.$on('userChange', function() {
+    loadCommands();
+  });
+
+  loadCommands();
 };

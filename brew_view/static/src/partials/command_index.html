@@ -4,9 +4,14 @@
 <server-error loader="commands"></server-error>
 <empty        loader="commands" label="commands"></empty>
 
-<div ng-if="commands.loaded && !commands.error && commands.data.length > 0 && systems != null" class="container-fluid animate-if">
+<div class="container-fluid animate-if"
+    ng-if="commands.loaded && !commands.error && commands.data.length > 0">
   <div>
-    <table datatable="ng" dt-options="dtOptions" class="table table-striped table-bordered" style="width: 100%">
+    <table
+        datatable="ng"
+        dt-options="dtOptions"
+        class="table table-striped table-bordered"
+        style="width: 100%">
     <thead>
       <tr>
         <th id="th_system">System</th>
@@ -23,11 +28,9 @@
         <td>{{entry.version}}</td>
         <td>{{entry.description}}</td>
         <td>
-          <a
-            class="btn btn-primary center-block word-wrap-button"
-            ui-sref="command(service.getStateParams(entry))">
-            Make it Happen!
-          </a>
+          <a class="btn btn-primary center-block word-wrap-button"
+             ui-sref="command(stateParams(entry))"
+             >Make it Happen!</a>
         </td>
       </tr>
     </tbody>
