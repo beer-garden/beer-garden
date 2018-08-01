@@ -1,88 +1,83 @@
+<h1 class="page-header">
+  <span>Job</span>
+
+  <span ng-if="job.loaded && !job.error">
+    <small>{{job.data.name}} - {{job.data.id}}</small>
+    <button type="button" class="btn btn-warning pull-right"
+            ng-if="job.data.status === 'RUNNING'"
+            ng-click="pauseJob(job.data.id)">
+      Pause Job
+    </button>
+    <button type="button" class="btn btn-success pull-right"
+            ng-if="job.data.status === 'PAUSED'"
+            ng-click="resumeJob(job.data.id)">
+      Resume Job
+    </button>
+    <button type="button" class="btn btn-danger pull-right"
+            confirm="Are you sure you want to delete this job?"
+            ng-click="deleteJob(job.data.id)">
+      Delete Job
+    </button>
+  </span>
+</h1>
+
 <loading      loader="job"></loading>
 <server-error loader="job"></server-error>
 <empty        loader="job" label="job"></empty>
 
-<div ng-if="job.loaded && !job.error">
-  <h1 class="page-header">
-    <span>Viewing Job</span>
-    <small>{{job.data.name}} - {{job.data.id}}</small>
-    <button 
-      class="btn btn-warning pull-right" 
-      ng-if="job.data.status === 'RUNNING'"
-      type="button"
-      ng-click="pauseJob(job.data.id)">
-      Pause Job
-    </button>
-    <button 
-      class="btn btn-success pull-right" 
-      ng-if="job.data.status === 'PAUSED'"
-      type="button"
-      ng-click="resumeJob(job.data.id)">
-      Resume Job
-    </button>
-    <button 
-      class="btn btn-danger pull-right" 
-      type="button"
-      confirm="Are you sure you want to delete this job?"
-      ng-click="deleteJob(job.data.id)">
-      Delete Job
-    </button>
-  </h1>
-
-  <div class="container-fluid animate-if">
-    <table id="jobTable" class="table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Command</th>
-          <th>System</th>
-          <th>System Version</th>
-          <th>Instance Name</th>
-          <th>Status</th>
-          <th>Success Count</th>
-          <th>Error Count</th>
-          <th>Next Run Time</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>{{job.data.name}}</td>
-          <td>{{job.data.request_template.command}}</td>
-          <td>{{job.data.request_template.system}}</td>
-          <td>{{job.data.request_template.system_version}}</td>
-          <td>{{job.data.request_template.instance_name}}</td>
-          <td>{{job.data.status}}</td>
-          <td>{{job.data.success_count}}</td>
-          <td>{{job.data.error_count}}</td>
-          <td>{{formatDate(job.data.next_run_time)}}</td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="row">
-      <div class="col-md-6">
-        <div style="margin-bottom: 10px;">
-          <span class="h3">Trigger</span>
-        </div>
-        <div style="position: relative;">
-          <div id="trigger">
-            <div 
-              ui-ace="{ onLoad: loadPreview }" 
-              ng-model="formattedTrigger"
-              style="width: 100%;">
-            </div>
+<div ng-if="job.loaded && !job.error" class="container-fluid animate-if">
+  <table id="jobTable" class="table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Command</th>
+        <th>System</th>
+        <th>System Version</th>
+        <th>Instance Name</th>
+        <th>Status</th>
+        <th>Success Count</th>
+        <th>Error Count</th>
+        <th>Next Run Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{job.data.name}}</td>
+        <td>{{job.data.request_template.command}}</td>
+        <td>{{job.data.request_template.system}}</td>
+        <td>{{job.data.request_template.system_version}}</td>
+        <td>{{job.data.request_template.instance_name}}</td>
+        <td>{{job.data.status}}</td>
+        <td>{{job.data.success_count}}</td>
+        <td>{{job.data.error_count}}</td>
+        <td>{{formatDate(job.data.next_run_time)}}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="row">
+    <div class="col-md-6">
+      <div style="margin-bottom: 10px;">
+        <span class="h3">Trigger</span>
+      </div>
+      <div style="position: relative;">
+        <div id="trigger">
+          <div
+            ui-ace="{ onLoad: loadPreview }"
+            ng-model="formattedTrigger"
+            style="width: 100%;">
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="col-md-6">
-        <div style="margin-bottom: 10px;">
-          <span class="h3">Request Template</span>
-        </div>
-        <div 
-          ui-ace="{ onLoad: loadPreview }" 
-          ng-model="formattedRequestTemplate" 
-          style="width: 100%;">
-        </div>
+    <div class="col-md-6">
+      <div style="margin-bottom: 10px;">
+        <span class="h3">Request Template</span>
+      </div>
+      <div
+        ui-ace="{ onLoad: loadPreview }"
+        ng-model="formattedRequestTemplate"
+        style="width: 100%;">
       </div>
     </div>
   </div>
