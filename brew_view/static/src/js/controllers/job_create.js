@@ -1,3 +1,5 @@
+import {formatJsonDisplay} from '../services/utility_service.js';
+
 jobCreateController.$inject = [
   '$scope',
   '$rootScope',
@@ -6,7 +8,6 @@ jobCreateController.$inject = [
   '$stateParams',
   'JobService',
   'SystemService',
-  'UtilityService',
   'SFBuilderService',
 ];
 
@@ -19,7 +20,6 @@ jobCreateController.$inject = [
  * @param  {$stateParams} $stateParams Angular's $stateParams object.
  * @param  {Object} JobService Beer-Garden's job service.
  * @param  {Object} SystemService Beer-Garden's system service.
- * @param  {Object} UtilityService Beer-Garden's utility service service.
  * @param  {Object} SFBuilderService Beer-Garden's schema-form service.
  */
 export default function jobCreateController(
@@ -30,7 +30,6 @@ export default function jobCreateController(
   $stateParams,
   JobService,
   SystemService,
-  UtilityService,
   SFBuilderService) {
     $scope.systems = {
       data: [],
@@ -146,7 +145,7 @@ export default function jobCreateController(
     };
 
     $scope.loadPreview = function(_editor) {
-      UtilityService.formatJsonDisplay(_editor, true);
+      formatJsonDisplay(_editor, true);
     };
 
     let generateJobSF = function() {

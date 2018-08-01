@@ -1,9 +1,10 @@
+import {formatDate, formatJsonDisplay} from '../services/utility_service.js';
+
 jobViewController.$inject = [
   '$scope',
   '$rootScope',
   '$location',
   '$stateParams',
-  'UtilityService',
   'JobService',
 ];
 
@@ -13,16 +14,14 @@ jobViewController.$inject = [
  * @param  {$rootScope} $rootScope Angular's $rootScope object.
  * @param  {$location} $location   Angular's $location object.
  * @param  {$stateParams} $stateParams Angular's $stateParams object.
- * @param  {Object} UtilityService Beer-Garden's utility service.
  * @param  {Object} JobService Beer-Garden's job service.
  */
 export default function jobViewController(
-  $scope,
-  $rootScope,
-  $location,
-  $stateParams,
-  UtilityService,
-  JobService) {
+    $scope,
+    $rootScope,
+    $location,
+    $stateParams,
+    JobService) {
   $scope.job = {
     data: [],
     loaded: false,
@@ -37,11 +36,11 @@ export default function jobViewController(
   $scope.formattedTrigger = '';
 
   $scope.loadPreview = function(_editor) {
-      UtilityService.formatJsonDisplay(_editor, true);
+    formatJsonDisplay(_editor, true);
   };
 
   $scope.formatDate = function(data) {
-      return UtilityService.formatDate(data);
+    formatDate(data);
   };
 
   $scope.successCallback = function(response) {

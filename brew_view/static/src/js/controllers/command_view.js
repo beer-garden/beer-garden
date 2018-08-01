@@ -1,4 +1,5 @@
 import angular from 'angular';
+import {formatJsonDisplay} from '../services/utility_service.js';
 
 commandViewController.$inject = [
   '$location',
@@ -11,7 +12,6 @@ commandViewController.$inject = [
   'RequestService',
   'SystemService',
   'SFBuilderService',
-  'UtilityService',
 ];
 
 
@@ -27,20 +27,18 @@ commandViewController.$inject = [
  * @param  {Object} RequestService     Beer-Garden's request service object.
  * @param  {Object} SystemService      Beer-Garden's system service object.
  * @param  {Object} SFBuilderService   Beer-Garden's schema-form builder service object.
- * @param  {Object} UtilityService     Beer-Garden's utility service object.
  */
 export default function commandViewController(
-  $location,
-  $rootScope,
-  $scope,
-  $state,
-  $stateParams,
-  $sce,
-  CommandService,
-  RequestService,
-  SystemService,
-  SFBuilderService,
-  UtilityService ) {
+    $location,
+    $rootScope,
+    $scope,
+    $state,
+    $stateParams,
+    $sce,
+    CommandService,
+    RequestService,
+    SystemService,
+    SFBuilderService) {
   $scope.schema = {};
   $scope.form = [];
   $scope.model = $stateParams.request || {};
@@ -200,11 +198,11 @@ export default function commandViewController(
   };
 
   $scope.loadPreview = function(_editor) {
-    UtilityService.formatJsonDisplay(_editor, true);
+    formatJsonDisplay(_editor, true);
   };
 
   $scope.loadEditor = function(_editor) {
-    UtilityService.formatJsonDisplay(_editor, false);
+    formatJsonDisplay(_editor, false);
   };
 
   $scope.toggleManualOverride = function() {

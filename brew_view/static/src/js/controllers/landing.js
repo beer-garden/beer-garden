@@ -89,8 +89,10 @@ export default function landingController(
   };
 
   function loadSystems() {
-    SystemService.getSystems(false)
-      .then($scope.successCallback, $scope.failureCallback);
+    SystemService.getSystems(false).then(
+      $scope.successCallback,
+      $scope.failureCallback
+    );
   }
 
   $scope.$on('userChange', () => {

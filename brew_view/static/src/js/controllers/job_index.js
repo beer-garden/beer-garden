@@ -1,10 +1,11 @@
+import {formatDate} from '../services/utility_service.js';
+
 jobIndexController.$inject = [
   '$scope',
   '$rootScope',
   '$location',
   '$interval',
   'JobService',
-  'UtilityService',
 ];
 
 /**
@@ -14,16 +15,13 @@ jobIndexController.$inject = [
  * @param  {$location} $location   Angular's $location object.
  * @param  {$interval} $interval   Angular's $interval object.
  * @param  {Object} JobService Beer-Garden's job service.
- * @param  {Object} UtilityService Beer-Garden's utility service.
  */
 export default function jobIndexController(
-  $scope,
-  $rootScope,
-  $location,
-  $interval,
-  JobService,
-  UtilityService) {
-  $scope.util = UtilityService;
+    $scope,
+    $rootScope,
+    $location,
+    $interval,
+    JobService,) {
 
   $scope.jobs = {
     data: [],
@@ -51,9 +49,7 @@ export default function jobIndexController(
     $scope.jobs.errorMessage = response.data.message;
   };
 
-  $scope.formatDate = function(data) {
-    return UtilityService.formatDate(data);
-  };
+  $scope.formatDate = formatDate;
 
   function loadJobs() {
     JobService.getJobs()

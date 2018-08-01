@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import {formatDate, formatJsonDisplay} from '../services/utility_service.js';
 
 requestViewController.$inject = [
   '$scope',
@@ -7,7 +8,6 @@ requestViewController.$inject = [
   '$timeout',
   '$animate',
   'RequestService',
-  'UtilityService',
   'SystemService',
 ];
 
@@ -19,7 +19,6 @@ requestViewController.$inject = [
  * @param  {$timeout} $timeout         Angular's $timeout object.
  * @param  {$animate} $animate         Angular's $animate object.
  * @param  {Object} RequestService     Beer-Garden Request Service.
- * @param  {Object} UtilityService     Beer-Garden's Utility Service.
  * @param  {Object} SystemService      Beer-Garden's System Service.
  */
 export default function requestViewController(
@@ -29,7 +28,6 @@ export default function requestViewController(
   $timeout,
   $animate,
   RequestService,
-  UtilityService,
   SystemService) {
   $scope.request = {};
   $scope.request.errorMap = RequestService.errorMap;
@@ -60,7 +58,7 @@ export default function requestViewController(
   };
 
   $scope.loadPreview = function(_editor) {
-    UtilityService.formatJsonDisplay(_editor, true);
+    formatJsonDisplay(_editor, true);
   };
 
   $scope.canRepeat = function(request) {
@@ -118,7 +116,7 @@ export default function requestViewController(
     }
   };
 
-  $scope.formatDate = UtilityService.formatDate;
+  $scope.formatDate = formatDate;
 
   $scope.successCallback = function(response) {
     $scope.request.data = response.data;

@@ -1,3 +1,4 @@
+import {camelCaseKeys} from './services/utility_service.js';
 
 appRun.$inject = [
   '$rootScope',
@@ -58,8 +59,7 @@ export function appRun(
     $rootScope.configPromise = UtilityService.getConfig()
     .then(
       (response) => {
-        let camelData = UtilityService.camelCaseKeys(response.data);
-        angular.extend($rootScope.config, camelData);
+        angular.extend($rootScope.config, camelCaseKeys(response.data));
       },
       (response) => {
         return $q.reject(response);
