@@ -4,6 +4,7 @@ appRun.$inject = [
   '$state',
   '$stateParams',
   '$http',
+  '$q',
   'localStorageService',
   'UtilityService',
   'SystemService',
@@ -17,6 +18,7 @@ appRun.$inject = [
  * @param  {$state} $state                 Angular's $state object.
  * @param  {$stateParams} $stateParams     Angular's $stateParams object.
  * @param  {$http} $http                   Angular's $http object.
+ * @param  {$q} $q                         Angular's $q object.
  * @param  {localStorageService} localStorageService Storage service
  * @param  {UtilityService} UtilityService Service for configuration/icons.
  * @param  {SystemService} SystemService   Service for System information.
@@ -28,6 +30,7 @@ export function appRun(
     $state,
     $stateParams,
     $http,
+    $q,
     localStorageService,
     UtilityService,
     SystemService,
@@ -43,40 +46,43 @@ export function appRun(
   // Change this to point to the Brew-View backend if it's at another location
   $rootScope.apiBaseUrl = '';
 
-  // Set a default config and update it with config from the server
   $rootScope.config = {};
-  UtilityService.getConfig().then(function(response) {
-    let camelData = UtilityService.camelCaseKeys(response.data);
-    angular.extend($rootScope.config, camelData);
-    $rootScope.$broadcast('configLoaded');
-  });
-
-  // Use the SystemService to build the side bar.
-  SystemService.getSystems(false, 'id,name,version').then(function(response) {
-    $rootScope.systems = response.data;
-    $rootScope.$broadcast('systemsLoaded');
-  });
+  $rootScope.systems = [];
 
   $rootScope.themes = {
     'default': false,
     'slate': false,
   };
 
-  $rootScope.changeTheme = function(theme) {
-    localStorageService.set('currentTheme', theme);
-    for (const key of Object.keys($rootScope.themes)) {
-      $rootScope.themes[key] = (key == theme);
-    };
+  $rootScope.doLoad = function() {
+    $rootScope.configPromise = UtilityService.getConfig()
+    .then(
+      (response) => {
+        let camelData = UtilityService.camelCaseKeys(response.data);
+        angular.extend($rootScope.config, camelData);
+      },
+      (response) => {
+        return $q.reject(response);
+      }
+    );
 
-    if ($rootScope.user) {
-      UserService.setTheme($rootScope.user.id, theme);
-    }
-  };
-
-  $rootScope.toggleLogin = function() {
-    // Clicking should always clear the red outline
-    $rootScope.loginError = false;
-    $rootScope.showLogin = !$rootScope.showLogin;
+    $rootScope.systemsPromise = SystemService.getSystems(false, 'id,name,version')
+    .then(
+      (response) => {
+        $rootScope.systems = response.data;
+        $rootScope.$broadcast('systemsLoaded');
+      },
+      (response) => {
+        // This is super annoying.
+        // If any controller is actually using this promise we need to return a
+        // rejection here, otherwise the chained promise will actually resolve
+        // (the success callback will be invoked instead of the failure callback).
+        // But for controllers that don't care if this fails (like the landing
+        // controller) this causes a 'possibly unhandled rejection' since they
+        // haven't constructed a pipeline based on this promise.
+        return $q.reject(response);
+      }
+    );
   };
 
   $rootScope.doLogin = function() {
@@ -92,6 +98,7 @@ export function appRun(
         UserService.loadUser(response.data.token).then(
           (response) => {
             $rootScope.user = response.data;
+            $rootScope.doLoad();
             $rootScope.$broadcast('userChange');
 
             $rootScope.changeTheme($rootScope.user.preferences.theme || 'default');
@@ -117,7 +124,25 @@ export function appRun(
     $http.defaults.headers.common.Authorization = undefined;
 
     $rootScope.user = undefined;
+    $rootScope.doLoad();
     $rootScope.$broadcast('userChange');
+  };
+
+  $rootScope.changeTheme = function(theme) {
+    localStorageService.set('currentTheme', theme);
+    for (const key of Object.keys($rootScope.themes)) {
+      $rootScope.themes[key] = (key == theme);
+    };
+
+    if ($rootScope.user) {
+      UserService.setTheme($rootScope.user.id, theme);
+    }
+  };
+
+  $rootScope.toggleLogin = function() {
+    // Clicking should always clear the red outline
+    $rootScope.loginError = false;
+    $rootScope.showLogin = !$rootScope.showLogin;
   };
 
   // Load up some settings
@@ -221,6 +246,8 @@ export function appRun(
       }
     }
   };
+
+  $rootScope.doLoad();
 };
 
 
