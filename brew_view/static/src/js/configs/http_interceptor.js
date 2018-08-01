@@ -64,7 +64,7 @@ export function authInterceptorService(
               // We're going to retry so clear the bad refresh token so we
               // don't get stuck in an infinite retry cycle
               let $rootScope = $injector.get('$rootScope');
-              $rootScope.logout();
+              $rootScope.doLogout();
 
               // Clear the Authorization header
               rejection.config.headers.Authorization = undefined;
