@@ -8,12 +8,12 @@ commandViewController.$inject = [
   '$state',
   '$stateParams',
   '$sce',
+  '$q',
   'CommandService',
   'RequestService',
   'SystemService',
   'SFBuilderService',
 ];
-
 
 /**
  * commandViewController - Angular controller for a specific command.
@@ -23,6 +23,7 @@ commandViewController.$inject = [
  * @param  {$state} $state             Angular's $state object.
  * @param  {$stateParams} $stateParams Angular's $stateParams object.
  * @param  {$sce} $sce                 Angular's $sce object.
+ * @param  {$q} $q                     Angular's $q object.
  * @param  {Object} CommandService     Beer-Garden's command service object.
  * @param  {Object} RequestService     Beer-Garden's request service object.
  * @param  {Object} SystemService      Beer-Garden's system service object.
@@ -35,6 +36,7 @@ export default function commandViewController(
     $state,
     $stateParams,
     $sce,
+    $q,
     CommandService,
     RequestService,
     SystemService,
@@ -306,52 +308,20 @@ export default function commandViewController(
     $scope.command.loaded = true;
   });
 
-
-  /**
-   * Search the system for the given command name.
-   *
-   * @param {string} commandName - Command Name
-   * @return {string} Command ID
-   */
-  const findCommandID = function(commandName) {
-    for (let command of $scope.system.commands) {
-      if (command.name === commandName) {
-        return command.id;
-      }
-    }
-  };
-
-  /**
-   * Success callback after getting a system.
-   *
-   * @param {Object} response - http response
-   */
-  const systemSuccessCallback = function(response) {
-    $scope.system = response.data;
-    findAndLoadCommand($stateParams.name);
-  };
-
-  /**
-   * Fetch data from the server with the correct callbacks.
-   *
-   * @param {string} commandID - Command ID to load
-   */
-  const loadCommandByID = function(commandID) {
-    CommandService.getCommand(commandID).
-      then($scope.successCallback, $scope.failureCallback);
-  };
-
   /**
    * Find a command, then load that command from the server.
    * @param {string} commandName - command name to load.
    */
   const findAndLoadCommand = function(commandName) {
-    let commandID = findCommandID(commandName);
-    if (!angular.isDefined(commandID) || commandID === null) {
-      $scope.failureCallback({status: 404, data: {message: 'Invalid command Name.'}});
-      return;
+    let command = _.find($scope.system.commands, {name: commandName});
+    if (_.isUndefined(command)) {
+      return $q.reject({status: 404, data: {message: 'No matching command'}});
     }
-    loadCommandByID(commandID);
+
+    // We already have the commands from the fully popluated system, so we could
+    // return $q.resolve({status: 200, data: command});
+    // But this is better as it validates that user has bg-command-read
+    return CommandService.getCommand(command.id);
   };
 
   /**
@@ -361,36 +331,61 @@ export default function commandViewController(
    */
   const findAndLoadSystem = function(systemName, systemVersion) {
     let bareSystem = $rootScope.findSystem(systemName, systemVersion);
-    if (!angular.isDefined(bareSystem) || bareSystem === null) {
-      $scope.failureCallback({status: 404, data: {message: 'Invalid System ID'}});
-      return;
+    if (_.isUndefined(bareSystem)) {
+      return $q.reject({status: 404, data: {message: 'No matching system'}});
     }
 
-    SystemService.getSystem(bareSystem.id, true).
-      then(systemSuccessCallback, $scope.failureCallback);
+    return SystemService.getSystem(bareSystem.id, true);
   };
 
   /**
    * Load data based on state.
+   * Two possiblities:
+   * 1. We have command ID
+   *    Load command, then load system
+   * 2. We have system name + version and the command name
+   *    Load the full system and then find the correct command
    * @param {Object} stateParams - State params.
    */
   const loadData = function(stateParams) {
-    if (Object.keys($scope.system).length === 0) {
-      findAndLoadSystem(stateParams.systemName, stateParams.systemVersion);
-    } else if (angular.isDefined(stateParams.id) && stateParams.id !== null) {
-      loadCommandByID(stateParams.id);
-    } else {
-      findAndLoadCommand(stateParams.name);
-    }
+    $rootScope.systemsPromise.then(
+      () => {
+        if (stateParams.id) {
+          CommandService.getCommand(stateParams.id).then(
+            (cmdResponse) => {
+              SystemService.getSystem(cmdResponse.data.system.id).then(
+                (sysResponse) => {
+                  $scope.system = sysResponse.data;
+                  $scope.successCallback(cmdResponse);
+                },
+                $scope.failureCallback
+              );
+            },
+            $scope.failureCallback
+          );
+        }
+        else {
+          // The 'root' systems list doesn't have full commands so we have to
+          // get a more detailed system
+          findAndLoadSystem(stateParams.systemName, stateParams.systemVersion).then(
+            (sysResponse) => {
+              $scope.system = sysResponse.data;
+              findAndLoadCommand(stateParams.name).then(
+                $scope.successCallback,
+                $scope.failureCallback
+              );
+            },
+            $scope.failureCallback
+          );
+        }
+      },
+      $scope.failureCallback
+    );
   };
 
-  // If we haven't loaded the systems, then we wait for the initial load
-  // before attempting to load a command.
-  if (angular.isDefined($rootScope.systems)) {
+  $scope.$on('userChange', function() {
     loadData($stateParams);
-  } else {
-    $scope.$on('systemsLoaded', function() {
-      loadData($stateParams);
-    });
-  }
+  });
+
+  loadData($stateParams);
 };

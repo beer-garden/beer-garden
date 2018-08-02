@@ -74,7 +74,7 @@ export default function routeConfig($stateProvider, $urlRouterProvider) {
     })
     // Unused by our UI, but helpful for external links.
     .state('commandID', {
-      url: '/commands/:command_id',
+      url: '/commands/:id',
       templateUrl: basePath + 'command_view.html',
       controller: 'CommandViewController',
       params: {
