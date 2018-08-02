@@ -129,13 +129,13 @@ export function appRun(
     $rootScope.$broadcast('userChange');
   };
 
-  $rootScope.changeTheme = function(theme) {
+  $rootScope.changeTheme = function(theme, sendUpdate) {
     localStorageService.set('currentTheme', theme);
     for (const key of Object.keys($rootScope.themes)) {
       $rootScope.themes[key] = (key == theme);
     };
 
-    if ($rootScope.user) {
+    if ($rootScope.user && sendUpdate) {
       UserService.setTheme($rootScope.user.id, theme);
     }
   };

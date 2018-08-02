@@ -62,7 +62,7 @@
           <ul class="dropdown-menu">
             <li ng-repeat="(style, enabled) in themes">
               <div style="padding: 3px 15px; cursor: pointer;"
-                    ng-click="changeTheme(style)">
+                    ng-click="changeTheme(style, true)">
                 <span class="fa" ng-class="{'fa-check': enabled, 'fa-fw': !enabled}"></span>
                 <span>{{style}}</span>
               </div>
