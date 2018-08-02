@@ -21,6 +21,10 @@
 .navbar-nav{
     margin-right: 0px !important;
 }
+.dropdown-menu{
+    min-width: 110px;
+}
+
 /* Ace editors */
 .ace-tm, .ace-dawn{
     background-color: rgba(255,255,255, .6) !important;

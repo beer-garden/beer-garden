@@ -207,7 +207,11 @@ table.dataTable{
     cursor: default;
 }
 
+.dropdown-menu{
+    min-width: 110px;
+}
+
 .red-border{
-  border: 2px solid red;
-  margin: -2px;
+    border: 2px solid red;
+    margin: -2px;
 }
