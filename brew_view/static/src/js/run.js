@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import {camelCaseKeys} from './services/utility_service.js';
 
 appRun.$inject = [
@@ -216,18 +217,19 @@ export function appRun(
    * @return {Object} The latest system or undefined if it is not found.
    */
   $rootScope.findSystem = function(name, version) {
-    let latestSystem;
-    for (let system of $rootScope.systems) {
-      if (system.name === name) {
-        if (!angular.isDefined(latestSystem)) {
-          latestSystem = system;
-        }
+    if (version !== 'latest') {
+      return _.find($rootScope.systems, {name: name, version: version});
+    }
 
-        if (system.version === version) {
-          return system;
-        } else if (version === 'latest' && isLaterVersion(system, latestSystem)) {
-          latestSystem = system;
-        }
+    let filteredSystems = _.filter($rootScope.systems, {name: name});
+    if (_.isEmpty(filteredSystems)) {
+      return undefined;
+    }
+
+    let latestSystem = filteredSystems[0];
+    for (let system of $rootScope.systems) {
+      if (isLaterVersion(system, latestSystem)) {
+        latestSystem = system;
       }
     }
     return latestSystem;
