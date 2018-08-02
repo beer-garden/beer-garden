@@ -2,6 +2,7 @@
 commandIndexController.$inject = [
   '$rootScope',
   '$scope',
+  '$q',
   'SystemService',
   'CommandService',
   'DTOptionsBuilder',
@@ -9,8 +10,9 @@ commandIndexController.$inject = [
 
 /**
  * commandIndexController - Angular controller for all commands page.
- * @param  {$rootScope} $rootScope     Angular's $rootScope object.
+ * @param  {$rootScope} $rootScope   Angular's $rootScope object.
  * @param  {$scope} $scope           Angular's $scope object.
+ * @param  {$q} $q                   Angular's $q object.
  * @param  {Object} SystemService    Beer-Garden system service.
  * @param  {Object} CommandService   Beer-Garden command service.
  * @param  {Object} DTOptionsBuilder Data-tables' builder for options.
@@ -18,6 +20,7 @@ commandIndexController.$inject = [
 export default function commandIndexController(
   $rootScope,
   $scope,
+  $q,
   SystemService,
   CommandService,
   DTOptionsBuilder) {
@@ -78,7 +81,7 @@ export default function commandIndexController(
   };
 
   $scope.successCallback = function(response) {
-    let systems = response.data;
+    let systems = response['systems'].data;
     let commands = [];
 
     // Sort the systems
@@ -113,7 +116,7 @@ export default function commandIndexController(
 
     $scope.commands.data = commands;
     $scope.commands.loaded = true;
-    $scope.commands.status = response.status;
+    $scope.commands.status = response['systems'].status;
     $scope.commands.error = false;
     $scope.commands.errorMessage = '';
   };
@@ -129,7 +132,12 @@ export default function commandIndexController(
   const loadCommands = function() {
     $rootScope.systemsPromise.then(
       () => {
-        SystemService.getSystems().then(
+        // We don't actually use the CommandService.getCommands(), but make the
+        // call just to verify that the user has bg-command-read
+        $q.all({
+          commands: CommandService.getCommands(),
+          systems: SystemService.getSystems(),
+        }).then(
           $scope.successCallback,
           $scope.failureCallback
         );
