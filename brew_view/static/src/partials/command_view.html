@@ -1,3 +1,17 @@
+<div ng-show="!manualOverride && !template">
+  <h1 class='page-header'>
+    <span>Make Request</span>
+    <span ng-show="command.loaded && !command.error">
+      <small>{{system.display_name || system.name}}[{{system.version}}] - {{command.data.name}}</small>
+      <bg-status class="pull-right" target='system.status'></bg-status>
+    </span>
+  </h1>
+  <div ng-show="command.loaded && !command.error && command.data.description"
+       style="margin:-15px 3px 20px">
+    {{command.data.description}}
+  </div>
+</div>
+
 <loading      loader="command"></loading>
 <server-error loader="command"></server-error>
 <empty        loader="command" label="command"></empty>
@@ -6,15 +20,7 @@
   <div ng-bind-html="template"></div>
 </div>
 
-<div ng-show="command.loaded && !command.error && system && !template && !manualOverride">
-  <h1 class='page-header'>
-    <span>System "{{system.display_name || system.name}}" Command "{{command.data.name}}"</span>
-    <bg-status class="pull-right" target='system.status'></bg-status>
-  </h1>
-  <div ng-show=command.data.description style="margin:-15px 3px 20px">
-    {{command.data.description}}
-  </div>
-
+<div ng-show="command.loaded && !command.error && !template && !manualOverride">
   <div class="container-fluid">
     <div class="row" ng-if="createError">
       <div class="col-md-offset-1 col-md-10">
