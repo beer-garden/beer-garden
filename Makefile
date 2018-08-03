@@ -49,6 +49,10 @@ deps-python-master: ## install bg dependencies from master
 	pip install -e git+https://github.com/beer-garden/bg-utils@master#egg=bg-utils
 	pip install -e git+https://github.com/beer-garden/brewtils@master#egg=brewtils
 
+deps-python-develop: ## install bg dependencies from develop
+	pip install -e git+https://github.com/beer-garden/bg-utils@develop#egg=bg-utils
+	pip install -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
+
 deps-js: ## install js dependencies
 	$(MAKE) -C $(JS_DIR) deps
 
