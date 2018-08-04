@@ -81,13 +81,24 @@ class BartenderHandler(object):
         admin_args = {'auto_delete': True}
         admin_queue = self.clients['pika'].setup_queue(admin_keys[-1], admin_args, admin_keys)
 
+        connection = {
+            'host': bartender.config.publish_hostname,
+            'port': bartender.config.amq.connections.message.port,
+            'user': bartender.config.amq.connections.message.user,
+            'password': bartender.config.amq.connections.message.password,
+            'virtual_host': bartender.config.amq.virtual_host,
+            'ssl': {
+                'enabled': bartender.config.amq.connections.message.ssl.enabled,
+            },
+        }
+
         instance.status = 'INITIALIZING'
         instance.status_info = StatusInfo(heartbeat=datetime.utcnow())
         instance.queue_type = 'rabbitmq'
         instance.queue_info = {
-            'url': self.clients['public'].connection_url,
+            'admin': admin_queue,
             'request': req_queue,
-            'admin': admin_queue
+            'connection': connection,
         }
         instance.save()
 
