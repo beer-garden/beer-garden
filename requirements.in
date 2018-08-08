@@ -5,8 +5,10 @@ futures ; python_version < "3.0"
 mongoengine
 passlib
 pika
+ruamel.ordereddict ; python_version < "3.0"
+ruamel.yaml
 thriftpy
-yapconf[yaml]
+yapconf
 
 # Documentation Dependencies
 sphinx

@@ -53,8 +53,8 @@ pytz==2018.5
 pyyaml==3.13              # via watchdog
 requests-toolbelt==0.8.0  # via twine
 requests==2.19.1          # via codecov, requests-toolbelt, sphinx, twine
-ruamel.ordereddict==0.4.13  # via ruamel.yaml
-ruamel.yaml==0.15.51      # via yapconf
+ruamel.ordereddict==0.4.13 ; python_version < "3.0"
+ruamel.yaml==0.15.51
 scandir==1.8              # via pathlib2
 simplejson==3.16.0
 six==1.11.0               # via mock, mongoengine, more-itertools, packaging, pathlib2, pytest, sphinx, tox, yapconf
@@ -72,4 +72,4 @@ virtualenv==16.0.0        # via tox
 watchdog==0.8.3
 wheel==0.31.1
 wrapt==1.10.11
-yapconf[yaml]==0.3.3
+yapconf==0.3.3
