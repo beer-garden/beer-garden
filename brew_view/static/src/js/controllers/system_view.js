@@ -1,4 +1,4 @@
-import angular from 'angular';
+import _ from 'lodash';
 
 systemViewController.$inject = [
   '$rootScope',
@@ -114,31 +114,27 @@ export default function systemViewController(
   };
 
   const loadSystem = function(stateParams) {
-    let systemId;
-    if (!angular.isDefined(stateParams.id)) {
-      let system = $rootScope.findSystem($stateParams.name, $stateParams.version);
-      if (!angular.isDefined(system)) {
-        $scope.failureCallback({status: 404, message: 'Invalid system ID'});
-        return;
-      }
-      systemId = system.id;
+    if (_.isUndefined(stateParams.id)) {
+      $rootScope.findSystem($stateParams.name, $stateParams.version).then(
+        (system) => {
+          SystemService.getSystem(system.id, true).then(
+            $scope.successCallback,
+            $scope.failureCallback
+          );
+        },
+        $scope.failureCallback
+      );
     } else {
-      systemId = $stateParams.id;
+      SystemService.getSystem(stateParams.id, true).then(
+        $scope.successCallback,
+        $scope.failureCallback
+      );
     }
-
-    SystemService.getSystem(systemId, true).
-      then($scope.successCallback, $scope.failureCallback);
   };
 
   $scope.$on('userChange', function() {
     loadSystem($stateParams);
   });
 
-  if (angular.isDefined($rootScope.systems)) {
-    loadSystem($stateParams);
-  } else {
-    $scope.$on('systemsLoaded', function() {
-      loadSystem($stateParams);
-    });
-  }
+  loadSystem($stateParams);
 };

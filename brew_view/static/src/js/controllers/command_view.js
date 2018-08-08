@@ -330,12 +330,11 @@ export default function commandViewController(
    * @param {string} systemVersion - Version of the system to load.
    */
   const findAndLoadSystem = function(systemName, systemVersion) {
-    let bareSystem = $rootScope.findSystem(systemName, systemVersion);
-    if (_.isUndefined(bareSystem)) {
-      return $q.reject({status: 404, data: {message: 'No matching system'}});
-    }
-
-    return SystemService.getSystem(bareSystem.id, true);
+    return $rootScope.findSystem(systemName, systemVersion).then(
+      (bareSystem) => {
+        return SystemService.getSystem(bareSystem.id, true);
+      }
+    );
   };
 
   /**
@@ -367,7 +366,9 @@ export default function commandViewController(
         else {
           // The 'root' systems list doesn't have full commands so we have to
           // get a more detailed system
-          findAndLoadSystem(stateParams.systemName, stateParams.systemVersion).then(
+          findAndLoadSystem(
+              stateParams.systemName,
+              stateParams.systemVersion).then(
             (sysResponse) => {
               $scope.system = sysResponse.data;
               findAndLoadCommand(stateParams.name).then(

@@ -71,13 +71,12 @@ export function appRun(
     .then(
       (response) => {
         $rootScope.systems = response.data;
-        $rootScope.$broadcast('systemsLoaded');
       },
       (response) => {
         // This is super annoying.
         // If any controller is actually using this promise we need to return a
         // rejection here, otherwise the chained promise will actually resolve
-        // (the success callback will be invoked instead of the failure callback).
+        // (success callback will be invoked instead of failure callback).
         // But for controllers that don't care if this fails (like the landing
         // controller) this causes a 'possibly unhandled rejection' since they
         // haven't constructed a pipeline based on this promise.
@@ -217,22 +216,35 @@ export function appRun(
    * @return {Object} The latest system or undefined if it is not found.
    */
   $rootScope.findSystem = function(name, version) {
-    if (version !== 'latest') {
-      return _.find($rootScope.systems, {name: name, version: version});
-    }
+    let notFound = {status: 404, data: {message: 'No matching system'}};
 
-    let filteredSystems = _.filter($rootScope.systems, {name: name});
-    if (_.isEmpty(filteredSystems)) {
-      return undefined;
-    }
+    return $rootScope.systemsPromise.then(
+      () => {
+        if (version !== 'latest') {
+          let sys = _.find($rootScope.systems, {name: name, version: version});
 
-    let latestSystem = filteredSystems[0];
-    for (let system of $rootScope.systems) {
-      if (isLaterVersion(system, latestSystem)) {
-        latestSystem = system;
+          if (_.isUndefined(sys)) {
+            return $q.reject(notFound);
+          } else {
+            return $q.resolve(sys);
+          }
+        }
+
+        let filteredSystems = _.filter($rootScope.systems, {name: name});
+        if (_.isEmpty(filteredSystems)) {
+          return $q.reject(notFound);
+        }
+
+        let latestSystem = filteredSystems[0];
+        for (let system of $rootScope.systems) {
+          if (isLaterVersion(system, latestSystem)) {
+            latestSystem = system;
+          }
+        }
+
+        return $q.resolve(latestSystem);
       }
-    }
-    return latestSystem;
+    );
   };
 
 
