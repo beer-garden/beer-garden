@@ -4,9 +4,10 @@
 -e git+https://github.com/beer-garden/bg-utils@develop#egg=bg-utils
 future ; python_version < "3.0"
 futures ; python_version < "3.0"
-subprocess32 ; python_version < "3.0"
-pika
 pyrabbit2
+ruamel.ordereddict ; python_version < "3.0"
+ruamel.yaml
+subprocess32 ; python_version < "3.0"
 
 # Documentation Dependencies
 sphinx
