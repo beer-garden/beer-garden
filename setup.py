@@ -17,7 +17,7 @@ setup(
     name='bg-utils',
     version=find_version('bg_utils/_version.py'),
     description='Shared utilities for beer-garden application components',
-    url=' ',
+    url='https://beer-garden.io/',
     author='The beer-garden Team',
     author_email=' ',
     license='MIT',
