@@ -6,7 +6,7 @@
 #
 -e git+https://github.com/beer-garden/bg-utils@develop#egg=bg-utils
 -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
-alabaster==0.7.10         # via sphinx
+alabaster==0.7.11         # via sphinx
 apispec==0.38.0
 apscheduler==3.5.1
 argh==0.26.2              # via watchdog
@@ -20,61 +20,66 @@ codecov==2.0.15
 configparser==3.5.0       # via flake8
 coverage==4.5.1
 docutils==0.14            # via sphinx
-enum34==1.1.6             # via brewtils, flake8
+enum34==1.1.6             # via flake8
 flake8==3.5.0
-funcsigs==1.0.2           # via mock, pytest
+funcsigs==1.0.2           # via apscheduler, mock, pytest
 futures==3.2.0 ; python_version < "3.0"
 idna==2.7                 # via requests
 imagesize==1.0.0          # via sphinx
 jinja2==2.10              # via sphinx
-lark-parser==0.5.6        # via brewtils
+lark-parser==0.6.3
 markupsafe==1.0           # via jinja2
-marshmallow==2.15.3       # via brewtils
+marshmallow-polyfield==3.2
+marshmallow==2.15.4       # via marshmallow-polyfield
 mccabe==0.6.1             # via flake8
 mock==2.0.0
-mongoengine==0.15.0       # via bg-utils
+mongoengine==0.15.3
 mongomock==3.10.0
-more-itertools==4.2.0     # via pytest
-packaging==17.1           # via sphinx
-passlib==1.7.1            # via bg-utils
+more-itertools==4.3.0     # via pytest
+packaging==17.1           # via sphinx, tox
+passlib==1.7.1
+pathlib2==2.3.2           # via pytest
 pathtools==0.1.2          # via watchdog
-pbr==4.0.4                # via mock
-pika==0.12.0              # via brewtils
+pbr==4.2.0                # via mock
+pika==0.12.0
 pkginfo==1.4.2            # via twine
-pluggy==0.6.0             # via pytest, tox
+pluggy==0.7.1             # via pytest, tox
 ply==3.11                 # via thriftpy
-prometheus-client==0.2.0
-py==1.5.3                 # via pytest, tox
+prometheus-client==0.3.1
+py==1.5.4                 # via pytest, tox
 pycodestyle==2.3.1        # via flake8
 pyflakes==1.6.0           # via flake8
 pygments==2.2.0           # via sphinx
 pyjwt==1.6.4
-pymongo==3.6.1            # via mongoengine
+pymongo==3.7.1            # via mongoengine
 pyparsing==2.2.0          # via packaging
-pytest==3.6.1
+pytest==3.7.1
 python-box==3.2.0         # via yapconf
-pytz==2018.4
+pytz==2018.5
 pyyaml==3.13              # via apispec, watchdog
 requests-toolbelt==0.8.0  # via twine
-requests==2.19.0          # via brewtils, codecov, requests-toolbelt, sphinx, twine
-ruamel.yaml==0.15.37      # via bg-utils
+requests==2.19.1          # via codecov, requests-toolbelt, sphinx, twine
+ruamel.ordereddict==0.4.13 ; python_version < "3.0"
+ruamel.yaml==0.15.51
+scandir==1.8              # via pathlib2
 sentinels==1.0.0          # via mongomock
-simplejson==3.15.0        # via brewtils
+simplejson==3.16.0
 singledispatch==3.4.0.3   # via tornado
-six==1.11.0               # via apscheduler, brewtils, mock, mongoengine, mongomock, more-itertools, packaging, pytest, singledispatch, sphinx, tox, yapconf
+six==1.11.0               # via apscheduler, mock, mongoengine, mongomock, more-itertools, packaging, pathlib2, pytest, singledispatch, sphinx, tox, yapconf
 snowballstemmer==1.2.1    # via sphinx
-sphinx-rtd-theme==0.4.0
-sphinx==1.7.5
+sphinx-rtd-theme==0.4.1
+sphinx==1.7.6
 sphinxcontrib-websupport==1.1.0  # via sphinx
-thriftpy==0.3.9           # via bg-utils
-tornado==5.0.2
-tox==3.0.0
-tqdm==4.23.4              # via twine
+thriftpy==0.3.9
+tornado==5.1
+tox==3.1.3
+tqdm==4.24.0              # via twine
 twine==1.11.0
+typing==3.6.4             # via sphinx
 tzlocal==1.5.1            # via apscheduler
 urllib3==1.23             # via requests
 virtualenv==16.0.0        # via tox
 watchdog==0.8.3
 wheel==0.31.1
-wrapt==1.10.11            # via brewtils
-yapconf[yaml]==0.3.3      # via bg-utils, brewtils
+wrapt==1.10.11
+yapconf==0.3.3

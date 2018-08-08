@@ -2,12 +2,13 @@
 # Dependencies
 -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
 -e git+https://github.com/beer-garden/bg-utils@develop#egg=bg-utils
-futures ; python_version < "3.0"
-apispec
+apispec < 0.39
 apscheduler
-pyjwt
-tornado
-prometheus_client
+futures ; python_version < "3.0"
+ruamel.ordereddict ; python_version < "3.0"
+ruamel.yaml
+tornado < 6
+prometheus_client < 1
 
 # Documentation Dependencies
 sphinx

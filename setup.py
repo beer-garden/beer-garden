@@ -30,10 +30,10 @@ setup(
     include_package_data=True,
     install_requires=[
         "apispec==0.38.0",
+        "apscheduler==3.5.1",
         "bg-utils>=2.3.6",
-        "tornado==5.0.2",
-        "prometheus_client<1.0.0",
-        "apscheduler<=3.5.1",
+        "prometheus_client==0.3.1",
+        "tornado==5.1",
     ],
     extras_require={
         ':python_version=="2.7"': [
