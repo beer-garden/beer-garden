@@ -99,6 +99,7 @@ class BartenderHandler(object):
             'admin': admin_queue,
             'request': req_queue,
             'connection': connection,
+            'url': self.clients['public'].connection_url,
         }
         instance.save()
 
