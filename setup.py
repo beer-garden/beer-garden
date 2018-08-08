@@ -22,7 +22,7 @@ setup(
     version=find_version('brew_view/_version.py'),
     description='Beergarden Frontend',
     long_description=readme,
-    url=' ',
+    url='https://beer-garden.io/',
     author='The beer-garden Team',
     author_email=' ',
     license='MIT',
