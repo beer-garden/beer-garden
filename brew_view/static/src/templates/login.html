@@ -1,9 +1,17 @@
 
-<div style="position: absolute; padding: 10px; background: #555555;">
+<div id="login">
   <form>
-    <label>Username: <input type="text" ng-model="login.username" /></label>
+    <label>
+      <span>Username:</span>
+      <input type="text" ng-model="login.username" />
+    </label>
     <br>
-    <label>Password: <input type="password" ng-model="login.password" /></label>
+    <label>
+      <span>Password:</span>
+      <input type="password"
+             ng-model="login.password"
+             ng-class="{'red-border': badPassword}" />
+    </label>
     <br>
     <input type="submit" value="Login" ng-click="submitFunc()">
   </form>

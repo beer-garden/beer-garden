@@ -42,7 +42,9 @@
           <a href="" ng-click="toggleLogin()">Login</a>
 
           <div ng-show="showLogin">
-            <login login-info="loginInfo" submit-func="doLogin"></login>
+            <login login-info="loginInfo"
+                   submit-func="doLogin"
+                   bad-password="badPassword"></login>
           </div>
         </li>
 

@@ -10,6 +10,7 @@ export default function loginDirective() {
     scope: {
       login: '=loginInfo',
       submitFunc: '<',
+      badPassword: '<',
     },
     template: template,
   };

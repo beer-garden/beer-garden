@@ -213,5 +213,16 @@ table.dataTable{
 
 .red-border{
     border: 2px solid red;
+    border-radius: 4px;
+}
+
+.navbar-nav > .red-border{
     margin: -2px;
+}
+
+#login{
+    background: #EEEEEE;
+    border-radius: 4px;
+    padding: 10px;
+    position: absolute;
 }

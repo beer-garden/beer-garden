@@ -44,6 +44,7 @@ export function appRun(
   $rootScope.loginInfo = {};
   $rootScope.showLogin = false;
   $rootScope.loginError = false;
+  $rootScope.badPassword = false;
 
   // Change this to point to the Brew-View backend if it's at another location
   $rootScope.apiBaseUrl = '';
@@ -86,11 +87,13 @@ export function appRun(
   };
 
   $rootScope.doLogin = function() {
-    TokenService.doLogin($rootScope.loginInfo.username,
-                         $rootScope.loginInfo.password).then(
+    TokenService.doLogin(
+        $rootScope.loginInfo.username,
+        $rootScope.loginInfo.password).then(
       (response) => {
         $rootScope.loginInfo = {};
         $rootScope.showLogin = false;
+        $rootScope.badPassword = false;
 
         TokenService.handleRefresh(response.data.refresh);
         TokenService.handleToken(response.data.token);
@@ -108,6 +111,7 @@ export function appRun(
         );
       }, (response) => {
         console.log('bad login');
+        $rootScope.badPassword = true;
         $rootScope.loginInfo.password = undefined;
       }
     );
