@@ -8,7 +8,7 @@ adminService.$inject = ['$http'];
  */
 export default function adminService($http) {
   return {
-    rescan: function() {
+    rescan: () => {
       return $http.patch('api/v1/admin/', {operation: 'rescan'});
     },
   };

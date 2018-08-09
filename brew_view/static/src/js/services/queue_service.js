@@ -8,13 +8,13 @@ queueService.$inject = ['$http'];
  */
 export default function queueService($http) {
   return {
-    getQueues: function(success, error) {
+    getQueues: (success, error) => {
       return $http.get('api/v1/queues');
     },
-    clearQueues: function() {
+    clearQueues: () => {
       return $http.delete('api/v1/queues');
     },
-    clearQueue: function(name) {
+    clearQueue: (name) => {
       return $http.delete('api/v1/queues/' + name);
     },
   };
