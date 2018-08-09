@@ -29,6 +29,7 @@ export default function landingController(
   $scope.systems = {
     data: [],
     loaded: false,
+    loading: true,
     error: false,
     errorMessage: '',
     status: null,
@@ -71,6 +72,7 @@ export default function landingController(
     $rootScope.systems = response.data;
     $scope.systems.data = response.data;
     $scope.systems.loaded = true;
+    $scope.systems.loading = false;
     $scope.systems.error = false;
     $scope.systems.status = response.status;
     $scope.systems.errorMessage = '';
@@ -79,6 +81,7 @@ export default function landingController(
   $scope.failureCallback = function(response) {
     $scope.systems.data = [];
     $scope.systems.loaded = false;
+    $scope.systems.loading = false;
     $scope.systems.error = true;
     $scope.systems.status = response.status;
     $scope.systems.errorMessage = response.data.message;
@@ -89,6 +92,8 @@ export default function landingController(
   };
 
   function loadSystems() {
+    $scope.systems.loading = true;
+
     SystemService.getSystems(false).then(
       $scope.successCallback,
       $scope.failureCallback

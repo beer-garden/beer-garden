@@ -1,8 +1,6 @@
 <h1 class='page-header'>Available Systems</h1>
 
-<loading      loader="systems"></loading>
-<server-error loader="systems"></server-error>
-<empty        loader="systems" label="systems"></empty>
+<fetch-data loader="systems" label="systems"></fetch-data>
 
 <div id="systems-container" class="animate-if" ng-if="systems.loaded && !systems.error">
 
