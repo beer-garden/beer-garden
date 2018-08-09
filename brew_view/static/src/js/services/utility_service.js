@@ -111,6 +111,9 @@ export default function utilityService($rootScope, $http) {
     getConfig: () => {
       return $http.get('config');
     },
+    getVersion: () => {
+      return $http.get('version');
+    },
     login: () => {
       return $http.get('login');
     },

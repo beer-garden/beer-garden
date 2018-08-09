@@ -1,12 +1,12 @@
 
-AboutController.$inject = ['$scope', 'VersionService'];
+AboutController.$inject = ['$scope', 'UtilityService'];
 
 /**
  * AboutController - Angular controller for the about page.
  * @param  {$scope} $scope         Angular's $scope object.
  * @param  {Object} VersionService Beer-Garden's version service object.
  */
-export default function AboutController($scope, VersionService) {
+export default function AboutController($scope, UtilityService) {
   $scope.version = {
     data: {},
     loaded: false,
@@ -42,6 +42,8 @@ export default function AboutController($scope, VersionService) {
     $scope.version.errorMessage = response.data.message;
   },
 
-  VersionService.getVersionInfo()
-    .then($scope.successCallback, $scope.failureCallback);
+  UtilityService.getVersion().then(
+    $scope.successCallback,
+    $scope.failureCallback
+  );
 };
