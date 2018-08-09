@@ -29,10 +29,10 @@
             <th width="60%">Description</th>
             <th width="25%">Resolution</th>
           </tr>
-          <tr ng-repeat="solution in loader.errorMap.empty.solutions">
-            <td ng-bind-html="solution.problem"></td>
-            <td ng-bind-html="solution.description"></td>
-            <td ng-bind-html="solution.resolution"></td>
+          <tr ng-repeat="errorItem in errorMap[label]">
+            <td ng-bind-html="errorItem.problem"></td>
+            <td ng-bind-html="errorItem.description"></td>
+            <td ng-bind-html="errorItem.resolution"></td>
           </tr>
         </table>
       </div>

@@ -83,6 +83,7 @@ import permissionService from './js/services/permission_service.js';
 import tokenService from './js/services/token_service.js';
 import utilityService from './js/services/utility_service.js';
 import jobService from './js/services/job_service.js';
+import errorService from './js/services/error_service.js';
 
 import aboutController from './js/controllers/about.js';
 import adminQueueController from './js/controllers/admin_queue.js';
@@ -170,6 +171,7 @@ angular.module('bgApp',
 .factory('TokenService', tokenService)
 .factory('UtilityService', utilityService)
 .factory('JobService', jobService)
+.factory('ErrorService', errorService)
 
 .controller('AboutController', aboutController)
 .controller('AdminQueueController', adminQueueController)

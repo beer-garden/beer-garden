@@ -65,26 +65,6 @@ export default function commandViewController(
     status: null,
     error: false,
     errorMessage: '',
-    errorMap: {
-      'empty': {
-        'solutions': [
-          {
-            problem: 'ID is incorrect',
-            description: 'The Backend has restarted and the ID changed of the command you were ' +
-                         'looking at',
-            resolution: 'Click the ' + $scope.config.applicationName + ' logo at the top left ' +
-                        'and refresh the page',
-          },
-          {
-            problem: 'The Plugin Stopped',
-            description: 'The plugin could have been stopped. You should probably contact the ' +
-                         'plugin maintainer. You should be able to tell what\'s wrong by their ' +
-                         'logs. Plugins are located at <code>$APP_HOME/plugins</code>',
-            resolution: '<kbd>less $APP_HOME/log/my-plugin.log</kbd>',
-          },
-        ],
-      },
-    },
   };
 
   $scope.createRequestWrapper = function(requestPrototype, ...args) {
