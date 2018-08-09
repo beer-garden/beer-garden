@@ -114,12 +114,6 @@ export default function utilityService($rootScope, $http) {
     getVersion: () => {
       return $http.get('version');
     },
-    login: () => {
-      return $http.get('login');
-    },
-    logout: () => {
-      return $http.get('logout');
-    },
     getIcon: (iconName) => {
       if (iconName === undefined || iconName == null) {
         if ($rootScope.config === undefined ||
