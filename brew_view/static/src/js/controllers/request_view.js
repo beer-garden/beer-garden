@@ -132,20 +132,19 @@ export default function requestViewController(
     // We need to find system attached to request
     // And find out if the status of that instance is up
     if (!RequestService.isComplete(response.data)) {
-      // Get promise to get id of system associated with the response
-      SystemService.getSystemID(response.data).then(function(systemId) {
-        // Using the system ID we can then get the system and instances
-        SystemService.getSystem(systemId, false).then(function(systemObj) {
-          for (let i = 0; i < systemObj.data.instances.length; i++) {
-            if (systemObj.data.instances[i].name == response.data.instance_name) {
-              // It's possible the instance comes back up before we get here so we don't want
-              // to show it is running yet so in the html we need to put an ngif against
-              // instanceStatus == 'RUNNING'
-              $scope.instanceStatus = systemObj.data.instances[i].status;
+      $scope.findSystem(response.data.system, response.data.system_version).then(
+        (bareSystem) => {
+          SystemService.getSystem(bareSystem.id, false).then(
+            (systemObj) => {
+              for (let i = 0; i < systemObj.data.instances.length; i++) {
+                if (systemObj.data.instances[i].name === response.data.instance_name) {
+                  $scope.instanceStatus = systemObj.data.instances[i].status;
+                }
+              }
             }
-          }
-        });
-      });
+          );
+        }
+      );
     }
 
     // If the children view is expanded we have to do a little update
