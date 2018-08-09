@@ -66,6 +66,7 @@ import {interceptorService, authInterceptorService, interceptorConfig}
 import emptyDirective from './js/directives/empty.js';
 import loadingDirective from './js/directives/loading.js';
 import serverErrorDirective from './js/directives/server_error.js';
+import fetchDataDirective from './js/directives/fetch_data.js';
 import bgStatusDirective from './js/directives/system_status.js';
 import loginDirective from './js/directives/login.js';
 import './js/directives/dataTables.lcf.datetimepicker.fr.js';
@@ -154,6 +155,7 @@ angular.module('bgApp',
 .directive('empty', emptyDirective)
 .directive('loading', loadingDirective)
 .directive('serverError', serverErrorDirective)
+.directive('fetchData', fetchDataDirective)
 .directive('bgStatus', bgStatusDirective)
 .directive('login', loginDirective)
 

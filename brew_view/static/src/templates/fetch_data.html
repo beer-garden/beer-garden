@@ -1,0 +1,80 @@
+
+<!-- Loading -->
+<div class="col-md-12" ng-if="loader.loading">
+  <h2 ng-show="showSpin">
+    <i class="fa fa-cog fa-spin fa-2x"></i>
+    <span>Loading</span>
+  </h2>
+</div>
+
+<div ng-if="!loader.loading">
+  <!-- Empty -->
+  <div class="col-md-12"
+       ng-if="(!loader.error && loader.data.length === 0) ||
+              (loader.status === 404)">
+    <div class="panel panel-warning">
+      <div class="panel-heading">
+        <h2><strong> Hmmm...</strong> No {{label}} could be found</h2>
+      </div>
+      <div class="panel-body">
+        <p>
+          There are a couple of explanations for why there would be no
+          {{label}}. Check out below for troubleshooting steps.
+        </p>
+        <table class="table">
+          <tr>
+            <th width="15%">Problem</th>
+            <th width="60%">Description</th>
+            <th width="25%">Resolution</th>
+          </tr>
+          <tr ng-repeat="solution in loader.errorMap.empty.solutions">
+            <td ng-bind-html="solution.problem"></td>
+            <td ng-bind-html="solution.description"></td>
+            <td ng-bind-html="solution.resolution"></td>
+          </tr>
+        </table>
+      </div>
+      <div class="panel-footer">
+        <p>
+          If none of the above solutions seem to solve the problem,
+          please check in with your System Administrator.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="col-md-12" ng-if="loader.error && loader.status !== 404">
+    <div class="panel panel-danger">
+      <div class="panel-heading">
+        <h2>
+          <i class="fa fa-bug"></i>
+          <strong>Oh Snap!</strong>
+          <span>Something unexpected happened on the server</span>
+        </h2>
+      </div>
+      <div class="panel-body">
+        <dl class="dl-horizontal">
+          <dt>Server Message</dt>
+          <dd>{{ loader.errorMessage }}</dd>
+          <dt>Next Steps</dt>
+          <dd>
+            <span>Is the above message not helpful? Sorry about that</span>
+            <i class="fa fa-frown-o"></i>
+            <br />
+            <p>
+              Please check the Troubleshooting Guide in the About section for
+              help, or possibly restart the application.
+            </p>
+          </dd>
+        </dl>
+      </div>
+      <div class="panel-footer">
+        <p>
+          If none of the above is helpful please check in with your
+          System Administrator.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
