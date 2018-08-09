@@ -66,11 +66,7 @@ export default function requestViewController(
       return false;
     }
 
-    if (RequestService.completeStatuses.indexOf(request.status) != -1) {
-      return true;
-    }
-
-    return false;
+    return RequestService.isComplete(request);
   };
 
   $scope.formatOutput = function() {
