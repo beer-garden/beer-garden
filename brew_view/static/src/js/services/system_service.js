@@ -24,7 +24,7 @@ export default function systemService($http) {
 
   SystemService.reloadSystem = function(system) {
     return $http.patch('api/v1/systems/' + system.id,
-      {operations: [{operation: 'reload', path: '', value: ''}]}
+      {operation: 'reload', path: '', value: ''}
     );
   };
 
