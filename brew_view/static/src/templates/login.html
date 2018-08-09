@@ -1,18 +1,18 @@
 
 <div id="login">
   <form>
-    <label>
-      <span>Username:</span>
-      <input type="text" ng-model="login.username" />
-    </label>
+    <input type="text"
+           placeholder="username"
+           ng-model="login.username" />
     <br>
-    <label>
-      <span>Password:</span>
-      <input type="password"
-             ng-model="login.password"
-             ng-class="{'red-border': badPassword}" />
-    </label>
+    <input type="password"
+           placeholder="password"
+           ng-model="login.password"
+           ng-class="{'red-border': badPassword}" />
     <br>
-    <input type="submit" value="Login" ng-click="submitFunc()">
+    <input type="submit"
+           value="Login"
+           class="btn btn-primary w-100"
+           ng-click="submitFunc()">
   </form>
 </div>

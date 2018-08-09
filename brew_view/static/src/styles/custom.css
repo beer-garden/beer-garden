@@ -226,3 +226,9 @@ table.dataTable{
     padding: 10px;
     position: absolute;
 }
+#login input{
+  margin: 5px 0;
+}
+#login .btn{
+  margin-top: 15px;
+}
