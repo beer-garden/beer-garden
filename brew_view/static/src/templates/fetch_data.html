@@ -1,10 +1,12 @@
 
 <!-- Loading -->
-<div class="col-md-12" ng-if="loader.loading">
-  <h2 ng-show="showSpin">
-    <i class="fa fa-cog fa-spin fa-2x"></i>
-    <span>Loading</span>
-  </h2>
+<div id="loading"
+     class="col-md-12 text-center"
+     ng-if="loader.loading">
+  <h1 ng-show="showSpin">
+    <div>Loading...</div>
+    <div><i class="fa fa-spinner fa-spin fa-2x"></i></div>
+  </h1>
 </div>
 
 <div ng-if="!loader.loading">

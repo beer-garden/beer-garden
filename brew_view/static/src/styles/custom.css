@@ -232,3 +232,7 @@ table.dataTable{
 #login .btn{
   margin-top: 15px;
 }
+
+#loading i{
+  margin-top: 10px;
+}
