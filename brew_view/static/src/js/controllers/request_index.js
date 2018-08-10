@@ -32,11 +32,8 @@ export default function requestIndexController(
       data.columns.push({'data': 'id'});
 
       RequestService.getRequests(data).then(
-        function(response) {
-          $scope.requests.loaded = true;
-          $scope.requests.error = false;
-          $scope.requests.status = response.status;
-          $scope.requests.errorMessage = '';
+        (response) => {
+          $scope.response = response;
 
           callback({
             data: response.data,
@@ -45,11 +42,8 @@ export default function requestIndexController(
             recordsTotal: response.headers('recordsTotal'),
           });
         },
-        function(response) {
-          $scope.requests.loaded = false;
-          $scope.requests.error = true;
-          $scope.requests.status = response.status;
-          $scope.requests.errorMessage = response.data.message;
+        (response) => {
+          $scope.response = response;
         }
       );
     })
@@ -148,6 +142,8 @@ export default function requestIndexController(
   };
 
   $scope.$on('userChange', function() {
+    $scope.response = undefined;
+
     if ($scope.dtInstance) {
       $scope.dtInstance.reloadData(() => {}, false);
     }
