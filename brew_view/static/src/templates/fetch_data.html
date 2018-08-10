@@ -2,81 +2,77 @@
 <!-- Loading -->
 <div id="loading"
      class="col-md-12 text-center"
-     ng-if="loader.loading">
+     ng-if="responseState(response) === 'loading'">
   <h1 ng-show="showSpin">
     <div>Loading...</div>
     <div><i class="fa fa-spinner fa-spin fa-2x"></i></div>
   </h1>
 </div>
 
-<div ng-if="!loader.loading">
-  <!-- Empty -->
-  <div class="col-md-12"
-       ng-if="(!loader.error && loader.data.length === 0) ||
-              (loader.status === 404)">
-    <div class="panel panel-warning">
-      <div class="panel-heading">
-        <h2><strong> Hmmm...</strong> No {{label}} could be found</h2>
-      </div>
-      <div class="panel-body">
-        <p>
-          There are a couple of explanations for why there would be no
-          {{label}}. Check out below for troubleshooting steps.
-        </p>
-        <table class="table">
-          <tr>
-            <th width="15%">Problem</th>
-            <th width="60%">Description</th>
-            <th width="25%">Resolution</th>
-          </tr>
-          <tr ng-repeat="errorItem in errorMap[label]">
-            <td ng-bind-html="errorItem.problem"></td>
-            <td ng-bind-html="errorItem.description"></td>
-            <td ng-bind-html="errorItem.resolution"></td>
-          </tr>
-        </table>
-      </div>
-      <div class="panel-footer">
-        <p>
-          If none of the above solutions seem to solve the problem,
-          please check in with your System Administrator.
-        </p>
-      </div>
+<!-- Empty -->
+<div class="col-md-12" ng-if="responseState(response) === 'empty'">
+  <div class="panel panel-warning">
+    <div class="panel-heading">
+      <h2><strong> Hmmm...</strong> No {{errorGroup()}} could be found</h2>
+    </div>
+    <div class="panel-body">
+      <p>
+        There are a couple of explanations for why there would be no
+        {{errorGroup()}}. Check out below for troubleshooting steps.
+      </p>
+      <table class="table">
+        <tr>
+          <th width="15%">Problem</th>
+          <th width="60%">Description</th>
+          <th width="25%">Resolution</th>
+        </tr>
+        <tr ng-repeat="item in errorMap[errorGroup()]">
+          <td ng-bind-html="item.problem"></td>
+          <td ng-bind-html="item.description"></td>
+          <td ng-bind-html="item.resolution"></td>
+        </tr>
+      </table>
+    </div>
+    <div class="panel-footer">
+      <p>
+        If none of the above solutions seem to solve the problem,
+        please check in with your System Administrator.
+      </p>
     </div>
   </div>
+</div>
 
-  <!-- Error -->
-  <div class="col-md-12" ng-if="loader.error && loader.status !== 404">
-    <div class="panel panel-danger">
-      <div class="panel-heading">
-        <h2>
-          <i class="fa fa-bug"></i>
-          <strong>Oh Snap!</strong>
-          <span>Something unexpected happened on the server</span>
-        </h2>
-      </div>
-      <div class="panel-body">
-        <dl class="dl-horizontal">
-          <dt>Server Message</dt>
-          <dd>{{ loader.errorMessage }}</dd>
-          <dt>Next Steps</dt>
-          <dd>
-            <span>Is the above message not helpful? Sorry about that</span>
-            <i class="fa fa-frown-o"></i>
-            <br />
-            <p>
-              Please check the Troubleshooting Guide in the About section for
-              help, or possibly restart the application.
-            </p>
-          </dd>
-        </dl>
-      </div>
-      <div class="panel-footer">
-        <p>
-          If none of the above is helpful please check in with your
-          System Administrator.
-        </p>
-      </div>
+<!-- Error -->
+<div class="col-md-12" ng-if="responseState(response) === 'error'">
+  <div class="panel panel-danger">
+    <div class="panel-heading">
+      <h2>
+        <i class="fa fa-bug"></i>
+        <strong>Oh Snap!</strong>
+        <span>Something unexpected happened on the server</span>
+      </h2>
+    </div>
+    <div class="panel-body">
+      <dl class="dl-horizontal">
+        <dt>Server Message</dt>
+        <dd>{{ loader.errorMessage }}</dd>
+        <dt>Next Steps</dt>
+        <dd>
+          <span>Is the above message not helpful? Sorry about that</span>
+          <i class="fa fa-frown-o"></i>
+          <br />
+          <p>
+            Please check the Troubleshooting Guide in the About section for
+            help, or possibly restart the application.
+          </p>
+        </dd>
+      </dl>
+    </div>
+    <div class="panel-footer">
+      <p>
+        If none of the above is helpful please check in with your
+        System Administrator.
+      </p>
     </div>
   </div>
 </div>

@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import {camelCaseKeys} from './services/utility_service.js';
+import {camelCaseKeys, responseState} from './services/utility_service.js';
 
 appRun.$inject = [
   '$rootScope',
@@ -56,6 +56,8 @@ export function appRun(
     'default': false,
     'slate': false,
   };
+
+  $rootScope.responseState = responseState;
 
   $rootScope.doLoad = function() {
     $rootScope.configPromise = UtilityService.getConfig()
@@ -195,7 +197,6 @@ export function appRun(
     return 'latest';
   };
 
-
   /**
    * Convert a system ObjectID to a route to use for the router.
    * @param {string} systemId  - ObjectID for system.
@@ -220,7 +221,11 @@ export function appRun(
    * @return {Object} The latest system or undefined if it is not found.
    */
   $rootScope.findSystem = function(name, version) {
-    let notFound = {status: 404, data: {message: 'No matching system'}};
+    let notFound = {
+      data: {message: 'No matching system'},
+      errorGroup: 'system',
+      status: 404,
+    };
 
     return $rootScope.systemsPromise.then(
       () => {

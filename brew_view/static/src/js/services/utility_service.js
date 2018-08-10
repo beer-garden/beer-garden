@@ -1,4 +1,22 @@
 
+export function responseState(response) {
+  if (_.isUndefined(response)) {
+    return 'loading';
+  }
+
+  switch (response.status) {
+    case 200:
+      if (!_.isEmpty(response.data)) {
+        return 'success';
+      }
+      // Fall through
+    case 404:
+      return 'empty';
+    default:
+      return 'error';
+  }
+}
+
 /**
  * mapToArray - Transform two arrays, one of all possible values, one of
  * actual values, into an object with name -> boolean mapping

@@ -17,7 +17,7 @@
 <empty        loader="request" label="request"></empty>
 
 <div ng-if="request.loaded && !request.error">
-  <ol id="breadcrumbs" class="breadcrumb" ng-show="request_tree.length > 1">
+  <ol class="tagline breadcrumb" ng-show="request_tree.length > 1">
     <li ng-repeat="request in request_tree = getParentTree(request.data)" ng-class="{active: $last}"
       ><span ng-if="!$last"><a ng-href="#!/requests/{{request.id}}">{{request.command}}</a></span
       ><span ng-if="$last">{{request.command}}</span>

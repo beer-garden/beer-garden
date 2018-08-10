@@ -45,6 +45,7 @@ export default function systemViewController(
     .withBootstrap();
 
   $scope.successCallback = function(response) {
+    $scope.response = response;
     $scope.system.data = response.data;
     $scope.system.loaded = true;
     $scope.system.error = false;
@@ -53,6 +54,7 @@ export default function systemViewController(
   };
 
   $scope.failureCallback = function(response) {
+    $scope.response = response;
     $scope.system.data = {};
     $scope.system.loaded = false;
     $scope.system.error = true;
@@ -94,6 +96,8 @@ export default function systemViewController(
   };
 
   const loadSystem = function(stateParams) {
+    $scope.response = undefined;
+
     if (_.isUndefined(stateParams.id)) {
       $rootScope.findSystem($stateParams.name, $stateParams.version).then(
         (system) => {
