@@ -30,15 +30,6 @@ export default function systemViewController(
   DTOptionsBuilder) {
   $scope.util = UtilityService;
 
-  $scope.system = {
-    data: {},
-    loaded: false,
-    error: false,
-    errorMessage: '',
-    forceReload: false,
-    status: null,
-  };
-
   $scope.dtOptions = DTOptionsBuilder.newOptions()
     .withOption('order', [4, 'asc'])
     .withOption('autoWidth', false)
@@ -46,29 +37,21 @@ export default function systemViewController(
 
   $scope.successCallback = function(response) {
     $scope.response = response;
-    $scope.system.data = response.data;
-    $scope.system.loaded = true;
-    $scope.system.error = false;
-    $scope.system.status = response.status;
-    $scope.system.errorMessage = '';
+    $scope.data = response.data;
   };
 
   $scope.failureCallback = function(response) {
     $scope.response = response;
-    $scope.system.data = {};
-    $scope.system.loaded = false;
-    $scope.system.error = true;
-    $scope.system.status = response.status;
-    $scope.system.errorMessage = response.data.message;
+    $scope.data = {};
   };
 
   // Register a function that polls if the system is in a transition status
   let statusUpdate = $interval(function() {
-    if (['STOPPING', 'STARTING'].indexOf($scope.system.data.status) != -1) {
+    if (['STOPPING', 'STARTING'].indexOf($scope.data.status) != -1) {
       SystemService.getSystem(
-        $scope.system.data.id, false,
+        $scope.data.id, false,
         function(data, status, headers, config) {
-          $scope.system.data.status = data.status;
+          $scope.data.status = data.status;
       });
     }
   }, 1000);
@@ -88,8 +71,8 @@ export default function systemViewController(
    */
   $scope.getCommandStateParams = function(command) {
     return {
-      systemName: $scope.system.data.name,
-      systemVersion: $rootScope.getVersionForUrl($scope.system.data),
+      systemName: $scope.data.name,
+      systemVersion: $rootScope.getVersionForUrl($scope.data),
       name: command.name,
       id: command.id,
     };
@@ -97,6 +80,7 @@ export default function systemViewController(
 
   const loadSystem = function(stateParams) {
     $scope.response = undefined;
+    $scope.data = {};
 
     if (_.isUndefined(stateParams.id)) {
       $rootScope.findSystem($stateParams.name, $stateParams.version).then(

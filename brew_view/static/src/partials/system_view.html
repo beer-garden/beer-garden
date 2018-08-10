@@ -1,9 +1,7 @@
 <h1 class="page-header">
   <span>System</span>
   <span ng-if="responseState(response) === 'success'">
-    <small>
-      {{system.data.display_name || system.data.name}}-{{system.data.version}}
-    </small>
+    {{data.display_name || data.name}} v{{data.version}}
   </span>
 </h1>
 
@@ -11,7 +9,7 @@
 
 <div ng-if="responseState(response) === 'success'">
   <div class="tagline">
-    {{system.data.description || "No Description Provided."}}
+    {{data.description || "No Description Provided."}}
   </div>
 
   <div class="container-fluid animate-if">
@@ -30,10 +28,10 @@
         </tr>
       </thead>
       <tbody>
-        <tr ng-repeat="command in system.data.commands | filter:query">
-          <td>{{system.data.display_name || system.data.name}}</td>
+        <tr ng-repeat="command in data.commands | filter:query">
+          <td>{{data.display_name || data.name}}</td>
           <td>{{command.name}}</td>
-          <td>{{system.data.version}}</td>
+          <td>{{data.version}}</td>
           <td>{{ command.description || "No Description Provided" }}</td>
           <td><a class="btn btn-primary center-block" ui-sref="command(getCommandStateParams(command))">Make it Happen!</a></td>
         </tr>
