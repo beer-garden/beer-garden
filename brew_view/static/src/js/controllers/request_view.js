@@ -22,15 +22,13 @@ requestViewController.$inject = [
  * @param  {Object} SystemService      Beer-Garden's System Service.
  */
 export default function requestViewController(
-  $scope,
-  $state,
-  $stateParams,
-  $timeout,
-  $animate,
-  RequestService,
-  SystemService) {
-  $scope.request = {};
-  $scope.request.errorMap = RequestService.errorMap;
+    $scope,
+    $state,
+    $stateParams,
+    $timeout,
+    $animate,
+    RequestService,
+    SystemService) {
   $scope.service = RequestService;
   $scope.timeoutRequest;
   $scope.children = [];
@@ -76,14 +74,14 @@ export default function requestViewController(
     $scope.formatErrorTitle = undefined;
     $scope.formatErrorMsg = undefined;
 
-    let rawOutput = $scope.request.data.output;
+    let rawOutput = $scope.data.output;
 
     try {
       if (rawOutput === undefined || rawOutput == null) {
         rawOutput = 'null';
-      } else if ($scope.request.data.output_type == 'JSON') {
+      } else if ($scope.data.output_type == 'JSON') {
         try {
-          let parsedOutput = JSON.parse($scope.request.data.output);
+          let parsedOutput = JSON.parse($scope.data.output);
           rawOutput = $scope.stringify(parsedOutput);
 
           if ($scope.countNodes($scope.formattedOutput) < 1000) {
@@ -102,9 +100,9 @@ export default function requestViewController(
                                     'doesn\'t look like JSON. If this is happening often please ' +
                                     'let the plugin developer know.';
         }
-      } else if ($scope.request.data.output_type == 'STRING') {
+      } else if ($scope.data.output_type == 'STRING') {
         try {
-          rawOutput = $scope.stringify(JSON.parse($scope.request.data.output));
+          rawOutput = $scope.stringify(JSON.parse($scope.data.output));
         } catch (err) { }
       }
     } finally {
@@ -115,14 +113,13 @@ export default function requestViewController(
   $scope.formatDate = formatDate;
 
   $scope.successCallback = function(response) {
-    $scope.request.data = response.data;
-    $scope.request.loaded = true;
-    $scope.request.error = false;
-    $scope.request.status = response.status;
-    $scope.request.errorMessage = '';
+    $scope.response = response;
+    $scope.data = response.data;
+
+    $scope.data = response.data;
 
     $scope.formatOutput();
-    $scope.formattedParameters = $scope.stringify($scope.request.data.parameters);
+    $scope.formattedParameters = $scope.stringify($scope.data.parameters);
 
     // If request is not yet successful
     // We need to find system attached to request
@@ -161,11 +158,11 @@ export default function requestViewController(
   };
 
   $scope.failureCallback = function(response) {
-    $scope.request.data = response.data;
-    $scope.request.loaded = false;
-    $scope.request.error = true;
-    $scope.request.status = response.status;
-    $scope.request.errorMessage = response.data.message;
+    $scope.response = response;
+    $scope.data = response.data;
+
+    $scope.data = response.data;
+
     $scope.rawOutput = undefined;
     $scope.formattedOutput = undefined;
     $scope.formattedAvailable = false;
@@ -221,18 +218,18 @@ export default function requestViewController(
     if ($scope.childrenCollapsed) {
       $scope.children = [];
     } else {
-      $scope.children = $scope.request.data.children;
+      $scope.children = $scope.data.children;
     }
   };
 
   $scope.showColumn = function(property) {
-    if ($scope.request.data[property] !== undefined && $scope.request.data[property] !== null) {
+    if ($scope.data[property] !== undefined && $scope.data[property] !== null) {
       return true;
     }
 
     let show = false;
-    if ($scope.hasChildren($scope.request.data)) {
-      $scope.request.data.children.forEach(function(child) {
+    if ($scope.hasChildren($scope.data)) {
+      $scope.data.children.forEach(function(child) {
         if (child[property] !== undefined && child[property] !== null) {
           show = true;
         }
@@ -268,6 +265,9 @@ export default function requestViewController(
   };
 
   function loadRequest() {
+    $scope.response = undefined;
+    $scope.data = {};
+
     RequestService.getRequest($stateParams.request_id)
       .then($scope.successCallback, $scope.failureCallback);
   }
