@@ -9,12 +9,14 @@ export default function fetchDataDirective($timeout, ErrorService) {
     restrict: 'E',
     scope: {
       delay: '@?',
-      response: '=',
+      response: '<',
     },
     template: template,
     link: function(scope, element, attrs) {
-      scope.errorMap = ErrorService;
       scope.responseState = responseState;
+
+      scope.emptyMap = ErrorService['empty'];
+      scope.errorMap = ErrorService['error'];
 
       scope.errorGroup = function() {
         // There are some cases where we 'fake' a failure without actually
@@ -25,6 +27,10 @@ export default function fetchDataDirective($timeout, ErrorService) {
         if (_.includes(scope.response.config.url, 'system')) {
           return 'system';
         }
+      }
+
+      scope.errorMessage = function() {
+        return _.get(scope.response.data, 'message', scope.response.data);
       }
 
       const delay = _.isUndefined(scope.delay) ? 0.25 : parseFloat(scope.delay);

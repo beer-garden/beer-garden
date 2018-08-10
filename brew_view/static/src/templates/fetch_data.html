@@ -26,7 +26,7 @@
           <th width="60%">Description</th>
           <th width="25%">Resolution</th>
         </tr>
-        <tr ng-repeat="item in errorMap[errorGroup()]">
+        <tr ng-repeat="item in emptyMap[errorGroup()]">
           <td ng-bind-html="item.problem"></td>
           <td ng-bind-html="item.description"></td>
           <td ng-bind-html="item.resolution"></td>
@@ -55,23 +55,28 @@
     <div class="panel-body">
       <dl class="dl-horizontal">
         <dt>Server Message</dt>
-        <dd>{{ loader.errorMessage }}</dd>
+        <dd>{{errorMessage()}}</dd>
         <dt>Next Steps</dt>
-        <dd>
-          <span>Is the above message not helpful? Sorry about that</span>
-          <i class="fa fa-frown-o"></i>
-          <br />
-          <p>
-            Please check the Troubleshooting Guide in the About section for
-            help, or possibly restart the application.
-          </p>
-        </dd>
+        <dd>These might help:</dd>
       </dl>
+      <table class="table">
+        <tr>
+          <th width="15%">Problem</th>
+          <th width="55%">Description</th>
+          <th width="30%">Resolution</th>
+        </tr>
+        <tr ng-repeat="item in errorMap[response.status]">
+          <td ng-bind-html="item.problem"></td>
+          <td ng-bind-html="item.description"></td>
+          <td ng-bind-html="item.resolution"></td>
+        </tr>
+      </table>
     </div>
     <div class="panel-footer">
       <p>
         If none of the above is helpful please check in with your
-        System Administrator.
+        System Administrator. Sorry about that!
+        <i class="fa fa-frown-o"></i>
       </p>
     </div>
   </div>

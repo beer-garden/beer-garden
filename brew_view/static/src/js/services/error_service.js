@@ -45,6 +45,22 @@ export default function errorService() {
         "<kbd>vim $APP_HOME/conf/bartender-config.yml</kbd><br />" +
         "<kbd>vim $APP_HOME/conf/brew-view-config.yml</kbd>",
     },
+    unauthorized: {
+      problem: "Not Logged In",
+      description:
+        "You're not logged in and anonymous users aren't able to view this " +
+        "data or perform this action.",
+      resolution:
+        "Log in using the button at the top of the screen.",
+    },
+    forbidden: {
+      problem: "Insufficient Permissions",
+      description:
+        "You don't have the necessary permission to view this data or " +
+        "perform this action.",
+      resolution:
+        "Contact your administrator and request to be given permission.",
+    },
   };
 
   const emptyMap = {
@@ -62,5 +78,17 @@ export default function errorService() {
     ],
   };
 
-  return emptyMap;
+  const errorMap = {
+    401: [
+      errors.unauthorized
+    ],
+    403: [
+      errors.forbidden
+    ],
+  }
+
+  return {
+    empty: emptyMap,
+    error: errorMap,
+  };
 };
