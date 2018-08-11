@@ -9,11 +9,19 @@ export default function fetchDataDirective($timeout, ErrorService) {
     restrict: 'E',
     scope: {
       delay: '@?',
+      hide: '@?',
       response: '<',
     },
     template: template,
     link: function(scope, element, attrs) {
-      scope.responseState = responseState;
+      // Do a little translation of the real state
+      scope.responseState = function(response) {
+        let realState = responseState(response);
+        if (scope.hide === 'empty' && realState === 'empty') {
+          return 'success';
+        }
+        return realState;
+      };
 
       scope.emptyMap = ErrorService['empty'];
       scope.errorMap = ErrorService['error'];
