@@ -40,15 +40,6 @@ export default function adminSystemController(
     AdminService) {
   $scope.util = UtilityService;
 
-  $scope.systems = {
-    data: [],
-    loaded: false,
-    error: false,
-    errorMessage: '',
-    forceReload: false,
-    status: null,
-  };
-
   $scope.rescan = function() {
     AdminService.rescan();
   };
@@ -86,28 +77,17 @@ export default function adminSystemController(
   };
 
   $scope.successCallback = function(response) {
+    $scope.response = response;
     $rootScope.systems = response.data;
-    $scope.systems.loaded = true;
-    $scope.systems.error = false;
-    $scope.systems.status = response.status;
-    $scope.systems.errorMessage = '';
 
-    $scope.systems.data = _.groupBy(response.data, function(value) {
+    $scope.data = _.groupBy(response.data, (value) => {
       return value.display_name || value.name;
     });
-
-    // Extra kick for the 'empty' directive
-    if (Object.keys($scope.systems.data).length === 0) {
-      $scope.systems.status = 404;
-    }
   };
 
   $scope.failureCallback = function(response) {
-    $scope.systems.data = [];
-    $scope.systems.loaded = false;
-    $scope.systems.error = true;
-    $scope.systems.status = response.status;
-    $scope.systems.errorMessage = response.data.message;
+    $scope.response = response;
+    $scope.data = [];
   };
 
   let socketConnection = undefined;
@@ -149,14 +129,16 @@ export default function adminSystemController(
         }
       });
 
-      $scope.$on('destroy', function() {
-        if (angular.isDefined(socketConnection)) {
-          socketConnection.close();
-          socketConnection = undefined;
-        }
-      });
+      $scope.$on('destroy', websocketClose);
     }
   }
+
+  function websocketClose() {
+    if (!_.isUndefined(socketConnection)) {
+      socketConnection.close();
+      socketConnection = undefined;
+    }
+  };
 
   /**
    * updateInstanceStatus - Change the status of an instance
@@ -166,9 +148,9 @@ export default function adminSystemController(
   function updateInstanceStatus(id, newStatus) {
     if (newStatus === undefined) return;
 
-    for (let systemName in $scope.systems.data) {
-      if ({}.hasOwnProperty.call($scope.systems.data, systemName)) {
-        for (let system of $scope.systems.data[systemName]) {
+    for (let systemName in $scope.data) {
+      if ({}.hasOwnProperty.call($scope.data, systemName)) {
+        for (let system of $scope.data[systemName]) {
           for (let instance of system.instances) {
             if (instance.id === id) {
               instance.status = newStatus;
@@ -184,14 +166,14 @@ export default function adminSystemController(
    * @param {string} id  The system ID
    */
   function removeSystem(id) {
-    for (let systemName in $scope.systems.data) {
-      if ({}.hasOwnProperty.call($scope.systems.data, systemName)) {
-        for (let system of $scope.systems.data[systemName]) {
+    for (let systemName in $scope.data) {
+      if ({}.hasOwnProperty.call($scope.data, systemName)) {
+        for (let system of $scope.data[systemName]) {
           if (system.id === id) {
-            _.pull($scope.systems.data[systemName], system);
+            _.pull($scope.data[systemName], system);
 
-            if ($scope.systems.data[systemName].length === 0) {
-              delete $scope.systems.data[systemName];
+            if ($scope.data[systemName].length === 0) {
+              delete $scope.data[systemName];
             }
           }
         }
@@ -200,8 +182,11 @@ export default function adminSystemController(
   }
 
   let loadSystems = function() {
-    SystemService.getSystems(true, 'id,name,display_name,version,instances')
-      .then($scope.successCallback, $scope.failureCallback);
+    SystemService.getSystems(true,
+        'id,name,display_name,version,instances').then(
+      $scope.successCallback,
+      $scope.failureCallback
+    );
   };
 
   // Periodically poll for changes (in case of websocket failure)
@@ -216,6 +201,10 @@ export default function adminSystemController(
   });
 
   let loadAll = function() {
+    $scope.response = undefined;
+    $scope.data = [];
+    websocketClose();
+
     loadSystems();
     websocketConnect();
   };

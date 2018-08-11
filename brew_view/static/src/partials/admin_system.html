@@ -1,18 +1,17 @@
 <h1 class='page-header'>
   <span>Systems Management</span>
-  <span class="pull-right" ng-show="systems.loaded || systems.error">
+  <span class="pull-right" ng-show="responseState(response) !== 'loading'">
     <button type="button" class="btn btn-primary"
             ng-click="rescan()">Rescan System Directory</button>
   </span>
 </h1>
 
-<loading      loader="systems"></loading>
-<server-error loader="systems"></server-error>
-<empty        loader="systems" label="systems"></empty>
+<fetch-data response="response"></fetch-data>
 
-<div id="systems-container" class="animate-if" ng-if="systems.loaded && !systems.error">
-
-  <div ng-repeat="(systemName, value) in systems.data"
+<div id="systems-container"
+     class="animate-if"
+     ng-if="responseState(response) === 'success'">
+  <div ng-repeat="(systemName, value) in data"
        class="container-item panel panel-default"
        style="display: block;">
     <div class="panel-heading" style="font-size: 22px;">
@@ -25,7 +24,8 @@
           <div class="list-group-item clearfix" style="font-size: 18px;">
             <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
               <a ui-sref="system({name: system.name, version: getVersionForUrl(system)})">
-                <span class="icon-color" ng-class="util.getIcon(system.icon_name)"></span>
+                <span class="icon-color"
+                      ng-class="util.getIcon(system.icon_name)"></span>
                 <span style="font-size: 18px;">{{system.version}}</span>
               </a>
             </div>
@@ -64,7 +64,7 @@
     </div>
   </div>
 
-  <!-- This is ugly but it creates empty panels that ensure the bottom row panels are aligned left -->
+  <!-- This is ugly but empty panels ensure the bottom row is left-aligned -->
   <div class="container-item empty"></div>
   <div class="container-item empty"></div>
 
