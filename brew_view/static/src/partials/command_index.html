@@ -1,11 +1,9 @@
 <h1 class='page-header'>Available Commands</h1>
 
-<loading      loader="commands"></loading>
-<server-error loader="commands"></server-error>
-<empty        loader="commands" label="commands"></empty>
+<fetch-data response="response"></fetch-data>
 
 <div class="container-fluid animate-if"
-    ng-if="commands.loaded && !commands.error && commands.data.length > 0">
+     ng-if="responseState(response) === 'success'">
   <div>
     <table
         datatable="ng"
@@ -22,7 +20,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="entry in commands.data | filter:query">
+      <tr ng-repeat="entry in data | filter:query">
         <td>{{entry.system}}</td>
         <td>{{entry.name}}</td>
         <td>{{entry.version}}</td>
