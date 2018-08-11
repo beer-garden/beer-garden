@@ -219,6 +219,10 @@ export function adminUserController(
       users: UserService.getUsers(),
     }).then(
       (responses) => {
+        // Success callback is only invoked if all promises are resolved, so just
+        // pick one to let the fetch-data directive know about the success
+        $scope.response = responses.users;
+
         $scope.raws = {
           permissions: responses.permissions.data,
           roles: responses.roles.data,
@@ -236,15 +240,14 @@ export function adminUserController(
         $scope.loader.error = false;
         $scope.loader.errorMessage = undefined;
       },
-      (responses) => {
-        $scope.loader.loaded = false;
-        $scope.loader.error = true;
-        $scope.loader.errorMessage = responses.data.message;
+      (response) => {
+        $scope.response = response;
       }
     );
   };
 
   $scope.$on('userChange', () => {
+    $scope.response = undefined;
     loadAll();
   });
 

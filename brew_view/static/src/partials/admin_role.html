@@ -2,10 +2,10 @@
   <span>Role Management</span>
 </h1>
 
-<loading      loader="loader"></loading>
-<server-error loader="loader"></server-error>
+<fetch-data response="response"></fetch-data>
 
-<div ng-show="loader.loaded && !loader.error" class="container-fluid animate-if">
+<div class="container-fluid animate-if"
+     ng-show="responseState(response) === 'success'">
   <div ng-show="!config.authEnabled" uib-alert class="alert alert-danger">
     Warning - Beergarden authorization is currently disabled. Changes made here
     will be persisted, but permissions will not be enforced. Contact your

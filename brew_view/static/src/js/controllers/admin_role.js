@@ -210,6 +210,10 @@ export function adminRoleController(
       roles: RoleService.getRoles(),
     })
     .then((responses) => {
+      // Success callback is only invoked if all promises are resolved, so just
+      // pick one to let the fetch-data directive know about the success
+      $scope.response = responses.roles;
+
       $scope.raws = {
         permissions: responses.permissions.data,
         roles: responses.roles.data,
@@ -240,13 +244,16 @@ export function adminRoleController(
         let allPermissionNames = _.union(primaryPermissionNames, coalesced[1]);
 
         let roleMap = arrayToMap(allRoleNames, $scope.roleNames);
-        let permissionMap = arrayToMap(allPermissionNames, $scope.raws.permissions);
+        let permissionMap = arrayToMap(allPermissionNames,
+          $scope.raws.permissions);
 
         let primaryRoleMap = arrayToMap(primaryRoleNames, $scope.roleNames);
-        let primaryPermissionMap = arrayToMap(primaryPermissionNames, $scope.raws.permissions);
+        let primaryPermissionMap = arrayToMap(primaryPermissionNames,
+          $scope.raws.permissions);
 
         let nestedRoleMap = arrayToMap(nestedRoleNames, $scope.roleNames);
-        let nestedPermissionMap = arrayToMap(nestedPermissionNames, $scope.raws.permissions);
+        let nestedPermissionMap = arrayToMap(nestedPermissionNames,
+          $scope.raws.permissions);
 
         thaRoles.push({
           id: role.id,
@@ -282,14 +289,14 @@ export function adminRoleController(
       $scope.loader.loaded = true;
       $scope.loader.error = false;
       $scope.loader.errorMessage = undefined;
-    }, (responses) => {
-      $scope.loader.loaded = false;
-      $scope.loader.error = true;
-      $scope.loader.errorMessage = responses.data.message;
+    },
+    (response) => {
+      $scope.response = response;
     });
   };
 
   $scope.$on('userChange', () => {
+    $scope.response = undefined;
     loadAll();
   });
 
