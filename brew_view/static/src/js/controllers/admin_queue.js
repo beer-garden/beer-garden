@@ -45,15 +45,6 @@ export default function adminQueueController(
   $scope.alerts = [];
   $scope.dtInstance = null;
 
-  $scope.queues = {
-    data: [],
-    loaded: false,
-    error: false,
-    errorMessage: '',
-    status: null,
-    errorMap: QueueService.errorMap,
-  };
-
   $scope.dtOptions = DTOptionsBuilder
     .fromFnPromise(
       () => {
@@ -177,23 +168,12 @@ export default function adminQueueController(
   });
 
   $scope.successCallback = function(response) {
-    $scope.queues.data = response.data;
-    $scope.queues.loaded = true;
-    $scope.queues.error = false;
-    $scope.queues.status = response.status;
-    $scope.queues.errorMessage = '';
-
-    return $scope.queues.data;
+    $scope.response = response;
+    return response.data;
   };
 
   $scope.failureCallback = function(response) {
-    $scope.queues.data = [];
-    $scope.queues.loaded = false;
-    $scope.queues.error = true;
-    $scope.queues.status = response.status;
-    $scope.queues.errorMessage = response.data.message;
-
-    return $scope.queues.data;
+    $scope.response = response;
   };
 
   const ensurePreconditions = function() {
@@ -216,7 +196,9 @@ export default function adminQueueController(
   };
 
   $scope.$on('userChange', () => {
-    // First make sure that preconditions are still good
+    $scope.response = undefined;
+
+    // Make sure that preconditions are still good
     ensurePreconditions();
 
     // Then give the datatable a kick
