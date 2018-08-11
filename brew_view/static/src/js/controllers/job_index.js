@@ -22,38 +22,26 @@ export default function jobIndexController(
     $location,
     $interval,
     JobService,) {
-
-  $scope.jobs = {
-    data: [],
-    loaded: false,
-    error: false,
-    errorMessage: '',
-    status: null,
-    errorMap: {
-    },
-  };
-
   $scope.successCallback = function(response) {
-    $scope.jobs.data = response.data;
-    $scope.jobs.loaded = true;
-    $scope.jobs.error = false;
-    $scope.jobs.status = response.status;
-    $scope.jobs.errorMessage = '';
+    $scope.response = response;
+    $scope.data = response.data;
   };
 
   $scope.failureCallback = function(response) {
-    $scope.jobs.data = [];
-    $scope.jobs.loaded = false;
-    $scope.jobs.error = true;
-    $scope.jobs.status = response.status;
-    $scope.jobs.errorMessage = response.data.message;
+    $scope.response = response;
+    $scope.data = {};
   };
 
   $scope.formatDate = formatDate;
 
   function loadJobs() {
-    JobService.getJobs()
-      .then($scope.successCallback, $scope.failureCallback);
+    $scope.response = undefined;
+    $scope.data = {};
+
+    JobService.getJobs().then(
+      $scope.successCallback,
+      $scope.failureCallback
+    );
   }
 
   $scope.$on('userChange', () => {

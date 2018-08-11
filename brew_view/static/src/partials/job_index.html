@@ -1,16 +1,17 @@
 <h1 class='page-header'>
   <span>Request Scheduler</span>
-
-  <button class="btn btn-primary pull-right" type="button"
-          ng-if="jobs.loaded && !jobs.error && jobs.data.length !== 0"
-          ui-sref="jobsCreate()">Schedule a Job</button>
+  <button type="button"
+          ng-if="responseState(response) === 'success'"
+          class="btn btn-primary pull-right"
+          ui-sref="jobsCreate()">
+    Schedule a Job
+  </button>
 </h1>
 
-<loading      loader="jobs"></loading>
-<server-error loader="jobs"></server-error>
+<fetch-data response="response" hide="empty"></fetch-data>
 
 <div class="container-fluid animate-if"
-     ng-if="jobs.loaded && !jobs.error && jobs.data.length == 0">
+     ng-if="responseState(response) === 'empty'">
   <br />
   <div class="jumbotron">
     <h1>Welcome to the Request Scheduler</h1>
@@ -30,7 +31,7 @@
 </div>
 
 <div class="container-fluid animate-if"
-     ng-if="jobs.loaded && !jobs.error && jobs.data.length > 0">
+     ng-if="responseState(response) === 'success'">
   <table
       datatable="ng"
       dt-options="dtOptions"
@@ -49,7 +50,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="job in jobs.data | filter:query">
+      <tr ng-repeat="job in data | filter:query">
         <td>
           <a href="#!/jobs/{{job.id}}">{{job.name}}</a>
         </td>
