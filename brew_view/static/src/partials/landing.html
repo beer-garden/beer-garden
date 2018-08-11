@@ -1,10 +1,12 @@
 <h1 class='page-header'>Available Systems</h1>
 
-<fetch-data loader="systems" label="systems"></fetch-data>
+<fetch-data response="response"></fetch-data>
 
-<div id="systems-container" class="animate-if" ng-if="systems.loaded && !systems.error">
+<div id="systems-container"
+     class="animate-if"
+     ng-if="responseState(response) === 'success'">
 
-  <div ng-repeat="system in systems.data" class="container-item panel panel-default">
+  <div ng-repeat="system in data" class="container-item panel panel-default">
     <div class="panel-heading">
       <h3>
         <span ng-class="util.getIcon(system.icon_name)"></span>
@@ -22,8 +24,8 @@
           <div class="col-sm-8 system-table">{{ system.commands.length }}</div>
         </div>
         <div class="row">
-          <div class="col-sm-4 system-table table-header" ng-if="system.instances.length > 0">Instances</div>
-          <div class="col-sm-8 system-table" ng-if="system.instances.length > 0">{{ system.instances.length }}</div>
+          <div class="col-sm-4 system-table table-header">Instances</div>
+          <div class="col-sm-8 system-table">{{ system.instances.length }}</div>
         </div>
       </div>
     </div>
@@ -36,7 +38,7 @@
       </div>
     </div>
   </div>
-  <!-- This is ugly but it creates empty panels that ensure the bottom row panels are aligned left -->
+  <!-- This is ugly but empty panels ensure the bottom row is left-aligned -->
   <div class="container-item empty" />
   <div class="container-item empty" />
 </div>

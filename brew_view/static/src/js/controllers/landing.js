@@ -18,40 +18,22 @@ landingController.$inject = [
  * @param  {Object} UtilityService Beer-Garden's utility service.
  */
 export default function landingController(
-  $scope,
-  $rootScope,
-  $location,
-  $interval,
-  SystemService,
-  UtilityService) {
+    $scope,
+    $rootScope,
+    $location,
+    $interval,
+    SystemService,
+    UtilityService) {
   $scope.util = UtilityService;
 
-  $scope.systems = {
-    data: [],
-    loaded: false,
-    loading: true,
-    error: false,
-    errorMessage: '',
-    status: null,
-  };
-
   $scope.successCallback = function(response) {
-    $rootScope.systems = response.data;
-    $scope.systems.data = response.data;
-    $scope.systems.loaded = true;
-    $scope.systems.loading = false;
-    $scope.systems.error = false;
-    $scope.systems.status = response.status;
-    $scope.systems.errorMessage = '';
+    $scope.response = response;
+    $scope.data = response.data;
   };
 
   $scope.failureCallback = function(response) {
-    $scope.systems.data = [];
-    $scope.systems.loaded = false;
-    $scope.systems.loading = false;
-    $scope.systems.error = true;
-    $scope.systems.status = response.status;
-    $scope.systems.errorMessage = response.data.message;
+    $scope.response = response;
+    $scope.data = {};
   };
 
   $scope.exploreSystem = function(system) {
@@ -59,7 +41,8 @@ export default function landingController(
   };
 
   function loadSystems() {
-    $scope.systems.loading = true;
+    $scope.response = undefined;
+    $scope.data = {};
 
     SystemService.getSystems(false).then(
       $scope.successCallback,
