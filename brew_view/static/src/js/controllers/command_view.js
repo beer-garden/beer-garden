@@ -41,6 +41,8 @@ export default function commandViewController(
     RequestService,
     SystemService,
     SFBuilderService) {
+  let tempResponse;
+
   $scope.schema = {};
   $scope.form = [];
   $scope.model = $stateParams.request || {};
@@ -57,14 +59,6 @@ export default function commandViewController(
     command: '',
     schema: '',
     form: '',
-  };
-
-  $scope.command = {
-    data: [],
-    loaded: false,
-    status: null,
-    error: false,
-    errorMessage: '',
   };
 
   $scope.createRequestWrapper = function(requestPrototype, ...args) {
@@ -198,13 +192,13 @@ export default function commandViewController(
       {
         'request': $scope.model,
         'system': $scope.system,
-        'command': $scope.command.data,
+        'command': $scope.command,
       }
     );
   };
 
   let generateSF = function() {
-    let sf = SFBuilderService.build($scope.system, $scope.command.data);
+    let sf = SFBuilderService.build($scope.system, $scope.command);
     $scope.schema = sf['schema'];
     $scope.form = sf['form'];
 
@@ -213,34 +207,29 @@ export default function commandViewController(
   };
 
   $scope.successCallback = function(response) {
-    $scope.command.data = response.data;
-    $scope.command.status = response.status;
-    $scope.command.error = false;
-    $scope.command.errorMessage = '';
+    tempResponse = response;
 
-    $scope.jsonValues.command = JSON.stringify($scope.command.data, undefined, 2);
+    $scope.command = response.data;
+    $scope.jsonValues.command = JSON.stringify($scope.command, undefined, 2);
 
     // If this command has a custom template then we're done!
-    if ($scope.command.data.template) {
+    if ($scope.command.template) {
       // This is necessary for things like scripts and forms
       if ($scope.config.allowUnsafeTemplates) {
-        $scope.template = $sce.trustAsHtml($scope.command.data.template);
+        $scope.template = $sce.trustAsHtml($scope.command.template);
       } else {
-        $scope.template = $scope.command.data.template;
+        $scope.template = $scope.command.template;
       }
-
-      $scope.command.loaded = true;
+      $scope.response = response;
     } else {
       generateSF();
     }
   };
 
   $scope.failureCallback = function(response) {
-    $scope.command.data = [];
-    $scope.command.loaded = false;
-    $scope.command.error = true;
-    $scope.command.status = response.status;
-    $scope.command.errorMessage = response.data.message;
+    tempResponse = response;
+    $scope.response = response;
+    $scope.command = [];
   };
 
   $scope.$watch('model', function(val, old) {
@@ -284,8 +273,8 @@ export default function commandViewController(
   $scope.$on('generateSF', generateSF);
 
   // Stop the loading animation after the schema form is done
-  $scope.$on('sf-render-finished', function() {
-    $scope.command.loaded = true;
+  $scope.$on('sf-render-finished', () => {
+    $scope.response = tempResponse;
   });
 
   /**
@@ -327,6 +316,10 @@ export default function commandViewController(
    * @param {Object} stateParams - State params.
    */
   const loadData = function(stateParams) {
+    tempResponse = undefined;
+    $scope.response = undefined;
+    $scope.command = [];
+
     $rootScope.systemsPromise.then(
       () => {
         if (stateParams.id) {
@@ -364,7 +357,7 @@ export default function commandViewController(
     );
   };
 
-  $scope.$on('userChange', function() {
+  $scope.$on('userChange', () => {
     loadData($stateParams);
   });
 

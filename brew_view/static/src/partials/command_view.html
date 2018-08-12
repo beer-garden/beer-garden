@@ -1,26 +1,38 @@
-<div ng-show="!manualOverride && !template">
-  <h1 class='page-header'>
-    <span>Make Request</span>
-    <span ng-show="command.loaded && !command.error">
-      <small>{{system.display_name || system.name}}[{{system.version}}] - {{command.data.name}}</small>
-      <bg-status class="pull-right" target='system.status'></bg-status>
-    </span>
-  </h1>
-  <div ng-show="command.loaded && !command.error && command.data.description"
-       style="margin:-15px 3px 20px">
-    {{command.data.description}}
-  </div>
-</div>
 
-<loading      loader="command"></loading>
-<server-error loader="command"></server-error>
-<empty        loader="command" label="command"></empty>
-
-<div ng-show="command.loaded && !command.error && template">
+<div ng-show="(responseState(response) === 'success') && template">
   <div ng-bind-html="template"></div>
 </div>
 
-<div ng-show="command.loaded && !command.error && !template && !manualOverride">
+<div ng-show="!template">
+  <h1 class="page-header" ng-show="responseState(response) !== 'success'">
+    Make Request
+  </h1>
+  <div ng-show="(responseState(response) === 'success')">
+    <div ng-show="!manualOverride">
+      <h1 class="page-header" ng-show="!manualOverride">
+        <span>{{command.name}}<span>
+        <small>{{system.display_name || system.name}}</small>
+        <small>v{{system.version}}</small>
+        <bg-status class="pull-right" target='system.status'></bg-status>
+      </h1>
+      <div class="tagline" ng-show="command.description">
+        {{command.description}}
+      </div>
+    </div>
+
+    <div ng-show="manualOverride">
+      <h1>Manual Request Creation</h1>
+      <h4>
+        This page allows the user to manually create a request.
+        Just edit the preview below and "Make Request".
+      </h4>
+    </div>
+  </div>
+</div>
+
+<fetch-data response="response"></fetch-data>
+
+<div ng-show="(responseState(response) === 'success') && !template && !manualOverride">
   <div class="container-fluid">
     <div class="row" ng-if="createError">
       <div class="col-md-offset-1 col-md-10">
@@ -34,8 +46,9 @@
           </div>
           <div class="panel-body">
             <p>
-              We try hard not to allow server errors to occur, but sometimes things fall through the cracks.
-              Below is what the server had to say about this error.
+              We try hard not to allow server errors to occur, but sometimes
+              things fall through the cracks. Below is what the server had to
+              say about this error.
             </p>
             <dl class="dl-horizontal">
               <dt>Server Message</dt>
@@ -104,14 +117,8 @@
 </div>
 
 
-<div ng-show="command.loaded && !command.error && system && !template && manualOverride">
-  <div class="page-header">
-    <h1>Manual Request Creation</h1>
-    <h4>This page allows the user to manually create a request. Just edit the preview below and "Make Request".</h4>
-  </div>
-
+<div ng-show="(responseState(response) === 'success') && !template && manualOverride">
   <div class="container-fluid">
-
     <div uib-alert class="alert alert-info alert-dismissable">
       <a class="close" data-dismiss="alert">&times;</a>
       We do not suggest overriding schema-form for inexperienced users
@@ -129,8 +136,9 @@
           </div>
           <div class="panel-body">
             <p>
-              We try hard not to allow server errors to occur, but sometimes things fall through the cracks.
-              Below is what the server had to say about this error.
+              We try hard not to allow server errors to occur, but sometimes
+              things fall through the cracks. Below is what the server had to
+              say about this error.
             </p>
             <dl class="dl-horizontal">
               <dt>Server Message</dt>
@@ -154,4 +162,5 @@
       <strong>Uh-oh!</strong>
       <span ng-bind=alert></span>
     </div>
+  </div>
 </div>
