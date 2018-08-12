@@ -63,9 +63,6 @@ import routeConfig from './js/configs/routes.js';
 import {interceptorService, authInterceptorService, interceptorConfig}
   from './js/configs/http_interceptor.js';
 
-import emptyDirective from './js/directives/empty.js';
-import loadingDirective from './js/directives/loading.js';
-import serverErrorDirective from './js/directives/server_error.js';
 import fetchDataDirective from './js/directives/fetch_data.js';
 import bgStatusDirective from './js/directives/system_status.js';
 import loginDirective from './js/directives/login.js';
@@ -152,9 +149,6 @@ angular.module('bgApp',
 .service('authInterceptorService', authInterceptorService)
 .animation('.slide', slideAnimation)
 
-.directive('empty', emptyDirective)
-.directive('loading', loadingDirective)
-.directive('serverError', serverErrorDirective)
 .directive('fetchData', fetchDataDirective)
 .directive('bgStatus', bgStatusDirective)
 .directive('login', loginDirective)
