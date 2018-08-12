@@ -1,12 +1,10 @@
 <h1 class='page-header'>Create Job</h1>
 
-<loading      loader="systems"></loading>
-<server-error loader="systems"></server-error>
-<empty        loader="systems" label="systems"></empty>
+<fetch-data response="response"></fetch-data>
 
 <!-- System Table -->
 <div id="systems-container" class="animate-if"
-     ng-if="system == null && systems.loaded && !systems.error">
+     ng-if="system == null && responseState(response) === 'success'">
   <h3>First, pick a system. Choose from the list below</h3>
 
   <table
@@ -22,7 +20,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="system in systems.data | filter:query">
+      <tr ng-repeat="system in data | filter:query">
         <td>{{system.name}}</td>
         <td>{{system.version}}</td>
         <td>
@@ -36,7 +34,7 @@
 
 <!-- Command Table -->
 <div id="foo-container" class="animate-if"
-     ng-if="system != null && requestSchema == null && systems.loaded && !systems.error">
+     ng-if="system != null && requestSchema == null && responseState(response) === 'success'">
   <h3 class="text-center">Now select the command you would like</h3>
 
   <table
@@ -63,7 +61,7 @@
 </div>
 
 <!-- Request Form -->
-<div ng-show="requestSchema != null && !template && requestTemplate == null && systems.loaded && !systems.error">
+<div ng-show="requestSchema != null && !template && requestTemplate == null && responseState(response) === 'success'">
   <h3 class='page-header'>
     <span>Fill out the request you would like to schedule</span>
   </h3>
@@ -95,7 +93,7 @@
 </div>
 
 <!-- Job Form -->
-<div ng-show="requestTemplate != null && systems.loaded && !systems.error">
+<div ng-show="requestTemplate != null && responseState(response) === 'success'">
   <div class="container-fluid">
     <div class="row">
       <div class="col-md-8">

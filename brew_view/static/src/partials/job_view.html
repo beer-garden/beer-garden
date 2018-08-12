@@ -1,31 +1,30 @@
 <h1 class="page-header">
   <span>Job</span>
 
-  <span ng-if="job.loaded && !job.error">
-    <small>{{job.data.name}} - {{job.data.id}}</small>
+  <span ng-if="responseState(response) === 'success'">
+    <small>{{data.name}} - {{data.id}}</small>
     <button type="button" class="btn btn-warning pull-right"
-            ng-if="job.data.status === 'RUNNING'"
-            ng-click="pauseJob(job.data.id)">
+            ng-if="data.status === 'RUNNING'"
+            ng-click="pauseJob(data.id)">
       Pause Job
     </button>
     <button type="button" class="btn btn-success pull-right"
-            ng-if="job.data.status === 'PAUSED'"
-            ng-click="resumeJob(job.data.id)">
+            ng-if="data.status === 'PAUSED'"
+            ng-click="resumeJob(data.id)">
       Resume Job
     </button>
     <button type="button" class="btn btn-danger pull-right"
             confirm="Are you sure you want to delete this job?"
-            ng-click="deleteJob(job.data.id)">
+            ng-click="deleteJob(data.id)">
       Delete Job
     </button>
   </span>
 </h1>
 
-<loading      loader="job"></loading>
-<server-error loader="job"></server-error>
-<empty        loader="job" label="job"></empty>
+<fetch-data response="response"></fetch-data>
 
-<div ng-if="job.loaded && !job.error" class="container-fluid animate-if">
+<div class="container-fluid animate-if"
+     ng-if="responseState(response) === 'success'">
   <table id="jobTable" class="table">
     <thead>
       <tr>
@@ -42,15 +41,15 @@
     </thead>
     <tbody>
       <tr>
-        <td>{{job.data.name}}</td>
-        <td>{{job.data.request_template.command}}</td>
-        <td>{{job.data.request_template.system}}</td>
-        <td>{{job.data.request_template.system_version}}</td>
-        <td>{{job.data.request_template.instance_name}}</td>
-        <td>{{job.data.status}}</td>
-        <td>{{job.data.success_count}}</td>
-        <td>{{job.data.error_count}}</td>
-        <td>{{formatDate(job.data.next_run_time)}}</td>
+        <td>{{data.name}}</td>
+        <td>{{data.request_template.command}}</td>
+        <td>{{data.request_template.system}}</td>
+        <td>{{data.request_template.system_version}}</td>
+        <td>{{data.request_template.instance_name}}</td>
+        <td>{{data.status}}</td>
+        <td>{{data.success_count}}</td>
+        <td>{{data.error_count}}</td>
+        <td>{{formatDate(data.next_run_time)}}</td>
       </tr>
     </tbody>
   </table>
