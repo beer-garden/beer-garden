@@ -37,15 +37,20 @@ class LocalPluginsManager(object):
         if plugin.status == 'INITIALIZING':
             new_plugin = plugin
         elif plugin.status in ['DEAD', 'STOPPED']:
-            new_plugin = LocalPluginRunner(plugin.entry_point, plugin.system, plugin.instance_name,
-                                           plugin.path_to_plugin, plugin.web_host,
-                                           plugin.web_port, plugin.ssl_enabled,
-                                           plugin_args=plugin.plugin_args,
-                                           environment=plugin.environment,
-                                           requirements=plugin.requirements,
-                                           plugin_log_directory=plugin.plugin_log_directory,
-                                           url_prefix=plugin.url_prefix, ca_verify=plugin.ca_verify,
-                                           ca_cert=plugin.ca_cert)
+            new_plugin = LocalPluginRunner(
+                plugin.entry_point, plugin.system, plugin.instance_name,
+                plugin.path_to_plugin, plugin.web_host, plugin.web_port,
+                plugin.ssl_enabled,
+                plugin_args=plugin.plugin_args,
+                environment=plugin.environment,
+                requirements=plugin.requirements,
+                plugin_log_directory=plugin.plugin_log_directory,
+                url_prefix=plugin.url_prefix,
+                ca_verify=plugin.ca_verify,
+                ca_cert=plugin.ca_cert,
+                username=plugin.username,
+                password=plugin.password
+            )
             self.registry.remove(plugin.unique_name)
             self.registry.register_plugin(new_plugin)
         else:
