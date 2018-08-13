@@ -12,6 +12,7 @@ appRun.$inject = [
   'SystemService',
   'UserService',
   'TokenService',
+  'RoleService',
 ];
 
 /**
@@ -26,6 +27,7 @@ appRun.$inject = [
  * @param  {SystemService} SystemService   Service for System information.
  * @param  {UserService} UserService       Service for User information.
  * @param  {TokenService} TokenService     Service for User information.
+ * @param  {RoleService} RoleService       Service for Role information.
  */
 export function appRun(
     $rootScope,
@@ -37,7 +39,8 @@ export function appRun(
     UtilityService,
     SystemService,
     UserService,
-    TokenService) {
+    TokenService,
+    RoleService) {
   $rootScope.$state = $state;
   $rootScope.$stateParams = $stateParams;
 
@@ -103,6 +106,11 @@ export function appRun(
         UserService.loadUser(response.data.token).then(
           (response) => {
             $rootScope.user = response.data;
+
+            // coalescePermissions [0] is the roles, [1] is the permissions
+            let perms = RoleService.coalescePermissions($rootScope.user.roles);
+            $rootScope.user.permissions = perms[1];
+
             $rootScope.doLoad();
             $rootScope.$broadcast('userChange');
 
@@ -132,6 +140,11 @@ export function appRun(
     $rootScope.user = undefined;
     $rootScope.doLoad();
     $rootScope.$broadcast('userChange');
+  };
+
+  $rootScope.hasPermission = function(permission) {
+    return _.includes($rootScope.user.permissions, permission) ||
+      _.includes($rootScope.user.permissions, 'bg-all');
   };
 
   $rootScope.changeTheme = function(theme, sendUpdate) {
