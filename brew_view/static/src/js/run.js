@@ -142,9 +142,16 @@ export function appRun(
     $rootScope.$broadcast('userChange');
   };
 
-  $rootScope.hasPermission = function(permission) {
-    return _.includes($rootScope.user.permissions, permission) ||
-      _.includes($rootScope.user.permissions, 'bg-all');
+  $rootScope.hasPermission = function(permissions) {
+    if (!$rootScope.config.authEnabled) return true;
+    if (!$rootScope.user) return false;
+    if (_.includes($rootScope.user.permissions, 'bg-all')) return true;
+
+    // This makes it possible to pass an array or a single string
+    return _.intersection(
+      $rootScope.user.permissions,
+      _.flatten([permissions])
+    ).length;
   };
 
   $rootScope.changeTheme = function(theme, sendUpdate) {
