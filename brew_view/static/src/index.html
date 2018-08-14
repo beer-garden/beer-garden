@@ -112,20 +112,23 @@
               </ul>
 
             </li>
-            <li>
-              <a ui-sref="commands" ng-class="{active: ($state.current.name.startsWith('command'))}">
+            <li ng-show="hasPermission(user, 'bg-command-read')">
+              <a ui-sref="commands"
+                 ng-class="{active: ($state.current.name.startsWith('command'))}">
                 <i class="fa fa-fw fa-send-o"></i>
                 <span>Commands</span>
               </a>
             </li>
-            <li>
-              <a ui-sref="requests" ng-class="{active: ($state.current.name.startsWith('request'))}">
+            <li ng-show="hasPermission(user, 'bg-request-read')">
+              <a ui-sref="requests"
+                 ng-class="{active: ($state.current.name.startsWith('request'))}">
                 <i class="fa fa-fw fa-tasks"></i>
                 <span>Requests</span>
               </a>
             </li>
-            <li>
-              <a ui-sref="jobs" ng-class="{active: ($state.current.name.startsWith('job'))}">
+            <li ng-show="hasPermission(user, 'bg-job-read')">
+              <a ui-sref="jobs"
+                 ng-class="{active: ($state.current.name.startsWith('job'))}">
                 <i class="fa fa-fw fa-calendar"></i>
                 <span>Scheduler</span>
               </a>
@@ -143,19 +146,19 @@
                     <span>Systems Management</span>
                   </a>
                 </li>
-                <li>
+                <li ng-show="hasPermission(user, 'bg-queue-read')">
                   <a ui-sref="queues" ui-sref-active="active">
                     <i class="fa fa-database"></i>
                     <span>Queue Management</span>
                   </a>
                 </li>
-                <li>
+                <li ng-show="hasPermission(user, 'bg-user-read')">
                   <a ui-sref="user_admin" ui-sref-active="active">
                     <i class="fa fa-user"></i>
                     <span>User Management</span>
                   </a>
                 </li>
-                <li>
+                <li ng-show="hasPermission(user, 'bg-role-read')">
                   <a ui-sref="role_admin" ui-sref-active="active">
                     <i class="fa fa-tag"></i>
                     <span>Role Management</span>

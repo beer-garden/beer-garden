@@ -170,15 +170,14 @@ export function appRun(
     $rootScope.$broadcast('userChange');
   };
 
-  $rootScope.hasPermission = function(permissions) {
+  $rootScope.hasPermission = function(user, permissions) {
     if (!$rootScope.config.authEnabled) return true;
-    if (!$rootScope.user) return false;
-    if (_.includes($rootScope.user.permissions, 'bg-all')) return true;
+    if (_.isUndefined(user)) return false;
+    if (_.includes(user.permissions, 'bg-all')) return true;
 
     // This makes it possible to pass an array or a single string
     return _.intersection(
-      $rootScope.user.permissions,
-      _.flatten([permissions])
+      user.permissions, _.castArray(permissions)
     ).length;
   };
 
