@@ -32,8 +32,6 @@ class VersionHandler(BaseHandler):
 
     @coroutine
     def get(self):
-        from brew_view._version import __version__
-
         with thrift_context() as client:
             try:
                 bartender_version = yield client.getVersion()
@@ -44,7 +42,7 @@ class VersionHandler(BaseHandler):
                 bartender_version = "unknown"
 
         self.write({
-            "brew_view_version": __version__,
+            "brew_view_version": brew_view.__version__,
             "bartender_version": bartender_version,
             "current_api_version": "v1",
             "supported_api_versions": ["v1"]

@@ -16,6 +16,7 @@ from urllib3.util.url import Url
 
 import bg_utils
 import brewtils.rest
+import brew_view._version
 from bg_utils.event_publisher import EventPublishers
 from bg_utils.models import Role
 from bg_utils.pika import TransientPikaClient
@@ -33,6 +34,8 @@ from brewtils.schemas import (
     RoleSchema, RefreshTokenSchema, JobSchema, DateTriggerSchema,
     IntervalTriggerSchema, CronTriggerSchema
 )
+
+__version__ = brew_view._version.__version__
 
 config = None
 application = None
