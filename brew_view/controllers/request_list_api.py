@@ -15,7 +15,7 @@ from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import (ModelValidationError, RequestPublishException,
-                             WaitExceededError)
+                             TimeoutExceededError)
 from brewtils.models import Events
 
 
@@ -210,13 +210,13 @@ class RequestListAPI(BaseHandler):
             description: The Request definition
             schema:
               $ref: '#/definitions/Request'
-          - name: wait
+          - name: blocking
             in: query
             required: false
             description: Flag indicating whether to wait for request completion
             type: boolean
             default: false
-          - name: max_wait
+          - name: timeout
             in: query
             required: false
             description: Maximum time (seconds) to wait for request completion
@@ -282,15 +282,16 @@ class RequestListAPI(BaseHandler):
                     request_model.delete()
                 raise
             else:
-                if self.get_argument('wait', default='').lower() == 'true':
-                    max_wait = timedelta(seconds=int(self.get_argument('max_wait', default=30)))
+                if self.get_argument('blocking', default='').lower() == 'true':
+                    timeout = self.get_argument('timeout', default=30)
+                    timeout_delta = timedelta(seconds=int(timeout))
 
-                    wait_condition = Condition()
-                    brew_view.request_map[str(request_model.id)] = wait_condition
+                    condition = Condition()
+                    brew_view.request_map[str(request_model.id)] = condition
 
-                    wait_result = yield wait_condition.wait(max_wait)
+                    wait_result = yield condition.wait(timeout_delta)
                     if not wait_result:
-                        raise WaitExceededError()
+                        raise TimeoutExceededError()
 
         request_model.reload()
 
