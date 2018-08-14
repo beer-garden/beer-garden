@@ -51,18 +51,22 @@ def main():
     bartender.setup_bartender(spec=spec, cli_args=vars(args))
 
     # Ensure we have a mongo connection
-    progressive_backoff(partial(bg_utils.setup_database, bartender.config), bartender.application,
+    progressive_backoff(partial(bg_utils.setup_database, bartender.config),
+                        bartender.application,
                         'Unable to connect to mongo, is it started?')
 
     # Ensure we have message queue connections
-    progressive_backoff(bartender.application.clients['pika'].is_alive, bartender.application,
+    progressive_backoff(bartender.application.clients['pika'].is_alive,
+                        bartender.application,
                         'Unable to connect to rabbitmq, is it started?')
-    progressive_backoff(bartender.application.clients['pyrabbit'].is_alive, bartender.application,
+    progressive_backoff(bartender.application.clients['pyrabbit'].is_alive,
+                        bartender.application,
                         'Unable to connect to rabbitmq admin interface. '
                         'Is the management plugin enabled?')
 
     # Ensure we have a brew-view connection
-    progressive_backoff(bartender.bv_client.can_connect, bartender.application,
+    progressive_backoff(partial(bartender.bv_client.can_connect, timeout=5),
+                        bartender.application,
                         'Unable to connect to brew-view, is it started?')
 
     # Since we wait for RabbitMQ and brew-view we could already be shutting down
