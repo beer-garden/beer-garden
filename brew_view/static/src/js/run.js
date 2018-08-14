@@ -62,9 +62,8 @@ export function appRun(
 
   $rootScope.responseState = responseState;
 
-  $rootScope.doLoad = function() {
-    $rootScope.configPromise = UtilityService.getConfig()
-    .then(
+  $rootScope.loadConfig = function() {
+    $rootScope.configPromise = UtilityService.getConfig().then(
       (response) => {
         angular.extend($rootScope.config, camelCaseKeys(response.data));
       },
@@ -72,9 +71,34 @@ export function appRun(
         return $q.reject(response);
       }
     );
+    return $rootScope.configPromise;
+  };
 
-    $rootScope.systemsPromise = SystemService.getSystems(false, 'id,name,version')
-    .then(
+  $rootScope.loadUser = function(token) {
+    if (!token) return;
+
+    $rootScope.userPromise = UserService.loadUser(token).then(
+      (response) => {
+        // Angular doesn't do a deep watch here, so make sure we calculate
+        // and set the permissions before setting $rootScope.user
+        // coalescePermissions [0] is roles, [1] is permissions
+        let user = response.data;
+        user.permissions = RoleService.coalescePermissions(user.roles)[1];
+        $rootScope.user = user;
+
+        $rootScope.changeTheme(user.preferences.theme || 'default');
+        $rootScope.$broadcast('userChange');
+      }, (response) => {
+        // TODO - Not sure what to do here
+        console.log('error loading user');
+      }
+    );
+    return $rootScope.userPromise;
+  };
+
+  $rootScope.loadSystems = function() {
+    $rootScope.systemsPromise = SystemService.getSystems(
+        false, 'id,name,version').then(
       (response) => {
         $rootScope.systems = response.data;
       },
@@ -88,6 +112,26 @@ export function appRun(
         // haven't constructed a pipeline based on this promise.
         return $q.reject(response);
       }
+    );
+    return $rootScope.systemsPromise;
+  };
+
+  $rootScope.changeUser = function(token) {
+    return $q.all({
+      systems: $rootScope.loadSystems(),
+      user: $rootScope.loadUser(token),
+    });
+  };
+
+  $rootScope.initialLoad = function() {
+    // Very first thing is to load up a token if one exists
+    let token = localStorageService.get('token');
+    if (token) {
+      TokenService.handleToken(token);
+    }
+
+    $rootScope.loadConfig().then(
+      $rootScope.changeUser(token)
     );
   };
 
@@ -103,22 +147,7 @@ export function appRun(
         TokenService.handleRefresh(response.data.refresh);
         TokenService.handleToken(response.data.token);
 
-        UserService.loadUser(response.data.token).then(
-          (response) => {
-            $rootScope.user = response.data;
-
-            // coalescePermissions [0] is the roles, [1] is the permissions
-            let perms = RoleService.coalescePermissions($rootScope.user.roles);
-            $rootScope.user.permissions = perms[1];
-
-            $rootScope.doLoad();
-            $rootScope.$broadcast('userChange');
-
-            $rootScope.changeTheme($rootScope.user.preferences.theme || 'default');
-          }, (response) => {
-            console.log('error loading user');
-          }
-        );
+        $rootScope.loadUser(response.data.token);
       }, (response) => {
         console.log('bad login');
         $rootScope.badPassword = true;
@@ -138,7 +167,6 @@ export function appRun(
     $http.defaults.headers.common.Authorization = undefined;
 
     $rootScope.user = undefined;
-    $rootScope.doLoad();
     $rootScope.$broadcast('userChange');
   };
 
@@ -170,24 +198,6 @@ export function appRun(
     $rootScope.loginError = false;
     $rootScope.showLogin = !$rootScope.showLogin;
   };
-
-  // Load up some settings
-  // If we have a token use it to load a user
-  // If not, try to load a persistent theme
-  let token = localStorageService.get('token');
-  if (token) {
-    TokenService.handleToken(token);
-    UserService.loadUser(token).then(
-      (response) => {
-        $rootScope.user = response.data;
-        $rootScope.changeTheme($rootScope.user.preferences.theme || 'default');
-      }, (response) => {
-        console.log('error loading user');
-      }
-    );
-  } else {
-    $rootScope.changeTheme(localStorageService.get('currentTheme') || 'default');
-  }
 
   const isLaterVersion = function(system1, system2) {
     let versionParts1 = system1.version.split('.');
@@ -290,7 +300,7 @@ export function appRun(
     }
   };
 
-  $rootScope.doLoad();
+  $rootScope.initialLoad();
 };
 
 
