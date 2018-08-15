@@ -14,8 +14,9 @@ from tornado.queues import Queue
 import brew_view
 from bg_utils.event_publisher import EventPublisher
 from bg_utils.parser import BeerGardenSchemaParser
-from bg_utils.pika import ClientBase, get_routing_key
+from bg_utils.pika import get_routing_key
 from brewtils.models import Events
+from brewtils.queues import PikaClient
 from brewtils.rest.client import RestClient
 
 
@@ -119,7 +120,7 @@ class MongoPublisher(BeergardenPublisher):
         )
 
 
-class TornadoPikaPublisher(BeergardenPublisher, ClientBase):
+class TornadoPikaPublisher(BeergardenPublisher, PikaClient):
 
     def __init__(self, **kwargs):
         self.logger = logging.getLogger(__name__)
@@ -136,7 +137,7 @@ class TornadoPikaPublisher(BeergardenPublisher, ClientBase):
 
         # Trying to get super() to work with incompatible signatures is a nightmare
         BeergardenPublisher.__init__(self)
-        ClientBase.__init__(self, **kwargs)
+        PikaClient.__init__(self, **kwargs)
 
         IOLoop.current().spawn_callback(self._process)
 
