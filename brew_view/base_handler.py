@@ -87,7 +87,8 @@ class BaseHandler(AuthMixin, RequestHandler):
         }
 
     def set_default_headers(self):
-        """Enable CORS by setting the access control header"""
+        """Headers set here will be applied to all responses"""
+        self.set_header("BG-Version", brew_view.__version__)
 
         if brew_view.config.cors_enabled:
             self.set_header("Access-Control-Allow-Origin", "*")

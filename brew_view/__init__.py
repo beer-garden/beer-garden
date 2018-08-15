@@ -15,8 +15,9 @@ from tornado.web import Application, StaticFileHandler, RedirectHandler
 from urllib3.util.url import Url
 
 import bg_utils
-import brewtils.rest
+import brew_view._version
 import brew_view.authorization
+import brewtils.rest
 from bg_utils.event_publisher import EventPublishers
 from bg_utils.pika import TransientPikaClient
 from bg_utils.plugin_logging_loader import PluginLoggingLoader
@@ -31,6 +32,8 @@ from brewtils.schemas import (
     RoleSchema, RefreshTokenSchema, JobSchema, DateTriggerSchema,
     IntervalTriggerSchema, CronTriggerSchema
 )
+
+__version__ = brew_view._version.__version__
 
 config = None
 application = None
