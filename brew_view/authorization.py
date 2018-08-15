@@ -132,16 +132,26 @@ def check_permission(principal, required_permissions):
 
 
 def anonymous_principal():
-    """Load correct anonymous permissions"""
+    """Load correct anonymous permissions
+
+    This exists in a weird space. We need to set the roles attribute to a 'real'
+    Role object so it works correctly when the REST handler goes to serialize
+    this principal.
+
+    However, we also need to set the permissions attribute to the consolidated
+    permission list so that ``check_permission`` will be able to do a comparison
+    without having to calculate effective permissions every time.
+    """
 
     if brew_view.config.auth.enabled:
-        anon_role = Role.objects.get(name='bg-anonymous')
-        roles, permissions = coalesce_permissions([anon_role])
+        roles = [Role.objects.get(name='bg-anonymous')]
     else:
-        roles, permissions = (Role(name='bg-anonymous'), ['bg-all'])
+        roles = [Role(name='bg-anonymous', permissions=['bg-all'])]
 
-    return BrewtilsPrincipal(username='bg-anonymous', roles=roles,
-                             permissions=permissions)
+    _, permissions = coalesce_permissions(roles)
+
+    return BrewtilsPrincipal(
+        username='anonymous', roles=roles, permissions=permissions)
 
 
 def coalesce_permissions(role_list):

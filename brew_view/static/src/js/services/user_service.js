@@ -48,10 +48,7 @@ export default function userService($http) {
     },
 
     loadUser: (token) => {
-      let decoded = jwtDecode(token);
-      let userId = decoded.sub;
-
-      return service.getUser(userId);
+      return service.getUser(token ? jwtDecode(token).sub : 'anonymous');
     },
     setTheme: (userId, theme) => {
       return service.updateUser(userId, [

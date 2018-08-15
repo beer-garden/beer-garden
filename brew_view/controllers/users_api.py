@@ -1,9 +1,10 @@
 import json
 import logging
 
-from mongoengine.errors import DoesNotExist
+from mongoengine.errors import DoesNotExist, ValidationError
 from passlib.apps import custom_app_context
 
+import brew_view
 from bg_utils.models import Principal, Role
 from bg_utils.parser import BeerGardenSchemaParser
 from brew_view.authorization import authenticated, check_permission, Permissions
@@ -15,15 +16,15 @@ class UserAPI(BaseHandler):
 
     logger = logging.getLogger(__name__)
 
-    def get(self, user_id):
+    def get(self, user_identifier):
         """
         ---
         summary: Retrieve a specific User
         parameters:
-          - name: user_id
+          - name: user_identifier
             in: path
             required: true
-            description: The ID of the User
+            description: The ID or name of the User
             type: string
         responses:
           200:
@@ -37,14 +38,20 @@ class UserAPI(BaseHandler):
         tags:
           - Users
         """
-        # Need fine-grained access control here
-        if user_id != self.current_user.id:
-            check_permission(self.current_user, [Permissions.USER_READ])
+        if user_identifier == 'anonymous':
+            principal = brew_view.anonymous_principal
+        else:
+            # Need fine-grained access control here
+            if user_identifier != self.current_user.id:
+                check_permission(self.current_user, [Permissions.USER_READ])
+
+            try:
+                principal = Principal.objects.get(id=str(user_identifier))
+            except (DoesNotExist, ValidationError):
+                principal = Principal.objects.get(username=str(user_identifier))
 
         self.write(BeerGardenSchemaParser.serialize_principal(
-            Principal.objects.get(id=str(user_id)),
-            to_string=False
-        ))
+            principal, to_string=False))
 
     @authenticated(permissions=[Permissions.USER_DELETE])
     def delete(self, user_id):

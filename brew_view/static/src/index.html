@@ -38,7 +38,7 @@
 
       <ul class="nav navbar-nav navbar-top-links navbar-right">
 
-        <li ng-show=!user ng-class="{'red-border': loginError}" class="">
+        <li ng-show=!isUser(user) ng-class="{'red-border': loginError}">
           <a href="" ng-click="toggleLogin()">Login</a>
 
           <div ng-show="showLogin">
@@ -48,11 +48,11 @@
           </div>
         </li>
 
-        <li ng-show=user>
+        <li ng-show="isUser(user)">
           <a href="">Hello, {{user.username}}!</a>
         </li>
 
-        <li ng-show=user>
+        <li ng-show="isUser(user)">
           <a ng-click="doLogout()" href="">Logout</a>
         </li>
 

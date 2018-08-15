@@ -75,22 +75,21 @@ export function appRun(
   };
 
   $rootScope.loadUser = function(token) {
-    if (!token) return;
-
     $rootScope.userPromise = UserService.loadUser(token).then(
       (response) => {
         // Angular doesn't do a deep watch here, so make sure we calculate
         // and set the permissions before setting $rootScope.user
-        // coalescePermissions [0] is roles, [1] is permissions
         let user = response.data;
-        user.permissions = RoleService.coalescePermissions(user.roles)[1];
-        $rootScope.user = user;
 
-        $rootScope.changeTheme(user.preferences.theme || 'default');
-        $rootScope.$broadcast('userChange');
+        // coalescePermissions [0] is roles, [1] is permissions
+        user.permissions = RoleService.coalescePermissions(user.roles)[1];
+
+        let theme = _.get(user, 'preferences.theme', 'default');
+        $rootScope.changeTheme(theme);
+
+        $rootScope.user = user;
       }, (response) => {
-        // TODO - Not sure what to do here
-        console.log('error loading user');
+        return $q.reject(response);
       }
     );
     return $rootScope.userPromise;
@@ -103,6 +102,8 @@ export function appRun(
         $rootScope.systems = response.data;
       },
       (response) => {
+        $rootScope.systems = [];
+
         // This is super annoying.
         // If any controller is actually using this promise we need to return a
         // rejection here, otherwise the chained promise will actually resolve
@@ -117,10 +118,11 @@ export function appRun(
   };
 
   $rootScope.changeUser = function(token) {
-    return $q.all({
-      systems: $rootScope.loadSystems(),
-      user: $rootScope.loadUser(token),
-    });
+    // We need to reload systems as those permisisons could have changed
+    $rootScope.loadSystems();
+
+    // And actually return this promise so we can broadcast in certain cases
+    return $rootScope.loadUser(token);
   };
 
   $rootScope.initialLoad = function() {
@@ -147,9 +149,12 @@ export function appRun(
         TokenService.handleRefresh(response.data.refresh);
         TokenService.handleToken(response.data.token);
 
-        $rootScope.loadUser(response.data.token);
+        $rootScope.changeUser(response.data.token).then(
+          () => {
+            $rootScope.$broadcast('userChange');
+          }
+        );
       }, (response) => {
-        console.log('bad login');
         $rootScope.badPassword = true;
         $rootScope.loginInfo.password = undefined;
       }
@@ -166,8 +171,11 @@ export function appRun(
     localStorageService.remove('token');
     $http.defaults.headers.common.Authorization = undefined;
 
-    $rootScope.user = undefined;
-    $rootScope.$broadcast('userChange');
+    $rootScope.changeUser(undefined).then(
+      () => {
+        $rootScope.$broadcast('userChange');
+      }
+    );
   };
 
   $rootScope.hasPermission = function(user, permissions) {
@@ -187,10 +195,14 @@ export function appRun(
       $rootScope.themes[key] = (key == theme);
     };
 
-    if ($rootScope.user && sendUpdate) {
+    if ($rootScope.isUser($rootScope.user) && sendUpdate) {
       UserService.setTheme($rootScope.user.id, theme);
     }
   };
+
+  $rootScope.isUser = function(user) {
+    return user && user.username !== 'anonymous';
+  }
 
   $rootScope.toggleLogin = function() {
     // Clicking should always clear the red outline
