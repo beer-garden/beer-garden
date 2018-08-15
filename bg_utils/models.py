@@ -516,6 +516,14 @@ class Principal(Document, BrewtilsPrincipal):
     roles = ListField(field=ReferenceField('Role', reverse_delete_rule=PULL))
     preferences = DictField()
 
+    meta = {
+        'auto_create_index': False,  # We need to manage this ourselves
+        'index_background': True,
+        'indexes': [
+            {'name': 'unique_index', 'fields': ['username'], 'unique': True},
+        ]
+    }
+
 
 class RefreshToken(Document):
 
