@@ -29,7 +29,7 @@ appRun.$inject = [
  * @param  {TokenService} TokenService     Service for User information.
  * @param  {RoleService} RoleService       Service for Role information.
  */
-export function appRun(
+export default function appRun(
     $rootScope,
     $state,
     $stateParams,
@@ -312,14 +312,4 @@ export function appRun(
   };
 
   $rootScope.initialLoad();
-};
-
-
-dtLoadingTemplate.$inject = ['DTDefaultOptions'];
-/**
- * dtLoadingTemplate - Loading Template for datatabales
- * @param  {Object} DTDefaultOptions Data-tables default options.
- */
-export function dtLoadingTemplate(DTDefaultOptions) {
-  DTDefaultOptions.setLoadingTemplate('<div class="row"><loading loader="queues"></loading></div>');
 };
