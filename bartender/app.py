@@ -1,8 +1,8 @@
 import logging
-import time
 from datetime import timedelta
 from functools import partial
 
+import time
 from mongoengine import Q
 from requests.exceptions import RequestException
 
@@ -21,7 +21,6 @@ from bartender.request_validator import RequestValidator
 from bartender.thrift.handler import BartenderHandler
 from bartender.thrift.server import make_server
 from bg_utils.models import Event, Request
-from bg_utils.pika import ClientBase
 from brewtils.models import Events
 from brewtils.stoppable_thread import StoppableThread
 
@@ -51,7 +50,7 @@ class BartenderApp(StoppableThread):
             'pyrabbit': PyrabbitClient(host=bartender.config.amq.host,
                                        virtual_host=bartender.config.amq.virtual_host,
                                        **bartender.config.amq.connections.admin),
-            'public': ClientBase(host=bartender.config.publish_hostname,
+            'public': PikaClient(host=bartender.config.publish_hostname,
                                  virtual_host=bartender.config.amq.virtual_host,
                                  **bartender.config.amq.connections.message),
         }
