@@ -6,7 +6,7 @@ from pika import BasicProperties
 from pika import BlockingConnection
 from pika.exceptions import AMQPError
 
-from brewtils.pika import ClientBase
+from brewtils.queues import PikaClient
 
 
 def get_routing_key(*args, **kwargs):
@@ -56,7 +56,7 @@ def get_routing_keys(*args, **kwargs):
     return routing_keys
 
 
-class TransientPikaClient(ClientBase):
+class TransientPikaClient(PikaClient):
     """Pika client implementation that creates a new connection and channel for each action"""
 
     def __init__(self, **kwargs):
