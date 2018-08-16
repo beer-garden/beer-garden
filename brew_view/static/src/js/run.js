@@ -202,7 +202,7 @@ export default function appRun(
 
   $rootScope.isUser = function(user) {
     return user && user.username !== 'anonymous';
-  }
+  };
 
   $rootScope.toggleLogin = function() {
     // Clicking should always clear the red outline

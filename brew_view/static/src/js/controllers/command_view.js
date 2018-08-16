@@ -280,6 +280,7 @@ export default function commandViewController(
   /**
    * Find a command, then load that command from the server.
    * @param {string} commandName - command name to load.
+   * @return {Promise} The command promise
    */
   const findAndLoadCommand = function(commandName) {
     let command = _.find($scope.system.commands, {name: commandName});
@@ -297,6 +298,7 @@ export default function commandViewController(
    * Find a system in $rootScope, then request all of its commands from the API.
    * @param {string} systemName - Name of the system to load.
    * @param {string} systemVersion - Version of the system to load.
+   * @return {Promise} The system promise
    */
   const findAndLoadSystem = function(systemName, systemVersion) {
     return $rootScope.findSystem(systemName, systemVersion).then(
@@ -335,8 +337,7 @@ export default function commandViewController(
             },
             $scope.failureCallback
           );
-        }
-        else {
+        } else {
           // The 'root' systems list doesn't have full commands so we have to
           // get a more detailed system
           findAndLoadSystem(

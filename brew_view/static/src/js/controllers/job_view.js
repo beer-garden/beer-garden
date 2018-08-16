@@ -22,7 +22,6 @@ export default function jobViewController(
     $location,
     $stateParams,
     JobService) {
-
   $scope.formattedRequestTemplate = '';
   $scope.formattedTrigger = '';
 

@@ -35,7 +35,9 @@ export default function requestService($q, $http, $timeout) {
         service.getRequest(id).then(
           (response) => {
             if (!service.isComplete(response.data)) {
-              $timeout(() => { checkForCompletion(id) }, 500);
+              $timeout(() => {
+                checkForCompletion(id);
+              }, 500);
             } else {
               response.data = JSON.parse(response.data.output);
               deferred.resolve(response);

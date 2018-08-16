@@ -21,7 +21,7 @@ export default function jobIndexController(
     $rootScope,
     $location,
     $interval,
-    JobService,) {
+    JobService) {
   $scope.successCallback = function(response) {
     $scope.response = response;
     $scope.data = response.data;

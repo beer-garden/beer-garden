@@ -38,7 +38,6 @@ export function authInterceptorService(
     responseError: (rejection) => {
       // 401 means 'needs authentication'
       if (rejection.status === 401) {
-
         // This attempts to handle the condition where an access token has
         // expired but there's a refresh token in storage. We use the refresh
         // token to get a new access token then re-attempt the original request.
@@ -73,8 +72,7 @@ export function authInterceptorService(
               return $http(rejection.config);
             }
           );
-        }
-        else {
+        } else {
           // Highlight the login button
           $injector.get('$rootScope').loginError = true;
         }

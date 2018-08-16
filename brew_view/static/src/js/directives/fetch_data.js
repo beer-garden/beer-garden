@@ -37,8 +37,7 @@ export default function fetchDataDirective($timeout, ErrorService) {
 
         if (scope.responseState(response) === 'empty') {
           statusCode = '404';
-        }
-        else if (scope.responseState(response) === 'error') {
+        } else if (scope.responseState(response) === 'error') {
           statusCode = response.status;
         }
 
@@ -54,11 +53,11 @@ export default function fetchDataDirective($timeout, ErrorService) {
         if (_.includes(scope.response.config.url, 'system')) {
           return 'system';
         }
-      }
+      };
 
       scope.errorMessage = function() {
         return _.get(scope.response.data, 'message', scope.response.data);
-      }
+      };
 
       const delay = _.isUndefined(scope.delay) ? 0.25 : parseFloat(scope.delay);
 

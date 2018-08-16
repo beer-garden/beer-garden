@@ -4,7 +4,7 @@ AboutController.$inject = ['$scope', 'UtilityService'];
 /**
  * AboutController - Angular controller for the about page.
  * @param  {$scope} $scope         Angular's $scope object.
- * @param  {Object} VersionService Beer-Garden's version service object.
+ * @param  {Object} UtilityService Beer-Garden's utility service object.
  */
 export default function AboutController($scope, UtilityService) {
   UtilityService.getVersion().then(
