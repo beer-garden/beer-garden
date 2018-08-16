@@ -13,12 +13,16 @@
 <div class="col-md-12" ng-if="responseState(response) === 'empty'">
   <div class="panel panel-warning">
     <div class="panel-heading">
-      <h2><strong> Hmmm...</strong> No {{errorGroup()}} could be found</h2>
+      <h2>
+        <i class="fa fa-search"></i>
+        <strong>Hmmm...</strong>
+        <span>the server can't seem to find that</span>
+      </h2>
     </div>
     <div class="panel-body">
       <p>
-        There are a couple of explanations for why there would be no
-        {{errorGroup()}}. Check out below for troubleshooting steps.
+        There are a couple reasons why that might happen. Check below for some
+        troubleshooting steps.
       </p>
       <table class="table">
         <tr>
@@ -26,7 +30,7 @@
           <th width="60%">Description</th>
           <th width="25%">Resolution</th>
         </tr>
-        <tr ng-repeat="item in emptyMap[errorGroup()]">
+        <tr ng-repeat="item in getErrors(response)">
           <td ng-bind-html="item.problem"></td>
           <td ng-bind-html="item.description"></td>
           <td ng-bind-html="item.resolution"></td>
@@ -65,7 +69,7 @@
           <th width="55%">Description</th>
           <th width="30%">Resolution</th>
         </tr>
-        <tr ng-repeat="item in errorMap[response.status]">
+        <tr ng-repeat="item in getErrors(response)">
           <td ng-bind-html="item.problem"></td>
           <td ng-bind-html="item.description"></td>
           <td ng-bind-html="item.resolution"></td>

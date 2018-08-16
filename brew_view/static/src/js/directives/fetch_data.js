@@ -23,8 +23,27 @@ export default function fetchDataDirective($timeout, ErrorService) {
         return realState;
       };
 
-      scope.emptyMap = ErrorService['empty'];
-      scope.errorMap = ErrorService['error'];
+      scope.getErrors = function(response) {
+        let specific;
+        let statusCode;
+
+        // Do some simple translation to add extra items based on the url
+        let url = _.get(response, 'config.url');
+        if (_.includes(url, 'system')) {
+          specific = 'system';
+        } else if (_.includes(url, 'requests/')) {
+          specific = 'request';
+        }
+
+        if (scope.responseState(response) === 'empty') {
+          statusCode = '404';
+        }
+        else if (scope.responseState(response) === 'error') {
+          statusCode = response.status;
+        }
+
+        return ErrorService.getErrors(specific, statusCode);
+      };
 
       scope.errorGroup = function() {
         // There are some cases where we 'fake' a failure without actually
