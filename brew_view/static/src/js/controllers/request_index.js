@@ -17,11 +17,13 @@ requestIndexController.$inject = [
  * @param  {Object} RequestService    Beer-Garden Request Service.
  */
 export default function requestIndexController(
-  $scope,
-  DTOptionsBuilder,
-  DTColumnBuilder,
-  DTRendererService,
-  RequestService) {
+    $scope,
+    DTOptionsBuilder,
+    DTColumnBuilder,
+    DTRendererService,
+    RequestService) {
+  $scope.setWindowTitle('requests');
+
   $scope.requests = {};
   $scope.requests.errorMap = RequestService.errorMap;
 

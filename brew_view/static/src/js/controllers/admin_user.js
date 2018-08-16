@@ -28,6 +28,8 @@ export function adminUserController(
     RoleService,
     UserService,
     PermissionService) {
+  $scope.setWindowTitle('users');
+
   // This holds the raw responses from the backend
   $scope.raws = {};
 

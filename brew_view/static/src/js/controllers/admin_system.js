@@ -38,6 +38,8 @@ export default function adminSystemController(
     InstanceService,
     UtilityService,
     AdminService) {
+  $scope.setWindowTitle('systems');
+
   $scope.util = UtilityService;
 
   $scope.rescan = function() {

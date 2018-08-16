@@ -116,7 +116,13 @@ export default function requestViewController(
     $scope.response = response;
     $scope.data = response.data;
 
-    $scope.data = response.data;
+    $scope.setWindowTitle(
+      'request',
+      $scope.data.command,
+      ($scope.data.metadata.system_display_name || $scope.data.system),
+      $scope.data.system_version,
+      $scope.data.instance_name,
+    );
 
     $scope.formatOutput();
     $scope.formattedParameters = $scope.stringify($scope.data.parameters);
@@ -161,14 +167,14 @@ export default function requestViewController(
     $scope.response = response;
     $scope.data = response.data;
 
-    $scope.data = response.data;
-
     $scope.rawOutput = undefined;
     $scope.formattedOutput = undefined;
     $scope.formattedAvailable = false;
     $scope.showFormatted = false;
     $scope.formatErrorTitle = undefined;
     $scope.formatErrorMsg = undefined;
+
+    $scope.setWindowTitle();
   };
 
   $scope.redoRequest = function(request) {

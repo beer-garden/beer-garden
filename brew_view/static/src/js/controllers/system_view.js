@@ -38,11 +38,16 @@ export default function systemViewController(
   $scope.successCallback = function(response) {
     $scope.response = response;
     $scope.data = response.data;
+    $scope.setWindowTitle(
+      ($scope.data.display_name || $scope.data.name),
+      $scope.data.version
+    );
   };
 
   $scope.failureCallback = function(response) {
     $scope.response = response;
     $scope.data = {};
+    $scope.setWindowTitle();
   };
 
   // Register a function that polls if the system is in a transition status

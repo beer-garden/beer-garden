@@ -31,6 +31,8 @@ export default function jobCreateController(
     JobService,
     SystemService,
     SFBuilderService) {
+  $scope.setWindowTitle('scheduler');
+
   $scope.system = $stateParams.system || null;
   $scope.command = $stateParams.command || null;
   $scope.instanceName = null;

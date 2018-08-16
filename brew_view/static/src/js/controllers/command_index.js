@@ -24,6 +24,8 @@ export default function commandIndexController(
   SystemService,
   CommandService,
   DTOptionsBuilder) {
+  $scope.setWindowTitle('commands');
+
   $scope.dtOptions = DTOptionsBuilder.newOptions()
     .withOption('order', [4, 'asc'])
     .withOption('autoWidth', false)
