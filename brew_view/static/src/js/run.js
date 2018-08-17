@@ -134,6 +134,10 @@ export default function appRun(
 
     $rootScope.loadConfig().then(
       $rootScope.changeUser(token)
+    ).then(
+      () => {
+        $rootScope.setWindowTitle();
+      }
     );
   };
 
@@ -208,6 +212,15 @@ export default function appRun(
     // Clicking should always clear the red outline
     $rootScope.loginError = false;
     $rootScope.showLogin = !$rootScope.showLogin;
+  };
+
+  $rootScope.setWindowTitle = function(...titleParts) {
+    $rootScope.configPromise.then(
+      () => {
+        titleParts.push($rootScope.config.applicationName);
+        $rootScope.title = _.join(titleParts, ' - ');
+      }
+    )
   };
 
   const isLaterVersion = function(system1, system2) {

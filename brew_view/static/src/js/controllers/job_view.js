@@ -22,6 +22,8 @@ export default function jobViewController(
     $location,
     $stateParams,
     JobService) {
+  $scope.setWindowTitle('scheduler');
+
   $scope.formattedRequestTemplate = '';
   $scope.formattedTrigger = '';
 

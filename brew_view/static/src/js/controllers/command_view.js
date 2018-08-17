@@ -224,12 +224,20 @@ export default function commandViewController(
     } else {
       generateSF();
     }
+
+    $scope.setWindowTitle(
+      'command',
+      $scope.command.name,
+      ($scope.system.display_name || $scope.system.name),
+      $scope.system.version,
+    );
   };
 
   $scope.failureCallback = function(response) {
     tempResponse = response;
     $scope.response = response;
     $scope.command = [];
+    $scope.setWindowTitle();
   };
 
   $scope.$watch('model', function(val, old) {

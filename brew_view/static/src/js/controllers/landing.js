@@ -24,6 +24,8 @@ export default function landingController(
     $interval,
     SystemService,
     UtilityService) {
+  $scope.setWindowTitle();
+
   $scope.util = UtilityService;
 
   $scope.successCallback = function(response) {

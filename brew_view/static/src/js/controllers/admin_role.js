@@ -25,6 +25,8 @@ export function adminRoleController(
     $uibModal,
     RoleService,
     PermissionService) {
+  $scope.setWindowTitle('roles');
+
   // This holds the raw responses from the backend
   $scope.raws = {};
 

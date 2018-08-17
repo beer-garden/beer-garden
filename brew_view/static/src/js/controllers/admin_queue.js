@@ -40,6 +40,8 @@ export default function adminQueueController(
     DTOptionsBuilder,
     DTColumnBuilder,
     QueueService) {
+  $scope.setWindowTitle('queues');
+
   let preconditionPromise;
 
   $scope.alerts = [];

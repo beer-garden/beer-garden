@@ -22,6 +22,8 @@ export default function jobIndexController(
     $location,
     $interval,
     JobService) {
+  $scope.setWindowTitle('scheduler');
+
   $scope.successCallback = function(response) {
     $scope.response = response;
     $scope.data = response.data;
