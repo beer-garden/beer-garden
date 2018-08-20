@@ -10,11 +10,11 @@ BIN_HOME="$APP_HOME/bin"
 PLUGIN_LOG_HOME="$LOG_HOME/plugins"
 PLUGIN_HOME="$APP_HOME/plugins"
 
-BARTENDER_CONFIG="${CONFIG_HOME}/bartender-config.json"
+BARTENDER_CONFIG="${CONFIG_HOME}/bartender-config.yml"
 BARTENDER_LOG_CONFIG="${CONFIG_HOME}/bartender-logging-config.json"
 BARTENDER_LOG_FILE="$LOG_HOME/bartender.log"
 
-BREW_VIEW_CONFIG="${CONFIG_HOME}/brew-view-config.json"
+BREW_VIEW_CONFIG="${CONFIG_HOME}/brew-view-config.yml"
 BREW_VIEW_LOG_CONFIG="${CONFIG_HOME}/brew-view-logging-config.json"
 BREW_VIEW_LOG_FILE="$LOG_HOME/brew-view.log"
 
