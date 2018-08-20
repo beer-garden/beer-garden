@@ -9,9 +9,9 @@
             class="btn btn-success pull-right">
       Pour it Again
     </button>
-    <span class="pull-right" ng-if="!canRepeat(data) && instanceStatus != 'RUNNING'">
+    <small class="pull-right" ng-if="showInstanceStatus(data, instanceStatus)">
       Error: Instance {{instanceStatus}}
-    </span>
+    </small>
   </span>
 </h1>
 

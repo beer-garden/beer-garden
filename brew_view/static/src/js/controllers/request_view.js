@@ -30,7 +30,10 @@ export default function requestViewController(
     RequestService,
     SystemService) {
   $scope.service = RequestService;
-  $scope.timeoutRequest;
+
+  $scope.instanceStatus = undefined;
+  $scope.timeoutRequest = undefined;
+
   $scope.children = [];
   $scope.childrenCollapsed = true;
 
@@ -42,7 +45,6 @@ export default function requestViewController(
   $scope.formatErrorMsg = undefined;
   $scope.showFormatted = false;
 
-  $scope.instanceStatus = '';
   $scope.statusDescriptions = {
     'CREATED': 'The request has been validated by beer-garden and is on the ' +
                'queue awaiting processing.',
@@ -66,6 +68,11 @@ export default function requestViewController(
 
     return RequestService.isComplete(request);
   };
+
+  $scope.showInstanceStatus = function(request, instanceStatus) {
+    return !$scope.canRepeat(request) && instanceStatus &&
+      instanceStatus != 'RUNNING';
+  }
 
   $scope.formatOutput = function() {
     $scope.formattedOutput = '';
@@ -135,11 +142,10 @@ export default function requestViewController(
         (bareSystem) => {
           SystemService.getSystem(bareSystem.id, false).then(
             (systemObj) => {
-              for (let i = 0; i < systemObj.data.instances.length; i++) {
-                if (systemObj.data.instances[i].name === response.data.instance_name) {
-                  $scope.instanceStatus = systemObj.data.instances[i].status;
-                }
-              }
+              $scope.instanceStatus = _.find(
+                systemObj.data.instances,
+                {name: response.data.instance_name}
+              ).status;
             }
           );
         }
