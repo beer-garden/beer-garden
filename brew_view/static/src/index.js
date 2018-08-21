@@ -7,6 +7,10 @@ import 'objectpath';
 import 'tv4';
 import 'jquery';
 
+import moment from 'moment';
+import 'moment-timezone';
+moment.tz.setDefault('UTC');
+
 // Angular
 import angular from 'angular';
 import 'angular-animate';

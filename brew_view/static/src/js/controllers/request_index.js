@@ -68,8 +68,23 @@ export default function requestIndexController(
         ],
       },
       4: {
-        html: 'range', type: 'text',
-        attr: {class: 'form-inline form-control', style: 'width: 50%;'},
+        html: 'range',
+        type: 'text',
+        attr: {
+          class: 'form-inline form-control',
+        },
+        startAttr: {
+          placeholder: 'start',
+        },
+        endAttr: {
+          placeholder: 'end',
+        },
+        picker: {
+          format: 'YYYY-MM-DD HH:mm:ss',
+          showClear: true,
+          showTodayButton: true,
+          useCurrent: false,
+        },
       },
       5: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
     })

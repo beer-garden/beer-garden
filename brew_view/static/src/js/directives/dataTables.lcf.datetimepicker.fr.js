@@ -12,8 +12,10 @@
   let factory = function($, ColumnFilter) {
     'use strict';
 
-    ColumnFilter.filter.rangeBase = $.extend(true, {}, ColumnFilter.filter.range);
     ColumnFilter.filter.range = {};
+    ColumnFilter.filter.rangeBase = $.extend(true, {},
+      ColumnFilter.filter.range);
+
     $.extend(
       ColumnFilter.filter.range,
       ColumnFilter.filter.rangeBase,
@@ -22,27 +24,30 @@
         dom: function(th) {
           let self = this;
 
-          // Picket widgets need to be inside a relative-positioned element
+          // Picker widgets need to be inside a relative-positioned element
           th.css('position', 'relative');
 
-          let pickerElement = $('<input>', {type: self.options.type || 'text'});
-
-          $.each(self.options.attr, function(key, value) {
-            pickerElement.attr(key, value);
+          var element = $('<input>', {
+            type: self.options.type || 'text',
+            style: 'width: 50%;',
           });
 
-          self.startPickerElem = pickerElement.clone().attr('placeholder', 'start');
-          self.endPickerElem = pickerElement.clone().attr('placeholder', 'end');
+          $.each(self.options.attr, function(key, value) {
+            element.attr(key, value);
+          });
 
-          let pickerOptions = {
-            format: 'YYYY-MM-DD',
-            showClear: true,
-            showTodayButton: true,
-            useCurrent: false,
-          };
+          self.startElement = element.clone();
+          $.each(self.options.startAttr, function(key, value) {
+            self.startElement.attr(key, value);
+          });
 
-          self.elements = self.startPickerElem.datetimepicker(pickerOptions)
-            .add(self.endPickerElem.datetimepicker(pickerOptions))
+          self.endElement = element.clone();
+          $.each(self.options.endAttr, function(key, value) {
+            self.endElement.attr(key, value);
+          });
+
+          self.elements = self.startElement.datetimepicker(self.options.picker)
+            .add(self.endElement.datetimepicker(self.options.picker))
             .appendTo(th);
 
           return self.elements;
@@ -50,10 +55,10 @@
         bindEvents: function() {
           const self = this;
 
-          self.startPickerElem.on('dp.change', function() {
+          self.startElement.on('dp.change', function() {
             self.search();
           });
-          self.endPickerElem.on('dp.change', function() {
+          self.endElement.on('dp.change', function() {
             self.search();
           });
         },
@@ -61,7 +66,7 @@
           const self = this;
 
           return [
-            self.startPickerElem.val(), self.endPickerElem.val(),
+            self.startElement.val(), self.endElement.val(),
           ].join(self.options.separator);
         },
       }
