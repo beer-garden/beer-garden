@@ -1,9 +1,10 @@
 <h1 class='page-header'>Requests</h1>
 
-<fetch-data response="response"></fetch-data>
+<fetch-data response="response" hide="empty"></fetch-data>
 
 <div class="container-fluid animate-if"
-     ng-show="responseState(response) === 'success'"
+     ng-show="responseState(response) === 'success' ||
+       responseState(response) === 'empty'"
      style="padding-bottom: 3rem;">
   <table
       datatable=""
