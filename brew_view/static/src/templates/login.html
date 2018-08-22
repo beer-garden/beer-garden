@@ -1,18 +1,19 @@
 
 <div id="login">
-  <form>
+  <form ng-submit="submitFunc()">
     <input type="text"
+           class="m-b-1"
            placeholder="username"
            ng-model="login.username" />
     <br>
     <input type="password"
+           class="m-b-2"
            placeholder="password"
            ng-model="login.password"
            ng-class="{'red-border': badPassword}" />
     <br>
     <input type="submit"
            value="Login"
-           class="btn btn-primary w-100"
-           ng-click="submitFunc()">
+           class="btn btn-primary w-100">
   </form>
 </div>

@@ -1,13 +1,27 @@
 
-<div class="modal-header">
-  <h3 class="modal-title" id="modal-title">Add Role</h3>
-</div>
-<div class="modal-body" id="modal-body">
-  <form>
-    <label for="name">Role Name:</label><input type="text" ng-model="create.name" id="name" /><br>
-  </form>
-</div>
-<div class="modal-footer">
-  <button class="btn btn-primary" type="button" ng-click="ok()">OK</button>
-  <button class="btn btn-warning" type="button" ng-click="cancel()">Cancel</button>
-</div>
+<form ng-submit="ok()">
+  <div class="modal-header">
+    <h3 class="modal-title" id="modal-title">Create Role</h3>
+  </div>
+
+  <div class="modal-body" id="modal-body">
+    <div class="row m-b-3">
+      <div class="col-md-12">
+        <input type="text"
+               class="w-100"
+               placeholder="role name"
+               ng-model="create.name" />
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <input type="button"
+           class="btn btn-danger"
+           value="Cancel"
+           ng-click="cancel()" />
+    <input type="submit"
+           class="btn btn-success"
+           value="Create" />
+  </div>
+</form>

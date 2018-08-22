@@ -47,8 +47,9 @@ export function adminUserController(
 
   $scope.doCreate = function() {
     let modalInstance = $uibModal.open({
-      template: template,
       controller: 'NewUserController',
+      size: 'sm',
+      template: template,
     });
 
     modalInstance.result.then(

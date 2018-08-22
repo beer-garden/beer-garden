@@ -20,6 +20,12 @@ pre {
 .m-b-0 {
     margin-bottom: 0px !important;
 }
+.m-b-1 {
+    margin-bottom: 1rem !important;
+}
+.m-b-2 {
+    margin-bottom: 2rem !important;
+}
 .m-b-3 {
     margin-bottom: 3rem !important;
 }
@@ -226,12 +232,6 @@ table.dataTable{
     border-radius: 4px;
     padding: 10px;
     position: absolute;
-}
-#login input{
-  margin: 5px 0;
-}
-#login .btn{
-  margin-top: 15px;
 }
 
 #loading i{
