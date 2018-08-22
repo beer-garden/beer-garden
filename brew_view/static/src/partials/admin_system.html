@@ -8,9 +8,17 @@
 
 <fetch-data response="response"></fetch-data>
 
+<div uib-alert
+     ng-repeat="alert in alerts"
+     ng-class="'alert-' + alert.type"
+     close="closeAlert($index)">
+  {{alert.msg}}
+</div>
+
 <div id="systems-container"
      class="animate-if"
      ng-if="responseState(response) === 'success'">
+
   <div ng-repeat="(systemName, value) in data"
        class="container-item panel panel-default"
        style="display: block;">

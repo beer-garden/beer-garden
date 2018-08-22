@@ -43,7 +43,7 @@ export default function adminSystemController(
   $scope.util = UtilityService;
 
   $scope.rescan = function() {
-    AdminService.rescan();
+    AdminService.rescan().then(_.noop, $scope.addErrorAlert);
   };
 
   $scope.startSystem = function(system) {
@@ -55,11 +55,11 @@ export default function adminSystemController(
   };
 
   $scope.reloadSystem = function(system) {
-    SystemService.reloadSystem(system);
+    SystemService.reloadSystem(system).then(_.noop, $scope.addErrorAlert);
   };
 
   $scope.deleteSystem = function(system) {
-    SystemService.deleteSystem(system);
+    SystemService.deleteSystem(system).then(_.noop, $scope.addErrorAlert);
   };
 
   $scope.hasRunningInstances = function(system) {
@@ -69,13 +69,33 @@ export default function adminSystemController(
   };
 
   $scope.startInstance = function(instance) {
-    instance.status = 'STARTING';
-    InstanceService.startInstance(instance);
+    InstanceService.startInstance(instance).then(
+      () => {
+        instance.status = 'STARTING';
+      },
+      $scope.addErrorAlert
+    );
   };
 
   $scope.stopInstance = function(instance) {
-    instance.status = 'STOPPING';
-    InstanceService.stopInstance(instance);
+    InstanceService.stopInstance(instance).then(
+      () => {
+        instance.status = 'STOPPING';
+      },
+      $scope.addErrorAlert
+    );
+  };
+
+  $scope.addErrorAlert = function(response) {
+    $scope.alerts.push({
+      type: 'danger',
+      msg: 'Something went wrong on the backend: ' +
+        _.get(response, 'data.message', 'Please check the server logs'),
+    });
+  };
+
+  $scope.closeAlert = function(index) {
+    $scope.alerts.splice(index, 1);
   };
 
   $scope.successCallback = function(response) {
@@ -205,6 +225,8 @@ export default function adminSystemController(
   let loadAll = function() {
     $scope.response = undefined;
     $scope.data = [];
+    $scope.alerts = [];
+
     websocketClose();
 
     loadSystems();

@@ -102,7 +102,19 @@ export function adminRoleController(
       }
     }
 
-    $q.all(promises).then(loadAll);
+    $q.all(promises).then(loadAll, $scope.addErrorAlert);
+  };
+
+  $scope.addErrorAlert = function(response) {
+    $scope.alerts.push({
+      type: 'danger',
+      msg: 'Something went wrong on the backend: ' +
+        _.get(response, 'data.message', 'Please check the server logs'),
+    });
+  };
+
+  $scope.closeAlert = function(index) {
+    $scope.alerts.splice(index, 1);
   };
 
   $scope.color = function(roleId, path) {
@@ -207,11 +219,13 @@ export function adminRoleController(
    * loadAll - load everything this controller needs
    */
   function loadAll() {
+    $scope.alerts = [];
+
     $q.all({
       permissions: PermissionService.getPermissions(),
       roles: RoleService.getRoles(),
-    })
-    .then((responses) => {
+    }).then(
+    (responses) => {
       // Success callback is only invoked if all promises are resolved, so just
       // pick one to let the fetch-data directive know about the success
       $scope.response = responses.roles;

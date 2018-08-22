@@ -85,4 +85,11 @@
       </div>
     </div>
   </form>
+
+  <div uib-alert
+       ng-repeat="alert in alerts"
+       ng-class="'alert-' + alert.type"
+       close="closeAlert($index)">
+    {{alert.msg}}
+  </div>
 </div>

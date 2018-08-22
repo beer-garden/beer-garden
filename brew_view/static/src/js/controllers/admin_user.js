@@ -92,7 +92,19 @@ export function adminUserController(
       promises.push(UserService.removeRoles(userId, removals));
     }
 
-    $q.all(promises).then(loadUsers);
+    $q.all(promises).then(loadUsers, $scope.addErrorAlert);
+  };
+
+  $scope.addErrorAlert = function(response) {
+    $scope.alerts.push({
+      type: 'danger',
+      msg: 'Something went wrong on the backend: ' +
+        _.get(response, 'data.message', 'Please check the server logs'),
+    });
+  };
+
+  $scope.closeAlert = function(index) {
+    $scope.alerts.splice(index, 1);
   };
 
   $scope.color = function(userId, path) {
@@ -215,6 +227,8 @@ export function adminUserController(
    * loadAll - load everything this controller needs
    */
   function loadAll() {
+    $scope.alerts = [];
+
     $q.all({
       permissions: PermissionService.getPermissions(),
       roles: RoleService.getRoles(),
