@@ -51,7 +51,7 @@ export function adminRoleController(
 
     modalInstance.result.then(
       (create) => {
-        RoleService.createRole(create.name).then(loadAll);
+        RoleService.createRole(create).then(loadAll);
       },
       // We don't really need to do anything if canceled
       () => {}

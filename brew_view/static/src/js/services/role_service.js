@@ -21,12 +21,8 @@ export default function roleService($http) {
     getRoles: () => {
       return $http.get('api/v1/roles/');
     },
-    createRole: (name, permissions, roles) => {
-      return $http.post('api/v1/roles/', {
-        name: name,
-        permissions: permissions,
-        roles: roles,
-      });
+    createRole: (newRole) => {
+      return $http.post('api/v1/roles/', newRole);
     },
   };
 
