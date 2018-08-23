@@ -31,14 +31,19 @@
         </select>
       </div>
       <div class="col-md-2">
-        <div ng-repeat="roleName in roleNames">
-          <input type="checkbox" id="{{roleName}}"
-            ng-model="selectedUser.roles[roleName]"
-            ng-click="roleChange(roleName)"
-            ng-disabled="isRoleDisabled(roleName)" />
-          <label for="{{roleName}}"
-            ng-style="color(selectedUser.id, 'roles.'+roleName)"
-            >{{roleName}}</label>
+        <div ng-repeat="role in raws.roles">
+          <input type="checkbox" id="{{role.name}}"
+            ng-model="selectedUser.roles[role.name]"
+            ng-click="roleChange(role.name)"
+            ng-disabled="isRoleDisabled(role.name)" />
+          <label for="{{role.name}}"
+            ng-style="color(selectedUser.id, 'roles.'+role.name)"
+            uib-popover="{{role.description}}"
+            popover-animation="true"
+            popover-placement="right"
+            popover-trigger="'mouseenter'"
+            popover-title="{{data.status}}"
+            >{{role.name}}</label>
         </div>
       </div>
       <div class="col-md-8">
