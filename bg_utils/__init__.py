@@ -343,50 +343,61 @@ def _ensure_special_roles():
     try:
         Role.objects.get(name='bg-admin')
     except DoesNotExist:
-        admin_role = Role(name='bg-admin', permissions=['bg-all'])
-        admin_role.save()
+        Role(name='bg-admin', permissions=['bg-all']).save()
 
     try:
-        anonymous_role = Role.objects.get(name='bg-anonymous')
+        Role.objects.get(name='bg-readonly')
     except DoesNotExist:
-        anonymous_role = Role(name='bg-anonymous',
-                              permissions=[
-                                  'bg-command-read',
-                                  'bg-event-read',
-                                  'bg-instance-read',
-                                  'bg-job-read',
-                                  'bg-queue-read',
-                                  'bg-request-read',
-                                  'bg-system-read',
-                              ])
-        anonymous_role.save()
+        Role(
+            name='bg-readonly',
+            permissions=[
+                'bg-command-read',
+                'bg-event-read',
+                'bg-instance-read',
+                'bg-job-read',
+                'bg-queue-read',
+                'bg-request-read',
+                'bg-system-read',
+            ]
+        ).save()
 
     try:
         Role.objects.get(name='bg-plugin')
     except DoesNotExist:
-        plugin_role = Role(name='bg-plugin',
-                           roles=[anonymous_role],
-                           permissions=[
-                               'bg-instance-update',
-                               'bg-request-create',
-                               'bg-request-update',
-                               'bg-system-create',
-                               'bg-system-update',
-                           ])
-        plugin_role.save()
+        Role(
+            name='bg-plugin',
+            permissions=[
+                'bg-instance-update',
+                'bg-job-create',
+                'bg-job-update',
+                'bg-request-create',
+                'bg-request-update',
+                'bg-system-create',
+                'bg-system-update',
+            ]
+        ).save()
 
 
-def _ensure_user():
-    """Create an admin user if no other users exist"""
+def _ensure_users():
+    """Create special users if no other users exist"""
     from .models import Principal, Role
 
     if Principal.objects.count() == 0:
-        logger.warning('No users found: creating admin user with '
-                       'username "admin" and password "password"')
-        admin_user = Principal(username='admin',
-                               hash=custom_app_context.hash('password'),
-                               roles=[Role.objects.get(name='bg-admin')])
-        admin_user.save()
+        logger.warning('No users found: creating special users')
+
+        logger.warning('Creating user with username "admin" and password "password"')
+        Principal(
+            username='admin',
+            hash=custom_app_context.hash('password'),
+            roles=[Role.objects.get(name='bg-admin')]
+        ).save()
+
+        logger.warning('Creating user with username "plugin" and password "password"')
+        Principal(
+            username='plugin',
+            hash=custom_app_context.hash('password'),
+            roles=[Role.objects.get(name='bg-plugin')]
+        ).save()
 
 
 def _check_indexes(document_class):
@@ -470,4 +481,4 @@ def _verify_db():
         _check_indexes(doc)
 
     _ensure_special_roles()
-    _ensure_user()
+    _ensure_users()
