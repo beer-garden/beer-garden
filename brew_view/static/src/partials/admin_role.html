@@ -67,7 +67,7 @@
             value="Remove Role"
             ng-click="doDelete(selectedRole.id)"
             ng-disabled="selectedRole.name == 'bg-admin' ||
-                         selectedRole.name == 'bg-anonymous' ||
+                         selectedRole.name == 'bg-readonly' ||
                          selectedRole.name == 'bg-plugin'"
             confirm="Are you sure you want to remove this role?" />
         </div>
