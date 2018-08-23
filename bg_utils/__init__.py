@@ -343,6 +343,7 @@ def _ensure_special_roles():
     try:
         Role.objects.get(name='bg-admin')
     except DoesNotExist:
+        logger.warning('Role bg-admin missing, about to create')
         Role(
             name='bg-admin',
             description='Allows all actions',
@@ -352,6 +353,7 @@ def _ensure_special_roles():
     try:
         Role.objects.get(name='bg-readonly')
     except DoesNotExist:
+        logger.warning('Role bg-readonly missing, about to create')
         Role(
             name='bg-readonly',
             description='Allows only standard read actions',
@@ -369,6 +371,7 @@ def _ensure_special_roles():
     try:
         Role.objects.get(name='bg-plugin')
     except DoesNotExist:
+        logger.warning('Role bg-plugin missing, about to create')
         Role(
             name='bg-plugin',
             description='Allows actions necessary for plugins to function',
