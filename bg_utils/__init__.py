@@ -343,13 +343,18 @@ def _ensure_special_roles():
     try:
         Role.objects.get(name='bg-admin')
     except DoesNotExist:
-        Role(name='bg-admin', permissions=['bg-all']).save()
+        Role(
+            name='bg-admin',
+            description='Allows all actions',
+            permissions=['bg-all']
+        ).save()
 
     try:
         Role.objects.get(name='bg-readonly')
     except DoesNotExist:
         Role(
             name='bg-readonly',
+            description='Allows only standard read actions',
             permissions=[
                 'bg-command-read',
                 'bg-event-read',
@@ -366,6 +371,7 @@ def _ensure_special_roles():
     except DoesNotExist:
         Role(
             name='bg-plugin',
+            description='Allows actions necessary for plugins to function',
             permissions=[
                 'bg-instance-update',
                 'bg-job-create',
