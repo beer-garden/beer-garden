@@ -43,6 +43,9 @@ log:
   level: INFO
 plugin:
   local:
+    auth:
+      username: null
+      password: null
     directory: ./plugins
     log_directory: null
     timeout:

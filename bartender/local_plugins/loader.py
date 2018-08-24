@@ -133,8 +133,8 @@ class LocalPluginLoader(object):
                 url_prefix=bartender.config.web.url_prefix,
                 ca_verify=bartender.config.web.ca_verify,
                 ca_cert=bartender.config.web.ca_cert,
-                username=bartender.config.web.username,
-                password=bartender.config.web.password,
+                username=bartender.config.plugin.local.auth.username,
+                password=bartender.config.plugin.local.auth.password,
                 log_level=config['LOG_LEVEL']
             )
 

@@ -322,12 +322,14 @@ SPECIFICATION = {
             },
             "username": {
                 "type": "str",
-                "description": "Username for authentication",
+                "description": "Username that Bartender will use for "
+                               "authentication (needs bg-all role)",
                 "required": False,
             },
             "password": {
                 "type": "str",
-                "description": "Password for authentication",
+                "description": "Password that Bartender will use for "
+                               "authentication (needs bg-all role)",
                 "required": False,
             },
             "url_prefix": {
@@ -384,6 +386,23 @@ SPECIFICATION = {
             'local': {
                 'type': 'dict',
                 'items': {
+                    'auth': {
+                        'type': 'dict',
+                        'items': {
+                            "username": {
+                                "type": "str",
+                                "description": "Username that local plugins will use for "
+                                               "authentication (needs bg-plugin role)",
+                                "required": False,
+                            },
+                            "password": {
+                                "type": "str",
+                                "description": "Password that local plugins will use for "
+                                               "authentication (needs bg-plugin role)",
+                                "required": False,
+                            },
+                        },
+                    },
                     "directory": {
                         "type": "str",
                         "description": "Directory where local plugins are located",
