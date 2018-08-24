@@ -23,7 +23,7 @@ from brewtils.rest.client import RestClient
 class BeergardenPublisher(EventPublisher):
 
     def __init__(self):
-        self._client = RestClient(brew_view.config.event.public_fqdn,
+        self._client = RestClient(brew_view.config.web.public_fqdn,
                                   brew_view.config.web.port,
                                   ssl_enabled=brew_view.config.web.ssl.enabled,
                                   url_prefix=brew_view.config.web.url_prefix)

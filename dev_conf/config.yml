@@ -51,7 +51,6 @@ event:
     virtual_host: /
   mongo:
     enable: true
-  public_fqdn: localhost
 log:
   config_file: dev_conf/logging-config.json
   file: null
@@ -74,6 +73,7 @@ shutdown_timeout: 5
 web:
   host: 0.0.0.0
   port: 2337
+  public_fqdn: localhost
   ssl:
     ca_cert: null
     ca_path: null

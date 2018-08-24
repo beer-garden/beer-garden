@@ -89,7 +89,7 @@ def _setup_application():
     global server, event_publishers, request_scheduler, anonymous_principal
 
     public_url = Url(scheme='https' if config.web.ssl.enabled else 'http',
-                     host=config.event.public_fqdn,
+                     host=config.web.public_fqdn,
                      port=config.web.port,
                      path=config.web.url_prefix).url
 
