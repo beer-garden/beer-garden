@@ -96,7 +96,7 @@ def _setup_application():
     # This is not super clean as we're pulling the config from different
     # 'sections,' but the scheduler is the only thing that uses this
     easy_client = EasyClient(
-        host=config.web.host,
+        host=config.web.public_fqdn,
         port=config.web.port,
         url_prefix=config.web.url_prefix,
         ssl_enabled=config.web.ssl.enabled,
