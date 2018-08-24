@@ -64,7 +64,7 @@ class RoleAPI(BaseHandler):
           - Roles
         """
         role = Role.objects.get(id=str(role_id))
-        if role.name in ('bg-admin', 'bg-readonly', 'bg-plugin'):
+        if role.name in ('bg-admin', 'bg-anonymous', 'bg-plugin'):
             raise ModelValidationError("Unable to remove '%s' role" % role.name)
 
         role.delete()

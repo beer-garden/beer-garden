@@ -144,9 +144,9 @@ def anonymous_principal():
     """
 
     if brew_view.config.auth.enabled:
-        roles = [Role.objects.get(name='bg-readonly')]
+        roles = Principal.objects.get(username='anonymous').roles
     else:
-        roles = [Role(name='bg-readonly', permissions=['bg-all'])]
+        roles = [Role(name='bg-admin', permissions=['bg-all'])]
 
     _, permissions = coalesce_permissions(roles)
 
