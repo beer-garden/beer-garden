@@ -336,24 +336,21 @@ def _update_request_model():
                                {'$set': {'has_parent': True}},)
 
 
-def _ensure_special_roles():
-    """These roles should exist"""
+def _ensure_roles():
+    """Create roles if necessary
+
+    There are certain 'convenience' roles that will be created if this is a new
+    install (if no roles currently exist).
+
+    Then there are roles that MUST be present. These will always be created if
+    they do not exist.
+    """
     from .models import Role
 
-    try:
-        Role.objects.get(name='bg-admin')
-    except DoesNotExist:
-        logger.warning('Role bg-admin missing, about to create')
-        Role(
-            name='bg-admin',
-            description='Allows all actions',
-            permissions=['bg-all']
-        ).save()
+    if Role.objects.count() == 0:
+        logger.warning('No roles found: creating convenience roles')
 
-    try:
-        Role.objects.get(name='bg-readonly')
-    except DoesNotExist:
-        logger.warning('Role bg-readonly missing, about to create')
+        logger.warning('About to create bg-readonly role')
         Role(
             name='bg-readonly',
             description='Allows only standard read actions',
@@ -368,10 +365,7 @@ def _ensure_special_roles():
             ]
         ).save()
 
-    try:
-        Role.objects.get(name='bg-operator')
-    except DoesNotExist:
-        logger.warning('Role bg-operator missing, about to create')
+        logger.warning('About to create bg-operator role')
         Role(
             name='bg-operator',
             description='Standard Beergarden user role',
@@ -399,26 +393,76 @@ def _ensure_special_roles():
             ]
         ).save()
 
+    try:
+        Role.objects.get(name='bg-admin')
+    except DoesNotExist:
+        logger.warning('Role bg-admin missing, about to create')
+        Role(
+            name='bg-admin',
+            description='Allows all actions',
+            permissions=['bg-all']
+        ).save()
+
+    try:
+        Role.objects.get(name='bg-anonymous')
+    except DoesNotExist:
+        logger.warning('Role bg-anonymous missing, about to create')
+        Role(
+            name='bg-anonymous',
+            description='Special role used for non-authenticated users',
+            permissions=[
+                'bg-command-read',
+                'bg-event-read',
+                'bg-instance-read',
+                'bg-job-read',
+                'bg-queue-read',
+                'bg-request-read',
+                'bg-system-read',
+            ]
+        ).save()
+
 
 def _ensure_users():
-    """Create special users if no other users exist"""
+    """Create users if necessary
+
+    There are certain 'convenience' users that will be created if this is a new
+    install (if no users currently exist).
+
+    Then there are users that MUST be present. These will always be created if
+    they do not exist.
+    """
     from .models import Principal, Role
 
     if Principal.objects.count() == 0:
-        logger.warning('No users found: creating special users')
+        logger.warning('No users found: creating convenience users')
 
-        logger.warning('Creating user with username "admin" and password "password"')
+        logger.warning('Creating plugin user '
+                       '(username "plugin", password "password"')
+        Principal(
+            username='plugin',
+            hash=custom_app_context.hash('password'),
+            roles=[Role.objects.get(name='bg-plugin')]
+        ).save()
+
+    try:
+        Principal.objects.get(username='admin')
+    except DoesNotExist:
+        logger.warning('Admin user missing, about to create '
+                       '(username "admin", password "password")')
         Principal(
             username='admin',
             hash=custom_app_context.hash('password'),
             roles=[Role.objects.get(name='bg-admin')]
         ).save()
 
-        logger.warning('Creating user with username "plugin" and password "password"')
+    try:
+        Principal.objects.get(username='anonymous')
+    except DoesNotExist:
+        logger.warning('Anonymous user missing, about to create '
+                       '(username "anonymous")')
         Principal(
-            username='plugin',
-            hash=custom_app_context.hash('password'),
-            roles=[Role.objects.get(name='bg-plugin')]
+            username='anonymous',
+            roles=[Role.objects.get(name='bg-anonymous')]
         ).save()
 
 
@@ -502,5 +546,5 @@ def _verify_db():
     for doc in (Job, Request, Role, System):
         _check_indexes(doc)
 
-    _ensure_special_roles()
+    _ensure_roles()
     _ensure_users()
