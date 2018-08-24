@@ -369,6 +369,19 @@ def _ensure_special_roles():
         ).save()
 
     try:
+        Role.objects.get(name='bg-operator')
+    except DoesNotExist:
+        logger.warning('Role bg-operator missing, about to create')
+        Role(
+            name='bg-operator',
+            description='Standard Beergarden user role',
+            roles=[Role.objects.get(name='bg-readonly')],
+            permissions=[
+                'bg-request-create',
+            ]
+        ).save()
+
+    try:
         Role.objects.get(name='bg-plugin')
     except DoesNotExist:
         logger.warning('Role bg-plugin missing, about to create')
