@@ -396,6 +396,23 @@ SPECIFICATION = {
     'scheduler': {
         'type': 'dict',
         'items': {
+            'auth': {
+                'type': 'dict',
+                'items': {
+                    "username": {
+                        "type": "str",
+                        "description": "Username that scheduler will use for "
+                                       "authentication (needs bg-admin role)",
+                        "required": False,
+                    },
+                    "password": {
+                        "type": "str",
+                        "description": "Password that scheduler will use for "
+                                       "authentication (needs bg-admin role)",
+                        "required": False,
+                    },
+                },
+            },
             'max_workers': {
                 'type': 'int',
                 'default': 10,

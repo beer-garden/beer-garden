@@ -93,12 +93,23 @@ def _setup_application():
                      port=config.web.port,
                      path=config.web.url_prefix).url
 
+    # This is not super clean as we're pulling the config from different
+    # 'sections,' but the scheduler is the only thing that uses this
+    easy_client = EasyClient(
+        host=config.web.host,
+        port=config.web.port,
+        url_prefix=config.web.url_prefix,
+        ssl_enabled=config.web.ssl.enabled,
+        ca_cert=config.web.ssl.ca_cert,
+        username=config.scheduler.auth.username,
+        password=config.scheduler.auth.password,
+    )
+
     thrift_context = _setup_thrift_context()
     tornado_app = _setup_tornado_app()
     server_ssl, client_ssl = _setup_ssl_context()
     event_publishers = _setup_event_publishers(client_ssl)
     anonymous_principal = brew_view.authorization.anonymous_principal()
-    easy_client = EasyClient(**config.web)
     request_scheduler = _setup_scheduler()
 
     server = HTTPServer(tornado_app, ssl_options=server_ssl)
