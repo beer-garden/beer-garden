@@ -24,7 +24,7 @@ class PermissionsAPI(BaseHandler):
           50x:
             $ref: '#/definitions/50xError'
         tags:
-          - Users
+          - Permissions
         """
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.write(json.dumps(sorted(Permissions.values)))
