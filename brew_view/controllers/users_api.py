@@ -43,7 +43,8 @@ class UserAPI(BaseHandler):
             principal = brew_view.anonymous_principal
         else:
             # Need fine-grained access control here
-            if user_identifier != self.current_user.id:
+            if user_identifier not in [self.current_user.id,
+                                       self.current_user.username]:
                 check_permission(self.current_user, [Permissions.USER_READ])
 
             try:
