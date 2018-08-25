@@ -5,6 +5,7 @@ import bg_utils
 import brewtils.rest
 from bartender.app import BartenderApp
 from bartender.specification import get_default_logging_config
+from brewtils.errors import ValidationError
 from brewtils.rest.easy_client import EasyClient
 
 # COMPONENTS #
@@ -39,3 +40,28 @@ def progressive_backoff(func, stoppable_thread, failure_message):
 
         stoppable_thread.wait(wait_time)
         wait_time = min(wait_time*2, 30)
+
+
+def ensure_admin():
+    # Either brew-view auth must be disabled (anonymous user will have bg-all)
+    # or the user must have bg-all permissions
+    try:
+        bartender_user = bv_client.who_am_i()
+    except ValidationError:
+        raise Exception(
+            'Unable to authenticate using provided username and password. '
+            'This usually indicates an incorrect password - please check the '
+            'web.username and web.password fields in the configuration.')
+
+    if 'bg-all' not in bartender_user.permissions:
+        if config.web.username:
+            raise Exception(
+                'User "%s" does not have "bg-all" permission. Please check '
+                'your configuration (specifically web.username and '
+                'web.password fields)' % config.web.username)
+        else:
+            raise Exception(
+                'It appears that Brew-view is operating with authentication '
+                'enabled and no username / password was provided. Please check '
+                'your configuration (specifically web.username and '
+                'web.password fields).')
