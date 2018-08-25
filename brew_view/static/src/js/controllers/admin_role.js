@@ -156,13 +156,6 @@ export function adminRoleController(
     let changed = $scope.selectedRole;
     let original = _.find($scope.serverRoles, {'id': changed.id});
 
-    changed.rolesChanged = false;
-    for (let key in changed.roles) {
-      if (changed.roles[key] != original.roles[key]) {
-       changed.rolesChanged = true;
-      }
-    }
-
     // Since this is a result of a click, we need to update primary roles
     changed.primaryRoles[roleName] = changed.roles[roleName];
 
@@ -202,6 +195,15 @@ export function adminRoleController(
 
     let nestedRoleMap = arrayToMap(nestedRoleNames, $scope.roleNames);
     changed.nestedRoles = nestedRoleMap;
+
+    // Finally, need to determine if the nested roles have been changed so
+    // that we can enable or disable changing the permissions
+    changed.rolesChanged = false;
+    for (let key in changed.roles) {
+      if (changed.roles[key] != original.roles[key]) {
+       changed.rolesChanged = true;
+      }
+    }
   };
 
   $scope.permissionChange = function(roleId) {
