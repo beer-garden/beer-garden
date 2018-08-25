@@ -7,7 +7,8 @@ from passlib.apps import custom_app_context
 import brew_view
 from bg_utils.models import Principal, Role
 from bg_utils.parser import BeerGardenSchemaParser
-from brew_view.authorization import authenticated, check_permission, Permissions
+from brew_view.authorization import (
+    authenticated, check_permission, Permissions, coalesce_permissions)
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 
@@ -49,6 +50,8 @@ class UserAPI(BaseHandler):
                 principal = Principal.objects.get(id=str(user_identifier))
             except (DoesNotExist, ValidationError):
                 principal = Principal.objects.get(username=str(user_identifier))
+
+        principal.permissions = coalesce_permissions(principal.roles)[1]
 
         self.write(BeerGardenSchemaParser.serialize_principal(
             principal, to_string=False))
@@ -181,6 +184,9 @@ class UsersAPI(BaseHandler):
           - Users
         """
         principals = Principal.objects.all().select_related(max_depth=1)
+
+        for principal in principals:
+            principal.permissions = coalesce_permissions(principal.roles)[1]
 
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.write(BeerGardenSchemaParser.serialize_principal(
