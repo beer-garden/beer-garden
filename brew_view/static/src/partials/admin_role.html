@@ -60,12 +60,14 @@
         <div class="col-md-6">
           <input type="submit" class="btn btn-success w-100"
             ng-click="doCreate()"
+            ng-show="hasPermission(user, 'bg-role-create')"
             value="Create Role" />
         </div>
         <div class="col-md-6">
           <input type="submit" class="btn btn-danger w-100"
             value="Remove Role"
             ng-click="doDelete(selectedRole.id)"
+            ng-show="hasPermission(user, 'bg-role-delete')"
             ng-disabled="selectedRole.name == 'bg-admin' ||
                          selectedRole.name == 'bg-anonymous' ||
                          selectedRole.name == 'bg-plugin'"
@@ -81,6 +83,7 @@
       <div class="col-md-4">
         <input type="submit" class="btn btn-primary w-100"
           ng-click="doUpdate()"
+          ng-show="hasPermission(user, 'bg-role-update')"
           value="Update Role" />
       </div>
     </div>
