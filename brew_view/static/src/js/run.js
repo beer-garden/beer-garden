@@ -124,8 +124,11 @@ export default function appRun(
     // We need to reload systems as those permisisons could have changed
     $rootScope.loadSystems();
 
-    // And actually return this promise so we can broadcast in certain cases
-    return $rootScope.loadUser(token);
+    $rootScope.loadUser(token).then(
+      () => {
+        $rootScope.$broadcast('userChange');
+      }
+    );
   };
 
   $rootScope.initialLoad = function() {
@@ -135,30 +138,9 @@ export default function appRun(
       TokenService.handleToken(token);
     }
 
-    $rootScope.loadConfig().then(
-      $rootScope.changeUser(token)
-    ).then(
-      () => {
-        $rootScope.setWindowTitle();
-      }
-    );
-  };
-
-  $rootScope.doLogout = function() {
-    let refreshToken = localStorageService.get('refresh');
-    if (refreshToken) {
-      TokenService.clearRefresh(refreshToken);
-      localStorageService.remove('refresh');
-    }
-
-    localStorageService.remove('token');
-    $http.defaults.headers.common.Authorization = undefined;
-
-    $rootScope.changeUser(undefined).then(
-      () => {
-        $rootScope.$broadcast('userChange');
-      }
-    );
+    $rootScope.loadConfig();
+    $rootScope.loadSystems();
+    $rootScope.loadUser(token);
   };
 
   $rootScope.hasPermission = function(user, permissions) {
@@ -191,19 +173,29 @@ export default function appRun(
     // Clicking should always clear the red outline
     $rootScope.loginError = false;
 
-    let modalInstance = $uibModal.open({
+    $uibModal.open({
       controller: 'LoginController',
       size: 'sm',
       template: loginTemplate,
-    });
-
-    modalInstance.result.then(
-      (create) => {
-        RoleService.createRole(create).then(loadAll);
+    }).result.then(
+      (result) => {
+        $rootScope.changeUser(result);
       },
-      // We don't really need to do anything if canceled
-      () => {}
+      _.noop
     );
+  };
+
+  $rootScope.doLogout = function() {
+    let refreshToken = localStorageService.get('refresh');
+    if (refreshToken) {
+      TokenService.clearRefresh(refreshToken);
+      localStorageService.remove('refresh');
+    }
+
+    localStorageService.remove('token');
+    $http.defaults.headers.common.Authorization = undefined;
+
+    $rootScope.changeUser(undefined);
   };
 
   $rootScope.setWindowTitle = function(...titleParts) {
