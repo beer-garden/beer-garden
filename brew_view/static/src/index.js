@@ -69,7 +69,6 @@ import {interceptorService, authInterceptorService, interceptorConfig}
 
 import fetchDataDirective from './js/directives/fetch_data.js';
 import bgStatusDirective from './js/directives/system_status.js';
-import loginDirective from './js/directives/login.js';
 import './js/directives/dataTables.lcf.datetimepicker.fr.js';
 
 import adminService from './js/services/admin_service.js';
@@ -155,7 +154,6 @@ angular.module('bgApp',
 
 .directive('fetchData', fetchDataDirective)
 .directive('bgStatus', bgStatusDirective)
-.directive('login', loginDirective)
 
 .factory('AdminService', adminService)
 .factory('CommandService', commandService)
