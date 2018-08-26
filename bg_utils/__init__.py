@@ -389,6 +389,7 @@ def _ensure_roles():
                 'bg-request-create',
                 'bg-request-update',
                 'bg-system-create',
+                'bg-system-read',
                 'bg-system-update',
             ]
         ).save()
