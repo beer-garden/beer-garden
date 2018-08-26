@@ -283,7 +283,7 @@ export default function appRun(
         }
 
         let latestSystem = filteredSystems[0];
-        for (let system of $rootScope.systems) {
+        for (let system of filteredSystems) {
           if (isLaterVersion(system, latestSystem)) {
             latestSystem = system;
           }
