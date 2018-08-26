@@ -1,19 +1,36 @@
 
-<div id="login">
-  <form ng-submit="submitFunc()">
-    <input type="text"
-           class="m-b-1"
-           placeholder="username"
-           ng-model="login.username" />
-    <br>
-    <input type="password"
-           class="m-b-2"
-           placeholder="password"
-           ng-model="login.password"
-           ng-class="{'red-border': badPassword}" />
-    <br>
+<form ng-submit="doLogin()">
+  <div class="modal-header">
+    <h3 class="modal-title" id="modal-title">Login</h3>
+  </div>
+
+  <div class="modal-body" id="modal-body">
+    <div class="row m-b-1">
+      <div class="col-md-12">
+        <input type="text"
+               class="w-100"
+               placeholder="username"
+               ng-model="model.username" />
+      </div>
+    </div>
+    <div class="row m-b-1">
+      <div class="col-md-12">
+        <input type="password"
+               class="w-100"
+               placeholder="password"
+               ng-model="model.password"
+               ng-class="{'red-border': badPassword}" />
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <input type="button"
+           class="btn btn-danger"
+           value="Cancel"
+           ng-click="cancel()" />
     <input type="submit"
-           value="Login"
-           class="btn btn-primary w-100">
-  </form>
-</div>
+           class="btn btn-success"
+           value="Login" />
+  </div>
+</form>

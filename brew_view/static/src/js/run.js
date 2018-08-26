@@ -1,12 +1,15 @@
 import _ from 'lodash';
 import {camelCaseKeys, responseState} from './services/utility_service.js';
 
+import loginTemplate from '../templates/login.html';
+
 appRun.$inject = [
   '$rootScope',
   '$state',
   '$stateParams',
   '$http',
   '$q',
+  '$uibModal',
   'localStorageService',
   'UtilityService',
   'SystemService',
@@ -22,6 +25,7 @@ appRun.$inject = [
  * @param  {$stateParams} $stateParams     Angular's $stateParams object.
  * @param  {$http} $http                   Angular's $http object.
  * @param  {$q} $q                         Angular's $q object.
+ * @param  {Object} $uibModal              Angular UI's $uibModal object.
  * @param  {localStorageService} localStorageService Storage service
  * @param  {UtilityService} UtilityService Service for configuration/icons.
  * @param  {SystemService} SystemService   Service for System information.
@@ -35,6 +39,7 @@ export default function appRun(
     $stateParams,
     $http,
     $q,
+    $uibModal,
     localStorageService,
     UtilityService,
     SystemService,
@@ -45,9 +50,7 @@ export default function appRun(
   $rootScope.$stateParams = $stateParams;
 
   $rootScope.loginInfo = {};
-  $rootScope.showLogin = false;
   $rootScope.loginError = false;
-  $rootScope.badPassword = false;
 
   // Change this to point to the Brew-View backend if it's at another location
   $rootScope.apiBaseUrl = '';
@@ -141,30 +144,6 @@ export default function appRun(
     );
   };
 
-  $rootScope.doLogin = function() {
-    TokenService.doLogin(
-        $rootScope.loginInfo.username,
-        $rootScope.loginInfo.password).then(
-      (response) => {
-        $rootScope.loginInfo = {};
-        $rootScope.showLogin = false;
-        $rootScope.badPassword = false;
-
-        TokenService.handleRefresh(response.data.refresh);
-        TokenService.handleToken(response.data.token);
-
-        $rootScope.changeUser(response.data.token).then(
-          () => {
-            $rootScope.$broadcast('userChange');
-          }
-        );
-      }, (response) => {
-        $rootScope.badPassword = true;
-        $rootScope.loginInfo.password = undefined;
-      }
-    );
-  };
-
   $rootScope.doLogout = function() {
     let refreshToken = localStorageService.get('refresh');
     if (refreshToken) {
@@ -208,10 +187,23 @@ export default function appRun(
     return user && user.username !== 'anonymous';
   };
 
-  $rootScope.toggleLogin = function() {
+  $rootScope.doLogin = function() {
     // Clicking should always clear the red outline
     $rootScope.loginError = false;
-    $rootScope.showLogin = !$rootScope.showLogin;
+
+    let modalInstance = $uibModal.open({
+      controller: 'LoginController',
+      size: 'sm',
+      template: loginTemplate,
+    });
+
+    modalInstance.result.then(
+      (create) => {
+        RoleService.createRole(create).then(loadAll);
+      },
+      // We don't really need to do anything if canceled
+      () => {}
+    );
   };
 
   $rootScope.setWindowTitle = function(...titleParts) {
@@ -309,7 +301,6 @@ export default function appRun(
       }
     );
   };
-
 
   /**
    * Find the system with the given ID.

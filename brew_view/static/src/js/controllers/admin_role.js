@@ -13,9 +13,9 @@ adminRoleController.$inject = [
 
 /**
  * adminRoleController - System management controller.
- * @param  {$scope} $scope            Angular's $scope object.
- * @param  {$scope} $q                Angular's $q object.
- * @param  {$scope} $uibModal         Angular UI's $uibModal object.
+ * @param  {Object} $scope            Angular's $scope object.
+ * @param  {Object} $q                Angular's $q object.
+ * @param  {Object} $uibModal         Angular UI's $uibModal object.
  * @param  {Object} RoleService       Beer-Garden's role service object.
  * @param  {Object} PermissionService Beer-Garden's permission service object.
  */

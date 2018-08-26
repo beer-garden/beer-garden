@@ -101,6 +101,7 @@ import systemViewController from './js/controllers/system_view.js';
 import jobIndexController from './js/controllers/job_index.js';
 import jobViewController from './js/controllers/job_view.js';
 import jobCreateController from './js/controllers/job_create.js';
+import loginController from './js/controllers/login.js';
 
 // Partials
 import './partials/about.html';
@@ -186,4 +187,5 @@ angular.module('bgApp',
 .controller('SystemViewController', systemViewController)
 .controller('JobIndexController', jobIndexController)
 .controller('JobViewController', jobViewController)
-.controller('JobCreateController', jobCreateController);
+.controller('JobCreateController', jobCreateController)
+.controller('LoginController', loginController);
