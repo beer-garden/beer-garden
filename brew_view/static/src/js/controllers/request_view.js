@@ -124,11 +124,11 @@ export default function requestViewController(
     $scope.data = response.data;
 
     $scope.setWindowTitle(
-      'request',
       $scope.data.command,
       ($scope.data.metadata.system_display_name || $scope.data.system),
       $scope.data.system_version,
       $scope.data.instance_name,
+      'request',
     );
 
     $scope.formatOutput();

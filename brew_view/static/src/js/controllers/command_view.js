@@ -226,10 +226,10 @@ export default function commandViewController(
     }
 
     $scope.setWindowTitle(
-      'command',
       $scope.command.name,
       ($scope.system.display_name || $scope.system.name),
       $scope.system.version,
+      'command',
     );
   };
 
