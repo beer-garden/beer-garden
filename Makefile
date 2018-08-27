@@ -1,10 +1,11 @@
 # Makefile for brew-view
 
-MODULE_NAME   = brew_view
-PYTHON_TEST_DIR = test/unit
-JS_DIR = brew_view/static
-DOCKER_NAME = bgio/brew-view
-VERSION ?= 0.0.0
+PYTHON           = python
+MODULE_NAME      = brew_view
+PYTHON_TEST_DIR  = test/unit
+JS_DIR           = brew_view/static
+DOCKER_NAME      = bgio/brew-view
+VERSION         ?= 0.0.0
 
 .PHONY: clean clean-build clean-test clean-pyc help test deps
 
@@ -30,15 +31,15 @@ for line in sys.stdin:
 		print("%-20s %s" % (target, help))
 endef
 export PRINT_HELP_PYSCRIPT
-BROWSER := python -c "$$BROWSER_PYSCRIPT"
+BROWSER := $(PYTHON) -c "$$BROWSER_PYSCRIPT"
 
 
 # Misc
 help:
-	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
+	@$(PYTHON) -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 install: clean ## install the package to the active Python's site-packages
-	python setup.py install
+	$(PYTHON) setup.py install
 
 
 # Dependencies
@@ -87,7 +88,7 @@ clean-js: ## remove javascript artifacts
 
 clean-all: clean-all-python clean-js ## remove everything
 
-clean: clean-all ## alias of clean-all
+clean: clean-all-python ## alias of clean-all-python
 
 
 # Linting
@@ -121,14 +122,17 @@ coverage-view: coverage ## view coverage report in a browser
 
 
 # Packaging
-package-python: clean-all-python ## builds source and wheel python package
-	python setup.py sdist bdist_wheel
-	ls -l dist
-
-package-js: clean-js ## builds javascript package
+package-js: clean-js deps-js ## builds javascript package
 	$(MAKE) -C $(JS_DIR) package
 
-package: package-js package-python ## build everything
+package-source: ## builds python source package
+	$(PYTHON) setup.py sdist
+
+package-wheel: ## builds python wheel package
+	$(PYTHON) setup.py bdist_wheel
+
+package: clean-all package-js package-source package-wheel ## build everything
+	ls -l dist
 
 
 # Docker
