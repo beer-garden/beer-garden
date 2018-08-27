@@ -1,5 +1,6 @@
 # Makefile for bg-utils
 
+PYTHON        = python
 MODULE_NAME   = bg_utils
 TEST_DIR      = test
 
@@ -28,15 +29,15 @@ for line in sys.stdin:
 		print("%-20s %s" % (target, help))
 endef
 export PRINT_HELP_PYSCRIPT
-BROWSER := python -c "$$BROWSER_PYSCRIPT"
+BROWSER := $(PYTHON) -c "$$BROWSER_PYSCRIPT"
 
 
 # Misc
 help:
-	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
+	@$(PYTHON) -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 install: clean ## install the package to the active Python's site-packages
-	python setup.py install
+	$(PYTHON) setup.py install
 
 
 # Dependencies
@@ -115,8 +116,13 @@ docs-serve: docs ## generage the docs and watch for changes
 
 
 # Packaging
-package: clean ## builds source and wheel package
-	python setup.py sdist bdist_wheel
+package-source: ## builds source package
+	$(PYTHON) setup.py sdist
+
+package-wheel: ## builds wheel package
+	$(PYTHON) setup.py bdist_wheel
+
+package: clean package-source package-wheel ## builds source and wheel package
 	ls -l dist
 
 
