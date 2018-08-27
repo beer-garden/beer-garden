@@ -6,6 +6,7 @@ import subprocess
 import os
 
 BUILD_IMAGE = "bgio/build"
+NODE_IMAGE = "node"
 SUPPORTED_DISTRIBUTIONS = ['centos6', 'centos7']
 SUPPORTED_PYTHONS = ['python2', 'python3']
 BUILD_TYPES = ['rpm']
@@ -13,7 +14,6 @@ BUILD_TYPES = ['rpm']
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 SRC_PATH = os.path.abspath(os.path.join(SCRIPT_PATH, '..'))
 RPM_BUILD_SCRIPT = os.path.join("/", "src", "bin", "rpm_build.sh")
-
 
 def parse_args(cli_args):
     parser = argparse.ArgumentParser(description="Build beer-garden artifacts.")
@@ -41,6 +41,13 @@ def build_rpms(cli_dist, cli_python, local):
         print("Invalid python (%s) for RPM build" % cli_python)
         print("Supported distributions are: %s" % SUPPORTED_PYTHONS)
         sys.exit(1)
+
+    # Local builds need Javascript built as well
+    js_cmd = ["docker", "run", "--rm",
+              "-v", SRC_PATH + ":/src",
+              NODE_IMAGE,
+              "make", "-C", "/src/brew-view", "package-js"]
+    subprocess.call(js_cmd)
 
     for dist in build_dists:
         cmd = ["docker", "run", "--rm",

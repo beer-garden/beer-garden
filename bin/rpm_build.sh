@@ -43,6 +43,8 @@ fi
 # Constants
 APP_NAME="beer-garden"
 APP_PATH="/opt/$APP_NAME"
+PYTHON_BIN="$APP_PATH/bin/python"
+PIP_BIN="$APP_PATH/bin/pip"
 SRC_PATH="/src"
 SRC_SCRIPT_PATH="$SRC_PATH/resources/centos${RELEASE}"
 BEFORE_INSTALL="before_install.sh"
@@ -50,71 +52,52 @@ AFTER_INSTALL="after_install.sh"
 BEFORE_REMOVE="before_remove.sh"
 AFTER_REMOVE="after_remove.sh"
 
-# A convenience method to install pip with standard flags passed in.
-pip_install() {
-    echo "Installing $1==$2"
-    $APP_PATH/bin/pip install $1==$2 --upgrade -q
-}
-
 get_version() {
     echo $(cat "$SRC_PATH/$1/$2/_version.py" | cut -d'"' -f2)
 }
 
 install_apps() {
     bartender_package="bartender"
-    bartender_module="bartender"
-    bartender_version=$(get_version $bartender_package $bartender_module)
-
     brew_view_package="brew-view"
-    brew_view_module="brew_view"
-    brew_view_version=$(get_version $brew_view_package $brew_view_module)
 
     if [[ "$LOCAL" == "true" ]]; then
-
         brewtils_package="brewtils"
-        brewtils_module="brewtils"
-        brewtils_version=$(get_version $brewtils_package $brewtils_module)
-
         bg_utils_package="bg-utils"
+
+        brewtils_module="brewtils"
         bg_utils_module="bg_utils"
+        bartender_module="bartender"
+        brew_view_module="brew_view"
+
+        brewtils_version=$(get_version $brewtils_package $brewtils_module)
         bg_utils_version=$(get_version $bg_utils_package $bg_utils_module)
+        bartender_version=$(get_version $bartender_package $bartender_module)
+        brew_view_version=$(get_version $brew_view_package $brew_view_module)
 
-        build_local_egg $brewtils_package $brewtils_version $SRC_PATH/$brewtils_package
-        build_local_egg $bg_utils_package $bg_utils_version $SRC_PATH/$bg_utils_package
-        build_local_egg $bartender_package $bartender_version $SRC_PATH/$bartender_package
-        build_local_egg $brew_view_package $brew_view_version $SRC_PATH/$brew_view_package
+        build_sdist $SRC_PATH/$brewtils_package
+        build_sdist $SRC_PATH/$bg_utils_package
+        build_sdist $SRC_PATH/$bartender_package
+        build_sdist $SRC_PATH/$brew_view_package
 
-        $APP_PATH/bin/pip install \
+        #$APP_PATH/bin/pip install \
+        $PIP_BIN install \
                 "$SRC_PATH/$brewtils_package/dist/$brewtils_package-$brewtils_version.tar.gz" \
-                "$SRC_PATH/$bg_utils_package/dist/$bg_utils_package-$bg_utils_version.tar.gz"
-
-        $APP_PATH/bin/pip install \
+                "$SRC_PATH/$bg_utils_package/dist/$bg_utils_package-$bg_utils_version.tar.gz" \
                 "$SRC_PATH/$bartender_package/dist/$bartender_package-$bartender_version.tar.gz" \
                 "$SRC_PATH/$brew_view_package/dist/$brew_view_package-$brew_view_version.tar.gz"
     else
-        $APP_PATH/bin/pip install --upgrade -q \
-		$bartender_package==$bartender_version \
-		$brew_view_package==$brew_view_version
+        # If this isn't a local install we don't have versions
+        $PIP_BIN install --upgrade -q $bartender_package $brew_view_package
     fi
 }
 
-build_local_egg() {
-    package=$1
-    version=$2
-    package_path=$3
+build_sdist() {
+    package_path=$1
 
     pushd $package_path
 
-    if [ -d "${package_path}/dist" ]; then
-        rm -rf "${package_path}/dist"
-    fi
-
-    if [ -d "${package_path}/${package}.egg-info" ]; then
-        rm -rf "${package_path}/${package}.egg-info"
-    fi
-
-    # TODO: Should I use bdist?
-    $APP_PATH/bin/python $package_path/setup.py sdist
+    ## TODO: Should we use wheels? (package-wheel)
+    make -e PYTHON=$PYTHON_BIN clean package-source
 
     popd
 }
