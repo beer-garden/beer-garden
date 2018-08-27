@@ -19,7 +19,7 @@ export default function loginController(
   $scope,
   $timeout,
   $uibModalInstance,
-  TokenService,
+  TokenService
 ) {
   $scope.model = {};
 
@@ -35,7 +35,7 @@ export default function loginController(
         $uibModalInstance.close(response.data.token);
       },
       () => {
-        if(_.isUndefined($scope.model.username)) {
+        if (_.isUndefined($scope.model.username)) {
           $scope.badUsername = true;
           angular.element('input[type="text"]').focus();
         } else {

@@ -236,7 +236,7 @@ export default function commandViewController(
       $scope.command.name,
       ($scope.system.display_name || $scope.system.name),
       $scope.system.version,
-      'command',
+      'command'
     );
   };
 

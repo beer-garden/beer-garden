@@ -72,7 +72,7 @@ export default function requestViewController(
   $scope.showInstanceStatus = function(request, instanceStatus) {
     return !$scope.canRepeat(request) && instanceStatus &&
       instanceStatus != 'RUNNING';
-  }
+  };
 
   $scope.formatOutput = function() {
     $scope.formattedOutput = '';
@@ -128,7 +128,7 @@ export default function requestViewController(
       ($scope.data.metadata.system_display_name || $scope.data.system),
       $scope.data.system_version,
       $scope.data.instance_name,
-      'request',
+      'request'
     );
 
     $scope.formatOutput();

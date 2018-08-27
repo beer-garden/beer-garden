@@ -9,50 +9,50 @@ export default function errorService() {
     401: {
       common: [
         {
-          problem: "Not Logged In",
+          problem: 'Not Logged In',
           description:
-            "You're not logged in and anonymous users aren't able to view " +
-            "this data or perform this action.",
+            'You\'re not logged in and anonymous users aren\'t able to view ' +
+            'this data or perform this action.',
           resolution:
-            "Log in using the button at the top of the screen.",
+            'Log in using the button at the top of the screen.',
         },
       ],
     },
     403: {
       common: [
         {
-          problem: "Insufficient Permissions",
+          problem: 'Insufficient Permissions',
           description:
-            "You don't have the necessary permission to view this data or " +
-            "perform this action.",
+            'You don\'t have the necessary permission to view this data or ' +
+            'perform this action.',
           resolution:
-            "Contact your administrator and request to be given permission.",
+            'Contact your administrator and request to be given permission.',
         },
       ],
     },
     404: {
       common: [
         {
-          problem: "No plugins",
+          problem: 'No plugins',
           description:
-            "If no one has developed any plugins then there won't be " +
-            "anything here. You'll need to build and deploy some plugins.",
-          resolution: "Develop a Plugin",
+            'If no one has developed any plugins then there won\'t be ' +
+            'anything here. You\'ll need to build and deploy some plugins.',
+          resolution: 'Develop a Plugin',
         },
         {
-          problem: "Wrong identifier",
+          problem: 'Wrong identifier',
           description:
-            "The identifiers for the resource may be off. For example, a " +
-            "system bookmark may be for an old version that's been removed.",
-          resolution: "Double-check that all identifiers are correct",
+            'The identifiers for the resource may be off. For example, a ' +
+            'system bookmark may be for an old version that\'s been removed.',
+          resolution: 'Double-check that all identifiers are correct',
         },
       ],
       request: [
         {
           problem: 'Request was removed',
           description:
-            "Beergarden can be set to remove requests after several " +
-            "minutes, so this request may have been removed.",
+            'Beergarden can be set to remove requests after several ' +
+            'minutes, so this request may have been removed.',
           resolution: 'Go back to the list of all requests',
         },
       ],

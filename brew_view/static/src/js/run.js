@@ -204,7 +204,7 @@ export default function appRun(
         titleParts.push($rootScope.config.applicationName);
         $rootScope.title = _.join(titleParts, ' - ');
       }
-    )
+    );
   };
 
   const isLaterVersion = function(system1, system2) {

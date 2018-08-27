@@ -27,7 +27,7 @@
           // Picker widgets need to be inside a relative-positioned element
           th.css('position', 'relative');
 
-          var element = $('<input>', {
+          let element = $('<input>', {
             type: self.options.type || 'text',
             style: 'width: 50%;',
           });
