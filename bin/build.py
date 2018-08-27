@@ -12,7 +12,7 @@ BUILD_TYPES = ['rpm']
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 SRC_PATH = os.path.abspath(os.path.join(SCRIPT_PATH, '..'))
-RPM_BUILD_SCRIPT = os.path.join("/", "src", "bin", "build_rpm.sh")
+RPM_BUILD_SCRIPT = os.path.join("/", "src", "bin", "rpm_build.sh")
 
 
 def parse_args(cli_args):
