@@ -1,5 +1,5 @@
 <h1 class="page-header">
-  <span>System</span>
+  <span ng-if="responseState(response) !== 'success'">System View</span>
   <span ng-if="responseState(response) === 'success'">
     {{data.display_name || data.name}} v{{data.version}}
   </span>
