@@ -497,6 +497,7 @@ class Event(Document, BrewtilsEvent):
 class Role(Document, BrewtilsRole):
 
     name = StringField(required=True)
+    description = StringField()
     roles = ListField(field=ReferenceField('Role', reverse_delete_rule=PULL))
     permissions = ListField(field=StringField())
 

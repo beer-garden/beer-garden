@@ -336,57 +336,135 @@ def _update_request_model():
                                {'$set': {'has_parent': True}},)
 
 
-def _ensure_special_roles():
-    """These roles should exist"""
+def _ensure_roles():
+    """Create roles if necessary
+
+    There are certain 'convenience' roles that will be created if this is a new
+    install (if no roles currently exist).
+
+    Then there are roles that MUST be present. These will always be created if
+    they do not exist.
+    """
     from .models import Role
 
-    try:
-        Role.objects.get(name='bg-admin')
-    except DoesNotExist:
-        admin_role = Role(name='bg-admin', permissions=['bg-all'])
-        admin_role.save()
+    if Role.objects.count() == 0:
+        logger.warning('No roles found: creating convenience roles')
 
-    try:
-        anonymous_role = Role.objects.get(name='bg-anonymous')
-    except DoesNotExist:
-        anonymous_role = Role(name='bg-anonymous',
-                              permissions=[
-                                  'bg-command-read',
-                                  'bg-event-read',
-                                  'bg-instance-read',
-                                  'bg-job-read',
-                                  'bg-queue-read',
-                                  'bg-request-read',
-                                  'bg-system-read',
-                              ])
-        anonymous_role.save()
+        logger.warning('About to create bg-readonly role')
+        Role(
+            name='bg-readonly',
+            description='Allows only standard read actions',
+            permissions=[
+                'bg-command-read',
+                'bg-event-read',
+                'bg-instance-read',
+                'bg-job-read',
+                'bg-queue-read',
+                'bg-request-read',
+                'bg-system-read',
+            ]
+        ).save()
+
+        logger.warning('About to create bg-operator role')
+        Role(
+            name='bg-operator',
+            description='Standard Beergarden user role',
+            roles=[Role.objects.get(name='bg-readonly')],
+            permissions=[
+                'bg-request-create',
+            ]
+        ).save()
 
     try:
         Role.objects.get(name='bg-plugin')
     except DoesNotExist:
-        plugin_role = Role(name='bg-plugin',
-                           roles=[anonymous_role],
-                           permissions=[
-                               'bg-instance-update',
-                               'bg-request-create',
-                               'bg-request-update',
-                               'bg-system-create',
-                               'bg-system-update',
-                           ])
-        plugin_role.save()
+        logger.warning('Role bg-plugin missing, about to create')
+        Role(
+            name='bg-plugin',
+            description='Allows actions necessary for plugins to function',
+            permissions=[
+                'bg-instance-update',
+                'bg-job-create',
+                'bg-job-update',
+                'bg-request-create',
+                'bg-request-update',
+                'bg-system-create',
+                'bg-system-read',
+                'bg-system-update',
+            ]
+        ).save()
+
+    try:
+        Role.objects.get(name='bg-admin')
+    except DoesNotExist:
+        logger.warning('Role bg-admin missing, about to create')
+        Role(
+            name='bg-admin',
+            description='Allows all actions',
+            permissions=['bg-all']
+        ).save()
+
+    try:
+        Role.objects.get(name='bg-anonymous')
+    except DoesNotExist:
+        logger.warning('Role bg-anonymous missing, about to create')
+        Role(
+            name='bg-anonymous',
+            description='Special role used for non-authenticated users',
+            permissions=[
+                'bg-command-read',
+                'bg-event-read',
+                'bg-instance-read',
+                'bg-job-read',
+                'bg-queue-read',
+                'bg-request-read',
+                'bg-system-read',
+            ]
+        ).save()
 
 
-def _ensure_user():
-    """Create an admin user if no other users exist"""
+def _ensure_users():
+    """Create users if necessary
+
+    There are certain 'convenience' users that will be created if this is a new
+    install (if no users currently exist).
+
+    Then there are users that MUST be present. These will always be created if
+    they do not exist.
+    """
     from .models import Principal, Role
 
     if Principal.objects.count() == 0:
-        logger.warning('No users found: creating admin user with '
-                       'username "admin" and password "password"')
-        admin_user = Principal(username='admin',
-                               hash=custom_app_context.hash('password'),
-                               roles=[Role.objects.get(name='bg-admin')])
-        admin_user.save()
+        logger.warning('No users found: creating convenience users')
+
+        logger.warning('Creating plugin user '
+                       '(username "plugin", password "password"')
+        Principal(
+            username='plugin',
+            hash=custom_app_context.hash('password'),
+            roles=[Role.objects.get(name='bg-plugin')]
+        ).save()
+
+    try:
+        Principal.objects.get(username='admin')
+    except DoesNotExist:
+        logger.warning('Admin user missing, about to create '
+                       '(username "admin", password "password")')
+        Principal(
+            username='admin',
+            hash=custom_app_context.hash('password'),
+            roles=[Role.objects.get(name='bg-admin')]
+        ).save()
+
+    try:
+        Principal.objects.get(username='anonymous')
+    except DoesNotExist:
+        logger.warning('Anonymous user missing, about to create '
+                       '(username "anonymous")')
+        Principal(
+            username='anonymous',
+            roles=[Role.objects.get(name='bg-anonymous')]
+        ).save()
 
 
 def _check_indexes(document_class):
@@ -469,5 +547,5 @@ def _verify_db():
     for doc in (Job, Request, Role, System):
         _check_indexes(doc)
 
-    _ensure_special_roles()
-    _ensure_user()
+    _ensure_roles()
+    _ensure_users()
