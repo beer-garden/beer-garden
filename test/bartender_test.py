@@ -7,7 +7,10 @@ from mock import Mock, call, patch
 from yapconf import YapconfSpec
 
 import bartender as bg
+from bartender import ConfigurationError
 from bartender.specification import SPECIFICATION
+from brewtils.errors import ValidationError
+from brewtils.models import Principal
 
 
 class BartenderTest(unittest.TestCase):
@@ -46,3 +49,22 @@ class BartenderTest(unittest.TestCase):
         bg.progressive_backoff(func_mock, stop_mock, 'test_func')
         max_val = max([mock_call[0][0] for mock_call in stop_mock.wait.call_args_list])
         self.assertLessEqual(max_val, 30)
+
+    @patch('bartender.bv_client')
+    def test_ensure_admin(self, client_mock):
+        client_mock.who_am_i.return_value = Principal(permissions=['bg-all'])
+        bg.ensure_admin()
+
+    @patch('bartender.config')
+    @patch('bartender.bv_client')
+    def test_ensure_admin_errors(self, client_mock, config_mock):
+        client_mock.who_am_i.return_value = Principal(permissions=[])
+
+        config_mock.web.username = None
+        self.assertRaises(ConfigurationError, bg.ensure_admin)
+
+        config_mock.web.username = 'Bob'
+        self.assertRaises(ConfigurationError, bg.ensure_admin)
+
+        client_mock.who_am_i.side_effect = ValidationError
+        self.assertRaises(ConfigurationError, bg.ensure_admin)

@@ -4,6 +4,7 @@ import logging.config
 import bg_utils
 import brewtils.rest
 from bartender.app import BartenderApp
+from bartender.errors import ConfigurationError
 from bartender.specification import get_default_logging_config
 from brewtils.errors import ValidationError
 from brewtils.rest.easy_client import EasyClient
@@ -48,19 +49,19 @@ def ensure_admin():
     try:
         bartender_user = bv_client.who_am_i()
     except ValidationError:
-        raise Exception(
+        raise ConfigurationError(
             'Unable to authenticate using provided username and password. '
             'This usually indicates an incorrect password - please check the '
             'web.username and web.password fields in the configuration.')
 
     if 'bg-all' not in bartender_user.permissions:
         if config.web.username:
-            raise Exception(
+            raise ConfigurationError(
                 'User "%s" does not have "bg-all" permission. Please check '
                 'your configuration (specifically web.username and '
                 'web.password fields)' % config.web.username)
         else:
-            raise Exception(
+            raise ConfigurationError(
                 'It appears that Brew-view is operating with authentication '
                 'enabled and no username / password was provided. Please check '
                 'your configuration (specifically web.username and '
