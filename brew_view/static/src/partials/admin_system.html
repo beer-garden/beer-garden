@@ -1,7 +1,9 @@
 <h1 class='page-header'>
   <span>Systems Management</span>
   <span class="pull-right" ng-show="responseState(response) !== 'loading'">
-    <button type="button" class="btn btn-primary"
+    <button type="button"
+            class="btn btn-primary"
+            ng-show="hasPermission(user, 'bg-system-create')"
             ng-click="rescan()">Rescan System Directory</button>
   </span>
 </h1>
