@@ -50,6 +50,11 @@ def main():
 
     bartender.setup_bartender(spec=spec, cli_args=vars(args))
 
+    # Ensure we have a brew-view connection
+    progressive_backoff(partial(bartender.bv_client.can_connect, timeout=5),
+                        bartender.application,
+                        'Unable to connect to brew-view, is it started?')
+
     # Ensure we have a mongo connection
     progressive_backoff(partial(bg_utils.setup_database, bartender.config),
                         bartender.application,
@@ -63,11 +68,6 @@ def main():
                         bartender.application,
                         'Unable to connect to rabbitmq admin interface. '
                         'Is the management plugin enabled?')
-
-    # Ensure we have a brew-view connection
-    progressive_backoff(partial(bartender.bv_client.can_connect, timeout=5),
-                        bartender.application,
-                        'Unable to connect to brew-view, is it started?')
 
     # Make sure that the bartender user has admin permissions
     bartender.ensure_admin()
