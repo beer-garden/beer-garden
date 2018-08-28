@@ -57,6 +57,15 @@ export default function errorService() {
         },
       ],
     },
+    503: {
+      common: [
+        {
+          problem: 'Bartender Stopped',
+          description: 'Bartender is not running for some reason.',
+          resolution: 'Have your system administrator start Bartender.',
+        },
+      ],
+    },
   };
 
   return {
