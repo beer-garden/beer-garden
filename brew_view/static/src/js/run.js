@@ -177,8 +177,8 @@ export default function appRun(
         template: loginTemplate,
       });
       loginModal.result.then(
-        (result) => {
-          $rootScope.changeUser(result);
+        () => {
+          $rootScope.changeUser(TokenService.getToken());
         },
         _.noop  // Prevents annoying console log messages
       );
@@ -188,17 +188,12 @@ export default function appRun(
         }
       );
     }
+    return loginModal;
   };
 
   $rootScope.doLogout = function() {
-    let refreshToken = localStorageService.get('refresh');
-    if (refreshToken) {
-      TokenService.clearRefresh(refreshToken);
-      localStorageService.remove('refresh');
-    }
-
-    localStorageService.remove('token');
-    $http.defaults.headers.common.Authorization = undefined;
+    TokenService.clearToken();
+    TokenService.clearRefresh();
 
     $rootScope.changeUser(undefined);
   };

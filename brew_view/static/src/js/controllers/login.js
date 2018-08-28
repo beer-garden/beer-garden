@@ -29,10 +29,7 @@ export default function loginController(
 
     TokenService.doLogin($scope.model.username, $scope.model.password).then(
       (response) => {
-        TokenService.handleRefresh(response.data.refresh);
-        TokenService.handleToken(response.data.token);
-
-        $uibModalInstance.close(response.data.token);
+        $uibModalInstance.close();
       },
       () => {
         if (_.isUndefined($scope.model.username)) {
