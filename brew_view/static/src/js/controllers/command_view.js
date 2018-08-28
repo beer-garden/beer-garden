@@ -201,11 +201,6 @@ export default function commandViewController(
   let generateSF = function() {
     let sf = SFBuilderService.build($scope.system, $scope.command);
 
-    // This disables the Make Request button if the permission isn't there
-    if (!$rootScope.hasPermission($rootScope.user, 'bg-request-create')) {
-      _.get(sf['form'], '[1].items[4].items[1]')['readonly'] = true;
-    }
-
     $scope.schema = sf['schema'];
     $scope.form = sf['form'];
 
