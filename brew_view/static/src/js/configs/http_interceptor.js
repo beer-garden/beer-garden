@@ -73,8 +73,8 @@ export function authInterceptorService(
             }
           );
         } else {
-          // Highlight the login button
-          $injector.get('$rootScope').loginError = true;
+          // Show the login modal
+          $injector.get('$rootScope').doLogin();
         }
       }
 

@@ -49,8 +49,8 @@ export default function appRun(
   $rootScope.$state = $state;
   $rootScope.$stateParams = $stateParams;
 
+  let loginModal;
   $rootScope.loginInfo = {};
-  $rootScope.loginError = false;
 
   // Change this to point to the Brew-View backend if it's at another location
   $rootScope.apiBaseUrl = '';
@@ -170,19 +170,24 @@ export default function appRun(
   };
 
   $rootScope.doLogin = function() {
-    // Clicking should always clear the red outline
-    $rootScope.loginError = false;
-
-    $uibModal.open({
-      controller: 'LoginController',
-      size: 'sm',
-      template: loginTemplate,
-    }).result.then(
-      (result) => {
-        $rootScope.changeUser(result);
-      },
-      _.noop
-    );
+    if (!loginModal) {
+      loginModal = $uibModal.open({
+        controller: 'LoginController',
+        size: 'sm',
+        template: loginTemplate,
+      });
+      loginModal.result.then(
+        (result) => {
+          $rootScope.changeUser(result);
+        },
+        _.noop  // Prevents annoying console log messages
+      );
+      loginModal.closed.then(
+        () => {
+          loginModal = undefined;
+        }
+      );
+    }
   };
 
   $rootScope.doLogout = function() {
