@@ -49,25 +49,27 @@ esac
 
 if [ ! -f "$BARTENDER_LOG_CONFIG" ]; then
   "$APP_HOME/bin/generate_bartender_log_config" \
-    --log-config-file="$BARTENDER_LOG_CONFIG" \
-    --log-file="$BARTENDER_LOG_FILE" \
-    --log-level="WARN"
+    --log-config-file "$BARTENDER_LOG_CONFIG" \
+    --log-file "$BARTENDER_LOG_FILE" \
+    --log-level "WARN"
 fi
 
 if [ ! -f "$BREW_VIEW_LOG_CONFIG" ]; then
   "$APP_HOME/bin/generate_brew_view_log_config" \
-    --log-config-file="$BREW_VIEW_LOG_CONFIG" \
-    --log-file="$BREW_VIEW_LOG_FILE" \
-    --log-level="WARN"
+    --log-config-file "$BREW_VIEW_LOG_CONFIG" \
+    --log-file "$BREW_VIEW_LOG_FILE" \
+    --log-level "WARN"
 fi
 
-"$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG" \
-  --log-config-file="$BARTENDER_LOG_CONFIG" \
-  --plugin-local-directory="$PLUGIN_HOME" \
-  --plugin-local-log-directory="$PLUGIN_LOG_HOME"
+"$APP_HOME/bin/migrate_bartender_config" \
+  -c "$BARTENDER_CONFIG" \
+  -l "$BARTENDER_LOG_CONFIG" \
+  --plugin-local-directory "$PLUGIN_HOME" \
+  --plugin-local-log-directory "$PLUGIN_LOG_HOME"
 
-"$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG" \
-  --log-config-file="$BREW_VIEW_LOG_CONFIG"
+"$APP_HOME/bin/migrate_brew_view_config" \
+  -c "$BREW_VIEW_CONFIG" \
+  -l "$BREW_VIEW_LOG_CONFIG"
 
 chown -hR ${USER}:${GROUP} $APP_HOME
 
