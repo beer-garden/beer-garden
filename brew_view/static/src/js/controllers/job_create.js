@@ -273,6 +273,9 @@ export default function jobCreateController(
     if (stateParams.request) {
       generateRequestSF();
       $scope.jsonValues.requestModel = angular.toJson(stateParams.request, 2);
+
+      // This is kinda gross but easy - just fake we got this from backend
+      $scope.response = {status: 200, data: stateParams.request};
     } else {
       SystemService.getSystems().then(
         $scope.successCallback,
