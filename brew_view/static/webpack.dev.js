@@ -16,10 +16,6 @@ module.exports = merge(common, {
       {
         context: ['/api', '/config', '/login', '/logout', '/version'],
         target: 'http://localhost:2337/',
-      },
-      {
-        context: ['/api/v1/socket/events'],
-        target: 'ws://localhost:2337/',
         ws: true,
       },
     ],

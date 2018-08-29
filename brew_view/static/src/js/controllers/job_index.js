@@ -1,10 +1,11 @@
+import {formatDate} from '../services/utility_service.js';
+
 jobIndexController.$inject = [
   '$scope',
   '$rootScope',
   '$location',
   '$interval',
   'JobService',
-  'UtilityService',
 ];
 
 /**
@@ -14,46 +15,40 @@ jobIndexController.$inject = [
  * @param  {$location} $location   Angular's $location object.
  * @param  {$interval} $interval   Angular's $interval object.
  * @param  {Object} JobService Beer-Garden's job service.
- * @param  {Object} UtilityService Beer-Garden's utility service.
  */
 export default function jobIndexController(
-  $scope,
-  $rootScope,
-  $location,
-  $interval,
-  JobService,
-  UtilityService) {
-  $scope.util = UtilityService;
-
-  $scope.jobs = {
-    data: [],
-    loaded: false,
-    error: false,
-    errorMessage: '',
-    status: null,
-    errorMap: {
-    },
-  };
+    $scope,
+    $rootScope,
+    $location,
+    $interval,
+    JobService) {
+  $scope.setWindowTitle('scheduler');
 
   $scope.successCallback = function(response) {
-    $scope.jobs.data = response.data;
-    $scope.jobs.loaded = true;
-    $scope.jobs.error = false;
-    $scope.jobs.status = response.status;
-    $scope.jobs.errorMessage = '';
+    $scope.response = response;
+    $scope.data = response.data;
   };
 
   $scope.failureCallback = function(response) {
-    $scope.jobs.data = [];
-    $scope.jobs.loaded = false;
-    $scope.jobs.error = true;
-    $scope.jobs.status = response.status;
-    $scope.jobs.errorMessage = response.data.message;
+    $scope.response = response;
+    $scope.data = {};
   };
 
-  $scope.formatDate = function(data) {
-    return UtilityService.formatDate(data);
-  };
+  $scope.formatDate = formatDate;
 
-  JobService.getJobs().then($scope.successCallback, $scope.failureCallback);
+  function loadJobs() {
+    $scope.response = undefined;
+    $scope.data = {};
+
+    JobService.getJobs().then(
+      $scope.successCallback,
+      $scope.failureCallback
+    );
+  }
+
+  $scope.$on('userChange', () => {
+    loadJobs();
+  });
+
+  loadJobs();
 };

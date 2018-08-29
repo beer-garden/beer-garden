@@ -18,42 +18,81 @@ export function interceptorService($rootScope, $templateCache) {
   };
 };
 
-authInterceptorService.$inject = ['$q', '$injector', 'localStorageService'];
+authInterceptorService.$inject = [
+  '$q',
+  '$injector',
+];
 /**
  * authInterceptorService - Used to intercept API requests.
  * @param  {$q} $q                                   $q object
  * @param  {$injector} $injector                     $rootScope object
- * @param  {localStorageService} localStorageService Storage service
  * @return {Object}                                  Interceptor object
  */
-export function authInterceptorService($q, $injector, localStorageService) {
+export function authInterceptorService($q, $injector) {
   return {
     responseError: (rejection) => {
-      // This attempts to handle the condition where an access token has expired
-      // but there's a refresh token in storage. We use the refresh token to get
-      // a new access token and then re-attempt the original request.
+      // 401 means 'needs authentication'
       if (rejection.status === 401) {
-        let refreshToken = localStorageService.get('refresh');
+        // Can't use normal dependency injection in here as it causes a cycle
+        let $http = $injector.get('$http');
+        let $rootScope = $injector.get('$rootScope');
+        let TokenService = $injector.get('TokenService');
 
+        // This attempts to handle the condition where an access token has
+        // expired but there's a refresh token in storage. We use the refresh
+        // token to get a new access token then re-attempt the original request.
+        let refreshToken = TokenService.getRefresh();
         if (refreshToken) {
-          // Thanks for this angular - can't inject this as it causes a cycle
-          let $http = $injector.get('$http');
+          return TokenService.doRefresh(refreshToken).then(
+            (response) => {
+              // Set the Authorization header to the updated default
+              rejection.config.headers.Authorization =
+                $http.defaults.headers.common.Authorization;
 
-          return $http.get('/api/v1/tokens/'+refreshToken)
-          .then((response) => {
-            let newToken = response.data.token;
-            localStorageService.set('token', newToken);
+              // And retry the original request
+              return $http(rejection.config);
+            },
+            (response) => {
+              // Refresh didn't work. Maybe it was expired / removed
+              // We're going to retry so clear the bad refresh token so we
+              // don't get stuck in an infinite retry cycle
+              $rootScope.doLogout();
 
-            let newHeader = 'Bearer ' + newToken;
-            $http.defaults.headers.common.Authorization = newHeader;
-            rejection.config.headers.Authorization = newHeader;
+              // Clear the Authorization header
+              rejection.config.headers.Authorization = undefined;
 
-            return $http(rejection.config);
-          });
+              // And then retry the original request
+              return $http(rejection.config);
+            }
+          );
+        } else {
+          // No refresh token - show the login modal
+          // If this is a GET we're going to assume that retrying is taken care
+          // of by the controllers handling the userChange event.
+          // For other verbs we'll retry if the login is successful
+          let loginModal = $rootScope.doLogin();
+          if (rejection.config.method !== 'GET') {
+            return loginModal.result.then(
+              (result) => {
+                // At this point there'll be updated tokens, so set the
+                // Authorization header to the updated default
+                rejection.config.headers.Authorization =
+                  $http.defaults.headers.common.Authorization;
+
+                // And then retry the original request
+                return $http(rejection.config);
+              },
+              () => {
+                // User dismissed the modal so return the original rejection
+                return $q.reject(rejection);
+              }
+            );
+          }
         }
       }
 
-      // Some other error, just return the rejection
+      // Either the code wasn't 401 or we won't / can't retry
+      // So just return the original rejection
       return $q.reject(rejection);
     },
   };

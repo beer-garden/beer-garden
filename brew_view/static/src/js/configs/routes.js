@@ -58,11 +58,6 @@ export default function routeConfig($stateProvider, $urlRouterProvider) {
       'templateUrl': basePath + 'job_view.html',
       'controller': 'JobViewController',
     })
-    .state('queues', {
-      url: '/admin/queues',
-      templateUrl: basePath + 'admin_queue.html',
-      controller: 'QueueIndexController',
-    })
     .state('commands', {
       url: '/commands',
       templateUrl: basePath + 'command_index.html',
@@ -79,7 +74,7 @@ export default function routeConfig($stateProvider, $urlRouterProvider) {
     })
     // Unused by our UI, but helpful for external links.
     .state('commandID', {
-      url: '/commands/:command_id',
+      url: '/commands/:id',
       templateUrl: basePath + 'command_view.html',
       controller: 'CommandViewController',
       params: {
@@ -96,14 +91,24 @@ export default function routeConfig($stateProvider, $urlRouterProvider) {
       templateUrl: basePath + 'request_view.html',
       controller: 'RequestViewController',
     })
+    .state('queues', {
+      url: '/admin/queues',
+      templateUrl: basePath + 'admin_queue.html',
+      controller: 'AdminQueueController',
+    })
     .state('system_admin', {
       url: '/admin/systems',
       templateUrl: basePath + 'admin_system.html',
-      controller: 'SystemAdminController',
+      controller: 'AdminSystemController',
     })
     .state('user_admin', {
       url: '/admin/users',
       templateUrl: basePath + 'admin_user.html',
-      controller: 'UserAdminController',
+      controller: 'AdminUserController',
+    })
+    .state('role_admin', {
+      url: '/admin/roles',
+      templateUrl: basePath + 'admin_role.html',
+      controller: 'AdminRoleController',
     });
 };

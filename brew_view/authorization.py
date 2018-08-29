@@ -8,7 +8,7 @@ from passlib.apps import custom_app_context
 from tornado.web import HTTPError
 
 import brew_view
-from bg_utils.models import Principal
+from bg_utils.models import Principal, Role
 from brewtils.errors import RequestForbidden
 from brewtils.models import (
     Principal as BrewtilsPrincipal,
@@ -22,6 +22,10 @@ class Permissions(Enum):
     COMMAND_READ = 'bg-command-read'
     COMMAND_UPDATE = 'bg-command-update'
     COMMAND_DELETE = 'bg-command-delete'
+    EVENT_CREATE = 'bg-event-create'
+    EVENT_READ = 'bg-event-read'
+    EVENT_UPDATE = 'bg-event-update'
+    EVENT_DELETE = 'bg-event-delete'
     INSTANCE_CREATE = 'bg-instance-create'
     INSTANCE_READ = 'bg-instance-read'
     INSTANCE_UPDATE = 'bg-instance-update'
@@ -38,6 +42,10 @@ class Permissions(Enum):
     REQUEST_READ = 'bg-request-read'
     REQUEST_UPDATE = 'bg-request-update'
     REQUEST_DELETE = 'bg-request-delete'
+    ROLE_CREATE = 'bg-role-create'
+    ROLE_READ = 'bg-role-read'
+    ROLE_UPDATE = 'bg-role-update'
+    ROLE_DELETE = 'bg-role-delete'
     SYSTEM_CREATE = 'bg-system-create'
     SYSTEM_READ = 'bg-system-read'
     SYSTEM_UPDATE = 'bg-system-update'
@@ -49,6 +57,22 @@ class Permissions(Enum):
 
 
 Permissions.values = {p.value for p in Permissions}
+
+
+class AuthMixin(object):
+
+    auth_providers = []
+
+    def get_current_user(self):
+        """Use registered handlers to determine current user"""
+
+        for provider in self.auth_providers:
+            principal = provider(self.request)
+
+            if principal is not None:
+                return principal
+
+        return brew_view.anonymous_principal
 
 
 def authenticated(permissions=None):
@@ -107,6 +131,29 @@ def check_permission(principal, required_permissions):
                                    permission_strings)
 
 
+def anonymous_principal():
+    """Load correct anonymous permissions
+
+    This exists in a weird space. We need to set the roles attribute to a 'real'
+    Role object so it works correctly when the REST handler goes to serialize
+    this principal.
+
+    However, we also need to set the permissions attribute to the consolidated
+    permission list so that ``check_permission`` will be able to do a comparison
+    without having to calculate effective permissions every time.
+    """
+
+    if brew_view.config.auth.enabled:
+        roles = Principal.objects.get(username='anonymous').roles
+    else:
+        roles = [Role(name='bg-admin', permissions=['bg-all'])]
+
+    _, permissions = coalesce_permissions(roles)
+
+    return BrewtilsPrincipal(
+        username='anonymous', roles=roles, permissions=permissions)
+
+
 def coalesce_permissions(role_list):
     """Determine permissions"""
 
@@ -157,13 +204,13 @@ def basic_auth(request):
 
 
 def bearer_auth(request):
-    """Determine if a bearer authorization header is valid
+    """Determine a principal from a JWT in the Authorization header
 
     Args:
         request: The request to authenticate
 
     Returns:
-        Brewtils principal if auth_header is valid, None otherwise
+        Brewtils principal if JWT is valid, None otherwise
     """
     auth_header = request.headers.get('Authorization')
     if not auth_header or not auth_header.startswith('Bearer '):
@@ -171,9 +218,40 @@ def bearer_auth(request):
 
     token = auth_header.split(' ')[1]
 
-    decoded = jwt.decode(token,
-                         key=brew_view.config.auth.token.secret,
-                         algorithm=brew_view.config.auth.token.algorithm)
+    return _principal_from_token(token)
+
+
+def query_token_auth(request):
+    """Determine a principal from a JWT in query parameter 'token'
+
+    Args:
+        request: The request to authenticate
+
+    Returns:
+        Brewtils principal if JWT is valid, None otherwise
+    """
+    token_args = request.query_arguments.get('token', None)
+    if token_args is None:
+        return None
+
+    return _principal_from_token(token_args[0])
+
+
+def _principal_from_token(token):
+    """Determine a principal from a JWT
+
+    Args:
+        token: The JWT
+
+    Returns:
+        Brewtils principal if JWT is valid, None otherwise
+    """
+    try:
+        decoded = jwt.decode(token,
+                             key=brew_view.config.auth.token.secret,
+                             algorithm=brew_view.config.auth.token.algorithm)
+    except jwt.exceptions.ExpiredSignatureError:
+        raise HTTPError(status_code=401, log_message='Signature expired')
 
     return BrewtilsPrincipal(
         id=decoded['sub'],

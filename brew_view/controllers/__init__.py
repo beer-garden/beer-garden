@@ -11,6 +11,7 @@ from brew_view.controllers.logging_api import LoggingConfigAPI
 from brew_view.controllers.misc_controllers import (
     ConfigHandler, VersionHandler, SpecHandler, SwaggerConfigHandler
 )
+from brew_view.controllers.permissions_api import PermissionsAPI
 from brew_view.controllers.queue_api import QueueAPI, OldQueueAPI
 from brew_view.controllers.queue_list_api import QueueListAPI, OldQueueListAPI
 from brew_view.controllers.request_api import RequestAPI

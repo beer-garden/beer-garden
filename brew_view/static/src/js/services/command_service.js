@@ -9,16 +9,16 @@ commandService.$inject = ['$http', '$rootScope'];
  */
 export default function commandService($http, $rootScope) {
   return {
-    getCommands: function() {
+    getCommands: () => {
       return $http.get('api/v1/commands');
     },
-    getCommand: function(id) {
+    getCommand: (id) => {
       return $http.get('api/v1/commands/' + id);
     },
-    findSystem: function(command) {
+    findSystem: (command) => {
       return $rootScope.findSystemByID(command.system.id);
     },
-    getStateParams: function(command) {
+    getStateParams: (command) => {
       let system = $rootScope.findSystemByID(command.system.id);
       return {
         systemName: system.name,

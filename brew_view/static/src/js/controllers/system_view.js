@@ -1,4 +1,4 @@
-import angular from 'angular';
+import _ from 'lodash';
 
 systemViewController.$inject = [
   '$rootScope',
@@ -30,63 +30,33 @@ export default function systemViewController(
   DTOptionsBuilder) {
   $scope.util = UtilityService;
 
-  $scope.system = {
-    data: {},
-    loaded: false,
-    error: false,
-    errorMessage: '',
-    forceReload: false,
-    status: null,
-    errorMap: {
-      'empty': {
-        'solutions': [
-          {
-            problem: 'ID is incorrect',
-            description: 'The Backend has restarted and the ID changed of the system you ' +
-                         'were looking at',
-            resolution: 'Click the ' + $scope.config.applicationName + ' logo at the top ' +
-                        'left and refresh the page',
-          },
-          {
-            problem: 'The Plugin Stopped',
-            description: 'The plugin could have been stopped. You should probably contact the ' +
-                         'plugin maintainer. You should be able to tell what\'s wrong by their ' +
-                         'logs. Plugins are located at <code>$APP_HOME/plugins</code>',
-            resolution: '<kbd>less $APP_HOME/log/my-plugin.log</kbd>',
-          },
-        ],
-      },
-    },
-  };
-
   $scope.dtOptions = DTOptionsBuilder.newOptions()
     .withOption('order', [4, 'asc'])
     .withOption('autoWidth', false)
     .withBootstrap();
 
   $scope.successCallback = function(response) {
-    $scope.system.data = response.data;
-    $scope.system.loaded = true;
-    $scope.system.error = false;
-    $scope.system.status = response.status;
-    $scope.system.errorMessage = '';
+    $scope.response = response;
+    $scope.data = response.data;
+    $scope.setWindowTitle(
+      ($scope.data.display_name || $scope.data.name),
+      $scope.data.version
+    );
   };
 
   $scope.failureCallback = function(response) {
-    $scope.system.data = {};
-    $scope.system.loaded = false;
-    $scope.system.error = true;
-    $scope.system.status = response.status;
-    $scope.system.errorMessage = response.data.message;
+    $scope.response = response;
+    $scope.data = {};
+    $scope.setWindowTitle();
   };
 
   // Register a function that polls if the system is in a transition status
   let statusUpdate = $interval(function() {
-    if (['STOPPING', 'STARTING'].indexOf($scope.system.data.status) != -1) {
+    if (['STOPPING', 'STARTING'].indexOf($scope.data.status) != -1) {
       SystemService.getSystem(
-        $scope.system.data.id, false,
+        $scope.data.id, false,
         function(data, status, headers, config) {
-          $scope.system.data.status = data.status;
+          $scope.data.status = data.status;
       });
     }
   }, 1000);
@@ -106,35 +76,38 @@ export default function systemViewController(
    */
   $scope.getCommandStateParams = function(command) {
     return {
-      systemName: $scope.system.data.name,
-      systemVersion: $rootScope.getVersionForUrl($scope.system.data),
+      systemName: $scope.data.name,
+      systemVersion: $rootScope.getVersionForUrl($scope.data),
       name: command.name,
       id: command.id,
     };
   };
 
   const loadSystem = function(stateParams) {
-    let systemId;
-    if (!angular.isDefined(stateParams.id)) {
-      let system = $rootScope.findSystem($stateParams.name, $stateParams.version);
-      if (!angular.isDefined(system)) {
-        $scope.failureCallback({status: 404, message: 'Invalid system ID'});
-        return;
-      }
-      systemId = system.id;
-    } else {
-      systemId = $stateParams.id;
-    }
+    $scope.response = undefined;
+    $scope.data = {};
 
-    SystemService.getSystem(systemId, true).
-      then($scope.successCallback, $scope.failureCallback);
+    if (_.isUndefined(stateParams.id)) {
+      $rootScope.findSystem($stateParams.name, $stateParams.version).then(
+        (system) => {
+          SystemService.getSystem(system.id, true).then(
+            $scope.successCallback,
+            $scope.failureCallback
+          );
+        },
+        $scope.failureCallback
+      );
+    } else {
+      SystemService.getSystem(stateParams.id, true).then(
+        $scope.successCallback,
+        $scope.failureCallback
+      );
+    }
   };
 
-  if (angular.isDefined($rootScope.systems)) {
+  $scope.$on('userChange', function() {
     loadSystem($stateParams);
-  } else {
-    $scope.$on('systemsLoaded', function() {
-      loadSystem($stateParams);
-    });
-  }
+  });
+
+  loadSystem($stateParams);
 };

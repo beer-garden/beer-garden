@@ -1,9 +1,10 @@
+import {formatDate, formatJsonDisplay} from '../services/utility_service.js';
+
 jobViewController.$inject = [
   '$scope',
   '$rootScope',
   '$location',
   '$stateParams',
-  'UtilityService',
   'JobService',
 ];
 
@@ -13,90 +14,82 @@ jobViewController.$inject = [
  * @param  {$rootScope} $rootScope Angular's $rootScope object.
  * @param  {$location} $location   Angular's $location object.
  * @param  {$stateParams} $stateParams Angular's $stateParams object.
- * @param  {Object} UtilityService Beer-Garden's utility service.
  * @param  {Object} JobService Beer-Garden's job service.
  */
 export default function jobViewController(
-  $scope,
-  $rootScope,
-  $location,
-  $stateParams,
-  UtilityService,
-  JobService) {
-  $scope.job = {
-    data: [],
-    loaded: false,
-    error: false,
-    errorMessage: '',
-    status: null,
-    errorMap: {
-    },
-  };
+    $scope,
+    $rootScope,
+    $location,
+    $stateParams,
+    JobService) {
+  $scope.setWindowTitle('scheduler');
 
   $scope.formattedRequestTemplate = '';
   $scope.formattedTrigger = '';
 
   $scope.loadPreview = function(_editor) {
-      UtilityService.formatJsonDisplay(_editor, true);
+    formatJsonDisplay(_editor, true);
   };
 
   $scope.formatDate = function(data) {
-      return UtilityService.formatDate(data);
+    formatDate(data);
   };
 
   $scope.successCallback = function(response) {
-    $scope.job.data = response.data;
-    $scope.job.loaded = true;
-    $scope.job.error = false;
-    $scope.job.status = response.status;
-    $scope.job.errorMessage = '';
+    $scope.response = response;
+    $scope.data = response.data;
 
     $scope.formattedRequestTemplate = JSON.stringify(
-        $scope.job.data.request_template,
-        undefined,
-        2
+      $scope.data.request_template,
+      undefined,
+      2
     );
     $scope.formattedTrigger = JSON.stringify(
-        $scope.job.data.trigger,
-        undefined,
-        2
+      $scope.data.trigger,
+      undefined,
+      2
     );
   };
 
   $scope.resumeJob = function(jobId) {
-      JobService.resumeJob(jobId)
-        .then(
-            $scope.successCallback,
-            $scope.failureCallback
-        );
+    JobService.resumeJob(jobId).then(
+      $scope.successCallback,
+      $scope.failureCallback
+    );
   };
 
   $scope.pauseJob = function(jobId) {
-      JobService.pauseJob(jobId)
-        .then(
-            $scope.successCallback,
-            $scope.failureCallback
-        );
+    JobService.pauseJob(jobId).then(
+      $scope.successCallback,
+      $scope.failureCallback
+    );
   };
 
   $scope.deleteJob = function(jobId) {
-      JobService.deleteJob(jobId)
-        .then(
-            $location.path('/jobs'),
-            function(response) {
-                $scope.job.error = true;
-                $scope.job.errorMessage = response.data.message;
-            }
-        );
+    JobService.deleteJob(jobId).then(
+      $location.path('/jobs'),
+      $scope.failureCallback
+    );
   };
 
   $scope.failureCallback = function(response) {
-    $scope.job.data = [];
-    $scope.job.loaded = false;
-    $scope.job.error = true;
-    $scope.job.status = response.status;
-    $scope.job.errorMessage = response.data.message;
+    $scope.response = response;
+    $scope.data = [];
   };
 
-  JobService.getJob($stateParams.id).then($scope.successCallback, $scope.failureCallback);
+  function loadJob() {
+    $scope.response = undefined;
+    $scope.data = [];
+
+    JobService.getJob($stateParams.id).then(
+      $scope.successCallback,
+      $scope.failureCallback
+    );
+  }
+
+  $scope.$on('userChange', () => {
+    loadJob();
+  });
+
+  loadJob();
 };

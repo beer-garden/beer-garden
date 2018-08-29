@@ -1,8 +1,95 @@
-<h1 class='page-header'>User Management</h1>
+<h1 class='page-header'>
+  <span>User Management</span>
+</h1>
 
-<h2>Create a new user</h2>
-<form>
-  <label>Username: <input type="text" ng-model="create.username" /></label><br>
-  <label>Password: <input type="password" ng-model="create.password" /></label><br>
-  <input type="submit" ng-click="doCreate(create)" value="Create">
-</form>
+<fetch-data response="response"></fetch-data>
+
+<div class="container-fluid animate-if"
+     ng-show="responseState(response) === 'success'">
+  <div ng-show="!config.authEnabled" uib-alert class="alert alert-danger">
+    Warning - Beergarden authorization is currently disabled. Changes made here
+    will be persisted, but permissions will not be enforced. Contact your
+    administator to enable this feature.
+  </div>
+  <div class="row">
+    <div class="col-md-2">
+      <h3 style="text-align: center;">Users</h3>
+    </div>
+    <div class="col-md-2">
+      <h3 style="text-align: center;">Roles</h3>
+    </div>
+    <div class="col-md-8">
+      <h3 style="text-align: center;">Effective Permissions</h3>
+    </div>
+  </div>
+  <form>
+    <div class="row form-group">
+      <div class="col-md-2">
+        <select class="w-100" size="{{users.length}}"
+          ng-model="selectedUser"
+          ng-options="user.username for user in users">
+        </select>
+      </div>
+      <div class="col-md-2">
+        <div ng-repeat="role in raws.roles">
+          <input type="checkbox" id="{{role.name}}"
+            ng-model="selectedUser.roles[role.name]"
+            ng-click="roleChange(role.name)"
+            ng-disabled="isRoleDisabled(role.name)" />
+          <label for="{{role.name}}"
+            ng-style="color(selectedUser.id, 'roles.'+role.name)"
+            uib-popover="{{role.description}}"
+            popover-animation="true"
+            popover-placement="right"
+            popover-trigger="'mouseenter'"
+            popover-title="{{data.status}}"
+            >{{role.name}}</label>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <div ng-repeat="permGroup in permissions" class="row">
+          <span ng-repeat="permission in permGroup" class="col-sm-3">
+            <input type="checkbox" id="{{permission}}"
+              ng-model="selectedUser.permissions[permission]" disabled />
+            <label for="{{permission}}"
+              ng-style="color(selectedUser.id, 'permissions.'+permission)"
+              >{{permission}}</label>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="row form-group">
+      <div class="col-md-2">
+        <input type="submit" class="btn btn-success w-100"
+          ng-click="doCreate()"
+          ng-show="hasPermission(user, 'bg-user-create')"
+          value="Create User" />
+      </div>
+      <div class="col-md-2">
+        <input type="submit" class="btn btn-danger w-100"
+          ng-click="doDelete(selectedUser.id)"
+          ng-show="hasPermission(user, 'bg-user-delete')"
+          confirm="Are you sure you want to remove this user?"
+          value="Remove User" />
+      </div>
+      <div class="col-md-2">
+        <input type="submit" class="btn btn-warning w-100"
+          ng-click="doReset(selectedUser.id)"
+          value="Reset" />
+      </div>
+      <div class="col-md-6">
+        <input type="submit" class="btn btn-primary w-100"
+          ng-click="doUpdate()"
+          ng-show="hasPermission(user, 'bg-user-update')"
+          value="Update User" />
+      </div>
+    </div>
+  </form>
+
+  <div uib-alert
+       ng-repeat="alert in alerts"
+       ng-class="'alert-' + alert.type"
+       close="closeAlert($index)">
+    {{alert.msg}}
+  </div>
+</div>

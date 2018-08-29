@@ -1,12 +1,14 @@
 import json
 import logging
 
-from mongoengine.errors import DoesNotExist
+from mongoengine.errors import DoesNotExist, ValidationError
 from passlib.apps import custom_app_context
 
+import brew_view
 from bg_utils.models import Principal, Role
 from bg_utils.parser import BeerGardenSchemaParser
-from brew_view.authorization import authenticated, check_permission, Permissions
+from brew_view.authorization import (
+    authenticated, check_permission, Permissions, coalesce_permissions)
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 
@@ -15,15 +17,15 @@ class UserAPI(BaseHandler):
 
     logger = logging.getLogger(__name__)
 
-    def get(self, user_id):
+    def get(self, user_identifier):
         """
         ---
         summary: Retrieve a specific User
         parameters:
-          - name: user_id
+          - name: user_identifier
             in: path
             required: true
-            description: The ID of the User
+            description: The ID or name of the User
             type: string
         responses:
           200:
@@ -37,14 +39,23 @@ class UserAPI(BaseHandler):
         tags:
           - Users
         """
-        # Need fine-grained access control here
-        if user_id != self.current_user.id:
-            check_permission(self.current_user, [Permissions.USER_READ])
+        if user_identifier == 'anonymous':
+            principal = brew_view.anonymous_principal
+        else:
+            # Need fine-grained access control here
+            if user_identifier not in [self.current_user.id,
+                                       self.current_user.username]:
+                check_permission(self.current_user, [Permissions.USER_READ])
+
+            try:
+                principal = Principal.objects.get(id=str(user_identifier))
+            except (DoesNotExist, ValidationError):
+                principal = Principal.objects.get(username=str(user_identifier))
+
+        principal.permissions = coalesce_permissions(principal.roles)[1]
 
         self.write(BeerGardenSchemaParser.serialize_principal(
-            Principal.objects.get(id=str(user_id)),
-            to_string=False
-        ))
+            principal, to_string=False))
 
     @authenticated(permissions=[Permissions.USER_DELETE])
     def delete(self, user_id):
@@ -72,7 +83,6 @@ class UserAPI(BaseHandler):
 
         self.set_status(204)
 
-    @authenticated(permissions=[Permissions.USER_UPDATE])
     def patch(self, user_id):
         """
         ---
@@ -122,6 +132,8 @@ class UserAPI(BaseHandler):
 
         for op in operations:
             if op.path == '/roles':
+                check_permission(self.current_user, [Permissions.USER_UPDATE])
+
                 try:
                     if op.operation == 'add':
                         principal.roles.append(Role.objects.get(name=op.value))
@@ -135,12 +147,16 @@ class UserAPI(BaseHandler):
                     raise ModelValidationError("Role '%s' does not exist" % op.value)
 
             elif op.path == '/preferences/theme':
+                if user_id != self.current_user.id:
+                    check_permission(self.current_user, [Permissions.USER_UPDATE])
+
                 if op.operation == 'set':
                     principal.preferences['theme'] = op.value
                 else:
                     raise ModelValidationError("Unsupported operation '%s'" % op.operation)
 
             else:
+                check_permission(self.current_user, [Permissions.USER_UPDATE])
                 raise ModelValidationError("Unsupported path '%s'" % op.path)
 
         principal.save()
@@ -169,6 +185,9 @@ class UsersAPI(BaseHandler):
           - Users
         """
         principals = Principal.objects.all().select_related(max_depth=1)
+
+        for principal in principals:
+            principal.permissions = coalesce_permissions(principal.roles)[1]
 
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
         self.write(BeerGardenSchemaParser.serialize_principal(

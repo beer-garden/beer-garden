@@ -1,10 +1,10 @@
+import {formatDate} from '../services/utility_service.js';
 
 requestIndexController.$inject = [
   '$scope',
   'DTOptionsBuilder',
   'DTColumnBuilder',
   'DTRendererService',
-  'UtilityService',
   'RequestService',
 ];
 
@@ -14,16 +14,16 @@ requestIndexController.$inject = [
  * @param  {Object} DTOptionsBuilder  Data-tables' options builder object.
  * @param  {Object} DTColumnBuilder   Data-tables' column builder object.
  * @param  {Object} DTRendererService Data-tables' rendering service.
- * @param  {Object} UtilityService    Beer-Garden Utility Service.
  * @param  {Object} RequestService    Beer-Garden Request Service.
  */
 export default function requestIndexController(
-  $scope,
-  DTOptionsBuilder,
-  DTColumnBuilder,
-  DTRendererService,
-  UtilityService,
-  RequestService) {
+    $scope,
+    DTOptionsBuilder,
+    DTColumnBuilder,
+    DTRendererService,
+    RequestService) {
+  $scope.setWindowTitle('requests');
+
   $scope.requests = {};
   $scope.requests.errorMap = RequestService.errorMap;
 
@@ -34,11 +34,8 @@ export default function requestIndexController(
       data.columns.push({'data': 'id'});
 
       RequestService.getRequests(data).then(
-        function(response) {
-          $scope.requests.loaded = true;
-          $scope.requests.error = false;
-          $scope.requests.status = response.status;
-          $scope.requests.errorMessage = '';
+        (response) => {
+          $scope.response = response;
 
           callback({
             data: response.data,
@@ -47,11 +44,8 @@ export default function requestIndexController(
             recordsTotal: response.headers('recordsTotal'),
           });
         },
-        function(response) {
-          $scope.requests.loaded = false;
-          $scope.requests.error = true;
-          $scope.requests.status = response.status;
-          $scope.requests.errorMessage = response.data.message;
+        (response) => {
+          $scope.response = response;
         }
       );
     })
@@ -74,8 +68,23 @@ export default function requestIndexController(
         ],
       },
       4: {
-        html: 'range', type: 'text',
-        attr: {class: 'form-inline form-control', style: 'width: 50%;'},
+        html: 'range',
+        type: 'text',
+        attr: {
+          class: 'form-inline form-control',
+        },
+        startAttr: {
+          placeholder: 'start',
+        },
+        endAttr: {
+          placeholder: 'end',
+        },
+        picker: {
+          format: 'YYYY-MM-DD HH:mm:ss',
+          showClear: true,
+          showTodayButton: true,
+          useCurrent: false,
+        },
       },
       5: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
     })
@@ -114,7 +123,7 @@ export default function requestIndexController(
       .withOption('type', 'date')
       .withOption('width', '25%')
       .renderWith(function(data, type, full) {
-        return UtilityService.formatDate(data);
+        return formatDate(data);
       }),
     DTColumnBuilder
       .newColumn('comment')
@@ -143,5 +152,17 @@ export default function requestIndexController(
         }
       });
     },
+  });
+
+  $scope.instanceCreated = function(_instance) {
+    $scope.dtInstance = _instance;
+  };
+
+  $scope.$on('userChange', function() {
+    $scope.response = undefined;
+
+    if ($scope.dtInstance) {
+      $scope.dtInstance.reloadData(() => {}, false);
+    }
   });
 };

@@ -1,8 +1,9 @@
 import angular from 'angular';
 
-queueIndexController.$inject = [
+adminQueueController.$inject = [
   '$rootScope',
   '$scope',
+  '$q',
   '$compile',
   '$window',
   '$location',
@@ -14,9 +15,10 @@ queueIndexController.$inject = [
 ];
 
 /**
- * queueIndexController - Angular controller for queue index page.
+ * adminQueueController - Angular controller for queue index page.
  * @param  {$rootScope} $rootScope   Angular's $rootScope object.
  * @param  {$scope} $scope           Angular's $scope object.
+ * @param  {$q} $q                   Angular's $q object.
  * @param  {$compile} $compile       Angular's $compile object.
  * @param  {$window} $window         Angular's $window object.
  * @param  {$location} $location     Angular's $location object.
@@ -26,49 +28,41 @@ queueIndexController.$inject = [
  * @param  {Object} DTColumnBuilder  Datatables' column builder object.
  * @param  {Object} QueueService     Beer-Garden's queue service object.
  */
-export default function queueIndexController(
-  $rootScope,
-  $scope,
-  $compile,
-  $window,
-  $location,
-  $interval,
-  $http,
-  DTOptionsBuilder,
-  DTColumnBuilder,
-  QueueService) {
+export default function adminQueueController(
+    $rootScope,
+    $scope,
+    $q,
+    $compile,
+    $window,
+    $location,
+    $interval,
+    $http,
+    DTOptionsBuilder,
+    DTColumnBuilder,
+    QueueService) {
+  $scope.setWindowTitle('queues');
+
+  let preconditionPromise;
+
   $scope.alerts = [];
   $scope.dtInstance = null;
 
-  $scope.setQueueValues = function() {
-    $scope.queueHost = $scope.config.amqHost;
-    $scope.queuePort = $scope.config.amqPort;
-    $scope.queueAdminPort = $scope.config.amqAdminPort;
-    $scope.queueVirtualHost = encodeURIComponent($scope.config.amqVirtualHost);
-  };
-
-  // Make sure config is loaded before attempting to set scope objects to undefined
-  if ($scope.config.amqHost == null) {
-    $scope.$on('configLoaded', function() {
-      $scope.setQueueValues();
-    });
-  } else {
-    $scope.setQueueValues();
-  }
-
-  $scope.queues = {
-    data: [],
-    loaded: false,
-    error: false,
-    errorMessage: '',
-    status: null,
-    errorMap: QueueService.errorMap,
-  };
-
   $scope.dtOptions = DTOptionsBuilder
-    .fromFnPromise(function() {
-      return QueueService.getQueues().then($scope.successCallback, $scope.failureCallback);
-    })
+    .fromFnPromise(
+      () => {
+        // Waiting for preconditionPromise ensures that the rootScope config
+        // and systems are ready first
+        return preconditionPromise.then(
+          () => {
+            return QueueService.getQueues().then(
+              $scope.successCallback,
+              $scope.failureCallback
+            );
+          },
+          $scope.failureCallback
+        );
+      }
+    )
     .withBootstrap()
     .withDisplayLength(50)
     .withDataProp('data')
@@ -120,7 +114,7 @@ export default function queueIndexController(
       .notSortable()
       .renderWith(function(data, type, full) {
         return '<button class="btn btn-danger btn-block word-wrap-button" ' +
-                        'ng-click="clearQueue(\'' + full.name + '\')">Clear Queue</button>';
+            'ng-click="clearQueue(\'' + full.name + '\')">Clear Queue</button>';
       }),
   ];
 
@@ -129,11 +123,17 @@ export default function queueIndexController(
   };
 
   $scope.clearQueue = function(queueName) {
-    QueueService.clearQueue(queueName).then($scope.addSuccessAlert, $scope.addErrorAlert);
+    QueueService.clearQueue(queueName).then(
+      $scope.addSuccessAlert,
+      $scope.addErrorAlert
+    );
   };
 
   $scope.clearAllQueues = function() {
-    QueueService.clearQueues().then($scope.addSuccessAlert, $scope.addErrorAlert);
+    QueueService.clearQueues().then(
+      $scope.addSuccessAlert,
+      $scope.addErrorAlert
+    );
   };
 
   $scope.closeAlert = function(index) {
@@ -159,9 +159,7 @@ export default function queueIndexController(
   };
 
   let poller = $interval(function() {
-    if ($scope.dtInstance) {
-      $scope.dtInstance.reloadData(function() {}, false);
-    }
+    $scope.dtInstance.reloadData(() => {}, false);
   }, 5000);
 
   $scope.$on('$destroy', function() {
@@ -172,20 +170,42 @@ export default function queueIndexController(
   });
 
   $scope.successCallback = function(response) {
-    $scope.queues.data = response.data;
-    $scope.queues.loaded = true;
-    $scope.queues.error = false;
-    $scope.queues.status = response.status;
-    $scope.queues.errorMessage = '';
-
+    $scope.response = response;
     return response.data;
   };
 
   $scope.failureCallback = function(response) {
-    $scope.queues.data = [];
-    $scope.queues.loaded = false;
-    $scope.queues.error = true;
-    $scope.queues.status = response.status;
-    $scope.queues.errorMessage = response.data.message;
+    $scope.response = response;
   };
+
+  const ensurePreconditions = function() {
+    // The table is constructed from getQueues but we need to wait for the
+    // application to have loaded systems and config first
+    let configPromise = $rootScope.configPromise.then(
+      () => {
+        $scope.queueHost = $scope.config.amqHost;
+        $scope.queuePort = $scope.config.amqPort;
+        $scope.queueAdminPort = $scope.config.amqAdminPort;
+        $scope.queueVirtualHost = encodeURIComponent($scope.config.amqVirtualHost);
+      },
+      $scope.failureCallback
+    );
+
+    preconditionPromise = $q.all({
+      config: configPromise,
+      systems: $rootScope.systemsPromise,
+    });
+  };
+
+  $scope.$on('userChange', () => {
+    $scope.response = undefined;
+
+    // Make sure that preconditions are still good
+    ensurePreconditions();
+
+    // Then give the datatable a kick
+    $scope.dtInstance.reloadData(() => {}, false);
+  });
+
+  ensurePreconditions();
 };

@@ -1,4 +1,6 @@
+import _ from 'lodash';
 import angular from 'angular';
+import {formatJsonDisplay} from '../services/utility_service.js';
 
 commandViewController.$inject = [
   '$location',
@@ -7,13 +9,12 @@ commandViewController.$inject = [
   '$state',
   '$stateParams',
   '$sce',
+  '$q',
   'CommandService',
   'RequestService',
   'SystemService',
   'SFBuilderService',
-  'UtilityService',
 ];
-
 
 /**
  * commandViewController - Angular controller for a specific command.
@@ -23,28 +24,29 @@ commandViewController.$inject = [
  * @param  {$state} $state             Angular's $state object.
  * @param  {$stateParams} $stateParams Angular's $stateParams object.
  * @param  {$sce} $sce                 Angular's $sce object.
+ * @param  {$q} $q                     Angular's $q object.
  * @param  {Object} CommandService     Beer-Garden's command service object.
  * @param  {Object} RequestService     Beer-Garden's request service object.
  * @param  {Object} SystemService      Beer-Garden's system service object.
  * @param  {Object} SFBuilderService   Beer-Garden's schema-form builder service object.
- * @param  {Object} UtilityService     Beer-Garden's utility service object.
  */
 export default function commandViewController(
-  $location,
-  $rootScope,
-  $scope,
-  $state,
-  $stateParams,
-  $sce,
-  CommandService,
-  RequestService,
-  SystemService,
-  SFBuilderService,
-  UtilityService ) {
+    $location,
+    $rootScope,
+    $scope,
+    $state,
+    $stateParams,
+    $sce,
+    $q,
+    CommandService,
+    RequestService,
+    SystemService,
+    SFBuilderService) {
+  let tempResponse;
+
   $scope.schema = {};
   $scope.form = [];
   $scope.model = $stateParams.request || {};
-  $scope.createError = false;
   $scope.alerts = [];
   $scope.baseModel = {};
   $scope.system = {};
@@ -57,34 +59,6 @@ export default function commandViewController(
     command: '',
     schema: '',
     form: '',
-  };
-
-  $scope.command = {
-    data: [],
-    loaded: false,
-    status: null,
-    error: false,
-    errorMessage: '',
-    errorMap: {
-      'empty': {
-        'solutions': [
-          {
-            problem: 'ID is incorrect',
-            description: 'The Backend has restarted and the ID changed of the command you were ' +
-                         'looking at',
-            resolution: 'Click the ' + $scope.config.applicationName + ' logo at the top left ' +
-                        'and refresh the page',
-          },
-          {
-            problem: 'The Plugin Stopped',
-            description: 'The plugin could have been stopped. You should probably contact the ' +
-                         'plugin maintainer. You should be able to tell what\'s wrong by their ' +
-                         'logs. Plugins are located at <code>$APP_HOME/plugins</code>',
-            resolution: '<kbd>less $APP_HOME/log/my-plugin.log</kbd>',
-          },
-        ],
-      },
-    },
   };
 
   $scope.createRequestWrapper = function(requestPrototype, ...args) {
@@ -180,15 +154,14 @@ export default function commandViewController(
         $location.path('/requests/' + response.data.id);
       },
       function(response) {
-        $scope.createError = true;
-        $scope.createErrorMessage = response.data.message;
+        $scope.createResponse = response;
       }
     );
   };
 
   $scope.reset = function(form, model, system, command) {
+    $scope.createResponse = undefined;
     $scope.alerts.splice(0);
-    $scope.createError = false;
     $scope.model = {};
 
     generateSF();
@@ -200,15 +173,16 @@ export default function commandViewController(
   };
 
   $scope.loadPreview = function(_editor) {
-    UtilityService.formatJsonDisplay(_editor, true);
+    formatJsonDisplay(_editor, true);
   };
 
   $scope.loadEditor = function(_editor) {
-    UtilityService.formatJsonDisplay(_editor, false);
+    formatJsonDisplay(_editor, false);
   };
 
   $scope.toggleManualOverride = function() {
     $scope.alerts.splice(0);
+    $scope.createResponse = undefined;
     $scope.manualOverride = !$scope.manualOverride;
     $scope.manualModel = $scope.jsonValues.model;
   };
@@ -218,13 +192,14 @@ export default function commandViewController(
       {
         'request': $scope.model,
         'system': $scope.system,
-        'command': $scope.command.data,
+        'command': $scope.command,
       }
     );
   };
 
   let generateSF = function() {
-    let sf = SFBuilderService.build($scope.system, $scope.command.data);
+    let sf = SFBuilderService.build($scope.system, $scope.command);
+
     $scope.schema = sf['schema'];
     $scope.form = sf['form'];
 
@@ -233,34 +208,37 @@ export default function commandViewController(
   };
 
   $scope.successCallback = function(response) {
-    $scope.command.data = response.data;
-    $scope.command.status = response.status;
-    $scope.command.error = false;
-    $scope.command.errorMessage = '';
+    tempResponse = response;
 
-    $scope.jsonValues.command = JSON.stringify($scope.command.data, undefined, 2);
+    $scope.command = response.data;
+    $scope.jsonValues.command = JSON.stringify($scope.command, undefined, 2);
 
     // If this command has a custom template then we're done!
-    if ($scope.command.data.template) {
+    if ($scope.command.template) {
       // This is necessary for things like scripts and forms
       if ($scope.config.allowUnsafeTemplates) {
-        $scope.template = $sce.trustAsHtml($scope.command.data.template);
+        $scope.template = $sce.trustAsHtml($scope.command.template);
       } else {
-        $scope.template = $scope.command.data.template;
+        $scope.template = $scope.command.template;
       }
-
-      $scope.command.loaded = true;
+      $scope.response = response;
     } else {
       generateSF();
     }
+
+    $scope.setWindowTitle(
+      $scope.command.name,
+      ($scope.system.display_name || $scope.system.name),
+      $scope.system.version,
+      'command'
+    );
   };
 
   $scope.failureCallback = function(response) {
-    $scope.command.data = [];
-    $scope.command.loaded = false;
-    $scope.command.error = true;
-    $scope.command.status = response.status;
-    $scope.command.errorMessage = response.data.message;
+    tempResponse = response;
+    $scope.response = response;
+    $scope.command = [];
+    $scope.setWindowTitle();
   };
 
   $scope.$watch('model', function(val, old) {
@@ -304,95 +282,95 @@ export default function commandViewController(
   $scope.$on('generateSF', generateSF);
 
   // Stop the loading animation after the schema form is done
-  $scope.$on('sf-render-finished', function() {
-    $scope.command.loaded = true;
+  $scope.$on('sf-render-finished', () => {
+    $scope.response = tempResponse;
   });
-
-
-  /**
-   * Search the system for the given command name.
-   *
-   * @param {string} commandName - Command Name
-   * @return {string} Command ID
-   */
-  const findCommandID = function(commandName) {
-    for (let command of $scope.system.commands) {
-      if (command.name === commandName) {
-        return command.id;
-      }
-    }
-  };
-
-  /**
-   * Success callback after getting a system.
-   *
-   * @param {Object} response - http response
-   */
-  const systemSuccessCallback = function(response) {
-    $scope.system = response.data;
-    findAndLoadCommand($stateParams.name);
-  };
-
-  /**
-   * Fetch data from the server with the correct callbacks.
-   *
-   * @param {string} commandID - Command ID to load
-   */
-  const loadCommandByID = function(commandID) {
-    CommandService.getCommand(commandID).
-      then($scope.successCallback, $scope.failureCallback);
-  };
 
   /**
    * Find a command, then load that command from the server.
    * @param {string} commandName - command name to load.
+   * @return {Promise} The command promise
    */
   const findAndLoadCommand = function(commandName) {
-    let commandID = findCommandID(commandName);
-    if (!angular.isDefined(commandID) || commandID === null) {
-      $scope.failureCallback({status: 404, data: {message: 'Invalid command Name.'}});
-      return;
+    let command = _.find($scope.system.commands, {name: commandName});
+    if (_.isUndefined(command)) {
+      return $q.reject({status: 404, data: {message: 'No matching command'}});
     }
-    loadCommandByID(commandID);
+
+    // We already have the commands from the fully popluated system, so we could
+    // return $q.resolve({status: 200, data: command});
+    // But this is better as it validates that user has bg-command-read
+    return CommandService.getCommand(command.id);
   };
 
   /**
    * Find a system in $rootScope, then request all of its commands from the API.
    * @param {string} systemName - Name of the system to load.
    * @param {string} systemVersion - Version of the system to load.
+   * @return {Promise} The system promise
    */
   const findAndLoadSystem = function(systemName, systemVersion) {
-    let bareSystem = $rootScope.findSystem(systemName, systemVersion);
-    if (!angular.isDefined(bareSystem) || bareSystem === null) {
-      $scope.failureCallback({status: 404, data: {message: 'Invalid System ID'}});
-      return;
-    }
-
-    SystemService.getSystem(bareSystem.id, true).
-      then(systemSuccessCallback, $scope.failureCallback);
+    return $rootScope.findSystem(systemName, systemVersion).then(
+      (bareSystem) => {
+        return SystemService.getSystem(bareSystem.id, true);
+      }
+    );
   };
 
   /**
    * Load data based on state.
+   * Two possiblities:
+   * 1. We have command ID
+   *    Load command, then load system
+   * 2. We have system name + version and the command name
+   *    Load the full system and then find the correct command
    * @param {Object} stateParams - State params.
    */
   const loadData = function(stateParams) {
-    if (Object.keys($scope.system).length === 0) {
-      findAndLoadSystem(stateParams.systemName, stateParams.systemVersion);
-    } else if (angular.isDefined(stateParams.id) && stateParams.id !== null) {
-      loadCommandByID(stateParams.id);
-    } else {
-      findAndLoadCommand(stateParams.name);
-    }
+    tempResponse = undefined;
+    $scope.response = undefined;
+    $scope.createResponse = undefined;
+    $scope.command = [];
+
+    $rootScope.systemsPromise.then(
+      () => {
+        if (stateParams.id) {
+          CommandService.getCommand(stateParams.id).then(
+            (cmdResponse) => {
+              SystemService.getSystem(cmdResponse.data.system.id).then(
+                (sysResponse) => {
+                  $scope.system = sysResponse.data;
+                  $scope.successCallback(cmdResponse);
+                },
+                $scope.failureCallback
+              );
+            },
+            $scope.failureCallback
+          );
+        } else {
+          // The 'root' systems list doesn't have full commands so we have to
+          // get a more detailed system
+          findAndLoadSystem(
+              stateParams.systemName,
+              stateParams.systemVersion).then(
+            (sysResponse) => {
+              $scope.system = sysResponse.data;
+              findAndLoadCommand(stateParams.name).then(
+                $scope.successCallback,
+                $scope.failureCallback
+              );
+            },
+            $scope.failureCallback
+          );
+        }
+      },
+      $scope.failureCallback
+    );
   };
 
-  // If we haven't loaded the systems, then we wait for the initial load
-  // before attempting to load a command.
-  if (angular.isDefined($rootScope.systems)) {
+  $scope.$on('userChange', () => {
     loadData($stateParams);
-  } else {
-    $scope.$on('systemsLoaded', function() {
-      loadData($stateParams);
-    });
-  }
+  });
+
+  loadData($stateParams);
 };

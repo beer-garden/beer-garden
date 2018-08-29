@@ -1,253 +1,294 @@
-import angular from 'angular';
 import _ from 'lodash';
+import {arrayToMap, mapToArray} from '../services/utility_service.js';
 
-userAdminController.$inject = [
+import template from '../../templates/new_user.html';
+
+adminUserController.$inject = [
   '$scope',
-  '$rootScope',
-  '$interval',
-  '$http',
-  '$websocket',
-  'SystemService',
-  'InstanceService',
-  'UtilityService',
-  'AdminService',
+  '$q',
+  '$uibModal',
+  'RoleService',
+  'UserService',
+  'PermissionService',
 ];
 
 /**
- * userAdminController - System management controller.
- * @param  {$scope} $scope          Angular's $scope object.
- * @param  {$rootScope} $rootScope  Angular's $rootScope object.
- * @param  {$interval} $interval    Angular's $interval object.
- * @param  {$http} $http            Angular's $http object.
- * @param  {$websocket} $websocket  Angular's $websocket object.
- * @param  {Object} SystemService   Beer-Garden's system service object.
- * @param  {Object} InstanceService Beer-Garden's instance service object.
- * @param  {Object} UtilityService  Beer-Garden's utility service object.
- * @param  {Object} AdminService    Beer-Garden's admin service object.
+ * adminUserController - System management controller.
+ * @param  {$scope} $scope            Angular's $scope object.
+ * @param  {$scope} $q                Angular's $q object.
+ * @param  {$scope} $uibModal         Angular UI's $uibModal object.
+ * @param  {Object} RoleService       Beer-Garden's role service object.
+ * @param  {Object} UserService       Beer-Garden's user service object.
+ * @param  {Object} PermissionService Beer-Garden's permission service object.
  */
-export default function userAdminController(
+export function adminUserController(
     $scope,
-    $rootScope,
-    $interval,
-    $http,
-    $websocket,
-    SystemService,
-    InstanceService,
-    UtilityService,
-    AdminService) {
-  $scope.util = UtilityService;
+    $q,
+    $uibModal,
+    RoleService,
+    UserService,
+    PermissionService) {
+  $scope.setWindowTitle('users');
 
-  $scope.systems = {
-    data: [],
-    loaded: false,
-    error: false,
-    errorMessage: '',
-    forceReload: false,
-    status: null,
-    errorMap: {
-      'empty': {
-        'solutions': [
-          {
-            problem: 'Backend Down',
-            description: 'If the backend is down, there will be no systems to control',
-            resolution: '<kbd>service bartender start</kbd>',
-          },
-          {
-            problem: 'Plugin Problems',
-            description: 'If Plugins attempted to start, but are failing to startup, then' +
-                         'you\'ll have to contact the plugin maintainer. You can tell what\'s ' +
-                         'wrong by their logs. Plugins are located at ' +
-                         '<code>$APP_HOME/plugins</code>',
-            resolution: '<kbd>less $APP_HOME/log/my-plugin.log</kbd>',
-          },
-          {
-            problem: 'Database Names Do Not Match',
-            description: 'It is possible that the backend is pointing to a Different Database ' +
-                         'than the Frontend. Check to make sure that the <code>DB_NAME</code> ' +
-                         'in both config files is the same',
-            resolution: '<kbd>vim $APP_HOME/conf/bartender.json</kbd><br />' +
-                        '<kbd>vim $APP_HOME/conf/brew-view.json</kbd>',
-          },
-          {
-            problem: 'There Are No Systems',
-            description: 'If no one has ever developed any plugins, then there will be no ' +
-                          'systems here. You\'ll need to build your own plugins.',
-            resolution: 'Develop a Plugin',
-          },
-        ],
+  // This holds the raw responses from the backend
+  $scope.raws = {};
+
+  // This is the list that gets changed as the user interacts
+  $scope.users = [];
+
+  // This is used for comparing changes
+  $scope.serverUsers = [];
+
+  // This is the user that's currently under selection
+  $scope.selectedUser = {};
+
+  // Normal loader
+  $scope.loader = {};
+
+  $scope.doCreate = function() {
+    let modalInstance = $uibModal.open({
+      controller: 'NewUserController',
+      size: 'sm',
+      template: template,
+    });
+
+    modalInstance.result.then(
+      (create) => {
+        if (create.password === create.verify) {
+          UserService.createUser(create.username, create.password).then(loadUsers);
+        }
       },
-    },
+      // We don't really need to do anything if canceled
+      () => {}
+    );
   };
 
-  $scope.rescan = function() {
-    AdminService.rescan();
+  $scope.doDelete = function(userId) {
+    UserService.deleteUser(userId).then(loadUsers);
   };
 
-  $scope.startSystem = function(system) {
-    _.forEach(system.instances, $scope.startInstance);
+  $scope.doReset = function(userId) {
+    let original = _.find($scope.serverUsers, {'id': userId});
+    let changed = _.find($scope.users, {'id': userId});
+
+    changed.roles = _.cloneDeep(original.roles);
+    changed.permissions = _.cloneDeep(original.permissions);
   };
 
-  $scope.stopSystem = function(system) {
-    _.forEach(system.instances, $scope.stopInstance);
+  $scope.doUpdate = function() {
+    let userId = $scope.selectedUser.id;
+    let original = _.find($scope.serverUsers, {'id': userId});
+    let promises = [];
+
+    let originalList = mapToArray(original.primaryRoles);
+    let changedList = mapToArray($scope.selectedUser.primaryRoles);
+
+    let additions = _.difference(changedList, originalList);
+    let removals = _.difference(originalList, changedList);
+
+    if (additions.length) {
+      promises.push(UserService.addRoles(userId, additions));
+    }
+    if (removals.length) {
+      promises.push(UserService.removeRoles(userId, removals));
+    }
+
+    $q.all(promises).then(loadUsers, $scope.addErrorAlert);
   };
 
-  $scope.reloadSystem = function(system) {
-    SystemService.reloadSystem(system);
-  };
-
-  $scope.deleteSystem = function(system) {
-    SystemService.deleteSystem(system);
-  };
-
-  $scope.hasRunningInstances = function(system) {
-    return system.instances.some(function(instance) {
-      return instance.status == 'RUNNING';
+  $scope.addErrorAlert = function(response) {
+    $scope.alerts.push({
+      type: 'danger',
+      msg: 'Something went wrong on the backend: ' +
+        _.get(response, 'data.message', 'Please check the server logs'),
     });
   };
 
-  $scope.startInstance = function(instance) {
-    instance.status = 'STARTING';
-    InstanceService.startInstance(instance);
+  $scope.closeAlert = function(index) {
+    $scope.alerts.splice(index, 1);
   };
 
-  $scope.stopInstance = function(instance) {
-    instance.status = 'STOPPING';
-    InstanceService.stopInstance(instance);
+  $scope.color = function(userId, path) {
+    // Pull the correct users based on the current selected user's id
+    let originalSelectedUser = _.find($scope.serverUsers, {'id': userId});
+    let changedSelectedUser = _.find($scope.users, {'id': userId});
+
+    // Now pull the original and changed values out
+    let originalValue = _.get(originalSelectedUser, path);
+    let changedValue = _.get(changedSelectedUser, path);
+
+    if (changedValue && !originalValue) {
+      return {'color': 'green'};
+    } else if (!changedValue && originalValue) {
+      return {'color': 'red'};
+    }
+
+    return {};
   };
 
-  $scope.successCallback = function(response) {
-    $rootScope.systems = response.data;
-    $scope.systems.loaded = true;
-    $scope.systems.error = false;
-    $scope.systems.status = response.status;
-    $scope.systems.errorMessage = '';
+  $scope.isRoleDisabled = function(roleName) {
+    // Roles need to be disabled if it's enabled because it's nested
+    return $scope.selectedUser.roles[roleName] &&
+      $scope.selectedUser.nestedRoles[roleName];
+  };
 
-    $scope.systems.data = _.groupBy(response.data, function(value) {
-      return value.display_name || value.name;
+  $scope.roleChange = function(roleName) {
+    let changed = $scope.selectedUser;
+
+    // Since this is a result of a click, we need to update primary roles
+    changed.primaryRoles[roleName] = changed.roles[roleName];
+
+    // Then get the list of roles that are checked
+    let primaryRoleNames = mapToArray(changed.primaryRoles);
+
+    // Now we need the actual role definitions for those roles...
+    let primaryRoleList = _.filter($scope.raws.roles, (value, key, collection) => {
+      return _.indexOf(primaryRoleNames, value.name) !== -1;
     });
 
-    // Extra kick for the 'empty' directive
-    if (Object.keys($scope.systems.data).length === 0) {
-      $scope.systems.status = 404;
-    }
+    // ...so that we can calculate nested permissions...
+    let coalesced = RoleService.coalescePermissions(primaryRoleList);
+    let permissionNames = coalesced[1];
+
+    // Finally, convert that list back into the map angular wants
+    let permissionMap = arrayToMap(permissionNames, $scope.raws.permissions);
+    changed.permissions = permissionMap;
+
+
+    // Now deal with roles too
+    let allRoleNames = coalesced[0];
+    let nestedRoleNames = _.difference(allRoleNames, primaryRoleNames);
+
+    let roleMap = arrayToMap(allRoleNames, $scope.roleNames);
+    changed.roles = roleMap;
+
+    let nestedRoleMap = arrayToMap(nestedRoleNames, $scope.roleNames);
+    changed.nestedRoles = nestedRoleMap;
   };
 
-  $scope.failureCallback = function(response) {
-    $scope.systems.data = [];
-    $scope.systems.loaded = false;
-    $scope.systems.error = true;
-    $scope.systems.status = response.status;
-    $scope.systems.errorMessage = response.data.message;
+  /**
+   * handleUsersResponse - Parse and translate users response
+   * @param  {Object} response The response
+   */
+  function handleUsersResponse(response) {
+    $scope.raws.users = response.data;
+
+    let thaUsers = [];
+
+    for (let user of $scope.raws.users) {
+      let primaryRoleNames = _.map(user.roles, 'name');
+
+      let coalesced = RoleService.coalescePermissions(user.roles);
+
+      let allRoleNames = coalesced[0];
+
+      let nestedRoleNames = _.difference(allRoleNames, primaryRoleNames);
+      let allPermissionNames = coalesced[1];
+
+      let roleMap = arrayToMap(allRoleNames, $scope.roleNames);
+      let permissionMap = arrayToMap(allPermissionNames, $scope.raws.permissions);
+
+      let primaryRoleMap = arrayToMap(primaryRoleNames, $scope.roleNames);
+      let nestedRoleMap = arrayToMap(nestedRoleNames, $scope.roleNames);
+
+      thaUsers.push({
+        id: user.id,
+        username: user.username,
+
+        roles: roleMap,
+        permissions: permissionMap,
+
+        primaryRoles: primaryRoleMap,
+        nestedRoles: nestedRoleMap,
+      });
+    }
+
+    // This is super annoying, but I can't find a better way
+    // Save off the current selection ID so we can keep it selected
+    let selectedId = $scope.selectedUser['id'];
+    let selectedUser = undefined;
+
+    $scope.serverUsers = _.cloneDeep(thaUsers);
+    $scope.users = _.cloneDeep(thaUsers);
+
+    if (selectedId) {
+      selectedUser = _.find($scope.users, {'id': selectedId});
+    }
+    $scope.selectedUser = selectedUser || $scope.users[0];
+  }
+
+  /**
+   * loadUsers - load all users
+   */
+  function loadUsers() {
+    UserService.getUsers().then(handleUsersResponse);
+  }
+
+  /**
+   * loadAll - load everything this controller needs
+   */
+  function loadAll() {
+    $scope.alerts = [];
+
+    $q.all({
+      permissions: PermissionService.getPermissions(),
+      roles: RoleService.getRoles(),
+      users: UserService.getUsers(),
+    }).then(
+      (responses) => {
+        // Success callback is only invoked if all promises are resolved, so just
+        // pick one to let the fetch-data directive know about the success
+        $scope.response = responses.users;
+
+        $scope.raws = {
+          permissions: responses.permissions.data,
+          roles: responses.roles.data,
+          users: responses.users.data,
+        };
+
+        $scope.roleNames = _.map($scope.raws.roles, 'name');
+        $scope.permissions = _.groupBy($scope.raws.permissions, (value) => {
+          return value.split('-').slice(0, 2).join('-');
+        });
+
+        handleUsersResponse(responses.users);
+
+        $scope.loader.loaded = true;
+        $scope.loader.error = false;
+        $scope.loader.errorMessage = undefined;
+      },
+      (response) => {
+        $scope.response = response;
+      }
+    );
   };
 
-  let socketError = false;
-
-  /**
-   * websocketConnect - Open a websocket connection.
-   */
-  function websocketConnect() {
-    if (window.WebSocket && !socketError) {
-      let proto = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-      let eventUrl = proto + window.location.host + '/api/v1/socket/events';
-
-      let socketConnection = $websocket(eventUrl);
-      socketConnection.onMessage(handleWebsocketMessage);
-
-      // If the connection is broken attempt to reconnect.
-      // If this is caused by brew-view stopping the reconnect attempt will
-      // probably error. This isn't ideal, but we can't distinguish between a
-      // 'real' error and brew-view being down, so we live with this for now.
-      socketConnection.onClose(websocketConnect);
-      socketConnection.onError(function() {
-        socketError = true;
-      });
-
-      $scope.$on('destroy', function() {
-        if (angular.isDefined(socketConnection)) {
-          socketConnection.close();
-          socketConnection = undefined;
-        }
-      });
-    }
-  }
-
-  /**
-   * handleWebsocketMessage - Handle a message
-   * @param {string} message  The event message
-   */
-  function handleWebsocketMessage(message) {
-    let event = JSON.parse(message.data);
-
-    switch (event.name) {
-      case 'INSTANCE_INITIALIZED':
-        updateInstanceStatus(event.payload.id, 'RUNNING');
-        break;
-      case 'INSTANCE_STOPPED':
-        updateInstanceStatus(event.payload.id, 'STOPPED');
-        break;
-      case 'SYSTEM_REMOVED':
-        removeSystem(event.payload.id);
-        break;
-    }
-  }
-
-  /**
-   * updateInstanceStatus - Change the status of an instance
-   * @param {string} id  The instance ID
-   * @param {string} newStatus  The new status
-   */
-  function updateInstanceStatus(id, newStatus) {
-    if (newStatus === undefined) return;
-
-    for (let systemName in $scope.systems.data) {
-      if ({}.hasOwnProperty.call($scope.systems.data, systemName)) {
-        for (let system of $scope.systems.data[systemName]) {
-          for (let instance of system.instances) {
-            if (instance.id === id) {
-              instance.status = newStatus;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * removeSystem - Remove a system from the list of systems
-   * @param {string} id  The system ID
-   */
-  function removeSystem(id) {
-    for (let systemName in $scope.systems.data) {
-      if ({}.hasOwnProperty.call($scope.systems.data, systemName)) {
-        for (let system of $scope.systems.data[systemName]) {
-          if (system.id === id) {
-            _.pull($scope.systems.data[systemName], system);
-
-            if ($scope.systems.data[systemName].length === 0) {
-              delete $scope.systems.data[systemName];
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // Attempt to connect to the event websocket
-  websocketConnect();
-
-  // Register a function that polls for systems...
-  let systemsUpdate = $interval(function() {
-    SystemService.getSystems(true, 'id,name,display_name,version,instances')
-      .then($scope.successCallback, $scope.failureCallback);
-  }, 5000);
-  $scope.$on('$destroy', function() {
-    if (angular.isDefined(systemsUpdate)) {
-      $interval.cancel(systemsUpdate);
-      systemsUpdate = undefined;
-    }
+  $scope.$on('userChange', () => {
+    $scope.response = undefined;
+    loadAll();
   });
 
-  // ...but go immediately so we don't have to wait for first interval
-  SystemService.getSystems(true, 'id,name,display_name,version,instances')
-    .then($scope.successCallback, $scope.failureCallback);
+  loadAll();
+};
+
+newUserController.$inject = [
+  '$scope',
+  '$uibModalInstance',
+];
+
+/**
+ * newUserController - New User controller.
+ * @param  {$scope} $scope                        Angular's $scope object.
+ * @param  {$uibModalInstance} $uibModalInstance  Angular UI's $uibModalInstance object.
+ */
+export function newUserController($scope, $uibModalInstance) {
+  $scope.create = {};
+
+  $scope.ok = function() {
+    $uibModalInstance.close($scope.create);
+  };
+
+  $scope.cancel = function() {
+    $uibModalInstance.dismiss('cancel');
+  };
 };

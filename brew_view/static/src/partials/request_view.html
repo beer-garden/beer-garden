@@ -1,21 +1,25 @@
-<loading      loader="request"></loading>
-<server-error loader="request"></server-error>
-<empty        loader="request" label="request"></empty>
+<h1 class="page-header">
+  <span>Request View</span>
 
-<div ng-if="request.loaded && !request.error">
-  <h1 class="page-header">
-    <span>Viewing Request</span>
-    <small>{{request.data.id}}</small>
-    <span class="pull-right" ng-if="canRepeat(request.data)">
-      <button class="btn btn-success" type="button" ng-click="redoRequest(request.data)">Pour it Again</button>
-    </span>
-    <span class="pull-right" ng-if="!canRepeat(request.data) && instanceStatus != 'RUNNING'">
-        Error: Instance {{instanceStatus}}
-    </span>
-  </h1>
+  <span ng-if="responseState(response) === 'success'">
+    <small>{{data.id}}</small>
+    <button type="button"
+            ng-if="canRepeat(data)"
+            ng-click="redoRequest(data)"
+            class="btn btn-success pull-right">
+      Pour it Again
+    </button>
+    <small class="pull-right" ng-if="showInstanceStatus(data, instanceStatus)">
+      Error: Instance {{instanceStatus}}
+    </small>
+  </span>
+</h1>
 
-  <ol id="breadcrumbs" class="breadcrumb" ng-show="request_tree.length > 1">
-    <li ng-repeat="request in request_tree = getParentTree(request.data)" ng-class="{active: $last}"
+<fetch-data response="response"></fetch-data>
+
+<div ng-if="responseState(response) === 'success'">
+  <ol class="tagline breadcrumb" ng-show="request_tree.length > 1">
+    <li ng-repeat="request in request_tree = getParentTree(data)" ng-class="{active: $last}"
       ><span ng-if="!$last"><a ng-href="#!/requests/{{request.id}}">{{request.command}}</a></span
       ><span ng-if="$last">{{request.command}}</span>
     </li>
@@ -28,7 +32,7 @@
           <th>Command</th>
           <th>System</th>
           <th>System Version</th>
-          <th ng-if="showColumn('instance_name')">Instance Name</th>
+          <th>Instance Name</th>
           <th>Status</th>
           <th ng-if="showColumn('error_class')">Error Type</th>
           <th>Created</th>
@@ -39,23 +43,28 @@
       <tbody>
         <tr ng-click="toggleChildren()">
           <td>
-            <span id="chevron" class="fa fa-chevron-right" ng-if="hasChildren(request.data)"
+            <span id="chevron"
+                  ng-if="hasChildren(data)"
+                  class="fa fa-chevron-right"
                   ng-class="{'chevron-rotate': !childrenCollapsed}">
-            </span>{{request.data.command}}</td>
-          <td>{{request.data.metadata.system_display_name || request.data.system}}</td>
-          <td>{{request.data.system_version}}</td>
-          <td ng-if="showColumn('instance_name')">{{request.data.instance_name}}</td>
-          <td>{{request.data.status}}
-            <span uib-popover="{{statusDescriptions[request.data.status]}}"
-                popover-animation="true" popover-placement="right" popover-trigger="'mouseenter'"
-                popover-title="{{request.data.status}}" style="color: gray; padding-top: 5px">
+            </span>{{data.command}}</td>
+          <td>{{data.metadata.system_display_name || data.system}}</td>
+          <td>{{data.system_version}}</td>
+          <td>{{data.instance_name}}</td>
+          <td>{{data.status}}
+            <span uib-popover="{{statusDescriptions[data.status]}}"
+                  popover-animation="true"
+                  popover-placement="right"
+                  popover-trigger="'mouseenter'"
+                  popover-title="{{data.status}}"
+                  style="color: gray; padding-top: 5px">
               <span class="glyphicon glyphicon-info-sign"></span>
             </span>
           </td>
-          <td ng-if="showColumn('error_class')">{{request.data.error_class}}</td>
-          <td>{{formatDate(request.data.created_at)}}</td>
-          <td>{{formatDate(request.data.updated_at)}}</td>
-          <td>{{request.data.comment}}</td>
+          <td ng-if="showColumn('error_class')">{{data.error_class}}</td>
+          <td>{{formatDate(data.created_at)}}</td>
+          <td>{{formatDate(data.updated_at)}}</td>
+          <td>{{data.comment}}</td>
         </tr>
 
         <tr class="child-row slide" ng-repeat="child in children">
@@ -67,7 +76,7 @@
           </td>
           <td><div>{{child.metadata.system_display_name || child.system}}</div></td>
           <td><div>{{child.system_version}}</div></td>
-          <td ng-if="showColumn('instance_name')"><div>{{child.instance_name}}</div></td>
+          <td><div>{{child.instance_name}}</div></td>
           <td><div>{{child.status}}</div></td>
           <td ng-if="showColumn('error_class')"><div>{{child.error_class}}</div></td>
           <td><div>{{formatDate(child.created_at)}}</div></td>

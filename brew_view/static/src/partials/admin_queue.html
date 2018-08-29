@@ -1,20 +1,32 @@
 <h1 class='page-header'>
   <span>Queue Management</span>
-  <span class="pull-right" ng-if="queues.loaded && ! queues.error && queues.data.length > 0">
-    <button type="button" class="btn btn-danger" ng-click="clearAllQueues()"
-            confirm="Are you sure you want to delete all Queues?">Clear All Queues</button>
+  <span class="pull-right" ng-if="responseState(response) === 'success'">
+    <button type="button"
+            class="btn btn-danger"
+            ng-click="clearAllQueues()"
+            confirm="Are you sure you want to delete all Queues?">
+      Clear All Queues
+    </button>
   </span>
 </h1>
 
-<loading      loader="queues"></loading>
-<server-error loader="queues"></server-error>
-<empty        loader="queues" label="queues"></empty>
+<fetch-data response="response"></fetch-data>
 
 <div class="container-fluid">
-  <div ng-show="queues.loaded && !queues.error && queues.data.length">
-    <table datatable="" dt-options="dtOptions" dt-columns="dtColumns" dt-instance="instanceCreated" class="table table-striped table-bordered" style="width: 100%">
+  <div ng-show="responseState(response) === 'success'">
+    <table
+        datatable=""
+        dt-options="dtOptions"
+        dt-columns="dtColumns"
+        dt-instance="instanceCreated"
+        class="table table-striped table-bordered"
+        style="width: 100%">
     </table>
-    <div uib-alert ng-repeat="alert in alerts" ng-class="'alert-' + alert.type" close="closeAlert($index)" dismiss-on-timeout=5000>
+    <div uib-alert
+         ng-repeat="alert in alerts"
+         ng-class="'alert-' + alert.type"
+         close="closeAlert($index)"
+         dismiss-on-timeout=5000>
       {{alert.msg}}
     </div>
   </div>

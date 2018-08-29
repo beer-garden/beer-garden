@@ -318,13 +318,6 @@ SPECIFICATION = {
                     },
                 },
             },
-            "public_fqdn": {
-                "type": "str",
-                "default": "localhost",
-                "description": "Public fully-qualified domain name",
-                "previous_names": ["public_fqdn"],
-                "alt_env_names": ["PUBLIC_FQDN"],
-            },
         },
     },
 
@@ -396,6 +389,23 @@ SPECIFICATION = {
     'scheduler': {
         'type': 'dict',
         'items': {
+            'auth': {
+                'type': 'dict',
+                'items': {
+                    "username": {
+                        "type": "str",
+                        "description": "Username that scheduler will use for "
+                                       "authentication (needs bg-admin role)",
+                        "required": False,
+                    },
+                    "password": {
+                        "type": "str",
+                        "description": "Password that scheduler will use for "
+                                       "authentication (needs bg-admin role)",
+                        "required": False,
+                    },
+                },
+            },
             'max_workers': {
                 'type': 'int',
                 'default': 10,
@@ -492,6 +502,13 @@ SPECIFICATION = {
                 'type': 'str',
                 'default': '0.0.0.0',
                 'description': 'Host for the HTTP Server to bind to',
+            },
+            "public_fqdn": {
+                "type": "str",
+                "default": "localhost",
+                "description": "Public fully-qualified domain name",
+                "previous_names": ["public_fqdn"],
+                "alt_env_names": ["PUBLIC_FQDN"],
             },
         },
     },

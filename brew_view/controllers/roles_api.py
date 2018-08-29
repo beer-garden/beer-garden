@@ -2,9 +2,10 @@ import logging
 
 from mongoengine.errors import DoesNotExist
 
+import brew_view
 from bg_utils.models import Role
 from bg_utils.parser import BeerGardenSchemaParser
-from brew_view.authorization import Permissions
+from brew_view.authorization import anonymous_principal, authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 
@@ -13,6 +14,7 @@ class RoleAPI(BaseHandler):
 
     logger = logging.getLogger(__name__)
 
+    @authenticated(permissions=[Permissions.ROLE_READ])
     def get(self, role_id):
         """
         ---
@@ -40,6 +42,7 @@ class RoleAPI(BaseHandler):
             to_string=False
         ))
 
+    @authenticated(permissions=[Permissions.ROLE_DELETE])
     def delete(self, role_id):
         """
         ---
@@ -60,10 +63,15 @@ class RoleAPI(BaseHandler):
         tags:
           - Roles
         """
-        Role.objects.get(id=str(role_id)).delete()
+        role = Role.objects.get(id=str(role_id))
+        if role.name in ('bg-admin', 'bg-anonymous', 'bg-plugin'):
+            raise ModelValidationError("Unable to remove '%s' role" % role.name)
+
+        role.delete()
 
         self.set_status(204)
 
+    @authenticated(permissions=[Permissions.ROLE_UPDATE])
     def patch(self, role_id):
         """
         ---
@@ -129,11 +137,19 @@ class RoleAPI(BaseHandler):
             elif op.path == '/roles':
                 try:
                     if op.operation == 'add':
-                        role.roles.append(Role.objects.get(name=op.value).to_dbref())
+                        new_nested = Role.objects.get(name=op.value)
+                        ensure_no_cycles(role, new_nested)
+                        role.roles.append(new_nested)
                     elif op.operation == 'remove':
-                        role.roles.remove(Role.objects.get(name=op.value).to_dbref())
+                        role.roles.remove(Role.objects.get(name=op.value))
                     elif op.operation == 'set':
-                        role.roles = [Role.objects.get(name=name).to_dbref() for name in op.value]
+                        # Do this one at a time to be super sure about cycles
+                        role.roles = []
+
+                        for role_name in op.value:
+                            new_role = Role.objects.get(name=role_name)
+                            ensure_no_cycles(role, new_role)
+                            role.roles.append(new_role)
                     else:
                         raise ModelValidationError("Unsupported operation '%s'" % op.operation)
                 except DoesNotExist:
@@ -144,11 +160,15 @@ class RoleAPI(BaseHandler):
 
         role.save()
 
+        # Any modification to roles will possibly modify the anonymous user
+        brew_view.anonymous_principal = anonymous_principal()
+
         self.write(BeerGardenSchemaParser.serialize_role(role, to_string=False))
 
 
 class RolesAPI(BaseHandler):
 
+    @authenticated(permissions=[Permissions.ROLE_READ])
     def get(self):
         """
         ---
@@ -169,6 +189,7 @@ class RolesAPI(BaseHandler):
         self.write(BeerGardenSchemaParser.serialize_role(Role.objects.all(),
                                                          many=True, to_string=True))
 
+    @authenticated(permissions=[Permissions.ROLE_CREATE])
     def post(self):
         """
         ---
@@ -205,7 +226,13 @@ class RolesAPI(BaseHandler):
         nested_roles = []
         for nested_role in role.roles:
             try:
-                nested_roles.append(Role.objects.get(name=nested_role.name).to_dbref())
+                db_role = Role.objects.get(name=nested_role.name)
+
+                # There shouldn't be any way to construct a cycle with a new
+                # role, but check just to be sure
+                ensure_no_cycles(role, db_role)
+
+                nested_roles.append(db_role)
             except DoesNotExist:
                 raise ModelValidationError("Role '%s' does not exist" % nested_role.name)
         role.roles = nested_roles
@@ -214,3 +241,26 @@ class RolesAPI(BaseHandler):
 
         self.set_status(201)
         self.write(BeerGardenSchemaParser.serialize_role(role, to_string=False))
+
+
+def ensure_no_cycles(base_role, new_role):
+    """Make sure there are no nested role cycles
+
+    Do this by looking through new_roles's nested roles and making sure
+    base_role doesn't appear
+
+    Args:
+        base_role: The role that is being modified
+        new_role: The new nested role
+
+    Returns:
+        None
+
+    Raises:
+        ModelValidationError: A cycle was detected
+    """
+    for role in new_role.roles:
+        if role == base_role:
+            raise ModelValidationError('Cycle Detected!')
+
+        ensure_no_cycles(base_role, role)

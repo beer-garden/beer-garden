@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import {formatDate, formatJsonDisplay} from '../services/utility_service.js';
 
 requestViewController.$inject = [
   '$scope',
@@ -7,7 +8,6 @@ requestViewController.$inject = [
   '$timeout',
   '$animate',
   'RequestService',
-  'UtilityService',
   'SystemService',
 ];
 
@@ -19,22 +19,21 @@ requestViewController.$inject = [
  * @param  {$timeout} $timeout         Angular's $timeout object.
  * @param  {$animate} $animate         Angular's $animate object.
  * @param  {Object} RequestService     Beer-Garden Request Service.
- * @param  {Object} UtilityService     Beer-Garden's Utility Service.
  * @param  {Object} SystemService      Beer-Garden's System Service.
  */
 export default function requestViewController(
-  $scope,
-  $state,
-  $stateParams,
-  $timeout,
-  $animate,
-  RequestService,
-  UtilityService,
-  SystemService) {
-  $scope.request = {};
-  $scope.request.errorMap = RequestService.errorMap;
+    $scope,
+    $state,
+    $stateParams,
+    $timeout,
+    $animate,
+    RequestService,
+    SystemService) {
   $scope.service = RequestService;
-  $scope.timeoutRequest;
+
+  $scope.instanceStatus = undefined;
+  $scope.timeoutRequest = undefined;
+
   $scope.children = [];
   $scope.childrenCollapsed = true;
 
@@ -46,7 +45,6 @@ export default function requestViewController(
   $scope.formatErrorMsg = undefined;
   $scope.showFormatted = false;
 
-  $scope.instanceStatus = '';
   $scope.statusDescriptions = {
     'CREATED': 'The request has been validated by beer-garden and is on the ' +
                'queue awaiting processing.',
@@ -60,7 +58,7 @@ export default function requestViewController(
   };
 
   $scope.loadPreview = function(_editor) {
-    UtilityService.formatJsonDisplay(_editor, true);
+    formatJsonDisplay(_editor, true);
   };
 
   $scope.canRepeat = function(request) {
@@ -68,11 +66,12 @@ export default function requestViewController(
       return false;
     }
 
-    if (RequestService.completeStatuses.indexOf(request.status) != -1) {
-      return true;
-    }
+    return RequestService.isComplete(request);
+  };
 
-    return false;
+  $scope.showInstanceStatus = function(request, instanceStatus) {
+    return !$scope.canRepeat(request) && instanceStatus &&
+      instanceStatus != 'RUNNING';
   };
 
   $scope.formatOutput = function() {
@@ -82,14 +81,14 @@ export default function requestViewController(
     $scope.formatErrorTitle = undefined;
     $scope.formatErrorMsg = undefined;
 
-    let rawOutput = $scope.request.data.output;
+    let rawOutput = $scope.data.output;
 
     try {
       if (rawOutput === undefined || rawOutput == null) {
         rawOutput = 'null';
-      } else if ($scope.request.data.output_type == 'JSON') {
+      } else if ($scope.data.output_type == 'JSON') {
         try {
-          let parsedOutput = JSON.parse($scope.request.data.output);
+          let parsedOutput = JSON.parse($scope.data.output);
           rawOutput = $scope.stringify(parsedOutput);
 
           if ($scope.countNodes($scope.formattedOutput) < 1000) {
@@ -108,9 +107,9 @@ export default function requestViewController(
                                     'doesn\'t look like JSON. If this is happening often please ' +
                                     'let the plugin developer know.';
         }
-      } else if ($scope.request.data.output_type == 'STRING') {
+      } else if ($scope.data.output_type == 'STRING') {
         try {
-          rawOutput = $scope.stringify(JSON.parse($scope.request.data.output));
+          rawOutput = $scope.stringify(JSON.parse($scope.data.output));
         } catch (err) { }
       }
     } finally {
@@ -118,36 +117,39 @@ export default function requestViewController(
     }
   };
 
-  $scope.formatDate = UtilityService.formatDate;
+  $scope.formatDate = formatDate;
 
   $scope.successCallback = function(response) {
-    $scope.request.data = response.data;
-    $scope.request.loaded = true;
-    $scope.request.error = false;
-    $scope.request.status = response.status;
-    $scope.request.errorMessage = '';
+    $scope.response = response;
+    $scope.data = response.data;
+
+    $scope.setWindowTitle(
+      $scope.data.command,
+      ($scope.data.metadata.system_display_name || $scope.data.system),
+      $scope.data.system_version,
+      $scope.data.instance_name,
+      'request'
+    );
 
     $scope.formatOutput();
-    $scope.formattedParameters = $scope.stringify($scope.request.data.parameters);
+    $scope.formattedParameters = $scope.stringify($scope.data.parameters);
 
     // If request is not yet successful
     // We need to find system attached to request
     // And find out if the status of that instance is up
     if (!RequestService.isComplete(response.data)) {
-      // Get promise to get id of system associated with the response
-      SystemService.getSystemID(response.data).then(function(systemId) {
-        // Using the system ID we can then get the system and instances
-        SystemService.getSystem(systemId, false).then(function(systemObj) {
-          for (let i = 0; i < systemObj.data.instances.length; i++) {
-            if (systemObj.data.instances[i].name == response.data.instance_name) {
-              // It's possible the instance comes back up before we get here so we don't want
-              // to show it is running yet so in the html we need to put an ngif against
-              // instanceStatus == 'RUNNING'
-              $scope.instanceStatus = systemObj.data.instances[i].status;
+      $scope.findSystem(response.data.system, response.data.system_version).then(
+        (bareSystem) => {
+          SystemService.getSystem(bareSystem.id, false).then(
+            (systemObj) => {
+              $scope.instanceStatus = _.find(
+                systemObj.data.instances,
+                {name: response.data.instance_name}
+              ).status;
             }
-          }
-        });
-      });
+          );
+        }
+      );
     }
 
     // If the children view is expanded we have to do a little update
@@ -168,17 +170,17 @@ export default function requestViewController(
   };
 
   $scope.failureCallback = function(response) {
-    $scope.request.data = response.data;
-    $scope.request.loaded = false;
-    $scope.request.error = true;
-    $scope.request.status = response.status;
-    $scope.request.errorMessage = response.data.message;
+    $scope.response = response;
+    $scope.data = response.data;
+
     $scope.rawOutput = undefined;
     $scope.formattedOutput = undefined;
     $scope.formattedAvailable = false;
     $scope.showFormatted = false;
     $scope.formatErrorTitle = undefined;
     $scope.formatErrorMsg = undefined;
+
+    $scope.setWindowTitle();
   };
 
   $scope.redoRequest = function(request) {
@@ -228,18 +230,18 @@ export default function requestViewController(
     if ($scope.childrenCollapsed) {
       $scope.children = [];
     } else {
-      $scope.children = $scope.request.data.children;
+      $scope.children = $scope.data.children;
     }
   };
 
   $scope.showColumn = function(property) {
-    if ($scope.request.data[property] !== undefined && $scope.request.data[property] !== null) {
+    if ($scope.data[property] !== undefined && $scope.data[property] !== null) {
       return true;
     }
 
     let show = false;
-    if ($scope.hasChildren($scope.request.data)) {
-      $scope.request.data.children.forEach(function(child) {
+    if ($scope.hasChildren($scope.data)) {
+      $scope.data.children.forEach(function(child) {
         if (child[property] !== undefined && child[property] !== null) {
           show = true;
         }
@@ -274,8 +276,19 @@ export default function requestViewController(
     return total;
   };
 
-  RequestService.getRequest($stateParams.request_id)
-    .then($scope.successCallback, $scope.failureCallback);
+  function loadRequest() {
+    $scope.response = undefined;
+    $scope.data = {};
+
+    RequestService.getRequest($stateParams.request_id)
+      .then($scope.successCallback, $scope.failureCallback);
+  }
+
+  $scope.$on('userChange', function() {
+    loadRequest();
+  });
+
+  loadRequest();
 };
 
 

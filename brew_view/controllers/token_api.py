@@ -11,7 +11,6 @@ from tornado.web import HTTPError
 
 import brew_view
 from bg_utils.models import Principal, RefreshToken
-from bg_utils.parser import BeerGardenSchemaParser
 from brew_view.authorization import coalesce_permissions
 from brew_view.base_handler import BaseHandler
 
@@ -58,7 +57,7 @@ class TokenAPI(BaseHandler):
         except DoesNotExist:
             pass
 
-        raise HTTPError(status_code=401, log_message='Bad credentials')
+        raise HTTPError(status_code=403, log_message='Bad credentials')
 
     def delete(self, token_id):
         """
@@ -94,26 +93,6 @@ class TokenListAPI(BaseHandler):
 
         self.executor = ProcessPoolExecutor()
 
-    def get(self):
-        """
-        ---
-        summary: Retrieve all Tokens
-        responses:
-          200:
-            description: All Tokens
-            schema:
-              type: array
-              items:
-                $ref: '#/definitions/RefreshToken'
-          50x:
-            $ref: '#/definitions/50xError'
-        tags:
-          - Tokens
-        """
-        self.set_header('Content-Type', 'application/json; charset=UTF-8')
-        self.write(BeerGardenSchemaParser.serialize_refresh_token(
-            RefreshToken.objects.all(), to_string=True, many=True))
-
     @coroutine
     def post(self):
         """
@@ -136,9 +115,8 @@ class TokenListAPI(BaseHandler):
         try:
             principal = Principal.objects.get(username=parsed_body['username'])
 
-            verified = yield self.executor.submit(verify,
-                                                  str(parsed_body['password']),
-                                                  str(principal.hash))
+            verified = yield self.executor.submit(
+                verify, str(parsed_body['password']), str(principal.hash))
 
             if verified:
                 self.write(json.dumps(generate_tokens(principal)))
@@ -147,7 +125,7 @@ class TokenListAPI(BaseHandler):
             # Still attempt to verify something so the request takes a while
             custom_app_context.verify('', None)
 
-        raise HTTPError(status_code=401, log_message='Bad credentials')
+        raise HTTPError(status_code=403, log_message='Bad credentials')
 
 
 def generate_tokens(principal):

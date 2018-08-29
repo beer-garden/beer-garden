@@ -7,6 +7,10 @@ import 'objectpath';
 import 'tv4';
 import 'jquery';
 
+import moment from 'moment';
+import 'moment-timezone';
+moment.tz.setDefault('UTC');
+
 // Angular
 import angular from 'angular';
 import 'angular-animate';
@@ -58,14 +62,12 @@ import 'font-awesome/css/font-awesome.css';
 import './styles/custom.css';
 
 // Now load our actual application components
-import {appRun, dtLoadingTemplate} from './js/run.js';
+import appRun from './js/run.js';
 import routeConfig from './js/configs/routes.js';
 import {interceptorService, authInterceptorService, interceptorConfig}
   from './js/configs/http_interceptor.js';
 
-import emptyDirective from './js/directives/empty.js';
-import loadingDirective from './js/directives/loading.js';
-import serverErrorDirective from './js/directives/server_error.js';
+import fetchDataDirective from './js/directives/fetch_data.js';
 import bgStatusDirective from './js/directives/system_status.js';
 import './js/directives/dataTables.lcf.datetimepicker.fr.js';
 
@@ -77,15 +79,17 @@ import requestService from './js/services/request_service.js';
 import systemService from './js/services/system_service.js';
 import userService from './js/services/user_service.js';
 import roleService from './js/services/role_service.js';
+import permissionService from './js/services/permission_service.js';
+import tokenService from './js/services/token_service.js';
 import utilityService from './js/services/utility_service.js';
-import versionService from './js/services/version_service.js';
 import jobService from './js/services/job_service.js';
+import errorService from './js/services/error_service.js';
 
 import aboutController from './js/controllers/about.js';
-import loginController from './js/controllers/login.js';
 import adminQueueController from './js/controllers/admin_queue.js';
 import adminSystemController from './js/controllers/admin_system.js';
-import userAdminController from './js/controllers/admin_user.js';
+import {adminUserController, newUserController} from './js/controllers/admin_user.js';
+import {adminRoleController, newRoleController} from './js/controllers/admin_role.js';
 import applicationController from './js/controllers/application.js';
 import commandIndexController from './js/controllers/command_index.js';
 import commandViewController from './js/controllers/command_view.js';
@@ -96,13 +100,14 @@ import systemViewController from './js/controllers/system_view.js';
 import jobIndexController from './js/controllers/job_index.js';
 import jobViewController from './js/controllers/job_view.js';
 import jobCreateController from './js/controllers/job_create.js';
+import loginController from './js/controllers/login.js';
 
 // Partials
 import './partials/about.html';
-import './partials/login.html';
 import './partials/admin_queue.html';
 import './partials/admin_system.html';
 import './partials/admin_user.html';
+import './partials/admin_role.html';
 import './partials/command_index.html';
 import './partials/command_view.html';
 import './partials/landing.html';
@@ -138,7 +143,6 @@ angular.module('bgApp',
   'beer-garden.builder',
 ])
 .run(appRun)
-.run(dtLoadingTemplate)
 .config(routeConfig)
 .config(interceptorConfig)
 .config(['localStorageServiceProvider', function(localStorageServiceProvider) {
@@ -148,9 +152,7 @@ angular.module('bgApp',
 .service('authInterceptorService', authInterceptorService)
 .animation('.slide', slideAnimation)
 
-.directive('empty', emptyDirective)
-.directive('loading', loadingDirective)
-.directive('serverError', serverErrorDirective)
+.directive('fetchData', fetchDataDirective)
 .directive('bgStatus', bgStatusDirective)
 
 .factory('AdminService', adminService)
@@ -161,15 +163,19 @@ angular.module('bgApp',
 .factory('SystemService', systemService)
 .factory('UserService', userService)
 .factory('RoleService', roleService)
+.factory('PermissionService', permissionService)
+.factory('TokenService', tokenService)
 .factory('UtilityService', utilityService)
-.factory('VersionService', versionService)
 .factory('JobService', jobService)
+.factory('ErrorService', errorService)
 
 .controller('AboutController', aboutController)
-.controller('LoginController', loginController)
-.controller('QueueIndexController', adminQueueController)
-.controller('SystemAdminController', adminSystemController)
-.controller('UserAdminController', userAdminController)
+.controller('AdminQueueController', adminQueueController)
+.controller('AdminSystemController', adminSystemController)
+.controller('AdminUserController', adminUserController)
+.controller('NewUserController', newUserController)
+.controller('AdminRoleController', adminRoleController)
+.controller('NewRoleController', newRoleController)
 .controller('ApplicationController', applicationController)
 .controller('CommandIndexController', commandIndexController)
 .controller('CommandViewController', commandViewController)
@@ -179,4 +185,5 @@ angular.module('bgApp',
 .controller('SystemViewController', systemViewController)
 .controller('JobIndexController', jobIndexController)
 .controller('JobViewController', jobViewController)
-.controller('JobCreateController', jobCreateController);
+.controller('JobCreateController', jobCreateController)
+.controller('LoginController', loginController);

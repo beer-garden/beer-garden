@@ -23,61 +23,64 @@
         </div>
       </div>
     </div>
-    <div class="col-md-4" ng-if="!version.error">
-      <loading loader="version"></loading>
-      <div class="panel panel-default animate-if" ng-if="version.loaded">
-        <div class="panel-heading">Version Information</div>
-        <div class="panel-body">
-          <p>{{config.applicationName}} is made up of multiple components. Their versions are listed below</p>
+    <div class="col-md-8">
+      <fetch-data response="response" hide="empty"></fetch-data>
+
+      <div class="animate-if" ng-if="responseState(response) === 'success'">
+        <div class="col-md-6">
+          <div class="panel panel-default">
+            <div class="panel-heading">Version Information</div>
+            <div class="panel-body">
+              <p>
+                {{config.applicationName}} is made up of multiple components.
+                Their versions are listed below.
+              </p>
+            </div>
+            <table class="table table-hover">
+              <tr>
+                <th>Component Name</th>
+                <th>Version</th>
+              </tr>
+              <tr>
+                <td>Bartender</td>
+                <td>{{ data.bartender_version }}</td>
+              </tr>
+              <tr>
+                <td>Brew View</td>
+                <td>{{ data.brew_view_version }}</td>
+              </tr>
+              <tr>
+                <td>Current API</td>
+                <td>{{ data.current_api_version }}</td>
+              </tr>
+              <tr>
+                <td>Supported API Versions</td>
+                <td>{{ data.supported_api_versions.join(', ') }}</td>
+              </tr>
+            </table>
+          </div>
         </div>
-        <table class="table table-hover">
-          <tr>
-            <th>Component Name</th>
-            <th>Version</th>
-          </tr>
-          <tr>
-            <td>Bartender</td>
-            <td>{{ version.data.bartender_version }}</td>
-          </tr>
-          <tr>
-            <td>Brew View</td>
-            <td>{{ version.data.brew_view_version }}</td>
-          </tr>
-          <tr>
-            <td>Current API</td>
-            <td>{{ version.data.current_api_version }}</td>
-          </tr>
-          <tr>
-            <td>Supported API Versions</td>
-            <td>{{ version.data.supported_api_versions.join(', ') }}</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-    <div class="col-md-4" ng-if="!version.error">
-      <loading loader="version"></loading>
-      <div class="panel panel-default animate-if" ng-if="version.loaded">
-        <div class="panel-heading">Component Version</div>
-        <div class="panel-body">
-          <p>Listed below is the current status of the components</p>
+        <div class="col-md-6">
+          <div class="panel panel-default">
+            <div class="panel-heading">Component Version</div>
+            <div class="panel-body">
+              <p>Listed below is the current status of the components</p>
+            </div>
+            <table class="table table-hover">
+              <tr>
+                <td>Brew View</td>
+                <td><span class="label label-success">RUNNING</span></td>
+              </tr>
+              <tr>
+                <td>Bartender</td>
+                <td>
+                  <span class="label label-success">RUNNING</span>
+                </td>
+              </tr>
+            </table>
+          </div>
         </div>
-        <table class="table table-hover">
-          <tr>
-            <td>Brew View</td>
-            <td><span class="label label-success">RUNNING</span></td>
-          </tr>
-          <tr>
-            <td>Bartender</td>
-            <td>
-              <span class="label label-success" ng-if="version.data.bartender_version != 'unknown'">RUNNING</span>
-              <span class="label label-danger" ng-if="version.data.bartender_version == 'unknown'">DOWN</span>
-            </td>
-          </tr>
-        </table>
       </div>
-    </div>
-    <div class="col-md-8" ng-if="version.error">
-      <server-error loader="version"></server-error>
     </div>
   </div>
 </div>

@@ -1,7 +1,8 @@
 {
     "extends": "google",
     "rules": {
-      "max-len": [2, 100, 4]
+      "max-len": [2, 100, 4],
+      "require-jsdoc": "off"
     },
     "env": {
       "mocha": true,

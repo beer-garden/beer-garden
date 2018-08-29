@@ -1,18 +1,27 @@
 <h1 class='page-header'>
   <span>Systems Management</span>
-  <span class="pull-right" ng-show="systems.loaded || systems.error">
-    <button type="button" class="btn btn-primary"
+  <span class="pull-right" ng-show="responseState(response) !== 'loading'">
+    <button type="button"
+            class="btn btn-primary"
+            ng-show="hasPermission(user, 'bg-system-create')"
             ng-click="rescan()">Rescan System Directory</button>
   </span>
 </h1>
 
-<loading      loader="systems"></loading>
-<server-error loader="systems"></server-error>
-<empty        loader="systems" label="systems"></empty>
+<fetch-data response="response"></fetch-data>
 
-<div id="systems-container" class="animate-if" ng-if="systems.loaded && !systems.error">
+<div uib-alert
+     ng-repeat="alert in alerts"
+     ng-class="'alert-' + alert.type"
+     close="closeAlert($index)">
+  {{alert.msg}}
+</div>
 
-  <div ng-repeat="(systemName, value) in systems.data"
+<div id="systems-container"
+     class="animate-if"
+     ng-if="responseState(response) === 'success'">
+
+  <div ng-repeat="(systemName, value) in data"
        class="container-item panel panel-default"
        style="display: block;">
     <div class="panel-heading" style="font-size: 22px;">
@@ -25,20 +34,25 @@
           <div class="list-group-item clearfix" style="font-size: 18px;">
             <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
               <a ui-sref="system({name: system.name, version: getVersionForUrl(system)})">
-                <span class="icon-color" ng-class="util.getIcon(system.icon_name)"></span>
+                <span class="icon-color"
+                      ng-class="util.getIcon(system.icon_name)"></span>
                 <span style="font-size: 18px;">{{system.version}}</span>
               </a>
             </div>
             <div class="btn-toolbar pull-right">
               <div class="btn-group btn-group-sm">
                 <button type="button" class="btn btn-default fa fa-play"
+                        ng-show="hasPermission(user, 'bg-instance-update')"
                         ng-click="startSystem(system)"></button>
                 <button type="button" class="btn btn-default fa fa-stop"
+                        ng-show="hasPermission(user, 'bg-instance-update')"
                         ng-click="stopSystem(system)"></button>
                 <button type="button" class="btn btn-default fa fa-refresh"
+                        ng-show="hasPermission(user, 'bg-system-update')"
                         ng-click="reloadSystem(system)"></button>
               </div>
-              <div class="btn-group btn-group-sm pull-right">
+              <div class="btn-group btn-group-sm pull-right"
+                   ng-show="hasPermission(user, 'bg-system-delete')">
                 <button type="button" class="btn btn-default fa fa-trash-o"
                         ng-click="deleteSystem(system)"
                         confirm="Are you sure you want to delete a system with running instances?"
@@ -50,7 +64,8 @@
           <div ng-repeat="instance in system.instances" class="list-group-item">
             <bg-status target='instance.status'></bg-status>
             <span style="padding: 0 10px">{{instance.name}}</span>
-            <span class="btn-toolbar pull-right">
+            <span class="btn-toolbar pull-right"
+                  ng-show="hasPermission(user, 'bg-instance-update')">
               <span class="btn-group btn-group-xs">
                 <button type="button" class="btn btn-default fa fa-play"
                         ng-click="startInstance(instance)"></button>
@@ -64,7 +79,7 @@
     </div>
   </div>
 
-  <!-- This is ugly but it creates empty panels that ensure the bottom row panels are aligned left -->
+  <!-- This is ugly but empty panels ensure the bottom row is left-aligned -->
   <div class="container-item empty"></div>
   <div class="container-item empty"></div>
 

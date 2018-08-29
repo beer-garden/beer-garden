@@ -23,7 +23,7 @@ application:
   icon_default: fa-beer
   name: Beer Garden
 auth:
-  enabled: False
+  enabled: false
   token:
     algorithm: HS256
     lifetime: 1200
@@ -51,7 +51,6 @@ event:
     virtual_host: /
   mongo:
     enable: true
-  public_fqdn: localhost
 log:
   config_file: dev_conf/logging-config.json
   file: null
@@ -63,6 +62,9 @@ plugin_logging:
   config_file: null
   level: INFO
 scheduler:
+  auth:
+    username: null
+    password: null
   max_workers: 10
   job_defaults:
     coalesce: True
@@ -71,6 +73,7 @@ shutdown_timeout: 5
 web:
   host: 0.0.0.0
   port: 2337
+  public_fqdn: localhost
   ssl:
     ca_cert: null
     ca_path: null

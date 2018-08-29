@@ -1,45 +1,42 @@
-<loading      loader="command"></loading>
-<server-error loader="command"></server-error>
-<empty        loader="command" label="command"></empty>
 
-<div ng-show="command.loaded && !command.error && template">
+<div ng-show="(responseState(response) === 'success') && template">
   <div ng-bind-html="template"></div>
 </div>
 
-<div ng-show="command.loaded && !command.error && system && !template && !manualOverride">
-  <h1 class='page-header'>
-    <span>System "{{system.display_name || system.name}}" Command "{{command.data.name}}"</span>
-    <bg-status class="pull-right" target='system.status'></bg-status>
+<div ng-show="!template">
+  <h1 class="page-header" ng-show="responseState(response) !== 'success'">
+    Make Request
   </h1>
-  <div ng-show=command.data.description style="margin:-15px 3px 20px">
-    {{command.data.description}}
-  </div>
-
-  <div class="container-fluid">
-    <div class="row" ng-if="createError">
-      <div class="col-md-offset-1 col-md-10">
-        <div class="panel panel-danger">
-          <div class="panel-heading">
-            <h2>
-              <span class="fa fa-bug"/>
-              <strong>Uh Oh!</strong>
-              <span>An error occurred while trying to create this request.</span>
-            </h2>
-          </div>
-          <div class="panel-body">
-            <p>
-              We try hard not to allow server errors to occur, but sometimes things fall through the cracks.
-              Below is what the server had to say about this error.
-            </p>
-            <dl class="dl-horizontal">
-              <dt>Server Message</dt>
-              <dd>{{createErrorMessage}}</dd>
-            </dl>
-          </div>
-        </div>
+  <div ng-show="(responseState(response) === 'success')">
+    <div ng-show="!manualOverride">
+      <h1 class="page-header" ng-show="!manualOverride">
+        <span>{{command.name}}<span>
+        <small>{{system.display_name || system.name}}</small>
+        <small>v{{system.version}}</small>
+        <bg-status class="pull-right" target='system.status'></bg-status>
+      </h1>
+      <div class="tagline" ng-show="command.description">
+        {{command.description}}
       </div>
     </div>
 
+    <div class="page-header" ng-show="manualOverride">
+      <h1>Manual Request Creation</h1>
+      <h4>
+        This page allows the user to manually create a request.
+        Just edit the preview below and "Make Request".
+      </h4>
+    </div>
+  </div>
+</div>
+
+<fetch-data response="response"></fetch-data>
+
+<div ng-show="(responseState(response) === 'success') && !template">
+
+  <fetch-data response="createResponse" hide="loading,empty" closeable="true"></fetch-data>
+
+  <div class="container-fluid" ng-show="!manualOverride">
     <div class="row">
       <div class="col-md-8">
         <form name="ngform" sf-schema="schema" sf-form="form" sf-model="model" ng-submit="submitForm(ngform, model)"/>
@@ -93,59 +90,25 @@
         }" ng-model="jsonValues.form" ng-model-options="{ debounce: 1000 }" style="width: 100%; height: 500px;"></div>
       </div>
     </div>
-
-  </div>
-</div>
-
-
-<div ng-show="command.loaded && !command.error && system && !template && manualOverride">
-  <div class="page-header">
-    <h1>Manual Request Creation</h1>
-    <h4>This page allows the user to manually create a request. Just edit the preview below and "Make Request".</h4>
   </div>
 
-  <div class="container-fluid">
-
-    <div uib-alert class="alert alert-info alert-dismissable">
-      <a class="close" data-dismiss="alert">&times;</a>
-      We do not suggest overriding schema-form for inexperienced users
-    </div>
-
-    <div class="row" ng-if="createError">
-      <div class="col-md-offset-1 col-md-10">
-        <div class="panel panel-danger">
-          <div class="panel-heading">
-            <h2>
-              <span class="fa fa-bug"/>
-              <strong>Uh Oh!</strong>
-              <span>An error occurred while trying to create this request.</span>
-            </h2>
-          </div>
-          <div class="panel-body">
-            <p>
-              We try hard not to allow server errors to occur, but sometimes things fall through the cracks.
-              Below is what the server had to say about this error.
-            </p>
-            <dl class="dl-horizontal">
-              <dt>Server Message</dt>
-              <dd>{{createErrorMessage}}</dd>
-            </dl>
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="container-fluid" ng-show="manualOverride">
 
     <div ui-ace="{ onLoad: loadEditor }" ng-model="manualModel"></div>
 
     <br />
 
+    <div uib-alert class="alert alert-info alert-dismissable">
+      <a class="close" data-dismiss="alert">&times;</a>
+      <span>We do not suggest overriding schema-form for inexperienced users</span>
+    </div>
+
     <button type="button" class="btn btn-warning" ng-click="toggleManualOverride()">Go back</button>
     <button type="button" class="btn btn-primary" ng-click="createRequest(manualModel)">Make Request</button>
-
-    <br />
 
     <div uib-alert ng-repeat="alert in alerts" class="alert-danger" close="closeAlert($index)">
       <strong>Uh-oh!</strong>
       <span ng-bind=alert></span>
     </div>
+  </div>
 </div>

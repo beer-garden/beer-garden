@@ -1,49 +1,54 @@
-import jwtDecode from 'jwt-decode';
+import _ from 'lodash';
+import angular from 'angular';
 
-LoginController.$inject = ['$scope', '$rootScope', '$http', '$state',
-  'localStorageService', 'UserService'];
+loginController.$inject = [
+  '$scope',
+  '$timeout',
+  '$uibModalInstance',
+  'TokenService',
+];
 
 /**
- * LoginController - Angular controller for the login page.
- * @param  {$scope} $scope                 Angular's $scope object.
- * @param  {$rootScope} $rootScope         Angular's $rootScope object.
- * @param  {$http} $http                   Angular's $http object.
- * @param  {$state} $state                 Angular's $state object.
- * @param  {localStorageService} localStorageService Storage service
- * @param  {UserService} UserService       Service for User information.
+ * loginController - Login controller
+ * @param  {Object} $scope                        Angular's $scope object.
+ * @param  {Object} $timeout                        Angular's $timeout object.
+ * @param  {Object} $uibModalInstance  Angular UI's $uibModalInstance object.
+ * @param  {Object} TokenService  TokenService object.
  */
-export default function LoginController($scope, $rootScope, $http, $state,
-    localStorageService, UserService) {
-  $scope.doLogin = function(model) {
-    $http.post('/api/v1/tokens', {
-      username: model.username,
-      password: model.password,
-    })
-    .then(function(response) {
-      let token = response.data.token;
+export default function loginController(
+  $scope,
+  $timeout,
+  $uibModalInstance,
+  TokenService
+) {
+  $scope.model = {};
 
-      // Save the token to session storage in case we need it later
-      localStorageService.set('token', token);
-      localStorageService.set('refresh', response.data.refresh);
+  $scope.doLogin = function() {
+    $scope.badUsername = false;
+    $scope.badPassword = false;
 
-      // Use the token for all subsequent requests
-      $http.defaults.headers.common.Authorization = 'Bearer ' + token;
-
-      // Now grab the user id and roles from the token
-      let decoded = jwtDecode(token);
-      let userId = decoded.sub;
-
-      // Finally, grab the user definition from the API
-      $http.get('api/v1/users/' + userId).then(function(response) {
-        $rootScope.user = response.data;
-        $rootScope.changeTheme($rootScope.user.preferences.theme || 'default');
-      });
-
-      $state.go('landing');
-    });
+    TokenService.doLogin($scope.model.username, $scope.model.password).then(
+      (response) => {
+        $uibModalInstance.close();
+      },
+      () => {
+        if (_.isUndefined($scope.model.username)) {
+          $scope.badUsername = true;
+          angular.element('input[type="text"]').focus();
+        } else {
+          $scope.badPassword = true;
+          $scope.model.password = undefined;
+          angular.element('input[type="password"]').focus();
+        }
+      }
+    );
   };
 
-  $scope.doCreate = function(user) {
-    UserService.createUser(user.username, user.password);
+  $scope.cancel = function() {
+    $uibModalInstance.dismiss();
   };
+
+  $timeout(() => {
+    angular.element('input[type="text"]').focus();
+  });
 };
