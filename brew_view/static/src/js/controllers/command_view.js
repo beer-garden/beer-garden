@@ -160,6 +160,7 @@ export default function commandViewController(
   };
 
   $scope.reset = function(form, model, system, command) {
+    $scope.createResponse = undefined;
     $scope.alerts.splice(0);
     $scope.model = {};
 

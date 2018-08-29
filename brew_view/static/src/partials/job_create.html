@@ -94,6 +94,9 @@
 
 <!-- Job Form -->
 <div ng-show="requestTemplate != null && responseState(response) === 'success'">
+
+  <fetch-data response="createResponse" hide="loading,empty" closeable="true"></fetch-data>
+
   <div class="container-fluid">
     <div class="row">
       <div class="col-md-8">

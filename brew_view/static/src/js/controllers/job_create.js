@@ -85,6 +85,7 @@ export default function jobCreateController(
   };
 
   $scope.resetJob = function(form, model, system, command) {
+    $scope.createResponse = undefined;
     $scope.jobAlerts.splice(0);
     $scope.jobModel = {};
 
@@ -186,8 +187,7 @@ export default function jobCreateController(
           $location.path('/jobs/' + response.data.id);
         },
         function(response) {
-          $scope.createError = true;
-          $scope.createErrorMessage = response.data.message;
+          $scope.createResponse = response;
         }
       );
     } else {
@@ -268,6 +268,7 @@ export default function jobCreateController(
 
   const doLoad = function(stateParams) {
     $scope.response = undefined;
+    $scope.createResponse = undefined;
     $scope.data = [];
 
     if (stateParams.request) {
