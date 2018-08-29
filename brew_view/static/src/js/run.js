@@ -180,7 +180,7 @@ export default function appRun(
         () => {
           $rootScope.changeUser(TokenService.getToken());
         },
-        _.noop  // Prevents annoying console log messages
+        _.noop // Prevents annoying console log messages
       );
       loginModal.closed.then(
         () => {
