@@ -12,7 +12,11 @@
 <!-- Empty -->
 <div class="col-md-12" ng-if="responseState(response) === 'empty'">
   <div class="panel panel-warning">
-    <div class="panel-heading">
+    <div class="panel-heading" style="position: relative;">
+      <a id="alertClose"
+         class="fa fa-times close"
+         ng-show="closeable"
+         ng-click="close()"></a>
       <h2>
         <i class="fa fa-search"></i>
         <strong>Hmmm...</strong>
@@ -49,7 +53,11 @@
 <!-- Error -->
 <div class="col-md-12" ng-if="responseState(response) === 'error'">
   <div class="panel panel-danger">
-    <div class="panel-heading">
+    <div class="panel-heading" style="position: relative;">
+      <a id="alertClose"
+         class="fa fa-times close"
+         ng-show="closeable"
+         ng-click="close()"></a>
       <h2>
         <i class="fa fa-bug"></i>
         <strong>Oh Snap!</strong>

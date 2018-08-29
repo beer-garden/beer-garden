@@ -34,7 +34,7 @@
 
 <div ng-show="(responseState(response) === 'success') && !template">
 
-  <fetch-data response="createResponse" hide="loading,empty"></fetch-data>
+  <fetch-data response="createResponse" hide="loading,empty" closeable="true"></fetch-data>
 
   <div class="container-fluid" ng-show="!manualOverride">
     <div class="row">

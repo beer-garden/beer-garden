@@ -8,9 +8,10 @@ export default function fetchDataDirective($timeout, ErrorService) {
   return {
     restrict: 'E',
     scope: {
+      closeable: '@?',
       delay: '@?',
       hide: '@?',
-      response: '<',
+      response: '=',
     },
     template: template,
     link: function(scope, element, attrs) {
@@ -22,6 +23,10 @@ export default function fetchDataDirective($timeout, ErrorService) {
           return 'success';
         }
         return realState;
+      };
+
+      scope.close = function() {
+        scope.response.status = 200;
       };
 
       scope.getErrors = function(response) {

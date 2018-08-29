@@ -227,11 +227,11 @@ table.dataTable{
     margin: -2px;
 }
 
-#login{
-    background: #EEEEEE;
-    border-radius: 4px;
+#alertClose{
     padding: 10px;
     position: absolute;
+    top: 0px;
+    right: 0px;
 }
 
 #loading i{
