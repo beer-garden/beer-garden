@@ -121,6 +121,7 @@ create_rpm() {
     # --after-remove path       Sets after-remove script to be run when uninstalling the RPM
     # --description String      Descrpition metadata on RPM
     # --license                 The license name
+    # --url                     Project site url
     # -d "$DEPS"                Specify any necessary package dependencies
     mkdir -p $SRC_PATH/dist
     VERSION=$(cat $SRC_PATH/resources/version)
@@ -144,6 +145,7 @@ create_rpm() {
         --after-remove $SRC_SCRIPT_PATH/$AFTER_REMOVE
         --description "The beer-garden application"
         --license "MIT"
+        --url "https://beer-garden.io"
     )
 
     if [[ "$RELEASE" == "7" ]]; then
