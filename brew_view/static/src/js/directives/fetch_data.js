@@ -17,7 +17,8 @@ export default function fetchDataDirective($timeout, ErrorService) {
       // Do a little translation of the real state
       scope.responseState = function(response) {
         let realState = responseState(response);
-        if (scope.hide === 'empty' && realState === 'empty') {
+        if ((_.includes(scope.hide, 'loading') && realState === 'loading') ||
+            (_.includes(scope.hide, 'empty') && realState === 'empty')) {
           return 'success';
         }
         return realState;

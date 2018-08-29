@@ -47,7 +47,6 @@ export default function commandViewController(
   $scope.schema = {};
   $scope.form = [];
   $scope.model = $stateParams.request || {};
-  $scope.createError = false;
   $scope.alerts = [];
   $scope.baseModel = {};
   $scope.system = {};
@@ -155,15 +154,13 @@ export default function commandViewController(
         $location.path('/requests/' + response.data.id);
       },
       function(response) {
-        $scope.createError = true;
-        $scope.createErrorMessage = response.data.message;
+        $scope.createResponse = response;
       }
     );
   };
 
   $scope.reset = function(form, model, system, command) {
     $scope.alerts.splice(0);
-    $scope.createError = false;
     $scope.model = {};
 
     generateSF();
@@ -184,6 +181,7 @@ export default function commandViewController(
 
   $scope.toggleManualOverride = function() {
     $scope.alerts.splice(0);
+    $scope.createResponse = undefined;
     $scope.manualOverride = !$scope.manualOverride;
     $scope.manualModel = $scope.jsonValues.model;
   };
@@ -330,6 +328,7 @@ export default function commandViewController(
   const loadData = function(stateParams) {
     tempResponse = undefined;
     $scope.response = undefined;
+    $scope.createResponse = undefined;
     $scope.command = [];
 
     $rootScope.systemsPromise.then(
