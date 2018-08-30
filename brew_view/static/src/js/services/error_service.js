@@ -28,6 +28,15 @@ export default function errorService() {
           resolution:
             'Contact your administrator and request to be given permission.',
         },
+          {
+            problem: 'Signature verification failed',
+            description:
+              'The signature of the token used in the request couldn\'t be ' +
+              'validated by the server.',
+            resolution:
+              'Log out (if currently logged in) and log in again to generate ' +
+              'a new token.',
+          },
       ],
     },
     404: {

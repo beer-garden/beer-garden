@@ -2,7 +2,7 @@ import re
 import socket
 
 import time
-from jwt.exceptions import ExpiredSignatureError
+from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
 from mongoengine.errors import (DoesNotExist, NotUniqueError,
                                 ValidationError as MongoValidationError)
 from prometheus_client import Gauge, Counter, Summary
@@ -75,6 +75,7 @@ class BaseHandler(AuthMixin, RequestHandler):
             ExpiredSignatureError: {'status_code': 401},
             AuthorizationRequired: {'status_code': 401},
             RequestForbidden: {'status_code': 403},
+            InvalidSignatureError: {'status_code': 403},
             DoesNotExist: {'status_code': 404, 'message': 'Resource does not exist'},
             WaitExceededError: {'status_code': 408, 'message': 'Max wait time exceeded'},
             NotUniqueError: {'status_code': 409, 'message': 'Resource already exists'},
