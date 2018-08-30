@@ -17,7 +17,7 @@ from urllib3.util.url import Url
 import bg_utils
 import brew_view._version
 import brew_view.authorization
-import brewtils.rest
+from brewtils.rest import normalize_url_prefix
 from bg_utils.event_publisher import EventPublishers
 from bg_utils.pika import TransientPikaClient
 from bg_utils.plugin_logging_loader import PluginLoggingLoader
@@ -57,7 +57,6 @@ def setup_brew_view(spec, cli_args):
     global config, logger, app_log_config, event_publishers, notification_meta
 
     config = bg_utils.load_application_config(spec, cli_args)
-    config.web.url_prefix = brewtils.rest.normalize_url_prefix(config.web.url_prefix)
 
     log_default = get_default_logging_config(config.log.level, config.log.file)
     app_log_config = bg_utils.setup_application_logging(config, log_default)
@@ -87,6 +86,17 @@ def load_plugin_logging_config(input_config):
 def _setup_application():
     global application, tornado_app, public_url, thrift_context, easy_client
     global server, event_publishers, request_scheduler, anonymous_principal
+
+    # Tweak some config options
+    config.web.url_prefix = normalize_url_prefix(config.web.url_prefix)
+    if not config.auth.token.secret:
+        config.auth.token.secret = os.urandom(20)
+        if config.auth.enabled:
+            logger.warning(
+                "Brew-view was started with authentication enabled and no "
+                "Secret. Generated tokens will not be valid across Brew-view "
+                "restarts. To prevent this set the auth.token.secret config."
+            )
 
     public_url = Url(scheme='https' if config.web.ssl.enabled else 'http',
                      host=config.web.public_fqdn,
