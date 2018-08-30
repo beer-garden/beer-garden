@@ -192,6 +192,7 @@ SPECIFICATION = {
                         "type": "str",
                         "required": False,
                         "description": "Secret to use when signing tokens",
+                        "default": "",
                     },
                 },
             },
