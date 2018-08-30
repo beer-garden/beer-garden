@@ -88,6 +88,11 @@ def _setup_application():
     global application, tornado_app, public_url, thrift_context, easy_client
     global server, event_publishers, request_scheduler, anonymous_principal
 
+    if config.auth.enabled and not config.auth.token.secret:
+        raise Exception("Unable to start Brew-view with authentication enabled "
+                        "and no secret. Please check the configuration "
+                        "(specifically auth.enabled and auth.token.secret).")
+
     public_url = Url(scheme='https' if config.web.ssl.enabled else 'http',
                      host=config.web.public_fqdn,
                      port=config.web.port,
