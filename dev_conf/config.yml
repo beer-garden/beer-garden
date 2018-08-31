@@ -67,7 +67,7 @@ scheduler:
     password: null
   max_workers: 10
   job_defaults:
-    coalesce: True
+    coalesce: true
     max_instances: 3
 shutdown_timeout: 5
 web:
