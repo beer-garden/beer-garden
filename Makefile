@@ -62,7 +62,6 @@ clean-build: ## remove build artifacts
 clean-docs: ## remove doc artifacts
 	rm -f docs/$(MODULE_NAME).rst
 	rm -f docs/modules.rst
-	$(MAKE) -C docs clean
 
 clean-python: ## remove Python file artifacts
 	find . -name '*.pyc' -exec rm -f {} +
@@ -70,14 +69,17 @@ clean-python: ## remove Python file artifacts
 	find . -name '*~' -exec rm -f {} +
 	find . -name '__pycache__' -exec rm -fr {} +
 
+clean-sphinx: ## requires sphinx to be installed
+	$(MAKE) -C docs clean
+
 clean-test: ## remove test and coverage artifacts
 	rm -fr .tox/
 	rm -f .coverage
 	rm -fr htmlcov/
 
-clean-all: clean-build clean-docs clean-python clean-test ## remove everything
+clean-all: clean-build clean-docs clean-python clean-sphinx clean-test ## remove everything
 
-clean: clean-all ## alias of clean-all
+clean: clean-build clean-docs clean-python clean-test ## remove everything but sphinx
 
 
 # Linting
