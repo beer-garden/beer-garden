@@ -65,7 +65,7 @@ if [ -f "$BARTENDER_CONFIG.yml" ]; then
   BARTENDER_CONFIG_TYPE="yml"
   "$APP_HOME/bin/migrate_bartender_config" \
     -c "$BARTENDER_CONFIG.$BARTENDER_CONFIG_TYPE"
-elif [ -f "$BARTENDER_CONFIG_JSON" ]; then
+elif [ -f "$BARTENDER_CONFIG.json" ]; then
   BARTENDER_CONFIG_TYPE="json"
   "$APP_HOME/bin/migrate_bartender_config" \
     -c "$BARTENDER_CONFIG.$BARTENDER_CONFIG_TYPE"
@@ -78,12 +78,14 @@ else
     --plugin-local-log-directory "$PLUGIN_LOG_HOME"
 fi
 
-if [ -f "$BREW_VIEW_CONFIG_YAML" ]; then
+if [ -f "$BREW_VIEW_CONFIG.yml" ]; then
   BREW_VIEW_CONFIG_TYPE="yml"
-  "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.$BREW_VIEW_CONFIG_TYPE"
-elif [ -f "$BREW_VIEW_CONFIG_JSON" ]; then
+  "$APP_HOME/bin/migrate_brew_view_config" \
+    -c "$BREW_VIEW_CONFIG.$BREW_VIEW_CONFIG_TYPE"
+elif [ -f "$BREW_VIEW_CONFIG.json" ]; then
   BREW_VIEW_CONFIG_TYPE="json"
-  "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.$BREW_VIEW_CONFIG_TYPE"
+  "$APP_HOME/bin/migrate_brew_view_config" \
+    -c "$BREW_VIEW_CONFIG.$BREW_VIEW_CONFIG_TYPE"
 else
   BREW_VIEW_CONFIG_TYPE="yml"
   "$APP_HOME/bin/generate_brew_view_config" \
