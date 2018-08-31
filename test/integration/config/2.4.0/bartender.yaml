@@ -1,13 +1,24 @@
 amq:
+  admin_queue_expiry: 3600000
   connection_attempts: 3
   connections:
     admin:
       password: guest
       port: 15672
+      ssl:
+        ca_cert: null
+        ca_verify: true
+        client_cert: null
+        enabled: false
       user: guest
     message:
       password: guest
-      port: 5672
+      port: 5671
+      ssl:
+        ca_cert: null
+        ca_verify: true
+        client_cert: null
+        enabled: false
       user: guest
   exchange: beer_garden
   heartbeat_interval: 3600
@@ -33,6 +44,9 @@ log:
   level: INFO
 plugin:
   local:
+    auth:
+      password: null
+      username: null
     directory: null
     log_directory: null
     timeout:
@@ -49,6 +63,8 @@ web:
   ca_cert: null
   ca_verify: true
   host: localhost
+  password: null
   port: 2337
   ssl_enabled: false
   url_prefix: null
+  username: null
