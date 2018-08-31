@@ -3,11 +3,14 @@ import logging.config
 
 import bg_utils
 import brewtils.rest
+import bartender._version
 from bartender.app import BartenderApp
 from bartender.errors import ConfigurationError
 from bartender.specification import get_default_logging_config
 from brewtils.errors import ValidationError
 from brewtils.rest.easy_client import EasyClient
+
+__version__ = bartender._version.__version__
 
 # COMPONENTS #
 application = None
