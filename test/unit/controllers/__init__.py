@@ -17,7 +17,7 @@ class TestHandlerBase(AsyncHTTPTestCase):
         server_patch.start()
 
         spec = YapconfSpec(SPECIFICATION)
-        brew_view.setup_brew_view(spec, {})
+        brew_view.setup(spec, {})
         connect('beer_garden', host='mongomock://localhost')
 
         cls.app = brew_view.tornado_app

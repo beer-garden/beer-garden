@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from apispec import APISpec
 from apscheduler.executors.tornado import TornadoExecutor
 from apscheduler.schedulers.tornado import TornadoScheduler
+from prometheus_client import start_http_server
 from pytz import utc
 from thriftpy.rpc import client_context
 from tornado.httpserver import HTTPServer
@@ -17,7 +18,6 @@ from urllib3.util.url import Url
 import bg_utils
 import brew_view._version
 import brew_view.authorization
-from brewtils.rest import normalize_url_prefix
 from bg_utils.event_publisher import EventPublishers
 from bg_utils.pika import TransientPikaClient
 from bg_utils.plugin_logging_loader import PluginLoggingLoader
@@ -25,6 +25,8 @@ from brew_view.publishers import (MongoPublisher, RequestPublisher,
                                   TornadoPikaPublisher, WebsocketPublisher)
 from brew_view.scheduler.jobstore import BGJobStore
 from brew_view.specification import get_default_logging_config
+from brewtils.models import Event, Events
+from brewtils.rest import normalize_url_prefix
 from brewtils.rest.easy_client import EasyClient
 from brewtils.schemas import (
     ParameterSchema, CommandSchema, InstanceSchema, SystemSchema, RequestSchema,
@@ -36,7 +38,7 @@ from brewtils.schemas import (
 __version__ = brew_view._version.__version__
 
 config = None
-application = None
+io_loop = None
 server = None
 tornado_app = None
 public_url = None
@@ -53,7 +55,7 @@ anonymous_principal = None
 easy_client = None
 
 
-def setup_brew_view(spec, cli_args):
+def setup(spec, cli_args):
     global config, logger, app_log_config, event_publishers, notification_meta
 
     config = bg_utils.load_application_config(spec, cli_args)
@@ -61,16 +63,61 @@ def setup_brew_view(spec, cli_args):
     log_default = get_default_logging_config(config.log.level, config.log.file)
     app_log_config = bg_utils.setup_application_logging(config, log_default)
     logger = logging.getLogger(__name__)
+    brew_view.logger.debug("Logging configured. Hello!")
 
     bg_utils.setup_database(config)
     load_plugin_logging_config(config)
     _setup_application()
 
 
+def startup():
+    logger.info(
+        'Starting metrics server on %s:%d' %
+        (config.web.host, config.metrics.port)
+    )
+    start_http_server(config.metrics.port)
+
+    logger.info(
+        'Starting HTTP server on %s:%d' %
+        (config.web.host, config.web.port)
+    )
+    server.listen(config.web.port, config.web.host)
+
+    logger.info('Starting scheduler')
+    request_scheduler.start()
+
+    logger.debug("Publishing application startup event.")
+    startup_event = Event(name=Events.BREWVIEW_STARTED.name)
+    event_publishers.publish_event(startup_event)
+
+
 def shutdown():
-    """Close any open websocket connections"""
+    logger.debug('Stopping scheduler')
+    request_scheduler.shutdown(wait=False)
+
+    # Stop the server so we don't process any more requests
+    logger.info("Stopping HTTP server")
+    server.stop()
+
+    # Publish shutdown notification
+    event_publishers.publish_event(Event(name=Events.BREWVIEW_STOPPED.name))
+
+    # Close any open websocket connections
     from brew_view.controllers import EventSocket
+    logger.debug('Closing websocket connections')
     EventSocket.shutdown()
+
+    def do_stop(*_):
+        io_loop.stop()
+        logger.info("IO loop has stopped")
+
+    # This is ... not great. Ideally we'd call shutdown() on event_publishers and it would be
+    # invoked on each of them. That's causing issues because we currently don't make a distinction
+    # between async an sync publishers, so for now just wait on the publisher we really care about
+    if 'pika' in event_publishers:
+        io_loop.add_future(event_publishers['pika'].shutdown(), do_stop)
+    else:
+        io_loop.add_callback(do_stop)
 
 
 def load_plugin_logging_config(input_config):
@@ -84,7 +131,7 @@ def load_plugin_logging_config(input_config):
 
 
 def _setup_application():
-    global application, tornado_app, public_url, thrift_context, easy_client
+    global io_loop, tornado_app, public_url, thrift_context, easy_client
     global server, event_publishers, request_scheduler, anonymous_principal
 
     # Tweak some config options
@@ -123,9 +170,7 @@ def _setup_application():
     request_scheduler = _setup_scheduler()
 
     server = HTTPServer(tornado_app, ssl_options=server_ssl)
-    server.listen(config.web.port, config.web.host)
-
-    application = IOLoop.current()
+    io_loop = IOLoop.current()
 
 
 def _setup_scheduler():

@@ -16,13 +16,13 @@ class BeerGardenTest(unittest.TestCase):
     def setUp(self):
         self.spec = YapconfSpec(SPECIFICATION)
         bg.config = None
-        bg.application = None
+        bg.io_loop = None
         bg.logger = None
         bg.thrift_context = None
 
     def tearDown(self):
         bg.config = None
-        bg.application = None
+        bg.io_loop = None
         bg.logger = None
         bg.thrift_context = None
 
@@ -31,11 +31,11 @@ class BeerGardenTest(unittest.TestCase):
     @patch('brew_view.load_plugin_logging_config', Mock())
     @patch('brew_view.HTTPServer.listen', Mock())
     def test_setup_no_file(self):
-        bg.setup_brew_view(self.spec, {})
+        bg.setup(self.spec, {})
         self.assertIsInstance(bg.config, Box)
         self.assertIsInstance(bg.logger, logging.Logger)
         self.assertIsNotNone(bg.thrift_context)
-        self.assertIsInstance(bg.application, IOLoop)
+        self.assertIsInstance(bg.io_loop, IOLoop)
 
     def test_setup_tornado_app(self):
         bg.config = self.spec.load_config({'web': {'url_prefix': '/'}})
