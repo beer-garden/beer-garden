@@ -35,6 +35,9 @@ class EventPublishers(MutableMapping):
                 self._logger.exception("Exception while publishing event to '%s' connection: %s",
                                        name, ex)
 
+    def shutdown(self):
+        return [c.shutdown() for c in self._connections.values()]
+
     # Delegate all container operations to _connections
     def __getitem__(self, item):
         return self._connections.__getitem__(item)
@@ -61,6 +64,9 @@ class EventPublisher(object):
                                                                                         **kwargs))
 
     def publish(self, message, **kwargs):
+        pass
+
+    def shutdown(self):
         pass
 
     def _event_prepare(self, event, **kwargs):
