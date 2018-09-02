@@ -107,6 +107,9 @@ class WebsocketPublisher(BeergardenPublisher):
     def publish(self, message, **kwargs):
         self._socket.publish(message)
 
+    def shutdown(self):
+        self._socket.shutdown()
+
 
 class MongoPublisher(BeergardenPublisher):
     """Publisher implementation that 'publishes' to Mongo"""

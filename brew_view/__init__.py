@@ -11,6 +11,7 @@ from apscheduler.schedulers.tornado import TornadoScheduler
 from prometheus_client import start_http_server
 from pytz import utc
 from thriftpy.rpc import client_context
+from tornado.concurrent import Future
 from tornado.gen import coroutine, sleep
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
@@ -92,11 +93,12 @@ def startup():
     logger.info('Starting scheduler')
     request_scheduler.start()
 
-    logger.debug("Publishing application startup event.")
+    logger.debug("Publishing application startup event")
     startup_event = Event(name=Events.BREWVIEW_STARTED.name)
     event_publishers.publish_event(startup_event)
 
 
+@coroutine
 def shutdown():
     logger.debug('Stopping scheduler')
     request_scheduler.shutdown(wait=False)
@@ -105,25 +107,20 @@ def shutdown():
     logger.info("Stopping HTTP server")
     server.stop()
 
-    # Publish shutdown notification
+    logger.debug("Publishing application shutdown event")
     event_publishers.publish_event(Event(name=Events.BREWVIEW_STOPPED.name))
 
-    # Close any open websocket connections
-    from brew_view.controllers import EventSocket
-    logger.debug('Closing websocket connections')
-    EventSocket.shutdown()
+    logger.debug("Shutting down event publishers")
+    yield list(filter(
+        lambda x: isinstance(x, Future),
+        event_publishers.shutdown()
+    ))
 
     def do_stop(*_):
         io_loop.stop()
         logger.info("IO loop has stopped")
 
-    # This is ... not great. Ideally we'd call shutdown() on event_publishers and it would be
-    # invoked on each of them. That's causing issues because we currently don't make a distinction
-    # between async an sync publishers, so for now just wait on the publisher we really care about
-    if 'pika' in event_publishers:
-        io_loop.add_future(event_publishers['pika'].shutdown(), do_stop)
-    else:
-        io_loop.add_callback(do_stop)
+    io_loop.add_callback(do_stop)
 
 
 @coroutine

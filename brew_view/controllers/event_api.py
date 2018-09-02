@@ -107,6 +107,7 @@ class EventSocket(AuthMixin, WebSocketHandler):
 
     @classmethod
     def shutdown(cls):
+        cls.logger.debug('Closing websocket connections')
         EventSocket.closing = True
 
         for listener in cls.listeners:
