@@ -56,6 +56,7 @@ request_scheduler = None
 request_map = {}
 anonymous_principal = None
 easy_client = None
+client_ssl = None
 
 
 def setup(spec, cli_args):
@@ -78,6 +79,8 @@ def startup():
 
     This is the first thing called from within the ioloop context.
     """
+    global event_publishers
+
     # Ensure we have a mongo connection
     yield _progressive_backoff(
         partial(bg_utils.setup_database, config),
@@ -96,6 +99,9 @@ def startup():
     )
     server.listen(config.web.port, config.web.host)
 
+    logger.info("Starting event publishers")
+    event_publishers = _setup_event_publishers(client_ssl)
+
     logger.info('Starting scheduler')
     request_scheduler.start()
 
@@ -112,23 +118,27 @@ def shutdown():
     This still operates within the ioloop, so stopping it should be the last
     thing done.
 
+    Because things in startup aren't guaranteed to have been run we need to be
+    careful about checking to make sure things actually need to be shut down.
+
     This execution is normally scheduled by the signal handler.
     """
-    logger.debug('Stopping scheduler')
-    request_scheduler.shutdown(wait=False)
+    if request_scheduler.running:
+        logger.info('Stopping scheduler')
+        request_scheduler.shutdown(wait=False)
 
-    # Stop the server so we don't process any more requests
     logger.info("Stopping HTTP server")
     server.stop()
 
-    logger.debug("Publishing application shutdown event")
-    event_publishers.publish_event(Event(name=Events.BREWVIEW_STOPPED.name))
+    if event_publishers:
+        logger.debug("Publishing application shutdown event")
+        event_publishers.publish_event(Event(name=Events.BREWVIEW_STOPPED.name))
 
-    logger.debug("Shutting down event publishers")
-    yield list(filter(
-        lambda x: isinstance(x, Future),
-        event_publishers.shutdown()
-    ))
+        logger.info("Shutting down event publishers")
+        yield list(filter(
+            lambda x: isinstance(x, Future),
+            event_publishers.shutdown()
+        ))
 
     logger.info("Stopping IO loop")
     io_loop.add_callback(io_loop.stop)
@@ -158,7 +168,7 @@ def load_plugin_logging_config(input_config):
 def _setup_application():
     """Setup things that can be taken care of before io loop is started"""
     global io_loop, tornado_app, public_url, thrift_context, easy_client
-    global server, event_publishers, request_scheduler, anonymous_principal
+    global server, client_ssl, request_scheduler, anonymous_principal
 
     # Tweak some config options
     config.web.url_prefix = normalize_url_prefix(config.web.url_prefix)
@@ -191,7 +201,6 @@ def _setup_application():
     thrift_context = _setup_thrift_context()
     tornado_app = _setup_tornado_app()
     server_ssl, client_ssl = _setup_ssl_context()
-    event_publishers = _setup_event_publishers(client_ssl)
     anonymous_principal = load_anonymous()
     request_scheduler = _setup_scheduler()
 
