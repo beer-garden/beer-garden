@@ -87,10 +87,12 @@ class BeerGardenTest(unittest.TestCase):
         app_config.plugin_logging.config_file = "plugin_log_config"
         app_config.plugin_logging.level = "INFO"
 
-        bg.app_log_config = "app_log_config"
+        bg.app_logging_config = "app_logging_config"
         loader_mock = Mock()
         PluginLoggingLoaderMock.return_value = loader_mock
         bg.load_plugin_logging_config(app_config)
-        loader_mock.load.assert_called_with(filename="plugin_log_config",
-                                            level="INFO",
-                                            default_config="app_log_config")
+        loader_mock.load.assert_called_with(
+            filename="plugin_log_config",
+            level="INFO",
+            default_config="app_logging_config"
+        )

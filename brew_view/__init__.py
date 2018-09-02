@@ -8,7 +8,7 @@ from functools import partial
 from apispec import APISpec
 from apscheduler.executors.tornado import TornadoExecutor
 from apscheduler.schedulers.tornado import TornadoScheduler
-from prometheus_client import start_http_server
+from prometheus_client.exposition import start_http_server
 from pytz import utc
 from thriftpy.rpc import client_context
 from tornado.concurrent import Future
@@ -20,12 +20,12 @@ from urllib3.util.url import Url
 
 import bg_utils
 import brew_view._version
-import brew_view.authorization
 from bg_utils.event_publisher import EventPublishers
 from bg_utils.pika import TransientPikaClient
 from bg_utils.plugin_logging_loader import PluginLoggingLoader
-from brew_view.publishers import (MongoPublisher, RequestPublisher,
-                                  TornadoPikaPublisher, WebsocketPublisher)
+from brew_view.authorization import anonymous_principal as load_anonymous
+from brew_view.publishers import (
+    MongoPublisher, RequestPublisher, TornadoPikaPublisher, WebsocketPublisher)
 from brew_view.scheduler.jobstore import BGJobStore
 from brew_view.specification import get_default_logging_config
 from brewtils.models import Event, Events
@@ -50,7 +50,7 @@ thrift_context = None
 event_publishers = None
 api_spec = None
 plugin_logging_config = None
-app_log_config = None
+app_logging_config = None
 notification_meta = None
 request_scheduler = None
 request_map = {}
@@ -59,14 +59,14 @@ easy_client = None
 
 
 def setup(spec, cli_args):
-    global config, logger, app_log_config, event_publishers, notification_meta
+    global config, logger, app_logging_config
 
     config = bg_utils.load_application_config(spec, cli_args)
 
-    log_default = get_default_logging_config(config.log.level, config.log.file)
-    app_log_config = bg_utils.setup_application_logging(config, log_default)
+    app_logging_config = bg_utils.setup_application_logging(
+        config, get_default_logging_config(config.log.level, config.log.file))
     logger = logging.getLogger(__name__)
-    brew_view.logger.debug("Logging configured. Hello!")
+    logger.debug("Logging configured. First post!")
 
     load_plugin_logging_config(config)
     _setup_application()
@@ -74,9 +74,15 @@ def setup(spec, cli_args):
 
 @coroutine
 def startup():
+    """Do startup things.
+
+    This is the first thing called from within the ioloop context.
+    """
     # Ensure we have a mongo connection
-    yield _progressive_backoff(partial(bg_utils.setup_database, config),
-                               'Unable to connect to mongo, is it started?')
+    yield _progressive_backoff(
+        partial(bg_utils.setup_database, config),
+        'Unable to connect to mongo, is it started?'
+    )
 
     logger.info(
         'Starting metrics server on %s:%d' %
@@ -94,12 +100,20 @@ def startup():
     request_scheduler.start()
 
     logger.debug("Publishing application startup event")
-    startup_event = Event(name=Events.BREWVIEW_STARTED.name)
-    event_publishers.publish_event(startup_event)
+    event_publishers.publish_event(Event(name=Events.BREWVIEW_STARTED.name))
+
+    brew_view.logger.info("Application is started. Hello!")
 
 
 @coroutine
 def shutdown():
+    """Do shutdown things
+
+    This still operates within the ioloop, so stopping it should be the last
+    thing done.
+
+    This execution is normally scheduled by the signal handler.
+    """
     logger.debug('Stopping scheduler')
     request_scheduler.shutdown(wait=False)
 
@@ -116,11 +130,8 @@ def shutdown():
         event_publishers.shutdown()
     ))
 
-    def do_stop(*_):
-        io_loop.stop()
-        logger.info("IO loop has stopped")
-
-    io_loop.add_callback(do_stop)
+    logger.info("Stopping IO loop")
+    io_loop.add_callback(io_loop.stop)
 
 
 @coroutine
@@ -140,11 +151,12 @@ def load_plugin_logging_config(input_config):
     plugin_logging_config = PluginLoggingLoader().load(
         filename=input_config.plugin_logging.config_file,
         level=input_config.plugin_logging.level,
-        default_config=app_log_config
+        default_config=app_logging_config
     )
 
 
 def _setup_application():
+    """Setup things that can be taken care of before io loop is started"""
     global io_loop, tornado_app, public_url, thrift_context, easy_client
     global server, event_publishers, request_scheduler, anonymous_principal
 
@@ -180,7 +192,7 @@ def _setup_application():
     tornado_app = _setup_tornado_app()
     server_ssl, client_ssl = _setup_ssl_context()
     event_publishers = _setup_event_publishers(client_ssl)
-    anonymous_principal = brew_view.authorization.anonymous_principal()
+    anonymous_principal = load_anonymous()
     request_scheduler = _setup_scheduler()
 
     server = HTTPServer(tornado_app, ssl_options=server_ssl)
