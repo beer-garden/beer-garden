@@ -3,6 +3,7 @@ import logging
 import os
 import ssl
 from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 
 from apispec import APISpec
 from apscheduler.executors.tornado import TornadoExecutor
@@ -10,6 +11,7 @@ from apscheduler.schedulers.tornado import TornadoScheduler
 from prometheus_client import start_http_server
 from pytz import utc
 from thriftpy.rpc import client_context
+from tornado.gen import coroutine, sleep
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado.web import Application, StaticFileHandler, RedirectHandler
@@ -65,12 +67,16 @@ def setup(spec, cli_args):
     logger = logging.getLogger(__name__)
     brew_view.logger.debug("Logging configured. Hello!")
 
-    bg_utils.setup_database(config)
     load_plugin_logging_config(config)
     _setup_application()
 
 
+@coroutine
 def startup():
+    # Ensure we have a mongo connection
+    yield _progressive_backoff(partial(bg_utils.setup_database, config),
+                               'Unable to connect to mongo, is it started?')
+
     logger.info(
         'Starting metrics server on %s:%d' %
         (config.web.host, config.metrics.port)
@@ -118,6 +124,17 @@ def shutdown():
         io_loop.add_future(event_publishers['pika'].shutdown(), do_stop)
     else:
         io_loop.add_callback(do_stop)
+
+
+@coroutine
+def _progressive_backoff(func, failure_message):
+    wait_time = 0.1
+    while not func():
+        logger.warning(failure_message)
+        logger.warning('Waiting %.1f seconds before next attempt', wait_time)
+
+        yield sleep(wait_time)
+        wait_time = min(wait_time*2, 30)
 
 
 def load_plugin_logging_config(input_config):
