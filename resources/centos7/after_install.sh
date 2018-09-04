@@ -10,11 +10,11 @@ BIN_HOME="$APP_HOME/bin"
 PLUGIN_LOG_HOME="$LOG_HOME/plugins"
 PLUGIN_HOME="$APP_HOME/plugins"
 
-BARTENDER_CONFIG="${CONFIG_HOME}/bartender-config.json"
+BARTENDER_CONFIG="${CONFIG_HOME}/bartender-config"
 BARTENDER_LOG_CONFIG="${CONFIG_HOME}/bartender-logging-config.json"
 BARTENDER_LOG_FILE="$LOG_HOME/bartender.log"
 
-BREW_VIEW_CONFIG="${CONFIG_HOME}/brew-view-config.json"
+BREW_VIEW_CONFIG="${CONFIG_HOME}/brew-view-config"
 BREW_VIEW_LOG_CONFIG="${CONFIG_HOME}/brew-view-logging-config.json"
 BREW_VIEW_LOG_FILE="$LOG_HOME/brew-view.log"
 
@@ -49,25 +49,49 @@ esac
 
 if [ ! -f "$BARTENDER_LOG_CONFIG" ]; then
   "$APP_HOME/bin/generate_bartender_log_config" \
-    --log-config-file="$BARTENDER_LOG_CONFIG" \
-    --log-file="$BARTENDER_LOG_FILE" \
-    --log-level="WARN"
+    --log-config-file "$BARTENDER_LOG_CONFIG" \
+    --log-file "$BARTENDER_LOG_FILE" \
+    --log-level "WARN"
 fi
 
 if [ ! -f "$BREW_VIEW_LOG_CONFIG" ]; then
   "$APP_HOME/bin/generate_brew_view_log_config" \
-    --log-config-file="$BREW_VIEW_LOG_CONFIG" \
-    --log-file="$BREW_VIEW_LOG_FILE" \
-    --log-level="WARN"
+    --log-config-file "$BREW_VIEW_LOG_CONFIG" \
+    --log-file "$BREW_VIEW_LOG_FILE" \
+    --log-level "WARN"
 fi
 
-"$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG" \
-  --log-config-file="$BARTENDER_LOG_CONFIG" \
-  --plugin-local-directory="$PLUGIN_HOME" \
-  --plugin-local-log-directory="$PLUGIN_LOG_HOME"
+if [ -f "$BARTENDER_CONFIG.yml" ]; then
+  BARTENDER_CONFIG_TYPE="yml"
+  "$APP_HOME/bin/migrate_bartender_config" \
+    -c "$BARTENDER_CONFIG.$BARTENDER_CONFIG_TYPE"
+elif [ -f "$BARTENDER_CONFIG.json" ]; then
+  BARTENDER_CONFIG_TYPE="json"
+  "$APP_HOME/bin/migrate_bartender_config" \
+    -c "$BARTENDER_CONFIG.$BARTENDER_CONFIG_TYPE"
+else
+  BARTENDER_CONFIG_TYPE="yml"
+  "$APP_HOME/bin/generate_bartender_config" \
+    -c "$BARTENDER_CONFIG.$BARTENDER_CONFIG_TYPE" \
+    -l "$BARTENDER_LOG_CONFIG" \
+    --plugin-local-directory "$PLUGIN_HOME" \
+    --plugin-local-log-directory "$PLUGIN_LOG_HOME"
+fi
 
-"$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG" \
-  --log-config-file="$BREW_VIEW_LOG_CONFIG"
+if [ -f "$BREW_VIEW_CONFIG.yml" ]; then
+  BREW_VIEW_CONFIG_TYPE="yml"
+  "$APP_HOME/bin/migrate_brew_view_config" \
+    -c "$BREW_VIEW_CONFIG.$BREW_VIEW_CONFIG_TYPE"
+elif [ -f "$BREW_VIEW_CONFIG.json" ]; then
+  BREW_VIEW_CONFIG_TYPE="json"
+  "$APP_HOME/bin/migrate_brew_view_config" \
+    -c "$BREW_VIEW_CONFIG.$BREW_VIEW_CONFIG_TYPE"
+else
+  BREW_VIEW_CONFIG_TYPE="yml"
+  "$APP_HOME/bin/generate_brew_view_config" \
+    -c "$BREW_VIEW_CONFIG.$BREW_VIEW_CONFIG_TYPE" \
+    -l "$BREW_VIEW_LOG_CONFIG"
+fi
 
 chown -hR ${USER}:${GROUP} $APP_HOME
 
@@ -94,12 +118,12 @@ PROCESS_NAME="beer-garden"
 CONFIG_HOME="\$BEERGARDEN_HOME/conf"
 PID_HOME="/var/run/\$PROCESS_NAME"
 
-BT_CONFIG_FILE="\$CONFIG_HOME/bartender-config.json"
+BT_CONFIG_FILE="\$CONFIG_HOME/bartender-config.$BARTENDER_CONFIG_TYPE"
 BT_EXEC="\$BEERGARDEN_HOME/bin/bartender -c \$BT_CONFIG_FILE"
 BT_PID_FILE="\$PID_HOME/bartender.pid"
 BT_LOCK_FILE="/var/lock/subsys/bartender"
 
-BV_CONFIG_FILE="\$CONFIG_HOME/brew-view-config.json"
+BV_CONFIG_FILE="\$CONFIG_HOME/brew-view-config.$BREW_VIEW_CONFIG_TYPE"
 BV_EXEC="\$BEERGARDEN_HOME/bin/brew-view -c \$BV_CONFIG_FILE"
 BV_PID_FILE="\$PID_HOME/brew-view.pid"
 BV_LOCK_FILE="/var/lock/subsys/brew-view"
