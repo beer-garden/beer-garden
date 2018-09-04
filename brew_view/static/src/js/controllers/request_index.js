@@ -135,8 +135,11 @@ export default function requestIndexController(
 
   DTRendererService.registerPlugin({
     postRender: function(options, result) {
-      // Insert our spinner thingy next to the search box
-      let spinner = $('<span>').addClass('spinner');
+      // Insert a spinner thingy next to the search box
+      let spinner = $('<span>')
+        .addClass('fa fa-spinner fa-pulse')
+        .css('margin-right', '5px');
+
       $('.dataTables_filter label').prepend(spinner);
 
       // Register callback to show / hide spinner thingy

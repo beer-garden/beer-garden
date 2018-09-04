@@ -76,16 +76,6 @@ html, body{
 .icon-color{
     color: black !important;
 }
-.spinner{
-    height: 16px;
-    width: 16px;
-    visibility: hidden;
-    background: url(../image/loading.gif) no-repeat;
-    display: inline-block;
-    position: absolute;
-    top: 45%;
-    transform: translate(-120%, -55%);
-}
 
 #requestTable {
     margin-bottom: 35px;
