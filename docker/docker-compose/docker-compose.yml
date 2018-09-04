@@ -47,7 +47,7 @@ services:
             - brew-view
 
     grafana:
-        image: grafana/grafana
+        image: grafana/grafana:5.2.3
         ports:
             - "3000:3000"
         volumes:
