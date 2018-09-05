@@ -27,7 +27,7 @@ setup(
     license='MIT',
     keywords='bartender beer beer-garden beergarden',
     install_requires=[
-        'bg-utils>=2.3.6',
+        'bg-utils>=2.4.0',
         'pyrabbit2==1.0.5',
     ],
     extras_require={
