@@ -1,10 +1,10 @@
-import datetime
 import json
 import logging
 import logging.config
 import os
 import sys
 from argparse import ArgumentParser
+from datetime import datetime
 from io import open
 
 import six
@@ -19,9 +19,11 @@ __version__ = generated_version
 
 logger = logging.getLogger(__name__)
 
-bg_thrift = thriftpy.load(os.path.join(os.path.dirname(__file__), 'thrift', 'beergarden.thrift'),
-                          include_dirs=[os.path.join(os.path.dirname(__file__), 'thrift')],
-                          module_name='bg_thrift')
+bg_thrift = thriftpy.load(
+    os.path.join(os.path.dirname(__file__), 'thrift', 'beergarden.thrift'),
+    include_dirs=[os.path.join(os.path.dirname(__file__), 'thrift')],
+    module_name='bg_thrift'
+)
 
 
 def parse_args(spec, item_names, cli_args):
@@ -209,12 +211,13 @@ def _is_new_config(spec, filename, file_type, tmp_filename):
 
 def _swap_files(filename, tmp_filename):
     try:
-        os.rename(filename, filename + '_' + datetime.datetime.utcnow().isoformat())
+        os.rename(filename, filename + '_' + datetime.utcnow().isoformat())
     except Exception:
         sys.stderr.write(
-            'Could not backup the old configuration. Cowardly refusing to overwrite '
-            'the current configuration with the old configuration. This could cause '
-            'problems later. Please see %s for the new configuration file' % tmp_filename
+            'Could not backup the old configuration. Cowardly refusing to '
+            'overwrite the current configuration with the old configuration. '
+            'This could cause problems later. Please see %s for the new '
+            'configuration file' % tmp_filename
         )
         return
 
