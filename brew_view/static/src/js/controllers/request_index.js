@@ -4,28 +4,24 @@ requestIndexController.$inject = [
   '$scope',
   'DTOptionsBuilder',
   'DTColumnBuilder',
-  'DTRendererService',
   'RequestService',
 ];
 
 /**
  * requestIndexController - Angular controller for viewing all requests.
- * @param  {$scope} $scope            Angular's $scope object.
+ * @param  {Object} $scope            Angular's $scope object.
  * @param  {Object} DTOptionsBuilder  Data-tables' options builder object.
  * @param  {Object} DTColumnBuilder   Data-tables' column builder object.
- * @param  {Object} DTRendererService Data-tables' rendering service.
  * @param  {Object} RequestService    Beer-Garden Request Service.
  */
 export default function requestIndexController(
     $scope,
     DTOptionsBuilder,
     DTColumnBuilder,
-    DTRendererService,
     RequestService) {
   $scope.setWindowTitle('requests');
 
   $scope.requests = {};
-  $scope.requests.errorMap = RequestService.errorMap;
 
   $scope.dtOptions = DTOptionsBuilder.newOptions()
     .withOption('autoWidth', false)
@@ -132,30 +128,6 @@ export default function requestIndexController(
       .newColumn('metadata')
       .notVisible(),
   ];
-
-  DTRendererService.registerPlugin({
-    postRender: function(options, result) {
-      // Insert a spinner thingy next to the search box
-      let spinner = $('<span>')
-        .addClass('fa fa-spinner fa-pulse')
-        .css('margin-right', '5px');
-
-      $('.dataTables_filter label').prepend(spinner);
-
-      // Register callback to show / hide spinner thingy
-      let processingDelay = null;
-      $('.dataTable').on('processing.dt', function(e, settings, processing) {
-        if (!processing) {
-          clearTimeout(processingDelay);
-          spinner.css('visibility', 'hidden');
-        } else {
-          processingDelay = setTimeout(function() {
-            spinner.css('visibility', 'visible');
-          }, 500);
-        }
-      });
-    },
-  });
 
   $scope.instanceCreated = function(_instance) {
     $scope.dtInstance = _instance;

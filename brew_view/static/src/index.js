@@ -63,6 +63,7 @@ import './styles/custom.css';
 
 // Now load our actual application components
 import appRun from './js/run.js';
+import runDTRenderer from './js/configs/dt_renderer.js';
 import routeConfig from './js/configs/routes.js';
 import {interceptorService, authInterceptorService, interceptorConfig}
   from './js/configs/http_interceptor.js';
@@ -143,6 +144,7 @@ angular.module('bgApp',
   'beer-garden.builder',
 ])
 .run(appRun)
+.run(runDTRenderer)
 .config(routeConfig)
 .config(interceptorConfig)
 .config(['localStorageServiceProvider', function(localStorageServiceProvider) {
