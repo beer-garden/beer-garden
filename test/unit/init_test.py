@@ -70,7 +70,7 @@ class TestBgUtils(object):
         return {
                 'log_config': None,
                 'log_file': None,
-                'old_log_level': 'INFO',
+                'log_level': 'INFO',
                 'configuration': {
                     'type': 'json',
                 }
@@ -448,7 +448,7 @@ class TestBgUtils(object):
         assert generated_config.log.level == 'INFO'
 
         with open(old_filename) as f:
-            new_config_value = yaml.safe_load(f)
+            new_config_value = json.load(f)
 
         assert new_config_value == expected_new_config
         assert len(os.listdir(str(tmpdir))) == 2

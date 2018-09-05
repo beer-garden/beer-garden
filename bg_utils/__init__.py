@@ -12,6 +12,7 @@ import thriftpy
 import yapconf
 from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
+from ruamel.yaml import YAML
 
 from ._version import __version__ as generated_version
 
@@ -176,7 +177,7 @@ def load_application_config(spec, cli_args):
             file_type = 'yaml'
         filename = temp_config.configuration.file
         _safe_migrate(spec, filename, file_type)
-        spec.add_source(filename, 'yaml', filename=filename)
+        spec.add_source(filename, file_type, filename=filename)
         config_sources.insert(1, filename)
 
     return spec.load_config(*config_sources)
@@ -189,7 +190,7 @@ def _safe_migrate(spec, filename, file_type):
             filename,
             current_file_type=file_type,
             output_file_name=tmp_filename,
-            output_file_type='yaml',
+            output_file_type=file_type,
         )
     except Exception:
         sys.stderr.write(
@@ -197,16 +198,25 @@ def _safe_migrate(spec, filename, file_type):
             'will attempt to load the previous configuration.'
         )
         return
-    if _is_new_config(spec, filename, file_type, tmp_filename):
+    if _is_new_config(filename, file_type, tmp_filename):
         _swap_files(filename, tmp_filename)
     else:
         os.remove(tmp_filename)
 
 
-def _is_new_config(spec, filename, file_type, tmp_filename):
-    old_config = spec.load_config(('old_config', filename, file_type))
-    new_config = spec.load_config(('new_config', tmp_filename, 'yaml'))
-    return old_config != new_config or file_type != 'yaml'
+def _is_new_config(filename, file_type, tmp_filename):
+    with open(filename, 'r') as f, open(tmp_filename, 'r') as g:
+        if file_type == 'json':
+            old_config = json.load(f)
+            new_config = json.load(g)
+        elif file_type == 'yaml':
+            yaml = YAML()
+            old_config = yaml.load(f)
+            new_config = yaml.load(g)
+        else:
+            raise ValueError('Unsupported file type %s' % file_type)
+
+    return old_config != new_config
 
 
 def _swap_files(filename, tmp_filename):
