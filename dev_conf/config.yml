@@ -63,12 +63,12 @@ plugin_logging:
   level: INFO
 scheduler:
   auth:
-    username: null
     password: null
-  max_workers: 10
+    username: null
   job_defaults:
     coalesce: true
     max_instances: 3
+  max_workers: 10
 shutdown_timeout: 5
 web:
   host: 0.0.0.0
