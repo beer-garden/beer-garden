@@ -2,7 +2,7 @@ FROM python:3.6-alpine
 ARG VERSION
 ENTRYPOINT ["brew-view"]
 
-ENV BG_LOG_CONFIG=/logging-config.json
+ENV BG_LOG_CONFIG_FILE=/logging-config.json
 
 ADD dev_conf/logging-config.json /logging-config.json
 
