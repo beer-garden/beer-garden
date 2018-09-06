@@ -2,8 +2,8 @@ FROM python:3.6-alpine
 WORKDIR /src
 ENTRYPOINT ["bartender"]
 
-ENV BG_PLUGIN_DIRECTORY=/plugins \
-    BG_LOG_CONFIG=/src/dev_conf/logging-config.json
+ENV BG_PLUGIN_LOCAL_DIRECTORY=/plugins \
+    BG_LOG_CONFIG_FILE=/src/dev_conf/logging-config.json
 
 ADD ./dev_conf/logging-config.json /src/dev_conf/
 ADD ./requirements.txt .
