@@ -64,8 +64,9 @@ def build_rpms(cli_dist, cli_python, local, docker_envs):
         cmd = [
             "docker", "run", "--rm", "-v", SRC_PATH + ":/src"
             ] + env_vars + [
-            BUILD_IMAGE+':'+tag, RPM_BUILD_SCRIPT, "-r", dist[-1]
-            ] + ["--local" if local else ""]
+            BUILD_IMAGE+':'+tag, RPM_BUILD_SCRIPT, "-r", dist[-1]]
+        if local:
+            cmd.append("--local")
         subprocess.call(cmd)
 
 

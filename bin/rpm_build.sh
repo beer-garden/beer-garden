@@ -1,7 +1,7 @@
 #!/bin/bash
 
 usage() {
-  echo "Usage: build_rpm.sh [OPTION]..."
+  echo "Usage: rpm_build.sh [OPTION]..."
   echo "Build an RPM distribution of beer-garden."
   echo ""
   echo "Arguments are space separated and are as follows:"
