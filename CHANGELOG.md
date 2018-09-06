@@ -2,6 +2,12 @@
 
 All notable changes should be documented in this file.
 
+## 2.4.1
+9/5/18
+
+#### Bug Fixes
+- Fixed issue with spinner always being shown on some pages (#172)
+
 ## 2.4.0
 9/5/18
 
