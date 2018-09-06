@@ -8,6 +8,11 @@ amq:
     message:
       password: guest
       port: 5672
+      ssl:
+        ca_cert: null
+        ca_verify: true
+        client_cert: null
+        enabled: false
       user: guest
   exchange: beer_garden
   heartbeat_interval: 3600
@@ -17,6 +22,12 @@ application:
   allow_unsafe_templates: false
   icon_default: fa-beer
   name: Beer Garden
+auth:
+  enabled: false
+  token:
+    algorithm: HS256
+    lifetime: 1200
+    secret: null
 backend:
   host: localhost
   port: 9090
@@ -40,19 +51,29 @@ event:
     virtual_host: /
   mongo:
     enable: true
-  public_fqdn: localhost
 log:
   config_file: null
   file: null
   level: INFO
 metrics:
   port: 2338
+  url: null
 plugin_logging:
   config_file: null
   level: INFO
+scheduler:
+  auth:
+    password: null
+    username: null
+  job_defaults:
+    coalesce: true
+    max_instances: 3
+  max_workers: 10
 shutdown_timeout: 5
 web:
+  host: 0.0.0.0
   port: 2337
+  public_fqdn: localhost
   ssl:
     ca_cert: null
     ca_path: null

@@ -10,3 +10,6 @@
 [submodule "example-plugins"]
 	path = example-plugins
 	url = ../example-plugins
+[submodule "brewtils"]
+	path = brewtils
+	url = ../brewtils

@@ -2,7 +2,7 @@ import json
 import time
 import re
 
-from brewtils import get_easy_client, load_config
+from brewtils import get_easy_client, load_config, SystemClient
 from brewtils.errors import ValidationError, SaveError
 from brewtils.models import PatchOperation
 from urllib3.exceptions import TimeoutError
@@ -219,5 +219,16 @@ def setup_easy_client():
     client = get_easy_client(**get_config())
     wait_for_connection(client)
     wait_for_plugins(client)
+
+    return client
+
+
+def setup_system_client(**kwargs):
+    client_args = kwargs.copy()
+    client_args.update(get_config())
+    client = SystemClient(**client_args)
+
+    wait_for_connection(client._easy_client)
+    wait_for_plugins(client._easy_client)
 
     return client

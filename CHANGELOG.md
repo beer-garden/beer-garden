@@ -2,6 +2,43 @@
 
 All notable changes should be documented in this file.
 
+## 2.4.0
+9/5/18
+
+Brew-view 2.4.0, Bartender 2.4.0, BG-utils 2.4.0
+
+#### Added Features
+- 'Created' filtering in request index view now supports second precision (#153)
+- Browser window title now reflects current page (#145)
+- Brew-view responses now have a header specifying the beer-garden version (#85)
+- Webapp no longer relies on IDs in the URL (#98)
+- Configuration file will be updated on application startup (#79)
+- Connections to RabbitMQ can now be TLS (#74)
+- System list endpoint can now return only certain system fields (#70)
+- Prometheus metrics and Grafana dashboards (#68, #69)
+- Actions on the system management page are more responsive (#67)
+- Configuration files can now be yaml (#66)
+- Dynamic choices can now use the instance name as an input (#45)
+- User / authentication support (#35)
+- Request creation can now wait for completion without polling (brew-view #16)
+- Periodic request scheduler (#10)
+
+#### Bug Fixes
+- Bartender checks for connection to Brew-view before Mongo to fix a race (#160)
+- Corrected condition that could cause 'Error: ' to flash on request view (#151)
+- Request view will continue to refresh even if a child has errored (#122)
+- Fixed issue where /var/run/beer-garden was removed after rpm install (#113)
+- Setting queue-level TTL for admin queue messages (#101)
+- Data persisted in the webapp using local storage instead of cookies (#92)
+- Bartender will error if SSL error occurs during Brew-view check (#65)
+- Local plugins are better about logging stacktraces (#57)
+- Date on request index page is always UTC (brew-view #56)
+- Fixing support for Unicode string values when using Python 2 (#54)
+- Nested request display looks better when using slate theme (#41)
+
+#### Other Changes
+- Request index spinner icon looks better on slate theme (#155)
+- Split system and instance columns on request index page (#103)
 
 ## 2.3.9
 6/14/18
