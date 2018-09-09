@@ -34,6 +34,7 @@ import 'startbootstrap-sb-admin-2/js/sb-admin-2.js';
 import 'datatables.net';
 import 'datatables.net-bs';
 import 'datatables-columnfilter';
+import 'datatables-columnfilter/dist/dataTables.lcf.eonasdan.js';
 import 'jwt-decode';
 import 'angular-datatables/dist/angular-datatables.js';
 import 'angular-datatables/dist/plugins/light-columnfilter/angular-datatables.light-columnfilter.js'; // eslint-disable-line max-len
@@ -70,7 +71,6 @@ import {interceptorService, authInterceptorService, interceptorConfig}
 
 import fetchDataDirective from './js/directives/fetch_data.js';
 import bgStatusDirective from './js/directives/system_status.js';
-import './js/directives/dataTables.lcf.datetimepicker.fr.js';
 
 import adminService from './js/services/admin_service.js';
 import commandService from './js/services/command_service.js';

@@ -1803,9 +1803,9 @@ dashdash@^1.12.0:
   dependencies:
     assert-plus "^1.0.0"
 
-datatables-columnfilter@1.0.7:
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/datatables-columnfilter/-/datatables-columnfilter-1.0.7.tgz#1364b55d3744a0a0e5edbf3411fc69600f1ae635"
+datatables-columnfilter@1.0.9:
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/datatables-columnfilter/-/datatables-columnfilter-1.0.9.tgz#b6e1f8f967555c60339a22dd488ed108eaf2a6e2"
 
 datatables.net-bs@^1.10.16:
   version "1.10.16"
