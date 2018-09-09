@@ -67,7 +67,7 @@ export default function requestIndexController(
         html: 'range',
         type: 'text',
         attr: {
-          class: 'form-inline form-control',
+          class: 'form-inline form-control w-50',
         },
         startAttr: {
           placeholder: 'start',

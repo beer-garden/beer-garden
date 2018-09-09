@@ -30,7 +30,10 @@ pre {
     margin-bottom: 3rem !important;
 }
 .w-100 {
-    width: 100%
+    width: 100% !important;
+}
+.w-50 {
+    width: 50% !important;
 }
 
 .clear-right {
