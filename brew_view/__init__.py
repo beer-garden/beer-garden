@@ -338,13 +338,13 @@ def _setup_thrift_context():
             return submit
 
     @contextlib.contextmanager
-    def bg_thrift_context(async=True, **kwargs):
+    def bg_thrift_context(sync=False, **kwargs):
         with client_context(bg_utils.bg_thrift.BartenderBackend,
                             host=config.backend.host,
                             port=config.backend.port,
                             socket_timeout=config.backend.socket_timeout,
                             **kwargs) as client:
-            yield BgClient(client) if async else client
+            yield client if sync else BgClient(client)
 
     return bg_thrift_context
 
