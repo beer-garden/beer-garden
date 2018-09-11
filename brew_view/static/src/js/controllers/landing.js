@@ -56,5 +56,11 @@ export default function landingController(
     loadSystems();
   });
 
+  // We need to reload the root-level systems list here as well, otherwise
+  // new systems won't show up in the sidebar or link correctly
+  // We only need to do this on initial controller load since the root-level
+  // systems will be reloaded as part of the user change process already
+  $rootScope.loadSystems();
+
   loadSystems();
 };
