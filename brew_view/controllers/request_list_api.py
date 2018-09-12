@@ -221,7 +221,7 @@ class RequestListAPI(BaseHandler):
             required: false
             description: Maximum time (seconds) to wait for request completion
             type: integer
-            default: 30
+            default: None (Wait forever)
         consumes:
           - application/json
           - application/x-www-form-urlencoded
@@ -283,8 +283,11 @@ class RequestListAPI(BaseHandler):
                 raise
             else:
                 if self.get_argument('blocking', default='').lower() == 'true':
-                    timeout = self.get_argument('timeout', default=30)
-                    timeout_delta = timedelta(seconds=int(timeout))
+                    timeout = self.get_argument('timeout', default=None)
+                    if timeout is None:
+                        timeout_delta = None
+                    else:
+                        timeout_delta = timedelta(seconds=int(timeout))
 
                     condition = Condition()
                     brew_view.request_map[str(request_model.id)] = condition
