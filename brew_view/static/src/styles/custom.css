@@ -211,6 +211,12 @@ table.dataTable{
     min-width: 110px;
 }
 
+/* Limits number of items shown in dropdowns */
+.select.dropdown-menu{
+    max-height: 195px;
+    overflow: auto;
+}
+
 .red-border{
     border: 2px solid red;
     border-radius: 4px;
