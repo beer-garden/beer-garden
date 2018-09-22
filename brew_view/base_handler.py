@@ -3,15 +3,15 @@ import socket
 
 import time
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
-from mongoengine.errors import (DoesNotExist, NotUniqueError,
-                                ValidationError as MongoValidationError)
+from mongoengine.errors import (
+    DoesNotExist, NotUniqueError, ValidationError as MongoValidationError)
 from prometheus_client import Gauge, Counter, Summary
 from thriftpy.thrift import TException
 from tornado.web import HTTPError, RequestHandler
 
 import bg_utils
 import brew_view
-from brew_view.authorization import basic_auth, bearer_auth, AuthMixin
+from brew_view.authorization import AuthMixin
 from brewtils.errors import (
     ModelError, ModelValidationError, RequestForbidden, RequestPublishException,
     WaitExceededError, AuthorizationRequired)
@@ -19,9 +19,30 @@ from brewtils.models import Event
 
 
 class BaseHandler(AuthMixin, RequestHandler):
-    """Base handler from which all handlers inherit. Enables CORS and error handling."""
+    """Base handler from which all handlers inherit"""
 
     MONGO_ID_PATTERN = r'.*/([0-9a-f]{24}).*'
+
+    charset_re = re.compile(r'charset=(.*)$')
+
+    error_map = {
+        MongoValidationError: {'status_code': 400},
+        ModelError: {'status_code': 400},
+        bg_utils.bg_thrift.InvalidSystem: {'status_code': 400},
+        ExpiredSignatureError: {'status_code': 401},
+        AuthorizationRequired: {'status_code': 401},
+        RequestForbidden: {'status_code': 403},
+        InvalidSignatureError: {'status_code': 403},
+        DoesNotExist: {'status_code': 404, 'message': 'Resource does not exist'},
+        WaitExceededError: {'status_code': 408, 'message': 'Max wait time exceeded'},
+        NotUniqueError: {'status_code': 409, 'message': 'Resource already exists'},
+
+        RequestPublishException: {'status_code': 502},
+        bg_utils.bg_thrift.BaseException: {'status_code': 502, 'message': 'An error occurred '
+                                                                          'on the backend'},
+        TException: {'status_code': 503, 'message': 'Could not connect to Bartender'},
+        socket.timeout: {'status_code': 504, 'message': 'Backend request timed out'},
+    }
 
     # Prometheus metrics.
     # Summaries:
@@ -59,33 +80,6 @@ class BaseHandler(AuthMixin, RequestHandler):
         'Number of requests IN_PROGRESS',
         ['system', 'instance_name', 'system_version'],
     )
-
-    def __init__(self, *args, **kwargs):
-        super(BaseHandler, self).__init__(*args, **kwargs)
-
-        self.charset_re = re.compile(r'charset=(.*)$')
-
-        self.auth_providers.append(bearer_auth)
-        self.auth_providers.append(basic_auth)
-
-        self.error_map = {
-            MongoValidationError: {'status_code': 400},
-            ModelError: {'status_code': 400},
-            bg_utils.bg_thrift.InvalidSystem: {'status_code': 400},
-            ExpiredSignatureError: {'status_code': 401},
-            AuthorizationRequired: {'status_code': 401},
-            RequestForbidden: {'status_code': 403},
-            InvalidSignatureError: {'status_code': 403},
-            DoesNotExist: {'status_code': 404, 'message': 'Resource does not exist'},
-            WaitExceededError: {'status_code': 408, 'message': 'Max wait time exceeded'},
-            NotUniqueError: {'status_code': 409, 'message': 'Resource already exists'},
-
-            RequestPublishException: {'status_code': 502},
-            bg_utils.bg_thrift.BaseException: {'status_code': 502, 'message': 'An error occurred '
-                                                                              'on the backend'},
-            TException: {'status_code': 503, 'message': 'Could not connect to Bartender'},
-            socket.timeout: {'status_code': 504, 'message': 'Backend request timed out'},
-        }
 
     def set_default_headers(self):
         """Headers set here will be applied to all responses"""
