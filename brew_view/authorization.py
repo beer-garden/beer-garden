@@ -59,22 +59,6 @@ class Permissions(Enum):
 Permissions.values = {p.value for p in Permissions}
 
 
-class AuthMixin(object):
-
-    auth_providers = []
-
-    def get_current_user(self):
-        """Use registered handlers to determine current user"""
-
-        for provider in self.auth_providers:
-            principal = provider(self.request)
-
-            if principal is not None:
-                return principal
-
-        return brew_view.anonymous_principal
-
-
 def authenticated(permissions=None):
     """Decorator used to require permissions for access to a resource.
 
@@ -259,3 +243,19 @@ def _principal_from_token(token):
         roles=[BrewtilsRole(name=role) for role in decoded.get('roles', [])],
         permissions=decoded.get('permissions', [])
     )
+
+
+class AuthMixin(object):
+
+    auth_providers = [bearer_auth, basic_auth]
+
+    def get_current_user(self):
+        """Use registered handlers to determine current user"""
+
+        for provider in self.auth_providers:
+            principal = provider(self.request)
+
+            if principal is not None:
+                return principal
+
+        return brew_view.anonymous_principal
