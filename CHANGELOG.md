@@ -2,11 +2,31 @@
 
 All notable changes should be documented in this file.
 
+## 2.4.3
+9/25/18
+
+#### Bug Fixes
+- Corrected problem with brew-view escalating CPU usage (#187)
+- Select boxes in the UI now have a maximum height (#169)
+
+
+## 2.4.2
+9/25/18
+
+#### Bug Fixes
+- Request create timeout is now -1 by default to match pre-2.4 behavior (#183)
+- The landing page now links newly-created systems correctly (#181)
+
+#### Other Changes
+- Changed use of newly-reserved 'async' keyword to support Python 3.7 (#175)
+
+
 ## 2.4.1
 9/5/18
 
 #### Bug Fixes
 - Fixed issue with spinner always being shown on some pages (#172)
+
 
 ## 2.4.0
 9/5/18
@@ -45,6 +65,7 @@ Brew-view 2.4.0, Bartender 2.4.0, BG-utils 2.4.0
 #### Other Changes
 - Request index spinner icon looks better on slate theme (#155)
 - Split system and instance columns on request index page (#103)
+
 
 ## 2.3.9
 6/14/18
