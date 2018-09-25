@@ -154,7 +154,7 @@ publish-package: package ## upload a package
 	twine upload dist/*
 
 publish-docker: docker-build ## push the docker images
-	docker push $(DOCKER_NAME):latest
-	docker push $(DOCKER_NAME):latest-python2
-	docker push $(DOCKER_NAME):$(VERSION)
 	docker push $(DOCKER_NAME):$(VERSION)-python2
+	docker push $(DOCKER_NAME):$(VERSION)
+	docker push $(DOCKER_NAME):latest-python2
+	docker push $(DOCKER_NAME):latest
