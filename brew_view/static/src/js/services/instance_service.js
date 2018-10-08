@@ -9,14 +9,10 @@ instanceService.$inject = ['$http'];
 export default function instanceService($http) {
   return {
     startInstance: (instance) => {
-      return $http.patch('api/v1/instances/' + instance.id,
-        {operation: 'replace', path: '/status', value: 'starting'}
-      );
+      return $http.patch('api/v1/instances/' + instance.id, {operation: 'start'});
     },
     stopInstance: (instance) => {
-      return $http.patch('api/v1/instances/' + instance.id,
-        {operation: 'replace', path: '/status', value: 'stopping'}
-      );
+      return $http.patch('api/v1/instances/' + instance.id, {operation: 'stop'});
     },
   };
 };
