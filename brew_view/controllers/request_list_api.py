@@ -5,7 +5,8 @@ from functools import reduce
 
 from mongoengine import Q
 from tornado.gen import coroutine
-from tornado.locks import Condition
+from tornado.locks import Event
+from tornado.util import TimeoutError
 
 import bg_utils
 import brew_view
@@ -266,11 +267,18 @@ class RequestListAPI(BaseHandler):
         if self.current_user:
             request_model.requester = self.current_user.username
 
+        # Ok, ready to save
+        request_model.save()
+        request_id = str(request_model.id)
+
+        # Set up the wait event BEFORE yielding the processRequest call
+        blocking = self.get_argument('blocking', default='').lower() == 'true'
+        if blocking:
+            brew_view.request_map[request_id] = Event()
+
         with thrift_context() as client:
             try:
-                request_model.save()
-                yield client.processRequest(str(request_model.id))
-
+                yield client.processRequest(request_id)
             except bg_utils.bg_thrift.InvalidRequest as ex:
                 request_model.delete()
                 raise ModelValidationError(ex.message)
@@ -282,24 +290,25 @@ class RequestListAPI(BaseHandler):
                     request_model.delete()
                 raise
             else:
-                if self.get_argument('blocking', default='').lower() == 'true':
+                if blocking:
                     timeout = self.get_argument('timeout', default=None)
                     if timeout is None:
                         timeout_delta = None
                     else:
                         timeout_delta = timedelta(seconds=int(timeout))
 
-                    condition = Condition()
-                    brew_view.request_map[str(request_model.id)] = condition
-
-                    wait_result = yield condition.wait(timeout_delta)
-                    if not wait_result:
+                    try:
+                        event = brew_view.request_map.get(request_id)
+                        yield event.wait(timeout_delta)
+                    except TimeoutError:
                         raise TimeoutExceededError()
+                    finally:
+                        brew_view.request_map.pop(request_id, None)
 
         request_model.reload()
 
         # Query for request from body id
-        req = Request.objects.get(id=str(request_model.id))
+        req = Request.objects.get(id=request_id)
 
         # Now attempt to add the instance status as a header.
         # The Request is already created at this point so it's a best-effort thing
@@ -319,7 +328,7 @@ class RequestListAPI(BaseHandler):
         # best-effort thing
         except Exception as ex:
             self.logger.exception('Unable to get Instance status for Request %s: %s',
-                                  str(request_model.id), ex)
+                                  request_id, ex)
 
         self.request.event_extras = {'request': req}
 
