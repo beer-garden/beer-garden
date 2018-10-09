@@ -89,7 +89,7 @@ class RequestAPI(BaseHandler):
         """
         req = Request.objects.get(id=request_id)
         operations = self.parser.parse_patch(self.request.decoded_body, many=True, from_string=True)
-        wait_condition = None
+        wait_event = None
 
         # We note the status before the operations, because it is possible for the operations to
         # update the status of the request. In that case, because the updates are coming in in a
@@ -110,7 +110,7 @@ class RequestAPI(BaseHandler):
                             self.request.event.name = Events.REQUEST_COMPLETED.name
 
                             if request_id in brew_view.request_map:
-                                wait_condition = brew_view.request_map[request_id]
+                                wait_event = brew_view.request_map[request_id]
                     else:
                         error_msg = "Unsupported status value '%s'" % op.value
                         self.logger.warning(error_msg)
@@ -145,8 +145,8 @@ class RequestAPI(BaseHandler):
         self._update_metrics(req, status_before)
         self._update_job_numbers(req, status_before)
 
-        if wait_condition:
-            wait_condition.notify()
+        if wait_event:
+            wait_event.set()
 
         self.request.event_extras = {'request': req, 'patch': operations}
 

@@ -51,6 +51,33 @@ class InstanceAPI(BaseHandler):
         self.write(self.parser.serialize_instance(Instance.objects.get(id=instance_id),
                                                   to_string=False))
 
+    @authenticated(permissions=[Permissions.INSTANCE_DELETE])
+    def delete(self, instance_id):
+        """
+        ---
+        summary: Delete a specific Instance
+        parameters:
+          - name: instance_id
+            in: path
+            required: true
+            description: The ID of the Instance
+            type: string
+        responses:
+          204:
+            description: Instance has been successfully deleted
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Instances
+        """
+        self.logger.debug("Deleting Instance: %s", instance_id)
+
+        Instance.objects.get(id=instance_id).delete()
+
+        self.set_status(204)
+
     @coroutine
     @authenticated(permissions=[Permissions.INSTANCE_UPDATE])
     def patch(self, instance_id):
