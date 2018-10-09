@@ -1,6 +1,14 @@
 # Beer Garden Changelog
 
-All notable changes should be documented in this file.
+## 2.4.4
+10/9/18
+
+#### Bug Fixes
+- Fixed a race that could cause request creation to wait forever (#195)
+
+#### Added Features
+- Added Instance deletion endpoint to REST API
+
 
 ## 2.4.3
 9/25/18
