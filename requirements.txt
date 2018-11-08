@@ -52,7 +52,7 @@ python-box==3.2.0         # via yapconf
 pytz==2018.5
 pyyaml==3.13              # via watchdog
 requests-toolbelt==0.8.0  # via twine
-requests==2.19.1          # via codecov, requests-toolbelt, sphinx, twine
+requests==2.20.1          # via codecov, requests-toolbelt, sphinx, twine
 ruamel.ordereddict==0.4.13 ; python_version < "3.0"
 ruamel.yaml==0.15.51
 scandir==1.8              # via pathlib2
