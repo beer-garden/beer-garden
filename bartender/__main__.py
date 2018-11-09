@@ -69,12 +69,12 @@ def main():
                         'Unable to connect to rabbitmq admin interface. '
                         'Is the management plugin enabled?')
 
-    # Make sure that the bartender user has admin permissions
-    bartender.ensure_admin()
-
     # Since we wait for RabbitMQ and brew-view we could already be shutting down
     # In that case we don't want to start
     if not bartender.application.stopped():
+        # Make sure that the bartender user has admin permissions
+        bartender.ensure_admin()
+
         bartender.logger.info("Hi, what can I get you to drink?")
         bartender.application.start()
 
