@@ -7,7 +7,7 @@ passlib
 pika
 ruamel.ordereddict ; python_version < "3.0"
 ruamel.yaml
-thriftpy
+thriftpy2
 yapconf
 
 # Documentation Dependencies
