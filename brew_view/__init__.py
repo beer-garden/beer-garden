@@ -1,13 +1,13 @@
 import contextlib
 import logging
 import os
-import ssl
 from concurrent.futures import ThreadPoolExecutor
-from functools import partial
 
+import ssl
 from apispec import APISpec
 from apscheduler.executors.tornado import TornadoExecutor
 from apscheduler.schedulers.tornado import TornadoScheduler
+from functools import partial
 from prometheus_client.exposition import start_http_server
 from pytz import utc
 from thriftpy.rpc import client_context
@@ -24,6 +24,7 @@ from bg_utils.event_publisher import EventPublishers
 from bg_utils.pika import TransientPikaClient
 from bg_utils.plugin_logging_loader import PluginLoggingLoader
 from brew_view.authorization import anonymous_principal as load_anonymous
+from brew_view.metrics import initialize_counts
 from brew_view.publishers import (
     MongoPublisher, RequestPublisher, TornadoPikaPublisher, WebsocketPublisher)
 from brew_view.scheduler.jobstore import BGJobStore
@@ -82,10 +83,17 @@ def startup():
     global event_publishers
 
     # Ensure we have a mongo connection
+    logger.info("Checking for Mongo connection")
     yield _progressive_backoff(
         partial(bg_utils.setup_database, config),
         'Unable to connect to mongo, is it started?'
     )
+
+    logger.info("Starting event publishers")
+    event_publishers = _setup_event_publishers(client_ssl)
+
+    logger.info("Initializing metrics")
+    initialize_counts()
 
     logger.info(
         'Starting metrics server on %s:%d' %
@@ -98,9 +106,6 @@ def startup():
         (config.web.host, config.web.port)
     )
     server.listen(config.web.port, config.web.host)
-
-    logger.info("Starting event publishers")
-    event_publishers = _setup_event_publishers(client_ssl)
 
     logger.info('Starting scheduler')
     request_scheduler.start()

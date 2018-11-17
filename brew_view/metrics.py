@@ -1,6 +1,7 @@
 import datetime
 from prometheus_client import Gauge, Counter, Summary
 
+from bg_utils.models import Request
 from brewtils.models import Request as BrewtilsRequest
 
 # Summaries:
@@ -41,7 +42,19 @@ in_progress_request_gauge = Gauge(
 
 
 def initialize_counts():
-    pass
+    for request in Request.objects(status='CREATED'):
+        queued_request_gauge.labels(
+            system=request.system,
+            system_version=request.system_version,
+            instance_name=request.instance_name,
+        ).inc()
+
+    for request in Request.objects(status='IN_PROGRESS'):
+        in_progress_request_gauge.labels(
+            system=request.system,
+            system_version=request.system_version,
+            instance_name=request.instance_name,
+        ).inc()
 
 
 def request_created(request):
