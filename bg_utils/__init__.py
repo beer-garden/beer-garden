@@ -10,7 +10,7 @@ from io import open
 import six
 import thriftpy
 import yapconf
-from mongoengine.errors import DoesNotExist
+from mongoengine.errors import DoesNotExist, NotUniqueError
 from passlib.apps import custom_app_context
 from ruamel.yaml import YAML
 
@@ -349,6 +349,17 @@ def _update_request_model():
                                {'$set': {'has_parent': True}},)
 
 
+def _create_role(role):
+    """Create a role if it doesn't already exist"""
+    from .models import Role
+
+    try:
+        Role.objects.get(name=role.name)
+    except DoesNotExist:
+        logger.warning('Role %s missing, about to create' % role.name)
+        role.save()
+
+
 def _ensure_roles():
     """Create roles if necessary
 
@@ -360,10 +371,7 @@ def _ensure_roles():
     """
     from .models import Role
 
-    if Role.objects.count() == 0:
-        logger.warning('No roles found: creating convenience roles')
-
-        logger.warning('About to create bg-readonly role')
+    convenience_roles = [
         Role(
             name='bg-readonly',
             description='Allows only standard read actions',
@@ -376,22 +384,43 @@ def _ensure_roles():
                 'bg-request-read',
                 'bg-system-read',
             ]
-        ).save()
-
-        logger.warning('About to create bg-operator role')
+        ),
         Role(
             name='bg-operator',
             description='Standard Beergarden user role',
-            roles=[Role.objects.get(name='bg-readonly')],
             permissions=[
+                'bg-command-read',
+                'bg-event-read',
+                'bg-instance-read',
+                'bg-job-read',
+                'bg-queue-read',
+                'bg-request-read',
+                'bg-system-read',
+
                 'bg-request-create',
             ]
-        ).save()
+        ),
+    ]
 
-    try:
-        Role.objects.get(name='bg-plugin')
-    except DoesNotExist:
-        logger.warning('Role bg-plugin missing, about to create')
+    mandatory_roles = [
+        Role(
+            name='bg-anonymous',
+            description='Special role used for non-authenticated users',
+            permissions=[
+                'bg-command-read',
+                'bg-event-read',
+                'bg-instance-read',
+                'bg-job-read',
+                'bg-queue-read',
+                'bg-request-read',
+                'bg-system-read',
+            ],
+        ),
+        Role(
+            name='bg-admin',
+            description='Allows all actions',
+            permissions=['bg-all'],
+        ),
         Role(
             name='bg-plugin',
             description='Allows actions necessary for plugins to function',
@@ -404,36 +433,24 @@ def _ensure_roles():
                 'bg-system-create',
                 'bg-system-read',
                 'bg-system-update',
-            ]
-        ).save()
+            ],
+        ),
+    ]
 
-    try:
-        Role.objects.get(name='bg-admin')
-    except DoesNotExist:
-        logger.warning('Role bg-admin missing, about to create')
-        Role(
-            name='bg-admin',
-            description='Allows all actions',
-            permissions=['bg-all']
-        ).save()
+    # Only create convenience roles if this is a fresh database
+    if Role.objects.count() == 0:
+        logger.warning('No roles found: creating convenience roles')
 
-    try:
-        Role.objects.get(name='bg-anonymous')
-    except DoesNotExist:
-        logger.warning('Role bg-anonymous missing, about to create')
-        Role(
-            name='bg-anonymous',
-            description='Special role used for non-authenticated users',
-            permissions=[
-                'bg-command-read',
-                'bg-event-read',
-                'bg-instance-read',
-                'bg-job-read',
-                'bg-queue-read',
-                'bg-request-read',
-                'bg-system-read',
-            ]
-        ).save()
+        for role in convenience_roles:
+            try:
+                # Since we have a race potential here catch the case where
+                # another process has already created the role
+                _create_role(role)
+            except NotUniqueError:
+                logger.warning('Unable to create role %s' % role.name)
+
+    for role in mandatory_roles:
+        _create_role(role)
 
 
 def _ensure_users():
