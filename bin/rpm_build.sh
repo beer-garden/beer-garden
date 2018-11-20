@@ -53,7 +53,7 @@ BEFORE_REMOVE="before_remove.sh"
 AFTER_REMOVE="after_remove.sh"
 
 get_version() {
-    echo $(cat "$SRC_PATH/$1/$2/_version.py" | cut -d'"' -f2)
+    echo $(cat "$SRC_PATH/$1/$2/_version.py" | cut -s -d'"' -f2)
 }
 
 install_apps() {
