@@ -15,7 +15,7 @@ from bg_utils.mongo.parser import MongoParser
 from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
-from brew_view.metrics import request_created
+from brew_view.metrics import request_created, http_api_latency_total, request_latency
 from brewtils.errors import (
     ModelValidationError,
     RequestPublishException,
@@ -311,23 +311,6 @@ class RequestListAPI(BaseHandler):
                 if request_model.id:
                     request_model.delete()
                 raise
-            else:
-                if blocking:
-                    timeout = self.get_argument("timeout", default=None)
-                    if timeout is None:
-                        timeout_delta = None
-                    else:
-                        timeout_delta = timedelta(seconds=int(timeout))
-
-                    try:
-                        event = brew_view.request_map.get(request_id)
-                        yield event.wait(timeout_delta)
-                    except TimeoutError:
-                        raise TimeoutExceededError()
-                    finally:
-                        brew_view.request_map.pop(request_id, None)
-
-        request_model.reload()
 
         # Query for request from body id
         req = Request.objects.get(id=request_id)
@@ -357,6 +340,35 @@ class RequestListAPI(BaseHandler):
 
         # Metrics
         request_created(request_model)
+
+        if blocking:
+            # Publish metrics here so they aren't skewed
+            self.request.publish_metrics = False
+            http_api_latency_total.labels(
+                method=self.request.method.upper(),
+                route=self.prometheus_endpoint,
+                status=self.get_status(),
+            ).observe(request_latency(self.request.created_time))
+
+            # Publish event so it doesn't come after completion event
+            self.request.publish_event = False
+            brew_view.event_publishers.publish_event(
+                self.request.event, **self.request.event_extras
+            )
+
+            try:
+                timeout = self.get_argument("timeout", default=None)
+                delta = timedelta(seconds=int(timeout)) if timeout else None
+
+                event = brew_view.request_map.get(request_id)
+
+                yield event.wait(delta)
+
+                request_model.reload()
+            except TimeoutError:
+                raise TimeoutExceededError()
+            finally:
+                brew_view.request_map.pop(request_id, None)
 
         self.set_status(201)
         self.write(self.parser.serialize_request(request_model, to_string=False))
