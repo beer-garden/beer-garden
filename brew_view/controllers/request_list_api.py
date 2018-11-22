@@ -352,6 +352,7 @@ class RequestListAPI(BaseHandler):
         requested_fields = []
         order_by = None
         overall_search = None
+        hint = []
 
         query_set = Request.objects
 
@@ -400,11 +401,15 @@ class RequestListAPI(BaseHandler):
                         })
 
                     search_params.append(search_query)
+                    hint.append(column['data'])
 
             raw_order = self.get_query_argument('order', default=None)
             if raw_order:
                 order = json.loads(raw_order)
                 order_by = columns[order.get('column')]['data']
+
+                hint.append(order_by)
+
                 if order.get('dir') == 'desc':
                     order_by = '-' + order_by
 
@@ -435,5 +440,17 @@ class RequestListAPI(BaseHandler):
             query_set = query_set.only(*requested_fields)
         else:
             requested_fields = None
+
+        # Mongo seems to prefer using only the ['parent', '<sort field>']
+        # index, even when also filtering. So we have to help it a bit.
+        real_hint = ['parent']
+        if 'created_at' in hint:
+            real_hint.append('created_at')
+        for index in ['command', 'system', 'instance', 'status']:
+            if index in hint:
+                real_hint.append(index)
+                break
+        real_hint.append('index')
+        query_set = query_set.hint('_'.join(real_hint))
 
         return query_set, requested_fields
