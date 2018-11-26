@@ -41,6 +41,11 @@ in_progress_request_gauge = Gauge(
 )
 
 
+def request_latency(start_time):
+    """Measure request latency in seconds as a float."""
+    return (datetime.datetime.utcnow() - start_time).total_seconds()
+
+
 def initialize_counts():
     for request in Request.objects(status__in=['CREATED', 'IN_PROGRESS']):
         label_args = {
@@ -96,10 +101,7 @@ def request_updated(request, status_before):
         in_progress_request_gauge.labels(**labels).inc()
 
     elif request.status in BrewtilsRequest.COMPLETED_STATUSES:
-        # We don't use _measure_latency here because the request times are
-        # stored in UTC and we need to make sure we're comparing apples to
-        # apples.
-        latency = (datetime.datetime.utcnow() - request.created_at).total_seconds()
+        latency = request_latency(request.created_at)
         labels['command'] = request.command
         labels['status'] = request.status
 
