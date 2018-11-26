@@ -373,24 +373,36 @@ class RequestListAPI(BaseHandler):
                 if column['data']:
                     requested_fields.append(column['data'])
 
-                if 'searchable' in column and column['searchable'] and column['search']['value']:
+                if 'searchable' in column and \
+                        column['searchable'] and \
+                        column['search']['value']:
                     if column['data'] in ['created_at', 'updated_at']:
                         search_dates = column['search']['value'].split('~')
                         start_query = Q()
                         end_query = Q()
 
                         if search_dates[0]:
-                            start_query = Q(**{column['data']+'__gte': search_dates[0]})
+                            start_query = Q(**{
+                                column['data']+'__gte': search_dates[0]
+                            })
                         if search_dates[1]:
-                            end_query = Q(**{column['data']+'__lte': search_dates[1]})
+                            end_query = Q(**{
+                                column['data']+'__lte': search_dates[1]
+                            })
 
                         search_query = start_query & end_query
                     elif column['data'] == 'status':
-                        search_query = Q(**{column['data']+'__exact': column['search']['value']})
+                        search_query = Q(**{
+                            column['data']+'__exact': column['search']['value']
+                        })
                     elif column['data'] == 'comment':
-                        search_query = Q(**{column['data']+'__contains': column['search']['value']})
+                        search_query = Q(**{
+                            column['data']+'__contains': column['search']['value']
+                        })
                     else:
-                        search_query = Q(**{column['data']+'__startswith': column['search']['value']})
+                        search_query = Q(**{
+                            column['data']+'__startswith': column['search']['value']
+                        })
 
                     search_params.append(search_query)
 
