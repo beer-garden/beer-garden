@@ -42,19 +42,17 @@ in_progress_request_gauge = Gauge(
 
 
 def initialize_counts():
-    for request in Request.objects(status='CREATED'):
-        queued_request_gauge.labels(
-            system=request.system,
-            system_version=request.system_version,
-            instance_name=request.instance_name,
-        ).inc()
+    for request in Request.objects(status__in=['CREATED', 'IN_PROGRESS']):
+        label_args = {
+            'system': request.system,
+            'system_version': request.system_version,
+            'instance_name': request.instance_name,
+        }
 
-    for request in Request.objects(status='IN_PROGRESS'):
-        in_progress_request_gauge.labels(
-            system=request.system,
-            system_version=request.system_version,
-            instance_name=request.instance_name,
-        ).inc()
+        if request.status == 'CREATED':
+            queued_request_gauge.labels(**label_args).inc()
+        elif request.status == 'IN_PROGRESS':
+            in_progress_request_gauge.labels(**label_args).inc()
 
 
 def request_created(request):
