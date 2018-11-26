@@ -8,6 +8,7 @@ from ruamel import yaml
 import pytest
 from box import Box
 from mock import patch, MagicMock, Mock
+from mongoengine import DoesNotExist, NotUniqueError
 from pymongo.errors import ServerSelectionTimeoutError
 from yapconf import YapconfSpec
 
@@ -465,3 +466,48 @@ class TestBgUtils(object):
         assert generated_config.to_dict() == new_config
 
         assert len(os.listdir(str(tmpdir))) == 1
+
+    def test_create_role_exists(self, model_mocks):
+        role = Mock()
+        model_mocks['role'].objects.get.return_value = role
+
+        bg_utils._create_role(role)
+        assert role.save.called is False
+
+    def test_create_role_missing(self, model_mocks):
+        role = Mock()
+        model_mocks['role'].objects.get.side_effect = DoesNotExist
+
+        bg_utils._create_role(role)
+        assert role.save.called is True
+
+    def test_ensure_roles(self, model_mocks):
+        bg_utils._ensure_roles()
+        assert 3 == model_mocks['role'].objects.get.call_count
+
+    def test_ensure_roles_new_install(self, model_mocks):
+        model_mocks['role'].objects.count.return_value = 0
+        model_mocks['role'].objects.get.side_effect = DoesNotExist
+
+        bg_utils._ensure_roles()
+        assert 5 == model_mocks['role'].objects.get.call_count
+
+    def test_ensure_roles_new_install_race_convenience(self, model_mocks):
+        """Race condition where another process created a convenience role"""
+        model_mocks['role'].objects.count.return_value = 0
+        model_mocks['role'].objects.get.side_effect = (
+            [NotUniqueError] + [DoesNotExist for _ in range(4)]
+        )
+
+        bg_utils._ensure_roles()
+        assert 5 == model_mocks['role'].objects.get.call_count
+
+    def test_ensure_roles_new_install_race_mandatory(self, model_mocks):
+        """Race condition where another process created a mandatory role"""
+        model_mocks['role'].objects.count.return_value = 0
+        model_mocks['role'].objects.get.side_effect = (
+            [DoesNotExist for _ in range(4)] + [NotUniqueError]
+        )
+
+        with pytest.raises(NotUniqueError):
+            bg_utils._ensure_roles()
