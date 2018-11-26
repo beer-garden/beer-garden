@@ -447,7 +447,7 @@ def _ensure_roles():
                 # another process has already created the role
                 _create_role(role)
             except NotUniqueError:
-                logger.warning('Unable to create role %s' % role.name)
+                logger.warning('Role %s already exists' % role.name)
 
     for role in mandatory_roles:
         _create_role(role)
