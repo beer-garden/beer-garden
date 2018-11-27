@@ -340,7 +340,7 @@ def _get_config_values(config):
 
 
 def _update_request_model():
-    from .models import Request
+    from bg_utils.mongo.models import Request
 
     raw_collection = Request._get_collection()
     raw_collection.update_many({'parent':  None},
@@ -351,7 +351,7 @@ def _update_request_model():
 
 def _create_role(role):
     """Create a role if it doesn't already exist"""
-    from .models import Role
+    from bg_utils.mongo.models import Role
 
     try:
         Role.objects.get(name=role.name)
@@ -369,7 +369,7 @@ def _ensure_roles():
     Then there are roles that MUST be present. These will always be created if
     they do not exist.
     """
-    from .models import Role
+    from bg_utils.mongo.models import Role
 
     convenience_roles = [
         Role(
@@ -462,7 +462,7 @@ def _ensure_users():
     Then there are users that MUST be present. These will always be created if
     they do not exist.
     """
-    from .models import Principal, Role
+    from bg_utils.mongo.models import Principal, Role
 
     if Principal.objects.count() == 0:
         logger.warning('No users found: creating convenience users')
@@ -516,7 +516,7 @@ def _check_indexes(document_class):
     """
     from pymongo.errors import OperationFailure
     from mongoengine.connection import get_db
-    from .models import Request
+    from bg_utils.mongo.models import Request
 
     try:
         # Building the indexes could take a while so it'd be nice to give some indication
@@ -572,7 +572,7 @@ def _check_indexes(document_class):
 
 def _verify_db():
     """Do everything necessary to ensure the database is in a 'good' state"""
-    from .models import Job, Request, Role, System
+    from bg_utils.mongo.models import Job, Request, Role, System
 
     for doc in (Job, Request, Role, System):
         _check_indexes(doc)

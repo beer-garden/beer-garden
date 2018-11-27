@@ -2,7 +2,7 @@ from copy import copy
 
 from marshmallow.exceptions import MarshmallowError
 
-from bg_utils.models import (
+from bg_utils.mongo.models import (
     System, Instance, Command, Parameter, Request, Choices, Event, Principal,
     Role, RefreshToken, Job, RequestTemplate, DateTrigger, IntervalTrigger,
     CronTrigger

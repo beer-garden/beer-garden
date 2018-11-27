@@ -13,7 +13,7 @@ from pymongo.errors import ServerSelectionTimeoutError
 from yapconf import YapconfSpec
 
 import bg_utils
-import bg_utils.models
+import bg_utils.mongo.models
 
 
 class TestBgUtils(object):
@@ -103,10 +103,10 @@ class TestBgUtils(object):
         role_mock.__name__ = 'Role'
         job_mock.__name__ = 'Job'
 
-        monkeypatch.setattr(bg_utils.models, 'Request', request_mock)
-        monkeypatch.setattr(bg_utils.models, 'System', system_mock)
-        monkeypatch.setattr(bg_utils.models, 'Role', role_mock)
-        monkeypatch.setattr(bg_utils.models, 'Job', job_mock)
+        monkeypatch.setattr(bg_utils.mongo.models, 'Request', request_mock)
+        monkeypatch.setattr(bg_utils.mongo.models, 'System', system_mock)
+        monkeypatch.setattr(bg_utils.mongo.models, 'Role', role_mock)
+        monkeypatch.setattr(bg_utils.mongo.models, 'Job', job_mock)
 
         return {
             'request': request_mock,
