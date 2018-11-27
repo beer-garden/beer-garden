@@ -373,9 +373,11 @@ class RequestListAPI(BaseHandler):
                 if column['data']:
                     requested_fields.append(column['data'])
 
-                if 'searchable' in column and \
-                        column['searchable'] and \
-                        column['search']['value']:
+                if (
+                        'searchable' in column
+                        and column['searchable']
+                        and column['search']['value']
+                ):
                     if column['data'] in ['created_at', 'updated_at']:
                         search_dates = column['search']['value'].split('~')
                         start_query = Q()
