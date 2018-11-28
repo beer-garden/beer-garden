@@ -3,7 +3,7 @@ import logging
 import bartender
 from bartender.errors import PluginStartupError
 from bartender.local_plugins.plugin_runner import LocalPluginRunner
-from bg_utils.models import System
+from bg_utils.mongo.models import System
 
 
 class LocalPluginsManager(object):

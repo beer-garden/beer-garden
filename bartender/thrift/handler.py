@@ -10,7 +10,7 @@ from pyrabbit2.http import HTTPError
 import bartender
 import bartender._version
 import bg_utils
-from bg_utils.models import Instance, Request, System, StatusInfo
+from bg_utils.mongo.models import Instance, Request, System, StatusInfo
 from bg_utils.pika import get_routing_key, get_routing_keys
 from brewtils.errors import ModelValidationError, RestError
 from brewtils.schema_parser import SchemaParser

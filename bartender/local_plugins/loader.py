@@ -6,7 +6,7 @@ from os.path import isfile, join, abspath
 
 import bartender
 from bartender.local_plugins.plugin_runner import LocalPluginRunner
-from bg_utils.models import Instance, System
+from bg_utils.mongo.models import Instance, System
 
 
 class LocalPluginLoader(object):

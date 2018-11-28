@@ -9,7 +9,7 @@ from builtins import str
 from requests import Session
 
 import bartender
-from bg_utils.models import System, Choices
+from bg_utils.mongo.models import System, Choices
 from brewtils.choices import parse
 from brewtils.errors import ModelValidationError
 from brewtils.rest.system_client import SystemClient

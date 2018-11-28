@@ -3,7 +3,7 @@ from box import Box
 from mock import Mock, call, patch, PropertyMock
 
 from bartender.request_validator import RequestValidator
-from bg_utils.models import Command, Instance, Parameter, Request, System, Choices
+from bg_utils.mongo.models import Command, Instance, Parameter, Request, System, Choices
 from brewtils.errors import ModelValidationError
 
 
@@ -143,21 +143,21 @@ class TestChoices(object):
 
 class TestRequestValidation(object):
 
-    @patch('bg_utils.models.System.find_unique')
+    @patch('bg_utils.mongo.models.System.find_unique')
     def test_get_and_validate_system_with_system(self, find_mock, validator):
         system = System(name="foo", instances=[Instance(name="default")])
         find_mock.return_value = system
         req = Request(system='foo', command='bar', instance_name="default", parameters={})
         assert validator.get_and_validate_system(req) == system
 
-    @patch('bg_utils.models.System.find_unique', Mock(return_value=None))
+    @patch('bg_utils.mongo.models.System.find_unique', Mock(return_value=None))
     def test_get_and_validate_system_no_system(self, validator):
         req = Request(system='foo', command='bar', parameters={})
 
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_system(req)
 
-    @patch('bg_utils.models.System.find_unique')
+    @patch('bg_utils.mongo.models.System.find_unique')
     def test_get_and_validate_system_invalid_instance_name(self, find_mock, validator):
         system = System(name="foo", instances=[Instance(name="instance1")])
         find_mock.return_value = system

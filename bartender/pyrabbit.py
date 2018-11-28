@@ -4,7 +4,7 @@ from pyrabbit2.api import Client
 from pyrabbit2.http import HTTPError, NetworkError
 
 import bartender
-from bg_utils.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import BeerGardenSchemaParser
 
 
 class PyrabbitClient(object):
