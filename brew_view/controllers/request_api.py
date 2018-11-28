@@ -2,8 +2,8 @@ import datetime
 import logging
 
 import brew_view
-from bg_utils.models import Request, Job
-from bg_utils.parser import BeerGardenSchemaParser
+from bg_utils.mongo.models import Request, Job
+from bg_utils.mongo.parser import BeerGardenSchemaParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError

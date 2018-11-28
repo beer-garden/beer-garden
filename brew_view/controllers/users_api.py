@@ -5,8 +5,8 @@ from mongoengine.errors import DoesNotExist, ValidationError
 from passlib.apps import custom_app_context
 
 import brew_view
-from bg_utils.models import Principal, Role
-from bg_utils.parser import BeerGardenSchemaParser
+from bg_utils.mongo.models import Principal, Role
+from bg_utils.mongo.parser import BeerGardenSchemaParser
 from brew_view.authorization import (
     authenticated, check_permission, Permissions, coalesce_permissions)
 from brew_view.base_handler import BaseHandler

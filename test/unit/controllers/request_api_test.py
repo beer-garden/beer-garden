@@ -4,7 +4,7 @@ import json
 
 from mock import Mock
 
-from bg_utils.models import Request, Job, RequestTemplate, DateTrigger
+from bg_utils.mongo.models import Request, Job, RequestTemplate, DateTrigger
 from . import TestHandlerBase
 
 

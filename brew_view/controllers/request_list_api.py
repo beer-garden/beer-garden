@@ -10,8 +10,8 @@ from tornado.util import TimeoutError
 
 import bg_utils
 import brew_view
-from bg_utils.models import Request, System
-from bg_utils.parser import BeerGardenSchemaParser
+from bg_utils.mongo.models import Request, System
+from bg_utils.mongo.parser import BeerGardenSchemaParser
 from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler

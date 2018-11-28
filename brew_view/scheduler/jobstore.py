@@ -4,7 +4,7 @@ from apscheduler.jobstores.base import BaseJobStore
 from mongoengine import DoesNotExist
 from pytz import utc
 
-from bg_utils.models import Job as BGJob
+from bg_utils.mongo.models import Job as BGJob
 from brew_view.scheduler import db_to_scheduler
 
 

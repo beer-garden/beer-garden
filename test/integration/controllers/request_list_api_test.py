@@ -6,7 +6,7 @@ from mock import Mock, MagicMock, patch
 from mongoengine import Q
 
 import brew_view
-from bg_utils.models import Request
+from bg_utils.mongo.models import Request
 
 
 @unittest.skip('TODO')
