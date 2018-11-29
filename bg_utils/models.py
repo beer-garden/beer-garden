@@ -261,19 +261,55 @@ class Request(Document, BrewtilsRequest):
             {'name': 'parent_index', 'fields': ['has_parent']},
 
             # These are for sorting on the request index page
-            {'name': 'parent_command_index', 'fields': ['has_parent', 'command']},
-            {'name': 'parent_system_index', 'fields': ['has_parent', 'system']},
-            {'name': 'parent_instance_index', 'fields': ['has_parent', 'instance_name']},
-            {'name': 'parent_status_index', 'fields': ['has_parent', 'status']},
-            {'name': 'parent_created_at_index', 'fields': ['has_parent', 'created_at']},
-            {'name': 'parent_comment_index', 'fields': ['has_parent', 'comment']},
+            {
+                'name': 'parent_command_index',
+                'fields': ['has_parent', 'command'],
+            },
+            {
+                'name': 'parent_system_index',
+                'fields': ['has_parent', 'system'],
+            },
+            {
+                'name': 'parent_instance_index',
+                'fields': ['has_parent', 'instance_name'],
+            },
+            {
+                'name': 'parent_status_index',
+                'fields': ['has_parent', 'status'],
+            },
+            {
+                'name': 'parent_created_at_index',
+                'fields': ['has_parent', 'created_at'],
+            },
+            {
+                'name': 'parent_comment_index',
+                'fields': ['has_parent', 'comment'],
+            },
+            {
+                'name': 'parent_created_at_command_index',
+                'fields': ['has_parent', '-created_at', 'command'],
+            },
+            {
+                'name': 'parent_created_at_system_index',
+                'fields': ['has_parent', '-created_at', 'system'],
+            },
+            {
+                'name': 'parent_created_at_instance_index',
+                'fields': ['has_parent', '-created_at', 'instance_name'],
+            },
+            {
+                'name': 'parent_created_at_status_index',
+                'fields': ['has_parent', '-created_at', 'status'],
+            },
 
             # This is used for text searching
             {
                 'name': 'text_index',
-                'fields': ['$system', '$command', '$command_type',
-                           '$comment', '$status', '$instance_name']
-            }
+                'fields': [
+                    '$system', '$command', '$command_type', '$comment',
+                    '$status', '$instance_name',
+                ],
+            },
         ]
     }
 
