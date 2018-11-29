@@ -20,7 +20,7 @@ class EventPublishers(MutableMapping):
         """Publish event to all connections
 
         :param event: The Event to publish
-        :param kwargs: Any additional arguments to be used when preparing the event
+        :param kwargs: Additional arguments to be used when preparing the event
         """
         if not event.timestamp:
             event.timestamp = datetime.utcnow
@@ -32,8 +32,9 @@ class EventPublishers(MutableMapping):
             try:
                 connection.publish_event(event, **kwargs)
             except Exception as ex:
-                self._logger.exception("Exception while publishing event to '%s' connection: %s",
-                                       name, ex)
+                self._logger.exception(
+                    "Exception while publishing event to '%s' connection: %s",
+                    name, ex)
 
     def shutdown(self):
         return [c.shutdown() for c in self._connections.values()]
@@ -56,12 +57,13 @@ class EventPublishers(MutableMapping):
 
 
 class EventPublisher(object):
-    """Mixin that marks a connection as being able to publish event notifications"""
+    """Mixin that marks a connection as able to publish event notifications"""
 
     def publish_event(self, event, **kwargs):
         event = self._event_prepare(event, **kwargs)
-        self.publish(self._event_serialize(event, **kwargs), **self._event_publish_args(event,
-                                                                                        **kwargs))
+        pub_args = self._event_publish_args(event, **kwargs)
+
+        self.publish(self._event_serialize(event, **kwargs), **pub_args)
 
     def publish(self, message, **kwargs):
         pass
