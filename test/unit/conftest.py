@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pytest
 
-from bg_utils.models import Job, DateTrigger, RequestTemplate
+from bg_utils.models import Job, DateTrigger, Request, RequestTemplate
 
 
 @pytest.fixture
@@ -76,6 +76,12 @@ def bg_trigger(trigger_dict, ts_dt):
 def bg_request_template(request_template_dict):
     """A request template model."""
     return RequestTemplate(**request_template_dict)
+
+
+@pytest.fixture
+def bg_request(request_template_dict):
+    """A request model."""
+    return Request(**request_template_dict)
 
 
 @pytest.fixture
