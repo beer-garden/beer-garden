@@ -36,9 +36,12 @@ class RequestListAPITest(TestHandlerBase):
 
         super(RequestListAPITest, self).setUp()
 
-    @patch('brew_view.controllers.request_list_api.RequestListAPI._get_requests')
-    def test_get(self, get_requests_mock):
-        get_requests_mock.return_value = (['request'], 1, None)
+    @patch('brew_view.controllers.request_list_api.RequestListAPI._get_query_set')
+    def test_get(self, get_query_set_mock):
+        query_set = MagicMock()
+        query_set.count.return_value = 1
+        query_set.__getitem__ = lambda *_: ['request']
+        get_query_set_mock.return_value = (query_set, None)
 
         response = self.fetch('/api/v1/requests?draw=1')
         self.assertEqual(200, response.code)
