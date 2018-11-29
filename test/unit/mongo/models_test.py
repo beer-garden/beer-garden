@@ -232,7 +232,10 @@ class SystemTest(unittest.TestCase):
         objects_mock.get = Mock(return_value=self.default_system)
         self.assertEqual(self.default_system, System.find_unique('foo', '1.0.0'))
 
-    @patch('bg_utils.mongo.models.System.objects', Mock(get=Mock(side_effect=mongoengine.DoesNotExist)))
+    @patch(
+        'bg_utils.mongo.models.System.objects',
+        Mock(get=Mock(side_effect=mongoengine.DoesNotExist))
+    )
     def test_find_unique_system_none(self):
         self.assertIsNone(System.find_unique('foo', '1.0.0'))
 

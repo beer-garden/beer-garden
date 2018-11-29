@@ -12,7 +12,6 @@ import thriftpy
 import yapconf
 from ruamel.yaml import YAML
 
-import bg_utils.mongo.util
 from ._version import __version__ as generated_version
 
 __version__ = generated_version
@@ -296,4 +295,3 @@ def _get_config_values(config):
             config_type = 'yaml'
 
     return config_file, config_type
-

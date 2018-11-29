@@ -7,9 +7,7 @@ from ruamel import yaml
 
 import pytest
 from box import Box
-from mock import patch, MagicMock, Mock
-from mongoengine import DoesNotExist, NotUniqueError
-from pymongo.errors import ServerSelectionTimeoutError
+from mock import patch, Mock
 from yapconf import YapconfSpec
 
 import bg_utils
