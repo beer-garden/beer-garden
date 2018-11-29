@@ -26,6 +26,8 @@ class RequestListAPI(BaseHandler):
     parser = BeerGardenSchemaParser()
     logger = logging.getLogger(__name__)
 
+    indexes = [index['name'] for index in Request._meta['indexes']]
+
     @authenticated(permissions=[Permissions.REQUEST_READ])
     def get(self):
         """
@@ -451,6 +453,10 @@ class RequestListAPI(BaseHandler):
                 real_hint.append(index)
                 break
         real_hint.append('index')
-        query_set = query_set.hint('_'.join(real_hint))
+
+        # Sanity check - if index is 'bad' just let mongo deal with it
+        index_name = '_'.join(real_hint)
+        if index_name in self.indexes:
+            query_set = query_set.hint(index_name)
 
         return query_set, requested_fields
