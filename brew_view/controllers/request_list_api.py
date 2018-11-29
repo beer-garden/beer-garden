@@ -15,6 +15,7 @@ from bg_utils.parser import BeerGardenSchemaParser
 from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
+from brew_view.metrics import request_created
 from brewtils.errors import (ModelValidationError, RequestPublishException,
                              TimeoutExceededError)
 from brewtils.models import Events
@@ -332,18 +333,10 @@ class RequestListAPI(BaseHandler):
 
         self.request.event_extras = {'request': req}
 
+        # Metrics
+        request_created(request_model)
+
         self.set_status(201)
-        self.queued_request_gauge.labels(
-            system=request_model.system,
-            system_version=request_model.system_version,
-            instance_name=request_model.instance_name,
-        ).inc()
-        self.request_counter_total.labels(
-            system=request_model.system,
-            system_version=request_model.system_version,
-            instance_name=request_model.instance_name,
-            command=request_model.command,
-        ).inc()
         self.write(self.parser.serialize_request(request_model, to_string=False))
 
     def _get_requests(self, start, end):
