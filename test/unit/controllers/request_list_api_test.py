@@ -256,22 +256,21 @@ class TestRequestListAPI(object):
         # Only sorting
         (0, None, 'parent_command_index'),
         (1, None, 'parent_system_index'),
-        # (2, None, 'parent_instance_index'),
-        # (2, None, 'parent_instance_name_index'),
+        (2, None, 'parent_instance_name_index'),
         (3, None, 'parent_status_index'),
         (4, None, 'parent_created_at_index'),
 
         # Only filtering
         (None, {'command': 'say'}, 'parent_command_index'),
         (None, {'system': 'test'}, 'parent_system_index'),
-        # (None, {'instance_name': 'say'}, 'parent_instance_name_index'),
+        (None, {'instance_name': 'say'}, 'parent_instance_name_index'),
         (None, {'status': 'SUCCESS'}, 'parent_status_index'),
         (None, {'created_at': 'start~stop'}, 'parent_created_at_index'),
 
         # Both, but only applicable for created_at sorting
         (4, {'command': 'say'}, 'parent_created_at_command_index'),
         (4, {'system': 'test'}, 'parent_created_at_system_index'),
-        # (4 , {'instance_name': 'say'}, 'parent_created_at_instance_name_index'),
+        (4, {'instance_name': 'say'}, 'parent_created_at_instance_name_index'),
         (4, {'status': 'SUCCESS'}, 'parent_created_at_status_index'),
         (4, {'created_at': 'start~stop'}, 'parent_created_at_index'),
     ])

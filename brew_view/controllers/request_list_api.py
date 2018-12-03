@@ -448,7 +448,7 @@ class RequestListAPI(BaseHandler):
         real_hint = ['parent']
         if 'created_at' in hint:
             real_hint.append('created_at')
-        for index in ['command', 'system', 'instance', 'status']:
+        for index in ['command', 'system', 'instance_name', 'status']:
             if index in hint:
                 real_hint.append(index)
                 break
