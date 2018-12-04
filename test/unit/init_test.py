@@ -294,7 +294,7 @@ class TestBgUtils(object):
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=['index1'])
             model_mock._get_collection = Mock(return_value=Mock(
-                index_information=Mock(return_value=['index1'])))
+                index_information=Mock(return_value={'index1': {}})))
 
         [bg_utils._check_indexes(doc) for doc in model_mocks.values()]
         for model_mock in model_mocks.values():
@@ -307,7 +307,7 @@ class TestBgUtils(object):
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=['index1', 'index2'])
             model_mock._get_collection = Mock(return_value=Mock(
-                index_information=Mock(return_value=['index1'])))
+                index_information=Mock(return_value={'index1': {}})))
 
         [bg_utils._check_indexes(doc) for doc in model_mocks.values()]
         for model_mock in model_mocks.values():
@@ -323,7 +323,7 @@ class TestBgUtils(object):
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=['index1'])
             model_mock._get_collection = Mock(return_value=Mock(
-                index_information=Mock(return_value=['index1'])))
+                index_information=Mock(return_value={'index1': {}})))
 
         # ... except for this one
         model_mocks['request'].list_indexes.side_effect = OperationFailure("")
@@ -343,7 +343,7 @@ class TestBgUtils(object):
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=['index1'])
             model_mock._get_collection = Mock(return_value=Mock(
-                index_information=Mock(return_value=['index1'])))
+                index_information=Mock(return_value={'index1': {}})))
 
             model_mock.ensure_indexes.side_effect = OperationFailure("")
 
@@ -361,13 +361,36 @@ class TestBgUtils(object):
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=['index1'])
             model_mock._get_collection = Mock(return_value=Mock(
-                index_information=Mock(return_value=['index1'])))
+                index_information=Mock(return_value={'index1': {}})))
 
             model_mock.ensure_indexes.side_effect = OperationFailure("")
 
         for doc in model_mocks.values():
             with pytest.raises(OperationFailure):
                 bg_utils._check_indexes(doc)
+
+    @patch('mongoengine.connection.get_db')
+    @patch('mongoengine.connect', Mock())
+    @patch('mongoengine.register_connection', Mock())
+    def test_check_indexes_old_request_index(self, get_db_mock, model_mocks):
+        # 'normal' return values
+        for model_mock in model_mocks.values():
+            model_mock.list_indexes = Mock(return_value=['index1'])
+            model_mock._get_collection = Mock(return_value=Mock(
+                index_information=Mock(return_value=['index1'])))
+
+        # ... except for this one
+        model_mocks['request']._get_collection.return_value.index_information.return_value = {
+            'index1': {},
+            'parent_instance_index': {},
+        }
+
+        db_mock = MagicMock()
+        get_db_mock.return_value = db_mock
+
+        [bg_utils._check_indexes(doc) for doc in model_mocks.values()]
+        assert db_mock['request'].drop_indexes.call_count == 1
+        assert model_mocks['request'].ensure_indexes.called is True
 
     def test_safe_migrate_migration_failure(self, tmpdir, spec, old_config):
         old_filename = os.path.join(str(tmpdir), 'config.json')
