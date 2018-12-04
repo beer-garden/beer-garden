@@ -512,6 +512,9 @@ def _check_indexes(document_class):
         spec = document_class.list_indexes()
         existing = document_class._get_collection().index_information()
 
+        if document_class == Request and 'parent_instance_index' in existing:
+            raise OperationFailure('Old Request index found, rebuilding')
+
         if len(spec) > len(existing):
             logger.warning('Found missing %s indexes, about to build them. '
                            'This could take a while :)',

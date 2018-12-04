@@ -270,7 +270,7 @@ class Request(Document, BrewtilsRequest):
                 'fields': ['has_parent', 'system'],
             },
             {
-                'name': 'parent_instance_index',
+                'name': 'parent_instance_name_index',
                 'fields': ['has_parent', 'instance_name'],
             },
             {
@@ -294,7 +294,7 @@ class Request(Document, BrewtilsRequest):
                 'fields': ['has_parent', '-created_at', 'system'],
             },
             {
-                'name': 'parent_created_at_instance_index',
+                'name': 'parent_created_at_instance_name_index',
                 'fields': ['has_parent', '-created_at', 'instance_name'],
             },
             {
