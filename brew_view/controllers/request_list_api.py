@@ -26,6 +26,8 @@ class RequestListAPI(BaseHandler):
     parser = BeerGardenSchemaParser()
     logger = logging.getLogger(__name__)
 
+    indexes = [index['name'] for index in Request._meta['indexes']]
+
     @authenticated(permissions=[Permissions.REQUEST_READ])
     def get(self):
         """
@@ -352,6 +354,7 @@ class RequestListAPI(BaseHandler):
         requested_fields = []
         order_by = None
         overall_search = None
+        hint = []
 
         query_set = Request.objects
 
@@ -400,11 +403,15 @@ class RequestListAPI(BaseHandler):
                         })
 
                     search_params.append(search_query)
+                    hint.append(column['data'])
 
             raw_order = self.get_query_argument('order', default=None)
             if raw_order:
                 order = json.loads(raw_order)
                 order_by = columns[order.get('column')]['data']
+
+                hint.append(order_by)
+
                 if order.get('dir') == 'desc':
                     order_by = '-' + order_by
 
@@ -435,5 +442,21 @@ class RequestListAPI(BaseHandler):
             query_set = query_set.only(*requested_fields)
         else:
             requested_fields = None
+
+        # Mongo seems to prefer using only the ['parent', '<sort field>']
+        # index, even when also filtering. So we have to help it a bit.
+        real_hint = ['parent']
+        if 'created_at' in hint:
+            real_hint.append('created_at')
+        for index in ['command', 'system', 'instance_name', 'status']:
+            if index in hint:
+                real_hint.append(index)
+                break
+        real_hint.append('index')
+
+        # Sanity check - if index is 'bad' just let mongo deal with it
+        index_name = '_'.join(real_hint)
+        if index_name in self.indexes:
+            query_set = query_set.hint(index_name)
 
         return query_set, requested_fields
