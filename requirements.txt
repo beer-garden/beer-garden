@@ -34,7 +34,7 @@ marshmallow==2.15.4       # via marshmallow-polyfield
 mccabe==0.6.1             # via flake8
 mock==2.0.0
 mongoengine==0.15.3
-mongomock==3.10.0
+mongomock==3.14.0
 more-itertools==4.3.0     # via pytest
 packaging==17.1           # via sphinx, tox
 passlib==1.7.1

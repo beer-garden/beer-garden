@@ -1,17 +1,17 @@
+import datetime
 import re
 import socket
 
-import time
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
 from mongoengine.errors import (
     DoesNotExist, NotUniqueError, ValidationError as MongoValidationError)
-from prometheus_client import Gauge, Counter, Summary
 from thriftpy.thrift import TException
 from tornado.web import HTTPError, RequestHandler
 
 import bg_utils
 import brew_view
 from brew_view.authorization import AuthMixin
+from brew_view.metrics import http_api_latency_total, request_latency
 from brewtils.errors import (
     ModelError, ModelValidationError, RequestForbidden, RequestPublishException,
     WaitExceededError, AuthorizationRequired)
@@ -44,43 +44,6 @@ class BaseHandler(AuthMixin, RequestHandler):
         socket.timeout: {'status_code': 504, 'message': 'Backend request timed out'},
     }
 
-    # Prometheus metrics.
-    # Summaries:
-    http_api_latency_total = Summary(
-        'bg_http_api_latency_seconds',
-        'Total number of seconds each API endpoint is taking to respond.',
-        ['method', 'route', 'status']
-    )
-    plugin_command_latency = Summary(
-        'bg_plugin_command_latency_seconds',
-        'Total time taken for a command to complete in seconds.',
-        ['system', 'instance_name', 'system_version', 'command', 'status'],
-    )
-
-    # Counters:
-    completed_request_counter = Counter(
-        'bg_completed_requests_total',
-        'Number of completed requests.',
-        ['system', 'instance_name', 'system_version', 'command', 'status'],
-    )
-    request_counter_total = Counter(
-        'bg_requests_total',
-        'Number of requests.',
-        ['system', 'instance_name', 'system_version', 'command'],
-    )
-
-    # Gauges:
-    queued_request_gauge = Gauge(
-        'bg_queued_requests',
-        'Number of requests waiting to be processed.',
-        ['system', 'instance_name', 'system_version'],
-    )
-    in_progress_request_gauge = Gauge(
-        'bg_in_progress_requests',
-        'Number of requests IN_PROGRESS',
-        ['system', 'instance_name', 'system_version'],
-    )
-
     def set_default_headers(self):
         """Headers set here will be applied to all responses"""
         self.set_header("BG-Version", brew_view.__version__)
@@ -101,10 +64,8 @@ class BaseHandler(AuthMixin, RequestHandler):
     def prepare(self):
         """Called before each verb handler"""
 
-        # Used for recording prometheus metrics.
-        # We keep this time in seconds, also time-zone does not matter
-        # because we are just calculating a duration.
-        self.request.created_time = time.time()
+        # Used for calculating request handling duration
+        self.request.created_time = datetime.datetime.utcnow()
 
         # This is used for sending event notifications
         self.request.event = Event()
@@ -130,19 +91,15 @@ class BaseHandler(AuthMixin, RequestHandler):
 
     def on_finish(self):
         """Called after a handler completes processing"""
-        self.http_api_latency_total.labels(
+        http_api_latency_total.labels(
             method=self.request.method.upper(),
             route=self.prometheus_endpoint,
             status=self.get_status(),
-        ).observe(self._measure_latency())
+        ).observe(request_latency(self.request.created_time))
 
         if self.request.event.name:
-            brew_view.event_publishers.publish_event(self.request.event,
-                                                     **self.request.event_extras)
-
-    def _measure_latency(self):
-        """We measure the latency in seconds as a float."""
-        return time.time() - self.request.created_time
+            brew_view.event_publishers.publish_event(
+                self.request.event, **self.request.event_extras)
 
     def options(self, *args, **kwargs):
 

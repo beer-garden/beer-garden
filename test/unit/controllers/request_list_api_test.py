@@ -1,7 +1,13 @@
+import json
+
+import pytest
 from mock import MagicMock, Mock, PropertyMock, patch
+from mongoengine import connect
 from tornado.gen import Future
 
 import bg_utils
+import brew_view
+from brew_view.controllers import RequestListAPI
 from . import TestHandlerBase
 
 
@@ -36,9 +42,12 @@ class RequestListAPITest(TestHandlerBase):
 
         super(RequestListAPITest, self).setUp()
 
-    @patch('brew_view.controllers.request_list_api.RequestListAPI._get_requests')
-    def test_get(self, get_requests_mock):
-        get_requests_mock.return_value = (['request'], 1, None)
+    @patch('brew_view.controllers.request_list_api.RequestListAPI._get_query_set')
+    def test_get(self, get_query_set_mock):
+        query_set = MagicMock()
+        query_set.count.return_value = 1
+        query_set.__getitem__ = lambda *_: ['request']
+        get_query_set_mock.return_value = (query_set, None)
 
         response = self.fetch('/api/v1/requests?draw=1')
         self.assertEqual(200, response.code)
@@ -129,3 +138,155 @@ class RequestListAPITest(TestHandlerBase):
         self.assertEqual(201, response.code)
         self.assertIn('Instance-Status', response.headers)
         self.assertEqual('UNKNOWN', response.headers['Instance-Status'])
+
+
+@pytest.fixture
+def mongo_mock():
+    connect('mongotest', host='mongomock://localhost')
+
+
+@pytest.mark.usefixtures('mongo_mock')
+class TestRequestListAPI(object):
+
+    @pytest.fixture
+    def columns(self):
+
+        def _factory(search=None):
+            search = search or {}
+
+            columns = [
+                {
+                    'data': 'command',
+                    'name': '',
+                    'searchable': True,
+                    'orderable': True,
+                    'search': {
+                        'value': search.get('command', ''),
+                        'regex': False,
+                    },
+                },
+                {
+                    'data': 'system',
+                    'name': '',
+                    'searchable': True,
+                    'orderable': True,
+                    'search': {
+                        'value': search.get('system', ''),
+                        'regex': False,
+                    },
+                },
+                {
+                    'data': 'instance_name',
+                    'name': '',
+                    'searchable': True,
+                    'orderable': True,
+                    'search': {
+                        'value': search.get('instance_name', ''),
+                        'regex': False,
+                    },
+                },
+                {
+                    'data': 'status',
+                    'name': '',
+                    'searchable': True,
+                    'orderable': True,
+                    'search': {
+                        'value': search.get('status', ''),
+                        'regex': False,
+                    },
+                },
+                {
+                    'data': 'created_at',
+                    'name': '',
+                    'searchable': True,
+                    'orderable': True,
+                    'search': {
+                        'value': search.get('created_at', ''),
+                        'regex': False,
+                    },
+                },
+                {
+                    'data': 'comment',
+                    'name': '',
+                    'searchable': True,
+                    'orderable': True,
+                    'search': {
+                        'value': search.get('comment', ''),
+                        'regex': False,
+                    },
+                },
+                {
+                    'data': 'metadata',
+                    'name': '',
+                    'searchable': True,
+                    'orderable': True,
+                    'search': {
+                        'value': search.get('metadata', ''),
+                        'regex': False,
+                    },
+                },
+                {
+                    'data': 'id',
+                },
+            ]
+
+            return [json.dumps(column) for column in columns]
+
+        return _factory
+
+    @pytest.fixture
+    def order(self):
+
+        def _factory(order_column):
+            if order_column is not None:
+                return [json.dumps({"column": order_column, "dir": "desc"})]
+            return None
+
+        return _factory
+
+    @pytest.fixture
+    def handler(self, monkeypatch):
+        monkeypatch.setattr(brew_view, 'config', Mock())
+        return RequestListAPI(MagicMock(), MagicMock())
+
+    @pytest.mark.parametrize('order_column,search,index', [
+        # Neither
+        (None, None, 'parent_index'),
+
+        # Only sorting
+        (0, None, 'parent_command_index'),
+        (1, None, 'parent_system_index'),
+        (2, None, 'parent_instance_name_index'),
+        (3, None, 'parent_status_index'),
+        (4, None, 'parent_created_at_index'),
+
+        # Only filtering
+        (None, {'command': 'say'}, 'parent_command_index'),
+        (None, {'system': 'test'}, 'parent_system_index'),
+        (None, {'instance_name': 'say'}, 'parent_instance_name_index'),
+        (None, {'status': 'SUCCESS'}, 'parent_status_index'),
+        (None, {'created_at': 'start~stop'}, 'parent_created_at_index'),
+
+        # Both, but only applicable for created_at sorting
+        (4, {'command': 'say'}, 'parent_created_at_command_index'),
+        (4, {'system': 'test'}, 'parent_created_at_system_index'),
+        (4, {'instance_name': 'say'}, 'parent_created_at_instance_name_index'),
+        (4, {'status': 'SUCCESS'}, 'parent_created_at_status_index'),
+        (4, {'created_at': 'start~stop'}, 'parent_created_at_index'),
+    ])
+    def test_order_index_hints(
+            self, monkeypatch, handler, columns, order, order_column, search,
+            index):
+
+        args = {
+            'columns': columns(search),
+            'order': order(order_column)
+        }
+
+        if order_column is None:
+            del args['order']
+
+        monkeypatch.setattr(handler.request, 'query_arguments', args)
+
+        query_set, fields = handler._get_query_set()
+        assert index == query_set._hint

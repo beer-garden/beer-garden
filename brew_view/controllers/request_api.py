@@ -1,4 +1,3 @@
-import datetime
 import logging
 
 import brew_view
@@ -6,6 +5,7 @@ from bg_utils.mongo.models import Request, Job
 from bg_utils.mongo.parser import BeerGardenSchemaParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
+from brew_view.metrics import request_updated
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events, Request as BrewtilsRequest
 
@@ -142,7 +142,9 @@ class RequestAPI(BaseHandler):
                 raise ModelValidationError(error_msg)
 
         req.save()
-        self._update_metrics(req, status_before)
+
+        # Metrics
+        request_updated(req, status_before)
         self._update_job_numbers(req, status_before)
 
         if wait_event:
@@ -171,44 +173,3 @@ class RequestAPI(BaseHandler):
         except Exception as exc:
             self.logger.warning('Could not update job counts.')
             self.logger.exception(exc)
-
-    def _update_metrics(self, request, status_before):
-        """Update metrics associated with this new request.
-
-        We have already confirmed that this request has had a valid state
-        transition because updating the status verifies that the updates are
-        correct.
-
-        In addition, this call is happening after the save to the
-        database. Now we just need to update the metrics.
-        """
-        if (
-            status_before == request.status or
-            status_before in BrewtilsRequest.COMPLETED_STATUSES
-        ):
-            return
-
-        labels = {
-            'system': request.system,
-            'system_version': request.system_version,
-            'instance_name': request.instance_name,
-        }
-
-        if status_before == 'CREATED':
-            self.queued_request_gauge.labels(**labels).dec()
-        elif status_before == 'IN_PROGRESS':
-            self.in_progress_request_gauge.labels(**labels).dec()
-
-        if request.status == 'IN_PROGRESS':
-            self.in_progress_request_gauge.labels(**labels).inc()
-
-        elif request.status in BrewtilsRequest.COMPLETED_STATUSES:
-            # We don't use _measure_latency here because the request times are
-            # stored in UTC and we need to make sure we're comparing apples to
-            # apples.
-            latency = (datetime.datetime.utcnow() - request.created_at).total_seconds()
-            labels['command'] = request.command
-            labels['status'] = request.status
-
-            self.completed_request_counter.labels(**labels).inc()
-            self.plugin_command_latency.labels(**labels).observe(latency)
