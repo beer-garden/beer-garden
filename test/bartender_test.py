@@ -24,7 +24,6 @@ class BartenderTest(unittest.TestCase):
         os.environ = self.environment_copy
 
     @patch('bg_utils.setup_application_logging', Mock())
-    @patch('bg_utils.setup_database', Mock())
     def test_setup(self):
         bg.setup_bartender(self.spec, {})
         self.assertIsInstance(bg.config, Box)

@@ -20,7 +20,7 @@ from bartender.pyrabbit import PyrabbitClient
 from bartender.request_validator import RequestValidator
 from bartender.thrift.handler import BartenderHandler
 from bartender.thrift.server import make_server
-from bg_utils.models import Event, Request
+from bg_utils.mongo.models import Event, Request
 from brewtils.models import Events
 from brewtils.stoppable_thread import StoppableThread
 

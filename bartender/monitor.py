@@ -1,7 +1,7 @@
 import logging
 
 from datetime import datetime, timedelta
-from bg_utils.models import Instance, Request
+from bg_utils.mongo.models import Instance, Request
 from brewtils.stoppable_thread import StoppableThread
 
 

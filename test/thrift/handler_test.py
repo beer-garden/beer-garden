@@ -21,20 +21,23 @@ class BartenderHandlerTest(unittest.TestCase):
                                         self.request_validator)
         self.handler.parser = Mock()
 
-    @patch('bg_utils.models.Request.find_or_none', Mock(side_effect=mongoengine.ValidationError))
+    @patch(
+        'bg_utils.mongo.models.Request.find_or_none',
+        Mock(side_effect=mongoengine.ValidationError)
+    )
     def test_process_request_bad_request(self):
         self.assertRaises(bg_utils.bg_thrift.InvalidRequest, self.handler.processRequest, 'id')
 
-    @patch('bg_utils.models.Request.find_or_none', Mock(return_value=None))
+    @patch('bg_utils.mongo.models.Request.find_or_none', Mock(return_value=None))
     def test_process_request_none(self):
         self.assertRaises(bg_utils.bg_thrift.InvalidRequest, self.handler.processRequest, 'id')
 
-    @patch('bg_utils.models.Request.find_or_none', Mock())
+    @patch('bg_utils.mongo.models.Request.find_or_none', Mock())
     def test_process_request_bad_backend(self):
         self.request_validator.validate_request = Mock(side_effect=ModelValidationError)
         self.assertRaises(bg_utils.bg_thrift.InvalidRequest, self.handler.processRequest, 'id')
 
-    @patch('bg_utils.models.Request.find_or_none')
+    @patch('bg_utils.mongo.models.Request.find_or_none')
     def test_process_request(self, find_mock):
         request = Mock()
         find_mock.return_value = request
@@ -45,7 +48,7 @@ class BartenderHandlerTest(unittest.TestCase):
         self.clients['pika'].publish_request.assert_called_once_with(request, confirm=True,
                                                                      mandatory=True)
 
-    @patch('bg_utils.models.Request.find_or_none')
+    @patch('bg_utils.mongo.models.Request.find_or_none')
     def test_process_request_fail(self, find_mock):
         request = Mock()
         find_mock.return_value = request
@@ -54,6 +57,7 @@ class BartenderHandlerTest(unittest.TestCase):
 
         self.assertRaises(bg_utils.bg_thrift.PublishException, self.handler.processRequest, 'id')
 
+    @patch('bartender.config', Mock())
     @patch('bartender.thrift.handler.get_routing_key', Mock(return_value='a'))
     @patch('bartender.thrift.handler.get_routing_keys', Mock(return_value=['b']))
     @patch('bartender.thrift.handler.BartenderHandler._get_system', Mock())

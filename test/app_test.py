@@ -8,7 +8,7 @@ from yapconf import YapconfSpec
 import bartender
 from bartender.app import BartenderApp, HelperThread
 from bartender.specification import SPECIFICATION
-from bg_utils.models import Event, Request
+from bg_utils.mongo.models import Event, Request
 
 
 @patch('bartender.app.time', Mock())
