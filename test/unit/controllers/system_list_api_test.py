@@ -50,7 +50,7 @@ class SystemListAPITest(TestHandlerBase):
         self.fetch('/api/v1/systems?foo=bar')
         self.system_mock.filter.assert_called_once_with()
 
-    @patch('bg_utils.models.System.find_unique', Mock(return_value=False))
+    @patch('bg_utils.mongo.models.System.find_unique', Mock(return_value=False))
     @patch('brew_view.controllers.system_list_api.SystemListAPI._create_new_system')
     @patch('brew_view.controllers.system_list_api.BeerGardenSchemaParser.parse_system')
     def test_post_new_system(self, parse_mock, create_mock):
@@ -61,7 +61,7 @@ class SystemListAPITest(TestHandlerBase):
         self.assertEqual(201, response.code)
         create_mock.assert_called_once_with(self.system_mock)
 
-    @patch('bg_utils.models.System.find_unique')
+    @patch('bg_utils.mongo.models.System.find_unique')
     @patch('brew_view.controllers.system_list_api.SystemListAPI._update_existing_system')
     @patch('brew_view.controllers.system_list_api.BeerGardenSchemaParser.parse_system')
     def test_post_existing_system(self, parse_mock, update_mock, find_mock):

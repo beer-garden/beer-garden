@@ -21,6 +21,7 @@ from urllib3.util.url import Url
 import bg_utils
 import brew_view._version
 from bg_utils.event_publisher import EventPublishers
+from bg_utils.mongo import setup_database
 from bg_utils.pika import TransientPikaClient
 from bg_utils.plugin_logging_loader import PluginLoggingLoader
 from brew_view.authorization import anonymous_principal as load_anonymous
@@ -85,7 +86,7 @@ def startup():
     # Ensure we have a mongo connection
     logger.info("Checking for Mongo connection")
     yield _progressive_backoff(
-        partial(bg_utils.setup_database, config),
+        partial(setup_database, config),
         'Unable to connect to mongo, is it started?'
     )
 

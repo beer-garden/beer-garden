@@ -1,7 +1,7 @@
 import datetime
 from prometheus_client import Gauge, Counter, Summary
 
-from bg_utils.models import Request
+from bg_utils.mongo.models import Request
 from brewtils.models import Request as BrewtilsRequest
 
 # Summaries:
