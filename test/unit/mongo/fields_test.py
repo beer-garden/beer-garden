@@ -1,6 +1,6 @@
 import unittest
 
-from bg_utils.fields import DummyField
+from bg_utils.mongo.fields import DummyField
 
 
 class DummyFieldTest(unittest.TestCase):

@@ -18,7 +18,7 @@ from mongoengine import (
 )
 from mongoengine.errors import DoesNotExist
 
-from bg_utils.fields import DummyField, StatusInfo
+from bg_utils.mongo.fields import DummyField, StatusInfo
 from brewtils.choices import parse
 from brewtils.errors import BrewmasterModelValidationError
 from brewtils.models import (

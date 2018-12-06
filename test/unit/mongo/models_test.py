@@ -5,7 +5,7 @@ import mongoengine
 import pytz
 from mock import Mock, PropertyMock, patch
 
-from bg_utils.models import Command, Instance, Parameter, Request, System, Choices, Job, \
+from bg_utils.mongo.models import Command, Instance, Parameter, Request, System, Choices, Job, \
     DateTrigger, IntervalTrigger, CronTrigger
 from brewtils.errors import BrewmasterModelValidationError
 from brewtils.schemas import RequestTemplateSchema
@@ -84,7 +84,7 @@ class ChoicesTest(unittest.TestCase):
         choice.clean()
         self.assertEqual({}, choice.details)
 
-    @patch('bg_utils.models.parse')
+    @patch('bg_utils.mongo.models.parse')
     def test_clean_parse(self, parse_mock):
         choice = Choices(type='command', value='foo')
         choice.clean()
@@ -92,7 +92,7 @@ class ChoicesTest(unittest.TestCase):
         self.assertTrue(parse_mock.called)
         self.assertNotEqual({}, choice.details)
 
-    @patch('bg_utils.models.parse')
+    @patch('bg_utils.mongo.models.parse')
     def test_clean_with_details(self, parse_mock):
         choice = Choices(type='command', value='foo', details={'non': 'empty'})
         choice.clean()
@@ -162,11 +162,11 @@ class RequestTest(unittest.TestCase):
         request = Request(system='foo', command='bar', output_type='BAD')
         self.assertRaises(BrewmasterModelValidationError, request.clean)
 
-    @patch('bg_utils.models.Request.objects')
+    @patch('bg_utils.mongo.models.Request.objects')
     def test_find_one_or_none_found(self, objects_mock):
         self.assertEqual(objects_mock.get.return_value, Request.find_or_none('id'))
 
-    @patch('bg_utils.models.Request.objects')
+    @patch('bg_utils.mongo.models.Request.objects')
     def test_find_one_or_none_none_found(self, objects_mock):
         objects_mock.get = Mock(side_effect=mongoengine.DoesNotExist)
         self.assertIsNone(Request.find_or_none('id'))
@@ -227,12 +227,15 @@ class SystemTest(unittest.TestCase):
         self.default_system.instances.append(Instance(name='default'))
         self.assertRaises(BrewmasterModelValidationError, self.default_system.clean)
 
-    @patch('bg_utils.models.System.objects')
+    @patch('bg_utils.mongo.models.System.objects')
     def test_find_unique_system(self, objects_mock):
         objects_mock.get = Mock(return_value=self.default_system)
         self.assertEqual(self.default_system, System.find_unique('foo', '1.0.0'))
 
-    @patch('bg_utils.models.System.objects', Mock(get=Mock(side_effect=mongoengine.DoesNotExist)))
+    @patch(
+        'bg_utils.mongo.models.System.objects',
+        Mock(get=Mock(side_effect=mongoengine.DoesNotExist))
+    )
     def test_find_unique_system_none(self):
         self.assertIsNone(System.find_unique('foo', '1.0.0'))
 
@@ -254,8 +257,8 @@ class SystemTest(unittest.TestCase):
         self.assertFalse(self.default_instance.save.called)
         self.assertFalse(self.default_system.delete.called)
 
-    @patch('bg_utils.models.Command.validate', Mock())
-    @patch('bg_utils.models.Instance.validate', Mock())
+    @patch('bg_utils.mongo.models.Command.validate', Mock())
+    @patch('bg_utils.mongo.models.Instance.validate', Mock())
     def test_deep_save_save_exception(self):
         self.default_instance.save = Mock(side_effect=ValueError)
 
@@ -266,12 +269,12 @@ class SystemTest(unittest.TestCase):
         self.assertTrue(self.default_instance.save.called)
         self.assertFalse(self.default_system.delete.called)
 
-    @patch('bg_utils.models.Command.validate', Mock())
-    @patch('bg_utils.models.Instance.validate', Mock())
+    @patch('bg_utils.mongo.models.Command.validate', Mock())
+    @patch('bg_utils.mongo.models.Instance.validate', Mock())
     def test_deep_save_save_exception_not_already_exists(self):
         self.default_instance.save = Mock(side_effect=ValueError)
 
-        with patch('bg_utils.models.System.id', new_callable=PropertyMock) as id_mock:
+        with patch('bg_utils.mongo.models.System.id', new_callable=PropertyMock) as id_mock:
             id_mock.side_effect = [None, '1234', '1234']
             self.assertRaises(ValueError, self.default_system.deep_save)
 
@@ -289,8 +292,8 @@ class SystemTest(unittest.TestCase):
 
     # FYI - Have to mock out System.commands here or else MongoEngine
     # blows up trying to dereference them
-    @patch('bg_utils.models.System.commands', Mock())
-    @patch('bg_utils.models.Command.objects')
+    @patch('bg_utils.mongo.models.System.commands', Mock())
+    @patch('bg_utils.mongo.models.Command.objects')
     def test_upsert_commands_new(self, objects_mock):
         self.default_system.commands = []
         objects_mock.return_value = []
@@ -301,8 +304,8 @@ class SystemTest(unittest.TestCase):
         self.assertTrue(self.default_system.save.called)
         self.assertEqual([new_command], self.default_system.commands)
 
-    @patch('bg_utils.models.System.commands', Mock())
-    @patch('bg_utils.models.Command.objects')
+    @patch('bg_utils.mongo.models.System.commands', Mock())
+    @patch('bg_utils.mongo.models.Command.objects')
     def test_upsert_commands_delete(self, objects_mock):
         old_command = Mock()
         objects_mock.return_value = [old_command]
@@ -311,8 +314,8 @@ class SystemTest(unittest.TestCase):
         self.assertTrue(old_command.delete.called)
         self.assertEqual([], self.default_system.commands)
 
-    @patch('bg_utils.models.System.commands', Mock())
-    @patch('bg_utils.models.Command.objects')
+    @patch('bg_utils.mongo.models.System.commands', Mock())
+    @patch('bg_utils.mongo.models.Command.objects')
     def test_upsert_commands_update(self, objects_mock):
         new_command = Mock(description='new desc')
         old_command = Mock(id='123', description='old desc')

@@ -2,9 +2,9 @@ import copy
 import unittest
 from datetime import datetime
 
-from bg_utils.fields import StatusInfo
-from bg_utils.models import Instance
-from bg_utils.parser import BeerGardenSchemaParser
+from bg_utils.mongo.fields import StatusInfo
+from bg_utils.mongo.models import Instance
+from bg_utils.mongo.parser import BeerGardenSchemaParser
 from brewtils.errors import BrewmasterModelValidationError
 
 
