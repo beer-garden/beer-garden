@@ -10,7 +10,7 @@ from tornado.gen import coroutine
 from tornado.web import HTTPError
 
 import brew_view
-from bg_utils.models import Principal, RefreshToken
+from bg_utils.mongo.models import Principal, RefreshToken
 from brew_view.authorization import coalesce_permissions
 from brew_view.base_handler import BaseHandler
 

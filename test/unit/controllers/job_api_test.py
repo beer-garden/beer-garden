@@ -5,7 +5,7 @@ from datetime import datetime
 
 from mock import patch
 
-from bg_utils.models import Job, RequestTemplate, DateTrigger
+from bg_utils.mongo.models import Job, RequestTemplate, DateTrigger
 from . import TestHandlerBase
 
 

@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pytest
 
-from bg_utils.models import Job, DateTrigger, Request, RequestTemplate
+from bg_utils.mongo.models import Job, DateTrigger, Request, RequestTemplate
 
 
 @pytest.fixture

@@ -4,8 +4,8 @@ import mongoengine
 from mock import MagicMock, Mock, patch
 
 import brew_view
-from bg_utils.models import Command, Instance, System
-from bg_utils.parser import BeerGardenSchemaParser
+from bg_utils.mongo.models import Command, Instance, System
+from bg_utils.mongo.parser import BeerGardenSchemaParser
 from ...utils import TestUtils
 
 
@@ -65,7 +65,7 @@ class SystemAPITest(TestUtils, unittest.TestCase):
         self.assertEqual(204, self.app.delete('/api/v1/systems/id').status_code)
         mock_system.deep_delete.assert_called_with()
 
-    @patch('bg_utils.models.System.deep_save')
+    @patch('bg_utils.mongo.models.System.deep_save')
     @patch('mongoengine.queryset.QuerySet.get')
     def test_put(self, get_mock, save_mock):
         get_mock.return_value = self.default_system

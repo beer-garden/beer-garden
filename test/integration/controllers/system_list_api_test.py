@@ -4,8 +4,8 @@ import unittest
 from mock import Mock, patch
 
 import brew_view
-from bg_utils.models import Command, Instance, System
-from bg_utils.parser import BeerGardenSchemaParser
+from bg_utils.mongo.models import Command, Instance, System
+from bg_utils.mongo.parser import BeerGardenSchemaParser
 from ...utils import TestUtils
 
 

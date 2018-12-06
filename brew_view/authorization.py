@@ -8,7 +8,7 @@ from passlib.apps import custom_app_context
 from tornado.web import HTTPError
 
 import brew_view
-from bg_utils.models import Principal, Role
+from bg_utils.mongo.models import Principal, Role
 from brewtils.errors import RequestForbidden
 from brewtils.models import (
     Principal as BrewtilsPrincipal,

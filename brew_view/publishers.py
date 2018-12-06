@@ -13,7 +13,7 @@ from tornado.queues import Queue
 
 import brew_view
 from bg_utils.event_publisher import EventPublisher
-from bg_utils.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import BeerGardenSchemaParser
 from bg_utils.pika import get_routing_key
 from brewtils.models import Events
 from brewtils.queues import PikaClient

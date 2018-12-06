@@ -3,8 +3,8 @@ import unittest
 from mock import Mock, patch
 
 import brew_view
-from bg_utils.models import Request
-from bg_utils.parser import BeerGardenSchemaParser
+from bg_utils.mongo.models import Request
+from bg_utils.mongo.parser import BeerGardenSchemaParser
 
 
 @unittest.skip('TODO')
@@ -22,7 +22,7 @@ class RequestAPITest(unittest.TestCase):
                                        status='CREATED')
         self.default_request.validate_backend = Mock()
 
-        objects_patch = patch('bg_utils.models.Request.objects')
+        objects_patch = patch('bg_utils.mongo.models.Request.objects')
         self.addCleanup(objects_patch.stop)
         self.objects_mock = objects_patch.start()
         self.objects_mock.return_value = None

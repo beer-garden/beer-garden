@@ -11,7 +11,7 @@ class TestHandlerBase(AsyncHTTPTestCase):
 
     @classmethod
     def setUpClass(cls):
-        db_patcher = patch('bg_utils.setup_database')
+        db_patcher = patch('brew_view.setup_database')
         db_patcher.start()
         server_patch = patch('brew_view.HTTPServer')
         server_patch.start()

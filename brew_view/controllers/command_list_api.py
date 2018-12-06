@@ -2,8 +2,8 @@ import logging
 
 import mongoengine.errors
 
-from bg_utils.models import Command
-from bg_utils.parser import BeerGardenSchemaParser
+from bg_utils.mongo.models import Command
+from bg_utils.mongo.parser import BeerGardenSchemaParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 
