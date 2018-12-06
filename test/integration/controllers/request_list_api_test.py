@@ -64,7 +64,7 @@ class RequestListAPITest(unittest.TestCase):
 
         return query_mock
 
-    @patch('bg_utils.models.Request.objects')
+    @patch('bg_utils.mongo.models.Request.objects')
     def test_get_emtpy(self, objects_mock):
         fake_list = Mock(__iter__=Mock(return_value=[]),
                          __getitem__=Mock(return_value=[]))
@@ -77,7 +77,7 @@ class RequestListAPITest(unittest.TestCase):
         self.assertEqual(rv.status_code, 200)
         self.assertEqual(len(data), 0)
 
-    @patch('bg_utils.models.Request.objects')
+    @patch('bg_utils.mongo.models.Request.objects')
     def test_get_with_results_no_headers(self, all_mock):
         fake_list = Mock(__iter__=Mock(return_value=[self.default_request]),
                          __getitem__=Mock(return_value=[self.default_request]))
@@ -92,7 +92,7 @@ class RequestListAPITest(unittest.TestCase):
     def test_get_response_headers(self):
         query_mock = self._get_query_mock()
 
-        with patch('bg_utils.models.Request.objects', return_value=query_mock):
+        with patch('bg_utils.mongo.models.Request.objects', return_value=query_mock):
             rv = self.app.get('/api/v1/requests')
             self.assertIn('start', rv.headers)
             self.assertIn('length', rv.headers)
@@ -109,7 +109,7 @@ class RequestListAPITest(unittest.TestCase):
         }
 
         query_mock = self._get_query_mock()
-        with patch('bg_utils.models.Request.objects', return_value=query_mock):
+        with patch('bg_utils.mongo.models.Request.objects', return_value=query_mock):
             rv = self.app.get('/api/v1/requests?' +
                               self._datatables_query(query_params=query_params))
             self.assertEqual(query_params['start'], rv.headers['start'])
@@ -128,7 +128,7 @@ class RequestListAPITest(unittest.TestCase):
         ]
 
         query_mock = self._get_query_mock()
-        with patch('bg_utils.models.Request.objects', return_value=query_mock):
+        with patch('bg_utils.mongo.models.Request.objects', return_value=query_mock):
             self.app.get('/api/v1/requests?' +
                          self._datatables_query(columns=columns))
 
@@ -143,7 +143,7 @@ class RequestListAPITest(unittest.TestCase):
         ]
 
         query_mock = self._get_query_mock()
-        with patch('bg_utils.models.Request.objects', return_value=query_mock):
+        with patch('bg_utils.mongo.models.Request.objects', return_value=query_mock):
             self.app.get('/api/v1/requests?' +
                          self._datatables_query(columns=columns))
 
@@ -153,7 +153,7 @@ class RequestListAPITest(unittest.TestCase):
     def test_no_search_params(self):
 
         query_mock = self._get_query_mock()
-        with patch('bg_utils.models.Request.objects', return_value=query_mock) as search_mock:
+        with patch('bg_utils.mongo.models.Request.objects', return_value=query_mock) as search_mock:
             self.app.get('/api/v1/requests')
 
             self.assertEqual(search_mock.call_args[0][0].query, Q(parent__exists=False).query)
@@ -161,7 +161,7 @@ class RequestListAPITest(unittest.TestCase):
     def test_search_params(self):
 
         query_mock = self._get_query_mock()
-        with patch('bg_utils.models.Request.objects', return_value=query_mock) as search_mock:
+        with patch('bg_utils.mongo.models.Request.objects', return_value=query_mock) as search_mock:
             self.app.get('/api/v1/requests?' + self._datatables_query())
 
             self.assertFalse(search_mock.call_args[0][0].empty)
@@ -169,7 +169,7 @@ class RequestListAPITest(unittest.TestCase):
     def test_include_children(self):
 
         query_mock = self._get_query_mock()
-        with patch('bg_utils.models.Request.objects', return_value=query_mock) as search_mock:
+        with patch('bg_utils.mongo.models.Request.objects', return_value=query_mock) as search_mock:
             self.app.get('/api/v1/requests?' + 'include_children=true')
 
             self.assertTrue(search_mock.call_args[0][0].empty)
@@ -177,7 +177,7 @@ class RequestListAPITest(unittest.TestCase):
     def test_exclude_children(self):
 
         query_mock = self._get_query_mock()
-        with patch('bg_utils.models.Request.objects', return_value=query_mock) as search_mock:
+        with patch('bg_utils.mongo.models.Request.objects', return_value=query_mock) as search_mock:
             self.app.get('/api/v1/requests?' + 'include_children=false')
 
             self.assertEqual(search_mock.call_args[0][0].query, Q(parent__exists=False).query)
@@ -189,7 +189,7 @@ class RequestListAPITest(unittest.TestCase):
         }
 
         query_mock = self._get_query_mock()
-        with patch('bg_utils.models.Request.objects', return_value=query_mock):
+        with patch('bg_utils.mongo.models.Request.objects', return_value=query_mock):
             self.app.get('/api/v1/requests?' +
                          self._datatables_query(query_params=query_params))
 
@@ -207,7 +207,7 @@ class RequestListAPITest(unittest.TestCase):
         }
 
         query_mock = self._get_query_mock()
-        with patch('bg_utils.models.Request.objects', return_value=query_mock):
+        with patch('bg_utils.mongo.models.Request.objects', return_value=query_mock):
             self.app.get('/api/v1/requests?' +
                          self._datatables_query(columns=columns, query_params=query_params))
 
@@ -225,7 +225,7 @@ class RequestListAPITest(unittest.TestCase):
         }
 
         query_mock = self._get_query_mock()
-        with patch('bg_utils.models.Request.objects', return_value=query_mock):
+        with patch('bg_utils.mongo.models.Request.objects', return_value=query_mock):
             self.app.get('/api/v1/requests?' +
                          self._datatables_query(columns=columns, query_params=query_params))
 
@@ -275,7 +275,7 @@ class RequestListAPITest(unittest.TestCase):
 
     @patch('bg_utils.parser.BeerGardenParser.parse_request_dict')
     @patch('brew_view.controllers.request_list_api.url_for', Mock(return_value='some_url'))
-    @patch('bg_utils.models.request.Request.objects')
+    @patch('bg_utils.mongo.models.request.Request.objects')
     def test_post_request_with_parent(self, object_mock, parse_mock):
         brew_view.backend.validateRequest.return_value = Mock(valid=True, message="message")
         mock_request = Mock(id='id')
