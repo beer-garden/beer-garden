@@ -39,20 +39,27 @@ class BartenderApp(StoppableThread):
                                                registry=self.plugin_registry)
 
         self.clients = {
-            'pika': PikaClient(host=bartender.config.amq.host,
-                               port=bartender.config.amq.connections.message.port,
-                               ssl=bartender.config.amq.connections.message.ssl,
-                               user=bartender.config.amq.connections.admin.user,
-                               password=bartender.config.amq.connections.admin.password,
-                               virtual_host=bartender.config.amq.virtual_host,
-                               connection_attempts=bartender.config.amq.connection_attempts,
-                               exchange=bartender.config.amq.exchange),
-            'pyrabbit': PyrabbitClient(host=bartender.config.amq.host,
-                                       virtual_host=bartender.config.amq.virtual_host,
-                                       **bartender.config.amq.connections.admin),
-            'public': PikaClient(host=bartender.config.publish_hostname,
-                                 virtual_host=bartender.config.amq.virtual_host,
-                                 **bartender.config.amq.connections.message),
+            'pika': PikaClient(
+                host=bartender.config.amq.host,
+                port=bartender.config.amq.connections.message.port,
+                ssl=bartender.config.amq.connections.message.ssl,
+                user=bartender.config.amq.connections.admin.user,
+                password=bartender.config.amq.connections.admin.password,
+                virtual_host=bartender.config.amq.virtual_host,
+                connection_attempts=bartender.config.amq.connection_attempts,
+                blocked_connection_timeout=bartender.config.amq.blocked_connection_timeout,
+                exchange=bartender.config.amq.exchange,
+            ),
+            'pyrabbit': PyrabbitClient(
+                host=bartender.config.amq.host,
+                virtual_host=bartender.config.amq.virtual_host,
+                **bartender.config.amq.connections.admin
+            ),
+            'public': PikaClient(
+                host=bartender.config.publish_hostname,
+                virtual_host=bartender.config.amq.virtual_host,
+                **bartender.config.amq.connections.message
+            ),
         }
 
         self.plugin_manager = LocalPluginsManager(

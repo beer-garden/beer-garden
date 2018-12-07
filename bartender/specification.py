@@ -50,6 +50,11 @@ SPECIFICATION = {
                 "description": "Heartbeat interval for AMQ",
                 "previous_names": ["amq_heartbeat_interval"],
             },
+            "blocked_connection_timeout": {
+                "type": "int",
+                "default": 5,
+                "description": "Time to wait for a blocked connection to be unblocked",
+            },
             "connection_attempts": {
                 "type": "int",
                 "default": 3,

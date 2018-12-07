@@ -1,5 +1,6 @@
 amq:
   admin_queue_expiry: 3600000
+  blocked_connection_timeout: 5
   connection_attempts: 3
   connections:
     admin:
