@@ -15,9 +15,9 @@ import SettingsIcon from '@material-ui/icons/Settings';
 
 const styles = theme => ({
   drawer: {
-    flexShrink: 0
+    flexShrink: 0,
   },
-  toolbar: theme.mixins.toolbar
+  toolbar: theme.mixins.toolbar,
 });
 
 class Sidebar extends Component {
@@ -29,7 +29,7 @@ class Sidebar extends Component {
         <List>
           <ListItem button key="systems">
             <ListItemIcon>
-              <FolderIcon />{' '}
+              <FolderIcon />
             </ListItemIcon>
             <ListItemText primary="Systems" />
           </ListItem>
@@ -65,7 +65,7 @@ class Sidebar extends Component {
 }
 
 Sidebar.propTypes = {
-  classes: PropTypes.object.isRequired
+  classes: PropTypes.object.isRequired,
 };
 
 export default withStyles(styles)(Sidebar);
