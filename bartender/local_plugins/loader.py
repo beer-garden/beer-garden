@@ -25,7 +25,12 @@ class LocalPluginLoader(object):
         the plugin can be loaded correctly.
         """
         for plugin_path in self.scan_plugin_path():
-            self.load_plugin(plugin_path)
+            try:
+                self.load_plugin(plugin_path)
+            except Exception as ex:
+                self.logger.exception(
+                    "Exception while loading plugin %s: %s", plugin_path, ex
+                )
 
         self.validate_plugin_requirements()
 

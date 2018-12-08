@@ -59,6 +59,16 @@ class PluginLoaderTest(unittest.TestCase):
         self.assertFalse(load_plugin_mock.called)
         validate_mock.assert_called_once_with()
 
+    @patch('bartender.local_plugins.loader.LocalPluginLoader.scan_plugin_path',
+           Mock(return_value=['pl1', 'pl2']))
+    @patch('bartender.local_plugins.loader.LocalPluginLoader.validate_plugin_requirements')
+    @patch('bartender.local_plugins.loader.LocalPluginLoader.load_plugin')
+    def test_load_plugins_exception(self, load_plugin_mock, validate_mock):
+        load_plugin_mock.side_effect = [ValueError()]
+        self.loader.load_plugins()
+        load_plugin_mock.assert_has_calls([call('pl1'), call('pl2')], any_order=False)
+        validate_mock.assert_called_once_with()
+
     @patch('bartender.local_plugins.loader.listdir', Mock(return_value=['file1', 'file2']))
     @patch('bartender.local_plugins.loader.isfile', Mock(side_effect=[False, True]))
     @patch('bartender.local_plugins.loader.LocalPluginLoader.load_plugin', Mock())
