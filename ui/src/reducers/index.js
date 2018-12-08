@@ -1,7 +1,6 @@
-const initialState = {
-  systems: []
-};
+import { combineReducers } from 'redux';
+import configReducer from './config';
 
-const rootReducer = (state = initialState, action) => state;
-
-export default rootReducer;
+export default combineReducers({
+  configReducer,
+});
