@@ -7,6 +7,7 @@ import { Route } from 'react-router-dom';
 import Spinner from '../components/layout/Spinner';
 import ErrorRetryDialog from '../components/layout/ErrorRetryDialog';
 import App from './App';
+import Login from '../components/auth/Login';
 
 class Root extends Component {
   componentDidMount() {
@@ -15,6 +16,7 @@ class Root extends Component {
 
   render() {
     const { configLoading, configError, config, loadConfig } = this.props;
+
     if (configLoading && !configError) {
       return <Spinner />;
     }
@@ -29,11 +31,16 @@ class Root extends Component {
       );
     }
 
-    return (
-      <>
-        <CssBaseline />
-      </>
-    );
+    if (config.authEnabled) {
+      return <Login />;
+    } else {
+      return (
+        <div>
+          <CssBaseline />
+          <Route exact path="/" component={App} />
+        </div>
+      );
+    }
   }
 }
 
