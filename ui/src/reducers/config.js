@@ -33,7 +33,6 @@ export default function configReducer(state = initialState, action) {
     case FETCH_CONFIG_FAILURE:
       // The request failed, but it did stop, so set loading to "false"
       // Save the error, and we can display it somewhere.
-      console.log('something went wrong...');
       return {
         ...state,
         configLoading: false,

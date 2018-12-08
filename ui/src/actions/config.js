@@ -1,3 +1,4 @@
+import camelcaseKeys from 'camelcase-keys';
 import {
   FETCH_CONFIG_BEGIN,
   FETCH_CONFIG_FAILURE,
@@ -28,13 +29,14 @@ export function fetchConfig() {
 
     console.log('fetching config...');
     console.log('Imitating some server load...');
-    await sleep(2000);
+    await sleep(1000);
     return fetch('/config')
       .then(handleErrors)
       .then(res => res.json())
       .then(json => {
-        dispatch(fetchConfigSuccess(json));
-        return json;
+        const normalizedData = camelcaseKeys(json);
+        dispatch(fetchConfigSuccess(normalizedData));
+        return normalizedData;
       })
       .catch(error => dispatch(fetchConfigFailure(error)));
   };
