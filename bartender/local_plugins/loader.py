@@ -32,11 +32,12 @@ class LocalPluginLoader(object):
     def scan_plugin_path(self, path=None):
         """Find valid plugin directories in a given path.
 
-        Note: This scan does not walk the directory tree - all plugins must be in the top
-        level of the given path.
+        Note: This scan does not walk the directory tree - all plugins must be
+        in the top level of the given path.
 
-        :param path: The path to scan for plugins. If none will default to the plugin path
-            specified at initialization.
+        :param path: The path to scan for plugins. If none will default to the
+            plugin path specified at initialization.
+
         :return: A list containing paths specifying plugins
         """
         path = path or bartender.config.plugin.local.directory
@@ -51,7 +52,7 @@ class LocalPluginLoader(object):
             ]
 
     def validate_plugin_requirements(self):
-        """Validates requirements for each plugin can be satisfied by one of the loaded plugins"""
+        """Validate requirements for each plugin can be satisfied"""
         plugin_list = self.registry.get_all_plugins()
         plugin_names = self.registry.get_unique_plugin_names()
         plugins_to_remove = []
@@ -59,10 +60,9 @@ class LocalPluginLoader(object):
         for plugin in plugin_list:
             for required_plugin in plugin.requirements:
                 if required_plugin not in plugin_names:
-                    self.logger.warning("Plugin %s requires plugin %s which is "
-                                        "not one of the known plugins.",
-                                        plugin.system.name, required_plugin)
-                    self.logger.warning("Plugin %s will not be loaded.", plugin.system.name)
+                    self.logger.warning(
+                        "Not loading plugin %s - plugin requirement %s is not "
+                        "a known plugin.", plugin.system.name, required_plugin)
                     plugins_to_remove.append(plugin)
 
         for plugin in plugins_to_remove:
@@ -71,14 +71,15 @@ class LocalPluginLoader(object):
     def load_plugin(self, plugin_path):
         """Loads a plugin given a path to a plugin directory.
 
-        It will use the validator to validate the plugin before registering the plugin in the
-        database as well as adding an entry to the plugin map
+        It will use the validator to validate the plugin before registering the
+        plugin in the database as well as adding an entry to the plugin map.
 
         :param plugin_path: The path of the plugin to load
         :return: The loaded plugin
         """
         if not self.validator.validate_plugin(plugin_path):
-            self.logger.warning("Not loading plugin at %s because it was invalid.", plugin_path)
+            self.logger.warning(
+                "Not loading plugin at %s because it was invalid.", plugin_path)
             return False
 
         config = self._load_plugin_config(join(plugin_path, 'beer.conf'))
@@ -93,9 +94,10 @@ class LocalPluginLoader(object):
         plugin_id = None
         plugin_commands = []
         # TODO: replace this with a call from the EasyClient
-        # plugin_system = self.easy_client.find_unique_system(name=plugin_name,
-        #                                                     version=plugin_version)
+        # plugin_system = self.easy_client.find_unique_system(
+        #     name=plugin_name, version=plugin_version)
         plugin_system = System.find_unique(plugin_name, plugin_version)
+
         if plugin_system:
             # Remove the current instances so they aren't left dangling
             # TODO: This should be replaced with a network call
@@ -105,15 +107,19 @@ class LocalPluginLoader(object):
             plugin_id = plugin_system.id
             plugin_commands = plugin_system.commands
 
-        plugin_system = System(id=plugin_id, name=plugin_name, version=plugin_version,
-                               commands=plugin_commands,
-                               instances=[Instance(name=instance_name)
-                                          for instance_name in plugin_instances],
-                               max_instances=len(plugin_instances),
-                               description=config.get('DESCRIPTION'),
-                               icon_name=config.get('ICON_NAME'),
-                               display_name=config.get('DISPLAY_NAME'),
-                               metadata=config.get('METADATA'))
+        plugin_system = System(
+            id=plugin_id,
+            name=plugin_name,
+            version=plugin_version,
+            commands=plugin_commands,
+            instances=[Instance(name=instance_name) for instance_name in plugin_instances],
+            max_instances=len(plugin_instances),
+            description=config.get('DESCRIPTION'),
+            icon_name=config.get('ICON_NAME'),
+            display_name=config.get('DISPLAY_NAME'),
+            metadata=config.get('METADATA'),
+        )
+
         # TODO: Right now, we have to save this system because the LocalPluginRunner
         # uses the database to determine status, specifically, it calls reload on the
         # instance object which we need to change to satisfy
@@ -123,9 +129,13 @@ class LocalPluginLoader(object):
         plugin_log_directory = bartender.config.plugin.local.log_directory
         for instance_name in plugin_instances:
             plugin = LocalPluginRunner(
-                plugin_entry, plugin_system, instance_name,
-                abspath(plugin_path), bartender.config.web.host,
-                bartender.config.web.port, bartender.config.web.ssl_enabled,
+                plugin_entry,
+                plugin_system,
+                instance_name,
+                abspath(plugin_path),
+                bartender.config.web.host,
+                bartender.config.web.port,
+                bartender.config.web.ssl_enabled,
                 plugin_args=plugin_args.get(instance_name),
                 environment=config['ENVIRONMENT'],
                 requirements=config['REQUIRES'],
@@ -135,7 +145,7 @@ class LocalPluginLoader(object):
                 ca_cert=bartender.config.web.ca_cert,
                 username=bartender.config.plugin.local.auth.username,
                 password=bartender.config.plugin.local.auth.password,
-                log_level=config['LOG_LEVEL']
+                log_level=config['LOG_LEVEL'],
             )
 
             self.registry.register_plugin(plugin)
