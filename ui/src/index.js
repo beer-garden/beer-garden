@@ -1,6 +1,7 @@
 import React from 'react';
 import { render } from 'react-dom';
 import { BrowserRouter as Router } from 'react-router-dom';
+import { Provider } from 'react-redux';
 import 'typeface-roboto';
 import Root from './containers/Root';
 import configureStore from './store/configureStore';
@@ -9,9 +10,11 @@ import * as serviceWorker from './serviceWorker';
 const store = configureStore();
 
 render(
-  <Router>
-    <Root store={store} />
-  </Router>,
+  <Provider store={store}>
+    <Router>
+      <Root />
+    </Router>
+  </Provider>,
   document.getElementById('root')
 );
 
