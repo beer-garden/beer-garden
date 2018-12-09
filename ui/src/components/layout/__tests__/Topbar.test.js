@@ -28,5 +28,7 @@ describe('Topbar Component', () => {
     expect(wrapper.state('anchorEl')).toBeNull();
     wrapper.find(IconButton).simulate('click', { currentTarget: 'target' });
     expect(wrapper.state('anchorEl')).toEqual('target');
+    wrapper.instance().handleClose();
+    expect(wrapper.state('anchorEl')).toBeNull();
   });
 });
