@@ -13,16 +13,16 @@ const initialState = {
 export default function configReducer(state = initialState, action) {
   switch (action.type) {
     case FETCH_CONFIG_BEGIN:
-      // Mark the state as loading so we can show a spinner or something
-      // Also reset any errors. We're starting fresh.
+      // Do not reset the error. This call only happens once at application
+      // configuration loading. Because of that, if an error occurs, we retry
+      // and don't want to unset the last error since the app simply cannot
+      // load if no configuration is returned.
       return {
         ...state,
         configLoading: true,
       };
 
     case FETCH_CONFIG_SUCCESS:
-      // All done: set loading "false"
-      // Also replace the items with ones from the server
       return {
         ...state,
         configLoading: false,
@@ -31,8 +31,6 @@ export default function configReducer(state = initialState, action) {
       };
 
     case FETCH_CONFIG_FAILURE:
-      // The request failed, but it did stop, so set loading to "false"
-      // Save the error, and we can display it somewhere.
       return {
         ...state,
         configLoading: false,
