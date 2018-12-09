@@ -10,15 +10,21 @@ const styles = theme => ({
 });
 
 function Spinner(props) {
-  const { classes } = props;
+  const { classes, color, size } = props;
   return (
-    <div>
-      <CircularProgress className={classes.progress} color="secondary" />
-    </div>
+    <CircularProgress className={classes.progress} color={color} size={size} />
   );
 }
 
 Spinner.propTypes = {
   classes: PropTypes.object.isRequired,
+  color: PropTypes.string.isRequired,
+  size: PropTypes.number.isRequired,
 };
+
+Spinner.defaultProps = {
+  color: 'primary',
+  size: 40,
+};
+
 export default withStyles(styles)(Spinner);

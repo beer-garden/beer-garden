@@ -107,6 +107,7 @@ RetryTimer.propTypes = {
   beginningWaitTime: PropTypes.number.isRequired,
   scaleWait: PropTypes.number.isRequired,
   loading: PropTypes.bool.isRequired,
+  error: PropTypes.object.isRequired,
 };
 
 RetryTimer.defaultProps = {

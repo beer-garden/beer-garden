@@ -57,7 +57,6 @@ class ErrorRetryDialog extends Component {
 }
 
 ErrorRetryDialog.propTypes = {
-  classes: PropTypes.object.isRequired,
   action: PropTypes.func.isRequired,
   error: PropTypes.object.isRequired,
   loading: PropTypes.bool.isRequired,
