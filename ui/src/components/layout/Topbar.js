@@ -17,7 +17,7 @@ const styles = theme => ({
   },
 });
 
-class Topbar extends Component {
+export class Topbar extends Component {
   state = {
     anchorEl: null,
   };

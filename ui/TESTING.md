@@ -30,7 +30,8 @@ test more easily and in isolation.
 
 Write a smoke test first (i.e. does the component render), then test behavior.
 
-Make sure your tests describe _what_ the component does, not _how_ it does it in your `test('calls')`
+Make sure your tests describe _what_ the component does, not _how_ it does it
+in your `test('calls')`
 
 ## Running the tests
 
@@ -40,11 +41,33 @@ To run the tests:
     npm test
 
 To generate coverage:
-  
- npm test -- --coverage # (notice the middle '--')
+
+npm test -- --coverage # (notice the middle '--')
 
 ## Notes
 
-When testing a component that uses `withStyles` you will almost certainly
-need to `.dive()` on any shallow copies you make. This is because you are
-creating a [High Order Component (HOC)](https://reactjs.org/docs/higher-order-components.html)
+If you are testing a [High Order Component (HOC)](https://reactjs.org/docs/higher-order-components.html)
+then you should be exporting the lower component as a non default export. For
+example, if you have the following redux and/or material-ui connected
+component:
+
+    // raw, unconnected component for testing
+    export function HeaderLinks(props) {
+        ...
+        return (
+            <Grid container item className={classes.nav}>
+                <HeaderMenu renderMenuLinks={() => menuLinks} />
+            </Grid>
+        )
+    }
+
+    // connected (or any other sort of HOC component) for use in App.
+    export default connect(mapStateToProps)(compose(withStyles(styles), withWidth())(HeaderLinks));
+
+This results in imports in the tests looking like:
+
+    import { HeaderLinks } from '../HeaderLinks'
+
+and imports in the application looking like:
+
+    import HeaderLinks from './components/HeaderLinks'

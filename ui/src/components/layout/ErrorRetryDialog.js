@@ -11,7 +11,7 @@ const styles = theme => ({
   },
 });
 
-class ErrorRetryDialog extends Component {
+export class ErrorRetryDialog extends Component {
   render() {
     const { classes, action, error, loading } = this.props;
 

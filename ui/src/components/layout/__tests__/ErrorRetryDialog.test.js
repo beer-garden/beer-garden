@@ -1,6 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
-import ErrorRetryDialog from '../ErrorRetryDialog';
+import { ErrorRetryDialog } from '../ErrorRetryDialog';
 import RetryTimer from '../RetryTimer';
 
 const setup = propOverrides => {
@@ -9,6 +9,7 @@ const setup = propOverrides => {
       action: jest.fn(),
       error: { message: 'My Error Message' },
       loading: false,
+      classes: { paper: 'paperClassName' },
     },
     propOverrides
   );
@@ -23,6 +24,6 @@ const setup = propOverrides => {
 describe('ErrorRetryDialog Component', () => {
   test('render', () => {
     const { wrapper } = setup();
-    expect(wrapper.dive().find(RetryTimer)).toHaveLength(1);
+    expect(wrapper.find(RetryTimer)).toHaveLength(1);
   });
 });
