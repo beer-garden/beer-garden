@@ -34,8 +34,10 @@
   "devDependencies": {
     "enzyme": "^3.7.0",
     "enzyme-adapter-react-16": "^1.7.0",
+    "fetch-mock": "^7.2.5",
     "react-test-renderer": "^16.6.3",
-    "redux-logger": "^3.0.6"
+    "redux-logger": "^3.0.6",
+    "redux-mock-store": "^1.5.3"
   },
   "proxy": "http://localhost:2337"
 }
