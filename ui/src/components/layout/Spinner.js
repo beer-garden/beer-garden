@@ -9,7 +9,7 @@ const styles = theme => ({
   },
 });
 
-function Spinner(props) {
+export function Spinner(props) {
   const { classes, color, size } = props;
   return (
     <CircularProgress className={classes.progress} color={color} size={size} />

@@ -22,7 +22,7 @@ const styles = theme => ({
   toolbar: theme.mixins.toolbar,
 });
 
-class Sidebar extends Component {
+export class Sidebar extends Component {
   render() {
     const { classes } = this.props;
     return (

@@ -9,7 +9,7 @@ import ErrorRetryDialog from '../components/layout/ErrorRetryDialog';
 import App from './App';
 import Login from '../components/auth/Login';
 
-class Root extends Component {
+export class Root extends Component {
   componentDidMount() {
     this.props.loadConfig();
   }
