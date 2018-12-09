@@ -1,23 +1,25 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
-import AppBar from '@material-ui/core/AppBar';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
-import IconButton from '@material-ui/core/IconButton';
-import AccountCircle from '@material-ui/icons/AccountCircle';
+import {
+  AppBar,
+  Menu,
+  MenuItem,
+  Toolbar,
+  Typography,
+  IconButton,
+} from '@material-ui/core';
+import { AccountCircle } from '@material-ui/icons';
 
 const styles = theme => ({
   appBar: {
-    zIndex: theme.zIndex.drawer + 1
-  }
+    zIndex: theme.zIndex.drawer + 1,
+  },
 });
 
 class Topbar extends Component {
   state = {
-    anchorEl: null
+    anchorEl: null,
   };
 
   handleMenu = event => {
@@ -62,7 +64,7 @@ class Topbar extends Component {
   }
 }
 Topbar.propTypes = {
-  classes: PropTypes.object.isRequired
+  classes: PropTypes.object.isRequired,
 };
 
 export default withStyles(styles)(Topbar);
