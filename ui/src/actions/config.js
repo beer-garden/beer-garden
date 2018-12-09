@@ -27,9 +27,9 @@ export function fetchConfig() {
   return async dispatch => {
     dispatch(fetchConfigBegin());
 
-    console.log('fetching config...');
-    console.log('Imitating some server load...');
-    await sleep(1000);
+    // console.log('fetching config...');
+    // console.log('Imitating some server load...');
+    // await sleep(1000);
     return fetch('/config')
       .then(handleErrors)
       .then(res => res.json())
@@ -44,7 +44,7 @@ export function fetchConfig() {
 
 export const loadConfig = () => (dispatch, getState) => {
   const configData = getState().config;
-  if (configData) {
+  if (configData && Object.getOwnPropertyNames(configData).length > 0) {
     return null;
   }
 
