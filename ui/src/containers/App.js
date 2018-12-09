@@ -6,8 +6,8 @@ class App extends Component {
   render() {
     return (
       <div style={{ display: 'flex' }}>
-        <Topbar />;
-        <Sidebar />;
+        <Topbar />
+        <Sidebar />
       </div>
     );
   }
