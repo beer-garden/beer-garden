@@ -219,7 +219,14 @@ export default function appRun(
     let versionParts2 = system2.version.split('.');
 
     for (let i = 0; i < 3; i++) {
-      if (parseInt(versionParts1[i]) > parseInt(versionParts2[i])) {
+      let intPart1 = parseInt(versionParts1[i]);
+      let intPart2 = parseInt(versionParts2[i]);
+
+      if (!isNan(intPart1) && !isNan(intPart2)) {
+        if (intPart1 > intPart2) {
+          return true;
+        }
+      } else if (versionParts1[i] > versionParts2[i]) {
         return true;
       }
     }
