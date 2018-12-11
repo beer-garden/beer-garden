@@ -54,7 +54,7 @@ class LocalPluginsManager(object):
             self.registry.remove(plugin.unique_name)
             self.registry.register_plugin(new_plugin)
         else:
-            raise PluginStartupError('Plugin in an invalid state')
+            raise PluginStartupError('Plugin in an invalid state (%s)' % plugin.status)
 
         new_plugin.status = 'STARTING'
         new_plugin.start()
