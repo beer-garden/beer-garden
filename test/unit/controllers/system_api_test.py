@@ -1,10 +1,84 @@
 import json
 
+import pytest
 from mock import MagicMock, Mock, patch
 from mongoengine.errors import DoesNotExist
+from pytest_lazyfixture import lazy_fixture
 from tornado.gen import Future
+from tornado.httpclient import HTTPRequest
 
+from bg_utils.mongo.models import System
+from brewtils.models import PatchOperation, Command
+from brewtils.schema_parser import SchemaParser
 from . import TestHandlerBase
+
+
+@pytest.fixture(autouse=True)
+def drop_systems(app):
+    System.drop_collection()
+
+
+class TestSystemAPI(object):
+
+    @pytest.mark.gen_test
+    def test_get(self, http_client, base_url, system_dict, mongo_system, system_id):
+        mongo_system.deep_save()
+
+        response = yield http_client.fetch(base_url + '/api/v1/systems/' + system_id)
+        assert 200 == response.code
+        assert system_dict == json.loads(response.body)
+
+    @pytest.mark.gen_test
+    def test_get_404(self, http_client, base_url, system_id):
+        response = yield http_client.fetch(
+            base_url + '/api/v1/systems/' + system_id,
+            raise_error=False,
+        )
+        assert 404 == response.code
+
+    @pytest.mark.gen_test
+    @pytest.mark.parametrize('new_command,dev,succeed', [
+        # Same commands
+        (lazy_fixture('bg_command'), True, True),
+        (lazy_fixture('bg_command'), False, True),
+
+        # Change commands
+        (Command(name='new'), True, True),
+        (Command(name='new'), False, False),
+    ])
+    def test_patch_commands(
+        self, http_client, base_url, mongo_system, system_id, new_command, dev, succeed,
+    ):
+        if dev:
+            mongo_system.version += '.dev'
+        mongo_system.deep_save()
+
+        body = PatchOperation(
+            operation='replace',
+            path='/commands',
+            value=SchemaParser.serialize_command(
+                [new_command], to_string=False, many=True
+            ) if new_command else [],
+        )
+
+        request = HTTPRequest(
+            base_url + '/api/v1/systems/' + system_id,
+            method='PATCH',
+            headers={'content-type': 'application/json'},
+            body=SchemaParser.serialize_patch(body),
+        )
+        response = yield http_client.fetch(request, raise_error=False)
+
+        if succeed:
+            assert 200 == response.code
+
+            updated = SchemaParser.parse_system(
+                response.body.decode(), from_string=True
+            )
+            # Stopgap until we can get real comparisons
+            assert new_command.name == updated.commands[0].name
+        else:
+            assert 400 == response.code
 
 
 class SystemAPITest(TestHandlerBase):
