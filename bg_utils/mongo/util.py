@@ -135,7 +135,7 @@ def _ensure_application_state(versions):
 
     app_state = AppState.objects.first()
     if not app_state:
-        app_state = AppState(versions=versions, auth={'initialized': False})
+        app_state = AppState(versions=versions, auth={"initialized": False})
 
     app_state.versions.update(versions)
     app_state.save()
@@ -175,14 +175,27 @@ def _ensure_users(guest_login_enabled):
             preferences={"auto_change": True, "changed": False},
         ).save()
 
-    if guest_login_enabled:
-        try:
-            Principal.objects.get(username='anonymous')
-        except DoesNotExist:
-            logger.info('Creating anonymous user.')
+    try:
+        anonymous_user = Principal.objects.get(username="anonymous")
+
+        # Here we specifically check for None because bartender does
+        # not have the guest_login_enabled configuration, so we don't
+        # really know what to do in that case, so we just allow it to
+        # stay around. This actually shouldn't matter anyway, because
+        # brew-view is a dependency for bartender to start so brew-view
+        # should have already done the right thing anyway.
+        if guest_login_enabled is not None and not guest_login_enabled:
+            logger.info(
+                "Previous anonymous user detected, but the config indicates "
+                "guest login is not enabled. Removing old anonymous user."
+            )
+            anonymous_user.delete()
+
+    except DoesNotExist:
+        if guest_login_enabled:
+            logger.info("Creating anonymous user.")
             Principal(
-                username='anonymous',
-                roles=[Role.objects.get(name='bg-anonymous')]
+                username="anonymous", roles=[Role.objects.get(name="bg-anonymous")]
             ).save()
 
 

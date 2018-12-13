@@ -59,7 +59,7 @@ class TestMongoUtils(object):
                 }
             }
         )
-        assert bg_utils.mongo.setup_database(app_config) is True
+        assert bg_utils.mongo.setup_database(app_config, {}) is True
         connect_mock.assert_called_with(
             alias="aliveness",
             db="db_name",
@@ -290,7 +290,29 @@ class TestMongoUtils(object):
 
     @patch("bg_utils.mongo.util._check_indexes", Mock())
     @patch("bg_utils.mongo.util._ensure_roles", Mock())
-    @patch("bg_utils.mongo.util._ensure_users", Mock())
+    @patch("bg_utils.mongo.util._ensure_application_state", Mock())
+    def test_remove_anonymous_user(self, model_mocks):
+        principal = model_mocks['principal']
+        anon_user = Mock()
+        principal.objects.get = Mock(return_value=anon_user)
+
+        bg_utils.mongo.util.verify_db(False, {})
+        assert anon_user.delete.call_count == 1
+
+    @patch('bg_utils.mongo.util._check_indexes', Mock())
+    @patch('bg_utils.mongo.util._ensure_roles', Mock())
+    @patch('bg_utils.mongo.util._ensure_application_state', Mock())
+    def test_remove_anonymous_user_guest_login_none(self, model_mocks):
+        principal = model_mocks['principal']
+        anon_user = Mock()
+        principal.objects.get = Mock(return_value=anon_user)
+
+        bg_utils.mongo.util.verify_db(None, {})
+        assert anon_user.delete.call_count == 0
+
+    @patch('bg_utils.mongo.util._check_indexes', Mock())
+    @patch('bg_utils.mongo.util._ensure_roles', Mock())
+    @patch('bg_utils.mongo.util._ensure_users', Mock())
     def test_ensure_application_state_first_time(self, model_mocks):
         app_state = model_mocks["app_state"]
         app_state.objects.first = Mock(return_value=None)
