@@ -8,7 +8,7 @@ from passlib.apps import custom_app_context
 logger = logging.getLogger(__name__)
 
 
-def verify_db():
+def verify_db(guest_login_enabled, versions):
     """Do everything necessary to ensure the database is in a 'good' state"""
     from bg_utils.mongo.models import Job, Request, Role, System
 
@@ -16,7 +16,8 @@ def verify_db():
         _check_indexes(doc)
 
     _ensure_roles()
-    _ensure_users()
+    _ensure_users(guest_login_enabled)
+    _ensure_application_state(versions)
 
 
 def _update_request_model():
@@ -128,7 +129,19 @@ def _ensure_roles():
         _create_role(role)
 
 
-def _ensure_users():
+def _ensure_application_state(versions):
+    """Ensure the application state."""
+    from bg_utils.mongo.models import AppState
+
+    app_state = AppState.objects.first()
+    if not app_state:
+        app_state = AppState(versions=versions, auth={'initialized': False})
+
+    app_state.versions.update(versions)
+    app_state.save()
+
+
+def _ensure_users(guest_login_enabled):
     """Create users if necessary
 
     There are certain 'convenience' users that will be created if this is a new
@@ -161,6 +174,16 @@ def _ensure_users():
             roles=[Role.objects.get(name="bg-admin")],
             preferences={"auto_change": True, "changed": False},
         ).save()
+
+    if guest_login_enabled:
+        try:
+            Principal.objects.get(username='anonymous')
+        except DoesNotExist:
+            logger.info('Creating anonymous user.')
+            Principal(
+                username='anonymous',
+                roles=[Role.objects.get(name='bg-anonymous')]
+            ).save()
 
 
 def _check_indexes(document_class):

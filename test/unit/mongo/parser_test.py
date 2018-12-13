@@ -3,7 +3,7 @@ import unittest
 from datetime import datetime
 
 from bg_utils.mongo.fields import StatusInfo
-from bg_utils.mongo.models import Instance
+from bg_utils.mongo.models import Instance, AppState
 from bg_utils.mongo.parser import MongoParser
 from brewtils.errors import BrewmasterModelValidationError
 
@@ -12,6 +12,10 @@ class ParserTest(unittest.TestCase):
     def setUp(self):
         self.parser = MongoParser()
 
+        self.serialized_app_state = {
+            "versions": {"foo": "bar"},
+            "auth": {"initialized": False},
+        }
         self.serialized_instance_dict = {
             "id": "584f11af55a38e64799fd1d4",
             "name": "default",
@@ -38,6 +42,7 @@ class ParserTest(unittest.TestCase):
                 "url": "amqp://guest:guest@localhost:5672/",
             },
         )
+        self.app_state = AppState(versions={"foo": "bar"}, auth={"initialized": False})
 
     def test_parse_none(self):
         self.assertRaises(
@@ -189,3 +194,14 @@ class ParserTest(unittest.TestCase):
 
     def test_serialize_request(self):
         pass
+
+    def test_serialize_app_state(self):
+        self.assertEqual(
+            self.parser.serialize_app_state(self.app_state, to_string=False),
+            self.serialized_app_state,
+        )
+
+    def test_parse_app_state(self):
+        state = self.parser.parse_app_state(self.serialized_app_state)
+        self.assertDictEqual(state.versions, self.serialized_app_state["versions"])
+        self.assertDictEqual(state.auth, self.serialized_app_state["auth"])

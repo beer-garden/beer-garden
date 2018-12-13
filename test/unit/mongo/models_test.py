@@ -16,6 +16,7 @@ from bg_utils.mongo.models import (
     DateTrigger,
     IntervalTrigger,
     CronTrigger,
+    AppState,
 )
 from brewtils.errors import BrewmasterModelValidationError
 from brewtils.schemas import RequestTemplateSchema
@@ -439,3 +440,17 @@ class TriggerTest(unittest.TestCase):
         self.date.run_date = datetime.now()
         start_date = self.date.get_scheduler_kwargs()["run_date"]
         self.assertEqual(start_date.tzinfo, pytz.utc)
+
+
+class AppStateTest(unittest.TestCase):
+    def test_str(self):
+        versions = {"foo": "bar"}
+        auth = {"initialized": False}
+        a = AppState(versions, auth)
+        self.assertEqual("versions=%s, auth=%s" % (versions, auth), str(a))
+
+    def test_repr(self):
+        versions = {"foo": "bar"}
+        auth = {"initialized": False}
+        a = AppState(versions, auth)
+        self.assertEqual("<AppState: versions=%s, auth=%s>" % (versions, auth), repr(a))

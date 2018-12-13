@@ -1,11 +1,12 @@
 from bg_utils.mongo.util import verify_db
 
 
-def setup_database(config):
+def setup_database(config, versions):
     """Attempt connection to a Mongo database and verify necessary indexes
 
     Args:
         config (box.Box): Yapconf-generated configuration object
+        versions (dict): A dictionary of component versions
 
     Returns:
         bool: True if successful, False otherwise (unable to connect)
@@ -41,6 +42,11 @@ def setup_database(config):
     # Yes, mongoengine uses 'db' in connect and 'name' in register_connection
     register_connection("default", name=config.db.name, **config.db.connection)
 
-    verify_db()
+    try:
+        guest_login_enabled = config.auth.guest_login_enabled
+    except KeyError:
+        guest_login_enabled = None
+
+    verify_db(guest_login_enabled, versions)
 
     return True

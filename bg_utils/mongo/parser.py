@@ -1,5 +1,6 @@
 from copy import copy
 
+from marshmallow import fields
 from marshmallow.exceptions import MarshmallowError
 
 from bg_utils.mongo.models import (
@@ -18,9 +19,16 @@ from bg_utils.mongo.models import (
     DateTrigger,
     IntervalTrigger,
     CronTrigger,
+    AppState,
 )
 from brewtils.errors import BrewmasterModelValidationError
 from brewtils.schema_parser import SchemaParser
+from brewtils.schemas import BaseSchema
+
+
+class AppStateSchema(BaseSchema):
+    versions = fields.Dict(allow_none=True)
+    auth = fields.Dict(allow_none=True)
 
 
 class MongoParser(SchemaParser):
@@ -44,6 +52,7 @@ class MongoParser(SchemaParser):
             "DateTriggerSchema": DateTrigger,
             "IntervalTriggerSchema": IntervalTrigger,
             "CronTriggerSchema": CronTrigger,
+            "AppStateSchema": AppState,
         }
     )
 
@@ -55,3 +64,13 @@ class MongoParser(SchemaParser):
             )
         except (TypeError, ValueError, MarshmallowError) as ex:
             raise BrewmasterModelValidationError(str(ex))
+
+    @classmethod
+    def serialize_app_state(cls, app_state, to_string=True, **kwargs):
+        return cls._do_serialize(AppStateSchema(**kwargs), app_state, to_string)
+
+    @classmethod
+    def parse_app_state(cls, app_state, from_string=False, **kwargs):
+        return cls._do_parse(
+            app_state, AppStateSchema(**kwargs), from_string=from_string
+        )

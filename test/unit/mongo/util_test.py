@@ -17,18 +17,21 @@ class TestMongoUtils(object):
         role_mock = Mock()
         job_mock = Mock()
         principal_mock = Mock()
+        app_state_mock = Mock()
 
         request_mock.__name__ = "Request"
         system_mock.__name__ = "System"
         role_mock.__name__ = "Role"
         job_mock.__name__ = "Job"
         principal_mock.__name__ = "Principal"
+        app_state_mock.__name__ = "AppState"
 
         monkeypatch.setattr(bg_utils.mongo.models, "Request", request_mock)
         monkeypatch.setattr(bg_utils.mongo.models, "System", system_mock)
         monkeypatch.setattr(bg_utils.mongo.models, "Role", role_mock)
         monkeypatch.setattr(bg_utils.mongo.models, "Job", job_mock)
         monkeypatch.setattr(bg_utils.mongo.models, "Principal", principal_mock)
+        monkeypatch.setattr(bg_utils.mongo.models, "AppState", app_state_mock)
 
         return {
             "request": request_mock,
@@ -36,6 +39,7 @@ class TestMongoUtils(object):
             "role": role_mock,
             "job": job_mock,
             "principal": principal_mock,
+            "app_state": app_state_mock,
         }
 
     @patch("mongoengine.register_connection")
@@ -74,13 +78,13 @@ class TestMongoUtils(object):
             host="db_host",
             port="db_port",
         )
-        verify_mock.assert_called_once_with()
+        verify_mock.assert_called_once_with(None, {})
 
     @patch("mongoengine.connect")
     @patch("bg_utils.mongo.verify_db", Mock())
     def test_setup_database_connect_error(self, connect_mock):
         connect_mock.side_effect = ServerSelectionTimeoutError
-        assert bg_utils.mongo.setup_database(MagicMock()) is False
+        assert bg_utils.mongo.setup_database(MagicMock(), {}) is False
 
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
@@ -240,34 +244,71 @@ class TestMongoUtils(object):
         with pytest.raises(NotUniqueError):
             bg_utils.mongo.util._ensure_roles()
 
-    @patch('bg_utils.mongo.util._check_indexes', Mock())
-    @patch('bg_utils.mongo.util._ensure_roles', Mock())
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("bg_utils.mongo.util._ensure_application_state", Mock())
     def test_ensure_users_already_exists(self, model_mocks):
-        principal = model_mocks['principal']
+        principal = model_mocks["principal"]
         principal.objects.get = Mock()
-        bg_utils.mongo.util.verify_db()
+        bg_utils.mongo.util.verify_db(False, {})
         principal.assert_not_called()
 
-    @patch('bg_utils.mongo.util._check_indexes', Mock())
-    @patch('bg_utils.mongo.util._ensure_roles', Mock())
-    @patch('passlib.apps.custom_app_context.hash')
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("bg_utils.mongo.util._ensure_application_state", Mock())
+    @patch("passlib.apps.custom_app_context.hash")
     def test_ensure_users_create(self, hash_mock, model_mocks):
-        principal = model_mocks['principal']
+        principal = model_mocks["principal"]
         principal.objects.get = Mock(side_effect=DoesNotExist)
 
-        bg_utils.mongo.util.verify_db()
+        bg_utils.mongo.util.verify_db(False, {})
         principal.assert_called_once()
-        hash_mock.assert_called_with('password')
+        hash_mock.assert_called_with("password")
 
-    @patch('bg_utils.mongo.util._check_indexes', Mock())
-    @patch('bg_utils.mongo.util._ensure_roles', Mock())
-    @patch('passlib.apps.custom_app_context.hash')
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("bg_utils.mongo.util._ensure_application_state", Mock())
+    @patch("passlib.apps.custom_app_context.hash")
     def test_ensure_users_create_env_password(self, hash_mock, model_mocks):
-        principal = model_mocks['principal']
+        principal = model_mocks["principal"]
         principal.objects.get = Mock(side_effect=DoesNotExist)
 
-        with patch2.dict('os.environ', {'BG_DEFAULT_ADMIN_PASSWORD': 'foo'}):
-            bg_utils.mongo.util.verify_db()
+        with patch2.dict("os.environ", {"BG_DEFAULT_ADMIN_PASSWORD": "foo"}):
+            bg_utils.mongo.util.verify_db(False, {})
             principal.assert_called_once()
-            hash_mock.assert_called_with('foo')
+            hash_mock.assert_called_with("foo")
 
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("bg_utils.mongo.util._ensure_application_state", Mock())
+    def test_ensure_users_guest_login_enabled(self, model_mocks):
+        principal = model_mocks["principal"]
+        principal.objects.get = Mock(side_effect=DoesNotExist)
+
+        bg_utils.mongo.util.verify_db(True, {})
+        assert principal.call_count == 2
+
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("bg_utils.mongo.util._ensure_users", Mock())
+    def test_ensure_application_state_first_time(self, model_mocks):
+        app_state = model_mocks["app_state"]
+        app_state.objects.first = Mock(return_value=None)
+
+        bg_utils.mongo.util.verify_db(False, {"foo": "bar"})
+        app_state.assert_called_with(
+            versions={"foo": "bar"}, auth={"initialized": False}
+        )
+
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("bg_utils.mongo.util._ensure_users", Mock())
+    def test_ensure_application_state_update(self, model_mocks):
+        app_state = model_mocks["app_state"]
+        fake_model = Mock(versions={"foo": "bar"})
+        app_state.objects.first = Mock(return_value=fake_model)
+        fake_model.save = Mock()
+
+        bg_utils.mongo.util.verify_db(False, {"foo": "bar2", "bat": "baz"})
+        assert fake_model.versions == {"foo": "bar2", "bat": "baz"}
+        assert fake_model.save.called

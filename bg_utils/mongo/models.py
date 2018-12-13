@@ -66,6 +66,7 @@ __all__ = [
     "DateTrigger",
     "CronTrigger",
     "IntervalTrigger",
+    "AppState",
 ]
 
 
@@ -793,3 +794,14 @@ class Job(Document, BrewtilsJob):
                 "Cannot save job. Trigger type: %s but got trigger: %s"
                 % (self.trigger_type, type(self.trigger))
             )
+
+
+class AppState(Document):
+    versions = DictField(required=True)
+    auth = DictField(required=True)
+
+    def __str__(self):
+        return "versions=%s, auth=%s" % (self.versions, self.auth)
+
+    def __repr__(self):
+        return "<AppState: %s>" % self.__str__()
