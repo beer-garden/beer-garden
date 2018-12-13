@@ -12,8 +12,11 @@ class ConfigHandlerTest(TestHandlerBase):
         import brew_view
 
         brew_view.config["application"]["name"] = "Rock Garden"
-
         response = self.fetch("/config")
+        data = json.loads(response.body.decode("utf-8"))
+        self.assertEqual("Rock Garden", data["application_name"])
+        assert "app_state" in data
+
         self.assertEqual(
             "Rock Garden", json.loads(response.body.decode("utf-8"))["application_name"]
         )
