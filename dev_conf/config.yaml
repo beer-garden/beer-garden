@@ -23,7 +23,8 @@ application:
   icon_default: fa-beer
   name: Beer Garden
 auth:
-  enabled: false
+  enabled: true
+  guest_login_enabled: false
   token:
     algorithm: HS256
     lifetime: 1200
