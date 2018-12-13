@@ -105,6 +105,7 @@ def startup():
     yield _progressive_backoff(
         partial(setup_database, config), "Unable to connect to mongo, is it started?"
     )
+    anonymous_principal = load_anonymous()
 
     # Need to wait until after mongo connection established to load
     anonymous_principal = load_anonymous()
