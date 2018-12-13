@@ -1,5 +1,6 @@
 import pytest
 from box import Box
+from unittest.mock import patch as patch2
 from mock import patch, MagicMock, Mock
 from mongoengine import DoesNotExist, NotUniqueError
 from pymongo.errors import ServerSelectionTimeoutError
@@ -15,22 +16,26 @@ class TestMongoUtils(object):
         system_mock = Mock()
         role_mock = Mock()
         job_mock = Mock()
+        principal_mock = Mock()
 
         request_mock.__name__ = "Request"
         system_mock.__name__ = "System"
         role_mock.__name__ = "Role"
         job_mock.__name__ = "Job"
+        principal_mock.__name__ = "Principal"
 
         monkeypatch.setattr(bg_utils.mongo.models, "Request", request_mock)
         monkeypatch.setattr(bg_utils.mongo.models, "System", system_mock)
         monkeypatch.setattr(bg_utils.mongo.models, "Role", role_mock)
         monkeypatch.setattr(bg_utils.mongo.models, "Job", job_mock)
+        monkeypatch.setattr(bg_utils.mongo.models, "Principal", principal_mock)
 
         return {
             "request": request_mock,
             "system": system_mock,
             "role": role_mock,
             "job": job_mock,
+            "principal": principal_mock,
         }
 
     @patch("mongoengine.register_connection")
@@ -234,3 +239,35 @@ class TestMongoUtils(object):
 
         with pytest.raises(NotUniqueError):
             bg_utils.mongo.util._ensure_roles()
+
+    @patch('bg_utils.mongo.util._check_indexes', Mock())
+    @patch('bg_utils.mongo.util._ensure_roles', Mock())
+    def test_ensure_users_already_exists(self, model_mocks):
+        principal = model_mocks['principal']
+        principal.objects.get = Mock()
+        bg_utils.mongo.util.verify_db()
+        principal.assert_not_called()
+
+    @patch('bg_utils.mongo.util._check_indexes', Mock())
+    @patch('bg_utils.mongo.util._ensure_roles', Mock())
+    @patch('passlib.apps.custom_app_context.hash')
+    def test_ensure_users_create(self, hash_mock, model_mocks):
+        principal = model_mocks['principal']
+        principal.objects.get = Mock(side_effect=DoesNotExist)
+
+        bg_utils.mongo.util.verify_db()
+        principal.assert_called_once()
+        hash_mock.assert_called_with('password')
+
+    @patch('bg_utils.mongo.util._check_indexes', Mock())
+    @patch('bg_utils.mongo.util._ensure_roles', Mock())
+    @patch('passlib.apps.custom_app_context.hash')
+    def test_ensure_users_create_env_password(self, hash_mock, model_mocks):
+        principal = model_mocks['principal']
+        principal.objects.get = Mock(side_effect=DoesNotExist)
+
+        with patch2.dict('os.environ', {'BG_DEFAULT_ADMIN_PASSWORD': 'foo'}):
+            bg_utils.mongo.util.verify_db()
+            principal.assert_called_once()
+            hash_mock.assert_called_with('foo')
+

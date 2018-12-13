@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 import logging
+import os
 
 from mongoengine.errors import DoesNotExist, NotUniqueError
 from passlib.apps import custom_app_context
@@ -137,39 +139,27 @@ def _ensure_users():
     """
     from bg_utils.mongo.models import Principal, Role
 
-    if Principal.objects.count() == 0:
-        logger.warning("No users found: creating convenience users")
-
-        logger.warning(
-            "Creating plugin user " '(username "plugin", password "password"'
-        )
-        Principal(
-            username="plugin",
-            hash=custom_app_context.hash("password"),
-            roles=[Role.objects.get(name="bg-plugin")],
-        ).save()
-
     try:
         Principal.objects.get(username="admin")
     except DoesNotExist:
-        logger.warning(
-            "Admin user missing, about to create "
-            '(username "admin", password "password")'
-        )
+        default_password = os.environ.get("BG_DEFAULT_ADMIN_PASSWORD")
+        logger.warning("Creating missing admin user...")
+        if default_password:
+            logger.info(
+                'Creating username "admin" with custom password set'
+                'in environment variable "BG_DEFAULT_ADMIN_PASSWORD"'
+            )
+        else:
+            logger.info(
+                'Creating username "admin" with default password. See '
+                "Beer Garden documentation for the value."
+            )
+            default_password = "password"
         Principal(
             username="admin",
-            hash=custom_app_context.hash("password"),
+            hash=custom_app_context.hash(default_password),
             roles=[Role.objects.get(name="bg-admin")],
-        ).save()
-
-    try:
-        Principal.objects.get(username="anonymous")
-    except DoesNotExist:
-        logger.warning(
-            "Anonymous user missing, about to create " '(username "anonymous")'
-        )
-        Principal(
-            username="anonymous", roles=[Role.objects.get(name="bg-anonymous")]
+            preferences={"auto_change": True, "changed": False},
         ).save()
 
 

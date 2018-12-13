@@ -594,6 +594,7 @@ class Principal(Document, BrewtilsPrincipal):
     hash = StringField()
     roles = ListField(field=ReferenceField("Role", reverse_delete_rule=PULL))
     preferences = DictField()
+    metadata = DictField()
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
