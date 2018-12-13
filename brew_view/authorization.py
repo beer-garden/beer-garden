@@ -126,8 +126,12 @@ def anonymous_principal():
     without having to calculate effective permissions every time.
     """
 
-    if brew_view.config.auth.enabled:
+    if brew_view.config.auth.enabled and brew_view.config.auth.guest_login_enabled:
         roles = Principal.objects.get(username="anonymous").roles
+    elif brew_view.config.auth.enabled:
+        # By default, if no guest login is available, there is no anonymous
+        # user, which means there are no roles.
+        roles = []
     else:
         roles = [Role(name="bg-admin", permissions=["bg-all"])]
 
