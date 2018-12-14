@@ -11,7 +11,7 @@ from brewtils.errors import BrewmasterModelValidationError
 from brewtils.schema_parser import SchemaParser
 
 
-class BeerGardenSchemaParser(SchemaParser):
+class MongoParser(SchemaParser):
     """Class responsible for converting JSON into Mongo-backed objects."""
 
     _models = copy(SchemaParser._models)
@@ -36,7 +36,7 @@ class BeerGardenSchemaParser(SchemaParser):
     @classmethod
     def _do_parse(cls, data, schema, from_string=False):
         try:
-            return super(BeerGardenSchemaParser, cls)._do_parse(data, schema,
-                                                                from_string=from_string)
+            return super(MongoParser, cls)._do_parse(data, schema,
+                                                     from_string=from_string)
         except (TypeError, ValueError, MarshmallowError) as ex:
             raise BrewmasterModelValidationError(str(ex))
