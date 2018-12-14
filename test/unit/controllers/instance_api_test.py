@@ -14,7 +14,7 @@ class InstanceAPITest(TestHandlerBase):
         get_mock.return_value.get.return_value = self.instance_mock
 
         serialize_patcher = patch(
-            'brew_view.controllers.instance_api.BeerGardenSchemaParser.serialize_instance'
+            'brew_view.controllers.instance_api.MongoParser.serialize_instance'
         )
         self.addCleanup(serialize_patcher.stop)
         self.serialize_mock = serialize_patcher.start()

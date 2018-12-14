@@ -2,7 +2,7 @@ import logging
 
 import brew_view
 from bg_utils.mongo.models import Request, Job
-from bg_utils.mongo.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brew_view.metrics import request_updated
@@ -12,7 +12,7 @@ from brewtils.models import Events, Request as BrewtilsRequest
 
 class RequestAPI(BaseHandler):
 
-    parser = BeerGardenSchemaParser()
+    parser = MongoParser()
     logger = logging.getLogger(__name__)
 
     @authenticated(permissions=[Permissions.REQUEST_READ])

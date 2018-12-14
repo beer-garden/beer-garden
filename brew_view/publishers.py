@@ -13,7 +13,7 @@ from tornado.queues import Queue
 
 import brew_view
 from bg_utils.event_publisher import EventPublisher
-from bg_utils.mongo.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 from bg_utils.pika import get_routing_key
 from brewtils.models import Events
 from brewtils.queues import PikaClient
@@ -118,8 +118,8 @@ class MongoPublisher(BeergardenPublisher):
         message.save()
 
     def _event_serialize(self, event, **kwargs):
-        return BeerGardenSchemaParser.parse_event(
-            BeerGardenSchemaParser.serialize_event(event, to_string=False)
+        return MongoParser.parse_event(
+            MongoParser.serialize_event(event, to_string=False)
         )
 
 

@@ -29,7 +29,7 @@ class RequestListAPITest(TestHandlerBase):
         self.mongo_mock.count.return_value = 1
 
         serialize_patcher = patch(
-            'brew_view.controllers.request_list_api.BeerGardenSchemaParser.serialize_request'
+            'brew_view.controllers.request_list_api.MongoParser.serialize_request'
         )
         self.addCleanup(serialize_patcher.stop)
         self.serialize_mock = serialize_patcher.start()
@@ -60,7 +60,7 @@ class RequestListAPITest(TestHandlerBase):
         self.assertEqual('1', response.headers['draw'])
 
     @patch('brew_view.controllers.request_list_api.System.objects')
-    @patch('brew_view.controllers.request_list_api.BeerGardenSchemaParser.parse_request')
+    @patch('brew_view.controllers.request_list_api.MongoParser.parse_request')
     @patch('brew_view.controllers.request_list_api.thrift_context')
     def test_post_json(self, context_mock, parse_mock, system_mock):
         context_mock.return_value = self.fake_context
@@ -80,7 +80,7 @@ class RequestListAPITest(TestHandlerBase):
         self.assertTrue(self.request_mock.save.called)
         self.client_mock.processRequest.assert_called_once_with(self.request_mock.id)
 
-    @patch('brew_view.controllers.request_list_api.BeerGardenSchemaParser.parse_request')
+    @patch('brew_view.controllers.request_list_api.MongoParser.parse_request')
     @patch('brew_view.controllers.request_list_api.thrift_context')
     def test_post_invalid(self, context_mock, parse_mock):
         context_mock.return_value = self.fake_context
@@ -94,7 +94,7 @@ class RequestListAPITest(TestHandlerBase):
         self.assertTrue(self.request_mock.delete.called)
         self.assertTrue(self.client_mock.processRequest.called)
 
-    @patch('brew_view.controllers.request_list_api.BeerGardenSchemaParser.parse_request')
+    @patch('brew_view.controllers.request_list_api.MongoParser.parse_request')
     @patch('brew_view.controllers.request_list_api.thrift_context')
     def test_post_publishing_exception(self, context_mock, parse_mock):
         context_mock.return_value = self.fake_context
@@ -107,7 +107,7 @@ class RequestListAPITest(TestHandlerBase):
         self.assertEqual(response.code, 502)
         self.assertTrue(self.request_mock.delete.called)
 
-    @patch('brew_view.controllers.request_list_api.BeerGardenSchemaParser.parse_request')
+    @patch('brew_view.controllers.request_list_api.MongoParser.parse_request')
     @patch('brew_view.controllers.request_list_api.thrift_context')
     def test_post_exception(self, context_mock, parse_mock):
         context_mock.return_value = self.fake_context
@@ -124,7 +124,7 @@ class RequestListAPITest(TestHandlerBase):
                               headers={'content-type': 'text/plain'})
         self.assertEqual(response.code, 400)
 
-    @patch('brew_view.controllers.request_list_api.BeerGardenSchemaParser.parse_request')
+    @patch('brew_view.controllers.request_list_api.MongoParser.parse_request')
     @patch('brew_view.controllers.request_list_api.thrift_context')
     def test_post_instance_status_exception(self, context_mock, parse_mock):
         context_mock.return_value = self.fake_context

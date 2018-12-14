@@ -5,7 +5,7 @@ from mock import Mock, patch
 
 import brew_view
 from bg_utils.mongo.models import Command, Instance, System
-from bg_utils.mongo.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 from ...utils import TestUtils
 
 
@@ -15,7 +15,7 @@ class SystemListAPITest(TestUtils, unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # brew_view.load_app(environment="test")
-        cls.parser = BeerGardenSchemaParser()
+        cls.parser = MongoParser()
 
     def setUp(self):
         self.app = brew_view.app.test_client()

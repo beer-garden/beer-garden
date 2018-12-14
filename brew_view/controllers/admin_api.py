@@ -2,7 +2,7 @@ import logging
 
 from tornado.gen import coroutine
 
-from bg_utils.mongo.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 from brew_view import thrift_context
 from brew_view.authorization import check_permission, Permissions
 from brew_view.base_handler import BaseHandler
@@ -11,7 +11,7 @@ from brewtils.errors import ModelValidationError
 
 class AdminAPI(BaseHandler):
 
-    parser = BeerGardenSchemaParser()
+    parser = MongoParser()
     logger = logging.getLogger(__name__)
 
     @coroutine

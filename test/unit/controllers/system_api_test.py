@@ -24,7 +24,7 @@ class SystemAPITest(TestHandlerBase):
 
         super(SystemAPITest, self).setUp()
 
-    @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.serialize_system')
+    @patch('brew_view.controllers.system_api.MongoParser.serialize_system')
     def test_get_system(self, serialize_mock):
         serialize_mock.return_value = 'serialized_system'
 
@@ -52,8 +52,8 @@ class SystemAPITest(TestHandlerBase):
         self.assertNotEqual(204, response.code)
         self.client_mock.removeSystem.assert_called_once_with('id')
 
-    @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.parse_command', Mock())
-    @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.serialize_system')
+    @patch('brew_view.controllers.system_api.MongoParser.parse_command', Mock())
+    @patch('brew_view.controllers.system_api.MongoParser.serialize_system')
     def test_patch_replace_commands_ok(self, serialize_mock):
         body = json.dumps({"operations": [{"operation": "replace", "path": "/commands",
                                            "value": "output"}]})
@@ -65,8 +65,8 @@ class SystemAPITest(TestHandlerBase):
         self.assertEqual('serialized_system', response.body.decode('utf-8'))
         self.assertTrue(self.system_mock.upsert_commands.called)
 
-    @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.parse_command', Mock())
-    @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.serialize_system')
+    @patch('brew_view.controllers.system_api.MongoParser.parse_command', Mock())
+    @patch('brew_view.controllers.system_api.MongoParser.serialize_system')
     def test_patch_replace_commands_bad(self, serialize_mock):
         self.system_mock.commands = ['a command']
         body = json.dumps({"operations": [{"operation": "replace", "path": "/commands",
@@ -79,7 +79,7 @@ class SystemAPITest(TestHandlerBase):
         self.assertFalse(self.system_mock.upsert_commands.called)
 
     @patch('brew_view.controllers.system_api.thrift_context')
-    @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.serialize_system')
+    @patch('brew_view.controllers.system_api.MongoParser.serialize_system')
     def test_patch_reload(self, serialize_mock, context_mock):
         context_mock.return_value = self.fake_context
         self.client_mock.reloadSystem.return_value = self.future_mock
@@ -93,8 +93,8 @@ class SystemAPITest(TestHandlerBase):
         self.assertEqual('serialized_system', response.body.decode('utf-8'))
         self.client_mock.reloadSystem.assert_called_once_with('id')
 
-    @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.parse_command', Mock())
-    @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.serialize_system')
+    @patch('brew_view.controllers.system_api.MongoParser.parse_command', Mock())
+    @patch('brew_view.controllers.system_api.MongoParser.serialize_system')
     def test_patch_update_metadata(self, serialize_mock):
         self.system_mock.metadata = {"foo": "baz"}
         body = json.dumps({"operations": [{"operation": "update", "path": "/metadata",
@@ -107,8 +107,8 @@ class SystemAPITest(TestHandlerBase):
         self.assertEqual('serialized_system', response.body.decode('utf-8'))
         self.assertEqual(self.system_mock.metadata, {"foo": "bar"})
 
-    @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.parse_command', Mock())
-    @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.serialize_system')
+    @patch('brew_view.controllers.system_api.MongoParser.parse_command', Mock())
+    @patch('brew_view.controllers.system_api.MongoParser.serialize_system')
     def test_patch_replace_description(self, serialize_mock):
         self.system_mock.description = "old_description"
         body = json.dumps({"operations": [{"operation": "replace", "path": "/description",
@@ -121,8 +121,8 @@ class SystemAPITest(TestHandlerBase):
         self.assertEqual('serialized_system', response.body.decode('utf-8'))
         self.assertEqual(self.system_mock.description, "new_description")
 
-    @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.parse_command', Mock())
-    @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.serialize_system')
+    @patch('brew_view.controllers.system_api.MongoParser.parse_command', Mock())
+    @patch('brew_view.controllers.system_api.MongoParser.serialize_system')
     def test_patch_replace_null_empty_string(self, serialize_mock):
         self.system_mock.description = "old_description"
         body = json.dumps({"operations": [{"operation": "replace", "path": "/description",
@@ -135,8 +135,8 @@ class SystemAPITest(TestHandlerBase):
         self.assertEqual('serialized_system', response.body.decode('utf-8'))
         self.assertEqual(self.system_mock.description, "")
 
-    @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.parse_command', Mock())
-    @patch('brew_view.controllers.system_api.BeerGardenSchemaParser.serialize_system')
+    @patch('brew_view.controllers.system_api.MongoParser.parse_command', Mock())
+    @patch('brew_view.controllers.system_api.MongoParser.serialize_system')
     def test_patch_invalid_path_for_update(self, serialize_mock):
         body = json.dumps({"operations": [{"operation": "update", "path": "/INVALID",
                                            "value": "doesnt_matter"}]})

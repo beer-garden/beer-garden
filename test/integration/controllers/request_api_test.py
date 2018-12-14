@@ -4,7 +4,7 @@ from mock import Mock, patch
 
 import brew_view
 from bg_utils.mongo.models import Request
-from bg_utils.mongo.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 
 
 @unittest.skip('TODO')
@@ -35,7 +35,7 @@ class RequestAPITest(unittest.TestCase):
         self.objects_mock.get.assert_called_with(id='id')
         self.objects_mock.assert_called_with(parent=self.default_request)
 
-        response_request = BeerGardenSchemaParser().parse_request(response.data, from_string=True)
+        response_request = MongoParser().parse_request(response.data, from_string=True)
         self.assertEqual(self.default_request.system, response_request.system)
         self.assertEqual(self.default_request.command, response_request.command)
         self.assertDictEqual(self.default_request.parameters, response_request.parameters)

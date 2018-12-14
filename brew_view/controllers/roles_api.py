@@ -4,7 +4,7 @@ from mongoengine.errors import DoesNotExist
 
 import brew_view
 from bg_utils.mongo.models import Role
-from bg_utils.mongo.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import anonymous_principal, authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
@@ -37,7 +37,7 @@ class RoleAPI(BaseHandler):
         tags:
           - Roles
         """
-        self.write(BeerGardenSchemaParser.serialize_role(
+        self.write(MongoParser.serialize_role(
             Role.objects.get(id=str(role_id)),
             to_string=False
         ))
@@ -113,7 +113,7 @@ class RoleAPI(BaseHandler):
           - Roles
         """
         role = Role.objects.get(id=str(role_id))
-        operations = BeerGardenSchemaParser.parse_patch(
+        operations = MongoParser.parse_patch(
             self.request.decoded_body,
             many=True,
             from_string=True
@@ -163,7 +163,7 @@ class RoleAPI(BaseHandler):
         # Any modification to roles will possibly modify the anonymous user
         brew_view.anonymous_principal = anonymous_principal()
 
-        self.write(BeerGardenSchemaParser.serialize_role(role, to_string=False))
+        self.write(MongoParser.serialize_role(role, to_string=False))
 
 
 class RolesAPI(BaseHandler):
@@ -186,8 +186,8 @@ class RolesAPI(BaseHandler):
           - Roles
         """
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
-        self.write(BeerGardenSchemaParser.serialize_role(Role.objects.all(),
-                                                         many=True, to_string=True))
+        self.write(MongoParser.serialize_role(Role.objects.all(),
+                                              many=True, to_string=True))
 
     @authenticated(permissions=[Permissions.ROLE_CREATE])
     def post(self):
@@ -214,8 +214,8 @@ class RolesAPI(BaseHandler):
         tags:
           - Roles
         """
-        role = BeerGardenSchemaParser.parse_role(self.request.decoded_body,
-                                                 from_string=True)
+        role = MongoParser.parse_role(self.request.decoded_body,
+                                      from_string=True)
 
         # Make sure all new permissions are real
         if not set(role.permissions).issubset(Permissions.values):
@@ -240,7 +240,7 @@ class RolesAPI(BaseHandler):
         role.save()
 
         self.set_status(201)
-        self.write(BeerGardenSchemaParser.serialize_role(role, to_string=False))
+        self.write(MongoParser.serialize_role(role, to_string=False))
 
 
 def ensure_no_cycles(base_role, new_role):

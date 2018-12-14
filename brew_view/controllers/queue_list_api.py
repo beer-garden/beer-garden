@@ -3,7 +3,7 @@ import logging
 from tornado.gen import coroutine
 
 from bg_utils.mongo.models import System
-from bg_utils.mongo.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
@@ -12,7 +12,7 @@ from brewtils.models import Events, Queue
 
 class QueueListAPI(BaseHandler):
 
-    parser = BeerGardenSchemaParser()
+    parser = MongoParser()
     logger = logging.getLogger(__name__)
 
     @coroutine
