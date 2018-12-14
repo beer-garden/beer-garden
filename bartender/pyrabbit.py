@@ -4,7 +4,7 @@ from pyrabbit2.api import Client
 from pyrabbit2.http import HTTPError, NetworkError
 
 import bartender
-from bg_utils.mongo.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 
 
 class PyrabbitClient(object):
@@ -87,8 +87,9 @@ class PyrabbitClient(object):
             if messages and len(messages) > 0:
                 message = messages[0]
                 try:
-                    request = BeerGardenSchemaParser.parse_request(message['payload'],
-                                                                   from_string=True)
+                    request = MongoParser.parse_request(
+                        message['payload'], from_string=True
+                    )
                     self.logger.debug("Canceling Request: %s", request.id)
                     bartender.bv_client.update_request(request.id, status='CANCELED')
                 except Exception as ex:
