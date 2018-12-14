@@ -3,13 +3,13 @@ import json
 import pytest
 from mock import MagicMock, Mock, patch
 from mongoengine.errors import DoesNotExist
-from pytest_lazyfixture import lazy_fixture
 from tornado.gen import Future
 from tornado.httpclient import HTTPRequest
 
 from bg_utils.mongo.models import System
-from brewtils.models import PatchOperation, Command
+from brewtils.models import PatchOperation
 from brewtils.schema_parser import SchemaParser
+from brewtils.test.utils.comparable import assert_command_equal
 from . import TestHandlerBase
 
 
@@ -37,28 +37,36 @@ class TestSystemAPI(object):
         assert 404 == response.code
 
     @pytest.mark.gen_test
-    @pytest.mark.parametrize('new_command,dev,succeed', [
-        # Same commands
-        (lazy_fixture('bg_command'), True, True),
-        (lazy_fixture('bg_command'), False, True),
+    @pytest.mark.parametrize('field,value,dev,succeed', [
+        # No changes
+        (None, None, True, True),
+        (None, None, False, True),
 
-        # Change commands
-        (Command(name='new'), True, True),
-        (Command(name='new'), False, False),
+        # Name change
+        ('name', 'new', True, True),
+        ('name', 'new', False, False),
     ])
     def test_patch_commands(
-        self, http_client, base_url, mongo_system, system_id, new_command, dev, succeed,
+        self, http_client, base_url, mongo_system, system_id, bg_command,
+        field, value, dev, succeed,
     ):
         if dev:
             mongo_system.version += '.dev'
         mongo_system.deep_save()
 
+        # Make changes to the new command
+        if field:
+            setattr(bg_command, field, value)
+
+        # Also delete the id, otherwise mongo gets really confused
+        delattr(bg_command, 'id')
+
         body = PatchOperation(
             operation='replace',
             path='/commands',
             value=SchemaParser.serialize_command(
-                [new_command], to_string=False, many=True
-            ) if new_command else [],
+                [bg_command], to_string=False, many=True
+            ),
         )
 
         request = HTTPRequest(
@@ -75,8 +83,7 @@ class TestSystemAPI(object):
             updated = SchemaParser.parse_system(
                 response.body.decode(), from_string=True
             )
-            # Stopgap until we can get real comparisons
-            assert new_command.name == updated.commands[0].name
+            assert_command_equal(bg_command, updated.commands[0])
         else:
             assert 400 == response.code
 
