@@ -1,3 +1,4 @@
+import axios from 'axios';
 import camelcaseKeys from 'camelcase-keys';
 import {
   FETCH_CONFIG_BEGIN,
@@ -19,26 +20,29 @@ export const fetchConfigFailure = error => ({
   payload: { error },
 });
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 export function fetchConfig() {
   return async dispatch => {
     dispatch(fetchConfigBegin());
 
-    // console.log('fetching config...');
-    // console.log('Imitating some server load...');
-    // await sleep(1000);
-    return fetch('/config')
-      .then(handleErrors)
-      .then(res => res.json())
-      .then(json => {
-        const normalizedData = camelcaseKeys(json);
+    return axios
+      .get('/config')
+      .then(response => {
+        const normalizedData = camelcaseKeys(response.data);
         dispatch(fetchConfigSuccess(normalizedData));
         return normalizedData;
       })
-      .catch(error => dispatch(fetchConfigFailure(error)));
+      .catch(error => {
+        if (
+          error.response &&
+          error.response.data &&
+          error.response.data.message
+        ) {
+          const newError = Error(error.response.data.message);
+          dispatch(fetchConfigFailure(newError));
+        } else {
+          dispatch(fetchConfigFailure(error));
+        }
+      });
   };
 }
 
@@ -50,10 +54,3 @@ export const loadConfig = () => (dispatch, getState) => {
 
   return dispatch(fetchConfig());
 };
-
-function handleErrors(response) {
-  if (!response.ok) {
-    throw Error(response.statusText);
-  }
-  return response;
-}
