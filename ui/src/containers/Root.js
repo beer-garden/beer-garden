@@ -1,13 +1,11 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { loadConfig } from '../actions/config';
-import CssBaseline from '@material-ui/core/CssBaseline';
 import PropTypes from 'prop-types';
-import { Route } from 'react-router-dom';
+import { Switch, Route, withRouter } from 'react-router-dom';
 import Spinner from '../components/layout/Spinner';
 import ErrorRetryDialog from '../components/layout/ErrorRetryDialog';
 import App from './App';
-import Login from '../components/auth/Login';
 
 export class Root extends Component {
   componentDidMount() {
@@ -17,7 +15,7 @@ export class Root extends Component {
   render() {
     const { configLoading, configError, config, loadConfig } = this.props;
 
-    if (configLoading && !configError) {
+    if (configLoading && configError === null) {
       return <Spinner />;
     }
 
@@ -31,16 +29,12 @@ export class Root extends Component {
       );
     }
 
-    if (config.authEnabled) {
-      return <Login />;
-    } else {
-      return (
-        <div>
-          <CssBaseline />
-          <Route exact path="/" component={App} />
-        </div>
-      );
-    }
+    document.title = config.applicationName;
+    return (
+      <Switch>
+        <Route exact path="/" component={App} />
+      </Switch>
+    );
   }
 }
 
@@ -65,7 +59,9 @@ Root.propTypes = {
   configError: PropTypes.object,
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(Root);
+export default withRouter(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps,
+  )(Root),
+);

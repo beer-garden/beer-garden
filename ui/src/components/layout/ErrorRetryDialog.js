@@ -15,8 +15,9 @@ export class ErrorRetryDialog extends Component {
   render() {
     const { classes, action, error, loading } = this.props;
 
+    document.title = 'Oops. Retrying connection...';
     return (
-      <Grid container spacing={24}>
+      <Grid container>
         <Hidden smDown>
           <Grid item xs />
         </Hidden>
