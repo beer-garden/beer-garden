@@ -7,8 +7,10 @@ const setup = overrideProps => {
   const props = Object.assign(
     {
       classes: { appBar: 'appBarClassName' },
+      config: { applicationName: 'Beer Garden' },
+      user: {},
     },
-    overrideProps
+    overrideProps,
   );
   const wrapper = shallow(<Topbar {...props} />);
   return {
