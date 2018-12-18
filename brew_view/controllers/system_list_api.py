@@ -4,7 +4,7 @@ from tornado.gen import coroutine
 from tornado.locks import Lock
 
 from bg_utils.mongo.models import System, Instance
-from bg_utils.mongo.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
@@ -14,7 +14,7 @@ from brewtils.schemas import SystemSchema
 
 class SystemListAPI(BaseHandler):
 
-    parser = BeerGardenSchemaParser()
+    parser = MongoParser()
     logger = logging.getLogger(__name__)
 
     REQUEST_FIELDS = set(SystemSchema.get_attribute_names())

@@ -1,6 +1,6 @@
 import logging
 import brew_view
-from bg_utils.mongo.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 
@@ -9,7 +9,7 @@ from tornado.gen import coroutine
 
 class LoggingConfigAPI(BaseHandler):
 
-    parser = BeerGardenSchemaParser()
+    parser = MongoParser()
     logger = logging.getLogger(__name__)
 
     def get(self):

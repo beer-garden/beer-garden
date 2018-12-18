@@ -5,7 +5,7 @@ from tornado.gen import coroutine
 
 import brew_view
 from bg_utils.mongo.models import Job
-from bg_utils.mongo.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
@@ -13,7 +13,7 @@ from brewtils.errors import ModelValidationError
 
 class JobAPI(BaseHandler):
     logger = logging.getLogger(__name__)
-    parser = BeerGardenSchemaParser()
+    parser = MongoParser()
 
     @authenticated(permissions=[Permissions.JOB_READ])
     def get(self, job_id):

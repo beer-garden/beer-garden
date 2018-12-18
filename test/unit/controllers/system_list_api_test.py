@@ -16,7 +16,7 @@ class SystemListAPITest(TestHandlerBase):
         self.get_mock.return_value = self.system_mock
 
         serialize_patcher = patch(
-            'brew_view.controllers.system_list_api.BeerGardenSchemaParser.serialize_system'
+            'brew_view.controllers.system_list_api.MongoParser.serialize_system'
         )
         self.addCleanup(serialize_patcher.stop)
         self.serialize_mock = serialize_patcher.start()
@@ -36,12 +36,10 @@ class SystemListAPITest(TestHandlerBase):
         self.assertEqual(self.serialize_mock.return_value, response.body.decode('utf-8'))
         self.assertEqual(self.serialize_mock.call_args[1]['exclude'], {'commands'})
 
-    @patch('brew_view.controllers.system_list_api.BeerGardenSchemaParser.serialize_system', Mock())
     def test_get_with_filter_param(self):
         self.fetch('/api/v1/systems?name=bar')
         self.system_mock.filter.assert_called_once_with(name='bar')
 
-    @patch('brew_view.controllers.system_list_api.BeerGardenSchemaParser.serialize_system', Mock())
     def test_get_with_filter_params(self):
         self.fetch('/api/v1/systems?name=bar&version=1.0.0')
         self.system_mock.filter.assert_called_once_with(name='bar', version='1.0.0')
@@ -52,7 +50,7 @@ class SystemListAPITest(TestHandlerBase):
 
     @patch('bg_utils.mongo.models.System.find_unique', Mock(return_value=False))
     @patch('brew_view.controllers.system_list_api.SystemListAPI._create_new_system')
-    @patch('brew_view.controllers.system_list_api.BeerGardenSchemaParser.parse_system')
+    @patch('brew_view.controllers.system_list_api.MongoParser.parse_system')
     def test_post_new_system(self, parse_mock, create_mock):
         parse_mock.return_value = self.system_mock
         create_mock.return_value = Mock(), 201
@@ -63,7 +61,7 @@ class SystemListAPITest(TestHandlerBase):
 
     @patch('bg_utils.mongo.models.System.find_unique')
     @patch('brew_view.controllers.system_list_api.SystemListAPI._update_existing_system')
-    @patch('brew_view.controllers.system_list_api.BeerGardenSchemaParser.parse_system')
+    @patch('brew_view.controllers.system_list_api.MongoParser.parse_system')
     def test_post_existing_system(self, parse_mock, update_mock, find_mock):
         parse_mock.return_value = self.system_mock
         db_system_mock = Mock()

@@ -4,7 +4,7 @@ from tornado.web import HTTPError
 from tornado.websocket import WebSocketHandler
 
 import brew_view
-from bg_utils.mongo.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import (authenticated, check_permission,
                                      query_token_auth, AuthMixin, Permissions)
 from brew_view.base_handler import BaseHandler
@@ -63,7 +63,7 @@ class EventPublisherAPI(BaseHandler):
 class EventSocket(AuthMixin, WebSocketHandler):
 
     logger = logging.getLogger(__name__)
-    parser = BeerGardenSchemaParser()
+    parser = MongoParser()
 
     closing = False
     listeners = set()

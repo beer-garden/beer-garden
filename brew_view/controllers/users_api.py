@@ -6,7 +6,7 @@ from passlib.apps import custom_app_context
 
 import brew_view
 from bg_utils.mongo.models import Principal, Role
-from bg_utils.mongo.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import (
     authenticated, check_permission, Permissions, coalesce_permissions)
 from brew_view.base_handler import BaseHandler
@@ -54,7 +54,7 @@ class UserAPI(BaseHandler):
 
         principal.permissions = coalesce_permissions(principal.roles)[1]
 
-        self.write(BeerGardenSchemaParser.serialize_principal(
+        self.write(MongoParser.serialize_principal(
             principal, to_string=False))
 
     @authenticated(permissions=[Permissions.USER_DELETE])
@@ -124,7 +124,7 @@ class UserAPI(BaseHandler):
           - Users
         """
         principal = Principal.objects.get(id=str(user_id))
-        operations = BeerGardenSchemaParser.parse_patch(
+        operations = MongoParser.parse_patch(
             self.request.decoded_body,
             many=True,
             from_string=True
@@ -161,8 +161,8 @@ class UserAPI(BaseHandler):
 
         principal.save()
 
-        self.write(BeerGardenSchemaParser.serialize_principal(principal,
-                                                              to_string=False))
+        self.write(MongoParser.serialize_principal(principal,
+                                                   to_string=False))
 
 
 class UsersAPI(BaseHandler):
@@ -190,7 +190,7 @@ class UsersAPI(BaseHandler):
             principal.permissions = coalesce_permissions(principal.roles)[1]
 
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
-        self.write(BeerGardenSchemaParser.serialize_principal(
+        self.write(MongoParser.serialize_principal(
             principals,
             to_string=True,
             many=True
