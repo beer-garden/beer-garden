@@ -5,7 +5,7 @@ describe('config reducer', () => {
   it('should return the initial state', () => {
     expect(configReducer(undefined, {})).toEqual({
       config: {},
-      configLoading: false,
+      configLoading: true,
       configError: null,
     });
   });
@@ -16,8 +16,8 @@ describe('config reducer', () => {
         { config: {}, configError: 'someError' },
         {
           type: types.FETCH_CONFIG_BEGIN,
-        }
-      )
+        },
+      ),
     ).toEqual({
       config: {},
       configLoading: true,
@@ -32,8 +32,8 @@ describe('config reducer', () => {
         {
           type: types.FETCH_CONFIG_SUCCESS,
           payload: { config: 'configPayload' },
-        }
-      )
+        },
+      ),
     ).toEqual({
       config: 'configPayload',
       configLoading: false,
@@ -48,8 +48,8 @@ describe('config reducer', () => {
         {
           type: types.FETCH_CONFIG_FAILURE,
           payload: { error: new Error('some error') },
-        }
-      )
+        },
+      ),
     ).toEqual({
       config: {},
       configLoading: false,

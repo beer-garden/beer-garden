@@ -1,9 +1,10 @@
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import camelcaseKeys from 'camelcase-keys';
-import * as actions from '../config';
+import { loadConfig } from '../config';
 import * as types from '../../constants/ActionTypes';
-import fetchMock from 'fetch-mock';
+import axios from 'axios';
+import MockAdapter from 'axios-mock-adapter';
 
 const middlewares = [thunk];
 const mockStore = configureMockStore(middlewares);
@@ -22,29 +23,28 @@ const serverConfig = {
   metrics_url: 'http://localhost:3000',
   auth_enabled: false,
 };
+const fetchMock = new MockAdapter(axios);
 
-const setup = (initialState, succeeds = true) => {
-  let response;
+const setup = (initialState, serverError = false, networkError = false) => {
   Object.assign({}, initialState);
-  if (succeeds) {
-    response = {
-      body: serverConfig,
-      headers: { 'content-type': 'application/json' },
-    };
+  const url = '/config';
+  if (networkError) {
+    fetchMock.onGet(url).networkError();
+  } else if (serverError) {
+    fetchMock.onGet(url).reply(500, { message: 'Error from server' });
   } else {
-    response = 500;
+    fetchMock.onGet(url).reply(200, serverConfig);
   }
-  fetchMock.mock('/config', response);
+
   const store = mockStore(initialState);
   return {
     store,
-    response,
   };
 };
 
 describe('async actions', () => {
   afterEach(() => {
-    fetchMock.restore();
+    fetchMock.reset();
   });
 
   test('it creates FETCH_CONFIG_SUCCESS when fetching config is done', () => {
@@ -56,14 +56,14 @@ describe('async actions', () => {
       { type: types.FETCH_CONFIG_BEGIN },
       { type: types.FETCH_CONFIG_SUCCESS, payload: { config: expectedConfig } },
     ];
-    return store.dispatch(actions.loadConfig()).then(() => {
+    return store.dispatch(loadConfig()).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });
 
   test('it should not create an action if the config already exists', () => {
     const { store } = setup({ config: 'alreadyLoaded' });
-    expect(store.dispatch(actions.loadConfig())).toBe(null);
+    expect(store.dispatch(loadConfig())).toBe(null);
   });
 
   test('it should create an action if the config is an empty object', () => {
@@ -74,22 +74,33 @@ describe('async actions', () => {
       { type: types.FETCH_CONFIG_BEGIN },
       { type: types.FETCH_CONFIG_SUCCESS, payload: { config: expectedConfig } },
     ];
-    return store.dispatch(actions.loadConfig()).then(() => {
+    return store.dispatch(loadConfig()).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });
 
   test('it should create a failed action if the fetch fails', () => {
-    const { store } = setup({}, false);
+    const { store } = setup({}, true, false);
     const expectedActions = [
       { type: types.FETCH_CONFIG_BEGIN },
       {
         type: types.FETCH_CONFIG_FAILURE,
-        payload: { error: Error('Internal Server Error') },
+        payload: { error: Error('Error from server') },
       },
     ];
-    return store.dispatch(actions.loadConfig()).then(() => {
+    return store.dispatch(loadConfig()).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
+    });
+  });
+
+  test('it should handle network failures gracefully', () => {
+    const { store } = setup({}, false, true);
+    return store.dispatch(loadConfig()).then(() => {
+      const actions = store.getActions();
+      expect(actions).toHaveLength(2);
+      expect(actions[0].type).toEqual(types.FETCH_CONFIG_BEGIN);
+      expect(actions[1].type).toEqual(types.FETCH_CONFIG_FAILURE);
+      expect(actions[1].payload.error).toHaveProperty('message');
     });
   });
 });

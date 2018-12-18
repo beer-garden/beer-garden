@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import {
@@ -31,40 +32,63 @@ export class Topbar extends Component {
   };
 
   render() {
-    const { classes } = this.props;
+    const { classes, config, user } = this.props;
     const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
+
+    const userIcon = (
+      <>
+        <IconButton
+          aria-owns={open ? 'menu-appbar' : undefined}
+          aria-haspopup="true"
+          onClick={this.handleMenu}
+          color="inherit"
+        >
+          <AccountCircle />
+        </IconButton>
+        <Menu
+          id="menu-appbar"
+          anchorEl={anchorEl}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          open={open}
+          onClose={this.handleClose}
+        >
+          <MenuItem onClick={this.handleClose}>User Settings</MenuItem>
+        </Menu>
+      </>
+    );
     return (
       <AppBar position="static" color="primary" className={classes.appBar}>
         <Toolbar>
           <Typography variant="h6" color="inherit" style={{ flex: 1 }}>
-            Beer Garden
+            {config.applicationName}
           </Typography>
-          <IconButton
-            aria-owns={open ? 'menu-appbar' : undefined}
-            aria-haspopup="true"
-            onClick={this.handleMenu}
-            color="inherit"
-          >
-            <AccountCircle />
-          </IconButton>
-          <Menu
-            id="menu-appbar"
-            anchorEl={anchorEl}
-            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-            open={open}
-            onClose={this.handleClose}
-          >
-            <MenuItem onClick={this.handleClose}>User Settings</MenuItem>
-          </Menu>
+          {user ? userIcon : null}
         </Toolbar>
       </AppBar>
     );
   }
 }
-Topbar.propTypes = {
-  classes: PropTypes.object.isRequired,
+
+const mapStateToProps = state => {
+  return {
+    config: state.configReducer.config,
+    user: state.authReducer.user,
+  };
 };
 
-export default withStyles(styles)(Topbar);
+const mapDispatchToProps = dispatch => {
+  return {};
+};
+
+Topbar.propTypes = {
+  classes: PropTypes.object.isRequired,
+  config: PropTypes.object.isRequired,
+  user: PropTypes.object,
+};
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(withStyles(styles)(Topbar));

@@ -1,10 +1,9 @@
 import React from 'react';
 import { Root } from '../Root';
 import { shallow } from 'enzyme';
-import { Route } from 'react-router-dom';
-import { CssBaseline } from '@material-ui/core';
+import { Route, Switch } from 'react-router-dom';
 import App from '../App';
-import Login from '../../components/auth/Login';
+import LoginDashboard from '../LoginDashboard';
 import Spinner from '../../components/layout/Spinner';
 import ErrorRetryDialog from '../../components/layout/ErrorRetryDialog';
 
@@ -16,7 +15,7 @@ const setup = propOverrides => {
       configLoading: false,
       configError: null,
     },
-    propOverrides
+    propOverrides,
   );
 
   const wrapper = shallow(<Root {...props} />);
@@ -29,12 +28,12 @@ const setup = propOverrides => {
 describe('<Root />', () => {
   test('render', () => {
     const { wrapper } = setup();
-    const divs = wrapper.find('div');
-    expect(divs).toHaveLength(1);
-    expect(wrapper.find(CssBaseline)).toHaveLength(1);
-    const routes = wrapper.find(Route);
-    expect(routes).toHaveLength(1);
-    expect(routes.first().prop('component')).toEqual(App);
+    const swtch = wrapper.find(Switch);
+    expect(swtch).toHaveLength(1);
+    const routes = swtch.find(Route);
+    expect(routes).toHaveLength(2);
+    expect(routes.at(0).prop('component')).toEqual(App);
+    expect(routes.at(1).prop('component')).toEqual(LoginDashboard);
   });
 
   test('Render <Spinner /> while loading', () => {
@@ -54,13 +53,5 @@ describe('<Root />', () => {
     });
     expect(wrapper.find(Spinner)).toHaveLength(0);
     expect(wrapper.find(ErrorRetryDialog)).toHaveLength(1);
-  });
-
-  test('render <Login /> if auth is enabled', () => {
-    const { wrapper } = setup({ config: { authEnabled: true } });
-    expect(wrapper.find(Spinner)).toHaveLength(0);
-    expect(wrapper.find(ErrorRetryDialog)).toHaveLength(0);
-    expect(wrapper.find('div')).toHaveLength(0);
-    expect(wrapper.find(Login)).toHaveLength(1);
   });
 });
