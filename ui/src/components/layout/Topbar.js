@@ -31,12 +31,10 @@ export class Topbar extends Component {
     this.setState({ anchorEl: null });
   };
 
-  render() {
-    const { classes, config, user } = this.props;
+  userIcon = () => {
     const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
-
-    const userIcon = (
+    return (
       <>
         <IconButton
           aria-owns={open ? 'menu-appbar' : undefined}
@@ -58,13 +56,18 @@ export class Topbar extends Component {
         </Menu>
       </>
     );
+  };
+
+  render() {
+    const { classes, config, auth } = this.props;
+
     return (
       <AppBar position="static" color="primary" className={classes.appBar}>
         <Toolbar>
           <Typography variant="h6" color="inherit" style={{ flex: 1 }}>
             {config.applicationName}
           </Typography>
-          {user ? userIcon : null}
+          {auth.isAuthenticated ? this.userIcon() : null}
         </Toolbar>
       </AppBar>
     );
@@ -74,7 +77,7 @@ export class Topbar extends Component {
 const mapStateToProps = state => {
   return {
     config: state.configReducer.config,
-    user: state.authReducer.user,
+    auth: state.authReducer,
   };
 };
 

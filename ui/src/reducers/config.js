@@ -6,7 +6,7 @@ import {
 
 const initialState = {
   config: {},
-  configLoading: false,
+  configLoading: true,
   configError: null,
 };
 
