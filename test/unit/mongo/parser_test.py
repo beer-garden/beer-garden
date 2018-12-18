@@ -4,14 +4,14 @@ from datetime import datetime
 
 from bg_utils.mongo.fields import StatusInfo
 from bg_utils.mongo.models import Instance
-from bg_utils.mongo.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 from brewtils.errors import BrewmasterModelValidationError
 
 
 class ParserTest(unittest.TestCase):
 
     def setUp(self):
-        self.parser = BeerGardenSchemaParser()
+        self.parser = MongoParser()
 
         self.serialized_instance_dict = {
             'id': '584f11af55a38e64799fd1d4',
