@@ -3,7 +3,7 @@ import { Root } from '../Root';
 import { shallow } from 'enzyme';
 import { Route, Switch } from 'react-router-dom';
 import App from '../App';
-import LoginDashboard from '../LoginDashboard';
+import LoginDashboard from '../auth/LoginDashboard';
 import Spinner from '../../components/layout/Spinner';
 import ErrorRetryDialog from '../../components/layout/ErrorRetryDialog';
 

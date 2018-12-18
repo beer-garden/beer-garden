@@ -5,6 +5,7 @@ import {
   FETCH_CONFIG_FAILURE,
   FETCH_CONFIG_SUCCESS,
 } from '../constants/ActionTypes';
+import { defaultErrorHandler } from '.';
 
 export const fetchConfigBegin = () => ({
   type: FETCH_CONFIG_BEGIN,
@@ -31,18 +32,7 @@ export function fetchConfig() {
         dispatch(fetchConfigSuccess(normalizedData));
         return normalizedData;
       })
-      .catch(error => {
-        if (
-          error.response &&
-          error.response.data &&
-          error.response.data.message
-        ) {
-          const newError = Error(error.response.data.message);
-          dispatch(fetchConfigFailure(newError));
-        } else {
-          dispatch(fetchConfigFailure(error));
-        }
-      });
+      .catch(e => defaultErrorHandler(e, dispatch, fetchConfigFailure));
   };
 }
 

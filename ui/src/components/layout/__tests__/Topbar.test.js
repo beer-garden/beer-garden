@@ -8,7 +8,7 @@ const setup = overrideProps => {
     {
       classes: { appBar: 'appBarClassName' },
       config: { applicationName: 'Beer Garden' },
-      user: {},
+      auth: { isAuthenticated: true },
     },
     overrideProps,
   );

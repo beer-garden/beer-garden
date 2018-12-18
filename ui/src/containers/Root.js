@@ -5,6 +5,7 @@ import PropTypes from 'prop-types';
 import { Switch, Route, withRouter } from 'react-router-dom';
 import Spinner from '../components/layout/Spinner';
 import ErrorRetryDialog from '../components/layout/ErrorRetryDialog';
+import LoginDashboard from '../containers/auth/LoginDashboard';
 import App from './App';
 
 export class Root extends Component {
@@ -33,6 +34,7 @@ export class Root extends Component {
     return (
       <Switch>
         <Route exact path="/" component={App} />
+        <Route exact path="/login" component={LoginDashboard} />
       </Switch>
     );
   }
