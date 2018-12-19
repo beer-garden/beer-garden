@@ -214,32 +214,74 @@ export default function appRun(
     );
   };
 
-  const isLaterVersion = function(system1, system2) {
-    let versionParts1 = system1.version.split('.');
-    let versionParts2 = system2.version.split('.');
+  /**
+   * Compare two system versions. Intended to be used for sorting.
+   *
+   * Newer systems will be sorted to the front. For example, this would be the
+   * result of sorting with this function:
+   *
+   * [ "1.1.0.dev0", "1.0.0", "1.0.0.dev1", "1.0.0.dev0", "1.0.0.dev" ]
+   *
+   * Note that versions with less parts are considered newer.
+   *
+   * @param {string} version1 - first version
+   * @param {string} version2 - second version
+   * @return {int} - result of comparison
+   */
+  const compareVersions = function(version1, version2) {
+    let parts1 = version1.split('.');
+    let parts2 = version2.split('.');
 
-    for (let i = 0; i < 3; i++) {
-      if (parseInt(versionParts1[i]) > parseInt(versionParts2[i])) {
-        return true;
+    let numParts = Math.min(parts1.length, parts2.length);
+
+    for (let i = 0; i < numParts; i++) {
+      let intPart1 = parseInt(parts1[i]);
+      let intPart2 = parseInt(parts2[i]);
+
+      if (!isNaN(intPart1) && !isNaN(intPart2)) {
+        if (intPart1 > intPart2) {
+          return -1;
+        }
+        else if (intPart1 < intPart2) {
+          return 1;
+        }
+      } else {
+        if (parts1[i] > parts2[i]) {
+          return -1;
+        }
+        else if (parts1[i] < parts2[i]) {
+          return 1;
+        }
       }
     }
-    return false;
+
+    if (parts1.length < parts2.length) {
+      return -1;
+    }
+    else if (parts1.length > parts2.length) {
+      return 1;
+    }
+
+    return 0;
   };
 
   /**
    * Converts a system's version to the 'latest' semantic url scheme.
-   * @param {Object} system  - system for which you want the version URL.
-   * @return {string} - either the systems version or 'latest'.
+   * @param {Object} system - system for which you want the version URL.
+   * @return {string} - either the system's version or 'latest'.
    */
   $rootScope.getVersionForUrl = function(system) {
-    for (let sys of $rootScope.systems) {
-      if (sys.name == system.name) {
-        if (isLaterVersion(sys, system)) {
-          return system.version;
-        }
-      }
-    }
-    return 'latest';
+
+    // All versions for systems with the given system name
+    let versions = _.map(
+      _.filter($rootScope.systems, {name: system.name}),
+      _.property('version'),
+    );
+
+    // Sorted according to the system comparison function
+    let sorted = versions.sort(compareVersions);
+
+    return system.version == sorted[0] ? 'latest' : system.version;
   };
 
   /**
@@ -289,14 +331,10 @@ export default function appRun(
           return $q.reject(notFound);
         }
 
-        let latestSystem = filteredSystems[0];
-        for (let system of filteredSystems) {
-          if (isLaterVersion(system, latestSystem)) {
-            latestSystem = system;
-          }
-        }
+        let versions = _.map(filteredSystems, _.property('version'));
+        let sorted = versions.sort(compareVersions);
 
-        return $q.resolve(latestSystem);
+        return $q.resolve(_.find(filteredSystems, {version: sorted[0]}));
       }
     );
   };
