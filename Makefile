@@ -90,10 +90,14 @@ clean-all: clean-all-python clean-js ## remove everything
 
 clean: clean-all-python ## alias of clean-all-python
 
+# Formatting
+format: ## Run black formatter in-line
+	black $(MODULE_NAME) $(PYTHON_TEST_DIR)
 
 # Linting
 lint-python: ## check python style with flake8
 	flake8 $(MODULE_NAME) $(PYTHON_TEST_DIR)
+	black --check $(MODULE_NAME) $(PYTHON_TEST_DIR)
 
 lint-js: ## check javascript style with eslint
 	$(MAKE) -C $(JS_DIR) lint

@@ -26,3 +26,4 @@ pytz
 tox
 twine
 wheel
+black

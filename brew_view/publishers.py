@@ -21,79 +21,102 @@ from brewtils.rest.client import RestClient
 
 
 class BeergardenPublisher(EventPublisher):
-
     def __init__(self):
-        self._client = RestClient(brew_view.config.web.public_fqdn,
-                                  brew_view.config.web.port,
-                                  ssl_enabled=brew_view.config.web.ssl.enabled,
-                                  url_prefix=brew_view.config.web.url_prefix)
+        self._client = RestClient(
+            brew_view.config.web.public_fqdn,
+            brew_view.config.web.port,
+            ssl_enabled=brew_view.config.web.ssl.enabled,
+            url_prefix=brew_view.config.web.url_prefix,
+        )
 
     def _event_prepare(self, event, **kwargs):
 
-        if event.name.startswith('REQUEST'):
-            request = kwargs.pop('request', None)
+        if event.name.startswith("REQUEST"):
+            request = kwargs.pop("request", None)
             if request:
-                event.metadata['entity_url'] = self._client.request_url + str(request.id)
-                event.payload = {k: str(getattr(request, k)) for k in
-                                 ['id', 'command', 'system', 'system_version', 'instance_name']}
+                event.metadata["entity_url"] = self._client.request_url + str(
+                    request.id
+                )
+                event.payload = {
+                    k: str(getattr(request, k))
+                    for k in [
+                        "id",
+                        "command",
+                        "system",
+                        "system_version",
+                        "instance_name",
+                    ]
+                }
 
-        elif event.name.startswith('SYSTEM'):
-            system = kwargs.pop('system', None)
+        elif event.name.startswith("SYSTEM"):
+            system = kwargs.pop("system", None)
             if system:
-                event.metadata['entity_url'] = self._client.system_url + str(system.id)
-                event.payload = {'id': str(system.id)}
+                event.metadata["entity_url"] = self._client.system_url + str(system.id)
+                event.payload = {"id": str(system.id)}
 
-        elif event.name.startswith('INSTANCE'):
-            instance = kwargs.pop('instance', None)
+        elif event.name.startswith("INSTANCE"):
+            instance = kwargs.pop("instance", None)
             if instance:
-                event.metadata['entity_url'] = self._client.instance_url + str(instance.id)
-                event.payload = {'id': str(instance.id)}
+                event.metadata["entity_url"] = self._client.instance_url + str(
+                    instance.id
+                )
+                event.payload = {"id": str(instance.id)}
 
         return event
 
 
 class HttpPublisher(EventPublisher):
-
     def __init__(self, urls, ssl_context=None):
         self._client = AsyncHTTPClient(
-            defaults={'ssl_options': ssl_context} if ssl_context else None)
+            defaults={"ssl_options": ssl_context} if ssl_context else None
+        )
         self._urls = urls
 
     def publish(self, message, **kwargs):
         for url in self._urls:
-            self._client.fetch(url, raise_error=False, method='POST',
-                               headers={'content-type': 'application/json'},
-                               body=message)
+            self._client.fetch(
+                url,
+                raise_error=False,
+                method="POST",
+                headers={"content-type": "application/json"},
+                body=message,
+            )
 
 
 class RequestPublisher(EventPublisher):
-
     def __init__(self, ssl_context=None):
         self._client = AsyncHTTPClient(
-            defaults={'ssl_options': ssl_context} if ssl_context else None)
+            defaults={"ssl_options": ssl_context} if ssl_context else None
+        )
 
     def publish(self, message, **kwargs):
-        for url in kwargs.get('urls', []):
-            self._client.fetch(url, raise_error=False, method='POST',
-                               headers={'content-type': 'application/json'},
-                               body=message)
+        for url in kwargs.get("urls", []):
+            self._client.fetch(
+                url,
+                raise_error=False,
+                method="POST",
+                headers={"content-type": "application/json"},
+                body=message,
+            )
 
     def _event_publish_args(self, event, **kwargs):
         urls = []
 
-        if event.name.startswith('REQUEST') and 'request' in kwargs:
-            if 'webhooks' in kwargs['request'].metadata:
-                webhook_dict = kwargs['request'].metadata['webhooks']
+        if event.name.startswith("REQUEST") and "request" in kwargs:
+            if "webhooks" in kwargs["request"].metadata:
+                webhook_dict = kwargs["request"].metadata["webhooks"]
 
                 # Always add current event urls
                 urls += webhook_dict.get(event.name, [])
 
-                # Additionally do some quick translation for success / failure completion events
+                # Additionally do some quick translation for success / failure
+                # completion events
                 if event.name == Events.REQUEST_COMPLETED.name:
                     urls += webhook_dict.get(
-                        'REQUEST_FAILURE' if event.error else 'REQUEST_SUCCESS', [])
+                        "REQUEST_FAILURE" if event.error else "REQUEST_SUCCESS", []
+                    )
 
-        return {'urls': urls} if urls else {}
+        return {"urls": urls} if urls else {}
 
 
 class WebsocketPublisher(BeergardenPublisher):
@@ -124,19 +147,17 @@ class MongoPublisher(BeergardenPublisher):
 
 
 class TornadoPikaPublisher(BeergardenPublisher, PikaClient):
-
     def __init__(self, **kwargs):
         self.logger = logging.getLogger(__name__)
 
-        self._shutdown_timeout = timedelta(seconds=kwargs.pop('shutdown_timeout', 5))
+        self._shutdown_timeout = timedelta(seconds=kwargs.pop("shutdown_timeout", 5))
         self._work_queue = Queue()
         self._connection = None
         self._channel = None
 
-        self.coroutiner = CoroutineMaker({
-            'TornadoConnection': 'on_open_callback',
-            'channel': 'on_open_callback'
-        })
+        self.coroutiner = CoroutineMaker(
+            {"TornadoConnection": "on_open_callback", "channel": "on_open_callback"}
+        )
 
         # Trying to get super() to work with incompatible signatures is a nightmare
         BeergardenPublisher.__init__(self)
@@ -150,8 +171,8 @@ class TornadoPikaPublisher(BeergardenPublisher, PikaClient):
     @coroutine
     def _open_connection(self):
         self._connection = yield self.coroutiner.convert(TornadoConnection)(
-            parameters=self._conn_params,
-            stop_ioloop_on_close=False)
+            parameters=self._conn_params, stop_ioloop_on_close=False
+        )
 
     @coroutine
     def _open_channel(self):
@@ -187,25 +208,36 @@ class TornadoPikaPublisher(BeergardenPublisher, PikaClient):
               Expiration to be included as part of the message properties
         :return: None
         """
-        self._work_queue.put(('basic_publish', {
-            'exchange': self._exchange, 'routing_key': kwargs['routing_key'], 'body': message,
-            'properties': BasicProperties(app_id='beer-garden', content_type='text/plain',
-                                          headers=kwargs.pop('headers', None),
-                                          expiration=kwargs.pop('expiration', None))
-        }))
+        self._work_queue.put(
+            (
+                "basic_publish",
+                {
+                    "exchange": self._exchange,
+                    "routing_key": kwargs["routing_key"],
+                    "body": message,
+                    "properties": BasicProperties(
+                        app_id="beer-garden",
+                        content_type="text/plain",
+                        headers=kwargs.pop("headers", None),
+                        expiration=kwargs.pop("expiration", None),
+                    ),
+                },
+            )
+        )
 
     def _event_publish_args(self, event, **kwargs):
 
         # Main thing we need to do here is figure out the appropriate routing key
         args = {}
-        if event.metadata and 'routing_key' in event.metadata:
-            args['routing_key'] = event.metadata['routing_key']
-        elif 'request' in kwargs:
-            request = kwargs['request']
-            args['routing_key'] = get_routing_key('request', request.system, request.system_version,
-                                                  request.instance_name)
+        if event.metadata and "routing_key" in event.metadata:
+            args["routing_key"] = event.metadata["routing_key"]
+        elif "request" in kwargs:
+            request = kwargs["request"]
+            args["routing_key"] = get_routing_key(
+                "request", request.system, request.system_version, request.instance_name
+            )
         else:
-            args['routing_key'] = 'beergarden'
+            args["routing_key"] = "beergarden"
 
         return args
 
@@ -213,14 +245,15 @@ class TornadoPikaPublisher(BeergardenPublisher, PikaClient):
 class CoroutineMaker(object):
     """Helper class to wrap functions in Tornado futures
 
-    Tornado has a nice @return_future decorator that converts a callback-based function into a
-    Tornado async one. The issue is that it expects the wrapped function to take a `callback`
-    argument and invoke that argument when execution is completed.
+    Tornado has a nice @return_future decorator that converts a callback-based function
+    into a Tornado async one. The issue is that it expects the wrapped function to take
+    a `callback` argument and invoke that argument when execution is completed.
 
-    We need to convert a couple of pika functions in this way. Unfortunately, they're expecting a
-    callback function to be provided with the `on_open_callback` keyword parameter. So we use this
-    class to wrap the functions and mangle the arguments when the function is called to pass the
-    Tornado-provided callback to the function like it's expecting.
+    We need to convert a couple of pika functions in this way. Unfortunately, they're
+    expecting a callback function to be provided with the `on_open_callback` keyword
+    parameter. So we use this class to wrap the functions and mangle the arguments when
+    the function is called to pass the Tornado-provided callback to the function like
+    it's expecting.
     """
 
     def __init__(self, config):
@@ -237,7 +270,6 @@ class CoroutineMaker(object):
                 raise Exception("Bad configuration")
 
     def convert(self, func):
-
         @return_future
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -251,19 +283,17 @@ class CoroutineMaker(object):
 
     @staticmethod
     def _positional_signature(position):
-
         def signature(args, kwargs):
             args = list(args)
-            args.insert(position, kwargs.pop('callback'))
+            args.insert(position, kwargs.pop("callback"))
             return args, kwargs
 
         return signature
 
     @staticmethod
     def _keyword_signature(keyword):
-
         def signature(args, kwargs):
-            kwargs[keyword] = kwargs.pop('callback')
+            kwargs[keyword] = kwargs.pop("callback")
             return args, kwargs
 
         return signature

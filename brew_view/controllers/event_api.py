@@ -5,8 +5,13 @@ from tornado.websocket import WebSocketHandler
 
 import brew_view
 from bg_utils.mongo.parser import MongoParser
-from brew_view.authorization import (authenticated, check_permission,
-                                     query_token_auth, AuthMixin, Permissions)
+from brew_view.authorization import (
+    authenticated,
+    check_permission,
+    query_token_auth,
+    AuthMixin,
+    Permissions,
+)
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import RequestForbidden
 from brewtils.schema_parser import SchemaParser
@@ -49,7 +54,7 @@ class EventPublisherAPI(BaseHandler):
           - Beta
         """
         event = self.parser.parse_event(self.request.decoded_body, from_string=True)
-        publishers = self.get_query_arguments('publisher')
+        publishers = self.get_query_arguments("publisher")
 
         if not publishers:
             brew_view.event_publishers.publish_event(event)
@@ -78,7 +83,7 @@ class EventSocket(AuthMixin, WebSocketHandler):
 
     def open(self):
         if EventSocket.closing:
-            self.close(reason='Shutting down')
+            self.close(reason="Shutting down")
             return
 
         # We can't go though the 'normal' BaseHandler exception translation
@@ -107,8 +112,8 @@ class EventSocket(AuthMixin, WebSocketHandler):
 
     @classmethod
     def shutdown(cls):
-        cls.logger.debug('Closing websocket connections')
+        cls.logger.debug("Closing websocket connections")
         EventSocket.closing = True
 
         for listener in cls.listeners:
-            listener.close(reason='Shutting down')
+            listener.close(reason="Shutting down")

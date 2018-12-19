@@ -50,14 +50,14 @@ class TokenAPI(BaseHandler):
 
             now = datetime.utcnow()
             if now < refresh.expires:
-                self.write(json.dumps({
-                    'token': generate_access_token(refresh.payload)
-                }))
+                self.write(
+                    json.dumps({"token": generate_access_token(refresh.payload)})
+                )
                 return
         except DoesNotExist:
             pass
 
-        raise HTTPError(status_code=403, log_message='Bad credentials')
+        raise HTTPError(status_code=403, log_message="Bad credentials")
 
     def delete(self, token_id):
         """
@@ -113,19 +113,20 @@ class TokenListAPI(BaseHandler):
         parsed_body = json.loads(self.request.decoded_body)
 
         try:
-            principal = Principal.objects.get(username=parsed_body['username'])
+            principal = Principal.objects.get(username=parsed_body["username"])
 
             verified = yield self.executor.submit(
-                verify, str(parsed_body['password']), str(principal.hash))
+                verify, str(parsed_body["password"]), str(principal.hash)
+            )
 
             if verified:
                 self.write(json.dumps(generate_tokens(principal)))
                 return
         except DoesNotExist:
             # Still attempt to verify something so the request takes a while
-            custom_app_context.verify('', None)
+            custom_app_context.verify("", None)
 
-        raise HTTPError(status_code=403, log_message='Bad credentials')
+        raise HTTPError(status_code=403, log_message="Bad credentials")
 
 
 def generate_tokens(principal):
@@ -133,15 +134,15 @@ def generate_tokens(principal):
     roles, permissions = coalesce_permissions(principal.roles)
 
     payload = {
-        'sub': str(principal.id),
-        'username': principal.username,
-        'roles': list(roles),
-        'permissions': list(permissions),
+        "sub": str(principal.id),
+        "username": principal.username,
+        "roles": list(roles),
+        "permissions": list(permissions),
     }
 
     return {
-        'token': generate_access_token(payload),
-        'refresh': generate_refresh_token(payload),
+        "token": generate_access_token(payload),
+        "refresh": generate_refresh_token(payload),
     }
 
 
@@ -149,14 +150,18 @@ def generate_access_token(payload, issue_time=None):
     issue_time = issue_time or datetime.utcnow()
 
     access_payload = payload.copy()
-    access_payload.update({
-        'iat': issue_time,
-        'exp': issue_time + timedelta(seconds=brew_view.config.auth.token.lifetime),
-    })
+    access_payload.update(
+        {
+            "iat": issue_time,
+            "exp": issue_time + timedelta(seconds=brew_view.config.auth.token.lifetime),
+        }
+    )
 
-    return jwt.encode(access_payload,
-                      key=brew_view.config.auth.token.secret,
-                      algorithm=brew_view.config.auth.token.algorithm).decode()
+    return jwt.encode(
+        access_payload,
+        key=brew_view.config.auth.token.secret,
+        algorithm=brew_view.config.auth.token.algorithm,
+    ).decode()
 
 
 def generate_refresh_token(payload, issue_time=None):
@@ -164,9 +169,7 @@ def generate_refresh_token(payload, issue_time=None):
     issue_time = issue_time or datetime.utcnow()
 
     token = RefreshToken(
-        issued=issue_time,
-        expires=issue_time + timedelta(hours=24),
-        payload=payload,
+        issued=issue_time, expires=issue_time + timedelta(hours=24), payload=payload
     )
     token.save()
 

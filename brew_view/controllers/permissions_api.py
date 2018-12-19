@@ -26,5 +26,5 @@ class PermissionsAPI(BaseHandler):
         tags:
           - Permissions
         """
-        self.set_header('Content-Type', 'application/json; charset=UTF-8')
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(json.dumps(sorted(Permissions.values)))

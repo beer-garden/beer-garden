@@ -25,21 +25,21 @@ def test_lookup_job_state(jobstore, bg_job):
     apjob = jobstore.lookup_job(str(bg_job.id))
     assert isinstance(apjob, APJob)
     state = apjob.__getstate__()
-    assert state['id'] == bg_job.id
-    assert state['func'] == 'brew_view.scheduler.runner:run_job'
-    assert state['executor'] == 'default'
-    assert state['args'] == ()
-    assert state['kwargs'] == {
-        'request_template': bg_job.request_template,
-        'job_id': str(bg_job.id),
+    assert state["id"] == bg_job.id
+    assert state["func"] == "brew_view.scheduler.runner:run_job"
+    assert state["executor"] == "default"
+    assert state["args"] == ()
+    assert state["kwargs"] == {
+        "request_template": bg_job.request_template,
+        "job_id": str(bg_job.id),
     }
-    assert state['name'] == bg_job.name
-    assert state['misfire_grace_time'] == bg_job.misfire_grace_time
-    assert state['coalesce'] == bg_job.coalesce
-    assert state['max_instances'] == 3
-    assert state['next_run_time'] == utc.localize(bg_job.next_run_time)
+    assert state["name"] == bg_job.name
+    assert state["misfire_grace_time"] == bg_job.misfire_grace_time
+    assert state["coalesce"] == bg_job.coalesce
+    assert state["max_instances"] == 3
+    assert state["next_run_time"] == utc.localize(bg_job.next_run_time)
 
-    assert isinstance(state['trigger'], DateTrigger)
+    assert isinstance(state["trigger"], DateTrigger)
 
 
 def test_get_due_jobs(jobstore, ts_dt, bg_job):
@@ -52,7 +52,7 @@ def test_get_due_jobs(jobstore, ts_dt, bg_job):
 
 def test_get_due_jobs_invalid_job(jobstore, bg_job):
     bg_job.save()
-    with patch('brew_view.scheduler.jobstore.db_to_scheduler') as convert_mock:
+    with patch("brew_view.scheduler.jobstore.db_to_scheduler") as convert_mock:
         convert_mock.side_effect = ValueError
         assert len(jobstore.get_all_jobs()) == 0
 
