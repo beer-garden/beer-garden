@@ -14,7 +14,7 @@ argh==0.26.2              # via watchdog
 atomicwrites==1.1.5       # via pytest
 attrs==18.1.0             # via black, pytest
 babel==2.6.0              # via sphinx
-black==18.9b0
+black==18.9b0 ; python_version > "3.5"
 certifi==2018.4.16        # via requests
 chardet==3.0.4            # via requests
 click==7.0                # via black
