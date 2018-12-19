@@ -143,8 +143,9 @@ class SystemListAPI(BaseHandler):
         """
         ---
         summary: Create a new System or update an existing System
-        description: If the System does not exist it will be created. If the System
-        already exists it will be updated (assuming it passes validation).
+        description: |
+            If the System does not exist it will be created. If the System
+            already exists it will be updated (assuming it passes validation).
         parameters:
           - name: system
             in: body

@@ -101,8 +101,8 @@ class RequestListAPI(BaseHandler):
           - name: include_children
             in: query
             required: false
-            description: Flag indicating whether to include child requests in the
-            response list
+            description: |
+                Flag indicating whether to include child requests in the response list
             type: boolean
             default: false
           - name: start
@@ -251,8 +251,9 @@ class RequestListAPI(BaseHandler):
             headers:
               Instance-Status:
                 type: string
-                description: Current status of the Instance that will process the
-                created Request
+                description: |
+                    Current status of the Instance that will process the
+                    created Request
           400:
             $ref: '#/definitions/400Error'
           50x:
