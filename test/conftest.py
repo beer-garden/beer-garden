@@ -3,12 +3,21 @@ from mock import Mock, MagicMock
 from mongoengine import connect
 
 import brew_view
+import brewtils.test
 from brew_view.authorization import anonymous_principal
 from test.utils import brew2mongo
 
 pytest_plugins = [
-    'brewtils.test.conftest',
+    'brewtils.test.fixtures',
 ]
+
+
+def pytest_configure():
+    setattr(brewtils.test, '_running_tests', True)
+
+
+def pytest_unconfigure():
+    delattr(brewtils.test, '_running_tests')
 
 
 @pytest.fixture

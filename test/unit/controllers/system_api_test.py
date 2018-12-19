@@ -11,7 +11,7 @@ from tornado.httpclient import HTTPRequest
 from bg_utils.mongo.models import System
 from brewtils.models import PatchOperation, Parameter, Choices
 from brewtils.schema_parser import SchemaParser
-from brewtils.test.utils.comparable import assert_command_equal
+from brewtils.test.comparable import assert_command_equal
 from . import TestHandlerBase
 
 

@@ -4,7 +4,7 @@ from functools import partial
 import brewtils.schemas
 from bg_utils.mongo.parser import BeerGardenSchemaParser
 from brewtils.schema_parser import SchemaParser
-from brewtils.test.utils.comparable import assert_system_equal
+from brewtils.test.comparable import assert_system_equal
 
 
 def convert(model, serializer=None, parser=None):
