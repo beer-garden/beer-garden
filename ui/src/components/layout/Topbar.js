@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import {
@@ -59,39 +58,25 @@ export class Topbar extends Component {
   };
 
   render() {
-    const { classes, config, auth } = this.props;
+    const { classes, appName, isAuthenticated } = this.props;
 
     return (
-      <AppBar position="static" color="primary" className={classes.appBar}>
+      <AppBar position="fixed" color="primary" className={classes.appBar}>
         <Toolbar>
           <Typography variant="h6" color="inherit" style={{ flex: 1 }}>
-            {config.applicationName}
+            {appName}
           </Typography>
-          {auth.isAuthenticated ? this.userIcon() : null}
+          {isAuthenticated ? this.userIcon() : null}
         </Toolbar>
       </AppBar>
     );
   }
 }
 
-const mapStateToProps = state => {
-  return {
-    config: state.configReducer.config,
-    auth: state.authReducer,
-  };
-};
-
-const mapDispatchToProps = dispatch => {
-  return {};
-};
-
 Topbar.propTypes = {
+  appName: PropTypes.string.isRequired,
+  isAuthenticated: PropTypes.bool.isRequired,
   classes: PropTypes.object.isRequired,
-  config: PropTypes.object.isRequired,
-  user: PropTypes.object,
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(withStyles(styles)(Topbar));
+export default withStyles(styles)(Topbar);
