@@ -15,7 +15,7 @@ const styles = theme => ({
     height: '100vh',
     overflow: 'auto',
   },
-  appBarSpacer: theme.mixins.toolbar,
+  topbarSpacer: theme.mixins.toolbar,
 });
 
 export class LoginDashboard extends Component {
@@ -45,7 +45,11 @@ export class LoginDashboard extends Component {
 
     return (
       <>
-        <Topbar />
+        <Topbar
+          appName={config.applicationName}
+          isAuthenticated={auth.isAuthenticated}
+        />
+        <div className={classes.topbarSpacer} />
         <main className={classes.content}>
           <Grid container>
             <Hidden xsDown>

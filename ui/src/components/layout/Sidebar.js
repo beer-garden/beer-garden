@@ -17,7 +17,11 @@ import SettingsIcon from '@material-ui/icons/Settings';
 
 const styles = theme => ({
   drawer: {
+    width: 240,
     flexShrink: 0,
+  },
+  drawerPaper: {
+    width: 240,
   },
   toolbar: theme.mixins.toolbar,
 });
@@ -26,7 +30,11 @@ export class Sidebar extends Component {
   render() {
     const { classes } = this.props;
     return (
-      <Drawer variant="permanent" className={classes.drawer}>
+      <Drawer
+        variant="permanent"
+        className={classes.drawer}
+        classes={{ paper: classes.drawerPaper }}
+      >
         <div className={classes.toolbar} />
         <List>
           <ListItem button key="systems">
