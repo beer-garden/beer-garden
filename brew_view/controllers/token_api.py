@@ -20,7 +20,6 @@ def verify(password, password_hash):
 
 
 class TokenAPI(BaseHandler):
-
     logger = logging.getLogger(__name__)
 
     def get(self, token_id):
@@ -35,9 +34,9 @@ class TokenAPI(BaseHandler):
             type: string
         responses:
           200:
-            description: System with the given ID
+            description: Refresh Token with the given ID
             schema:
-              $ref: '#/definitions/System'
+              $ref: '#/definitions/RefreshToken'
           404:
             $ref: '#/definitions/404Error'
           50x:
@@ -85,7 +84,6 @@ class TokenAPI(BaseHandler):
 
 
 class TokenListAPI(BaseHandler):
-
     logger = logging.getLogger(__name__)
 
     def __init__(self, *args, **kwargs):
@@ -114,13 +112,24 @@ class TokenListAPI(BaseHandler):
 
         try:
             principal = Principal.objects.get(username=parsed_body["username"])
-
-            verified = yield self.executor.submit(
-                verify, str(parsed_body["password"]), str(principal.hash)
-            )
+            if (
+                brew_view.config.auth.guest_login_enabled
+                and principal.username == brew_view.anonymous_principal.username
+            ):
+                verified = True
+            else:
+                verified = yield self.executor.submit(
+                    verify, str(parsed_body["password"]), str(principal.hash)
+                )
 
             if verified:
-                self.write(json.dumps(generate_tokens(principal)))
+                tokens = generate_tokens(principal, self.REFRESH_COOKIE_EXP)
+                self.set_secure_cookie(
+                    self.REFRESH_COOKIE_NAME,
+                    tokens["refresh"],
+                    expires_days=self.REFRESH_COOKIE_EXP,
+                )
+                self.write(json.dumps(tokens))
                 return
         except DoesNotExist:
             # Still attempt to verify something so the request takes a while
@@ -129,8 +138,7 @@ class TokenListAPI(BaseHandler):
         raise HTTPError(status_code=403, log_message="Bad credentials")
 
 
-def generate_tokens(principal):
-
+def generate_tokens(principal, expire_days):
     roles, permissions = coalesce_permissions(principal.roles)
 
     payload = {
@@ -142,7 +150,7 @@ def generate_tokens(principal):
 
     return {
         "token": generate_access_token(payload),
-        "refresh": generate_refresh_token(payload),
+        "refresh": generate_refresh_token(payload, expire_days),
     }
 
 
@@ -164,12 +172,13 @@ def generate_access_token(payload, issue_time=None):
     ).decode()
 
 
-def generate_refresh_token(payload, issue_time=None):
-
+def generate_refresh_token(payload, expire_days, issue_time=None):
     issue_time = issue_time or datetime.utcnow()
 
     token = RefreshToken(
-        issued=issue_time, expires=issue_time + timedelta(hours=24), payload=payload
+        issued=issue_time,
+        expires=issue_time + timedelta(days=expire_days),
+        payload=payload,
     )
     token.save()
 

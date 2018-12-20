@@ -4,19 +4,21 @@ from tornado.gen import coroutine
 
 import brew_view
 from bg_utils.mongo.models import AppState
-from bg_utils.mongo.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 from brew_view import thrift_context
 from brew_view.base_handler import BaseHandler
 
 
 class ConfigHandler(BaseHandler):
 
-    parser = BeerGardenSchemaParser()
+    parser = MongoParser()
 
     def get(self):
         """Subset of configuration options that the frontend needs"""
         app_state = AppState.objects.first()
-        serialized_app_state = self.parser.serialize_app_state(app_state, to_string=False)
+        serialized_app_state = self.parser.serialize_app_state(
+            app_state, to_string=False
+        )
         configs = {
             "allow_unsafe_templates": brew_view.config.application.allow_unsafe_templates,
             "application_name": brew_view.config.application.name,

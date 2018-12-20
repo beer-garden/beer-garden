@@ -104,7 +104,7 @@ def startup():
     logger.info("Checking for Mongo connection")
     yield _progressive_backoff(
         partial(setup_database, config, {"brew_view_version": __version__}),
-        "Unable to connect to mongo, is it started?"
+        "Unable to connect to mongo, is it started?",
     )
     anonymous_principal = load_anonymous()
 
@@ -339,7 +339,9 @@ def _setup_tornado_app():
     _load_swagger(published_url_specs, title=config.application.name)
 
     return Application(
-        published_url_specs + unpublished_url_specs, debug=config.debug_mode
+        published_url_specs + unpublished_url_specs,
+        debug=config.debug_mode,
+        cookie_secret=config.auth.token.secret,
     )
 
 

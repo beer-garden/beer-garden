@@ -5,7 +5,7 @@ import jwt
 import wrapt
 from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
-from tornado.web import HTTPError
+from tornado.web import HTTPError, decode_signed_value
 
 import brew_view
 from bg_utils.mongo.models import Principal, Role
