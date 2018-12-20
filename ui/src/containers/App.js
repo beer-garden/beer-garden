@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { Link, Route, Redirect, withRouter } from 'react-router-dom';
-import Dashboard from '../components/example/Dashboard';
+import Dashboard from './Dashboard';
 
 export class App extends Component {
   render() {
