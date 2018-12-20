@@ -32,9 +32,11 @@ export class LoginDashboard extends Component {
   };
 
   guestLogin = formData => {
-    console.log('guest login was clicked.');
-    console.log('Do something with ');
-    console.log(formData);
+    const { basicLogin, history } = this.props;
+    basicLogin('anonymous', null, formData.rememberMe).then(data => {
+      localStorage.setItem('loggedInAsGuest', true);
+      history.push('/');
+    });
   };
 
   render() {
