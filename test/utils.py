@@ -11,9 +11,7 @@ from brewtils.test.comparable import assert_system_equal
 def convert(model, parser=None):
     schema = getattr(brewtils.schemas, model.schema)
     return parser._do_parse(
-        SchemaParser._do_serialize(schema(), model, True),
-        schema(),
-        True,
+        SchemaParser._do_serialize(schema(), model, True), schema(), True
     )
 
 
