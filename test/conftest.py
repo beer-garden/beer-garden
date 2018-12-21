@@ -60,3 +60,8 @@ def thrift_context(thrift_client):
 @pytest.fixture
 def mongo_system(bg_system):
     return brew2mongo(bg_system)
+
+
+@pytest.fixture
+def mongo_job(bg_job):
+    return brew2mongo(bg_job)
