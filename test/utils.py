@@ -28,8 +28,9 @@ def test_convert(bg_system):
 
 
 class TestUtils(unittest.TestCase):
-
-    def _assert_systems_equal(self, expected_system, test_system, include_commands=True):
+    def _assert_systems_equal(
+        self, expected_system, test_system, include_commands=True
+    ):
         self.assertEqual(expected_system.id, test_system.id)
         self.assertEqual(expected_system.name, test_system.name)
         self.assertEqual(expected_system.version, test_system.version)

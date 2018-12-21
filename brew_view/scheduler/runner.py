@@ -12,5 +12,5 @@ def run_job(job_id, request_template):
         job_id: The Beer-Garden job ID that triggered this event.
         request_template: Request template specified by the job.
     """
-    request_template.metadata['_bg_job_id'] = job_id
+    request_template.metadata["_bg_job_id"] = job_id
     brew_view.easy_client.create_request(request_template)

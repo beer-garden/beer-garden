@@ -1,6 +1,6 @@
 import logging
 import brew_view
-from bg_utils.mongo.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 
@@ -9,7 +9,7 @@ from tornado.gen import coroutine
 
 class LoggingConfigAPI(BaseHandler):
 
-    parser = BeerGardenSchemaParser()
+    parser = MongoParser()
     logger = logging.getLogger(__name__)
 
     def get(self):
@@ -32,8 +32,10 @@ class LoggingConfigAPI(BaseHandler):
         tags:
           - Config
         """
-        system_name = self.get_query_argument('system_name', default=None)
-        log_config = brew_view.plugin_logging_config.get_plugin_log_config(system_name=system_name)
+        system_name = self.get_query_argument("system_name", default=None)
+        log_config = brew_view.plugin_logging_config.get_plugin_log_config(
+            system_name=system_name
+        )
         self.write(self.parser.serialize_logging_config(log_config, to_string=False))
 
     @coroutine
@@ -42,8 +44,8 @@ class LoggingConfigAPI(BaseHandler):
         ---
         summary: Reload the plugin logging configuration
         description: |
-          The body of the request needs to contain a set of instructions detailing the operation
-          to make. Currently supported operations are below:
+          The body of the request needs to contain a set of instructions detailing the
+          operation to make. Currently supported operations are below:
           ```JSON
           {
             "operations": [
@@ -68,16 +70,21 @@ class LoggingConfigAPI(BaseHandler):
         tags:
           - Config
         """
-        operations = self.parser.parse_patch(self.request.decoded_body, many=True, from_string=True)
+        operations = self.parser.parse_patch(
+            self.request.decoded_body, many=True, from_string=True
+        )
 
         for op in operations:
-            if op.operation == 'reload':
+            if op.operation == "reload":
                 brew_view.load_plugin_logging_config(brew_view.config)
             else:
                 error_msg = "Unsupported operation '%s'" % op.operation
                 self.logger.warning(error_msg)
-                raise ModelValidationError('value', error_msg)
+                raise ModelValidationError("value", error_msg)
 
         self.set_status(200)
-        self.write(self.parser.serialize_logging_config(brew_view.plugin_logging_config,
-                                                        to_string=False))
+        self.write(
+            self.parser.serialize_logging_config(
+                brew_view.plugin_logging_config, to_string=False
+            )
+        )

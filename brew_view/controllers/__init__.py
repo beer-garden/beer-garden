@@ -9,7 +9,10 @@ from brew_view.controllers.job_api import JobAPI
 from brew_view.controllers.job_list_api import JobListAPI
 from brew_view.controllers.logging_api import LoggingConfigAPI
 from brew_view.controllers.misc_controllers import (
-    ConfigHandler, VersionHandler, SpecHandler, SwaggerConfigHandler
+    ConfigHandler,
+    VersionHandler,
+    SpecHandler,
+    SwaggerConfigHandler,
 )
 from brew_view.controllers.permissions_api import PermissionsAPI
 from brew_view.controllers.queue_api import QueueAPI, OldQueueAPI

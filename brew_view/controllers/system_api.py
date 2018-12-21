@@ -3,7 +3,7 @@ import logging
 from tornado.gen import coroutine
 
 from bg_utils.mongo.models import System
-from bg_utils.mongo.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
@@ -13,7 +13,7 @@ from brewtils.models import Events
 
 class SystemAPI(BaseHandler):
 
-    parser = BeerGardenSchemaParser()
+    parser = MongoParser()
     logger = logging.getLogger(__name__)
 
     @authenticated(permissions=[Permissions.SYSTEM_READ])
@@ -47,21 +47,29 @@ class SystemAPI(BaseHandler):
         """
         self.logger.debug("Getting System: %s", system_id)
 
-        include_commands = self.get_query_argument(
-            'include_commands', default='true').lower() != 'false'
-        self.write(self.parser.serialize_system(System.objects.get(id=system_id), to_string=False,
-                                                include_commands=include_commands))
+        include_commands = (
+            self.get_query_argument("include_commands", default="true").lower()
+            != "false"
+        )
+        self.write(
+            self.parser.serialize_system(
+                System.objects.get(id=system_id),
+                to_string=False,
+                include_commands=include_commands,
+            )
+        )
 
     @coroutine
     @authenticated(permissions=[Permissions.SYSTEM_DELETE])
     def delete(self, system_id):
         """
-        Will give Bartender a chance to remove instances of this system from the registry but will
-        always delete the system regardless of whether the Bartender operation succeeds.
+        Will give Bartender a chance to remove instances of this system from the
+        registry but will always delete the system regardless of whether the Bartender
+        operation succeeds.
         ---
         summary: Delete a specific System
-        description: Will remove instances of local plugins from the registry, clear and remove
-            message queues, and remove the system from the database.
+        description: Will remove instances of local plugins from the registry, clear
+            and remove message queues, and remove the system from the database.
         parameters:
           - name: system_id
             in: path
@@ -79,7 +87,7 @@ class SystemAPI(BaseHandler):
           - Systems
         """
         self.request.event.name = Events.SYSTEM_REMOVED.name
-        self.request.event_extras = {'system': System.objects.get(id=system_id)}
+        self.request.event_extras = {"system": System.objects.get(id=system_id)}
 
         with thrift_context() as client:
             yield client.removeSystem(str(system_id))
@@ -93,8 +101,8 @@ class SystemAPI(BaseHandler):
         ---
         summary: Partially update a System
         description: |
-          The body of the request needs to contain a set of instructions detailing the updates to
-          apply.
+          The body of the request needs to contain a set of instructions detailing the
+          updates to apply.
           Currently supported operations are below:
           ```JSON
           {
@@ -137,23 +145,26 @@ class SystemAPI(BaseHandler):
         self.request.event.name = Events.SYSTEM_UPDATED.name
 
         system = System.objects.get(id=system_id)
-        operations = self.parser.parse_patch(self.request.decoded_body, many=True, from_string=True)
+        operations = self.parser.parse_patch(
+            self.request.decoded_body, many=True, from_string=True
+        )
 
         for op in operations:
-            if op.operation == 'replace':
-                if op.path == '/commands':
+            if op.operation == "replace":
+                if op.path == "/commands":
                     new_commands = self.parser.parse_command(op.value, many=True)
                     if system.has_different_commands(new_commands):
-                        if system.commands and 'dev' not in system.version:
-                            raise ModelValidationError('System %s-%s already exists with '
-                                                       'different commands' %
-                                                       (system.name, system.version))
+                        if system.commands and "dev" not in system.version:
+                            raise ModelValidationError(
+                                "System %s-%s already exists with "
+                                "different commands" % (system.name, system.version)
+                            )
                         else:
                             system.upsert_commands(new_commands)
-                elif op.path in ['/description', '/icon_name', '/display_name']:
+                elif op.path in ["/description", "/icon_name", "/display_name"]:
                     if op.value is None:
-                        # If we set an attribute to None, mongoengine marks that attribute
-                        # for deletion, so we don't do that.
+                        # If we set an attribute to None, mongoengine marks that
+                        # attribute for deletion, so we don't do that.
                         value = ""
                     else:
                         value = op.value
@@ -166,9 +177,9 @@ class SystemAPI(BaseHandler):
                 else:
                     error_msg = "Unsupported path '%s'" % op.path
                     self.logger.warning(error_msg)
-                    raise ModelValidationError('value', error_msg)
-            elif op.operation == 'update':
-                if op.path == '/metadata':
+                    raise ModelValidationError("value", error_msg)
+            elif op.operation == "update":
+                if op.path == "/metadata":
                     self.logger.debug("Updating system metadata")
                     self.logger.debug("Old: %s" % system.metadata)
                     system.metadata.update(op.value)
@@ -177,17 +188,17 @@ class SystemAPI(BaseHandler):
                 else:
                     error_msg = "Unsupported path for update '%s'" % op.path
                     self.logger.warning(error_msg)
-                    raise ModelValidationError('path', error_msg)
-            elif op.operation == 'reload':
+                    raise ModelValidationError("path", error_msg)
+            elif op.operation == "reload":
                 with thrift_context() as client:
                     yield client.reloadSystem(system_id)
             else:
                 error_msg = "Unsupported operation '%s'" % op.operation
                 self.logger.warning(error_msg)
-                raise ModelValidationError('value', error_msg)
+                raise ModelValidationError("value", error_msg)
 
         system.reload()
 
-        self.request.event_extras = {'system': system, 'patch': operations}
+        self.request.event_extras = {"system": system, "patch": operations}
 
         self.write(self.parser.serialize_system(system, to_string=False))

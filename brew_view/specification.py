@@ -1,8 +1,8 @@
 SPECIFICATION = {
     "configuration": {
-        'type': 'dict',
+        "type": "dict",
         "bootstrap": True,
-        'items': {
+        "items": {
             "file": {
                 "type": "str",
                 "description": "Path to configuration file to use",
@@ -22,9 +22,9 @@ SPECIFICATION = {
             },
         },
     },
-    'amq': {
-        'type': 'dict',
-        'items': {
+    "amq": {
+        "type": "dict",
+        "items": {
             "host": {
                 "type": "str",
                 "default": "localhost",
@@ -55,12 +55,12 @@ SPECIFICATION = {
                 "description": "Virtual host to use for AMQ",
                 "previous_names": ["amq_virtual_host"],
             },
-            'connections': {
-                'type': 'dict',
-                'items': {
-                    'admin': {
-                        'type': 'dict',
-                        'items': {
+            "connections": {
+                "type": "dict",
+                "items": {
+                    "admin": {
+                        "type": "dict",
+                        "items": {
                             "port": {
                                 "type": "int",
                                 "default": 15672,
@@ -79,14 +79,17 @@ SPECIFICATION = {
                                 "type": "str",
                                 "default": "guest",
                                 "description": "Password to login to the AMQ admin",
-                                "previous_names": ["amq_admin_password", "amq_admin_pw"],
+                                "previous_names": [
+                                    "amq_admin_password",
+                                    "amq_admin_pw",
+                                ],
                                 "alt_env_names": ["AMQ_ADMIN_PASSWORD", "AMQ_ADMIN_PW"],
                             },
                         },
                     },
-                    'message': {
-                        'type': 'dict',
-                        'items': {
+                    "message": {
+                        "type": "dict",
+                        "items": {
                             "port": {
                                 "type": "int",
                                 "default": 5672,
@@ -108,9 +111,9 @@ SPECIFICATION = {
                                 "previous_names": ["amq_user"],
                                 "alt_env_names": ["AMQ_USER"],
                             },
-                            'ssl': {
-                                'type': 'dict',
-                                'items': {
+                            "ssl": {
+                                "type": "dict",
+                                "items": {
                                     "enabled": {
                                         "type": "bool",
                                         "default": False,
@@ -118,7 +121,9 @@ SPECIFICATION = {
                                     },
                                     "ca_cert": {
                                         "type": "str",
-                                        "description": "Path to CA certificate file to use",
+                                        "description": (
+                                            "Path to CA certificate file to use"
+                                        ),
                                         "required": False,
                                     },
                                     "ca_verify": {
@@ -129,7 +134,9 @@ SPECIFICATION = {
                                     },
                                     "client_cert": {
                                         "type": "str",
-                                        "description": "Path to client combined key / certificate",
+                                        "description": (
+                                            "Path to client combined key / certificate"
+                                        ),
                                         "required": False,
                                     },
                                 },
@@ -140,10 +147,9 @@ SPECIFICATION = {
             },
         },
     },
-
     "application": {
-        'type': 'dict',
-        'items': {
+        "type": "dict",
+        "items": {
             "name": {
                 "type": "str",
                 "default": "Beer Garden",
@@ -161,23 +167,28 @@ SPECIFICATION = {
                 "type": "bool",
                 "default": False,
                 "description": "Allow unsafe templates to be loaded by the application",
-                "previous_names": ["ALLOW_UNSANITIZED_TEMPLATES", "allow_unsafe_templates"],
-                "alt_env_names": ["ALLOW_UNSANITIZED_TEMPLATES", "BG_ALLOW_UNSAFE_TEMPLATES"],
+                "previous_names": [
+                    "ALLOW_UNSANITIZED_TEMPLATES",
+                    "allow_unsafe_templates",
+                ],
+                "alt_env_names": [
+                    "ALLOW_UNSANITIZED_TEMPLATES",
+                    "BG_ALLOW_UNSAFE_TEMPLATES",
+                ],
             },
         },
     },
-
     "auth": {
-        'type': 'dict',
-        'items': {
+        "type": "dict",
+        "items": {
             "enabled": {
                 "type": "bool",
                 "default": False,
                 "description": "Use role-based authentication / authorization",
             },
             "token": {
-                'type': 'dict',
-                'items': {
+                "type": "dict",
+                "items": {
                     "algorithm": {
                         "type": "str",
                         "default": "HS256",
@@ -198,10 +209,9 @@ SPECIFICATION = {
             },
         },
     },
-
-    'backend': {
-        'type': 'dict',
-        'items': {
+    "backend": {
+        "type": "dict",
+        "items": {
             "host": {
                 "type": "str",
                 "default": "localhost",
@@ -222,19 +232,18 @@ SPECIFICATION = {
             },
         },
     },
-
-    'db': {
-        'type': 'dict',
-        'items': {
+    "db": {
+        "type": "dict",
+        "items": {
             "name": {
                 "type": "str",
                 "default": "beer_garden",
                 "description": "Name of the database to use",
                 "previous_names": ["db_name"],
             },
-            'connection': {
-                'type': 'dict',
-                'items': {
+            "connection": {
+                "type": "dict",
+                "items": {
                     "host": {
                         "type": "str",
                         "default": "localhost",
@@ -280,13 +289,12 @@ SPECIFICATION = {
         "default": False,
         "description": "Run the application in debug mode",
     },
-
-    'event': {
-        'type': 'dict',
-        'items': {
-            'amq': {
-                'type': 'dict',
-                'items': {
+    "event": {
+        "type": "dict",
+        "items": {
+            "amq": {
+                "type": "dict",
+                "items": {
                     "enable": {
                         "type": "bool",
                         "default": False,
@@ -307,24 +315,23 @@ SPECIFICATION = {
                     },
                 },
             },
-            'mongo': {
-                'type': 'dict',
-                'items': {
+            "mongo": {
+                "type": "dict",
+                "items": {
                     "enable": {
                         "type": "bool",
                         "default": True,
                         "description": "Persist events to Mongo",
                         "previous_names": ["event_persist_mongo"],
                         "alt_env_names": ["EVENT_PERSIST_MONGO"],
-                    },
+                    }
                 },
             },
         },
     },
-
-    'log': {
-        'type': 'dict',
-        'items': {
+    "log": {
+        "type": "dict",
+        "items": {
             "config_file": {
                 "type": "str",
                 "description": "Path to a logging configuration file",
@@ -348,26 +355,24 @@ SPECIFICATION = {
             },
         },
     },
-
-    'metrics': {
-        'type': 'dict',
-        'items': {
-            'port': {
-                'type': 'int',
-                'description': 'Port for prometheus server to listen on.',
-                'default': 2338
+    "metrics": {
+        "type": "dict",
+        "items": {
+            "port": {
+                "type": "int",
+                "description": "Port for prometheus server to listen on.",
+                "default": 2338,
             },
-            'url': {
-                'type': 'str',
-                'description': 'URL to prometheus/grafana server.',
-                'required': False,
-            }
-        }
+            "url": {
+                "type": "str",
+                "description": "URL to prometheus/grafana server.",
+                "required": False,
+            },
+        },
     },
-
-    'plugin_logging': {
-        'type': 'dict',
-        'items': {
+    "plugin_logging": {
+        "type": "dict",
+        "items": {
             "config_file": {
                 "type": "str",
                 "description": "Path to a logging configuration file for plugins",
@@ -378,7 +383,7 @@ SPECIFICATION = {
             "level": {
                 "type": "str",
                 "description": "Default log level for plugins (could be "
-                               "overwritten by plugin_log_config value)",
+                "overwritten by plugin_log_config value)",
                 "default": "INFO",
                 "choices": ["DEBUG", "INFO", "WARN", "WARNING", "ERROR", "CRITICAL"],
                 "previous_names": ["plugin_log_level"],
@@ -386,66 +391,66 @@ SPECIFICATION = {
             },
         },
     },
-
-    'scheduler': {
-        'type': 'dict',
-        'items': {
-            'auth': {
-                'type': 'dict',
-                'items': {
+    "scheduler": {
+        "type": "dict",
+        "items": {
+            "auth": {
+                "type": "dict",
+                "items": {
                     "username": {
                         "type": "str",
                         "description": "Username that scheduler will use for "
-                                       "authentication (needs bg-admin role)",
+                        "authentication (needs bg-admin role)",
                         "required": False,
                     },
                     "password": {
                         "type": "str",
                         "description": "Password that scheduler will use for "
-                                       "authentication (needs bg-admin role)",
+                        "authentication (needs bg-admin role)",
                         "required": False,
                     },
                 },
             },
-            'max_workers': {
-                'type': 'int',
-                'default': 10,
-                'description': 'Number of workers (processes) to run concurrently.'
+            "max_workers": {
+                "type": "int",
+                "default": 10,
+                "description": "Number of workers (processes) to run concurrently.",
             },
-            'job_defaults': {
-                'type': 'dict',
-                'items': {
-                    'coalesce': {
-                        'type': 'bool',
-                        'default': True,
-                        'description': (
-                            'Should jobs run only once if multiple have missed their window'
+            "job_defaults": {
+                "type": "dict",
+                "items": {
+                    "coalesce": {
+                        "type": "bool",
+                        "default": True,
+                        "description": (
+                            "Should jobs run only once if multiple have missed their "
+                            "window"
                         ),
                     },
-                    'max_instances': {
-                        'type': 'int',
-                        'default': 3,
-                        'description': 'Default maximum instances of a job to run concurrently.'
-                    }
-                }
-            }
-        }
-
+                    "max_instances": {
+                        "type": "int",
+                        "default": 3,
+                        "description": (
+                            "Default maximum instances of a job to run concurrently."
+                        ),
+                    },
+                },
+            },
+        },
     },
-
-    'web': {
-        'type': 'dict',
-        'items': {
-            'ssl': {
-                'type': 'dict',
-                'items': {
+    "web": {
+        "type": "dict",
+        "items": {
+            "ssl": {
+                "type": "dict",
+                "items": {
                     "enabled": {
                         "type": "bool",
                         "default": False,
                         "description": "Serve content using SSL",
                         "previous_names": ["ssl_enabled"],
                         "alt_env_names": ["SSL_ENABLED"],
-                        "cli_separator": "_"
+                        "cli_separator": "_",
                     },
                     "private_key": {
                         "type": "str",
@@ -463,21 +468,27 @@ SPECIFICATION = {
                     },
                     "ca_cert": {
                         "type": "str",
-                        "description": "Path to CA certificate file to use for SSLContext",
+                        "description": (
+                            "Path to CA certificate file to use for SSLContext"
+                        ),
                         "required": False,
                         "previous_names": ["ca_cert"],
                         "alt_env_names": ["CA_CERT"],
                     },
                     "ca_path": {
                         "type": "str",
-                        "description": "Path to CA certificate path to use for SSLContext",
+                        "description": (
+                            "Path to CA certificate path to use for SSLContext"
+                        ),
                         "required": False,
                         "previous_names": ["ca_path"],
                         "alt_env_names": ["CA_PATH"],
                     },
                     "client_cert_verify": {
                         "type": "str",
-                        "description": "Client certificate mode to use when handling requests",
+                        "description": (
+                            "Client certificate mode to use when handling requests"
+                        ),
                         "choices": ["NONE", "OPTIONAL", "REQUIRED"],
                         "default": "NONE",
                         "previous_names": ["client_cert_verify"],
@@ -499,10 +510,10 @@ SPECIFICATION = {
                 "previous_names": ["url_prefix"],
                 "alt_env_names": ["URL_PREFIX"],
             },
-            'host': {
-                'type': 'str',
-                'default': '0.0.0.0',
-                'description': 'Host for the HTTP Server to bind to',
+            "host": {
+                "type": "str",
+                "default": "0.0.0.0",
+                "description": "Host for the HTTP Server to bind to",
             },
             "public_fqdn": {
                 "type": "str",
@@ -513,7 +524,6 @@ SPECIFICATION = {
             },
         },
     },
-
     "shutdown_timeout": {
         "type": "int",
         "default": 5,
@@ -525,46 +535,33 @@ SPECIFICATION = {
 def get_default_logging_config(level, filename):
     if filename:
         brew_view_handler = {
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": level,
-                "formatter": "simple",
-                "filename": filename,
-                "maxBytes": 10485760,
-                "backupCount": 20,
-                "encoding": "utf8"
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": level,
+            "formatter": "simple",
+            "filename": filename,
+            "maxBytes": 10485760,
+            "backupCount": 20,
+            "encoding": "utf8",
         }
     else:
         brew_view_handler = {
             "class": "logging.StreamHandler",
             "formatter": "simple",
             "level": level,
-            "stream": "ext://sys.stdout"
+            "stream": "ext://sys.stdout",
         }
 
     return {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
-            "simple": {
-                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            }
+            "simple": {"format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"}
         },
-        "handlers": {
-            "brew-view": brew_view_handler
-        },
+        "handlers": {"brew-view": brew_view_handler},
         "loggers": {
-            "tornado.access": {
-                "level": "WARN"
-            },
-            "tornado.application": {
-                "level": "WARN"
-            },
-            "tornado.general": {
-                "level": "WARN"
-            }
+            "tornado.access": {"level": "WARN"},
+            "tornado.application": {"level": "WARN"},
+            "tornado.general": {"level": "WARN"},
         },
-        "root": {
-            "level": level,
-            "handlers": ["brew-view"]
-        }
+        "root": {"level": level, "handlers": ["brew-view"]},
     }

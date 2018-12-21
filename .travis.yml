@@ -1,6 +1,9 @@
 language: python
 cache: pip
+sudo: required
+dist: xenial
 python:
+  - 3.7
   - 3.6
   - 3.5
   - 3.4
@@ -8,7 +11,9 @@ python:
 
 
 install: "make deps"
-script: "make lint coverage"
+script:
+  - make coverage
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.6 ]]; then make lint; fi
 after_success: "codecov"
 
 
