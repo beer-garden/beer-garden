@@ -54,7 +54,7 @@ class TestSystemAPI(object):
 
         response = yield http_client.fetch(base_url + "/api/v1/systems/" + system_id)
         assert 200 == response.code
-        assert system_dict == json.loads(response.body)
+        assert system_dict == json.loads(response.body.decode("utf-8"))
 
     @pytest.mark.gen_test
     def test_get_404(self, http_client, base_url, system_id):
@@ -138,7 +138,7 @@ class TestSystemAPI(object):
             assert response.code == 200
 
             updated = SchemaParser.parse_system(
-                response.body.decode(), from_string=True
+                response.body.decode("utf-8"), from_string=True
             )
             assert_command_equal(bg_command, updated.commands[0])
         else:
