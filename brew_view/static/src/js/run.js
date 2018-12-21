@@ -241,15 +241,13 @@ export default function appRun(
       if (!isNaN(intPart1) && !isNaN(intPart2)) {
         if (intPart1 > intPart2) {
           return -1;
-        }
-        else if (intPart1 < intPart2) {
+        } else if (intPart1 < intPart2) {
           return 1;
         }
       } else {
         if (parts1[i] > parts2[i]) {
           return -1;
-        }
-        else if (parts1[i] < parts2[i]) {
+        } else if (parts1[i] < parts2[i]) {
           return 1;
         }
       }
@@ -257,8 +255,7 @@ export default function appRun(
 
     if (parts1.length < parts2.length) {
       return -1;
-    }
-    else if (parts1.length > parts2.length) {
+    } else if (parts1.length > parts2.length) {
       return 1;
     }
 
@@ -271,11 +268,10 @@ export default function appRun(
    * @return {string} - either the system's version or 'latest'.
    */
   $rootScope.getVersionForUrl = function(system) {
-
     // All versions for systems with the given system name
     let versions = _.map(
       _.filter($rootScope.systems, {name: system.name}),
-      _.property('version'),
+      _.property('version')
     );
 
     // Sorted according to the system comparison function
