@@ -26,3 +26,4 @@ pytz
 tox
 twine
 wheel
+black ; python_version > "3.5"

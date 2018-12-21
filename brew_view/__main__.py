@@ -18,11 +18,13 @@ def signal_handler(signal_number, stack_frame):
 
 def generate_logging_config():
     spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
-    bg_utils.generate_logging_config_file(spec, get_default_logging_config, sys.argv[1:])
+    bg_utils.generate_logging_config_file(
+        spec, get_default_logging_config, sys.argv[1:]
+    )
 
 
 def generate_config():
-    spec = YapconfSpec(SPECIFICATION, env_prefix='BG_')
+    spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
     bg_utils.generate_config_file(spec, sys.argv[1:])
 
 
@@ -46,11 +48,11 @@ def main():
     # Schedule things to happen after the ioloop comes up
     brew_view.io_loop.add_callback(brew_view.startup)
 
-    brew_view.logger.info('Starting IO loop')
+    brew_view.logger.info("Starting IO loop")
     brew_view.io_loop.start()
 
     brew_view.logger.info("Application is shut down. Goodbye!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

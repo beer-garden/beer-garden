@@ -8,7 +8,11 @@ import brew_view
 from bg_utils.mongo.models import Principal, Role
 from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import (
-    authenticated, check_permission, Permissions, coalesce_permissions)
+    authenticated,
+    check_permission,
+    Permissions,
+    coalesce_permissions,
+)
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 
@@ -39,12 +43,14 @@ class UserAPI(BaseHandler):
         tags:
           - Users
         """
-        if user_identifier == 'anonymous':
+        if user_identifier == "anonymous":
             principal = brew_view.anonymous_principal
         else:
             # Need fine-grained access control here
-            if user_identifier not in [self.current_user.id,
-                                       self.current_user.username]:
+            if user_identifier not in [
+                self.current_user.id,
+                self.current_user.username,
+            ]:
                 check_permission(self.current_user, [Permissions.USER_READ])
 
             try:
@@ -54,8 +60,7 @@ class UserAPI(BaseHandler):
 
         principal.permissions = coalesce_permissions(principal.roles)[1]
 
-        self.write(MongoParser.serialize_principal(
-            principal, to_string=False))
+        self.write(MongoParser.serialize_principal(principal, to_string=False))
 
     @authenticated(permissions=[Permissions.USER_DELETE])
     def delete(self, user_id):
@@ -125,35 +130,39 @@ class UserAPI(BaseHandler):
         """
         principal = Principal.objects.get(id=str(user_id))
         operations = MongoParser.parse_patch(
-            self.request.decoded_body,
-            many=True,
-            from_string=True
+            self.request.decoded_body, many=True, from_string=True
         )
 
         for op in operations:
-            if op.path == '/roles':
+            if op.path == "/roles":
                 check_permission(self.current_user, [Permissions.USER_UPDATE])
 
                 try:
-                    if op.operation == 'add':
+                    if op.operation == "add":
                         principal.roles.append(Role.objects.get(name=op.value))
-                    elif op.operation == 'remove':
+                    elif op.operation == "remove":
                         principal.roles.remove(Role.objects.get(name=op.value))
-                    elif op.operation == 'set':
-                        principal.roles = [Role.objects.get(name=name) for name in op.value]
+                    elif op.operation == "set":
+                        principal.roles = [
+                            Role.objects.get(name=name) for name in op.value
+                        ]
                     else:
-                        raise ModelValidationError("Unsupported operation '%s'" % op.operation)
+                        raise ModelValidationError(
+                            "Unsupported operation '%s'" % op.operation
+                        )
                 except DoesNotExist:
                     raise ModelValidationError("Role '%s' does not exist" % op.value)
 
-            elif op.path == '/preferences/theme':
+            elif op.path == "/preferences/theme":
                 if user_id != self.current_user.id:
                     check_permission(self.current_user, [Permissions.USER_UPDATE])
 
-                if op.operation == 'set':
-                    principal.preferences['theme'] = op.value
+                if op.operation == "set":
+                    principal.preferences["theme"] = op.value
                 else:
-                    raise ModelValidationError("Unsupported operation '%s'" % op.operation)
+                    raise ModelValidationError(
+                        "Unsupported operation '%s'" % op.operation
+                    )
 
             else:
                 check_permission(self.current_user, [Permissions.USER_UPDATE])
@@ -161,12 +170,10 @@ class UserAPI(BaseHandler):
 
         principal.save()
 
-        self.write(MongoParser.serialize_principal(principal,
-                                                   to_string=False))
+        self.write(MongoParser.serialize_principal(principal, to_string=False))
 
 
 class UsersAPI(BaseHandler):
-
     @authenticated(permissions=[Permissions.USER_READ])
     def get(self):
         """
@@ -189,12 +196,10 @@ class UsersAPI(BaseHandler):
         for principal in principals:
             principal.permissions = coalesce_permissions(principal.roles)[1]
 
-        self.set_header('Content-Type', 'application/json; charset=UTF-8')
-        self.write(MongoParser.serialize_principal(
-            principals,
-            to_string=True,
-            many=True
-        ))
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(
+            MongoParser.serialize_principal(principals, to_string=True, many=True)
+        )
 
     @authenticated(permissions=[Permissions.USER_CREATE])
     def post(self):
@@ -233,8 +238,10 @@ class UsersAPI(BaseHandler):
         """
         parsed = json.loads(self.request.decoded_body)
 
-        user = Principal(username=parsed['username'],
-                         hash=custom_app_context.hash(parsed['password']))
+        user = Principal(
+            username=parsed["username"],
+            hash=custom_app_context.hash(parsed["password"]),
+        )
         user.save()
 
         self.set_status(204)

@@ -13,7 +13,7 @@ from brew_view import BGJobStore
 @pytest.fixture
 def jobstore():
     """A Beer Garden Job Store."""
-    connect('beer_garden', host='mongomock://localhost')
+    connect("beer_garden", host="mongomock://localhost")
     js = BGJobStore()
     yield js
     js.remove_all_jobs()
@@ -22,17 +22,17 @@ def jobstore():
 @pytest.fixture
 def ap_job(bg_job, bg_request_template):
     job_kwargs = {
-        'func': Mock(),
-        'scheduler': Mock(BaseScheduler, timezone=utc),
-        'trigger': DateTrigger(),
-        'executor': 'default',
-        'args': (),
-        'kwargs': {'request_template': bg_request_template},
-        'id': str(bg_job.id),
-        'misfire_grace_time': bg_job.misfire_grace_time,
-        'coalesce': bg_job.coalesce,
-        'name': bg_job.name,
-        'max_instances': 3,
+        "func": Mock(),
+        "scheduler": Mock(BaseScheduler, timezone=utc),
+        "trigger": DateTrigger(),
+        "executor": "default",
+        "args": (),
+        "kwargs": {"request_template": bg_request_template},
+        "id": str(bg_job.id),
+        "misfire_grace_time": bg_job.misfire_grace_time,
+        "coalesce": bg_job.coalesce,
+        "name": bg_job.name,
+        "max_instances": 3,
     }
-    job_kwargs.setdefault('next_run_time', None)
+    job_kwargs.setdefault("next_run_time", None)
     return APJob(**job_kwargs)

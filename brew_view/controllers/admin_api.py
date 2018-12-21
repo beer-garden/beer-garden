@@ -50,10 +50,11 @@ class AdminAPI(BaseHandler):
           - Admin
         """
         operations = self.parser.parse_patch(
-            self.request.decoded_body, many=True, from_string=True)
+            self.request.decoded_body, many=True, from_string=True
+        )
 
         for op in operations:
-            if op.operation == 'rescan':
+            if op.operation == "rescan":
                 check_permission(self.current_user, [Permissions.SYSTEM_CREATE])
                 with thrift_context() as client:
                     yield client.rescanSystemDirectory()
@@ -66,7 +67,6 @@ class AdminAPI(BaseHandler):
 
 
 class OldAdminAPI(BaseHandler):
-
     @coroutine
     def post(self):
         """

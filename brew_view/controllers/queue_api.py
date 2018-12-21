@@ -35,7 +35,7 @@ class QueueAPI(BaseHandler):
           - Queues
         """
         self.request.event.name = Events.QUEUE_CLEARED.name
-        self.request.event.payload = {'queue_name': queue_name}
+        self.request.event.payload = {"queue_name": queue_name}
 
         with thrift_context() as client:
             yield client.clearQueue(queue_name)
@@ -52,7 +52,8 @@ class OldQueueAPI(BaseHandler):
         ---
         summary: Clear a queue by canceling all requests
         deprecated: true
-        description: This endpoint is DEPRECATED - Use /api/v1/queues/{queue_name} instead.
+        description: This endpoint is DEPRECATED - Use /api/v1/queues/{queue_name}
+            instead.
         parameters:
           - name: queue_name
             in: path
@@ -69,4 +70,4 @@ class OldQueueAPI(BaseHandler):
         tags:
           - Deprecated
         """
-        self.redirect('/api/v1/queues/' + queue_name, permanent=True)
+        self.redirect("/api/v1/queues/" + queue_name, permanent=True)

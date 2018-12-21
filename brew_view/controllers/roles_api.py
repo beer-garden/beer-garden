@@ -37,10 +37,11 @@ class RoleAPI(BaseHandler):
         tags:
           - Roles
         """
-        self.write(MongoParser.serialize_role(
-            Role.objects.get(id=str(role_id)),
-            to_string=False
-        ))
+        self.write(
+            MongoParser.serialize_role(
+                Role.objects.get(id=str(role_id)), to_string=False
+            )
+        )
 
     @authenticated(permissions=[Permissions.ROLE_DELETE])
     def delete(self, role_id):
@@ -64,7 +65,7 @@ class RoleAPI(BaseHandler):
           - Roles
         """
         role = Role.objects.get(id=str(role_id))
-        if role.name in ('bg-admin', 'bg-anonymous', 'bg-plugin'):
+        if role.name in ("bg-admin", "bg-anonymous", "bg-plugin"):
             raise ModelValidationError("Unable to remove '%s' role" % role.name)
 
         role.delete()
@@ -114,35 +115,38 @@ class RoleAPI(BaseHandler):
         """
         role = Role.objects.get(id=str(role_id))
         operations = MongoParser.parse_patch(
-            self.request.decoded_body,
-            many=True,
-            from_string=True
+            self.request.decoded_body, many=True, from_string=True
         )
 
         for op in operations:
-            if op.path == '/permissions':
+            if op.path == "/permissions":
                 try:
-                    if op.operation == 'add':
+                    if op.operation == "add":
                         role.permissions.append(Permissions(op.value).value)
-                    elif op.operation == 'remove':
+                    elif op.operation == "remove":
                         role.permissions.remove(Permissions(op.value).value)
-                    elif op.operation == 'set':
-                        role.permissions = [Permissions(perm).value for perm in op.value]
+                    elif op.operation == "set":
+                        role.permissions = [
+                            Permissions(perm).value for perm in op.value
+                        ]
                     else:
-                        raise ModelValidationError("Unsupported operation '%s'" % op.operation)
+                        raise ModelValidationError(
+                            "Unsupported operation '%s'" % op.operation
+                        )
                 except ValueError:
-                    raise ModelValidationError("Permission '%s' does not exist"
-                                               % op.value)
+                    raise ModelValidationError(
+                        "Permission '%s' does not exist" % op.value
+                    )
 
-            elif op.path == '/roles':
+            elif op.path == "/roles":
                 try:
-                    if op.operation == 'add':
+                    if op.operation == "add":
                         new_nested = Role.objects.get(name=op.value)
                         ensure_no_cycles(role, new_nested)
                         role.roles.append(new_nested)
-                    elif op.operation == 'remove':
+                    elif op.operation == "remove":
                         role.roles.remove(Role.objects.get(name=op.value))
-                    elif op.operation == 'set':
+                    elif op.operation == "set":
                         # Do this one at a time to be super sure about cycles
                         role.roles = []
 
@@ -151,7 +155,9 @@ class RoleAPI(BaseHandler):
                             ensure_no_cycles(role, new_role)
                             role.roles.append(new_role)
                     else:
-                        raise ModelValidationError("Unsupported operation '%s'" % op.operation)
+                        raise ModelValidationError(
+                            "Unsupported operation '%s'" % op.operation
+                        )
                 except DoesNotExist:
                     raise ModelValidationError("Role '%s' does not exist" % op.value)
 
@@ -167,7 +173,6 @@ class RoleAPI(BaseHandler):
 
 
 class RolesAPI(BaseHandler):
-
     @authenticated(permissions=[Permissions.ROLE_READ])
     def get(self):
         """
@@ -185,9 +190,10 @@ class RolesAPI(BaseHandler):
         tags:
           - Roles
         """
-        self.set_header('Content-Type', 'application/json; charset=UTF-8')
-        self.write(MongoParser.serialize_role(Role.objects.all(),
-                                              many=True, to_string=True))
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(
+            MongoParser.serialize_role(Role.objects.all(), many=True, to_string=True)
+        )
 
     @authenticated(permissions=[Permissions.ROLE_CREATE])
     def post(self):
@@ -214,8 +220,7 @@ class RolesAPI(BaseHandler):
         tags:
           - Roles
         """
-        role = MongoParser.parse_role(self.request.decoded_body,
-                                      from_string=True)
+        role = MongoParser.parse_role(self.request.decoded_body, from_string=True)
 
         # Make sure all new permissions are real
         if not set(role.permissions).issubset(Permissions.values):
@@ -234,7 +239,9 @@ class RolesAPI(BaseHandler):
 
                 nested_roles.append(db_role)
             except DoesNotExist:
-                raise ModelValidationError("Role '%s' does not exist" % nested_role.name)
+                raise ModelValidationError(
+                    "Role '%s' does not exist" % nested_role.name
+                )
         role.roles = nested_roles
 
         role.save()
@@ -261,6 +268,6 @@ def ensure_no_cycles(base_role, new_role):
     """
     for role in new_role.roles:
         if role == base_role:
-            raise ModelValidationError('Cycle Detected!')
+            raise ModelValidationError("Cycle Detected!")
 
         ensure_no_cycles(base_role, role)

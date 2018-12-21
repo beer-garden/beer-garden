@@ -39,7 +39,7 @@ class JobAPI(BaseHandler):
           - Jobs
         """
         document = Job.objects.get(id=job_id)
-        self.set_header('Content-Type', 'application/json; charset=UTF-8')
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(self.parser.serialize_job(document, to_string=False))
 
     @authenticated(permissions=[Permissions.JOB_UPDATE])
@@ -98,24 +98,22 @@ class JobAPI(BaseHandler):
         """
         job = Job.objects.get(id=job_id)
         operations = self.parser.parse_patch(
-            self.request.decoded_body,
-            many=True,
-            from_string=True
+            self.request.decoded_body, many=True, from_string=True
         )
 
         for op in operations:
-            if op.operation == 'update':
-                if op.path == '/status':
-                    if str(op.value).upper() == 'PAUSED':
+            if op.operation == "update":
+                if op.path == "/status":
+                    if str(op.value).upper() == "PAUSED":
                         brew_view.request_scheduler.pause_job(
-                            job_id, jobstore='beer_garden'
+                            job_id, jobstore="beer_garden"
                         )
-                        job.status = 'PAUSED'
-                    elif str(op.value).upper() == 'RUNNING':
+                        job.status = "PAUSED"
+                    elif str(op.value).upper() == "RUNNING":
                         brew_view.request_scheduler.resume_job(
-                            job_id, jobstore='beer_garden'
+                            job_id, jobstore="beer_garden"
                         )
-                        job.status = 'RUNNING'
+                        job.status = "RUNNING"
                     else:
                         error_msg = "Unsupported status value '%s'" % op.value
                         self.logger.warning(error_msg)
@@ -130,7 +128,7 @@ class JobAPI(BaseHandler):
                 raise ModelValidationError(error_msg)
 
         job.save()
-        self.set_header('Content-Type', 'application/json; charset=UTF-8')
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(self.parser.serialize_job(job, to_string=False))
 
     @coroutine
@@ -156,5 +154,5 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
-        brew_view.request_scheduler.remove_job(job_id, jobstore='beer_garden')
+        brew_view.request_scheduler.remove_job(job_id, jobstore="beer_garden")
         self.set_status(204)
