@@ -1,8 +1,8 @@
-import configReducer from '../config';
-import * as types from '../../constants/ActionTypes';
+import configReducer from "../config";
+import * as types from "../../constants/ActionTypes";
 
-describe('config reducer', () => {
-  it('should return the initial state', () => {
+describe("config reducer", () => {
+  it("should return the initial state", () => {
     expect(configReducer(undefined, {})).toEqual({
       config: {},
       configLoading: true,
@@ -10,10 +10,10 @@ describe('config reducer', () => {
     });
   });
 
-  it('should handle FETCH_CONFIG_BEGIN', () => {
+  it("should handle FETCH_CONFIG_BEGIN", () => {
     expect(
       configReducer(
-        { config: {}, configError: 'someError' },
+        { config: {}, configError: "someError" },
         {
           type: types.FETCH_CONFIG_BEGIN,
         },
@@ -21,39 +21,39 @@ describe('config reducer', () => {
     ).toEqual({
       config: {},
       configLoading: true,
-      configError: 'someError',
+      configError: "someError",
     });
   });
 
-  it('should handle FETCH_CONFIG_SUCCESS', () => {
+  it("should handle FETCH_CONFIG_SUCCESS", () => {
     expect(
       configReducer(
-        { config: {}, configError: 'someError', configLoading: true },
+        { config: {}, configError: "someError", configLoading: true },
         {
           type: types.FETCH_CONFIG_SUCCESS,
-          payload: { config: 'configPayload' },
+          payload: { config: "configPayload" },
         },
       ),
     ).toEqual({
-      config: 'configPayload',
+      config: "configPayload",
       configLoading: false,
       configError: null,
     });
   });
 
-  it('should handle FETCH_CONFIG_FAILURE', () => {
+  it("should handle FETCH_CONFIG_FAILURE", () => {
     expect(
       configReducer(
         { config: {}, configError: null, configLoading: true },
         {
           type: types.FETCH_CONFIG_FAILURE,
-          payload: { error: new Error('some error') },
+          payload: { error: new Error("some error") },
         },
       ),
     ).toEqual({
       config: {},
       configLoading: false,
-      configError: new Error('some error'),
+      configError: new Error("some error"),
     });
   });
 });

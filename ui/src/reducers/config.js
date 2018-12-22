@@ -2,7 +2,7 @@ import {
   FETCH_CONFIG_BEGIN,
   FETCH_CONFIG_SUCCESS,
   FETCH_CONFIG_FAILURE,
-} from '../constants/ActionTypes';
+} from "../constants/ActionTypes";
 
 const initialState = {
   config: {},

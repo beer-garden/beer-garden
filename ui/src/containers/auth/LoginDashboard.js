@@ -1,19 +1,19 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { Redirect } from 'react-router-dom';
-import { withStyles } from '@material-ui/core/styles';
-import { Grid, Hidden } from '@material-ui/core';
-import Topbar from '../../components/layout/Topbar';
-import Login from '../../components/auth/Login';
-import { basicLogin } from '../../actions/auth';
+import React, { Component } from "react";
+import PropTypes from "prop-types";
+import { connect } from "react-redux";
+import { Redirect } from "react-router-dom";
+import { withStyles } from "@material-ui/core/styles";
+import { Grid, Hidden } from "@material-ui/core";
+import Topbar from "../../components/layout/Topbar";
+import Login from "../../components/auth/Login";
+import { basicLogin } from "../../actions/auth";
 
 const styles = theme => ({
   content: {
     flewGrow: 1,
     padding: theme.spacing.unit * 3,
-    height: '100vh',
-    overflow: 'auto',
+    height: "100vh",
+    overflow: "auto",
   },
   topbarSpacer: theme.mixins.toolbar,
 });
@@ -23,19 +23,19 @@ export class LoginDashboard extends Component {
     const { basicLogin, history } = this.props;
     basicLogin(formData.username, formData.password, formData.rememberMe).then(
       data => {
-        console.log('successfully logged in...');
+        console.log("successfully logged in...");
         console.log(data);
-        console.log('I should redirect');
-        history.push('/');
+        console.log("I should redirect");
+        history.push("/");
       },
     );
   };
 
   guestLogin = formData => {
     const { basicLogin, history } = this.props;
-    basicLogin('anonymous', null, formData.rememberMe).then(data => {
-      localStorage.setItem('loggedInAsGuest', true);
-      history.push('/');
+    basicLogin("anonymous", null, formData.rememberMe).then(data => {
+      localStorage.setItem("loggedInAsGuest", true);
+      history.push("/");
     });
   };
 

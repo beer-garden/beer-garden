@@ -1,13 +1,13 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
-import { Grid, Typography, Paper, Divider, Hidden } from '@material-ui/core';
-import RetryTimer from './RetryTimer';
+import React, { Component } from "react";
+import PropTypes from "prop-types";
+import { withStyles } from "@material-ui/core/styles";
+import { Grid, Typography, Paper, Divider, Hidden } from "@material-ui/core";
+import RetryTimer from "./RetryTimer";
 
 const styles = theme => ({
   paper: {
     padding: theme.spacing.unit * 2,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
 
@@ -15,7 +15,7 @@ export class ErrorRetryDialog extends Component {
   render() {
     const { classes, action, error, loading } = this.props;
 
-    document.title = 'Oops. Retrying connection...';
+    document.title = "Oops. Retrying connection...";
     return (
       <Grid container>
         <Hidden smDown>

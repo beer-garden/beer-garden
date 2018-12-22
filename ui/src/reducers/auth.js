@@ -2,11 +2,11 @@ import {
   USER_LOGIN_BEGIN,
   USER_LOGIN_SUCCESS,
   USER_LOGIN_FAILURE,
-} from '../constants/ActionTypes';
+} from "../constants/ActionTypes";
 
-const cookies = document.cookie.split('; ');
-const sessionCookie = cookies.find(item => item.startsWith('refresh_id='));
-const isGuest = localStorage.getItem('loggedInAsGuest') || false;
+const cookies = document.cookie.split("; ");
+const sessionCookie = cookies.find(item => item.startsWith("refresh_id="));
+const isGuest = localStorage.getItem("loggedInAsGuest") || false;
 
 const initialState = {
   userData: {},

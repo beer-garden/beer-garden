@@ -1,8 +1,8 @@
-import authReducer from '../auth';
-import * as types from '../../constants/ActionTypes';
+import authReducer from "../auth";
+import * as types from "../../constants/ActionTypes";
 
-describe('auth reducer', () => {
-  it('should return the initial state', () => {
+describe("auth reducer", () => {
+  it("should return the initial state", () => {
     expect(authReducer(undefined, {})).toEqual({
       userData: {},
       isAuthenticated: false,
@@ -12,11 +12,11 @@ describe('auth reducer', () => {
     });
   });
 
-  it('should handle USER_LOGIN_BEGIN', () => {
+  it("should handle USER_LOGIN_BEGIN", () => {
     expect(
       authReducer(
         {
-          userData: 'oldData',
+          userData: "oldData",
           isAuthenticated: true,
           isGuest: false,
           userLoading: false,
@@ -35,17 +35,17 @@ describe('auth reducer', () => {
     });
   });
 
-  it('should handle USER_LOGIN_SUCCESS', () => {
+  it("should handle USER_LOGIN_SUCCESS", () => {
     expect(
       authReducer(
         {},
         {
           type: types.USER_LOGIN_SUCCESS,
-          payload: { isGuest: false, data: 'dataFromServer' },
+          payload: { isGuest: false, data: "dataFromServer" },
         },
       ),
     ).toEqual({
-      userData: 'dataFromServer',
+      userData: "dataFromServer",
       userLoading: false,
       isAuthenticated: true,
       isGuest: false,
@@ -53,8 +53,8 @@ describe('auth reducer', () => {
     });
   });
 
-  it('should handle USER_LOGIN_FAILURE', () => {
-    const error = new Error('errorMessagej');
+  it("should handle USER_LOGIN_FAILURE", () => {
+    const error = new Error("errorMessagej");
     expect(
       authReducer(
         {},

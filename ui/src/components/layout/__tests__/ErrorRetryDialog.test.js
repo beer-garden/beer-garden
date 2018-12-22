@@ -1,17 +1,17 @@
-import React from 'react';
-import { shallow } from 'enzyme';
-import { ErrorRetryDialog } from '../ErrorRetryDialog';
-import RetryTimer from '../RetryTimer';
+import React from "react";
+import { shallow } from "enzyme";
+import { ErrorRetryDialog } from "../ErrorRetryDialog";
+import RetryTimer from "../RetryTimer";
 
 const setup = propOverrides => {
   const props = Object.assign(
     {
       action: jest.fn(),
-      error: { message: 'My Error Message' },
+      error: { message: "My Error Message" },
       loading: false,
-      classes: { paper: 'paperClassName' },
+      classes: { paper: "paperClassName" },
     },
-    propOverrides
+    propOverrides,
   );
 
   const wrapper = shallow(<ErrorRetryDialog {...props} />);
@@ -21,8 +21,8 @@ const setup = propOverrides => {
   };
 };
 
-describe('ErrorRetryDialog Component', () => {
-  test('render', () => {
+describe("ErrorRetryDialog Component", () => {
+  test("render", () => {
     const { wrapper } = setup();
     expect(wrapper.find(RetryTimer)).toHaveLength(1);
   });

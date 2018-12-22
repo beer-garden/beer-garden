@@ -1,5 +1,5 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React, { Component } from "react";
+import PropTypes from "prop-types";
 import {
   Typography,
   Grid,
@@ -12,15 +12,15 @@ import {
   Checkbox,
   Input,
   InputLabel,
-} from '@material-ui/core';
-import LockIcon from '@material-ui/icons/LockOutlined';
-import withStyles from '@material-ui/core/styles/withStyles';
+} from "@material-ui/core";
+import LockIcon from "@material-ui/icons/LockOutlined";
+import withStyles from "@material-ui/core/styles/withStyles";
 
 const styles = theme => ({
   paper: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
     padding: `${theme.spacing.unit * 2}px ${theme.spacing.unit * 3}px ${theme
       .spacing.unit * 3}px`,
   },
@@ -29,14 +29,14 @@ const styles = theme => ({
     backgroundColor: theme.palette.secondary.main,
   },
   form: {
-    width: '100%', // Fix IE 11 issue.
+    width: "100%", // Fix IE 11 issue.
     marginTop: theme.spacing.unit,
   },
   submit: {
     marginTop: theme.spacing.unit * 3,
   },
   progress: {
-    position: 'relative',
+    position: "relative",
     top: -58,
     left: 0,
     zIndex: 1,
@@ -170,10 +170,10 @@ Login.propTypes = {
   guestLoginEnabled: PropTypes.bool.isRequired,
   guestLogin: function(props, propName, componentName) {
     if (
-      props['guestLoginEnabled'] === true &&
-      (props[propName] === undefined || typeof props[propName] !== 'function')
+      props["guestLoginEnabled"] === true &&
+      (props[propName] === undefined || typeof props[propName] !== "function")
     ) {
-      return new Error('Please provide a guest login function.');
+      return new Error("Please provide a guest login function.");
     }
   },
   error: PropTypes.object,
