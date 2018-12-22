@@ -12,6 +12,8 @@ const styles = theme => {
     content: {
       flexGrow: 1,
       padding: theme.spacing.unit * 2,
+      backgroundColor: theme.palette.background.default,
+      height: "100vh",
     },
     topbarSpacer: theme.mixins.toolbar,
   };

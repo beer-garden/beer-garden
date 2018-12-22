@@ -14,6 +14,7 @@ const setup = propOverrides => {
       config: { authEnabled: false },
       configLoading: false,
       configError: null,
+      theme: {},
     },
     propOverrides,
   );

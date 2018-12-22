@@ -14,6 +14,7 @@ const styles = theme => ({
     padding: theme.spacing.unit * 3,
     height: "100vh",
     overflow: "auto",
+    backgroundColor: theme.palette.background.default,
   },
   topbarSpacer: theme.mixins.toolbar,
 });
@@ -23,9 +24,6 @@ export class LoginDashboard extends Component {
     const { basicLogin, history } = this.props;
     basicLogin(formData.username, formData.password, formData.rememberMe).then(
       data => {
-        console.log("successfully logged in...");
-        console.log(data);
-        console.log("I should redirect");
         history.push("/");
       },
     );
