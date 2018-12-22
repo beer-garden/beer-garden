@@ -1,15 +1,13 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
-import { Typography, withStyles } from "@material-ui/core";
-import Topbar from "../components/layout/Topbar";
+import { withStyles } from "@material-ui/core";
 import Sidebar from "../components/layout/Sidebar";
 import SystemList from "../components/systems/SystemList";
 import { fetchSystems } from "../actions/system";
 import Spinner from "../components/layout/Spinner";
 
 const styles = theme => {
-  console.log(theme.mixins.toolbar);
   return {
     content: {
       flexGrow: 1,
@@ -19,7 +17,7 @@ const styles = theme => {
   };
 };
 
-class Dashboard extends Component {
+export class SystemDashboard extends Component {
   componentDidMount() {
     this.props.fetchSystems();
   }
@@ -49,11 +47,12 @@ class Dashboard extends Component {
   }
 }
 
-Dashboard.propTypes = {
+SystemDashboard.propTypes = {
   classes: PropTypes.object.isRequired,
   systems: PropTypes.array.isRequired,
   systemsLoading: PropTypes.bool.isRequired,
   systemsError: PropTypes.object,
+  fetchSystems: PropTypes.func.isRequired,
 };
 
 const mapStateToProps = state => {
@@ -73,4 +72,4 @@ const mapDispatchToProps = dispatch => {
 export default connect(
   mapStateToProps,
   mapDispatchToProps,
-)(withStyles(styles)(Dashboard));
+)(withStyles(styles)(SystemDashboard));
