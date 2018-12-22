@@ -1,11 +1,11 @@
-import axios from 'axios';
-import camelcaseKeys from 'camelcase-keys';
+import axios from "axios";
+import camelcaseKeys from "camelcase-keys";
 import {
   FETCH_SYSTEMS_BEGIN,
   FETCH_SYSTEMS_SUCCESS,
   FETCH_SYSTEMS_FAILURE,
-} from '../constants/ActionTypes';
-import { defaultErrorHandler } from '.';
+} from "../constants/ActionTypes";
+import { defaultErrorHandler } from ".";
 
 export const fetchSystemsBegin = () => ({
   type: FETCH_SYSTEMS_BEGIN,
@@ -13,7 +13,7 @@ export const fetchSystemsBegin = () => ({
 
 export const fetchSystemsSuccess = data => ({
   type: FETCH_SYSTEMS_SUCCESS,
-  payload: data,
+  payload: { systems: data },
 });
 
 export const fetchSystemsFailure = error => ({
@@ -21,12 +21,12 @@ export const fetchSystemsFailure = error => ({
   payload: { error },
 });
 
-export function getSystems() {
+export function fetchSystems() {
   return async dispatch => {
     dispatch(fetchSystemsBegin());
 
     return axios
-      .get('/api/v1/systems')
+      .get("/api/v1/systems")
       .then(res => {
         const normalizedData = camelcaseKeys(res.data);
         dispatch(fetchSystemsSuccess(normalizedData));
