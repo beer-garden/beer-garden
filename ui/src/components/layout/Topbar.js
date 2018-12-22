@@ -1,6 +1,6 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
+import React, { Component } from "react";
+import PropTypes from "prop-types";
+import { withStyles } from "@material-ui/core/styles";
 import {
   AppBar,
   Menu,
@@ -8,8 +8,8 @@ import {
   Toolbar,
   Typography,
   IconButton,
-} from '@material-ui/core';
-import { AccountCircle } from '@material-ui/icons';
+} from "@material-ui/core";
+import { AccountCircle } from "@material-ui/icons";
 
 const styles = theme => ({
   appBar: {
@@ -36,7 +36,7 @@ export class Topbar extends Component {
     return (
       <>
         <IconButton
-          aria-owns={open ? 'menu-appbar' : undefined}
+          aria-owns={open ? "menu-appbar" : undefined}
           aria-haspopup="true"
           onClick={this.handleMenu}
           color="inherit"
@@ -46,8 +46,8 @@ export class Topbar extends Component {
         <Menu
           id="menu-appbar"
           anchorEl={anchorEl}
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+          transformOrigin={{ vertical: "top", horizontal: "right" }}
           open={open}
           onClose={this.handleClose}
         >

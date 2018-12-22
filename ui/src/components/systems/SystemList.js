@@ -1,17 +1,17 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React from "react";
+import PropTypes from "prop-types";
 import {
   List,
   ListItem,
   ListItemText,
   Avatar,
   withStyles,
-} from '@material-ui/core';
-import ImageIcon from '@material-ui/icons/Image';
+} from "@material-ui/core";
+import ImageIcon from "@material-ui/icons/Image";
 
 const styles = theme => ({
   root: {
-    width: '100%',
+    width: "100%",
     maxWidth: 360,
     backgroundColor: theme.palette.background.paperk,
   },

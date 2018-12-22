@@ -1,11 +1,11 @@
-import axios from 'axios';
-import camelcaseKeys from 'camelcase-keys';
+import axios from "axios";
+import camelcaseKeys from "camelcase-keys";
 import {
   FETCH_CONFIG_BEGIN,
   FETCH_CONFIG_FAILURE,
   FETCH_CONFIG_SUCCESS,
-} from '../constants/ActionTypes';
-import { defaultErrorHandler } from '.';
+} from "../constants/ActionTypes";
+import { defaultErrorHandler } from ".";
 
 export const fetchConfigBegin = () => ({
   type: FETCH_CONFIG_BEGIN,
@@ -26,7 +26,7 @@ export function fetchConfig() {
     dispatch(fetchConfigBegin());
 
     return axios
-      .get('/config')
+      .get("/config")
       .then(response => {
         const normalizedData = camelcaseKeys(response.data);
         dispatch(fetchConfigSuccess(normalizedData));

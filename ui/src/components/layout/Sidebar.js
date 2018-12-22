@@ -1,6 +1,6 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
+import React, { Component } from "react";
+import PropTypes from "prop-types";
+import { withStyles } from "@material-ui/core/styles";
 import {
   Divider,
   Drawer,
@@ -8,12 +8,12 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-} from '@material-ui/core';
-import FolderIcon from '@material-ui/icons/Folder';
-import ViewModuleIcon from '@material-ui/icons/ViewModule';
-import StorageIcon from '@material-ui/icons/Storage';
-import ScheduleIcon from '@material-ui/icons/Schedule';
-import SettingsIcon from '@material-ui/icons/Settings';
+} from "@material-ui/core";
+import FolderIcon from "@material-ui/icons/Folder";
+import ViewModuleIcon from "@material-ui/icons/ViewModule";
+import StorageIcon from "@material-ui/icons/Storage";
+import ScheduleIcon from "@material-ui/icons/Schedule";
+import SettingsIcon from "@material-ui/icons/Settings";
 
 const styles = theme => ({
   drawer: {

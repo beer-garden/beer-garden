@@ -1,7 +1,7 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { Typography, Tabs, Tab } from '@material-ui/core';
-import Spinner from './Spinner';
+import React, { Component } from "react";
+import PropTypes from "prop-types";
+import { Typography, Tabs, Tab } from "@material-ui/core";
+import Spinner from "./Spinner";
 
 class RetryTimer extends Component {
   state = {
@@ -57,9 +57,9 @@ class RetryTimer extends Component {
   getTimerItem = () => {
     let second;
     if (this.state.counter === 1) {
-      second = 'second';
+      second = "second";
     } else {
-      second = 'seconds';
+      second = "seconds";
     }
     return (
       <Typography variant="body1">

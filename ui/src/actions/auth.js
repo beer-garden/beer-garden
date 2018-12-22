@@ -1,11 +1,11 @@
-import axios from 'axios';
-import camelcaseKeys from 'camelcase-keys';
+import axios from "axios";
+import camelcaseKeys from "camelcase-keys";
 import {
   USER_LOGIN_BEGIN,
   USER_LOGIN_SUCCESS,
   USER_LOGIN_FAILURE,
-} from '../constants/ActionTypes';
-import { defaultErrorHandler } from '.';
+} from "../constants/ActionTypes";
+import { defaultErrorHandler } from ".";
 
 export const userLoginBegin = () => ({
   type: USER_LOGIN_BEGIN,
@@ -27,10 +27,10 @@ export function basicLogin(username, password, rememberMe = false) {
 
     const payload = { username, password };
     return axios
-      .post('/api/v1/tokens', JSON.stringify(payload))
+      .post("/api/v1/tokens", JSON.stringify(payload))
       .then(res => {
         if (rememberMe) {
-          console.log('I should store the refresh token');
+          console.log("I should store the refresh token");
         }
         const normalizedData = camelcaseKeys(res.data);
         const actionPayload = { isGuest: false, data: normalizedData };

@@ -1,12 +1,12 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import { loadConfig } from '../actions/config';
-import PropTypes from 'prop-types';
-import { Switch, Route, withRouter } from 'react-router-dom';
-import Spinner from '../components/layout/Spinner';
-import ErrorRetryDialog from '../components/layout/ErrorRetryDialog';
-import LoginDashboard from '../containers/auth/LoginDashboard';
-import App from './App';
+import React, { Component } from "react";
+import { connect } from "react-redux";
+import { loadConfig } from "../actions/config";
+import PropTypes from "prop-types";
+import { Switch, Route, withRouter } from "react-router-dom";
+import Spinner from "../components/layout/Spinner";
+import ErrorRetryDialog from "../components/layout/ErrorRetryDialog";
+import LoginDashboard from "../containers/auth/LoginDashboard";
+import App from "./App";
 
 export class Root extends Component {
   componentDidMount() {
