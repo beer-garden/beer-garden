@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Link, Route, Redirect, withRouter } from "react-router-dom";
 import Topbar from "../components/layout/Topbar";
-import Dashboard from "./Dashboard";
+import SystemDashboard from "./SystemDashboard";
 
 export class App extends Component {
   render() {
@@ -19,7 +19,7 @@ export class App extends Component {
           appName={config.applicationName}
           isAuthenticated={auth.isAuthenticated}
         />
-        <Dashboard />
+        <SystemDashboard />
       </div>
     );
   }

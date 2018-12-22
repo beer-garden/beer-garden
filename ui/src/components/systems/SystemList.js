@@ -16,7 +16,8 @@ const styles = theme => ({
     backgroundColor: theme.palette.background.paperk,
   },
 });
-function SystemList(props) {
+
+export function SystemList(props) {
   const { classes, systems } = props;
   const listItems = systems.map(system => (
     <ListItem key={system.id}>
@@ -33,4 +34,5 @@ SystemList.propTypes = {
   classes: PropTypes.object.isRequired,
   systems: PropTypes.array.isRequired,
 };
+
 export default withStyles(styles)(SystemList);

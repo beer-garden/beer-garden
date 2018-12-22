@@ -6,7 +6,7 @@ import {
 
 const initialState = {
   systems: [],
-  systemsLoading: false,
+  systemsLoading: true,
   systemsError: null,
   selectedSystem: null,
 };
@@ -16,11 +16,11 @@ export default function systemReducer(state = initialState, action) {
     case FETCH_SYSTEMS_BEGIN:
       return {
         ...state,
+        systemsError: null,
         systemsLoading: true,
       };
 
     case FETCH_SYSTEMS_SUCCESS:
-      console.log(action.payload);
       return {
         ...state,
         systemsLoading: false,
