@@ -5,6 +5,7 @@ import {
   AppBar,
   Menu,
   MenuItem,
+  Switch,
   Toolbar,
   Typography,
   IconButton,
@@ -30,9 +31,20 @@ export class Topbar extends Component {
     this.setState({ anchorEl: null });
   };
 
+  toggleTheme = () => {
+    const { themeName, setUserTheme } = this.props;
+    if (themeName === "dark") {
+      setUserTheme("light");
+    } else {
+      setUserTheme("dark");
+    }
+  };
+
   userIcon = () => {
     const { anchorEl } = this.state;
+    const { themeName } = this.props;
     const open = Boolean(anchorEl);
+    const themeChecked = themeName === "dark";
     return (
       <>
         <IconButton
@@ -51,7 +63,9 @@ export class Topbar extends Component {
           open={open}
           onClose={this.handleClose}
         >
-          <MenuItem onClick={this.handleClose}>User Settings</MenuItem>
+          <MenuItem onClick={this.toggleTheme}>
+            <Switch checked={themeChecked} />
+          </MenuItem>
         </Menu>
       </>
     );
@@ -77,6 +91,8 @@ Topbar.propTypes = {
   appName: PropTypes.string.isRequired,
   isAuthenticated: PropTypes.bool.isRequired,
   classes: PropTypes.object.isRequired,
+  themeName: PropTypes.string,
+  setUserTheme: PropTypes.func,
 };
 
 export default withStyles(styles)(Topbar);

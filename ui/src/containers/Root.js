@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import { loadConfig } from "../actions/config";
 import PropTypes from "prop-types";
+import { MuiThemeProvider } from "@material-ui/core";
 import { Switch, Route, withRouter } from "react-router-dom";
 import Spinner from "../components/layout/Spinner";
 import ErrorRetryDialog from "../components/layout/ErrorRetryDialog";
@@ -14,13 +15,18 @@ export class Root extends Component {
   }
 
   render() {
-    const { configLoading, configError, config, loadConfig } = this.props;
+    const {
+      configLoading,
+      configError,
+      config,
+      loadConfig,
+      theme,
+    } = this.props;
 
+    let element;
     if (configLoading && configError === null) {
-      return <Spinner />;
-    }
-
-    if (configError) {
+      element = <Spinner />;
+    } else if (configError) {
       return (
         <ErrorRetryDialog
           error={configError}
@@ -28,15 +34,17 @@ export class Root extends Component {
           loading={configLoading}
         />
       );
+    } else {
+      document.title = config.applicationName;
+      element = (
+        <Switch>
+          <Route exact path="/" component={App} />
+          <Route exact path="/login" component={LoginDashboard} />
+        </Switch>
+      );
     }
 
-    document.title = config.applicationName;
-    return (
-      <Switch>
-        <Route exact path="/" component={App} />
-        <Route exact path="/login" component={LoginDashboard} />
-      </Switch>
-    );
+    return <MuiThemeProvider theme={theme}>{element}</MuiThemeProvider>;
   }
 }
 
@@ -45,6 +53,7 @@ const mapStateToProps = state => {
     config: state.configReducer.config,
     configLoading: state.configReducer.configLoading,
     configError: state.configReducer.configError,
+    theme: state.themeReducer.theme,
   };
 };
 
@@ -59,6 +68,7 @@ Root.propTypes = {
   config: PropTypes.object.isRequired,
   configLoading: PropTypes.bool.isRequired,
   configError: PropTypes.object,
+  theme: PropTypes.object.isRequired,
 };
 
 export default withRouter(

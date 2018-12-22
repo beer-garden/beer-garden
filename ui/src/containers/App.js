@@ -1,13 +1,14 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Link, Route, Redirect, withRouter } from "react-router-dom";
+import { Redirect, withRouter } from "react-router-dom";
+import { setUserTheme } from "../actions/theme";
 import Topbar from "../components/layout/Topbar";
 import SystemDashboard from "./SystemDashboard";
 
 export class App extends Component {
   render() {
-    const { config, auth } = this.props;
+    const { config, auth, themeName, setUserTheme } = this.props;
 
     if (config.authEnabled && !auth.isAuthenticated) {
       return <Redirect to="/login" />;
@@ -18,6 +19,8 @@ export class App extends Component {
         <Topbar
           appName={config.applicationName}
           isAuthenticated={auth.isAuthenticated}
+          themeName={themeName}
+          setUserTheme={setUserTheme}
         />
         <SystemDashboard />
       </div>
@@ -29,16 +32,21 @@ const mapStateToProps = state => {
   return {
     config: state.configReducer.config,
     auth: state.authReducer,
+    themeName: state.themeReducer.themeName,
   };
 };
 
 const mapDispatchToProps = dispatch => {
-  return {};
+  return {
+    setUserTheme: name => dispatch(setUserTheme(name)),
+  };
 };
 
 App.propTypes = {
   config: PropTypes.object.isRequired,
   auth: PropTypes.object.isRequired,
+  setUserTheme: PropTypes.func.isRequired,
+  themeName: PropTypes.string.isRequired,
 };
 
 export default withRouter(

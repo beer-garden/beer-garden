@@ -1,14 +1,16 @@
 import React from "react";
 import { shallow } from "enzyme";
-import { AppBar, IconButton } from "@material-ui/core";
+import { AppBar, IconButton, MenuItem } from "@material-ui/core";
 import { Topbar } from "../Topbar";
 
 const setup = overrideProps => {
   const props = Object.assign(
     {
+      appName: "Beer Garden",
+      themeName: "light",
+      isAuthenticated: true,
       classes: { appBar: "appBarClassName" },
-      config: { applicationName: "Beer Garden" },
-      auth: { isAuthenticated: true },
+      setUserTheme: jest.fn(),
     },
     overrideProps,
   );
@@ -32,5 +34,11 @@ describe("Topbar Component", () => {
     expect(wrapper.state("anchorEl")).toEqual("target");
     wrapper.instance().handleClose();
     expect(wrapper.state("anchorEl")).toBeNull();
+  });
+
+  test("Toggle theme", () => {
+    const { wrapper, props } = setup();
+    wrapper.find(MenuItem).simulate("click");
+    expect(props.setUserTheme).toHaveBeenCalled();
   });
 });
