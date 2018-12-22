@@ -1,8 +1,9 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { Link, Route, Redirect, withRouter } from 'react-router-dom';
-import Dashboard from './Dashboard';
+import React, { Component } from "react";
+import PropTypes from "prop-types";
+import { connect } from "react-redux";
+import { Link, Route, Redirect, withRouter } from "react-router-dom";
+import Topbar from "../components/layout/Topbar";
+import Dashboard from "./Dashboard";
 
 export class App extends Component {
   render() {
@@ -12,7 +13,15 @@ export class App extends Component {
       return <Redirect to="/login" />;
     }
 
-    return <Dashboard />;
+    return (
+      <div style={{ display: "flex" }}>
+        <Topbar
+          appName={config.applicationName}
+          isAuthenticated={auth.isAuthenticated}
+        />
+        <Dashboard />
+      </div>
+    );
   }
 }
 
