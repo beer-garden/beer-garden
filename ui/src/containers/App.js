@@ -1,11 +1,15 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Redirect, withRouter } from "react-router-dom";
+import { Switch, Route, Redirect, withRouter } from "react-router-dom";
 import { setUserTheme } from "../actions/theme";
 import { logout } from "../actions/auth";
-import Topbar from "../components/layout/Topbar";
-import SystemDashboard from "./SystemDashboard";
+import SystemsContainer from "./SystemsContainer";
+import CommandsContainer from "./CommandsContainer";
+import RequestsContainer from "./RequestsContainer";
+import SchedulerContainer from "./SchedulerContainer";
+import AdvancedContainer from "./AdvancedContainer";
+import Layout from "../components/layout";
 
 export class App extends Component {
   render() {
@@ -16,16 +20,21 @@ export class App extends Component {
     }
 
     return (
-      <div style={{ display: "flex" }}>
-        <Topbar
-          appName={config.applicationName}
-          isAuthenticated={auth.isAuthenticated}
-          themeName={themeName}
-          setUserTheme={setUserTheme}
-          logout={logout}
-        />
-        <SystemDashboard />
-      </div>
+      <Layout
+        appName={config.applicationName}
+        themeName={themeName}
+        setUserTheme={setUserTheme}
+        logout={logout}
+        isAuthenticated={auth.isAuthenticated}
+      >
+        <Switch>
+          <Route exact path="/" component={SystemsContainer} />
+          <Route exact path="/commands" component={CommandsContainer} />
+          <Route exact path="/requests" component={RequestsContainer} />
+          <Route exact path="/scheduler" component={SchedulerContainer} />
+          <Route exact path="/advanced" component={AdvancedContainer} />
+        </Switch>
+      </Layout>
     );
   }
 }

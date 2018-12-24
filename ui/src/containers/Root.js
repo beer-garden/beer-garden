@@ -38,8 +38,8 @@ export class Root extends Component {
       document.title = config.applicationName;
       element = (
         <Switch>
-          <Route exact path="/" component={App} />
           <Route exact path="/login" component={LoginDashboard} />
+          <Route path="/" component={App} />
         </Switch>
       );
     }
