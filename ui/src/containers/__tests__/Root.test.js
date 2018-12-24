@@ -33,8 +33,8 @@ describe("<Root />", () => {
     expect(swtch).toHaveLength(1);
     const routes = swtch.find(Route);
     expect(routes).toHaveLength(2);
-    expect(routes.at(0).prop("component")).toEqual(App);
-    expect(routes.at(1).prop("component")).toEqual(LoginDashboard);
+    expect(routes.at(1).prop("component")).toEqual(App);
+    expect(routes.at(0).prop("component")).toEqual(LoginDashboard);
   });
 
   test("Render <Spinner /> while loading", () => {

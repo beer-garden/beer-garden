@@ -1,5 +1,7 @@
 import React, { Component } from "react";
+import { compose } from "recompose";
 import PropTypes from "prop-types";
+import { Link, withRouter } from "react-router-dom";
 import { withStyles } from "@material-ui/core/styles";
 import {
   Divider,
@@ -27,8 +29,41 @@ const styles = theme => ({
 });
 
 export class Sidebar extends Component {
+  routes = [
+    { to: "/", key: "systems", icon: <FolderIcon />, text: "Systems" },
+    {
+      to: "/commands",
+      key: "commands",
+      icon: <ViewModuleIcon />,
+      text: "Commands",
+    },
+    {
+      to: "/requests",
+      key: "requests",
+      icon: <StorageIcon />,
+      text: "Requests",
+    },
+    {
+      to: "/scheduler",
+      key: "scheduler",
+      icon: <ScheduleIcon />,
+      text: "Scheduler",
+    },
+    {
+      to: "/advanced",
+      key: "advanced",
+      icon: <SettingsIcon />,
+      text: "Advanced",
+      divide: true,
+    },
+  ];
+
+  //TODO: Make sidebar responsive
   render() {
-    const { classes } = this.props;
+    const {
+      classes,
+      location: { pathname },
+    } = this.props;
     return (
       <Drawer
         variant="permanent"
@@ -36,38 +71,26 @@ export class Sidebar extends Component {
         classes={{ paper: classes.drawerPaper }}
       >
         <div className={classes.toolbar} />
-        <List>
-          <ListItem button key="systems">
-            <ListItemIcon>
-              <FolderIcon />
-            </ListItemIcon>
-            <ListItemText primary="Systems" />
-          </ListItem>
-          <ListItem button key="commands">
-            <ListItemIcon>
-              <ViewModuleIcon />
-            </ListItemIcon>
-            <ListItemText primary="Commands" />
-          </ListItem>
-          <ListItem button key="requests">
-            <ListItemIcon>
-              <StorageIcon />
-            </ListItemIcon>
-            <ListItemText primary="Requests" />
-          </ListItem>
-          <ListItem button key="scheduler">
-            <ListItemIcon>
-              <ScheduleIcon />
-            </ListItemIcon>
-            <ListItemText primary="Scheduler" />
-          </ListItem>
-          <Divider />
-          <ListItem button key="advanced">
-            <ListItemIcon>
-              <SettingsIcon />
-            </ListItemIcon>
-            <ListItemText primary="Advanced" />
-          </ListItem>
+        <List style={{ paddingTop: 0 }}>
+          {this.routes.map(route => {
+            const divider = route.divide ? <Divider /> : null;
+            return (
+              <React.Fragment key={route.key}>
+                {divider}
+                <ListItem
+                  id={`${route.key}SBLink`}
+                  selected={route.to === pathname}
+                  button
+                  component={Link}
+                  to={route.to}
+                  key={route.key}
+                >
+                  <ListItemIcon>{route.icon}</ListItemIcon>
+                  <ListItemText primary={route.text} />
+                </ListItem>
+              </React.Fragment>
+            );
+          })}
         </List>
       </Drawer>
     );
@@ -76,6 +99,10 @@ export class Sidebar extends Component {
 
 Sidebar.propTypes = {
   classes: PropTypes.object.isRequired,
+  location: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(Sidebar);
+export default compose(
+  withRouter,
+  withStyles(styles),
+)(Sidebar);
