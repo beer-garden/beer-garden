@@ -56,8 +56,17 @@ class BaseHandler(AuthMixin, RequestHandler):
         socket.timeout: {"status_code": 504, "message": "Backend request timed out"},
     }
 
+    def get_refresh_id_from_cookie(self):
+        token_id = self.get_secure_cookie(self.REFRESH_COOKIE_NAME)
+        if token_id:
+            return token_id.decode()
+        return None
+
     def _get_user_from_cookie(self):
-        refresh_id = self.get_secure_cookie(self.REFRESH_COOKIE_NAME)
+        refresh_id = self.get_refresh_id_from_cookie()
+        if not refresh_id:
+            return None
+
         token = bg_utils.mongo.models.RefreshToken.objects.get(id=refresh_id)
         now = datetime.datetime.utcnow()
         if not token or token.expires < now:
@@ -73,7 +82,12 @@ class BaseHandler(AuthMixin, RequestHandler):
         return principal
 
     def get_current_user(self):
-        return AuthMixin.get_current_user(self) or self._get_user_from_cookie()
+        user = AuthMixin.get_current_user(self)
+        if not user or user == brew_view.anonymous_principal:
+            cookie_user = self._get_user_from_cookie()
+            if cookie_user:
+                user = cookie_user
+        return user
 
     def set_default_headers(self):
         """Headers set here will be applied to all responses"""
