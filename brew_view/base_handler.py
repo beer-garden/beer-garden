@@ -60,7 +60,7 @@ class BaseHandler(AuthMixin, RequestHandler):
         refresh_id = self.get_secure_cookie(self.REFRESH_COOKIE_NAME)
         token = bg_utils.mongo.models.RefreshToken.objects.get(id=refresh_id)
         now = datetime.datetime.utcnow()
-        if not token or token.expires > now:
+        if not token or token.expires < now:
             return None
 
         principal = token.get_principal()
