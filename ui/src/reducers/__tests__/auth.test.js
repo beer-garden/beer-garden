@@ -71,4 +71,30 @@ describe("auth reducer", () => {
       userError: error,
     });
   });
+
+  it("should handle USER_LOGOUT_BEGIN", () => {
+    expect(authReducer({}, { type: types.USER_LOGOUT_BEGIN })).toEqual({
+      userLoading: true,
+    });
+  });
+
+  it("should handle USER_LOGOUT_FAILURE", () => {
+    const error = new Error("error");
+    expect(
+      authReducer({}, { type: types.USER_LOGOUT_FAILURE, payload: { error } }),
+    ).toEqual({
+      userLoading: false,
+      userError: error,
+    });
+  });
+
+  it("should handle USER_LOGOUT_SUCCESS", () => {
+    expect(authReducer({}, { type: types.USER_LOGOUT_SUCCESS })).toEqual({
+      userData: {},
+      isAuthenticated: false,
+      isGuest: false,
+      userLoading: false,
+      userError: null,
+    });
+  });
 });

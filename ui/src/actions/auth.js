@@ -4,6 +4,9 @@ import {
   USER_LOGIN_BEGIN,
   USER_LOGIN_SUCCESS,
   USER_LOGIN_FAILURE,
+  USER_LOGOUT_BEGIN,
+  USER_LOGOUT_SUCCESS,
+  USER_LOGOUT_FAILURE,
 } from "../constants/ActionTypes";
 import { defaultErrorHandler } from ".";
 
@@ -21,7 +24,33 @@ export const userLoginFailure = error => ({
   payload: { error },
 });
 
-export function basicLogin(username, password, rememberMe = false) {
+export const userLogoutBegin = () => ({
+  type: USER_LOGOUT_BEGIN,
+});
+
+export const userLogoutSuccess = () => ({
+  type: USER_LOGOUT_SUCCESS,
+});
+
+export const userLogoutFailure = error => ({
+  type: USER_LOGOUT_FAILURE,
+  payload: { error },
+});
+
+export function logout() {
+  return async dispatch => {
+    dispatch(userLogoutBegin());
+
+    return axios
+      .delete("/api/v1/tokens")
+      .then(res => {
+        dispatch(userLogoutSuccess());
+      })
+      .catch(e => defaultErrorHandler(e, dispatch, userLogoutFailure));
+  };
+}
+
+export function basicLogin(username, password) {
   return async dispatch => {
     dispatch(userLoginBegin());
 
@@ -29,9 +58,6 @@ export function basicLogin(username, password, rememberMe = false) {
     return axios
       .post("/api/v1/tokens", JSON.stringify(payload))
       .then(res => {
-        if (rememberMe) {
-          console.log("I should store the refresh token");
-        }
         const normalizedData = camelcaseKeys(res.data);
         const actionPayload = { isGuest: false, data: normalizedData };
         dispatch(userLoginSuccess(actionPayload));
