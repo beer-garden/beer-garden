@@ -54,7 +54,7 @@ export function basicLogin(username, password) {
   return async dispatch => {
     dispatch(userLoginBegin());
 
-    const payload = { username, password };
+    const payload = { username, password, remember_me: true };
     return axios
       .post("/api/v1/tokens", JSON.stringify(payload))
       .then(res => {

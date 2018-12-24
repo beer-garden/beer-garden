@@ -8,8 +8,6 @@ import {
   Avatar,
   Button,
   FormControl,
-  FormControlLabel,
-  Checkbox,
   Input,
   InputLabel,
 } from "@material-ui/core";
@@ -48,7 +46,6 @@ export class Login extends Component {
   state = {
     username: null,
     password: null,
-    rememberMe: true,
   };
 
   onSubmit = e => {
@@ -58,10 +55,6 @@ export class Login extends Component {
 
   handleChange = e => {
     this.setState({ [e.target.name]: e.target.value });
-  };
-
-  handleCheckbox = (event, isChecked) => {
-    this.setState({ [event.target.name]: isChecked });
   };
 
   render() {
@@ -112,20 +105,6 @@ export class Login extends Component {
                 onChange={this.handleChange}
               />
             </FormControl>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  id="rememberMe"
-                  onChange={this.handleCheckbox}
-                  disabled={loading}
-                  name="rememberMe"
-                  color="primary"
-                  checked
-                />
-              }
-              label="Remember me"
-              disabled={loading}
-            />
             <Button
               id="userLoginBtn"
               type="submit"
