@@ -1,0 +1,101 @@
+import React, { Component } from "react";
+import PropTypes from "prop-types";
+import {
+  Menu,
+  MenuItem,
+  IconButton,
+  ListItemIcon,
+  ListItemText,
+} from "@material-ui/core";
+import AccountCircle from "@material-ui/icons/AccountCircle";
+import Brightness3 from "@material-ui/icons/Brightness3";
+import Brightness5 from "@material-ui/icons/Brightness5";
+import LockOpen from "@material-ui/icons/LockOpen";
+
+export class UserIcon extends Component {
+  state = {
+    anchorEl: null,
+  };
+
+  openMenu = event => {
+    this.setState({ anchorEl: event.currentTarget });
+  };
+
+  handleClose = event => {
+    this.setState({ anchorEl: null });
+  };
+
+  toggleTheme = () => {
+    const { themeName, setUserTheme } = this.props;
+    if (themeName === "dark") {
+      setUserTheme("light");
+    } else {
+      setUserTheme("dark");
+    }
+  };
+
+  logout = () => {
+    this.props.logout();
+  };
+
+  themeMenuItem = () => {
+    const { themeName } = this.props;
+    const isLightTheme = themeName === "light";
+    let icon, primary;
+    if (isLightTheme) {
+      primary = "Dark theme";
+      icon = <Brightness3 />;
+    } else {
+      primary = "Light theme";
+      icon = <Brightness5 />;
+    }
+    return (
+      <>
+        <ListItemIcon>{icon}</ListItemIcon>
+        <ListItemText inset primary={primary} />
+      </>
+    );
+  };
+  render() {
+    const { anchorEl } = this.state;
+    const open = Boolean(anchorEl);
+    return (
+      <>
+        <IconButton
+          aria-owns={open ? "menu-appbar" : undefined}
+          aria-haspopup="true"
+          onClick={this.openMenu}
+          color="inherit"
+        >
+          <AccountCircle />
+        </IconButton>
+        <Menu
+          id="menu-appbar"
+          anchorEl={anchorEl}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+          transformOrigin={{ vertical: "top", horizontal: "right" }}
+          open={open}
+          onClose={this.handleClose}
+        >
+          <MenuItem id="themeMenuItem" onClick={this.toggleTheme}>
+            {this.themeMenuItem()}
+          </MenuItem>
+          <MenuItem id="signoutMenuItem" onClick={this.logout}>
+            <ListItemIcon>
+              <LockOpen />
+            </ListItemIcon>
+            <ListItemText inset primary="Sign Out" />
+          </MenuItem>
+        </Menu>
+      </>
+    );
+  }
+}
+
+UserIcon.propTypes = {
+  themeName: PropTypes.string.isRequired,
+  setUserTheme: PropTypes.func.isRequired,
+  logout: PropTypes.func.isRequired,
+};
+
+export default UserIcon;

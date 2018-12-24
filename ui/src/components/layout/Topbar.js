@@ -1,16 +1,8 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
-import {
-  AppBar,
-  Menu,
-  MenuItem,
-  Switch,
-  Toolbar,
-  Typography,
-  IconButton,
-} from "@material-ui/core";
-import { AccountCircle } from "@material-ui/icons";
+import { AppBar, Toolbar, Typography } from "@material-ui/core";
+import UserIcon from "./UserIcon";
 
 const styles = theme => ({
   appBar: {
@@ -31,48 +23,15 @@ export class Topbar extends Component {
     this.setState({ anchorEl: null });
   };
 
-  toggleTheme = () => {
-    const { themeName, setUserTheme } = this.props;
-    if (themeName === "dark") {
-      setUserTheme("light");
-    } else {
-      setUserTheme("dark");
-    }
-  };
-
-  userIcon = () => {
-    const { anchorEl } = this.state;
-    const { themeName } = this.props;
-    const open = Boolean(anchorEl);
-    const themeChecked = themeName === "dark";
-    return (
-      <>
-        <IconButton
-          aria-owns={open ? "menu-appbar" : undefined}
-          aria-haspopup="true"
-          onClick={this.handleMenu}
-          color="inherit"
-        >
-          <AccountCircle />
-        </IconButton>
-        <Menu
-          id="menu-appbar"
-          anchorEl={anchorEl}
-          anchorOrigin={{ vertical: "top", horizontal: "right" }}
-          transformOrigin={{ vertical: "top", horizontal: "right" }}
-          open={open}
-          onClose={this.handleClose}
-        >
-          <MenuItem onClick={this.toggleTheme}>
-            <Switch checked={themeChecked} />
-          </MenuItem>
-        </Menu>
-      </>
-    );
-  };
-
   render() {
-    const { classes, appName, isAuthenticated } = this.props;
+    const {
+      classes,
+      appName,
+      isAuthenticated,
+      setUserTheme,
+      themeName,
+      logout,
+    } = this.props;
 
     return (
       <AppBar position="fixed" color="primary" className={classes.appBar}>
@@ -80,7 +39,13 @@ export class Topbar extends Component {
           <Typography variant="h6" color="inherit" style={{ flex: 1 }}>
             {appName}
           </Typography>
-          {isAuthenticated ? this.userIcon() : null}
+          {isAuthenticated ? (
+            <UserIcon
+              themeName={themeName}
+              setUserTheme={setUserTheme}
+              logout={logout}
+            />
+          ) : null}
         </Toolbar>
       </AppBar>
     );
@@ -93,6 +58,7 @@ Topbar.propTypes = {
   classes: PropTypes.object.isRequired,
   themeName: PropTypes.string,
   setUserTheme: PropTypes.func,
+  logout: PropTypes.func,
 };
 
 export default withStyles(styles)(Topbar);
