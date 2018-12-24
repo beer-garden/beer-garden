@@ -4,6 +4,8 @@ from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timedelta
 
 import jwt
+from bg_utils.mongo.parser import MongoParser
+from brewtils.errors import ModelValidationError
 from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
 from tornado.gen import coroutine
@@ -26,6 +28,10 @@ class TokenAPI(BaseHandler):
         """
         ---
         summary: Use a refresh token to retrieve a new access token
+        deprecated: true
+        description: |
+          This endpoint is DEPRECATED - Use GET /api/v1/tokens or PATCH /api/v1/tokens
+          instead.
         parameters:
           - name: token_id
             in: path
@@ -42,7 +48,7 @@ class TokenAPI(BaseHandler):
           50x:
             $ref: '#/definitions/50xError'
         tags:
-          - Tokens
+          - Deprecated
         """
         try:
             refresh = RefreshToken.objects.get(id=token_id)
@@ -62,6 +68,9 @@ class TokenAPI(BaseHandler):
         """
         ---
         summary: Remove a refresh token
+        deprecated: true
+        description: |
+          This endpoint is DEPRECATED - Use DELETE /api/v1/tokens instead.
         parameters:
           - name: token_id
             in: path
@@ -76,7 +85,7 @@ class TokenAPI(BaseHandler):
           50x:
             $ref: '#/definitions/50xError'
         tags:
-          - Tokens
+          - Deprecated
         """
         RefreshToken.objects.get(id=token_id).delete()
 
@@ -84,12 +93,123 @@ class TokenAPI(BaseHandler):
 
 
 class TokenListAPI(BaseHandler):
+
+    parser = MongoParser()
     logger = logging.getLogger(__name__)
 
     def __init__(self, *args, **kwargs):
         super(TokenListAPI, self).__init__(*args, **kwargs)
 
         self.executor = ProcessPoolExecutor()
+
+    def get(self):
+        """
+        ---
+        summary: Use a refresh token to retrieve a new access token
+        description: |
+          Your refresh token can either be set in a cookie (which we set on your
+          session when you logged in) or you can include a JSON payload in the request
+          body, which specified "refresh_id"
+        responses:
+          200:
+            description: New Auth Token
+            schema:
+              $ref: '#/definitions/RefreshToken'
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Tokens
+        """
+        self.write(json.dumps(self._refresh_token()))
+
+    def patch(self):
+        """
+        ---
+        summary: Refresh an auth token.
+        description: |
+          The body of the request needs to contain a set of instructions. Currently the
+          only operation supported is `refresh`, with path `/payload`:
+          ```JSON
+          {
+            "operations": [
+              { "operation": "refresh", "path": "/payload", "value": "REFRESH_ID" }
+            ]
+          }
+          ```
+          If you do not know your REFRESH_ID, it should be set in a cookie by the
+          server. If you leave `value` as `null` and include this cookie, then we
+          will automatically refresh. Also, if you are using a cookie, you should
+          really consider just using a GET on /api/v1/tokens as it has the same effect.
+        parameters:
+          - name: patch
+            in: body
+            required: true
+            description: Instructions for what to do
+            schema:
+              $ref: '#/definitions/Patch'
+        responses:
+          200:
+            description: New Auth token
+            schema:
+              $ref: '#/definitions/RefreshToken'
+          400:
+            $ref: '#/definitions/400Error'
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Tokens
+        """
+        operations = self.parser.parse_patch(
+            self.request.decoded_body, many=True, from_string=True
+        )
+        token = None
+
+        for op in operations:
+            if op.operation == "refresh":
+                if op.path == "/payload":
+                    token = self._refresh_token(op.value)
+                else:
+                    error_msg = "Unsupported path '%s'" % op.path
+                    self.logger.warning(error_msg)
+                    raise ModelValidationError(error_msg)
+            else:
+                error_msg = "Unsupported operation '%s'" % op.operation
+                self.logger.warning(error_msg)
+                raise ModelValidationError(error_msg)
+
+        self.write(json.dumps(token))
+
+    def delete(self):
+        """
+        ---
+        summary: Remove a refresh token
+        description: |
+          Your refresh token can either be set in a cookie (which we set on your
+          session when you logged in) or you can include a JSON payload in the request
+          body, which specified "refresh_id". This will delete this particular
+          refresh token if it exists.
+        responses:
+          204:
+            description: Token has been successfully deleted
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Tokens
+        """
+        token = self._get_refresh_token()
+        if token:
+            token.delete()
+            self.clear_cookie(self.REFRESH_COOKIE_NAME)
+            self.set_status(204)
+            return
+
+        raise HTTPError(status_code=403, log_message="Bad credentials")
 
     @coroutine
     def post(self):
@@ -124,11 +244,12 @@ class TokenListAPI(BaseHandler):
 
             if verified:
                 tokens = generate_tokens(principal, self.REFRESH_COOKIE_EXP)
-                self.set_secure_cookie(
-                    self.REFRESH_COOKIE_NAME,
-                    tokens["refresh"],
-                    expires_days=self.REFRESH_COOKIE_EXP,
-                )
+                if parsed_body.get("remember_me", False):
+                    self.set_secure_cookie(
+                        self.REFRESH_COOKIE_NAME,
+                        tokens["refresh"],
+                        expires_days=self.REFRESH_COOKIE_EXP,
+                    )
                 self.write(json.dumps(tokens))
                 return
         except DoesNotExist:
@@ -136,6 +257,34 @@ class TokenListAPI(BaseHandler):
             custom_app_context.verify("", None)
 
         raise HTTPError(status_code=403, log_message="Bad credentials")
+
+    def _get_refresh_token(self, token_id=None):
+        if not token_id:
+            token_id = self.get_refresh_id_from_cookie()
+
+        if not token_id and self.request.body:
+            body = self.request.body.decode("utf-8")
+            try:
+                json_body = json.loads(body)
+                if "refresh_id" in json_body:
+                    token_id = json_body["refresh_id"]
+            except (TypeError, ValueError):
+                pass
+
+        if token_id:
+            try:
+                return RefreshToken.objects.get(id=token_id)
+            except DoesNotExist:
+                pass
+
+        return None
+
+    def _refresh_token(self, token_id=None):
+        token = self._get_refresh_token(token_id)
+        if token and datetime.utcnow() < token.expires:
+            return {"token": generate_access_token(token.payload)}
+        else:
+            raise HTTPError(status_code=403, log_message="Bad credentials")
 
 
 def generate_tokens(principal, expire_days):
