@@ -14,7 +14,7 @@ from tornado.web import HTTPError, RequestHandler
 import bg_utils
 import bg_utils.mongo.models
 import brew_view
-from brew_view.authorization import AuthMixin
+from brew_view.authorization import AuthMixin, coalesce_permissions
 from brew_view.metrics import http_api_latency_total, request_latency
 from brewtils.errors import (
     ModelError,
@@ -67,7 +67,8 @@ class BaseHandler(AuthMixin, RequestHandler):
         if not principal:
             return None
 
-        token.expires = now + datetime.timedelta(hours=24 * self.REFRESH_COOKIE_EXP)
+        _, principal.permissions = coalesce_permissions(principal.roles)
+        token.expires = now + datetime.timedelta(days=self.REFRESH_COOKIE_EXP)
         token.save()
         return principal
 
