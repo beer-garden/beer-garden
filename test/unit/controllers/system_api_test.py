@@ -77,20 +77,8 @@ class TestSystemAPI(object):
             ("parameters", lazy_fixture("key_parameter"), True, True),
             ("parameters", lazy_fixture("key_parameter"), False, False),
             # Parameter choices change
-            pytest.param(
-                "parameters",
-                lazy_fixture("choices_parameter"),
-                True,
-                True,
-                marks=pytest.mark.xfail,
-            ),
-            pytest.param(
-                "parameters",
-                lazy_fixture("choices_parameter"),
-                False,
-                True,
-                marks=pytest.mark.xfail,
-            ),
+            ("parameters", lazy_fixture("choices_parameter"), True, True),
+            ("parameters", lazy_fixture("choices_parameter"), False, True),
         ],
     )
     def test_patch_commands(
