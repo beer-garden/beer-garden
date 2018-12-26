@@ -22,6 +22,8 @@ flake8
 mock
 mongomock
 pytest
+pytest-lazy-fixture
+pytest-tornado
 pytz
 tox
 twine

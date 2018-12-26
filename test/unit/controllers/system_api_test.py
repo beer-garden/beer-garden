@@ -1,10 +1,148 @@
+import copy
 import json
 
+import pytest
 from mock import MagicMock, Mock, patch
 from mongoengine.errors import DoesNotExist
+from pytest_lazyfixture import lazy_fixture
 from tornado.gen import Future
+from tornado.httpclient import HTTPRequest
 
+from bg_utils.mongo.models import System
+from brewtils.models import PatchOperation, Parameter, Choices
+from brewtils.schema_parser import SchemaParser
+from brewtils.test.comparable import assert_command_equal
 from . import TestHandlerBase
+
+
+@pytest.fixture(autouse=True)
+def drop_systems(app):
+    System.drop_collection()
+
+
+@pytest.fixture
+def key_parameter(parameter_dict, bg_choices):
+    """Parameter with a different key"""
+    dict_copy = copy.deepcopy(parameter_dict)
+    dict_copy["parameters"] = [Parameter(**dict_copy["parameters"][0])]
+    dict_copy["choices"] = bg_choices
+
+    # Change key
+    dict_copy["key"] = "key1"
+
+    return Parameter(**dict_copy)
+
+
+@pytest.fixture
+def choices_parameter(parameter_dict, choices_dict):
+    """Parameter with a different choices"""
+    # Change the choices value
+    choices_copy = copy.deepcopy(choices_dict)
+    choices_copy["value"] = ["choiceA", "choiceB", "choiceC"]
+
+    dict_copy = copy.deepcopy(parameter_dict)
+    dict_copy["parameters"] = [Parameter(**dict_copy["parameters"][0])]
+    dict_copy["choices"] = Choices(**choices_copy)
+
+    return Parameter(**dict_copy)
+
+
+class TestSystemAPI(object):
+    @pytest.mark.gen_test
+    def test_get(self, http_client, base_url, system_dict, mongo_system, system_id):
+        mongo_system.deep_save()
+
+        response = yield http_client.fetch(base_url + "/api/v1/systems/" + system_id)
+        assert 200 == response.code
+        assert system_dict == json.loads(response.body.decode("utf-8"))
+
+    @pytest.mark.gen_test
+    def test_get_404(self, http_client, base_url, system_id):
+        response = yield http_client.fetch(
+            base_url + "/api/v1/systems/" + system_id, raise_error=False
+        )
+        assert 404 == response.code
+
+    @pytest.mark.gen_test
+    @pytest.mark.parametrize(
+        "field,value,dev,succeed",
+        [
+            # No changes
+            (None, None, True, True),
+            (None, None, False, True),
+            # Command name change
+            ("name", "new", True, True),
+            ("name", "new", False, False),
+            # Parameter name change
+            ("parameters", lazy_fixture("key_parameter"), True, True),
+            ("parameters", lazy_fixture("key_parameter"), False, False),
+            # Parameter choices change
+            pytest.param(
+                "parameters",
+                lazy_fixture("choices_parameter"),
+                True,
+                True,
+                marks=pytest.mark.xfail,
+            ),
+            pytest.param(
+                "parameters",
+                lazy_fixture("choices_parameter"),
+                False,
+                True,
+                marks=pytest.mark.xfail,
+            ),
+        ],
+    )
+    def test_patch_commands(
+        self,
+        http_client,
+        base_url,
+        mongo_system,
+        system_id,
+        bg_command,
+        field,
+        value,
+        dev,
+        succeed,
+    ):
+        if dev:
+            mongo_system.version += ".dev"
+        mongo_system.deep_save()
+
+        # Make changes to the new command
+        if field:
+            if field == "parameters":
+                value = [value]
+            setattr(bg_command, field, value)
+
+        # Also delete the id, otherwise mongo gets really confused
+        delattr(bg_command, "id")
+
+        body = PatchOperation(
+            operation="replace",
+            path="/commands",
+            value=SchemaParser.serialize_command(
+                [bg_command], to_string=False, many=True
+            ),
+        )
+
+        request = HTTPRequest(
+            base_url + "/api/v1/systems/" + system_id,
+            method="PATCH",
+            headers={"content-type": "application/json"},
+            body=SchemaParser.serialize_patch(body),
+        )
+        response = yield http_client.fetch(request, raise_error=False)
+
+        if succeed:
+            assert response.code == 200
+
+            updated = SchemaParser.parse_system(
+                response.body.decode("utf-8"), from_string=True
+            )
+            assert_command_equal(bg_command, updated.commands[0])
+        else:
+            assert response.code == 400
 
 
 class SystemAPITest(TestHandlerBase):

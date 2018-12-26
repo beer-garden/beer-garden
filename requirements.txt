@@ -55,6 +55,8 @@ pygments==2.2.0           # via sphinx
 pyjwt==1.6.4
 pymongo==3.7.1            # via mongoengine
 pyparsing==2.2.0          # via packaging
+pytest-lazy-fixture==0.4.2
+pytest-tornado==0.5.0
 pytest==3.7.1
 python-box==3.2.0         # via yapconf
 pytz==2018.5
