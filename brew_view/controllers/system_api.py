@@ -156,16 +156,16 @@ class SystemAPI(BaseHandler):
 
                     if (
                         system.commands
-                        and 'dev' not in system.version
+                        and "dev" not in system.version
                         and system.has_different_commands(new_commands)
                     ):
                         raise ModelValidationError(
-                            'System %s-%s already exists with different commands' %
-                            (system.name, system.version)
+                            "System %s-%s already exists with different commands"
+                            % (system.name, system.version)
                         )
 
                     system.upsert_commands(new_commands)
-                elif op.path in ['/description', '/icon_name', '/display_name']:
+                elif op.path in ["/description", "/icon_name", "/display_name"]:
                     if op.value is None:
                         # If we set an attribute to None, mongoengine marks that
                         # attribute for deletion, so we don't do that.
