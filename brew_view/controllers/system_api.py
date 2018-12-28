@@ -153,14 +153,18 @@ class SystemAPI(BaseHandler):
             if op.operation == "replace":
                 if op.path == "/commands":
                     new_commands = self.parser.parse_command(op.value, many=True)
-                    if system.has_different_commands(new_commands):
-                        if system.commands and "dev" not in system.version:
-                            raise ModelValidationError(
-                                "System %s-%s already exists with "
-                                "different commands" % (system.name, system.version)
-                            )
-                        else:
-                            system.upsert_commands(new_commands)
+
+                    if (
+                        system.commands
+                        and "dev" not in system.version
+                        and system.has_different_commands(new_commands)
+                    ):
+                        raise ModelValidationError(
+                            "System %s-%s already exists with different commands"
+                            % (system.name, system.version)
+                        )
+
+                    system.upsert_commands(new_commands)
                 elif op.path in ["/description", "/icon_name", "/display_name"]:
                     if op.value is None:
                         # If we set an attribute to None, mongoengine marks that
