@@ -98,13 +98,16 @@ def startup():
 
     This is the first thing called from within the ioloop context.
     """
-    global event_publishers
+    global event_publishers, anonymous_principal
 
     # Ensure we have a mongo connection
     logger.info("Checking for Mongo connection")
     yield _progressive_backoff(
         partial(setup_database, config), "Unable to connect to mongo, is it started?"
     )
+
+    # Need to wait until after mongo connection established to load
+    anonymous_principal = load_anonymous()
 
     logger.info("Starting event publishers")
     event_publishers = _setup_event_publishers(client_ssl)
@@ -183,7 +186,7 @@ def load_plugin_logging_config(input_config):
 def _setup_application():
     """Setup things that can be taken care of before io loop is started"""
     global io_loop, tornado_app, public_url, thrift_context, easy_client
-    global server, client_ssl, request_scheduler, anonymous_principal
+    global server, client_ssl, request_scheduler
 
     # Tweak some config options
     config.web.url_prefix = normalize_url_prefix(config.web.url_prefix)
@@ -218,7 +221,6 @@ def _setup_application():
     thrift_context = _setup_thrift_context()
     tornado_app = _setup_tornado_app()
     server_ssl, client_ssl = _setup_ssl_context()
-    anonymous_principal = load_anonymous()
     request_scheduler = _setup_scheduler()
 
     server = HTTPServer(tornado_app, ssl_options=server_ssl)
