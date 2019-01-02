@@ -229,6 +229,7 @@ SPECIFICATION = {
                 "default": 13000,
                 "description": "Time (in ms) to wait for backend to respond",
                 "previous_names": ["backend_socket_timeout"],
+                "previous_defaults": [3000],
             },
         },
     },
