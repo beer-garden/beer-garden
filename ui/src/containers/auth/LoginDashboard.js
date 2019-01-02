@@ -1,12 +1,13 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Redirect } from "react-router-dom";
+import { Redirect, withRouter } from "react-router-dom";
 import { withStyles } from "@material-ui/core/styles";
 import { Grid, Hidden } from "@material-ui/core";
 import Topbar from "../../components/layout/Topbar";
 import Login from "../../components/auth/Login";
 import { basicLogin } from "../../actions/auth";
+import { compose } from "recompose";
 
 const styles = theme => ({
   content: {
@@ -21,26 +22,20 @@ const styles = theme => ({
 
 export class LoginDashboard extends Component {
   login = formData => {
-    const { basicLogin, history } = this.props;
-    basicLogin(formData.username, formData.password, formData.rememberMe).then(
-      data => {
-        history.push("/");
-      },
-    );
+    const { basicLogin } = this.props;
+    basicLogin(formData.username, formData.password, formData.rememberMe);
   };
 
   guestLogin = formData => {
-    const { basicLogin, history } = this.props;
-    basicLogin("anonymous", null, formData.rememberMe).then(data => {
-      localStorage.setItem("loggedInAsGuest", true);
-      history.push("/");
-    });
+    const { basicLogin } = this.props;
+    basicLogin("anonymous", null, formData.rememberMe);
   };
 
   render() {
     const { classes, config, auth } = this.props;
     if (!config.authEnabled || auth.isAuthenticated) {
-      return <Redirect to="/" />;
+      const { from } = this.props.location.state || { from: { pathname: "/" } };
+      return <Redirect to={from} />;
     }
 
     return (
@@ -86,9 +81,19 @@ const mapStateToProps = state => {
   };
 };
 
-export default connect(
-  mapStateToProps,
-  {
-    basicLogin: basicLogin,
-  },
-)(withStyles(styles)(LoginDashboard));
+const mapDispatchToProps = dispatch => {
+  return {
+    basicLogin: (username, password) =>
+      dispatch(basicLogin(username, password)),
+  };
+};
+
+const enhance = compose(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps,
+  ),
+  withStyles(styles),
+  withRouter,
+);
+export default enhance(LoginDashboard);

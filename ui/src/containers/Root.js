@@ -1,21 +1,34 @@
 import React, { Component } from "react";
+import { compose } from "recompose";
 import { connect } from "react-redux";
 import { loadConfig } from "../actions/config";
+import { loadUserData } from "../actions/auth";
 import PropTypes from "prop-types";
 import { MuiThemeProvider } from "@material-ui/core";
-import { Switch, Route, withRouter } from "react-router-dom";
+import { withRouter } from "react-router-dom";
 import Spinner from "../components/layout/Spinner";
 import ErrorRetryDialog from "../components/layout/ErrorRetryDialog";
-import LoginDashboard from "../containers/auth/LoginDashboard";
 import App from "./App";
 
 export class Root extends Component {
   componentDidMount() {
-    this.props.loadConfig();
+    const { loadConfig } = this.props;
+
+    loadConfig().then(() => {
+      const { config, userData, isAuthenticated, loadUserData } = this.props;
+      if (!config.authEnabled) {
+        return;
+      }
+
+      if (isAuthenticated && Object.keys(userData).length === 0) {
+        loadUserData();
+      }
+    });
   }
 
   render() {
     const {
+      userLoading,
       configLoading,
       configError,
       config,
@@ -23,10 +36,7 @@ export class Root extends Component {
       theme,
     } = this.props;
 
-    let element;
-    if (configLoading && configError === null) {
-      element = <Spinner />;
-    } else if (configError) {
+    if (configError) {
       return (
         <ErrorRetryDialog
           error={configError}
@@ -34,14 +44,14 @@ export class Root extends Component {
           loading={configLoading}
         />
       );
+    }
+
+    let element;
+    if (configLoading || userLoading) {
+      element = <Spinner />;
     } else {
       document.title = config.applicationName;
-      element = (
-        <Switch>
-          <Route exact path="/login" component={LoginDashboard} />
-          <Route path="/" component={App} />
-        </Switch>
-      );
+      element = <App />;
     }
 
     return <MuiThemeProvider theme={theme}>{element}</MuiThemeProvider>;
@@ -50,6 +60,9 @@ export class Root extends Component {
 
 const mapStateToProps = state => {
   return {
+    isAuthenticated: state.authReducer.isAuthenticated,
+    userLoading: state.authReducer.userLoading,
+    userData: state.authReducer.userData,
     config: state.configReducer.config,
     configLoading: state.configReducer.configLoading,
     configError: state.configReducer.configError,
@@ -60,6 +73,7 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => {
   return {
     loadConfig: () => dispatch(loadConfig()),
+    loadUserData: () => dispatch(loadUserData()),
   };
 };
 
@@ -71,9 +85,12 @@ Root.propTypes = {
   theme: PropTypes.object.isRequired,
 };
 
-export default withRouter(
+const enhance = compose(
+  withRouter,
   connect(
     mapStateToProps,
     mapDispatchToProps,
-  )(Root),
+  ),
 );
+
+export default enhance(Root);

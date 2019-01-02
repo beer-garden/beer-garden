@@ -6,15 +6,14 @@ import {
   USER_LOGOUT_SUCCESS,
   USER_LOGOUT_FAILURE,
 } from "../constants/ActionTypes";
+import { getCookie } from "../utils";
 
-const cookies = document.cookie.split("; ");
-const sessionCookie = cookies.find(item => item.startsWith("refresh_id="));
-const isGuest = localStorage.getItem("loggedInAsGuest") || false;
+const REFRESH_COOKIE_NAME = "refresh_id";
+const sessionCookie = getCookie(REFRESH_COOKIE_NAME);
 
 const initialState = {
   userData: {},
   isAuthenticated: sessionCookie ? true : false,
-  isGuest: isGuest,
   userLoading: false,
   userError: null,
 };
@@ -26,7 +25,6 @@ export default function authReducer(state = initialState, action) {
         ...state,
         userData: {},
         isAuthenticated: false,
-        isGuest: false,
         userLoading: true,
         userError: null,
       };
@@ -35,7 +33,6 @@ export default function authReducer(state = initialState, action) {
         ...state,
         userLoading: false,
         isAuthenticated: true,
-        isGuest: action.payload.isGuest,
         userError: null,
         userData: action.payload.data,
       };
@@ -44,7 +41,6 @@ export default function authReducer(state = initialState, action) {
         ...state,
         userData: {},
         isAuthenticated: false,
-        isGuest: false,
         userLoading: false,
         userError: action.payload.error,
       };
@@ -64,7 +60,6 @@ export default function authReducer(state = initialState, action) {
         ...state,
         userData: {},
         isAuthenticated: false,
-        isGuest: false,
         userLoading: false,
         userError: null,
       };

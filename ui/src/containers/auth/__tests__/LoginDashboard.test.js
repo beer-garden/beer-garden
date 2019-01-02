@@ -13,6 +13,7 @@ const setup = propOverrides => {
       config: { authEnabled: true, guestLoginEnabled: true },
       auth: { isAuthenticated: false },
       basicLogin: jest.fn(),
+      location: { state: { from: "/" } },
     },
     propOverrides,
   );
@@ -28,6 +29,15 @@ describe("<LoginDashboard />", () => {
     test("redirect if authentication is not required", () => {
       const { dashboard } = setup({ auth: { isAuthenticated: true } });
       expect(dashboard.find(Redirect)).toHaveLength(1);
+    });
+
+    test("redirect to previous route", () => {
+      const { dashboard } = setup({
+        auth: { isAuthenticated: true },
+        location: { state: { from: "/requests" } },
+      });
+      const redirect = dashboard.find(Redirect);
+      expect(redirect.prop("to")).toEqual("/requests");
     });
 
     test("login, topbar and grid", () => {

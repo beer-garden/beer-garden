@@ -6,7 +6,6 @@ describe("auth reducer", () => {
     expect(authReducer(undefined, {})).toEqual({
       userData: {},
       isAuthenticated: false,
-      isGuest: false,
       userLoading: false,
       userError: null,
     });
@@ -18,7 +17,6 @@ describe("auth reducer", () => {
         {
           userData: "oldData",
           isAuthenticated: true,
-          isGuest: false,
           userLoading: false,
           userError: null,
         },
@@ -29,7 +27,6 @@ describe("auth reducer", () => {
     ).toEqual({
       userData: {},
       isAuthenticated: false,
-      isGuest: false,
       userLoading: true,
       userError: null,
     });
@@ -41,14 +38,13 @@ describe("auth reducer", () => {
         {},
         {
           type: types.USER_LOGIN_SUCCESS,
-          payload: { isGuest: false, data: "dataFromServer" },
+          payload: { data: "dataFromServer" },
         },
       ),
     ).toEqual({
       userData: "dataFromServer",
       userLoading: false,
       isAuthenticated: true,
-      isGuest: false,
       userError: null,
     });
   });
@@ -66,7 +62,6 @@ describe("auth reducer", () => {
     ).toEqual({
       userData: {},
       isAuthenticated: false,
-      isGuest: false,
       userLoading: false,
       userError: error,
     });
@@ -92,7 +87,6 @@ describe("auth reducer", () => {
     expect(authReducer({}, { type: types.USER_LOGOUT_SUCCESS })).toEqual({
       userData: {},
       isAuthenticated: false,
-      isGuest: false,
       userLoading: false,
       userError: null,
     });
