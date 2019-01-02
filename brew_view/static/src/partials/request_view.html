@@ -100,8 +100,11 @@
           </span>
         </div>
         <div style="position: relative;">
-          <pre id="rawOutput" ng-hide="showFormatted">{{rawOutput}}</pre>
-          <div id="formattedOutput" ng-show="showFormatted">
+          <div class="w-100" style="text-align: center;" ng-hide="service.isComplete(data)">
+            <i class="fa fa-spinner fa-pulse fa-3x"></i>
+          </div>
+          <pre id="rawOutput" ng-show="!showFormatted && service.isComplete(data)">{{rawOutput}}</pre>
+          <div id="formattedOutput" ng-show="showFormatted && service.isComplete(data)">
             <div ui-ace="{ onLoad: loadPreview }" ng-model="formattedOutput"
               ng-if="formattedAvailable && format_error === undefined" style="width: 100%;"></div>
           </div>
