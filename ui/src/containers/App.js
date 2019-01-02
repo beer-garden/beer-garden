@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Switch, Route, Redirect, withRouter } from "react-router-dom";
+import { Switch, Route, withRouter } from "react-router-dom";
 import { setUserTheme } from "../actions/theme";
 import { logout } from "../actions/auth";
 import SystemsContainer from "./SystemsContainer";
@@ -10,14 +10,12 @@ import RequestsContainer from "./RequestsContainer";
 import SchedulerContainer from "./SchedulerContainer";
 import AdvancedContainer from "./AdvancedContainer";
 import Layout from "../components/layout";
+import AuthRoute from "./auth/AuthRoute";
+import LoginDashboard from "./auth/LoginDashboard";
 
 export class App extends Component {
   render() {
     const { config, auth, themeName, setUserTheme, logout } = this.props;
-
-    if (config.authEnabled && !auth.isAuthenticated) {
-      return <Redirect to="/login" />;
-    }
 
     return (
       <Layout
@@ -28,11 +26,12 @@ export class App extends Component {
         isAuthenticated={auth.isAuthenticated}
       >
         <Switch>
-          <Route exact path="/" component={SystemsContainer} />
-          <Route exact path="/commands" component={CommandsContainer} />
-          <Route exact path="/requests" component={RequestsContainer} />
-          <Route exact path="/scheduler" component={SchedulerContainer} />
-          <Route exact path="/advanced" component={AdvancedContainer} />
+          <Route exact path="/login" component={LoginDashboard} />
+          <AuthRoute exact path="/" component={SystemsContainer} />
+          <AuthRoute exact path="/commands" component={CommandsContainer} />
+          <AuthRoute exact path="/requests" component={RequestsContainer} />
+          <AuthRoute exact path="/scheduler" component={SchedulerContainer} />
+          <AuthRoute exact path="/advanced" component={AdvancedContainer} />
         </Switch>
       </Layout>
     );

@@ -1,14 +1,17 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
+import { compose } from "recompose";
 import { connect } from "react-redux";
 import Spinner from "../components/layout/Spinner";
 import SystemList from "../components/systems/SystemList";
 import { fetchSystems } from "../actions/system";
+import withAuthOverview from "./auth/withAuthOverview";
 
 export class SystemsContainer extends Component {
   componentDidMount() {
     this.props.fetchSystems();
   }
+
   render() {
     const { systemsLoading, systems } = this.props;
     if (systemsLoading) {
@@ -40,7 +43,12 @@ const mapDispatchToProps = dispatch => {
   };
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(SystemsContainer);
+const enhance = compose(
+  connect(
+    mapStateToProps,
+    mapDispatchToProps,
+  ),
+  withAuthOverview,
+);
+
+export default enhance(SystemsContainer);

@@ -28,6 +28,9 @@ export class Layout extends Component {
       setUserTheme,
       logout,
     } = this.props;
+
+    const sidebar = isAuthenticated ? <Sidebar /> : null;
+
     return (
       <div className={classes.root}>
         <Topbar
@@ -37,7 +40,7 @@ export class Layout extends Component {
           setUserTheme={setUserTheme}
           logout={logout}
         />
-        <Sidebar />
+        {sidebar}
         <main className={classes.content}>
           <div className={classes.topbarSpacer} />
           {children}

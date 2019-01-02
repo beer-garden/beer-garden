@@ -25,10 +25,15 @@ const setup = overrideProps => {
 };
 
 describe("<Layout />", () => {
-  test("render", () => {
+  test("render authenticated", () => {
     const { layout } = setup();
     expect(layout.find(Topbar)).toHaveLength(1);
     expect(layout.find(Sidebar)).toHaveLength(1);
     expect(layout.find("main")).toHaveLength(1);
+  });
+
+  test("render unauthenticated", () => {
+    const { layout } = setup({ isAuthenticated: false });
+    expect(layout.find(Sidebar)).toHaveLength(0);
   });
 });

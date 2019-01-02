@@ -8,6 +8,7 @@ import {
   USER_LOGOUT_SUCCESS,
   USER_LOGOUT_FAILURE,
 } from "../constants/ActionTypes";
+import jwtDecode from "jwt-decode";
 import { defaultErrorHandler } from ".";
 
 export const userLoginBegin = () => ({
@@ -43,9 +44,7 @@ export function logout() {
 
     return axios
       .delete("/api/v1/tokens")
-      .then(res => {
-        dispatch(userLogoutSuccess());
-      })
+      .then(() => dispatch(userLogoutSuccess()))
       .catch(e => defaultErrorHandler(e, dispatch, userLogoutFailure));
   };
 }
@@ -59,8 +58,24 @@ export function basicLogin(username, password) {
       .post("/api/v1/tokens", JSON.stringify(payload))
       .then(res => {
         const normalizedData = camelcaseKeys(res.data);
-        const actionPayload = { isGuest: false, data: normalizedData };
-        dispatch(userLoginSuccess(actionPayload));
+        const userData = jwtDecode(normalizedData["token"]);
+        dispatch(userLoginSuccess({ data: userData }));
+        return normalizedData;
+      })
+      .catch(e => defaultErrorHandler(e, dispatch, userLoginFailure));
+  };
+}
+
+export function loadUserData() {
+  return async dispatch => {
+    dispatch(userLoginBegin());
+
+    return axios
+      .get("/api/v1/tokens")
+      .then(res => {
+        const normalizedData = camelcaseKeys(res.data);
+        const userData = jwtDecode(normalizedData["token"]);
+        dispatch(userLoginSuccess({ data: userData }));
         return normalizedData;
       })
       .catch(e => defaultErrorHandler(e, dispatch, userLoginFailure));

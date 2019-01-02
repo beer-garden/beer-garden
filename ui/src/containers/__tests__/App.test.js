@@ -1,8 +1,9 @@
 import React from "react";
 import { App } from "../App";
 import { shallow } from "enzyme";
-import { Redirect } from "react-router-dom";
+import { Route } from "react-router-dom";
 import layout from "../../components/layout";
+import AuthRoute from "../auth/AuthRoute";
 
 const setup = overrideProps => {
   const props = Object.assign(
@@ -27,13 +28,10 @@ const setup = overrideProps => {
 };
 
 describe("<App />", () => {
-  test("redirect if not authenticated", () => {
-    const { app } = setup({ auth: { isAuthenticated: false } });
-    expect(app.find(Redirect)).toHaveLength(1);
-  });
-
-  test("render layout if authenticated", () => {
+  test("render layout and routes", () => {
     const { app } = setup();
     expect(app.find(layout)).toHaveLength(1);
+    expect(app.find(Route)).toHaveLength(1);
+    expect(app.find(AuthRoute).length).toBeGreaterThan(0);
   });
 });

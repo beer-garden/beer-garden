@@ -1,16 +1,21 @@
 import React from "react";
 import { Root } from "../Root";
 import { shallow } from "enzyme";
-import { Route, Switch } from "react-router-dom";
 import App from "../App";
-import LoginDashboard from "../auth/LoginDashboard";
 import Spinner from "../../components/layout/Spinner";
 import ErrorRetryDialog from "../../components/layout/ErrorRetryDialog";
+import { flushPromises } from "../../testHelpers";
 
 const setup = propOverrides => {
+  const mockLoadConfig = jest.fn();
+  mockLoadConfig.mockResolvedValue({});
   const props = Object.assign(
     {
-      loadConfig: jest.fn(),
+      loadConfig: mockLoadConfig,
+      loadUserData: jest.fn(),
+      isAuthenticated: false,
+      userLoading: false,
+      userData: {},
       config: { authEnabled: false },
       configLoading: false,
       configError: null,
@@ -27,32 +32,47 @@ const setup = propOverrides => {
 };
 
 describe("<Root />", () => {
-  test("render", () => {
-    const { wrapper } = setup();
-    const swtch = wrapper.find(Switch);
-    expect(swtch).toHaveLength(1);
-    const routes = swtch.find(Route);
-    expect(routes).toHaveLength(2);
-    expect(routes.at(1).prop("component")).toEqual(App);
-    expect(routes.at(0).prop("component")).toEqual(LoginDashboard);
-  });
-
-  test("Render <Spinner /> while loading", () => {
-    const { wrapper } = setup({ configLoading: true });
-    expect(wrapper.find(Spinner)).toHaveLength(1);
-  });
-
-  test("render <ErrorRetryDialog/> if an error occurs", () => {
-    const { wrapper } = setup({ configError: new Error("message") });
-    expect(wrapper.find(ErrorRetryDialog)).toHaveLength(1);
-  });
-
-  test("render <ErrorRetryDialog /> if loading after an error", () => {
-    const { wrapper } = setup({
-      configLoading: true,
-      configError: new Error("message"),
+  describe("render", () => {
+    test("<App /> when not loadin gor errored.", () => {
+      const { wrapper } = setup();
+      expect(wrapper.find(App)).toHaveLength(1);
     });
-    expect(wrapper.find(Spinner)).toHaveLength(0);
-    expect(wrapper.find(ErrorRetryDialog)).toHaveLength(1);
+    test("<Spinner /> while loading", () => {
+      const { wrapper } = setup({ configLoading: true });
+      expect(wrapper.find(Spinner)).toHaveLength(1);
+    });
+    test("<ErrorRetryDialog/> if an error occurs", () => {
+      const { wrapper } = setup({ configError: new Error("message") });
+      expect(wrapper.find(ErrorRetryDialog)).toHaveLength(1);
+    });
+    test("<ErrorRetryDialog /> if loading after an error", () => {
+      const { wrapper } = setup({
+        configLoading: true,
+        configError: new Error("message"),
+      });
+      expect(wrapper.find(Spinner)).toHaveLength(0);
+      expect(wrapper.find(ErrorRetryDialog)).toHaveLength(1);
+    });
+  });
+
+  describe("componentDidMount", () => {
+    test("only load config if auth is not enabled.", () => {
+      const { props } = setup({ config: { authEnabled: false } });
+      return flushPromises().then(() => {
+        expect(props.loadConfig.mock.calls.length).toEqual(1);
+        expect(props.loadUserData.mock.calls.length).toEqual(0);
+      });
+    });
+
+    test("load config and user data if auth is enabled and authenticated.", () => {
+      const { props } = setup({
+        config: { authEnabled: true },
+        isAuthenticated: true,
+      });
+      return flushPromises().then(() => {
+        expect(props.loadConfig.mock.calls.length).toEqual(1);
+        expect(props.loadUserData.mock.calls.length).toEqual(1);
+      });
+    });
   });
 });
