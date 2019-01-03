@@ -131,7 +131,10 @@ export default function requestViewController(
       'request'
     );
 
-    $scope.formatOutput();
+    if (RequestService.isComplete(response.data)) {
+      $scope.formatOutput();
+    }
+
     $scope.formattedParameters = $scope.stringify($scope.data.parameters);
 
     // If request is not yet successful
