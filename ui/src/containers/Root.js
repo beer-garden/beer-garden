@@ -9,6 +9,7 @@ import { withRouter } from "react-router-dom";
 import Spinner from "../components/layout/Spinner";
 import ErrorRetryDialog from "../components/layout/ErrorRetryDialog";
 import App from "./App";
+import { isEmpty } from "../utils";
 
 export class Root extends Component {
   componentDidMount() {
@@ -20,15 +21,37 @@ export class Root extends Component {
         return;
       }
 
-      if (isAuthenticated && Object.keys(userData).length === 0) {
+      if (isAuthenticated && isEmpty(userData)) {
         loadUserData();
       }
     });
   }
 
-  render() {
+  waitingForInit = () => {
     const {
       userLoading,
+      userData,
+      isAuthenticated,
+      configLoading,
+      config,
+    } = this.props;
+    if (configLoading) {
+      return true;
+    }
+
+    if (config.authEnabled) {
+      if (isAuthenticated) {
+        if (userLoading || isEmpty(userData)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  };
+
+  render() {
+    const {
       configLoading,
       configError,
       config,
@@ -47,7 +70,7 @@ export class Root extends Component {
     }
 
     let element;
-    if (configLoading || userLoading) {
+    if (this.waitingForInit()) {
       element = <Spinner />;
     } else {
       document.title = config.applicationName;
