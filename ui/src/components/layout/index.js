@@ -18,6 +18,14 @@ const styles = theme => ({
 });
 
 export class Layout extends Component {
+  state = {
+    mobileOpen: false,
+  };
+
+  handleDrawerToggle = () => {
+    this.setState({ mobileOpen: !this.state.mobileOpen });
+  };
+
   render() {
     const {
       classes,
@@ -29,8 +37,15 @@ export class Layout extends Component {
       setUserTheme,
       logout,
     } = this.props;
+    const { mobileOpen } = this.state;
 
-    const sidebar = !authEnabled || isAuthenticated ? <Sidebar /> : null;
+    const sidebar =
+      !authEnabled || isAuthenticated ? (
+        <Sidebar
+          mobileOpen={mobileOpen}
+          toggleDrawer={this.handleDrawerToggle}
+        />
+      ) : null;
 
     return (
       <div className={classes.root}>
@@ -41,6 +56,7 @@ export class Layout extends Component {
           themeName={themeName}
           setUserTheme={setUserTheme}
           logout={logout}
+          toggleDrawer={this.handleDrawerToggle}
         />
         {sidebar}
         <main className={classes.content}>

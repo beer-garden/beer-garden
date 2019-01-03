@@ -1,6 +1,6 @@
 import React from "react";
 import { shallow } from "enzyme";
-import { AppBar } from "@material-ui/core";
+import { AppBar, IconButton } from "@material-ui/core";
 import { Topbar } from "../Topbar";
 import UserIcon from "../UserIcon";
 
@@ -14,6 +14,7 @@ const setup = overrideProps => {
       classes: { appBar: "appBarClassName" },
       setUserTheme: jest.fn(),
       logout: jest.fn(),
+      toggleDrawer: jest.fn(),
     },
     overrideProps,
   );
@@ -30,6 +31,7 @@ describe("<Topbar />", () => {
       const { topbar } = setup();
       expect(topbar.find(AppBar)).toHaveLength(1);
       expect(topbar.find(UserIcon)).toHaveLength(1);
+      expect(topbar.find(IconButton)).toHaveLength(1);
     });
   });
 });
