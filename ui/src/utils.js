@@ -3,3 +3,11 @@ export function getCookie(name) {
   if (match) return match[2];
   return null;
 }
+
+export function deleteCookie(name, sPath, sDomain) {
+  document.cookie =
+    encodeURIComponent(name) +
+    "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" +
+    (sDomain ? "; domain=" + sDomain : "") +
+    (sPath ? "; path=" + sPath : "");
+}

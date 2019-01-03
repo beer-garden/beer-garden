@@ -20,13 +20,14 @@ const basicAuthSetup = (
   initialState,
   serverError = false,
   networkError = false,
+  errorCode = 500,
 ) => {
   Object.assign({}, initialState);
   const url = "/api/v1/tokens";
   if (networkError) {
     fetchMock.onAny(url).networkError();
   } else if (serverError) {
-    fetchMock.onAny(url).reply(500, { message: "Error from server" });
+    fetchMock.onAny(url).reply(errorCode, { message: "Error from server" });
   } else {
     fetchMock.onAny(url).reply(200, serverResponse);
   }
@@ -53,7 +54,7 @@ describe("async actions", () => {
           payload: { data: decodedToken },
         },
       ];
-      store.dispatch(basicLogin("username", "password")).then(() => {
+      return store.dispatch(basicLogin("username", "password")).then(() => {
         expect(store.getActions()).toEqual(expectedActions);
       });
     });
@@ -61,7 +62,7 @@ describe("async actions", () => {
     test("it creates the expected actions on failure", () => {
       const { store } = basicAuthSetup({}, true);
 
-      store.dispatch(basicLogin("username", "password")).then(() => {
+      return store.dispatch(basicLogin("username", "password")).then(() => {
         const actions = store.getActions();
         expect(actions).toHaveLength(2);
         expect(actions[0].type).toEqual(types.USER_LOGIN_BEGIN);
@@ -81,7 +82,7 @@ describe("async actions", () => {
           payload: { data: decodedToken },
         },
       ];
-      store.dispatch(loadUserData()).then(() => {
+      return store.dispatch(loadUserData()).then(() => {
         expect(store.getActions()).toEqual(expectedActions);
       });
     });
@@ -89,7 +90,18 @@ describe("async actions", () => {
     test("it creates the expected actions on failure", () => {
       const { store } = basicAuthSetup({}, true);
 
-      store.dispatch(loadUserData()).then(() => {
+      return store.dispatch(loadUserData()).then(() => {
+        const actions = store.getActions();
+        expect(actions).toHaveLength(2);
+        expect(actions[0].type).toEqual(types.USER_LOGIN_BEGIN);
+        expect(actions[1].type).toEqual(types.USER_LOGIN_FAILURE);
+      });
+    });
+
+    test("it creates only a single aciton on a 401", () => {
+      const { store } = basicAuthSetup({}, true, false, 401);
+
+      return store.dispatch(loadUserData()).then(() => {
         const actions = store.getActions();
         expect(actions).toHaveLength(2);
         expect(actions[0].type).toEqual(types.USER_LOGIN_BEGIN);
@@ -101,7 +113,7 @@ describe("async actions", () => {
   describe("logout", () => {
     test("it creates the expected actions on success", () => {
       const { store } = basicAuthSetup();
-      store.dispatch(logout()).then(() => {
+      return store.dispatch(logout()).then(() => {
         const actions = store.getActions();
         expect(actions).toHaveLength(2);
         expect(actions[0].type).toEqual(types.USER_LOGOUT_BEGIN);
@@ -112,7 +124,7 @@ describe("async actions", () => {
     test("it creates the expeced actions on failure", () => {
       const { store } = basicAuthSetup({}, true);
 
-      store.dispatch(logout()).then(() => {
+      return store.dispatch(logout()).then(() => {
         const actions = store.getActions();
         expect(actions).toHaveLength(2);
         expect(actions[0].type).toEqual(types.USER_LOGOUT_BEGIN);
