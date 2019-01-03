@@ -6,11 +6,19 @@ import {
   IconButton,
   ListItemIcon,
   ListItemText,
+  Typography,
+  withStyles,
 } from "@material-ui/core";
 import AccountCircle from "@material-ui/icons/AccountCircle";
 import Brightness3 from "@material-ui/icons/Brightness3";
 import Brightness5 from "@material-ui/icons/Brightness5";
 import LockOpen from "@material-ui/icons/LockOpen";
+
+const styles = theme => ({
+  accountIcon: {
+    marginRight: theme.spacing.unit,
+  },
+});
 
 export class UserIcon extends Component {
   state = {
@@ -75,6 +83,7 @@ export class UserIcon extends Component {
 
   render() {
     const { anchorEl } = this.state;
+    const { username, classes } = this.props;
     const open = Boolean(anchorEl);
     return (
       <>
@@ -84,7 +93,11 @@ export class UserIcon extends Component {
           onClick={this.openMenu}
           color="inherit"
         >
-          <AccountCircle />
+          <AccountCircle className={classes.accountIcon} />
+          <Typography variant="body1" color="inherit">
+            {" "}
+            {username}
+          </Typography>
         </IconButton>
         <Menu
           id="menu-appbar"
@@ -110,6 +123,7 @@ UserIcon.propTypes = {
   themeName: PropTypes.string.isRequired,
   setUserTheme: PropTypes.func.isRequired,
   logout: PropTypes.func.isRequired,
+  username: PropTypes.string,
 };
 
-export default UserIcon;
+export default withStyles(styles)(UserIcon);

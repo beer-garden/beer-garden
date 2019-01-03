@@ -14,6 +14,7 @@ const setup = overrideProps => {
       authEnabled: true,
       setUserTheme: jest.fn(),
       logout: jest.fn(),
+      username: null,
     },
     overrideProps,
   );

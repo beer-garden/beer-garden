@@ -34,6 +34,7 @@ export class Topbar extends Component {
     const {
       classes,
       appName,
+      username,
       isAuthenticated,
       setUserTheme,
       themeName,
@@ -57,6 +58,7 @@ export class Topbar extends Component {
             {appName}
           </Typography>
           <UserIcon
+            username={username}
             themeName={themeName}
             setUserTheme={setUserTheme}
             logout={logout}
@@ -78,6 +80,7 @@ Topbar.propTypes = {
   themeName: PropTypes.string,
   setUserTheme: PropTypes.func,
   logout: PropTypes.func,
+  username: PropTypes.string,
 };
 
 export default withStyles(styles)(Topbar);

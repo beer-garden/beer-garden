@@ -15,6 +15,7 @@ const setup = overrideProps => {
       setUserTheme: jest.fn(),
       logout: jest.fn(),
       toggleDrawer: jest.fn(),
+      username: null,
     },
     overrideProps,
   );
