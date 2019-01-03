@@ -4,7 +4,6 @@ import { connect } from "react-redux";
 import { Redirect, withRouter } from "react-router-dom";
 import { withStyles } from "@material-ui/core/styles";
 import { Grid, Hidden } from "@material-ui/core";
-import Topbar from "../../components/layout/Topbar";
 import Login from "../../components/auth/Login";
 import { basicLogin } from "../../actions/auth";
 import { compose } from "recompose";
@@ -39,30 +38,23 @@ export class LoginDashboard extends Component {
     }
 
     return (
-      <>
-        <Topbar
-          appName={config.applicationName}
-          isAuthenticated={auth.isAuthenticated}
-        />
-        <div className={classes.topbarSpacer} />
-        <main className={classes.content}>
-          <Grid container>
-            <Hidden xsDown>
-              <Grid item xs />
-            </Hidden>
-            <Login
-              guestLoginEnabled={config.guestLoginEnabled}
-              loading={auth.userLoading}
-              error={auth.userError}
-              login={this.login}
-              guestLogin={this.guestLogin}
-            />
-            <Hidden xsDown>
-              <Grid item xs />
-            </Hidden>
-          </Grid>
-        </main>
-      </>
+      <main className={classes.content}>
+        <Grid container>
+          <Hidden xsDown>
+            <Grid item xs />
+          </Hidden>
+          <Login
+            guestLoginEnabled={config.guestLoginEnabled}
+            loading={auth.userLoading}
+            error={auth.userError}
+            login={this.login}
+            guestLogin={this.guestLogin}
+          />
+          <Hidden xsDown>
+            <Grid item xs />
+          </Hidden>
+        </Grid>
+      </main>
     );
   }
 }

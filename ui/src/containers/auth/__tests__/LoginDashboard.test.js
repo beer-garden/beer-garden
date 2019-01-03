@@ -3,7 +3,6 @@ import { Redirect } from "react-router-dom";
 import { Grid } from "@material-ui/core";
 import { shallow } from "enzyme";
 import Login from "../../../components/auth/Login";
-import Topbar from "../../../components/layout/Topbar";
 import { LoginDashboard } from "../LoginDashboard";
 
 const setup = propOverrides => {
@@ -40,9 +39,8 @@ describe("<LoginDashboard />", () => {
       expect(redirect.prop("to")).toEqual("/requests");
     });
 
-    test("login, topbar and grid", () => {
+    test("login and grid", () => {
       const { dashboard } = setup();
-      expect(dashboard.find(Topbar)).toHaveLength(1);
       expect(dashboard.find(Login)).toHaveLength(1);
       expect(dashboard.find(Grid)).toHaveLength(3);
     });
