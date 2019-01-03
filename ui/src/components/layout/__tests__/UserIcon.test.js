@@ -8,6 +8,8 @@ import { UserIcon } from "../UserIcon";
 const setup = overrideProps => {
   const props = Object.assign(
     {
+      isAuthenticated: true,
+      authEnabled: true,
       themeName: "light",
       setUserTheme: jest.fn(),
       logout: jest.fn(),
@@ -39,6 +41,15 @@ describe("<UserIcon />", () => {
       const { userIcon } = setup({ themeName: "dark" });
       userIcon.find(IconButton).simulate("click", { currentTarget: "target" });
       expect(userIcon.find(Brightness5)).toHaveLength(1);
+    });
+
+    test("No signout if auth is not enabled", () => {
+      const { userIcon } = setup({ authEnabled: false });
+      expect(userIcon.find("#signoutMenuItem")).toHaveLength(0);
+    });
+    test("No signout if not authenticated", () => {
+      const { userIcon } = setup({ isAuthenticated: false });
+      expect(userIcon.find("#signoutMenuItem")).toHaveLength(0);
     });
   });
 

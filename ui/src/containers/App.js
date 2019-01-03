@@ -24,6 +24,7 @@ export class App extends Component {
         setUserTheme={setUserTheme}
         logout={logout}
         isAuthenticated={auth.isAuthenticated}
+        authEnabled={config.authEnabled}
       >
         <Switch>
           <Route exact path="/login" component={LoginDashboard} />

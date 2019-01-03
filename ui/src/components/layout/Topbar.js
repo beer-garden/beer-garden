@@ -31,6 +31,7 @@ export class Topbar extends Component {
       setUserTheme,
       themeName,
       logout,
+      authEnabled,
     } = this.props;
 
     return (
@@ -39,13 +40,13 @@ export class Topbar extends Component {
           <Typography variant="h6" color="inherit" style={{ flex: 1 }}>
             {appName}
           </Typography>
-          {isAuthenticated ? (
-            <UserIcon
-              themeName={themeName}
-              setUserTheme={setUserTheme}
-              logout={logout}
-            />
-          ) : null}
+          <UserIcon
+            themeName={themeName}
+            setUserTheme={setUserTheme}
+            logout={logout}
+            authEnabled={authEnabled}
+            isAuthenticated={isAuthenticated}
+          />
         </Toolbar>
       </AppBar>
     );
@@ -55,6 +56,7 @@ export class Topbar extends Component {
 Topbar.propTypes = {
   appName: PropTypes.string.isRequired,
   isAuthenticated: PropTypes.bool.isRequired,
+  authEnabled: PropTypes.bool.isRequired,
   classes: PropTypes.object.isRequired,
   themeName: PropTypes.string,
   setUserTheme: PropTypes.func,
