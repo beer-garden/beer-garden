@@ -9,6 +9,8 @@ const setup = overrideProps => {
     {
       classes: {},
       location: { pathname: "/" },
+      mobileOpen: false,
+      toggleDrawer: jest.fn(),
     },
     overrideProps,
   );
@@ -24,15 +26,31 @@ describe("Sidebar Component", () => {
   describe("render", () => {
     test("smoke", () => {
       const { sidebar } = setup();
-      expect(sidebar.find(Drawer)).toHaveLength(1);
+      // One for mobile, one for non-mobile.
+      expect(sidebar.find(Drawer)).toHaveLength(2);
     });
 
     test("selected routes", () => {
       const { sidebar } = setup({ location: { pathname: "/commands" } });
-      const systemLink = sidebar.find(ListItem).filter("#systemsSBLink");
-      const commandLink = sidebar.find(ListItem).filter("#commandsSBLink");
+      const systemLink = sidebar
+        .find(ListItem)
+        .filter("#systemsSBLink")
+        .first();
+      const commandLink = sidebar
+        .find(ListItem)
+        .filter("#commandsSBLink")
+        .first();
       expect(systemLink.prop("selected")).toBe(false);
       expect(commandLink.prop("selected")).toBe(true);
+    });
+
+    test("select systems if the route is /", () => {
+      const { sidebar } = setup({ location: { pathname: "/" } });
+      const systemLink = sidebar
+        .find(ListItem)
+        .filter("#systemsSBLink")
+        .first();
+      expect(systemLink.prop("selected")).toBe(true);
     });
   });
 });
