@@ -36,6 +36,7 @@ export class Layout extends Component {
       themeName,
       setUserTheme,
       logout,
+      username,
     } = this.props;
     const { mobileOpen } = this.state;
 
@@ -51,6 +52,7 @@ export class Layout extends Component {
       <div className={classes.root}>
         <Topbar
           appName={appName}
+          username={username}
           isAuthenticated={isAuthenticated}
           authEnabled={authEnabled}
           themeName={themeName}
@@ -76,6 +78,7 @@ Layout.propTypes = {
   logout: PropTypes.func.isRequired,
   isAuthenticated: PropTypes.bool.isRequired,
   authEnabled: PropTypes.bool.isRequired,
+  username: PropTypes.string,
 };
 
 export default withStyles(styles)(Layout);

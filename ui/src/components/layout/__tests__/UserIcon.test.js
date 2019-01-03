@@ -1,6 +1,6 @@
 import React from "react";
 import { shallow } from "enzyme";
-import { IconButton, Menu } from "@material-ui/core";
+import { Typography, IconButton, Menu } from "@material-ui/core";
 import Brightness3 from "@material-ui/icons/Brightness3";
 import Brightness5 from "@material-ui/icons/Brightness5";
 import { UserIcon } from "../UserIcon";
@@ -13,6 +13,8 @@ const setup = overrideProps => {
       themeName: "light",
       setUserTheme: jest.fn(),
       logout: jest.fn(),
+      classes: {},
+      username: "someuser",
     },
     overrideProps,
   );
@@ -47,9 +49,21 @@ describe("<UserIcon />", () => {
       const { userIcon } = setup({ authEnabled: false });
       expect(userIcon.find("#signoutMenuItem")).toHaveLength(0);
     });
+
     test("No signout if not authenticated", () => {
       const { userIcon } = setup({ isAuthenticated: false });
       expect(userIcon.find("#signoutMenuItem")).toHaveLength(0);
+    });
+
+    test("username", () => {
+      const { userIcon } = setup({ isAuthenticated: false });
+      expect(
+        userIcon
+          .find(Typography)
+          .dive()
+          .dive()
+          .text(),
+      ).toEqual(" someuser");
     });
   });
 

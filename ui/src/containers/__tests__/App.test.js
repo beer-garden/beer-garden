@@ -12,7 +12,7 @@ const setup = overrideProps => {
         authEnabled: true,
         applicationName: "Beer Garden",
       },
-      auth: { isAuthenticated: true },
+      auth: { isAuthenticated: true, userData: {} },
       setUserTheme: jest.fn(),
       logout: jest.fn(),
       themeName: "light",
