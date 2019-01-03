@@ -12,8 +12,7 @@ import ImageIcon from "@material-ui/icons/Image";
 const styles = theme => ({
   root: {
     width: "100%",
-    maxWidth: 360,
-    backgroundColor: theme.palette.background.paperk,
+    backgroundColor: theme.palette.background.paper,
   },
 });
 
