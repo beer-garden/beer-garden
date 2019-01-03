@@ -56,6 +56,23 @@ export class UserIcon extends Component {
       </>
     );
   };
+
+  signoutMenuItem = () => {
+    const { authEnabled, isAuthenticated } = this.props;
+    if (authEnabled && isAuthenticated) {
+      return (
+        <MenuItem id="signoutMenuItem" onClick={this.logout}>
+          <ListItemIcon>
+            <LockOpen />
+          </ListItemIcon>
+          <ListItemText inset primary="Sign Out" />
+        </MenuItem>
+      );
+    }
+
+    return null;
+  };
+
   render() {
     const { anchorEl } = this.state;
     const open = Boolean(anchorEl);
@@ -80,12 +97,7 @@ export class UserIcon extends Component {
           <MenuItem id="themeMenuItem" onClick={this.toggleTheme}>
             {this.themeMenuItem()}
           </MenuItem>
-          <MenuItem id="signoutMenuItem" onClick={this.logout}>
-            <ListItemIcon>
-              <LockOpen />
-            </ListItemIcon>
-            <ListItemText inset primary="Sign Out" />
-          </MenuItem>
+          {this.signoutMenuItem()}
         </Menu>
       </>
     );
@@ -93,6 +105,8 @@ export class UserIcon extends Component {
 }
 
 UserIcon.propTypes = {
+  authEnabled: PropTypes.bool.isRequired,
+  isAuthenticated: PropTypes.bool.isRequired,
   themeName: PropTypes.string.isRequired,
   setUserTheme: PropTypes.func.isRequired,
   logout: PropTypes.func.isRequired,

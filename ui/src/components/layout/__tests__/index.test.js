@@ -11,6 +11,7 @@ const setup = overrideProps => {
       appName: "Beer Garden",
       themeName: "light",
       isAuthenticated: true,
+      authEnabled: true,
       setUserTheme: jest.fn(),
       logout: jest.fn(),
     },
@@ -35,5 +36,10 @@ describe("<Layout />", () => {
   test("render unauthenticated", () => {
     const { layout } = setup({ isAuthenticated: false });
     expect(layout.find(Sidebar)).toHaveLength(0);
+  });
+
+  test("render no auth", () => {
+    const { layout } = setup({ authEnabled: false });
+    expect(layout.find(Sidebar)).toHaveLength(1);
   });
 });

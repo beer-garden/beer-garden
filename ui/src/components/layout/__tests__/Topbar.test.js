@@ -10,6 +10,7 @@ const setup = overrideProps => {
       appName: "Beer Garden",
       themeName: "light",
       isAuthenticated: true,
+      authEnabled: true,
       classes: { appBar: "appBarClassName" },
       setUserTheme: jest.fn(),
       logout: jest.fn(),
@@ -25,31 +26,10 @@ const setup = overrideProps => {
 
 describe("<Topbar />", () => {
   describe("render", () => {
-    test("render with user", () => {
+    test("basic", () => {
       const { topbar } = setup();
       expect(topbar.find(AppBar)).toHaveLength(1);
       expect(topbar.find(UserIcon)).toHaveLength(1);
     });
-
-    test("render without user", () => {
-      const { topbar } = setup({ isAuthenticated: false });
-      expect(topbar.find(AppBar)).toHaveLength(1);
-      expect(topbar.find(UserIcon)).toHaveLength(0);
-    });
   });
-
-  // test("Toggle user settings", () => {
-  //   const { wrapper } = setup();
-  //   expect(wrapper.state("anchorEl")).toBeNull();
-  //   wrapper.find(IconButton).simulate("click", { currentTarget: "target" });
-  //   expect(wrapper.state("anchorEl")).toEqual("target");
-  //   wrapper.instance().handleClose();
-  //   expect(wrapper.state("anchorEl")).toBeNull();
-  // });
-
-  // test("Toggle theme", () => {
-  //   const { wrapper, props } = setup();
-  //   wrapper.find(MenuItem).simulate("click");
-  //   expect(props.setUserTheme).toHaveBeenCalled();
-  // });
 });

@@ -24,18 +24,20 @@ export class Layout extends Component {
       children,
       appName,
       isAuthenticated,
+      authEnabled,
       themeName,
       setUserTheme,
       logout,
     } = this.props;
 
-    const sidebar = isAuthenticated ? <Sidebar /> : null;
+    const sidebar = !authEnabled || isAuthenticated ? <Sidebar /> : null;
 
     return (
       <div className={classes.root}>
         <Topbar
           appName={appName}
           isAuthenticated={isAuthenticated}
+          authEnabled={authEnabled}
           themeName={themeName}
           setUserTheme={setUserTheme}
           logout={logout}
@@ -57,6 +59,7 @@ Layout.propTypes = {
   setUserTheme: PropTypes.func.isRequired,
   logout: PropTypes.func.isRequired,
   isAuthenticated: PropTypes.bool.isRequired,
+  authEnabled: PropTypes.bool.isRequired,
 };
 
 export default withStyles(styles)(Layout);
