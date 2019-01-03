@@ -5,7 +5,6 @@ import { connect } from "react-redux";
 import Spinner from "../components/layout/Spinner";
 import SystemList from "../components/systems/SystemList";
 import { fetchSystems } from "../actions/system";
-import withAuthOverview from "./auth/withAuthOverview";
 
 export class SystemsContainer extends Component {
   componentDidMount() {
@@ -48,7 +47,6 @@ const enhance = compose(
     mapStateToProps,
     mapDispatchToProps,
   ),
-  withAuthOverview,
 );
 
 export default enhance(SystemsContainer);
