@@ -6,7 +6,7 @@ import {
   USER_LOGOUT_SUCCESS,
   USER_LOGOUT_FAILURE,
 } from "../constants/ActionTypes";
-import { getCookie } from "../utils";
+import { getCookie, deleteCookie } from "../utils";
 
 const REFRESH_COOKIE_NAME = "refresh_id";
 const sessionCookie = getCookie(REFRESH_COOKIE_NAME);
@@ -37,6 +37,7 @@ export default function authReducer(state = initialState, action) {
         userData: action.payload.data,
       };
     case USER_LOGIN_FAILURE:
+      deleteCookie(REFRESH_COOKIE_NAME);
       return {
         ...state,
         userData: {},

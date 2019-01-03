@@ -24,13 +24,18 @@ const serverResponse = [
 ];
 const fetchMock = new MockAdapter(axios);
 
-const setup = (initialState, serverError = false, networkError = false) => {
+const setup = (
+  initialState,
+  serverError = false,
+  networkError = false,
+  status = 500,
+) => {
   Object.assign({}, initialState);
   const url = "/api/v1/systems";
   if (networkError) {
     fetchMock.onGet(url).networkError();
   } else if (serverError) {
-    fetchMock.onGet(url).reply(500, { message: "Error from server" });
+    fetchMock.onGet(url).reply(status, { message: "Error from server" });
   } else {
     fetchMock.onGet(url).reply(200, serverResponse);
   }
@@ -67,6 +72,24 @@ describe("system actions", () => {
     const { store } = setup({}, true, false);
     const expectedActions = [
       { type: types.FETCH_SYSTEMS_BEGIN },
+      {
+        type: types.FETCH_SYSTEMS_FAILURE,
+        payload: { error: Error("Error from server") },
+      },
+    ];
+    return store.dispatch(fetchSystems()).then(() => {
+      expect(store.getActions()).toEqual(expectedActions);
+    });
+  });
+
+  test("it should create different errors for a 401", () => {
+    const { store } = setup({}, true, false, 401);
+    const expectedActions = [
+      { type: types.FETCH_SYSTEMS_BEGIN },
+      {
+        type: types.USER_LOGIN_FAILURE,
+        payload: { error: Error("Error from server") },
+      },
       {
         type: types.FETCH_SYSTEMS_FAILURE,
         payload: { error: Error("Error from server") },
