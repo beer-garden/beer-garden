@@ -26,7 +26,7 @@ describe("auth reducer", () => {
       ),
     ).toEqual({
       userData: {},
-      isAuthenticated: false,
+      isAuthenticated: true,
       userLoading: true,
       userError: null,
     });

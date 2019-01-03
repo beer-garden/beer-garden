@@ -37,10 +37,32 @@ describe("<Root />", () => {
       const { wrapper } = setup();
       expect(wrapper.find(App)).toHaveLength(1);
     });
-    test("<Spinner /> while loading", () => {
+    test("<Spinner /> while config loading", () => {
       const { wrapper } = setup({ configLoading: true });
       expect(wrapper.find(Spinner)).toHaveLength(1);
     });
+
+    test("<Spinner /> while auth enabled, authenticated, and user loading", () => {
+      const { wrapper } = setup({
+        configLoading: false,
+        config: { authEnabled: true },
+        isAuthenticated: true,
+        userLoading: true,
+      });
+      expect(wrapper.find(Spinner)).toHaveLength(1);
+    });
+
+    test("<Spinner /> while auth enabled, authenticated, and user empty", () => {
+      const { wrapper } = setup({
+        configLoading: false,
+        config: { authEnabled: true },
+        isAuthenticated: true,
+        userLoading: false,
+        userData: {},
+      });
+      expect(wrapper.find(Spinner)).toHaveLength(1);
+    });
+
     test("<ErrorRetryDialog/> if an error occurs", () => {
       const { wrapper } = setup({ configError: new Error("message") });
       expect(wrapper.find(ErrorRetryDialog)).toHaveLength(1);

@@ -11,3 +11,10 @@ export function deleteCookie(name, sPath, sDomain) {
     (sDomain ? "; domain=" + sDomain : "") +
     (sPath ? "; path=" + sPath : "");
 }
+
+export function isEmpty(obj) {
+  if (obj) {
+    return Object.keys(obj).length === 0;
+  }
+  return true;
+}
