@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import {
   Menu,
   MenuItem,
+  Hidden,
   IconButton,
   ListItemIcon,
   ListItemText,
@@ -94,10 +95,12 @@ export class UserIcon extends Component {
           color="inherit"
         >
           <AccountCircle className={classes.accountIcon} />
-          <Typography variant="body1" color="inherit">
-            {" "}
-            {username}
-          </Typography>
+          <Hidden xsDown>
+            <Typography variant="body1" color="inherit">
+              {" "}
+              {username}
+            </Typography>
+          </Hidden>
         </IconButton>
         <Menu
           id="menu-appbar"
