@@ -5,6 +5,7 @@ import {
   FETCH_CONFIG_FAILURE,
   FETCH_CONFIG_SUCCESS,
 } from "../constants/ActionTypes";
+import { isEmpty } from "../utils";
 import { defaultErrorHandler } from ".";
 
 export const fetchConfigBegin = () => ({
@@ -37,8 +38,8 @@ export function fetchConfig() {
 }
 
 export const loadConfig = () => (dispatch, getState) => {
-  const configData = getState().config;
-  if (configData && Object.getOwnPropertyNames(configData).length > 0) {
+  const configData = getState().configReducer.config;
+  if (!isEmpty(configData)) {
     return null;
   }
 

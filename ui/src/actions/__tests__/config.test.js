@@ -26,7 +26,7 @@ const serverConfig = {
 const fetchMock = new MockAdapter(axios);
 
 const setup = (initialState, serverError = false, networkError = false) => {
-  Object.assign({}, initialState);
+  const state = Object.assign({}, initialState);
   const url = "/config";
   if (networkError) {
     fetchMock.onGet(url).networkError();
@@ -36,7 +36,7 @@ const setup = (initialState, serverError = false, networkError = false) => {
     fetchMock.onGet(url).reply(200, serverConfig);
   }
 
-  const store = mockStore(initialState);
+  const store = mockStore({ configReducer: state });
   return {
     store,
   };
