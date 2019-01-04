@@ -17,6 +17,7 @@ const setup = propOverrides => {
       authEnabled: true,
       isAuthenticated: true,
       component: TestComponent,
+      render: null,
     },
     propOverrides,
   );
@@ -52,6 +53,20 @@ describe("<AuthRoute />", () => {
     test("<TestComponent /> if auth is enabled and authenticated", () => {
       const { route } = setup({ authEnabled: true, isAuthenticated: true });
       expect(route.find(TestComponent)).toHaveLength(1);
+    });
+
+    test("custom render function", () => {
+      const route = mount(
+        <MemoryRouter>
+          <AuthRoute
+            authEnabled
+            isAuthenticated
+            path="/"
+            render={props => <TestComponent {...props} />}
+          />
+        </MemoryRouter>,
+      );
+      return expect(route.find(TestComponent)).toHaveLength(1);
     });
   });
 });

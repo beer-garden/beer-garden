@@ -6,6 +6,7 @@ import { compose } from "recompose";
 
 export const AuthRoute = ({
   component: Component,
+  render,
   authEnabled,
   isAuthenticated,
   ...rest
@@ -20,6 +21,8 @@ export const AuthRoute = ({
         />
       );
     };
+  } else if (render) {
+    renderMethod = render;
   } else {
     renderMethod = props => {
       return <Component {...props} />;
