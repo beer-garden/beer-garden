@@ -33,7 +33,7 @@ export class App extends Component {
           <AuthRoute exact path="/commands" component={CommandsContainer} />
           <AuthRoute exact path="/requests" component={RequestsContainer} />
           <AuthRoute exact path="/scheduler" component={SchedulerContainer} />
-          <AuthRoute exact path="/advanced" component={AdvancedContainer} />
+          <AuthRoute path="/advanced" component={AdvancedContainer} />
         </Switch>
       </Layout>
     );

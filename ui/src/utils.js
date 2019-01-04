@@ -18,3 +18,19 @@ export function isEmpty(obj) {
   }
   return true;
 }
+
+export function hasPermissions(userData, permissions) {
+  if (
+    isEmpty(userData) ||
+    !userData.permissions ||
+    userData.permissions.length === 0
+  ) {
+    return false;
+  }
+
+  if (userData.permissions.includes("bg-all")) {
+    return true;
+  }
+
+  return permissions.every(elem => userData.permissions.includes(elem));
+}
