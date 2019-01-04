@@ -17,6 +17,10 @@ class TestHandlerBase(AsyncHTTPTestCase):
 
         spec = YapconfSpec(SPECIFICATION)
         brew_view.setup(spec, {})
+
+        # Setup anonymous user for testing.
+        brew_view.anonymous_principal = brew_view.load_anonymous()
+
         connect("beer_garden", host="mongomock://localhost")
 
         cls.app = brew_view.tornado_app
