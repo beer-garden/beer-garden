@@ -104,13 +104,15 @@ class BaseHandler(AuthMixin, RequestHandler):
 
     def on_finish(self):
         """Called after a handler completes processing"""
-        http_api_latency_total.labels(
-            method=self.request.method.upper(),
-            route=self.prometheus_endpoint,
-            status=self.get_status(),
-        ).observe(request_latency(self.request.created_time))
+        # This is gross, but in some cases we have to do these in the handler
+        if getattr(self.request, "publish_metrics", True):
+            http_api_latency_total.labels(
+                method=self.request.method.upper(),
+                route=self.prometheus_endpoint,
+                status=self.get_status(),
+            ).observe(request_latency(self.request.created_time))
 
-        if self.request.event.name:
+        if self.request.event.name and getattr(self.request, "publish_event", True):
             brew_view.event_publishers.publish_event(
                 self.request.event, **self.request.event_extras
             )

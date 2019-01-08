@@ -2,13 +2,128 @@ import json
 
 import pytest
 from mock import MagicMock, Mock, PropertyMock, patch
-from mongoengine import connect
 from tornado.gen import Future
+from tornado.httpclient import HTTPRequest
 
 import bg_utils
 import brew_view
+from bg_utils.mongo.models import System
 from brew_view.controllers import RequestListAPI
+from brewtils.rest.client import RestClient
+from brewtils.schema_parser import SchemaParser
 from . import TestHandlerBase
+
+
+@pytest.fixture(autouse=True)
+def setup_systems(app, mongo_system):
+    System.drop_collection()
+    mongo_system.deep_save()
+
+
+@pytest.fixture(autouse=True)
+def thrift(monkeypatch, thrift_context, thrift_client, process_future):
+    thrift_client.processRequest.return_value = process_future
+    monkeypatch.setattr(
+        brew_view.controllers.request_list_api, "thrift_context", thrift_context
+    )
+
+
+@pytest.fixture(autouse=True)
+def latency_total(monkeypatch):
+    latency_total = Mock()
+    monkeypatch.setattr(
+        brew_view.controllers.request_list_api, "http_api_latency_total", latency_total
+    )
+    return latency_total
+
+
+@pytest.fixture
+def process_future():
+    return Future()
+
+
+@pytest.fixture
+def post_request(base_url, bg_request):
+    bg_request.parent = None
+    return HTTPRequest(
+        base_url + "/api/v1/requests/",
+        method="POST",
+        headers=RestClient.JSON_HEADERS,
+        body=SchemaParser.serialize_request(bg_request, to_string=True),
+    )
+
+
+class TestBlocking(object):
+    """Test blocking functionality
+
+    Testing the metrics and event publishing is kind of tricky. For these tests the
+    request goes through the entire handler chain (aka BaseHander.on_finish is called).
+    Since the difference there is WHEN in the process those things happen it makes it
+    difficult.
+
+    So we mock out the metrics call in the actual request list module and use that to
+    determine if it was called in the 'correct' place.
+
+    Because of the implementation of the event publishers we can't do the same thing
+    there. So just check to ensure that the publish was called.
+
+    """
+
+    @pytest.mark.gen_test
+    def test_no_blocking(
+        self, app, process_future, http_client, latency_total, post_request
+    ):
+        process_future.set_result(None)
+
+        response = yield http_client.fetch(post_request)
+        assert response.code == 201
+        assert latency_total.labels.return_value.observe.called is False
+        assert brew_view.event_publishers["mock"].publish_event.called is True
+        assert len(brew_view.request_map) == 0
+
+    @pytest.mark.gen_test
+    def test_blocking(
+        self,
+        app,
+        process_future,
+        io_loop,
+        http_client,
+        latency_total,
+        post_request,
+        bg_request,
+    ):
+        process_future.set_result(None)
+        io_loop.call_later(0.25, lambda: brew_view.request_map[bg_request.id].set())
+
+        post_request.url += "?blocking=true"
+        response = yield http_client.fetch(post_request)
+
+        assert response.code == 201
+        assert latency_total.labels.return_value.observe.called is True
+        assert brew_view.event_publishers["mock"].publish_event.called is True
+        assert len(brew_view.request_map) == 0
+
+    @pytest.mark.gen_test
+    def test_blocking_timeout(
+        self,
+        app,
+        process_future,
+        io_loop,
+        http_client,
+        latency_total,
+        post_request,
+        bg_request,
+    ):
+        process_future.set_result(None)
+        io_loop.call_later(0.25, lambda: brew_view.request_map[bg_request.id].set())
+
+        post_request.url += "?blocking=true&timeout=0"
+        response = yield http_client.fetch(post_request, raise_error=False)
+
+        assert response.code == 408
+        assert latency_total.labels.return_value.observe.called is True
+        assert brew_view.event_publishers["mock"].publish_event.called is True
+        assert len(brew_view.request_map) == 0
 
 
 class RequestListAPITest(TestHandlerBase):
@@ -166,12 +281,7 @@ class RequestListAPITest(TestHandlerBase):
         self.assertEqual("UNKNOWN", response.headers["Instance-Status"])
 
 
-@pytest.fixture
-def mongo_mock():
-    connect("mongotest", host="mongomock://localhost")
-
-
-@pytest.mark.usefixtures("mongo_mock")
+@pytest.mark.usefixtures("mongo")
 class TestRequestListAPI(object):
     @pytest.fixture
     def columns(self):
