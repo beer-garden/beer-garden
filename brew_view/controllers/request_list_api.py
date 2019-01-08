@@ -342,7 +342,8 @@ class RequestListAPI(BaseHandler):
         request_created(request_model)
 
         if blocking:
-            # Publish metrics here so they aren't skewed
+            # Publish metrics and event here here so they aren't skewed
+            # See https://github.com/beer-garden/beer-garden/issues/190
             self.request.publish_metrics = False
             http_api_latency_total.labels(
                 method=self.request.method.upper(),
@@ -350,7 +351,6 @@ class RequestListAPI(BaseHandler):
                 status=self.get_status(),
             ).observe(request_latency(self.request.created_time))
 
-            # Publish event so it doesn't come after completion event
             self.request.publish_event = False
             brew_view.event_publishers.publish_event(
                 self.request.event, **self.request.event_extras
