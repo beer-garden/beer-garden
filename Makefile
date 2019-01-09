@@ -140,6 +140,10 @@ package: clean-all package-js package-source package-wheel ## build everything
 
 
 # Docker
+docker-login: ## log in to the docker registry
+	# echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USER)" --password-stdin
+	docker login -u $(DOCKER_USER) -p $(DOCKER_PASSWORD)
+
 docker-build: ## build the docker images
 	docker build -t $(DOCKER_NAME):latest --build-arg VERSION=$(VERSION) -f Dockerfile .
 	docker build -t $(DOCKER_NAME):latest-python2 --build-arg VERSION=$(VERSION) -f Dockerfile.2 .
@@ -162,3 +166,6 @@ publish-docker: docker-build ## push the docker images
 	docker push $(DOCKER_NAME):$(VERSION)
 	docker push $(DOCKER_NAME):latest-python2
 	docker push $(DOCKER_NAME):latest
+
+publish-docker-unstable: docker-build-unstable ## push the unstable docker image
+	docker push $(DOCKER_NAME):unstable
