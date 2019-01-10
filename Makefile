@@ -141,8 +141,7 @@ package: clean-all package-js package-source package-wheel ## build everything
 
 # Docker
 docker-login: ## log in to the docker registry
-	# echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USER)" --password-stdin
-	docker login -u $(DOCKER_USER) -p $(DOCKER_PASSWORD)
+	echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USER)" --password-stdin
 
 docker-build: ## build the docker images
 	docker build -t $(DOCKER_NAME):latest --build-arg VERSION=$(VERSION) -f Dockerfile .
