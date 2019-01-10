@@ -35,11 +35,12 @@ class BartenderApp(StoppableThread):
         self.plugin_registry = LocalPluginRegistry()
         self.plugin_validator = LocalPluginValidator()
 
-        self.plugin_loader = LocalPluginLoader(validator=self.plugin_validator,
-                                               registry=self.plugin_registry)
+        self.plugin_loader = LocalPluginLoader(
+            validator=self.plugin_validator, registry=self.plugin_registry
+        )
 
         self.clients = {
-            'pika': PikaClient(
+            "pika": PikaClient(
                 host=bartender.config.amq.host,
                 port=bartender.config.amq.connections.message.port,
                 ssl=bartender.config.amq.connections.message.ssl,
@@ -50,12 +51,12 @@ class BartenderApp(StoppableThread):
                 blocked_connection_timeout=bartender.config.amq.blocked_connection_timeout,
                 exchange=bartender.config.amq.exchange,
             ),
-            'pyrabbit': PyrabbitClient(
+            "pyrabbit": PyrabbitClient(
                 host=bartender.config.amq.host,
                 virtual_host=bartender.config.amq.virtual_host,
                 **bartender.config.amq.connections.admin
             ),
-            'public': PikaClient(
+            "public": PikaClient(
                 host=bartender.config.publish_hostname,
                 virtual_host=bartender.config.amq.virtual_host,
                 **bartender.config.amq.connections.message
@@ -63,32 +64,48 @@ class BartenderApp(StoppableThread):
         }
 
         self.plugin_manager = LocalPluginsManager(
-            loader=self.plugin_loader, validator=self.plugin_validator,
-            registry=self.plugin_registry, clients=self.clients)
+            loader=self.plugin_loader,
+            validator=self.plugin_validator,
+            registry=self.plugin_registry,
+            clients=self.clients,
+        )
 
-        self.handler = BartenderHandler(registry=self.plugin_registry, clients=self.clients,
-                                        plugin_manager=self.plugin_manager,
-                                        request_validator=self.request_validator)
+        self.handler = BartenderHandler(
+            registry=self.plugin_registry,
+            clients=self.clients,
+            plugin_manager=self.plugin_manager,
+            request_validator=self.request_validator,
+        )
 
         self.helper_threads = [
-
-            HelperThread(make_server, service=bg_utils.bg_thrift.BartenderBackend,
-                         handler=self.handler, host=bartender.config.thrift.host,
-                         port=bartender.config.thrift.port),
-
-            HelperThread(LocalPluginMonitor, plugin_manager=self.plugin_manager,
-                         registry=self.plugin_registry),
-
-            HelperThread(PluginStatusMonitor, self.clients,
-                         timeout_seconds=bartender.config.plugin.status_timeout,
-                         heartbeat_interval=bartender.config.plugin.status_heartbeat)
+            HelperThread(
+                make_server,
+                service=bg_utils.bg_thrift.BartenderBackend,
+                handler=self.handler,
+                host=bartender.config.thrift.host,
+                port=bartender.config.thrift.port,
+            ),
+            HelperThread(
+                LocalPluginMonitor,
+                plugin_manager=self.plugin_manager,
+                registry=self.plugin_registry,
+            ),
+            HelperThread(
+                PluginStatusMonitor,
+                self.clients,
+                timeout_seconds=bartender.config.plugin.status_timeout,
+                heartbeat_interval=bartender.config.plugin.status_heartbeat,
+            ),
         ]
 
         # Only want to run the MongoPruner if it would do anything
         tasks, run_every = self._setup_pruning_tasks()
         if run_every:
-            self.helper_threads.append(HelperThread(MongoPruner, tasks=tasks,
-                                                    run_every=timedelta(minutes=run_every)))
+            self.helper_threads.append(
+                HelperThread(
+                    MongoPruner, tasks=tasks, run_every=timedelta(minutes=run_every)
+                )
+            )
 
         super(BartenderApp, self).__init__(logger=self.logger, name="BartenderApp")
 
@@ -98,7 +115,9 @@ class BartenderApp(StoppableThread):
         while not self.stopped():
             for helper_thread in self.helper_threads:
                 if not helper_thread.thread.isAlive():
-                    self.logger.warning("%s is dead, restarting" % helper_thread.display_name)
+                    self.logger.warning(
+                        "%s is dead, restarting" % helper_thread.display_name
+                    )
                     helper_thread.start()
 
             time.sleep(0.1)
@@ -109,13 +128,13 @@ class BartenderApp(StoppableThread):
         self.logger.info("Starting Bartender...")
 
         self.logger.info("Verifying message virtual host...")
-        self.clients['pyrabbit'].verify_virtual_host()
+        self.clients["pyrabbit"].verify_virtual_host()
 
         self.logger.info("Ensuring admin queue expiration policy...")
-        self.clients['pyrabbit'].ensure_admin_expiry()
+        self.clients["pyrabbit"].ensure_admin_expiry()
 
         self.logger.info("Declaring message exchange...")
-        self.clients['pika'].declare_exchange()
+        self.clients["pika"].declare_exchange()
 
         self.logger.info("Starting helper threads...")
         for helper_thread in self.helper_threads:
@@ -130,7 +149,7 @@ class BartenderApp(StoppableThread):
         try:
             bartender.bv_client.publish_event(name=Events.BARTENDER_STARTED.name)
         except RequestException:
-            self.logger.warning('Unable to publish startup notification')
+            self.logger.warning("Unable to publish startup notification")
 
         self.logger.info("Bartender started")
 
@@ -146,7 +165,7 @@ class BartenderApp(StoppableThread):
         try:
             bartender.bv_client.publish_event(name=Events.BARTENDER_STOPPED.name)
         except RequestException:
-            self.logger.warning('Unable to publish shutdown notification')
+            self.logger.warning("Unable to publish shutdown notification")
 
         self.logger.info("Successfully shut down Bartender")
 
@@ -155,40 +174,56 @@ class BartenderApp(StoppableThread):
 
         prune_tasks = []
         if bartender.config.db.ttl.info > 0:
-            prune_tasks.append({
-                'collection': Request, 'field': 'created_at',
-                'delete_after': timedelta(minutes=bartender.config.db.ttl.info),
-                'additional_query':
-                    (Q(status="SUCCESS") |
-                     Q(status='CANCELED') |
-                     Q(status='ERROR')) & Q(command_type='INFO')})
+            prune_tasks.append(
+                {
+                    "collection": Request,
+                    "field": "created_at",
+                    "delete_after": timedelta(minutes=bartender.config.db.ttl.info),
+                    "additional_query": (
+                        Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
+                    )
+                    & Q(command_type="INFO"),
+                }
+            )
 
         if bartender.config.db.ttl.action > 0:
-            prune_tasks.append({
-                'collection': Request, 'field': 'created_at',
-                'delete_after': timedelta(minutes=bartender.config.db.ttl.action),
-                'additional_query':
-                    (Q(status="SUCCESS") |
-                     Q(status='CANCELED') |
-                     Q(status='ERROR')) & Q(command_type='ACTION')})
+            prune_tasks.append(
+                {
+                    "collection": Request,
+                    "field": "created_at",
+                    "delete_after": timedelta(minutes=bartender.config.db.ttl.action),
+                    "additional_query": (
+                        Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
+                    )
+                    & Q(command_type="ACTION"),
+                }
+            )
 
         if bartender.config.db.ttl.event > 0:
-            prune_tasks.append({'collection': Event, 'field': 'timestamp',
-                                'delete_after': timedelta(minutes=bartender.config.db.ttl.event)})
+            prune_tasks.append(
+                {
+                    "collection": Event,
+                    "field": "timestamp",
+                    "delete_after": timedelta(minutes=bartender.config.db.ttl.event),
+                }
+            )
 
         # Look at the various TTLs to determine how often to run the MongoPruner
-        real_ttls = [x for x in
-                     (bartender.config.db.ttl.info,
-                      bartender.config.db.ttl.action,
-                      bartender.config.db.ttl.event)
-                     if x > 0]
+        real_ttls = [
+            x
+            for x in (
+                bartender.config.db.ttl.info,
+                bartender.config.db.ttl.action,
+                bartender.config.db.ttl.event,
+            )
+            if x > 0
+        ]
         run_every = min(real_ttls) // 2 if real_ttls else None
 
         return prune_tasks, run_every
 
 
 class HelperThread(object):
-
     def __init__(self, init_callable, *args, **kwargs):
         self.logger = logging.getLogger(__name__)
 
@@ -202,8 +237,10 @@ class HelperThread(object):
 
     def stop(self):
         if not self.thread.isAlive():
-            self.logger.warning("Uh-oh. Looks like a bad shutdown - the %s "
-                                "was already stopped", self.display_name)
+            self.logger.warning(
+                "Uh-oh. Looks like a bad shutdown - the %s " "was already stopped",
+                self.display_name,
+            )
         else:
             self.logger.debug("%s is being requested to stop", self.display_name)
             self.thread.stop()
@@ -218,4 +255,4 @@ class HelperThread(object):
 
     @property
     def display_name(self):
-        return getattr(self.thread, 'display_name', str(self.thread))
+        return getattr(self.thread, "display_name", str(self.thread))

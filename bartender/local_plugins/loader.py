@@ -67,7 +67,10 @@ class LocalPluginLoader(object):
                 if required_plugin not in plugin_names:
                     self.logger.warning(
                         "Not loading plugin %s - plugin requirement %s is not "
-                        "a known plugin.", plugin.system.name, required_plugin)
+                        "a known plugin.",
+                        plugin.system.name,
+                        required_plugin,
+                    )
                     plugins_to_remove.append(plugin)
 
         for plugin in plugins_to_remove:
@@ -84,16 +87,17 @@ class LocalPluginLoader(object):
         """
         if not self.validator.validate_plugin(plugin_path):
             self.logger.warning(
-                "Not loading plugin at %s because it was invalid.", plugin_path)
+                "Not loading plugin at %s because it was invalid.", plugin_path
+            )
             return False
 
-        config = self._load_plugin_config(join(plugin_path, 'beer.conf'))
+        config = self._load_plugin_config(join(plugin_path, "beer.conf"))
 
-        plugin_name = config['NAME']
-        plugin_version = config['VERSION']
+        plugin_name = config["NAME"]
+        plugin_version = config["VERSION"]
         plugin_entry = config["PLUGIN_ENTRY"]
-        plugin_instances = config['INSTANCES']
-        plugin_args = config['PLUGIN_ARGS']
+        plugin_instances = config["INSTANCES"]
+        plugin_args = config["PLUGIN_ARGS"]
 
         # If this system already exists we need to do some stuff
         plugin_id = None
@@ -117,12 +121,14 @@ class LocalPluginLoader(object):
             name=plugin_name,
             version=plugin_version,
             commands=plugin_commands,
-            instances=[Instance(name=instance_name) for instance_name in plugin_instances],
+            instances=[
+                Instance(name=instance_name) for instance_name in plugin_instances
+            ],
             max_instances=len(plugin_instances),
-            description=config.get('DESCRIPTION'),
-            icon_name=config.get('ICON_NAME'),
-            display_name=config.get('DISPLAY_NAME'),
-            metadata=config.get('METADATA'),
+            description=config.get("DESCRIPTION"),
+            icon_name=config.get("ICON_NAME"),
+            display_name=config.get("DISPLAY_NAME"),
+            metadata=config.get("METADATA"),
         )
 
         # TODO: Right now, we have to save this system because the LocalPluginRunner
@@ -142,15 +148,15 @@ class LocalPluginLoader(object):
                 bartender.config.web.port,
                 bartender.config.web.ssl_enabled,
                 plugin_args=plugin_args.get(instance_name),
-                environment=config['ENVIRONMENT'],
-                requirements=config['REQUIRES'],
+                environment=config["ENVIRONMENT"],
+                requirements=config["REQUIRES"],
                 plugin_log_directory=plugin_log_directory,
                 url_prefix=bartender.config.web.url_prefix,
                 ca_verify=bartender.config.web.ca_verify,
                 ca_cert=bartender.config.web.ca_cert,
                 username=bartender.config.plugin.local.auth.username,
                 password=bartender.config.plugin.local.auth.password,
-                log_level=config['LOG_LEVEL'],
+                log_level=config["LOG_LEVEL"],
             )
 
             self.registry.register_plugin(plugin)
@@ -162,16 +168,16 @@ class LocalPluginLoader(object):
         """Loads a validated plugin config"""
         self.logger.debug("Loading configuration at %s", path_to_config)
 
-        config_module = load_source('BGPLUGINCONFIG', path_to_config)
+        config_module = load_source("BGPLUGINCONFIG", path_to_config)
 
-        instances = getattr(config_module, 'INSTANCES', None)
-        plugin_args = getattr(config_module, 'PLUGIN_ARGS', None)
-        user_log_level = getattr(config_module, 'LOG_LEVEL', 'INFO')
+        instances = getattr(config_module, "INSTANCES", None)
+        plugin_args = getattr(config_module, "PLUGIN_ARGS", None)
+        user_log_level = getattr(config_module, "LOG_LEVEL", "INFO")
         log_level = self._convert_log_level(user_log_level)
 
         if instances is None and plugin_args is None:
-            instances = ['default']
-            plugin_args = {'default': None}
+            instances = ["default"]
+            plugin_args = {"default": None}
 
         elif plugin_args is None:
             plugin_args = {}
@@ -180,12 +186,12 @@ class LocalPluginLoader(object):
 
         elif instances is None:
             if isinstance(plugin_args, list):
-                instances = ['default']
-                plugin_args = {'default': plugin_args}
+                instances = ["default"]
+                plugin_args = {"default": plugin_args}
             elif isinstance(plugin_args, dict):
                 instances = list(plugin_args.keys())
             else:
-                raise ValueError('Unknown plugin args type: %s' % plugin_args)
+                raise ValueError("Unknown plugin args type: %s" % plugin_args)
 
         elif isinstance(plugin_args, list):
             temp_args = {}
@@ -195,22 +201,22 @@ class LocalPluginLoader(object):
             plugin_args = temp_args
 
         config = {
-            'NAME': config_module.NAME,
-            'VERSION': config_module.VERSION,
-            'INSTANCES': instances,
-            'PLUGIN_ENTRY': config_module.PLUGIN_ENTRY,
-            'PLUGIN_ARGS': plugin_args,
-            'DESCRIPTION': getattr(config_module, 'DESCRIPTION', ''),
-            'ICON_NAME': getattr(config_module, 'ICON_NAME', None),
-            'DISPLAY_NAME': getattr(config_module, 'DISPLAY_NAME', None),
-            'REQUIRES': getattr(config_module, 'REQUIRES', []),
-            'ENVIRONMENT': getattr(config_module, 'ENVIRONMENT', {}),
-            'METADATA': getattr(config_module, 'METADATA', {}),
-            'LOG_LEVEL': log_level,
+            "NAME": config_module.NAME,
+            "VERSION": config_module.VERSION,
+            "INSTANCES": instances,
+            "PLUGIN_ENTRY": config_module.PLUGIN_ENTRY,
+            "PLUGIN_ARGS": plugin_args,
+            "DESCRIPTION": getattr(config_module, "DESCRIPTION", ""),
+            "ICON_NAME": getattr(config_module, "ICON_NAME", None),
+            "DISPLAY_NAME": getattr(config_module, "DISPLAY_NAME", None),
+            "REQUIRES": getattr(config_module, "REQUIRES", []),
+            "ENVIRONMENT": getattr(config_module, "ENVIRONMENT", {}),
+            "METADATA": getattr(config_module, "METADATA", {}),
+            "LOG_LEVEL": log_level,
         }
 
-        if 'BGPLUGINCONFIG' in sys.modules:
-            del sys.modules['BGPLUGINCONFIG']
+        if "BGPLUGINCONFIG" in sys.modules:
+            del sys.modules["BGPLUGINCONFIG"]
 
         return config
 
