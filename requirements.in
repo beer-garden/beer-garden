@@ -15,6 +15,7 @@ sphinx_rtd_theme
 watchdog
 
 # Build / Test Dependencies
+black ; python_version > "3.5"
 codecov
 coverage
 flake8
