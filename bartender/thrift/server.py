@@ -19,13 +19,14 @@ class BartenderThriftServer(TThreadedServer, StoppableThread):
 
     def __init__(self, *args, **kwargs):
         self.logger = logging.getLogger(__name__)
-        self.display_name = 'Thrift Server'
+        self.display_name = "Thrift Server"
         self.pool = ThreadPoolExecutor(max_workers=bartender.config.thrift.max_workers)
         self.futures = set()
         self.finished = Event()
 
-        StoppableThread.__init__(self, logger=self.logger,
-                                 name=kwargs.pop('name', 'ThriftPyServer'))
+        StoppableThread.__init__(
+            self, logger=self.logger, name=kwargs.pop("name", "ThriftPyServer")
+        )
         TThreadedServer.__init__(self, *args, **kwargs)
 
     def run(self):
@@ -34,7 +35,7 @@ class BartenderThriftServer(TThreadedServer, StoppableThread):
 
         # We could still be waiting on worker threads to finish -
         # we need another event to tell when REALLY stopped
-        self.finished.wait(timeout=self.WORKER_TIMEOUT+1)
+        self.finished.wait(timeout=self.WORKER_TIMEOUT + 1)
         self.logger.info(self.display_name + " is stopped")
 
     def stop(self):
@@ -45,17 +46,22 @@ class BartenderThriftServer(TThreadedServer, StoppableThread):
         self.trans.close()
 
         # Wait some amount of time for all the futures to complete
-        futures_status = wait(self.futures, timeout=self.WORKER_TIMEOUT, return_when=ALL_COMPLETED)
+        futures_status = wait(
+            self.futures, timeout=self.WORKER_TIMEOUT, return_when=ALL_COMPLETED
+        )
 
         # If there are still workers remaining after the timeout then we remove references to them.
         # We need to do this because workers are daemons but concurrent.futures.thread adds a
         # hook to join all workers with no timeout when shutting down. So any hung worker would
         # prevent the application from shutting down.
         if futures_status.not_done:
-            self.logger.warning('There were still unfinished worker '
-                                'threads even after waiting, about to orphan them')
+            self.logger.warning(
+                "There were still unfinished worker "
+                "threads even after waiting, about to orphan them"
+            )
 
             import concurrent.futures.thread
+
             self.pool._threads.clear()
             concurrent.futures.thread._threads_queues.clear()
 
@@ -93,21 +99,33 @@ class WrappedTProcessor(TProcessor):
         try:
             super(WrappedTProcessor, self).handle_exception(e, result)
         except Exception as ex:
-            self.logger.exception("Uncaught exception occurred during thrift execution: %s", ex)
-            setattr(result, self.default_exception_name,
-                    self.default_exception_cls(str(ex) or
-                                               "No message was found on the raised exception."))
+            self.logger.exception(
+                "Uncaught exception occurred during thrift execution: %s", ex
+            )
+            setattr(
+                result,
+                self.default_exception_name,
+                self.default_exception_cls(
+                    str(ex) or "No message was found on the raised exception."
+                ),
+            )
 
 
-def make_server(service, handler, host="127.0.0.1", port=9090, client_timeout=None, cert_file=None):
+def make_server(
+    service, handler, host="127.0.0.1", port=9090, client_timeout=None, cert_file=None
+):
     """Factory method to create a BartenderThriftServer"""
 
     if cert_file:
-        server_socket = TSSLServerSocket(host=host, port=port, client_timeout=client_timeout,
-                                         certfile=cert_file)
+        server_socket = TSSLServerSocket(
+            host=host, port=port, client_timeout=client_timeout, certfile=cert_file
+        )
     else:
-        server_socket = TServerSocket(host=host, port=port, client_timeout=client_timeout)
+        server_socket = TServerSocket(
+            host=host, port=port, client_timeout=client_timeout
+        )
 
-    return BartenderThriftServer(WrappedTProcessor('baseEx', bg_utils.bg_thrift.BaseException,
-                                                   service, handler),
-                                 server_socket)
+    return BartenderThriftServer(
+        WrappedTProcessor("baseEx", bg_utils.bg_thrift.BaseException, service, handler),
+        server_socket,
+    )

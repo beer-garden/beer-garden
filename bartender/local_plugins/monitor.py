@@ -11,11 +11,13 @@ class LocalPluginMonitor(StoppableThread):
 
     def __init__(self, plugin_manager, registry):
         self.logger = logging.getLogger(__name__)
-        self.display_name = 'Local Plugin Monitor'
+        self.display_name = "Local Plugin Monitor"
         self.plugin_manager = plugin_manager
         self.registry = registry
 
-        super(LocalPluginMonitor, self).__init__(logger=self.logger, name="LocalPluginMonitor")
+        super(LocalPluginMonitor, self).__init__(
+            logger=self.logger, name="LocalPluginMonitor"
+        )
 
     def run(self):
         self.logger.info(self.display_name + " is started")
@@ -35,18 +37,30 @@ class LocalPluginMonitor(StoppableThread):
             if self.stopped():
                 break
 
-            if plugin.process and plugin.process.poll() is not None and not plugin.stopped():
-                if plugin.status == 'RUNNING':
-                    self.logger.warning("It looks like plugin %s has "
-                                        "unexpectedly stopped running.", plugin.unique_name)
-                    self.logger.warning("If this is happening often, you "
-                                        "need to talk to the plugin developer.")
+            if (
+                plugin.process
+                and plugin.process.poll() is not None
+                and not plugin.stopped()
+            ):
+                if plugin.status == "RUNNING":
+                    self.logger.warning(
+                        "It looks like plugin %s has " "unexpectedly stopped running.",
+                        plugin.unique_name,
+                    )
+                    self.logger.warning(
+                        "If this is happening often, you "
+                        "need to talk to the plugin developer."
+                    )
                     self.logger.warning("Restarting plugin: %s", plugin.unique_name)
 
-                    plugin.status = 'DEAD'
+                    plugin.status = "DEAD"
                     self.plugin_manager.restart_plugin(plugin)
-                elif plugin.status == 'STARTING':
-                    self.logger.warning("It looks like plugin %s has "
-                                        "failed to start.", plugin.unique_name)
-                    self.logger.warning("Marking plugin %s as dead.", plugin.unique_name)
-                    plugin.status = 'DEAD'
+                elif plugin.status == "STARTING":
+                    self.logger.warning(
+                        "It looks like plugin %s has " "failed to start.",
+                        plugin.unique_name,
+                    )
+                    self.logger.warning(
+                        "Marking plugin %s as dead.", plugin.unique_name
+                    )
+                    plugin.status = "DEAD"

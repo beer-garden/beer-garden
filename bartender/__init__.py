@@ -40,10 +40,10 @@ def progressive_backoff(func, stoppable_thread, failure_message):
     wait_time = 0.1
     while not stoppable_thread.stopped() and not func():
         logger.warning(failure_message)
-        logger.warning('Waiting %.1f seconds before next attempt', wait_time)
+        logger.warning("Waiting %.1f seconds before next attempt", wait_time)
 
         stoppable_thread.wait(wait_time)
-        wait_time = min(wait_time*2, 30)
+        wait_time = min(wait_time * 2, 30)
 
 
 def ensure_admin():
@@ -53,19 +53,22 @@ def ensure_admin():
         bartender_user = bv_client.who_am_i()
     except ValidationError:
         raise ConfigurationError(
-            'Unable to authenticate using provided username and password. '
-            'This usually indicates an incorrect password - please check the '
-            'web.username and web.password fields in the configuration.')
+            "Unable to authenticate using provided username and password. "
+            "This usually indicates an incorrect password - please check the "
+            "web.username and web.password fields in the configuration."
+        )
 
-    if 'bg-all' not in bartender_user.permissions:
+    if "bg-all" not in bartender_user.permissions:
         if config.web.username:
             raise ConfigurationError(
                 'User "%s" does not have "bg-all" permission. Please check '
-                'your configuration (specifically web.username and '
-                'web.password fields)' % config.web.username)
+                "your configuration (specifically web.username and "
+                "web.password fields)" % config.web.username
+            )
         else:
             raise ConfigurationError(
-                'It appears that Brew-view is operating with authentication '
-                'enabled and no username / password was provided. Please check '
-                'your configuration (specifically web.username and '
-                'web.password fields).')
+                "It appears that Brew-view is operating with authentication "
+                "enabled and no username / password was provided. Please check "
+                "your configuration (specifically web.username and "
+                "web.password fields)."
+            )

@@ -3,6 +3,7 @@ import logging
 
 class LocalPluginRegistry(object):
     """Plugin Registry that is responsible for keeping track of plugins and their status"""
+
     def __init__(self):
         self._registry = []
         self.logger = logging.getLogger(__name__)
@@ -32,8 +33,11 @@ class LocalPluginRegistry(object):
         :param system_version: The system version
         :return: List of plugins
         """
-        return [p for p in self._registry
-                if p.system.name == system_name and p.system.version == system_version]
+        return [
+            p
+            for p in self._registry
+            if p.system.name == system_name and p.system.version == system_version
+        ]
 
     def remove(self, unique_name):
         """Removes a plugin from the registry
@@ -47,7 +51,9 @@ class LocalPluginRegistry(object):
         """
         for index, plugin in enumerate(self._registry):
             if plugin.unique_name == unique_name:
-                self.logger.info("Removing Plugin %s from the registry.", plugin.unique_name)
+                self.logger.info(
+                    "Removing Plugin %s from the registry.", plugin.unique_name
+                )
                 self._registry.pop(index)
                 return
 
@@ -61,10 +67,14 @@ class LocalPluginRegistry(object):
 
         registered_plugin = self.get_plugin(plugin.unique_name)
         if registered_plugin is None:
-            self.logger.info("Registering Plugin %s in the registry.", plugin.unique_name)
+            self.logger.info(
+                "Registering Plugin %s in the registry.", plugin.unique_name
+            )
             self._registry.append(plugin)
         else:
-            self.logger.info("Plugin %s is already in the registry.", registered_plugin.unique_name)
+            self.logger.info(
+                "Plugin %s is already in the registry.", registered_plugin.unique_name
+            )
 
     def plugin_exists(self, plugin_name, plugin_version):
         """Query if a specific plugin exists in the registry
@@ -74,10 +84,13 @@ class LocalPluginRegistry(object):
         :return:
         """
         for plugin in self._registry:
-            if plugin.system.name == plugin_name and plugin.system.version == plugin_version:
+            if (
+                plugin.system.name == plugin_name
+                and plugin.system.version == plugin_version
+            ):
                 return True
         return False
 
     @staticmethod
     def get_unique_name(plugin_name, plugin_version, instance_name):
-        return '%s[%s]-%s' % (plugin_name, instance_name, plugin_version)
+        return "%s[%s]-%s" % (plugin_name, instance_name, plugin_version)
