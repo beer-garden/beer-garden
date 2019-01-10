@@ -80,9 +80,15 @@ clean-all: clean-build clean-python clean-test ## remove all python
 clean: clean-all ## alias of clean-all
 
 
+# Formatting
+format: ## Run black formatter in-line
+	black $(MODULE_NAME) $(PYTHON_TEST_DIR)
+
+
 # Linting
 lint: ## check style with flake8
 	flake8 $(MODULE_NAME) $(TEST_DIR)
+	black --check $(MODULE_NAME) $(PYTHON_TEST_DIR)
 
 
 # Testing / Coverage
