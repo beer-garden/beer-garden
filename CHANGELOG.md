@@ -1,5 +1,27 @@
 # Beer Garden Changelog
 
+## 2.4.5
+1/11/19
+
+#### Bug Fixes
+- Bartender avoids extra network call if shut down while still starting (#214)
+- Correct Brew-view startup failure when authentication is enabled (#207)
+- No longer hanging if Rabbit broker runs out of resources (#203)
+- Errors loading a local plugin will no longer affect subsequent plugins (#202)
+- Fixed UI bug where more than one plugin version was considered 'latest' (#200)
+- Better error handling for simultaneous index creation (#198)
+- Initializing Prometheus counts correctly on startup (#197)
+- Accounted for magic comment when building local rpm (#196)
+- Styling fix for Systems Management page (#174)
+- Changing choices configuration no longer requires removing System (#58)
+
+#### Added Features
+- Request view page will show spinner while request is in progress (#204)
+
+#### Other Changes
+- Increased default Bartender timeout to 13 seconds (#182)
+- Added additional indexes to increase Request Index page performance (#105)
+
 ## 2.4.4
 10/9/18
 
