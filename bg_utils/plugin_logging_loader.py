@@ -19,12 +19,12 @@ class PluginLoggingLoader(object):
 
     """
 
-    STDOUT_HANDLERS = ['logging.StreamHandler']
+    STDOUT_HANDLERS = ["logging.StreamHandler"]
     LOGSTASH_HANDLERS = ["logstash_async.handler.AsynchronousLogstashHandler"]
     FILE_HANDLERS = [
-        'logging.handlers.FileHandler',
-        'logging.handlers.RotatingFileHandler',
-        'logging.handlers.TimedRotatingFileHandler'
+        "logging.handlers.FileHandler",
+        "logging.handlers.RotatingFileHandler",
+        "logging.handlers.TimedRotatingFileHandler",
     ]
     KNOWN_HANDLERS = STDOUT_HANDLERS + LOGSTASH_HANDLERS + FILE_HANDLERS
 
@@ -74,8 +74,12 @@ class PluginLoggingLoader(object):
         formatters = cls._validate_formatters(config_to_validate.get("formatters", {}))
         loggers = cls._validate_loggers(config_to_validate.get("loggers", {}))
 
-        return LoggingConfig(level=default_level, handlers=handlers, formatters=formatters,
-                             loggers=loggers)
+        return LoggingConfig(
+            level=default_level,
+            handlers=handlers,
+            formatters=formatters,
+            loggers=loggers,
+        )
 
     @classmethod
     def _parse_python_logging_config(cls, python_logging_config, level):
@@ -85,18 +89,24 @@ class PluginLoggingLoader(object):
         :param level:
         :return:
         """
-        cls.logger.debug("Loading plugin logging configuration from python logger information "
-                         "specified in beer-garden")
-        default_level = python_logging_config.get('root', {}).get("level", level)
+        cls.logger.debug(
+            "Loading plugin logging configuration from python logger information "
+            "specified in beer-garden"
+        )
+        default_level = python_logging_config.get("root", {}).get("level", level)
 
-        handlers = cls._parse_python_handlers(python_logging_config.get('handlers'), level)
-        formatters = cls._parse_python_formatters(python_logging_config.get('formatters'))
+        handlers = cls._parse_python_handlers(
+            python_logging_config.get("handlers"), level
+        )
+        formatters = cls._parse_python_formatters(
+            python_logging_config.get("formatters")
+        )
         loggers = {}
         return {
-            'level': default_level,
-            'loggers': loggers,
-            'handlers': handlers,
-            'formatters': formatters
+            "level": default_level,
+            "loggers": loggers,
+            "handlers": handlers,
+            "formatters": formatters,
         }
 
     @classmethod
@@ -114,14 +124,18 @@ class PluginLoggingLoader(object):
         for handler_name, handler_config in six.iteritems(handlers):
             if handler_name in LoggingConfig.SUPPORTED_HANDLERS:
                 handlers_to_return[handler_name] = cls._parse_python_handler_config(
-                    handler_config, level)
+                    handler_config, level
+                )
             elif handler_config.get("class") in cls.KNOWN_HANDLERS:
-                standardized_name = cls._get_standardized_handler_name(handler_config['class'])
-                handlers_to_return[standardized_name] = cls._parse_python_handler_config(
-                    handler_config, level)
+                standardized_name = cls._get_standardized_handler_name(
+                    handler_config["class"]
+                )
+                handlers_to_return[
+                    standardized_name
+                ] = cls._parse_python_handler_config(handler_config, level)
 
         if not handlers_to_return:
-            handlers_to_return['stdout'] = LoggingConfig.DEFAULT_HANDLER
+            handlers_to_return["stdout"] = LoggingConfig.DEFAULT_HANDLER
 
         return handlers_to_return
 
@@ -137,9 +151,7 @@ class PluginLoggingLoader(object):
         :param formatters:
         :return:
         """
-        formatter_to_return = {
-            "default": {"format": LoggingConfig.DEFAULT_FORMAT}
-        }
+        formatter_to_return = {"default": {"format": LoggingConfig.DEFAULT_FORMAT}}
 
         for formatter_name, formatter_info in six.iteritems(formatters):
             if formatter_name in LoggingConfig.SUPPORTED_HANDLERS:
@@ -161,8 +173,8 @@ class PluginLoggingLoader(object):
             formatter = "default"
 
         config_to_return = copy.copy(handler_config)
-        config_to_return['level'] = level
-        config_to_return['formatter'] = formatter
+        config_to_return["level"] = level
+        config_to_return["formatter"] = formatter
         return config_to_return
 
     @classmethod
@@ -183,8 +195,9 @@ class PluginLoggingLoader(object):
                     for handler_name in logger_info.get("handlers"):
                         if handler_name not in LoggingConfig.SUPPORTED_HANDLERS:
                             raise LoggingLoadingError(
-                                "Invalid handler specified (%s). Supported handlers are: %s" %
-                                (handler_name, LoggingConfig.SUPPORTED_HANDLERS))
+                                "Invalid handler specified (%s). Supported handlers are: %s"
+                                % (handler_name, LoggingConfig.SUPPORTED_HANDLERS)
+                            )
                 else:
                     cls._validate_handlers(logger_info.get("handlers"))
 
@@ -207,12 +220,12 @@ class PluginLoggingLoader(object):
 
         for formatter_name, formatter_info in six.iteritems(formatters):
 
-            if formatter_name not in LoggingConfig.SUPPORTED_HANDLERS + ('default',):
-                raise LoggingLoadingError("Invalid formatters specified (%s). Supported "
-                                          "formatters are: %s" %
-                                          (formatter_name,
-                                           LoggingConfig.SUPPORTED_HANDLERS +
-                                           ('default',)))
+            if formatter_name not in LoggingConfig.SUPPORTED_HANDLERS + ("default",):
+                raise LoggingLoadingError(
+                    "Invalid formatters specified (%s). Supported "
+                    "formatters are: %s"
+                    % (formatter_name, LoggingConfig.SUPPORTED_HANDLERS + ("default",))
+                )
 
         return formatters
 
@@ -230,9 +243,11 @@ class PluginLoggingLoader(object):
 
         for handler_name, handler_config in six.iteritems(handlers):
             if handler_name not in LoggingConfig.SUPPORTED_HANDLERS:
-                raise LoggingLoadingError("Invalid handler specified (%s). "
-                                          "Supported handlers are: %s" %
-                                          (handler_name, LoggingConfig.SUPPORTED_HANDLERS))
+                raise LoggingLoadingError(
+                    "Invalid handler specified (%s). "
+                    "Supported handlers are: %s"
+                    % (handler_name, LoggingConfig.SUPPORTED_HANDLERS)
+                )
 
         return handlers
 
@@ -244,8 +259,10 @@ class PluginLoggingLoader(object):
         :return:
         """
         if level not in LoggingConfig.LEVELS:
-            raise LoggingLoadingError("Invalid level specified (%s) supported levels: %s" %
-                                      (level, LoggingConfig.LEVELS))
+            raise LoggingLoadingError(
+                "Invalid level specified (%s) supported levels: %s"
+                % (level, LoggingConfig.LEVELS)
+            )
         return level
 
     @classmethod
@@ -272,7 +289,9 @@ class PluginLoggingLoader(object):
         :return:
         """
         if filename:
-            cls.logger.debug("Plugin logging configuration provided. Loading from %s" % filename)
+            cls.logger.debug(
+                "Plugin logging configuration provided. Loading from %s" % filename
+            )
             with open(filename) as log_config_file:
                 return json.load(log_config_file)
         else:

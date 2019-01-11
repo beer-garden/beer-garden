@@ -19,9 +19,9 @@ __version__ = generated_version
 logger = logging.getLogger(__name__)
 
 bg_thrift = thriftpy.load(
-    os.path.join(os.path.dirname(__file__), 'thrift', 'beergarden.thrift'),
-    include_dirs=[os.path.join(os.path.dirname(__file__), 'thrift')],
-    module_name='bg_thrift'
+    os.path.join(os.path.dirname(__file__), "thrift", "beergarden.thrift"),
+    include_dirs=[os.path.join(os.path.dirname(__file__), "thrift")],
+    module_name="bg_thrift",
 )
 
 
@@ -36,6 +36,7 @@ def parse_args(spec, item_names, cli_args):
     Returns:
         dict: Argument values
     """
+
     def find_item(spec, item_name):
         name_parts = item_name.split(spec._separator)
         base_name = name_parts[0]
@@ -93,8 +94,7 @@ def generate_config_file(spec, cli_args):
     config = _generate_config(spec, cli_args)
     config_file, config_type = _get_config_values(config)
 
-    yapconf.dump_data(config.to_dict(), filename=config_file,
-                      file_type=config_type)
+    yapconf.dump_data(config.to_dict(), filename=config_file, file_type=config_type)
 
 
 def update_config_file(spec, cli_args):
@@ -114,12 +114,16 @@ def update_config_file(spec, cli_args):
     config_file, config_type = _get_config_values(config)
 
     if not config_file:
-        raise SystemExit('Please specify a config file to update'
-                         ' in the CLI arguments (-c)')
+        raise SystemExit(
+            "Please specify a config file to update" " in the CLI arguments (-c)"
+        )
 
-    spec.migrate_config_file(config_file, update_defaults=True,
-                             current_file_type=config_type,
-                             output_file_type=config_type)
+    spec.migrate_config_file(
+        config_file,
+        update_defaults=True,
+        current_file_type=config_type,
+        output_file_type=config_type,
+    )
 
 
 def generate_logging_config_file(spec, logging_config_generator, cli_args):
@@ -142,12 +146,12 @@ def generate_logging_config_file(spec, logging_config_generator, cli_args):
     """
     args = parse_args(spec, ["log.config_file", "log.file", "log.level"], cli_args)
 
-    log = args.get('log', {})
-    logging_config = logging_config_generator(log.get('level'), log.get('file'))
-    log_config_file = log.get('config_file')
+    log = args.get("log", {})
+    logging_config = logging_config_generator(log.get("level"), log.get("file"))
+    log_config_file = log.get("config_file")
 
     if log_config_file is not None:
-        with open(log_config_file, 'w') as f:
+        with open(log_config_file, "w") as f:
             dumped = json.dumps(logging_config, indent=4, sort_keys=True)
             f.write(six.u(dumped))
     else:
@@ -158,10 +162,10 @@ def generate_logging_config_file(spec, logging_config_generator, cli_args):
 
 def load_application_config(spec, cli_args):
 
-    spec.add_source('cli_args', 'dict', data=cli_args)
-    spec.add_source('ENVIRONMENT', 'environment')
+    spec.add_source("cli_args", "dict", data=cli_args)
+    spec.add_source("ENVIRONMENT", "environment")
 
-    config_sources = ['cli_args', 'ENVIRONMENT']
+    config_sources = ["cli_args", "ENVIRONMENT"]
 
     # Load bootstrap items to see if there's a config file
     temp_config = spec.load_config(*config_sources, bootstrap=True)
@@ -169,10 +173,10 @@ def load_application_config(spec, cli_args):
     if temp_config.configuration.file:
         if temp_config.configuration.type:
             file_type = temp_config.configuration.type
-        elif temp_config.configuration.file.endswith('json'):
-            file_type = 'json'
+        elif temp_config.configuration.file.endswith("json"):
+            file_type = "json"
         else:
-            file_type = 'yaml'
+            file_type = "yaml"
         filename = temp_config.configuration.file
         _safe_migrate(spec, filename, file_type)
         spec.add_source(filename, file_type, filename=filename)
@@ -182,7 +186,7 @@ def load_application_config(spec, cli_args):
 
 
 def _safe_migrate(spec, filename, file_type):
-    tmp_filename = filename + '.tmp'
+    tmp_filename = filename + ".tmp"
     try:
         spec.migrate_config_file(
             filename,
@@ -192,8 +196,8 @@ def _safe_migrate(spec, filename, file_type):
         )
     except Exception:
         sys.stderr.write(
-            'Could not successfully migrate application configuration.'
-            'will attempt to load the previous configuration.'
+            "Could not successfully migrate application configuration."
+            "will attempt to load the previous configuration."
         )
         return
     if _is_new_config(filename, file_type, tmp_filename):
@@ -203,29 +207,29 @@ def _safe_migrate(spec, filename, file_type):
 
 
 def _is_new_config(filename, file_type, tmp_filename):
-    with open(filename, 'r') as f, open(tmp_filename, 'r') as g:
-        if file_type == 'json':
+    with open(filename, "r") as f, open(tmp_filename, "r") as g:
+        if file_type == "json":
             old_config = json.load(f)
             new_config = json.load(g)
-        elif file_type == 'yaml':
+        elif file_type == "yaml":
             yaml = YAML()
             old_config = yaml.load(f)
             new_config = yaml.load(g)
         else:
-            raise ValueError('Unsupported file type %s' % file_type)
+            raise ValueError("Unsupported file type %s" % file_type)
 
     return old_config != new_config
 
 
 def _swap_files(filename, tmp_filename):
     try:
-        os.rename(filename, filename + '_' + datetime.utcnow().isoformat())
+        os.rename(filename, filename + "_" + datetime.utcnow().isoformat())
     except Exception:
         sys.stderr.write(
-            'Could not backup the old configuration. Cowardly refusing to '
-            'overwrite the current configuration with the old configuration. '
-            'This could cause problems later. Please see %s for the new '
-            'configuration file' % tmp_filename
+            "Could not backup the old configuration. Cowardly refusing to "
+            "overwrite the current configuration with the old configuration. "
+            "This could cause problems later. Please see %s for the new "
+            "configuration file" % tmp_filename
         )
         return
 
@@ -233,10 +237,10 @@ def _swap_files(filename, tmp_filename):
         os.rename(tmp_filename, filename)
     except Exception:
         sys.stderr.write(
-            'ERROR: Config migration was a success, but we could not move the '
-            'new config into the old config value. Maybe a permission issue? '
-            'Beer Garden cannot start now. To resolve this, you need to rename '
-            '%s to %s' % (tmp_filename, filename)
+            "ERROR: Config migration was a success, but we could not move the "
+            "new config into the old config value. Maybe a permission issue? "
+            "Beer Garden cannot start now. To resolve this, you need to rename "
+            "%s to %s" % (tmp_filename, filename)
         )
         raise
 
@@ -254,7 +258,7 @@ def setup_application_logging(config, default_config):
         dict: The logging configuration used
     """
     if config.log.config_file:
-        with open(config.log.config_file, 'rt') as f:
+        with open(config.log.config_file, "rt") as f:
             logging_config = json.load(f)
     else:
         logging_config = default_config
@@ -278,7 +282,7 @@ def _generate_config(spec, cli_args):
     spec.add_arguments(parser)
     args = parser.parse_args(cli_args)
 
-    return spec.load_config(vars(args), 'ENVIRONMENT')
+    return spec.load_config(vars(args), "ENVIRONMENT")
 
 
 def _get_config_values(config):
@@ -289,9 +293,9 @@ def _get_config_values(config):
 
     # Default to yaml, but try to use file extension if we have one
     if config_type is None:
-        if config_file and config_file.endswith('json'):
-            config_type = 'json'
+        if config_file and config_file.endswith("json"):
+            config_type = "json"
         else:
-            config_type = 'yaml'
+            config_type = "yaml"
 
     return config_file, config_type

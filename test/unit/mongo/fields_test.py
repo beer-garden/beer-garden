@@ -4,11 +4,10 @@ from bg_utils.mongo.fields import DummyField
 
 
 class DummyFieldTest(unittest.TestCase):
-
     def test_to_python(self):
         field = DummyField()
-        self.assertEqual('value', field.to_python('value'))
+        self.assertEqual("value", field.to_python("value"))
 
     def test_to_mongo(self):
         field = DummyField()
-        self.assertIsNone(field.to_mongo('value'))
+        self.assertIsNone(field.to_mongo("value"))

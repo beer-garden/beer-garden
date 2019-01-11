@@ -33,8 +33,8 @@ class EventPublishers(MutableMapping):
                 connection.publish_event(event, **kwargs)
             except Exception as ex:
                 self._logger.exception(
-                    "Exception while publishing event to '%s' connection: %s",
-                    name, ex)
+                    "Exception while publishing event to '%s' connection: %s", name, ex
+                )
 
     def shutdown(self):
         return [c.shutdown() for c in self._connections.values()]

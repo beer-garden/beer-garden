@@ -45,13 +45,15 @@ def get_routing_keys(*args, **kwargs):
     :param kwargs: is_admin: Will prepend 'admin' to all generated keys if True
     :return: List of routing keys, ordered from general to specific
     """
-    routing_keys = ['admin'] if kwargs.get('is_admin', False) else []
+    routing_keys = ["admin"] if kwargs.get("is_admin", False) else []
 
     for arg in (y for y in args if y is not None):
         # Make sure we don't have any extra word delimiters
-        new_key = arg.replace('.', '-')
+        new_key = arg.replace(".", "-")
 
-        routing_keys.append(routing_keys[-1] + '.' + new_key if len(routing_keys) else new_key)
+        routing_keys.append(
+            routing_keys[-1] + "." + new_key if len(routing_keys) else new_key
+        )
 
     return routing_keys
 
@@ -65,16 +67,18 @@ class TransientPikaClient(PikaClient):
 
     def is_alive(self):
         try:
-            with BlockingConnection(self.connection_parameters(connection_attempts=1)) as conn:
+            with BlockingConnection(
+                self.connection_parameters(connection_attempts=1)
+            ) as conn:
                 return conn.is_open
         except AMQPError:
             return False
 
     def declare_exchange(self):
         with BlockingConnection(self._conn_params) as conn:
-            conn.channel().exchange_declare(exchange=self._exchange,
-                                            exchange_type='topic',
-                                            durable=True)
+            conn.channel().exchange_declare(
+                exchange=self._exchange, exchange_type="topic", durable=True
+            )
 
     def setup_queue(self, queue_name, queue_args, routing_keys):
         """Will create a new queue with the given args and bind it to the given routing keys"""
@@ -83,12 +87,11 @@ class TransientPikaClient(PikaClient):
             conn.channel().queue_declare(queue_name, **queue_args)
 
             for routing_key in routing_keys:
-                conn.channel().queue_bind(queue_name, self._exchange, routing_key=routing_key)
+                conn.channel().queue_bind(
+                    queue_name, self._exchange, routing_key=routing_key
+                )
 
-        return {
-            'name': queue_name,
-            'args': queue_args
-        }
+        return {"name": queue_name, "args": queue_args}
 
     def publish(self, message, **kwargs):
         """Publish a message.
@@ -113,16 +116,20 @@ class TransientPikaClient(PikaClient):
         with BlockingConnection(self._conn_params) as conn:
             channel = conn.channel()
 
-            if kwargs.get('confirm'):
+            if kwargs.get("confirm"):
                 channel.confirm_delivery()
 
-            properties = BasicProperties(app_id='beer-garden',
-                                         content_type='text/plain',
-                                         headers=kwargs.get('headers'),
-                                         expiration=kwargs.get('expiration'))
+            properties = BasicProperties(
+                app_id="beer-garden",
+                content_type="text/plain",
+                headers=kwargs.get("headers"),
+                expiration=kwargs.get("expiration"),
+            )
 
-            return channel.basic_publish(exchange=self._exchange,
-                                         routing_key=kwargs['routing_key'],
-                                         body=message,
-                                         properties=properties,
-                                         mandatory=kwargs.get('mandatory'))
+            return channel.basic_publish(
+                exchange=self._exchange,
+                routing_key=kwargs["routing_key"],
+                body=message,
+                properties=properties,
+                mandatory=kwargs.get("mandatory"),
+            )
