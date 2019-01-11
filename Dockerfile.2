@@ -2,8 +2,8 @@ FROM python:2-alpine
 ARG VERSION
 ENTRYPOINT ["bartender"]
 
-ENV BG_PLUGIN_DIRECTORY=/plugins \
-    BG_LOG_CONFIG=/logging-config.json
+ENV BG_PLUGIN_LOCAL_DIRECTORY=/plugins \
+    BG_LOG_CONFIG_FILE=/logging-config.json
 
 ADD dev_conf/logging-config.json /logging-config.json
 

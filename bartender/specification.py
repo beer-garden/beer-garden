@@ -1,9 +1,8 @@
-
 SPECIFICATION = {
     "configuration": {
-        'type': 'dict',
+        "type": "dict",
         "bootstrap": True,
-        'items': {
+        "items": {
             "file": {
                 "type": "str",
                 "description": "Path to configuration file to use",
@@ -30,9 +29,9 @@ SPECIFICATION = {
         "previous_names": ["amq_publish_host"],
         "alt_env_names": ["AMQ_PUBLISH_HOST"],
     },
-    'amq': {
-        'type': 'dict',
-        'items': {
+    "amq": {
+        "type": "dict",
+        "items": {
             "host": {
                 "type": "str",
                 "default": "localhost",
@@ -41,7 +40,7 @@ SPECIFICATION = {
             },
             "admin_queue_expiry": {
                 "type": "int",
-                "default": 3600000,     # One hour
+                "default": 3600000,  # One hour
                 "description": "Time before unused admin queues are removed",
             },
             "heartbeat_interval": {
@@ -49,6 +48,11 @@ SPECIFICATION = {
                 "default": 3600,
                 "description": "Heartbeat interval for AMQ",
                 "previous_names": ["amq_heartbeat_interval"],
+            },
+            "blocked_connection_timeout": {
+                "type": "int",
+                "default": 5,
+                "description": "Time to wait for a blocked connection to be unblocked",
             },
             "connection_attempts": {
                 "type": "int",
@@ -68,12 +72,12 @@ SPECIFICATION = {
                 "description": "Virtual host to use for AMQ",
                 "previous_names": ["amq_virtual_host"],
             },
-            'connections': {
-                'type': 'dict',
-                'items': {
-                    'admin': {
-                        'type': 'dict',
-                        'items': {
+            "connections": {
+                "type": "dict",
+                "items": {
+                    "admin": {
+                        "type": "dict",
+                        "items": {
                             "port": {
                                 "type": "int",
                                 "default": 15672,
@@ -92,7 +96,10 @@ SPECIFICATION = {
                                 "type": "str",
                                 "default": "guest",
                                 "description": "Password to login to the AMQ admin",
-                                "previous_names": ["amq_admin_password", "amq_admin_pw"],
+                                "previous_names": [
+                                    "amq_admin_password",
+                                    "amq_admin_pw",
+                                ],
                                 "alt_env_names": ["AMQ_ADMIN_PASSWORD", "AMQ_ADMIN_PW"],
                             },
                             "ssl": {
@@ -123,9 +130,9 @@ SPECIFICATION = {
                             },
                         },
                     },
-                    'message': {
-                        'type': 'dict',
-                        'items': {
+                    "message": {
+                        "type": "dict",
+                        "items": {
                             "port": {
                                 "type": "int",
                                 "default": 5672,
@@ -179,19 +186,18 @@ SPECIFICATION = {
             },
         },
     },
-
-    'db': {
-        'type': 'dict',
-        'items': {
+    "db": {
+        "type": "dict",
+        "items": {
             "name": {
                 "type": "str",
                 "default": "beer_garden",
                 "description": "Name of the database to use",
                 "previous_names": ["db_name"],
             },
-            'connection': {
-                'type': 'dict',
-                'items': {
+            "connection": {
+                "type": "dict",
+                "items": {
                     "host": {
                         "type": "str",
                         "default": "localhost",
@@ -224,14 +230,14 @@ SPECIFICATION = {
                     },
                 },
             },
-            'ttl': {
-                'type': 'dict',
-                'items': {
+            "ttl": {
+                "type": "dict",
+                "items": {
                     "event": {
                         "type": "int",
                         "default": 15,
                         "description": "Number of minutes to wait before deleting "
-                                       "events (negative number for never)",
+                        "events (negative number for never)",
                         "previous_names": ["event_mongo_ttl"],
                         "alt_env_names": ["EVENT_MONGO_TTL"],
                     },
@@ -239,7 +245,7 @@ SPECIFICATION = {
                         "type": "int",
                         "default": -1,
                         "description": "Number of minutes to wait before deleting "
-                                       "ACTION requests (negative number for never)",
+                        "ACTION requests (negative number for never)",
                         "previous_names": ["action_request_ttl"],
                         "alt_env_names": ["ACTION_REQUEST_TTL"],
                     },
@@ -254,10 +260,9 @@ SPECIFICATION = {
             },
         },
     },
-
-    'log': {
-        'type': 'dict',
-        'items': {
+    "log": {
+        "type": "dict",
+        "items": {
             "config_file": {
                 "type": "str",
                 "description": "Path to a logging config file.",
@@ -281,10 +286,9 @@ SPECIFICATION = {
             },
         },
     },
-
-    'web': {
-        'type': 'dict',
-        'items': {
+    "web": {
+        "type": "dict",
+        "items": {
             "ca_cert": {
                 "type": "str",
                 "description": "Path to CA certificate file to use",
@@ -323,13 +327,13 @@ SPECIFICATION = {
             "username": {
                 "type": "str",
                 "description": "Username that Bartender will use for "
-                               "authentication (needs bg-all role)",
+                "authentication (needs bg-all role)",
                 "required": False,
             },
             "password": {
                 "type": "str",
                 "description": "Password that Bartender will use for "
-                               "authentication (needs bg-all role)",
+                "authentication (needs bg-all role)",
                 "required": False,
             },
             "url_prefix": {
@@ -342,10 +346,9 @@ SPECIFICATION = {
             },
         },
     },
-
-    'thrift': {
-        'type': 'dict',
-        'items': {
+    "thrift": {
+        "type": "dict",
+        "items": {
             "max_workers": {
                 "type": "int",
                 "default": 25,
@@ -367,10 +370,9 @@ SPECIFICATION = {
             },
         },
     },
-
-    'plugin': {
-        'type': 'dict',
-        'items': {
+    "plugin": {
+        "type": "dict",
+        "items": {
             "status_heartbeat": {
                 "type": "int",
                 "default": 10,
@@ -383,22 +385,22 @@ SPECIFICATION = {
                 "description": "Amount of time to wait before marking a plugin as unresponsive",
                 "previous_names": ["plugin_status_timeout "],
             },
-            'local': {
-                'type': 'dict',
-                'items': {
-                    'auth': {
-                        'type': 'dict',
-                        'items': {
+            "local": {
+                "type": "dict",
+                "items": {
+                    "auth": {
+                        "type": "dict",
+                        "items": {
                             "username": {
                                 "type": "str",
                                 "description": "Username that local plugins will use for "
-                                               "authentication (needs bg-plugin role)",
+                                "authentication (needs bg-plugin role)",
                                 "required": False,
                             },
                             "password": {
                                 "type": "str",
                                 "description": "Password that local plugins will use for "
-                                               "authentication (needs bg-plugin role)",
+                                "authentication (needs bg-plugin role)",
                                 "required": False,
                             },
                         },
@@ -417,9 +419,9 @@ SPECIFICATION = {
                         "previous_names": ["plugin_log_directory"],
                         "alt_env_names": ["PLUGIN_LOG_DIRECTORY"],
                     },
-                    'timeout': {
-                        'type': 'dict',
-                        'items': {
+                    "timeout": {
+                        "type": "dict",
+                        "items": {
                             "shutdown": {
                                 "type": "int",
                                 "default": 10,
@@ -446,43 +448,32 @@ SPECIFICATION = {
 def get_default_logging_config(level, filename):
     if filename:
         bartender_handler = {
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": level,
-                "formatter": "simple",
-                "filename": filename,
-                "maxBytes": 10485760,
-                "backupCount": 20,
-                "encoding": "utf8"
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": level,
+            "formatter": "simple",
+            "filename": filename,
+            "maxBytes": 10485760,
+            "backupCount": 20,
+            "encoding": "utf8",
         }
     else:
         bartender_handler = {
             "class": "logging.StreamHandler",
             "formatter": "simple",
             "level": level,
-            "stream": "ext://sys.stdout"
+            "stream": "ext://sys.stdout",
         }
 
     return {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
-            "simple": {
-                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            }
+            "simple": {"format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"}
         },
-        "handlers": {
-            "bartender": bartender_handler
-        },
+        "handlers": {"bartender": bartender_handler},
         "loggers": {
-            "pika": {
-                "level": "ERROR"
-            },
-            "requests.packages.urllib3.connectionpool": {
-                "level": "WARN"
-            }
+            "pika": {"level": "ERROR"},
+            "requests.packages.urllib3.connectionpool": {"level": "WARN"},
         },
-        "root": {
-            "level": level,
-            "handlers": ["bartender"]
-        }
+        "root": {"level": level, "handlers": ["bartender"]},
     }

@@ -4,27 +4,38 @@ from pyrabbit2.api import Client
 from pyrabbit2.http import HTTPError, NetworkError
 
 import bartender
-from bg_utils.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 
 
 class PyrabbitClient(object):
     """Class that implements a connection to RabbitMQ Management HTTP API"""
 
-    def __init__(self, host='localhost', port=15672, user='guest', password='guest',
-                 virtual_host='/', ssl=None):
+    def __init__(
+        self,
+        host="localhost",
+        port=15672,
+        user="guest",
+        password="guest",
+        virtual_host="/",
+        ssl=None,
+    ):
         self.logger = logging.getLogger(__name__)
 
         # Pyrabbit won't infer the default virtual host ('/'). So we need to enforce it
-        self._virtual_host = virtual_host or '/'
+        self._virtual_host = virtual_host or "/"
 
         ssl = ssl or {}
-        verify = ssl.get('ca_cert', True) if ssl.get('ca_verify') else False
+        verify = ssl.get("ca_cert", True) if ssl.get("ca_verify") else False
 
         # The client for doing Admin things over the HTTP API
-        self._client = Client("%s:%s" % (host, port), user, password,
-                              scheme='https' if ssl.get('enabled') else 'http',
-                              verify=verify,
-                              cert=ssl.get('client_cert'))
+        self._client = Client(
+            "%s:%s" % (host, port),
+            user,
+            password,
+            scheme="https" if ssl.get("enabled") else "http",
+            verify=verify,
+            cert=ssl.get("client_cert"),
+        )
 
     def is_alive(self):
         try:
@@ -37,19 +48,21 @@ class PyrabbitClient(object):
         try:
             return self._client.get_vhost(self._virtual_host)
         except Exception:
-            self.logger.error("Error verifying virtual host %s, does it exist?", self._virtual_host)
+            self.logger.error(
+                "Error verifying virtual host %s, does it exist?", self._virtual_host
+            )
             raise
 
     def ensure_admin_expiry(self):
         """Ensure that the admin queue expiration policy exists"""
         try:
             kwargs = {
-                'pattern': '^admin.*',
-                'definition': {'expires': bartender.config.amq.admin_queue_expiry},
-                'priority': 1,
-                'apply-to': 'queues',
+                "pattern": "^admin.*",
+                "definition": {"expires": bartender.config.amq.admin_queue_expiry},
+                "priority": 1,
+                "apply-to": "queues",
             }
-            self._client.create_policy(self._virtual_host, 'admin_expiry', **kwargs)
+            self._client.create_policy(self._virtual_host, "admin_expiry", **kwargs)
         except Exception:
             self.logger.error("Error creating admin queue expiration policy")
             raise
@@ -62,7 +75,9 @@ class PyrabbitClient(object):
         """
         self.logger.debug("Getting queue Size for: %s", queue_name)
         try:
-            return self._client.get_queue(self._virtual_host, queue_name).get('messages', 0)
+            return self._client.get_queue(self._virtual_host, queue_name).get(
+                "messages", 0
+            )
         except HTTPError as ex:
             if ex.status == 404:
                 self.logger.error("Queue '%s' could not be found", queue_name)
@@ -78,26 +93,30 @@ class PyrabbitClient(object):
         """
         self.logger.info("Clearing Queue: %s", queue_name)
         queue_dictionary = self._client.get_queue(self._virtual_host, queue_name)
-        number_of_messages = queue_dictionary.get('messages_ready', 0)
+        number_of_messages = queue_dictionary.get("messages_ready", 0)
 
         while number_of_messages > 0:
             self.logger.debug("Getting the Next Message")
-            messages = self._client.get_messages(self._virtual_host, queue_name, count=1,
-                                                 requeue=False)
+            messages = self._client.get_messages(
+                self._virtual_host, queue_name, count=1, requeue=False
+            )
             if messages and len(messages) > 0:
                 message = messages[0]
                 try:
-                    request = BeerGardenSchemaParser.parse_request(message['payload'],
-                                                                   from_string=True)
+                    request = MongoParser.parse_request(
+                        message["payload"], from_string=True
+                    )
                     self.logger.debug("Canceling Request: %s", request.id)
-                    bartender.bv_client.update_request(request.id, status='CANCELED')
+                    bartender.bv_client.update_request(request.id, status="CANCELED")
                 except Exception as ex:
-                    self.logger.error('Error removing message:')
+                    self.logger.error("Error removing message:")
                     self.logger.exception(ex)
             else:
-                self.logger.debug("Race condition: The while loop thought there were "
-                                  "more messages to ingest but no more messages could "
-                                  "be received.")
+                self.logger.debug(
+                    "Race condition: The while loop thought there were "
+                    "more messages to ingest but no more messages could "
+                    "be received."
+                )
                 break
 
             number_of_messages -= 1
@@ -153,10 +172,12 @@ class PyrabbitClient(object):
         for channel in channels:
 
             # If the channel is already gone, just return an empty response
-            channel_details = self._client.get_channel(channel['name']) or {'consumer_details': []}
+            channel_details = self._client.get_channel(channel["name"]) or {
+                "consumer_details": []
+            }
 
-            for consumer_details in channel_details['consumer_details']:
-                if queue_name == consumer_details['queue']['name']:
+            for consumer_details in channel_details["consumer_details"]:
+                if queue_name == consumer_details["queue"]["name"]:
                     self._client.delete_connection(
-                        consumer_details['channel_details']['connection_name']
+                        consumer_details["channel_details"]["connection_name"]
                     )

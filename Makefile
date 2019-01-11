@@ -80,9 +80,15 @@ clean-all: clean-build clean-python clean-test ## remove all python
 clean: clean-all ## alias of clean-all
 
 
+# Formatting
+format: ## Run black formatter in-line
+	black $(MODULE_NAME) $(PYTHON_TEST_DIR)
+
+
 # Linting
 lint: ## check style with flake8
 	flake8 $(MODULE_NAME) $(TEST_DIR)
+	black --check $(MODULE_NAME) $(PYTHON_TEST_DIR)
 
 
 # Testing / Coverage
@@ -113,6 +119,9 @@ package: clean package-source package-wheel ## builds source and wheel package
 
 
 # Docker
+docker-login: ## log in to the docker registry
+	echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USER)" --password-stdin
+
 docker-build: ## build the docker images
 	docker build -t $(DOCKER_NAME):latest --build-arg VERSION=$(VERSION) -f Dockerfile .
 	docker build -t $(DOCKER_NAME):latest-python2 --build-arg VERSION=$(VERSION) -f Dockerfile.2 .
@@ -131,7 +140,10 @@ publish-package: package ## upload a package
 	twine upload dist/*
 
 publish-docker: docker-build ## push the docker images
-	docker push $(DOCKER_NAME):latest
-	docker push $(DOCKER_NAME):latest-python2
-	docker push $(DOCKER_NAME):$(VERSION)
 	docker push $(DOCKER_NAME):$(VERSION)-python2
+	docker push $(DOCKER_NAME):$(VERSION)
+	docker push $(DOCKER_NAME):latest-python2
+	docker push $(DOCKER_NAME):latest
+
+publish-docker-unstable: docker-build-unstable ## push the unstable docker image
+	docker push $(DOCKER_NAME):unstable

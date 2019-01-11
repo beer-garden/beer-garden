@@ -1,4 +1,3 @@
-
 def string_contains_environment_var(string):
     """Determines whether or not there is a valid environment variable in the string"""
     parts = string.split("$")
@@ -75,7 +74,7 @@ def expand_string_with_environment_var(string, env_copy=None):
     if env_copy is None:
         env_copy = os.environ.copy()
 
-    expanded_value = ''
+    expanded_value = ""
     for index, part in enumerate(parts):
         if index == 0:
             if len(part) == 0:
@@ -84,13 +83,13 @@ def expand_string_with_environment_var(string, env_copy=None):
                 expanded_value += part
 
         elif expanded_value.endswith("\\"):
-            expanded_value += ("$" + part)
+            expanded_value += "$" + part
 
         elif is_string_environment_variable(part):
             environment_key = get_environment_var_name_from_string(part)
-            environment_value = env_copy.get(environment_key, '')
+            environment_value = env_copy.get(environment_key, "")
             expanded_value += part.replace(environment_key, environment_value)
         else:
-            expanded_value += ("$" + part)
+            expanded_value += "$" + part
 
     return expanded_value
