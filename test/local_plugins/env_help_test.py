@@ -20,16 +20,16 @@ class EnvHelpTest(unittest.TestCase):
         self.assertEqual(string_contains_environment_var("foo"), False)
 
     def test_string_contains_environment_var_single_escaped(self):
-        self.assertEqual(string_contains_environment_var("\$foo"), False)
+        self.assertEqual(string_contains_environment_var(r"\$foo"), False)
 
     def test_string_contains_environment_var_multi_escaped(self):
-        self.assertEqual(string_contains_environment_var("\$foo:\$bar"), False)
+        self.assertEqual(string_contains_environment_var(r"\$foo:\$bar"), False)
 
     def test_string_contains_environment_var_true(self):
         self.assertEqual(string_contains_environment_var("$FOO"), True)
 
     def test_string_contains_environment_var_embedded(self):
-        self.assertEqual(string_contains_environment_var("\$foo:$BAR"), True)
+        self.assertEqual(string_contains_environment_var(r"\$foo:$BAR"), True)
 
     def test_string_contains_environment_var_bad_var(self):
         self.assertEqual(string_contains_environment_var("$.MyWeirdValue"), False)
@@ -38,7 +38,7 @@ class EnvHelpTest(unittest.TestCase):
         self.assertEqual(string_contains_environment_var("foo:$BAR"), True)
 
     def test_string_contains_environment_var_embeeded_escape(self):
-        self.assertEqual(string_contains_environment_var("foo\$bar"), False)
+        self.assertEqual(string_contains_environment_var(r"foo\$bar"), False)
 
     def test_is_string_environment_variable_no_string(self):
         self.assertEqual(is_string_environment_variable(""), False)
@@ -59,7 +59,7 @@ class EnvHelpTest(unittest.TestCase):
         self.assertEqual(get_environment_var_name_from_string("FOO:BAR"), "FOO")
 
     def test_expand_string_with_environmnet_var_complex_no_environment_var(self):
-        value = "FOO_BAR:/path/to/something/el\$e"
+        value = r"FOO_BAR:/path/to/something/el\$e"
         self.assertEqual(expand_string_with_environment_var(value), value)
 
     def test_expand_string_with_environment_var_simple_no_environment_var(self):

@@ -1,27 +1,55 @@
 language: python
 cache: pip
+sudo: required
+dist: xenial
+
+services:
+  - docker
+
+env:
+  global:
+    # Docker User
+    - secure: "lUFNIpVIu7B2TPW/uPg+YY0/2dMP/Rp0lSjJm5oWzezOk/vhaHCg7VqmeSMt1GXaB4oRM0B3+Ttyr5lME7zX8PfSgkTnGjdg+KeMwYP53XV+OT8OtKoap6wT6/G9GbuEFrJpOJUDuYlnm1qby2NIgQ+OBlau8ggrWgEpUYXttmSLfdntAA78h7USJJ0mJtGptrN5ADF3G+lzt29UH5lC4ot9uhtFwN7jmOTiaTBzXT4FyZdPTapd0GqormLllmrpKgFeFYQmhTFLG3TOua/Efv1XDgatOUxuqHZ3W5ThQgqc2p7zDMCUPcoqxUEVmqBr51O9v0FWItEoLFgpwb7BnG3HV41wSW5bozOJwQtv2qmY9r8+LU/PySaNJTyJBKjKjCkpzOKY6aCzIQZYZfdWh395rLHXmgpWJhfi/4p/7Cqx40ljMC+UT/AsnyVMX+wm8l3gcrFvLHHdhnjKSSRULriRkWEBidrvv1vnMN34ldgw89bzqJtsTWkR9SA9WFPP6/AV8BA15tCZdT5nHu5lGDbiILcdoHrlxyTUto2VxhXkgSCYHqIk6Ut3Lp8BUJvceLZJP/oyfhyIFkZBgZVb2X8iuV9/Mi7sB32YKxyn45Xdu5yQaHvG2LNPzrjUd88G8QUdgOBQFNMot4IGoe6SVV8XHNULQ8u1XBFR2fBm/NM="
+    # Docker Password
+    - secure: "pEIp6mvUKHl5LPcvKS5fXZBqiu1PaRco4gUdCnUr5m3kxjhbkDM80eQQhgCUTYrqIvQK5hJ0WXLhFfzdk0q0IcJ3m8encS5sZnDMMwPFvDeKTOhyoXctpVx4Nt+ks3js6JqejNgUNu1rgOZpJKnH31f52SRB+1XT1wvBc7MC3uck+X2Lh+d2fsnfLJuQ810SJTNnp9/3doN2QHAr5WSQkPSWKB1spCwB99azKsRX0k9j1So3OV9WbTTFukCrIXeg/hSKgjBaEk/yocNv88+R+5OHa77wv7HDToTkJ7PrMuQunc8icRMiubSrIsczB7wQ3Ta4mChHSZ0b6IxEOHjB+B1LIkQE+cThPv435cDltlaK+EdxuPn5CVDaOkQ46uHTH++UV7e+Pytq/1VQ/rlEA3xRNMmLxOzoSdZ/PvBoAnA7tLblDXupwgwcdiA04QDAGF3CQJCkmNQpP3aqC9KqodctsVnm1wmM5DJm17N6tiB+gOhNu+0QrRH20Wft1AzewR6NHJrElX4PJhnrxs8JMPftcQF4mAl24yZ7VghRrF6erHM164QlEudxzMJ9kpmTKSL560VCDTjuQmg5eZSmjMfQs2KDxvhUcQVvrI7ocjzbV3BMBQdiLfq24LlUb4pUBPHzOrmSWCeaJ608sg96/6gOZZE9J2jS6M0zzfXzQlk="
+
 python:
-  - 3.6
-  - 3.5
-  - 3.4
-  - 2.7
+  - '3.7'
+  - '3.6'
+  - '3.5'
+  - '3.4'
+  - '2.7'
 
+stages:
+  - lint
+  - test
+  - unstable docker deploy
+  - pypi deploy
+  - docker deploy
 
-install: "make deps"
-script: "make lint coverage"
+# This is for the "test" stage
+install: "make deps-python"
+script: "make coverage"
 after_success: "codecov"
 
-
-deploy:
-  provider: pypi
-  distributions: "sdist bdist_wheel"
-  on:
-    tags: true
-    python: 3.6
-  user: beerbuildbot
-  password:
-    secure: eRzIInKTfL5vu5UnF6QyE+L/GVadvVv1v/8Z8wP56DgdzBnkTgiQWzBKfsWtxDRmI8atGWyz0SatopkcTEePYucsZgIZXTFRqWJ8OiqanKylBV/r+0Cg14ADltdAipcsi3rK3I67v0kIiW823vdqSNbW0CcLjZfeiVXFObp8i8ARKF2XDjJhl4i1PK81+4e9nKlP6gTAEsvU31KM+tFD2fQsDfyQgY3s24yoCU6MpWsiWR03YHDFSWgbALhzyJaWOgtQIIMZJOKoqfhhtU9uwAVHx8nNxs2TMzd2hzNfITGaHrGWuyYtH2dbebcv9Mn3Vvl1cjv31ZU3EzxoU5lgM9twmxtMVXjcHzZEV9iH1AjS88zyTCXH8fjP5AGDANBYhOVB6PfvwRg70Sw645P+adPQBGkva3KDSKbbWgJg4ZdiVEYaZVMySZbaNueArDBH3uEtmPRVyikjH30xUb8SKx1k6wLmpBeOfbWru9WYkQ7pFLN5HWJdvta39U0oRFevpqCF5maEqYeeyxvfk7pnUwabVbRbTPXmeozhOMReMrnzUUSAF2hvJIcGshVp6AAi/4nUIGUqkbpYr0/xkauWpxrKnM7YghMGLniWK2d1od0EKXijat6nqtJxQB/+Xn5lzwSGWZCQi0I3dz5uD99ZdhqN2z6Om7XweP9/8vLWLh0=
-
-notifications:
-  slack:
-    secure: ODTX+6tZu+unnuliHiVrnQgm1Zp9Evi15vgz0JxX93SKoQ+gpw63PR+bTsGlZIOHPjTdZtT/mF7HvJlNKX1t/hsKS6tAVvCFJbnBDUHnSifBh3HFB6kJrVHHEVOMsgKy9nJ5vO6JBi1pwswEgpLndbONj6SAWF5pNJOT9IV6ju0fJDHnByh5uDHso/5aloO6Fg1tstrSQZ2p8AJXI2bTUPsDmShhntEHmbzK/IfwXCQ5WSehApkUGkzDTSf7PePOUNJpZ/7yJSihvGrrzd1gTmTM31Jg0gdOUkDVNfvKEEb14Wth9FruYZIQSNMHiVtb+P+8sCLhzDlLp3ZKIzEWIXTrNI3ELsnBCswQ6trVdy8AwCmh5Juaiwmnth32+a7FZ3nJSzr1WyP9kE4Ka8X1aRQtGme8TAvKWA/T5FSKp0W5+vQWWTybqrAo2I0V6KT5KemaQzxSdt/SYRhsRBcq/zPjerjmcyF3EGfEaWBN1bS+JyM0lX9SC7wt2I0XTUE3LZ70mKn1LJwto3gS2ENAf6LXmCLGEt9TAJub6Xfrd2IJCWniiwreBu01dfwyzkDr/D+l+3n7vR1PIf4GWZghw/nA1xBdRDi3euMBi9GKjiIulhZpt1QhbuAwYTuHPVkU6ALN5hwgtcwr9xGgbjzcP9HMnXvADkJSMI6Tt3HNESg=
+jobs:
+  include:
+    - stage: lint
+      install: "pip install black flake8"
+      script: "make lint"
+    - stage: unstable docker deploy
+      if: (branch = develop) AND (type != pull_request)
+      script: "make docker-login publish-docker-unstable"
+    - stage: pypi deploy
+      if: tag IS present
+      install: skip
+      script: "make package"
+      deploy:
+        provider: pypi
+        distributions: "sdist bdist_wheel"
+        user: beerbuildbot
+        password:
+          secure: eRzIInKTfL5vu5UnF6QyE+L/GVadvVv1v/8Z8wP56DgdzBnkTgiQWzBKfsWtxDRmI8atGWyz0SatopkcTEePYucsZgIZXTFRqWJ8OiqanKylBV/r+0Cg14ADltdAipcsi3rK3I67v0kIiW823vdqSNbW0CcLjZfeiVXFObp8i8ARKF2XDjJhl4i1PK81+4e9nKlP6gTAEsvU31KM+tFD2fQsDfyQgY3s24yoCU6MpWsiWR03YHDFSWgbALhzyJaWOgtQIIMZJOKoqfhhtU9uwAVHx8nNxs2TMzd2hzNfITGaHrGWuyYtH2dbebcv9Mn3Vvl1cjv31ZU3EzxoU5lgM9twmxtMVXjcHzZEV9iH1AjS88zyTCXH8fjP5AGDANBYhOVB6PfvwRg70Sw645P+adPQBGkva3KDSKbbWgJg4ZdiVEYaZVMySZbaNueArDBH3uEtmPRVyikjH30xUb8SKx1k6wLmpBeOfbWru9WYkQ7pFLN5HWJdvta39U0oRFevpqCF5maEqYeeyxvfk7pnUwabVbRbTPXmeozhOMReMrnzUUSAF2hvJIcGshVp6AAi/4nUIGUqkbpYr0/xkauWpxrKnM7YghMGLniWK2d1od0EKXijat6nqtJxQB/+Xn5lzwSGWZCQi0I3dz5uD99ZdhqN2z6Om7XweP9/8vLWLh0=
+    - stage: docker deploy
+      if: tag IS present
+      script: "make docker-login publish-docker VERSION=$TRAVIS_TAG"
