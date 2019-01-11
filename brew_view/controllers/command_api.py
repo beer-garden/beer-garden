@@ -1,14 +1,14 @@
 import logging
 
-from bg_utils.models import Command
-from bg_utils.parser import BeerGardenSchemaParser
+from bg_utils.mongo.models import Command
+from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 
 
 class CommandAPI(BaseHandler):
 
-    parser = BeerGardenSchemaParser()
+    parser = MongoParser()
     logger = logging.getLogger(__name__)
 
     @authenticated(permissions=[Permissions.COMMAND_READ])
@@ -36,5 +36,8 @@ class CommandAPI(BaseHandler):
         """
         self.logger.debug("Getting Command: %s", command_id)
 
-        self.write(self.parser.serialize_command(Command.objects.get(id=str(command_id)),
-                                                 to_string=False))
+        self.write(
+            self.parser.serialize_command(
+                Command.objects.get(id=str(command_id)), to_string=False
+            )
+        )

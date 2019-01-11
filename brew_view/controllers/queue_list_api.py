@@ -2,8 +2,8 @@ import logging
 
 from tornado.gen import coroutine
 
-from bg_utils.models import System
-from bg_utils.parser import BeerGardenSchemaParser
+from bg_utils.mongo.models import System
+from bg_utils.mongo.parser import MongoParser
 from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
@@ -12,7 +12,7 @@ from brewtils.models import Events, Queue
 
 class QueueListAPI(BaseHandler):
 
-    parser = BeerGardenSchemaParser()
+    parser = MongoParser()
     logger = logging.getLogger(__name__)
 
     @coroutine
@@ -41,23 +41,32 @@ class QueueListAPI(BaseHandler):
         for system in systems:
             for instance in system.instances:
 
-                queue = Queue(name='UNKNOWN', system=system.name, version=system.version,
-                              instance=instance.name, system_id=str(system.id),
-                              display=system.display_name, size=-1)
+                queue = Queue(
+                    name="UNKNOWN",
+                    system=system.name,
+                    version=system.version,
+                    instance=instance.name,
+                    system_id=str(system.id),
+                    display=system.display_name,
+                    size=-1,
+                )
 
                 with thrift_context() as client:
                     try:
-                        queue_info = yield client.getQueueInfo(system.name, system.version,
-                                                               instance.name)
+                        queue_info = yield client.getQueueInfo(
+                            system.name, system.version, instance.name
+                        )
                         queue.name = queue_info.name
                         queue.size = queue_info.size
                     except Exception:
-                        self.logger.error("Error getting queue size for %s[%s]-%s" %
-                                          (system.name, instance.name, system.version))
+                        self.logger.error(
+                            "Error getting queue size for %s[%s]-%s"
+                            % (system.name, instance.name, system.version)
+                        )
 
                 queues.append(queue)
 
-        self.set_header('Content-Type', 'application/json; charset=UTF-8')
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(self.parser.serialize_queue(queues, to_string=True, many=True))
 
     @coroutine
@@ -104,7 +113,7 @@ class OldQueueListAPI(BaseHandler):
         tags:
           - Deprecated
         """
-        self.redirect('/api/v1/queues/', permanent=True)
+        self.redirect("/api/v1/queues/", permanent=True)
 
     def delete(self):
         """
@@ -120,4 +129,4 @@ class OldQueueListAPI(BaseHandler):
         tags:
           - Deprecated
         """
-        self.redirect('/api/v1/queues/', permanent=True)
+        self.redirect("/api/v1/queues/", permanent=True)

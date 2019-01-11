@@ -31,7 +31,7 @@ auth:
 backend:
   host: localhost
   port: 9090
-  socket_timeout: 3000
+  socket_timeout: 13000
 configuration:
   file: dev_conf/config.yml
   type: yaml

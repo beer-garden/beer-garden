@@ -3,8 +3,8 @@ import logging
 from tornado.gen import coroutine
 from tornado.locks import Lock
 
-from bg_utils.models import System, Instance
-from bg_utils.parser import BeerGardenSchemaParser
+from bg_utils.mongo.models import System, Instance
+from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
@@ -14,7 +14,7 @@ from brewtils.schemas import SystemSchema
 
 class SystemListAPI(BaseHandler):
 
-    parser = BeerGardenSchemaParser()
+    parser = MongoParser()
     logger = logging.getLogger(__name__)
 
     REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
@@ -92,32 +92,34 @@ class SystemListAPI(BaseHandler):
         tags:
           - Systems
         """
-        query_set = System.objects.order_by(self.request.headers.get('order_by', 'name'))
-        serialize_params = {'to_string': True, 'many': True}
+        query_set = System.objects.order_by(
+            self.request.headers.get("order_by", "name")
+        )
+        serialize_params = {"to_string": True, "many": True}
 
-        include_fields = self.get_query_argument('include_fields', None)
-        exclude_fields = self.get_query_argument('exclude_fields', None)
-        dereference_nested = self.get_query_argument('dereference_nested', None)
-        include_commands = self.get_query_argument('include_commands', None)
+        include_fields = self.get_query_argument("include_fields", None)
+        exclude_fields = self.get_query_argument("exclude_fields", None)
+        dereference_nested = self.get_query_argument("dereference_nested", None)
+        include_commands = self.get_query_argument("include_commands", None)
 
         if include_fields:
-            include_fields = set(include_fields.split(',')) & self.REQUEST_FIELDS
+            include_fields = set(include_fields.split(",")) & self.REQUEST_FIELDS
             query_set = query_set.only(*include_fields)
-            serialize_params['only'] = include_fields
+            serialize_params["only"] = include_fields
 
         if exclude_fields:
-            exclude_fields = set(exclude_fields.split(',')) & self.REQUEST_FIELDS
+            exclude_fields = set(exclude_fields.split(",")) & self.REQUEST_FIELDS
             query_set = query_set.exclude(*exclude_fields)
-            serialize_params['exclude'] = exclude_fields
+            serialize_params["exclude"] = exclude_fields
 
-        if include_commands and include_commands.lower() == 'false':
-            query_set = query_set.exclude('commands')
+        if include_commands and include_commands.lower() == "false":
+            query_set = query_set.exclude("commands")
 
-            if 'exclude' not in serialize_params:
-                serialize_params['exclude'] = set()
-            serialize_params['exclude'].add('commands')
+            if "exclude" not in serialize_params:
+                serialize_params["exclude"] = set()
+            serialize_params["exclude"].add("commands")
 
-        if dereference_nested and dereference_nested.lower() == 'false':
+        if dereference_nested and dereference_nested.lower() == "false":
             query_set = query_set.no_dereference()
 
         # TODO - Handle multiple query arguments with the same key
@@ -132,7 +134,7 @@ class SystemListAPI(BaseHandler):
 
         result_set = query_set.filter(**filter_params)
 
-        self.set_header('Content-Type', 'application/json; charset=UTF-8')
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(self.parser.serialize_system(result_set, **serialize_params))
 
     @coroutine
@@ -141,8 +143,9 @@ class SystemListAPI(BaseHandler):
         """
         ---
         summary: Create a new System or update an existing System
-        description: If the System does not exist it will be created. If the System already exists
-            it will be updated (assuming it passes validation).
+        description: |
+            If the System does not exist it will be created. If the System
+            already exists it will be updated (assuming it passes validation).
         parameters:
           - name: system
             in: body
@@ -167,42 +170,55 @@ class SystemListAPI(BaseHandler):
         """
         self.request.event.name = Events.SYSTEM_CREATED.name
 
-        system_model = self.parser.parse_system(self.request.decoded_body, from_string=True)
+        system_model = self.parser.parse_system(
+            self.request.decoded_body, from_string=True
+        )
 
         with (yield self.system_lock.acquire()):
             # See if we already have a system with this name + version
-            existing_system = System.find_unique(system_model.name, system_model.version)
+            existing_system = System.find_unique(
+                system_model.name, system_model.version
+            )
 
             if not existing_system:
                 self.logger.debug("Creating a new system: %s" % system_model.name)
                 saved_system, status_code = self._create_new_system(system_model)
             else:
-                self.logger.debug("System %s already exists. Updating it." % system_model.name)
+                self.logger.debug(
+                    "System %s already exists. Updating it." % system_model.name
+                )
                 self.request.event.name = Events.SYSTEM_UPDATED.name
-                saved_system, status_code = self._update_existing_system(existing_system,
-                                                                         system_model)
+                saved_system, status_code = self._update_existing_system(
+                    existing_system, system_model
+                )
 
             saved_system.deep_save()
 
-        self.request.event_extras = {'system': saved_system}
+        self.request.event_extras = {"system": saved_system}
 
         self.set_status(status_code)
-        self.write(self.parser.serialize_system(saved_system, to_string=False,
-                                                include_commands=True))
+        self.write(
+            self.parser.serialize_system(
+                saved_system, to_string=False, include_commands=True
+            )
+        )
 
     @staticmethod
     def _create_new_system(system_model):
         new_system = system_model
 
-        # Assign a default 'main' instance if there aren't any instances and there can only be one
+        # Assign a default 'main' instance if there aren't any instances and there can
+        # only be one
         if not new_system.instances or len(new_system.instances) == 0:
             if new_system.max_instances is None or new_system.max_instances == 1:
-                new_system.instances = [Instance(name='default')]
+                new_system.instances = [Instance(name="default")]
                 new_system.max_instances = 1
             else:
-                raise ModelValidationError('Could not create system %s-%s: Systems with '
-                                           'max_instances > 1 must also define their instances' %
-                                           (system_model.name, system_model.version))
+                raise ModelValidationError(
+                    "Could not create system %s-%s: Systems with "
+                    "max_instances > 1 must also define their instances"
+                    % (system_model.name, system_model.version)
+                )
         else:
             if not new_system.max_instances:
                 new_system.max_instances = len(new_system.instances)
@@ -211,24 +227,30 @@ class SystemListAPI(BaseHandler):
 
     @staticmethod
     def _update_existing_system(existing_system, system_model):
-        # Raise an exception if commands already exist for this system and they differ from what's
-        # already in the database in a significant way
-        if existing_system.commands and 'dev' not in existing_system.version and \
-                existing_system.has_different_commands(system_model.commands):
-            raise ModelValidationError('System %s-%s already exists with different commands' %
-                                       (system_model.name, system_model.version))
+        # Raise an exception if commands already exist for this system and they differ
+        # from what's already in the database in a significant way
+        if (
+            existing_system.commands
+            and "dev" not in existing_system.version
+            and existing_system.has_different_commands(system_model.commands)
+        ):
+            raise ModelValidationError(
+                "System %s-%s already exists with different commands"
+                % (system_model.name, system_model.version)
+            )
         else:
             existing_system.upsert_commands(system_model.commands)
 
         # Update instances
         if not system_model.instances or len(system_model.instances) == 0:
-            system_model.instances = [Instance(name='default')]
+            system_model.instances = [Instance(name="default")]
 
-        for attr in ['description', 'icon_name', 'display_name']:
+        for attr in ["description", "icon_name", "display_name"]:
             value = getattr(system_model, attr)
 
-            # If we set an attribute on the model as None, mongoengine marks the attribute for
-            # deletion. We want to prevent this, so we set it to an emtpy string.
+            # If we set an attribute on the model as None, mongoengine marks the
+            # attribute for deletion. We want to prevent this, so we set it to an emtpy
+            # string.
             if value is None:
                 setattr(existing_system, attr, "")
             else:
@@ -238,10 +260,16 @@ class SystemListAPI(BaseHandler):
         new_metadata = system_model.metadata or {}
         existing_system.metadata.update(new_metadata)
 
-        old_instances = [inst for inst in existing_system.instances
-                         if system_model.has_instance(inst.name)]
-        new_instances = [inst for inst in system_model.instances
-                         if not existing_system.has_instance(inst.name)]
+        old_instances = [
+            inst
+            for inst in existing_system.instances
+            if system_model.has_instance(inst.name)
+        ]
+        new_instances = [
+            inst
+            for inst in system_model.instances
+            if not existing_system.has_instance(inst.name)
+        ]
         existing_system.instances = old_instances + new_instances
 
         return existing_system, 200

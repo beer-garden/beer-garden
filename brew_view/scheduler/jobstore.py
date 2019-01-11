@@ -4,12 +4,11 @@ from apscheduler.jobstores.base import BaseJobStore
 from mongoengine import DoesNotExist
 from pytz import utc
 
-from bg_utils.models import Job as BGJob
+from bg_utils.mongo.models import Job as BGJob
 from brew_view.scheduler import db_to_scheduler
 
 
 class BGJobStore(BaseJobStore):
-
     def lookup_job(self, job_id):
         """Get job from mongo, convert it to an apscheduler Job.
 
@@ -27,16 +26,17 @@ class BGJobStore(BaseJobStore):
 
     def get_due_jobs(self, now):
         """Find due jobs and convert them to apscheduler jobs."""
-        return self._get_jobs({'next_run_time__lte': now})
+        return self._get_jobs({"next_run_time__lte": now})
 
     def get_next_run_time(self):
         """Get the next run time as a localized datetime."""
         try:
-            document = BGJob.objects(
-                next_run_time__ne=None
-            ).order_by(
-                'next_run_time'
-            ).fields(next_run_time=1).first()
+            document = (
+                BGJob.objects(next_run_time__ne=None)
+                .order_by("next_run_time")
+                .fields(next_run_time=1)
+                .first()
+            )
 
             if document:
                 return utc.localize(document.next_run_time)
@@ -82,11 +82,9 @@ class BGJobStore(BaseJobStore):
     def _get_jobs(self, conditions):
         jobs = []
         failed_jobs = []
-        for document in BGJob.objects(**conditions).order_by('next_run_time'):
+        for document in BGJob.objects(**conditions).order_by("next_run_time"):
             try:
-                jobs.append(
-                    db_to_scheduler(document, self._scheduler, self._alias)
-                )
+                jobs.append(db_to_scheduler(document, self._scheduler, self._alias))
             except BaseException:
                 self._logger.exception(
                     'Unable to restore job "%s" -- removing it' % document.id

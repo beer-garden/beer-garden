@@ -5,8 +5,8 @@ import logging
 from tornado.gen import coroutine
 
 import brew_view
-from bg_utils.models import Job
-from bg_utils.parser import BeerGardenSchemaParser
+from bg_utils.mongo.models import Job
+from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brew_view.scheduler.runner import run_job
@@ -15,7 +15,7 @@ from brewtils.schemas import JobSchema
 
 class JobListAPI(BaseHandler):
 
-    parser = BeerGardenSchemaParser()
+    parser = MongoParser()
     logger = logging.getLogger(__name__)
 
     @authenticated(permissions=[Permissions.JOB_READ])
@@ -40,12 +40,12 @@ class JobListAPI(BaseHandler):
             if key in JobSchema.get_attribute_names():
                 filter_params[key] = self.get_query_argument(key)
 
-        self.set_header('Content-Type', 'application/json; charset=UTF-8')
-        self.write(self.parser.serialize_job(
-            Job.objects.filter(**filter_params),
-            to_string=True,
-            many=True
-        ))
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(
+            self.parser.serialize_job(
+                Job.objects.filter(**filter_params), to_string=True, many=True
+            )
+        )
 
     @coroutine
     @authenticated(permissions=[Permissions.JOB_CREATE])
@@ -74,10 +74,7 @@ class JobListAPI(BaseHandler):
         tags:
           - Jobs
         """
-        document = self.parser.parse_job(
-            self.request.decoded_body,
-            from_string=True
-        )
+        document = self.parser.parse_job(self.request.decoded_body, from_string=True)
         # We have to save here, because we need an ID to pass
         # to the scheduler.
         document.save()
@@ -87,14 +84,14 @@ class JobListAPI(BaseHandler):
                 run_job,
                 None,
                 kwargs={
-                    'request_template': document.request_template,
-                    'job_id': str(document.id),
+                    "request_template": document.request_template,
+                    "job_id": str(document.id),
                 },
                 name=document.name,
                 misfire_grace_time=document.misfire_grace_time,
                 coalesce=document.coalesce,
                 max_instances=3,
-                jobstore='beer_garden',
+                jobstore="beer_garden",
                 replace_existing=False,
                 id=str(document.id),
             )
@@ -103,5 +100,5 @@ class JobListAPI(BaseHandler):
             raise
 
         self.set_status(201)
-        self.set_header('Content-Type', 'application/json; charset=UTF-8')
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(self.parser.serialize_job(document, to_string=False))

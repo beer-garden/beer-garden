@@ -2,7 +2,7 @@ import logging
 
 from tornado.gen import coroutine
 
-from bg_utils.parser import BeerGardenSchemaParser
+from bg_utils.mongo.parser import MongoParser
 from brew_view import thrift_context
 from brew_view.authorization import check_permission, Permissions
 from brew_view.base_handler import BaseHandler
@@ -11,7 +11,7 @@ from brewtils.errors import ModelValidationError
 
 class AdminAPI(BaseHandler):
 
-    parser = BeerGardenSchemaParser()
+    parser = MongoParser()
     logger = logging.getLogger(__name__)
 
     @coroutine
@@ -50,10 +50,11 @@ class AdminAPI(BaseHandler):
           - Admin
         """
         operations = self.parser.parse_patch(
-            self.request.decoded_body, many=True, from_string=True)
+            self.request.decoded_body, many=True, from_string=True
+        )
 
         for op in operations:
-            if op.operation == 'rescan':
+            if op.operation == "rescan":
                 check_permission(self.current_user, [Permissions.SYSTEM_CREATE])
                 with thrift_context() as client:
                     yield client.rescanSystemDirectory()
@@ -66,7 +67,6 @@ class AdminAPI(BaseHandler):
 
 
 class OldAdminAPI(BaseHandler):
-
     @coroutine
     def post(self):
         """
