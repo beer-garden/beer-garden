@@ -85,6 +85,7 @@ clean: clean-build clean-docs clean-python clean-test ## remove everything but s
 # Linting
 lint: ## check style with flake8
 	flake8 $(MODULE_NAME) $(TEST_DIR)
+	black --check $(MODULE_NAME) $(PYTHON_TEST_DIR)
 
 
 # Testing / Coverage
