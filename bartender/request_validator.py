@@ -433,11 +433,11 @@ class RequestValidator(object):
                 and command_parameter.default is None
             ):
                 self.logger.error(
-                    "Required key: %s not provided in request. Parameters are: %s"
+                    "Required key '%s' not provided in request. Parameters are: %s"
                     % (command_parameter.key, request.parameters)
                 )
                 raise ModelValidationError(
-                    "Required key: %s not provided in request. Parameters are: %s"
+                    "Required key '%s' not provided in request. Parameters are: %s"
                     % (command_parameter.key, request.parameters)
                 )
 
@@ -452,11 +452,11 @@ class RequestValidator(object):
         for key in request_parameters:
             if key not in valid_keys:
                 self.logger.error(
-                    "Unknown Key: %s provided in the parameters. Valid Keys are: %s"
+                    "Unknown key '%s' provided in the parameters. Valid Keys are: %s"
                     % (key, valid_keys)
                 )
                 raise ModelValidationError(
-                    "Unknown Key: %s provided in the parameters. Valid Keys are: %s"
+                    "Unknown key '%s' provided in the parameters. Valid Keys are: %s"
                     % (key, valid_keys)
                 )
 
