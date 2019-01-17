@@ -242,7 +242,13 @@ class RequestValidator(object):
                 response_json = json.loads(
                     self._session.get(parsed_value["address"], params=query_params).text
                 )
-                allowed_values = [item["value"] for item in response_json]
+
+                allowed_values = []
+                for item in response_json:
+                    if isinstance(item, dict):
+                        allowed_values.append(item["value"])
+                    else:
+                        allowed_values.append(item)
             elif choices.type == "command":
 
                 if isinstance(choices.value, six.string_types):
