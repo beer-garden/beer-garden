@@ -290,13 +290,15 @@ class RequestValidator(object):
                         raise ModelValidationError(
                             "Value '%s' is not a valid choice for parameter with key '%s'. "
                             "Valid choices are: %s"
-                            % (single_value, command_parameter.key, allowed_values))
+                            % (single_value, command_parameter.key, allowed_values)
+                        )
             else:
                 if value not in allowed_values:
                     raise ModelValidationError(
                         "Value '%s' is not a valid choice for parameter with key '%s'. "
                         "Valid choices are: %s"
-                        % (value, command_parameter.key, allowed_values))
+                        % (value, command_parameter.key, allowed_values)
+                    )
 
     def _validate_maximum(self, value, command_parameter):
         """Validate that the value(s) are below the specified maximum"""
@@ -311,7 +313,8 @@ class RequestValidator(object):
                                 len(value),
                                 command_parameter.maximum,
                                 command_parameter.key,
-                            ))
+                            )
+                        )
                 else:
                     if value > command_parameter.maximum:
                         raise ModelValidationError(
@@ -333,13 +336,15 @@ class RequestValidator(object):
                                 len(value),
                                 command_parameter.minimum,
                                 command_parameter.key,
-                            ))
+                            )
+                        )
                 else:
                     if value < command_parameter.minimum:
                         raise ModelValidationError(
                             "Value %s is less than the minimum allowed value (%s) "
                             "for parameter %s"
-                            % (value, command_parameter.minimum, command_parameter.key))
+                            % (value, command_parameter.minimum, command_parameter.key)
+                        )
 
     def _validate_regex(self, value, command_parameter):
         """Validate that the value matches the regex"""
@@ -347,10 +352,9 @@ class RequestValidator(object):
             if command_parameter.regex:
                 if not re.match(command_parameter.regex, value):
                     raise ModelValidationError(
-                        "Value %s does not match regular expression %s" % (
-                        value,
-                        command_parameter.regex,
-                    ))
+                        "Value %s does not match regular expression %s"
+                        % (value, command_parameter.regex)
+                    )
 
     def _extract_parameter_value_from_request(
         self, request, command_parameter, request_parameters, command

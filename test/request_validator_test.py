@@ -87,7 +87,6 @@ class TestValidateRequest(object):
 
 
 class TestGetAndValidateSystem(object):
-
     def test_success(self, validator, system_find, bg_system, bg_request):
         system_find.return_value = bg_system
         assert validator.get_and_validate_system(bg_request) == bg_system
@@ -742,11 +741,7 @@ class TestValidateChoices(object):
             validator.get_and_validate_parameters(req, command)
 
     @pytest.mark.parametrize(
-        "response",
-        [
-            '[{"text": "text", "value": "value"}]',
-            '["value"]',
-        ],
+        "response", ['[{"text": "text", "value": "value"}]', '["value"]']
     )
     def test_validate_url_choices(self, validator, response):
         session_mock = Mock()
