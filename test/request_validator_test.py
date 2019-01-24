@@ -735,9 +735,16 @@ class TestValidateChoices(object):
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(req, command)
 
-    def test_validate_url_choices(self, validator):
+    @pytest.mark.parametrize(
+        "response",
+        [
+            '[{"text": "text", "value": "value"}]',
+            '["value"]',
+        ],
+    )
+    def test_validate_url_choices(self, validator, response):
         session_mock = Mock()
-        session_mock.get.return_value.text = '[{"value": "value"}]'
+        session_mock.get.return_value.text = response
         validator._session = session_mock
 
         req = Request(system="foo", command="command1", parameters={"key1": "value"})
