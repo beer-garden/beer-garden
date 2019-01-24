@@ -419,12 +419,18 @@ class TestValidateParameterType(object):
         "req_value,param_type,expected",
         [
             ("1", "String", "1"),
+            ("1", "Integer", 1),
             (1, "Integer", 1),
+            ("1.0", "Float", 1.0),
             (1.0, "Float", 1.0),
             ({}, "Any", {}),
             ({"foo": "bar"}, "Dictionary", {"foo": "bar"}),
             (False, "Boolean", False),
             (True, "Boolean", True),
+            ("1451606400000", "Date", 1451606400000),
+            (1451606400000, "Date", 1451606400000),
+            ("1451606400000", "Datetime", 1451606400000),
+            (1451606400000, "Datetime", 1451606400000),
         ],
     )
     def test_success(self, validator, req_value, param_type, expected):
