@@ -81,7 +81,6 @@ class RequestValidator(object):
             system = self.get_and_validate_system(request)
 
         if request.command is None:
-            self.logger.error("Could not validate command because it was none")
             raise ModelValidationError(
                 "Could not validate command because it was None."
             )
@@ -97,11 +96,6 @@ class RequestValidator(object):
                 if request.command_type is None:
                     request.command_type = command.command_type
                 elif command.command_type != request.command_type:
-                    self.logger.error(
-                        "Command Type for Request was %s but the command "
-                        "specified the command_type as %s"
-                        % (request.command_type, command.command_type)
-                    )
                     raise ModelValidationError(
                         "Command Type for Request was %s but the command specified "
                         "the type as %s" % (request.command_type, command.command_type)
@@ -110,11 +104,6 @@ class RequestValidator(object):
                 if request.output_type is None:
                     request.output_type = command.output_type
                 elif command.output_type != request.output_type:
-                    self.logger.error(
-                        "Output Type for Request was %s but the command specified "
-                        "the output_type as %s"
-                        % (request.output_type, command.output_type)
-                    )
                     raise ModelValidationError(
                         "Output Type for Request was %s but the command specified "
                         "the type as %s" % (request.output_type, command.output_type)
@@ -124,10 +113,6 @@ class RequestValidator(object):
 
             command_names.append(command.name)
 
-        self.logger.error(
-            "No Command with name: %s could be found. Valid Commands for %s "
-            "are: %s" % (request.command, system.name, command_names)
-        )
         raise ModelValidationError(
             "No Command with name: %s could be found. Valid Commands for %s are: %s"
             % (request.command, system.name, command_names)
@@ -302,22 +287,16 @@ class RequestValidator(object):
             if command_parameter.multi:
                 for single_value in value:
                     if single_value not in allowed_values:
-                        msg = (
+                        raise ModelValidationError(
                             "Value '%s' is not a valid choice for parameter with key '%s'. "
                             "Valid choices are: %s"
-                            % (single_value, command_parameter.key, allowed_values)
-                        )
-                        self.logger.error(msg)
-                        raise ModelValidationError(msg)
+                            % (single_value, command_parameter.key, allowed_values))
             else:
                 if value not in allowed_values:
-                    msg = (
+                    raise ModelValidationError(
                         "Value '%s' is not a valid choice for parameter with key '%s'. "
                         "Valid choices are: %s"
-                        % (value, command_parameter.key, allowed_values)
-                    )
-                    self.logger.error(msg)
-                    raise ModelValidationError(msg)
+                        % (value, command_parameter.key, allowed_values))
 
     def _validate_maximum(self, value, command_parameter):
         """Validate that the value(s) are below the specified maximum"""
@@ -325,26 +304,21 @@ class RequestValidator(object):
             if command_parameter.maximum:
                 if isinstance(value, collections.Sequence):
                     if len(value) > command_parameter.maximum:
-                        error_msg = (
+                        raise ModelValidationError(
                             "Length %s is greater than the maximum allowed length (%s) "
                             "for parameter %s"
                             % (
                                 len(value),
                                 command_parameter.maximum,
                                 command_parameter.key,
-                            )
-                        )
-                        self.logger.error(error_msg)
-                        raise ModelValidationError(error_msg)
+                            ))
                 else:
                     if value > command_parameter.maximum:
-                        error_msg = (
+                        raise ModelValidationError(
                             "Value %s is greater than the maximum allowed value (%s) "
                             "for parameter %s"
                             % (value, command_parameter.maximum, command_parameter.key)
                         )
-                        self.logger.error(error_msg)
-                        raise ModelValidationError(error_msg)
 
     def _validate_minimum(self, value, command_parameter):
         """Validate that the value(s) are above the specified minimum"""
@@ -352,38 +326,31 @@ class RequestValidator(object):
             if command_parameter.minimum:
                 if isinstance(value, collections.Sequence):
                     if len(value) < command_parameter.minimum:
-                        error_msg = (
+                        raise ModelValidationError(
                             "Length %s is less than the minimum allowed length (%s) "
                             "for parameter %s"
                             % (
                                 len(value),
                                 command_parameter.minimum,
                                 command_parameter.key,
-                            )
-                        )
-                        self.logger.error(error_msg)
-                        raise ModelValidationError(error_msg)
+                            ))
                 else:
                     if value < command_parameter.minimum:
-                        error_msg = (
+                        raise ModelValidationError(
                             "Value %s is less than the minimum allowed value (%s) "
                             "for parameter %s"
-                            % (value, command_parameter.minimum, command_parameter.key)
-                        )
-                        self.logger.error(error_msg)
-                        raise ModelValidationError(error_msg)
+                            % (value, command_parameter.minimum, command_parameter.key))
 
     def _validate_regex(self, value, command_parameter):
         """Validate that the value matches the regex"""
         if value is not None and not command_parameter.optional:
             if command_parameter.regex:
                 if not re.match(command_parameter.regex, value):
-                    error_msg = "Value %s does not match regular expression %s" % (
+                    raise ModelValidationError(
+                        "Value %s does not match regular expression %s" % (
                         value,
                         command_parameter.regex,
-                    )
-                    self.logger.error(error_msg)
-                    raise ModelValidationError(error_msg)
+                    ))
 
     def _extract_parameter_value_from_request(
         self, request, command_parameter, request_parameters, command
@@ -432,10 +399,6 @@ class RequestValidator(object):
                 command_parameter.key not in request_parameters
                 and command_parameter.default is None
             ):
-                self.logger.error(
-                    "Required key '%s' not provided in request. Parameters are: %s"
-                    % (command_parameter.key, request.parameters)
-                )
                 raise ModelValidationError(
                     "Required key '%s' not provided in request. Parameters are: %s"
                     % (command_parameter.key, request.parameters)
@@ -451,10 +414,6 @@ class RequestValidator(object):
         self.logger.debug("Valid Keys are : %s" % valid_keys)
         for key in request_parameters:
             if key not in valid_keys:
-                self.logger.error(
-                    "Unknown key '%s' provided in the parameters. Valid Keys are: %s"
-                    % (key, valid_keys)
-                )
                 raise ModelValidationError(
                     "Unknown key '%s' provided in the parameters. Valid Keys are: %s"
                     % (key, valid_keys)
