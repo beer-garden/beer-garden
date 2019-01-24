@@ -1,9 +1,9 @@
 import pytest
 from box import Box
-from mock import Mock, call, patch, PropertyMock
+from mock import Mock, call, patch
 
 from bartender.request_validator import RequestValidator
-from bg_utils.mongo.models import Command, Instance, Parameter, Request, System, Choices
+from bg_utils.mongo.models import Command, Parameter, Request, System, Choices
 from brewtils.errors import ModelValidationError
 
 
@@ -19,6 +19,13 @@ def config_mock():
             "ca_cert": None,
         }
     )
+
+
+@pytest.fixture
+def system_find(monkeypatch):
+    find_mock = Mock()
+    monkeypatch.setattr(System, "find_unique", find_mock)
+    return find_mock
 
 
 @pytest.fixture
@@ -59,7 +66,411 @@ def make_request(**kwargs):
     return Mock(spec=Request, **defaults)
 
 
-class TestChoices(object):
+class TestSessionConfig(object):
+    def test_verify(self, monkeypatch, config_mock):
+        cert_mock = Mock()
+        config_mock.web.ca_cert = cert_mock
+        config_mock.web.ca_verify = True
+        monkeypatch.setattr("bartender.config", config_mock)
+
+        validator = RequestValidator()
+        assert validator._session.verify == cert_mock
+
+    def test_no_verify(self, validator):
+        assert validator._session.verify is False
+
+
+class TestValidateRequest(object):
+    def test_success(self, validator, system_find, bg_system, bg_request):
+        system_find.return_value = bg_system
+        assert validator.validate_request(bg_request) == bg_request
+
+
+class TestGetAndValidateSystem(object):
+    def test_success(self, validator, system_find, bg_system, bg_request):
+        system_find.return_value = bg_system
+        assert validator.get_and_validate_system(bg_request) == bg_system
+
+    def test_missing_system(self, validator, system_find, bg_request):
+        system_find.return_value = None
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_system(bg_request)
+
+    def test_invalid_instance(self, validator, system_find, bg_system, bg_request):
+        system_find.return_value = bg_system
+        bg_request.instance_name = "INVALID"
+
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_system(bg_request)
+
+
+class TestGetAndValidateCommandForSystem(object):
+    def test_success(self, validator, bg_system, bg_request, bg_command):
+        assert (
+            validator.get_and_validate_command_for_system(bg_request, system=bg_system)
+            == bg_command
+        )
+
+    def test_no_request_command(self, validator):
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_command_for_system(
+                Request(system="foo", parameters={}), Mock()
+            )
+
+    def test_system_lookup(
+        self, monkeypatch, validator, bg_system, bg_request, bg_command
+    ):
+        monkeypatch.setattr(
+            validator, "get_and_validate_system", Mock(return_value=bg_system)
+        )
+        assert validator.get_and_validate_command_for_system(bg_request) == bg_command
+
+    def test_command_type(self, validator, bg_system, bg_request):
+        bg_request.command_type = None
+
+        validator.get_and_validate_command_for_system(bg_request, system=bg_system)
+        assert bg_request.command_type == "ACTION"
+
+    def test_output_type(self, validator, bg_system, bg_request):
+        bg_request.output_type = None
+
+        validator.get_and_validate_command_for_system(bg_request, system=bg_system)
+        assert bg_request.output_type == "STRING"
+
+    @pytest.mark.parametrize("attribute", ["command", "command_type", "output_type"])
+    def test_bad_request_attributes(self, validator, bg_system, bg_request, attribute):
+        setattr(bg_request, attribute, "BAD")
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_command_for_system(bg_request, system=bg_system)
+
+
+class TestGetAndValidateParameters(object):
+    def test_success(self, validator, bg_request, bg_command):
+        params = validator.get_and_validate_parameters(bg_request, command=bg_command)
+        assert params == bg_request.parameters
+
+    def test_empty(self, validator):
+        req = Request(system="foo", command="command1")
+        command = Command(parameters=[])
+        assert validator.get_and_validate_parameters(req, command) == {}
+
+    def test_command_lookup(self, monkeypatch, validator):
+        request = Request(parameters={})
+        lookup_mock = Mock(return_value=Mock(parameters=[]))
+        monkeypatch.setattr(
+            validator, "get_and_validate_command_for_system", lookup_mock
+        )
+        validator.get_and_validate_parameters(request)
+        lookup_mock.assert_called_once_with(request)
+
+    def test_bad_request_parameter_key(self, validator, bg_request, bg_command):
+        bg_request.parameters = {"bad_key": "bad_value"}
+
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_parameters(bg_request, command=bg_command)
+
+    def test_missing_required_key_no_default(self, validator, bg_request, bg_command):
+        bg_command.parameters = [
+            make_param(key="message", optional=False, default=None, nullable=False)
+        ]
+        bg_request.parameters = {}
+
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_parameters(bg_request, command=bg_command)
+
+    def test_missing_required_key_with_default(self, validator, bg_request, bg_command):
+        bg_command.parameters = [
+            make_param(key="message", optional=False, default="foo", nullable=False)
+        ]
+        bg_request.parameters = {}
+
+        params = validator.get_and_validate_parameters(bg_request, command=bg_command)
+        assert params["message"] == "foo"
+
+    def test_missing_nested_parameters(self, validator):
+        req = Request(system="foo", command="command1", parameters={"key1": {}})
+        nested_parameter = Mock(key="foo", multi=False, type="String", optional=False)
+        command_parameter = Mock(
+            key="key1", multi=False, type="Dictionary", parameters=[nested_parameter]
+        )
+        command = Mock(parameters=[command_parameter])
+
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_parameters(req, command)
+
+    @patch(
+        "bartender.request_validator.RequestValidator._validate_parameter_based_on_type"
+    )
+    def test_extract_parameter_non_multi_calls_no_default(
+        self, validate_mock, validator
+    ):
+        req = Request(system="foo", command="command1", parameters={"key1": "value1"})
+        command_parameter = Mock(key="key1", multi=False)
+        command = Mock(parameters=[command_parameter])
+        validate_mock.side_effect = lambda w, x, y, z: w
+
+        validator.get_and_validate_parameters(req, command)
+        validate_mock.assert_called_once_with("value1", command_parameter, command, req)
+
+    @patch(
+        "bartender.request_validator.RequestValidator._validate_parameter_based_on_type"
+    )
+    def test_extract_parameter_non_multi_calls_with_default(
+        self, validate_mock, validator
+    ):
+        req = Request(system="foo", command="command1", parameters={})
+        command_parameter = Mock(key="key1", multi=False, default="default_value")
+        command = Mock(parameters=[command_parameter])
+        validate_mock.side_effect = lambda w, x, y, z: w
+
+        validator.get_and_validate_parameters(req, command)
+        validate_mock.assert_called_once_with(
+            "default_value", command_parameter, command, req
+        )
+
+    @patch(
+        "bartender.request_validator.RequestValidator._validate_parameter_based_on_type"
+    )
+    def test_update_and_validate_parameter_extract_parameter_multi(
+        self, validate_mock, validator
+    ):
+        req = Request(system="foo", command="command1", parameters={"key1": [1, 2]})
+        command_parameter = Mock(key="key1", multi=True)
+        command = Mock(parameters=[command_parameter])
+        validate_mock.side_effect = lambda w, x, y, z: w
+
+        validator.get_and_validate_parameters(req, command)
+        validate_mock.assert_has_calls(
+            [
+                call(1, command_parameter, command, req),
+                call(2, command_parameter, command, req),
+            ],
+            any_order=True,
+        )
+
+    def test_update_and_validate_parameter_extract_parameter_multi_not_list(
+        self, validator
+    ):
+        req = Request(
+            system="foo", command="command1", parameters={"key1": "NOT A LIST"}
+        )
+        command_parameter = Mock(key="key1", multi=True)
+        command = Mock(parameters=[command_parameter])
+
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_parameters(req, command)
+
+    def test_update_and_validate_parameter_extract_parameter_optional_no_default(
+        self, validator
+    ):
+        req = Request(system="foo", command="command1", parameters={})
+        command_parameter = Parameter(
+            key="key1", multi=False, optional=True, default=None
+        )
+        command = Mock(parameters=[command_parameter])
+
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_parameters(req, command)
+
+    def test_update_and_validate_parameter_extract_parameter_nullable_no_default(
+        self, validator
+    ):
+        req = Request(system="foo", command="command1", parameters={})
+        command_parameter = Parameter(
+            key="key1", multi=False, nullable=True, default=None
+        )
+        command = Mock(parameters=[command_parameter])
+        validated_parameters = validator.get_and_validate_parameters(req, command)
+        assert validated_parameters["key1"] is None
+
+    def test_validate_parameter_based_on_type_null_not_nullable(self, validator):
+        req = Request(system="foo", command="command1", parameters={"key1": None})
+        command_parameter = Mock(key="key1", multi=False, type="String", nullable=False)
+        command = Mock(parameters=[command_parameter])
+
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_parameters(req, command)
+
+    def test_validate_maximum_sequence(self, validator):
+        req = Request(system="foo", command="command1", parameters={"key1": "value"})
+
+        command_parameter = Parameter(
+            key="key1", multi=False, type="String", optional=False, maximum=10
+        )
+        command = Command("test", parameters=[command_parameter])
+        validator.get_and_validate_parameters(req, command)
+
+        command_parameter = Parameter(
+            key="key1", multi=False, type="String", optional=False, maximum=3
+        )
+        command = Command("test", parameters=[command_parameter])
+
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_parameters(req, command)
+
+    def test_validate_maximum_non_sequence(self, validator):
+        req = Request(system="foo", command="command1", parameters={"key1": 5})
+
+        command_parameter = Parameter(
+            key="key1", multi=False, type="Integer", optional=False, maximum=10
+        )
+        command = Command("test", parameters=[command_parameter])
+        validator.get_and_validate_parameters(req, command)
+
+        command_parameter = Parameter(
+            key="key1", multi=False, type="Integer", optional=False, maximum=3
+        )
+        command = Command("test", parameters=[command_parameter])
+
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_parameters(req, command)
+
+    def test_validate_minimum_sequence(self, validator):
+        req = Request(system="foo", command="command1", parameters={"key1": "value"})
+
+        command_parameter = Parameter(
+            key="key1", multi=False, type="String", optional=False, minimum=3
+        )
+        command = Command("test", parameters=[command_parameter])
+        validator.get_and_validate_parameters(req, command)
+
+        command_parameter = Parameter(
+            key="key1", multi=False, type="String", optional=False, minimum=10
+        )
+        command = Command("test", parameters=[command_parameter])
+
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_parameters(req, command)
+
+    def test_validate_minimum_non_sequence(self, validator):
+        req = Request(system="foo", command="command1", parameters={"key1": 5})
+
+        command_parameter = Parameter(
+            key="key1", multi=False, type="Integer", optional=False, minimum=3
+        )
+        command = Command("test", parameters=[command_parameter])
+        validator.get_and_validate_parameters(req, command)
+
+        command_parameter = Parameter(
+            key="key1", multi=False, type="Integer", optional=False, minimum=10
+        )
+        command = Command("test", parameters=[command_parameter])
+
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_parameters(req, command)
+
+    def test_validate_regex(self, validator):
+        req = Request(
+            system="foo", command="command1", parameters={"key1": "Hi World!"}
+        )
+
+        command_parameter = Parameter(
+            key="key1", multi=False, type="String", optional=False, regex=r"^Hi.*"
+        )
+        command = Command("test", parameters=[command_parameter])
+        validator.get_and_validate_parameters(req, command)
+
+        command_parameter = Parameter(
+            key="key1", multi=False, type="String", optional=False, regex=r"^Hello.*"
+        )
+        command = Command("test", parameters=[command_parameter])
+
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_parameters(req, command)
+
+    def test_validate_regex_nullable(self, validator):
+        req = Request(system="foo", command="command1", parameters={"key1": None})
+        command_parameter = Parameter(
+            key="key1", multi=False, type="String", regex=r"^Hi.*", nullable=True
+        )
+        command = Command("test", parameters=[command_parameter])
+        validator.get_and_validate_parameters(req, command)
+
+    def test_validate_minimum_nullable(self, validator):
+        req = Request(system="foo", command="command1", parameters={"key1": None})
+        command_parameter = Parameter(
+            key="key1",
+            multi=False,
+            type="Integer",
+            optional=False,
+            minimum=3,
+            nullable=True,
+        )
+        command = Command("test", parameters=[command_parameter])
+        validator.get_and_validate_parameters(req, command)
+
+    def test_validate_maximum_nullable(self, validator):
+        req = Request(system="foo", command="command1", parameters={"key1": None})
+        command_parameter = Parameter(
+            key="key1",
+            multi=False,
+            type="Integer",
+            optional=False,
+            minimum=3,
+            nullable=True,
+        )
+        command = Command("test", parameters=[command_parameter])
+        validator.get_and_validate_parameters(req, command)
+
+
+class TestValidateParameterType(object):
+    @pytest.mark.parametrize(
+        "req_value,param_type,expected",
+        [
+            ("1", "String", "1"),
+            ("1", "Integer", 1),
+            (1, "Integer", 1),
+            ("1.0", "Float", 1.0),
+            (1.0, "Float", 1.0),
+            ({}, "Any", {}),
+            ({"foo": "bar"}, "Dictionary", {"foo": "bar"}),
+            (False, "Boolean", False),
+            (True, "Boolean", True),
+            ("1451606400000", "Date", 1451606400000),
+            (1451606400000, "Date", 1451606400000),
+            ("1451606400000", "Datetime", 1451606400000),
+            (1451606400000, "Datetime", 1451606400000),
+        ],
+    )
+    def test_success(self, validator, req_value, param_type, expected):
+        validated_parameters = validator.get_and_validate_parameters(
+            make_request(parameters={"key1": req_value}),
+            Mock(parameters=[make_param(key="key1", type=param_type)]),
+        )
+        assert validated_parameters["key1"] == expected
+
+    @pytest.mark.parametrize(
+        "req_value,param_type",
+        [
+            (1, "String"),
+            (1.1, "Integer"),
+            ("foo", "Integer"),
+            ("foo", "Boolean"),
+            ("foo", "UH OH THIS IS BAD"),
+            (["not an int"], "Integer"),
+            ([1], "Integer"),
+        ],
+    )
+    def test_fail(self, validator, req_value, param_type):
+        with pytest.raises(ModelValidationError):
+            validator.get_and_validate_parameters(
+                make_request(parameters={"key1": req_value}),
+                Mock(parameters=[make_param(key="key1", type=param_type)]),
+            )
+
+    def test_nested_parameters(self, validator):
+        param = make_param(
+            key="key1",
+            type="Dictionary",
+            parameters=[make_param(key="foo", type="String")],
+        )
+        validated_parameters = validator.get_and_validate_parameters(
+            make_request(parameters={"key1": {"foo": "bar"}}), Mock(parameters=[param])
+        )
+        assert validated_parameters["key1"]["foo"] == "bar"
+
+
+class TestValidateChoices(object):
     @pytest.mark.parametrize(
         "req",
         [
@@ -236,387 +647,6 @@ class TestChoices(object):
             p=req.instance_name,
         )
 
-
-class TestRequestValidation(object):
-    @patch("bg_utils.mongo.models.System.find_unique")
-    def test_get_and_validate_system_with_system(self, find_mock, validator):
-        system = System(name="foo", instances=[Instance(name="default")])
-        find_mock.return_value = system
-        req = Request(
-            system="foo", command="bar", instance_name="default", parameters={}
-        )
-        assert validator.get_and_validate_system(req) == system
-
-    @patch("bg_utils.mongo.models.System.find_unique", Mock(return_value=None))
-    def test_get_and_validate_system_no_system(self, validator):
-        req = Request(system="foo", command="bar", parameters={})
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_system(req)
-
-    @patch("bg_utils.mongo.models.System.find_unique")
-    def test_get_and_validate_system_invalid_instance_name(self, find_mock, validator):
-        system = System(name="foo", instances=[Instance(name="instance1")])
-        find_mock.return_value = system
-        req = Request(
-            system="foo", command="bar", instance_name="INVALID", parameters={}
-        )
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_system(req)
-
-    def test_get_and_validate_command_none_provided(self, validator):
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_command_for_system(
-                Request(system="foo", parameters={}), Mock()
-            )
-
-    def test_get_and_validate_command_good_command(self, validator):
-        mock_name = PropertyMock(return_value="command1")
-        command = Mock(command_type="ACTION", output_type="STRING")
-        type(command).name = mock_name
-        system = Mock(commands=[command])
-        req = Request(system="foo", command="command1", parameters={})
-        assert validator.get_and_validate_command_for_system(req, system) == command
-
-    @patch("bartender.request_validator.RequestValidator.get_and_validate_system")
-    def test_get_and_validate_command_no_system_passed_in(self, mock_get, validator):
-        mock_name = PropertyMock(return_value="command1")
-        command = Mock(command_type="ACTION", output_type="STRING")
-        type(command).name = mock_name
-        system = Mock(commands=[command])
-        mock_get.return_value = system
-        req = Request(system="foo", command="command1", parameters={})
-        assert validator.get_and_validate_command_for_system(req) == command
-
-    def test_get_and_validate_command_not_found(self, validator):
-        mock_name = PropertyMock(return_value="command1")
-        command = Mock()
-        type(command).name = mock_name
-        system = Mock(commands=[command])
-        req = Request(system="foo", command="command2", parameters={})
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_command_for_system(req, system)
-
-    def test_get_and_validate_command_no_command_type_specified(self, validator):
-        mock_name = PropertyMock(return_value="command1")
-        command = Mock(command_type="ACTION", output_type="STRING")
-        type(command).name = mock_name
-        system = Mock(commands=[command])
-        req = Request(
-            system="foo", command="command1", parameters={}, command_type=None
-        )
-        validator.get_and_validate_command_for_system(req, system)
-        assert req.command_type == "ACTION"
-
-    def test_get_and_validate_command_for_system_bad_command_type(self, validator):
-        mock_name = PropertyMock(return_value="command1")
-        command = Mock()
-        type(command).name = mock_name
-        system = Mock(commands=[command])
-        req = Request(
-            system="foo", command="command1", parameters={}, command_type="BAD"
-        )
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_command_for_system(req, system)
-
-    def test_get_and_validate_command_no_output_type_specified(self, validator):
-        mock_name = PropertyMock(return_value="command1")
-        command = Mock(output_type="STRING", command_type="ACTION")
-        type(command).name = mock_name
-        system = Mock(commands=[command])
-        req = Request(system="foo", command="command1", parameters={}, output_type=None)
-        validator.get_and_validate_command_for_system(req, system)
-        assert req.output_type == "STRING"
-
-    def test_get_and_validate_command_for_system_bad_output_type(self, validator):
-        mock_name = PropertyMock(return_value="command1")
-        command = Mock()
-        type(command).name = mock_name
-        system = Mock(commands=[command])
-        req = Request(
-            system="foo", command="command1", parameters={}, output_type="BAD"
-        )
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_command_for_system(req, system)
-
-    def test_get_and_validate_parameters_empty_parameters(self, validator):
-        req = Request(system="foo", command="command1")
-        command = Mock(parameters=[])
-        assert validator.get_and_validate_parameters(req, command) == {}
-
-    @patch(
-        "bartender.request_validator.RequestValidator.get_and_validate_command_for_system"
-    )
-    def test_get_and_validate_parameters_no_command(self, get_mock, validator):
-        req = Request(system="foo", command="command1", parameters={})
-        get_mock.return_value = Mock(parameters=[])
-        validator.get_and_validate_parameters(req)
-        get_mock.assert_called_with(req)
-
-    def test_get_and_validate_parameters_bad_key_in_request_parameters(self, validator):
-        req = Request(
-            system="foo", command="command1", parameters={"bad_key": "bad_value"}
-        )
-        command = Mock(parameters=[])
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_parameters(req, command)
-
-    def test_get_and_validate_parameters_for_command_required_key_not_provided(
-        self, validator
-    ):
-        mock_name = PropertyMock(return_value="command1")
-        req = Request(system="foo", command="command1")
-        command = Mock()
-        type(command).name = mock_name
-        command.parameters = [
-            Mock(key="key1", optional=False, default=None, nullable=False)
-        ]
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_parameters(req, command)
-
-    def test_get_and_validate_parameters_command_missing_nested_parameters(
-        self, validator
-    ):
-        req = Request(system="foo", command="command1", parameters={"key1": {}})
-        nested_parameter = Mock(key="foo", multi=False, type="String", optional=False)
-        command_parameter = Mock(
-            key="key1", multi=False, type="Dictionary", parameters=[nested_parameter]
-        )
-        command = Mock(parameters=[command_parameter])
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_parameters(req, command)
-
-    def test_get_and_validate_parameters_required_key_not_provided_with_default(
-        self, validator
-    ):
-        req = Request(system="foo", command="command1")
-        command = Mock(
-            parameters=[Parameter(key="key1", optional=False, default="value1")]
-        )
-        validated_parameters = validator.get_and_validate_parameters(req, command)
-        assert validated_parameters["key1"] == "value1"
-
-    @patch(
-        "bartender.request_validator.RequestValidator._validate_parameter_based_on_type"
-    )
-    def test_extract_parameter_non_multi_calls_no_default(
-        self, validate_mock, validator
-    ):
-        req = Request(system="foo", command="command1", parameters={"key1": "value1"})
-        command_parameter = Mock(key="key1", multi=False)
-        command = Mock(parameters=[command_parameter])
-        validate_mock.side_effect = lambda w, x, y, z: w
-
-        validator.get_and_validate_parameters(req, command)
-        validate_mock.assert_called_once_with("value1", command_parameter, command, req)
-
-    @patch(
-        "bartender.request_validator.RequestValidator._validate_parameter_based_on_type"
-    )
-    def test_extract_parameter_non_multi_calls_with_default(
-        self, validate_mock, validator
-    ):
-        req = Request(system="foo", command="command1", parameters={})
-        command_parameter = Mock(key="key1", multi=False, default="default_value")
-        command = Mock(parameters=[command_parameter])
-        validate_mock.side_effect = lambda w, x, y, z: w
-
-        validator.get_and_validate_parameters(req, command)
-        validate_mock.assert_called_once_with(
-            "default_value", command_parameter, command, req
-        )
-
-    @patch(
-        "bartender.request_validator.RequestValidator._validate_parameter_based_on_type"
-    )
-    def test_update_and_validate_parameter_extract_parameter_multi(
-        self, validate_mock, validator
-    ):
-        req = Request(system="foo", command="command1", parameters={"key1": [1, 2]})
-        command_parameter = Mock(key="key1", multi=True)
-        command = Mock(parameters=[command_parameter])
-        validate_mock.side_effect = lambda w, x, y, z: w
-
-        validator.get_and_validate_parameters(req, command)
-        validate_mock.assert_has_calls(
-            [
-                call(1, command_parameter, command, req),
-                call(2, command_parameter, command, req),
-            ],
-            any_order=True,
-        )
-
-    def test_update_and_validate_parameter_extract_parameter_multi_not_list(
-        self, validator
-    ):
-        req = Request(
-            system="foo", command="command1", parameters={"key1": "NOT A LIST"}
-        )
-        command_parameter = Mock(key="key1", multi=True)
-        command = Mock(parameters=[command_parameter])
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_parameters(req, command)
-
-    def test_update_and_validate_parameter_extract_parameter_optional_no_default(
-        self, validator
-    ):
-        req = Request(system="foo", command="command1", parameters={})
-        command_parameter = Parameter(
-            key="key1", multi=False, optional=True, default=None
-        )
-        command = Mock(parameters=[command_parameter])
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_parameters(req, command)
-
-    def test_update_and_validate_parameter_extract_parameter_nullable_no_default(
-        self, validator
-    ):
-        req = Request(system="foo", command="command1", parameters={})
-        command_parameter = Parameter(
-            key="key1", multi=False, nullable=True, default=None
-        )
-        command = Mock(parameters=[command_parameter])
-        validated_parameters = validator.get_and_validate_parameters(req, command)
-        assert validated_parameters["key1"] is None
-
-    def test_validate_parameter_based_on_type_null_not_nullable(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": None})
-        command_parameter = Mock(key="key1", multi=False, type="String", nullable=False)
-        command = Mock(parameters=[command_parameter])
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_parameters(req, command)
-
-    def test_validate_parameter_based_on_type_good_string(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": "1"})
-        command_parameter = Mock(key="key1", multi=False, type="String")
-        command = Mock(parameters=[command_parameter])
-        validated_parameters = validator.get_and_validate_parameters(req, command)
-        assert validated_parameters["key1"] == "1"
-
-    def test_validate_parameter_based_on_type_bad_string(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": 1})
-        command_parameter = Mock(key="key1", multi=False, type="String")
-        command = Mock(parameters=[command_parameter])
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_parameters(req, command)
-
-    def test_validate_parameter_based_on_type_good_integer(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": 1})
-        command_parameter = Mock(key="key1", multi=False, type="Integer")
-        command = Mock(parameters=[command_parameter])
-        validated_parameters = validator.get_and_validate_parameters(req, command)
-        assert validated_parameters["key1"] == 1
-
-    def test_validate_parameter_based_on_type_bad_integer(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": 1.1})
-        command_parameter = Mock(key="key1", multi=False, type="Integer")
-        command = Mock(parameters=[command_parameter])
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_parameters(req, command)
-
-    def test_validate_parameter_based_on_type_good_float(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": 1.0})
-        command_parameter = Mock(key="key1", multi=False, type="Float")
-        command = Mock(parameters=[command_parameter])
-        validated_parameters = validator.get_and_validate_parameters(req, command)
-        assert validated_parameters["key1"] == 1.0
-
-    def test_validate_parameter_based_on_type_good_any(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": {}})
-        command_parameter = Mock(key="key1", multi=False, type="Any")
-        command = Mock(parameters=[command_parameter])
-        validated_parameters = validator.get_and_validate_parameters(req, command)
-        assert validated_parameters["key1"] == {}
-
-    def test_validate_parameter_based_on_type_good_boolean_false(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": False})
-        command_parameter = Mock(key="key1", multi=False, type="Boolean")
-        command = Mock(parameters=[command_parameter])
-        validated_parameters = validator.get_and_validate_parameters(req, command)
-        assert validated_parameters["key1"] is False
-
-    def test_validate_parameter_based_on_type_good_boolean_true(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": True})
-        command_parameter = Mock(key="key1", multi=False, type="Boolean")
-        command = Mock(parameters=[command_parameter])
-        validated_parameters = validator.get_and_validate_parameters(req, command)
-        assert validated_parameters["key1"] is True
-
-    def test_validate_parameter_based_on_type_invalid_boolean(self, validator):
-        req = Request(
-            system="foo", command="command1", parameters={"key1": "not true or false"}
-        )
-        command_parameter = Mock(key="key1", multi=False, type="Boolean")
-        command = Mock(parameters=[command_parameter])
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_parameters(req, command)
-
-    def test_validate_parameter_based_on_type_good_dictionary(self, validator):
-        req = Request(
-            system="foo", command="command1", parameters={"key1": {"foo": "bar"}}
-        )
-        command_parameter = Mock(
-            key="key1", multi=False, type="Dictionary", parameters=None
-        )
-        command = Mock(parameters=[command_parameter])
-        validated_parameters = validator.get_and_validate_parameters(req, command)
-        assert validated_parameters["key1"] == {"foo": "bar"}
-
-    def test_validate_parameter_based_on_type_with_nested_parameters(self, validator):
-        req = Request(
-            system="foo", command="command1", parameters={"key1": {"foo": "bar"}}
-        )
-        nested_parameter = Mock(key="foo", multi=False, type="String")
-        command_parameter = Mock(
-            key="key1", multi=False, type="Dictionary", parameters=[nested_parameter]
-        )
-        command = Mock(parameters=[command_parameter])
-        validated_parameters = validator.get_and_validate_parameters(req, command)
-        assert validated_parameters["key1"]["foo"] == "bar"
-
-    def test_validate_parameter_based_on_type_invalid_type(self, validator):
-        req = Request(
-            system="foo", command="command1", parameters={"key1": {"foo": "bar"}}
-        )
-        command_parameter = Mock(key="key1", multi=False, type="UH OH THIS IS BAD")
-        command = Mock(parameters=[command_parameter])
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_parameters(req, command)
-
-    def test_validate_parameter_based_on_type_type_conversion_error(self, validator):
-        req = Request(
-            system="foo", command="command1", parameters={"key1": ["this isnt a int"]}
-        )
-        command_parameter = Mock(key="key1", multi=False, type="Integer")
-        command = Mock(parameters=[command_parameter])
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_parameters(req, command)
-
-    def test_validate_parameter_based_on_type_value_conversion_error(self, validator):
-        req = Request(
-            system="foo", command="command1", parameters={"key1": "this isn't an int"}
-        )
-        command_parameter = Mock(key="key1", multi=False, type="Integer")
-        command = Mock(parameters=[command_parameter])
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_parameters(req, command)
-
     def test_validate_value_in_choices_no_choices(self, validator):
         req = Request(system="foo", command="command1", parameters={"key1": "value"})
         command_parameter = Mock(key="key1", multi=False, type="String", choices=None)
@@ -710,9 +740,20 @@ class TestRequestValidation(object):
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(req, command)
 
-    def test_validate_url_choices(self, validator):
+    @pytest.mark.parametrize(
+        "response",
+        [
+            '[{"text": "text", "value": "value"}]',
+            '[{"text": "a", "value": "b"}, {"text": "b", "value": "value"}]',
+            '["value"]',
+            '["a", "b", "value"]',
+            '["a", {"text": "text", "value": "value"}]',
+            '["a", {"text": "b", "value": "2"}, "value"]',
+        ]
+    )
+    def test_validate_url_choices(self, validator, response):
         session_mock = Mock()
-        session_mock.get.return_value.text = '[{"value": "value"}]'
+        session_mock.get.return_value.text = response
         validator._session = session_mock
 
         req = Request(system="foo", command="command1", parameters={"key1": "value"})
@@ -924,124 +965,3 @@ class TestRequestValidation(object):
 
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(request, command)
-
-    def test_validate_maximum_sequence(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": "value"})
-
-        command_parameter = Parameter(
-            key="key1", multi=False, type="String", optional=False, maximum=10
-        )
-        command = Command("test", parameters=[command_parameter])
-        validator.get_and_validate_parameters(req, command)
-
-        command_parameter = Parameter(
-            key="key1", multi=False, type="String", optional=False, maximum=3
-        )
-        command = Command("test", parameters=[command_parameter])
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_parameters(req, command)
-
-    def test_validate_maximum_non_sequence(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": 5})
-
-        command_parameter = Parameter(
-            key="key1", multi=False, type="Integer", optional=False, maximum=10
-        )
-        command = Command("test", parameters=[command_parameter])
-        validator.get_and_validate_parameters(req, command)
-
-        command_parameter = Parameter(
-            key="key1", multi=False, type="Integer", optional=False, maximum=3
-        )
-        command = Command("test", parameters=[command_parameter])
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_parameters(req, command)
-
-    def test_validate_minimum_sequence(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": "value"})
-
-        command_parameter = Parameter(
-            key="key1", multi=False, type="String", optional=False, minimum=3
-        )
-        command = Command("test", parameters=[command_parameter])
-        validator.get_and_validate_parameters(req, command)
-
-        command_parameter = Parameter(
-            key="key1", multi=False, type="String", optional=False, minimum=10
-        )
-        command = Command("test", parameters=[command_parameter])
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_parameters(req, command)
-
-    def test_validate_minimum_non_sequence(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": 5})
-
-        command_parameter = Parameter(
-            key="key1", multi=False, type="Integer", optional=False, minimum=3
-        )
-        command = Command("test", parameters=[command_parameter])
-        validator.get_and_validate_parameters(req, command)
-
-        command_parameter = Parameter(
-            key="key1", multi=False, type="Integer", optional=False, minimum=10
-        )
-        command = Command("test", parameters=[command_parameter])
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_parameters(req, command)
-
-    def test_validate_regex(self, validator):
-        req = Request(
-            system="foo", command="command1", parameters={"key1": "Hi World!"}
-        )
-
-        command_parameter = Parameter(
-            key="key1", multi=False, type="String", optional=False, regex=r"^Hi.*"
-        )
-        command = Command("test", parameters=[command_parameter])
-        validator.get_and_validate_parameters(req, command)
-
-        command_parameter = Parameter(
-            key="key1", multi=False, type="String", optional=False, regex=r"^Hello.*"
-        )
-        command = Command("test", parameters=[command_parameter])
-
-        with pytest.raises(ModelValidationError):
-            validator.get_and_validate_parameters(req, command)
-
-    def test_validate_regex_nullable(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": None})
-        command_parameter = Parameter(
-            key="key1", multi=False, type="String", regex=r"^Hi.*", nullable=True
-        )
-        command = Command("test", parameters=[command_parameter])
-        validator.get_and_validate_parameters(req, command)
-
-    def test_validate_minimum_nullable(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": None})
-        command_parameter = Parameter(
-            key="key1",
-            multi=False,
-            type="Integer",
-            optional=False,
-            minimum=3,
-            nullable=True,
-        )
-        command = Command("test", parameters=[command_parameter])
-        validator.get_and_validate_parameters(req, command)
-
-    def test_validate_maximum_nullable(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": None})
-        command_parameter = Parameter(
-            key="key1",
-            multi=False,
-            type="Integer",
-            optional=False,
-            minimum=3,
-            nullable=True,
-        )
-        command = Command("test", parameters=[command_parameter])
-        validator.get_and_validate_parameters(req, command)
