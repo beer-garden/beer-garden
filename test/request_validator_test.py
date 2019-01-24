@@ -741,7 +741,15 @@ class TestValidateChoices(object):
             validator.get_and_validate_parameters(req, command)
 
     @pytest.mark.parametrize(
-        "response", ['[{"text": "text", "value": "value"}]', '["value"]']
+        "response",
+        [
+            '[{"text": "text", "value": "value"}]',
+            '[{"text": "a", "value": "b"}, {"text": "b", "value": "value"}]',
+            '["value"]',
+            '["a", "b", "value"]',
+            '["a", {"text": "text", "value": "value"}]',
+            '["a", {"text": "b", "value": "2"}, "value"]',
+        ]
     )
     def test_validate_url_choices(self, validator, response):
         session_mock = Mock()
