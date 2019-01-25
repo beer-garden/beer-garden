@@ -43,10 +43,18 @@ fi
 # Constants
 APP_NAME="beer-garden"
 APP_PATH="/opt/$APP_NAME"
+
+BIN_PATH="$APP_PATH/bin"
+INCLUDE_PATH="$APP_PATH/include"
+LIB_PATH="$APP_PATH/lib"
+SHARE_PATH="$APP_PATH/share"
+
 PYTHON_BIN="$APP_PATH/bin/python"
 PIP_BIN="$APP_PATH/bin/pip"
+
 SRC_PATH="/src"
 SRC_SCRIPT_PATH="$SRC_PATH/resources/centos${RELEASE}"
+
 BEFORE_INSTALL="before_install.sh"
 AFTER_INSTALL="after_install.sh"
 BEFORE_REMOVE="before_remove.sh"
@@ -113,8 +121,8 @@ create_rpm() {
     # --rpm-dist "el$RELEASE"   The rpm distribution
     # --iteration 1             The iteration number
     # -s dir                    Describes that the source we are using is a directory
-    # -x "*.bak"                Excludes any .bak files
-    # -x "*.orig"               Excludes and .orig files
+    # -x ""                     Excludes paths matching the given pattern
+    # --directories             Recursively mark a directory as 'owned' by the RPM
     # --before-install path     Sets before-install script to be run when installing the RPM
     # --after-install path      Sets after-install script to be run when installing the RPM
     # --before-remove path      Sets before-remove script to be run when uninstalling the RPM
@@ -139,6 +147,13 @@ create_rpm() {
         -s dir
         -x "*.bak"
         -x "*.orig"
+        -x "*.pyc"
+        -x "*.pyo"
+        -x "**/__pycache__"
+        --directories $BIN_PATH
+        --directories $INCLUDE_PATH
+        --directories $LIB_PATH
+        --directories $SHARE_PATH
         --before-install $SRC_SCRIPT_PATH/$BEFORE_INSTALL
         --after-install $SRC_SCRIPT_PATH/$AFTER_INSTALL
         --before-remove $SRC_SCRIPT_PATH/$BEFORE_REMOVE
