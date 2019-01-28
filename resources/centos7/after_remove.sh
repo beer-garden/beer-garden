@@ -1,6 +1,17 @@
 APP_NAME="beer-garden"
 APP_HOME="/opt/${APP_NAME}"
 
+CONFIG_HOME="$APP_HOME/conf"
+LOG_HOME="$APP_HOME/log"
+
+BARTENDER_CONFIG="${CONFIG_HOME}/bartender-config"
+BARTENDER_LOG_CONFIG="${CONFIG_HOME}/bartender-logging-config.json"
+BARTENDER_LOG_FILE="$LOG_HOME/bartender.log"
+
+BREW_VIEW_CONFIG="${CONFIG_HOME}/brew-view-config"
+BREW_VIEW_LOG_CONFIG="${CONFIG_HOME}/brew-view-logging-config.json"
+BREW_VIEW_LOG_FILE="$LOG_HOME/brew-view.log"
+
 case "$1" in
     0)
         # This is an uninstallation of the app, so
@@ -9,9 +20,18 @@ case "$1" in
         /usr/sbin/userdel $APP_NAME
     ;;
     1)
-        # This is an upgrade. I think the deletion of files
-        # Should be taken care of by the RPM tool itself, so
-        # we don't have to do anything in this case.
-        :
+        # This is an upgrade.
+        # Migrate config files if they exist
+        if [ -e "$BARTENDER_CONFIG.yml" ]; then
+            "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.yml"
+        elif [ -e "$BARTENDER_CONFIG.json" ]; then
+            "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.json"
+        fi
+
+        if [ -e "$BREW_VIEW_CONFIG.yml" ]; then
+            "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.yml"
+        elif [ -e "$BREW_VIEW_CONFIG.json" ]; then
+            "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.json"
+        fi
     ;;
 esac

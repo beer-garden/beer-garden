@@ -21,6 +21,10 @@ BREW_VIEW_LOG_FILE="$LOG_HOME/brew-view.log"
 case "$1" in
     1)
         # This is an initial install
+        # Create the beer-garden group/user if they do not exist
+        /usr/bin/getent group $GROUP > /dev/null || /usr/sbin/groupadd -r $GROUP
+        /usr/bin/getent passwd $USER > /dev/null || /usr/sbin/useradd -r -d $APP_HOME -s /sbin/nologin -g $GROUP $USER
+
         if [ ! -d "$CONFIG_HOME" ]; then
             mkdir -p "$CONFIG_HOME"
         fi
@@ -35,63 +39,46 @@ case "$1" in
         fi
 
         if [ ! -d "$PID_HOME" ]; then
-          mkdir -p "$PID_HOME"
+            mkdir -p "$PID_HOME"
         fi
 
-        # Create the beer-garden group/user if they do not exist
-        /usr/bin/getent group $GROUP > /dev/null || /usr/sbin/groupadd -r $GROUP
-        /usr/bin/getent passwd $USER > /dev/null || /usr/sbin/useradd -r -d $APP_HOME -s /sbin/nologin -g $GROUP $USER
+        # Generate logging configs if they don't exist
+        if [ ! -f "$BARTENDER_LOG_CONFIG" ]; then
+            "$APP_HOME/bin/generate_bartender_log_config" \
+                --log-config-file "$BARTENDER_LOG_CONFIG" \
+                --log-file "$BARTENDER_LOG_FILE" \
+                --log-level "WARN"
+        fi
+
+        if [ ! -f "$BREW_VIEW_LOG_CONFIG" ]; then
+            "$APP_HOME/bin/generate_brew_view_log_config" \
+                --log-config-file "$BREW_VIEW_LOG_CONFIG" \
+                --log-file "$BREW_VIEW_LOG_FILE" \
+                --log-level "WARN"
+        fi
+
+        # Generate application configs if they don't exist
+        if [ ! -f "$BARTENDER_CONFIG.yml" -a ! -f "$BARTENDER_CONFIG.json" ]; then
+            BARTENDER_CONFIG_TYPE="yml"
+            "$APP_HOME/bin/generate_bartender_config" \
+                -c "$BARTENDER_CONFIG.$BARTENDER_CONFIG_TYPE" \
+                -l "$BARTENDER_LOG_CONFIG" \
+                --plugin-local-directory "$PLUGIN_HOME" \
+                --plugin-local-log-directory "$PLUGIN_LOG_HOME"
+        fi
+
+        if [ ! -f "$BREW_VIEW_CONFIG.yml" -a ! -f "$BREW_VIEW_CONFIG.json" ]; then
+            BREW_VIEW_CONFIG_TYPE="yml"
+            "$APP_HOME/bin/generate_brew_view_config" \
+                -c "$BREW_VIEW_CONFIG.$BREW_VIEW_CONFIG_TYPE" \
+                -l "$BREW_VIEW_LOG_CONFIG"
+        fi
     ;;
     2)
         # This is an upgrade, nothing to do
     ;;
 esac
 
-if [ ! -f "$BARTENDER_LOG_CONFIG" ]; then
-  "$APP_HOME/bin/generate_bartender_log_config" \
-    --log-config-file "$BARTENDER_LOG_CONFIG" \
-    --log-file "$BARTENDER_LOG_FILE" \
-    --log-level "WARN"
-fi
-
-if [ ! -f "$BREW_VIEW_LOG_CONFIG" ]; then
-  "$APP_HOME/bin/generate_brew_view_log_config" \
-    --log-config-file "$BREW_VIEW_LOG_CONFIG" \
-    --log-file "$BREW_VIEW_LOG_FILE" \
-    --log-level "WARN"
-fi
-
-if [ -f "$BARTENDER_CONFIG.yml" ]; then
-  BARTENDER_CONFIG_TYPE="yml"
-  "$APP_HOME/bin/migrate_bartender_config" \
-    -c "$BARTENDER_CONFIG.$BARTENDER_CONFIG_TYPE"
-elif [ -f "$BARTENDER_CONFIG.json" ]; then
-  BARTENDER_CONFIG_TYPE="json"
-  "$APP_HOME/bin/migrate_bartender_config" \
-    -c "$BARTENDER_CONFIG.$BARTENDER_CONFIG_TYPE"
-else
-  BARTENDER_CONFIG_TYPE="yml"
-  "$APP_HOME/bin/generate_bartender_config" \
-    -c "$BARTENDER_CONFIG.$BARTENDER_CONFIG_TYPE" \
-    -l "$BARTENDER_LOG_CONFIG" \
-    --plugin-local-directory "$PLUGIN_HOME" \
-    --plugin-local-log-directory "$PLUGIN_LOG_HOME"
-fi
-
-if [ -f "$BREW_VIEW_CONFIG.yml" ]; then
-  BREW_VIEW_CONFIG_TYPE="yml"
-  "$APP_HOME/bin/migrate_brew_view_config" \
-    -c "$BREW_VIEW_CONFIG.$BREW_VIEW_CONFIG_TYPE"
-elif [ -f "$BREW_VIEW_CONFIG.json" ]; then
-  BREW_VIEW_CONFIG_TYPE="json"
-  "$APP_HOME/bin/migrate_brew_view_config" \
-    -c "$BREW_VIEW_CONFIG.$BREW_VIEW_CONFIG_TYPE"
-else
-  BREW_VIEW_CONFIG_TYPE="yml"
-  "$APP_HOME/bin/generate_brew_view_config" \
-    -c "$BREW_VIEW_CONFIG.$BREW_VIEW_CONFIG_TYPE" \
-    -l "$BREW_VIEW_LOG_CONFIG"
-fi
 
 chown -hR ${USER}:${GROUP} $APP_HOME
 
