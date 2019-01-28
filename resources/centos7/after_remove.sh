@@ -14,24 +14,28 @@ BREW_VIEW_LOG_FILE="$LOG_HOME/brew-view.log"
 
 case "$1" in
     0)
-        # This is an uninstallation of the app, so
-        # we don't need to keep anything around anymore.
-        rm -f /etc/init.d/${APP_NAME}
+        # This is an uninstallation
+        # Remove the user
         /usr/sbin/userdel $APP_NAME
     ;;
     1)
         # This is an upgrade.
         # Migrate config files if they exist
-        if [ -e "$BARTENDER_CONFIG.yml" ]; then
+        if [ -f "$BARTENDER_CONFIG.yml" ]; then
             "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.yml"
-        elif [ -e "$BARTENDER_CONFIG.json" ]; then
+        elif [ -f "$BARTENDER_CONFIG.json" ]; then
             "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.json"
         fi
 
-        if [ -e "$BREW_VIEW_CONFIG.yml" ]; then
+        if [ -f "$BREW_VIEW_CONFIG.yml" ]; then
             "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.yml"
-        elif [ -e "$BREW_VIEW_CONFIG.json" ]; then
+        elif [ -f "$BREW_VIEW_CONFIG.json" ]; then
             "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.json"
         fi
     ;;
 esac
+
+# Remove the old sysV init script if it exists
+if [ -f /etc/init.d/${APP_NAME} ]; then
+    rm -f /etc/init.d/${APP_NAME}
+fi

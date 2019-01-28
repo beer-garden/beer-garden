@@ -167,7 +167,15 @@ create_rpm() {
         args+=(-d "openssl-libs >= 1:1.0.2a-1")
     fi
 
-    fpm "${args[@]}" $APP_PATH
+    cp $SRC_SCRIPT_PATH/beer-garden.service /lib/systemd/system/
+    cp $SRC_SCRIPT_PATH/bartender.service /lib/systemd/system/
+    cp $SRC_SCRIPT_PATH/brew-view.service /lib/systemd/system/
+
+    fpm "${args[@]}" \
+        $APP_PATH \
+        /lib/systemd/system/beer-garden.service \
+        /lib/systemd/system/bartender.service \
+        /lib/systemd/system/brew-view.service
 }
 
 install_apps

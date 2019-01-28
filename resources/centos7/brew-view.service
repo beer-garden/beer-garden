@@ -1,0 +1,11 @@
+# The brew-view service unit file
+
+[Unit]
+Description=Beergarden REST server and frontend
+Requires=network.target
+PartOf=beer-garden.service
+
+[Service]
+Type=simple
+User=beer-garden
+ExecStart=/opt/beer-garden/bin/brew-view -c /opt/beer-garden/conf/brew-view-config.yml
