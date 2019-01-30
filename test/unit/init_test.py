@@ -341,3 +341,32 @@ class TestBgUtils(object):
         assert generated_config.to_dict() == new_config
 
         assert len(os.listdir(str(tmpdir))) == 1
+
+    @pytest.mark.parametrize(
+        "file,file_type,expected_type",
+        [
+            (None, None, "yaml"),
+            (None, "yaml", "yaml"),
+            (None, "json", "json"),
+
+            ("file", None, "yaml"),
+            ("file", "yaml", "yaml"),
+            ("file", "json", "json"),
+
+            ("file.yaml", None, "yaml"),
+            ("file.blah", None, "yaml"),
+            ("file.json", None, "json"),
+
+            ("file.yaml", "yaml", "yaml"),
+            ("file.yaml", "json", "json"),
+
+            ("file.json", "yaml", "yaml"),
+            ("file.json", "json", "json"),
+        ]
+    )
+    def test_get_config_values(self, file, file_type, expected_type):
+        config = Box({"configuration": {"file": file, "type": file_type}})
+
+        computed_file, computed_type = bg_utils._get_config_values(config)
+        assert computed_file == file
+        assert computed_type == expected_type
