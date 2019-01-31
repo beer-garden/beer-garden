@@ -414,13 +414,7 @@ class System(Document, BrewtilsSystem):
         "auto_create_index": False,  # We need to manage this ourselves
         "index_background": True,
         "indexes": [
-            {"name": "unique_index", "fields": ["name", "version"], "unique": True},
-            {
-                "name": "unique_display",
-                "fields": ["display_name", "version"],
-                "unique": True,
-                "partialFilterExpression": {"display_name": {"$exists": True}},
-            },
+            {"name": "unique_index", "fields": ["name", "version"], "unique": True}
         ],
     }
 

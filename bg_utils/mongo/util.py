@@ -208,6 +208,9 @@ def _check_indexes(document_class):
         if document_class == Request and "parent_instance_index" in existing:
             raise OperationFailure("Old Request index found, rebuilding")
 
+        if len(spec) < len(existing):
+            raise OperationFailure("Extra index found, rebuilding")
+
         if len(spec) > len(existing):
             logger.warning(
                 "Found missing %s indexes, about to build them. This could "
