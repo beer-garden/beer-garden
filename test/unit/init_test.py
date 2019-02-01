@@ -121,12 +121,14 @@ class TestBgUtils(object):
         filename = os.path.join(str(tmpdir), "temp." + file_type)
         bg_utils.generate_config_file(spec, ["-c", filename, "-t", file_type])
 
-        # For this case we don't tell generate the file type
-        filename2 = os.path.join(str(tmpdir), "temp2." + file_type)
-        bg_utils.generate_config_file(spec, ["-c", filename2])
+        assert os.path.getsize(filename) > 0
+
+    @pytest.mark.parametrize("file_type", ["json", "yaml"])
+    def test_generate_config_file_infer_type(self, spec, tmpdir, file_type):
+        filename = os.path.join(str(tmpdir), "temp." + file_type)
+        bg_utils.generate_config_file(spec, ["-c", filename])
 
         assert os.path.getsize(filename) > 0
-        assert os.path.getsize(filename2) > 0
 
     @pytest.mark.parametrize("file_type", ["json", "yaml"])
     def test_generate_config_file_print(self, spec, capsys, file_type):
@@ -137,8 +139,9 @@ class TestBgUtils(object):
 
     @pytest.mark.parametrize("file_type", ["json", "yaml"])
     def test_update_config(self, spec, file_type):
+        migrate_mock = Mock()
+        spec.migrate_config_file = migrate_mock
         spec.update_defaults = Mock()
-        spec.migrate_config_file = Mock()
         bg_utils.update_config_file(spec, ["-c", "/path/to/config." + file_type])
 
         expected = Box(
@@ -149,19 +152,48 @@ class TestBgUtils(object):
                 "configuration": {"file": "/path/to/config." + file_type},
             }
         )
-        spec.migrate_config_file.assert_called_once_with(
+        migrate_mock.assert_called_once_with(
             expected.configuration.file,
-            update_defaults=True,
             current_file_type=file_type,
+            output_file_name=expected.configuration.file,
             output_file_type=file_type,
+            update_defaults=True,
+            include_bootstrap=False,
         )
 
-    def test_update_config_no_config_specified(self, spec):
-        spec.migrate_config_file = Mock()
+    @pytest.mark.parametrize(
+        "file_type,config_type", [("json", "yaml"), ("yaml", "json")]
+    )
+    def test_update_config_change_type(self, monkeypatch, spec, file_type, config_type):
+        migrate_mock = Mock()
+        spec.migrate_config_file = migrate_mock
+        spec.update_defaults = Mock()
+
+        remove_mock = Mock()
+        monkeypatch.setattr(os, "remove", remove_mock)
+
+        bg_utils.update_config_file(
+            spec, ["-c", "/path/to/config." + file_type, "-t", config_type]
+        )
+
+        migrate_mock.assert_called_once_with(
+            "/path/to/config." + file_type,
+            current_file_type=file_type,
+            output_file_name="/path/to/config." + config_type,
+            output_file_type=config_type,
+            update_defaults=True,
+            include_bootstrap=False,
+        )
+        remove_mock.assert_called_once_with("/path/to/config." + file_type)
+
+    def test_update_config_no_file_specified(self, spec):
+        migrate_mock = Mock()
+        spec.migrate_config_file = migrate_mock
+
         with pytest.raises(SystemExit):
             bg_utils.update_config_file(spec, [])
 
-        assert spec.migrate_config_file.called is False
+        assert migrate_mock.called is False
 
     @patch("bg_utils.open")
     def test_generate_logging_config(self, open_mock, spec):
@@ -348,25 +380,19 @@ class TestBgUtils(object):
             (None, None, "yaml"),
             (None, "yaml", "yaml"),
             (None, "json", "json"),
-
             ("file", None, "yaml"),
             ("file", "yaml", "yaml"),
             ("file", "json", "json"),
-
             ("file.yaml", None, "yaml"),
             ("file.blah", None, "yaml"),
             ("file.json", None, "json"),
-
             ("file.yaml", "yaml", "yaml"),
             ("file.yaml", "json", "json"),
-
             ("file.json", "yaml", "yaml"),
             ("file.json", "json", "json"),
-        ]
+        ],
     )
     def test_get_config_values(self, file, file_type, expected_type):
         config = Box({"configuration": {"file": file, "type": file_type}})
 
-        computed_file, computed_type = bg_utils._get_config_values(config)
-        assert computed_file == file
-        assert computed_type == expected_type
+        assert bg_utils._get_config_type(config) == expected_type

@@ -92,9 +92,12 @@ def generate_config_file(spec, cli_args):
         YapconfLoadError: Missing 'config' configuration option (file location)
     """
     config = _generate_config(spec, cli_args)
-    config_file, config_type = _get_config_values(config)
 
-    yapconf.dump_data(config.to_dict(), filename=config_file, file_type=config_type)
+    yapconf.dump_data(
+        config.to_dict(),
+        filename=config.configuration.file,
+        file_type=_get_config_type(config),
+    )
 
 
 def update_config_file(spec, cli_args):
@@ -111,19 +114,42 @@ def update_config_file(spec, cli_args):
         YapconfLoadError: Missing 'config' configuration option (file location)
     """
     config = _generate_config(spec, cli_args)
-    config_file, config_type = _get_config_values(config)
 
-    if not config_file:
+    if not config.configuration.file:
         raise SystemExit(
             "Please specify a config file to update" " in the CLI arguments (-c)"
         )
 
-    spec.migrate_config_file(
-        config_file,
-        update_defaults=True,
-        current_file_type=config_type,
-        output_file_type=config_type,
-    )
+    current_root, current_extension = os.path.splitext(config.configuration.file)
+    current_type = current_extension[1:]
+    if current_type == "yml":
+        current_type = "yaml"
+
+    # Determine if a type conversion is needed
+    type_conversion = False
+    new_type = _get_config_type(config)
+    if current_type != new_type:
+        new_file = current_root + "." + new_type
+        type_conversion = True
+    else:
+        new_file = config.configuration.file
+
+    try:
+        logger.debug("About to migrate config at %s" % config.configuration.file)
+        spec.migrate_config_file(
+            config.configuration.file,
+            current_file_type=current_type,
+            output_file_name=new_file,
+            output_file_type=new_type,
+            update_defaults=True,
+            include_bootstrap=False,
+        )
+
+        if type_conversion:
+            logger.debug("Removing old config file at %s" % config.configuration.file)
+            os.remove(config.configuration.file)
+    except Exception:
+        raise
 
 
 def generate_logging_config_file(spec, logging_config_generator, cli_args):
@@ -285,17 +311,13 @@ def _generate_config(spec, cli_args):
     return spec.load_config(vars(args), "ENVIRONMENT")
 
 
-def _get_config_values(config):
-    """Get the configuration file name and type from a configuration"""
+def _get_config_type(config):
+    """Get configuration type from a configuration"""
 
-    config_file = config.configuration.file or None
-    config_type = config.configuration.type or None
+    if config.configuration.type:
+        return config.configuration.type
 
-    # Default to yaml, but try to use file extension if we have one
-    if config_type is None:
-        if config_file and config_file.endswith("json"):
-            config_type = "json"
-        else:
-            config_type = "yaml"
+    if config.configuration.file and config.configuration.file.endswith("json"):
+        return "json"
 
-    return config_file, config_type
+    return "yaml"
