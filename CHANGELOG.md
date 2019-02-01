@@ -2,6 +2,7 @@
 
 ## 2.4.5
 1/11/19
+Brew-view 2.4.7, Bartender 2.4.1, BG-utils 2.4.2
 
 #### Bug Fixes
 - Bartender avoids extra network call if shut down while still starting (#214)
@@ -24,6 +25,7 @@
 
 ## 2.4.4
 10/9/18
+Brew-view 2.4.6, Bartender 2.4.0 BG-utils 2.4.0
 
 #### Bug Fixes
 - Fixed a race that could cause request creation to wait forever (#195)
@@ -34,6 +36,7 @@
 
 ## 2.4.3
 9/25/18
+Brew-view 2.4.5, Bartender 2.4.0, BG-utils 2.4.0
 
 #### Bug Fixes
 - Corrected problem with brew-view escalating CPU usage (#187)
@@ -42,6 +45,7 @@
 
 ## 2.4.2
 9/25/18
+Brew-view 2.4.4, Bartender 2.4.0, BG-utils 2.4.0
 
 #### Bug Fixes
 - Request create timeout is now -1 by default to match pre-2.4 behavior (#183)
@@ -53,6 +57,7 @@
 
 ## 2.4.1
 9/5/18
+Brew-view 2.4.1, Bartender 2.4.0, BG-utils 2.4.0
 
 #### Bug Fixes
 - Fixed issue with spinner always being shown on some pages (#172)
@@ -60,7 +65,6 @@
 
 ## 2.4.0
 9/5/18
-
 Brew-view 2.4.0, Bartender 2.4.0, BG-utils 2.4.0
 
 #### Added Features
@@ -99,7 +103,6 @@ Brew-view 2.4.0, Bartender 2.4.0, BG-utils 2.4.0
 
 ## 2.3.9
 6/14/18
-
 Brew-view 2.3.10, Bartender 2.3.7, BG-utils 2.3.6
 
 #### Bug Fixes
@@ -108,7 +111,6 @@ Brew-view 2.3.10, Bartender 2.3.7, BG-utils 2.3.6
 
 ## 2.3.8
 6/12/18
-
 Brew-view 2.3.9, Bartender 2.3.6, BG-utils 2.3.4
 
 #### Bug Fixes
@@ -117,7 +119,6 @@ Brew-view 2.3.9, Bartender 2.3.6, BG-utils 2.3.4
 
 ## 2.3.7
 6/7/18
-
 Brew-view 2.3.8, Bartender 2.3.6, BG-utils 2.3.4
 
 This release addresses two critical problems with database performance. To support the fix an additional field was added to the Request model and the indexes for the Request collection were updated.
@@ -135,8 +136,8 @@ See issue #84 for a detailed explanation.
 
 ## 2.3.6
 4/6/18
-
 Brew-view 2.3.6, Bartender 2.3.5, BG-utils 2.3.3
+
 #### Added Features
 - Using RabbitMQ publisher confirms when publishing requests (#37)
 - Brew-view accepts ca_cert, ca_path, and client_cert_verify configuration options (beer-garden/brew-view#43)
@@ -156,8 +157,8 @@ Brew-view 2.3.6, Bartender 2.3.5, BG-utils 2.3.3
 
 ## 2.3.5
 4/3/18
-
 Brew-view 2.3.5, Bartender 2.3.4, BG-utils 2.3.3
+
 #### Added Features
 - Attempting to update a completed request without actually modifiying data is no longer an error (beer-garden/brew-view#49)
 
@@ -167,8 +168,8 @@ Brew-view 2.3.5, Bartender 2.3.4, BG-utils 2.3.3
 
 ## 2.3.3
 2/21/18
-
 Brew-view 2.3.3, Bartender 2.3.3, BG-utils 2.3.2
+
 #### Bug Fixes
 - Bartender shutdown will now be clean even before making Brew-view and RabbitMQ connections
 
@@ -179,14 +180,15 @@ Brew-view 2.3.3, Bartender 2.3.3, BG-utils 2.3.2
 
 ## 2.3.1
 2/5/18
-
 Brew-view 2.3.1, Bartender 2.3.0, BG-utils 2.3.0
+
 #### Bug Fixes
 - Fixing issue with manual request creation targeting incorrect system
 
 
 ## 2.3.0
 1/26/18
+
 #### Added Features
 - Bartender can now be configured to skip server certificate verification when making HTTPS requests
 - Added Bartender custom CA certificate configuration option
