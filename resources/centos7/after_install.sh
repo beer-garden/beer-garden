@@ -53,14 +53,23 @@ case "$1" in
         fi
 
         # Generate application configs if they don't exist
-        if [ ! -f "$BARTENDER_CONFIG.yml" -a ! -f "$BARTENDER_CONFIG.json" ]; then
+        # Migrate them  if they do, converting to yaml if they're json
+        if [ -f "$BARTENDER_CONFIG.yml" ]; then
+            "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.yml"
+        elif [ -f "$BARTENDER_CONFIG.json" ]; then
+            "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.json" -t "yaml"
+        else
             "$APP_HOME/bin/generate_bartender_config" \
                 -c "$BARTENDER_CONFIG.yml" -l "$BARTENDER_LOG_CONFIG" \
                 --plugin-local-directory "$PLUGIN_HOME" \
                 --plugin-local-log-directory "$PLUGIN_LOG_HOME"
         fi
 
-        if [ ! -f "$BREW_VIEW_CONFIG.yml" -a ! -f "$BREW_VIEW_CONFIG.json" ]; then
+        if [ -f "$BREW_VIEW_CONFIG.yml" ]; then
+            "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.yml"
+        elif [ -f "$BREW_VIEW_CONFIG.json" ]; then
+            "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.json" -t "yaml"
+        else
             "$APP_HOME/bin/generate_brew_view_config" \
                 -c "$BREW_VIEW_CONFIG.yml" -l "$BREW_VIEW_LOG_CONFIG"
         fi
@@ -70,6 +79,8 @@ case "$1" in
     ;;
     2)
         # This is an upgrade, nothing to do
+        # Config migration will be done in after_remove
+        # See https://github.com/beer-garden/beer-garden/issues/215
     ;;
 esac
 

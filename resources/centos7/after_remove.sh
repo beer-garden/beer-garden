@@ -20,17 +20,17 @@ case "$1" in
     ;;
     1)
         # This is an upgrade.
-        # Migrate config files if they exist
+        # Migrate config files if they exist, converting to yaml if they're json
         if [ -f "$BARTENDER_CONFIG.yml" ]; then
             "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.yml"
         elif [ -f "$BARTENDER_CONFIG.json" ]; then
-            "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.json"
+            "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.json" -t "yaml"
         fi
 
         if [ -f "$BREW_VIEW_CONFIG.yml" ]; then
             "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.yml"
         elif [ -f "$BREW_VIEW_CONFIG.json" ]; then
-            "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.json"
+            "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.json" -t "yaml"
         fi
     ;;
 esac
