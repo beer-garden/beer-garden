@@ -5,10 +5,11 @@ PLUGINS_HOME="${APP_HOME}/plugins"
 
 case "$1" in
     1)
-        # This is an initial install. Version migrations should go here
+        # This is an initial install.
     ;;
     2)
         # This is an upgrade, so we stop the application first.
-        systemctl stop $APP_NAME
+        # But we don't want to abort if the service definition is missing
+        systemctl stop $APP_NAME || true
     ;;
 esac

@@ -11,13 +11,10 @@ find $APP_HOME -name '__pycache__' -exec rm -fr {} +
 case "$1" in
     0)
         # This is an uninstallation.
-        systemctl stop $APP_NAME
-        systemctl disable $APP_NAME
+        systemctl stop $APP_NAME || true
     ;;
     1)
         # This is an upgrade.
-        # Do nothing because the pre install scripts will
-        # Take care of it.
         :
     ;;
 esac
