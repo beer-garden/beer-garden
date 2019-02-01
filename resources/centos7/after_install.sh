@@ -64,6 +64,9 @@ case "$1" in
             "$APP_HOME/bin/generate_brew_view_config" \
                 -c "$BREW_VIEW_CONFIG.yml" -l "$BREW_VIEW_LOG_CONFIG"
         fi
+
+        # Reload units so service is ready to go
+        systemctl daemon-reload
     ;;
     2)
         # This is an upgrade, nothing to do

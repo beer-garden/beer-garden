@@ -39,3 +39,6 @@ esac
 if [ -f /etc/init.d/${APP_NAME} ]; then
     rm -f /etc/init.d/${APP_NAME}
 fi
+
+# And reload units
+systemctl daemon-reload
