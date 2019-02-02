@@ -20,6 +20,21 @@ case "$1" in
     ;;
     1)
         # This is an upgrade.
+        # Generate logging configs if they don't exist
+        if [ ! -f "$BARTENDER_LOG_CONFIG" ]; then
+            "$APP_HOME/bin/generate_bartender_log_config" \
+                --log-config-file "$BARTENDER_LOG_CONFIG" \
+                --log-file "$BARTENDER_LOG_FILE" \
+                --log-level "WARN"
+        fi
+
+        if [ ! -f "$BREW_VIEW_LOG_CONFIG" ]; then
+            "$APP_HOME/bin/generate_brew_view_log_config" \
+                --log-config-file "$BREW_VIEW_LOG_CONFIG" \
+                --log-file "$BREW_VIEW_LOG_FILE" \
+                --log-level "WARN"
+        fi
+
         # Migrate config files if they exist, converting to yaml if they're json
         if [ -f "$BARTENDER_CONFIG.yml" ]; then
             "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.yml"
