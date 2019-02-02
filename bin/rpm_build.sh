@@ -131,11 +131,20 @@ create_rpm() {
     # --license                 The license name
     # --url                     Project site url
     # -d "$DEPS"                Specify any necessary package dependencies
-    mkdir -p $SRC_PATH/dist
+
     VERSION=$(cat $SRC_PATH/resources/version)
     echo "Building beer-garden (${VERSION}) RPM Package..."
-    cd $SRC_PATH/dist
 
+    # Put the service files in the correct location
+    service_paths=()
+    service_files=("beer-garden.service" "bartender.service" "brew-view.service")
+    for file in "${service_files[@]}"
+    do
+        cp "$SRC_SCRIPT_PATH/$file" "/lib/systemd/system/"
+        service_paths+=("/lib/systemd/system/$file")
+    done
+
+    # Construct the fpm arguments
     args=(
         -f
         -t rpm
@@ -167,15 +176,13 @@ create_rpm() {
         args+=(-d "openssl-libs >= 1:1.0.2a-1")
     fi
 
-    cp $SRC_SCRIPT_PATH/beer-garden.service /lib/systemd/system/
-    cp $SRC_SCRIPT_PATH/bartender.service /lib/systemd/system/
-    cp $SRC_SCRIPT_PATH/brew-view.service /lib/systemd/system/
 
-    fpm "${args[@]}" \
-        $APP_PATH \
-        /lib/systemd/system/beer-garden.service \
-        /lib/systemd/system/bartender.service \
-        /lib/systemd/system/brew-view.service
+    # Make sure we have a place to put the rpm
+    mkdir -p $SRC_PATH/dist
+    cd $SRC_PATH/dist
+
+    # Build it!
+    fpm "${args[@]}" "$APP_PATH" "${service_paths[@]}"
 }
 
 install_apps
