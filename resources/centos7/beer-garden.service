@@ -3,6 +3,7 @@
 [Unit]
 Description=Beergarden Service
 Wants=brew-view.service bartender.service
+Before=brew-view.service bartender.service
 
 [Service]
 Type=oneshot
