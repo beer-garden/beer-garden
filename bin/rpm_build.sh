@@ -135,15 +135,6 @@ create_rpm() {
     VERSION=$(cat $SRC_PATH/resources/version)
     echo "Building beer-garden (${VERSION}) RPM Package..."
 
-    # Put the service files in the correct location
-    service_paths=()
-    service_files=("beer-garden.service" "bartender.service" "brew-view.service")
-    for file in "${service_files[@]}"
-    do
-        cp "$SRC_SCRIPT_PATH/$file" "/lib/systemd/system/"
-        service_paths+=("/lib/systemd/system/$file")
-    done
-
     # Construct the fpm arguments
     args=(
         -f
@@ -172,8 +163,25 @@ create_rpm() {
         --url "https://beer-garden.io"
     )
 
-    if [[ "$RELEASE" == "7" ]]; then
+    # Put the service files in the correct location
+    service_paths=()
+
+    if [[ "$RELEASE" == "6" ]]; then
+        service_files=("beer-garden")
+        for file in "${service_files[@]}"
+        do
+            cp "$SRC_SCRIPT_PATH/$file" "/etc/init.d/"
+            service_paths+=("/etc/init.d/$file")
+        done
+    elif [[ "$RELEASE" == "7" ]]; then
         args+=(-d "openssl-libs >= 1:1.0.2a-1")
+
+        service_files=("beer-garden.service" "bartender.service" "brew-view.service")
+        for file in "${service_files[@]}"
+        do
+            cp "$SRC_SCRIPT_PATH/$file" "/lib/systemd/system/"
+            service_paths+=("/lib/systemd/system/$file")
+        done
     fi
 
 
