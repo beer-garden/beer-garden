@@ -35,15 +35,20 @@ case "$1" in
                 --log-level "WARN"
         fi
 
-        # Migrate config files if they exist, converting to yaml if they're json
+        # Migrate config files if they exist, converting to yaml if necessary
+        # (.yml will be 'migrated' to .yaml)
         if [ -f "$BARTENDER_CONFIG.yaml" ]; then
             "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.yaml"
+        elif [ -f "$BARTENDER_CONFIG.yml" ]; then
+            "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.yml"
         elif [ -f "$BARTENDER_CONFIG.json" ]; then
             "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.json" -t "yaml"
         fi
 
         if [ -f "$BREW_VIEW_CONFIG.yaml" ]; then
             "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.yaml"
+        elif [ -f "$BREW_VIEW_CONFIG.yml" ]; then
+            "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.yml"
         elif [ -f "$BREW_VIEW_CONFIG.json" ]; then
             "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.json" -t "yaml"
         fi
