@@ -8,4 +8,4 @@ PartOf=beer-garden.service
 [Service]
 Type=simple
 User=beer-garden
-ExecStart=/opt/beer-garden/bin/brew-view -c /opt/beer-garden/conf/brew-view-config.yml
+ExecStart=/opt/beer-garden/bin/brew-view -c /opt/beer-garden/conf/brew-view-config.yaml

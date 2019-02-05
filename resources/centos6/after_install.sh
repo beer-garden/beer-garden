@@ -59,24 +59,24 @@ case "$1" in
 
         # Generate application configs if they don't exist
         # Migrate them  if they do, converting to yaml if they're json
-        if [ -f "$BARTENDER_CONFIG.yml" ]; then
-            "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.yml"
+        if [ -f "$BARTENDER_CONFIG.yaml" ]; then
+            "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.yaml"
         elif [ -f "$BARTENDER_CONFIG.json" ]; then
             "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.json" -t "yaml"
         else
             "$APP_HOME/bin/generate_bartender_config" \
-                -c "$BARTENDER_CONFIG.yml" -l "$BARTENDER_LOG_CONFIG" \
+                -c "$BARTENDER_CONFIG.yaml" -l "$BARTENDER_LOG_CONFIG" \
                 --plugin-local-directory "$PLUGIN_HOME" \
                 --plugin-local-log-directory "$PLUGIN_LOG_HOME"
         fi
 
-        if [ -f "$BREW_VIEW_CONFIG.yml" ]; then
-            "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.yml"
+        if [ -f "$BREW_VIEW_CONFIG.yaml" ]; then
+            "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.yaml"
         elif [ -f "$BREW_VIEW_CONFIG.json" ]; then
             "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.json" -t "yaml"
         else
             "$APP_HOME/bin/generate_brew_view_config" \
-                -c "$BREW_VIEW_CONFIG.yml" -l "$BREW_VIEW_LOG_CONFIG"
+                -c "$BREW_VIEW_CONFIG.yaml" -l "$BREW_VIEW_LOG_CONFIG"
         fi
     ;;
     2)
