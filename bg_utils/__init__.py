@@ -134,22 +134,19 @@ def update_config_file(spec, cli_args):
     else:
         new_file = config.configuration.file
 
-    try:
-        logger.debug("About to migrate config at %s" % config.configuration.file)
-        spec.migrate_config_file(
-            config.configuration.file,
-            current_file_type=current_type,
-            output_file_name=new_file,
-            output_file_type=new_type,
-            update_defaults=True,
-            include_bootstrap=False,
-        )
+    logger.debug("About to migrate config at %s" % config.configuration.file)
+    spec.migrate_config_file(
+        config.configuration.file,
+        current_file_type=current_type,
+        output_file_name=new_file,
+        output_file_type=new_type,
+        update_defaults=True,
+        include_bootstrap=False,
+    )
 
-        if type_conversion:
-            logger.debug("Removing old config file at %s" % config.configuration.file)
-            os.remove(config.configuration.file)
-    except Exception:
-        raise
+    if type_conversion:
+        logger.debug("Removing old config file at %s" % config.configuration.file)
+        os.remove(config.configuration.file)
 
 
 def generate_logging_config_file(spec, logging_config_generator, cli_args):
