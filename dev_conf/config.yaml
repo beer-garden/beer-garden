@@ -33,7 +33,7 @@ backend:
   port: 9090
   socket_timeout: 13000
 configuration:
-  file: dev_conf/config.yml
+  file: dev_conf/config.yaml
   type: yaml
 cors_enabled: true
 db:
