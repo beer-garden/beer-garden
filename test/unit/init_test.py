@@ -138,10 +138,14 @@ class TestBgUtils(object):
         assert capsys.readouterr().out
 
     @pytest.mark.parametrize("file_type", ["json", "yaml"])
-    def test_update_config(self, spec, file_type):
+    def test_update_config(self, monkeypatch, spec, file_type):
         migrate_mock = Mock()
         spec.migrate_config_file = migrate_mock
         spec.update_defaults = Mock()
+
+        remove_mock = Mock()
+        monkeypatch.setattr(os, "remove", remove_mock)
+
         bg_utils.update_config_file(spec, ["-c", "/path/to/config." + file_type])
 
         expected = Box(
@@ -160,6 +164,7 @@ class TestBgUtils(object):
             update_defaults=True,
             include_bootstrap=False,
         )
+        assert remove_mock.called is False
 
     @pytest.mark.parametrize(
         "extension,current_type,new_type",
@@ -190,6 +195,20 @@ class TestBgUtils(object):
             include_bootstrap=False,
         )
         remove_mock.assert_called_once_with("/path/to/config." + extension)
+
+    def test_update_config_change_type_error(self, monkeypatch, spec):
+        migrate_mock = Mock(side_effect=ValueError)
+        spec.migrate_config_file = migrate_mock
+        spec.update_defaults = Mock()
+
+        remove_mock = Mock()
+        monkeypatch.setattr(os, "remove", remove_mock)
+
+        with pytest.raises(ValueError):
+            bg_utils.update_config_file(
+                spec, ["-c", "/path/to/config.json", "-t", "yaml"]
+            )
+        assert remove_mock.called is False
 
     def test_update_config_no_file_specified(self, spec):
         migrate_mock = Mock()
