@@ -122,8 +122,6 @@ def update_config_file(spec, cli_args):
 
     current_root, current_extension = os.path.splitext(config.configuration.file)
     current_type = current_extension[1:]
-    if current_type == "yml":
-        current_type = "yaml"
 
     # Determine if a type conversion is needed
     type_conversion = False
@@ -133,6 +131,9 @@ def update_config_file(spec, cli_args):
         type_conversion = True
     else:
         new_file = config.configuration.file
+
+    if current_type == "yml":
+        current_type = "yaml"
 
     logger.debug("About to migrate config at %s" % config.configuration.file)
     spec.migrate_config_file(

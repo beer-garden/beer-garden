@@ -162,9 +162,14 @@ class TestBgUtils(object):
         )
 
     @pytest.mark.parametrize(
-        "file_type,config_type", [("json", "yaml"), ("yaml", "json")]
+        "extension,current_type,new_type",
+        [
+            ("json", "json", "yaml"),
+            ("yaml", "yaml", "json"),
+            ("yml", "yaml", "yaml"),
+        ]
     )
-    def test_update_config_change_type(self, monkeypatch, spec, file_type, config_type):
+    def test_update_config_change_type(self, monkeypatch, spec, extension, current_type, new_type):
         migrate_mock = Mock()
         spec.migrate_config_file = migrate_mock
         spec.update_defaults = Mock()
@@ -173,18 +178,18 @@ class TestBgUtils(object):
         monkeypatch.setattr(os, "remove", remove_mock)
 
         bg_utils.update_config_file(
-            spec, ["-c", "/path/to/config." + file_type, "-t", config_type]
+            spec, ["-c", "/path/to/config." + extension, "-t", new_type]
         )
 
         migrate_mock.assert_called_once_with(
-            "/path/to/config." + file_type,
-            current_file_type=file_type,
-            output_file_name="/path/to/config." + config_type,
-            output_file_type=config_type,
+            "/path/to/config." + extension,
+            current_file_type=current_type,
+            output_file_name="/path/to/config." + new_type,
+            output_file_type=new_type,
             update_defaults=True,
             include_bootstrap=False,
         )
-        remove_mock.assert_called_once_with("/path/to/config." + file_type)
+        remove_mock.assert_called_once_with("/path/to/config." + extension)
 
     def test_update_config_no_file_specified(self, spec):
         migrate_mock = Mock()
