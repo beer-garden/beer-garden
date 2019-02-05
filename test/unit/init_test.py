@@ -375,7 +375,7 @@ class TestBgUtils(object):
         assert len(os.listdir(str(tmpdir))) == 1
 
     @pytest.mark.parametrize(
-        "file,file_type,expected_type",
+        "file_name,file_type,expected_type",
         [
             (None, None, "yaml"),
             (None, "yaml", "yaml"),
@@ -392,7 +392,6 @@ class TestBgUtils(object):
             ("file.json", "json", "json"),
         ],
     )
-    def test_get_config_values(self, file, file_type, expected_type):
-        config = Box({"configuration": {"file": file, "type": file_type}})
-
+    def test_get_config_type(self, file_name, file_type, expected_type):
+        config = Box({"configuration": {"file": file_name, "type": file_type}})
         assert bg_utils._get_config_type(config) == expected_type
