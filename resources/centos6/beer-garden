@@ -14,17 +14,21 @@
 # Source function library.
 . /etc/rc.d/init.d/functions
 
+APP_NAME="beer-garden"
+APP_HOME="/opt/${APP_NAME}"
 BEERGARDEN_HOME="${BEERGARDEN_HOME:-$APP_HOME}"
-PROCESS_NAME="beer-garden"
+
 CONFIG_HOME="$BEERGARDEN_HOME/conf"
+
+PROCESS_NAME="beer-garden"
 PID_HOME="/var/run/$PROCESS_NAME"
 
-BT_CONFIG_FILE="$CONFIG_HOME/bartender-config.$BARTENDER_CONFIG_TYPE"
+BT_CONFIG_FILE="$CONFIG_HOME/bartender-config.yaml"
 BT_EXEC="$BEERGARDEN_HOME/bin/bartender -c $BT_CONFIG_FILE"
 BT_PID_FILE="$PID_HOME/bartender.pid"
 BT_LOCK_FILE="/var/lock/subsys/bartender"
 
-BV_CONFIG_FILE="$CONFIG_HOME/brew-view-config.$BREW_VIEW_CONFIG_TYPE"
+BV_CONFIG_FILE="$CONFIG_HOME/brew-view-config.yaml"
 BV_EXEC="$BEERGARDEN_HOME/bin/brew-view -c $BV_CONFIG_FILE"
 BV_PID_FILE="$PID_HOME/brew-view.pid"
 BV_LOCK_FILE="/var/lock/subsys/brew-view"
