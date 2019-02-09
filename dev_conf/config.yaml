@@ -26,7 +26,7 @@ amq:
   host: localhost
   virtual_host: /
 configuration:
-  file: dev_conf/config.yml
+  file: dev_conf/config.yaml
   type: yaml
 db:
   connection:
