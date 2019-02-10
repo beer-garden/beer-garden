@@ -1,7 +1,10 @@
+// Configuration constants
 export const FETCH_CONFIG_BEGIN = "FETCH_CONFIG_BEGIN";
 export const FETCH_CONFIG_SUCCESS = "FETCH_CONFIG_SUCCESS";
 export const FETCH_CONFIG_FAILURE = "FETCH_CONFIG_FAILURE";
+// End configuration constants
 
+// User constants
 export const USER_LOGIN_BEGIN = "USER_LOGIN_BEGIN";
 export const USER_LOGIN_SUCCESS = "USER_LOGIN_SUCCESS";
 export const USER_LOGIN_FAILURE = "USER_LOGIN_FAILURE";
@@ -10,12 +13,21 @@ export const USER_LOGOUT_BEGIN = "USER_LOGOUT_BEGIN";
 export const USER_LOGOUT_SUCCESS = "USER_LOGOUT_SUCCESS";
 export const USER_LOGOUT_FAILURE = "USER_LOGOUT_FAILURE";
 
+export const FETCH_USERS_BEGIN = "FETCH_USERS_BEGIN";
+export const FETCH_USERS_SUCCESS = "FETCH_USERS_SUCCESS";
+export const FETCH_USERS_FAILURE = "FETCH_USERS_FAILURE";
+
+export const SET_USER_THEME = "SET_USER_THEME";
+// End user constants
+
+// System constants
 export const FETCH_SYSTEMS_BEGIN = "FETCH_SYSTEMS_BEGIN";
 export const FETCH_SYSTEMS_SUCCESS = "FETCH_SYSTEMS_SUCCESS";
 export const FETCH_SYSTEMS_FAILURE = "FETCH_SYSTEMS_FAILURE";
+// End system constants
 
-export const SET_USER_THEME = "SET_USER_THEME";
-
+// Version constants
 export const FETCH_VERSION_BEGIN = "FETCH_VERSION_BEGIN";
 export const FETCH_VERSION_SUCCESS = "FETCH_VERSION_SUCCESS";
 export const FETCH_VERSION_FAILURE = "FETCH_VERSION_FAILURE";
+// End version constants
