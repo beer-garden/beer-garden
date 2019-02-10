@@ -18,14 +18,14 @@ export class AboutContainer extends Component {
     return (
       <Grid container spacing={24}>
         <Grid item xs={12}>
+          <HelpfulLinks config={config} />
+        </Grid>
+        <Grid item xs={12}>
           <VersionInfo
             loading={versionLoading}
             version={version}
             error={versionError}
           />
-        </Grid>
-        <Grid item xs={12}>
-          <HelpfulLinks config={config} />
         </Grid>
       </Grid>
     );
