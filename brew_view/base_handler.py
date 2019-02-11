@@ -8,7 +8,7 @@ from mongoengine.errors import (
     NotUniqueError,
     ValidationError as MongoValidationError,
 )
-from thriftpy.thrift import TException
+from thriftpy2.thrift import TException
 from tornado.web import HTTPError, RequestHandler
 
 import bg_utils
