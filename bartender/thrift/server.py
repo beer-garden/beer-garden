@@ -97,7 +97,7 @@ class WrappedTProcessor(TProcessor):
 
     def handle_exception(self, e, result):
         try:
-            super(WrappedTProcessor, self).handle_exception(e, result)
+            return super(WrappedTProcessor, self).handle_exception(e, result)
         except Exception as ex:
             self.logger.exception(
                 "Uncaught exception occurred during thrift execution: %s", ex
