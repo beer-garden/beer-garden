@@ -137,8 +137,15 @@ class TestBgUtils(object):
         # Just make sure we printed something
         assert capsys.readouterr().out
 
-    @pytest.mark.parametrize("file_type", ["json", "yaml"])
-    def test_update_config(self, monkeypatch, spec, file_type):
+    @pytest.mark.parametrize(
+        "extension,file_type",
+        [
+            ("json", "json"),
+            ("yaml", "yaml"),
+            ("yml", "yaml"),
+        ]
+    )
+    def test_update_config(self, monkeypatch, spec, extension, file_type):
         migrate_mock = Mock()
         spec.migrate_config_file = migrate_mock
         spec.update_defaults = Mock()
@@ -146,14 +153,14 @@ class TestBgUtils(object):
         remove_mock = Mock()
         monkeypatch.setattr(os, "remove", remove_mock)
 
-        bg_utils.update_config_file(spec, ["-c", "/path/to/config." + file_type])
+        bg_utils.update_config_file(spec, ["-c", "/path/to/config." + extension])
 
         expected = Box(
             {
                 "log_file": None,
                 "log_level": "INFO",
                 "log_config": None,
-                "configuration": {"file": "/path/to/config." + file_type},
+                "configuration": {"file": "/path/to/config." + extension},
             }
         )
         migrate_mock.assert_called_once_with(
@@ -167,14 +174,13 @@ class TestBgUtils(object):
         assert remove_mock.called is False
 
     @pytest.mark.parametrize(
-        "extension,current_type,new_type",
+        "current_type,new_type",
         [
-            ("json", "json", "yaml"),
-            ("yaml", "yaml", "json"),
-            ("yml", "yaml", "yaml"),
+            ("json", "yaml"),
+            ("yaml", "json"),
         ]
     )
-    def test_update_config_change_type(self, monkeypatch, spec, extension, current_type, new_type):
+    def test_update_config_change_type(self, monkeypatch, spec, current_type, new_type):
         migrate_mock = Mock()
         spec.migrate_config_file = migrate_mock
         spec.update_defaults = Mock()
@@ -183,18 +189,18 @@ class TestBgUtils(object):
         monkeypatch.setattr(os, "remove", remove_mock)
 
         bg_utils.update_config_file(
-            spec, ["-c", "/path/to/config." + extension, "-t", new_type]
+            spec, ["-c", "/path/to/config." + current_type, "-t", new_type]
         )
 
         migrate_mock.assert_called_once_with(
-            "/path/to/config." + extension,
+            "/path/to/config." + current_type,
             current_file_type=current_type,
             output_file_name="/path/to/config." + new_type,
             output_file_type=new_type,
             update_defaults=True,
             include_bootstrap=False,
         )
-        remove_mock.assert_called_once_with("/path/to/config." + extension)
+        remove_mock.assert_called_once_with("/path/to/config." + current_type)
 
     def test_update_config_change_type_error(self, monkeypatch, spec):
         migrate_mock = Mock(side_effect=ValueError)
