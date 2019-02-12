@@ -57,13 +57,18 @@ case "$1" in
             --log-level "WARN"
         fi
 
+        # Enforce .yaml extension for yaml config files
+        if [ -f "$BARTENDER_CONFIG.yml" ]; then
+            mv "$BARTENDER_CONFIG.yml" "$BARTENDER_CONFIG.yaml"
+        fi
+        if [ -f "$BREW_VIEW_CONFIG.yml" ]; then
+            mv "$BREW_VIEW_CONFIG.yml" "$BREW_VIEW_CONFIG.yaml"
+        fi
+
         # Generate application configs if they don't exist
         # Migrate them if they do, converting to yaml if necessary
-        # (.yml will be 'migrated' to .yaml)
         if [ -f "$BARTENDER_CONFIG.yaml" ]; then
             "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.yaml"
-        elif [ -f "$BARTENDER_CONFIG.yml" ]; then
-            "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.yml"
         elif [ -f "$BARTENDER_CONFIG.json" ]; then
             "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_CONFIG.json" -t "yaml"
         else
@@ -75,8 +80,6 @@ case "$1" in
 
         if [ -f "$BREW_VIEW_CONFIG.yaml" ]; then
             "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.yaml"
-        elif [ -f "$BREW_VIEW_CONFIG.yml" ]; then
-            "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.yml"
         elif [ -f "$BREW_VIEW_CONFIG.json" ]; then
             "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_CONFIG.json" -t "yaml"
         else
