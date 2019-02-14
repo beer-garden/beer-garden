@@ -10,7 +10,7 @@ from apscheduler.schedulers.tornado import TornadoScheduler
 from functools import partial
 from prometheus_client.exposition import start_http_server
 from pytz import utc
-from thriftpy.rpc import client_context
+from thriftpy2.rpc import client_context
 from tornado.concurrent import Future
 from tornado.gen import coroutine, sleep
 from tornado.httpserver import HTTPServer
