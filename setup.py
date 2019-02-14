@@ -30,7 +30,7 @@ setup(
         "pika<0.13",
         "pytz<2019",
         "ruamel.yaml<0.16",
-        "thriftpy2<0.4",
+        "thriftpy2<0.5",
         "yapconf>=0.3.3",
     ],
 )
