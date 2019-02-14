@@ -1,0 +1,15 @@
+# The Beergarden service unit file
+
+[Unit]
+Description=Beergarden Service
+Wants=brew-view.service bartender.service
+Before=brew-view.service bartender.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/true
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
+Also=brew-view.service bartender.service

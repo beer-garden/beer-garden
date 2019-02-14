@@ -43,10 +43,18 @@ fi
 # Constants
 APP_NAME="beer-garden"
 APP_PATH="/opt/$APP_NAME"
+
+BIN_PATH="$APP_PATH/bin"
+INCLUDE_PATH="$APP_PATH/include"
+LIB_PATH="$APP_PATH/lib"
+SHARE_PATH="$APP_PATH/share"
+
 PYTHON_BIN="$APP_PATH/bin/python"
 PIP_BIN="$APP_PATH/bin/pip"
+
 SRC_PATH="/src"
 SRC_SCRIPT_PATH="$SRC_PATH/resources/centos${RELEASE}"
+
 BEFORE_INSTALL="before_install.sh"
 AFTER_INSTALL="after_install.sh"
 BEFORE_REMOVE="before_remove.sh"
@@ -113,8 +121,8 @@ create_rpm() {
     # --rpm-dist "el$RELEASE"   The rpm distribution
     # --iteration 1             The iteration number
     # -s dir                    Describes that the source we are using is a directory
-    # -x "*.bak"                Excludes any .bak files
-    # -x "*.orig"               Excludes and .orig files
+    # -x ""                     Excludes paths matching the given pattern
+    # --directories             Recursively mark a directory as 'owned' by the RPM
     # --before-install path     Sets before-install script to be run when installing the RPM
     # --after-install path      Sets after-install script to be run when installing the RPM
     # --before-remove path      Sets before-remove script to be run when uninstalling the RPM
@@ -123,11 +131,11 @@ create_rpm() {
     # --license                 The license name
     # --url                     Project site url
     # -d "$DEPS"                Specify any necessary package dependencies
-    mkdir -p $SRC_PATH/dist
+
     VERSION=$(cat $SRC_PATH/resources/version)
     echo "Building beer-garden (${VERSION}) RPM Package..."
-    cd $SRC_PATH/dist
 
+    # Construct the fpm arguments
     args=(
         -f
         -t rpm
@@ -139,6 +147,13 @@ create_rpm() {
         -s dir
         -x "*.bak"
         -x "*.orig"
+        -x "*.pyc"
+        -x "*.pyo"
+        -x "**/__pycache__"
+        --directories $BIN_PATH
+        --directories $INCLUDE_PATH
+        --directories $LIB_PATH
+        --directories $SHARE_PATH
         --before-install $SRC_SCRIPT_PATH/$BEFORE_INSTALL
         --after-install $SRC_SCRIPT_PATH/$AFTER_INSTALL
         --before-remove $SRC_SCRIPT_PATH/$BEFORE_REMOVE
@@ -148,11 +163,34 @@ create_rpm() {
         --url "https://beer-garden.io"
     )
 
-    if [[ "$RELEASE" == "7" ]]; then
+    # Put the service files in the correct location
+    service_paths=()
+
+    if [[ "$RELEASE" == "6" ]]; then
+        service_files=("beer-garden")
+        for file in "${service_files[@]}"
+        do
+            cp "$SRC_SCRIPT_PATH/$file" "/etc/init.d/"
+            service_paths+=("/etc/init.d/$file")
+        done
+    elif [[ "$RELEASE" == "7" ]]; then
         args+=(-d "openssl-libs >= 1:1.0.2a-1")
+
+        service_files=("beer-garden.service" "bartender.service" "brew-view.service")
+        for file in "${service_files[@]}"
+        do
+            cp "$SRC_SCRIPT_PATH/$file" "/lib/systemd/system/"
+            service_paths+=("/lib/systemd/system/$file")
+        done
     fi
 
-    fpm "${args[@]}" $APP_PATH
+
+    # Make sure we have a place to put the rpm
+    mkdir -p $SRC_PATH/dist
+    cd $SRC_PATH/dist
+
+    # Build it!
+    fpm "${args[@]}" "$APP_PATH" "${service_paths[@]}"
 }
 
 install_apps
