@@ -285,8 +285,8 @@ class RequestListAPITest(TestHandlerBase):
 class TestRequestListAPI(object):
     @pytest.fixture
     def columns(self):
-        def _factory(search=None):
-            search = search or {}
+        def _factory(filter_value=None):
+            filter_value = filter_value or {}
 
             columns = [
                 {
@@ -294,14 +294,17 @@ class TestRequestListAPI(object):
                     "name": "",
                     "searchable": True,
                     "orderable": True,
-                    "search": {"value": search.get("command", ""), "regex": False},
+                    "search": {
+                        "value": filter_value.get("command", ""),
+                        "regex": False,
+                    },
                 },
                 {
                     "data": "system",
                     "name": "",
                     "searchable": True,
                     "orderable": True,
-                    "search": {"value": search.get("system", ""), "regex": False},
+                    "search": {"value": filter_value.get("system", ""), "regex": False},
                 },
                 {
                     "data": "instance_name",
@@ -309,7 +312,7 @@ class TestRequestListAPI(object):
                     "searchable": True,
                     "orderable": True,
                     "search": {
-                        "value": search.get("instance_name", ""),
+                        "value": filter_value.get("instance_name", ""),
                         "regex": False,
                     },
                 },
@@ -318,28 +321,37 @@ class TestRequestListAPI(object):
                     "name": "",
                     "searchable": True,
                     "orderable": True,
-                    "search": {"value": search.get("status", ""), "regex": False},
+                    "search": {"value": filter_value.get("status", ""), "regex": False},
                 },
                 {
                     "data": "created_at",
                     "name": "",
                     "searchable": True,
                     "orderable": True,
-                    "search": {"value": search.get("created_at", ""), "regex": False},
+                    "search": {
+                        "value": filter_value.get("created_at", ""),
+                        "regex": False,
+                    },
                 },
                 {
                     "data": "comment",
                     "name": "",
                     "searchable": True,
                     "orderable": True,
-                    "search": {"value": search.get("comment", ""), "regex": False},
+                    "search": {
+                        "value": filter_value.get("comment", ""),
+                        "regex": False,
+                    },
                 },
                 {
                     "data": "metadata",
                     "name": "",
                     "searchable": True,
                     "orderable": True,
-                    "search": {"value": search.get("metadata", ""), "regex": False},
+                    "search": {
+                        "value": filter_value.get("metadata", ""),
+                        "regex": False,
+                    },
                 },
                 {"data": "id"},
             ]
@@ -358,12 +370,21 @@ class TestRequestListAPI(object):
         return _factory
 
     @pytest.fixture
+    def search(self):
+        def _factory(search_value=None):
+            if search_value is not None:
+                return [json.dumps({"value": search_value, "regex": False})]
+            return None
+
+        return _factory
+
+    @pytest.fixture
     def handler(self, monkeypatch):
         monkeypatch.setattr(brew_view, "config", Mock())
         return RequestListAPI(MagicMock(), MagicMock())
 
     @pytest.mark.parametrize(
-        "order_column,search,index",
+        "order_column,filter_value,index",
         [
             # Neither
             (None, None, "parent_index"),
@@ -388,15 +409,42 @@ class TestRequestListAPI(object):
         ],
     )
     def test_order_index_hints(
-        self, monkeypatch, handler, columns, order, order_column, search, index
+        self, monkeypatch, handler, columns, order, order_column, filter_value, index
     ):
 
-        args = {"columns": columns(search), "order": order(order_column)}
+        args = {"columns": columns(filter_value), "order": order(order_column)}
 
         if order_column is None:
             del args["order"]
 
         monkeypatch.setattr(handler.request, "query_arguments", args)
 
-        query_set, fields = handler._get_query_set()
-        assert index == query_set._hint
+        query_set, _ = handler._get_query_set()
+        assert query_set._hint == index
+
+    @pytest.mark.parametrize(
+        "order_column,filter_value",
+        [
+            (None, None),  # Neither
+            (0, None),  # Only sorting
+            (None, {"command": "say"}),  # Only filtering
+            (4, {"command": "say"}),  # Both
+        ],
+    )
+    def test_overall_search_no_hint(
+        self, monkeypatch, handler, columns, order, order_column, filter_value, search
+    ):
+
+        args = {
+            "columns": columns(filter_value),
+            "order": order(order_column),
+            "search": search("Search Text"),
+        }
+
+        if order_column is None:
+            del args["order"]
+
+        monkeypatch.setattr(handler.request, "query_arguments", args)
+
+        query_set, _ = handler._get_query_set()
+        assert query_set._hint == -1
