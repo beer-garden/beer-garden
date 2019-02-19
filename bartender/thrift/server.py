@@ -2,9 +2,9 @@ import logging
 from concurrent.futures import wait, ThreadPoolExecutor, ALL_COMPLETED
 from threading import Event
 
-from thriftpy.server import TThreadedServer
-from thriftpy.thrift import TProcessor
-from thriftpy.transport import TServerSocket, TSSLServerSocket
+from thriftpy2.server import TThreadedServer
+from thriftpy2.thrift import TProcessor
+from thriftpy2.transport import TServerSocket, TSSLServerSocket
 
 import bg_utils
 from brewtils.stoppable_thread import StoppableThread
@@ -97,7 +97,7 @@ class WrappedTProcessor(TProcessor):
 
     def handle_exception(self, e, result):
         try:
-            super(WrappedTProcessor, self).handle_exception(e, result)
+            return super(WrappedTProcessor, self).handle_exception(e, result)
         except Exception as ex:
             self.logger.exception(
                 "Uncaught exception occurred during thrift execution: %s", ex

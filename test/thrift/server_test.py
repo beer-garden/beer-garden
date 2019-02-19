@@ -4,7 +4,7 @@ from concurrent.futures import Future
 from mock import ANY, Mock, patch
 
 from bartender.thrift.server import BartenderThriftServer, make_server
-from thriftpy.transport import TServerSocket, TSSLServerSocket
+from thriftpy2.transport import TServerSocket, TSSLServerSocket
 
 
 class ThriftServerTest(unittest.TestCase):
@@ -112,8 +112,8 @@ class MakeServerTest(unittest.TestCase):
         self.assertNotIsInstance(server.trans, TSSLServerSocket)
 
     @patch("bartender.config", Mock(thrift=Mock(max_workers=1)))
-    @patch("thriftpy.transport.sslsocket.os", Mock())
-    @patch("thriftpy.transport.sslsocket.create_thriftpy_context", Mock())
+    @patch("thriftpy2.transport.sslsocket.os", Mock())
+    @patch("thriftpy2.transport.sslsocket.create_thriftpy_context", Mock())
     def test_make_server_with_cert(self):
         server = make_server(Mock(), Mock(), cert_file=Mock())
         self.assertIsInstance(server.trans, TSSLServerSocket)
