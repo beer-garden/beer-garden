@@ -21,7 +21,7 @@ export class AdvancedIndex extends Component {
       to: "/about",
       icon: <Help fontSize="large" />,
       secondary:
-        "See some basic information about this Beer Garden Installation including version numbers and where to find our API documentation",
+        "Basic Information about this installation including version numbers and where to find API documentation",
     },
     {
       id: "sysMgmtLink",
