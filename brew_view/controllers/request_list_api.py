@@ -462,10 +462,7 @@ class RequestListAPI(BaseHandler):
         query_params = reduce(lambda x, y: x & y, search_params, Q())
         query_set = query_set.filter(query_params)
 
-        # Further modify the QuerySet
-        if overall_search:
-            query_set = query_set.search_text(overall_search)
-
+        # And set the ordering
         if order_by:
             query_set = query_set.order_by(order_by)
 
@@ -477,19 +474,23 @@ class RequestListAPI(BaseHandler):
             requested_fields = None
 
         # Mongo seems to prefer using only the ['parent', '<sort field>']
-        # index, even when also filtering. So we have to help it a bit.
-        real_hint = ["parent"]
-        if "created_at" in hint:
-            real_hint.append("created_at")
-        for index in ["command", "system", "instance_name", "status"]:
-            if index in hint:
-                real_hint.append(index)
-                break
-        real_hint.append("index")
+        # index, even when also filtering. So we have to help it pick the right index.
+        # BUT pymongo will blow up if you try to use a hint with a text search.
+        if overall_search:
+            query_set = query_set.search_text(overall_search)
+        else:
+            real_hint = ["parent"]
+            if "created_at" in hint:
+                real_hint.append("created_at")
+            for index in ["command", "system", "instance_name", "status"]:
+                if index in hint:
+                    real_hint.append(index)
+                    break
+            real_hint.append("index")
 
-        # Sanity check - if index is 'bad' just let mongo deal with it
-        index_name = "_".join(real_hint)
-        if index_name in self.indexes:
-            query_set = query_set.hint(index_name)
+            # Sanity check - if index is 'bad' just let mongo deal with it
+            index_name = "_".join(real_hint)
+            if index_name in self.indexes:
+                query_set = query_set.hint(index_name)
 
         return query_set, requested_fields
