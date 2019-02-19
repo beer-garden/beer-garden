@@ -1,12 +1,12 @@
 import React from "react";
 import PropTypes from "prop-types";
-import {
-  List,
-  ListItem,
-  ListItemText,
-  Avatar,
-  withStyles,
-} from "@material-ui/core";
+import { compose } from "recompose";
+import { Link, withRouter } from "react-router-dom";
+import { withStyles } from "@material-ui/core/styles";
+import Avatar from "@material-ui/core/Avatar";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemText from "@material-ui/core/ListItemText";
 import AccountCircle from "@material-ui/icons/AccountCircle";
 
 const styles = theme => ({
@@ -17,11 +17,16 @@ const styles = theme => ({
 });
 
 export function UserList(props) {
-  const { classes, users } = props;
+  const { match, classes, users } = props;
   const listItems = users.map(user => {
     const roles = "Roles: " + user.roles.map(r => r.name).join(", ");
     return (
-      <ListItem button key={user.id}>
+      <ListItem
+        button
+        key={user.id}
+        component={Link}
+        to={`${match.url}/${user.username}`}
+      >
         <Avatar>
           <AccountCircle />
         </Avatar>
@@ -39,6 +44,12 @@ export function UserList(props) {
 UserList.propTypes = {
   classes: PropTypes.object.isRequired,
   users: PropTypes.array.isRequired,
+  match: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(UserList);
+const enhance = compose(
+  withStyles(styles),
+  withRouter,
+);
+
+export default enhance(UserList);
