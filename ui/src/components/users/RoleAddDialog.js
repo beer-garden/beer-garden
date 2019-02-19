@@ -58,7 +58,6 @@ export class RoleAddDialog extends Component {
             To create a role, enter a name, description, and select the
             permission you would like to assign to this role.
           </DialogContentText>
-          {errorContent}
           <RoleForm
             permissions={permissions}
             togglePermission={togglePermission}
@@ -67,6 +66,7 @@ export class RoleAddDialog extends Component {
             newRoleDescription={newRoleDescription}
             saving={saving}
           />
+          {errorContent}
           <DialogActions>
             <Button disabled={saving} onClick={onClose} color="primary">
               Cancel
