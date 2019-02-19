@@ -33,21 +33,24 @@ const styles = theme => ({
 
 export class PermissionList extends React.PureComponent {
   renderEditCell(permission) {
-    const { permissions, togglePermission } = this.props;
+    const { permissions, togglePermission, disabled } = this.props;
 
     const hasPermission = hasPermissions(
       { permissions: permissions.map(p => p.value) },
       [permission],
     );
-    const propPerm = permissions.find(perm => perm.value === permission);
-    const disabled = propPerm ? propPerm.inherited : false;
+    let disableCheckbox = disabled;
+    if (!disableCheckbox) {
+      const propPerm = permissions.find(perm => perm.value === permission);
+      disableCheckbox = propPerm ? propPerm.inherited : false;
+    }
 
     return (
       <Checkbox
         checked={hasPermission}
         onChange={togglePermission}
         value={permission}
-        disabled={disabled}
+        disabled={disableCheckbox}
       />
     );
   }
@@ -88,9 +91,11 @@ export class PermissionList extends React.PureComponent {
   }
 
   render() {
+    const { errorMessage } = this.props;
     return (
       <>
         <Typography color="textSecondary">Permissions:</Typography>
+        <Typography color="error">{errorMessage}</Typography>
         <Divider />
         <Table padding={"checkbox"}>
           <TableHead>
@@ -114,6 +119,12 @@ PermissionList.propTypes = {
   edit: PropTypes.bool.isRequired,
   permissions: PropTypes.array.isRequired,
   togglePermission: PropTypes.func,
+  errorMessage: PropTypes.string,
+  disabled: PropTypes.bool,
+};
+
+PermissionList.defaultProps = {
+  disabled: false,
 };
 
 const enhance = compose(withStyles(styles));

@@ -7,6 +7,7 @@ import Table from "@material-ui/core/Table";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import TableCell from "@material-ui/core/TableCell";
+import Typography from "@material-ui/core/Typography";
 import Check from "@material-ui/icons/Check";
 import Clear from "@material-ui/icons/Clear";
 
@@ -17,6 +18,7 @@ const setup = overrideProps => {
       edit: false,
       permissions: [REQUEST_READ],
       togglePermission: jest.fn(),
+      errorMessage: null,
     },
     overrideProps,
   );
@@ -79,6 +81,22 @@ describe("PermissionList Component", () => {
       expect(boxes.length).toEqual(LIST_ALL.length);
       expect(boxes.first().prop("checked")).toBe(true);
       expect(boxes.first().prop("disabled")).toBe(true);
+    });
+
+    test("it should render an error if an errorMessage is provided", () => {
+      const { permissionList } = setup({ errorMessage: "some message" });
+      expect(
+        permissionList.find(Typography).filter({ color: "error" }),
+      ).toHaveLength(1);
+    });
+
+    test("it should disable everything is disabled is true", () => {
+      const { permissionList } = setup({
+        edit: true,
+        disabled: true,
+      });
+      const boxes = permissionList.find(Checkbox).filter({ disabled: true });
+      expect(boxes.length).toEqual(LIST_ALL.length);
     });
   });
 });
