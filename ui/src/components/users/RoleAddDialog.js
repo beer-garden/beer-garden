@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import { compose } from "recompose";
 import Button from "@material-ui/core/Button";
+import CircularProgress from "@material-ui/core/CircularProgress";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogTitle from "@material-ui/core/DialogTitle";
@@ -14,6 +15,14 @@ const styles = theme => ({
     ...theme.mixins.gutters(),
     paddingTop: theme.spacing.unit * 2,
     paddingBottom: theme.spacing.unit * 2,
+  },
+  saving: {
+    position: "fixed",
+    top: "50%",
+    left: "50%",
+    zIndex: 1,
+    marginTop: -30,
+    marginLeft: -30,
   },
 });
 
@@ -44,6 +53,7 @@ export class RoleAddDialog extends Component {
       >
         <DialogTitle id="role-create-dialog-title">Save a Role</DialogTitle>
         <div className={classes.margin}>
+          {saving && <CircularProgress className={classes.saving} size={60} />}
           <DialogContentText>
             To create a role, enter a name, description, and select the
             permission you would like to assign to this role.
@@ -58,10 +68,10 @@ export class RoleAddDialog extends Component {
             saving={saving}
           />
           <DialogActions>
-            <Button onClick={onClose} color="primary">
+            <Button disabled={saving} onClick={onClose} color="primary">
               Cancel
             </Button>
-            <Button onClick={onSave} color="primary">
+            <Button disabled={saving} onClick={onSave} color="primary">
               Save
             </Button>
           </DialogActions>

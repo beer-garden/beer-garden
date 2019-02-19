@@ -1,6 +1,7 @@
 import React from "react";
 import { shallow } from "enzyme";
 import { RoleAddDialog } from "../RoleAddDialog";
+import CircularProgress from "@material-ui/core/CircularProgress";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContentText from "@material-ui/core/DialogContentText";
@@ -45,6 +46,11 @@ describe("<RoleAddDialog />", () => {
     test("error", () => {
       const { dialog } = setup({ error: { message: "foo" } });
       expect(dialog.find(DialogContentText)).toHaveLength(2);
+    });
+
+    it("should render a spinner if its saving", () => {
+      const { dialog } = setup({ saving: true });
+      expect(dialog.find(CircularProgress)).toHaveLength(1);
     });
   });
 });
