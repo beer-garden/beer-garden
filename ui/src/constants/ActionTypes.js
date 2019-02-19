@@ -20,6 +20,16 @@ export const FETCH_USERS_FAILURE = "FETCH_USERS_FAILURE";
 export const SET_USER_THEME = "SET_USER_THEME";
 // End user constants
 
+// Role constants
+export const FETCH_ROLES_BEGIN = "FETCH_ROLES_BEGIN";
+export const FETCH_ROLES_SUCCESS = "FETCH_ROLES_SUCCESS";
+export const FETCH_ROLES_FAILURE = "FETCH_ROLES_FAILURE";
+
+export const CREATE_ROLE_BEGIN = "CREATE_ROLE_BEGIN";
+export const CREATE_ROLE_SUCCESS = "CREATE_ROLE_SUCCESS";
+export const CREATE_ROLE_FAILURE = "CREATE_ROLE_FAILURE";
+// End role constants
+
 // System constants
 export const FETCH_SYSTEMS_BEGIN = "FETCH_SYSTEMS_BEGIN";
 export const FETCH_SYSTEMS_SUCCESS = "FETCH_SYSTEMS_SUCCESS";
