@@ -24,9 +24,10 @@ const styles = theme => ({
 
 export class RoleRow extends Component {
   renderRoleChips = () => {
-    const { classes, selectedRoles, handleRoleClick } = this.props;
+    const { classes, edit, selectedRoles, handleRoleClick } = this.props;
 
     const roleChips = selectedRoles.map(role => {
+      const onDelete = edit ? () => handleRoleClick(role) : null;
       return (
         <Tooltip
           key={role.name}
@@ -37,7 +38,7 @@ export class RoleRow extends Component {
           <Chip
             className={classes.chip}
             label={role.name}
-            onDelete={() => handleRoleClick(role)}
+            onDelete={onDelete}
           />
         </Tooltip>
       );
@@ -65,14 +66,14 @@ export class RoleRow extends Component {
   };
 
   render() {
-    const { classes } = this.props;
+    const { classes, edit } = this.props;
     return (
       <div className={classes.bottomPad}>
         <Typography color="textSecondary">Roles:</Typography>
         <Divider />
         <div className={classes.topPad}>
           {this.renderRoleChips()}
-          {this.renderRoleButton()}
+          {edit && this.renderRoleButton()}
         </div>
       </div>
     );
@@ -81,9 +82,10 @@ export class RoleRow extends Component {
 
 RoleRow.propTypes = {
   classes: PropTypes.object.isRequired,
-  handleInheritRoleClick: PropTypes.func.isRequired,
   selectedRoles: PropTypes.array.isRequired,
-  handleRoleClick: PropTypes.func.isRequired,
+  edit: PropTypes.bool.isRequired,
+  handleInheritRoleClick: PropTypes.func,
+  handleRoleClick: PropTypes.func,
 };
 
 const enhance = compose(withStyles(styles));

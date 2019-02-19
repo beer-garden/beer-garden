@@ -3,12 +3,14 @@ import { shallow } from "enzyme";
 import { RoleRow } from "../RoleRow";
 import Chip from "@material-ui/core/Chip";
 import Tooltip from "@material-ui/core/Tooltip";
+import Fab from "@material-ui/core/Fab";
 
 const setup = overrideProps => {
   const props = Object.assign(
     {
       classes: {},
       handleInheritRoleClick: jest.fn(),
+      edit: true,
       selectedRoles: [
         { name: "role1", description: "role1 description" },
         { name: "role2" },
@@ -52,6 +54,17 @@ describe("<RoleRow />", () => {
           .findWhere(node => node.key() === "role2")
           .prop("title"),
       ).toEqual("No description provided");
+    });
+
+    it("should not render a button if edit is false", () => {
+      const { row } = setup({ edit: false });
+      expect(row.find(Fab)).toHaveLength(0);
+    });
+
+    it("should not render chips with a delete if edit is false", () => {
+      const { row } = setup({ edit: false });
+      expect(row.find(Chip)).toHaveLength(2);
+      expect(row.find(Chip).filter({ onDelete: null })).toHaveLength(2);
     });
   });
 });
