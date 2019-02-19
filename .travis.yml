@@ -13,7 +13,7 @@ python:
 stages:
   - lint
   - test
-  - pypi deploy
+  - deploy
 
 # This is for the "test" stage
 install: "make deps"
@@ -27,16 +27,14 @@ jobs:
       script: "make lint"
       after_success: skip
 
-    - stage: pypi deploy
+    - stage: deploy
       if: tag IS present
       install: skip
-      script: "make package"
+      script: skip
       after_success: skip
       deploy:
         provider: pypi
         distributions: "sdist bdist_wheel"
-        on:
-          tags: true
         user: beerbuildbot
         password:
           secure: kI9qu3EF6gmyRyPN6dTWMAJ9hWu58zv4mJVJ/9qiwX00V/jKN/LkuNGKYA8vSxBGkkVjvCWaTj5KThYJBOgx2VnevIuApF/oGAImDgYflQyMttZcZRPPOCMmGT5P8Tp7uLFpjfiRZVa/Sz+YaRHuUaYC0c+diyW2AM25nr2l1534ZP+/FGnasQdxSGc6QPQL6QLHAl/ijitDgAMudH5PIxBZuxQ+l9w7c1VFI8sBeFO//FOkpspt8u8hfJ//Vo0YjN6KZ1Bsvp3uskRKCKCf2Et1TXvpOqAV9+BG4g2b3m8jmaZw9jjYoT3glcMiwJZ9O3D5VfeLx69qXKXIwHZyEgOrYJOUXD5TJtlQU3J9K++BbAvALm2goU3WIAFJWE41N8hF3eljE+782fsA5/oEXh8CQ51vy0QDgD1UgNv+d3iS3NZjmJRgTS1eq7QJmq7V83cXzu6P1zCdHjTGtwD3wkWAWUcoJ1eAY8cfAq8HgcvwqhgEyUE72miMLG2X0jnN/QaTJxHxxuec35ECuN6o3/b/35UIgUoXqFTCLzQMdf/aI0q4kVovWsnbbcHeIZfh8GVpANwdIX5kN7/YcNrihaFiYjdmCyriJvQboJsIyMWTB+W9KjalTn3XNQJyieWLGuIdyY7ZDZ7Gdvu8IpKoYgCL7GTIJNhI8gwx9qvgf7Y=
