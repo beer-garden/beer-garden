@@ -1,10 +1,9 @@
 import React from "react";
 import { shallow } from "enzyme";
 import { UserList } from "../UserList";
+import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import Typography from "@material-ui/core/Typography";
-import RoleRow from "../RoleRow";
-import PermissionList from "../PermissionList";
 
 const setup = overrideProps => {
   const props = Object.assign(
@@ -48,6 +47,12 @@ describe("<UserList />", () => {
       });
       expect(list.find(ListItem)).toHaveLength(1);
       expect(list.find(ListItem).prop("to")).toEqual("/advanced/users/foo");
+    });
+
+    it("should not render a list if there are no items", () => {
+      const { list } = setup({ users: [] });
+      expect(list.find(List)).toHaveLength(0);
+      expect(list.find(Typography)).toHaveLength(1);
     });
   });
 });

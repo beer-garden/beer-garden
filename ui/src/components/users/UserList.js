@@ -7,6 +7,7 @@ import Avatar from "@material-ui/core/Avatar";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
+import Typography from "@material-ui/core/Typography";
 import AccountCircle from "@material-ui/icons/AccountCircle";
 
 const styles = theme => ({
@@ -34,11 +35,16 @@ export function UserList(props) {
       </ListItem>
     );
   });
-  return (
-    <List component="nav" className={classes.root}>
-      {listItems}
-    </List>
-  );
+
+  if (listItems.length > 0) {
+    return (
+      <List component="nav" className={classes.root}>
+        {listItems}
+      </List>
+    );
+  } else {
+    return <Typography variant="body1">No users could be found.</Typography>;
+  }
 }
 
 UserList.propTypes = {
