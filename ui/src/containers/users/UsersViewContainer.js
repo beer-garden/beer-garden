@@ -3,8 +3,6 @@ import PropTypes from "prop-types";
 import { compose } from "recompose";
 import { connect } from "react-redux";
 import { Redirect, withRouter } from "react-router-dom";
-import { withStyles } from "@material-ui/core/styles";
-import Paper from "@material-ui/core/Paper";
 import Typography from "@material-ui/core/Typography";
 
 import { getUser, deleteUser } from "../../actions/user";
@@ -13,14 +11,6 @@ import { hasPermissions } from "../../utils";
 import UserInfo from "../../components/users/UserInfo";
 import UserInfoHeader from "../../components/users/UserInfoHeader";
 import { USER_DELETE, USER_UPDATE } from "../../constants/permissions";
-
-const styles = theme => ({
-  root: {
-    ...theme.mixins.gutters(),
-    paddingTop: theme.spacing.unit * 2,
-    paddingBottom: theme.spacing.unit * 2,
-  },
-});
 
 export class UsersViewContainer extends Component {
   state = {
@@ -42,13 +32,7 @@ export class UsersViewContainer extends Component {
   };
 
   render() {
-    const {
-      classes,
-      userLoading,
-      userError,
-      selectedUser,
-      currentUser,
-    } = this.props;
+    const { userLoading, userError, selectedUser, currentUser } = this.props;
     const { redirect } = this.state;
     if (redirect) {
       return <Redirect to="/advanced/users" />;
@@ -59,7 +43,7 @@ export class UsersViewContainer extends Component {
       return <Typography>TODO: Render an error</Typography>;
     } else {
       return (
-        <Paper className={classes.root}>
+        <>
           <UserInfoHeader
             canEdit={hasPermissions(currentUser, [USER_UPDATE])}
             canDelete={hasPermissions(currentUser, [USER_DELETE])}
@@ -67,14 +51,13 @@ export class UsersViewContainer extends Component {
             onDelete={this.deleteUser}
           />
           <UserInfo user={selectedUser} />
-        </Paper>
+        </>
       );
     }
   }
 }
 
 UsersViewContainer.propTypes = {
-  classes: PropTypes.object.isRequired,
   currentUser: PropTypes.object.isRequired,
   selectedUser: PropTypes.object.isRequired,
   userLoading: PropTypes.bool.isRequired,
@@ -106,7 +89,6 @@ const enhance = compose(
     mapStateToProps,
     mapDispatchToProps,
   ),
-  withStyles(styles),
   withRouter,
 );
 

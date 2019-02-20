@@ -10,7 +10,6 @@ import UserInfo from "../../../components/users/UserInfo";
 const setup = propOverrides => {
   const props = Object.assign(
     {
-      classes: {},
       match: {
         params: { username: "user1" },
       },
