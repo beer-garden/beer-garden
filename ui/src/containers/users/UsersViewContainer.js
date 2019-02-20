@@ -32,7 +32,14 @@ export class UsersViewContainer extends Component {
   };
 
   render() {
-    const { userLoading, userError, selectedUser, currentUser } = this.props;
+    const {
+      userLoading,
+      userError,
+      selectedUser,
+      currentUser,
+      deleteUserLoading,
+      deleteUserError,
+    } = this.props;
     const { redirect } = this.state;
     if (redirect) {
       return <Redirect to="/advanced/users" />;
@@ -49,6 +56,8 @@ export class UsersViewContainer extends Component {
             canDelete={hasPermissions(currentUser, [USER_DELETE])}
             onEdit={() => {}}
             onDelete={this.deleteUser}
+            deleting={deleteUserLoading}
+            errorMessage={deleteUserError ? deleteUserError.message : ""}
           />
           <UserInfo user={selectedUser} />
         </>

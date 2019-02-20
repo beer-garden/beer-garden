@@ -13,6 +13,8 @@ const setup = overrideProps => {
       canDelete: true,
       onEdit: jest.fn(),
       onDelete: jest.fn(),
+      deleting: false,
+      errorMessage: "",
     },
     overrideProps,
   );
@@ -39,6 +41,16 @@ describe("<UserInfoHeader />", () => {
     it("should not render if the user cant see them", () => {
       const { header } = setup({ canEdit: false, canDelete: false });
       expect(header.find(Button)).toHaveLength(0);
+    });
+
+    it("should disable the buttons if we are deleting", () => {
+      const { header } = setup({ deleting: true });
+      expect(header.find(Button).filter({ disabled: true })).toHaveLength(2);
+    });
+
+    it("should display an error message if one is provided", () => {
+      const { header } = setup({ errorMessage: "error" });
+      expect(header.find(Typography)).toHaveLength(3);
     });
   });
 });

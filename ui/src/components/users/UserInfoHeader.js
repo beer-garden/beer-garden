@@ -34,12 +34,19 @@ export class UserInfoHeader extends Component {
   };
 
   renderButtons = () => {
-    const { classes, canEdit, canDelete, onEdit, onDelete } = this.props;
+    const {
+      classes,
+      canEdit,
+      canDelete,
+      onEdit,
+      onDelete,
+      deleting,
+    } = this.props;
     let editButton = null;
     let deleteButton = null;
     if (canEdit) {
       editButton = (
-        <Button color="primary" onClick={onEdit}>
+        <Button color="primary" onClick={onEdit} disabled={deleting}>
           <Hidden xsDown>Edit</Hidden>
           <Edit className={classes.rightIcon} fontSize="small" />
         </Button>
@@ -48,7 +55,11 @@ export class UserInfoHeader extends Component {
 
     if (canDelete) {
       deleteButton = (
-        <Button className={classes.error} onClick={onDelete}>
+        <Button
+          className={classes.error}
+          onClick={onDelete}
+          disabled={deleting}
+        >
           <Hidden xsDown>Delete</Hidden>
           <Delete className={classes.rightIcon} fontSize="small" />
         </Button>
@@ -62,14 +73,29 @@ export class UserInfoHeader extends Component {
     );
   };
 
+  renderError() {
+    const { classes, errorMessage } = this.props;
+    if (!errorMessage) {
+      return null;
+    }
+    return (
+      <Typography variant="body1" align="right" className={classes.error}>
+        {errorMessage}
+      </Typography>
+    );
+  }
+
   render() {
     const { classes } = this.props;
 
     return (
-      <div className={classes.headerRow}>
-        {this.renderTitle()}
-        <div className={classes.rightButton}>{this.renderButtons()}</div>
-      </div>
+      <>
+        <div className={classes.headerRow}>
+          {this.renderTitle()}
+          <div className={classes.rightButton}>{this.renderButtons()}</div>
+        </div>
+        {this.renderError()}
+      </>
     );
   }
 }
@@ -77,8 +103,10 @@ export class UserInfoHeader extends Component {
 UserInfoHeader.propTypes = {
   canEdit: PropTypes.bool.isRequired,
   canDelete: PropTypes.bool.isRequired,
+  deleting: PropTypes.bool.isRequired,
   onEdit: PropTypes.func,
   onDelete: PropTypes.func,
+  errorMessage: PropTypes.string,
 };
 
 const enhance = compose(withStyles(styles));
