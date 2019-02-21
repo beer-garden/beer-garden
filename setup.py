@@ -27,7 +27,6 @@ setup(
         "brewtils>=2.3.0",
         "mongoengine<0.16",
         "passlib<1.8",
-        "pika<0.13",
         "pytz<2019",
         "ruamel.yaml<0.16",
         "thriftpy2<0.5",
