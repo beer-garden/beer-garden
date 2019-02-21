@@ -43,7 +43,7 @@ passlib==1.7.1
 pathlib2==2.3.2           # via pytest
 pathtools==0.1.2          # via watchdog
 pbr==4.2.0                # via mock
-pika==0.12.0
+pika==0.13.0
 pkginfo==1.4.2            # via twine
 pluggy==0.7.1             # via pytest, tox
 ply==3.11                 # via thriftpy2

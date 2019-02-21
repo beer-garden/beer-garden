@@ -3,7 +3,7 @@ from datetime import timedelta
 from functools import wraps
 
 from pika import BasicProperties
-from pika import TornadoConnection
+from pika.adapters.tornado_connection import TornadoConnection
 from six import string_types
 from tornado.concurrent import return_future
 from tornado.gen import coroutine
