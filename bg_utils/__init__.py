@@ -217,11 +217,12 @@ def _safe_migrate(spec, filename, file_type):
             current_file_type=file_type,
             output_file_name=tmp_filename,
             output_file_type=file_type,
+            include_bootstrap=False,
         )
     except Exception:
         sys.stderr.write(
-            "Could not successfully migrate application configuration."
-            "will attempt to load the previous configuration."
+            "Could not successfully migrate application configuration. "
+            "Will attempt to load the previous configuration."
         )
         return
     if _is_new_config(filename, file_type, tmp_filename):

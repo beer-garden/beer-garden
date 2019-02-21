@@ -85,8 +85,7 @@ class TestBgUtils(object):
     def new_config(self):
         """Represents a up-to-date config with all new values."""
         return {
-            "log": {"config_file": None, "file": None, "level": "WARN"},
-            "configuration": {"type": "yaml"},
+            "log": {"config_file": None, "file": None, "level": "INFO"},
         }
 
     def test_parse_args(self, spec):
@@ -314,28 +313,31 @@ class TestBgUtils(object):
 
         assert logging_config == generated_config
 
-    def test_safe_migrate_migration_failure(self, tmpdir, spec, old_config):
+    def test_safe_migrate_migration_failure(self, capsys, tmpdir, spec, old_config):
         old_filename = os.path.join(str(tmpdir), "config.json")
-        old_config["configuration"]["file"] = old_filename
         cli_args = {"configuration": {"file": old_filename, "type": "json"}}
+
+        spec.migrate_config_file = Mock(side_effect=ValueError)
 
         with open(old_filename, "w") as f:
             f.write(json.dumps(old_config, ensure_ascii=False))
 
-        spec.migrate_config_file = Mock(side_effect=ValueError)
         generated_config = bg_utils.load_application_config(spec, cli_args)
-        assert generated_config.log.level == "INFO"
 
-        # If the migration fails, we should still have JSON file.
+        # Make sure we printed something
+        assert capsys.readouterr().err
+
+        # If the migration fails, we should still have a single unchanged JSON file.
+        assert len(os.listdir(str(tmpdir))) == 1
         with open(old_filename) as f:
             new_config_value = json.load(f)
-
-        assert len(os.listdir(str(tmpdir))) == 1
         assert new_config_value == old_config
 
-    def test_safe_migrate_initial_rename_failure(self, tmpdir, spec, old_config):
+        # And the values should be unchanged
+        assert generated_config.log.level == "INFO"
+
+    def test_safe_migrate_rename_failure(self, capsys, tmpdir, spec, old_config):
         old_filename = os.path.join(str(tmpdir), "config.json")
-        old_config["configuration"]["file"] = old_filename
         cli_args = {"configuration": {"file": old_filename, "type": "json"}}
 
         with open(old_filename, "w") as f:
@@ -344,22 +346,24 @@ class TestBgUtils(object):
         with patch("os.rename", Mock(side_effect=ValueError)):
             generated_config = bg_utils.load_application_config(spec, cli_args)
 
+        # Make sure we printed something
+        assert capsys.readouterr().err
+
         assert generated_config.log.level == "INFO"
 
-        # The tmp file should still be there.
+        # Both the tmp file and the old JSON should still be there.
+        assert len(os.listdir(str(tmpdir))) == 2
         with open(old_filename + ".tmp") as f:
             yaml.safe_load(f)
 
-        # However the loaded config, should be a JSON file.
+        # The loaded config should be the JSON file.
         with open(old_filename) as f:
             new_config_value = json.load(f)
 
-        assert len(os.listdir(str(tmpdir))) == 2
         assert new_config_value == old_config
 
-    def test_safe_migrate_catastrophe(self, tmpdir, spec, old_config):
+    def test_safe_migrate_catastrophe(self, capsys, tmpdir, spec, old_config):
         old_filename = os.path.join(str(tmpdir), "config.json")
-        old_config["configuration"]["file"] = old_filename
         cli_args = {"configuration": {"file": old_filename, "type": "json"}}
 
         with open(old_filename, "w") as f:
@@ -368,16 +372,17 @@ class TestBgUtils(object):
         with patch("os.rename", Mock(side_effect=[Mock(), ValueError])):
             with pytest.raises(ValueError):
                 bg_utils.load_application_config(spec, cli_args)
+
+        # Make sure we printed something
+        assert capsys.readouterr().err
+
+        # Both the tmp file and the old JSON should still be there.
         assert len(os.listdir(str(tmpdir))) == 2
 
-    def test_safe_migrate_success(self, tmpdir, spec, old_config):
+    def test_safe_migrate_success(self, tmpdir, spec, old_config, new_config):
         old_filename = os.path.join(str(tmpdir), "config.json")
         old_config["configuration"]["file"] = old_filename
         cli_args = {"configuration": {"file": old_filename, "type": "json"}}
-        expected_new_config = {
-            "log": {"config_file": None, "file": None, "level": "INFO"},
-            "configuration": {"file": old_filename, "type": "json"},
-        }
 
         with open(old_filename, "w") as f:
             f.write(json.dumps(old_config, ensure_ascii=False))
@@ -388,20 +393,23 @@ class TestBgUtils(object):
         with open(old_filename) as f:
             new_config_value = json.load(f)
 
-        assert new_config_value == expected_new_config
+        assert new_config_value == new_config
         assert len(os.listdir(str(tmpdir))) == 2
 
     def test_safe_migrate_no_change(self, tmpdir, spec, new_config):
-        filename = os.path.join(str(tmpdir), "config.yaml")
-        new_config["configuration"]["file"] = filename
-        cli_args = {"configuration": {"file": filename, "type": "yaml"}}
+        config_file = os.path.join(str(tmpdir), "config.yaml")
+        cli_args = {"configuration": {"file": config_file}}
 
-        with open(filename, "w", encoding="utf-8") as f:
+        with open(config_file, "w") as f:
             yaml.safe_dump(new_config, f, default_flow_style=False, encoding="utf-8")
 
         generated_config = bg_utils.load_application_config(spec, cli_args)
-        assert generated_config.to_dict() == new_config
+        assert generated_config.log.level == "INFO"
 
+        with open(config_file) as f:
+            new_config_value = yaml.safe_load(f)
+
+        assert new_config_value == new_config
         assert len(os.listdir(str(tmpdir))) == 1
 
     @pytest.mark.parametrize(
