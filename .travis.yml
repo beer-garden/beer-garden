@@ -55,6 +55,7 @@ jobs:
         distributions: "sdist bdist_wheel"
         on:
           tags: true
+        skip_cleanup: true
         user: beerbuildbot
         password:
           secure: lKQ553PIEu9TCW0VqHlUTKX1dnxQbcZKMIwlbjnwRM4FFNaiD+K++JLXDC7w9eqFtlfUcNUsKfefnUOeTCjgq/qY0r53RqrYIbMtLghF2vXpQzB0tAPXmwBLQwunef5rJklPdXhUquhinXR5Ze8GGdsmOo+fNNtbkW4glmHW8NPJUOYB8Lm+UCuQH6uUJxewxz7YI4SG/6oO/cJyeVwSwzDR0Tl8kMvvuoWlzeE+vNiFgvVDQZVaP31P/fW6RuDLQYgxKUIU1WVPODTYrzcomwkWyyofTp5zvYWJRsFWjVV3Wf+MePBKNw2g0b5369Wk7SSJow2GuPe7Fci9G4fMd8tpPttEKkWmriuBPRUdTTA5Vnw6qniLRVBd4WqUJ8JNq2LZohbo1IfiIixbu2ST5OOCwoRN+vE4mY++hplBWU/f61ZLh5JINkJN/BCUA51NKdh8JKWfbDGY5c2dEfL7TvDTn0vsBciCWEzY5AUqRRlscMbgJDnyZZJa3113YKG3A8gvqfFHwWxwKc6fx93Hp/wC4nEZHxjfczHOOF32zfkqTcPTocqygBDZ/OfXWSfr0/d2KtyG+QTpn3LdVcG6xBjB3pisTGCGIp0hPObasHGf+wEKEZ4MlReed9EiSXFWzgV4B5CXWcPSuQiq7ym6aTJKTQTNlLqOUVVIMANIPns=
