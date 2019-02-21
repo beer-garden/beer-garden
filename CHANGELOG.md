@@ -1,5 +1,24 @@
 # Beer Garden Changelog
 
+## 2.4.6
+2/22/19
+Brew-view 2.4.10, Bartender 2.4.2, BG-utils 2.4.6
+
+#### Bug Fixes
+- Request index page overall search no longer specifies a hint (#235)
+- Bartender errors correctly propagate back through thrift interface (#229)
+- Removed unique index with potential to cause system registration issues (#222)
+- Dynamic choices URL source works correctly with a list of strings (#218)
+- All files correctly removed when upgrading using the rpm (#215)
+
+#### Added Features
+- Config file upgrades can now be converted between json and yaml (#72)
+- Centos 7 rpm install now uses real systemd unit files (#17)
+
+#### Other Changes
+- Config file extensions for rpm install are now .yaml, not .yml (#226)
+- Config files no longer contain bootstrap entries (#224)
+
 ## 2.4.5
 1/11/19
 Brew-view 2.4.7, Bartender 2.4.1, BG-utils 2.4.2
