@@ -49,7 +49,7 @@ jobs:
       if: tag IS present
       install: skip
       script: "make package"
-      after_success: skip
+      after_success: true
       deploy:
         provider: pypi
         distributions: "sdist bdist_wheel"
