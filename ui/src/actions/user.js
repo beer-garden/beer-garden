@@ -104,7 +104,7 @@ export function createUser(username, password, roles) {
       .post("/api/v1/users", {
         username,
         password,
-        roles: roles.map(r => r.name),
+        roles,
       })
       .then(res => {
         const normalizedData = camelcaseKeys(res.data);
