@@ -46,6 +46,8 @@ npm test -- --coverage # (notice the middle '--')
 
 ## Notes
 
+### HOC
+
 If you are testing a [High Order Component (HOC)](https://reactjs.org/docs/higher-order-components.html)
 then you should be exporting the lower component as a non default export. For
 example, if you have the following redux and/or material-ui connected
@@ -71,3 +73,21 @@ This results in imports in the tests looking like:
 and imports in the application looking like:
 
     import HeaderLinks from './components/HeaderLinks'
+    
+### Testing async functions
+
+In jest, if we have functions that involve kicking off a promise chain, the way
+to test that would be to import the `flushPromises` function in the `testHelper.js`
+then make your test function `async` and then `await` the `flushPromises` call. 
+For example:
+
+```ecmascript 6
+import { flushPromises } from './src/testHelpers'
+
+it('should return the correct thing', async () => {
+  const { component } = setup();
+  component.instance().thingThatKicksOffPromiseChain();
+  await flushPromises();
+  expect(component.state().value).toEqual(false);
+})
+```
