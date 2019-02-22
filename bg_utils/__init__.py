@@ -93,8 +93,17 @@ def generate_config_file(spec, cli_args):
     """
     config = _generate_config(spec, cli_args)
 
+    # Bootstrap items shouldn't be in the generated config file
+    # We mimic a migration as it's the easiest way to filter out bootstrap items
+    items = [item for item in spec._yapconf_items.values() if not item.bootstrap]
+    filtered_config = {}
+    for item in items:
+        item.migrate_config(
+            config, filtered_config, always_update=True, update_defaults=True
+        )
+
     yapconf.dump_data(
-        config.to_dict(),
+        filtered_config,
         filename=config.configuration.file,
         file_type=_get_config_type(config),
     )

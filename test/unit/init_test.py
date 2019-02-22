@@ -250,6 +250,16 @@ class TestGenerateConfig(object):
         # Just make sure we printed something
         assert capsys.readouterr().out
 
+    def test_omit_bootstrap(self, spec, tmpdir):
+        filename = os.path.join(str(tmpdir), "temp.yaml")
+        bg_utils.generate_config_file(spec, ["-c", filename])
+
+        with open(filename) as f:
+            config = yaml.safe_load(f)
+
+        assert "log" in config
+        assert "configuration" not in config
+
 
 class TestUpdateConfig(object):
     @pytest.mark.parametrize(
