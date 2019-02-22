@@ -22,7 +22,7 @@ export const fetchSystemsFailure = error => ({
 });
 
 export function fetchSystems() {
-  return async dispatch => {
+  return dispatch => {
     dispatch(fetchSystemsBegin());
 
     return axios

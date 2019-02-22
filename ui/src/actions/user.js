@@ -73,7 +73,7 @@ export const deleteUserFailure = error => ({
 });
 
 export function fetchUser(username) {
-  return async dispatch => {
+  return dispatch => {
     dispatch(fetchUserBegin());
 
     return axios
@@ -97,7 +97,7 @@ export const getUser = username => (dispatch, getState) => {
 };
 
 export function createUser(username, password, roles) {
-  return async dispatch => {
+  return dispatch => {
     dispatch(createUserBegin());
 
     return axios
@@ -116,7 +116,7 @@ export function createUser(username, password, roles) {
 }
 
 export function deleteUser(userId) {
-  return async dispatch => {
+  return dispatch => {
     dispatch(deleteUserBegin());
 
     return axios
@@ -130,7 +130,7 @@ export function deleteUser(userId) {
 }
 
 export function fetchUsers() {
-  return async dispatch => {
+  return dispatch => {
     dispatch(fetchUsersBegin());
 
     return axios

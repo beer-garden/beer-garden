@@ -39,7 +39,7 @@ export const createRoleFailure = error => ({
 });
 
 export function fetchRoles() {
-  return async dispatch => {
+  return dispatch => {
     dispatch(fetchRolesBegin());
 
     return axios
@@ -54,7 +54,7 @@ export function fetchRoles() {
 }
 
 export function createRole(name, description, permissions) {
-  return async dispatch => {
+  return dispatch => {
     dispatch(createRoleBegin());
 
     return axios

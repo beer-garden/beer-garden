@@ -23,7 +23,7 @@ export const fetchConfigFailure = error => ({
 });
 
 export function fetchConfig() {
-  return async dispatch => {
+  return dispatch => {
     dispatch(fetchConfigBegin());
 
     return axios

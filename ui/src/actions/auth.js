@@ -39,7 +39,7 @@ export const userLogoutFailure = error => ({
 });
 
 export function logout() {
-  return async dispatch => {
+  return dispatch => {
     dispatch(userLogoutBegin());
 
     return axios
@@ -50,7 +50,7 @@ export function logout() {
 }
 
 export function basicLogin(username, password) {
-  return async dispatch => {
+  return dispatch => {
     dispatch(userLoginBegin());
 
     const payload = { username, password, remember_me: true };
@@ -67,7 +67,7 @@ export function basicLogin(username, password) {
 }
 
 export function loadUserData() {
-  return async dispatch => {
+  return dispatch => {
     dispatch(userLoginBegin());
 
     return axios

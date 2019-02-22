@@ -21,4 +21,5 @@ export const defaultErrorHandler = (error, dispatch, action) => {
   if (action) {
     dispatch(action(newError));
   }
+  return newError;
 };

@@ -23,7 +23,7 @@ export const fetchVersionFailure = error => ({
 });
 
 export function fetchVersion() {
-  return async dispatch => {
+  return dispatch => {
     dispatch(fetchVersionBegin());
 
     return axios
