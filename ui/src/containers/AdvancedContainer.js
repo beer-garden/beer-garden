@@ -7,9 +7,10 @@ import { withStyles } from "@material-ui/core";
 import AuthRoute from "./auth/AuthRoute";
 import AdvancedIndex from "../components/advanced/index";
 import AboutContainer from "./advanced/AboutContainer";
+import NavCrumbs from "../components/layout/NavCrumbs";
 import SystemsContainer from "./advanced/SystemsContainer";
 import QueuesContainer from "./advanced/QueuesContainer";
-import UsersContainer from "./advanced/UsersContainer";
+import UsersRoot from "./users/UsersRoot";
 
 const styles = theme => ({
   root: {
@@ -19,10 +20,20 @@ const styles = theme => ({
 });
 
 export class AdvancedContainer extends Component {
+  pathMap = {
+    advanced: "Advanced",
+    about: "About",
+    systems: "Systems",
+    queues: "Queues",
+    users: "Users",
+    add: "Add",
+  };
+
   render() {
-    const { classes, match, authEnabled, userData } = this.props;
+    const { classes, match, authEnabled, userData, location } = this.props;
     return (
       <div className={classes.root}>
+        <NavCrumbs mapping={this.pathMap} pathname={location.pathname} />
         <Switch>
           <AuthRoute
             exact
@@ -50,11 +61,7 @@ export class AdvancedContainer extends Component {
             path={`${match.path}/queues`}
             component={QueuesContainer}
           />
-          <AuthRoute
-            exact
-            path={`${match.path}/users`}
-            component={UsersContainer}
-          />
+          <AuthRoute path={`${match.path}/users`} component={UsersRoot} />
         </Switch>
       </div>
     );

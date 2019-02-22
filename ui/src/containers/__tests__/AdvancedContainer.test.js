@@ -10,6 +10,7 @@ const setup = overrideProps => {
       userData: {},
       classes: {},
       match: { path: "/advanced" },
+      location: { pathname: "/advanced" },
     },
     overrideProps,
   );
