@@ -14,7 +14,7 @@ from brew_view.authorization import (
     coalesce_permissions,
 )
 from brew_view.base_handler import BaseHandler
-from brewtils.errors import ModelValidationError
+from brewtils.errors import ModelValidationError, RequestForbidden
 
 
 class UserAPI(BaseHandler):
@@ -153,6 +153,47 @@ class UserAPI(BaseHandler):
                 except DoesNotExist:
                     raise ModelValidationError("Role '%s' does not exist" % op.value)
 
+            elif op.path == "/username":
+                if user_id != self.current_user.id:
+                    check_permission(self.current_user, [Permissions.USER_UPDATE])
+
+                if op.operation == "update":
+                    principal.username = op.value
+                else:
+                    raise ModelValidationError(
+                        "Unsupported operation '%s'" % op.operation
+                    )
+
+            elif op.path == "/password":
+                if op.operation != "update":
+                    raise ModelValidationError(
+                        "Unsupported operation '%s'" % op.operation
+                    )
+
+                if isinstance(op.value, dict):
+                    current_password = op.value.get("current_password")
+                    new_password = op.value.get("new_password")
+                else:
+                    current_password = None
+                    new_password = op.value
+
+                if user_id == self.current_user.id:
+                    if current_password is None:
+                        raise ModelValidationError(
+                            "In order to update your own password, you must provide "
+                            "your current password"
+                        )
+
+                    if not custom_app_context.verify(
+                        current_password, self.current_user.hash
+                    ):
+                        raise RequestForbidden("Invalid password")
+
+                else:
+                    check_permission(self.current_user, [Permissions.USER_UPDATE])
+
+                principal.hash = custom_app_context.hash(new_password)
+
             elif op.path == "/preferences/theme":
                 if user_id != self.current_user.id:
                     check_permission(self.current_user, [Permissions.USER_UPDATE])
@@ -170,6 +211,7 @@ class UserAPI(BaseHandler):
 
         principal.save()
 
+        principal.permissions = coalesce_permissions(principal.roles)[1]
         self.write(MongoParser.serialize_principal(principal, to_string=False))
 
 
@@ -242,6 +284,12 @@ class UsersAPI(BaseHandler):
             username=parsed["username"],
             hash=custom_app_context.hash(parsed["password"]),
         )
-        user.save()
 
-        self.set_status(204)
+        if "roles" in parsed:
+            user.roles = [Role.objects.get(name=name) for name in parsed["roles"]]
+
+        user.save()
+        user.permissions = coalesce_permissions(user.roles)[1]
+
+        self.set_status(201)
+        self.write(MongoParser.serialize_principal(user, to_string=False))
