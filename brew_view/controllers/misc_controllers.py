@@ -42,14 +42,14 @@ class ConfigHandler(BaseHandler):
 class VersionHandler(BaseHandler):
     @coroutine
     def get(self):
-        with thrift_context() as client:
-            try:
+        try:
+            with thrift_context() as client:
                 bartender_version = yield client.getVersion()
-            except Exception as ex:
-                logger = logging.getLogger(__name__)
-                logger.error("Could not get Bartender Version.")
-                logger.exception(ex)
-                bartender_version = "unknown"
+        except Exception as ex:
+            logger = logging.getLogger(__name__)
+            logger.error("Could not get Bartender Version.")
+            logger.exception(ex)
+            bartender_version = "unknown"
 
         self.write(
             {

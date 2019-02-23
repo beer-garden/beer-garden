@@ -70,3 +70,21 @@ class VersionHandlerTest(TestHandlerBase):
                 "supported_api_versions": ["v1"],
             },
         )
+
+    @patch("brew_view.controllers.misc_controllers.thrift_context")
+    def test_version_fail_to_get_thrift_context(self, context_mock):
+        context_mock.side_effect = ValueError("cant connect")
+        self.client_mock.getVersion.return_value = self.future_mock
+        self.future_mock.set_exception(ValueError("cant connect"))
+
+        response = self.fetch("/version")
+        output = json.loads(response.body.decode("utf-8"))
+        self.assertEqual(
+            output,
+            {
+                "brew_view_version": __version__,
+                "bartender_version": "unknown",
+                "current_api_version": "v1",
+                "supported_api_versions": ["v1"],
+            },
+        )
