@@ -10,9 +10,9 @@ logger = logging.getLogger(__name__)
 
 def verify_db(guest_login_enabled, versions):
     """Do everything necessary to ensure the database is in a 'good' state"""
-    from bg_utils.mongo.models import Job, Request, Role, System
+    from bg_utils.mongo.models import Job, Request, Role, System, Principal
 
-    for doc in (Job, Request, Role, System):
+    for doc in (Job, Request, Role, System, Principal):
         _check_indexes(doc)
 
     _ensure_roles()
