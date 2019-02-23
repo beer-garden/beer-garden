@@ -7,6 +7,7 @@ import {
   fetchUser,
   deleteUser,
   getUser,
+  updateUser,
 } from "../user";
 import * as types from "../../constants/ActionTypes";
 import axios from "axios";
@@ -59,7 +60,7 @@ const serverResponse = [
     ],
     preferences: {},
     username: "anonymous",
-    id: "5c4e1bc691e42613a679bcbb",
+    id: "userId",
   },
 ];
 const fetchMock = new MockAdapter(axios);
@@ -75,20 +76,19 @@ const setup = (
   const singleUrl = "/api/v1/users/username";
   const idUrl = "/api/v1/users/userId";
   if (networkError) {
-    fetchMock.onGet(url).networkError();
-    fetchMock.onGet(singleUrl).networkError();
-    fetchMock.onDelete(idUrl).networkError();
-    fetchMock.onPost(url).networkError();
+    fetchMock.onAny(url).networkError();
+    fetchMock.onAny(singleUrl).networkError();
+    fetchMock.onAny(idUrl).networkError();
   } else if (serverError) {
-    fetchMock.onGet(url).reply(status, { message: "Error from server" });
-    fetchMock.onGet(singleUrl).reply(status, { message: "Error from server" });
-    fetchMock.onDelete(idUrl).reply(status, { message: "Error from server" });
-    fetchMock.onPost(url).reply(status, { message: "Error from server" });
+    fetchMock.onAny(url).reply(status, { message: "Error from server" });
+    fetchMock.onAny(singleUrl).reply(status, { message: "Error from server" });
+    fetchMock.onAny(idUrl).reply(status, { message: "Error from server" });
   } else {
     fetchMock.onGet(url).reply(200, serverResponse);
     fetchMock.onGet(singleUrl).reply(200, serverResponse[0]);
     fetchMock.onDelete(idUrl).reply(204, null);
     fetchMock.onPost(url).reply(201, serverResponse[0]);
+    fetchMock.onPatch(idUrl).reply(200, serverResponse[1]);
   }
 
   const store = mockStore({ userReducer: initialState });
@@ -239,5 +239,134 @@ describe("user actions", () => {
       .then(() => {
         expect(store.getActions()).toEqual(expectedActions);
       });
+  });
+
+  describe("updateUser", () => {
+    it("should trigger the correct actions on success", () => {
+      const { store } = setup();
+      const expectedActions = [
+        { type: types.UPDATE_USER_BEGIN },
+        {
+          type: types.UPDATE_USER_SUCCESS,
+          payload: { user: serverResponse[1] },
+        },
+      ];
+      const user = camelcaseKeys(serverResponse[1]);
+      return store.dispatch(updateUser(user, user)).then(() => {
+        expect(store.getActions()).toEqual(expectedActions);
+      });
+    });
+
+    it("should trigger the correct actions on failure", () => {
+      const { store } = setup({}, true);
+      const expectedActions = [
+        { type: types.UPDATE_USER_BEGIN },
+        {
+          type: types.UPDATE_USER_FAILURE,
+          payload: { error: new Error("Error from server") },
+        },
+      ];
+      const user = camelcaseKeys(serverResponse[1]);
+      return store.dispatch(updateUser(user, user)).then(() => {
+        expect(store.getActions()).toEqual(expectedActions);
+      });
+    });
+
+    it("should create the operations for a new username", () => {
+      const { store } = setup();
+      const prevUser = camelcaseKeys(serverResponse[1]);
+      const newUser = { ...prevUser };
+      newUser["username"] = "newUsername";
+      return store.dispatch(updateUser(prevUser, newUser)).then(() => {
+        const history = fetchMock.history;
+        const operations = JSON.parse(history.patch[0].data).operations;
+
+        expect(operations.length).toEqual(1);
+        expect(operations[0]).toEqual({
+          operation: "update",
+          path: "/username",
+          value: "newUsername",
+        });
+      });
+    });
+
+    it("should create operations for a new password", () => {
+      const { store } = setup();
+      const prevUser = camelcaseKeys(serverResponse[1]);
+      const newUser = { ...prevUser };
+      newUser["password"] = "newPassword";
+      return store.dispatch(updateUser(prevUser, newUser)).then(() => {
+        const history = fetchMock.history;
+        const operations = JSON.parse(history.patch[0].data).operations;
+
+        expect(operations.length).toEqual(1);
+        expect(operations[0]).toEqual({
+          operation: "update",
+          path: "/password",
+          value: "newPassword",
+        });
+      });
+    });
+
+    it("should create operations for new roles", () => {
+      const { store } = setup();
+      const prevUser = camelcaseKeys(serverResponse[1]);
+      const newUser = { ...prevUser };
+      newUser["roles"] = ["bg-admin", "bg-operator", "bg-plugin"];
+      return store.dispatch(updateUser(prevUser, newUser)).then(() => {
+        const history = fetchMock.history;
+        const operations = JSON.parse(history.patch[0].data).operations;
+
+        expect(operations.length).toEqual(1);
+        expect(operations[0]).toEqual({
+          operation: "set",
+          path: "/roles",
+          value: ["bg-admin", "bg-operator", "bg-plugin"],
+        });
+      });
+    });
+
+    it("should create a different operation for a user changing their current password", () => {
+      const { store } = setup();
+      const prevUser = camelcaseKeys(serverResponse[1]);
+      const newUser = { ...prevUser };
+      newUser["currentPassword"] = "currentPassword";
+      newUser["password"] = "newPassword";
+      return store.dispatch(updateUser(prevUser, newUser)).then(() => {
+        const history = fetchMock.history;
+        const operations = JSON.parse(history.patch[0].data).operations;
+
+        expect(operations.length).toEqual(1);
+        expect(operations[0]).toEqual({
+          operation: "update",
+          path: "/password",
+          value: {
+            current_password: "currentPassword",
+            new_password: "newPassword",
+          },
+        });
+      });
+    });
+
+    it("should not generate any operations if nothing is set", () => {
+      const { store } = setup();
+      const prevUser = camelcaseKeys(serverResponse[1]);
+      return store.dispatch(updateUser(prevUser, {})).then(() => {
+        const history = fetchMock.history;
+        const operations = JSON.parse(history.patch[0].data).operations;
+        expect(operations.length).toEqual(0);
+      });
+    });
+
+    it("should not generate any operations if nothing has changed", () => {
+      const { store } = setup();
+      const prevUser = camelcaseKeys(serverResponse[1]);
+      const newUser = { ...prevUser };
+      return store.dispatch(updateUser(prevUser, newUser)).then(() => {
+        const history = fetchMock.history;
+        const operations = JSON.parse(history.patch[0].data).operations;
+        expect(operations.length).toEqual(0);
+      });
+    });
   });
 });

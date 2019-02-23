@@ -11,6 +11,9 @@ import {
   DELETE_USER_BEGIN,
   DELETE_USER_SUCCESS,
   DELETE_USER_FAILURE,
+  UPDATE_USER_BEGIN,
+  UPDATE_USER_SUCCESS,
+  UPDATE_USER_FAILURE,
 } from "../constants/ActionTypes";
 
 const initialState = {
@@ -24,6 +27,8 @@ const initialState = {
   createUserError: null,
   deleteUserLoading: false,
   deleteUserError: null,
+  updateUserLoading: false,
+  updateUserError: null,
 };
 
 export default function userReducer(state = initialState, action) {
@@ -105,14 +110,9 @@ export default function userReducer(state = initialState, action) {
       };
 
     case DELETE_USER_SUCCESS:
-      const index = state.users.findIndex(u => u.id === action.payload);
-      let newUsers = [...state.users];
-      if (index !== -1) {
-        newUsers.splice(index, 1);
-      }
       return {
         ...state,
-        users: newUsers,
+        users: removeIfExists(state.users, action.payload),
         deleteUserError: null,
         deleteUserLoading: false,
       };
@@ -124,7 +124,48 @@ export default function userReducer(state = initialState, action) {
         deleteUserLoading: false,
       };
 
+    case UPDATE_USER_BEGIN:
+      return {
+        ...state,
+        updateUserError: null,
+        updateUserLoading: true,
+      };
+
+    case UPDATE_USER_FAILURE:
+      return {
+        ...state,
+        updateUserError: action.payload.error,
+        updateUserLoading: false,
+      };
+
+    case UPDATE_USER_SUCCESS:
+      return {
+        ...state,
+        users: updateIfExists(state.users, action.payload),
+        selectedUser: action.payload.user,
+        updateUserLoading: false,
+        updateUserError: null,
+      };
+
     default:
       return state;
   }
 }
+
+const updateIfExists = (users, user) => {
+  const index = users.findIndex(u => u.id === user.id);
+  let newUsers = [...users];
+  if (index !== -1) {
+    newUsers[index] = user;
+  }
+  return newUsers;
+};
+
+const removeIfExists = (users, id) => {
+  const index = users.findIndex(u => u.id === id);
+  let newUsers = [...users];
+  if (index !== -1) {
+    newUsers.splice(index, 1);
+  }
+  return newUsers;
+};

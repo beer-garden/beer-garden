@@ -14,6 +14,8 @@ const setupState = overrideState => {
       createUserError: null,
       deleteUserLoading: false,
       deleteUserError: null,
+      updateUserLoading: false,
+      updateUserError: null,
     },
     overrideState,
   );
@@ -32,6 +34,8 @@ describe("user reducer", () => {
       createUserError: null,
       deleteUserLoading: false,
       deleteUserError: null,
+      updateUserLoading: false,
+      updateUserError: null,
     });
   });
 
@@ -221,5 +225,64 @@ describe("user reducer", () => {
     const newState = userReducer(initialState, action);
     expect(newState.deleteUserLoading).toBe(false);
     expect(newState.deleteUserError).not.toBeNull();
+  });
+
+  it("should handle UPDATE_USER_BEGIN", () => {
+    const initialState = setupState({
+      updateUserLoading: false,
+      updateUserError: "previous error",
+    });
+    const action = {
+      type: types.UPDATE_USER_BEGIN,
+    };
+    const newState = userReducer(initialState, action);
+    expect(newState.updateUserLoading).toBe(true);
+    expect(newState.updateUserError).toBeNull();
+  });
+
+  it("should handle UPDATE_USER_SUCCESS when loaded", () => {
+    const initialState = setupState({
+      users: [{ id: "userId", username: "newName" }],
+      updateUserLoading: true,
+      updateUserError: null,
+    });
+    const action = {
+      type: types.UPDATE_USER_SUCCESS,
+      payload: { id: "userId", username: "newName" },
+    };
+    const newState = userReducer(initialState, action);
+    expect(newState.updateUserLoading).toBe(false);
+    expect(newState.updateUserError).toBeNull();
+    expect(newState.users).toEqual([{ id: "userId", username: "newName" }]);
+  });
+
+  it("should handle UPDATE_USER_SUCCESS when not loaded", () => {
+    const initialState = setupState({
+      users: [],
+      updateUserLoading: true,
+      updateUserError: null,
+    });
+    const action = {
+      type: types.UPDATE_USER_SUCCESS,
+      payload: { id: "userId", username: "newName" },
+    };
+    const newState = userReducer(initialState, action);
+    expect(newState.updateUserLoading).toBe(false);
+    expect(newState.updateUserError).toBeNull();
+    expect(newState.users).toEqual([]);
+  });
+
+  it("should handle UPDATE_USER_FAILURE", () => {
+    const initialState = setupState({
+      updateUserLoading: true,
+      updateUserError: null,
+    });
+    const action = {
+      type: types.UPDATE_USER_FAILURE,
+      payload: { error: new Error("create error") },
+    };
+    const newState = userReducer(initialState, action);
+    expect(newState.updateUserLoading).toBe(false);
+    expect(newState.updateUserError).not.toBeNull();
   });
 });

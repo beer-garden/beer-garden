@@ -1,5 +1,6 @@
 import axios from "axios";
 import camelcaseKeys from "camelcase-keys";
+import isEqual from "lodash.isequal";
 import {
   CREATE_USER_BEGIN,
   CREATE_USER_FAILURE,
@@ -13,6 +14,9 @@ import {
   FETCH_USER_BEGIN,
   FETCH_USER_SUCCESS,
   FETCH_USER_FAILURE,
+  UPDATE_USER_BEGIN,
+  UPDATE_USER_SUCCESS,
+  UPDATE_USER_FAILURE,
 } from "../constants/ActionTypes";
 import { defaultErrorHandler } from "./index";
 
@@ -72,6 +76,20 @@ export const deleteUserFailure = error => ({
   payload: { error },
 });
 
+export const updateUserBegin = () => ({
+  type: UPDATE_USER_BEGIN,
+});
+
+export const updateUserSuccess = user => ({
+  type: UPDATE_USER_SUCCESS,
+  payload: { user },
+});
+
+export const updateUserFailure = error => ({
+  type: UPDATE_USER_FAILURE,
+  payload: { error },
+});
+
 export function fetchUser(username) {
   return dispatch => {
     dispatch(fetchUserBegin());
@@ -128,6 +146,60 @@ export function deleteUser(userId) {
       .catch(e => defaultErrorHandler(e, dispatch, deleteUserFailure));
   };
 }
+
+export function updateUser(prevUser, newUser) {
+  return dispatch => {
+    const operations = generateUpdateOperations(prevUser, newUser);
+    dispatch(updateUserBegin());
+
+    return axios
+      .patch(`/api/v1/users/${prevUser.id}`, { operations })
+      .then(res => {
+        const normalizedData = camelcaseKeys(res.data);
+        dispatch(updateUserSuccess(normalizedData));
+        return normalizedData;
+      })
+      .catch(e => defaultErrorHandler(e, dispatch, updateUserFailure));
+  };
+}
+
+const generateUpdateOperations = (prevUser, newUser) => {
+  const operations = [];
+  if (newUser.username && prevUser.username !== newUser.username) {
+    operations.push({
+      operation: "update",
+      path: "/username",
+      value: newUser.username,
+    });
+  }
+
+  if (newUser.password) {
+    let value;
+    if (newUser.currentPassword) {
+      value = {
+        current_password: newUser.currentPassword,
+        new_password: newUser.password,
+      };
+    } else {
+      value = newUser.password;
+    }
+    operations.push({
+      operation: "update",
+      path: "/password",
+      value,
+    });
+  }
+
+  if (newUser.roles && !isEqual(newUser.roles, prevUser.roles)) {
+    operations.push({
+      operation: "set",
+      path: "/roles",
+      value: newUser.roles,
+    });
+  }
+
+  return operations;
+};
 
 export function fetchUsers() {
   return dispatch => {

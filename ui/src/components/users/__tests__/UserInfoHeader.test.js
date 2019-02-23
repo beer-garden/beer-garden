@@ -4,6 +4,10 @@ import { UserInfoHeader } from "../UserInfoHeader";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import AccountBox from "@material-ui/icons/AccountBox";
+import Close from "@material-ui/icons/Close";
+import Delete from "@material-ui/icons/Delete";
+import Edit from "@material-ui/icons/Edit";
+import Save from "@material-ui/icons/Save";
 
 const setup = overrideProps => {
   const props = Object.assign(
@@ -15,6 +19,9 @@ const setup = overrideProps => {
       onDelete: jest.fn(),
       deleting: false,
       errorMessage: "",
+      editing: false,
+      onCancelEdit: jest.fn(),
+      saving: false,
     },
     overrideProps,
   );
@@ -51,6 +58,24 @@ describe("<UserInfoHeader />", () => {
     it("should display an error message if one is provided", () => {
       const { header } = setup({ errorMessage: "error" });
       expect(header.find(Typography)).toHaveLength(3);
+    });
+
+    it("should render save/cancel buttons while editing", () => {
+      const { header } = setup({ editing: true });
+      expect(header.find(Save)).toHaveLength(1);
+      expect(header.find(Close)).toHaveLength(1);
+    });
+
+    it("should only render the edit button if the user cant delete", () => {
+      const { header } = setup({ canEdit: true, canDelete: false });
+      expect(header.find(Edit)).toHaveLength(1);
+      expect(header.find(Delete)).toHaveLength(0);
+    });
+
+    it("should only render the delete button if the user cant edit", () => {
+      const { header } = setup({ canEdit: false, canDelete: true });
+      expect(header.find(Edit)).toHaveLength(0);
+      expect(header.find(Delete)).toHaveLength(1);
     });
   });
 });

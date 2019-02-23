@@ -6,8 +6,10 @@ import Button from "@material-ui/core/Button";
 import Hidden from "@material-ui/core/Hidden";
 import Typography from "@material-ui/core/Typography";
 import AccountBox from "@material-ui/icons/AccountBox";
+import Close from "@material-ui/icons/Close";
 import Delete from "@material-ui/icons/Delete";
 import Edit from "@material-ui/icons/Edit";
+import Save from "@material-ui/icons/Save";
 
 const styles = theme => ({
   leftIcon: { marginRight: theme.spacing.unit },
@@ -38,37 +40,61 @@ export class UserInfoHeader extends Component {
       classes,
       canEdit,
       canDelete,
+      editing,
+      onCancelEdit,
       onEdit,
       onDelete,
       deleting,
+      saving,
     } = this.props;
-    let editButton = null;
-    let deleteButton = null;
-    if (canEdit) {
-      editButton = (
-        <Button color="primary" onClick={onEdit} disabled={deleting}>
-          <Hidden xsDown>Edit</Hidden>
-          <Edit className={classes.rightIcon} fontSize="small" />
-        </Button>
-      );
+
+    const saveButton = (
+      <Button type="submit" color="primary" disabled={saving}>
+        <Hidden xsDown>Save</Hidden>
+        <Save className={classes.rightIcon} fontSize="small" />
+      </Button>
+    );
+
+    const editButton = (
+      <Button color="primary" onClick={onEdit} disabled={deleting}>
+        <Hidden xsDown>Edit</Hidden>
+        <Edit className={classes.rightIcon} fontSize="small" />
+      </Button>
+    );
+
+    const cancelButton = (
+      <Button color="primary" onClick={onCancelEdit}>
+        <Hidden xsDown>Cancel</Hidden>
+        <Close className={classes.rightIcon} fontSize="small" />
+      </Button>
+    );
+
+    const deleteButton = (
+      <Button className={classes.error} onClick={onDelete} disabled={deleting}>
+        <Hidden xsDown>Delete</Hidden>
+        <Delete className={classes.rightIcon} fontSize="small" />
+      </Button>
+    );
+
+    let rightButton = null;
+    let leftButton = null;
+
+    if (editing) {
+      leftButton = saveButton;
+      rightButton = cancelButton;
+    } else if (canEdit && canDelete) {
+      rightButton = editButton;
+      leftButton = deleteButton;
+    } else if (canEdit) {
+      rightButton = editButton;
+    } else if (canDelete) {
+      leftButton = deleteButton;
     }
 
-    if (canDelete) {
-      deleteButton = (
-        <Button
-          className={classes.error}
-          onClick={onDelete}
-          disabled={deleting}
-        >
-          <Hidden xsDown>Delete</Hidden>
-          <Delete className={classes.rightIcon} fontSize="small" />
-        </Button>
-      );
-    }
     return (
       <>
-        {deleteButton}
-        {editButton}
+        {leftButton}
+        {rightButton}
       </>
     );
   };
@@ -101,12 +127,15 @@ export class UserInfoHeader extends Component {
 }
 
 UserInfoHeader.propTypes = {
+  editing: PropTypes.bool.isRequired,
   canEdit: PropTypes.bool.isRequired,
   canDelete: PropTypes.bool.isRequired,
   deleting: PropTypes.bool.isRequired,
-  onEdit: PropTypes.func,
-  onDelete: PropTypes.func,
-  errorMessage: PropTypes.string,
+  onCancelEdit: PropTypes.func.isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  errorMessage: PropTypes.string.isRequired,
+  saving: PropTypes.bool.isRequired,
 };
 
 const enhance = compose(withStyles(styles));

@@ -6,14 +6,20 @@ import { flushPromises } from "../../../testHelpers";
 import Typography from "@material-ui/core/Typography";
 import Spinner from "../../../components/layout/Spinner";
 import UserInfo from "../../../components/users/UserInfo";
+import UsersFormContainer from "../UsersFormContainer";
 
-const setup = propOverrides => {
+const setup = (propOverrides, stateOverrides = {}) => {
   const props = Object.assign(
     {
+      location: { pathname: "/advanced/users/userId" },
       match: {
         params: { username: "user1" },
       },
-      selectedUser: { username: "user1", id: 1 },
+      selectedUser: {
+        username: "user1",
+        id: 1,
+        roles: [{ name: "bg-admin" }],
+      },
       currentUser: {
         username: "user2",
         permissions: [USER_UPDATE, USER_DELETE],
@@ -24,11 +30,15 @@ const setup = propOverrides => {
       deleteUser: jest.fn().mockResolvedValue(true),
       deleteUserError: null,
       deleteUserLoading: false,
+      updateUserError: null,
+      updateUserLoading: false,
+      updateUser: jest.fn().mockResolvedValue({}),
     },
     propOverrides,
   );
 
   const container = shallow(<UsersViewContainer {...props} />);
+  container.setState(stateOverrides);
   return {
     props,
     container,
@@ -72,6 +82,74 @@ describe("<UsersViewContainer />", () => {
     });
   });
 
+  describe("handlerUpdate", () => {
+    it("should not call updateUser if there is no need", async () => {
+      const {
+        container,
+        props: { selectedUser, updateUser },
+      } = setup();
+
+      container
+        .instance()
+        .handleUpdate(
+          selectedUser.username,
+          "",
+          selectedUser.roles.map(r => r.name),
+        );
+      await flushPromises();
+      return expect(updateUser).not.toHaveBeenCalled();
+    });
+
+    it("should toggleEdit after the user saves", async () => {
+      const {
+        container,
+        props: { selectedUser },
+      } = setup({}, { editing: true });
+
+      container
+        .instance()
+        .handleUpdate(
+          selectedUser.username,
+          "",
+          selectedUser.roles.map(r => r.name),
+        );
+      await flushPromises();
+      expect(container.state().editing).toBe(false);
+    });
+
+    it("should call updateUser", async () => {
+      const {
+        container,
+        props: { updateUser },
+      } = setup();
+      container
+        .instance()
+        .handleUpdate("newUsername", "newPassword", ["newrole1", "newrole2"]);
+      await flushPromises();
+      expect(updateUser).toHaveBeenCalled();
+      expect(updateUser).toHaveBeenCalledWith(
+        { id: 1, username: "user1", roles: ["bg-admin"] },
+        {
+          username: "newUsername",
+          password: "newPassword",
+          roles: ["newrole1", "newrole2"],
+        },
+      );
+    });
+
+    it("should not toggle editing if updateUser fails", async () => {
+      const { container } = setup(
+        { updateUserError: new Error("some error") },
+        { editing: true },
+      );
+      container
+        .instance()
+        .handleUpdate("newUsername", "newPassword", ["newrole1", "newrole2"]);
+      await flushPromises();
+      expect(container.state().editing).toBe(true);
+    });
+  });
+
   describe("render", () => {
     it("should display a spinner while loading", () => {
       const { container } = setup({ userLoading: true });
@@ -87,5 +165,9 @@ describe("<UsersViewContainer />", () => {
       const { container } = setup();
       expect(container.find(UserInfo)).toHaveLength(1);
     });
+
+    it("should render <UserFormContainer /> if it is editing", () => {});
+    const { container } = setup({}, { editing: true });
+    expect(container.find(UsersFormContainer)).toHaveLength(1);
   });
 });
