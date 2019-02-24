@@ -48,7 +48,7 @@ class UserAPI(BaseHandler):
         else:
             # Need fine-grained access control here
             if user_identifier not in [
-                self.current_user.id,
+                str(self.current_user.id),
                 self.current_user.username,
             ]:
                 check_permission(self.current_user, [Permissions.USER_READ])
@@ -154,7 +154,7 @@ class UserAPI(BaseHandler):
                     raise ModelValidationError("Role '%s' does not exist" % op.value)
 
             elif op.path == "/username":
-                if user_id != self.current_user.id:
+                if user_id != str(self.current_user.id):
                     check_permission(self.current_user, [Permissions.USER_UPDATE])
 
                 if op.operation == "update":
@@ -177,7 +177,7 @@ class UserAPI(BaseHandler):
                     current_password = None
                     new_password = op.value
 
-                if user_id == self.current_user.id:
+                if user_id == str(self.current_user.id):
                     if current_password is None:
                         raise ModelValidationError(
                             "In order to update your own password, you must provide "
@@ -195,7 +195,7 @@ class UserAPI(BaseHandler):
                 principal.hash = custom_app_context.hash(new_password)
 
             elif op.path == "/preferences/theme":
-                if user_id != self.current_user.id:
+                if user_id != str(self.current_user.id):
                     check_permission(self.current_user, [Permissions.USER_UPDATE])
 
                 if op.operation == "set":
