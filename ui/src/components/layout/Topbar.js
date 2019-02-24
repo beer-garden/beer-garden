@@ -22,19 +22,12 @@ export class Topbar extends Component {
     anchorEl: null,
   };
 
-  handleMenu = event => {
-    this.setState({ anchorEl: event.currentTarget });
-  };
-
-  handleClose = event => {
-    this.setState({ anchorEl: null });
-  };
-
   render() {
     const {
       classes,
       appName,
       username,
+      isAnonymous,
       isAuthenticated,
       setUserTheme,
       themeName,
@@ -64,6 +57,7 @@ export class Topbar extends Component {
             logout={logout}
             authEnabled={authEnabled}
             isAuthenticated={isAuthenticated}
+            isAnonymous={isAnonymous}
           />
         </Toolbar>
       </AppBar>
@@ -74,6 +68,7 @@ export class Topbar extends Component {
 Topbar.propTypes = {
   appName: PropTypes.string.isRequired,
   isAuthenticated: PropTypes.bool.isRequired,
+  isAnonymous: PropTypes.bool.isRequired,
   authEnabled: PropTypes.bool.isRequired,
   classes: PropTypes.object.isRequired,
   toggleDrawer: PropTypes.func.isRequired,

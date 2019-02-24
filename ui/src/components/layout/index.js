@@ -32,6 +32,7 @@ export class Layout extends Component {
       children,
       appName,
       isAuthenticated,
+      isAnonymous,
       authEnabled,
       themeName,
       setUserTheme,
@@ -54,6 +55,7 @@ export class Layout extends Component {
           appName={appName}
           username={username}
           isAuthenticated={isAuthenticated}
+          isAnonymous={isAnonymous}
           authEnabled={authEnabled}
           themeName={themeName}
           setUserTheme={setUserTheme}
@@ -77,6 +79,7 @@ Layout.propTypes = {
   setUserTheme: PropTypes.func.isRequired,
   logout: PropTypes.func.isRequired,
   isAuthenticated: PropTypes.bool.isRequired,
+  isAnonymous: PropTypes.bool.isRequired,
   authEnabled: PropTypes.bool.isRequired,
   username: PropTypes.string,
 };

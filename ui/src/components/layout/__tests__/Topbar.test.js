@@ -10,6 +10,7 @@ const setup = overrideProps => {
       appName: "Beer Garden",
       themeName: "light",
       isAuthenticated: true,
+      isAnonymous: false,
       authEnabled: true,
       classes: { appBar: "appBarClassName" },
       setUserTheme: jest.fn(),

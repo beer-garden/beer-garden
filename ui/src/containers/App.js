@@ -9,6 +9,7 @@ import CommandsContainer from "./CommandsContainer";
 import RequestsContainer from "./RequestsContainer";
 import SchedulerContainer from "./SchedulerContainer";
 import AdvancedContainer from "./AdvancedContainer";
+import UserSettingsContainer from "./users/UserSettingsContainer";
 import Layout from "../components/layout";
 import AuthRoute from "./auth/AuthRoute";
 import LoginDashboard from "./auth/LoginDashboard";
@@ -24,6 +25,7 @@ export class App extends Component {
         setUserTheme={setUserTheme}
         logout={logout}
         isAuthenticated={auth.isAuthenticated}
+        isAnonymous={auth.isAnonymous}
         authEnabled={config.authEnabled}
         username={auth.userData.username}
       >
@@ -33,6 +35,11 @@ export class App extends Component {
           <AuthRoute exact path="/commands" component={CommandsContainer} />
           <AuthRoute exact path="/requests" component={RequestsContainer} />
           <AuthRoute exact path="/scheduler" component={SchedulerContainer} />
+          <AuthRoute
+            exact
+            path="/user/settings"
+            component={UserSettingsContainer}
+          />
           <AuthRoute path="/advanced" component={AdvancedContainer} />
         </Switch>
       </Layout>

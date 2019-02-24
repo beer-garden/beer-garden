@@ -9,6 +9,7 @@ const setup = overrideProps => {
   const props = Object.assign(
     {
       isAuthenticated: true,
+      isAnonymous: false,
       authEnabled: true,
       themeName: "light",
       setUserTheme: jest.fn(),
@@ -53,6 +54,16 @@ describe("<UserIcon />", () => {
     test("No signout if not authenticated", () => {
       const { userIcon } = setup({ isAuthenticated: false });
       expect(userIcon.find("#signoutMenuItem")).toHaveLength(0);
+    });
+
+    test("should render change password if the user can", () => {
+      const { userIcon } = setup();
+      expect(userIcon.find("#changePassMenuItem")).toHaveLength(1);
+    });
+
+    test("should not render change password if anonymous", () => {
+      const { userIcon } = setup({ isAnonymous: true });
+      expect(userIcon.find("#changePassMenuItem")).toHaveLength(0);
     });
 
     test("username", () => {

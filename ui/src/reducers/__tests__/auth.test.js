@@ -6,6 +6,8 @@ describe("auth reducer", () => {
     expect(authReducer(undefined, {})).toEqual({
       userData: {},
       isAuthenticated: false,
+      isAnonymous: false,
+      isProtected: false,
       userLoading: false,
       userError: null,
     });
@@ -17,6 +19,8 @@ describe("auth reducer", () => {
         {
           userData: "oldData",
           isAuthenticated: true,
+          isAnonymous: false,
+          isProtected: false,
           userLoading: false,
           userError: null,
         },
@@ -27,6 +31,8 @@ describe("auth reducer", () => {
     ).toEqual({
       userData: {},
       isAuthenticated: true,
+      isAnonymous: false,
+      isProtected: false,
       userLoading: true,
       userError: null,
     });
@@ -38,19 +44,41 @@ describe("auth reducer", () => {
         {},
         {
           type: types.USER_LOGIN_SUCCESS,
-          payload: { data: "dataFromServer" },
+          payload: { data: { username: "someUser" } },
         },
       ),
     ).toEqual({
-      userData: "dataFromServer",
+      userData: { username: "someUser" },
+      isProtected: false,
+      isAnonymous: false,
       userLoading: false,
       isAuthenticated: true,
       userError: null,
     });
   });
 
+  it("should set isProtected for the admin user", () => {
+    const action = {
+      type: types.USER_LOGIN_SUCCESS,
+      payload: { data: { username: "admin" } },
+    };
+    const newState = authReducer({}, action);
+    expect(newState.isProtected).toBe(true);
+    expect(newState.isAnonymous).toBe(false);
+  });
+
+  it("should set isProtected and isAnonymous for the anon user", () => {
+    const action = {
+      type: types.USER_LOGIN_SUCCESS,
+      payload: { data: { username: "anonymous" } },
+    };
+    const newState = authReducer({}, action);
+    expect(newState.isProtected).toBe(true);
+    expect(newState.isAnonymous).toBe(true);
+  });
+
   it("should handle USER_LOGIN_FAILURE", () => {
-    const error = new Error("errorMessagej");
+    const error = new Error("errorMessage");
     expect(
       authReducer(
         {},
@@ -61,6 +89,8 @@ describe("auth reducer", () => {
       ),
     ).toEqual({
       userData: {},
+      isProtected: false,
+      isAnonymous: false,
       isAuthenticated: false,
       userLoading: false,
       userError: error,
@@ -87,6 +117,8 @@ describe("auth reducer", () => {
     expect(authReducer({}, { type: types.USER_LOGOUT_SUCCESS })).toEqual({
       userData: {},
       isAuthenticated: false,
+      isAnonymous: false,
+      isProtected: false,
       userLoading: false,
       userError: null,
     });

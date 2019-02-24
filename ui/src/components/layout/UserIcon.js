@@ -1,19 +1,19 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
-import {
-  Menu,
-  MenuItem,
-  Hidden,
-  IconButton,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-  withStyles,
-} from "@material-ui/core";
+import { Link } from "react-router-dom";
+import { withStyles } from "@material-ui/core/styles";
+import Hidden from "@material-ui/core/Hidden";
+import IconButton from "@material-ui/core/IconButton";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import ListItemText from "@material-ui/core/ListItemText";
+import Menu from "@material-ui/core/Menu";
+import MenuItem from "@material-ui/core/MenuItem";
+import Typography from "@material-ui/core/Typography";
 import AccountCircle from "@material-ui/icons/AccountCircle";
 import Brightness3 from "@material-ui/icons/Brightness3";
 import Brightness5 from "@material-ui/icons/Brightness5";
 import LockOpen from "@material-ui/icons/LockOpen";
+import Security from "@material-ui/icons/Security";
 
 const styles = theme => ({
   accountIcon: {
@@ -59,10 +59,10 @@ export class UserIcon extends Component {
       icon = <Brightness5 />;
     }
     return (
-      <>
+      <MenuItem id="themeMenuItem" onClick={this.toggleTheme}>
         <ListItemIcon>{icon}</ListItemIcon>
         <ListItemText inset primary={primary} />
-      </>
+      </MenuItem>
     );
   };
 
@@ -80,6 +80,20 @@ export class UserIcon extends Component {
     }
 
     return null;
+  };
+
+  changePasswordItem = () => {
+    const { authEnabled, isAuthenticated, isAnonymous } = this.props;
+    if (authEnabled && isAuthenticated && !isAnonymous) {
+      return (
+        <MenuItem id="changePassMenuItem" component={Link} to="/user/settings">
+          <ListItemIcon>
+            <Security />
+          </ListItemIcon>
+          <ListItemText inset primary="Change Password" />
+        </MenuItem>
+      );
+    }
   };
 
   render() {
@@ -110,9 +124,8 @@ export class UserIcon extends Component {
           open={open}
           onClose={this.handleClose}
         >
-          <MenuItem id="themeMenuItem" onClick={this.toggleTheme}>
-            {this.themeMenuItem()}
-          </MenuItem>
+          {this.themeMenuItem()}
+          {this.changePasswordItem()}
           {this.signoutMenuItem()}
         </Menu>
       </>
@@ -123,6 +136,7 @@ export class UserIcon extends Component {
 UserIcon.propTypes = {
   authEnabled: PropTypes.bool.isRequired,
   isAuthenticated: PropTypes.bool.isRequired,
+  isAnonymous: PropTypes.bool.isRequired,
   themeName: PropTypes.string.isRequired,
   setUserTheme: PropTypes.func.isRequired,
   logout: PropTypes.func.isRequired,

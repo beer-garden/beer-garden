@@ -14,6 +14,8 @@ const sessionCookie = getCookie(REFRESH_COOKIE_NAME);
 const initialState = {
   userData: {},
   isAuthenticated: sessionCookie ? true : false,
+  isAnonymous: false,
+  isProtected: false,
   userLoading: false,
   userError: null,
 };
@@ -24,14 +26,19 @@ export default function authReducer(state = initialState, action) {
       return {
         ...state,
         userData: {},
+        isProtected: false,
+        isAnonymous: false,
         userLoading: true,
         userError: null,
       };
     case USER_LOGIN_SUCCESS:
+      const username = action.payload.data.username;
       return {
         ...state,
         userLoading: false,
         isAuthenticated: true,
+        isProtected: ["admin", "anonymous"].indexOf(username) !== -1,
+        isAnonymous: username === "anonymous",
         userError: null,
         userData: action.payload.data,
       };
@@ -40,6 +47,8 @@ export default function authReducer(state = initialState, action) {
       return {
         ...state,
         userData: {},
+        isProtected: false,
+        isAnonymous: false,
         isAuthenticated: false,
         userLoading: false,
         userError: action.payload.error,
@@ -59,6 +68,8 @@ export default function authReducer(state = initialState, action) {
       return {
         ...state,
         userData: {},
+        isProtected: false,
+        isAnonymous: false,
         isAuthenticated: false,
         userLoading: false,
         userError: null,

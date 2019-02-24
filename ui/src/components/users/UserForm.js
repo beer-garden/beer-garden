@@ -20,12 +20,17 @@ const styles = theme => ({
 
 export class UserForm extends Component {
   renderInput = (name, display, inputType = "text") => {
+    if (!(name in this.props)) {
+      return null;
+    }
+
     const { classes, handleFormChange } = this.props;
     const item = this.props[name];
+    const label = item.label ? item.label : display;
 
     return (
       <FormControl className={classes.control}>
-        <InputLabel htmlFor={name}>{display}</InputLabel>
+        <InputLabel htmlFor={name}>{label}</InputLabel>
         <Input
           id={name}
           name={name}
@@ -46,9 +51,8 @@ export class UserForm extends Component {
       <div>
         <FormGroup row className={classes.bottomPad}>
           {this.renderInput("username", "Username")}
-          {"currentPassword" in this.props &&
-            this.renderInput("currentPassword", "Current Password", "password")}
-          {this.renderInput("password", "Password", "password")}
+          {this.renderInput("currentPassword", "Current Password", "password")}
+          {this.renderInput("password", "Confirm Password", "password")}
           {this.renderInput("confirmPassword", "Confirm Password", "password")}
         </FormGroup>
       </div>
@@ -60,12 +64,13 @@ const fieldShape = {
   value: PropTypes.any.isRequired,
   error: PropTypes.bool.isRequired,
   help: PropTypes.string,
+  label: PropTypes.string,
 };
 
 UserForm.propTypes = {
   classes: PropTypes.object.isRequired,
   handleFormChange: PropTypes.func.isRequired,
-  username: PropTypes.shape(fieldShape).isRequired,
+  username: PropTypes.shape(fieldShape),
   password: PropTypes.shape(fieldShape).isRequired,
   confirmPassword: PropTypes.shape(fieldShape).isRequired,
   currentPassword: PropTypes.shape(fieldShape),
