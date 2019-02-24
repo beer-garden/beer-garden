@@ -93,8 +93,17 @@ def generate_config_file(spec, cli_args):
     """
     config = _generate_config(spec, cli_args)
 
+    # Bootstrap items shouldn't be in the generated config file
+    # We mimic a migration as it's the easiest way to filter out bootstrap items
+    items = [item for item in spec._yapconf_items.values() if not item.bootstrap]
+    filtered_config = {}
+    for item in items:
+        item.migrate_config(
+            config, filtered_config, always_update=True, update_defaults=True
+        )
+
     yapconf.dump_data(
-        config.to_dict(),
+        filtered_config,
         filename=config.configuration.file,
         file_type=_get_config_type(config),
     )
@@ -217,11 +226,12 @@ def _safe_migrate(spec, filename, file_type):
             current_file_type=file_type,
             output_file_name=tmp_filename,
             output_file_type=file_type,
+            include_bootstrap=False,
         )
     except Exception:
         sys.stderr.write(
-            "Could not successfully migrate application configuration."
-            "will attempt to load the previous configuration."
+            "Could not successfully migrate application configuration. "
+            "Will attempt to load the previous configuration."
         )
         return
     if _is_new_config(filename, file_type, tmp_filename):
