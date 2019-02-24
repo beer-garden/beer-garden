@@ -193,6 +193,8 @@ class UserAPI(BaseHandler):
                     check_permission(self.current_user, [Permissions.USER_UPDATE])
 
                 principal.hash = custom_app_context.hash(new_password)
+                if "changed" in principal.metadata:
+                    principal.metadata["changed"] = True
 
             elif op.path == "/preferences/theme":
                 if user_id != str(self.current_user.id):
