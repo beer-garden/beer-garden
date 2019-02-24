@@ -3,6 +3,7 @@ import { shallow } from "enzyme";
 import { UsersViewContainer } from "../UsersViewContainer";
 import { USER_UPDATE, USER_DELETE } from "../../../constants/permissions";
 import { flushPromises } from "../../../testHelpers";
+import Dialog from "@material-ui/core/Dialog";
 import Typography from "@material-ui/core/Typography";
 import Spinner from "../../../components/layout/Spinner";
 import UserInfo from "../../../components/users/UserInfo";
@@ -80,9 +81,55 @@ describe("<UsersViewContainer />", () => {
       await flushPromises();
       return expect(container.state().redirect).toBe(false);
     });
+
+    it("should set showConfirmDialog to false", async () => {
+      const { container } = setup({}, { showConfirmDialog: true });
+      container.instance().deleteUser();
+      await flushPromises();
+      return expect(container.state().showConfirmDialog).toBe(false);
+    });
   });
 
-  describe("handlerUpdate", () => {
+  describe("deleteUserDialog", () => {
+    it("should call deleteUser like normal for a regular delete", async () => {
+      const {
+        container,
+        props: { deleteUser },
+      } = setup({}, {});
+      container.instance().deleteUserDialog();
+      await flushPromises();
+      expect(deleteUser).toHaveBeenCalled();
+    });
+
+    it("should not call deleteUser if user is a protected user", async () => {
+      const {
+        container,
+        props: { deleteUser },
+      } = setup({
+        selectedUser: { username: "admin", permissions: [], id: 1 },
+      });
+      container.instance().deleteUserDialog();
+      await flushPromises();
+      expect(deleteUser).not.toHaveBeenCalled();
+      expect(container.state().showConfirmDialog).toBe(true);
+    });
+
+    it("should not call deleteUser if the selectedUser and currentUser are the same", async () => {
+      const {
+        container,
+        props: { deleteUser },
+      } = setup({
+        selectedUser: { username: "foo", permissions: [], id: 1 },
+        currentUser: { username: "foo", permissions: [] },
+      });
+      container.instance().deleteUserDialog();
+      await flushPromises();
+      expect(deleteUser).not.toHaveBeenCalled();
+      expect(container.state().showConfirmDialog).toBe(true);
+    });
+  });
+
+  describe("handleUpdate", () => {
     it("should not call updateUser if there is no need", async () => {
       const {
         container,
@@ -166,8 +213,14 @@ describe("<UsersViewContainer />", () => {
       expect(container.find(UserInfo)).toHaveLength(1);
     });
 
-    it("should render <UserFormContainer /> if it is editing", () => {});
-    const { container } = setup({}, { editing: true });
-    expect(container.find(UsersFormContainer)).toHaveLength(1);
+    it("should render <UserFormContainer /> if it is editing", () => {
+      const { container } = setup({}, { editing: true });
+      expect(container.find(UsersFormContainer)).toHaveLength(1);
+    });
+
+    it("should render <Dialog />", () => {
+      const { container } = setup();
+      expect(container.find(Dialog)).toHaveLength(1);
+    });
   });
 });

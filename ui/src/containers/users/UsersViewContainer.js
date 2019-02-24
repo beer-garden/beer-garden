@@ -3,6 +3,11 @@ import PropTypes from "prop-types";
 import { compose } from "recompose";
 import { connect } from "react-redux";
 import { Redirect, withRouter } from "react-router-dom";
+import Button from "@material-ui/core/Button";
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
 import Typography from "@material-ui/core/Typography";
 import isEqual from "lodash.isequal";
 
@@ -11,6 +16,7 @@ import Spinner from "../../components/layout/Spinner";
 import { hasPermissions } from "../../utils";
 import UserInfo from "../../components/users/UserInfo";
 import UserInfoHeader from "../../components/users/UserInfoHeader";
+import { PROTECTED_USERS } from "../../constants/auth";
 import { USER_DELETE, USER_UPDATE } from "../../constants/permissions";
 import UsersFormContainer from "./UsersFormContainer";
 
@@ -18,6 +24,9 @@ export class UsersViewContainer extends Component {
   state = {
     editing: false,
     redirect: false,
+    confirmAction: false,
+    showConfirmDialog: false,
+    confirmDialogText: "",
   };
 
   componentDidMount() {
@@ -25,8 +34,31 @@ export class UsersViewContainer extends Component {
     getUser(match.params.username);
   }
 
+  deleteUserDialog = () => {
+    const { selectedUser, currentUser } = this.props;
+
+    if (PROTECTED_USERS.indexOf(selectedUser.username) !== -1) {
+      this.setState({
+        showConfirmDialog: true,
+        confirmDialogText:
+          "You are about to delete a protected user, this often means that " +
+          "you will need to have modified configurations. Delete this user?",
+      });
+    } else if (selectedUser.username === currentUser.username) {
+      this.setState({
+        showConfirmDialog: true,
+        confirmDialogText:
+          "You are about to delete the current user. This will automatically " +
+          "log you out. Delete this user?",
+      });
+    } else {
+      this.deleteUser();
+    }
+  };
+
   deleteUser = () => {
     const { selectedUser, deleteUser } = this.props;
+    this.handleClose();
     deleteUser(selectedUser.id).then(() => {
       if (!this.props.deleteUserError) {
         this.setState({ redirect: true });
@@ -67,6 +99,34 @@ export class UsersViewContainer extends Component {
     this.setState({ editing: !this.state.editing });
   };
 
+  handleClose = () => {
+    this.setState({ showConfirmDialog: false });
+  };
+
+  renderDialog = () => {
+    return (
+      <Dialog
+        open={this.state.showConfirmDialog}
+        onClose={this.handleClose}
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {this.state.confirmDialogText}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={this.handleClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={this.deleteUser} color="primary" autoFocus>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+  };
+
   render() {
     const {
       userLoading,
@@ -98,7 +158,7 @@ export class UsersViewContainer extends Component {
         editing={editing}
         onCancelEdit={this.toggleEdit}
         onEdit={this.toggleEdit}
-        onDelete={this.deleteUser}
+        onDelete={this.deleteUserDialog}
         deleting={deleteUserLoading}
         errorMessage={deleteUserError ? deleteUserError.message : ""}
         saving={updateUserLoading}
@@ -122,6 +182,7 @@ export class UsersViewContainer extends Component {
         <>
           {header}
           <UserInfo user={selectedUser} />
+          {this.renderDialog()}
         </>
       );
     }

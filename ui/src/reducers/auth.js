@@ -7,6 +7,7 @@ import {
   USER_LOGOUT_FAILURE,
   UPDATE_USER_SUCCESS,
 } from "../constants/ActionTypes";
+import { PROTECTED_USERS } from "../constants/auth";
 import { getCookie, deleteCookie } from "../utils";
 
 const REFRESH_COOKIE_NAME = "refresh_id";
@@ -39,7 +40,7 @@ export default function authReducer(state = initialState, action) {
         ...state,
         userLoading: false,
         isAuthenticated: true,
-        isProtected: ["admin", "anonymous"].indexOf(username) !== -1,
+        isProtected: PROTECTED_USERS.indexOf(username) !== -1,
         isAnonymous: username === "anonymous",
         userError: null,
         userData: action.payload.data.user,
