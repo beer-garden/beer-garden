@@ -250,8 +250,10 @@ class TokenListAPI(BaseHandler):
                 # update their password, and then login again. In the short term, this
                 # will be enough. This is really meant only to work for our UI so
                 # backwards compatibility is not a concern.
-                if principal.metadata.get('auto_change') and not principal.metadata.get('changed'):
-                    self.set_header('change_password_required', 'true')
+                if principal.metadata.get("auto_change") and not principal.metadata.get(
+                    "changed"
+                ):
+                    self.set_header("change_password_required", "true")
 
                 if parsed_body.get("remember_me", False):
                     self.set_secure_cookie(
