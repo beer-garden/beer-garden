@@ -21,6 +21,7 @@ const basicAuthSetup = (
   serverError = false,
   networkError = false,
   errorCode = 500,
+  headers = {},
 ) => {
   Object.assign({}, initialState);
   const url = "/api/v1/tokens";
@@ -29,7 +30,7 @@ const basicAuthSetup = (
   } else if (serverError) {
     fetchMock.onAny(url).reply(errorCode, { message: "Error from server" });
   } else {
-    fetchMock.onAny(url).reply(200, serverResponse);
+    fetchMock.onAny(url).reply(200, serverResponse, headers);
   }
 
   const store = mockStore(initialState);
@@ -51,7 +52,7 @@ describe("async actions", () => {
         { type: types.USER_LOGIN_BEGIN },
         {
           type: types.USER_LOGIN_SUCCESS,
-          payload: { data: decodedToken },
+          payload: { data: { user: decodedToken, pwChangeRequired: false } },
         },
       ];
       return store.dispatch(basicLogin("username", "password")).then(() => {
@@ -69,6 +70,23 @@ describe("async actions", () => {
         expect(actions[1].type).toEqual(types.USER_LOGIN_FAILURE);
       });
     });
+
+    it("should set pwChangeRequired if the header is set", () => {
+      const { store } = basicAuthSetup({}, false, false, null, {
+        change_password_required: "true",
+      });
+
+      const expectedActions = [
+        { type: types.USER_LOGIN_BEGIN },
+        {
+          type: types.USER_LOGIN_SUCCESS,
+          payload: { data: { user: decodedToken, pwChangeRequired: true } },
+        },
+      ];
+      return store.dispatch(basicLogin("username", "password")).then(() => {
+        expect(store.getActions()).toEqual(expectedActions);
+      });
+    });
   });
 
   describe("loadUserData", () => {
@@ -79,7 +97,7 @@ describe("async actions", () => {
         { type: types.USER_LOGIN_BEGIN },
         {
           type: types.USER_LOGIN_SUCCESS,
-          payload: { data: decodedToken },
+          payload: { data: { user: decodedToken, pwChangeRequired: false } },
         },
       ];
       return store.dispatch(loadUserData()).then(() => {

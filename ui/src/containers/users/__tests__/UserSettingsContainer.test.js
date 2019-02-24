@@ -1,4 +1,5 @@
 import React from "react";
+import { Redirect } from "react-router-dom";
 import { UserSettingsContainer } from "../UserSettingsContainer";
 import { shallow } from "enzyme";
 import { flushPromises } from "../../../testHelpers";
@@ -14,6 +15,7 @@ const setup = (overrideProps, overrideState) => {
       updateUserError: null,
       updateUserLoading: false,
       updateUser: jest.fn().mockResolvedValue({}),
+      pwChangeRequired: false,
     },
     overrideProps,
   );
@@ -90,6 +92,13 @@ describe("<UsersSettingsContainer />", () => {
       await flushPromises();
       expect(updateUser).not.toHaveBeenCalled();
     });
+
+    it("should redirect on success and pwChangeRequired is true", async () => {
+      const { container } = setup({ pwChangeRequired: true });
+      container.instance().handleSubmit({ preventDefault: () => {} });
+      await flushPromises();
+      expect(container.state().redirect).toBe(true);
+    });
   });
 
   describe("validatePassword", () => {
@@ -131,6 +140,16 @@ describe("<UsersSettingsContainer />", () => {
       expect(container.find(Button)).toHaveLength(1);
       expect(container.find(Typography)).toHaveLength(3);
       expect(container.find(UserForm)).toHaveLength(1);
+    });
+
+    it("should render an extra Typography if pwChangeRequired", () => {
+      const { container } = setup({ pwChangeRequired: true });
+      expect(container.find(Typography)).toHaveLength(4);
+    });
+
+    it("should redirect if redirect is true", () => {
+      const { container } = setup({}, { redirect: true });
+      expect(container.find(Redirect)).toHaveLength(1);
     });
   });
 });

@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
+import { Redirect } from "react-router-dom";
 import { compose } from "recompose";
 import { withStyles } from "@material-ui/core/styles";
 import Button from "@material-ui/core/Button";
@@ -55,6 +56,7 @@ export class UserSettingsContainer extends Component {
       label: "Confirm New Password",
     },
     successMessage: "",
+    redirect: false,
   };
 
   handleFormChange = event => {
@@ -72,7 +74,7 @@ export class UserSettingsContainer extends Component {
     if (!this.validatePassword()) {
       return;
     }
-    const { currentUser, updateUser } = this.props;
+    const { currentUser, updateUser, pwChangeRequired } = this.props;
     const { password, currentPassword } = this.state;
 
     const prevUser = {
@@ -87,7 +89,14 @@ export class UserSettingsContainer extends Component {
 
     updateUser(prevUser, newUser).then(() => {
       if (!this.props.updateUserError) {
-        this.setState({ successMessage: "Successfully updated password" });
+        // It is important that we do not access this variable through
+        // the props, instead using the scope above. If we access through
+        // the props, the answer will always be false.
+        if (pwChangeRequired) {
+          this.setState({ redirect: true });
+        } else {
+          this.setState({ successMessage: "Successfully updated password" });
+        }
       }
     });
   };
@@ -164,13 +173,23 @@ export class UserSettingsContainer extends Component {
   };
 
   render() {
-    const { classes, updateUserError, updateUserLoading } = this.props;
+    const {
+      classes,
+      updateUserError,
+      updateUserLoading,
+      pwChangeRequired,
+    } = this.props;
     const {
       password,
       confirmPassword,
       currentPassword,
       successMessage,
+      redirect,
     } = this.state;
+
+    if (redirect) {
+      return <Redirect to="/" />;
+    }
 
     return (
       <Paper className={classes.root}>
@@ -178,6 +197,7 @@ export class UserSettingsContainer extends Component {
           <div className={classes.row}>
             <Security className={classes.leftIcon} fontSize="large" />
             <Typography variant="h4">Change Password</Typography>
+
             <Button
               className={classes.rightButton}
               color="primary"
@@ -189,6 +209,11 @@ export class UserSettingsContainer extends Component {
               Save
             </Button>
           </div>
+          {pwChangeRequired && (
+            <Typography variant="body1" gutterBottom>
+              You are required to change your password upon initial login.
+            </Typography>
+          )}
           <Typography align="right" variant="body1" className={classes.error}>
             {updateUserError && updateUserError.message}
           </Typography>
@@ -213,11 +238,13 @@ UserSettingsContainer.propTypes = {
   updateUserError: PropTypes.object,
   updateUserLoading: PropTypes.bool.isRequired,
   updateUser: PropTypes.func.isRequired,
+  pwChangeRequired: PropTypes.bool.isRequired,
 };
 
 const mapStateToProps = state => {
   return {
     currentUser: state.authReducer.userData,
+    pwChangeRequired: state.authReducer.pwChangeRequired,
     updateUserLoading: state.userReducer.updateUserLoading,
     updateUserError: state.userReducer.updateUserError,
   };

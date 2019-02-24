@@ -31,7 +31,7 @@ describe("<App />", () => {
   test("render layout and routes", () => {
     const { app } = setup();
     expect(app.find(layout)).toHaveLength(1);
-    expect(app.find(Route)).toHaveLength(1);
-    expect(app.find(AuthRoute).length).toBeGreaterThan(0);
+    expect(app.find(Route)).toHaveLength(2);
+    expect(app.find(AuthRoute)).toHaveLength(5);
   });
 });

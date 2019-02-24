@@ -9,15 +9,26 @@ export const AuthRoute = ({
   render,
   authEnabled,
   isAuthenticated,
+  pwChangeRequired,
   ...rest
 }) => {
   let renderMethod;
 
-  if (authEnabled && !isAuthenticated) {
+  const redirectToLogin = authEnabled && !isAuthenticated;
+
+  if (redirectToLogin) {
     renderMethod = props => {
       return (
         <Redirect
           to={{ pathname: "/login", state: { from: props.location } }}
+        />
+      );
+    };
+  } else if (pwChangeRequired) {
+    renderMethod = props => {
+      return (
+        <Redirect
+          to={{ pathname: "/user/settings", state: { from: props.location } }}
         />
       );
     };
@@ -35,12 +46,14 @@ export const AuthRoute = ({
 AuthRoute.propTypes = {
   authEnabled: PropTypes.bool.isRequired,
   isAuthenticated: PropTypes.bool.isRequired,
+  pwChangeRequired: PropTypes.bool.isRequired,
 };
 
 const mapStateToProps = state => {
   return {
     isAuthenticated: state.authReducer.isAuthenticated,
     authEnabled: state.configReducer.config.authEnabled,
+    pwChangeRequired: state.authReducer.pwChangeRequired,
   };
 };
 

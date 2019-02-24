@@ -10,6 +10,7 @@ describe("auth reducer", () => {
       isProtected: false,
       userLoading: false,
       userError: null,
+      pwChangeRequired: false,
     });
   });
 
@@ -23,6 +24,7 @@ describe("auth reducer", () => {
           isProtected: false,
           userLoading: false,
           userError: null,
+          pwChangeRequired: false,
         },
         {
           type: types.USER_LOGIN_BEGIN,
@@ -35,6 +37,7 @@ describe("auth reducer", () => {
       isProtected: false,
       userLoading: true,
       userError: null,
+      pwChangeRequired: false,
     });
   });
 
@@ -44,7 +47,9 @@ describe("auth reducer", () => {
         {},
         {
           type: types.USER_LOGIN_SUCCESS,
-          payload: { data: { username: "someUser" } },
+          payload: {
+            data: { user: { username: "someUser" }, pwChangeRequired: false },
+          },
         },
       ),
     ).toEqual({
@@ -54,13 +59,16 @@ describe("auth reducer", () => {
       userLoading: false,
       isAuthenticated: true,
       userError: null,
+      pwChangeRequired: false,
     });
   });
 
   it("should set isProtected for the admin user", () => {
     const action = {
       type: types.USER_LOGIN_SUCCESS,
-      payload: { data: { username: "admin" } },
+      payload: {
+        data: { user: { username: "admin" }, pwChangeRequired: false },
+      },
     };
     const newState = authReducer({}, action);
     expect(newState.isProtected).toBe(true);
@@ -70,7 +78,9 @@ describe("auth reducer", () => {
   it("should set isProtected and isAnonymous for the anon user", () => {
     const action = {
       type: types.USER_LOGIN_SUCCESS,
-      payload: { data: { username: "anonymous" } },
+      payload: {
+        data: { user: { username: "anonymous" }, pwChangeRequired: false },
+      },
     };
     const newState = authReducer({}, action);
     expect(newState.isProtected).toBe(true);
@@ -122,5 +132,14 @@ describe("auth reducer", () => {
       userLoading: false,
       userError: null,
     });
+  });
+
+  it("should toggle pwChangeRequired if set and UPDATE_USER_SUCCESS occurs", () => {
+    const action = {
+      type: types.UPDATE_USER_SUCCESS,
+      payload: {},
+    };
+    const newState = authReducer({ pwChangeRequired: true }, action);
+    expect(newState.pwChangeRequired).toBe(false);
   });
 });

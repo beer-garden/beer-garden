@@ -5,6 +5,7 @@ import {
   USER_LOGOUT_BEGIN,
   USER_LOGOUT_SUCCESS,
   USER_LOGOUT_FAILURE,
+  UPDATE_USER_SUCCESS,
 } from "../constants/ActionTypes";
 import { getCookie, deleteCookie } from "../utils";
 
@@ -18,6 +19,7 @@ const initialState = {
   isProtected: false,
   userLoading: false,
   userError: null,
+  pwChangeRequired: false,
 };
 
 export default function authReducer(state = initialState, action) {
@@ -32,7 +34,7 @@ export default function authReducer(state = initialState, action) {
         userError: null,
       };
     case USER_LOGIN_SUCCESS:
-      const username = action.payload.data.username;
+      const username = action.payload.data.user.username;
       return {
         ...state,
         userLoading: false,
@@ -40,7 +42,8 @@ export default function authReducer(state = initialState, action) {
         isProtected: ["admin", "anonymous"].indexOf(username) !== -1,
         isAnonymous: username === "anonymous",
         userError: null,
-        userData: action.payload.data,
+        userData: action.payload.data.user,
+        pwChangeRequired: action.payload.data.pwChangeRequired,
       };
     case USER_LOGIN_FAILURE:
       deleteCookie(REFRESH_COOKIE_NAME);
@@ -74,6 +77,16 @@ export default function authReducer(state = initialState, action) {
         userLoading: false,
         userError: null,
       };
+
+    case UPDATE_USER_SUCCESS:
+      if (state.pwChangeRequired) {
+        return {
+          ...state,
+          pwChangeRequired: false,
+        };
+      } else {
+        return state;
+      }
 
     default:
       return state;

@@ -57,9 +57,12 @@ export function basicLogin(username, password) {
     return axios
       .post("/api/v1/tokens", JSON.stringify(payload))
       .then(res => {
+        const pwChangeRequired = !!res.headers.change_password_required;
         const normalizedData = camelcaseKeys(res.data);
         const userData = jwtDecode(normalizedData["token"]);
-        dispatch(userLoginSuccess({ data: userData }));
+        dispatch(
+          userLoginSuccess({ data: { user: userData, pwChangeRequired } }),
+        );
         return normalizedData;
       })
       .catch(e => defaultErrorHandler(e, dispatch, userLoginFailure));
@@ -75,7 +78,11 @@ export function loadUserData() {
       .then(res => {
         const normalizedData = camelcaseKeys(res.data);
         const userData = jwtDecode(normalizedData["token"]);
-        dispatch(userLoginSuccess({ data: userData }));
+        dispatch(
+          userLoginSuccess({
+            data: { user: userData, pwChangeRequired: false },
+          }),
+        );
         return normalizedData;
       })
       .catch(e => defaultErrorHandler(e, dispatch, userLoginFailure));

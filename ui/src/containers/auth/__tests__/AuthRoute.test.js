@@ -7,6 +7,10 @@ const TestLoginComponent = () => {
   return <h1>Test Login</h1>;
 };
 
+const TestPWComponent = () => {
+  return <h1>Test Password Change</h1>;
+};
+
 const TestComponent = () => {
   return <h1>Test</h1>;
 };
@@ -16,6 +20,7 @@ const setup = propOverrides => {
     {
       authEnabled: true,
       isAuthenticated: true,
+      pwChangeRequired: false,
       component: TestComponent,
       render: null,
     },
@@ -28,6 +33,7 @@ const setup = propOverrides => {
     <MemoryRouter>
       <Switch>
         <Route exact path="/login" component={TestLoginComponent} />
+        <Route exact path="/user/settings" component={TestPWComponent} />
         <AuthRoute {...props} />
       </Switch>
     </MemoryRouter>,
@@ -67,6 +73,15 @@ describe("<AuthRoute />", () => {
         </MemoryRouter>,
       );
       return expect(route.find(TestComponent)).toHaveLength(1);
+    });
+
+    it("should redirect to <TestPWComponent /> if pwChange is required", () => {
+      const { route } = setup({
+        authEnabled: true,
+        isAuthenticated: true,
+        pwChangeRequired: true,
+      });
+      expect(route.find(TestPWComponent)).toHaveLength(1);
     });
   });
 });

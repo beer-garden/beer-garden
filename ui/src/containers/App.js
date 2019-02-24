@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
-import { Switch, Route, withRouter } from "react-router-dom";
+import { Switch, Route, withRouter, Redirect } from "react-router-dom";
 import { setUserTheme } from "../actions/theme";
 import { logout } from "../actions/auth";
 import SystemsContainer from "./SystemsContainer";
@@ -35,12 +35,22 @@ export class App extends Component {
           <AuthRoute exact path="/commands" component={CommandsContainer} />
           <AuthRoute exact path="/requests" component={RequestsContainer} />
           <AuthRoute exact path="/scheduler" component={SchedulerContainer} />
-          <AuthRoute
+          <AuthRoute path="/advanced" component={AdvancedContainer} />
+          <Route
             exact
             path="/user/settings"
-            component={UserSettingsContainer}
+            render={props => {
+              if (config.authEnabled && !auth.isAuthenticated) {
+                return (
+                  <Redirect
+                    to={{ pathname: "/login", state: { from: props.location } }}
+                  />
+                );
+              } else {
+                return <UserSettingsContainer {...props} />;
+              }
+            }}
           />
-          <AuthRoute path="/advanced" component={AdvancedContainer} />
         </Switch>
       </Layout>
     );
