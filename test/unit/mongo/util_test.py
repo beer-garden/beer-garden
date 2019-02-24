@@ -256,9 +256,33 @@ class TestMongoUtils(object):
     @patch("bg_utils.mongo.util._check_indexes", Mock())
     @patch("bg_utils.mongo.util._ensure_roles", Mock())
     @patch("bg_utils.mongo.util._ensure_application_state", Mock())
+    def test_ensure_users_others_exist(self, model_mocks):
+        principal = model_mocks["principal"]
+        principal.objects.count = Mock(return_value=2)
+        principal.objects.get = Mock(side_effect=DoesNotExist)
+        bg_utils.mongo.util.verify_db(False, {})
+        principal.assert_not_called()
+
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("bg_utils.mongo.util._ensure_application_state", Mock())
+    def test_ensure_users_only_anon_exists(self, model_mocks):
+        principal = model_mocks["principal"]
+        principal.objects.count = Mock(return_value=1)
+        mock_anon = Mock(username="anonymous")
+        principal.objects.get = Mock(
+            side_effect=[DoesNotExist, [mock_anon], DoesNotExist]
+        )
+        bg_utils.mongo.util.verify_db(False, {})
+        principal.assert_called_once()
+
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("bg_utils.mongo.util._ensure_application_state", Mock())
     @patch("passlib.apps.custom_app_context.hash")
     def test_ensure_users_create(self, hash_mock, model_mocks):
         principal = model_mocks["principal"]
+        principal.objects.count = Mock(return_value=0)
         principal.objects.get = Mock(side_effect=DoesNotExist)
 
         bg_utils.mongo.util.verify_db(False, {})
@@ -271,6 +295,7 @@ class TestMongoUtils(object):
     @patch("passlib.apps.custom_app_context.hash")
     def test_ensure_users_create_env_password(self, hash_mock, model_mocks):
         principal = model_mocks["principal"]
+        principal.objects.count = Mock(return_value=0)
         principal.objects.get = Mock(side_effect=DoesNotExist)
 
         with patch2.dict("os.environ", {"BG_DEFAULT_ADMIN_PASSWORD": "foo"}):
@@ -283,6 +308,7 @@ class TestMongoUtils(object):
     @patch("bg_utils.mongo.util._ensure_application_state", Mock())
     def test_ensure_users_guest_login_enabled(self, model_mocks):
         principal = model_mocks["principal"]
+        principal.objects.count = Mock(return_value=0)
         principal.objects.get = Mock(side_effect=DoesNotExist)
 
         bg_utils.mongo.util.verify_db(True, {})
@@ -292,27 +318,28 @@ class TestMongoUtils(object):
     @patch("bg_utils.mongo.util._ensure_roles", Mock())
     @patch("bg_utils.mongo.util._ensure_application_state", Mock())
     def test_remove_anonymous_user(self, model_mocks):
-        principal = model_mocks['principal']
+        principal = model_mocks["principal"]
         anon_user = Mock()
+        principal.objects.count = Mock(return_value=0)
         principal.objects.get = Mock(return_value=anon_user)
 
         bg_utils.mongo.util.verify_db(False, {})
         assert anon_user.delete.call_count == 1
 
-    @patch('bg_utils.mongo.util._check_indexes', Mock())
-    @patch('bg_utils.mongo.util._ensure_roles', Mock())
-    @patch('bg_utils.mongo.util._ensure_application_state', Mock())
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("bg_utils.mongo.util._ensure_application_state", Mock())
     def test_remove_anonymous_user_guest_login_none(self, model_mocks):
-        principal = model_mocks['principal']
+        principal = model_mocks["principal"]
         anon_user = Mock()
         principal.objects.get = Mock(return_value=anon_user)
 
         bg_utils.mongo.util.verify_db(None, {})
         assert anon_user.delete.call_count == 0
 
-    @patch('bg_utils.mongo.util._check_indexes', Mock())
-    @patch('bg_utils.mongo.util._ensure_roles', Mock())
-    @patch('bg_utils.mongo.util._ensure_users', Mock())
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("bg_utils.mongo.util._ensure_users", Mock())
     def test_ensure_application_state_first_time(self, model_mocks):
         app_state = model_mocks["app_state"]
         app_state.objects.first = Mock(return_value=None)

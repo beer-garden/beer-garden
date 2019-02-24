@@ -613,7 +613,7 @@ class RefreshToken(Document):
     meta = {"indexes": [{"fields": ["expires"], "expireAfterSeconds": 0}]}
 
     def get_principal(self):
-        principal_id = self.payload.get('sub')
+        principal_id = self.payload.get("sub")
         if not principal_id:
             return None
 

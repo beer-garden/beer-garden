@@ -141,6 +141,30 @@ def _ensure_application_state(versions):
     app_state.save()
 
 
+def _should_create_admin():
+    from bg_utils.mongo.models import Principal
+
+    count = Principal.objects.count()
+
+    if count == 0:
+        return True
+
+    try:
+        Principal.objects.get(username="admin")
+        return False
+    except DoesNotExist:
+        pass
+
+    if count == 1:
+        principal = Principal.objects.get()[0]
+        return principal.username == "anonymous"
+
+    # By default, if they have created other users that are not just the
+    # anonymous users, we assume they do not want to re-create the admin
+    # user.
+    return False
+
+
 def _ensure_users(guest_login_enabled):
     """Create users if necessary
 
@@ -152,9 +176,7 @@ def _ensure_users(guest_login_enabled):
     """
     from bg_utils.mongo.models import Principal, Role
 
-    try:
-        Principal.objects.get(username="admin")
-    except DoesNotExist:
+    if _should_create_admin():
         default_password = os.environ.get("BG_DEFAULT_ADMIN_PASSWORD")
         logger.warning("Creating missing admin user...")
         if default_password:
@@ -172,7 +194,7 @@ def _ensure_users(guest_login_enabled):
             username="admin",
             hash=custom_app_context.hash(default_password),
             roles=[Role.objects.get(name="bg-admin")],
-            preferences={"auto_change": True, "changed": False},
+            metadata={"auto_change": True, "changed": False},
         ).save()
 
     try:
