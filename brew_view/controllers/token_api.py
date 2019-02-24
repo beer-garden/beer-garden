@@ -244,6 +244,15 @@ class TokenListAPI(BaseHandler):
 
             if verified:
                 tokens = generate_tokens(principal, self.REFRESH_COOKIE_EXP)
+
+                # This is a semi-done solution. To really do this, we cannot give them
+                # a token, instead we should return an error, indicating they need to
+                # update their password, and then login again. In the short term, this
+                # will be enough. This is really meant only to work for our UI so
+                # backwards compatibility is not a concern.
+                if principal.metadata.get('auto_change') and not principal.metadata.get('changed'):
+                    self.set_header('change_password_required', 'true')
+
                 if parsed_body.get("remember_me", False):
                     self.set_secure_cookie(
                         self.REFRESH_COOKIE_NAME,
