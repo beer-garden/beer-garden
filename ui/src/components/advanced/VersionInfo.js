@@ -55,21 +55,23 @@ export class VersionInfo extends Component {
             <TableCell align="right">{version.brewViewVersion}</TableCell>
           </TableRow>
           <TableRow>
-            <TableCell>Bartender</TableCell>
+            <TableCell align="left">Bartender</TableCell>
             <TableCell align="center">
               {this.getStatusChip(version.bartenderVersion, classes)}
             </TableCell>
-            <TableCell>{version.bartenderVersion}</TableCell>
+            <TableCell align="right">{version.bartenderVersion}</TableCell>
           </TableRow>
           <TableRow>
-            <TableCell>Current API</TableCell>
-            <TableCell />
-            <TableCell>{version.currentApiVersion}</TableCell>
+            <TableCell align="left">Current API</TableCell>
+            <TableCell align="center" />
+            <TableCell align="right">{version.currentApiVersion}</TableCell>
           </TableRow>
           <TableRow>
-            <TableCell>Supported API Versions</TableCell>
-            <TableCell />
-            <TableCell>{version.supportedApiVersions.join(", ")}</TableCell>
+            <TableCell align="left">Supported API Versions</TableCell>
+            <TableCell align="center" />
+            <TableCell align="right">
+              {version.supportedApiVersions.join(", ")}
+            </TableCell>
           </TableRow>
         </TableHead>
       </Table>
