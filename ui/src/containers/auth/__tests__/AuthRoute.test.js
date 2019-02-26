@@ -65,6 +65,7 @@ describe("<AuthRoute />", () => {
       const route = mount(
         <MemoryRouter>
           <AuthRoute
+            pwChangeRequired={false}
             authEnabled
             isAuthenticated
             path="/"
