@@ -11,6 +11,7 @@ import NavCrumbs from "../components/layout/NavCrumbs";
 import SystemsContainer from "./advanced/SystemsContainer";
 import QueuesContainer from "./advanced/QueuesContainer";
 import UsersRoot from "./users/UsersRoot";
+import RolesRoot from "./roles/RolesRoot";
 
 const styles = theme => ({
   root: {
@@ -26,6 +27,7 @@ export class AdvancedContainer extends Component {
     systems: "Systems",
     queues: "Queues",
     users: "Users",
+    roles: "Roles",
     add: "Add",
   };
 
@@ -62,6 +64,7 @@ export class AdvancedContainer extends Component {
             component={QueuesContainer}
           />
           <AuthRoute path={`${match.path}/users`} component={UsersRoot} />
+          <AuthRoute path={`${match.path}/roles`} component={RolesRoot} />
         </Switch>
       </div>
     );

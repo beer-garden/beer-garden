@@ -1,16 +1,19 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { withRouter, Link } from "react-router-dom";
-import {
-  Divider,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  List,
-  Hidden,
-} from "@material-ui/core";
-import { People, ViewHeadline, Help, Extension } from "@material-ui/icons";
+import Divider from "@material-ui/core/Divider";
+import Hidden from "@material-ui/core/Hidden";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import ListItemText from "@material-ui/core/ListItemText";
+import Extension from "@material-ui/icons/Extension";
+import Help from "@material-ui/icons/Help";
+import ViewHeadline from "@material-ui/icons/ViewHeadline";
+import People from "@material-ui/icons/People";
+import HowToReg from "@material-ui/icons/HowToReg";
 import { hasPermissions } from "../../utils";
+import { ROLE_READ, USER_READ } from "../../constants/permissions";
 
 export class AdvancedIndex extends Component {
   allElements = [
@@ -42,11 +45,20 @@ export class AdvancedIndex extends Component {
     {
       id: "usrMgmtLink",
       authRequired: true,
-      permissions: ["bg-user-read"],
+      permissions: [USER_READ],
       primary: "User Management",
       to: "/users",
       icon: <People fontSize="large" />,
       secondary: "Create, update, and delete users and their roles.",
+    },
+    {
+      id: "roleMgmtLink",
+      authRequired: true,
+      permissions: [ROLE_READ],
+      primary: "Role Management",
+      to: "/roles",
+      icon: <HowToReg fontSize="large" />,
+      secondary: "Create, update, and delete roles.",
     },
   ];
 

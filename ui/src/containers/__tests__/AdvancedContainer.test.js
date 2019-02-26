@@ -25,6 +25,6 @@ const setup = overrideProps => {
 describe("<AdvancedContainer />", () => {
   test("render routes", () => {
     const { container } = setup();
-    expect(container.find(AuthRoute)).toHaveLength(5);
+    expect(container.find(AuthRoute)).toHaveLength(6);
   });
 });

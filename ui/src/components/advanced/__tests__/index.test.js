@@ -2,6 +2,7 @@ import React from "react";
 import { ListItem } from "@material-ui/core";
 import { AdvancedIndex } from "../";
 import { shallow } from "enzyme";
+import { ROLE_READ } from "../../../constants/permissions";
 
 const setup = overrideProps => {
   const props = Object.assign(
@@ -21,7 +22,7 @@ const setup = overrideProps => {
 
 describe("<AdvancedIndex />", () => {
   describe("render", () => {
-    test("render correct links when auth disabled", () => {
+    it("should render correct links when auth disabled", () => {
       const { index } = setup();
       const listItems = index.find(ListItem);
       expect(listItems).toHaveLength(3);
@@ -31,7 +32,7 @@ describe("<AdvancedIndex />", () => {
       expect(listItems.filter("#qMgmtLink")).toHaveLength(1);
     });
 
-    test("render user management if auth enabled and user can see", () => {
+    it("should render user management if auth enabled and user can see", () => {
       const { index } = setup({
         authEnabled: true,
         userData: { permissions: ["bg-user-read"] },
@@ -40,6 +41,17 @@ describe("<AdvancedIndex />", () => {
       expect(listItems).toHaveLength(4);
 
       expect(listItems.filter("#usrMgmtLink")).toHaveLength(1);
+    });
+
+    it("should render role management if auth enabled and the user can", () => {
+      const { index } = setup({
+        authEnabled: true,
+        userData: { permissions: [ROLE_READ] },
+      });
+      const listItems = index.find(ListItem);
+      expect(listItems).toHaveLength(4);
+
+      expect(listItems.filter("#roleMgmtLink")).toHaveLength(1);
     });
   });
 });
