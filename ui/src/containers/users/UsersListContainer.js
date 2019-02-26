@@ -5,7 +5,7 @@ import { connect } from "react-redux";
 import { compose } from "recompose";
 import { Typography, withStyles } from "@material-ui/core";
 
-import { fetchUsers, getUser } from "../../actions/user";
+import { fetchUsers } from "../../actions/user";
 import Spinner from "../../components/layout/Spinner";
 import UserList from "../../components/users/UserList";
 import {
@@ -94,7 +94,6 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => {
   return {
     fetchUsers: () => dispatch(fetchUsers()),
-    getUser: id => dispatch(getUser(id)),
   };
 };
 
