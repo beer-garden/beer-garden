@@ -6,6 +6,8 @@ import {
   isValidPassword,
   coalescePermissions,
   toggleItemInArray,
+  updateIfExists,
+  removeIfExists,
 } from "../utils";
 
 describe("utils", () => {
@@ -184,6 +186,32 @@ describe("utils", () => {
       expect(permissions).toEqual(
         new Set(["perm1", "perm2", "perm3", "perm4"]),
       );
+    });
+  });
+
+  describe("updateIfExists", () => {
+    it("should do nothing if the item does not exist", () => {
+      const initialList = [{ id: 1 }];
+      const newItem = { id: 2 };
+      expect(updateIfExists(initialList, newItem)).toEqual(initialList);
+    });
+
+    it("should update the item if it exists", () => {
+      const initialList = [{ id: 1 }];
+      const newItem = { id: 1, foo: "bar" };
+      expect(updateIfExists(initialList, newItem)).toEqual([newItem]);
+    });
+  });
+
+  describe("removeIfExists", () => {
+    it("should do nothing if the id does not exist", () => {
+      const initialList = [{ id: 1 }];
+      expect(removeIfExists(initialList, 2)).toEqual(initialList);
+    });
+
+    it("should remove the item if it exists", () => {
+      const initialList = [{ id: 1 }];
+      expect(removeIfExists(initialList, 1)).toEqual([]);
     });
   });
 });

@@ -15,6 +15,7 @@ import {
   UPDATE_USER_SUCCESS,
   UPDATE_USER_FAILURE,
 } from "../constants/ActionTypes";
+import { removeIfExists, updateIfExists } from "../utils";
 
 const initialState = {
   users: [],
@@ -151,21 +152,3 @@ export default function userReducer(state = initialState, action) {
       return state;
   }
 }
-
-const updateIfExists = (users, user) => {
-  const index = users.findIndex(u => u.id === user.id);
-  let newUsers = [...users];
-  if (index !== -1) {
-    newUsers[index] = user;
-  }
-  return newUsers;
-};
-
-const removeIfExists = (users, id) => {
-  const index = users.findIndex(u => u.id === id);
-  let newUsers = [...users];
-  if (index !== -1) {
-    newUsers.splice(index, 1);
-  }
-  return newUsers;
-};

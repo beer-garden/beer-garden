@@ -96,3 +96,21 @@ export function toggleItemInArray(
   }
   return newList;
 }
+
+export const updateIfExists = (list, item) => {
+  const index = list.findIndex(i => i.id === item.id);
+  let newList = [...list];
+  if (index !== -1) {
+    newList[index] = item;
+  }
+  return newList;
+};
+
+export const removeIfExists = (list, id) => {
+  const index = list.findIndex(i => i.id === id);
+  let newList = [...list];
+  if (index !== -1) {
+    newList.splice(index, 1);
+  }
+  return newList;
+};

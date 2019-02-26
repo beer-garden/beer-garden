@@ -6,6 +6,7 @@ import { Switch, withRouter } from "react-router-dom";
 import Paper from "@material-ui/core/Paper";
 import AuthRoute from "../auth/AuthRoute";
 import RolesListContainer from "./RolesListContainer";
+import RolesViewContainer from "./RolesViewContainer";
 
 const styles = theme => ({
   root: {
@@ -25,6 +26,11 @@ export class RolesRoot extends Component {
             exact
             path={`${match.path}/`}
             component={RolesListContainer}
+          />
+          <AuthRoute
+            exact
+            path={`${match.path}/:name`}
+            component={RolesViewContainer}
           />
         </Switch>
       </Paper>

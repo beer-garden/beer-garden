@@ -22,6 +22,6 @@ const setup = overrideProps => {
 describe("<RolesRoot />", () => {
   test("render routes", () => {
     const { container } = setup();
-    expect(container.find(AuthRoute)).toHaveLength(1);
+    expect(container.find(AuthRoute)).toHaveLength(2);
   });
 });
