@@ -5,6 +5,7 @@ import { withStyles } from "@material-ui/core/styles";
 import { Switch, withRouter } from "react-router-dom";
 import Paper from "@material-ui/core/Paper";
 import AuthRoute from "../auth/AuthRoute";
+import RolesAddContainer from "./RolesAddContainer";
 import RolesListContainer from "./RolesListContainer";
 import RolesViewContainer from "./RolesViewContainer";
 
@@ -26,6 +27,11 @@ export class RolesRoot extends Component {
             exact
             path={`${match.path}/`}
             component={RolesListContainer}
+          />
+          <AuthRoute
+            exact
+            path={`${match.path}/add`}
+            component={RolesAddContainer}
           />
           <AuthRoute
             exact
