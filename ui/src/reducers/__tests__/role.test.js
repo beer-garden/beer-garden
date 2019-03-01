@@ -203,7 +203,7 @@ describe("role reducer", () => {
     });
     const action = {
       type: types.UPDATE_ROLE_SUCCESS,
-      payload: { id: "roleId", name: "newName" },
+      payload: { role: { id: "roleId", name: "newName" } },
     };
     const newState = roleReducer(initialState, action);
     expect(newState.updateRoleLoading).toBe(false);
@@ -219,12 +219,43 @@ describe("role reducer", () => {
     });
     const action = {
       type: types.UPDATE_ROLE_SUCCESS,
-      payload: { id: "roleId", name: "newName" },
+      payload: { role: { id: "roleId", name: "newName" } },
     };
     const newState = roleReducer(initialState, action);
     expect(newState.updateRoleLoading).toBe(false);
     expect(newState.updateRoleError).toBeNull();
     expect(newState.roles).toEqual([]);
+  });
+
+  it("should set selectedRole if set on UPDATE_ROLE_SUCCESS", () => {
+    const initialState = setupState({
+      selectedRole: { id: "roleId", name: "oldName" },
+      updateRoleLoading: true,
+      updateRoleError: null,
+    });
+    const newRole = { id: "roleId", name: "newName" };
+    const action = {
+      type: types.UPDATE_ROLE_SUCCESS,
+      payload: { role: newRole },
+    };
+    const newState = roleReducer(initialState, action);
+    expect(newState.selectedRole).toEqual(newRole);
+  });
+
+  it("should not set selectedRole if they mismatch", () => {
+    const oldRole = { id: "roleId", name: "oldName" };
+    const initialState = setupState({
+      selectedRole: oldRole,
+      updateRoleLoading: true,
+      updateRoleError: null,
+    });
+    const newRole = { id: "differentId", name: "newName" };
+    const action = {
+      type: types.UPDATE_ROLE_SUCCESS,
+      payload: { role: newRole },
+    };
+    const newState = roleReducer(initialState, action);
+    expect(newState.selectedRole).toEqual(oldRole);
   });
 
   it("should handle UPDATE_ROLE_FAILURE", () => {

@@ -133,9 +133,17 @@ export default function roleReducer(state = initialState, action) {
       };
 
     case UPDATE_ROLE_SUCCESS:
+      let selectedRole = state.selectedRole;
+      if (
+        state.selectedRole &&
+        state.selectedRole.id === action.payload.role.id
+      ) {
+        selectedRole = action.payload.role;
+      }
       return {
         ...state,
-        roles: updateIfExists(state.roles, action.payload),
+        selectedRole,
+        roles: updateIfExists(state.roles, action.payload.role),
         updateRoleError: null,
         updateRoleLoading: false,
       };

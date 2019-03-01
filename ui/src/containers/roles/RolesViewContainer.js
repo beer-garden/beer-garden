@@ -17,6 +17,7 @@ import RoleInfo from "../../components/roles/RoleInfo";
 import RoleInfoHeader from "../../components/roles/RoleInfoHeader";
 import { ROLE_UPDATE, ROLE_DELETE } from "../../constants/permissions";
 import { PROTECTED_ROLES } from "../../constants/auth";
+import RolesFormContainer from "./RolesFormContainer";
 
 export class RolesViewContainer extends Component {
   state = {
@@ -64,6 +65,19 @@ export class RolesViewContainer extends Component {
     });
   };
 
+  updateRole = (newName, newDescription, newPermissions) => {
+    const { selectedRole, updateRole } = this.props;
+    updateRole(selectedRole, {
+      name: newName,
+      description: newDescription,
+      permissions: newPermissions,
+    }).then(() => {
+      if (!this.props.updateRoleError) {
+        this.toggleEdit();
+      }
+    });
+  };
+
   toggleEdit = () => {
     this.setState({ editing: !this.state.editing });
   };
@@ -105,6 +119,7 @@ export class RolesViewContainer extends Component {
       deleteRoleLoading,
       deleteRoleError,
       updateRoleLoading,
+      updateRoleError,
       selectedRole,
     } = this.props;
     const { redirect, editing } = this.state;
@@ -132,6 +147,20 @@ export class RolesViewContainer extends Component {
         saving={updateRoleLoading}
       />
     );
+
+    if (editing) {
+      return (
+        <RolesFormContainer
+          handleSubmit={this.updateRole}
+          loading={updateRoleLoading}
+          header={header}
+          error={updateRoleError}
+          newRoleName={selectedRole.name}
+          newRoleDescription={selectedRole.description}
+          permissions={selectedRole.permissions}
+        />
+      );
+    }
 
     return (
       <>

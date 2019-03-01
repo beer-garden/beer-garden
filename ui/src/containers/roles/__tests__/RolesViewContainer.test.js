@@ -7,6 +7,7 @@ import Dialog from "@material-ui/core/Dialog";
 import Typography from "@material-ui/core/Typography";
 import Spinner from "../../../components/layout/Spinner";
 import RoleInfo from "../../../components/roles/RoleInfo";
+import RolesFormContainer from "../RolesFormContainer";
 
 const setup = (propOverrides, stateOverrides = {}) => {
   const props = Object.assign(
@@ -90,6 +91,42 @@ describe("<RolesViewContainer/>", () => {
     });
   });
 
+  describe("updateRole", () => {
+    it("should call updateRole with the correct data", async () => {
+      const {
+        container,
+        props: { selectedRole, updateRole },
+      } = setup({}, { editing: true });
+      container.instance().updateRole("name", "desc", [ROLE_UPDATE]);
+      await flushPromises();
+      expect(updateRole).toHaveBeenCalled();
+      expect(updateRole).toHaveBeenCalledWith(selectedRole, {
+        name: "name",
+        description: "desc",
+        permissions: [ROLE_UPDATE],
+      });
+    });
+
+    it("should set editing to false after the update succeeds", async () => {
+      const { container } = setup({}, { editing: true });
+      container.instance().updateRole("name", "desc", [ROLE_UPDATE]);
+      await flushPromises();
+      expect(container.state().editing).toBe(false);
+    });
+
+    it("should not set editing to false if the update fails", async () => {
+      const { container } = setup(
+        {
+          updateRoleError: new Error("some message"),
+        },
+        { editing: true },
+      );
+      container.instance().updateRole("name", "desc", [ROLE_UPDATE]);
+      await flushPromises();
+      expect(container.state().editing).toBe(true);
+    });
+  });
+
   describe("deleteRoleDialog", () => {
     it("should call deleteRole like normal for a regular delete", async () => {
       const {
@@ -149,5 +186,9 @@ describe("<RolesViewContainer/>", () => {
       const { container } = setup();
       expect(container.find(Dialog)).toHaveLength(1);
     });
+
+    it("should render <RolesFormContainer /> if editing is true", () => {});
+    const { container } = setup({}, { editing: true });
+    expect(container.find(RolesFormContainer)).toHaveLength(1);
   });
 });
