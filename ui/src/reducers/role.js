@@ -70,6 +70,7 @@ export default function roleReducer(state = initialState, action) {
         roleCreateLoading: false,
         roleCreateError: null,
         roles: [...state.roles, action.payload.role],
+        selectedRole: action.payload.role,
       };
 
     case CREATE_ROLE_FAILURE:

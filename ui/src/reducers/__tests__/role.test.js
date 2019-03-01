@@ -106,6 +106,7 @@ describe("role reducer", () => {
     expect(newState.roleCreateLoading).toBe(false);
     expect(newState.roleCreateError).toBeNull();
     expect(newState.roles).toEqual(["role1"]);
+    expect(newState.selectedRole).toEqual("role1");
   });
 
   it("should handle CREATE_ROLE_FAILURE", () => {
@@ -257,7 +258,7 @@ describe("role reducer", () => {
       roleError: "previousError",
     });
     const action = {
-      type: types.FETCH_ROLES_SUCCESS,
+      type: types.FETCH_ROLE_SUCCESS,
       payload: { role: "role1" },
     };
     const newState = roleReducer(initialState, action);
