@@ -161,6 +161,13 @@ class RoleAPI(BaseHandler):
                 except DoesNotExist:
                     raise ModelValidationError("Role '%s' does not exist" % op.value)
 
+            elif op.path == "/description":
+                if op.operation != "update":
+                    raise ModelValidationError(
+                        "Unsupported operation '%s'" % op.operation
+                    )
+                role.description = op.value
+
             else:
                 raise ModelValidationError("Unsupported path '%s'" % op.path)
 
