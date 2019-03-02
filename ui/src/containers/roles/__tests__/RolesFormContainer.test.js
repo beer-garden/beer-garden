@@ -1,7 +1,7 @@
 import React from "react";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
-import RoleForm from "../../../components/users/RoleForm";
+import RoleForm from "../../../components/roles/RoleForm";
 import { RolesFormContainer } from "../RolesFormContainer";
 import { shallow } from "enzyme";
 import { flushPromises } from "../../../testHelpers";

@@ -5,7 +5,7 @@ import { compose } from "recompose";
 import { withStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 
-import PermissionList from "../../components/users/PermissionList";
+import PermissionList from "../../components/roles/PermissionList";
 import {
   hasPermissions,
   coalescePermissions,
@@ -18,7 +18,7 @@ import {
   ROLE_CREATE,
   ROLE_READ,
 } from "../../constants/permissions";
-import RoleRowContainer from "./RoleRowContainer";
+import RoleRowContainer from "../roles/RoleRowContainer";
 import UserForm from "../../components/users/UserForm";
 
 const styles = theme => ({

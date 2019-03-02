@@ -4,7 +4,7 @@ import { compose } from "recompose";
 import { withStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 
-import RoleForm from "../../components/users/RoleForm";
+import RoleForm from "../../components/roles/RoleForm";
 import { toggleItemInArray } from "../../utils";
 
 const styles = theme => ({

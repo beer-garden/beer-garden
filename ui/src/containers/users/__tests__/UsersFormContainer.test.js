@@ -9,9 +9,9 @@ import {
   USER_READ,
 } from "../../../constants/permissions";
 import { flushPromises } from "../../../testHelpers";
-import RoleRowContainer from "../RoleRowContainer";
+import RoleRowContainer from "../../roles/RoleRowContainer";
 import UserForm from "../../../components/users/UserForm";
-import PermissionList from "../../../components/users/PermissionList";
+import PermissionList from "../../../components/roles/PermissionList";
 
 const setup = (overrideProps, overrideState) => {
   const props = Object.assign(

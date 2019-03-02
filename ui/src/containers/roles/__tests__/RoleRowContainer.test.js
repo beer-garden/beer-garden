@@ -3,9 +3,9 @@ import { shallow } from "enzyme";
 import { RoleRowContainer } from "../RoleRowContainer";
 import { ROLE_CREATE, USER_DELETE } from "../../../constants/permissions";
 import { flushPromises } from "../../../testHelpers";
-import RoleRow from "../../../components/users/RoleRow";
-import RoleDialog from "../../../components/users/RoleDialog";
-import RoleAddDialog from "../../../components/users/RoleAddDialog";
+import RoleRow from "../../../components/roles/RoleRow";
+import RoleDialog from "../../../components/roles/RoleDialog";
+import RoleAddDialog from "../../../components/roles/RoleAddDialog";
 
 const setup = propOverrides => {
   const props = Object.assign(

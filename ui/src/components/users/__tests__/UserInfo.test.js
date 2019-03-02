@@ -2,8 +2,8 @@ import React from "react";
 import { shallow } from "enzyme";
 import { UserInfo } from "../UserInfo";
 import Typography from "@material-ui/core/Typography";
-import RoleRow from "../RoleRow";
-import PermissionList from "../PermissionList";
+import RoleRow from "../../roles/RoleRow";
+import PermissionList from "../../roles/PermissionList";
 
 const setup = overrideProps => {
   const props = Object.assign(

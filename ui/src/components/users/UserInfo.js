@@ -3,8 +3,8 @@ import PropTypes from "prop-types";
 import { compose } from "recompose";
 import { withStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
-import PermissionList from "./PermissionList";
-import RoleRow from "./RoleRow";
+import PermissionList from "../roles/PermissionList";
+import RoleRow from "../roles/RoleRow";
 
 const styles = theme => ({
   root: {

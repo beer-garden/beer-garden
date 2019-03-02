@@ -6,9 +6,9 @@ import { connect } from "react-redux";
 import { hasPermissions } from "../../utils";
 import { ROLE_CREATE } from "../../constants/permissions";
 import { createRole, fetchRoles } from "../../actions/role";
-import RoleRow from "../../components/users/RoleRow";
-import RoleDialog from "../../components/users/RoleDialog";
-import RoleAddDialog from "../../components/users/RoleAddDialog";
+import RoleRow from "../../components/roles/RoleRow";
+import RoleDialog from "../../components/roles/RoleDialog";
+import RoleAddDialog from "../../components/roles/RoleAddDialog";
 
 export class RoleRowContainer extends Component {
   state = {

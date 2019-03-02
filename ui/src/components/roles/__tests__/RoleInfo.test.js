@@ -2,7 +2,7 @@ import React from "react";
 import { shallow } from "enzyme";
 import { RoleInfo } from "../RoleInfo";
 import Typography from "@material-ui/core/Typography";
-import PermissionList from "../../users/PermissionList";
+import PermissionList from "../PermissionList";
 import { ROLE_CREATE } from "../../../constants/permissions";
 
 const setup = overrideProps => {

@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { compose } from "recompose";
 import { withStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
-import PermissionList from "../users/PermissionList";
+import PermissionList from "./PermissionList";
 
 const styles = theme => ({
   root: {
