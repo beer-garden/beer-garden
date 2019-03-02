@@ -52,7 +52,7 @@ export class UserForm extends Component {
         <FormGroup row className={classes.bottomPad}>
           {this.renderInput("username", "Username")}
           {this.renderInput("currentPassword", "Current Password", "password")}
-          {this.renderInput("password", "Confirm Password", "password")}
+          {this.renderInput("password", "Password", "password")}
           {this.renderInput("confirmPassword", "Confirm Password", "password")}
         </FormGroup>
       </div>
