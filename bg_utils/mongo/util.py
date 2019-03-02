@@ -8,7 +8,7 @@ from passlib.apps import custom_app_context
 logger = logging.getLogger(__name__)
 
 
-def verify_db(guest_login_enabled, versions):
+def verify_db(guest_login_enabled):
     """Do everything necessary to ensure the database is in a 'good' state"""
     from bg_utils.mongo.models import Job, Request, Role, System, Principal
 
@@ -17,7 +17,6 @@ def verify_db(guest_login_enabled, versions):
 
     _ensure_roles()
     _ensure_users(guest_login_enabled)
-    _ensure_application_state(versions)
 
 
 def _update_request_model():
@@ -127,18 +126,6 @@ def _ensure_roles():
 
     for role in mandatory_roles:
         _create_role(role)
-
-
-def _ensure_application_state(versions):
-    """Ensure the application state."""
-    from bg_utils.mongo.models import AppState
-
-    app_state = AppState.objects.first()
-    if not app_state:
-        app_state = AppState(versions=versions, auth={"initialized": False})
-
-    app_state.versions.update(versions)
-    app_state.save()
 
 
 def _should_create_admin():

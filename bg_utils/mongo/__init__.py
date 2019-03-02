@@ -1,12 +1,11 @@
 from bg_utils.mongo.util import verify_db
 
 
-def setup_database(config, versions):
+def setup_database(config):
     """Attempt connection to a Mongo database and verify necessary indexes
 
     Args:
         config (box.Box): Yapconf-generated configuration object
-        versions (dict): A dictionary of component versions
 
     Returns:
         bool: True if successful, False otherwise (unable to connect)
@@ -47,6 +46,6 @@ def setup_database(config, versions):
     except KeyError:
         guest_login_enabled = None
 
-    verify_db(guest_login_enabled, versions)
+    verify_db(guest_login_enabled)
 
     return True
