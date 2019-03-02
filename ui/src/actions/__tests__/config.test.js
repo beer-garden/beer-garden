@@ -63,7 +63,11 @@ describe("async actions", () => {
 
   test("it should not create an action if the config already exists", () => {
     const { store } = setup({ config: "alreadyLoaded" });
-    expect(store.dispatch(loadConfig())).toBe(null);
+    const expectedAction = {
+      type: types.FETCH_CONFIG_SUCCESS,
+      payload: { config: "alreadyLoaded" },
+    };
+    expect(store.dispatch(loadConfig())).toEqual(expectedAction);
   });
 
   test("it should create an action if the config is an empty object", () => {

@@ -40,7 +40,7 @@ export function fetchConfig() {
 export const loadConfig = () => (dispatch, getState) => {
   const configData = getState().configReducer.config;
   if (!isEmpty(configData)) {
-    return null;
+    return dispatch(fetchConfigSuccess(configData));
   }
 
   return dispatch(fetchConfig());

@@ -13,6 +13,10 @@ import { isEmpty } from "../utils";
 
 export class Root extends Component {
   componentDidMount() {
+    this.loadInitData();
+  }
+
+  loadInitData = () => {
     const { loadConfig } = this.props;
 
     loadConfig().then(() => {
@@ -25,7 +29,7 @@ export class Root extends Component {
         loadUserData();
       }
     });
-  }
+  };
 
   waitingForInit = () => {
     const {
@@ -51,19 +55,13 @@ export class Root extends Component {
   };
 
   render() {
-    const {
-      configLoading,
-      configError,
-      config,
-      loadConfig,
-      theme,
-    } = this.props;
+    const { configLoading, configError, config, theme } = this.props;
 
     if (configError) {
       return (
         <ErrorRetryDialog
           error={configError}
-          action={loadConfig}
+          action={this.loadInitData}
           loading={configLoading}
         />
       );
