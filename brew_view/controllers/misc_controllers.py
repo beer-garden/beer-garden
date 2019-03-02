@@ -3,14 +3,11 @@ import logging
 from tornado.gen import coroutine
 
 import brew_view
-from bg_utils.mongo.parser import MongoParser
 from brew_view import thrift_context
 from brew_view.base_handler import BaseHandler
 
 
 class ConfigHandler(BaseHandler):
-
-    parser = MongoParser()
 
     def get(self):
         """Subset of configuration options that the frontend needs"""
