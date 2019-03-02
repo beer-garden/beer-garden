@@ -15,7 +15,6 @@ class ConfigHandlerTest(TestHandlerBase):
         response = self.fetch("/config")
         data = json.loads(response.body.decode("utf-8"))
         self.assertEqual("Rock Garden", data["application_name"])
-        assert "app_state" in data
 
         self.assertEqual(
             "Rock Garden", json.loads(response.body.decode("utf-8"))["application_name"]
