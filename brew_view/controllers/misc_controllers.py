@@ -3,7 +3,6 @@ import logging
 from tornado.gen import coroutine
 
 import brew_view
-# from bg_utils.mongo.models import AppState
 from bg_utils.mongo.parser import MongoParser
 from brew_view import thrift_context
 from brew_view.base_handler import BaseHandler
@@ -15,10 +14,6 @@ class ConfigHandler(BaseHandler):
 
     def get(self):
         """Subset of configuration options that the frontend needs"""
-        # app_state = AppState.objects.first()
-        # serialized_app_state = self.parser.serialize_app_state(
-        #     app_state, to_string=False
-        # )
         configs = {
             "allow_unsafe_templates": brew_view.config.application.allow_unsafe_templates,
             "application_name": brew_view.config.application.name,
@@ -34,7 +29,6 @@ class ConfigHandler(BaseHandler):
             "metrics_url": brew_view.config.metrics.url,
             "auth_enabled": brew_view.config.auth.enabled,
             "guest_login_enabled": brew_view.config.auth.guest_login_enabled,
-            # "app_state": serialized_app_state,
         }
         self.write(configs)
 
