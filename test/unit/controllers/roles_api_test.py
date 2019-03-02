@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
-
 import pytest
 from tornado.httpclient import HTTPRequest
 
@@ -24,14 +22,14 @@ class TestRolesAPI(object):
         ],
     )
     def test_patch_role_description(
-            self,
-            http_client,
-            base_url,
-            mongo_role,
-            operation,
-            value,
-            expected_value,
-            succeed,
+        self,
+        http_client,
+        base_url,
+        mongo_role,
+        operation,
+        value,
+        expected_value,
+        succeed,
     ):
         mongo_role.save()
 
@@ -42,7 +40,7 @@ class TestRolesAPI(object):
             method="PATCH",
             headers={"content-type": "application/json"},
             body=SchemaParser.serialize_patch(body),
-            )
+        )
         response = yield http_client.fetch(request, raise_error=False)
 
         if succeed:

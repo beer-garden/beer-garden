@@ -190,8 +190,8 @@ SPECIFICATION = {
                 "type": "bool",
                 "default": True,
                 "description": "Only applicable if auth is enabled. If set to "
-                               "true, guests can login without username/"
-                               "passwords."
+                "true, guests can login without username/"
+                "passwords.",
             },
             "token": {
                 "type": "dict",
