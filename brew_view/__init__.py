@@ -103,8 +103,7 @@ def startup():
     # Ensure we have a mongo connection
     logger.info("Checking for Mongo connection")
     yield _progressive_backoff(
-        partial(setup_database, config, {"brew_view_version": __version__}),
-        "Unable to connect to mongo, is it started?",
+        partial(setup_database, config), "Unable to connect to mongo, is it started?"
     )
     anonymous_principal = load_anonymous()
 
