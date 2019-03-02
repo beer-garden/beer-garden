@@ -1,8 +1,12 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
+import { Link as RouterLink } from "react-router-dom";
 import { withStyles } from "@material-ui/core/styles";
-import { IconButton, AppBar, Toolbar, Typography } from "@material-ui/core";
-import { Menu } from "@material-ui/icons";
+import AppBar from "@material-ui/core/AppBar";
+import IconButton from "@material-ui/core/IconButton";
+import Toolbar from "@material-ui/core/Toolbar";
+import Link from "@material-ui/core/Link";
+import Menu from "@material-ui/icons/Menu";
 import UserIcon from "./UserIcon";
 
 const styles = theme => ({
@@ -47,9 +51,16 @@ export class Topbar extends Component {
           >
             <Menu />
           </IconButton>
-          <Typography variant="h6" color="inherit" style={{ flex: 1 }}>
+          <Link
+            component={RouterLink}
+            underline="none"
+            to="/"
+            variant="h6"
+            color="inherit"
+            style={{ flex: 1 }}
+          >
             {appName}
-          </Typography>
+          </Link>
           <UserIcon
             username={username}
             themeName={themeName}
