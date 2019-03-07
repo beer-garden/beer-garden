@@ -173,13 +173,9 @@ class TokenListAPI(BaseHandler):
                 if op.path == "/payload":
                     token = self._refresh_token(op.value)
                 else:
-                    error_msg = "Unsupported path '%s'" % op.path
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError(error_msg)
+                    raise ModelValidationError("Unsupported path '%s'" % op.path)
             else:
-                error_msg = "Unsupported operation '%s'" % op.operation
-                self.logger.warning(error_msg)
-                raise ModelValidationError(error_msg)
+                raise ModelValidationError("Unsupported operation '%s'" % op.operation)
 
         self.write(json.dumps(token))
 
