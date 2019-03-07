@@ -84,14 +84,16 @@ class TokenAPITest(TestHandlerBase):
         assert "token" in data
 
     @patch("brew_view.base_handler.BaseHandler.get_secure_cookie")
-    def test_get_refresh_token_payload(self, get_cookie_mock):
+    def test_get_refresh_token_header(self, get_cookie_mock):
         self.refresh.save()
         get_cookie_mock.return_value = None
         response = self.fetch(
             "/api/v1/tokens",
             method="GET",
-            body=json.dumps({"refresh_id": str(self.refresh.id)}),
-            headers={"content-type": "application/json"},
+            headers={
+                "content-type": "application/json",
+                "X-BG-RefreshID": str(self.refresh.id),
+            },
             allow_nonstandard_methods=True,
         )
         self.assertEqual(200, response.code)

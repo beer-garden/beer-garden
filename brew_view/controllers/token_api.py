@@ -108,8 +108,8 @@ class TokenListAPI(BaseHandler):
         summary: Use a refresh token to retrieve a new access token
         description: |
           Your refresh token can either be set in a cookie (which we set on your
-          session when you logged in) or you can include a JSON payload in the request
-          body, which specified "refresh_id"
+          session when you logged in) or you can include the refresh ID as a
+          header named "X-BG-RefreshID"
         responses:
           200:
             description: New Auth Token
@@ -189,9 +189,8 @@ class TokenListAPI(BaseHandler):
         summary: Remove a refresh token
         description: |
           Your refresh token can either be set in a cookie (which we set on your
-          session when you logged in) or you can include a JSON payload in the request
-          body, which specified "refresh_id". This will delete this particular
-          refresh token if it exists.
+          session when you logged in) or you can include the refresh ID as a
+          header named "X-BG-RefreshID"
         responses:
           204:
             description: Token has been successfully deleted
@@ -273,14 +272,8 @@ class TokenListAPI(BaseHandler):
         if not token_id:
             token_id = self.get_refresh_id_from_cookie()
 
-        if not token_id and self.request.body:
-            body = self.request.body.decode("utf-8")
-            try:
-                json_body = json.loads(body)
-                if "refresh_id" in json_body:
-                    token_id = json_body["refresh_id"]
-            except (TypeError, ValueError):
-                pass
+        if not token_id and self.request.headers:
+            token_id = self.request.headers.get("X-BG-RefreshID", None)
 
         if token_id:
             try:
