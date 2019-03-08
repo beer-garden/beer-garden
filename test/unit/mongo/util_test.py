@@ -1,6 +1,5 @@
 import pytest
 from box import Box
-from unittest.mock import patch as patch2
 from mock import patch, MagicMock, Mock
 from mongoengine import DoesNotExist, NotUniqueError
 from pymongo.errors import ServerSelectionTimeoutError
@@ -289,7 +288,7 @@ class TestMongoUtils(object):
         principal.objects.count = Mock(return_value=0)
         principal.objects.get = Mock(side_effect=DoesNotExist)
 
-        with patch2.dict("os.environ", {"BG_DEFAULT_ADMIN_PASSWORD": "foo"}):
+        with patch.dict("os.environ", {"BG_DEFAULT_ADMIN_PASSWORD": "foo"}):
             bg_utils.mongo.util.verify_db(False)
             principal.assert_called_once()
             hash_mock.assert_called_with("foo")
