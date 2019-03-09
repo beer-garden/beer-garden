@@ -15,22 +15,26 @@ class TestMongoUtils(object):
         system_mock = Mock()
         role_mock = Mock()
         job_mock = Mock()
+        principal_mock = Mock()
 
         request_mock.__name__ = "Request"
         system_mock.__name__ = "System"
         role_mock.__name__ = "Role"
         job_mock.__name__ = "Job"
+        principal_mock.__name__ = "Principal"
 
         monkeypatch.setattr(bg_utils.mongo.models, "Request", request_mock)
         monkeypatch.setattr(bg_utils.mongo.models, "System", system_mock)
         monkeypatch.setattr(bg_utils.mongo.models, "Role", role_mock)
         monkeypatch.setattr(bg_utils.mongo.models, "Job", job_mock)
+        monkeypatch.setattr(bg_utils.mongo.models, "Principal", principal_mock)
 
         return {
             "request": request_mock,
             "system": system_mock,
             "role": role_mock,
             "job": job_mock,
+            "principal": principal_mock,
         }
 
     @patch("mongoengine.register_connection")
@@ -69,7 +73,7 @@ class TestMongoUtils(object):
             host="db_host",
             port="db_port",
         )
-        verify_mock.assert_called_once_with()
+        verify_mock.assert_called_once_with(None)
 
     @patch("mongoengine.connect")
     @patch("bg_utils.mongo.verify_db", Mock())
@@ -234,3 +238,88 @@ class TestMongoUtils(object):
 
         with pytest.raises(NotUniqueError):
             bg_utils.mongo.util._ensure_roles()
+
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    def test_ensure_users_already_exists(self, model_mocks):
+        principal = model_mocks["principal"]
+        principal.objects.get = Mock()
+        bg_utils.mongo.util.verify_db(False)
+        principal.assert_not_called()
+
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    def test_ensure_users_others_exist(self, model_mocks):
+        principal = model_mocks["principal"]
+        principal.objects.count = Mock(return_value=2)
+        principal.objects.get = Mock(side_effect=DoesNotExist)
+        bg_utils.mongo.util.verify_db(False)
+        principal.assert_not_called()
+
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    def test_ensure_users_only_anon_exists(self, model_mocks):
+        principal = model_mocks["principal"]
+        principal.objects.count = Mock(return_value=1)
+        mock_anon = Mock(username="anonymous")
+        principal.objects.get = Mock(
+            side_effect=[DoesNotExist, [mock_anon], DoesNotExist]
+        )
+        bg_utils.mongo.util.verify_db(False)
+        principal.assert_called_once()
+
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("passlib.apps.custom_app_context.hash")
+    def test_ensure_users_create(self, hash_mock, model_mocks):
+        principal = model_mocks["principal"]
+        principal.objects.count = Mock(return_value=0)
+        principal.objects.get = Mock(side_effect=DoesNotExist)
+
+        bg_utils.mongo.util.verify_db(False)
+        principal.assert_called_once()
+        hash_mock.assert_called_with("password")
+
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("passlib.apps.custom_app_context.hash")
+    def test_ensure_users_create_env_password(self, hash_mock, model_mocks):
+        principal = model_mocks["principal"]
+        principal.objects.count = Mock(return_value=0)
+        principal.objects.get = Mock(side_effect=DoesNotExist)
+
+        with patch.dict("os.environ", {"BG_DEFAULT_ADMIN_PASSWORD": "foo"}):
+            bg_utils.mongo.util.verify_db(False)
+            principal.assert_called_once()
+            hash_mock.assert_called_with("foo")
+
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    def test_ensure_users_guest_login_enabled(self, model_mocks):
+        principal = model_mocks["principal"]
+        principal.objects.count = Mock(return_value=0)
+        principal.objects.get = Mock(side_effect=DoesNotExist)
+
+        bg_utils.mongo.util.verify_db(True)
+        assert principal.call_count == 2
+
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    def test_remove_anonymous_user(self, model_mocks):
+        principal = model_mocks["principal"]
+        anon_user = Mock()
+        principal.objects.count = Mock(return_value=0)
+        principal.objects.get = Mock(return_value=anon_user)
+
+        bg_utils.mongo.util.verify_db(False)
+        assert anon_user.delete.call_count == 1
+
+    @patch("bg_utils.mongo.util._check_indexes", Mock())
+    @patch("bg_utils.mongo.util._ensure_roles", Mock())
+    def test_remove_anonymous_user_guest_login_none(self, model_mocks):
+        principal = model_mocks["principal"]
+        anon_user = Mock()
+        principal.objects.get = Mock(return_value=anon_user)
+
+        bg_utils.mongo.util.verify_db(None)
+        assert anon_user.delete.call_count == 0

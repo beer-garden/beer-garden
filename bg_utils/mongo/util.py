@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 import logging
+import os
 
 from mongoengine.errors import DoesNotExist, NotUniqueError
 from passlib.apps import custom_app_context
@@ -6,15 +8,15 @@ from passlib.apps import custom_app_context
 logger = logging.getLogger(__name__)
 
 
-def verify_db():
+def verify_db(guest_login_enabled):
     """Do everything necessary to ensure the database is in a 'good' state"""
-    from bg_utils.mongo.models import Job, Request, Role, System
+    from bg_utils.mongo.models import Job, Request, Role, System, Principal
 
-    for doc in (Job, Request, Role, System):
+    for doc in (Job, Request, Role, System, Principal):
         _check_indexes(doc)
 
     _ensure_roles()
-    _ensure_users()
+    _ensure_users(guest_login_enabled)
 
 
 def _update_request_model():
@@ -126,7 +128,31 @@ def _ensure_roles():
         _create_role(role)
 
 
-def _ensure_users():
+def _should_create_admin():
+    from bg_utils.mongo.models import Principal
+
+    count = Principal.objects.count()
+
+    if count == 0:
+        return True
+
+    try:
+        Principal.objects.get(username="admin")
+        return False
+    except DoesNotExist:
+        pass
+
+    if count == 1:
+        principal = Principal.objects.get()[0]
+        return principal.username == "anonymous"
+
+    # By default, if they have created other users that are not just the
+    # anonymous users, we assume they do not want to re-create the admin
+    # user.
+    return False
+
+
+def _ensure_users(guest_login_enabled):
     """Create users if necessary
 
     There are certain 'convenience' users that will be created if this is a new
@@ -137,40 +163,49 @@ def _ensure_users():
     """
     from bg_utils.mongo.models import Principal, Role
 
-    if Principal.objects.count() == 0:
-        logger.warning("No users found: creating convenience users")
-
-        logger.warning(
-            "Creating plugin user " '(username "plugin", password "password"'
-        )
-        Principal(
-            username="plugin",
-            hash=custom_app_context.hash("password"),
-            roles=[Role.objects.get(name="bg-plugin")],
-        ).save()
-
-    try:
-        Principal.objects.get(username="admin")
-    except DoesNotExist:
-        logger.warning(
-            "Admin user missing, about to create "
-            '(username "admin", password "password")'
-        )
+    if _should_create_admin():
+        default_password = os.environ.get("BG_DEFAULT_ADMIN_PASSWORD")
+        logger.warning("Creating missing admin user...")
+        if default_password:
+            logger.info(
+                'Creating username "admin" with custom password set'
+                'in environment variable "BG_DEFAULT_ADMIN_PASSWORD"'
+            )
+        else:
+            logger.info(
+                'Creating username "admin" with default password. See '
+                "Beer Garden documentation for the value."
+            )
+            default_password = "password"
         Principal(
             username="admin",
-            hash=custom_app_context.hash("password"),
+            hash=custom_app_context.hash(default_password),
             roles=[Role.objects.get(name="bg-admin")],
+            metadata={"auto_change": True, "changed": False},
         ).save()
 
     try:
-        Principal.objects.get(username="anonymous")
+        anonymous_user = Principal.objects.get(username="anonymous")
+
+        # Here we specifically check for None because bartender does
+        # not have the guest_login_enabled configuration, so we don't
+        # really know what to do in that case, so we just allow it to
+        # stay around. This actually shouldn't matter anyway, because
+        # brew-view is a dependency for bartender to start so brew-view
+        # should have already done the right thing anyway.
+        if guest_login_enabled is not None and not guest_login_enabled:
+            logger.info(
+                "Previous anonymous user detected, but the config indicates "
+                "guest login is not enabled. Removing old anonymous user."
+            )
+            anonymous_user.delete()
+
     except DoesNotExist:
-        logger.warning(
-            "Anonymous user missing, about to create " '(username "anonymous")'
-        )
-        Principal(
-            username="anonymous", roles=[Role.objects.get(name="bg-anonymous")]
-        ).save()
+        if guest_login_enabled:
+            logger.info("Creating anonymous user.")
+            Principal(
+                username="anonymous", roles=[Role.objects.get(name="bg-anonymous")]
+            ).save()
 
 
 def _check_indexes(document_class):

@@ -41,6 +41,11 @@ def setup_database(config):
     # Yes, mongoengine uses 'db' in connect and 'name' in register_connection
     register_connection("default", name=config.db.name, **config.db.connection)
 
-    verify_db()
+    try:
+        guest_login_enabled = config.auth.guest_login_enabled
+    except KeyError:
+        guest_login_enabled = None
+
+    verify_db(guest_login_enabled)
 
     return True

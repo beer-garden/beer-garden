@@ -594,6 +594,7 @@ class Principal(Document, BrewtilsPrincipal):
     hash = StringField()
     roles = ListField(field=ReferenceField("Role", reverse_delete_rule=PULL))
     preferences = DictField()
+    metadata = DictField()
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
@@ -609,6 +610,16 @@ class RefreshToken(Document):
     payload = DictField(required=True)
 
     meta = {"indexes": [{"fields": ["expires"], "expireAfterSeconds": 0}]}
+
+    def get_principal(self):
+        principal_id = self.payload.get("sub")
+        if not principal_id:
+            return None
+
+        try:
+            return Principal.objects.get(id=principal_id)
+        except DoesNotExist:
+            return None
 
 
 class RequestTemplate(EmbeddedDocument, BrewtilsRequestTemplate):
