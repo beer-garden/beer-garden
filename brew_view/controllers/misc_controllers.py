@@ -8,7 +8,6 @@ from brew_view.base_handler import BaseHandler
 
 
 class ConfigHandler(BaseHandler):
-
     def get(self):
         """Subset of configuration options that the frontend needs"""
         configs = {
