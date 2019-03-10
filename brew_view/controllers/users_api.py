@@ -133,8 +133,13 @@ class UserAPI(BaseHandler):
             self.request.decoded_body, many=True, from_string=True
         )
 
+        # Most things only need a permission check if updating a different user
+        if user_id != str(self.current_user.id):
+            check_permission(self.current_user, [Permissions.USER_UPDATE])
+
         for op in operations:
             if op.path == "/roles":
+                # Updating roles always requires USER_UPDATE
                 check_permission(self.current_user, [Permissions.USER_UPDATE])
 
                 try:
@@ -154,8 +159,6 @@ class UserAPI(BaseHandler):
                     raise ModelValidationError("Role '%s' does not exist" % op.value)
 
             elif op.path == "/username":
-                if user_id != str(self.current_user.id):
-                    check_permission(self.current_user, [Permissions.USER_UPDATE])
 
                 if op.operation == "update":
                     principal.username = op.value
@@ -189,17 +192,11 @@ class UserAPI(BaseHandler):
                     ):
                         raise RequestForbidden("Invalid password")
 
-                else:
-                    check_permission(self.current_user, [Permissions.USER_UPDATE])
-
                 principal.hash = custom_app_context.hash(new_password)
                 if "changed" in principal.metadata:
                     principal.metadata["changed"] = True
 
             elif op.path == "/preferences/theme":
-                if user_id != str(self.current_user.id):
-                    check_permission(self.current_user, [Permissions.USER_UPDATE])
-
                 if op.operation == "set":
                     principal.preferences["theme"] = op.value
                 else:
@@ -208,7 +205,6 @@ class UserAPI(BaseHandler):
                     )
 
             else:
-                check_permission(self.current_user, [Permissions.USER_UPDATE])
                 raise ModelValidationError("Unsupported path '%s'" % op.path)
 
         principal.save()
