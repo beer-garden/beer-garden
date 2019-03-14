@@ -366,7 +366,9 @@ class RequestListAPI(BaseHandler):
 
                 request_model.reload()
             except TimeoutError:
-                raise TimeoutExceededError()
+                raise TimeoutExceededError(
+                    "Timeout exceeded for request %s" % request_id
+                )
             finally:
                 brew_view.request_map.pop(request_id, None)
 
