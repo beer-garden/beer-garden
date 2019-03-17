@@ -24,7 +24,7 @@ application:
   name: Beer Garden
 auth:
   enabled: true
-  guest_login_enabled: false
+  guest_login_enabled: true
   token:
     algorithm: HS256
     lifetime: 1200
