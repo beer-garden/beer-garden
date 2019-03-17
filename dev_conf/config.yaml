@@ -43,8 +43,8 @@ log:
 plugin:
   local:
     auth:
-      password: null
-      username: null
+      password: password
+      username: admin
     directory: ./plugins
     log_directory: null
     timeout:
@@ -61,8 +61,8 @@ web:
   ca_cert: null
   ca_verify: true
   host: localhost
-  password: null
+  password: password
   port: 2337
   ssl_enabled: false
   url_prefix: null
-  username: null
+  username: admin
