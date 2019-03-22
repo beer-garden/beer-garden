@@ -182,6 +182,7 @@ class BartenderApp(StoppableThread):
                     "additional_query": (
                         Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
                     )
+                    & Q(has_parent=False)
                     & Q(command_type="INFO"),
                 }
             )
@@ -195,6 +196,7 @@ class BartenderApp(StoppableThread):
                     "additional_query": (
                         Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
                     )
+                    & Q(has_parent=False)
                     & Q(command_type="ACTION"),
                 }
             )
