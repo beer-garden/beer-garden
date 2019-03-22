@@ -118,7 +118,7 @@ class BartenderAppTest(unittest.TestCase):
 
         prune_tasks, run_every = BartenderApp._setup_pruning_tasks()
         self.assertEqual(3, len(prune_tasks))
-        self.assertEqual(2, run_every)
+        self.assertEqual(2.5, run_every)
 
         info_task = prune_tasks[0]
         action_task = prune_tasks[1]
@@ -152,7 +152,7 @@ class BartenderAppTest(unittest.TestCase):
 
         prune_tasks, run_every = BartenderApp._setup_pruning_tasks()
         self.assertEqual(2, len(prune_tasks))
-        self.assertEqual(2, run_every)
+        self.assertEqual(2.5, run_every)
 
         info_task = prune_tasks[0]
         event_task = prune_tasks[1]

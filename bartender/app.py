@@ -218,7 +218,7 @@ class BartenderApp(StoppableThread):
             )
             if x > 0
         ]
-        run_every = min(real_ttls) // 2 if real_ttls else None
+        run_every = min(real_ttls) / 2 if real_ttls else None
 
         return prune_tasks, run_every
 
