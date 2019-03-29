@@ -2,6 +2,7 @@ import {formatDate} from '../services/utility_service.js';
 
 requestIndexController.$inject = [
   '$scope',
+  '$compile',
   'DTOptionsBuilder',
   'DTColumnBuilder',
   'RequestService',
@@ -16,6 +17,7 @@ requestIndexController.$inject = [
  */
 export default function requestIndexController(
     $scope,
+    $compile,
     DTOptionsBuilder,
     DTColumnBuilder,
     RequestService) {
@@ -30,7 +32,10 @@ export default function requestIndexController(
       data.columns.push({'data': 'id'});
 
       // Take include_children value from the checkbox
-      data.include_children = $('#childCheck').is(":checked");
+      if ($('#childCheck').is(":checked")) {
+        data.include_children = true;
+        data.columns.push({'data': 'parent'});
+      }
 
       RequestService.getRequests(data).then(
         (response) => {
@@ -91,14 +96,31 @@ export default function requestIndexController(
     .withOption('order', [4, 'desc'])
     .withOption('serverSide', true)
     .withPaginationType('full_numbers')
-    .withBootstrap();
+    .withBootstrap()
+    .withOption('createdRow', function(row, data, dataIndex) {
+      $compile(angular.element(row).contents())($scope);
+    });
 
   $scope.dtColumns = [
     DTColumnBuilder
       .newColumn('command')
       .withTitle('Command Name')
       .renderWith(function(data, type, full) {
-        return '<a href="#!/requests/' + full.id + '">' + data + '</a>';
+        let display = '';
+
+        if (full.parent) {
+          display +=
+            '<span style="margin-right: 2px;"' +
+              'uib-popover="' + full.parent.command + '"' +
+              'popover-trigger="\'mouseenter\'"' +
+              'popover-title="parent request"' +
+              'popover-animation="true"' +
+              'popover-placement="left">' +
+                '<a href="#!/requests/' + full.parent.id + '" class="fa fa-level-up fa-fw"></a>' +
+            '</span>';
+        }
+
+        return display + '<a href="#!/requests/' + full.id + '">' + data + '</a>';
       }),
     DTColumnBuilder
       .newColumn('system')

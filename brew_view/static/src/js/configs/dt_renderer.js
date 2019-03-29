@@ -12,20 +12,18 @@ export default function runDTRenderer(DTRendererService) {
     postRender: function(options, result) {
 
       let childContainer = $('<span>')
+        .css('margin-right', '20px')
         .append(
           $('<input>')
             .attr('id', 'childCheck')
             .attr('type', 'checkbox')
-            .css('margin', '0')
+            .css('margin-top', '-4px')
             .change(() => { $('#requestIndexTable').dataTable().fnUpdate(); })
         )
         .append(
           $('<label>')
             .attr('for', 'childCheck')
-            .css('vertical-align', 'text-top')
-            .css('padding-right', '15px')
             .css('padding-left', '4px')
-            .css('margin', '0')
             .text('Include Children')
         );
       $('.dataTables_filter').prepend(childContainer);
@@ -33,10 +31,11 @@ export default function runDTRenderer(DTRendererService) {
       // Insert a spinner thingy
       let spinner = $('<span>')
         .attr('id', 'dtSpinner')
-        .addClass('fa fa-spinner fa-pulse')
-        .css('margin-right', '5px')
+        .addClass('fa fa-spinner fa-pulse fa-lg')
+        .css('margin-right', '8px')
+        .css('margin-left', '8px')
         .css('visibility', 'hidden');
-      $('.dataTables_filter').prepend(spinner);
+      $('.dataTables_length').append(spinner);
 
       // Register callback to show / hide spinner thingy
       let processingDelay = null;
