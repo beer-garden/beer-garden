@@ -384,35 +384,69 @@ class TestRequestListAPI(object):
         return RequestListAPI(MagicMock(), MagicMock())
 
     @pytest.mark.parametrize(
-        "order_column,filter_value,index",
+        "include_children, order_column,filter_value,index",
         [
-            # Neither
-            (None, None, "parent_index"),
+            # # Parent requests only
+            # Nothing
+            (False, None, None, "parent_index"),
             # Only sorting
-            (0, None, "parent_command_index"),
-            (1, None, "parent_system_index"),
-            (2, None, "parent_instance_name_index"),
-            (3, None, "parent_status_index"),
-            (4, None, "parent_created_at_index"),
+            (False, 0, None, "parent_command_index"),
+            (False, 1, None, "parent_system_index"),
+            (False, 2, None, "parent_instance_name_index"),
+            (False, 3, None, "parent_status_index"),
+            (False, 4, None, "parent_created_at_index"),
             # Only filtering
-            (None, {"command": "say"}, "parent_command_index"),
-            (None, {"system": "test"}, "parent_system_index"),
-            (None, {"instance_name": "say"}, "parent_instance_name_index"),
-            (None, {"status": "SUCCESS"}, "parent_status_index"),
-            (None, {"created_at": "start~stop"}, "parent_created_at_index"),
+            (False, None, {"command": "say"}, "parent_command_index"),
+            (False, None, {"system": "test"}, "parent_system_index"),
+            (False, None, {"instance_name": "say"}, "parent_instance_name_index"),
+            (False, None, {"status": "SUCCESS"}, "parent_status_index"),
+            (False, None, {"created_at": "start~stop"}, "parent_created_at_index"),
             # Both, but only applicable for created_at sorting
-            (4, {"command": "say"}, "parent_created_at_command_index"),
-            (4, {"system": "test"}, "parent_created_at_system_index"),
-            (4, {"instance_name": "say"}, "parent_created_at_instance_name_index"),
-            (4, {"status": "SUCCESS"}, "parent_created_at_status_index"),
-            (4, {"created_at": "start~stop"}, "parent_created_at_index"),
+            (False, 4, {"command": "say"}, "parent_created_at_command_index"),
+            (False, 4, {"system": "test"}, "parent_created_at_system_index"),
+            (False, 4, {"instance_name": "s"}, "parent_created_at_instance_name_index"),
+            (False, 4, {"status": "SUCCESS"}, "parent_created_at_status_index"),
+            (False, 4, {"created_at": "start~stop"}, "parent_created_at_index"),
+            # # All requests
+            # Nothing
+            (True, None, None, -1),  # Let mongo deal with this one
+            # Only sorting
+            (True, 0, None, "command_index"),
+            (True, 1, None, "system_index"),
+            (True, 2, None, "instance_name_index"),
+            (True, 3, None, "status_index"),
+            (True, 4, None, "created_at_index"),
+            # Only filtering
+            (True, None, {"command": "say"}, "command_index"),
+            (True, None, {"system": "test"}, "system_index"),
+            (True, None, {"instance_name": "say"}, "instance_name_index"),
+            (True, None, {"status": "SUCCESS"}, "status_index"),
+            (True, None, {"created_at": "start~stop"}, "created_at_index"),
+            # Both, but only applicable for created_at sorting
+            (True, 4, {"command": "say"}, "created_at_command_index"),
+            (True, 4, {"system": "test"}, "created_at_system_index"),
+            (True, 4, {"instance_name": "s"}, "created_at_instance_name_index"),
+            (True, 4, {"status": "SUCCESS"}, "created_at_status_index"),
+            (True, 4, {"created_at": "start~stop"}, "created_at_index"),
         ],
     )
     def test_order_index_hints(
-        self, monkeypatch, handler, columns, order, order_column, filter_value, index
+        self,
+        monkeypatch,
+        handler,
+        columns,
+        order,
+        include_children,
+        order_column,
+        filter_value,
+        index,
     ):
 
-        args = {"columns": columns(filter_value), "order": order(order_column)}
+        args = {
+            "columns": columns(filter_value),
+            "order": order(order_column),
+            "include_children": [str(include_children)],
+        }
 
         if order_column is None:
             del args["order"]
