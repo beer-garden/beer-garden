@@ -29,6 +29,9 @@ export default function requestIndexController(
       // Need to also request ID for the href
       data.columns.push({'data': 'id'});
 
+      // Take include_children value from the checkbox
+      data.include_children = $('#childCheck').is(":checked");
+
       RequestService.getRequests(data).then(
         (response) => {
           $scope.response = response;
