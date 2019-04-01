@@ -28,12 +28,23 @@ export default function runDTRenderer(DTRendererService) {
         );
       $('.dataTables_filter').prepend(childContainer);
 
-      // Insert a spinner thingy
+      let refreshButton = $('<button>')
+        .attr('type', 'button')
+        .addClass('btn')
+        .addClass('btn-default')
+        .addClass('fa')
+        .addClass('fa-refresh')
+        .css('margin-right', '20px')
+        .css('margin-bottom', '5px')
+        .text(' Refresh')
+        .click(() => { $('#requestIndexTable').dataTable().fnUpdate(); });
+      $('.dataTables_length').prepend(refreshButton);
+
       let spinner = $('<span>')
         .attr('id', 'dtSpinner')
         .addClass('fa fa-spinner fa-pulse fa-lg')
-        .css('margin-right', '8px')
-        .css('margin-left', '8px')
+        .css('margin-right', '20px')
+        .css('margin-left', '20px')
         .css('visibility', 'hidden');
       $('.dataTables_length').append(spinner);
 
