@@ -294,17 +294,18 @@ class Request(Document, BrewtilsRequest):
         "auto_create_index": False,  # We need to manage this ourselves
         "index_background": True,
         "indexes": [
-            # These are used for ... something
+            # These are used for sorting all requests
             {"name": "command_index", "fields": ["command"]},
             {"name": "command_type_index", "fields": ["command_type"]},
-            {"name": "system_index", "fields": ["system", "instance_name"]},
+            {"name": "system_index", "fields": ["system"]},
+            {"name": "instance_name_index", "fields": ["instance_name"]},
             {"name": "status_index", "fields": ["status"]},
             {"name": "created_at_index", "fields": ["created_at"]},
             {"name": "updated_at_index", "fields": ["updated_at"]},
             {"name": "comment_index", "fields": ["comment"]},
             {"name": "parent_ref_index", "fields": ["parent"]},
             {"name": "parent_index", "fields": ["has_parent"]},
-            # These are for sorting on the request index page
+            # These are for sorting parent requests
             {"name": "parent_command_index", "fields": ["has_parent", "command"]},
             {"name": "parent_system_index", "fields": ["has_parent", "system"]},
             {
@@ -314,6 +315,15 @@ class Request(Document, BrewtilsRequest):
             {"name": "parent_status_index", "fields": ["has_parent", "status"]},
             {"name": "parent_created_at_index", "fields": ["has_parent", "created_at"]},
             {"name": "parent_comment_index", "fields": ["has_parent", "comment"]},
+            # These are used for filtering all requests while sorting on created time
+            {"name": "created_at_command_index", "fields": ["-created_at", "command"]},
+            {"name": "created_at_system_index", "fields": ["-created_at", "system"]},
+            {
+                "name": "created_at_instance_name_index",
+                "fields": ["-created_at", "instance_name"],
+            },
+            {"name": "created_at_status_index", "fields": ["-created_at", "status"]},
+            # These are used for filtering parent while sorting on created time
             {
                 "name": "parent_created_at_command_index",
                 "fields": ["has_parent", "-created_at", "command"],
