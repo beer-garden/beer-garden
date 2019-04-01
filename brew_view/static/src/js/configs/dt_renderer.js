@@ -10,14 +10,32 @@ runDTRenderer.$inject = [
 export default function runDTRenderer(DTRendererService) {
   DTRendererService.registerPlugin({
     postRender: function(options, result) {
-      // Insert a spinner thingy next to the search box
+
+      let childContainer = $('<span>')
+        .css('margin-right', '20px')
+        .append(
+          $('<input>')
+            .attr('id', 'childCheck')
+            .attr('type', 'checkbox')
+            .css('margin-top', '-4px')
+            .change(() => { $('#requestIndexTable').dataTable().fnUpdate(); })
+        )
+        .append(
+          $('<label>')
+            .attr('for', 'childCheck')
+            .css('padding-left', '4px')
+            .text('Include Children')
+        );
+      $('.dataTables_filter').prepend(childContainer);
+
+      // Insert a spinner thingy
       let spinner = $('<span>')
         .attr('id', 'dtSpinner')
-        .addClass('fa fa-spinner fa-pulse')
-        .css('margin-right', '5px')
+        .addClass('fa fa-spinner fa-pulse fa-lg')
+        .css('margin-right', '8px')
+        .css('margin-left', '8px')
         .css('visibility', 'hidden');
-
-      $('.dataTables_filter label').prepend(spinner);
+      $('.dataTables_length').append(spinner);
 
       // Register callback to show / hide spinner thingy
       let processingDelay = null;

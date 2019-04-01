@@ -385,6 +385,7 @@ class RequestListAPI(BaseHandler):
         requested_fields = []
         order_by = None
         overall_search = None
+        include_children = False
         hint = []
 
         query_set = Request.objects
@@ -459,6 +460,7 @@ class RequestListAPI(BaseHandler):
             != "true"
         ):
             search_params.append(Q(has_parent=False))
+            include_children = True
 
         # Now we can construct the actual query parameters
         query_params = reduce(lambda x, y: x & y, search_params, Q())
@@ -481,7 +483,11 @@ class RequestListAPI(BaseHandler):
         if overall_search:
             query_set = query_set.search_text(overall_search)
         else:
-            real_hint = ["parent"]
+            real_hint = []
+
+            if include_children:
+                real_hint.append("parent")
+
             if "created_at" in hint:
                 real_hint.append("created_at")
             for index in ["command", "system", "instance_name", "status"]:
