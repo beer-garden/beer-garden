@@ -51,8 +51,13 @@ export default function runDTRenderer(DTRendererService) {
       // Register callback to show / hide spinner thingy
       let processingDelay = null;
       $('.dataTable').on('processing.dt', function(e, settings, processing) {
-        if (!processing) {
+        // Regardless of whether this event is the start or end of processing
+        // we want to clear the current timeout if one exists
+        if (processingDelay) {
           clearTimeout(processingDelay);
+        }
+
+        if (!processing) {
           $('#dtSpinner').css('visibility', 'hidden');
         } else {
           processingDelay = setTimeout(function() {
