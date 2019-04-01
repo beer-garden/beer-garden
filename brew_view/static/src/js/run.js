@@ -16,6 +16,7 @@ appRun.$inject = [
   'UserService',
   'TokenService',
   'RoleService',
+  'EventService',
 ];
 
 /**
@@ -30,7 +31,7 @@ appRun.$inject = [
  * @param  {UtilityService} UtilityService Service for configuration/icons.
  * @param  {SystemService} SystemService   Service for System information.
  * @param  {UserService} UserService       Service for User information.
- * @param  {TokenService} TokenService     Service for User information.
+ * @param  {TokenService} TokenService     Service for Token information.
  * @param  {RoleService} RoleService       Service for Role information.
  */
 export default function appRun(
@@ -45,7 +46,8 @@ export default function appRun(
     SystemService,
     UserService,
     TokenService,
-    RoleService) {
+    RoleService,
+    EventService) {
   $rootScope.$state = $state;
   $rootScope.$stateParams = $stateParams;
 
@@ -148,6 +150,8 @@ export default function appRun(
         $rootScope.doLogout();
       }
     );
+
+    EventService.connect();
   };
 
   $rootScope.hasPermission = function(user, permissions) {

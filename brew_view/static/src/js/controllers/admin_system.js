@@ -6,12 +6,12 @@ adminSystemController.$inject = [
   '$rootScope',
   '$interval',
   '$http',
-  '$websocket',
   'localStorageService',
   'SystemService',
   'InstanceService',
   'UtilityService',
   'AdminService',
+  'EventService',
 ];
 
 /**
@@ -20,24 +20,24 @@ adminSystemController.$inject = [
  * @param  {$rootScope} $rootScope  Angular's $rootScope object.
  * @param  {$interval} $interval    Angular's $interval object.
  * @param  {$http} $http            Angular's $http object.
- * @param  {$websocket} $websocket  Angular's $websocket object.
  * @param  {localStorageService} localStorageService Storage service
  * @param  {Object} SystemService   Beer-Garden's system service object.
  * @param  {Object} InstanceService Beer-Garden's instance service object.
  * @param  {Object} UtilityService  Beer-Garden's utility service object.
  * @param  {Object} AdminService    Beer-Garden's admin service object.
+ * @param  {Object} EventService    Beer-Garden's event service object.
  */
 export default function adminSystemController(
     $scope,
     $rootScope,
     $interval,
     $http,
-    $websocket,
     localStorageService,
     SystemService,
     InstanceService,
     UtilityService,
-    AdminService) {
+    AdminService,
+    EventService) {
   $scope.setWindowTitle('systems');
 
   $scope.util = UtilityService;
@@ -112,56 +112,6 @@ export default function adminSystemController(
     $scope.data = [];
   };
 
-  let socketConnection = undefined;
-
-  /**
-   * websocketConnect - Open a websocket connection.
-   */
-  function websocketConnect() {
-    if (window.WebSocket && !socketConnection) {
-      let proto = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-      let eventUrl = proto + window.location.host + '/api/v1/socket/events';
-
-      let token = localStorageService.get('token');
-      if (token) {
-        eventUrl += '?token=' + token;
-      }
-
-      socketConnection = $websocket(eventUrl);
-
-      socketConnection.onClose((message) => {
-        console.log('Websocket closed: ' + message.reason);
-      });
-      socketConnection.onError((message) => {
-        console.log('Websocket error: ' + message.reason);
-      });
-      socketConnection.onMessage((message) => {
-        let event = JSON.parse(message.data);
-
-        switch (event.name) {
-          case 'INSTANCE_INITIALIZED':
-            updateInstanceStatus(event.payload.id, 'RUNNING');
-            break;
-          case 'INSTANCE_STOPPED':
-            updateInstanceStatus(event.payload.id, 'STOPPED');
-            break;
-          case 'SYSTEM_REMOVED':
-            removeSystem(event.payload.id);
-            break;
-        }
-      });
-
-      $scope.$on('destroy', websocketClose);
-    }
-  }
-
-  function websocketClose() {
-    if (!_.isUndefined(socketConnection)) {
-      socketConnection.close();
-      socketConnection = undefined;
-    }
-  };
-
   /**
    * updateInstanceStatus - Change the status of an instance
    * @param {string} id  The instance ID
@@ -215,11 +165,15 @@ export default function adminSystemController(
   let systemsUpdate = $interval(function() {
     loadSystems();
   }, 5000);
+
+  // Need to clean up the interval and callback when done
   $scope.$on('$destroy', function() {
     if (angular.isDefined(systemsUpdate)) {
       $interval.cancel(systemsUpdate);
       systemsUpdate = undefined;
     }
+
+    EventService.clearCallback();
   });
 
   let loadAll = function() {
@@ -227,11 +181,24 @@ export default function adminSystemController(
     $scope.data = [];
     $scope.alerts = [];
 
-    websocketClose();
-
     loadSystems();
-    websocketConnect();
   };
+
+  EventService.setCallback((message) => {
+    let event = JSON.parse(message.data);
+
+    switch (event.name) {
+      case 'INSTANCE_INITIALIZED':
+        updateInstanceStatus(event.payload.id, 'RUNNING');
+        break;
+      case 'INSTANCE_STOPPED':
+        updateInstanceStatus(event.payload.id, 'STOPPED');
+        break;
+      case 'SYSTEM_REMOVED':
+        removeSystem(event.payload.id);
+        break;
+    }
+  });
 
   $scope.$on('userChange', function() {
     loadAll();
