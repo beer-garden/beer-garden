@@ -1,3 +1,5 @@
+from __future__ import division
+
 import logging
 from datetime import timedelta
 from functools import partial
