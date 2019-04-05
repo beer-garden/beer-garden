@@ -156,7 +156,8 @@ export default function requestIndexController(
 
   $scope.instanceCreated = function(_instance) {
     $scope.dtInstance = _instance;
-    $('#childContainer').css('visibility', 'visible');
+    $('#childContainer').css('display', 'inline');
+    $('#refreshButton').css('display', 'inline-block');
   };
 
   $scope.$on('userChange', function() {

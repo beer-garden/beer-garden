@@ -14,7 +14,7 @@ export default function runDTRenderer(DTRendererService) {
       let childContainer = $('<span>')
         .attr('id', 'childContainer')
         .css('margin-right', '20px')
-        .css('visibility', 'hidden')
+        .css('display', 'none')
         .append(
           $('<input>')
             .attr('id', 'childCheck')
@@ -31,6 +31,7 @@ export default function runDTRenderer(DTRendererService) {
       $('.dataTables_filter').prepend(childContainer);
 
       let refreshButton = $('<button>')
+        .attr('id', 'refreshButton')
         .attr('type', 'button')
         .addClass('btn')
         .addClass('btn-default')
@@ -38,6 +39,7 @@ export default function runDTRenderer(DTRendererService) {
         .addClass('fa-refresh')
         .css('margin-right', '20px')
         .css('margin-bottom', '5px')
+        .css('display', 'none')
         .text(' Refresh')
         .click(() => { $('#requestIndexTable').dataTable().fnUpdate(); });
       $('.dataTables_length').prepend(refreshButton);
