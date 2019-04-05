@@ -156,6 +156,7 @@ export default function requestIndexController(
 
   $scope.instanceCreated = function(_instance) {
     $scope.dtInstance = _instance;
+    $('#childContainer').css('visibility', 'visible');
   };
 
   $scope.$on('userChange', function() {

@@ -12,7 +12,9 @@ export default function runDTRenderer(DTRendererService) {
     postRender: function(options, result) {
 
       let childContainer = $('<span>')
+        .attr('id', 'childContainer')
         .css('margin-right', '20px')
+        .css('visibility', 'hidden')
         .append(
           $('<input>')
             .attr('id', 'childCheck')
