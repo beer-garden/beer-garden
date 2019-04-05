@@ -50,6 +50,9 @@ export default function requestIndexController(
             recordsFiltered: response.headers('recordsFiltered'),
             recordsTotal: response.headers('recordsTotal'),
           });
+
+          // Hide the 'new data' notification
+          $('#newData').css('visibility', 'hidden');
         },
         (response) => {
           $scope.response = response;
@@ -100,6 +103,7 @@ export default function requestIndexController(
     .withOption('serverSide', true)
     .withOption('refreshButton', true)
     .withOption('childContainer', true)
+    .withOption('newData', true)
     .withPaginationType('full_numbers')
     .withBootstrap()
     .withOption('createdRow', function(row, data, dataIndex) {
@@ -171,7 +175,7 @@ export default function requestIndexController(
       case 'REQUEST_STARTED':
       case 'REQUEST_COMPLETED':
         if ($scope.dtInstance) {
-          $scope.dtInstance.reloadData(() => {}, false);
+          $('#newData').css('visibility', 'visible');
         }
         break;
     }
