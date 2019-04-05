@@ -11,38 +11,40 @@ export default function runDTRenderer(DTRendererService) {
   DTRendererService.registerPlugin({
     postRender: function(options, result) {
 
-      let childContainer = $('<span>')
-        .attr('id', 'childContainer')
-        .css('margin-right', '20px')
-        .css('display', 'none')
-        .append(
-          $('<input>')
-            .attr('id', 'childCheck')
-            .attr('type', 'checkbox')
-            .css('margin-top', '-4px')
-            .change(() => { $('#requestIndexTable').dataTable().fnUpdate(); })
-        )
-        .append(
-          $('<label>')
-            .attr('for', 'childCheck')
-            .css('padding-left', '4px')
-            .text('Include Children')
-        );
-      $('.dataTables_filter').prepend(childContainer);
+      if (options.childContainer) {
+        let childContainer = $('<span>')
+          .attr('id', 'childContainer')
+          .css('margin-right', '20px')
+          .append(
+            $('<input>')
+              .attr('id', 'childCheck')
+              .attr('type', 'checkbox')
+              .css('margin-top', '-4px')
+              .change(() => { $('#requestIndexTable').dataTable().fnUpdate(); })
+          )
+          .append(
+            $('<label>')
+              .attr('for', 'childCheck')
+              .css('padding-left', '4px')
+              .text('Include Children')
+          );
+        $('.dataTables_filter').prepend(childContainer);
+      }
 
-      let refreshButton = $('<button>')
-        .attr('id', 'refreshButton')
-        .attr('type', 'button')
-        .addClass('btn')
-        .addClass('btn-default')
-        .addClass('fa')
-        .addClass('fa-refresh')
-        .css('margin-right', '20px')
-        .css('margin-bottom', '5px')
-        .css('display', 'none')
-        .text(' Refresh')
-        .click(() => { $('#requestIndexTable').dataTable().fnUpdate(); });
-      $('.dataTables_length').prepend(refreshButton);
+      if (options.refreshButton) {
+        let refreshButton = $('<button>')
+          .attr('id', 'refreshButton')
+          .attr('type', 'button')
+          .addClass('btn')
+          .addClass('btn-default')
+          .addClass('fa')
+          .addClass('fa-refresh')
+          .css('margin-right', '20px')
+          .css('margin-bottom', '5px')
+          .text(' Refresh')
+          .click(() => { $('#requestIndexTable').dataTable().fnUpdate(); });
+        $('.dataTables_length').prepend(refreshButton);
+      }
 
       let spinner = $('<span>')
         .attr('id', 'dtSpinner')

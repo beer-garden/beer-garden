@@ -95,6 +95,8 @@ export default function requestIndexController(
     .withDataProp('data')
     .withOption('order', [4, 'desc'])
     .withOption('serverSide', true)
+    .withOption('refreshButton', true)
+    .withOption('childContainer', true)
     .withPaginationType('full_numbers')
     .withBootstrap()
     .withOption('createdRow', function(row, data, dataIndex) {
@@ -156,8 +158,6 @@ export default function requestIndexController(
 
   $scope.instanceCreated = function(_instance) {
     $scope.dtInstance = _instance;
-    $('#childContainer').css('display', 'inline');
-    $('#refreshButton').css('display', 'inline-block');
   };
 
   $scope.$on('userChange', function() {
