@@ -282,6 +282,8 @@ class RequestListAPI(BaseHandler):
 
         if request_model.parent:
             request_model.parent = Request.objects.get(id=str(request_model.parent.id))
+            if request_model.parent.status in Request.COMPLETED_STATUSES:
+                raise ModelValidationError("Parent request has already completed")
             request_model.has_parent = True
         else:
             request_model.has_parent = False
