@@ -24,6 +24,7 @@ class ConfigHandler(BaseHandler):
             "url_prefix": brew_view.config.web.url_prefix,
             "metrics_url": brew_view.config.metrics.url,
             "auth_enabled": brew_view.config.auth.enabled,
+            "guest_login_enabled": brew_view.config.auth.guest_login_enabled,
         }
         self.write(configs)
 
@@ -31,14 +32,14 @@ class ConfigHandler(BaseHandler):
 class VersionHandler(BaseHandler):
     @coroutine
     def get(self):
-        with thrift_context() as client:
-            try:
+        try:
+            with thrift_context() as client:
                 bartender_version = yield client.getVersion()
-            except Exception as ex:
-                logger = logging.getLogger(__name__)
-                logger.error("Could not get Bartender Version.")
-                logger.exception(ex)
-                bartender_version = "unknown"
+        except Exception as ex:
+            logger = logging.getLogger(__name__)
+            logger.error("Could not get Bartender Version.")
+            logger.exception(ex)
+            bartender_version = "unknown"
 
         self.write(
             {

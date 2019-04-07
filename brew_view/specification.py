@@ -186,6 +186,12 @@ SPECIFICATION = {
                 "default": False,
                 "description": "Use role-based authentication / authorization",
             },
+            "guest_login_enabled": {
+                "type": "bool",
+                "default": True,
+                "description": "Only applicable if auth is enabled. If set to "
+                "true, guests can login without username/passwords.",
+            },
             "token": {
                 "type": "dict",
                 "items": {

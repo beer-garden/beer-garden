@@ -337,7 +337,9 @@ def _setup_tornado_app():
     _load_swagger(published_url_specs, title=config.application.name)
 
     return Application(
-        published_url_specs + unpublished_url_specs, debug=config.debug_mode
+        published_url_specs + unpublished_url_specs,
+        debug=config.debug_mode,
+        cookie_secret=config.auth.token.secret,
     )
 
 

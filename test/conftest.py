@@ -4,6 +4,7 @@ from mongoengine import connect
 
 import brew_view
 import brewtils.test
+from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import anonymous_principal
 from test.utils import brew2mongo
 
@@ -76,3 +77,17 @@ def mongo_system(bg_system):
 @pytest.fixture
 def mongo_job(bg_job):
     return brew2mongo(bg_job)
+
+
+@pytest.fixture
+def mongo_principal(principal_dict):
+    principal = principal_dict.copy()
+    del principal['permissions']
+    return MongoParser().parse_principal(principal, False)
+
+
+@pytest.fixture
+def mongo_role(role_dict):
+    role = role_dict.copy()
+    role['roles'] = []
+    return MongoParser().parse_role(role, False)
