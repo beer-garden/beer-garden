@@ -19,7 +19,7 @@ def verify_db(guest_login_enabled):
     _ensure_users(guest_login_enabled)
 
 
-def _update_request_model():
+def _update_request_has_parent_model():
     from bg_utils.mongo.models import Request
 
     raw_collection = Request._get_collection()
@@ -284,7 +284,7 @@ def _check_indexes(document_class):
         # We need to create the `has_parent` field
         if document_class == Request:
             logger.warning("Request definition is out of date, updating")
-            _update_request_model()
+            _update_request_has_parent_model()
 
         try:
             document_class.ensure_indexes()
