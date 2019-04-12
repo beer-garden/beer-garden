@@ -1,3 +1,5 @@
+from __future__ import division
+
 import logging
 from datetime import timedelta
 from functools import partial
@@ -209,16 +211,8 @@ class BartenderApp(StoppableThread):
             )
 
         # Look at the various TTLs to determine how often to run the MongoPruner
-        real_ttls = [
-            x
-            for x in (
-                bartender.config.db.ttl.info,
-                bartender.config.db.ttl.action,
-                bartender.config.db.ttl.event,
-            )
-            if x > 0
-        ]
-        run_every = min(real_ttls) // 2 if real_ttls else None
+        real_ttls = [x for x in bartender.config.db.ttl.values() if x > 0]
+        run_every = min(real_ttls) / 2 if real_ttls else None
 
         return prune_tasks, run_every
 
