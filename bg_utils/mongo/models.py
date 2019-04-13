@@ -18,7 +18,6 @@ from mongoengine import (
     DictField,
     Document,
     DynamicField,
-    GenericReferenceField,
     EmbeddedDocument,
     EmbeddedDocumentField,
     IntField,
@@ -278,7 +277,7 @@ class Request(Document, BrewtilsRequest):
     for field_name, field_info in TEMPLATE_FIELDS.items():
         locals()[field_name] = field_info["field"](**field_info["kwargs"])
 
-    parent = GenericReferenceField(required=False)
+    parent = ReferenceField("Request", dbref=True, required=False)
     children = DummyField(required=False)
     output = StringField()
     output_type = StringField(choices=BrewtilsCommand.OUTPUT_TYPES)

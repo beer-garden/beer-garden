@@ -12,11 +12,24 @@ def verify_db(guest_login_enabled):
     """Do everything necessary to ensure the database is in a 'good' state"""
     from bg_utils.mongo.models import Job, Request, Role, System, Principal
 
+    # Change GenericReferenceField to ReferenceField
+    _update_request_parent_model()
+
     for doc in (Job, Request, Role, System, Principal):
         _check_indexes(doc)
 
     _ensure_roles()
     _ensure_users(guest_login_enabled)
+
+
+def _update_request_parent_model():
+    from bg_utils.mongo.models import Request
+
+    raw_collection = Request._get_collection()
+    for request in raw_collection.find({"parent._ref": {"$type": "object"}}):
+        raw_collection.update_one(
+            {"_id": request["_id"]}, {"$set": {"parent": request["parent"]["_ref"]}}
+        )
 
 
 def _update_request_has_parent_model():
