@@ -99,7 +99,7 @@ def generate_config_file(spec, cli_args):
     filtered_config = {}
     for item in items:
         item.migrate_config(
-            config, filtered_config, always_update=True, update_defaults=True
+            config, filtered_config, always_update=False, update_defaults=False
         )
 
     yapconf.dump_data(
