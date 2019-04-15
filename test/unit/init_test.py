@@ -222,12 +222,31 @@ class TestBgUtils(object):
 
 
 class TestGenerateConfig(object):
-    def test_correctness(self, spec):
-        config = bg_utils._generate_config(spec, ["-c", "/path/to/config"])
+    def test_correctness(self, tmpdir, spec):
+        config_file = os.path.join(str(tmpdir), "config.yaml")
+        logging_config_file = os.path.join(str(tmpdir), "logging.json")
+
+        bg_utils.generate_config_file(spec, [
+            "-c", config_file, "-l", logging_config_file
+        ])
+
+        spec.add_source(label="config_file", source_type="yaml", filename=config_file)
+        config = spec.load_config("config_file")
+
+        # Defaults from spec
         assert config.log.file is None
-        assert config.log.config_file is None
         assert config.log.level == "INFO"
-        assert config.configuration.file == "/path/to/config"
+
+        # Value passed in
+        assert config.log.config_file == logging_config_file
+
+        # Ensure that bootstrap items were not written to file
+        assert config.configuration.file is None
+        assert config.configuration.type is None
+
+        with open(config_file) as f:
+            yaml_config = yaml.safe_load(f)
+        assert "configuration" not in yaml_config
 
     @pytest.mark.parametrize("file_type", ["json", "yaml"])
     def test_create_file(self, spec, tmpdir, file_type):
