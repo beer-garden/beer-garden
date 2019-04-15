@@ -48,7 +48,7 @@
         "logstash", "stdout"
       ],
       "formatters": {
-        "logstash": "%(ascitime)s - %(message)s"
+        "logstash": "%(asctime)s - %(message)s"
       }
     },
     "plugin2": {
