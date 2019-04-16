@@ -12,9 +12,6 @@ def verify_db(guest_login_enabled):
     """Do everything necessary to ensure the database is in a 'good' state"""
     from bg_utils.mongo.models import Job, Request, Role, System, Principal
 
-    # Change GenericReferenceField to ReferenceField
-    _update_request_parent_model()
-
     for doc in (Job, Request, Role, System, Principal):
         _check_indexes(doc)
 
@@ -22,7 +19,8 @@ def verify_db(guest_login_enabled):
     _ensure_users(guest_login_enabled)
 
 
-def _update_request_parent_model():
+def _update_request_parent_field_type():
+    """Change GenericReferenceField to ReferenceField"""
     from bg_utils.mongo.models import Request
 
     raw_collection = Request._get_collection()
@@ -293,11 +291,14 @@ def _check_indexes(document_class):
             )
             raise
 
-        # For bg-utils 2.3.3 -> 2.3.4 upgrade
-        # We need to create the `has_parent` field
         if document_class == Request:
             logger.warning("Request definition is out of date, updating")
+
+            # bg-utils 2.3.3 -> 2.3.4 create the `has_parent` field
             _update_request_has_parent_model()
+
+            # bg-utils 2.4.6 -> 2.4.7 change parent to ReferenceField
+            _update_request_parent_field_type()
 
         try:
             document_class.ensure_indexes()
