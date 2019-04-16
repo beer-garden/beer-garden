@@ -1,7 +1,7 @@
 import copy
-import datetime
 import logging
 
+import datetime
 import pytz
 import six
 
@@ -20,12 +20,13 @@ from mongoengine import (
     DynamicField,
     EmbeddedDocument,
     EmbeddedDocumentField,
+    GenericEmbeddedDocumentField,
     IntField,
     ListField,
     ReferenceField,
     StringField,
     PULL,
-    GenericEmbeddedDocumentField,
+    CASCADE,
 )
 from mongoengine.errors import DoesNotExist
 
@@ -277,7 +278,9 @@ class Request(Document, BrewtilsRequest):
     for field_name, field_info in TEMPLATE_FIELDS.items():
         locals()[field_name] = field_info["field"](**field_info["kwargs"])
 
-    parent = ReferenceField("Request", dbref=True, required=False)
+    parent = ReferenceField(
+        "Request", dbref=True, required=False, reverse_delete_rule=CASCADE
+    )
     children = DummyField(required=False)
     output = StringField()
     output_type = StringField(choices=BrewtilsCommand.OUTPUT_TYPES)
