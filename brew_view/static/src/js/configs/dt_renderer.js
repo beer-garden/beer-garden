@@ -55,12 +55,16 @@ export default function runDTRenderer(DTRendererService) {
           .attr('id', 'newData')
           .css('margin-left', '20px')
           .css('margin-bottom', '5px')
+          .css('visiblity', 'hidden')
           .append($('<span>')
             .addClass('glyphicon')
             .addClass('glyphicon-info-sign')
             .css('padding-right', '5px')
           )
-          .append($('<span>').text('Updates Detected'));
+          .append($('<span>')
+            .css('cursor', 'default')
+            .text('Updates Detected')
+          );
         $('.dataTables_length').append(newData);
       }
 
@@ -70,7 +74,7 @@ export default function runDTRenderer(DTRendererService) {
         .css('margin-right', '20px')
         .css('margin-left', '20px')
         .css('visibility', 'hidden');
-      $('.dataTables_length').append(spinner);
+      $('.dataTables_filter').prepend(spinner);
 
       // Register callback to show / hide spinner thingy
       let processingDelay = null;
@@ -83,9 +87,11 @@ export default function runDTRenderer(DTRendererService) {
 
         if (!processing) {
           $('#dtSpinner').css('visibility', 'hidden');
+          $('#refreshButton').prop('disabled', false);
         } else {
           processingDelay = setTimeout(function() {
             $('#dtSpinner').css('visibility', 'visible');
+            $('#refreshButton').prop('disabled', true);
           }, 500);
         }
       });

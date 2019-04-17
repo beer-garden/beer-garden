@@ -38,7 +38,6 @@ export default function eventService($websocket, TokenService) {
           console.log('Websocket error: ' + message.reason);
         });
         socketConnection.onMessage((message) => {
-          console.log(message);
           if (messageCallback) {
             messageCallback(message);
           }
