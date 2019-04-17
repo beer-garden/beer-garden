@@ -37,6 +37,7 @@ export default function runDTRenderer(DTRendererService) {
           .attr('type', 'button')
           .addClass('btn')
           .addClass('btn-default')
+          .addClass('btn-sm')
           .css('margin-left', '20px')
           .css('margin-bottom', '5px')
           .click(() => { $('.dataTable').dataTable().fnUpdate(); })
@@ -59,7 +60,7 @@ export default function runDTRenderer(DTRendererService) {
             .addClass('glyphicon-info-sign')
             .css('padding-right', '5px')
           )
-          .append($('<span>').text('Updated Info Detected'));
+          .append($('<span>').text('Updates Detected'));
         $('.dataTables_length').append(newData);
       }
 
