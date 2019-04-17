@@ -55,12 +55,16 @@ export default function runDTRenderer(DTRendererService) {
           .attr('id', 'newData')
           .css('margin-left', '20px')
           .css('margin-bottom', '5px')
+          .css('visiblity', 'hidden')
           .append($('<span>')
             .addClass('glyphicon')
             .addClass('glyphicon-info-sign')
             .css('padding-right', '5px')
           )
-          .append($('<span>').text('Updates Detected'));
+          .append($('<span>')
+            .css('cursor', 'default')
+            .text('Updates Detected')
+          );
         $('.dataTables_length').append(newData);
       }
 
