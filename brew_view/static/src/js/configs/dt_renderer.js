@@ -87,9 +87,11 @@ export default function runDTRenderer(DTRendererService) {
 
         if (!processing) {
           $('#dtSpinner').css('visibility', 'hidden');
+          $('#refreshButton').prop('disabled', false);
         } else {
           processingDelay = setTimeout(function() {
             $('#dtSpinner').css('visibility', 'visible');
+            $('#refreshButton').prop('disabled', true);
           }, 500);
         }
       });
