@@ -74,7 +74,7 @@ export default function runDTRenderer(DTRendererService) {
         .css('margin-right', '20px')
         .css('margin-left', '20px')
         .css('visibility', 'hidden');
-      $('.dataTables_length').append(spinner);
+      $('.dataTables_filter').prepend(spinner);
 
       // Register callback to show / hide spinner thingy
       let processingDelay = null;
