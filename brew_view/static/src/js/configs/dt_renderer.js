@@ -20,7 +20,7 @@ export default function runDTRenderer(DTRendererService) {
               .attr('id', 'childCheck')
               .attr('type', 'checkbox')
               .css('margin-top', '-4px')
-              .change(() => { $('#requestIndexTable').dataTable().fnUpdate(); })
+              .change(() => { $('.dataTable').dataTable().fnUpdate(); })
           )
           .append(
             $('<label>')
@@ -37,13 +37,31 @@ export default function runDTRenderer(DTRendererService) {
           .attr('type', 'button')
           .addClass('btn')
           .addClass('btn-default')
-          .addClass('fa')
-          .addClass('fa-refresh')
-          .css('margin-right', '20px')
+          .addClass('btn-sm')
+          .css('margin-left', '20px')
           .css('margin-bottom', '5px')
-          .text(' Refresh')
-          .click(() => { $('#requestIndexTable').dataTable().fnUpdate(); });
-        $('.dataTables_length').prepend(refreshButton);
+          .click(() => { $('.dataTable').dataTable().fnUpdate(); })
+          .append($('<span>')
+            .addClass('fa')
+            .addClass('fa-refresh')
+            .css('padding-right', '5px')
+          )
+          .append($('<span>').text('Refresh'));
+        $('.dataTables_length').append(refreshButton);
+      }
+
+      if (options.newData) {
+        let newData = $('<span>')
+          .attr('id', 'newData')
+          .css('margin-left', '20px')
+          .css('margin-bottom', '5px')
+          .append($('<span>')
+            .addClass('glyphicon')
+            .addClass('glyphicon-info-sign')
+            .css('padding-right', '5px')
+          )
+          .append($('<span>').text('Updates Detected'));
+        $('.dataTables_length').append(newData);
       }
 
       let spinner = $('<span>')

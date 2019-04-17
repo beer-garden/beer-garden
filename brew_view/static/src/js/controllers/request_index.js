@@ -6,6 +6,7 @@ requestIndexController.$inject = [
   'DTOptionsBuilder',
   'DTColumnBuilder',
   'RequestService',
+  'EventService',
 ];
 
 /**
@@ -14,13 +15,15 @@ requestIndexController.$inject = [
  * @param  {Object} DTOptionsBuilder  Data-tables' options builder object.
  * @param  {Object} DTColumnBuilder   Data-tables' column builder object.
  * @param  {Object} RequestService    Beer-Garden Request Service.
+ * @param  {Object} EventService      Beer-Garden Event Service.
  */
 export default function requestIndexController(
     $scope,
     $compile,
     DTOptionsBuilder,
     DTColumnBuilder,
-    RequestService) {
+    RequestService,
+    EventService) {
   $scope.setWindowTitle('requests');
 
   $scope.requests = {};
@@ -47,6 +50,9 @@ export default function requestIndexController(
             recordsFiltered: response.headers('recordsFiltered'),
             recordsTotal: response.headers('recordsTotal'),
           });
+
+          // Hide the 'new data' notification
+          $('#newData').css('visibility', 'hidden');
         },
         (response) => {
           $scope.response = response;
@@ -97,6 +103,7 @@ export default function requestIndexController(
     .withOption('serverSide', true)
     .withOption('refreshButton', true)
     .withOption('childContainer', true)
+    .withOption('newData', true)
     .withPaginationType('full_numbers')
     .withBootstrap()
     .withOption('createdRow', function(row, data, dataIndex) {
@@ -159,6 +166,20 @@ export default function requestIndexController(
   $scope.instanceCreated = function(_instance) {
     $scope.dtInstance = _instance;
   };
+
+  EventService.setCallback((message) => {
+    let event = JSON.parse(message.data);
+
+    switch (event.name) {
+      case 'REQUEST_CREATED':
+      case 'REQUEST_STARTED':
+      case 'REQUEST_COMPLETED':
+        if ($scope.dtInstance) {
+          $('#newData').css('visibility', 'visible');
+        }
+        break;
+    }
+  });
 
   $scope.$on('userChange', function() {
     $scope.response = undefined;
