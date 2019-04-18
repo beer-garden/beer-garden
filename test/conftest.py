@@ -82,12 +82,27 @@ def mongo_job(bg_job):
 @pytest.fixture
 def mongo_principal(principal_dict):
     principal = principal_dict.copy()
-    del principal['permissions']
+    del principal["permissions"]
     return MongoParser().parse_principal(principal, False)
 
 
 @pytest.fixture
 def mongo_role(role_dict):
     role = role_dict.copy()
-    role['roles'] = []
+    role["roles"] = []
     return MongoParser().parse_role(role, False)
+
+
+@pytest.fixture
+def mongo_bg_request(bg_request):
+    return brew2mongo(bg_request)
+
+
+@pytest.fixture
+def mongo_parent_request(parent_request):
+    return brew2mongo(parent_request)
+
+
+@pytest.fixture
+def mongo_child_request(child_request):
+    return brew2mongo(child_request)
