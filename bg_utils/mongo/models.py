@@ -25,8 +25,8 @@ from mongoengine import (
     ListField,
     ReferenceField,
     StringField,
-    PULL,
     CASCADE,
+    PULL,
 )
 from mongoengine.errors import DoesNotExist
 

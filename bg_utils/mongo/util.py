@@ -292,13 +292,18 @@ def _check_indexes(document_class):
             raise
 
         if document_class == Request:
-            logger.warning("Request definition is out of date, updating")
+            logger.warning(
+                "Request definition is potentially out of date. About to check and "
+                "update if necessary - this could take several minutes."
+            )
 
             # bg-utils 2.3.3 -> 2.3.4 create the `has_parent` field
             _update_request_has_parent_model()
 
             # bg-utils 2.4.6 -> 2.4.7 change parent to ReferenceField
             _update_request_parent_field_type()
+
+            logger.warning("Request definition check/update complete.")
 
         try:
             document_class.ensure_indexes()
