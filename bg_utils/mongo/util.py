@@ -19,7 +19,18 @@ def verify_db(guest_login_enabled):
     _ensure_users(guest_login_enabled)
 
 
-def _update_request_model():
+def _update_request_parent_field_type():
+    """Change GenericReferenceField to ReferenceField"""
+    from bg_utils.mongo.models import Request
+
+    raw_collection = Request._get_collection()
+    for request in raw_collection.find({"parent._ref": {"$type": "object"}}):
+        raw_collection.update_one(
+            {"_id": request["_id"]}, {"$set": {"parent": request["parent"]["_ref"]}}
+        )
+
+
+def _update_request_has_parent_model():
     from bg_utils.mongo.models import Request
 
     raw_collection = Request._get_collection()
@@ -280,11 +291,19 @@ def _check_indexes(document_class):
             )
             raise
 
-        # For bg-utils 2.3.3 -> 2.3.4 upgrade
-        # We need to create the `has_parent` field
         if document_class == Request:
-            logger.warning("Request definition is out of date, updating")
-            _update_request_model()
+            logger.warning(
+                "Request definition is potentially out of date. About to check and "
+                "update if necessary - this could take several minutes."
+            )
+
+            # bg-utils 2.3.3 -> 2.3.4 create the `has_parent` field
+            _update_request_has_parent_model()
+
+            # bg-utils 2.4.6 -> 2.4.7 change parent to ReferenceField
+            _update_request_parent_field_type()
+
+            logger.warning("Request definition check/update complete.")
 
         try:
             document_class.ensure_indexes()

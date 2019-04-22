@@ -119,7 +119,9 @@ class TestMongoUtils(object):
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=["index1"])
             model_mock._get_collection = Mock(
-                return_value=Mock(index_information=Mock(return_value={"index1": {}}))
+                return_value=MagicMock(
+                    index_information=Mock(return_value={"index1": {}})
+                )
             )
 
         # ... except for this one
@@ -159,7 +161,9 @@ class TestMongoUtils(object):
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=["index1"])
             model_mock._get_collection = Mock(
-                return_value=Mock(index_information=Mock(return_value={"index1": {}}))
+                return_value=MagicMock(
+                    index_information=Mock(return_value={"index1": {}})
+                )
             )
 
             model_mock.ensure_indexes.side_effect = OperationFailure("")
@@ -171,12 +175,16 @@ class TestMongoUtils(object):
     @patch("mongoengine.connection.get_db")
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
-    def test_check_indexes_old_request_index(self, get_db_mock, model_mocks):
+    def test_check_indexes_old_request_index(
+        self, get_db_mock, model_mocks, monkeypatch
+    ):
         # 'normal' return values
         for model_mock in model_mocks.values():
             model_mock.list_indexes = Mock(return_value=["index1"])
             model_mock._get_collection = Mock(
-                return_value=Mock(index_information=Mock(return_value={"index1": {}}))
+                return_value=MagicMock(
+                    index_information=Mock(return_value={"index1": {}})
+                )
             )
 
         # ... except for this one
@@ -187,12 +195,28 @@ class TestMongoUtils(object):
             "parent_instance_index": {},
         }
 
+        # Mock out request model update methods
+        update_parent_field_type_mock = Mock()
+        update_has_parent_mock = Mock()
+        monkeypatch.setattr(
+            bg_utils.mongo.util,
+            "_update_request_parent_field_type",
+            update_parent_field_type_mock,
+        )
+        monkeypatch.setattr(
+            bg_utils.mongo.util,
+            "_update_request_has_parent_model",
+            update_has_parent_mock,
+        )
+
         db_mock = MagicMock()
         get_db_mock.return_value = db_mock
 
         [bg_utils.mongo.util._check_indexes(doc) for doc in model_mocks.values()]
         assert db_mock["request"].drop_indexes.call_count == 1
         assert model_mocks["request"].ensure_indexes.called is True
+        assert update_parent_field_type_mock.called is True
+        assert update_has_parent_mock.called is True
 
     def test_create_role_exists(self, model_mocks):
         role = Mock()
