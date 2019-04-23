@@ -177,8 +177,9 @@ class TestCreation(object):
         mongo_parent_request.status = "SUCCESS"
         mongo_parent_request.save()
 
-        with pytest.raises(HTTPClientError):
+        with pytest.raises(HTTPClientError) as ex:
             yield http_client.fetch(post_bg_request)
+        assert ex.value.code == 409
 
 
 class RequestListAPITest(TestHandlerBase):
