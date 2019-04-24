@@ -1,5 +1,21 @@
 # Beer Garden Changelog
 
+## 2.4.7
+4/24/19
+Brew-view 2.4.11, Bartender 2.4.3, BG-utils 2.4.7
+
+#### Bug Fixes
+- Fixed configuration generation regression caused by #224 (#254)
+- Child requests cannot be created after the parent is completed (#252)
+- When mongo pruner removes a request the children are also removed (#246)
+- Fixed issue that could cause mongo pruner to not run (#245)
+- Mongo pruner will only directly remove top-level requests (#244)
+
+#### Added Features
+- Toggle for displaying child requests on the index page (#248)
+- Added button for refreshing request index without reloading the page (#236)
+- Show a notification on request index page when changes occur (#180)
+
 ## 2.4.6
 2/22/19
 Brew-view 2.4.10, Bartender 2.4.2, BG-utils 2.4.6
