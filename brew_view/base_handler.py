@@ -17,6 +17,7 @@ import brew_view
 from brew_view.authorization import AuthMixin, coalesce_permissions
 from brew_view.metrics import http_api_latency_total, request_latency
 from brewtils.errors import (
+    ConflictError,
     ModelError,
     ModelValidationError,
     RequestForbidden,
@@ -46,6 +47,7 @@ class BaseHandler(AuthMixin, RequestHandler):
         InvalidSignatureError: {"status_code": 403},
         DoesNotExist: {"status_code": 404, "message": "Resource does not exist"},
         WaitExceededError: {"status_code": 408, "message": "Max wait time exceeded"},
+        ConflictError: {"status_code": 409},
         NotUniqueError: {"status_code": 409, "message": "Resource already exists"},
         RequestPublishException: {"status_code": 502},
         bg_utils.bg_thrift.BaseException: {

@@ -3,11 +3,11 @@ import json
 import pytest
 from mock import MagicMock, Mock, PropertyMock, patch
 from tornado.gen import Future
-from tornado.httpclient import HTTPRequest
+from tornado.httpclient import HTTPRequest, HTTPClientError
 
 import bg_utils
 import brew_view
-from bg_utils.mongo.models import System
+from bg_utils.mongo.models import Request, System
 from brew_view.controllers import RequestListAPI
 from brewtils.rest.client import RestClient
 from brewtils.schema_parser import SchemaParser
@@ -18,6 +18,11 @@ from . import TestHandlerBase
 def setup_systems(app, mongo_system):
     System.drop_collection()
     mongo_system.deep_save()
+
+
+@pytest.fixture(autouse=True)
+def clear_requests(app):
+    Request.drop_collection()
 
 
 @pytest.fixture(autouse=True)
@@ -43,8 +48,17 @@ def process_future():
 
 
 @pytest.fixture
-def post_request(base_url, bg_request):
-    bg_request.parent = None
+def post_parent(base_url, parent_request):
+    return HTTPRequest(
+        base_url + "/api/v1/requests/",
+        method="POST",
+        headers=RestClient.JSON_HEADERS,
+        body=SchemaParser.serialize_request(parent_request, to_string=True),
+    )
+
+
+@pytest.fixture
+def post_bg_request(base_url, bg_request):
     return HTTPRequest(
         base_url + "/api/v1/requests/",
         method="POST",
@@ -71,11 +85,11 @@ class TestBlocking(object):
 
     @pytest.mark.gen_test
     def test_no_blocking(
-        self, app, process_future, http_client, latency_total, post_request
+        self, app, process_future, http_client, latency_total, post_parent
     ):
         process_future.set_result(None)
 
-        response = yield http_client.fetch(post_request)
+        response = yield http_client.fetch(post_parent)
         assert response.code == 201
         assert latency_total.labels.return_value.observe.called is False
         assert brew_view.event_publishers["mock"].publish_event.called is True
@@ -89,14 +103,14 @@ class TestBlocking(object):
         io_loop,
         http_client,
         latency_total,
-        post_request,
-        bg_request,
+        post_parent,
+        parent_request,
     ):
         process_future.set_result(None)
-        io_loop.call_later(0.25, lambda: brew_view.request_map[bg_request.id].set())
+        io_loop.call_later(0.25, lambda: brew_view.request_map[parent_request.id].set())
 
-        post_request.url += "?blocking=true"
-        response = yield http_client.fetch(post_request)
+        post_parent.url += "?blocking=true"
+        response = yield http_client.fetch(post_parent)
 
         assert response.code == 201
         assert latency_total.labels.return_value.observe.called is True
@@ -111,19 +125,61 @@ class TestBlocking(object):
         io_loop,
         http_client,
         latency_total,
-        post_request,
-        bg_request,
+        post_parent,
+        parent_request,
     ):
         process_future.set_result(None)
-        io_loop.call_later(0.25, lambda: brew_view.request_map[bg_request.id].set())
+        io_loop.call_later(0.25, lambda: brew_view.request_map[parent_request.id].set())
 
-        post_request.url += "?blocking=true&timeout=0"
-        response = yield http_client.fetch(post_request, raise_error=False)
+        post_parent.url += "?blocking=true&timeout=0"
+        response = yield http_client.fetch(post_parent, raise_error=False)
 
         assert response.code == 408
         assert latency_total.labels.return_value.observe.called is True
         assert brew_view.event_publishers["mock"].publish_event.called is True
         assert len(brew_view.request_map) == 0
+
+
+class TestCreation(object):
+    """Test request creation"""
+
+    @pytest.mark.gen_test
+    def test_create_with_parent(
+        self,
+        app,
+        process_future,
+        http_client,
+        latency_total,
+        post_bg_request,
+        mongo_parent_request,
+    ):
+        process_future.set_result(None)
+        mongo_parent_request.save()
+
+        response = yield http_client.fetch(post_bg_request)
+        assert response.code == 201
+        assert latency_total.labels.return_value.observe.called is False
+        assert brew_view.event_publishers["mock"].publish_event.called is True
+        assert len(brew_view.request_map) == 0
+
+    @pytest.mark.gen_test
+    def test_create_parent_completed(
+        self,
+        app,
+        process_future,
+        http_client,
+        latency_total,
+        post_bg_request,
+        mongo_parent_request,
+    ):
+        process_future.set_result(None)
+
+        mongo_parent_request.status = "SUCCESS"
+        mongo_parent_request.save()
+
+        with pytest.raises(HTTPClientError) as ex:
+            yield http_client.fetch(post_bg_request)
+        assert ex.value.code == 409
 
 
 class RequestListAPITest(TestHandlerBase):

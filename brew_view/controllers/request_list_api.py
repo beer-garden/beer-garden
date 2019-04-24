@@ -17,6 +17,7 @@ from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brew_view.metrics import request_created, http_api_latency_total, request_latency
 from brewtils.errors import (
+    ConflictError,
     ModelValidationError,
     RequestPublishException,
     TimeoutExceededError,
@@ -282,6 +283,8 @@ class RequestListAPI(BaseHandler):
 
         if request_model.parent:
             request_model.parent = Request.objects.get(id=str(request_model.parent.id))
+            if request_model.parent.status in Request.COMPLETED_STATUSES:
+                raise ConflictError("Parent request has already completed")
             request_model.has_parent = True
         else:
             request_model.has_parent = False
