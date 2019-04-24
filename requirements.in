@@ -6,26 +6,25 @@ apispec < 0.39
 apscheduler
 futures ; python_version < "3.0"
 ruamel.ordereddict ; python_version < "3.0"
-ruamel.yaml
 tornado < 6
 prometheus_client < 1
 
 # Documentation Dependencies
-sphinx
+sphinx<2
 sphinx_rtd_theme
 watchdog
 
 # Test Dependencies
+black ; python_version > "3.5"
 codecov
 coverage
 flake8
 mock
 mongomock
-pytest
+pytest<4
 pytest-lazy-fixture
 pytest-tornado
 pytz
 tox
 twine
 wheel
-black ; python_version > "3.5"
