@@ -6,11 +6,10 @@ future ; python_version < "3.0"
 futures ; python_version < "3.0"
 pyrabbit2
 ruamel.ordereddict ; python_version < "3.0"
-ruamel.yaml
 subprocess32 ; python_version < "3.0"
 
 # Documentation Dependencies
-sphinx
+sphinx<2
 sphinx_rtd_theme
 watchdog
 
@@ -20,7 +19,7 @@ codecov
 coverage
 flake8
 mock
-pytest
+pytest<4
 pytest-mock
 pytz
 tox

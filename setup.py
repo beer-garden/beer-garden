@@ -27,7 +27,7 @@ setup(
     packages=(find_packages(exclude=["test", "test.*"])),
     license="MIT",
     keywords="bartender beer beer-garden beergarden",
-    install_requires=["bg-utils>=2.4.4", "brewtils>=2.4.0", "pyrabbit2==1.0.5"],
+    install_requires=["bg-utils>=2.4.4", "brewtils>=2.4.0", "pyrabbit2==1.0.7"],
     extras_require={
         ':python_version=="2.7"': [
             "future>=0.16.0",
