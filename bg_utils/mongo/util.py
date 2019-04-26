@@ -183,11 +183,10 @@ def _ensure_users(guest_login_enabled):
                 'in environment variable "BG_DEFAULT_ADMIN_PASSWORD"'
             )
         else:
-            logger.info(
-                'Creating username "admin" with default password. See '
-                "Beer Garden documentation for the value."
-            )
             default_password = "password"
+            logger.info(
+                'Creating username "admin" with password "%s"' % default_password
+            )
         Principal(
             username="admin",
             hash=custom_app_context.hash(default_password),
