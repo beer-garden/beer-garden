@@ -243,52 +243,54 @@ def _setup_scheduler():
 
 def _setup_tornado_app():
     # Import these here so we don't have a problem importing thrift_context
-    import brew_view.controllers as bc
+    import brew_view.handlers.v1 as v1
+    import brew_view.handlers.vbeta as vbeta
+    import brew_view.handlers.misc as misc
 
     prefix = config.web.url_prefix
     static_base = os.path.join(os.path.dirname(__file__), "static", "dist")
 
     # These get documented in our OpenAPI (fka Swagger) documentation
     published_url_specs = [
-        (r"{0}api/v1/commands/?".format(prefix), bc.command_api.CommandListAPI),
-        (r"{0}api/v1/requests/?".format(prefix), bc.request_api.RequestListAPI),
-        (r"{0}api/v1/systems/?".format(prefix), bc.system_api.SystemListAPI),
-        (r"{0}api/v1/queues/?".format(prefix), bc.queue_api.QueueListAPI),
-        (r"{0}api/v1/users/?".format(prefix), bc.users_api.UsersAPI),
-        (r"{0}api/v1/roles/?".format(prefix), bc.roles_api.RolesAPI),
-        (r"{0}api/v1/permissions/?".format(prefix), bc.permissions_api.PermissionsAPI),
-        (r"{0}api/v1/tokens/?".format(prefix), bc.token_api.TokenListAPI),
-        (r"{0}api/v1/admin/?".format(prefix), bc.admin_api.AdminAPI),
-        (r"{0}api/v1/jobs/?".format(prefix), bc.job_api.JobListAPI),
-        (r"{0}api/v1/commands/(\w+)/?".format(prefix), bc.command_api.CommandAPI),
-        (r"{0}api/v1/instances/(\w+)/?".format(prefix), bc.instance_api.InstanceAPI),
-        (r"{0}api/v1/requests/(\w+)/?".format(prefix), bc.request_api.RequestAPI),
-        (r"{0}api/v1/systems/(\w+)/?".format(prefix), bc.system_api.SystemAPI),
-        (r"{0}api/v1/queues/([\w\.-]+)/?".format(prefix), bc.queue_api.QueueAPI),
-        (r"{0}api/v1/users/(\w+)/?".format(prefix), bc.users_api.UserAPI),
-        (r"{0}api/v1/roles/(\w+)/?".format(prefix), bc.roles_api.RoleAPI),
-        (r"{0}api/v1/tokens/(\w+)/?".format(prefix), bc.token_api.TokenAPI),
-        (r"{0}api/v1/jobs/(\w+)/?".format(prefix), bc.job_api.JobAPI),
-        (r"{0}api/v1/config/logging/?".format(prefix), bc.logging_api.LoggingConfigAPI),
+        (r"{0}api/v1/commands/?".format(prefix), v1.command.CommandListAPI),
+        (r"{0}api/v1/requests/?".format(prefix), v1.request.RequestListAPI),
+        (r"{0}api/v1/systems/?".format(prefix), v1.system.SystemListAPI),
+        (r"{0}api/v1/queues/?".format(prefix), v1.queue.QueueListAPI),
+        (r"{0}api/v1/users/?".format(prefix), v1.user.UsersAPI),
+        (r"{0}api/v1/roles/?".format(prefix), v1.role.RolesAPI),
+        (r"{0}api/v1/permissions/?".format(prefix), v1.permissions.PermissionsAPI),
+        (r"{0}api/v1/tokens/?".format(prefix), v1.token.TokenListAPI),
+        (r"{0}api/v1/admin/?".format(prefix), v1.admin.AdminAPI),
+        (r"{0}api/v1/jobs/?".format(prefix), v1.job.JobListAPI),
+        (r"{0}api/v1/commands/(\w+)/?".format(prefix), v1.command.CommandAPI),
+        (r"{0}api/v1/instances/(\w+)/?".format(prefix), v1.instance.InstanceAPI),
+        (r"{0}api/v1/requests/(\w+)/?".format(prefix), v1.request.RequestAPI),
+        (r"{0}api/v1/systems/(\w+)/?".format(prefix), v1.system.SystemAPI),
+        (r"{0}api/v1/queues/([\w\.-]+)/?".format(prefix), v1.queue.QueueAPI),
+        (r"{0}api/v1/users/(\w+)/?".format(prefix), v1.user.UserAPI),
+        (r"{0}api/v1/roles/(\w+)/?".format(prefix), v1.role.RoleAPI),
+        (r"{0}api/v1/tokens/(\w+)/?".format(prefix), v1.token.TokenAPI),
+        (r"{0}api/v1/jobs/(\w+)/?".format(prefix), v1.job.JobAPI),
+        (r"{0}api/v1/config/logging/?".format(prefix), v1.logging.LoggingConfigAPI),
         # Beta
-        (r"{0}api/vbeta/events/?".format(prefix), bc.event_api.EventPublisherAPI),
+        (r"{0}api/vbeta/events/?".format(prefix), vbeta.event.EventPublisherAPI),
         # Deprecated
-        (r"{0}api/v1/admin/system/?".format(prefix), bc.admin_api.OldAdminAPI),
-        (r"{0}api/v1/admin/queues/?".format(prefix), bc.queue_api.OldQueueListAPI),
-        (r"{0}api/v1/admin/queues/([\w\.-]+)/?".format(prefix), bc.queue_api.OldQueueAPI),
+        (r"{0}api/v1/admin/system/?".format(prefix), v1.admin.OldAdminAPI),
+        (r"{0}api/v1/admin/queues/?".format(prefix), v1.queue.OldQueueListAPI),
+        (r"{0}api/v1/admin/queues/([\w\.-]+)/?".format(prefix), v1.queue.OldQueueAPI),
     ]
 
     # And these do not
     unpublished_url_specs = [
         # These are a little special - unpublished but still versioned
         # The swagger spec
-        (r"{0}api/v1/spec/?".format(prefix), bc.misc_controllers.SpecHandler),
+        (r"{0}api/v1/spec/?".format(prefix), misc.SpecHandler),
         # Events websocket
-        (r"{0}api/v1/socket/events/?".format(prefix), bc.event_api.EventSocket),
+        (r"{0}api/v1/socket/events/?".format(prefix), v1.event.EventSocket),
         # Version / configs
-        (r"{0}version/?".format(prefix), bc.misc_controllers.VersionHandler),
-        (r"{0}config/?".format(prefix), bc.misc_controllers.ConfigHandler),
-        (r"{0}config/swagger/?".format(prefix), bc.misc_controllers.SwaggerConfigHandler),
+        (r"{0}version/?".format(prefix), misc.VersionHandler),
+        (r"{0}config/?".format(prefix), misc.ConfigHandler),
+        (r"{0}config/swagger/?".format(prefix), misc.SwaggerConfigHandler),
         # Not sure if these are really necessary
         (r"{0}".format(prefix[:-1]), RedirectHandler, {"url": prefix}),
         (
@@ -374,7 +376,7 @@ def _setup_thrift_context():
 
 
 def _setup_event_publishers(ssl_context):
-    from brew_view.controllers.event_api import EventSocket
+    from brew_view.handlers.v1.event import EventSocket
 
     # Create the collection of event publishers and add concrete publishers
     pubs = EventPublishers(
