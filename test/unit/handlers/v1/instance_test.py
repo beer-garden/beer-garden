@@ -71,8 +71,7 @@ class InstanceAPITest(TestHandlerBase):
         self.client_mock.stopInstance.assert_called_once_with("id")
 
     @patch(
-        "brew_view.handlers.v1.instance.datetime",
-        Mock(utcnow=Mock(return_value="now")),
+        "brew_view.handlers.v1.instance.datetime", Mock(utcnow=Mock(return_value="now"))
     )
     @patch("brew_view.handlers.v1.instance.thrift_context")
     def test_patch_heartbeat(self, context_mock):

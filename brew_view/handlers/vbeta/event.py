@@ -1,10 +1,7 @@
 import logging
 
 import brew_view
-from brew_view.authorization import (
-    authenticated,
-    Permissions,
-)
+from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.schema_parser import SchemaParser
 

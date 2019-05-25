@@ -1,3 +1,5 @@
+# flake8: noqa
+
 import brew_view.handlers.v1.admin
 import brew_view.handlers.v1.command
 import brew_view.handlers.v1.event

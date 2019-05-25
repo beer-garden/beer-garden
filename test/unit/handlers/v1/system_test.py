@@ -436,9 +436,7 @@ class SystemListAPITest(TestHandlerBase):
         create_mock.assert_called_once_with(self.system_mock)
 
     @patch("bg_utils.mongo.models.System.find_unique")
-    @patch(
-        "brew_view.handlers.v1.system.SystemListAPI._update_existing_system"
-    )
+    @patch("brew_view.handlers.v1.system.SystemListAPI._update_existing_system")
     @patch("brew_view.handlers.v1.system.MongoParser.parse_system")
     def test_post_existing_system(self, parse_mock, update_mock, find_mock):
         parse_mock.return_value = self.system_mock

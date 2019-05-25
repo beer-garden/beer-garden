@@ -32,9 +32,7 @@ def clear_requests(app):
 @pytest.fixture(autouse=True)
 def thrift(monkeypatch, thrift_context, thrift_client, process_future):
     thrift_client.processRequest.return_value = process_future
-    monkeypatch.setattr(
-        brew_view.handlers.v1.request, "thrift_context", thrift_context
-    )
+    monkeypatch.setattr(brew_view.handlers.v1.request, "thrift_context", thrift_context)
 
 
 @pytest.fixture(autouse=True)
