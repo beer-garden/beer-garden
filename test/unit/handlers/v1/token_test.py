@@ -1,11 +1,12 @@
+# -*- coding: utf-8 -*-
 import copy
-import datetime
 import json
 
+import datetime
 from mock import Mock, patch
 
 from bg_utils.mongo.models import RefreshToken
-from . import TestHandlerBase
+from .. import TestHandlerBase
 
 
 class TokenAPITest(TestHandlerBase):

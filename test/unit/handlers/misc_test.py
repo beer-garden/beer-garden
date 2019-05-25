@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 
 from tornado.gen import Future
@@ -32,7 +33,7 @@ class VersionHandlerTest(TestHandlerBase):
 
         super(VersionHandlerTest, self).setUp()
 
-    @patch("brew_view.controllers.misc_controllers.thrift_context")
+    @patch("brew_view.handlers.misc.thrift_context")
     def test_version_everything_works(self, context_mock):
         context_mock.return_value = self.fake_context
         self.client_mock.getVersion.return_value = self.future_mock
@@ -51,7 +52,7 @@ class VersionHandlerTest(TestHandlerBase):
             },
         )
 
-    @patch("brew_view.controllers.misc_controllers.thrift_context")
+    @patch("brew_view.handlers.misc.thrift_context")
     def test_version_fail_to_get_backend_version(self, context_mock):
         context_mock.return_value = self.fake_context
         self.client_mock.getVersion.return_value = self.future_mock
@@ -70,7 +71,7 @@ class VersionHandlerTest(TestHandlerBase):
             },
         )
 
-    @patch("brew_view.controllers.misc_controllers.thrift_context")
+    @patch("brew_view.handlers.misc.thrift_context")
     def test_version_fail_to_get_thrift_context(self, context_mock):
         context_mock.side_effect = ValueError("cant connect")
         self.client_mock.getVersion.return_value = self.future_mock

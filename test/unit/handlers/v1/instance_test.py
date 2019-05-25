@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
 from mock import MagicMock, Mock, patch
 
-from . import TestHandlerBase
+from .. import TestHandlerBase
 
 
 class InstanceAPITest(TestHandlerBase):
@@ -13,7 +14,7 @@ class InstanceAPITest(TestHandlerBase):
         get_mock.return_value.get.return_value = self.instance_mock
 
         serialize_patcher = patch(
-            "brew_view.controllers.instance_api.MongoParser.serialize_instance"
+            "brew_view.handlers.v1.instance.MongoParser.serialize_instance"
         )
         self.addCleanup(serialize_patcher.stop)
         self.serialize_mock = serialize_patcher.start()
@@ -33,7 +34,7 @@ class InstanceAPITest(TestHandlerBase):
         self.assertEqual("serialized_instance", output)
         self.assertIn(self.instance_mock, self.serialize_mock.call_args[0])
 
-    @patch("brew_view.controllers.instance_api.thrift_context")
+    @patch("brew_view.handlers.v1.instance.thrift_context")
     def test_patch_initialize(self, context_mock):
         context_mock.return_value = self.fake_context
 
@@ -45,7 +46,7 @@ class InstanceAPITest(TestHandlerBase):
         )
         self.client_mock.initializeInstance.assert_called_once_with("id")
 
-    @patch("brew_view.controllers.instance_api.thrift_context")
+    @patch("brew_view.handlers.v1.instance.thrift_context")
     def test_patch_start(self, context_mock):
         context_mock.return_value = self.fake_context
 
@@ -57,7 +58,7 @@ class InstanceAPITest(TestHandlerBase):
         )
         self.client_mock.startInstance.assert_called_once_with("id")
 
-    @patch("brew_view.controllers.instance_api.thrift_context")
+    @patch("brew_view.handlers.v1.instance.thrift_context")
     def test_patch_stop(self, context_mock):
         context_mock.return_value = self.fake_context
 
@@ -70,10 +71,10 @@ class InstanceAPITest(TestHandlerBase):
         self.client_mock.stopInstance.assert_called_once_with("id")
 
     @patch(
-        "brew_view.controllers.instance_api.datetime",
+        "brew_view.handlers.v1.instance.datetime",
         Mock(utcnow=Mock(return_value="now")),
     )
-    @patch("brew_view.controllers.instance_api.thrift_context")
+    @patch("brew_view.handlers.v1.instance.thrift_context")
     def test_patch_heartbeat(self, context_mock):
         context_mock.return_value = self.fake_context
 
@@ -85,7 +86,7 @@ class InstanceAPITest(TestHandlerBase):
         )
         self.assertEqual("now", self.instance_mock.status_info.heartbeat)
 
-    @patch("brew_view.controllers.instance_api.thrift_context")
+    @patch("brew_view.handlers.v1.instance.thrift_context")
     def test_patch_bad_operation(self, context_mock):
         context_mock.return_value = self.fake_context
 

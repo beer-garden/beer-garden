@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
 from mock import MagicMock, Mock, patch
 from tornado.gen import Future
 
-from . import TestHandlerBase
+from .. import TestHandlerBase
 
 
 class AdminAPITest(TestHandlerBase):
@@ -15,7 +16,7 @@ class AdminAPITest(TestHandlerBase):
 
         super(AdminAPITest, self).setUp()
 
-    @patch("brew_view.controllers.admin_api.thrift_context")
+    @patch("brew_view.handlers.v1.admin.thrift_context")
     def test_patch(self, context_mock):
         context_mock.return_value = self.fake_context
         self.client_mock.rescanSystemDirectory.return_value = self.future_mock
@@ -30,7 +31,7 @@ class AdminAPITest(TestHandlerBase):
         self.assertEqual(204, response.code)
         self.client_mock.rescanSystemDirectory.assert_called_once_with()
 
-    @patch("brew_view.controllers.admin_api.thrift_context")
+    @patch("brew_view.handlers.v1.admin.thrift_context")
     def test_patch_exception(self, context_mock):
         context_mock.return_value = self.fake_context
         self.client_mock.rescanSystemDirectory.return_value = self.future_mock

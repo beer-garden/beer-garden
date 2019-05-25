@@ -1,9 +1,28 @@
+# -*- coding: utf-8 -*-
 import json
 
 from mock import MagicMock, Mock, PropertyMock, patch
 from tornado.gen import Future
 
-from . import TestHandlerBase
+from .. import TestHandlerBase
+
+
+class QueueAPITest(TestHandlerBase):
+    def setUp(self):
+        self.client_mock = Mock(name="client_mock")
+        self.fake_context = MagicMock(
+            __enter__=Mock(return_value=self.client_mock),
+            __exit__=Mock(return_value=False),
+        )
+
+        super(QueueAPITest, self).setUp()
+
+    @patch("brew_view.handlers.v1.queue.thrift_context")
+    def test_delete_calls(self, context_mock):
+        context_mock.return_value = self.fake_context
+
+        self.fetch("/api/v1/queues/name", method="DELETE")
+        self.client_mock.clearQueue.assert_called_once_with("name")
 
 
 class QueueListAPITest(TestHandlerBase):
@@ -32,15 +51,15 @@ class QueueListAPITest(TestHandlerBase):
 
         super(QueueListAPITest, self).setUp()
 
-    @patch("brew_view.controllers.queue_list_api.System.objects")
+    @patch("brew_view.handlers.v1.queue.System.objects")
     def test_get_empty(self, objects_mock):
         objects_mock.all.return_value.select_related = Mock(return_value=[])
 
         response = self.fetch("/api/v1/queues")
         self.assertEqual("[]", response.body.decode("utf-8"))
 
-    @patch("brew_view.controllers.queue_list_api.thrift_context")
-    @patch("brew_view.controllers.queue_list_api.System.objects")
+    @patch("brew_view.handlers.v1.queue.thrift_context")
+    @patch("brew_view.handlers.v1.queue.System.objects")
     def test_get(self, objects_mock, context_mock):
         objects_mock.all.return_value.select_related = Mock(
             return_value=[self.system_mock]
@@ -71,8 +90,8 @@ class QueueListAPITest(TestHandlerBase):
             output[0],
         )
 
-    @patch("brew_view.controllers.queue_list_api.thrift_context")
-    @patch("brew_view.controllers.queue_list_api.System.objects")
+    @patch("brew_view.handlers.v1.queue.thrift_context")
+    @patch("brew_view.handlers.v1.queue.System.objects")
     def test_get_with_exception(self, objects_mock, context_mock):
         objects_mock.all.return_value.select_related = Mock(
             return_value=[self.system_mock]
@@ -97,8 +116,8 @@ class QueueListAPITest(TestHandlerBase):
             output[0],
         )
 
-    @patch("brew_view.controllers.queue_list_api.thrift_context")
-    @patch("brew_view.controllers.queue_list_api.System.objects")
+    @patch("brew_view.handlers.v1.queue.thrift_context")
+    @patch("brew_view.handlers.v1.queue.System.objects")
     def test_delete(self, objects_mock, context_mock):
         objects_mock.all = Mock(return_value=[self.system_mock])
         context_mock.return_value = self.fake_context
