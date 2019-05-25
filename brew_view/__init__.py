@@ -274,10 +274,6 @@ def _setup_tornado_app():
         (r"{0}api/v1/config/logging/?".format(prefix), v1.logging.LoggingConfigAPI),
         # Beta
         (r"{0}api/vbeta/events/?".format(prefix), vbeta.event.EventPublisherAPI),
-        # Deprecated
-        (r"{0}api/v1/admin/system/?".format(prefix), v1.admin.OldAdminAPI),
-        (r"{0}api/v1/admin/queues/?".format(prefix), v1.queue.OldQueueListAPI),
-        (r"{0}api/v1/admin/queues/([\w\.-]+)/?".format(prefix), v1.queue.OldQueueAPI),
     ]
 
     # And these do not

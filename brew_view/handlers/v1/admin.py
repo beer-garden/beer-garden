@@ -64,31 +64,3 @@ class AdminAPI(BaseHandler):
                 raise ModelValidationError(error_msg)
 
         self.set_status(204)
-
-
-class OldAdminAPI(BaseHandler):
-    @coroutine
-    def post(self):
-        """
-        ---
-        summary: Initiate a rescan of the plugin directory
-        deprecated: true
-        description: |
-          This endpoint is DEPRECATED - Use PATCH /api/v1/admin instead.
-
-          Will initiate a rescan of the plugins directory.
-          * Will remove from the registry and database any currently stopped
-            plugins who's directory has been removed.
-          * Will add and start any new plugin directories.
-        responses:
-          204:
-            description: Rescan successfully initiated
-          50x:
-            $ref: '#/definitions/50xError'
-        tags:
-          - Deprecated
-        """
-        with thrift_context() as client:
-            yield client.rescanSystemDirectory()
-
-        self.set_status(204)
