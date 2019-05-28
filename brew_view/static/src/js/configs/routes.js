@@ -12,10 +12,18 @@ export default function routeConfig($stateProvider, $urlRouterProvider) {
   $urlRouterProvider.otherwise('/');
 
   $stateProvider
-    .state('landing', {
-        url: '/',
-        templateUrl: basePath + 'landing.html',
-        controller: 'LandingController',
+    .state('namespace', {
+      url: '/:namespace',
+      params: {
+        namespace: {
+          value: 'default',
+        },
+      },
+    })
+    .state('namespace.landing', {
+      url: '/',
+      templateUrl: basePath + 'landing.html',
+      controller: 'LandingController',
     })
     .state('login', {
       url: '/login',
@@ -23,12 +31,12 @@ export default function routeConfig($stateProvider, $urlRouterProvider) {
       controller: 'LoginController',
     })
     // Unused by our UI, but helpful for external links.
-    .state('systemID', {
+    .state('namespace.systemID', {
       url: '/systems/:id',
       templateUrl: basePath + 'system_view.html',
       controller: 'SystemViewController',
     })
-    .state('system', {
+    .state('namespace.system', {
       'url': '/systems/:name/:version',
       'templateUrl': basePath + 'system_view.html',
       'controller': 'SystemViewController',
