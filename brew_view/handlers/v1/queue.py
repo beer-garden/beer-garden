@@ -10,6 +10,41 @@ from brew_view.base_handler import BaseHandler
 from brewtils.models import Events, Queue
 
 
+class QueueAPI(BaseHandler):
+
+    logger = logging.getLogger(__name__)
+
+    @coroutine
+    @authenticated(permissions=[Permissions.QUEUE_DELETE])
+    def delete(self, queue_name):
+        """
+        ---
+        summary: Clear a queue by canceling all requests
+        parameters:
+          - name: queue_name
+            in: path
+            required: true
+            description: The name of the queue to clear
+            type: string
+        responses:
+          204:
+            description: Queue successfully cleared
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Queues
+        """
+        self.request.event.name = Events.QUEUE_CLEARED.name
+        self.request.event.payload = {"queue_name": queue_name}
+
+        with thrift_context() as client:
+            yield client.clearQueue(queue_name)
+
+        self.set_status(204)
+
+
 class QueueListAPI(BaseHandler):
 
     parser = MongoParser()
@@ -89,44 +124,3 @@ class QueueListAPI(BaseHandler):
             yield client.clearAllQueues()
 
         self.set_status(204)
-
-
-class OldQueueListAPI(BaseHandler):
-
-    logger = logging.getLogger(__name__)
-
-    def get(self):
-        """
-        ---
-        summary: Retrieve all queue information
-        deprecated: true
-        description: This endpoint is DEPRECATED - Use /api/v1/queues instead.
-        responses:
-          200:
-            description: List of all queue information objects
-            schema:
-              type: array
-              items:
-                $ref: '#/definitions/Queue'
-          50x:
-            $ref: '#/definitions/50xError'
-        tags:
-          - Deprecated
-        """
-        self.redirect("/api/v1/queues/", permanent=True)
-
-    def delete(self):
-        """
-        ---
-        summary: Cancel and clear all requests in all queues
-        deprecated: true
-        description: This endpoint is DEPRECATED - Use /api/v1/queues instead.
-        responses:
-          204:
-            description: All queues successfully cleared
-          50x:
-            $ref: '#/definitions/50xError'
-        tags:
-          - Deprecated
-        """
-        self.redirect("/api/v1/queues/", permanent=True)

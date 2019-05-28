@@ -4,12 +4,12 @@ from mock import patch
 from mongoengine.errors import DoesNotExist
 
 from brewtils.errors import ModelValidationError
-from .controllers import TestHandlerBase
+from .handlers import TestHandlerBase
 
 
 class ErrorHandlerTest(TestHandlerBase):
     def setUp(self):
-        objects_patcher = patch("brew_view.controllers.command_api.Command.objects")
+        objects_patcher = patch("brew_view.handlers.v1.command.Command.objects")
         self.addCleanup(objects_patcher.stop)
         self.objects_mock = objects_patcher.start()
 
