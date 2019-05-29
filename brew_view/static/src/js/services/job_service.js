@@ -1,33 +1,39 @@
 
-jobService.$inject = ['$http'];
+jobService.$inject = ['$http', 'NamespaceService'];
 
 
 /**
  * jobService - Service for getting jobs from the API.
- * @param  {$http} $http Angular's $http object.
- * @return {Object}      Object for interacting with the job API.
+ * @param  {Object} $http             Angular's $http object.
+ * @param  {Object} NamespaceService  Beer-Garden's namespace service.
+ * @return {Object}                   Object for interacting with the job API.
  */
-export default function jobService($http) {
+export default function jobService($http, NamespaceService) {
   let JobService = {};
 
-  JobService.getJobs = function() {
-    return $http.get('api/v1/jobs');
+  JobService.getJobs = function(options = {}) {
+    let namespace = NamespaceService.default(options.namespace);
+    return $http.get('api/v2/namespaces/'+namespace+'/jobs');
   };
 
-  JobService.getJob = function(id) {
-    return $http.get('api/v1/jobs/' + id);
+  JobService.getJob = function(id, options = {}) {
+    let namespace = NamespaceService.default(options.namespace);
+    return $http.get('api/v2/namespaces/'+namespace+'/jobs/' + id);
   };
 
-  JobService.createJob = function(job) {
-    return $http.post('api/v1/jobs', job);
+  JobService.createJob = function(job, options = {}) {
+    let namespace = NamespaceService.default(options.namespace);
+    return $http.post('api/v2/namespaces/'+namespace+'/jobs', job);
   };
 
-  JobService.deleteJob = function(id) {
-    return $http.delete('api/v1/jobs/' + id);
+  JobService.deleteJob = function(id, options = {}) {
+    let namespace = NamespaceService.default(options.namespace);
+    return $http.delete('api/v2/namespaces/'+namespace+'/jobs/' + id);
   };
 
-  JobService.patchJob = function(id, payload) {
-    return $http.patch('api/v1/jobs/' + id, payload);
+  JobService.patchJob = function(id, payload, options = {}) {
+    let namespace = NamespaceService.default(options.namespace);
+    return $http.patch('api/v2/namespaces/'+namespace+'/jobs/' + id, payload);
   };
 
   JobService.resumeJob = function(jobId) {
