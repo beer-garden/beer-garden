@@ -292,13 +292,6 @@ class SystemListAPI(BaseHandler):
             description: Commands and instances will be an object id
             type: boolean
             default: true
-          - name: include_commands
-            in: query
-            required: false
-            description: __DEPRECATED__ Include commands in the response.
-              Use `exclude_fields=commands` instead.
-            type: boolean
-            default: true
         responses:
           200:
             description: All Systems
@@ -319,7 +312,6 @@ class SystemListAPI(BaseHandler):
         include_fields = self.get_query_argument("include_fields", None)
         exclude_fields = self.get_query_argument("exclude_fields", None)
         dereference_nested = self.get_query_argument("dereference_nested", None)
-        include_commands = self.get_query_argument("include_commands", None)
 
         if include_fields:
             include_fields = set(include_fields.split(",")) & self.REQUEST_FIELDS
@@ -330,13 +322,6 @@ class SystemListAPI(BaseHandler):
             exclude_fields = set(exclude_fields.split(",")) & self.REQUEST_FIELDS
             query_set = query_set.exclude(*exclude_fields)
             serialize_params["exclude"] = exclude_fields
-
-        if include_commands and include_commands.lower() == "false":
-            query_set = query_set.exclude("commands")
-
-            if "exclude" not in serialize_params:
-                serialize_params["exclude"] = set()
-            serialize_params["exclude"].add("commands")
 
         if dereference_nested and dereference_nested.lower() == "false":
             query_set = query_set.no_dereference()
