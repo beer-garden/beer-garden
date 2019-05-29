@@ -6,7 +6,6 @@ adminQueueController.$inject = [
   '$q',
   '$compile',
   '$window',
-  '$location',
   '$interval',
   '$http',
   'DTOptionsBuilder',
@@ -16,17 +15,16 @@ adminQueueController.$inject = [
 
 /**
  * adminQueueController - Angular controller for queue index page.
- * @param  {$rootScope} $rootScope   Angular's $rootScope object.
- * @param  {$scope} $scope           Angular's $scope object.
- * @param  {$q} $q                   Angular's $q object.
- * @param  {$compile} $compile       Angular's $compile object.
- * @param  {$window} $window         Angular's $window object.
- * @param  {$location} $location     Angular's $location object.
- * @param  {$interval} $interval     Angular's $interval object.
- * @param  {$http} $http             Angular's $http object.
- * @param  {Object} DTOptionsBuilder Datatables' options builder object.
- * @param  {Object} DTColumnBuilder  Datatables' column builder object.
- * @param  {Object} QueueService     Beer-Garden's queue service object.
+ * @param  {Object} $rootScope        Angular's $rootScope object.
+ * @param  {Object} $scope            Angular's $scope object.
+ * @param  {Object} $q                Angular's $q object.
+ * @param  {Object} $compile          Angular's $compile object.
+ * @param  {Object} $window           Angular's $window object.
+ * @param  {Object} $interval         Angular's $interval object.
+ * @param  {Object} $http             Angular's $http object.
+ * @param  {Object} DTOptionsBuilder  Datatables' options builder object.
+ * @param  {Object} DTColumnBuilder   Datatables' column builder object.
+ * @param  {Object} QueueService      Beer-Garden's queue service object.
  */
 export default function adminQueueController(
     $rootScope,
@@ -34,7 +32,6 @@ export default function adminQueueController(
     $q,
     $compile,
     $window,
-    $location,
     $interval,
     $http,
     DTOptionsBuilder,

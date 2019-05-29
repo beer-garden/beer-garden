@@ -1,27 +1,13 @@
 import {formatDate} from '../services/utility_service.js';
 
-jobIndexController.$inject = [
-  '$scope',
-  '$rootScope',
-  '$location',
-  '$interval',
-  'JobService',
-];
+jobIndexController.$inject = ['$scope', 'JobService'];
 
 /**
  * jobIndexController - Controller for the job index page.
- * @param  {$scope} $scope         Angular's $scope object.
- * @param  {$rootScope} $rootScope Angular's $rootScope object.
- * @param  {$location} $location   Angular's $location object.
- * @param  {$interval} $interval   Angular's $interval object.
- * @param  {Object} JobService Beer-Garden's job service.
+ * @param  {Object} $scope      Angular's $scope object.
+ * @param  {Object} JobService  Beer-Garden's job service.
  */
-export default function jobIndexController(
-    $scope,
-    $rootScope,
-    $location,
-    $interval,
-    JobService) {
+export default function jobIndexController($scope, JobService) {
   $scope.setWindowTitle('scheduler');
 
   $scope.successCallback = function(response) {

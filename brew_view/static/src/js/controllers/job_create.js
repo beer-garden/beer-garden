@@ -3,8 +3,7 @@ import {formatJsonDisplay} from '../services/utility_service.js';
 jobCreateController.$inject = [
   '$scope',
   '$rootScope',
-  '$location',
-  '$interval',
+  '$state',
   '$stateParams',
   'JobService',
   'SystemService',
@@ -13,20 +12,18 @@ jobCreateController.$inject = [
 
 /**
  * jobCreateController - Controller for the job create page.
- * @param  {$scope} $scope         Angular's $scope object.
- * @param  {$rootScope} $rootScope Angular's $rootScope object.
- * @param  {$location} $location   Angular's $location object.
- * @param  {$interval} $interval   Angular's $interval object.
- * @param  {$stateParams} $stateParams Angular's $stateParams object.
- * @param  {Object} JobService Beer-Garden's job service.
- * @param  {Object} SystemService Beer-Garden's system service.
- * @param  {Object} SFBuilderService Beer-Garden's schema-form service.
+ * @param  {Object} $scope            Angular's $scope object.
+ * @param  {Object} $rootScope        Angular's $rootScope object.
+ * @param  {Object} $state            Angular's $state object.
+ * @param  {Object} $stateParams      Angular's $stateParams object.
+ * @param  {Object} JobService        Beer-Garden's job service.
+ * @param  {Object} SystemService     Beer-Garden's system service.
+ * @param  {Object} SFBuilderService  Beer-Garden's schema-form service.
  */
 export default function jobCreateController(
     $scope,
     $rootScope,
-    $location,
-    $interval,
+    $state,
     $stateParams,
     JobService,
     SystemService,
@@ -61,10 +58,6 @@ export default function jobCreateController(
   $scope.failureCallback = function(response) {
     $scope.response = response;
     $scope.data = [];
-  };
-
-  $scope.exploreSystem = function(system) {
-    $location.path($rootScope.getSystemUrl(system.id));
   };
 
   $scope.selectCommand = function(command) {
@@ -184,7 +177,7 @@ export default function jobCreateController(
       let serverModel = JobService.formToServerModel(model, $scope.requestTemplate);
       JobService.createJob(serverModel).then(
         function(response) {
-          $location.path('/jobs/' + response.data.id);
+          $state.go('namespace.job', {'id': response.data.id});
         },
         function(response) {
           $scope.createResponse = response;
