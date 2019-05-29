@@ -284,7 +284,16 @@ def _setup_tornado_app():
         (rf"{prefix}api/v2/tokens/?", v1.token.TokenListAPI),
         (rf"{prefix}api/v2/tokens/(\w+)/?", v1.token.TokenAPI),
 
+        (rf"{prefix}api/v2/namespaces/(\w+)/admin/?", v2.admin.AdminAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/commands/?", v2.command.CommandListAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/commands/(\w+)/?", v2.command.CommandAPI),
         (rf"{prefix}api/v2/namespaces/(\w+)/instances/(\w+)/?", v2.instance.InstanceAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/jobs/?", v2.job.JobListAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/jobs/(\w+)/?", v2.job.JobAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/queues/?", v2.queue.QueueListAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/queues/([\w\.-]+)/?", v2.queue.QueueAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/requests/?", v2.request.RequestListAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/requests/(\w+)/?", v2.request.RequestAPI),
         (rf"{prefix}api/v2/namespaces/(\w+)/systems/?", v2.system.SystemListAPI),
         (rf"{prefix}api/v2/namespaces/(\w+)/systems/(\w+)/?", v2.system.SystemAPI),
     ]
