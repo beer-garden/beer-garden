@@ -196,7 +196,7 @@ export default function requestViewController(
       parameters: request.parameters,
     };
     $state.go(
-      'command',
+      'namespace.command',
       {
         name: request.command,
         systemName: request.system,
