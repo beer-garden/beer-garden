@@ -92,7 +92,7 @@ export default function adminQueueController(
       .renderWith(function(data, type, full) {
         let version = $rootScope.getVersionForUrl($rootScope.findSystemByID(full.system_id));
         return '<a ui-sref=' +
-               '"system({name: \'' + full.system+ '\', version: \'' + version + '\'})">' +
+               '"namespace.system({name: \'' + full.system+ '\', version: \'' + version + '\'})">' +
                (full.display || data) + '</a>';
       }),
     DTColumnBuilder

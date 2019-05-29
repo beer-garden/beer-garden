@@ -33,7 +33,10 @@
           <td>{{command.name}}</td>
           <td>{{data.version}}</td>
           <td>{{ command.description || "No Description Provided" }}</td>
-          <td><a class="btn btn-primary center-block" ui-sref="command(getCommandStateParams(command))">Make it Happen!</a></td>
+          <td>
+            <a ui-sref="namespace.command(getCommandStateParams(command))"
+               class="btn btn-primary center-block">Make it Happen!</a>
+          </td>
         </tr>
       </tbody>
     </table>

@@ -86,7 +86,7 @@
         </li>
 
         <li>
-          <a ui-sref="about" ui-sref-active="active">About</a>
+          <a ui-sref="namespace.about" ui-sref-active="active">About</a>
         </li>
       </ul>
       <!-- Navbar Top End -->
@@ -133,21 +133,21 @@
 
             </li>
             <li ng-show="hasPermission(user, 'bg-command-read')">
-              <a ui-sref="commands"
+              <a ui-sref="namespace.commands"
                  ng-class="{active: ($state.current.name.startsWith('command'))}">
                 <i class="fa fa-fw fa-send-o"></i>
                 <span>Commands</span>
               </a>
             </li>
             <li ng-show="hasPermission(user, 'bg-request-read')">
-              <a ui-sref="requests"
+              <a ui-sref="namespace.requests"
                  ng-class="{active: ($state.current.name.startsWith('request'))}">
                 <i class="fa fa-fw fa-tasks"></i>
                 <span>Requests</span>
               </a>
             </li>
             <li ng-show="hasPermission(user, 'bg-job-read')">
-              <a ui-sref="jobs"
+              <a ui-sref="namespace.jobs"
                  ng-class="{active: ($state.current.name.startsWith('job'))}">
                 <i class="fa fa-fw fa-calendar"></i>
                 <span>Scheduler</span>
@@ -161,13 +161,13 @@
               </a>
               <ul class="nav nav-second-level" ng-cloak>
                 <li>
-                  <a ui-sref="system_admin" ui-sref-active="active">
+                  <a ui-sref="namespace.system_admin" ui-sref-active="active">
                     <i class="fa fa-power-off"></i>
                     <span>Systems Management</span>
                   </a>
                 </li>
                 <li ng-show="hasPermission(user, 'bg-queue-read')">
-                  <a ui-sref="queues" ui-sref-active="active">
+                  <a ui-sref="namespace.queues" ui-sref-active="active">
                     <i class="fa fa-database"></i>
                     <span>Queue Management</span>
                   </a>
