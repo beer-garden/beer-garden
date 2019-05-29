@@ -51,7 +51,7 @@ export default function landingController(
     $scope.response = undefined;
     $scope.data = {};
 
-    SystemService.getSystems($stateParams.namespace, false).then(
+    SystemService.getSystems({dereferenceNested: false}).then(
       $scope.successCallback,
       $scope.failureCallback
     );

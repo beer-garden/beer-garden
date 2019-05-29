@@ -312,7 +312,7 @@ export default function commandViewController(
   const findAndLoadSystem = function(systemName, systemVersion) {
     return $rootScope.findSystem(systemName, systemVersion).then(
       (bareSystem) => {
-        return SystemService.getSystem(bareSystem.id, true);
+        return SystemService.getSystem(bareSystem.id);
       }
     );
   };

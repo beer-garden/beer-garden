@@ -108,7 +108,8 @@ export default function appRun(
 
   $rootScope.loadSystems = function() {
     $rootScope.systemsPromise = SystemService.getSystems(
-        $rootScope.getCurrentNamespace(), false, 'id,name,version').then(
+        {dereferenceNested: false, includeFields: 'id,name,version'}
+      ).then(
       (response) => {
         $rootScope.systems = response.data;
       },
