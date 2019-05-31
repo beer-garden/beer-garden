@@ -9,7 +9,7 @@ from bg_utils.mongo.models import Job
 from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
-from brew_view.scheduler.runner import run_job
+from brew_view.scheduler import run_job
 from brewtils.schemas import JobSchema
 
 

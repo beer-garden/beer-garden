@@ -32,7 +32,7 @@ from brew_view.publishers import (
     TornadoPikaPublisher,
     WebsocketPublisher,
 )
-from brew_view.scheduler.jobstore import BGJobStore
+from brew_view.scheduler import BGJobStore
 from brew_view.specification import get_default_logging_config
 from brewtils.models import Event, Events
 from brewtils.rest import normalize_url_prefix

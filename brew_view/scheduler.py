@@ -1,11 +1,70 @@
 # -*- coding: utf-8 -*-
-
+from apscheduler.job import Job as APJob
 from apscheduler.jobstores.base import BaseJobStore
+from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.date import DateTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 from mongoengine import DoesNotExist
 from pytz import utc
 
+import brew_view
 from bg_utils.mongo.models import Job as BGJob
-from brew_view.scheduler import db_to_scheduler
+
+
+def construct_trigger(trigger_type, bg_trigger):
+    """Construct an apscheduler trigger based on type and mongo document."""
+    trigger_type = trigger_type
+    trigger_kwargs = bg_trigger.get_scheduler_kwargs()
+    if trigger_type == "date":
+        return DateTrigger(**trigger_kwargs)
+    elif trigger_type == "interval":
+        return IntervalTrigger(**trigger_kwargs)
+    elif trigger_type == "cron":
+        return CronTrigger(**trigger_kwargs)
+    else:
+        raise ValueError("Invalid trigger type %s" % trigger_type)
+
+
+def db_to_scheduler(document, scheduler, alias="beer_garden"):
+    """Convert a database job to a scheduler's job."""
+    job = APJob.__new__(APJob)
+    if document.next_run_time:
+        next_run_time = utc.localize(document.next_run_time)
+    else:
+        next_run_time = None
+    state = {
+        "id": document.id,
+        "func": "brew_view.scheduler:run_job",
+        "trigger": construct_trigger(document.trigger_type, document.trigger),
+        "executor": "default",
+        "args": (),
+        "kwargs": {
+            "request_template": document.request_template,
+            "job_id": str(document.id),
+        },
+        "name": document.name,
+        "misfire_grace_time": document.misfire_grace_time,
+        "coalesce": document.coalesce,
+        "max_instances": 3,
+        "next_run_time": next_run_time,
+    }
+    job.__setstate__(state)
+    job._scheduler = scheduler
+    job._jobstore_alias = alias
+    return job
+
+
+def run_job(job_id, request_template):
+    """Spawned by the scheduler, this will kick off a new request.
+
+    This method is meant to be run in a separate process.
+
+    Args:
+        job_id: The Beer-Garden job ID that triggered this event.
+        request_template: Request template specified by the job.
+    """
+    request_template.metadata["_bg_job_id"] = job_id
+    brew_view.easy_client.create_request(request_template)
 
 
 class BGJobStore(BaseJobStore):
