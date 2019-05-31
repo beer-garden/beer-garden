@@ -794,6 +794,7 @@ class Job(Document, BrewtilsJob):
     status = StringField(
         required=True, choices=BrewtilsJob.STATUS_TYPES, default="RUNNING"
     )
+    max_instances = IntField(default=3, min_value=1)
 
     def __str__(self):
         return BrewtilsJob.__str__(self)
