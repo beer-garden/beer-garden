@@ -679,6 +679,7 @@ class IntervalTrigger(EmbeddedDocument, BrewtilsIntervalTrigger):
     end_date = DateTimeField(required=False)
     timezone = StringField(required=False, default="utc", chocies=pytz.all_timezones)
     jitter = IntField(required=False)
+    reschedule_on_finish = BooleanField(required=False, default=False)
 
     def __str__(self):
         return BrewtilsIntervalTrigger.__str__(self)
@@ -698,6 +699,7 @@ class IntervalTrigger(EmbeddedDocument, BrewtilsIntervalTrigger):
             "end_date",
             "timezone",
             "jitter",
+            "reschedule_on_finish",
         ]
 
     def get_scheduler_kwargs(self):
