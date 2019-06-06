@@ -120,6 +120,7 @@ export default function jobService($http) {
     serviceModel['trigger'] = getTrigger(formModel['trigger_type'], formModel);
     serviceModel['request_template'] = requestTemplate;
     serviceModel['coalesce'] = formModel['coalesce'];
+    serviceModel['max_instances'] = formModel['max_instances'];
     return serviceModel;
   };
 
@@ -213,6 +214,13 @@ export default function jobService($http) {
         'title': 'Coalesce',
         'type': 'boolean',
         'default': true,
+      },
+      'max_instances': {
+        'title': 'Max Instances',
+        'description': 'Maximum number of concurrent job executions.',
+        'type': 'integer',
+        'minimum': 1,
+        'default': 3,
       },
       'run_date': {
         'title': 'Run Date',
@@ -358,6 +366,7 @@ export default function jobService($http) {
               'items': [
                 'coalesce',
                 'misfire_grace_time',
+                'max_instances',
               ],
             },
             {
