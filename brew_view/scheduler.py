@@ -3,12 +3,20 @@ from apscheduler.job import Job as APJob
 from apscheduler.jobstores.base import BaseJobStore
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
-from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from mongoengine import DoesNotExist
 from pytz import utc
 
 import brew_view
 from bg_utils.mongo.models import Job as BGJob
+
+
+class IntervalTrigger(APInterval):
+    """Beergarden implementation of an apscheduler IntervalTrigger"""
+
+    def __init__(self, *args, **kwargs):
+        self.reschedule_on_finish = kwargs.pop("reschedule_on_finish", False)
+        super(IntervalTrigger, self).__init__(*args, **kwargs)
 
 
 def construct_trigger(trigger_type, bg_trigger):
@@ -64,7 +72,15 @@ def run_job(job_id, request_template):
         request_template: Request template specified by the job.
     """
     request_template.metadata["_bg_job_id"] = job_id
-    brew_view.easy_client.create_request(request_template)
+
+    brew_view.easy_client.create_request(request_template, blocking=True)
+
+    # Be a little careful here as the job could have been removed before this
+    job = brew_view.request_scheduler.get_job(job_id)
+    if job and getattr(job.trigger, "reschedule_on_finish", False):
+        # This essentially resets the timer on this job, which has the effect of
+        # making the wait time start whenever the job finishes
+        brew_view.request_scheduler.reschedule_job(job_id, trigger=job.trigger)
 
 
 class BGJobStore(BaseJobStore):
