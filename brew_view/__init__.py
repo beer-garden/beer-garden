@@ -145,10 +145,10 @@ def shutdown():
     This execution is normally scheduled by the signal handler.
     """
     if request_scheduler.running:
-        logger.info("Stopping scheduler")
-        request_scheduler.shutdown(wait=False)
+        logger.info("Pausing scheduler - no more jobs will be run")
+        yield request_scheduler.pause()
 
-    logger.info("Stopping HTTP server")
+    logger.info("Stopping server for new HTTP connections")
     server.stop()
 
     if event_publishers:
@@ -157,6 +157,15 @@ def shutdown():
 
         logger.info("Shutting down event publishers")
         yield list(filter(lambda x: isinstance(x, Future), event_publishers.shutdown()))
+
+    # We need to do this before the scheduler shuts down completely in order to kick any
+    # currently waiting request creations
+    logger.info("Closing all open HTTP connections")
+    yield server.close_all_connections()
+
+    if request_scheduler.running:
+        logger.info("Shutting down scheduler")
+        yield request_scheduler.shutdown(wait=False)
 
     logger.info("Stopping IO loop")
     io_loop.add_callback(io_loop.stop)
