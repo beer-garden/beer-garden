@@ -75,9 +75,13 @@ def run_job(job_id, request_template):
 
     brew_view.easy_client.create_request(request_template, blocking=True)
 
-    # Be a little careful here as the job could have been removed before this
+    # Be a little careful here as the job could have been removed or paused
     job = brew_view.request_scheduler.get_job(job_id)
-    if job and getattr(job.trigger, "reschedule_on_finish", False):
+    if (
+        job
+        and job.next_run_time is not None
+        and getattr(job.trigger, "reschedule_on_finish", False)
+    ):
         # This essentially resets the timer on this job, which has the effect of
         # making the wait time start whenever the job finishes
         brew_view.request_scheduler.reschedule_job(job_id, trigger=job.trigger)
