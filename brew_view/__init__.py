@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import ssl
 from apispec import APISpec
-from apscheduler.executors.tornado import TornadoExecutor
+from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.tornado import TornadoScheduler
 from functools import partial
 from prometheus_client.exposition import start_http_server
@@ -237,13 +237,12 @@ def _setup_application():
 
 
 def _setup_scheduler():
-    jobstores = {"beer_garden": BGJobStore()}
-    # TODO: Look at creating a custom executor using process pools
-    executors = {"default": TornadoExecutor(config.scheduler.max_workers)}
+    job_stores = {"beer_garden": BGJobStore()}
+    executors = {"default": APThreadPoolExecutor(config.scheduler.max_workers)}
     job_defaults = config.scheduler.job_defaults.to_dict()
 
     return TornadoScheduler(
-        jobstores=jobstores,
+        jobstores=job_stores,
         executors=executors,
         job_defaults=job_defaults,
         timezone=utc,
