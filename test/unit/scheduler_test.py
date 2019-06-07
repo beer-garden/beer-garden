@@ -8,6 +8,7 @@ from mock import patch
 from mongoengine import connect
 from pytz import utc
 
+import brew_view
 from bg_utils.mongo.models import Job
 from brew_view.scheduler import BGJobStore
 from brew_view.scheduler import run_job
@@ -41,11 +42,15 @@ def ap_job(mongo_job, bg_request_template):
     return APJob(**job_kwargs)
 
 
-def test_run_job(bg_request_template):
+def test_run_job(monkeypatch, bg_request_template):
+    mock_scheduler = Mock()
+    mock_scheduler.get_job.return_value = None
+    monkeypatch.setattr(brew_view, "request_scheduler", mock_scheduler)
+
     with patch("brew_view.easy_client") as client_mock:
         run_job("job_id", bg_request_template)
 
-    client_mock.create_request.assert_called_with(bg_request_template)
+    client_mock.create_request.assert_called_with(bg_request_template, blocking=True)
     assert bg_request_template.metadata["_bg_job_id"] == "job_id"
 
 
