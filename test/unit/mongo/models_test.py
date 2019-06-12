@@ -401,6 +401,7 @@ class TriggerTest(unittest.TestCase):
             "end_date": None,
             "timezone": pytz.utc,
             "jitter": None,
+            "reschedule_on_finish": False,
         }
         self.assertEqual(self.interval.get_scheduler_kwargs(), expected)
 
