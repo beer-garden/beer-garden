@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from apscheduler.job import Job as APJob
 from apscheduler.jobstores.base import BaseJobStore
 from apscheduler.triggers.cron import CronTrigger
@@ -9,6 +11,8 @@ from pytz import utc
 
 import brew_view
 from bg_utils.mongo.models import Job as BGJob
+
+logger = logging.getLogger(__name__)
 
 
 class IntervalTrigger(APInterval):
@@ -165,9 +169,7 @@ class BGJobStore(BaseJobStore):
             try:
                 jobs.append(db_to_scheduler(document, self._scheduler, self._alias))
             except BaseException:
-                self._logger.exception(
-                    'Unable to restore job "%s" -- removing it' % document.id
-                )
+                logger.exception('Unable to restore job "%s", removing' % document.id)
                 failed_jobs.append(document)
 
         # Remove all the jobs we failed to restore
