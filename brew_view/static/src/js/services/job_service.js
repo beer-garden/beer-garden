@@ -93,6 +93,7 @@ export default function jobService($http) {
         'start_date': formModel['interval_start_date'],
         'end_date': formModel['interval_end_date'],
         'timezone': formModel['interval_timezone'],
+        'reschedule_on_finish': formModel['interval_reschedule_on_finish'],
       };
     } else {
       return {
@@ -120,6 +121,7 @@ export default function jobService($http) {
     serviceModel['trigger'] = getTrigger(formModel['trigger_type'], formModel);
     serviceModel['request_template'] = requestTemplate;
     serviceModel['coalesce'] = formModel['coalesce'];
+    serviceModel['max_instances'] = formModel['max_instances'];
     return serviceModel;
   };
 
@@ -145,6 +147,7 @@ export default function jobService($http) {
     'interval_end_date',
     'interval_timezone',
     'interval_jitter',
+    'interval_reschedule_on_finish',
   ];
   JobService.DATE_KEYS = [
     'run_date',
@@ -175,6 +178,7 @@ export default function jobService($http) {
           'interval_end_date',
           'interval_timezone',
           'interval_jitter',
+          'interval_reschedule_on_finish',
         ].includes(key)) {
           requiredKeys.push(key);
         }
@@ -213,6 +217,13 @@ export default function jobService($http) {
         'title': 'Coalesce',
         'type': 'boolean',
         'default': true,
+      },
+      'max_instances': {
+        'title': 'Max Instances',
+        'description': 'Maximum number of concurrent job executions.',
+        'type': 'integer',
+        'minimum': 1,
+        'default': 3,
       },
       'run_date': {
         'title': 'Run Date',
@@ -336,6 +347,11 @@ export default function jobService($http) {
         'type': 'integer',
         'minimum': 0,
       },
+      'interval_reschedule_on_finish': {
+        'title': 'Reschedule on Finish',
+        'description': 'Reset the interval timer when the job finishes.',
+        'type': 'boolean',
+      },
     },
   };
 
@@ -358,6 +374,7 @@ export default function jobService($http) {
               'items': [
                 'coalesce',
                 'misfire_grace_time',
+                'max_instances',
               ],
             },
             {
@@ -405,6 +422,7 @@ export default function jobService($http) {
                     {'key': 'interval_num', 'htmlClass': 'col-md-2'},
                     {'key': 'interval', 'htmlClass': 'col-md-2'},
                     {'key': 'interval_jitter', 'htmlClass': 'col-md-2'},
+                    {'key': 'interval_reschedule_on_finish', 'htmlClass': 'col-md-2'},
                   ],
                 },
                 {
