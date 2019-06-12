@@ -168,8 +168,10 @@ class BGJobStore(BaseJobStore):
         for document in BGJob.objects(**conditions).order_by("next_run_time"):
             try:
                 jobs.append(db_to_scheduler(document, self._scheduler, self._alias))
-            except BaseException:
-                logger.exception('Unable to restore job "%s", removing' % document.id)
+            except Exception:
+                logger.exception(
+                    "Removing job %s, exception occurred while restoring:" % document.id
+                )
                 failed_jobs.append(document)
 
         # Remove all the jobs we failed to restore
