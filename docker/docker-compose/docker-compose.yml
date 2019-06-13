@@ -1,6 +1,11 @@
 version: '3.5'
 
 x-definitions: &env
+    # IMPORTANT!!
+    # Change this to support both local and remote plugins
+    # Should be resolvable from inside and outside the docker network
+    BG_AMQ_PUBLISH_HOST: localhost
+
     BG_AMQ_ADMIN_HOST: rabbitmq
     BG_AMQ_ADMIN_USER: beer_garden
     BG_AMQ_ADMIN_PASSWORD: password
@@ -37,10 +42,6 @@ services:
             - ./localplugins:/plugins
         environment:
             <<: *env
-
-            # Change this to support remote plugins outside of docker
-            # Should be resolvable from inside and outside the docker network
-            BG_AMQ_PUBLISH_HOST: rabbitmq
         depends_on:
             - mongodb
             - rabbitmq
