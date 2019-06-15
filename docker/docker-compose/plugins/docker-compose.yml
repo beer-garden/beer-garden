@@ -1,8 +1,12 @@
 version: '3.5'
 
 x-definitions: &common-env
-    BG_HOST: brew-view
+    # IMPORTANT!!
+    # Comment this out when using the "secure" compose file
     BG_SSL_ENABLED: "False"
+
+    BG_HOST: localhost
+    BG_CA_CERT: /certs/ca_certificate.pem
 
 x-definitions: &complex-env
     DB_NAME: complex
@@ -10,8 +14,9 @@ x-definitions: &complex-env
 
 x-definitions: &plugin
     image: bgio/example-plugins
-    networks:
-        - bg-network
+    network_mode: host
+    volumes:
+        - ../data/certs/ca_certificate.pem:/certs/ca_certificate.pem
     environment:
         <<: *common-env
 
@@ -56,8 +61,3 @@ services:
     sleeper:
         command: ["sleeper"]
         <<: *plugin
-
-
-networks:
-    bg-network:
-        external: true

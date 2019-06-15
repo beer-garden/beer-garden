@@ -13,51 +13,50 @@ x-definitions: &env
 
     BG_AMQ_CONNECTIONS_ADMIN_USER: beer_garden
     BG_AMQ_CONNECTIONS_ADMIN_PASSWORD: password
+    BG_AMQ_CONNECTIONS_ADMIN_PORT: "15671"
+    BG_AMQ_CONNECTIONS_ADMIN_SSL_ENABLED: "true"
+    BG_AMQ_CONNECTIONS_ADMIN_SSL_CA_CERT: "/certs/ca_certificate.pem"
+
     BG_AMQ_CONNECTIONS_MESSAGE_USER: beer_garden
     BG_AMQ_CONNECTIONS_MESSAGE_PASSWORD: password
+    BG_AMQ_CONNECTIONS_MESSAGE_PORT: "5671"
+    BG_AMQ_CONNECTIONS_MESSAGE_SSL_ENABLED: "true"
+    BG_AMQ_CONNECTIONS_MESSAGE_SSL_CA_CERT: "/certs/ca_certificate.pem"
+
+    BG_WEB_SSL_ENABLED: "true"
+    BG_WEB_CA_CERT: "/certs/ca_certificate.pem"
+    BG_WEB_SSL_PUBLIC_KEY: /certs/server_certificate.pem
+    BG_WEB_SSL_PRIVATE_KEY: /certs/server_key.pem
 
 services:
     brew-view:
         image: bgio/brew-view
         networks:
             - bg-network
+        volumes:
+            - ../data/certs:/certs
         ports:
             - "2337:2337"
             - "2338:2338"
         environment:
             <<: *env
-            # We expose grafana for you, but you can change this to an
-            # external grafana URL if you would like. It just adds a
-            # link in our About section if it is defined.
-            BG_METRICS_URL: http://localhost:3000
         depends_on:
             - mongodb
             - rabbitmq
 
     bartender:
-        image: bgio/bartender
+        image: bgio/bartender:unstable
         networks:
             - bg-network
         volumes:
-            - ./data/localplugins:/plugins
+            - ../data/localplugins:/plugins
+            - ../data/certs:/certs
         environment:
             <<: *env
         depends_on:
             - mongodb
             - rabbitmq
             - brew-view
-
-    grafana:
-        image: grafana/grafana:5.2.3
-        ports:
-            - "3000:3000"
-        volumes:
-            - ./data/grafana/provisioning:/etc/grafana/provisioning
-            - ./data/grafana/dashboards:/var/lib/grafana/dashboards
-        networks:
-            - bg-network
-        depends_on:
-            - prometheus
 
     mongodb:
         image: mongo:3.6
@@ -68,29 +67,36 @@ services:
             - mongo-config:/data/configdb
         restart: always
 
-    prometheus:
-        image: prom/prometheus:v2.3.2
-        ports:
-          - "9091:9090"
-        networks:
-            - bg-network
-        volumes:
-            - ./data/prometheus:/prometheus-data
-        command:
-            --config.file=/prometheus-data/prometheus.yml
-
     rabbitmq:
         image: rabbitmq:management-alpine
+        hostname: rabbitmq
         networks:
             - bg-network
         environment:
-            - RABBITMQ_DEFAULT_USER=beer_garden
-            - RABBITMQ_DEFAULT_PASS=password
+            RABBITMQ_DEFAULT_USER: beer_garden
+            RABBITMQ_DEFAULT_PASS: password
+
+            RABBITMQ_SSL_CACERTFILE: /certs/ca_certificate.pem
+            RABBITMQ_SSL_CERTFILE: /certs/server_certificate.pem
+            RABBITMQ_SSL_DEPTH: 2
+            RABBITMQ_SSL_FAIL_IF_NO_PEER_CERT: "false"
+            RABBITMQ_SSL_KEYFILE: /certs/server_key.pem
+            RABBITMQ_SSL_VERIFY: verify_peer
+
+            RABBITMQ_MANAGEMENT_SSL_CACERTFILE: /certs/ca_certificate.pem
+            RABBITMQ_MANAGEMENT_SSL_CERTFILE: /certs/server_certificate.pem
+            RABBITMQ_MANAGEMENT_SSL_DEPTH: 2
+            RABBITMQ_MANAGEMENT_SSL_FAIL_IF_NO_PEER_CERT: "false"
+            RABBITMQ_MANAGEMENT_SSL_KEYFILE: /certs/server_key.pem
+            RABBITMQ_MANAGEMENT_SSL_VERIFY: verify_peer
         ports:
+            - "5671:5671"
             - "5672:5672"
+            - "15671:15671"
             - "15672:15672"
         volumes:
             - rabbitmq-home:/var/lib/rabbitmq
+            - ../data/certs:/certs
 
 networks:
     bg-network:
