@@ -1,0 +1,112 @@
+version: '3.5'
+
+x-definitions: &env
+    # IMPORTANT!!
+    # Change this to support both local and remote plugins
+    # Should be resolvable from inside and outside the docker network
+    #BG_AMQ_PUBLISH_HOST: bg2.delilah.sys
+    BG_PUBLISH_HOSTNAME: localhost
+
+    BG_AMQ_HOST: rabbitmq
+    BG_BACKEND_HOST: bartender
+    BG_DB_HOST: mongodb
+    BG_WEB_HOST: brew-view
+
+    BG_AMQ_CONNECTIONS_ADMIN_USER: beer_garden
+    BG_AMQ_CONNECTIONS_ADMIN_PASSWORD: password
+    BG_AMQ_CONNECTIONS_ADMIN_PORT: "15671"
+    BG_AMQ_CONNECTIONS_ADMIN_SSL_ENABLED: "true"
+    BG_AMQ_CONNECTIONS_ADMIN_SSL_CA_CERT: "/certs/ca_certificate.pem"
+
+    BG_AMQ_CONNECTIONS_MESSAGE_USER: beer_garden
+    BG_AMQ_CONNECTIONS_MESSAGE_PASSWORD: password
+    BG_AMQ_CONNECTIONS_MESSAGE_PORT: "5671"
+    BG_AMQ_CONNECTIONS_MESSAGE_SSL_ENABLED: "true"
+    BG_AMQ_CONNECTIONS_MESSAGE_SSL_CA_CERT: "/certs/ca_certificate.pem"
+
+    BG_WEB_SSL_ENABLED: "true"
+    BG_WEB_CA_CERT: "/certs/ca_certificate.pem"
+    BG_WEB_SSL_PUBLIC_KEY: /certs/server_certificate.pem
+    BG_WEB_SSL_PRIVATE_KEY: /certs/server_key.pem
+
+services:
+    brew-view:
+        image: bgio/brew-view
+        networks:
+            - bg-network
+        volumes:
+            - ../data/certs:/certs
+        ports:
+            - "2337:2337"
+            - "2338:2338"
+        environment:
+            <<: *env
+        depends_on:
+            - mongodb
+            - rabbitmq
+
+    bartender:
+        image: bgio/bartender:unstable
+        networks:
+            - bg-network
+        volumes:
+            - ../data/localplugins:/plugins
+            - ../data/certs:/certs
+        environment:
+            <<: *env
+        depends_on:
+            - mongodb
+            - rabbitmq
+            - brew-view
+
+    mongodb:
+        image: mongo:3.6
+        networks:
+            - bg-network
+        volumes:
+            - mongo-data:/data/db
+            - mongo-config:/data/configdb
+        restart: always
+
+    rabbitmq:
+        image: rabbitmq:management-alpine
+        hostname: rabbitmq
+        networks:
+            - bg-network
+        environment:
+            RABBITMQ_DEFAULT_USER: beer_garden
+            RABBITMQ_DEFAULT_PASS: password
+
+            RABBITMQ_SSL_CACERTFILE: /certs/ca_certificate.pem
+            RABBITMQ_SSL_CERTFILE: /certs/server_certificate.pem
+            RABBITMQ_SSL_DEPTH: 2
+            RABBITMQ_SSL_FAIL_IF_NO_PEER_CERT: "false"
+            RABBITMQ_SSL_KEYFILE: /certs/server_key.pem
+            RABBITMQ_SSL_VERIFY: verify_peer
+
+            RABBITMQ_MANAGEMENT_SSL_CACERTFILE: /certs/ca_certificate.pem
+            RABBITMQ_MANAGEMENT_SSL_CERTFILE: /certs/server_certificate.pem
+            RABBITMQ_MANAGEMENT_SSL_DEPTH: 2
+            RABBITMQ_MANAGEMENT_SSL_FAIL_IF_NO_PEER_CERT: "false"
+            RABBITMQ_MANAGEMENT_SSL_KEYFILE: /certs/server_key.pem
+            RABBITMQ_MANAGEMENT_SSL_VERIFY: verify_peer
+        ports:
+            - "5671:5671"
+            - "5672:5672"
+            - "15671:15671"
+            - "15672:15672"
+        volumes:
+            - rabbitmq-home:/var/lib/rabbitmq
+            - ../data/certs:/certs
+
+networks:
+    bg-network:
+        driver: bridge
+        name: bg-network
+
+volumes:
+    plugins:
+    plugin-logs:
+    mongo-data:
+    mongo-config:
+    rabbitmq-home:
