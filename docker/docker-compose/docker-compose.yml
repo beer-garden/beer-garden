@@ -39,7 +39,7 @@ services:
         networks:
             - bg-network
         volumes:
-            - ./localplugins:/plugins
+            - ./data/localplugins:/plugins
         environment:
             <<: *env
         depends_on:
@@ -52,8 +52,8 @@ services:
         ports:
             - "3000:3000"
         volumes:
-            - ./grafana/provisioning:/etc/grafana/provisioning
-            - ./grafana/dashboards:/var/lib/grafana/dashboards
+            - ./data/grafana/provisioning:/etc/grafana/provisioning
+            - ./data/grafana/dashboards:/var/lib/grafana/dashboards
         networks:
             - bg-network
         depends_on:
@@ -75,7 +75,7 @@ services:
         networks:
             - bg-network
         volumes:
-            - ./prometheus:/prometheus-data
+            - ./data/prometheus:/prometheus-data
         command:
             --config.file=/prometheus-data/prometheus.yml
 
