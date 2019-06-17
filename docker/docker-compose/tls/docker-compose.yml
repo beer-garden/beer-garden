@@ -45,7 +45,7 @@ services:
             - rabbitmq
 
     bartender:
-        image: bgio/bartender:unstable
+        image: bgio/bartender
         networks:
             - bg-network
         volumes:
