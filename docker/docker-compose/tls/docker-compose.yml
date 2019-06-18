@@ -1,15 +1,22 @@
 version: '3.5'
 
-x-definitions: &env
-    # IMPORTANT!!
-    # Change this to support both local and remote plugins
-    # Should be resolvable from inside and outside the docker network
-    BG_PUBLISH_HOSTNAME: localhost
+# TO USE A REAL CERTIFICATE
+# First, replace the server_certificate.pem and server_key.pem with
+# the real certificate and key.
+#
+# Next, replace the ca_certificate.pem file with the correct
+# certificate authority bundle.
+#
+# There are three values in the section below marked with # Replace
+# Change each of these values to the 'real' host name.
 
-    BG_AMQ_HOST: rabbitmq
+x-definitions: &env
+    BG_PUBLISH_HOSTNAME: localhost  # Replace
+
+    BG_AMQ_HOST: rabbitmq  # Replace
     BG_BACKEND_HOST: bartender
     BG_DB_HOST: mongodb
-    BG_WEB_HOST: brew-view
+    BG_WEB_HOST: brew-view  # Replace
 
     BG_AMQ_CONNECTIONS_ADMIN_USER: beer_garden
     BG_AMQ_CONNECTIONS_ADMIN_PASSWORD: password
@@ -40,6 +47,8 @@ services:
             - "2338:2338"
         environment:
             <<: *env
+            # For brew-view web host is really interface to bind
+            BG_WEB_HOST: 0.0.0.0
         depends_on:
             - mongodb
             - rabbitmq
