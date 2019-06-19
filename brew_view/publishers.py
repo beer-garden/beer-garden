@@ -1,4 +1,5 @@
 import logging
+
 from datetime import timedelta
 from functools import wraps
 
@@ -171,7 +172,7 @@ class TornadoPikaPublisher(BeergardenPublisher, PikaClient):
     @coroutine
     def _open_connection(self):
         self._connection = yield self.coroutiner.convert(TornadoConnection)(
-            parameters=self._conn_params, stop_ioloop_on_close=False
+            parameters=self._conn_params
         )
 
     @coroutine
