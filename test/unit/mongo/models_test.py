@@ -17,7 +17,7 @@ from bg_utils.mongo.models import (
     IntervalTrigger,
     CronTrigger,
 )
-from brewtils.errors import BrewmasterModelValidationError
+from brewtils.errors import ModelValidationError
 from brewtils.schemas import RequestTemplateSchema
 
 
@@ -35,24 +35,24 @@ class CommandTest(unittest.TestCase):
 
     def test_clean_empty_name(self):
         command = Command(name="")
-        self.assertRaises(BrewmasterModelValidationError, command.clean)
+        self.assertRaises(ModelValidationError, command.clean)
 
     def test_clean_fail_bad_command_type(self):
         command = Command(
             name="foo", description="bar", command_type="BAD TYPE", parameters=[]
         )
-        self.assertRaises(BrewmasterModelValidationError, command.clean)
+        self.assertRaises(ModelValidationError, command.clean)
 
     def test_clean_fail_bad_output_type(self):
         command = Command(
             name="foo", description="bar", output_type="BAD TYPE", parameters=[]
         )
-        self.assertRaises(BrewmasterModelValidationError, command.clean)
+        self.assertRaises(ModelValidationError, command.clean)
 
     def test_clean_fail_duplicate_parameter_keys(self):
         parameter = Parameter(key="foo", optional=False)
         command = Command(name="foo", parameters=[parameter, parameter])
-        self.assertRaises(BrewmasterModelValidationError, command.clean)
+        self.assertRaises(ModelValidationError, command.clean)
 
 
 class InstanceTest(unittest.TestCase):
@@ -66,7 +66,7 @@ class InstanceTest(unittest.TestCase):
 
     def test_clean_bad_status(self):
         instance = Instance(status="BAD")
-        self.assertRaises(BrewmasterModelValidationError, instance.clean)
+        self.assertRaises(ModelValidationError, instance.clean)
 
 
 class ChoicesTest(unittest.TestCase):
@@ -81,19 +81,16 @@ class ChoicesTest(unittest.TestCase):
 
     def test_clean_value_types(self):
         self.assertRaises(
-            BrewmasterModelValidationError,
-            Choices(type="static", value="SHOULD_BE_A_LIST").clean,
+            ModelValidationError, Choices(type="static", value="SHOULD_BE_A_LIST").clean
         )
+        self.assertRaises(ModelValidationError, Choices(type="url", value=[1, 2]).clean)
         self.assertRaises(
-            BrewmasterModelValidationError, Choices(type="url", value=[1, 2]).clean
-        )
-        self.assertRaises(
-            BrewmasterModelValidationError, Choices(type="command", value=[1, 2]).clean
+            ModelValidationError, Choices(type="command", value=[1, 2]).clean
         )
 
     def test_clean_missing_dict_keys(self):
         self.assertRaises(
-            BrewmasterModelValidationError,
+            ModelValidationError,
             Choices(type="command", value={"command": "foo"}).clean,
         )
 
@@ -127,15 +124,14 @@ class ChoicesTest(unittest.TestCase):
         }
 
         self.assertRaises(
-            BrewmasterModelValidationError,
+            ModelValidationError,
             Choices(type="command", value=command_dict["command"]).clean,
         )
         self.assertRaises(
-            BrewmasterModelValidationError,
-            Choices(type="command", value=command_dict).clean,
+            ModelValidationError, Choices(type="command", value=command_dict).clean
         )
         self.assertRaises(
-            BrewmasterModelValidationError,
+            ModelValidationError,
             Choices(type="url", value="http://foo?arg=${val").clean,
         )
 
@@ -158,13 +154,13 @@ class ParameterTest(unittest.TestCase):
 
     def test_clean_fail_nullable_optional_but_no_default(self):
         p = Parameter(key="foo", optional=True, default=None, nullable=False)
-        self.assertRaises(BrewmasterModelValidationError, p.clean)
+        self.assertRaises(ModelValidationError, p.clean)
 
     def test_clean_fail_duplicate_parameter_keys(self):
         nested = Parameter(key="foo")
         p = Parameter(key="foo", optional=False, parameters=[nested, nested])
 
-        self.assertRaises(BrewmasterModelValidationError, p.clean)
+        self.assertRaises(ModelValidationError, p.clean)
 
 
 class RequestTest(unittest.TestCase):
@@ -178,15 +174,15 @@ class RequestTest(unittest.TestCase):
 
     def test_clean_fail_bad_status(self):
         request = Request(system="foo", command="bar", status="bad")
-        self.assertRaises(BrewmasterModelValidationError, request.clean)
+        self.assertRaises(ModelValidationError, request.clean)
 
     def test_clean_fail_bad_command_type(self):
         request = Request(system="foo", command="bar", command_type="BAD")
-        self.assertRaises(BrewmasterModelValidationError, request.clean)
+        self.assertRaises(ModelValidationError, request.clean)
 
     def test_clean_fail_bad_output_type(self):
         request = Request(system="foo", command="bar", output_type="BAD")
-        self.assertRaises(BrewmasterModelValidationError, request.clean)
+        self.assertRaises(ModelValidationError, request.clean)
 
     @patch("bg_utils.mongo.models.Request.objects")
     def test_find_one_or_none_found(self, objects_mock):
@@ -253,12 +249,12 @@ class SystemTest(unittest.TestCase):
 
     def test_clean_fail_max_instances(self):
         self.default_system.instances.append(Instance(name="default2"))
-        self.assertRaises(BrewmasterModelValidationError, self.default_system.clean)
+        self.assertRaises(ModelValidationError, self.default_system.clean)
 
     def test_clean_fail_duplicate_instance_names(self):
         self.default_system.max_instances = 2
         self.default_system.instances.append(Instance(name="default"))
-        self.assertRaises(BrewmasterModelValidationError, self.default_system.clean)
+        self.assertRaises(ModelValidationError, self.default_system.clean)
 
     @patch("bg_utils.mongo.models.System.objects")
     def test_find_unique_system(self, objects_mock):
@@ -374,13 +370,13 @@ class SystemTest(unittest.TestCase):
 class JobTest(unittest.TestCase):
     def test_invalid_trigger_type(self):
         job = Job(trigger_type="INVALID_TRIGGER_TYPE")
-        with self.assertRaises(BrewmasterModelValidationError):
+        with self.assertRaises(ModelValidationError):
             job.clean()
 
     def test_trigger_mismatch(self):
         date_trigger = DateTrigger()
         job = Job(trigger_type="cron", trigger=date_trigger)
-        with self.assertRaises(BrewmasterModelValidationError):
+        with self.assertRaises(ModelValidationError):
             job.clean()
 
 

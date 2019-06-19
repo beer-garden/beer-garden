@@ -19,7 +19,7 @@ from bg_utils.mongo.models import (
     IntervalTrigger,
     CronTrigger,
 )
-from brewtils.errors import BrewmasterModelValidationError
+from brewtils.errors import ModelValidationError
 from brewtils.schema_parser import SchemaParser
 
 
@@ -54,4 +54,4 @@ class MongoParser(SchemaParser):
                 data, schema, from_string=from_string
             )
         except (TypeError, ValueError, MarshmallowError) as ex:
-            raise BrewmasterModelValidationError(str(ex))
+            raise ModelValidationError(str(ex))
