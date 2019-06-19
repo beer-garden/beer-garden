@@ -2,6 +2,7 @@ import unittest
 
 import mongoengine
 from mock import MagicMock, Mock, PropertyMock, patch, call
+from pika.exceptions import UnroutableError
 from pyrabbit2.http import HTTPError
 
 import bg_utils
@@ -60,7 +61,7 @@ class BartenderHandlerTest(unittest.TestCase):
         request = Mock()
         find_mock.return_value = request
         self.request_validator.validate_request.return_value = request
-        self.clients["pika"].publish_request.return_value = False
+        self.clients["pika"].publish_request.side_effect = UnroutableError("Nope")
 
         self.assertRaises(
             bg_utils.bg_thrift.PublishException, self.handler.processRequest, "id"
