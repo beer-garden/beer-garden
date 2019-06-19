@@ -226,9 +226,9 @@ class TestGenerateConfig(object):
         config_file = os.path.join(str(tmpdir), "config.yaml")
         logging_config_file = os.path.join(str(tmpdir), "logging.json")
 
-        bg_utils.generate_config_file(spec, [
-            "-c", config_file, "-l", logging_config_file
-        ])
+        bg_utils.generate_config_file(
+            spec, ["-c", config_file, "-l", logging_config_file]
+        )
 
         spec.add_source(label="config_file", source_type="yaml", filename=config_file)
         config = spec.load_config("config_file")

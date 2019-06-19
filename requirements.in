@@ -1,13 +1,13 @@
 
 # Runtime Dependencies
 -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
+mongoengine < 0.16
+passlib < 1.8
+ruamel.yaml < 0.16
+thriftpy2 < 0.5
+yapconf >= 0.3.3
 futures ; python_version < "3.0"
-mongoengine<0.16
-passlib<1.8
 ruamel.ordereddict ; python_version < "3.0"
-ruamel.yaml<0.16
-thriftpy2<0.5
-yapconf>=0.3.3
 
 # Documentation Dependencies
 sphinx<2
@@ -20,8 +20,9 @@ codecov
 coverage
 flake8
 mock
-pytest<4
-pytz<2019
+pytest < 4
+pytest-lazy-fixture
+pytz < 2019
 tox
 twine
 wheel
