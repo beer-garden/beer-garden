@@ -8,7 +8,7 @@ from bg_utils.mongo.models import Job
 from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
-from brew_view.scheduler.runner import run_job
+from brew_view.scheduler import run_job
 from brewtils.errors import ModelValidationError
 from brewtils.schemas import JobSchema
 
@@ -237,7 +237,7 @@ class JobListAPI(BaseHandler):
                 name=document.name,
                 misfire_grace_time=document.misfire_grace_time,
                 coalesce=document.coalesce,
-                max_instances=3,
+                max_instances=document.max_instances,
                 jobstore="beer_garden",
                 replace_existing=False,
                 id=str(document.id),

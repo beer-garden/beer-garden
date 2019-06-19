@@ -32,6 +32,7 @@ class JobAPITest(TestHandlerBase):
             "success_count": 0,
             "error_count": 0,
             "status": "RUNNING",
+            "max_instances": 3,
         }
         db_dict = copy.deepcopy(self.job_dict)
         db_dict["request_template"] = RequestTemplate(**db_dict["request_template"])
@@ -190,6 +191,7 @@ class JobListAPITest(TestHandlerBase):
             "success_count": 0,
             "error_count": 0,
             "status": "RUNNING",
+            "max_instances": 3,
         }
         db_dict = copy.deepcopy(self.job_dict)
         db_dict["request_template"] = RequestTemplate(**db_dict["request_template"])
