@@ -1,7 +1,7 @@
 import json
 import logging
+from collections import Sequence
 
-import collections.abc
 import re
 import six
 import urllib3
@@ -304,7 +304,7 @@ class RequestValidator(object):
         """Validate that the value(s) are below the specified maximum"""
         if value is not None and not command_parameter.optional:
             if command_parameter.maximum:
-                if isinstance(value, collections.abc.Sequence):
+                if isinstance(value, Sequence):
                     if len(value) > command_parameter.maximum:
                         raise ModelValidationError(
                             "Length %s is greater than the maximum allowed length (%s) "
@@ -327,7 +327,7 @@ class RequestValidator(object):
         """Validate that the value(s) are above the specified minimum"""
         if value is not None and not command_parameter.optional:
             if command_parameter.minimum:
-                if isinstance(value, collections.abc.Sequence):
+                if isinstance(value, Sequence):
                     if len(value) < command_parameter.minimum:
                         raise ModelValidationError(
                             "Length %s is less than the minimum allowed length (%s) "
