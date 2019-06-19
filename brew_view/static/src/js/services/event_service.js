@@ -21,7 +21,7 @@ export default function eventService($websocket, TokenService) {
     },
     connect: () => {
       if (window.WebSocket && !socketConnection) {
-        let eventUrl = window.location.protocol === 'https:' ? 'wss://' : 'ws://' +
+        let eventUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') +
           window.location.host +
           window.location.pathname +
           'api/v1/socket/events';
