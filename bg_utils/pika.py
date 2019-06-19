@@ -106,12 +106,9 @@ class TransientPikaClient(PikaClient):
             * *expiration* --
               Expiration to be included as part of the message properties
             * *confirm* --
-              If set to True return False if the message fails to be delivered to the broker
+              Flag indicating whether to operate in publisher-acknowledgements mode
             * *mandatory* --
-              If set to True return False if the message can not be routed to any queues
-        :return:
-            Boolean, behavior depends on setting of the confirm and mandatory flags.
-            If both are False then this method will always return True
+              Raise if the message can not be routed to any queues
         """
         with BlockingConnection(self._conn_params) as conn:
             channel = conn.channel()
@@ -126,7 +123,7 @@ class TransientPikaClient(PikaClient):
                 expiration=kwargs.get("expiration"),
             )
 
-            return channel.basic_publish(
+            channel.basic_publish(
                 exchange=self._exchange,
                 routing_key=kwargs["routing_key"],
                 body=message,
