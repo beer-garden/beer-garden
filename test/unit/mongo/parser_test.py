@@ -5,7 +5,7 @@ from datetime import datetime
 from bg_utils.mongo.fields import StatusInfo
 from bg_utils.mongo.models import Instance
 from bg_utils.mongo.parser import MongoParser
-from brewtils.errors import BrewmasterModelValidationError
+from brewtils.errors import ModelValidationError
 
 
 class ParserTest(unittest.TestCase):
@@ -41,16 +41,10 @@ class ParserTest(unittest.TestCase):
 
     def test_parse_none(self):
         self.assertRaises(
-            BrewmasterModelValidationError,
-            self.parser.parse_instance,
-            None,
-            from_string=True,
+            ModelValidationError, self.parser.parse_instance, None, from_string=True
         )
         self.assertRaises(
-            BrewmasterModelValidationError,
-            self.parser.parse_instance,
-            None,
-            from_string=False,
+            ModelValidationError, self.parser.parse_instance, None, from_string=False
         )
 
     def test_parse_empty(self):
@@ -59,13 +53,10 @@ class ParserTest(unittest.TestCase):
 
     def test_parse_error(self):
         self.assertRaises(
-            BrewmasterModelValidationError,
-            self.parser.parse_instance,
-            "",
-            from_string=True,
+            ModelValidationError, self.parser.parse_instance, "", from_string=True
         )
         self.assertRaises(
-            BrewmasterModelValidationError,
+            ModelValidationError,
             self.parser.parse_instance,
             "bad bad bad",
             from_string=True,
@@ -73,13 +64,13 @@ class ParserTest(unittest.TestCase):
 
     def test_parse_bad_input_type(self):
         self.assertRaises(
-            BrewmasterModelValidationError,
+            ModelValidationError,
             self.parser.parse_instance,
             ["list", "bad"],
             from_string=True,
         )
         self.assertRaises(
-            BrewmasterModelValidationError,
+            ModelValidationError,
             self.parser.parse_instance,
             {"bad": "bad"},
             from_string=True,
@@ -88,12 +79,12 @@ class ParserTest(unittest.TestCase):
     def test_parse_fail_validation(self):
         self.serialized_instance_dict["name"] = None
         self.assertRaises(
-            BrewmasterModelValidationError,
+            ModelValidationError,
             self.parser.parse_instance,
             self.serialized_instance_dict,
         )
         self.assertRaises(
-            BrewmasterModelValidationError,
+            ModelValidationError,
             self.parser.parse_instance,
             "bad bad bad",
             from_string=False,
