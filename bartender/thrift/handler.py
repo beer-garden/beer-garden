@@ -50,9 +50,11 @@ class BartenderHandler(object):
             request = self.request_validator.validate_request(request)
             request.save()
 
-            if not self.clients["pika"].publish_request(
-                request, confirm=True, mandatory=True
-            ):
+            try:
+                self.clients["pika"].publish_request(
+                    request, confirm=True, mandatory=True
+                )
+            except Exception:
                 msg = "Error while publishing request to queue (%s[%s]-%s %s)" % (
                     request.system,
                     request.system_version,
