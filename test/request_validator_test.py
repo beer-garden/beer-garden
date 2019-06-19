@@ -749,7 +749,7 @@ class TestValidateChoices(object):
             '["a", "b", "value"]',
             '["a", {"text": "text", "value": "value"}]',
             '["a", {"text": "b", "value": "2"}, "value"]',
-        ]
+        ],
     )
     def test_validate_url_choices(self, validator, response):
         session_mock = Mock()
