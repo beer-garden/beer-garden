@@ -55,6 +55,7 @@ pyjwt==1.7.1
 pymongo==3.8.0            # via mongoengine
 pyparsing==2.4.0          # via packaging
 pytest==3.10.1
+pytest-lazy-fixture==0.5.2
 python-box==3.3.0         # via yapconf
 pytz==2018.9
 pyyaml==5.1               # via watchdog
