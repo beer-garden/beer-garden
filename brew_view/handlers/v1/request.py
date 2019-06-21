@@ -26,6 +26,7 @@ from brewtils.errors import (
 )
 from brewtils.models import Events
 from brewtils.models import Request as BrewtilsRequest
+from brewtils.schema_parser import SchemaParser
 
 
 class RequestAPI(BaseHandler):
@@ -202,7 +203,7 @@ class RequestAPI(BaseHandler):
 
 class RequestListAPI(BaseHandler):
 
-    parser = MongoParser()
+    parser = SchemaParser()
     logger = logging.getLogger(__name__)
 
     indexes = [index["name"] for index in Request._meta["indexes"]]
@@ -467,70 +468,65 @@ class RequestListAPI(BaseHandler):
         if self.current_user:
             request_model.requester = self.current_user.username
 
-        # Ok, ready to save
-        request_model.save()
-        request_id = str(request_model.id)
-
-        # Set up the wait event BEFORE yielding the processRequest call
-        blocking = self.get_argument("blocking", default="").lower() == "true"
-        if blocking:
-            brew_view.request_map[request_id] = Event()
-
         with thrift_context() as client:
             try:
-                yield client.processRequest(request_id)
+                process_response = yield client.processRequest(
+                    self.parser.serialize_request(request_model)
+                )
             except bg_utils.bg_thrift.InvalidRequest as ex:
-                request_model.delete()
                 raise ModelValidationError(ex.message)
             except bg_utils.bg_thrift.PublishException as ex:
-                request_model.delete()
                 raise RequestPublishException(ex.message)
-            except Exception:
-                if request_model.id:
-                    request_model.delete()
-                raise
 
-        # Query for request from body id
-        req = Request.objects.get(id=request_id)
+        processed_request = self.parser.parse_request(
+            process_response, from_string=True
+        )
 
-        self.request.event_extras = {"request": req}
+        self.request.event_extras = {"request": processed_request}
 
         # Metrics
-        request_created(request_model)
+        request_created(processed_request)
 
-        if blocking:
+        if self.get_argument("blocking", default="").lower() == "true":
             # Publish metrics and event here here so they aren't skewed
             # See https://github.com/beer-garden/beer-garden/issues/190
             self.request.publish_metrics = False
+            self.request.publish_event = False
+
             http_api_latency_total.labels(
                 method=self.request.method.upper(),
                 route=self.prometheus_endpoint,
                 status=self.get_status(),
             ).observe(request_latency(self.request.created_time))
 
-            self.request.publish_event = False
             brew_view.event_publishers.publish_event(
                 self.request.event, **self.request.event_extras
             )
 
-            try:
+            # It's possible the request is already done by this point, so check
+            mongo_request = Request.objects.get(id=processed_request.id)
+            if mongo_request.status not in Request.COMPLETED_STATUSES:
                 timeout = self.get_argument("timeout", default=None)
                 delta = timedelta(seconds=int(timeout)) if timeout else None
 
-                event = brew_view.request_map.get(request_id)
+                try:
+                    wait_event = Event()
+                    brew_view.request_map[processed_request.id] = wait_event
 
-                yield event.wait(delta)
+                    yield wait_event.wait(delta)
 
-                request_model.reload()
-            except TimeoutError:
-                raise TimeoutExceededError(
-                    "Timeout exceeded for request %s" % request_id
-                )
-            finally:
-                brew_view.request_map.pop(request_id, None)
+                    mongo_request.reload()
+                except TimeoutError:
+                    raise TimeoutExceededError(
+                        f"Timeout exceeded for request {processed_request.id}"
+                    )
+                finally:
+                    brew_view.request_map.pop(processed_request.id, None)
+
+            processed_request = mongo_request
 
         self.set_status(201)
-        self.write(self.parser.serialize_request(request_model, to_string=False))
+        self.write(self.parser.serialize_request(processed_request, to_string=False))
 
     def _get_query_set(self):
         """Get Requests matching the HTTP request query parameters.
