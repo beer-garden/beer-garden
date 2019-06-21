@@ -21,14 +21,14 @@ from brewtils.errors import (
     RestError,
 )
 
+parser = MongoParser()
+
 
 class BartenderHandler(object):
     """Implements the thrift interface."""
 
-    def __init__(self):
-        self.parser = MongoParser()
-
-    def processRequest(self, request):
+    @staticmethod
+    def processRequest(request):
         """Validates and publishes a Request.
 
         :param str request: The Request to process
@@ -36,15 +36,16 @@ class BartenderHandler(object):
         :return: None
         """
         try:
-            return self.parser.serialize_request(
-                process_request(self.parser.parse_request(request, from_string=True))
+            return parser.serialize_request(
+                process_request(parser.parse_request(request, from_string=True))
             )
         except RequestPublishException as ex:
             raise bg_utils.bg_thrift.PublishException(str(ex))
         except (mongoengine.ValidationError, ModelValidationError, RestError) as ex:
             raise bg_utils.bg_thrift.InvalidRequest("", str(ex))
 
-    def initializeInstance(self, instance_id):
+    @staticmethod
+    def initializeInstance(instance_id):
         """Initializes an instance.
 
         :param instance_id: The ID of the instance
@@ -57,9 +58,10 @@ class BartenderHandler(object):
                 "", f"Database error initializing instance {instance_id}"
             )
 
-        return self.parser.serialize_instance(instance, to_string=True)
+        return parser.serialize_instance(instance, to_string=True)
 
-    def startInstance(self, instance_id):
+    @staticmethod
+    def startInstance(instance_id):
         """Starts an instance.
 
         :param instance_id: The ID of the instance
@@ -72,9 +74,10 @@ class BartenderHandler(object):
                 "", f"Couldn't find instance {instance_id}"
             )
 
-        return self.parser.serialize_instance(instance, to_string=True)
+        return parser.serialize_instance(instance, to_string=True)
 
-    def stopInstance(self, instance_id):
+    @staticmethod
+    def stopInstance(instance_id):
         """Stops an instance.
 
         :param instance_id: The ID of the instance
@@ -87,9 +90,10 @@ class BartenderHandler(object):
                 "", f"Couldn't find instance {instance_id}"
             )
 
-        return self.parser.serialize_instance(instance, to_string=True)
+        return parser.serialize_instance(instance, to_string=True)
 
-    def reloadSystem(self, system_id):
+    @staticmethod
+    def reloadSystem(system_id):
         """Reload a system configuration
 
         :param system_id: The system id
@@ -102,7 +106,8 @@ class BartenderHandler(object):
                 "", f"Couldn't find system {system_id}"
             )
 
-    def removeSystem(self, system_id):
+    @staticmethod
+    def removeSystem(system_id):
         """Removes a system from the registry if necessary.
 
         :param system_id: The system id
@@ -112,17 +117,13 @@ class BartenderHandler(object):
             remove_system(system_id)
         except mongoengine.DoesNotExist:
             raise bg_utils.bg_thrift.InvalidSystem(
-                "", f"Couldn't find system {system_id}"
+                system_id, f"Couldn't find system {system_id}"
             )
 
-    def rescanSystemDirectory(self):
+    @staticmethod
+    def rescanSystemDirectory():
         """Scans plugin directory and starts any new Systems"""
         rescan_system_directory()
-
-    def getAllQueueInfo(self):
-        return self.parser.serialize_queue(
-            get_all_queue_info(), to_string=True, many=True
-        )
 
     @staticmethod
     def getQueueMessageCount(queue_name):
@@ -134,7 +135,12 @@ class BartenderHandler(object):
         """
         return get_queue_message_count(queue_name)
 
-    def clearQueue(self, queue_name):
+    @staticmethod
+    def getAllQueueInfo():
+        return parser.serialize_queue(get_all_queue_info(), to_string=True, many=True)
+
+    @staticmethod
+    def clearQueue(queue_name):
         """Clear all Requests in the given queue
 
         Will iterate through all requests on a queue and mark them as "CANCELED".
@@ -147,16 +153,12 @@ class BartenderHandler(object):
         except NotFoundError as ex:
             raise bg_utils.bg_thrift.InvalidSystem(queue_name, str(ex))
 
-    def clearAllQueues(self):
-        """Clears all queues that Bartender knows about.
+    @staticmethod
+    def clearAllQueues():
+        """Clears all queues that Bartender knows about"""
+        clear_all_queues()
 
-        :return: None
-        """
-        try:
-            clear_all_queues()
-        except NotFoundError as ex:
-            raise bg_utils.bg_thrift.InvalidSystem("", str(ex))
-
-    def getVersion(self):
+    @staticmethod
+    def getVersion():
         """Gets the current version of the backend"""
         return bartender.__version__

@@ -11,6 +11,18 @@ from brewtils.models import Queue
 logger = logging.getLogger(__name__)
 
 
+def get_queue_message_count(queue_name):
+    """Gets the size of a queue
+
+    :param queue_name: The queue name
+    :return: number of messages currently on the queue
+    :raises Exception: If queue does not exist
+    """
+    logger.debug(f"Getting queue message count for {queue_name}")
+
+    return bartender.application.clients["pyrabbit"].get_queue_size(queue_name)
+
+
 def get_all_queue_info():
     """Get queue information for all queues
 
@@ -42,18 +54,6 @@ def get_all_queue_info():
             queues.append(queue)
 
     return queues
-
-
-def get_queue_message_count(queue_name):
-    """Gets the size of a queue
-
-    :param queue_name: The queue name
-    :return: number of messages currently on the queue
-    :raises Exception: If queue does not exist
-    """
-    logger.debug(f"Getting queue message count for {queue_name}")
-
-    return bartender.application.clients["pyrabbit"].get_queue_size(queue_name)
 
 
 def clear_queue(queue_name):
