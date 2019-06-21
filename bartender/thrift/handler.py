@@ -5,7 +5,12 @@ import mongoengine
 import bartender
 import bg_utils
 from bartender.instances import initialize_instance, start_instance, stop_instance
-from bartender.queues import clear_all_queues, clear_queue, get_queue_info
+from bartender.queues import (
+    clear_all_queues,
+    clear_queue,
+    get_all_queue_info,
+    get_queue_message_count,
+)
 from bartender.requests import process_request
 from bartender.systems import reload_system, remove_system, rescan_system_directory
 from bg_utils.mongo.parser import MongoParser
@@ -114,19 +119,20 @@ class BartenderHandler(object):
         """Scans plugin directory and starts any new Systems"""
         rescan_system_directory()
 
+    def getAllQueueInfo(self):
+        return self.parser.serialize_queue(
+            get_all_queue_info(), to_string=True, many=True
+        )
+
     @staticmethod
-    def getQueueInfo(system_name, system_version, instance_name):
+    def getQueueMessageCount(queue_name):
         """Gets the size of a queue
 
-        :param system_name: The system name
-        :param system_version: The system version
-        :param instance_name: The instance name
-        :return size of the queue
+        :param queue_name: The queue name
+        :return: number of messages currently on the queue
         :raises Exception: If queue does not exist
         """
-        return bg_utils.bg_thrift.QueueInfo(
-            *get_queue_info(system_name, system_version, instance_name)
-        )
+        return get_queue_message_count(queue_name)
 
     def clearQueue(self, queue_name):
         """Clear all Requests in the given queue

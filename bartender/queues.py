@@ -6,26 +6,54 @@ import bartender
 from bg_utils.mongo.models import System
 from bg_utils.pika import get_routing_key
 from brewtils.errors import NotFoundError
+from brewtils.models import Queue
 
 logger = logging.getLogger(__name__)
 
 
-def get_queue_info(system_name, system_version, instance_name):
-    """Gets the size of a queue
+def get_all_queue_info():
+    """Get queue information for all queues
 
-    :param system_name: The system name
-    :param system_version: The system version
-    :param instance_name: The instance name
     :return size of the queue
     :raises Exception: If queue does not exist
     """
-    routing_key = get_routing_key(system_name, system_version, instance_name)
-    logger.debug("Get the queue state for %s", routing_key)
+    queues = []
+    systems = System.objects.all().select_related(max_depth=1)
 
-    return (
-        routing_key,
-        bartender.application.clients["pyrabbit"].get_queue_size(routing_key),
-    )
+    for system in systems:
+        for instance in system.instances:
+            queue_name = get_routing_key(system.name, system.version, instance.name)
+
+            queue = Queue(
+                name=queue_name,
+                system=system.name,
+                version=system.version,
+                instance=instance.name,
+                system_id=str(system.id),
+                display=system.display_name,
+                size=-1,
+            )
+
+            try:
+                queue.size = get_queue_message_count(queue_name)
+            except Exception:
+                logger.error(f"Error getting queue size for {queue_name}")
+
+            queues.append(queue)
+
+    return queues
+
+
+def get_queue_message_count(queue_name):
+    """Gets the size of a queue
+
+    :param queue_name: The queue name
+    :return: number of messages currently on the queue
+    :raises Exception: If queue does not exist
+    """
+    logger.debug(f"Getting queue message count for {queue_name}")
+
+    return bartender.application.clients["pyrabbit"].get_queue_size(queue_name)
 
 
 def clear_queue(queue_name):
