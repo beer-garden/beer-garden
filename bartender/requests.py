@@ -39,6 +39,9 @@ def process_request(request):
             request, confirm=True, mandatory=True
         )
     except Exception:
+        # An error publishing means this request will never complete, so remove it
+        request.delete()
+
         raise RequestPublishException(
             f"Error while publishing request {request.id} to queue "
             f"{request.system}[{request.system_version}]-{request.instance_name}"
