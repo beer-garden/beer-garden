@@ -19,7 +19,7 @@ from bartender.mongo_pruner import MongoPruner
 from bartender.monitor import PluginStatusMonitor
 from bartender.pika import PikaClient
 from bartender.pyrabbit import PyrabbitClient
-from bartender.request_validator import RequestValidator
+from bartender.requests import RequestValidator
 from bartender.thrift.handler import BartenderHandler
 from bartender.thrift.server import make_server
 from bg_utils.mongo.models import Event, Request
@@ -72,12 +72,7 @@ class BartenderApp(StoppableThread):
             clients=self.clients,
         )
 
-        self.handler = BartenderHandler(
-            registry=self.plugin_registry,
-            clients=self.clients,
-            plugin_manager=self.plugin_manager,
-            request_validator=self.request_validator,
-        )
+        self.handler = BartenderHandler()
 
         self.helper_threads = [
             HelperThread(

@@ -1,5 +1,7 @@
 import logging
 
+from bg_utils.mongo.models import Instance, System
+
 
 class LocalPluginRegistry(object):
     """Plugin Registry that is responsible for keeping track of plugins and their status"""
@@ -19,12 +21,19 @@ class LocalPluginRegistry(object):
     def get_plugin(self, unique_name):
         """Returns an actual plugin
 
-        :param unique_name: The unique name of the plugin, in the form of name[instance]-version
+        :param unique_name: The unique name of the plugin (name[instance]-version)
         :return: The plugin
         """
         for plugin in self._registry:
             if plugin.unique_name == unique_name:
                 return plugin
+
+    def get_plugin_from_instance_id(self, instance_id):
+        instance = Instance.objects.get(id=instance_id)
+        system = System.objects.get(instances__contains=instance)
+        unique_name = self.get_unique_name(system.name, system.version, instance.name)
+
+        return self.get_plugin(unique_name)
 
     def get_plugins_by_system(self, system_name, system_version):
         """Returns a list of plugins with the given system name and version

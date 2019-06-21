@@ -11,8 +11,40 @@ from requests import Session
 import bartender
 from bg_utils.mongo.models import System, Choices
 from brewtils.choices import parse
-from brewtils.errors import ModelValidationError
+from brewtils.errors import ModelValidationError, RequestPublishException
 from brewtils.rest.system_client import SystemClient
+
+logger = logging.getLogger(__name__)
+
+
+def process_request(request):
+    """Validates and publishes a Request.
+
+    :param request: The Request to process
+    :raises InvalidRequest: If the Request is invalid in some way
+    :return: None
+    """
+    logger.info(f"Processing Request: {request.id}")
+
+    # Validates the request based on what is in the database.
+    # This includes the validation of the request parameters,
+    # systems are there, commands are there etc.
+    request = bartender.application.request_validator.validate_request(request)
+
+    # Once validated we need to save since validate can modify the request
+    request.save()
+
+    try:
+        bartender.application.clients["pika"].publish_request(
+            request, confirm=True, mandatory=True
+        )
+    except Exception:
+        raise RequestPublishException(
+            f"Error while publishing request {request.id} to queue "
+            f"{request.system}[{request.system_version}]-{request.instance_name}"
+        )
+
+    return request
 
 
 class RequestValidator(object):
@@ -243,7 +275,7 @@ class RequestValidator(object):
                         _system_name=request.system,
                         _system_version=request.system_version,
                         _instance_name=request.instance_name,
-                        **map_param_values(parsed_value["args"])
+                        **map_param_values(parsed_value["args"]),
                     )
                 elif isinstance(choices.value, dict):
                     parsed_value = parse(choices.value["command"], parse_as="func")
@@ -252,7 +284,7 @@ class RequestValidator(object):
                         _system_name=choices.value.get("system"),
                         _system_version=choices.value.get("version"),
                         _instance_name=choices.value.get("instance_name", "default"),
-                        **map_param_values(parsed_value["args"])
+                        **map_param_values(parsed_value["args"]),
                     )
                 else:
                     raise ModelValidationError(
