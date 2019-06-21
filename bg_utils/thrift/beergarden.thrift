@@ -31,6 +31,8 @@ service BartenderBackend {
 
   void removeSystem(1: string systemId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
 
+  void rescanSystemDirectory() throws (1:BaseException baseEx);
+
 
   // Instances
   string initializeInstance(1: string instanceId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
@@ -39,13 +41,11 @@ service BartenderBackend {
 
   string stopInstance(1: string instanceId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
 
-  void restartInstance(1: string instanceId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
-
   void checkIn(1: string instanceId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
 
 
   // Requests
-  void processRequest(1:string id) throws (1:InvalidRequest ex, 2: PublishException pubEx,
+  string processRequest(1:string id) throws (1:InvalidRequest ex, 2: PublishException pubEx,
     3:BaseException baseEx);
 
 
@@ -59,10 +59,5 @@ service BartenderBackend {
 
 
   // Misc
-  void ping();
-
   string getVersion();
-
-  void rescanSystemDirectory() throws (1:BaseException baseEx);
-
 }
