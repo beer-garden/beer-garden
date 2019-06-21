@@ -9,9 +9,9 @@ from builtins import str
 from requests import Session
 
 import bartender
-from bg_utils.mongo.models import System, Choices
+from bg_utils.mongo.models import Choices, Request, System
 from brewtils.choices import parse
-from brewtils.errors import ModelValidationError, RequestPublishException
+from brewtils.errors import ModelValidationError, RequestPublishException, ConflictError
 from brewtils.rest.system_client import SystemClient
 
 logger = logging.getLogger(__name__)
@@ -24,8 +24,6 @@ def process_request(request):
     :raises InvalidRequest: If the Request is invalid in some way
     :return: None
     """
-    logger.info(f"Processing Request: {request.id}")
-
     # Validates the request based on what is in the database.
     # This includes the validation of the request parameters,
     # systems are there, commands are there etc.
@@ -35,6 +33,8 @@ def process_request(request):
     request.save()
 
     try:
+        logger.info(f"Publishing request {request.id}")
+
         bartender.application.clients["pika"].publish_request(
             request, confirm=True, mandatory=True
         )
@@ -72,10 +72,25 @@ class RequestValidator(object):
 
         system = self.get_and_validate_system(request)
         command = self.get_and_validate_command_for_system(request, system)
-
         request.parameters = self.get_and_validate_parameters(request, command)
+        request.has_parent = self.get_and_validate_parent(request)
 
         return request
+
+    def get_and_validate_parent(self, request):
+        """Ensure that a Request's parent request hasn't already completed.
+
+        :param request: The request to validate
+        :return: Boolean indicating if this request has a parent
+        :raises ConflictError: The parent request has already completed
+        """
+        if not request.parent:
+            return False
+
+        if request.parent.status in Request.COMPLETED_STATUSES:
+            raise ConflictError("Parent request has already completed")
+
+        return True
 
     def get_and_validate_system(self, request):
         """Ensure there is a system in the DB that corresponds to this Request.
