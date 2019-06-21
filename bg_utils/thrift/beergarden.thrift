@@ -19,11 +19,6 @@ exception InvalidSystem {
   2: string message
 }
 
-struct QueueInfo {
-  1: string name,
-  2: i32 size
-}
-
 service BartenderBackend {
 
   // Systems
@@ -50,8 +45,10 @@ service BartenderBackend {
 
 
   // Queues
-  QueueInfo getQueueInfo(1:string systemName, 2:string systemVersion, 3:string instanceName)
+  i32 getQueueMessageCount(1:string queueName)
     throws (1:BaseException baseEx, 2:InvalidSystem invalidEx);
+
+  string getAllQueueInfo() throws (1:BaseException baseEx);
 
   void clearQueue(1:string queueName) throws (1:BaseException baseEx, 2:InvalidSystem invalidEx);
 
