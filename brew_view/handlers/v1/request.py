@@ -19,7 +19,6 @@ from brew_view.base_handler import BaseHandler
 from brew_view.metrics import request_created, http_api_latency_total, request_latency
 from brew_view.metrics import request_updated
 from brewtils.errors import (
-    ConflictError,
     ModelValidationError,
     RequestPublishException,
     TimeoutExceededError,
@@ -456,14 +455,6 @@ class RequestListAPI(BaseHandler):
             request_model = Request(**args)
         else:
             raise ModelValidationError("Unsupported or missing content-type header")
-
-        if request_model.parent:
-            request_model.parent = Request.objects.get(id=str(request_model.parent.id))
-            if request_model.parent.status in Request.COMPLETED_STATUSES:
-                raise ConflictError("Parent request has already completed")
-            request_model.has_parent = True
-        else:
-            request_model.has_parent = False
 
         if self.current_user:
             request_model.requester = self.current_user.username
