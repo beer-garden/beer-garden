@@ -11,7 +11,7 @@ from tornado.util import TimeoutError
 import bg_utils
 import brew_view
 from bg_utils.mongo.models import Job
-from bg_utils.mongo.models import Request, System
+from bg_utils.mongo.models import Request
 from bg_utils.mongo.parser import MongoParser
 from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
@@ -492,27 +492,6 @@ class RequestListAPI(BaseHandler):
 
         # Query for request from body id
         req = Request.objects.get(id=request_id)
-
-        # Now attempt to add the instance status as a header.
-        # The Request is already created at this point so it's a best-effort thing
-        self.set_header("Instance-Status", "UNKNOWN")
-
-        try:
-            # Since request has system info we can query for a system object
-            system = System.objects.get(name=req.system, version=req.system_version)
-
-            # Loop through all instances in the system until we find the instance that
-            # matches the request instance
-            for instance in system.instances:
-                if instance.name == req.instance_name:
-                    self.set_header("Instance-Status", instance.status)
-
-        # The Request is already created at this point so adding the Instance status
-        # header is a best-effort thing
-        except Exception as ex:
-            self.logger.exception(
-                "Unable to get Instance status for Request %s: %s", request_id, ex
-            )
 
         self.request.event_extras = {"request": req}
 
