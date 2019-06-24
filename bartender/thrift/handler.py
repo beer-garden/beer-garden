@@ -1,4 +1,5 @@
 """Bartender side of the thrift interface."""
+import json
 
 import mongoengine
 
@@ -11,7 +12,7 @@ from bartender.queues import (
     get_all_queue_info,
     get_queue_message_count,
 )
-from bartender.requests import process_request
+from bartender.requests import get_requests, process_request
 from bartender.systems import reload_system, remove_system, rescan_system_directory
 from bg_utils.mongo.parser import MongoParser
 from brewtils.errors import (
@@ -26,6 +27,10 @@ parser = MongoParser()
 
 class BartenderHandler(object):
     """Implements the thrift interface."""
+
+    @staticmethod
+    def getRequests(query):
+        return json.dumps(get_requests(**json.loads(query)))
 
     @staticmethod
     def processRequest(request):
