@@ -408,6 +408,10 @@ class Request(Document, BrewtilsRequest):
         except DoesNotExist:
             return None
 
+    @classmethod
+    def index_names(cls):
+        return [index["name"] for index in cls._meta["indexes"]]
+
 
 class System(Document, BrewtilsSystem):
     """Mongo-Backed BREWMASTER System Object"""
