@@ -2,8 +2,6 @@ import json
 import logging
 
 from datetime import timedelta
-from functools import reduce
-from mongoengine import Q
 from tornado.gen import coroutine
 from tornado.locks import Event
 from tornado.util import TimeoutError
@@ -205,8 +203,7 @@ class RequestListAPI(BaseHandler):
     parser = SchemaParser()
     logger = logging.getLogger(__name__)
 
-    indexes = [index["name"] for index in Request._meta["indexes"]]
-
+    @coroutine
     @authenticated(permissions=[Permissions.REQUEST_READ])
     def get(self):
         """
@@ -291,6 +288,7 @@ class RequestListAPI(BaseHandler):
             required: false
             description: The maximum number of Requests to include in the page
             type: integer
+            default: 100
           - name: draw
             in: query
             required: false
@@ -361,23 +359,36 @@ class RequestListAPI(BaseHandler):
         """
         self.logger.debug("Getting Requests")
 
-        query_set, requested_fields = self._get_query_set()
+        columns_arg = self.get_query_arguments("columns")
+        order_arg = self.get_query_argument("order", default=None)
+        search_arg = self.get_query_argument("search", default=None)
+        child_arg = self.get_query_argument("include_children", default="")
 
-        # Actually execute the query. The slicing greatly reduces load time.
-        start = int(self.get_argument("start", default=0))
-        length = int(self.get_argument("length", default=100))
-        requests = query_set[start : start + length]
+        thrift_args = {
+            "columns": [json.loads(c) for c in columns_arg],
+            "order": json.loads(order_arg) if order_arg else None,
+            "search": json.loads(search_arg) if search_arg else None,
+            "include_children": bool(child_arg.lower() == "true"),
+            "start": int(self.get_argument("start", default=0)),
+            "length": int(self.get_argument("length", default=100)),
+        }
 
-        # Sweet, we have data. Now setup some headers for the response
+        serialized_args = json.dumps(thrift_args)
+
+        with thrift_context() as client:
+            raw_response = yield client.getRequests(serialized_args)
+
+        parsed_response = json.loads(raw_response)
+
         response_headers = {
             # These are a courtesy for non-datatables requests. We want people
             # making a request with no headers to realize they probably aren't
             # getting the full dataset
-            "start": start,
-            "length": len(requests),
+            "start": thrift_args["start"],
+            "length": parsed_response["length"],
             # And these are required by datatables
-            "recordsFiltered": query_set.count(),  # This is another query
-            "recordsTotal": Request.objects.count(),
+            "recordsFiltered": parsed_response["filtered_count"],
+            "recordsTotal": parsed_response["total_count"],
             "draw": self.get_argument("draw", ""),
         }
 
@@ -386,11 +397,7 @@ class RequestListAPI(BaseHandler):
             self.add_header("Access-Control-Expose-Headers", key)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(
-            self.parser.serialize_request(
-                requests, to_string=True, many=True, only=requested_fields
-            )
-        )
+        self.write(parsed_response["requests"])
 
     @coroutine
     @authenticated(permissions=[Permissions.REQUEST_CREATE])
@@ -518,131 +525,3 @@ class RequestListAPI(BaseHandler):
 
         self.set_status(201)
         self.write(self.parser.serialize_request(processed_request, to_string=False))
-
-    def _get_query_set(self):
-        """Get Requests matching the HTTP request query parameters.
-
-        :return query_set: The QuerySet representing this query
-        :return requested_fields: The fields to be returned for each Request
-        """
-        search_params = []
-        requested_fields = []
-        order_by = None
-        overall_search = None
-        include_children = False
-        hint = []
-
-        query_set = Request.objects
-
-        raw_columns = self.get_query_arguments("columns")
-        if raw_columns:
-            columns = []
-
-            for raw_column in raw_columns:
-                column = json.loads(raw_column)
-                columns.append(column)
-
-                if column["data"]:
-                    requested_fields.append(column["data"])
-
-                if (
-                    "searchable" in column
-                    and column["searchable"]
-                    and column["search"]["value"]
-                ):
-                    if column["data"] in ["created_at", "updated_at"]:
-                        search_dates = column["search"]["value"].split("~")
-                        start_query = Q()
-                        end_query = Q()
-
-                        if search_dates[0]:
-                            start_query = Q(
-                                **{column["data"] + "__gte": search_dates[0]}
-                            )
-                        if search_dates[1]:
-                            end_query = Q(**{column["data"] + "__lte": search_dates[1]})
-
-                        search_query = start_query & end_query
-                    elif column["data"] == "status":
-                        search_query = Q(
-                            **{column["data"] + "__exact": column["search"]["value"]}
-                        )
-                    elif column["data"] == "comment":
-                        search_query = Q(
-                            **{column["data"] + "__contains": column["search"]["value"]}
-                        )
-                    else:
-                        search_query = Q(
-                            **{
-                                column["data"]
-                                + "__startswith": column["search"]["value"]
-                            }
-                        )
-
-                    search_params.append(search_query)
-                    hint.append(column["data"])
-
-            raw_order = self.get_query_argument("order", default=None)
-            if raw_order:
-                order = json.loads(raw_order)
-                order_by = columns[order.get("column")]["data"]
-
-                hint.append(order_by)
-
-                if order.get("dir") == "desc":
-                    order_by = "-" + order_by
-
-        raw_search = self.get_query_argument("search", default=None)
-        if raw_search:
-            search = json.loads(raw_search)
-            if search["value"]:
-                overall_search = '"' + search["value"] + '"'
-
-        # Default to only top-level requests
-        if (
-            self.get_query_argument("include_children", default="false").lower()
-            != "true"
-        ):
-            search_params.append(Q(has_parent=False))
-            include_children = True
-
-        # Now we can construct the actual query parameters
-        query_params = reduce(lambda x, y: x & y, search_params, Q())
-        query_set = query_set.filter(query_params)
-
-        # And set the ordering
-        if order_by:
-            query_set = query_set.order_by(order_by)
-
-        # Marshmallow treats [] as 'serialize nothing' which is not what we
-        # want, so translate to None
-        if requested_fields:
-            query_set = query_set.only(*requested_fields)
-        else:
-            requested_fields = None
-
-        # Mongo seems to prefer using only the ['parent', '<sort field>']
-        # index, even when also filtering. So we have to help it pick the right index.
-        # BUT pymongo will blow up if you try to use a hint with a text search.
-        if overall_search:
-            query_set = query_set.search_text(overall_search)
-        else:
-            real_hint = []
-
-            if include_children:
-                real_hint.append("parent")
-
-            if "created_at" in hint:
-                real_hint.append("created_at")
-            for index in ["command", "system", "instance_name", "status"]:
-                if index in hint:
-                    real_hint.append(index)
-                    break
-            real_hint.append("index")
-
-            # Sanity check - if index is 'bad' just let mongo deal with it
-            index_name = "_".join(real_hint)
-            if index_name in self.indexes:
-                query_set = query_set.hint(index_name)
-
-        return query_set, requested_fields
