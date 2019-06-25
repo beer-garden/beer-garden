@@ -2,7 +2,7 @@ import pytest
 from box import Box
 from mock import Mock, call, patch
 
-from bartender.request_validator import RequestValidator
+from bartender.requests import RequestValidator
 from bg_utils.mongo.models import Command, Parameter, Request, System, Choices
 from brewtils.errors import ModelValidationError
 
@@ -198,9 +198,7 @@ class TestGetAndValidateParameters(object):
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(req, command)
 
-    @patch(
-        "bartender.request_validator.RequestValidator._validate_parameter_based_on_type"
-    )
+    @patch("bartender.requests.RequestValidator._validate_parameter_based_on_type")
     def test_extract_parameter_non_multi_calls_no_default(
         self, validate_mock, validator
     ):
@@ -212,9 +210,7 @@ class TestGetAndValidateParameters(object):
         validator.get_and_validate_parameters(req, command)
         validate_mock.assert_called_once_with("value1", command_parameter, command, req)
 
-    @patch(
-        "bartender.request_validator.RequestValidator._validate_parameter_based_on_type"
-    )
+    @patch("bartender.requests.RequestValidator._validate_parameter_based_on_type")
     def test_extract_parameter_non_multi_calls_with_default(
         self, validate_mock, validator
     ):
@@ -228,9 +224,7 @@ class TestGetAndValidateParameters(object):
             "default_value", command_parameter, command, req
         )
 
-    @patch(
-        "bartender.request_validator.RequestValidator._validate_parameter_based_on_type"
-    )
+    @patch("bartender.requests.RequestValidator._validate_parameter_based_on_type")
     def test_update_and_validate_parameter_extract_parameter_multi(
         self, validate_mock, validator
     ):

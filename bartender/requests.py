@@ -6,13 +6,51 @@ import re
 import six
 import urllib3
 from builtins import str
+from functools import reduce
+from mongoengine import Q
 from requests import Session
 
 import bartender
-from bg_utils.mongo.models import System, Choices
+from bg_utils.mongo.models import Choices, Request, System
 from brewtils.choices import parse
-from brewtils.errors import ModelValidationError
+from brewtils.errors import ModelValidationError, RequestPublishException, ConflictError
 from brewtils.rest.system_client import SystemClient
+from brewtils.schema_parser import SchemaParser
+
+logger = logging.getLogger(__name__)
+
+
+def process_request(request):
+    """Validates and publishes a Request.
+
+    :param request: The Request to process
+    :raises InvalidRequest: If the Request is invalid in some way
+    :return: None
+    """
+    # Validates the request based on what is in the database.
+    # This includes the validation of the request parameters,
+    # systems are there, commands are there etc.
+    request = bartender.application.request_validator.validate_request(request)
+
+    # Once validated we need to save since validate can modify the request
+    request.save()
+
+    try:
+        logger.info(f"Publishing request {request.id}")
+
+        bartender.application.clients["pika"].publish_request(
+            request, confirm=True, mandatory=True
+        )
+    except Exception:
+        # An error publishing means this request will never complete, so remove it
+        request.delete()
+
+        raise RequestPublishException(
+            f"Error while publishing request {request.id} to queue "
+            f"{request.system}[{request.system_version}]-{request.instance_name}"
+        )
+
+    return request
 
 
 class RequestValidator(object):
@@ -37,10 +75,25 @@ class RequestValidator(object):
 
         system = self.get_and_validate_system(request)
         command = self.get_and_validate_command_for_system(request, system)
-
         request.parameters = self.get_and_validate_parameters(request, command)
+        request.has_parent = self.get_and_validate_parent(request)
 
         return request
+
+    def get_and_validate_parent(self, request):
+        """Ensure that a Request's parent request hasn't already completed.
+
+        :param request: The request to validate
+        :return: Boolean indicating if this request has a parent
+        :raises ConflictError: The parent request has already completed
+        """
+        if not request.parent:
+            return False
+
+        if request.parent.status in Request.COMPLETED_STATUSES:
+            raise ConflictError("Parent request has already completed")
+
+        return True
 
     def get_and_validate_system(self, request):
         """Ensure there is a system in the DB that corresponds to this Request.
@@ -243,7 +296,7 @@ class RequestValidator(object):
                         _system_name=request.system,
                         _system_version=request.system_version,
                         _instance_name=request.instance_name,
-                        **map_param_values(parsed_value["args"])
+                        **map_param_values(parsed_value["args"]),
                     )
                 elif isinstance(choices.value, dict):
                     parsed_value = parse(choices.value["command"], parse_as="func")
@@ -252,7 +305,7 @@ class RequestValidator(object):
                         _system_name=choices.value.get("system"),
                         _system_version=choices.value.get("version"),
                         _instance_name=choices.value.get("instance_name", "default"),
-                        **map_param_values(parsed_value["args"])
+                        **map_param_values(parsed_value["args"]),
                     )
                 else:
                     raise ModelValidationError(
@@ -479,3 +532,126 @@ class RequestValidator(object):
                 "Value for key: %s is not the correct type. Should be: %s"
                 % (parameter.key, parameter.type)
             )
+
+
+def get_requests(
+    start=0, length=100, columns=None, order=None, search=None, include_children=False
+):
+    """Search for requests
+
+    :return query_set: The QuerySet representing this query
+    :return requested_fields: The fields to be returned for each Request
+    """
+    search_params = []
+    requested_fields = []
+    order_by = None
+    overall_search = None
+    hint = []
+
+    query_set = Request.objects
+
+    if columns:
+        query_columns = []
+
+        for column in columns:
+            query_columns.append(column)
+
+            if column["data"]:
+                requested_fields.append(column["data"])
+
+            if (
+                "searchable" in column
+                and column["searchable"]
+                and column["search"]["value"]
+            ):
+                if column["data"] in ["created_at", "updated_at"]:
+                    search_dates = column["search"]["value"].split("~")
+                    start_query = Q()
+                    end_query = Q()
+
+                    if search_dates[0]:
+                        start_query = Q(**{column["data"] + "__gte": search_dates[0]})
+                    if search_dates[1]:
+                        end_query = Q(**{column["data"] + "__lte": search_dates[1]})
+
+                    search_query = start_query & end_query
+                elif column["data"] == "status":
+                    search_query = Q(
+                        **{column["data"] + "__exact": column["search"]["value"]}
+                    )
+                elif column["data"] == "comment":
+                    search_query = Q(
+                        **{column["data"] + "__contains": column["search"]["value"]}
+                    )
+                else:
+                    search_query = Q(
+                        **{column["data"] + "__startswith": column["search"]["value"]}
+                    )
+
+                search_params.append(search_query)
+                hint.append(column["data"])
+
+        if order:
+            order_by = query_columns[order.get("column")]["data"]
+
+            hint.append(order_by)
+
+            if order.get("dir") == "desc":
+                order_by = "-" + order_by
+
+    if search:
+        if search["value"]:
+            overall_search = '"' + search["value"] + '"'
+
+    if not include_children:
+        search_params.append(Q(has_parent=False))
+
+    # Now we can construct the actual query parameters
+    query_params = reduce(lambda x, y: x & y, search_params, Q())
+    query_set = query_set.filter(query_params)
+
+    # And set the ordering
+    if order_by:
+        query_set = query_set.order_by(order_by)
+
+    # Marshmallow treats [] as 'serialize nothing' which is not what we
+    # want, so translate to None
+    if requested_fields:
+        query_set = query_set.only(*requested_fields)
+    else:
+        requested_fields = None
+
+    # Mongo seems to prefer using only the ['parent', '<sort field>']
+    # index, even when also filtering. So we have to help it pick the right index.
+    # BUT pymongo will blow up if you try to use a hint with a text search.
+    if overall_search:
+        query_set = query_set.search_text(overall_search)
+    else:
+        real_hint = []
+
+        if not include_children:
+            real_hint.append("parent")
+
+        if "created_at" in hint:
+            real_hint.append("created_at")
+        for index in ["command", "system", "instance_name", "status"]:
+            if index in hint:
+                real_hint.append(index)
+                break
+        real_hint.append("index")
+
+        # Sanity check - if index is 'bad' just let mongo deal with it
+        index_name = "_".join(real_hint)
+        if index_name in Request.index_names():
+            query_set = query_set.hint(index_name)
+
+    result = [r for r in query_set[start : start + length]]
+
+    return {
+        "requests": SchemaParser.serialize_request(
+            result, only=requested_fields, many=True
+        ),
+        "length": len(result),
+        "filtered_count": query_set.count(),  # This is another query
+        "total_count": Request.objects.count(),
+    }
