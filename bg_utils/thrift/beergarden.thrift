@@ -19,17 +19,14 @@ exception InvalidSystem {
   2: string message
 }
 
-struct QueueInfo {
-  1: string name,
-  2: i32 size
-}
-
 service BartenderBackend {
 
   // Systems
   void reloadSystem(1: string systemId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
 
   void removeSystem(1: string systemId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
+
+  void rescanSystemDirectory() throws (1:BaseException baseEx);
 
 
   // Instances
@@ -39,19 +36,21 @@ service BartenderBackend {
 
   string stopInstance(1: string instanceId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
 
-  void restartInstance(1: string instanceId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
-
   void checkIn(1: string instanceId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
 
 
   // Requests
-  void processRequest(1:string id) throws (1:InvalidRequest ex, 2: PublishException pubEx,
+  string getRequests(1: string query) throws (1:BaseException baseEx);
+
+  string processRequest(1:string id) throws (1:InvalidRequest ex, 2: PublishException pubEx,
     3:BaseException baseEx);
 
 
   // Queues
-  QueueInfo getQueueInfo(1:string systemName, 2:string systemVersion, 3:string instanceName)
+  i32 getQueueMessageCount(1:string queueName)
     throws (1:BaseException baseEx, 2:InvalidSystem invalidEx);
+
+  string getAllQueueInfo() throws (1:BaseException baseEx);
 
   void clearQueue(1:string queueName) throws (1:BaseException baseEx, 2:InvalidSystem invalidEx);
 
@@ -59,10 +58,5 @@ service BartenderBackend {
 
 
   // Misc
-  void ping();
-
   string getVersion();
-
-  void rescanSystemDirectory() throws (1:BaseException baseEx);
-
 }
