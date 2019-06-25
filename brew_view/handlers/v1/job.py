@@ -8,7 +8,6 @@ from bg_utils.mongo.models import Job
 from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
-from brew_view.scheduler import run_job
 from brewtils.errors import ModelValidationError
 from brewtils.schemas import JobSchema
 
@@ -44,6 +43,7 @@ class JobAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(self.parser.serialize_job(document, to_string=False))
 
+    @coroutine
     @authenticated(permissions=[Permissions.JOB_UPDATE])
     def patch(self, job_id):
         """
@@ -98,7 +98,6 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
-        job = Job.objects.get(id=job_id)
         operations = self.parser.parse_patch(
             self.request.decoded_body, many=True, from_string=True
         )
@@ -107,31 +106,20 @@ class JobAPI(BaseHandler):
             if op.operation == "update":
                 if op.path == "/status":
                     if str(op.value).upper() == "PAUSED":
-                        brew_view.request_scheduler.pause_job(
-                            job_id, jobstore="beer_garden"
-                        )
-                        job.status = "PAUSED"
+                        with brew_view.thrift_context() as client:
+                            response = yield client.pauseJob(job_id)
                     elif str(op.value).upper() == "RUNNING":
-                        brew_view.request_scheduler.resume_job(
-                            job_id, jobstore="beer_garden"
-                        )
-                        job.status = "RUNNING"
+                        with brew_view.thrift_context() as client:
+                            response = yield client.resumeJob(job_id)
                     else:
-                        error_msg = "Unsupported status value '%s'" % op.value
-                        self.logger.warning(error_msg)
-                        raise ModelValidationError(error_msg)
+                        raise ModelValidationError(f"Unsupported status value '{op.value}'")
                 else:
-                    error_msg = "Unsupported path value '%s'" % op.path
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError(error_msg)
+                    raise ModelValidationError(f"Unsupported path value '{op.path}'")
             else:
-                error_msg = "Unsupported operation '%s'" % op.operation
-                self.logger.warning(error_msg)
-                raise ModelValidationError(error_msg)
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
-        job.save()
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(self.parser.serialize_job(job, to_string=False))
+        self.write(response)
 
     @coroutine
     @authenticated(permissions=[Permissions.JOB_DELETE])
@@ -156,7 +144,9 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
-        brew_view.request_scheduler.remove_job(job_id, jobstore="beer_garden")
+        with brew_view.thrift_context() as client:
+            yield client.removeJob(job_id)
+
         self.set_status(204)
 
 
@@ -221,31 +211,9 @@ class JobListAPI(BaseHandler):
         tags:
           - Jobs
         """
-        document = self.parser.parse_job(self.request.decoded_body, from_string=True)
-        # We have to save here, because we need an ID to pass
-        # to the scheduler.
-        document.save()
-
-        try:
-            brew_view.request_scheduler.add_job(
-                run_job,
-                None,
-                kwargs={
-                    "request_template": document.request_template,
-                    "job_id": str(document.id),
-                },
-                name=document.name,
-                misfire_grace_time=document.misfire_grace_time,
-                coalesce=document.coalesce,
-                max_instances=document.max_instances,
-                jobstore="beer_garden",
-                replace_existing=False,
-                id=str(document.id),
-            )
-        except Exception:
-            document.delete()
-            raise
+        with brew_view.thrift_context() as client:
+            response = yield client.createJob(self.request.decoded_body)
 
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(self.parser.serialize_job(document, to_string=False))
+        self.write(response)

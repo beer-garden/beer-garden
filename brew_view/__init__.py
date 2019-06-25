@@ -5,11 +5,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 import ssl
 from apispec import APISpec
-from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
-from apscheduler.schedulers.tornado import TornadoScheduler
 from functools import partial
 from prometheus_client.exposition import start_http_server
-from pytz import utc
 from thriftpy2.rpc import client_context
 from tornado.concurrent import Future
 from tornado.gen import coroutine, sleep
@@ -70,7 +67,6 @@ api_spec = None
 plugin_logging_config = None
 app_logging_config = None
 notification_meta = None
-request_scheduler = None
 request_map = {}
 anonymous_principal = None
 easy_client = None
@@ -123,9 +119,6 @@ def startup():
     logger.info("Starting HTTP server on %s:%d" % (config.web.host, config.web.port))
     server.listen(config.web.port, config.web.host)
 
-    logger.info("Starting scheduler")
-    request_scheduler.start()
-
     logger.debug("Publishing application startup event")
     event_publishers.publish_event(Event(name=Events.BREWVIEW_STARTED.name))
 
@@ -144,9 +137,6 @@ def shutdown():
 
     This execution is normally scheduled by the signal handler.
     """
-    if request_scheduler.running:
-        logger.info("Pausing scheduler - no more jobs will be run")
-        yield request_scheduler.pause()
 
     logger.info("Stopping server for new HTTP connections")
     server.stop()
@@ -162,10 +152,6 @@ def shutdown():
     # currently waiting request creations
     logger.info("Closing all open HTTP connections")
     yield server.close_all_connections()
-
-    if request_scheduler.running:
-        logger.info("Shutting down scheduler")
-        yield request_scheduler.shutdown(wait=False)
 
     logger.info("Stopping IO loop")
     io_loop.add_callback(io_loop.stop)
@@ -195,7 +181,7 @@ def load_plugin_logging_config(input_config):
 def _setup_application():
     """Setup things that can be taken care of before io loop is started"""
     global io_loop, tornado_app, public_url, thrift_context, easy_client
-    global server, client_ssl, request_scheduler
+    global server, client_ssl
 
     # Tweak some config options
     config.web.url_prefix = normalize_url_prefix(config.web.url_prefix)
@@ -230,23 +216,9 @@ def _setup_application():
     thrift_context = _setup_thrift_context()
     tornado_app = _setup_tornado_app()
     server_ssl, client_ssl = _setup_ssl_context()
-    request_scheduler = _setup_scheduler()
 
     server = HTTPServer(tornado_app, ssl_options=server_ssl)
     io_loop = IOLoop.current()
-
-
-def _setup_scheduler():
-    job_stores = {"beer_garden": BGJobStore()}
-    executors = {"default": APThreadPoolExecutor(config.scheduler.max_workers)}
-    job_defaults = config.scheduler.job_defaults.to_dict()
-
-    return TornadoScheduler(
-        jobstores=job_stores,
-        executors=executors,
-        job_defaults=job_defaults,
-        timezone=utc,
-    )
 
 
 def _setup_tornado_app():

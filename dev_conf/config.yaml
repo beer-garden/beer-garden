@@ -59,14 +59,6 @@ metrics:
 plugin_logging:
   config_file: null
   level: INFO
-scheduler:
-  auth:
-    password: null
-    username: null
-  job_defaults:
-    coalesce: true
-    max_instances: 3
-  max_workers: 10
 shutdown_timeout: 5
 web:
   host: 0.0.0.0

@@ -398,53 +398,6 @@ SPECIFICATION = {
             },
         },
     },
-    "scheduler": {
-        "type": "dict",
-        "items": {
-            "auth": {
-                "type": "dict",
-                "items": {
-                    "username": {
-                        "type": "str",
-                        "description": "Username that scheduler will use for "
-                        "authentication (needs bg-admin role)",
-                        "required": False,
-                    },
-                    "password": {
-                        "type": "str",
-                        "description": "Password that scheduler will use for "
-                        "authentication (needs bg-admin role)",
-                        "required": False,
-                    },
-                },
-            },
-            "max_workers": {
-                "type": "int",
-                "default": 10,
-                "description": "Number of workers (processes) to run concurrently.",
-            },
-            "job_defaults": {
-                "type": "dict",
-                "items": {
-                    "coalesce": {
-                        "type": "bool",
-                        "default": True,
-                        "description": (
-                            "Should jobs run only once if multiple have missed their "
-                            "window"
-                        ),
-                    },
-                    "max_instances": {
-                        "type": "int",
-                        "default": 3,
-                        "description": (
-                            "Default maximum instances of a job to run concurrently."
-                        ),
-                    },
-                },
-            },
-        },
-    },
     "web": {
         "type": "dict",
         "items": {
