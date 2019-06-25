@@ -13,6 +13,7 @@ from bartender.queues import (
     get_queue_message_count,
 )
 from bartender.requests import get_requests, process_request
+from bartender.scheduler import create_job, remove_job, pause_job, resume_job
 from bartender.systems import reload_system, remove_system, rescan_system_directory
 from bg_utils.mongo.parser import MongoParser
 from brewtils.errors import (
@@ -162,6 +163,22 @@ class BartenderHandler(object):
     def clearAllQueues():
         """Clears all queues that Bartender knows about"""
         clear_all_queues()
+
+    @staticmethod
+    def createJob(job):
+        return parser.serialize_job(create_job(parser.parse_job(job, from_string=True)))
+
+    @staticmethod
+    def pauseJob(job_id):
+        return parser.serialize_job(pause_job(job_id))
+
+    @staticmethod
+    def resumeJob(job_id):
+        return parser.serialize_job(resume_job(job_id))
+
+    @staticmethod
+    def removeJob(job_id):
+        remove_job(job_id)
 
     @staticmethod
     def getVersion():

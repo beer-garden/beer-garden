@@ -1,12 +1,16 @@
 from __future__ import division
 
 import logging
+
+from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import timedelta
 from functools import partial
 
 import time
 from mongoengine import Q
+from pytz import utc
 from requests.exceptions import RequestException
+from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 
 import bartender
 import bg_utils
@@ -20,6 +24,7 @@ from bartender.monitor import PluginStatusMonitor
 from bartender.pika import PikaClient
 from bartender.pyrabbit import PyrabbitClient
 from bartender.requests import RequestValidator
+from bartender.scheduler import BGJobStore
 from bartender.thrift.handler import BartenderHandler
 from bartender.thrift.server import make_server
 from bg_utils.mongo.models import Event, Request
@@ -36,6 +41,7 @@ class BartenderApp(StoppableThread):
         self.request_validator = RequestValidator()
         self.plugin_registry = LocalPluginRegistry()
         self.plugin_validator = LocalPluginValidator()
+        self.scheduler = self._setup_scheduler()
 
         self.plugin_loader = LocalPluginLoader(
             validator=self.plugin_validator, registry=self.plugin_registry
@@ -143,6 +149,9 @@ class BartenderApp(StoppableThread):
         self.logger.info("Starting all local plugins...")
         self.plugin_manager.start_all_plugins()
 
+        self.logger.info("Starting scheduler")
+        self.scheduler.start()
+
         try:
             bartender.bv_client.publish_event(name=Events.BARTENDER_STARTED.name)
         except RequestException:
@@ -153,11 +162,19 @@ class BartenderApp(StoppableThread):
     def _shutdown(self):
         self.logger.info("Shutting down Bartender...")
 
+        if self.scheduler.running:
+            self.logger.info("Pausing scheduler - no more jobs will be run")
+            self.scheduler.pause()
+
         self.plugin_manager.stop_all_plugins()
 
         self.logger.info("Stopping helper threads...")
         for helper_thread in reversed(self.helper_threads):
             helper_thread.stop()
+
+        if self.scheduler.running:
+            self.logger.info("Shutting down scheduler")
+            self.scheduler.shutdown(wait=False)
 
         try:
             bartender.bv_client.publish_event(name=Events.BARTENDER_STOPPED.name)
@@ -212,6 +229,21 @@ class BartenderApp(StoppableThread):
         run_every = min(real_ttls) / 2 if real_ttls else None
 
         return prune_tasks, run_every
+
+    @staticmethod
+    def _setup_scheduler():
+        job_stores = {"beer_garden": BGJobStore()}
+        executors = {
+            "default": APThreadPoolExecutor(bartender.config.scheduler.max_workers)
+        }
+        job_defaults = bartender.config.scheduler.job_defaults.to_dict()
+
+        return BackgroundScheduler(
+            jobstores=job_stores,
+            executors=executors,
+            job_defaults=job_defaults,
+            timezone=utc,
+        )
 
 
 class HelperThread(object):

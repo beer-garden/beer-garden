@@ -53,6 +53,14 @@ plugin:
   status_heartbeat: 5
   status_timeout: 30
 publish_hostname: localhost
+scheduler:
+  auth:
+    password: null
+    username: null
+  job_defaults:
+    coalesce: true
+    max_instances: 3
+  max_workers: 10
 thrift:
   host: 0.0.0.0
   max_workers: 25
