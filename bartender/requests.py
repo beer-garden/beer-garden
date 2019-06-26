@@ -20,39 +20,6 @@ from brewtils.schema_parser import SchemaParser
 logger = logging.getLogger(__name__)
 
 
-def process_request(request):
-    """Validates and publishes a Request.
-
-    :param request: The Request to process
-    :raises InvalidRequest: If the Request is invalid in some way
-    :return: None
-    """
-    # Validates the request based on what is in the database.
-    # This includes the validation of the request parameters,
-    # systems are there, commands are there etc.
-    request = bartender.application.request_validator.validate_request(request)
-
-    # Once validated we need to save since validate can modify the request
-    request.save()
-
-    try:
-        logger.info(f"Publishing request {request.id}")
-
-        bartender.application.clients["pika"].publish_request(
-            request, confirm=True, mandatory=True
-        )
-    except Exception:
-        # An error publishing means this request will never complete, so remove it
-        request.delete()
-
-        raise RequestPublishException(
-            f"Error while publishing request {request.id} to queue "
-            f"{request.system}[{request.system_version}]-{request.instance_name}"
-        )
-
-    return request
-
-
 class RequestValidator(object):
     def __init__(self):
         self.logger = logging.getLogger(__name__)
@@ -655,3 +622,36 @@ def get_requests(
         "filtered_count": query_set.count(),  # This is another query
         "total_count": Request.objects.count(),
     }
+
+
+def process_request(request):
+    """Validates and publishes a Request.
+
+    :param request: The Request to process
+    :raises InvalidRequest: If the Request is invalid in some way
+    :return: None
+    """
+    # Validates the request based on what is in the database.
+    # This includes the validation of the request parameters,
+    # systems are there, commands are there etc.
+    request = bartender.application.request_validator.validate_request(request)
+
+    # Once validated we need to save since validate can modify the request
+    request.save()
+
+    try:
+        logger.info(f"Publishing request {request.id}")
+
+        bartender.application.clients["pika"].publish_request(
+            request, confirm=True, mandatory=True
+        )
+    except Exception:
+        # An error publishing means this request will never complete, so remove it
+        request.delete()
+
+        raise RequestPublishException(
+            f"Error while publishing request {request.id} to queue "
+            f"{request.system}[{request.system_version}]-{request.instance_name}"
+        )
+
+    return request
