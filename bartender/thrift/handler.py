@@ -12,9 +12,10 @@ from bartender.queues import (
     get_all_queue_info,
     get_queue_message_count,
 )
-from bartender.requests import get_requests, process_request
+from bartender.requests import get_requests, process_request, update_request
 from bartender.scheduler import create_job, remove_job, pause_job, resume_job
 from bartender.systems import reload_system, remove_system, rescan_system_directory
+from bg_utils.mongo.models import Request
 from bg_utils.mongo.parser import MongoParser
 from brewtils.errors import (
     ModelValidationError,
@@ -49,6 +50,13 @@ class BartenderHandler(object):
             raise bg_utils.bg_thrift.PublishException(str(ex))
         except (mongoengine.ValidationError, ModelValidationError, RestError) as ex:
             raise bg_utils.bg_thrift.InvalidRequest("", str(ex))
+
+    @staticmethod
+    def updateRequest(request_id, patch):
+        request = Request.objects.get(id=request_id)
+        parsed_patch = parser.parse_patch(patch, many=True, from_string=True)
+
+        return parser.serialize_request(update_request(request, parsed_patch))
 
     @staticmethod
     def initializeInstance(instance_id):

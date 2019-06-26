@@ -655,3 +655,72 @@ def process_request(request):
         )
 
     return request
+
+
+def update_request(request, patch):
+    # req = Request.objects.get(id=request_id)
+    #
+    # operations = SchemaParser.parse_patch(patch, many=True, from_string=True)
+    # wait_event = None
+
+    # We note the status before the operations, because it is possible for the
+    # operations to update the status of the request. In that case, because the
+    # updates are coming in in a single request it is okay to update the output or
+    # error_class. Ideally this would be handled correctly when we better integrate
+    # PatchOperations with their models.
+    status_before = request.status
+
+    for op in patch:
+        if op.operation == "replace":
+            if op.path == "/status":
+                if op.value.upper() in Request.STATUS_LIST:
+                    request.status = op.value.upper()
+
+                    # if op.value.upper() == "IN_PROGRESS":
+                    #     self.request.event.name = Events.REQUEST_STARTED.name
+                    #
+                    # elif op.value.upper() in BrewtilsRequest.COMPLETED_STATUSES:
+                    #     self.request.event.name = Events.REQUEST_COMPLETED.name
+                    #
+                    #     if request_id in brew_view.request_map:
+                    #         wait_event = brew_view.request_map[request_id]
+                else:
+                    raise ModelValidationError(f"Unsupported status value '{op.value}'")
+            elif op.path == "/output":
+                if request.output == op.value:
+                    continue
+
+                if status_before in Request.COMPLETED_STATUSES:
+                    raise ModelValidationError(
+                        "Cannot update output for a completed request"
+                    )
+                request.output = op.value
+            elif op.path == "/error_class":
+                if request.error_class == op.value:
+                    continue
+
+                if status_before in Request.COMPLETED_STATUSES:
+                    raise ModelValidationError(
+                        "Cannot update error_class for a completed request"
+                    )
+                request.error_class = op.value
+                # self.request.event.error = True
+            else:
+                raise ModelValidationError(f"Unsupported path '{op.path}'")
+        else:
+            raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+
+    request.save()
+
+    # Metrics
+    # request_updated(req, status_before)
+    # self._update_job_numbers(req, status_before)
+    #
+    # if wait_event:
+    #     wait_event.set()
+    #
+    # self.request.event_extras = {"request": req, "patch": operations}
+    #
+    # self.write(self.parser.serialize_request(req, to_string=False))
+
+    return request
