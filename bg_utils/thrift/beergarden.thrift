@@ -45,6 +45,8 @@ service BartenderBackend {
   string processRequest(1:string id) throws (1:InvalidRequest ex, 2: PublishException pubEx,
     3:BaseException baseEx);
 
+   string updateRequest(1:string requestId, 2:string patch) throws (1: BaseException baseEx);
+
 
   // Queues
   i32 getQueueMessageCount(1:string queueName)
