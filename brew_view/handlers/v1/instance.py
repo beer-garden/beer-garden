@@ -9,19 +9,12 @@ from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
-from brewtils.models import Events
 
 
 class InstanceAPI(BaseHandler):
 
     parser = MongoParser()
     logger = logging.getLogger(__name__)
-
-    event_dict = {
-        "initialize": Events.INSTANCE_INITIALIZED.name,
-        "start": Events.INSTANCE_STARTED.name,
-        "stop": Events.INSTANCE_STOPPED.name,
-    }
 
     @authenticated(permissions=[Permissions.INSTANCE_READ])
     def get(self, instance_id):
@@ -137,7 +130,6 @@ class InstanceAPI(BaseHandler):
 
         for op in operations:
             if op.operation.lower() in ("initialize", "start", "stop"):
-                self.request.event.name = self.event_dict[op.operation.lower()]
                 with thrift_context() as client:
                     response = yield getattr(client, op.operation.lower() + "Instance")(
                         instance_id
@@ -151,17 +143,14 @@ class InstanceAPI(BaseHandler):
             elif op.operation.lower() == "replace":
                 if op.path.lower() == "/status":
                     if op.value.upper() == "INITIALIZING":
-                        self.request.event.name = Events.INSTANCE_INITIALIZED.name
                         with thrift_context() as client:
                             response = yield client.initializeInstance(instance_id)
 
                     elif op.value.upper() == "STOPPING":
-                        self.request.event.name = Events.INSTANCE_STOPPED.name
                         with thrift_context() as client:
                             response = yield client.stopInstance(instance_id)
 
                     elif op.value.upper() == "STARTING":
-                        self.request.event.name = Events.INSTANCE_STARTED.name
                         with thrift_context() as client:
                             response = yield client.startInstance(instance_id)
 
@@ -184,8 +173,5 @@ class InstanceAPI(BaseHandler):
                 error_msg = "Unsupported operation '%s'" % op.operation
                 self.logger.warning(error_msg)
                 raise ModelValidationError("value", error_msg)
-
-        if self.request.event.name:
-            self.request.event_extras = {"instance": instance}
 
         self.write(response)

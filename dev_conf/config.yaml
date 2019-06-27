@@ -42,13 +42,6 @@ db:
     username: null
   name: beer_garden_v3
 debug_mode: true
-event:
-  amq:
-    enable: true
-    exchange: event
-    virtual_host: /
-  mongo:
-    enable: true
 log:
   config_file: dev_conf/logging-config.json
   file: null

@@ -33,9 +33,6 @@ class QueueAPI(BaseHandler):
         tags:
           - Queues
         """
-        self.request.event.name = Events.QUEUE_CLEARED.name
-        self.request.event.payload = {"queue_name": queue_name}
-
         with thrift_context() as client:
             yield client.clearQueue(queue_name)
 
@@ -83,8 +80,6 @@ class QueueListAPI(BaseHandler):
         tags:
           - Queues
         """
-        self.request.event.name = Events.ALL_QUEUES_CLEARED.name
-
         with thrift_context() as client:
             yield client.clearAllQueues()
 

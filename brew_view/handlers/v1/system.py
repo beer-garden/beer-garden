@@ -9,7 +9,6 @@ from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
-from brewtils.models import Events
 from brewtils.schemas import SystemSchema
 
 
@@ -88,9 +87,6 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        self.request.event.name = Events.SYSTEM_REMOVED.name
-        self.request.event_extras = {"system": System.objects.get(id=system_id)}
-
         with thrift_context() as client:
             yield client.removeSystem(str(system_id))
 
@@ -144,7 +140,7 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        self.request.event.name = Events.SYSTEM_UPDATED.name
+        # self.request.event.name = Events.SYSTEM_UPDATED.name
 
         system = System.objects.get(id=system_id)
         operations = self.parser.parse_patch(
@@ -205,7 +201,7 @@ class SystemAPI(BaseHandler):
 
         system.reload()
 
-        self.request.event_extras = {"system": system, "patch": operations}
+        # self.request.event_extras = {"system": system, "patch": operations}
 
         self.write(self.parser.serialize_system(system, to_string=False))
 
@@ -366,7 +362,7 @@ class SystemListAPI(BaseHandler):
         tags:
           - Systems
         """
-        self.request.event.name = Events.SYSTEM_CREATED.name
+        # self.request.event.name = Events.SYSTEM_CREATED.name
 
         system_model = self.parser.parse_system(
             self.request.decoded_body, from_string=True
@@ -385,14 +381,14 @@ class SystemListAPI(BaseHandler):
                 self.logger.debug(
                     "System %s already exists. Updating it." % system_model.name
                 )
-                self.request.event.name = Events.SYSTEM_UPDATED.name
+                # self.request.event.name = Events.SYSTEM_UPDATED.name
                 saved_system, status_code = self._update_existing_system(
                     existing_system, system_model
                 )
 
             saved_system.deep_save()
 
-        self.request.event_extras = {"system": saved_system}
+        # self.request.event_extras = {"system": saved_system}
 
         self.set_status(status_code)
         self.write(

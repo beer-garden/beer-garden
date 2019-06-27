@@ -296,46 +296,6 @@ SPECIFICATION = {
         "default": False,
         "description": "Run the application in debug mode",
     },
-    "event": {
-        "type": "dict",
-        "items": {
-            "amq": {
-                "type": "dict",
-                "items": {
-                    "enable": {
-                        "type": "bool",
-                        "default": False,
-                        "description": "Publish events to RabbitMQ",
-                    },
-                    "exchange": {
-                        "type": "str",
-                        "required": False,
-                        "description": "Exchange to use for AMQ events",
-                        "previous_names": ["event_amq_exchange"],
-                    },
-                    "virtual_host": {
-                        "type": "str",
-                        "default": "/",
-                        "required": False,
-                        "description": "Virtual host to use for AMQ events",
-                        "previous_names": ["event_amq_virtual_host"],
-                    },
-                },
-            },
-            "mongo": {
-                "type": "dict",
-                "items": {
-                    "enable": {
-                        "type": "bool",
-                        "default": True,
-                        "description": "Persist events to Mongo",
-                        "previous_names": ["event_persist_mongo"],
-                        "alt_env_names": ["EVENT_PERSIST_MONGO"],
-                    }
-                },
-            },
-        },
-    },
     "log": {
         "type": "dict",
         "items": {

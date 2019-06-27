@@ -17,9 +17,7 @@ from urllib3.util.url import Url
 
 import bg_utils
 import brew_view._version
-from bg_utils.event_publisher import EventPublishers
 from bg_utils.mongo import setup_database
-from bg_utils.pika import TransientPikaClient
 from bg_utils.plugin_logging_loader import PluginLoggingLoader
 from brew_view.authorization import anonymous_principal as load_anonymous
 from brew_view.metrics import initialize_counts
@@ -29,11 +27,9 @@ from brew_view.publishers import (
     TornadoPikaPublisher,
     WebsocketPublisher,
 )
-from brew_view.scheduler import BGJobStore
 from brew_view.specification import get_default_logging_config
 from brewtils.models import Event, Events
 from brewtils.rest import normalize_url_prefix
-from brewtils.rest.easy_client import EasyClient
 from brewtils.schemas import (
     ParameterSchema,
     CommandSchema,
@@ -69,7 +65,6 @@ app_logging_config = None
 notification_meta = None
 request_map = {}
 anonymous_principal = None
-easy_client = None
 client_ssl = None
 
 
@@ -94,7 +89,7 @@ def startup():
 
     This is the first thing called from within the ioloop context.
     """
-    global event_publishers, anonymous_principal
+    global anonymous_principal
 
     # Ensure we have a mongo connection
     logger.info("Checking for Mongo connection")
@@ -104,9 +99,6 @@ def startup():
 
     # Need to wait until after mongo connection established to load
     anonymous_principal = load_anonymous()
-
-    logger.info("Starting event publishers")
-    event_publishers = _setup_event_publishers(client_ssl)
 
     logger.info("Initializing metrics")
     initialize_counts()
@@ -118,9 +110,6 @@ def startup():
 
     logger.info("Starting HTTP server on %s:%d" % (config.web.host, config.web.port))
     server.listen(config.web.port, config.web.host)
-
-    logger.debug("Publishing application startup event")
-    event_publishers.publish_event(Event(name=Events.BREWVIEW_STARTED.name))
 
     brew_view.logger.info("Application is started. Hello!")
 
@@ -180,8 +169,7 @@ def load_plugin_logging_config(input_config):
 
 def _setup_application():
     """Setup things that can be taken care of before io loop is started"""
-    global io_loop, tornado_app, public_url, thrift_context, easy_client
-    global server, client_ssl
+    global io_loop, tornado_app, public_url, thrift_context, server, client_ssl
 
     # Tweak some config options
     config.web.url_prefix = normalize_url_prefix(config.web.url_prefix)
@@ -200,18 +188,6 @@ def _setup_application():
         port=config.web.port,
         path=config.web.url_prefix,
     ).url
-
-    # This is not super clean as we're pulling the config from different
-    # 'sections,' but the scheduler is the only thing that uses this
-    easy_client = EasyClient(
-        host=config.web.public_fqdn,
-        port=config.web.port,
-        url_prefix=config.web.url_prefix,
-        ssl_enabled=config.web.ssl.enabled,
-        ca_cert=config.web.ssl.ca_cert,
-        username=config.scheduler.auth.username,
-        password=config.scheduler.auth.password,
-    )
 
     thrift_context = _setup_thrift_context()
     tornado_app = _setup_tornado_app()
@@ -351,49 +327,49 @@ def _setup_thrift_context():
     return bg_thrift_context
 
 
-def _setup_event_publishers(ssl_context):
-    from brew_view.handlers.v1.event import EventSocket
-
-    # Create the collection of event publishers and add concrete publishers
-    pubs = EventPublishers(
-        {
-            "request": RequestPublisher(ssl_context=ssl_context),
-            "websocket": WebsocketPublisher(EventSocket),
-        }
-    )
-
-    if config.event.mongo.enable:
-        try:
-            pubs["mongo"] = MongoPublisher()
-        except Exception as ex:
-            logger.warning("Error starting Mongo event publisher: %s", ex)
-
-    if config.event.amq.enable:
-        try:
-            pika_params = {
-                "host": config.amq.host,
-                "port": config.amq.connections.message.port,
-                "ssl": config.amq.connections.message.ssl,
-                "user": config.amq.connections.admin.user,
-                "password": config.amq.connections.admin.password,
-                "exchange": config.event.amq.exchange,
-                "virtual_host": config.event.amq.virtual_host,
-                "connection_attempts": config.amq.connection_attempts,
-            }
-
-            # Make sure the exchange exists
-            TransientPikaClient(**pika_params).declare_exchange()
-
-            pubs["pika"] = TornadoPikaPublisher(
-                shutdown_timeout=config.shutdown_timeout, **pika_params
-            )
-        except Exception as ex:
-            logger.exception("Error starting RabbitMQ event publisher: %s", ex)
-
-    # Metadata functions - additional metadata to be included with each event
-    pubs.metadata_funcs["public_url"] = lambda: public_url
-
-    return pubs
+# def _setup_event_publishers(ssl_context):
+#     from brew_view.handlers.v1.event import EventSocket
+#
+#     # Create the collection of event publishers and add concrete publishers
+#     pubs = EventPublishers(
+#         {
+#             "request": RequestPublisher(ssl_context=ssl_context),
+#             "websocket": WebsocketPublisher(EventSocket),
+#         }
+#     )
+#
+#     if config.event.mongo.enable:
+#         try:
+#             pubs["mongo"] = MongoPublisher()
+#         except Exception as ex:
+#             logger.warning("Error starting Mongo event publisher: %s", ex)
+#
+#     if config.event.amq.enable:
+#         try:
+#             pika_params = {
+#                 "host": config.amq.host,
+#                 "port": config.amq.connections.message.port,
+#                 "ssl": config.amq.connections.message.ssl,
+#                 "user": config.amq.connections.admin.user,
+#                 "password": config.amq.connections.admin.password,
+#                 "exchange": config.event.amq.exchange,
+#                 "virtual_host": config.event.amq.virtual_host,
+#                 "connection_attempts": config.amq.connection_attempts,
+#             }
+#
+#             # Make sure the exchange exists
+#             TransientPikaClient(**pika_params).declare_exchange()
+#
+#             pubs["pika"] = TornadoPikaPublisher(
+#                 shutdown_timeout=config.shutdown_timeout, **pika_params
+#             )
+#         except Exception as ex:
+#             logger.exception("Error starting RabbitMQ event publisher: %s", ex)
+#
+#     # Metadata functions - additional metadata to be included with each event
+#     pubs.metadata_funcs["public_url"] = lambda: public_url
+#
+#     return pubs
 
 
 def _load_swagger(url_specs, title=None):

@@ -112,7 +112,9 @@ class JobAPI(BaseHandler):
                         with brew_view.thrift_context() as client:
                             response = yield client.resumeJob(job_id)
                     else:
-                        raise ModelValidationError(f"Unsupported status value '{op.value}'")
+                        raise ModelValidationError(
+                            f"Unsupported status value '{op.value}'"
+                        )
                 else:
                     raise ModelValidationError(f"Unsupported path value '{op.path}'")
             else:

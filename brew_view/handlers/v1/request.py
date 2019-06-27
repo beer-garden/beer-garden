@@ -20,7 +20,6 @@ from brewtils.errors import (
     RequestPublishException,
     TimeoutExceededError,
 )
-from brewtils.models import Events
 from brewtils.schema_parser import SchemaParser
 
 
@@ -379,8 +378,6 @@ class RequestListAPI(BaseHandler):
         tags:
           - Requests
         """
-        self.request.event.name = Events.REQUEST_CREATED.name
-
         if self.request.mime_type == "application/json":
             request_model = self.parser.parse_request(
                 self.request.decoded_body, from_string=True
@@ -415,26 +412,19 @@ class RequestListAPI(BaseHandler):
             process_response, from_string=True
         )
 
-        self.request.event_extras = {"request": processed_request}
-
         # Metrics
         request_created(processed_request)
 
         if self.get_argument("blocking", default="").lower() == "true":
-            # Publish metrics and event here here so they aren't skewed
+            # Publish metrics here here so they aren't skewed
             # See https://github.com/beer-garden/beer-garden/issues/190
             self.request.publish_metrics = False
-            self.request.publish_event = False
 
             http_api_latency_total.labels(
                 method=self.request.method.upper(),
                 route=self.prometheus_endpoint,
                 status=self.get_status(),
             ).observe(request_latency(self.request.created_time))
-
-            brew_view.event_publishers.publish_event(
-                self.request.event, **self.request.event_extras
-            )
 
             # It's possible the request is already done by this point, so check
             mongo_request = Request.objects.get(id=processed_request.id)
