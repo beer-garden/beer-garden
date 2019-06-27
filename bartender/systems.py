@@ -1,10 +1,12 @@
 from time import sleep
 
+from bartender.events import publish_event
 from bg_utils.mongo.models import System
 
 import logging
 
 import bartender
+from brewtils.models import Events
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +23,7 @@ def reload_system(system_id):
     bartender.application.plugin_manager.reload_system(system.name, system.version)
 
 
+@publish_event(Events.SYSTEM_REMOVED)
 def remove_system(system_id):
     """Removes a system from the registry if necessary.
 

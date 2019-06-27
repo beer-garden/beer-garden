@@ -5,13 +5,16 @@ import string
 from datetime import datetime
 
 import bartender
+from bartender.events import publish_event
 from bg_utils.mongo.fields import StatusInfo
 from bg_utils.mongo.models import Instance, System
 from bg_utils.pika import get_routing_key, get_routing_keys
+from brewtils.models import Events
 
 logger = logging.getLogger(__name__)
 
 
+@publish_event(Events.INSTANCE_INITIALIZED)
 def initialize_instance(instance_id):
     """Initializes an instance.
 
@@ -71,6 +74,7 @@ def initialize_instance(instance_id):
     return instance
 
 
+@publish_event(Events.INSTANCE_STARTED)
 def start_instance(instance_id):
     """Starts an instance.
 
@@ -91,6 +95,7 @@ def start_instance(instance_id):
     return instance
 
 
+@publish_event(Events.INSTANCE_STOPPED)
 def stop_instance(instance_id):
     """Stops an instance.
 

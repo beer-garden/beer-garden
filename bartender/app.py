@@ -14,6 +14,7 @@ from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecuto
 
 import bartender
 import bg_utils
+import brewtils.models
 from bartender.local_plugins.loader import LocalPluginLoader
 from bartender.local_plugins.manager import LocalPluginsManager
 from bartender.local_plugins.monitor import LocalPluginMonitor
@@ -27,7 +28,10 @@ from bartender.requests import RequestValidator
 from bartender.scheduler import BGJobStore
 from bartender.thrift.handler import BartenderHandler
 from bartender.thrift.server import make_server
+from bg_utils.event_publisher import EventPublishers
 from bg_utils.mongo.models import Event, Request
+from bg_utils.pika import TransientPikaClient
+from bg_utils.publishers import MongoPublisher
 from brewtils.models import Events
 from brewtils.stoppable_thread import StoppableThread
 
@@ -42,6 +46,7 @@ class BartenderApp(StoppableThread):
         self.plugin_registry = LocalPluginRegistry()
         self.plugin_validator = LocalPluginValidator()
         self.scheduler = self._setup_scheduler()
+        self.event_publishers = EventPublishers()
 
         self.plugin_loader = LocalPluginLoader(
             validator=self.plugin_validator, registry=self.plugin_registry
@@ -139,6 +144,10 @@ class BartenderApp(StoppableThread):
         self.logger.info("Declaring message exchange...")
         self.clients["pika"].declare_exchange()
 
+        self.logger.info("Starting event publishers")
+        self.event_publishers = self._setup_event_publishers()
+        # self.event_publishers = self._setup_event_publishers(client_ssl)
+
         self.logger.info("Starting helper threads...")
         for helper_thread in self.helper_threads:
             helper_thread.start()
@@ -153,7 +162,10 @@ class BartenderApp(StoppableThread):
         self.scheduler.start()
 
         try:
-            bartender.bv_client.publish_event(name=Events.BARTENDER_STARTED.name)
+            self.event_publishers.publish_event(
+                brewtils.models.Event(name=Events.BARTENDER_STARTED.name)
+            )
+            # bartender.bv_client.publish_event(name=Events.BARTENDER_STARTED.name)
         except RequestException:
             self.logger.warning("Unable to publish startup notification")
 
@@ -177,7 +189,10 @@ class BartenderApp(StoppableThread):
             self.scheduler.shutdown(wait=False)
 
         try:
-            bartender.bv_client.publish_event(name=Events.BARTENDER_STOPPED.name)
+            self.event_publishers.publish_event(
+                brewtils.models.Event(name=Events.BARTENDER_STOPPED.name)
+            )
+            # bartender.bv_client.publish_event(name=Events.BARTENDER_STOPPED.name)
         except RequestException:
             self.logger.warning("Unable to publish shutdown notification")
 
@@ -244,6 +259,48 @@ class BartenderApp(StoppableThread):
             job_defaults=job_defaults,
             timezone=utc,
         )
+
+    # def _setup_event_publishers(self, ssl_context):
+    def _setup_event_publishers(self):
+        # Create the collection of event publishers and add concrete publishers
+        pubs = EventPublishers(
+            # {
+            #     "webhook": WebhookPublisher(ssl_context=ssl_context),
+            # }
+        )
+
+        if bartender.config.event.mongo.enable:
+            try:
+                pubs["mongo"] = MongoPublisher()
+            except Exception as ex:
+                self.logger.warning("Error starting Mongo event publisher: %s", ex)
+
+        if bartender.config.event.amq.enable:
+            try:
+                pika_params = {
+                    "host": bartender.config.amq.host,
+                    "port": bartender.config.amq.connections.message.port,
+                    "ssl": bartender.config.amq.connections.message.ssl,
+                    "user": bartender.config.amq.connections.admin.user,
+                    "password": bartender.config.amq.connections.admin.password,
+                    "exchange": bartender.config.event.amq.exchange,
+                    "virtual_host": bartender.config.event.amq.virtual_host,
+                    "connection_attempts": bartender.config.amq.connection_attempts,
+                }
+
+                # Make sure the exchange exists
+                TransientPikaClient(**pika_params).declare_exchange()
+
+                # pubs["pika"] = TornadoPikaPublisher(
+                #     shutdown_timeout=bartender.config.shutdown_timeout, **pika_params
+                # )
+            except Exception as ex:
+                self.logger.exception("Error starting RabbitMQ event publisher: %s", ex)
+
+        # Metadata functions - additional metadata to be included with each event
+        # pubs.metadata_funcs["public_url"] = lambda: public_url
+
+        return pubs
 
 
 class HelperThread(object):
