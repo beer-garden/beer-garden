@@ -383,15 +383,7 @@ class RequestListAPI(BaseHandler):
                 self.request.decoded_body, from_string=True
             )
         elif self.request.mime_type == "application/x-www-form-urlencoded":
-            args = {"parameters": {}}
-            for key, value in self.request.body_arguments.items():
-                if key.startswith("parameters."):
-                    args["parameters"][key.replace("parameters.", "")] = value[
-                        0
-                    ].decode(self.request.charset)
-                else:
-                    args[key] = value[0].decode(self.request.charset)
-            request_model = Request(**args)
+            request_model = self._parse_form_request()
         else:
             raise ModelValidationError("Unsupported or missing content-type header")
 
@@ -450,3 +442,16 @@ class RequestListAPI(BaseHandler):
 
         self.set_status(201)
         self.write(self.parser.serialize_request(processed_request, to_string=False))
+
+    def _parse_form_request(self):
+        args = {"parameters": {}}
+
+        for key, value in self.request.body_arguments.items():
+            decoded_param = value[0].decode(self.request.charset)
+
+            if key.startswith("parameters."):
+                args["parameters"][key.replace("parameters.", "")] = decoded_param
+            else:
+                args[key] = decoded_param
+
+        return Request(**args)
