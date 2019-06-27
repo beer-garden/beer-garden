@@ -26,6 +26,9 @@ services:
             - "2338:2338"
         environment:
             <<: *env
+            # For brew-view web host is really interface to bind
+            BG_WEB_HOST: 0.0.0.0
+
             # We expose grafana for you, but you can change this to an
             # external grafana URL if you would like. It just adds a
             # link in our About section if it is defined.
