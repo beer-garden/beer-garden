@@ -1,5 +1,19 @@
 # Beer Garden Changelog
 
+## 2.4.8
+6/27/19
+Brew-view 2.4.12, Bartender 2.4.4, BG-utils 2.4.8
+
+#### Bug Fixes
+- Semicolon in request index page filters no longer breaks (#302)
+- Granfana link descriptions on about page respect application name (#301)
+- Frontend websocket connection now handles non-default base path (#298)
+
+#### Added Features
+- Support for Pika v1 (#305)
+- Scheduled jobs can now specify a max number of concurrent executions (#209)
+- Interval jobs can now reschedule based on prior run completion (#209)
+
 ## 2.4.7
 4/24/19
 Brew-view 2.4.11, Bartender 2.4.3, BG-utils 2.4.7
