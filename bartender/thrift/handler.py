@@ -76,7 +76,7 @@ class BartenderHandler(object):
         except mongoengine.DoesNotExist:
             raise bg_utils.bg_thrift.InvalidSystem(
                 "", f"Database error initializing instance {instance_id}"
-            )
+            ) from None
 
         return parser.serialize_instance(instance, to_string=True)
 
@@ -92,7 +92,7 @@ class BartenderHandler(object):
         except mongoengine.DoesNotExist:
             raise bg_utils.bg_thrift.InvalidSystem(
                 "", f"Couldn't find instance {instance_id}"
-            )
+            ) from None
 
         return parser.serialize_instance(instance, to_string=True)
 
@@ -108,7 +108,7 @@ class BartenderHandler(object):
         except mongoengine.DoesNotExist:
             raise bg_utils.bg_thrift.InvalidSystem(
                 "", f"Couldn't find instance {instance_id}"
-            )
+            ) from None
 
         return parser.serialize_instance(instance, to_string=True)
 
@@ -143,7 +143,7 @@ class BartenderHandler(object):
         except mongoengine.DoesNotExist:
             raise bg_utils.bg_thrift.InvalidSystem(
                 "", f"Couldn't find system {system_id}"
-            )
+            ) from None
 
     @staticmethod
     def removeSystem(system_id):
@@ -157,7 +157,7 @@ class BartenderHandler(object):
         except mongoengine.DoesNotExist:
             raise bg_utils.bg_thrift.InvalidSystem(
                 system_id, f"Couldn't find system {system_id}"
-            )
+            ) from None
 
     @staticmethod
     def rescanSystemDirectory():
