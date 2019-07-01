@@ -19,9 +19,17 @@ exception InvalidSystem {
   2: string message
 }
 
+exception ConflictException {
+  1: string message,
+}
+
 service BartenderBackend {
 
   // Systems
+  string createSystem(1:string system) throws (1: ConflictException ex, 2:BaseException baseEx);
+
+  string updateSystem(1:string systemId, 2:string updates) throws (1:BaseException baseEx);
+
   void reloadSystem(1: string systemId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
 
   void removeSystem(1: string systemId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
