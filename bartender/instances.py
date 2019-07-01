@@ -124,3 +124,35 @@ def stop_instance(instance_id):
         )
 
     return instance
+
+
+def update_instance(instance_id, new_status):
+    """Update an instance status.
+
+    Will also update the status_info heartbeat.
+
+    Args:
+        instance_id: The instance ID
+        new_status: The new status
+
+    Returns:
+        The updated instance
+    """
+    instance = Instance.objects.get(id=instance_id)
+    instance.status = new_status
+    instance.status_info.heartbeat = datetime.utcnow()
+    instance.save()
+
+    return instance
+
+
+def remove_instance(instance_id):
+    """Removes an instance
+
+    Args:
+        instance_id: The instance ID
+
+    Returns:
+        None
+    """
+    Instance.objects.get(id=instance_id).delete()

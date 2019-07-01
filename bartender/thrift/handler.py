@@ -5,7 +5,13 @@ import mongoengine
 
 import bartender
 import bg_utils
-from bartender.instances import initialize_instance, start_instance, stop_instance
+from bartender.instances import (
+    initialize_instance,
+    start_instance,
+    stop_instance,
+    remove_instance,
+    update_instance,
+)
 from bartender.queues import (
     clear_all_queues,
     clear_queue,
@@ -111,6 +117,40 @@ class BartenderHandler(object):
             ) from None
 
         return parser.serialize_instance(instance, to_string=True)
+
+    @staticmethod
+    def updateInstance(instance_id, new_status):
+        """Update instance status.
+
+        Args:
+            instance_id: The instance ID
+            new_status: The new status
+
+        Returns:
+
+        """
+        try:
+            instance = update_instance(instance_id, new_status)
+        except mongoengine.DoesNotExist:
+            raise bg_utils.bg_thrift.InvalidSystem(
+                instance_id, f"Couldn't find instance {instance_id}"
+            ) from None
+
+        return parser.serialize_instance(instance, to_string=True)
+
+    @staticmethod
+    def removeInstance(instance_id):
+        """Removes an instance.
+
+        :param instance_id: The ID of the instance
+        :return: None
+        """
+        try:
+            remove_instance(instance_id)
+        except mongoengine.DoesNotExist:
+            raise bg_utils.bg_thrift.InvalidSystem(
+                instance_id, f"Couldn't find instance {instance_id}"
+            ) from None
 
     @staticmethod
     def createSystem(system):
