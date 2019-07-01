@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 from tornado.gen import coroutine
 
@@ -68,9 +67,8 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        self.logger.debug("Deleting Instance: %s", instance_id)
-
-        Instance.objects.get(id=instance_id).delete()
+        with thrift_context() as client:
+            yield client.removeInstance(instance_id)
 
         self.set_status(204)
 
@@ -122,8 +120,6 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        response = {}
-        instance = Instance.objects.get(id=instance_id)
         operations = self.parser.parse_patch(
             self.request.decoded_body, many=True, from_string=True
         )
@@ -136,42 +132,17 @@ class InstanceAPI(BaseHandler):
                     )
 
             elif op.operation.lower() == "heartbeat":
-                instance.status_info.heartbeat = datetime.utcnow()
-                instance.save()
-                response = self.parser.serialize_instance(instance, to_string=False)
+                with thrift_context() as client:
+                    response = yield client.updateInstance(instance_id, "RUNNING")
 
             elif op.operation.lower() == "replace":
                 if op.path.lower() == "/status":
-                    if op.value.upper() == "INITIALIZING":
-                        with thrift_context() as client:
-                            response = yield client.initializeInstance(instance_id)
-
-                    elif op.value.upper() == "STOPPING":
-                        with thrift_context() as client:
-                            response = yield client.stopInstance(instance_id)
-
-                    elif op.value.upper() == "STARTING":
-                        with thrift_context() as client:
-                            response = yield client.startInstance(instance_id)
-
-                    elif op.value.upper() in ["RUNNING", "STOPPED"]:
-                        instance.status = op.value.upper()
-                        instance.save()
-                        response = self.parser.serialize_instance(
-                            instance, to_string=False
-                        )
-
-                    else:
-                        error_msg = "Unsupported status value '%s'" % op.value
-                        self.logger.warning(error_msg)
-                        raise ModelValidationError("value", error_msg)
+                    with thrift_context() as client:
+                        response = yield client.updateInstance(instance_id, op.value)
                 else:
-                    error_msg = "Unsupported path '%s'" % op.path
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError("value", error_msg)
+                    raise ModelValidationError(f"Unsupported path '{op.path}'")
             else:
-                error_msg = "Unsupported operation '%s'" % op.operation
-                self.logger.warning(error_msg)
-                raise ModelValidationError("value", error_msg)
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

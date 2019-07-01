@@ -127,9 +127,8 @@ class RequestAPI(BaseHandler):
             elif request.status == "SUCCESS":
                 document.success_count += 1
             document.save()
-        except Exception as exc:
-            self.logger.warning("Could not update job counts.")
-            self.logger.exception(exc)
+        except Exception as ex:
+            self.logger.exception(f"Could not update job counts: {ex}")
 
 
 class RequestListAPI(BaseHandler):

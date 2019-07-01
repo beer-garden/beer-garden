@@ -59,8 +59,6 @@ class AdminAPI(BaseHandler):
                 with thrift_context() as client:
                     yield client.rescanSystemDirectory()
             else:
-                error_msg = "Unsupported operation '%s'" % op.operation
-                self.logger.warning(error_msg)
-                raise ModelValidationError(error_msg)
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         self.set_status(204)
