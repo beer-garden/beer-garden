@@ -14,7 +14,13 @@ from bartender.queues import (
 )
 from bartender.requests import get_requests, process_request, update_request
 from bartender.scheduler import create_job, remove_job, pause_job, resume_job
-from bartender.systems import reload_system, remove_system, rescan_system_directory
+from bartender.systems import (
+    reload_system,
+    remove_system,
+    rescan_system_directory,
+    create_system,
+    update_system,
+)
 from bg_utils.mongo.models import Request
 from bg_utils.mongo.parser import MongoParser
 from brewtils.errors import (
@@ -105,6 +111,25 @@ class BartenderHandler(object):
             )
 
         return parser.serialize_instance(instance, to_string=True)
+
+    @staticmethod
+    def createSystem(system):
+        try:
+            return parser.serialize_system(
+                create_system(parser.parse_system(system, from_string=True))
+            )
+        except mongoengine.errors.NotUniqueError:
+            raise bg_utils.bg_thrift.ConflictException(
+                "System already exists"
+            ) from None
+
+    @staticmethod
+    def updateSystem(system_id, operations):
+        return parser.serialize_system(
+            update_system(
+                system_id, parser.parse_patch(operations, many=True, from_string=True)
+            )
+        )
 
     @staticmethod
     def reloadSystem(system_id):
