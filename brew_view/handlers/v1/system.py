@@ -3,12 +3,13 @@ import logging
 from tornado.gen import coroutine
 from tornado.locks import Lock
 
-from bg_utils.mongo.models import System, Instance
+import bg_utils
+from bg_utils.mongo.models import System
 from bg_utils.mongo.parser import MongoParser
 from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
-from brewtils.errors import ModelValidationError
+from brewtils.errors import ConflictError
 from brewtils.schemas import SystemSchema
 
 
@@ -88,7 +89,7 @@ class SystemAPI(BaseHandler):
           - Systems
         """
         with thrift_context() as client:
-            yield client.removeSystem(str(system_id))
+            yield client.removeSystem(system_id)
 
         self.set_status(204)
 
@@ -105,6 +106,7 @@ class SystemAPI(BaseHandler):
           ```JSON
           {
             "operations": [
+              { "operation": "add", "path": "/instance", "value": "" },
               { "operation": "replace", "path": "/commands", "value": "" },
               { "operation": "replace", "path": "/description", "value": "new description"},
               { "operation": "replace", "path": "/display_name", "value": "new display name"},
@@ -140,70 +142,13 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        # self.request.event.name = Events.SYSTEM_UPDATED.name
+        with thrift_context() as client:
+            thrift_response = yield client.updateSystem(
+                system_id, self.request.decoded_body
+            )
 
-        system = System.objects.get(id=system_id)
-        operations = self.parser.parse_patch(
-            self.request.decoded_body, many=True, from_string=True
-        )
-
-        for op in operations:
-            if op.operation == "replace":
-                if op.path == "/commands":
-                    new_commands = self.parser.parse_command(op.value, many=True)
-
-                    if (
-                        system.commands
-                        and "dev" not in system.version
-                        and system.has_different_commands(new_commands)
-                    ):
-                        raise ModelValidationError(
-                            "System %s-%s already exists with different commands"
-                            % (system.name, system.version)
-                        )
-
-                    system.upsert_commands(new_commands)
-                elif op.path in ["/description", "/icon_name", "/display_name"]:
-                    if op.value is None:
-                        # If we set an attribute to None, mongoengine marks that
-                        # attribute for deletion, so we don't do that.
-                        value = ""
-                    else:
-                        value = op.value
-                    attr = op.path.strip("/")
-                    self.logger.debug("Updating system %s" % attr)
-                    self.logger.debug("Old: %s" % getattr(system, attr))
-                    setattr(system, attr, value)
-                    self.logger.debug("Updated: %s" % getattr(system, attr))
-                    system.save()
-                else:
-                    error_msg = "Unsupported path '%s'" % op.path
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError("value", error_msg)
-            elif op.operation == "update":
-                if op.path == "/metadata":
-                    self.logger.debug("Updating system metadata")
-                    self.logger.debug("Old: %s" % system.metadata)
-                    system.metadata.update(op.value)
-                    self.logger.debug("Updated: %s" % system.metadata)
-                    system.save()
-                else:
-                    error_msg = "Unsupported path for update '%s'" % op.path
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError("path", error_msg)
-            elif op.operation == "reload":
-                with thrift_context() as client:
-                    yield client.reloadSystem(system_id)
-            else:
-                error_msg = "Unsupported operation '%s'" % op.operation
-                self.logger.warning(error_msg)
-                raise ModelValidationError("value", error_msg)
-
-        system.reload()
-
-        # self.request.event_extras = {"system": system, "patch": operations}
-
-        self.write(self.parser.serialize_system(system, to_string=False))
+        self.set_status(201)
+        self.write(thrift_response)
 
 
 class SystemListAPI(BaseHandler):
@@ -362,108 +307,11 @@ class SystemListAPI(BaseHandler):
         tags:
           - Systems
         """
-        # self.request.event.name = Events.SYSTEM_CREATED.name
+        with thrift_context() as client:
+            try:
+                thrift_response = yield client.createSystem(self.request.decoded_body)
+            except bg_utils.bg_thrift.ConflictException:
+                raise ConflictError() from None
 
-        system_model = self.parser.parse_system(
-            self.request.decoded_body, from_string=True
-        )
-
-        with (yield self.system_lock.acquire()):
-            # See if we already have a system with this name + version
-            existing_system = System.find_unique(
-                system_model.name, system_model.version
-            )
-
-            if not existing_system:
-                self.logger.debug("Creating a new system: %s" % system_model.name)
-                saved_system, status_code = self._create_new_system(system_model)
-            else:
-                self.logger.debug(
-                    "System %s already exists. Updating it." % system_model.name
-                )
-                # self.request.event.name = Events.SYSTEM_UPDATED.name
-                saved_system, status_code = self._update_existing_system(
-                    existing_system, system_model
-                )
-
-            saved_system.deep_save()
-
-        # self.request.event_extras = {"system": saved_system}
-
-        self.set_status(status_code)
-        self.write(
-            self.parser.serialize_system(
-                saved_system, to_string=False, include_commands=True
-            )
-        )
-
-    @staticmethod
-    def _create_new_system(system_model):
-        new_system = system_model
-
-        # Assign a default 'main' instance if there aren't any instances and there can
-        # only be one
-        if not new_system.instances or len(new_system.instances) == 0:
-            if new_system.max_instances is None or new_system.max_instances == 1:
-                new_system.instances = [Instance(name="default")]
-                new_system.max_instances = 1
-            else:
-                raise ModelValidationError(
-                    "Could not create system %s-%s: Systems with "
-                    "max_instances > 1 must also define their instances"
-                    % (system_model.name, system_model.version)
-                )
-        else:
-            if not new_system.max_instances:
-                new_system.max_instances = len(new_system.instances)
-
-        return new_system, 201
-
-    @staticmethod
-    def _update_existing_system(existing_system, system_model):
-        # Raise an exception if commands already exist for this system and they differ
-        # from what's already in the database in a significant way
-        if (
-            existing_system.commands
-            and "dev" not in existing_system.version
-            and existing_system.has_different_commands(system_model.commands)
-        ):
-            raise ModelValidationError(
-                "System %s-%s already exists with different commands"
-                % (system_model.name, system_model.version)
-            )
-        else:
-            existing_system.upsert_commands(system_model.commands)
-
-        # Update instances
-        if not system_model.instances or len(system_model.instances) == 0:
-            system_model.instances = [Instance(name="default")]
-
-        for attr in ["description", "icon_name", "display_name"]:
-            value = getattr(system_model, attr)
-
-            # If we set an attribute on the model as None, mongoengine marks the
-            # attribute for deletion. We want to prevent this, so we set it to an emtpy
-            # string.
-            if value is None:
-                setattr(existing_system, attr, "")
-            else:
-                setattr(existing_system, attr, value)
-
-        # Update metadata
-        new_metadata = system_model.metadata or {}
-        existing_system.metadata.update(new_metadata)
-
-        old_instances = [
-            inst
-            for inst in existing_system.instances
-            if system_model.has_instance(inst.name)
-        ]
-        new_instances = [
-            inst
-            for inst in system_model.instances
-            if not existing_system.has_instance(inst.name)
-        ]
-        existing_system.instances = old_instances + new_instances
-
-        return existing_system, 200
+        self.set_status(201)
+        self.write(thrift_response)
