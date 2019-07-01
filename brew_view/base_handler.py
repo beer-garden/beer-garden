@@ -49,10 +49,7 @@ class BaseHandler(AuthMixin, RequestHandler):
         ConflictError: {"status_code": 409},
         NotUniqueError: {"status_code": 409, "message": "Resource already exists"},
         RequestPublishException: {"status_code": 502},
-        bg_utils.bg_thrift.BaseException: {
-            "status_code": 502,
-            "message": "An error occurred " "on the backend",
-        },
+        bg_utils.bg_thrift.BaseException: {"status_code": 502},
         TException: {"status_code": 503, "message": "Could not connect to Bartender"},
         socket.timeout: {"status_code": 504, "message": "Backend request timed out"},
     }
@@ -200,8 +197,9 @@ class BaseHandler(AuthMixin, RequestHandler):
                         break
 
             if error_dict:
+                # Thrift exceptions should have a message attribute
+                message = error_dict.get("message", getattr(e, "message", str(e)))
                 code = error_dict.get("status_code", 500)
-                message = error_dict.get("message", str(e))
 
             elif brew_view.config.debug_mode:
                 message = str(e)
