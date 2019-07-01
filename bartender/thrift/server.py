@@ -96,19 +96,32 @@ class WrappedTProcessor(TProcessor):
         self.logger = logging.getLogger(__name__)
 
     def handle_exception(self, e, result):
-        try:
-            return super(WrappedTProcessor, self).handle_exception(e, result)
-        except Exception as ex:
-            self.logger.exception(
-                "Uncaught exception occurred during thrift execution: %s", ex
-            )
+        """Handle exceptions raised by a handler method.
+
+        First give the base class a chance to handle it - if that returns True it
+        indicates that the raised exception was declared in the thrift service
+        definition.
+
+        If False then we just stuff it into a BaseException since all the thrift
+        methods declare that as a possible exception.
+
+        Always return True - returning False tells the thrift library there is no way
+        to marshall the exception, which results in transport-level errors (which is
+        not very useful on the client side).
+
+        """
+        if not super(WrappedTProcessor, self).handle_exception(e, result):
             setattr(
                 result,
                 self.default_exception_name,
                 self.default_exception_cls(
-                    str(ex) or "No message was found on the raised exception."
+                    str(e) or "No message was found on the raised exception."
                 ),
             )
+
+        self.logger.exception(f"An exception occurred in a thrift handler method: {e}")
+
+        return True
 
 
 def make_server(
