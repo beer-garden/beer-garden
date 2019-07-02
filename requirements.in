@@ -3,7 +3,6 @@
 -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
 -e git+https://github.com/beer-garden/bg-utils@develop#egg=bg-utils
 apispec < 0.39
-apscheduler
 futures ; python_version < "3.0"
 ruamel.ordereddict ; python_version < "3.0"
 tornado < 6

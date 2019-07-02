@@ -25,7 +25,6 @@ from brewtils.errors import (
     WaitExceededError,
     AuthorizationRequired,
 )
-from brewtils.models import Event
 
 
 class BaseHandler(AuthMixin, RequestHandler):
@@ -50,10 +49,7 @@ class BaseHandler(AuthMixin, RequestHandler):
         ConflictError: {"status_code": 409},
         NotUniqueError: {"status_code": 409, "message": "Resource already exists"},
         RequestPublishException: {"status_code": 502},
-        bg_utils.bg_thrift.BaseException: {
-            "status_code": 502,
-            "message": "An error occurred " "on the backend",
-        },
+        bg_utils.bg_thrift.BaseException: {"status_code": 502},
         TException: {"status_code": 503, "message": "Could not connect to Bartender"},
         socket.timeout: {"status_code": 504, "message": "Backend request timed out"},
     }
@@ -116,10 +112,6 @@ class BaseHandler(AuthMixin, RequestHandler):
         # Used for calculating request handling duration
         self.request.created_time = datetime.datetime.utcnow()
 
-        # This is used for sending event notifications
-        self.request.event = Event()
-        self.request.event_extras = {}
-
         content_type = self.request.headers.get("content-type", "")
         if self.request.method.upper() in ["POST", "PATCH"] and content_type:
             content_type = content_type.split(";")
@@ -149,11 +141,6 @@ class BaseHandler(AuthMixin, RequestHandler):
                 route=self.prometheus_endpoint,
                 status=self.get_status(),
             ).observe(request_latency(self.request.created_time))
-
-        if self.request.event.name and getattr(self.request, "publish_event", True):
-            brew_view.event_publishers.publish_event(
-                self.request.event, **self.request.event_extras
-            )
 
     def options(self, *args, **kwargs):
 
@@ -210,8 +197,9 @@ class BaseHandler(AuthMixin, RequestHandler):
                         break
 
             if error_dict:
+                # Thrift exceptions should have a message attribute
+                message = error_dict.get("message", getattr(e, "message", str(e)))
                 code = error_dict.get("status_code", 500)
-                message = error_dict.get("message", str(e))
 
             elif brew_view.config.debug_mode:
                 message = str(e)
@@ -221,9 +209,6 @@ class BaseHandler(AuthMixin, RequestHandler):
             "Encountered unknown exception. Please check "
             "with your System Administrator."
         )
-
-        self.request.event.error = True
-        self.request.event.payload = {"message": message}
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.set_status(code)

@@ -15,14 +15,11 @@ from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brew_view.metrics import request_created, http_api_latency_total, request_latency
-from brew_view.metrics import request_updated
 from brewtils.errors import (
     ModelValidationError,
     RequestPublishException,
     TimeoutExceededError,
 )
-from brewtils.models import Events
-from brewtils.models import Request as BrewtilsRequest
 from brewtils.schema_parser import SchemaParser
 
 
@@ -61,6 +58,7 @@ class RequestAPI(BaseHandler):
 
         self.write(self.parser.serialize_request(req, to_string=False))
 
+    @coroutine
     @authenticated(permissions=[Permissions.REQUEST_UPDATE])
     def patch(self, request_id):
         """
@@ -103,79 +101,15 @@ class RequestAPI(BaseHandler):
         tags:
           - Requests
         """
-        req = Request.objects.get(id=request_id)
-        operations = self.parser.parse_patch(
-            self.request.decoded_body, many=True, from_string=True
-        )
-        wait_event = None
+        with thrift_context() as client:
+            try:
+                thrift_response = yield client.updateRequest(
+                    request_id, self.request.decoded_body
+                )
+            except bg_utils.bg_thrift.InvalidRequest as ex:
+                raise ModelValidationError(ex.message)
 
-        # We note the status before the operations, because it is possible for the
-        # operations to update the status of the request. In that case, because the
-        # updates are coming in in a single request it is okay to update the output or
-        # error_class. Ideally this would be handled correctly when we better integrate
-        # PatchOperations with their models.
-        status_before = req.status
-
-        for op in operations:
-            if op.operation == "replace":
-                if op.path == "/status":
-                    if op.value.upper() in BrewtilsRequest.STATUS_LIST:
-                        req.status = op.value.upper()
-
-                        if op.value.upper() == "IN_PROGRESS":
-                            self.request.event.name = Events.REQUEST_STARTED.name
-
-                        elif op.value.upper() in BrewtilsRequest.COMPLETED_STATUSES:
-                            self.request.event.name = Events.REQUEST_COMPLETED.name
-
-                            if request_id in brew_view.request_map:
-                                wait_event = brew_view.request_map[request_id]
-                    else:
-                        error_msg = "Unsupported status value '%s'" % op.value
-                        self.logger.warning(error_msg)
-                        raise ModelValidationError(error_msg)
-                elif op.path == "/output":
-                    if req.output == op.value:
-                        continue
-
-                    if status_before in Request.COMPLETED_STATUSES:
-                        raise ModelValidationError(
-                            "Cannot update output for a request "
-                            "that is already completed"
-                        )
-                    req.output = op.value
-                elif op.path == "/error_class":
-                    if req.error_class == op.value:
-                        continue
-
-                    if status_before in Request.COMPLETED_STATUSES:
-                        raise ModelValidationError(
-                            "Cannot update error_class for a "
-                            "request that is already completed"
-                        )
-                    req.error_class = op.value
-                    self.request.event.error = True
-                else:
-                    error_msg = "Unsupported path '%s'" % op.path
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError(error_msg)
-            else:
-                error_msg = "Unsupported operation '%s'" % op.operation
-                self.logger.warning(error_msg)
-                raise ModelValidationError(error_msg)
-
-        req.save()
-
-        # Metrics
-        request_updated(req, status_before)
-        self._update_job_numbers(req, status_before)
-
-        if wait_event:
-            wait_event.set()
-
-        self.request.event_extras = {"request": req, "patch": operations}
-
-        self.write(self.parser.serialize_request(req, to_string=False))
+        self.write(thrift_response)
 
     def _update_job_numbers(self, request, status_before):
         if (
@@ -193,9 +127,8 @@ class RequestAPI(BaseHandler):
             elif request.status == "SUCCESS":
                 document.success_count += 1
             document.save()
-        except Exception as exc:
-            self.logger.warning("Could not update job counts.")
-            self.logger.exception(exc)
+        except Exception as ex:
+            self.logger.exception(f"Could not update job counts: {ex}")
 
 
 class RequestListAPI(BaseHandler):
@@ -444,22 +377,12 @@ class RequestListAPI(BaseHandler):
         tags:
           - Requests
         """
-        self.request.event.name = Events.REQUEST_CREATED.name
-
         if self.request.mime_type == "application/json":
             request_model = self.parser.parse_request(
                 self.request.decoded_body, from_string=True
             )
         elif self.request.mime_type == "application/x-www-form-urlencoded":
-            args = {"parameters": {}}
-            for key, value in self.request.body_arguments.items():
-                if key.startswith("parameters."):
-                    args["parameters"][key.replace("parameters.", "")] = value[
-                        0
-                    ].decode(self.request.charset)
-                else:
-                    args[key] = value[0].decode(self.request.charset)
-            request_model = Request(**args)
+            request_model = self._parse_form_request()
         else:
             raise ModelValidationError("Unsupported or missing content-type header")
 
@@ -480,26 +403,19 @@ class RequestListAPI(BaseHandler):
             process_response, from_string=True
         )
 
-        self.request.event_extras = {"request": processed_request}
-
         # Metrics
         request_created(processed_request)
 
         if self.get_argument("blocking", default="").lower() == "true":
-            # Publish metrics and event here here so they aren't skewed
+            # Publish metrics here here so they aren't skewed
             # See https://github.com/beer-garden/beer-garden/issues/190
             self.request.publish_metrics = False
-            self.request.publish_event = False
 
             http_api_latency_total.labels(
                 method=self.request.method.upper(),
                 route=self.prometheus_endpoint,
                 status=self.get_status(),
             ).observe(request_latency(self.request.created_time))
-
-            brew_view.event_publishers.publish_event(
-                self.request.event, **self.request.event_extras
-            )
 
             # It's possible the request is already done by this point, so check
             mongo_request = Request.objects.get(id=processed_request.id)
@@ -525,3 +441,16 @@ class RequestListAPI(BaseHandler):
 
         self.set_status(201)
         self.write(self.parser.serialize_request(processed_request, to_string=False))
+
+    def _parse_form_request(self):
+        args = {"parameters": {}}
+
+        for key, value in self.request.body_arguments.items():
+            decoded_param = value[0].decode(self.request.charset)
+
+            if key.startswith("parameters."):
+                args["parameters"][key.replace("parameters.", "")] = decoded_param
+            else:
+                args[key] = decoded_param
+
+        return Request(**args)

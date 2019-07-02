@@ -78,11 +78,8 @@ class LoggingConfigAPI(BaseHandler):
             if op.operation == "reload":
                 brew_view.load_plugin_logging_config(brew_view.config)
             else:
-                error_msg = "Unsupported operation '%s'" % op.operation
-                self.logger.warning(error_msg)
-                raise ModelValidationError("value", error_msg)
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
-        self.set_status(200)
         self.write(
             self.parser.serialize_logging_config(
                 brew_view.plugin_logging_config, to_string=False
