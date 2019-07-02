@@ -40,6 +40,13 @@ export default function requestIndexController(
         data.columns.push({'data': 'parent'});
       }
 
+      // Not urlencoding semicolons in the search values breaks the backend
+      for (let column of data.columns) {
+        if (column.search && column.search.value) {
+          column.search.value = column.search.value.replace(/;/g, '%3B');
+        }
+      }
+
       RequestService.getRequests(data).then(
         (response) => {
           $scope.response = response;
