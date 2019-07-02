@@ -260,6 +260,46 @@ SPECIFICATION = {
             },
         },
     },
+    "event": {
+        "type": "dict",
+        "items": {
+            "amq": {
+                "type": "dict",
+                "items": {
+                    "enable": {
+                        "type": "bool",
+                        "default": False,
+                        "description": "Publish events to RabbitMQ",
+                    },
+                    "exchange": {
+                        "type": "str",
+                        "required": False,
+                        "description": "Exchange to use for AMQ events",
+                        "previous_names": ["event_amq_exchange"],
+                    },
+                    "virtual_host": {
+                        "type": "str",
+                        "default": "/",
+                        "required": False,
+                        "description": "Virtual host to use for AMQ events",
+                        "previous_names": ["event_amq_virtual_host"],
+                    },
+                },
+            },
+            "mongo": {
+                "type": "dict",
+                "items": {
+                    "enable": {
+                        "type": "bool",
+                        "default": True,
+                        "description": "Persist events to Mongo",
+                        "previous_names": ["event_persist_mongo"],
+                        "alt_env_names": ["EVENT_PERSIST_MONGO"],
+                    }
+                },
+            },
+        },
+    },
     "log": {
         "type": "dict",
         "items": {
@@ -437,6 +477,53 @@ SPECIFICATION = {
                                 "alt_env_names": ["PLUGIN_STARTUP_TIMEOUT"],
                             },
                         },
+                    },
+                },
+            },
+        },
+    },
+    "scheduler": {
+        "type": "dict",
+        "items": {
+            "auth": {
+                "type": "dict",
+                "items": {
+                    "username": {
+                        "type": "str",
+                        "description": "Username that scheduler will use for "
+                        "authentication (needs bg-admin role)",
+                        "required": False,
+                    },
+                    "password": {
+                        "type": "str",
+                        "description": "Password that scheduler will use for "
+                        "authentication (needs bg-admin role)",
+                        "required": False,
+                    },
+                },
+            },
+            "max_workers": {
+                "type": "int",
+                "default": 10,
+                "description": "Number of workers (processes) to run concurrently.",
+            },
+            "job_defaults": {
+                "type": "dict",
+                "items": {
+                    "coalesce": {
+                        "type": "bool",
+                        "default": True,
+                        "description": (
+                            "Should jobs run only once if multiple have missed their "
+                            "window"
+                        ),
+                    },
+                    "max_instances": {
+                        "type": "int",
+                        "default": 3,
+                        "description": (
+                            "Default maximum instances of a job to run concurrently."
+                        ),
                     },
                 },
             },

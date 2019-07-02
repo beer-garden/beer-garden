@@ -11,46 +11,15 @@ from mongoengine import Q
 from requests import Session
 
 import bartender
+from bartender.events import publish_event
 from bg_utils.mongo.models import Choices, Request, System
 from brewtils.choices import parse
 from brewtils.errors import ModelValidationError, RequestPublishException, ConflictError
+from brewtils.models import Events
 from brewtils.rest.system_client import SystemClient
 from brewtils.schema_parser import SchemaParser
 
 logger = logging.getLogger(__name__)
-
-
-def process_request(request):
-    """Validates and publishes a Request.
-
-    :param request: The Request to process
-    :raises InvalidRequest: If the Request is invalid in some way
-    :return: None
-    """
-    # Validates the request based on what is in the database.
-    # This includes the validation of the request parameters,
-    # systems are there, commands are there etc.
-    request = bartender.application.request_validator.validate_request(request)
-
-    # Once validated we need to save since validate can modify the request
-    request.save()
-
-    try:
-        logger.info(f"Publishing request {request.id}")
-
-        bartender.application.clients["pika"].publish_request(
-            request, confirm=True, mandatory=True
-        )
-    except Exception:
-        # An error publishing means this request will never complete, so remove it
-        request.delete()
-
-        raise RequestPublishException(
-            f"Error while publishing request {request.id} to queue "
-            f"{request.system}[{request.system_version}]-{request.instance_name}"
-        )
-
-    return request
 
 
 class RequestValidator(object):
@@ -655,3 +624,103 @@ def get_requests(
         "filtered_count": query_set.count(),  # This is another query
         "total_count": Request.objects.count(),
     }
+
+
+@publish_event(Events.REQUEST_CREATED)
+def process_request(request):
+    """Validates and publishes a Request.
+
+    :param request: The Request to process
+    :raises InvalidRequest: If the Request is invalid in some way
+    :return: None
+    """
+    # Validates the request based on what is in the database.
+    # This includes the validation of the request parameters,
+    # systems are there, commands are there etc.
+    request = bartender.application.request_validator.validate_request(request)
+
+    # Once validated we need to save since validate can modify the request
+    request.save()
+
+    try:
+        logger.info(f"Publishing request {request.id}")
+
+        bartender.application.clients["pika"].publish_request(
+            request, confirm=True, mandatory=True
+        )
+    except Exception:
+        # An error publishing means this request will never complete, so remove it
+        request.delete()
+
+        raise RequestPublishException(
+            f"Error while publishing request {request.id} to queue "
+            f"{request.system}[{request.system_version}]-{request.instance_name}"
+        )
+
+    return request
+
+
+def update_request(request, patch):
+    # wait_event = None
+
+    status = None
+    output = None
+    error_class = None
+
+    for op in patch:
+        if op.operation == "replace":
+            if op.path == "/status":
+                if op.value.upper() in Request.STATUS_LIST:
+                    if op.value.upper() == "IN_PROGRESS":
+                        return start_request(request)
+                    else:
+                        status = op.value
+                    #     if request_id in brew_view.request_map:
+                    #         wait_event = brew_view.request_map[request_id]
+                else:
+                    raise ModelValidationError(f"Unsupported status value '{op.value}'")
+            elif op.path == "/output":
+                output = op.value
+            elif op.path == "/error_class":
+                error_class = op.value
+            else:
+                raise ModelValidationError(f"Unsupported path '{op.path}'")
+        else:
+            raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+
+    return complete_request(request, status, output, error_class)
+
+    # Metrics
+    # request_updated(req, status_before)
+    # self._update_job_numbers(req, status_before)
+    #
+    # if wait_event:
+    #     wait_event.set()
+
+    # return request
+
+
+@publish_event(Events.REQUEST_STARTED)
+def start_request(request):
+    if request.status in Request.COMPLETED_STATUSES:
+        raise ModelValidationError("Cannot update a completed request")
+
+    request.status = "IN_PROGRESS"
+    request.save()
+
+    return request
+
+
+@publish_event(Events.REQUEST_COMPLETED)
+def complete_request(request, status, output=None, error_class=None):
+    if request.status in Request.COMPLETED_STATUSES:
+        raise ModelValidationError("Cannot update a completed request")
+
+    # Completing should always have a status
+    request.status = status
+
+    request.output = output
+    request.error_class = error_class
+    request.save()
+
+    return request

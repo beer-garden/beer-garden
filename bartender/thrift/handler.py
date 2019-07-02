@@ -5,15 +5,29 @@ import mongoengine
 
 import bartender
 import bg_utils
-from bartender.instances import initialize_instance, start_instance, stop_instance
+from bartender.instances import (
+    initialize_instance,
+    start_instance,
+    stop_instance,
+    remove_instance,
+    update_instance,
+)
 from bartender.queues import (
     clear_all_queues,
     clear_queue,
     get_all_queue_info,
     get_queue_message_count,
 )
-from bartender.requests import get_requests, process_request
-from bartender.systems import reload_system, remove_system, rescan_system_directory
+from bartender.requests import get_requests, process_request, update_request
+from bartender.scheduler import create_job, remove_job, pause_job, resume_job
+from bartender.systems import (
+    reload_system,
+    remove_system,
+    rescan_system_directory,
+    create_system,
+    update_system,
+)
+from bg_utils.mongo.models import Request
 from bg_utils.mongo.parser import MongoParser
 from brewtils.errors import (
     ModelValidationError,
@@ -50,6 +64,13 @@ class BartenderHandler(object):
             raise bg_utils.bg_thrift.InvalidRequest("", str(ex))
 
     @staticmethod
+    def updateRequest(request_id, patch):
+        request = Request.objects.get(id=request_id)
+        parsed_patch = parser.parse_patch(patch, many=True, from_string=True)
+
+        return parser.serialize_request(update_request(request, parsed_patch))
+
+    @staticmethod
     def initializeInstance(instance_id):
         """Initializes an instance.
 
@@ -61,7 +82,7 @@ class BartenderHandler(object):
         except mongoengine.DoesNotExist:
             raise bg_utils.bg_thrift.InvalidSystem(
                 "", f"Database error initializing instance {instance_id}"
-            )
+            ) from None
 
         return parser.serialize_instance(instance, to_string=True)
 
@@ -77,7 +98,7 @@ class BartenderHandler(object):
         except mongoengine.DoesNotExist:
             raise bg_utils.bg_thrift.InvalidSystem(
                 "", f"Couldn't find instance {instance_id}"
-            )
+            ) from None
 
         return parser.serialize_instance(instance, to_string=True)
 
@@ -93,9 +114,62 @@ class BartenderHandler(object):
         except mongoengine.DoesNotExist:
             raise bg_utils.bg_thrift.InvalidSystem(
                 "", f"Couldn't find instance {instance_id}"
-            )
+            ) from None
 
         return parser.serialize_instance(instance, to_string=True)
+
+    @staticmethod
+    def updateInstance(instance_id, new_status):
+        """Update instance status.
+
+        Args:
+            instance_id: The instance ID
+            new_status: The new status
+
+        Returns:
+
+        """
+        try:
+            instance = update_instance(instance_id, new_status)
+        except mongoengine.DoesNotExist:
+            raise bg_utils.bg_thrift.InvalidSystem(
+                instance_id, f"Couldn't find instance {instance_id}"
+            ) from None
+
+        return parser.serialize_instance(instance, to_string=True)
+
+    @staticmethod
+    def removeInstance(instance_id):
+        """Removes an instance.
+
+        :param instance_id: The ID of the instance
+        :return: None
+        """
+        try:
+            remove_instance(instance_id)
+        except mongoengine.DoesNotExist:
+            raise bg_utils.bg_thrift.InvalidSystem(
+                instance_id, f"Couldn't find instance {instance_id}"
+            ) from None
+
+    @staticmethod
+    def createSystem(system):
+        try:
+            return parser.serialize_system(
+                create_system(parser.parse_system(system, from_string=True))
+            )
+        except mongoengine.errors.NotUniqueError:
+            raise bg_utils.bg_thrift.ConflictException(
+                "System already exists"
+            ) from None
+
+    @staticmethod
+    def updateSystem(system_id, operations):
+        return parser.serialize_system(
+            update_system(
+                system_id, parser.parse_patch(operations, many=True, from_string=True)
+            )
+        )
 
     @staticmethod
     def reloadSystem(system_id):
@@ -109,7 +183,7 @@ class BartenderHandler(object):
         except mongoengine.DoesNotExist:
             raise bg_utils.bg_thrift.InvalidSystem(
                 "", f"Couldn't find system {system_id}"
-            )
+            ) from None
 
     @staticmethod
     def removeSystem(system_id):
@@ -123,7 +197,7 @@ class BartenderHandler(object):
         except mongoengine.DoesNotExist:
             raise bg_utils.bg_thrift.InvalidSystem(
                 system_id, f"Couldn't find system {system_id}"
-            )
+            ) from None
 
     @staticmethod
     def rescanSystemDirectory():
@@ -162,6 +236,22 @@ class BartenderHandler(object):
     def clearAllQueues():
         """Clears all queues that Bartender knows about"""
         clear_all_queues()
+
+    @staticmethod
+    def createJob(job):
+        return parser.serialize_job(create_job(parser.parse_job(job, from_string=True)))
+
+    @staticmethod
+    def pauseJob(job_id):
+        return parser.serialize_job(pause_job(job_id))
+
+    @staticmethod
+    def resumeJob(job_id):
+        return parser.serialize_job(resume_job(job_id))
+
+    @staticmethod
+    def removeJob(job_id):
+        remove_job(job_id)
 
     @staticmethod
     def getVersion():

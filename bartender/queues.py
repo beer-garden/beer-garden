@@ -3,10 +3,11 @@ import logging
 from pyrabbit2.http import HTTPError
 
 import bartender
+from bartender.events import publish_event
 from bg_utils.mongo.models import System
 from bg_utils.pika import get_routing_key
 from brewtils.errors import NotFoundError
-from brewtils.models import Queue
+from brewtils.models import Queue, Events
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,7 @@ def get_all_queue_info():
     return queues
 
 
+@publish_event(Events.QUEUE_CLEARED)
 def clear_queue(queue_name):
     """Clear all Requests in the given queue
 
@@ -74,6 +76,7 @@ def clear_queue(queue_name):
             raise
 
 
+@publish_event(Events.ALL_QUEUES_CLEARED)
 def clear_all_queues():
     """Clears all queues that Bartender knows about.
 

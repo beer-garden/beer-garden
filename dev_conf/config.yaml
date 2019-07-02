@@ -36,6 +36,13 @@ db:
     action: -1
     event: 15
     info: 15
+event:
+  amq:
+    enable: false
+    exchange: event
+    virtual_host: /
+  mongo:
+    enable: true
 log:
   config_file: dev_conf/logging-config.json
   file: null
@@ -53,6 +60,14 @@ plugin:
   status_heartbeat: 5
   status_timeout: 30
 publish_hostname: localhost
+scheduler:
+  auth:
+    password: null
+    username: null
+  job_defaults:
+    coalesce: true
+    max_instances: 3
+  max_workers: 10
 thrift:
   host: 0.0.0.0
   max_workers: 25
