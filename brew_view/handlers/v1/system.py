@@ -147,7 +147,7 @@ class SystemAPI(BaseHandler):
                 system_id, self.request.decoded_body
             )
 
-        self.set_status(201)
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)
 
 
@@ -246,10 +246,10 @@ class SystemListAPI(BaseHandler):
 
         with thrift_context() as client:
             thrift_response = yield client.querySystems(
-                json.dumps(filter_params),
+                filter_params,
                 order_by,
-                json.dumps(list(include_fields)),
-                json.dumps(list(exclude_fields)),
+                include_fields,
+                exclude_fields,
                 dereference_nested,
             )
 
