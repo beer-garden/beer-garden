@@ -27,6 +27,7 @@ from bartender.systems import (
     rescan_system_directory,
     create_system,
     update_system,
+    query_systems,
 )
 from bg_utils.mongo.models import Request
 from bg_utils.mongo.parser import MongoParser
@@ -158,6 +159,32 @@ class BartenderHandler(object):
             raise bg_utils.bg_thrift.InvalidSystem(
                 instance_id, f"Couldn't find instance {instance_id}"
             ) from None
+
+    @staticmethod
+    def querySystems(
+        filter_params=None,
+        order_by=None,
+        include_fields=None,
+        exclude_fields=None,
+        dereference_nested=None,
+    ):
+        filter_params = json.loads(filter_params)
+        include_fields = json.loads(include_fields)
+        exclude_fields = json.loads(exclude_fields)
+
+        return parser.serialize_system(
+            query_systems(
+                filter_params=filter_params,
+                order_by=order_by,
+                include_fields=include_fields,
+                exclude_fields=exclude_fields,
+                dereference_nested=dereference_nested,
+            ),
+            to_string=True,
+            many=True,
+            only=include_fields,
+            exclude=exclude_fields,
+        )
 
     @staticmethod
     def createSystem(system):
