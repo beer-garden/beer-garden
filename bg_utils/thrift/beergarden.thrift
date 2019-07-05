@@ -26,6 +26,8 @@ exception ConflictException {
 service BartenderBackend {
 
   // Systems
+  string querySystems(1: string filterParams, 2: string orderBy, 3: string includeFields, 4: string excludeFields, 5: bool dereferenceNested) throws (1:BaseException baseEx);
+
   string createSystem(1: string system) throws (1:ConflictException ex, 2:BaseException baseEx);
 
   string updateSystem(1: string systemId, 2:string updates) throws (1:BaseException baseEx);
@@ -40,7 +42,7 @@ service BartenderBackend {
   // Instances
   string initializeInstance(1: string instanceId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
 
-  string updateInstance(1: string instanceId, 2: string patch) throws (1: BaseException baseEx);
+  string updateInstance(1: string instanceId, 2: string patch) throws (1:BaseException baseEx);
 
   string startInstance(1: string instanceId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
 
