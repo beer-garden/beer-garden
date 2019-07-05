@@ -9,6 +9,7 @@ from bartender.events import publish_event
 from bg_utils.mongo.fields import StatusInfo
 from bg_utils.mongo.models import Instance, System
 from bg_utils.pika import get_routing_key, get_routing_keys
+from brewtils.errors import ModelValidationError
 from brewtils.models import Events
 
 logger = logging.getLogger(__name__)
@@ -74,6 +75,35 @@ def initialize_instance(instance_id):
     return instance
 
 
+def update_instance(instance_id, patch):
+    instance = None
+
+    for op in patch:
+        operation = op.operation.lower()
+
+        if operation == "initialize":
+            instance = initialize_instance(instance_id)
+
+        elif operation == "start":
+            instance = start_instance(instance_id)
+
+        elif operation == "stop":
+            instance = stop_instance(instance_id)
+
+        elif operation == "heartbeat":
+            instance = update_instance_status(instance_id, "RUNNING")
+
+        elif operation == "replace":
+            if op.path.lower() == "/status":
+                instance = update_instance_status(instance_id, op.value)
+            else:
+                raise ModelValidationError(f"Unsupported path '{op.path}'")
+        else:
+            raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+
+    return instance
+
+
 @publish_event(Events.INSTANCE_STARTED)
 def start_instance(instance_id):
     """Starts an instance.
@@ -126,7 +156,7 @@ def stop_instance(instance_id):
     return instance
 
 
-def update_instance(instance_id, new_status):
+def update_instance_status(instance_id, new_status):
     """Update an instance status.
 
     Will also update the status_info heartbeat.

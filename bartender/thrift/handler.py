@@ -10,6 +10,7 @@ from bartender.instances import (
     start_instance,
     stop_instance,
     remove_instance,
+    update_instance_status,
     update_instance,
 )
 from bartender.queues import (
@@ -87,6 +88,12 @@ class BartenderHandler(object):
         return parser.serialize_instance(instance, to_string=True)
 
     @staticmethod
+    def updateInstance(instance_id, patch):
+        parsed_patch = parser.parse_patch(patch, many=True, from_string=True)
+
+        return parser.serialize_instance(update_instance(instance_id, parsed_patch))
+
+    @staticmethod
     def startInstance(instance_id):
         """Starts an instance.
 
@@ -119,7 +126,7 @@ class BartenderHandler(object):
         return parser.serialize_instance(instance, to_string=True)
 
     @staticmethod
-    def updateInstance(instance_id, new_status):
+    def updateInstanceStatus(instance_id, new_status):
         """Update instance status.
 
         Args:
@@ -130,7 +137,7 @@ class BartenderHandler(object):
 
         """
         try:
-            instance = update_instance(instance_id, new_status)
+            instance = update_instance_status(instance_id, new_status)
         except mongoengine.DoesNotExist:
             raise bg_utils.bg_thrift.InvalidSystem(
                 instance_id, f"Couldn't find instance {instance_id}"
