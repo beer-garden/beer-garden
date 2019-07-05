@@ -26,7 +26,13 @@ exception ConflictException {
 service BartenderBackend {
 
   // Systems
-  string querySystems(1: string filterParams, 2: string orderBy, 3: string includeFields, 4: string excludeFields, 5: bool dereferenceNested) throws (1:BaseException baseEx);
+  string querySystems(
+      1: map<string, string> filterParams,
+      2: string orderBy,
+      3: set<string> includeFields,
+      4: set<string> excludeFields,
+      5: bool dereferenceNested
+  ) throws (1:BaseException baseEx);
 
   string createSystem(1: string system) throws (1:ConflictException ex, 2:BaseException baseEx);
 
