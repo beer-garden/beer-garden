@@ -40,11 +40,13 @@ service BartenderBackend {
   // Instances
   string initializeInstance(1: string instanceId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
 
+  string updateInstance(1: string instanceId, 2: string patch) throws (1: BaseException baseEx);
+
   string startInstance(1: string instanceId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
 
   string stopInstance(1: string instanceId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
 
-  string updateInstance(1: string instanceId, 2: string newStatus) throws (1:BaseException baseEx);
+  string updateInstanceStatus(1: string instanceId, 2: string newStatus) throws (1:BaseException baseEx);
 
   void removeInstance(1: string instanceId) throws (1:BaseException baseEx);
 
