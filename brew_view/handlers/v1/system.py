@@ -1,7 +1,7 @@
+import json
 import logging
 
 from tornado.gen import coroutine
-from tornado.locks import Lock
 
 import bg_utils
 from bg_utils.mongo.models import System
@@ -153,14 +153,9 @@ class SystemAPI(BaseHandler):
 
 class SystemListAPI(BaseHandler):
 
-    parser = MongoParser()
-    logger = logging.getLogger(__name__)
-
     REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
-    # Need to ensure that Systems are updated atomically
-    system_lock = Lock()
-
+    @coroutine
     @authenticated(permissions=[Permissions.SYSTEM_READ])
     def get(self):
         """
@@ -212,13 +207,6 @@ class SystemListAPI(BaseHandler):
             description: Commands and instances will be an object id
             type: boolean
             default: true
-          - name: include_commands
-            in: query
-            required: false
-            description: __DEPRECATED__ Include commands in the response.
-              Use `exclude_fields=commands` instead.
-            type: boolean
-            default: true
         responses:
           200:
             description: All Systems
@@ -231,35 +219,21 @@ class SystemListAPI(BaseHandler):
         tags:
           - Systems
         """
-        query_set = System.objects.order_by(
-            self.request.headers.get("order_by", "name")
-        )
-        serialize_params = {"to_string": True, "many": True}
+        order_by = self.get_query_argument("order_by", None)
+
+        dereference_nested = self.get_query_argument("dereference_nested", None)
+        if dereference_nested is None:
+            dereference_nested = True
+        else:
+            dereference_nested = bool(dereference_nested.lower() == "true")
 
         include_fields = self.get_query_argument("include_fields", None)
-        exclude_fields = self.get_query_argument("exclude_fields", None)
-        dereference_nested = self.get_query_argument("dereference_nested", None)
-        include_commands = self.get_query_argument("include_commands", None)
-
         if include_fields:
             include_fields = set(include_fields.split(",")) & self.REQUEST_FIELDS
-            query_set = query_set.only(*include_fields)
-            serialize_params["only"] = include_fields
 
+        exclude_fields = self.get_query_argument("exclude_fields", None)
         if exclude_fields:
             exclude_fields = set(exclude_fields.split(",")) & self.REQUEST_FIELDS
-            query_set = query_set.exclude(*exclude_fields)
-            serialize_params["exclude"] = exclude_fields
-
-        if include_commands and include_commands.lower() == "false":
-            query_set = query_set.exclude("commands")
-
-            if "exclude" not in serialize_params:
-                serialize_params["exclude"] = set()
-            serialize_params["exclude"].add("commands")
-
-        if dereference_nested and dereference_nested.lower() == "false":
-            query_set = query_set.no_dereference()
 
         # TODO - Handle multiple query arguments with the same key
         # for example: (?name=foo&name=bar) ... what should that mean?
@@ -268,13 +242,19 @@ class SystemListAPI(BaseHandler):
         # Need to use self.request.query_arguments to get all the query args
         for key in self.request.query_arguments:
             if key in self.REQUEST_FIELDS:
-                # Now use get_query_argument to get the decoded value
                 filter_params[key] = self.get_query_argument(key)
 
-        result_set = query_set.filter(**filter_params)
+        with thrift_context() as client:
+            thrift_response = yield client.querySystems(
+                json.dumps(filter_params),
+                order_by,
+                json.dumps(list(include_fields)),
+                json.dumps(list(exclude_fields)),
+                dereference_nested,
+            )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(self.parser.serialize_system(result_set, **serialize_params))
+        self.write(thrift_response)
 
     @coroutine
     @authenticated(permissions=[Permissions.SYSTEM_CREATE])
@@ -314,4 +294,5 @@ class SystemListAPI(BaseHandler):
                 raise ConflictError() from None
 
         self.set_status(201)
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)
