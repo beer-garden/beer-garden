@@ -7,7 +7,6 @@ from bg_utils.mongo.parser import MongoParser
 from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
-from brewtils.errors import ModelValidationError
 
 
 class InstanceAPI(BaseHandler):
@@ -120,29 +119,10 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        operations = self.parser.parse_patch(
-            self.request.decoded_body, many=True, from_string=True
-        )
-
-        for op in operations:
-            if op.operation.lower() in ("initialize", "start", "stop"):
-                with thrift_context() as client:
-                    response = yield getattr(client, op.operation.lower() + "Instance")(
-                        instance_id
-                    )
-
-            elif op.operation.lower() == "heartbeat":
-                with thrift_context() as client:
-                    response = yield client.updateInstance(instance_id, "RUNNING")
-
-            elif op.operation.lower() == "replace":
-                if op.path.lower() == "/status":
-                    with thrift_context() as client:
-                        response = yield client.updateInstance(instance_id, op.value)
-                else:
-                    raise ModelValidationError(f"Unsupported path '{op.path}'")
-            else:
-                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+        with thrift_context() as client:
+            thrift_response = yield client.updateInstance(
+                instance_id, self.request.decoded_body
+            )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(response)
+        self.write(thrift_response)
