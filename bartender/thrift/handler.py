@@ -168,22 +168,22 @@ class BartenderHandler(object):
         exclude_fields=None,
         dereference_nested=None,
     ):
-        filter_params = json.loads(filter_params)
-        include_fields = json.loads(include_fields)
-        exclude_fields = json.loads(exclude_fields)
+        # This is gross, but do it this way so we don't re-define default arg values
+        # aka, only pass what what's non-None to systems.query_systems
+        query_params = {"filter_params": filter_params}
+        for p in ["order_by", "include_fields", "exclude_fields", "dereference_nested"]:
+            value = locals()[p]
+            if value:
+                query_params[p] = value
+
+        serialize_params = {"to_string": True, "many": True}
+        if include_fields:
+            serialize_params["only"] = include_fields
+        if exclude_fields:
+            serialize_params["exclude"] = exclude_fields
 
         return parser.serialize_system(
-            query_systems(
-                filter_params=filter_params,
-                order_by=order_by,
-                include_fields=include_fields,
-                exclude_fields=exclude_fields,
-                dereference_nested=dereference_nested,
-            ),
-            to_string=True,
-            many=True,
-            only=include_fields,
-            exclude=exclude_fields,
+            query_systems(**query_params), **serialize_params
         )
 
     @staticmethod
