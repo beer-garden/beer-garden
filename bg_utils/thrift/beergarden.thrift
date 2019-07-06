@@ -62,6 +62,8 @@ service BartenderBackend {
 
 
   // Requests
+  string getRequest(1: string requestId) throws (1:BaseException baseEx);
+
   string getRequests(1: string query) throws (1:BaseException baseEx);
 
   string processRequest(1: string id) throws (1:InvalidRequest ex, 2: PublishException pubEx,
