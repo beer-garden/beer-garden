@@ -10,7 +10,6 @@ import bg_utils
 import brew_view
 from bg_utils.mongo.models import Job
 from bg_utils.mongo.models import Request
-from bg_utils.mongo.parser import MongoParser
 from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
@@ -22,12 +21,11 @@ from brewtils.errors import (
 )
 from brewtils.schema_parser import SchemaParser
 
+logger = logging.getLogger(__name__)
+
 
 class RequestAPI(BaseHandler):
-
-    parser = MongoParser()
-    logger = logging.getLogger(__name__)
-
+    @coroutine
     @authenticated(permissions=[Permissions.REQUEST_READ])
     def get(self, request_id):
         """
@@ -51,12 +49,11 @@ class RequestAPI(BaseHandler):
         tags:
           - Requests
         """
-        self.logger.debug("Getting Request: %s", request_id)
+        with thrift_context() as client:
+            thrift_response = yield client.getRequest(request_id)
 
-        req = Request.objects.get(id=str(request_id))
-        req.children = Request.objects(parent=req)
-
-        self.write(self.parser.serialize_request(req, to_string=False))
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(thrift_response)
 
     @coroutine
     @authenticated(permissions=[Permissions.REQUEST_UPDATE])
@@ -128,7 +125,7 @@ class RequestAPI(BaseHandler):
                 document.success_count += 1
             document.save()
         except Exception as ex:
-            self.logger.exception(f"Could not update job counts: {ex}")
+            logger.exception(f"Could not update job counts: {ex}")
 
 
 class RequestListAPI(BaseHandler):
