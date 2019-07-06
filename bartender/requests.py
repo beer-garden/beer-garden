@@ -503,6 +503,13 @@ class RequestValidator(object):
             )
 
 
+def get_request(request_id):
+    request = Request.objects.get(id=request_id)
+    request.children = Request.objects(parent=request)
+
+    return request
+
+
 def get_requests(
     start=0, length=100, columns=None, order=None, search=None, include_children=False
 ):

@@ -19,7 +19,12 @@ from bartender.queues import (
     get_all_queue_info,
     get_queue_message_count,
 )
-from bartender.requests import get_requests, process_request, update_request
+from bartender.requests import (
+    get_requests,
+    process_request,
+    update_request,
+    get_request,
+)
 from bartender.scheduler import create_job, remove_job, pause_job, resume_job
 from bartender.systems import (
     reload_system,
@@ -43,6 +48,10 @@ parser = MongoParser()
 
 class BartenderHandler(object):
     """Implements the thrift interface."""
+
+    @staticmethod
+    def getRequest(request):
+        return parser.serialize_request(get_request(request))
 
     @staticmethod
     def getRequests(query):
