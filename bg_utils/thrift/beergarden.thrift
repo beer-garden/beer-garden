@@ -46,6 +46,8 @@ service BartenderBackend {
 
 
   // Instances
+  string getInstance(1: string instanceId) throws (1:BaseException baseEx);
+
   string initializeInstance(1: string instanceId) throws (1:InvalidSystem ex, 2:BaseException baseEx);
 
   string updateInstance(1: string instanceId, 2: string patch) throws (1:BaseException baseEx);
