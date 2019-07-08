@@ -5,7 +5,6 @@ from tornado.gen import coroutine
 from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
-from brewtils.models import Events
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +57,6 @@ class QueueListAPI(BaseHandler):
         tags:
           - Queues
         """
-        logger.debug("Getting all queue info")
-
         with thrift_context() as client:
             queues = yield client.getAllQueueInfo()
 

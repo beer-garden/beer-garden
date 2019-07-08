@@ -1,19 +1,12 @@
-import logging
-
 from tornado.gen import coroutine
 
-from bg_utils.mongo.models import Instance
-from bg_utils.mongo.parser import MongoParser
 from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 
 
 class InstanceAPI(BaseHandler):
-
-    parser = MongoParser()
-    logger = logging.getLogger(__name__)
-
+    @coroutine
     @authenticated(permissions=[Permissions.INSTANCE_READ])
     def get(self, instance_id):
         """
@@ -37,14 +30,13 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        self.logger.debug("Getting Instance: %s", instance_id)
+        with thrift_context() as client:
+            thrift_response = yield client.getInstance(instance_id)
 
-        self.write(
-            self.parser.serialize_instance(
-                Instance.objects.get(id=instance_id), to_string=False
-            )
-        )
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(thrift_response)
 
+    @coroutine
     @authenticated(permissions=[Permissions.INSTANCE_DELETE])
     def delete(self, instance_id):
         """
