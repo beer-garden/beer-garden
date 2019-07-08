@@ -9,6 +9,7 @@ from builtins import str
 from functools import reduce
 from mongoengine import Q
 from requests import Session
+from threading import Event
 
 import bartender
 from bartender.events import publish_event
@@ -20,6 +21,8 @@ from brewtils.rest.system_client import SystemClient
 from brewtils.schema_parser import SchemaParser
 
 logger = logging.getLogger(__name__)
+
+request_map = {}
 
 
 class RequestValidator(object):
@@ -634,12 +637,18 @@ def get_requests(
 
 
 @publish_event(Events.REQUEST_CREATED)
-def process_request(request):
+def process_request(request, wait_timeout=-1):
     """Validates and publishes a Request.
 
-    :param request: The Request to process
-    :raises InvalidRequest: If the Request is invalid in some way
-    :return: None
+    Args:
+        request: The Request
+        wait_timeout: Float describing amount of time to wait for request to complete
+            <0: Wait forever
+            0: Don't wait at all
+            >0: Wait this long
+
+    Returns:
+        The processed Request
     """
     # Validates the request based on what is in the database.
     # This includes the validation of the request parameters,
@@ -648,21 +657,38 @@ def process_request(request):
 
     # Once validated we need to save since validate can modify the request
     request.save()
+    request_id = str(request.id)
+
+    if wait_timeout != 0:
+        request_map[request_id] = Event()
 
     try:
-        logger.info(f"Publishing request {request.id}")
-
+        logger.info(f"Publishing request {request_id}")
         bartender.application.clients["pika"].publish_request(
             request, confirm=True, mandatory=True
         )
-    except Exception:
+    except Exception as ex:
         # An error publishing means this request will never complete, so remove it
         request.delete()
 
         raise RequestPublishException(
             f"Error while publishing request {request.id} to queue "
             f"{request.system}[{request.system_version}]-{request.instance_name}"
-        )
+        ) from ex
+
+    # Wait for the request to complete, if requested
+    if wait_timeout != 0:
+        if wait_timeout < 0:
+            wait_timeout = None
+
+        try:
+            completed = request_map[request_id].wait(timeout=wait_timeout)
+            if not completed:
+                raise TimeoutError(f"Timeout exceeded for request {request_id}")
+
+            request.reload()
+        finally:
+            request_map.pop(request_id, None)
 
     return request
 
@@ -729,6 +755,9 @@ def complete_request(request, status, output=None, error_class=None):
     request.output = output
     request.error_class = error_class
     request.save()
+
+    if str(request.id) in request_map:
+        request_map[str(request.id)].set()
 
     return request
 

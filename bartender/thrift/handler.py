@@ -58,7 +58,7 @@ class BartenderHandler(object):
         return json.dumps(get_requests(**json.loads(query)))
 
     @staticmethod
-    def processRequest(request):
+    def processRequest(request, wait_timeout):
         """Validates and publishes a Request.
 
         :param str request: The Request to process
@@ -67,7 +67,9 @@ class BartenderHandler(object):
         """
         try:
             return parser.serialize_request(
-                process_request(parser.parse_request(request, from_string=True))
+                process_request(
+                    parser.parse_request(request, from_string=True), wait_timeout
+                )
             )
         except RequestPublishException as ex:
             raise bg_utils.bg_thrift.PublishException(str(ex))
