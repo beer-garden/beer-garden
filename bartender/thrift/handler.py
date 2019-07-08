@@ -12,6 +12,7 @@ from bartender.instances import (
     remove_instance,
     update_instance_status,
     update_instance,
+    get_instance,
 )
 from bartender.queues import (
     clear_all_queues,
@@ -50,8 +51,8 @@ class BartenderHandler(object):
     """Implements the thrift interface."""
 
     @staticmethod
-    def getRequest(request):
-        return parser.serialize_request(get_request(request))
+    def getRequest(request_id):
+        return parser.serialize_request(get_request(request_id))
 
     @staticmethod
     def getRequests(query):
@@ -82,6 +83,10 @@ class BartenderHandler(object):
         parsed_patch = parser.parse_patch(patch, many=True, from_string=True)
 
         return parser.serialize_request(update_request(request, parsed_patch))
+
+    @staticmethod
+    def getInstance(instance_id):
+        return parser.serialize_instance(get_instance(instance_id))
 
     @staticmethod
     def initializeInstance(instance_id):

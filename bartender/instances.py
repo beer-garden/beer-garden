@@ -15,6 +15,10 @@ from brewtils.models import Events
 logger = logging.getLogger(__name__)
 
 
+def get_instance(instance_id):
+    return Instance.objects.get(id=instance_id)
+
+
 @publish_event(Events.INSTANCE_INITIALIZED)
 def initialize_instance(instance_id):
     """Initializes an instance.
