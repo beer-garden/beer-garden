@@ -63,7 +63,6 @@ api_spec = None
 plugin_logging_config = None
 app_logging_config = None
 notification_meta = None
-request_map = {}
 anonymous_principal = None
 client_ssl = None
 

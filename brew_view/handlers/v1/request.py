@@ -1,24 +1,16 @@
 import json
 import logging
 
-from datetime import timedelta
 from tornado.gen import coroutine
-from tornado.locks import Event
-from tornado.util import TimeoutError
 
 import bg_utils
-import brew_view
 from bg_utils.mongo.models import Job
 from bg_utils.mongo.models import Request
 from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brew_view.metrics import request_created, http_api_latency_total, request_latency
-from brewtils.errors import (
-    ModelValidationError,
-    RequestPublishException,
-    TimeoutExceededError,
-)
+from brewtils.errors import ModelValidationError, RequestPublishException
 from brewtils.schema_parser import SchemaParser
 
 logger = logging.getLogger(__name__)
@@ -350,9 +342,9 @@ class RequestListAPI(BaseHandler):
           - name: timeout
             in: query
             required: false
-            description: Maximum time (seconds) to wait for request completion
-            type: integer
-            default: None (Wait forever)
+            description: Max seconds to wait for request completion. (-1 = wait forever)
+            type: float
+            default: -1
         consumes:
           - application/json
           - application/x-www-form-urlencoded
@@ -386,19 +378,21 @@ class RequestListAPI(BaseHandler):
         if self.current_user:
             request_model.requester = self.current_user.username
 
+        wait_timeout = 0
+        if self.get_argument("blocking", default="").lower() == "true":
+            wait_timeout = self.get_argument("timeout", default=-1)
+
         with thrift_context() as client:
             try:
-                process_response = yield client.processRequest(
-                    self.parser.serialize_request(request_model)
+                thrift_response = yield client.processRequest(
+                    self.parser.serialize_request(request_model), float(wait_timeout)
                 )
             except bg_utils.bg_thrift.InvalidRequest as ex:
                 raise ModelValidationError(ex.message)
             except bg_utils.bg_thrift.PublishException as ex:
                 raise RequestPublishException(ex.message)
 
-        processed_request = self.parser.parse_request(
-            process_response, from_string=True
-        )
+        processed_request = self.parser.parse_request(thrift_response, from_string=True)
 
         # Metrics
         request_created(processed_request)
@@ -413,28 +407,6 @@ class RequestListAPI(BaseHandler):
                 route=self.prometheus_endpoint,
                 status=self.get_status(),
             ).observe(request_latency(self.request.created_time))
-
-            # It's possible the request is already done by this point, so check
-            mongo_request = Request.objects.get(id=processed_request.id)
-            if mongo_request.status not in Request.COMPLETED_STATUSES:
-                timeout = self.get_argument("timeout", default=None)
-                delta = timedelta(seconds=int(timeout)) if timeout else None
-
-                try:
-                    wait_event = Event()
-                    brew_view.request_map[processed_request.id] = wait_event
-
-                    yield wait_event.wait(delta)
-
-                    mongo_request.reload()
-                except TimeoutError:
-                    raise TimeoutExceededError(
-                        f"Timeout exceeded for request {processed_request.id}"
-                    )
-                finally:
-                    brew_view.request_map.pop(processed_request.id, None)
-
-            processed_request = mongo_request
 
         self.set_status(201)
         self.write(self.parser.serialize_request(processed_request, to_string=False))
