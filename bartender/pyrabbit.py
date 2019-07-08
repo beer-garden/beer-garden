@@ -4,6 +4,7 @@ from pyrabbit2.api import Client
 from pyrabbit2.http import HTTPError, NetworkError
 
 import bartender
+from bartender.requests import cancel_request
 from bg_utils.mongo.parser import MongoParser
 
 
@@ -92,6 +93,7 @@ class PyrabbitClient(object):
         :return:None
         """
         self.logger.info("Clearing Queue: %s", queue_name)
+
         queue_dictionary = self._client.get_queue(self._virtual_host, queue_name)
         number_of_messages = queue_dictionary.get("messages_ready", 0)
 
@@ -106,16 +108,15 @@ class PyrabbitClient(object):
                     request = MongoParser.parse_request(
                         message["payload"], from_string=True
                     )
-                    self.logger.debug("Canceling Request: %s", request.id)
-                    bartender.bv_client.update_request(request.id, status="CANCELED")
+
+                    self.logger.debug(f"Canceling Request {request.id}")
+                    cancel_request(request)
                 except Exception as ex:
-                    self.logger.error("Error removing message:")
-                    self.logger.exception(ex)
+                    self.logger.exception(f"Error canceling message: {ex}")
             else:
                 self.logger.debug(
-                    "Race condition: The while loop thought there were "
-                    "more messages to ingest but no more messages could "
-                    "be received."
+                    "Race condition: The while loop thought there were more messages "
+                    "to ingest but no more messages could be received."
                 )
                 break
 

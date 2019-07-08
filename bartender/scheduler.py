@@ -10,7 +10,8 @@ from mongoengine import DoesNotExist
 from pytz import utc
 
 import bartender
-from bg_utils.mongo.models import Job as BGJob
+from bartender.requests import process_request
+from bg_utils.mongo.models import Job as BGJob, Request
 
 logger = logging.getLogger(__name__)
 
@@ -75,9 +76,12 @@ def run_job(job_id, request_template):
         job_id: The Beer-Garden job ID that triggered this event.
         request_template: Request template specified by the job.
     """
-    request_template.metadata["_bg_job_id"] = job_id
+    request = Request(**request_template.to_mongo())
+    request.metadata["_bg_job_id"] = job_id
 
-    bartender.bv_client.create_request(request_template, blocking=True)
+    # TODO - Need to add blocking support!!!
+    # bartender.bv_client.create_request(request_template, blocking=True)
+    process_request(request)
 
     # Be a little careful here as the job could have been removed or paused
     job = bartender.application.scheduler.get_job(job_id)

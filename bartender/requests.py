@@ -731,3 +731,13 @@ def complete_request(request, status, output=None, error_class=None):
     request.save()
 
     return request
+
+
+def cancel_request(request):
+    if request.status in Request.COMPLETED_STATUSES:
+        raise ModelValidationError("Cannot cancel a completed request")
+
+    request.status = "CANCELED"
+    request.save()
+
+    return request
