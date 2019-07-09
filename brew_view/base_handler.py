@@ -1,7 +1,6 @@
 import datetime
 import re
 import socket
-
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
 from mongoengine.errors import (
     DoesNotExist,
@@ -15,7 +14,7 @@ import bg_utils
 import bg_utils.mongo.models
 import brew_view
 from brew_view.authorization import AuthMixin, coalesce_permissions
-from brew_view.metrics import http_api_latency_total, request_latency
+from brew_view.metrics import http_api_latency_total
 from brewtils.errors import (
     ConflictError,
     ModelError,
@@ -134,13 +133,15 @@ class BaseHandler(AuthMixin, RequestHandler):
 
     def on_finish(self):
         """Called after a handler completes processing"""
-        # This is gross, but in some cases we have to do these in the handler
-        if getattr(self.request, "publish_metrics", True):
+        # Latency measurement for blocking request creation just muddies the waters
+        if not getattr(self.request, "ignore_latency", False):
+            timedelta = datetime.datetime.utcnow() - self.request.created_time
+
             http_api_latency_total.labels(
                 method=self.request.method.upper(),
                 route=self.prometheus_endpoint,
                 status=self.get_status(),
-            ).observe(request_latency(self.request.created_time))
+            ).observe(timedelta.total_seconds())
 
     def options(self, *args, **kwargs):
 

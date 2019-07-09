@@ -325,16 +325,31 @@ SPECIFICATION = {
     "metrics": {
         "type": "dict",
         "items": {
-            "port": {
-                "type": "int",
-                "description": "Port for prometheus server to listen on.",
-                "default": 2338,
-            },
-            "url": {
-                "type": "str",
-                "description": "URL to prometheus/grafana server.",
-                "required": False,
-            },
+            "prometheus": {
+                "type": "dict",
+                "items": {
+                    "enabled": {
+                        "type": "bool",
+                        "description": "Enable prometheus server",
+                        "default": True,
+                    },
+                    "host": {
+                        "type": "str",
+                        "default": "0.0.0.0",
+                        "description": "Host to bind the prometheus server to",
+                    },
+                    "port": {
+                        "type": "int",
+                        "description": "Port for prometheus server to listen on.",
+                        "default": 2338,
+                    },
+                    "url": {
+                        "type": "str",
+                        "description": "URL to prometheus/grafana server.",
+                        "required": False,
+                    },
+                },
+            }
         },
     },
     "plugin_logging": {

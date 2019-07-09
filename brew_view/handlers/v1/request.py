@@ -2,12 +2,10 @@ import json
 import logging
 
 import bg_utils
-from bg_utils.mongo.models import Job
-from bg_utils.mongo.models import Request
-from brew_view.thrift import ThriftClient
+from bg_utils.mongo.models import Job, Request
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
-from brew_view.metrics import request_created, http_api_latency_total, request_latency
+from brew_view.thrift import ThriftClient
 from brewtils.errors import ModelValidationError, RequestPublishException
 from brewtils.schema_parser import SchemaParser
 
@@ -376,6 +374,9 @@ class RequestListAPI(BaseHandler):
         if self.get_argument("blocking", default="").lower() == "true":
             wait_timeout = self.get_argument("timeout", default=-1)
 
+            # Also don't publish latency measurements
+            self.request.ignore_latency = True
+
         async with ThriftClient() as client:
             try:
                 thrift_response = await client.processRequest(
@@ -387,20 +388,6 @@ class RequestListAPI(BaseHandler):
                 raise RequestPublishException(ex.message)
 
         processed_request = self.parser.parse_request(thrift_response, from_string=True)
-
-        # Metrics
-        request_created(processed_request)
-
-        if self.get_argument("blocking", default="").lower() == "true":
-            # Publish metrics here here so they aren't skewed
-            # See https://github.com/beer-garden/beer-garden/issues/190
-            self.request.publish_metrics = False
-
-            http_api_latency_total.labels(
-                method=self.request.method.upper(),
-                route=self.prometheus_endpoint,
-                status=self.get_status(),
-            ).observe(request_latency(self.request.created_time))
 
         self.set_status(201)
         self.write(self.parser.serialize_request(processed_request, to_string=False))

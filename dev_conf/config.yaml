@@ -47,8 +47,11 @@ log:
   file: null
   level: INFO
 metrics:
-  port: 2338
-  url: http://localhost:3000
+  prometheus:
+    enabled: true
+    host: 0.0.0.0
+    port: 2338
+    url: http://localhost:3000
 plugin_logging:
   config_file: null
   level: INFO

@@ -1,7 +1,5 @@
 import logging
 
-from tornado.gen import coroutine
-
 import brew_view
 from brew_view.thrift import ThriftClient
 from brew_view.base_handler import BaseHandler
@@ -22,7 +20,7 @@ class ConfigHandler(BaseHandler):
             "icon_default": brew_view.config.application.icon_default,
             "debug_mode": brew_view.config.debug_mode,
             "url_prefix": brew_view.config.web.url_prefix,
-            "metrics_url": brew_view.config.metrics.url,
+            "metrics_url": brew_view.config.metrics.prometheus.url,
             "auth_enabled": brew_view.config.auth.enabled,
             "guest_login_enabled": brew_view.config.auth.guest_login_enabled,
         }

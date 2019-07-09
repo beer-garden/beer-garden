@@ -16,7 +16,6 @@ import brew_view._version
 from bg_utils.mongo import setup_database
 from bg_utils.plugin_logging_loader import PluginLoggingLoader
 from brew_view.authorization import anonymous_principal as load_anonymous
-from brew_view.metrics import initialize_counts
 from brew_view.specification import get_default_logging_config
 from brewtils.models import Event, Events
 from brewtils.rest import normalize_url_prefix
@@ -87,11 +86,13 @@ async def startup():
     # Need to wait until after mongo connection established to load
     anonymous_principal = load_anonymous()
 
-    logger.info("Initializing metrics")
-    initialize_counts()
-
-    logger.info(f"Starting metrics server on {config.web.host}:{config.metrics.port}")
-    start_http_server(config.metrics.port)
+    logger.info(
+        f"Starting metrics server on "
+        f"{config.metrics.prometheus.host}:{config.metrics.prometheus.port}"
+    )
+    start_http_server(
+        config.metrics.prometheus.port, addr=config.metrics.prometheus.host
+    )
 
     logger.info(f"Starting HTTP server on {config.web.host}:{config.web.port}")
     server.listen(config.web.port, config.web.host)
