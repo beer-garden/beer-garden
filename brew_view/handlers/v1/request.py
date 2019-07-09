@@ -1,12 +1,10 @@
 import json
 import logging
 
-from tornado.gen import coroutine
-
 import bg_utils
 from bg_utils.mongo.models import Job
 from bg_utils.mongo.models import Request
-from brew_view import thrift_context
+from brew_view.thrift import ThriftClient
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brew_view.metrics import request_created, http_api_latency_total, request_latency
@@ -17,9 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class RequestAPI(BaseHandler):
-    @coroutine
     @authenticated(permissions=[Permissions.REQUEST_READ])
-    def get(self, request_id):
+    async def get(self, request_id):
         """
         ---
         summary: Retrieve a specific Request
@@ -41,15 +38,14 @@ class RequestAPI(BaseHandler):
         tags:
           - Requests
         """
-        with thrift_context() as client:
-            thrift_response = yield client.getRequest(request_id)
+        async with ThriftClient() as client:
+            thrift_response = await client.getRequest(request_id)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)
 
-    @coroutine
     @authenticated(permissions=[Permissions.REQUEST_UPDATE])
-    def patch(self, request_id):
+    async def patch(self, request_id):
         """
         ---
         summary: Partially update a Request
@@ -90,9 +86,9 @@ class RequestAPI(BaseHandler):
         tags:
           - Requests
         """
-        with thrift_context() as client:
+        async with ThriftClient() as client:
             try:
-                thrift_response = yield client.updateRequest(
+                thrift_response = await client.updateRequest(
                     request_id, self.request.decoded_body
                 )
             except bg_utils.bg_thrift.InvalidRequest as ex:
@@ -125,9 +121,8 @@ class RequestListAPI(BaseHandler):
     parser = SchemaParser()
     logger = logging.getLogger(__name__)
 
-    @coroutine
     @authenticated(permissions=[Permissions.REQUEST_READ])
-    def get(self):
+    async def get(self):
         """
         ---
         summary: Retrieve a page of all Requests
@@ -297,8 +292,8 @@ class RequestListAPI(BaseHandler):
 
         serialized_args = json.dumps(thrift_args)
 
-        with thrift_context() as client:
-            raw_response = yield client.getRequests(serialized_args)
+        async with ThriftClient() as client:
+            raw_response = await client.getRequests(serialized_args)
 
         parsed_response = json.loads(raw_response)
 
@@ -321,9 +316,8 @@ class RequestListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(parsed_response["requests"])
 
-    @coroutine
     @authenticated(permissions=[Permissions.REQUEST_CREATE])
-    def post(self):
+    async def post(self):
         """
         ---
         summary: Create a new Request
@@ -382,9 +376,9 @@ class RequestListAPI(BaseHandler):
         if self.get_argument("blocking", default="").lower() == "true":
             wait_timeout = self.get_argument("timeout", default=-1)
 
-        with thrift_context() as client:
+        async with ThriftClient() as client:
             try:
-                thrift_response = yield client.processRequest(
+                thrift_response = await client.processRequest(
                     self.parser.serialize_request(request_model), float(wait_timeout)
                 )
             except bg_utils.bg_thrift.InvalidRequest as ex:

@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from tornado.gen import coroutine
-
-import brew_view
 from bg_utils.mongo.models import Job
 from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
+from brew_view.thrift import ThriftClient
 from brewtils.errors import ModelValidationError
 from brewtils.schemas import JobSchema
 
@@ -43,9 +41,8 @@ class JobAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(self.parser.serialize_job(document, to_string=False))
 
-    @coroutine
     @authenticated(permissions=[Permissions.JOB_UPDATE])
-    def patch(self, job_id):
+    async def patch(self, job_id):
         """
         ---
         summary: Pause/Resume a job
@@ -106,11 +103,11 @@ class JobAPI(BaseHandler):
             if op.operation == "update":
                 if op.path == "/status":
                     if str(op.value).upper() == "PAUSED":
-                        with brew_view.thrift_context() as client:
-                            response = yield client.pauseJob(job_id)
+                        async with ThriftClient() as client:
+                            response = await client.pauseJob(job_id)
                     elif str(op.value).upper() == "RUNNING":
-                        with brew_view.thrift_context() as client:
-                            response = yield client.resumeJob(job_id)
+                        async with ThriftClient() as client:
+                            response = await client.resumeJob(job_id)
                     else:
                         raise ModelValidationError(
                             f"Unsupported status value '{op.value}'"
@@ -123,9 +120,8 @@ class JobAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @coroutine
     @authenticated(permissions=[Permissions.JOB_DELETE])
-    def delete(self, job_id):
+    async def delete(self, job_id):
         """
         ---
         summary: Delete a specific Job.
@@ -146,8 +142,8 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
-        with brew_view.thrift_context() as client:
-            yield client.removeJob(job_id)
+        async with ThriftClient() as client:
+            await client.removeJob(job_id)
 
         self.set_status(204)
 
@@ -186,9 +182,8 @@ class JobListAPI(BaseHandler):
             )
         )
 
-    @coroutine
     @authenticated(permissions=[Permissions.JOB_CREATE])
-    def post(self):
+    async def post(self):
         """
         ---
         summary: Schedules a Job to be run.
@@ -213,8 +208,8 @@ class JobListAPI(BaseHandler):
         tags:
           - Jobs
         """
-        with brew_view.thrift_context() as client:
-            response = yield client.createJob(self.request.decoded_body)
+        async with ThriftClient() as client:
+            response = await client.createJob(self.request.decoded_body)
 
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")

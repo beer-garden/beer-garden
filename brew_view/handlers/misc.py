@@ -3,7 +3,7 @@ import logging
 from tornado.gen import coroutine
 
 import brew_view
-from brew_view import thrift_context
+from brew_view.thrift import ThriftClient
 from brew_view.base_handler import BaseHandler
 
 
@@ -30,11 +30,10 @@ class ConfigHandler(BaseHandler):
 
 
 class VersionHandler(BaseHandler):
-    @coroutine
-    def get(self):
+    async def get(self):
         try:
-            with thrift_context() as client:
-                bartender_version = yield client.getVersion()
+            async with ThriftClient() as client:
+                bartender_version = await client.getVersion()
         except Exception as ex:
             logger = logging.getLogger(__name__)
             logger.error("Could not get Bartender Version.")

@@ -1,15 +1,12 @@
-from tornado.gen import coroutine
-
-from brew_view import thrift_context
 from brew_view.authorization import check_permission, Permissions
 from brew_view.base_handler import BaseHandler
+from brew_view.thrift import ThriftClient
 from brewtils.errors import ModelValidationError
 from brewtils.schema_parser import SchemaParser
 
 
 class AdminAPI(BaseHandler):
-    @coroutine
-    def patch(self):
+    async def patch(self):
         """
         ---
         summary: Initiate a rescan of the plugin directory
@@ -50,8 +47,8 @@ class AdminAPI(BaseHandler):
         for op in operations:
             if op.operation == "rescan":
                 check_permission(self.current_user, [Permissions.SYSTEM_CREATE])
-                with thrift_context() as client:
-                    yield client.rescanSystemDirectory()
+                async with ThriftClient() as client:
+                    await client.rescanSystemDirectory()
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 

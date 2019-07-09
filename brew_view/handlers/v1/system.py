@@ -1,13 +1,11 @@
 import logging
 
-from tornado.gen import coroutine
-
 import bg_utils
 from bg_utils.mongo.models import System
 from bg_utils.mongo.parser import MongoParser
-from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
+from brew_view.thrift import ThriftClient
 from brewtils.errors import ConflictError
 from brewtils.schemas import SystemSchema
 
@@ -60,9 +58,8 @@ class SystemAPI(BaseHandler):
             )
         )
 
-    @coroutine
     @authenticated(permissions=[Permissions.SYSTEM_DELETE])
-    def delete(self, system_id):
+    async def delete(self, system_id):
         """
         Will give Bartender a chance to remove instances of this system from the
         registry but will always delete the system regardless of whether the Bartender
@@ -87,14 +84,13 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        with thrift_context() as client:
-            yield client.removeSystem(system_id)
+        async with ThriftClient() as client:
+            await client.removeSystem(system_id)
 
         self.set_status(204)
 
-    @coroutine
     @authenticated(permissions=[Permissions.SYSTEM_UPDATE])
-    def patch(self, system_id):
+    async def patch(self, system_id):
         """
         ---
         summary: Partially update a System
@@ -141,8 +137,8 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        with thrift_context() as client:
-            thrift_response = yield client.updateSystem(
+        async with ThriftClient() as client:
+            thrift_response = await client.updateSystem(
                 system_id, self.request.decoded_body
             )
 
@@ -154,9 +150,8 @@ class SystemListAPI(BaseHandler):
 
     REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
-    @coroutine
     @authenticated(permissions=[Permissions.SYSTEM_READ])
-    def get(self):
+    async def get(self):
         """
         ---
         summary: Retrieve all Systems
@@ -243,8 +238,8 @@ class SystemListAPI(BaseHandler):
             if key in self.REQUEST_FIELDS:
                 filter_params[key] = self.get_query_argument(key)
 
-        with thrift_context() as client:
-            thrift_response = yield client.querySystems(
+        async with ThriftClient() as client:
+            thrift_response = await client.querySystems(
                 filter_params,
                 order_by,
                 include_fields,
@@ -255,9 +250,8 @@ class SystemListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)
 
-    @coroutine
     @authenticated(permissions=[Permissions.SYSTEM_CREATE])
-    def post(self):
+    async def post(self):
         """
         ---
         summary: Create a new System or update an existing System
@@ -286,9 +280,9 @@ class SystemListAPI(BaseHandler):
         tags:
           - Systems
         """
-        with thrift_context() as client:
+        async with ThriftClient() as client:
             try:
-                thrift_response = yield client.createSystem(self.request.decoded_body)
+                thrift_response = await client.createSystem(self.request.decoded_body)
             except bg_utils.bg_thrift.ConflictException:
                 raise ConflictError() from None
 

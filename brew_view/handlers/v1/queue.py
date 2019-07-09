@@ -1,18 +1,15 @@
 import logging
 
-from tornado.gen import coroutine
-
-from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
+from brew_view.thrift import ThriftClient
 
 logger = logging.getLogger(__name__)
 
 
 class QueueAPI(BaseHandler):
-    @coroutine
     @authenticated(permissions=[Permissions.QUEUE_DELETE])
-    def delete(self, queue_name):
+    async def delete(self, queue_name):
         """
         ---
         summary: Clear a queue by canceling all requests
@@ -32,16 +29,15 @@ class QueueAPI(BaseHandler):
         tags:
           - Queues
         """
-        with thrift_context() as client:
-            yield client.clearQueue(queue_name)
+        async with ThriftClient() as client:
+            await client.clearQueue(queue_name)
 
         self.set_status(204)
 
 
 class QueueListAPI(BaseHandler):
-    @coroutine
     @authenticated(permissions=[Permissions.QUEUE_READ])
-    def get(self):
+    async def get(self):
         """
         ---
         summary: Retrieve all queue information
@@ -57,15 +53,14 @@ class QueueListAPI(BaseHandler):
         tags:
           - Queues
         """
-        with thrift_context() as client:
-            queues = yield client.getAllQueueInfo()
+        async with ThriftClient() as client:
+            queues = await client.getAllQueueInfo()
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(queues)
 
-    @coroutine
     @authenticated(permissions=[Permissions.QUEUE_DELETE])
-    def delete(self):
+    async def delete(self):
         """
         ---
         summary: Cancel and clear all requests in all queues
@@ -77,7 +72,7 @@ class QueueListAPI(BaseHandler):
         tags:
           - Queues
         """
-        with thrift_context() as client:
-            yield client.clearAllQueues()
+        async with ThriftClient() as client:
+            await client.clearAllQueues()
 
         self.set_status(204)

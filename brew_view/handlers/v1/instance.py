@@ -1,14 +1,11 @@
-from tornado.gen import coroutine
-
-from brew_view import thrift_context
+from brew_view.thrift import ThriftClient
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 
 
 class InstanceAPI(BaseHandler):
-    @coroutine
     @authenticated(permissions=[Permissions.INSTANCE_READ])
-    def get(self, instance_id):
+    async def get(self, instance_id):
         """
         ---
         summary: Retrieve a specific Instance
@@ -30,15 +27,14 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        with thrift_context() as client:
-            thrift_response = yield client.getInstance(instance_id)
+        async with ThriftClient() as client:
+            thrift_response = await client.getInstance(instance_id)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)
 
-    @coroutine
     @authenticated(permissions=[Permissions.INSTANCE_DELETE])
-    def delete(self, instance_id):
+    async def delete(self, instance_id):
         """
         ---
         summary: Delete a specific Instance
@@ -58,14 +54,13 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        with thrift_context() as client:
-            yield client.removeInstance(instance_id)
+        async with ThriftClient() as client:
+            await client.removeInstance(instance_id)
 
         self.set_status(204)
 
-    @coroutine
     @authenticated(permissions=[Permissions.INSTANCE_UPDATE])
-    def patch(self, instance_id):
+    async def patch(self, instance_id):
         """
         ---
         summary: Partially update an Instance
@@ -111,8 +106,8 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        with thrift_context() as client:
-            thrift_response = yield client.updateInstance(
+        async with ThriftClient() as client:
+            thrift_response = await client.updateInstance(
                 instance_id, self.request.decoded_body
             )
 
