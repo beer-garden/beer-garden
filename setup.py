@@ -33,7 +33,7 @@ setup(
         "bg-utils>=2.4.4",
         "brewtils>=2.4.0",
         "prometheus_client==0.3.1",
-        "tornado==5.1",
+        "tornado==6.0.3",
     ],
     extras_require={':python_version=="2.7"': ["futures>=3.1.1"]},
     entry_points={

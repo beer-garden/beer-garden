@@ -17,12 +17,6 @@ from bg_utils.mongo import setup_database
 from bg_utils.plugin_logging_loader import PluginLoggingLoader
 from brew_view.authorization import anonymous_principal as load_anonymous
 from brew_view.metrics import initialize_counts
-from brew_view.publishers import (
-    MongoPublisher,
-    RequestPublisher,
-    TornadoPikaPublisher,
-    WebsocketPublisher,
-)
 from brew_view.specification import get_default_logging_config
 from brewtils.models import Event, Events
 from brewtils.rest import normalize_url_prefix

@@ -81,7 +81,7 @@ sphinx==1.8.5
 sphinxcontrib-websupport==1.1.0  # via sphinx
 thriftpy2==0.4.2
 toml==0.10.0              # via black, tox
-tornado==5.1.1
+tornado==6.0.3
 tox==3.9.0
 tqdm==4.31.1              # via twine
 twine==1.13.0
