@@ -31,6 +31,7 @@ setup(
         "apscheduler==3.6.0",
         "bg-utils>=2.4.4",
         "brewtils>=2.4.0",
+        "prometheus-client==0.7.1",
         "pyrabbit2==1.0.7",
     ],
     extras_require={

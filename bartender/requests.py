@@ -13,6 +13,7 @@ from threading import Event
 
 import bartender
 from bartender.events import publish_event
+from bartender.metrics import request_created, request_started, request_completed
 from bg_utils.mongo.models import Choices, Request, System
 from brewtils.choices import parse
 from brewtils.errors import ModelValidationError, RequestPublishException, ConflictError
@@ -676,6 +677,9 @@ def process_request(request, wait_timeout=-1):
             f"{request.system}[{request.system_version}]-{request.instance_name}"
         ) from ex
 
+    # Metrics
+    request_created(request)
+
     # Wait for the request to complete, if requested
     if wait_timeout != 0:
         if wait_timeout < 0:
@@ -694,8 +698,6 @@ def process_request(request, wait_timeout=-1):
 
 
 def update_request(request, patch):
-    # wait_event = None
-
     status = None
     output = None
     error_class = None
@@ -708,8 +710,6 @@ def update_request(request, patch):
                         return start_request(request)
                     else:
                         status = op.value
-                    #     if request_id in brew_view.request_map:
-                    #         wait_event = brew_view.request_map[request_id]
                 else:
                     raise ModelValidationError(f"Unsupported status value '{op.value}'")
             elif op.path == "/output":
@@ -723,15 +723,6 @@ def update_request(request, patch):
 
     return complete_request(request, status, output, error_class)
 
-    # Metrics
-    # request_updated(req, status_before)
-    # self._update_job_numbers(req, status_before)
-    #
-    # if wait_event:
-    #     wait_event.set()
-
-    # return request
-
 
 @publish_event(Events.REQUEST_STARTED)
 def start_request(request):
@@ -740,6 +731,9 @@ def start_request(request):
 
     request.status = "IN_PROGRESS"
     request.save()
+
+    # Metrics
+    request_started(request)
 
     return request
 
@@ -759,6 +753,9 @@ def complete_request(request, status, output=None, error_class=None):
     if str(request.id) in request_map:
         request_map[str(request.id)].set()
 
+    # Metrics
+    request_completed(request)
+
     return request
 
 
@@ -768,5 +765,7 @@ def cancel_request(request):
 
     request.status = "CANCELED"
     request.save()
+
+    # TODO - Metrics here?
 
     return request

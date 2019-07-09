@@ -2,15 +2,14 @@ from __future__ import division
 
 import logging
 
+import time
+from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import timedelta
 from functools import partial
-
-import time
 from mongoengine import Q
 from pytz import utc
 from requests.exceptions import RequestException
-from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 
 import bartender
 import bg_utils
@@ -20,6 +19,7 @@ from bartender.local_plugins.manager import LocalPluginsManager
 from bartender.local_plugins.monitor import LocalPluginMonitor
 from bartender.local_plugins.registry import LocalPluginRegistry
 from bartender.local_plugins.validator import LocalPluginValidator
+from bartender.metrics import PrometheusServer
 from bartender.mongo_pruner import MongoPruner
 from bartender.monitor import PluginStatusMonitor
 from bartender.pika import PikaClient
@@ -112,6 +112,15 @@ class BartenderApp(StoppableThread):
             self.helper_threads.append(
                 HelperThread(
                     MongoPruner, tasks=tasks, run_every=timedelta(minutes=run_every)
+                )
+            )
+
+        if bartender.config.metrics.prometheus.enabled:
+            self.helper_threads.append(
+                HelperThread(
+                    PrometheusServer,
+                    bartender.config.metrics.prometheus.host,
+                    bartender.config.metrics.prometheus.port,
                 )
             )
 

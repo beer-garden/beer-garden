@@ -50,6 +50,7 @@ pika==1.0.1
 pkginfo==1.5.0.1          # via twine
 pluggy==0.9.0             # via pytest, tox
 ply==3.11                 # via thriftpy2
+prometheus-client==0.7.1
 py==1.8.0                 # via pytest, tox
 pycodestyle==2.5.0        # via flake8
 pyflakes==2.1.1           # via flake8
