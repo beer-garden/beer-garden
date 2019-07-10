@@ -86,6 +86,10 @@ service BartenderBackend {
   void clearAllQueues() throws (1:BaseException baseEx);
 
   // Jobs
+  string getJob(1: string jobId) throws (1:BaseException baseEx);
+
+  string getJobs(1: map<string, string> filterParams) throws (1:BaseException baseEx);
+
   string createJob(1: string job) throws (1:BaseException baseEx);
 
   string pauseJob(1: string jobName) throws (1:BaseException baseEx);
