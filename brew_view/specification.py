@@ -352,27 +352,6 @@ SPECIFICATION = {
             }
         },
     },
-    "plugin_logging": {
-        "type": "dict",
-        "items": {
-            "config_file": {
-                "type": "str",
-                "description": "Path to a logging configuration file for plugins",
-                "required": False,
-                "previous_names": ["plugin_log_config"],
-                "alt_env_names": ["PLUGIN_LOG_CONFIG"],
-            },
-            "level": {
-                "type": "str",
-                "description": "Default log level for plugins (could be "
-                "overwritten by plugin_log_config value)",
-                "default": "INFO",
-                "choices": ["DEBUG", "INFO", "WARN", "WARNING", "ERROR", "CRITICAL"],
-                "previous_names": ["plugin_log_level"],
-                "alt_env_names": ["PLUGIN_LOG_LEVEL"],
-            },
-        },
-    },
     "web": {
         "type": "dict",
         "items": {

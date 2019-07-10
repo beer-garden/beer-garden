@@ -14,7 +14,6 @@ from urllib3.util.url import Url
 import bg_utils
 import brew_view._version
 from bg_utils.mongo import setup_database
-from bg_utils.plugin_logging_loader import PluginLoggingLoader
 from brew_view.authorization import anonymous_principal as load_anonymous
 from brew_view.specification import get_default_logging_config
 from brewtils.models import Event, Events
@@ -48,7 +47,6 @@ public_url = None
 logger = None
 event_publishers = None
 api_spec = None
-plugin_logging_config = None
 app_logging_config = None
 notification_meta = None
 anonymous_principal = None
@@ -66,7 +64,6 @@ def setup(spec, cli_args):
     logger = logging.getLogger(__name__)
     logger.debug("Logging configured. First post!")
 
-    load_plugin_logging_config(config)
     _setup_application()
 
 
@@ -139,16 +136,6 @@ async def _progressive_backoff(func, failure_message):
 
         await sleep(wait_time)
         wait_time = min(wait_time * 2, 30)
-
-
-def load_plugin_logging_config(input_config):
-    global plugin_logging_config
-
-    plugin_logging_config = PluginLoggingLoader().load(
-        filename=input_config.plugin_logging.config_file,
-        level=input_config.plugin_logging.level,
-        default_config=app_logging_config,
-    )
 
 
 def _setup_application():
