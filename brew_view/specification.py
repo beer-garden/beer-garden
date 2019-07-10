@@ -314,11 +314,6 @@ SPECIFICATION = {
             },
         },
     },
-    "shutdown_timeout": {
-        "type": "int",
-        "default": 5,
-        "description": "How long to wait for Brew View to shutdown before terminating",
-    },
 }
 
 
