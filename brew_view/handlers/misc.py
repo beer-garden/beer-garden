@@ -12,7 +12,7 @@ class ConfigHandler(BaseHandler):
             "allow_unsafe_templates": brew_view.config.application.allow_unsafe_templates,
             "application_name": brew_view.config.application.name,
             "icon_default": brew_view.config.application.icon_default,
-            "debug_mode": brew_view.config.debug_mode,
+            "debug_mode": brew_view.config.application.debug_mode,
             "url_prefix": brew_view.config.web.url_prefix,
             "metrics_url": brew_view.config.metrics.prometheus.url,
             "auth_enabled": brew_view.config.auth.enabled,

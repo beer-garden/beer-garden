@@ -90,7 +90,7 @@ class BaseHandler(AuthMixin, RequestHandler):
         """Headers set here will be applied to all responses"""
         self.set_header("BG-Version", brew_view.__version__)
 
-        if brew_view.config.cors_enabled:
+        if brew_view.config.application.cors_enabled:
             self.set_header("Access-Control-Allow-Origin", "*")
             self.set_header("Access-Control-Allow-Headers", "Content-Type")
             self.set_header(

@@ -25,6 +25,18 @@ SPECIFICATION = {
     "application": {
         "type": "dict",
         "items": {
+            "cors_enabled": {
+                "type": "bool",
+                "default": False,
+                "description": "Determine if CORS should be enabled",
+                "previous_names": ["cors_enabled"],
+            },
+            "debug_mode": {
+                "type": "bool",
+                "default": False,
+                "description": "Run the application in debug mode",
+                "previous_names": ["debug_mode"],
+            },
             "name": {
                 "type": "str",
                 "default": "Beer Garden",
@@ -159,17 +171,6 @@ SPECIFICATION = {
                 },
             },
         },
-    },
-    "cors_enabled": {
-        "type": "bool",
-        "default": False,
-        "description": "Determine if CORS should be enabled",
-        "previous_names": ["CORS_ENABLED"],
-    },
-    "debug_mode": {
-        "type": "bool",
-        "default": False,
-        "description": "Run the application in debug mode",
     },
     "log": {
         "type": "dict",

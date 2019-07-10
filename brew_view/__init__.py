@@ -231,7 +231,7 @@ def _setup_tornado_app():
 
     return Application(
         published_url_specs + unpublished_url_specs,
-        debug=config.debug_mode,
+        debug=config.application.debug_mode,
         cookie_secret=config.auth.token.secret,
     )
 

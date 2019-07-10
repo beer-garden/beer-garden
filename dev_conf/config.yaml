@@ -1,5 +1,7 @@
 application:
   allow_unsafe_templates: false
+  cors_enabled: true
+  debug_mode: true
   icon_default: fa-beer
   name: Beer Garden
 auth:
@@ -13,7 +15,6 @@ backend:
   host: localhost
   port: 9090
   socket_timeout: 13000
-cors_enabled: true
 db:
   connection:
     host: localhost
@@ -21,7 +22,6 @@ db:
     port: 27017
     username: null
   name: beer_garden_v3
-debug_mode: true
 log:
   config_file: dev_conf/logging-config.json
   file: null
