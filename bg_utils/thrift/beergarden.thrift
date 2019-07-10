@@ -96,5 +96,9 @@ service BartenderBackend {
 
 
   // Misc
+  string getPluginLogConfig(1: string systemName) throws (1:BaseException baseEx);
+
+  string reloadPluginLogConfig() throws (1:BaseException baseEx);
+
   string getVersion();
 }
