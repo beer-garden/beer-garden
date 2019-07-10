@@ -5,6 +5,7 @@ import mongoengine
 
 import bartender
 import bg_utils
+from bartender.commands import get_commands, get_command
 from bartender.instances import (
     initialize_instance,
     start_instance,
@@ -303,6 +304,14 @@ class BartenderHandler(object):
     @staticmethod
     def removeJob(job_id):
         remove_job(job_id)
+
+    @staticmethod
+    def getCommand(command_id):
+        return parser.serialize_command(get_command(command_id))
+
+    @staticmethod
+    def getCommands():
+        return parser.serialize_command(get_commands(), many=True)
 
     @staticmethod
     def getPluginLogConfig(system_name):
