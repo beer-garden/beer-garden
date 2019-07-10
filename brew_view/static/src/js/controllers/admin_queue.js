@@ -74,19 +74,6 @@ export default function adminQueueController(
 
   $scope.dtColumns = [
     DTColumnBuilder
-      .newColumn(null)
-      .withTitle('')
-      .withOption('width', '15px')
-      .notSortable()
-      .renderWith(function(data, type, full) {
-        const baseUrl = 'http://{{queueHost}}:{{queueAdminPort}}';
-        const path = '/#/queues/{{queueVirtualHost}}/' + full.name;
-        const fullUrl = baseUrl + path;
-        return '<a ng-href="' + fullUrl + '" target="_blank">' +
-                 '<i class="fa fa-database fa-fw icon-color"></i>' +
-               '</a>';
-      }),
-    DTColumnBuilder
       .newColumn('system')
       .withTitle('System')
       .renderWith(function(data, type, full) {
@@ -180,21 +167,8 @@ export default function adminQueueController(
 
   const ensurePreconditions = function() {
     // The table is constructed from getQueues but we need to wait for the
-    // application to have loaded systems and config first
-    let configPromise = $rootScope.configPromise.then(
-      () => {
-        $scope.queueHost = $scope.config.amqHost;
-        $scope.queuePort = $scope.config.amqPort;
-        $scope.queueAdminPort = $scope.config.amqAdminPort;
-        $scope.queueVirtualHost = encodeURIComponent($scope.config.amqVirtualHost);
-      },
-      $scope.failureCallback
-    );
-
-    preconditionPromise = $q.all({
-      config: configPromise,
-      systems: $rootScope.systemsPromise,
-    });
+    // application to have loaded systems first
+    preconditionPromise = $rootScope.systemsPromise;
   };
 
   $scope.$on('userChange', () => {
