@@ -30,11 +30,14 @@ def publish_event(event_type):
                         "instance_name",
                     ]
                 }
-            elif event.name.startswith("SYSTEM"):
+            elif event.name == Events.SYSTEM_CREATED.name:
                 event.payload = {"id": str(result.id)}
 
+            elif event.name.startswith("SYSTEM"):
+                event.payload = {"id": args[0]}
+
             elif event.name.startswith("INSTANCE"):
-                event.payload = {"id": str(result.id)}
+                event.payload = {"id": args[0]}
 
             elif event.name == Events.QUEUE_CLEARED.name:
                 event.payload = {"queue_name": args[0]}

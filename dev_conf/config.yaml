@@ -47,7 +47,16 @@ log:
   config_file: dev_conf/logging-config.json
   file: null
   level: INFO
+metrics:
+  prometheus:
+    enabled: true
+    host: 0.0.0.0
+    port: 2339
+    url: http://localhost:3000
 plugin:
+  logging:
+    config_file: dev_conf/example-plugin-logging-config.json
+    level: INFO
   local:
     auth:
       password: password

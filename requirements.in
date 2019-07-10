@@ -2,8 +2,9 @@
 # Dependencies
 -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
 -e git+https://github.com/beer-garden/bg-utils@develop#egg=bg-utils
-apscheduler
-pyrabbit2
+apscheduler < 4
+prometheus_client < 1
+pyrabbit2 < 2
 future ; python_version < "3.0"
 futures ; python_version < "3.0"
 ruamel.ordereddict ; python_version < "3.0"

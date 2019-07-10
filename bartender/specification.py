@@ -326,6 +326,36 @@ SPECIFICATION = {
             },
         },
     },
+    "metrics": {
+        "type": "dict",
+        "items": {
+            "prometheus": {
+                "type": "dict",
+                "items": {
+                    "enabled": {
+                        "type": "bool",
+                        "description": "Enable prometheus server",
+                        "default": True,
+                    },
+                    "host": {
+                        "type": "str",
+                        "default": "0.0.0.0",
+                        "description": "Host to bind the prometheus server to",
+                    },
+                    "port": {
+                        "type": "int",
+                        "description": "Port for prometheus server to listen on.",
+                        "default": 2339,
+                    },
+                    "url": {
+                        "type": "str",
+                        "description": "URL to prometheus/grafana server.",
+                        "required": False,
+                    },
+                },
+            }
+        },
+    },
     "web": {
         "type": "dict",
         "items": {
@@ -413,6 +443,30 @@ SPECIFICATION = {
     "plugin": {
         "type": "dict",
         "items": {
+            "logging": {
+                "type": "dict",
+                "items": {
+                    "config_file": {
+                        "type": "str",
+                        "description": "Path to a logging configuration file for plugins",
+                        "required": False,
+                    },
+                    "level": {
+                        "type": "str",
+                        "description": "Default log level for plugins (could be "
+                        "overwritten by plugin_log_config value)",
+                        "default": "INFO",
+                        "choices": [
+                            "DEBUG",
+                            "INFO",
+                            "WARN",
+                            "WARNING",
+                            "ERROR",
+                            "CRITICAL",
+                        ],
+                    },
+                },
+            },
             "status_heartbeat": {
                 "type": "int",
                 "default": 10,

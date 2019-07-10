@@ -8,11 +8,39 @@ from bg_utils.mongo.models import System, Instance
 from bg_utils.mongo.parser import MongoParser
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events
+from brewtils.schemas import SystemSchema
+
+REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
 # system_lock = RLock()
 parser = MongoParser()
 
 logger = logging.getLogger(__name__)
+
+
+def get_system(system_id):
+    return System.objects.get(id=system_id)
+
+
+def query_systems(
+    filter_params=None,
+    order_by="name",
+    include_fields=None,
+    exclude_fields=None,
+    dereference_nested=True,
+):
+    query_set = System.objects.order_by(order_by)
+
+    if include_fields:
+        query_set = query_set.only(*include_fields)
+
+    if exclude_fields:
+        query_set = query_set.exclude(*exclude_fields)
+
+    if not dereference_nested:
+        query_set = query_set.no_dereference()
+
+    return query_set.filter(**filter_params)
 
 
 @publish_event(Events.SYSTEM_CREATED)

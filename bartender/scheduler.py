@@ -10,7 +10,8 @@ from mongoengine import DoesNotExist
 from pytz import utc
 
 import bartender
-from bg_utils.mongo.models import Job as BGJob
+from bartender.requests import process_request
+from bg_utils.mongo.models import Job as BGJob, Request
 
 logger = logging.getLogger(__name__)
 
@@ -75,9 +76,22 @@ def run_job(job_id, request_template):
         job_id: The Beer-Garden job ID that triggered this event.
         request_template: Request template specified by the job.
     """
-    request_template.metadata["_bg_job_id"] = job_id
+    request = Request(**request_template.to_mongo())
+    request.metadata["_bg_job_id"] = job_id
 
-    bartender.bv_client.create_request(request_template, blocking=True)
+    # TODO - Possibly allow specifying blocking timeout on the job definition
+    # Want to wait for completion here
+    process_request(request, wait_timeout=-1)
+
+    try:
+        document = BGJob.objects.get(id=job_id)
+        if request.status == "ERROR":
+            document.error_count += 1
+        elif request.status == "SUCCESS":
+            document.success_count += 1
+        document.save()
+    except Exception as ex:
+        logger.exception(f"Could not update job counts: {ex}")
 
     # Be a little careful here as the job could have been removed or paused
     job = bartender.application.scheduler.get_job(job_id)
@@ -180,6 +194,15 @@ class BGJobStore(BaseJobStore):
                 document.delete()
 
         return jobs
+
+
+def get_job(job_id):
+    return BGJob.objects.get(id=job_id)
+
+
+def get_jobs(filter_params=None):
+    filter_params = filter_params or {}
+    return BGJob.objects.filter(**filter_params)
 
 
 def create_job(job):
