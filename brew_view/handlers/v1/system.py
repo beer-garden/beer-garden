@@ -1,8 +1,4 @@
-import logging
-
 import bg_utils
-from bg_utils.mongo.models import System
-from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brew_view.thrift import ThriftClient
@@ -11,12 +7,8 @@ from brewtils.schemas import SystemSchema
 
 
 class SystemAPI(BaseHandler):
-
-    parser = MongoParser()
-    logger = logging.getLogger(__name__)
-
     @authenticated(permissions=[Permissions.SYSTEM_READ])
-    def get(self, system_id):
+    async def get(self, system_id):
         """
         ---
         summary: Retrieve a specific System
@@ -44,19 +36,15 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        self.logger.debug("Getting System: %s", system_id)
-
         include_commands = (
-            self.get_query_argument("include_commands", default="true").lower()
-            != "false"
+            self.get_query_argument("include_commands", default="").lower() != "false"
         )
-        self.write(
-            self.parser.serialize_system(
-                System.objects.get(id=system_id),
-                to_string=False,
-                include_commands=include_commands,
-            )
-        )
+
+        async with ThriftClient() as client:
+            thrift_response = await client.getSystem(system_id, include_commands)
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(thrift_response)
 
     @authenticated(permissions=[Permissions.SYSTEM_DELETE])
     async def delete(self, system_id):
