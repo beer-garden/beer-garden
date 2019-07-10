@@ -14,6 +14,7 @@ from bartender.instances import (
     update_instance,
     get_instance,
 )
+from bartender.log import get_plugin_log_config, load_plugin_log_config
 from bartender.queues import (
     clear_all_queues,
     clear_queue,
@@ -302,6 +303,16 @@ class BartenderHandler(object):
     @staticmethod
     def removeJob(job_id):
         remove_job(job_id)
+
+    @staticmethod
+    def getPluginLogConfig(system_name):
+        return parser.serialize_logging_config(get_plugin_log_config(system_name))
+
+    @staticmethod
+    def reloadPluginLogConfig():
+        load_plugin_log_config()
+
+        return parser.serialize_logging_config(get_plugin_log_config())
 
     @staticmethod
     def getVersion():

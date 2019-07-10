@@ -443,6 +443,30 @@ SPECIFICATION = {
     "plugin": {
         "type": "dict",
         "items": {
+            "logging": {
+                "type": "dict",
+                "items": {
+                    "config_file": {
+                        "type": "str",
+                        "description": "Path to a logging configuration file for plugins",
+                        "required": False,
+                    },
+                    "level": {
+                        "type": "str",
+                        "description": "Default log level for plugins (could be "
+                        "overwritten by plugin_log_config value)",
+                        "default": "INFO",
+                        "choices": [
+                            "DEBUG",
+                            "INFO",
+                            "WARN",
+                            "WARNING",
+                            "ERROR",
+                            "CRITICAL",
+                        ],
+                    },
+                },
+            },
             "status_heartbeat": {
                 "type": "int",
                 "default": 10,

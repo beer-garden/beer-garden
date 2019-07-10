@@ -54,6 +54,9 @@ metrics:
     port: 2339
     url: http://localhost:3000
 plugin:
+  logging:
+    config_file: dev_conf/example-plugin-logging-config.json
+    level: INFO
   local:
     auth:
       password: password
