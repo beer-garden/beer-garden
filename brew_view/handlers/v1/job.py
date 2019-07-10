@@ -1,21 +1,15 @@
 # -*- coding: utf-8 -*-
-import logging
-
-from bg_utils.mongo.models import Job
-from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brew_view.thrift import ThriftClient
 from brewtils.errors import ModelValidationError
+from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import JobSchema
 
 
 class JobAPI(BaseHandler):
-    logger = logging.getLogger(__name__)
-    parser = MongoParser()
-
     @authenticated(permissions=[Permissions.JOB_READ])
-    def get(self, job_id):
+    async def get(self, job_id):
         """
         ---
         summary: Retrieve a specific Job
@@ -37,9 +31,11 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
-        document = Job.objects.get(id=job_id)
+        async with ThriftClient() as client:
+            thrift_response = await client.getJob(job_id)
+
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(self.parser.serialize_job(document, to_string=False))
+        self.write(thrift_response)
 
     @authenticated(permissions=[Permissions.JOB_UPDATE])
     async def patch(self, job_id):
@@ -95,7 +91,7 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
-        operations = self.parser.parse_patch(
+        operations = SchemaParser.parse_patch(
             self.request.decoded_body, many=True, from_string=True
         )
 
@@ -149,12 +145,8 @@ class JobAPI(BaseHandler):
 
 
 class JobListAPI(BaseHandler):
-
-    parser = MongoParser()
-    logger = logging.getLogger(__name__)
-
     @authenticated(permissions=[Permissions.JOB_READ])
-    def get(self):
+    async def get(self):
         """
         ---
         summary: Retrieve all Jobs.
@@ -175,12 +167,11 @@ class JobListAPI(BaseHandler):
             if key in JobSchema.get_attribute_names():
                 filter_params[key] = self.get_query_argument(key)
 
+        async with ThriftClient() as client:
+            thrift_response = await client.getJobs(filter_params)
+
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(
-            self.parser.serialize_job(
-                Job.objects.filter(**filter_params), to_string=True, many=True
-            )
-        )
+        self.write(thrift_response)
 
     @authenticated(permissions=[Permissions.JOB_CREATE])
     async def post(self):
