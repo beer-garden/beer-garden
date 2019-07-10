@@ -1,4 +1,3 @@
-import brew_view
 from brew_view.base_handler import BaseHandler
 from brew_view.thrift import ThriftClient
 from brewtils.errors import ModelValidationError

@@ -1,5 +1,4 @@
 import json
-import logging
 
 import bg_utils
 from brew_view.authorization import authenticated, Permissions
@@ -8,8 +7,6 @@ from brew_view.thrift import ThriftClient
 from brewtils.errors import ModelValidationError, RequestPublishException
 from brewtils.models import Request
 from brewtils.schema_parser import SchemaParser
-
-logger = logging.getLogger(__name__)
 
 
 class RequestAPI(BaseHandler):
@@ -98,7 +95,6 @@ class RequestAPI(BaseHandler):
 class RequestListAPI(BaseHandler):
 
     parser = SchemaParser()
-    logger = logging.getLogger(__name__)
 
     @authenticated(permissions=[Permissions.REQUEST_READ])
     async def get(self):
@@ -253,8 +249,6 @@ class RequestListAPI(BaseHandler):
         tags:
           - Requests
         """
-        self.logger.debug("Getting Requests")
-
         columns_arg = self.get_query_arguments("columns")
         order_arg = self.get_query_argument("order", default=None)
         search_arg = self.get_query_argument("search", default=None)

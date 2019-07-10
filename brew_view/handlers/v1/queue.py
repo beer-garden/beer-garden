@@ -1,10 +1,6 @@
-import logging
-
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brew_view.thrift import ThriftClient
-
-logger = logging.getLogger(__name__)
 
 
 class QueueAPI(BaseHandler):

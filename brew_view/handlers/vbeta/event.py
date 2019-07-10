@@ -1,5 +1,3 @@
-import logging
-
 import brew_view
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
@@ -8,7 +6,6 @@ from brewtils.schema_parser import SchemaParser
 
 class EventPublisherAPI(BaseHandler):
 
-    logger = logging.getLogger(__name__)
     parser = SchemaParser()
 
     @authenticated(permissions=[Permissions.EVENT_CREATE])

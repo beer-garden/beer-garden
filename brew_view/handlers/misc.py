@@ -4,6 +4,8 @@ import brew_view
 from brew_view.thrift import ThriftClient
 from brew_view.base_handler import BaseHandler
 
+logger = logging.getLogger(__name__)
+
 
 class ConfigHandler(BaseHandler):
     def get(self):
@@ -27,9 +29,7 @@ class VersionHandler(BaseHandler):
             async with ThriftClient() as client:
                 bartender_version = await client.getVersion()
         except Exception as ex:
-            logger = logging.getLogger(__name__)
-            logger.error("Could not get Bartender Version.")
-            logger.exception(ex)
+            logger.exception(f"Error determining Bartender version - Caused by:\n{ex}")
             bartender_version = "unknown"
 
         self.write(

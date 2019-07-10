@@ -1,5 +1,3 @@
-import logging
-
 from mongoengine.errors import DoesNotExist
 
 import brew_view
@@ -11,9 +9,6 @@ from brewtils.errors import ModelValidationError
 
 
 class RoleAPI(BaseHandler):
-
-    logger = logging.getLogger(__name__)
-
     @authenticated(permissions=[Permissions.ROLE_READ])
     def get(self, role_id):
         """
