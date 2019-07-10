@@ -2,11 +2,11 @@ import json
 import logging
 
 import bg_utils
-from bg_utils.mongo.models import Request
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brew_view.thrift import ThriftClient
 from brewtils.errors import ModelValidationError, RequestPublishException
+from brewtils.models import Request
 from brewtils.schema_parser import SchemaParser
 
 logger = logging.getLogger(__name__)
