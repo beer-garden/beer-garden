@@ -26,6 +26,8 @@ exception ConflictException {
 service BartenderBackend {
 
   // Systems
+  string getSystem(1: string systemId, 2: bool includeCommands) throws (1:BaseException baseEx);
+
   string querySystems(
       1: map<string, string> filterParams,
       2: string orderBy,
