@@ -2,7 +2,7 @@ import json
 import logging
 
 import bg_utils
-from bg_utils.mongo.models import Job, Request
+from bg_utils.mongo.models import Request
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
 from brew_view.thrift import ThriftClient
@@ -93,25 +93,6 @@ class RequestAPI(BaseHandler):
                 raise ModelValidationError(ex.message)
 
         self.write(thrift_response)
-
-    def _update_job_numbers(self, request, status_before):
-        if (
-            not request.metadata.get("_bg_job_id")
-            or status_before == request.status
-            or request.status not in Request.COMPLETED_STATUSES
-        ):
-            return
-
-        try:
-            job_id = request.metadata.get("_bg_job_id")
-            document = Job.objects.get(id=job_id)
-            if request.status == "ERROR":
-                document.error_count += 1
-            elif request.status == "SUCCESS":
-                document.success_count += 1
-            document.save()
-        except Exception as ex:
-            logger.exception(f"Could not update job counts: {ex}")
 
 
 class RequestListAPI(BaseHandler):
