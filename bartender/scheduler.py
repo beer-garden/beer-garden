@@ -186,6 +186,15 @@ class BGJobStore(BaseJobStore):
         return jobs
 
 
+def get_job(job_id):
+    return BGJob.objects.get(id=job_id)
+
+
+def get_jobs(filter_params=None):
+    filter_params = filter_params or {}
+    return BGJob.objects.filter(**filter_params)
+
+
 def create_job(job):
     # We have to save here, because we need an ID to pass
     # to the scheduler.

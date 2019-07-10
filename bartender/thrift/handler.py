@@ -28,7 +28,14 @@ from bartender.requests import (
     update_request,
     get_request,
 )
-from bartender.scheduler import create_job, remove_job, pause_job, resume_job
+from bartender.scheduler import (
+    create_job,
+    remove_job,
+    pause_job,
+    resume_job,
+    get_job,
+    get_jobs,
+)
 from bartender.systems import (
     reload_system,
     remove_system,
@@ -288,6 +295,14 @@ class BartenderHandler(object):
     def clearAllQueues():
         """Clears all queues that Bartender knows about"""
         clear_all_queues()
+
+    @staticmethod
+    def getJob(job_id):
+        return parser.serialize_job(get_job(job_id))
+
+    @staticmethod
+    def getJobs(filter_params):
+        return parser.serialize_job(get_jobs(filter_params), many=True)
 
     @staticmethod
     def createJob(job):
