@@ -43,6 +43,7 @@ from bartender.systems import (
     create_system,
     update_system,
     query_systems,
+    get_system,
 )
 from bg_utils.mongo.models import Request
 from bg_utils.mongo.parser import MongoParser
@@ -184,6 +185,12 @@ class BartenderHandler(object):
             raise bg_utils.bg_thrift.InvalidSystem(
                 instance_id, f"Couldn't find instance {instance_id}"
             ) from None
+
+    @staticmethod
+    def getSystem(system_id, include_commands):
+        serialize_params = {} if include_commands else {"exclude": {"commands"}}
+
+        return parser.serialize_system(get_system(system_id), **serialize_params)
 
     @staticmethod
     def querySystems(

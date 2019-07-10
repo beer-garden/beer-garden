@@ -7,7 +7,7 @@ from bartender.events import publish_event
 from bg_utils.mongo.models import System, Instance
 from bg_utils.mongo.parser import MongoParser
 from brewtils.errors import ModelValidationError
-from brewtils.models import Events, Request
+from brewtils.models import Events
 from brewtils.schemas import SystemSchema
 
 REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
@@ -16,6 +16,10 @@ REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 parser = MongoParser()
 
 logger = logging.getLogger(__name__)
+
+
+def get_system(system_id):
+    return System.objects.get(id=system_id)
 
 
 def query_systems(
