@@ -1,5 +1,4 @@
 import json
-import logging
 
 from mongoengine.errors import DoesNotExist, ValidationError
 from passlib.apps import custom_app_context
@@ -18,9 +17,6 @@ from brewtils.errors import ModelValidationError, RequestForbidden
 
 
 class UserAPI(BaseHandler):
-
-    logger = logging.getLogger(__name__)
-
     def get(self, user_identifier):
         """
         ---

@@ -1,35 +1,17 @@
 import json
-import logging
-
-from datetime import timedelta
-from tornado.gen import coroutine
-from tornado.locks import Event
-from tornado.util import TimeoutError
 
 import bg_utils
-import brew_view
-from bg_utils.mongo.models import Job
-from bg_utils.mongo.models import Request
-from bg_utils.mongo.parser import MongoParser
-from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
-from brew_view.metrics import request_created, http_api_latency_total, request_latency
-from brewtils.errors import (
-    ModelValidationError,
-    RequestPublishException,
-    TimeoutExceededError,
-)
+from brew_view.thrift import ThriftClient
+from brewtils.errors import ModelValidationError, RequestPublishException
+from brewtils.models import Request
 from brewtils.schema_parser import SchemaParser
 
 
 class RequestAPI(BaseHandler):
-
-    parser = MongoParser()
-    logger = logging.getLogger(__name__)
-
     @authenticated(permissions=[Permissions.REQUEST_READ])
-    def get(self, request_id):
+    async def get(self, request_id):
         """
         ---
         summary: Retrieve a specific Request
@@ -51,16 +33,14 @@ class RequestAPI(BaseHandler):
         tags:
           - Requests
         """
-        self.logger.debug("Getting Request: %s", request_id)
+        async with ThriftClient() as client:
+            thrift_response = await client.getRequest(request_id)
 
-        req = Request.objects.get(id=str(request_id))
-        req.children = Request.objects(parent=req)
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(thrift_response)
 
-        self.write(self.parser.serialize_request(req, to_string=False))
-
-    @coroutine
     @authenticated(permissions=[Permissions.REQUEST_UPDATE])
-    def patch(self, request_id):
+    async def patch(self, request_id):
         """
         ---
         summary: Partially update a Request
@@ -101,9 +81,9 @@ class RequestAPI(BaseHandler):
         tags:
           - Requests
         """
-        with thrift_context() as client:
+        async with ThriftClient() as client:
             try:
-                thrift_response = yield client.updateRequest(
+                thrift_response = await client.updateRequest(
                     request_id, self.request.decoded_body
                 )
             except bg_utils.bg_thrift.InvalidRequest as ex:
@@ -111,34 +91,13 @@ class RequestAPI(BaseHandler):
 
         self.write(thrift_response)
 
-    def _update_job_numbers(self, request, status_before):
-        if (
-            not request.metadata.get("_bg_job_id")
-            or status_before == request.status
-            or request.status not in Request.COMPLETED_STATUSES
-        ):
-            return
-
-        try:
-            job_id = request.metadata.get("_bg_job_id")
-            document = Job.objects.get(id=job_id)
-            if request.status == "ERROR":
-                document.error_count += 1
-            elif request.status == "SUCCESS":
-                document.success_count += 1
-            document.save()
-        except Exception as ex:
-            self.logger.exception(f"Could not update job counts: {ex}")
-
 
 class RequestListAPI(BaseHandler):
 
     parser = SchemaParser()
-    logger = logging.getLogger(__name__)
 
-    @coroutine
     @authenticated(permissions=[Permissions.REQUEST_READ])
-    def get(self):
+    async def get(self):
         """
         ---
         summary: Retrieve a page of all Requests
@@ -290,8 +249,6 @@ class RequestListAPI(BaseHandler):
         tags:
           - Requests
         """
-        self.logger.debug("Getting Requests")
-
         columns_arg = self.get_query_arguments("columns")
         order_arg = self.get_query_argument("order", default=None)
         search_arg = self.get_query_argument("search", default=None)
@@ -308,8 +265,8 @@ class RequestListAPI(BaseHandler):
 
         serialized_args = json.dumps(thrift_args)
 
-        with thrift_context() as client:
-            raw_response = yield client.getRequests(serialized_args)
+        async with ThriftClient() as client:
+            raw_response = await client.getRequests(serialized_args)
 
         parsed_response = json.loads(raw_response)
 
@@ -332,9 +289,8 @@ class RequestListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(parsed_response["requests"])
 
-    @coroutine
     @authenticated(permissions=[Permissions.REQUEST_CREATE])
-    def post(self):
+    async def post(self):
         """
         ---
         summary: Create a new Request
@@ -353,9 +309,9 @@ class RequestListAPI(BaseHandler):
           - name: timeout
             in: query
             required: false
-            description: Maximum time (seconds) to wait for request completion
-            type: integer
-            default: None (Wait forever)
+            description: Max seconds to wait for request completion. (-1 = wait forever)
+            type: float
+            default: -1
         consumes:
           - application/json
           - application/x-www-form-urlencoded
@@ -389,55 +345,24 @@ class RequestListAPI(BaseHandler):
         if self.current_user:
             request_model.requester = self.current_user.username
 
-        with thrift_context() as client:
+        wait_timeout = 0
+        if self.get_argument("blocking", default="").lower() == "true":
+            wait_timeout = self.get_argument("timeout", default=-1)
+
+            # Also don't publish latency measurements
+            self.request.ignore_latency = True
+
+        async with ThriftClient() as client:
             try:
-                process_response = yield client.processRequest(
-                    self.parser.serialize_request(request_model)
+                thrift_response = await client.processRequest(
+                    self.parser.serialize_request(request_model), float(wait_timeout)
                 )
             except bg_utils.bg_thrift.InvalidRequest as ex:
                 raise ModelValidationError(ex.message)
             except bg_utils.bg_thrift.PublishException as ex:
                 raise RequestPublishException(ex.message)
 
-        processed_request = self.parser.parse_request(
-            process_response, from_string=True
-        )
-
-        # Metrics
-        request_created(processed_request)
-
-        if self.get_argument("blocking", default="").lower() == "true":
-            # Publish metrics here here so they aren't skewed
-            # See https://github.com/beer-garden/beer-garden/issues/190
-            self.request.publish_metrics = False
-
-            http_api_latency_total.labels(
-                method=self.request.method.upper(),
-                route=self.prometheus_endpoint,
-                status=self.get_status(),
-            ).observe(request_latency(self.request.created_time))
-
-            # It's possible the request is already done by this point, so check
-            mongo_request = Request.objects.get(id=processed_request.id)
-            if mongo_request.status not in Request.COMPLETED_STATUSES:
-                timeout = self.get_argument("timeout", default=None)
-                delta = timedelta(seconds=int(timeout)) if timeout else None
-
-                try:
-                    wait_event = Event()
-                    brew_view.request_map[processed_request.id] = wait_event
-
-                    yield wait_event.wait(delta)
-
-                    mongo_request.reload()
-                except TimeoutError:
-                    raise TimeoutExceededError(
-                        f"Timeout exceeded for request {processed_request.id}"
-                    )
-                finally:
-                    brew_view.request_map.pop(processed_request.id, None)
-
-            processed_request = mongo_request
+        processed_request = self.parser.parse_request(thrift_response, from_string=True)
 
         self.set_status(201)
         self.write(self.parser.serialize_request(processed_request, to_string=False))

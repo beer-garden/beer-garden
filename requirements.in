@@ -5,7 +5,7 @@
 apispec < 0.39
 futures ; python_version < "3.0"
 ruamel.ordereddict ; python_version < "3.0"
-tornado < 6
+tornado < 7
 prometheus_client < 1
 
 # Documentation Dependencies

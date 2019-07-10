@@ -1,22 +1,11 @@
-import logging
-
-from tornado.gen import coroutine
-
-from bg_utils.mongo.models import Instance
-from bg_utils.mongo.parser import MongoParser
-from brew_view import thrift_context
+from brew_view.thrift import ThriftClient
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
-from brewtils.errors import ModelValidationError
 
 
 class InstanceAPI(BaseHandler):
-
-    parser = MongoParser()
-    logger = logging.getLogger(__name__)
-
     @authenticated(permissions=[Permissions.INSTANCE_READ])
-    def get(self, instance_id):
+    async def get(self, instance_id):
         """
         ---
         summary: Retrieve a specific Instance
@@ -38,16 +27,14 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        self.logger.debug("Getting Instance: %s", instance_id)
+        async with ThriftClient() as client:
+            thrift_response = await client.getInstance(instance_id)
 
-        self.write(
-            self.parser.serialize_instance(
-                Instance.objects.get(id=instance_id), to_string=False
-            )
-        )
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(thrift_response)
 
     @authenticated(permissions=[Permissions.INSTANCE_DELETE])
-    def delete(self, instance_id):
+    async def delete(self, instance_id):
         """
         ---
         summary: Delete a specific Instance
@@ -67,14 +54,13 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        with thrift_context() as client:
-            yield client.removeInstance(instance_id)
+        async with ThriftClient() as client:
+            await client.removeInstance(instance_id)
 
         self.set_status(204)
 
-    @coroutine
     @authenticated(permissions=[Permissions.INSTANCE_UPDATE])
-    def patch(self, instance_id):
+    async def patch(self, instance_id):
         """
         ---
         summary: Partially update an Instance
@@ -120,29 +106,10 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        operations = self.parser.parse_patch(
-            self.request.decoded_body, many=True, from_string=True
-        )
-
-        for op in operations:
-            if op.operation.lower() in ("initialize", "start", "stop"):
-                with thrift_context() as client:
-                    response = yield getattr(client, op.operation.lower() + "Instance")(
-                        instance_id
-                    )
-
-            elif op.operation.lower() == "heartbeat":
-                with thrift_context() as client:
-                    response = yield client.updateInstance(instance_id, "RUNNING")
-
-            elif op.operation.lower() == "replace":
-                if op.path.lower() == "/status":
-                    with thrift_context() as client:
-                        response = yield client.updateInstance(instance_id, op.value)
-                else:
-                    raise ModelValidationError(f"Unsupported path '{op.path}'")
-            else:
-                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+        async with ThriftClient() as client:
+            thrift_response = await client.updateInstance(
+                instance_id, self.request.decoded_body
+            )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(response)
+        self.write(thrift_response)

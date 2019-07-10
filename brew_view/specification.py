@@ -22,134 +22,21 @@ SPECIFICATION = {
             },
         },
     },
-    "amq": {
-        "type": "dict",
-        "items": {
-            "host": {
-                "type": "str",
-                "default": "localhost",
-                "description": "Hostname of AMQ to use",
-                "previous_names": ["amq_host"],
-            },
-            "heartbeat_interval": {
-                "type": "int",
-                "default": 3600,
-                "description": "Heartbeat interval for AMQ",
-                "previous_names": ["amq_heartbeat_interval"],
-            },
-            "connection_attempts": {
-                "type": "int",
-                "default": 3,
-                "description": "Number of retries to connect to AMQ",
-                "previous_names": ["amq_connection_attempts"],
-            },
-            "exchange": {
-                "type": "str",
-                "default": "beer_garden",
-                "description": "Exchange name to use for AMQ",
-                "previous_names": ["amq_exchange"],
-            },
-            "virtual_host": {
-                "type": "str",
-                "default": "/",
-                "description": "Virtual host to use for AMQ",
-                "previous_names": ["amq_virtual_host"],
-            },
-            "connections": {
-                "type": "dict",
-                "items": {
-                    "admin": {
-                        "type": "dict",
-                        "items": {
-                            "port": {
-                                "type": "int",
-                                "default": 15672,
-                                "description": "Port of the AMQ Admin host",
-                                "previous_names": ["amq_admin_port"],
-                                "alt_env_names": ["AMQ_ADMIN_PORT"],
-                            },
-                            "user": {
-                                "type": "str",
-                                "default": "guest",
-                                "description": "Username to login to the AMQ admin",
-                                "previous_names": ["amq_admin_user"],
-                                "alt_env_names": ["AMQ_ADMIN_USER"],
-                            },
-                            "password": {
-                                "type": "str",
-                                "default": "guest",
-                                "description": "Password to login to the AMQ admin",
-                                "previous_names": [
-                                    "amq_admin_password",
-                                    "amq_admin_pw",
-                                ],
-                                "alt_env_names": ["AMQ_ADMIN_PASSWORD", "AMQ_ADMIN_PW"],
-                            },
-                        },
-                    },
-                    "message": {
-                        "type": "dict",
-                        "items": {
-                            "port": {
-                                "type": "int",
-                                "default": 5672,
-                                "description": "Port of the AMQ host",
-                                "previous_names": ["amq_port"],
-                                "alt_env_names": ["AMQ_PORT"],
-                            },
-                            "password": {
-                                "type": "str",
-                                "default": "guest",
-                                "description": "Password to login to the AMQ host",
-                                "previous_names": ["amq_password"],
-                                "alt_env_names": ["AMQ_PASSWORD"],
-                            },
-                            "user": {
-                                "type": "str",
-                                "default": "guest",
-                                "description": "Username to login to the AMQ host",
-                                "previous_names": ["amq_user"],
-                                "alt_env_names": ["AMQ_USER"],
-                            },
-                            "ssl": {
-                                "type": "dict",
-                                "items": {
-                                    "enabled": {
-                                        "type": "bool",
-                                        "default": False,
-                                        "description": "Should the connection use SSL",
-                                    },
-                                    "ca_cert": {
-                                        "type": "str",
-                                        "description": (
-                                            "Path to CA certificate file to use"
-                                        ),
-                                        "required": False,
-                                    },
-                                    "ca_verify": {
-                                        "type": "bool",
-                                        "default": True,
-                                        "description": "Verify external certificates",
-                                        "required": False,
-                                    },
-                                    "client_cert": {
-                                        "type": "str",
-                                        "description": (
-                                            "Path to client combined key / certificate"
-                                        ),
-                                        "required": False,
-                                    },
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-        },
-    },
     "application": {
         "type": "dict",
         "items": {
+            "cors_enabled": {
+                "type": "bool",
+                "default": False,
+                "description": "Determine if CORS should be enabled",
+                "previous_names": ["cors_enabled"],
+            },
+            "debug_mode": {
+                "type": "bool",
+                "default": False,
+                "description": "Run the application in debug mode",
+                "previous_names": ["debug_mode"],
+            },
             "name": {
                 "type": "str",
                 "default": "Beer Garden",
@@ -285,17 +172,6 @@ SPECIFICATION = {
             },
         },
     },
-    "cors_enabled": {
-        "type": "bool",
-        "default": False,
-        "description": "Determine if CORS should be enabled",
-        "previous_names": ["CORS_ENABLED"],
-    },
-    "debug_mode": {
-        "type": "bool",
-        "default": False,
-        "description": "Run the application in debug mode",
-    },
     "log": {
         "type": "dict",
         "items": {
@@ -325,37 +201,31 @@ SPECIFICATION = {
     "metrics": {
         "type": "dict",
         "items": {
-            "port": {
-                "type": "int",
-                "description": "Port for prometheus server to listen on.",
-                "default": 2338,
-            },
-            "url": {
-                "type": "str",
-                "description": "URL to prometheus/grafana server.",
-                "required": False,
-            },
-        },
-    },
-    "plugin_logging": {
-        "type": "dict",
-        "items": {
-            "config_file": {
-                "type": "str",
-                "description": "Path to a logging configuration file for plugins",
-                "required": False,
-                "previous_names": ["plugin_log_config"],
-                "alt_env_names": ["PLUGIN_LOG_CONFIG"],
-            },
-            "level": {
-                "type": "str",
-                "description": "Default log level for plugins (could be "
-                "overwritten by plugin_log_config value)",
-                "default": "INFO",
-                "choices": ["DEBUG", "INFO", "WARN", "WARNING", "ERROR", "CRITICAL"],
-                "previous_names": ["plugin_log_level"],
-                "alt_env_names": ["PLUGIN_LOG_LEVEL"],
-            },
+            "prometheus": {
+                "type": "dict",
+                "items": {
+                    "enabled": {
+                        "type": "bool",
+                        "description": "Enable prometheus server",
+                        "default": True,
+                    },
+                    "host": {
+                        "type": "str",
+                        "default": "0.0.0.0",
+                        "description": "Host to bind the prometheus server to",
+                    },
+                    "port": {
+                        "type": "int",
+                        "description": "Port for prometheus server to listen on.",
+                        "default": 2338,
+                    },
+                    "url": {
+                        "type": "str",
+                        "description": "URL to prometheus/grafana server.",
+                        "required": False,
+                    },
+                },
+            }
         },
     },
     "web": {
@@ -443,11 +313,6 @@ SPECIFICATION = {
                 "alt_env_names": ["PUBLIC_FQDN"],
             },
         },
-    },
-    "shutdown_timeout": {
-        "type": "int",
-        "default": 5,
-        "description": "How long to wait for Brew View to shutdown before terminating",
     },
 }
 

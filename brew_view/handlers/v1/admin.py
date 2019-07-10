@@ -1,21 +1,12 @@
-import logging
-
-from tornado.gen import coroutine
-
-from bg_utils.mongo.parser import MongoParser
-from brew_view import thrift_context
 from brew_view.authorization import check_permission, Permissions
 from brew_view.base_handler import BaseHandler
+from brew_view.thrift import ThriftClient
 from brewtils.errors import ModelValidationError
+from brewtils.schema_parser import SchemaParser
 
 
 class AdminAPI(BaseHandler):
-
-    parser = MongoParser()
-    logger = logging.getLogger(__name__)
-
-    @coroutine
-    def patch(self):
+    async def patch(self):
         """
         ---
         summary: Initiate a rescan of the plugin directory
@@ -49,15 +40,15 @@ class AdminAPI(BaseHandler):
         tags:
           - Admin
         """
-        operations = self.parser.parse_patch(
+        operations = SchemaParser.parse_patch(
             self.request.decoded_body, many=True, from_string=True
         )
 
         for op in operations:
             if op.operation == "rescan":
                 check_permission(self.current_user, [Permissions.SYSTEM_CREATE])
-                with thrift_context() as client:
-                    yield client.rescanSystemDirectory()
+                async with ThriftClient() as client:
+                    await client.rescanSystemDirectory()
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 

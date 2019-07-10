@@ -1,25 +1,14 @@
-import logging
-
-from tornado.gen import coroutine
-from tornado.locks import Lock
-
 import bg_utils
-from bg_utils.mongo.models import System
-from bg_utils.mongo.parser import MongoParser
-from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
+from brew_view.thrift import ThriftClient
 from brewtils.errors import ConflictError
 from brewtils.schemas import SystemSchema
 
 
 class SystemAPI(BaseHandler):
-
-    parser = MongoParser()
-    logger = logging.getLogger(__name__)
-
     @authenticated(permissions=[Permissions.SYSTEM_READ])
-    def get(self, system_id):
+    async def get(self, system_id):
         """
         ---
         summary: Retrieve a specific System
@@ -47,23 +36,18 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        self.logger.debug("Getting System: %s", system_id)
-
         include_commands = (
-            self.get_query_argument("include_commands", default="true").lower()
-            != "false"
-        )
-        self.write(
-            self.parser.serialize_system(
-                System.objects.get(id=system_id),
-                to_string=False,
-                include_commands=include_commands,
-            )
+            self.get_query_argument("include_commands", default="").lower() != "false"
         )
 
-    @coroutine
+        async with ThriftClient() as client:
+            thrift_response = await client.getSystem(system_id, include_commands)
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(thrift_response)
+
     @authenticated(permissions=[Permissions.SYSTEM_DELETE])
-    def delete(self, system_id):
+    async def delete(self, system_id):
         """
         Will give Bartender a chance to remove instances of this system from the
         registry but will always delete the system regardless of whether the Bartender
@@ -88,14 +72,13 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        with thrift_context() as client:
-            yield client.removeSystem(system_id)
+        async with ThriftClient() as client:
+            await client.removeSystem(system_id)
 
         self.set_status(204)
 
-    @coroutine
     @authenticated(permissions=[Permissions.SYSTEM_UPDATE])
-    def patch(self, system_id):
+    async def patch(self, system_id):
         """
         ---
         summary: Partially update a System
@@ -142,27 +125,21 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        with thrift_context() as client:
-            thrift_response = yield client.updateSystem(
+        async with ThriftClient() as client:
+            thrift_response = await client.updateSystem(
                 system_id, self.request.decoded_body
             )
 
-        self.set_status(201)
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)
 
 
 class SystemListAPI(BaseHandler):
 
-    parser = MongoParser()
-    logger = logging.getLogger(__name__)
-
     REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
-    # Need to ensure that Systems are updated atomically
-    system_lock = Lock()
-
     @authenticated(permissions=[Permissions.SYSTEM_READ])
-    def get(self):
+    async def get(self):
         """
         ---
         summary: Retrieve all Systems
@@ -212,13 +189,6 @@ class SystemListAPI(BaseHandler):
             description: Commands and instances will be an object id
             type: boolean
             default: true
-          - name: include_commands
-            in: query
-            required: false
-            description: __DEPRECATED__ Include commands in the response.
-              Use `exclude_fields=commands` instead.
-            type: boolean
-            default: true
         responses:
           200:
             description: All Systems
@@ -231,35 +201,21 @@ class SystemListAPI(BaseHandler):
         tags:
           - Systems
         """
-        query_set = System.objects.order_by(
-            self.request.headers.get("order_by", "name")
-        )
-        serialize_params = {"to_string": True, "many": True}
+        order_by = self.get_query_argument("order_by", None)
+
+        dereference_nested = self.get_query_argument("dereference_nested", None)
+        if dereference_nested is None:
+            dereference_nested = True
+        else:
+            dereference_nested = bool(dereference_nested.lower() == "true")
 
         include_fields = self.get_query_argument("include_fields", None)
-        exclude_fields = self.get_query_argument("exclude_fields", None)
-        dereference_nested = self.get_query_argument("dereference_nested", None)
-        include_commands = self.get_query_argument("include_commands", None)
-
         if include_fields:
             include_fields = set(include_fields.split(",")) & self.REQUEST_FIELDS
-            query_set = query_set.only(*include_fields)
-            serialize_params["only"] = include_fields
 
+        exclude_fields = self.get_query_argument("exclude_fields", None)
         if exclude_fields:
             exclude_fields = set(exclude_fields.split(",")) & self.REQUEST_FIELDS
-            query_set = query_set.exclude(*exclude_fields)
-            serialize_params["exclude"] = exclude_fields
-
-        if include_commands and include_commands.lower() == "false":
-            query_set = query_set.exclude("commands")
-
-            if "exclude" not in serialize_params:
-                serialize_params["exclude"] = set()
-            serialize_params["exclude"].add("commands")
-
-        if dereference_nested and dereference_nested.lower() == "false":
-            query_set = query_set.no_dereference()
 
         # TODO - Handle multiple query arguments with the same key
         # for example: (?name=foo&name=bar) ... what should that mean?
@@ -268,17 +224,22 @@ class SystemListAPI(BaseHandler):
         # Need to use self.request.query_arguments to get all the query args
         for key in self.request.query_arguments:
             if key in self.REQUEST_FIELDS:
-                # Now use get_query_argument to get the decoded value
                 filter_params[key] = self.get_query_argument(key)
 
-        result_set = query_set.filter(**filter_params)
+        async with ThriftClient() as client:
+            thrift_response = await client.querySystems(
+                filter_params,
+                order_by,
+                include_fields,
+                exclude_fields,
+                dereference_nested,
+            )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(self.parser.serialize_system(result_set, **serialize_params))
+        self.write(thrift_response)
 
-    @coroutine
     @authenticated(permissions=[Permissions.SYSTEM_CREATE])
-    def post(self):
+    async def post(self):
         """
         ---
         summary: Create a new System or update an existing System
@@ -307,11 +268,12 @@ class SystemListAPI(BaseHandler):
         tags:
           - Systems
         """
-        with thrift_context() as client:
+        async with ThriftClient() as client:
             try:
-                thrift_response = yield client.createSystem(self.request.decoded_body)
+                thrift_response = await client.createSystem(self.request.decoded_body)
             except bg_utils.bg_thrift.ConflictException:
                 raise ConflictError() from None
 
         self.set_status(201)
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)

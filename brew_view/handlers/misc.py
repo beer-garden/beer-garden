@@ -1,10 +1,10 @@
 import logging
 
-from tornado.gen import coroutine
-
 import brew_view
-from brew_view import thrift_context
+from brew_view.thrift import ThriftClient
 from brew_view.base_handler import BaseHandler
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigHandler(BaseHandler):
@@ -13,16 +13,10 @@ class ConfigHandler(BaseHandler):
         configs = {
             "allow_unsafe_templates": brew_view.config.application.allow_unsafe_templates,
             "application_name": brew_view.config.application.name,
-            "amq_admin_port": brew_view.config.amq.connections.admin.port,
-            "amq_host": brew_view.config.amq.host,
-            "amq_port": brew_view.config.amq.connections.message.port,
-            "amq_virtual_host": brew_view.config.amq.virtual_host,
-            "backend_host": brew_view.config.backend.host,
-            "backend_port": brew_view.config.backend.port,
             "icon_default": brew_view.config.application.icon_default,
-            "debug_mode": brew_view.config.debug_mode,
+            "debug_mode": brew_view.config.application.debug_mode,
             "url_prefix": brew_view.config.web.url_prefix,
-            "metrics_url": brew_view.config.metrics.url,
+            "metrics_url": brew_view.config.metrics.prometheus.url,
             "auth_enabled": brew_view.config.auth.enabled,
             "guest_login_enabled": brew_view.config.auth.guest_login_enabled,
         }
@@ -30,15 +24,12 @@ class ConfigHandler(BaseHandler):
 
 
 class VersionHandler(BaseHandler):
-    @coroutine
-    def get(self):
+    async def get(self):
         try:
-            with thrift_context() as client:
-                bartender_version = yield client.getVersion()
+            async with ThriftClient() as client:
+                bartender_version = await client.getVersion()
         except Exception as ex:
-            logger = logging.getLogger(__name__)
-            logger.error("Could not get Bartender Version.")
-            logger.exception(ex)
+            logger.exception(f"Error determining Bartender version - Caused by:\n{ex}")
             bartender_version = "unknown"
 
         self.write(

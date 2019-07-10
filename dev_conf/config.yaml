@@ -1,25 +1,7 @@
-amq:
-  connection_attempts: 3
-  connections:
-    admin:
-      password: guest
-      port: 15672
-      user: guest
-    message:
-      password: guest
-      port: 5672
-      ssl:
-        ca_cert: null
-        ca_verify: true
-        client_cert: null
-        enabled: false
-      user: guest
-  exchange: beer_garden
-  heartbeat_interval: 3600
-  host: localhost
-  virtual_host: /
 application:
   allow_unsafe_templates: false
+  cors_enabled: true
+  debug_mode: true
   icon_default: fa-beer
   name: Beer Garden
 auth:
@@ -33,7 +15,6 @@ backend:
   host: localhost
   port: 9090
   socket_timeout: 13000
-cors_enabled: true
 db:
   connection:
     host: localhost
@@ -41,18 +22,16 @@ db:
     port: 27017
     username: null
   name: beer_garden_v3
-debug_mode: true
 log:
   config_file: dev_conf/logging-config.json
   file: null
   level: INFO
 metrics:
-  port: 2338
-  url: http://localhost:3000
-plugin_logging:
-  config_file: null
-  level: INFO
-shutdown_timeout: 5
+  prometheus:
+    enabled: true
+    host: 0.0.0.0
+    port: 2338
+    url: http://localhost:3000
 web:
   host: 0.0.0.0
   port: 2337

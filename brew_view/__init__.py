@@ -1,15 +1,11 @@
-import contextlib
 import logging
 import os
-from concurrent.futures import ThreadPoolExecutor
+from asyncio import sleep
 
 import ssl
 from apispec import APISpec
 from functools import partial
 from prometheus_client.exposition import start_http_server
-from thriftpy2.rpc import client_context
-from tornado.concurrent import Future
-from tornado.gen import coroutine, sleep
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado.web import Application, StaticFileHandler, RedirectHandler
@@ -18,15 +14,7 @@ from urllib3.util.url import Url
 import bg_utils
 import brew_view._version
 from bg_utils.mongo import setup_database
-from bg_utils.plugin_logging_loader import PluginLoggingLoader
 from brew_view.authorization import anonymous_principal as load_anonymous
-from brew_view.metrics import initialize_counts
-from brew_view.publishers import (
-    MongoPublisher,
-    RequestPublisher,
-    TornadoPikaPublisher,
-    WebsocketPublisher,
-)
 from brew_view.specification import get_default_logging_config
 from brewtils.models import Event, Events
 from brewtils.rest import normalize_url_prefix
@@ -57,13 +45,10 @@ server = None
 tornado_app = None
 public_url = None
 logger = None
-thrift_context = None
 event_publishers = None
 api_spec = None
-plugin_logging_config = None
 app_logging_config = None
 notification_meta = None
-request_map = {}
 anonymous_principal = None
 client_ssl = None
 
@@ -79,12 +64,10 @@ def setup(spec, cli_args):
     logger = logging.getLogger(__name__)
     logger.debug("Logging configured. First post!")
 
-    load_plugin_logging_config(config)
     _setup_application()
 
 
-@coroutine
-def startup():
+async def startup():
     """Do startup things.
 
     This is the first thing called from within the ioloop context.
@@ -93,29 +76,28 @@ def startup():
 
     # Ensure we have a mongo connection
     logger.info("Checking for Mongo connection")
-    yield _progressive_backoff(
+    await _progressive_backoff(
         partial(setup_database, config), "Unable to connect to mongo, is it started?"
     )
 
     # Need to wait until after mongo connection established to load
     anonymous_principal = load_anonymous()
 
-    logger.info("Initializing metrics")
-    initialize_counts()
-
     logger.info(
-        "Starting metrics server on %s:%d" % (config.web.host, config.metrics.port)
+        f"Starting metrics server on "
+        f"{config.metrics.prometheus.host}:{config.metrics.prometheus.port}"
     )
-    start_http_server(config.metrics.port)
+    start_http_server(
+        config.metrics.prometheus.port, addr=config.metrics.prometheus.host
+    )
 
-    logger.info("Starting HTTP server on %s:%d" % (config.web.host, config.web.port))
+    logger.info(f"Starting HTTP server on {config.web.host}:{config.web.port}")
     server.listen(config.web.port, config.web.host)
 
     brew_view.logger.info("Application is started. Hello!")
 
 
-@coroutine
-def shutdown():
+async def shutdown():
     """Do shutdown things
 
     This still operates within the ioloop, so stopping it should be the last
@@ -130,46 +112,35 @@ def shutdown():
     logger.info("Stopping server for new HTTP connections")
     server.stop()
 
-    if event_publishers:
-        logger.debug("Publishing application shutdown event")
-        event_publishers.publish_event(Event(name=Events.BREWVIEW_STOPPED.name))
-
-        logger.info("Shutting down event publishers")
-        yield list(filter(lambda x: isinstance(x, Future), event_publishers.shutdown()))
+    # if event_publishers:
+    #     logger.debug("Publishing application shutdown event")
+    #     event_publishers.publish_event(Event(name=Events.BREWVIEW_STOPPED.name))
+    #
+    #     logger.info("Shutting down event publishers")
+    #     await list(filter(lambda x: isinstance(x, Future), event_publishers.shutdown()))
 
     # We need to do this before the scheduler shuts down completely in order to kick any
     # currently waiting request creations
     logger.info("Closing all open HTTP connections")
-    yield server.close_all_connections()
+    await server.close_all_connections()
 
     logger.info("Stopping IO loop")
     io_loop.add_callback(io_loop.stop)
 
 
-@coroutine
-def _progressive_backoff(func, failure_message):
-    wait_time = 0.1
+async def _progressive_backoff(func, failure_message):
+    wait_time = 1
     while not func():
         logger.warning(failure_message)
-        logger.warning("Waiting %.1f seconds before next attempt", wait_time)
+        logger.warning(f"Waiting {wait_time} seconds before next attempt")
 
-        yield sleep(wait_time)
+        await sleep(wait_time)
         wait_time = min(wait_time * 2, 30)
-
-
-def load_plugin_logging_config(input_config):
-    global plugin_logging_config
-
-    plugin_logging_config = PluginLoggingLoader().load(
-        filename=input_config.plugin_logging.config_file,
-        level=input_config.plugin_logging.level,
-        default_config=app_logging_config,
-    )
 
 
 def _setup_application():
     """Setup things that can be taken care of before io loop is started"""
-    global io_loop, tornado_app, public_url, thrift_context, server, client_ssl
+    global io_loop, tornado_app, public_url, server, client_ssl
 
     # Tweak some config options
     config.web.url_prefix = normalize_url_prefix(config.web.url_prefix)
@@ -189,7 +160,6 @@ def _setup_application():
         path=config.web.url_prefix,
     ).url
 
-    thrift_context = _setup_thrift_context()
     tornado_app = _setup_tornado_app()
     server_ssl, client_ssl = _setup_ssl_context()
 
@@ -261,7 +231,7 @@ def _setup_tornado_app():
 
     return Application(
         published_url_specs + unpublished_url_specs,
-        debug=config.debug_mode,
+        debug=config.application.debug_mode,
         cookie_secret=config.auth.token.secret,
     )
 
@@ -294,37 +264,6 @@ def _setup_ssl_context():
         client_ssl = None
 
     return server_ssl, client_ssl
-
-
-def _setup_thrift_context():
-    class BgClient(object):
-        """Helper class that wraps a thriftpy TClient"""
-
-        executor = ThreadPoolExecutor(max_workers=10)
-
-        def __init__(self, t_client):
-            self.t_client = t_client
-
-        def __getattr__(self, thrift_method):
-            def submit(*args, **kwargs):
-                return self.executor.submit(
-                    self.t_client.__getattr__(thrift_method), *args, **kwargs
-                )
-
-            return submit
-
-    @contextlib.contextmanager
-    def bg_thrift_context(sync=False, **kwargs):
-        with client_context(
-            bg_utils.bg_thrift.BartenderBackend,
-            host=config.backend.host,
-            port=config.backend.port,
-            socket_timeout=config.backend.socket_timeout,
-            **kwargs
-        ) as client:
-            yield client if sync else BgClient(client)
-
-    return bg_thrift_context
 
 
 # def _setup_event_publishers(ssl_context):

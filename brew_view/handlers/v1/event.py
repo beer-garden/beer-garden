@@ -3,7 +3,6 @@ import logging
 from tornado.web import HTTPError
 from tornado.websocket import WebSocketHandler
 
-from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import (
     check_permission,
     query_token_auth,
@@ -12,11 +11,10 @@ from brew_view.authorization import (
 )
 from brewtils.errors import RequestForbidden
 
+logger = logging.getLogger(__name__)
+
 
 class EventSocket(AuthMixin, WebSocketHandler):
-
-    logger = logging.getLogger(__name__)
-    parser = MongoParser()
 
     closing = False
     listeners = set()
@@ -60,7 +58,7 @@ class EventSocket(AuthMixin, WebSocketHandler):
 
     @classmethod
     def shutdown(cls):
-        cls.logger.debug("Closing websocket connections")
+        logger.debug("Closing websocket connections")
         EventSocket.closing = True
 
         for listener in cls.listeners:
