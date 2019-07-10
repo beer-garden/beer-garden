@@ -94,11 +94,16 @@ service BartenderBackend {
 
   void removeJob(1: string jobName) throws (1:BaseException baseEx);
 
+  // Commands
+  string getCommand(1: string commandId) throws (1:BaseException baseEx);
 
-  // Misc
+  string getCommands() throws (1:BaseException baseEx);
+
+  // Logging
   string getPluginLogConfig(1: string systemName) throws (1:BaseException baseEx);
 
   string reloadPluginLogConfig() throws (1:BaseException baseEx);
 
+  // Misc
   string getVersion();
 }
