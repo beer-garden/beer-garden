@@ -79,9 +79,19 @@ def run_job(job_id, request_template):
     request = Request(**request_template.to_mongo())
     request.metadata["_bg_job_id"] = job_id
 
-    # TODO - Need to add blocking support!!!
-    # bartender.bv_client.create_request(request_template, blocking=True)
-    process_request(request)
+    # TODO - Possibly allow specifying blocking timeout on the job definition
+    # Want to wait for completion here
+    process_request(request, wait_timeout=-1)
+
+    try:
+        document = BGJob.objects.get(id=job_id)
+        if request.status == "ERROR":
+            document.error_count += 1
+        elif request.status == "SUCCESS":
+            document.success_count += 1
+        document.save()
+    except Exception as ex:
+        logger.exception(f"Could not update job counts: {ex}")
 
     # Be a little careful here as the job could have been removed or paused
     job = bartender.application.scheduler.get_job(job_id)
