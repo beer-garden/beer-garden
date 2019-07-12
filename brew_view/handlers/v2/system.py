@@ -1,26 +1,14 @@
-import logging
-
-from mongoengine import NotUniqueError
-from tornado.gen import coroutine
-from tornado.locks import Lock
-
-from bg_utils.mongo.models import System, Instance
-from bg_utils.mongo.parser import MongoParser
-from brew_view import thrift_context
+import bg_utils
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
-from brewtils.errors import ModelValidationError
-from brewtils.models import Events
+from brew_view.thrift import ThriftClient
+from brewtils.errors import ConflictError
 from brewtils.schemas import SystemSchema
 
 
 class SystemAPI(BaseHandler):
-
-    parser = MongoParser()
-    logger = logging.getLogger(__name__)
-
     @authenticated(permissions=[Permissions.SYSTEM_READ])
-    def get(self, namespace, system_id):
+    async def get(self, namespace, system_id):
         """
         ---
         summary: Retrieve a specific System
@@ -53,23 +41,20 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        self.logger.debug("Getting System: %s", system_id)
-
         include_commands = (
-            self.get_query_argument("include_commands", default="true").lower()
-            != "false"
-        )
-        self.write(
-            self.parser.serialize_system(
-                System.objects.get(id=system_id, namespace=namespace),
-                to_string=False,
-                include_commands=include_commands,
-            )
+            self.get_query_argument("include_commands", default="").lower() != "false"
         )
 
-    @coroutine
+        async with ThriftClient() as client:
+            thrift_response = await client.getSystem(
+                namespace, system_id, include_commands
+            )
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(thrift_response)
+
     @authenticated(permissions=[Permissions.SYSTEM_DELETE])
-    def delete(self, namespace, system_id):
+    async def delete(self, namespace, system_id):
         """
         Will give Bartender a chance to remove instances of this system from the
         registry but will always delete the system regardless of whether the Bartender
@@ -99,17 +84,13 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        self.request.event.name = Events.SYSTEM_REMOVED.name
-        self.request.event_extras = {"system": System.objects.get(id=system_id)}
-
-        with thrift_context() as client:
-            yield client.removeSystem(str(system_id))
+        async with ThriftClient() as client:
+            await client.removeSystem(namespace, system_id)
 
         self.set_status(204)
 
-    @coroutine
     @authenticated(permissions=[Permissions.SYSTEM_UPDATE])
-    def patch(self, namespace, system_id):
+    async def patch(self, namespace, system_id):
         """
         ---
         summary: Partially update a System
@@ -160,84 +141,21 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        self.request.event.name = Events.SYSTEM_UPDATED.name
+        async with ThriftClient() as client:
+            thrift_response = await client.updateSystem(
+                namespace, system_id, self.request.decoded_body
+            )
 
-        system = System.objects.get(id=system_id, namespace=namespace)
-        operations = self.parser.parse_patch(
-            self.request.decoded_body, many=True, from_string=True
-        )
-
-        for op in operations:
-            if op.operation == "replace":
-                if op.path == "/commands":
-                    new_commands = self.parser.parse_command(op.value, many=True)
-
-                    if (
-                        system.commands
-                        and "dev" not in system.version
-                        and system.has_different_commands(new_commands)
-                    ):
-                        raise ModelValidationError(
-                            "System %s-%s already exists with different commands"
-                            % (system.name, system.version)
-                        )
-
-                    system.upsert_commands(new_commands)
-                elif op.path in ["/description", "/icon_name", "/display_name"]:
-                    if op.value is None:
-                        # If we set an attribute to None, mongoengine marks that
-                        # attribute for deletion, so we don't do that.
-                        value = ""
-                    else:
-                        value = op.value
-                    attr = op.path.strip("/")
-                    self.logger.debug("Updating system %s" % attr)
-                    self.logger.debug("Old: %s" % getattr(system, attr))
-                    setattr(system, attr, value)
-                    self.logger.debug("Updated: %s" % getattr(system, attr))
-                    system.save()
-                else:
-                    error_msg = "Unsupported path '%s'" % op.path
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError("value", error_msg)
-            elif op.operation == "update":
-                if op.path == "/metadata":
-                    self.logger.debug("Updating system metadata")
-                    self.logger.debug("Old: %s" % system.metadata)
-                    system.metadata.update(op.value)
-                    self.logger.debug("Updated: %s" % system.metadata)
-                    system.save()
-                else:
-                    error_msg = "Unsupported path for update '%s'" % op.path
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError("path", error_msg)
-            elif op.operation == "reload":
-                with thrift_context() as client:
-                    yield client.reloadSystem(system_id)
-            else:
-                error_msg = "Unsupported operation '%s'" % op.operation
-                self.logger.warning(error_msg)
-                raise ModelValidationError("value", error_msg)
-
-        system.reload()
-
-        self.request.event_extras = {"system": system, "patch": operations}
-
-        self.write(self.parser.serialize_system(system, to_string=False))
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(thrift_response)
 
 
 class SystemListAPI(BaseHandler):
 
-    parser = MongoParser()
-    logger = logging.getLogger(__name__)
-
     REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
-    # Need to ensure that Systems are updated atomically
-    system_lock = Lock()
-
     @authenticated(permissions=[Permissions.SYSTEM_READ])
-    def get(self, namespace):
+    async def get(self, namespace):
         """
         ---
         summary: Retrieve all Systems
@@ -304,46 +222,46 @@ class SystemListAPI(BaseHandler):
         tags:
           - Systems
         """
-        query_set = System.objects.order_by(
-            self.request.headers.get("order_by", "name")
-        )
-        serialize_params = {"to_string": True, "many": True}
+        order_by = self.get_query_argument("order_by", None)
+
+        dereference_nested = self.get_query_argument("dereference_nested", None)
+        if dereference_nested is None:
+            dereference_nested = True
+        else:
+            dereference_nested = bool(dereference_nested.lower() == "true")
 
         include_fields = self.get_query_argument("include_fields", None)
-        exclude_fields = self.get_query_argument("exclude_fields", None)
-        dereference_nested = self.get_query_argument("dereference_nested", None)
-
         if include_fields:
             include_fields = set(include_fields.split(",")) & self.REQUEST_FIELDS
-            query_set = query_set.only(*include_fields)
-            serialize_params["only"] = include_fields
 
+        exclude_fields = self.get_query_argument("exclude_fields", None)
         if exclude_fields:
             exclude_fields = set(exclude_fields.split(",")) & self.REQUEST_FIELDS
-            query_set = query_set.exclude(*exclude_fields)
-            serialize_params["exclude"] = exclude_fields
-
-        if dereference_nested and dereference_nested.lower() == "false":
-            query_set = query_set.no_dereference()
 
         # TODO - Handle multiple query arguments with the same key
         # for example: (?name=foo&name=bar) ... what should that mean?
-        filter_params = {"namespace": namespace}
+        filter_params = {}
 
         # Need to use self.request.query_arguments to get all the query args
         for key in self.request.query_arguments:
             if key in self.REQUEST_FIELDS:
-                # Now use get_query_argument to get the decoded value
                 filter_params[key] = self.get_query_argument(key)
 
-        result_set = query_set.filter(**filter_params)
+        async with ThriftClient() as client:
+            thrift_response = await client.querySystems(
+                namespace,
+                filter_params,
+                order_by,
+                include_fields,
+                exclude_fields,
+                dereference_nested,
+            )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(self.parser.serialize_system(result_set, **serialize_params))
+        self.write(thrift_response)
 
-    @coroutine
     @authenticated(permissions=[Permissions.SYSTEM_CREATE])
-    def post(self, namespace):
+    async def post(self, namespace):
         """
         ---
         summary: Create a new System or update an existing System
@@ -377,52 +295,14 @@ class SystemListAPI(BaseHandler):
         tags:
           - Systems
         """
-        self.request.event.name = Events.SYSTEM_CREATED.name
-
-        system_model = self.parser.parse_system(
-            self.request.decoded_body, from_string=True
-        )
-
-        with (yield self.system_lock.acquire()):
-            # See if we already have a system with this name + version
-            existing_system = System.find_unique(
-                system_model.name, system_model.version, namespace
-            )
-
-            if existing_system:
-                raise NotUniqueError("System %s already exists" % system_model.name)
-
-            self.logger.debug("Creating a new system: %s" % system_model.name)
-            saved_system, status_code = self._create_new_system(system_model, namespace)
-            saved_system.deep_save(namespace=namespace)
-
-        self.request.event_extras = {"system": saved_system}
-
-        self.set_status(status_code)
-        self.write(
-            self.parser.serialize_system(
-                saved_system, to_string=False, include_commands=True
-            )
-        )
-
-    @staticmethod
-    def _create_new_system(system_model, namespace):
-        new_system = system_model
-
-        # Assign a default 'main' instance if there aren't any instances and there can
-        # only be one
-        if not new_system.instances or len(new_system.instances) == 0:
-            if new_system.max_instances is None or new_system.max_instances == 1:
-                new_system.instances = [Instance(name="default", namespace=namespace)]
-                new_system.max_instances = 1
-            else:
-                raise ModelValidationError(
-                    "Could not create system %s-%s: Systems with "
-                    "max_instances > 1 must also define their instances"
-                    % (system_model.name, system_model.version)
+        async with ThriftClient() as client:
+            try:
+                thrift_response = await client.createSystem(
+                    namespace, self.request.decoded_body
                 )
-        else:
-            if not new_system.max_instances:
-                new_system.max_instances = len(new_system.instances)
+            except bg_utils.bg_thrift.ConflictException:
+                raise ConflictError() from None
 
-        return new_system, 201
+        self.set_status(201)
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(thrift_response)
