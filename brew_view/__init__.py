@@ -170,6 +170,7 @@ def _setup_application():
 def _setup_tornado_app():
     # Import these here so we don't have a problem importing thrift_context
     import brew_view.handlers.v1 as v1
+    import brew_view.handlers.v2 as v2
     import brew_view.handlers.vbeta as vbeta
     import brew_view.handlers.misc as misc
 
@@ -178,6 +179,7 @@ def _setup_tornado_app():
 
     # These get documented in our OpenAPI (fka Swagger) documentation
     published_url_specs = [
+        # V1
         (r"{0}api/v1/commands/?".format(prefix), v1.command.CommandListAPI),
         (r"{0}api/v1/requests/?".format(prefix), v1.request.RequestListAPI),
         (r"{0}api/v1/systems/?".format(prefix), v1.system.SystemListAPI),
@@ -198,8 +200,28 @@ def _setup_tornado_app():
         (r"{0}api/v1/tokens/(\w+)/?".format(prefix), v1.token.TokenAPI),
         (r"{0}api/v1/jobs/(\w+)/?".format(prefix), v1.job.JobAPI),
         (r"{0}api/v1/config/logging/?".format(prefix), v1.logging.LoggingConfigAPI),
+
         # Beta
         (r"{0}api/vbeta/events/?".format(prefix), vbeta.event.EventPublisherAPI),
+
+        # V2
+        (rf"{prefix}api/v2/users/?", v1.user.UsersAPI),
+        (rf"{prefix}api/v2/users/(\w+)/?", v1.user.UserAPI),
+        (rf"{prefix}api/v2/tokens/?", v1.token.TokenListAPI),
+        (rf"{prefix}api/v2/tokens/(\w+)/?", v1.token.TokenAPI),
+
+        (rf"{prefix}api/v2/namespaces/(\w+)/admin/?", v2.admin.AdminAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/commands/?", v2.command.CommandListAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/commands/(\w+)/?", v2.command.CommandAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/instances/(\w+)/?", v2.instance.InstanceAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/jobs/?", v2.job.JobListAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/jobs/(\w+)/?", v2.job.JobAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/queues/?", v2.queue.QueueListAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/queues/([\w\.-]+)/?", v2.queue.QueueAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/requests/?", v2.request.RequestListAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/requests/(\w+)/?", v2.request.RequestAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/systems/?", v2.system.SystemListAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/systems/(\w+)/?", v2.system.SystemAPI),
     ]
 
     # And these do not

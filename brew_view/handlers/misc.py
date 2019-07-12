@@ -19,6 +19,7 @@ class ConfigHandler(BaseHandler):
             "metrics_url": brew_view.config.metrics.prometheus.url,
             "auth_enabled": brew_view.config.auth.enabled,
             "guest_login_enabled": brew_view.config.auth.guest_login_enabled,
+            "namespaces": brew_view.config.namespaces,
         }
         self.write(configs)
 

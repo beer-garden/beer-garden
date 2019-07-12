@@ -228,6 +228,22 @@ SPECIFICATION = {
             }
         },
     },
+    "namespaces": {
+        "type": "dict",
+        "items": {
+            "local": {
+                "type": "str",
+                "default": "default",
+            },
+            "remote": {
+                "type": "list",
+                "required": False,
+                "items": {
+                    "namespace": {"type": "str"},
+                },
+            },
+        },
+    },
     "web": {
         "type": "dict",
         "items": {

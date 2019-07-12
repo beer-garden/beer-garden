@@ -86,6 +86,7 @@ import utilityService from './js/services/utility_service.js';
 import jobService from './js/services/job_service.js';
 import errorService from './js/services/error_service.js';
 import eventService from './js/services/event_service.js';
+import namespaceService from './js/services/namespace_service.js';
 
 import aboutController from './js/controllers/about.js';
 import adminQueueController from './js/controllers/admin_queue.js';
@@ -172,6 +173,7 @@ angular.module('bgApp',
 .factory('JobService', jobService)
 .factory('ErrorService', errorService)
 .factory('EventService', eventService)
+.factory('NamespaceService', namespaceService)
 
 .controller('AboutController', aboutController)
 .controller('AdminQueueController', adminQueueController)

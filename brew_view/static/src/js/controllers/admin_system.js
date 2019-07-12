@@ -154,8 +154,9 @@ export default function adminSystemController(
   }
 
   let loadSystems = function() {
-    SystemService.getSystems(true,
-        'id,name,display_name,version,instances').then(
+    SystemService.getSystems(
+      {includeFields: 'id,name,display_name,version,instances'}
+    ).then(
       $scope.successCallback,
       $scope.failureCallback
     );

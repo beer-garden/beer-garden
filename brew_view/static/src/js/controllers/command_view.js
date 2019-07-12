@@ -3,7 +3,6 @@ import angular from 'angular';
 import {formatJsonDisplay} from '../services/utility_service.js';
 
 commandViewController.$inject = [
-  '$location',
   '$rootScope',
   '$scope',
   '$state',
@@ -18,20 +17,18 @@ commandViewController.$inject = [
 
 /**
  * commandViewController - Angular controller for a specific command.
- * @param  {$location} $location       Angular's $location object.
- * @param  {$rootScope} $rootScope     Angular's $rootScope object.
- * @param  {$scope} $scope             Angular's $scope object.
- * @param  {$state} $state             Angular's $state object.
- * @param  {$stateParams} $stateParams Angular's $stateParams object.
- * @param  {$sce} $sce                 Angular's $sce object.
- * @param  {$q} $q                     Angular's $q object.
- * @param  {Object} CommandService     Beer-Garden's command service object.
- * @param  {Object} RequestService     Beer-Garden's request service object.
- * @param  {Object} SystemService      Beer-Garden's system service object.
- * @param  {Object} SFBuilderService   Beer-Garden's schema-form builder service object.
+ * @param  {Object} $rootScope        Angular's $rootScope object.
+ * @param  {Object} $scope            Angular's $scope object.
+ * @param  {Object} $state            Angular's $state object.
+ * @param  {Object} $stateParams      Angular's $stateParams object.
+ * @param  {Object} $sce              Angular's $sce object.
+ * @param  {Object} $q                Angular's $q object.
+ * @param  {Object} CommandService    Beer-Garden's command service object.
+ * @param  {Object} RequestService    Beer-Garden's request service object.
+ * @param  {Object} SystemService     Beer-Garden's system service object.
+ * @param  {Object} SFBuilderService  Beer-Garden's schema-form builder service object.
  */
 export default function commandViewController(
-    $location,
     $rootScope,
     $scope,
     $state,
@@ -151,7 +148,7 @@ export default function commandViewController(
 
     RequestService.createRequest(newRequest).then(
       function(response) {
-        $location.path('/requests/' + response.data.id);
+        $state.go('namespace.request', {'request_id': response.data.id})
       },
       function(response) {
         $scope.createResponse = response;
@@ -312,7 +309,7 @@ export default function commandViewController(
   const findAndLoadSystem = function(systemName, systemVersion) {
     return $rootScope.findSystem(systemName, systemVersion).then(
       (bareSystem) => {
-        return SystemService.getSystem(bareSystem.id, true);
+        return SystemService.getSystem(bareSystem.id);
       }
     );
   };

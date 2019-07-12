@@ -59,6 +59,7 @@ export default function appRun(
 
   $rootScope.config = {};
   $rootScope.systems = [];
+  $rootScope.namespaces = [];
 
   $rootScope.themes = {
     'default': false,
@@ -71,6 +72,11 @@ export default function appRun(
     $rootScope.configPromise = UtilityService.getConfig().then(
       (response) => {
         angular.extend($rootScope.config, camelCaseKeys(response.data));
+
+        $rootScope.namespaces = _.concat(
+          $rootScope.config.namespaces.local,
+          $rootScope.config.namespaces.remote,
+        );
       },
       (response) => {
         return $q.reject(response);
@@ -102,7 +108,8 @@ export default function appRun(
 
   $rootScope.loadSystems = function() {
     $rootScope.systemsPromise = SystemService.getSystems(
-        false, 'id,name,version').then(
+        {dereferenceNested: false, includeFields: 'id,name,version'}
+      ).then(
       (response) => {
         $rootScope.systems = response.data;
       },
@@ -140,14 +147,17 @@ export default function appRun(
       TokenService.handleToken(token);
     }
 
-    $rootScope.loadConfig();
-    $rootScope.loadSystems();
-    $rootScope.loadUser(token).catch(
-      // This prevents the situation where the user needs to logout but the
-      // logout button isn't displayed because there's no user loaded
-      // (happens if the server secret changes)
-      (response) => {
-        $rootScope.doLogout();
+    $rootScope.loadConfig().then(
+      () => {
+        $rootScope.loadSystems();
+        $rootScope.loadUser(token).catch(
+          // This prevents the situation where the user needs to logout but the
+          // logout button isn't displayed because there's no user loaded
+          // (happens if the server secret changes)
+          (response) => {
+            $rootScope.doLogout();
+          }
+        );
       }
     );
 
@@ -174,6 +184,14 @@ export default function appRun(
     if ($rootScope.isUser($rootScope.user) && sendUpdate) {
       UserService.setTheme($rootScope.user.id, theme);
     }
+  };
+
+  $rootScope.getCurrentNamespace = function() {
+    return $stateParams.namespace;
+  };
+
+  $rootScope.isCurrentNamespace = function(namespace) {
+    return $stateParams.namespace == namespace;
   };
 
   $rootScope.isUser = function(user) {

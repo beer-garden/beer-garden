@@ -54,7 +54,7 @@ export default function systemViewController(
   let statusUpdate = $interval(function() {
     if (['STOPPING', 'STARTING'].indexOf($scope.data.status) != -1) {
       SystemService.getSystem(
-        $scope.data.id, false,
+        $scope.data.id, {includeCommands: false},
         function(data, status, headers, config) {
           $scope.data.status = data.status;
       });
@@ -90,7 +90,7 @@ export default function systemViewController(
     if (_.isUndefined(stateParams.id)) {
       $rootScope.findSystem($stateParams.name, $stateParams.version).then(
         (system) => {
-          SystemService.getSystem(system.id, true).then(
+          SystemService.getSystem(system.id).then(
             $scope.successCallback,
             $scope.failureCallback
           );
@@ -98,7 +98,7 @@ export default function systemViewController(
         $scope.failureCallback
       );
     } else {
-      SystemService.getSystem(stateParams.id, true).then(
+      SystemService.getSystem(stateParams.id).then(
         $scope.successCallback,
         $scope.failureCallback
       );

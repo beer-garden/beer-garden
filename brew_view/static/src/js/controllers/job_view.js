@@ -3,23 +3,23 @@ import {formatDate, formatJsonDisplay} from '../services/utility_service.js';
 jobViewController.$inject = [
   '$scope',
   '$rootScope',
-  '$location',
+  '$state',
   '$stateParams',
   'JobService',
 ];
 
 /**
  * jobViewController - Controller for the job view page.
- * @param  {$scope} $scope         Angular's $scope object.
- * @param  {$rootScope} $rootScope Angular's $rootScope object.
- * @param  {$location} $location   Angular's $location object.
- * @param  {$stateParams} $stateParams Angular's $stateParams object.
- * @param  {Object} JobService Beer-Garden's job service.
+ * @param  {Object} $scope        Angular's $scope object.
+ * @param  {Object} $rootScope    Angular's $rootScope object.
+ * @param  {Object} $state        Angular's $state object.
+ * @param  {Object} $stateParams  Angular's $stateParams object.
+ * @param  {Object} JobService    Beer-Garden's job service.
  */
 export default function jobViewController(
     $scope,
     $rootScope,
-    $location,
+    $state,
     $stateParams,
     JobService) {
   $scope.setWindowTitle('scheduler');
@@ -67,7 +67,7 @@ export default function jobViewController(
 
   $scope.deleteJob = function(jobId) {
     JobService.deleteJob(jobId).then(
-      $location.path('/jobs'),
+      $state.go('namespace.jobs'),
       $scope.failureCallback
     );
   };

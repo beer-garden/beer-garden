@@ -127,16 +127,18 @@ export default function requestIndexController(
         if (full.parent) {
           display +=
             '<span style="margin-right: 2px;"' +
-              'uib-popover="' + full.parent.command + '"' +
+              `uib-popover="${full.parent.command}"` +
               'popover-trigger="\'mouseenter\'"' +
               'popover-title="parent request"' +
               'popover-animation="true"' +
               'popover-placement="left">' +
-                '<a href="#!/requests/' + full.parent.id + '" class="fa fa-level-up fa-fw"></a>' +
+                `<a ui-sref="namespace.request({request_id: '${full.parent.id}'})" ` +
+                  'class="fa fa-level-up fa-fw">' +
+                '</a>' +
             '</span>';
         }
 
-        return display + '<a href="#!/requests/' + full.id + '">' + data + '</a>';
+        return display + `<a ui-sref="namespace.request({request_id: '${full.id}'})">` + data + '</a>';
       }),
     DTColumnBuilder
       .newColumn('system')

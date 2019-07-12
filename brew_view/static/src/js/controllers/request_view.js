@@ -143,7 +143,7 @@ export default function requestViewController(
     if (!RequestService.isComplete(response.data)) {
       $scope.findSystem(response.data.system, response.data.system_version).then(
         (bareSystem) => {
-          SystemService.getSystem(bareSystem.id, false).then(
+          SystemService.getSystem(bareSystem.id, {includeCommands: false}).then(
             (systemObj) => {
               $scope.instanceStatus = _.find(
                 systemObj.data.instances,
@@ -196,7 +196,7 @@ export default function requestViewController(
       parameters: request.parameters,
     };
     $state.go(
-      'command',
+      'namespace.command',
       {
         name: request.command,
         systemName: request.system,
