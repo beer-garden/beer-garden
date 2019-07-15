@@ -61,6 +61,14 @@ class BartenderHandler(object):
     """Implements the thrift interface."""
 
     @staticmethod
+    def getLocalNamespace():
+        return bartender.config.namespaces.local
+
+    @staticmethod
+    def getRemoteNamespaces():
+        return bartender.config.namespaces.remote or []
+
+    @staticmethod
     def getRequest(request_id):
         return parser.serialize_request(get_request(request_id))
 
