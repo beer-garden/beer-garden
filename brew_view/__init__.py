@@ -83,13 +83,14 @@ async def startup():
     # Need to wait until after mongo connection established to load
     anonymous_principal = load_anonymous()
 
-    logger.info(
-        f"Starting metrics server on "
-        f"{config.metrics.prometheus.host}:{config.metrics.prometheus.port}"
-    )
-    start_http_server(
-        config.metrics.prometheus.port, addr=config.metrics.prometheus.host
-    )
+    if config.metrics.prometheus.enabled:
+        logger.info(
+            f"Starting metrics server on "
+            f"{config.metrics.prometheus.host}:{config.metrics.prometheus.port}"
+        )
+        start_http_server(
+            config.metrics.prometheus.port, addr=config.metrics.prometheus.host
+        )
 
     logger.info(f"Starting HTTP server on {config.web.host}:{config.web.port}")
     server.listen(config.web.port, config.web.host)
@@ -200,20 +201,20 @@ def _setup_tornado_app():
         (r"{0}api/v1/tokens/(\w+)/?".format(prefix), v1.token.TokenAPI),
         (r"{0}api/v1/jobs/(\w+)/?".format(prefix), v1.job.JobAPI),
         (r"{0}api/v1/config/logging/?".format(prefix), v1.logging.LoggingConfigAPI),
-
         # Beta
         (r"{0}api/vbeta/events/?".format(prefix), vbeta.event.EventPublisherAPI),
-
         # V2
         (rf"{prefix}api/v2/users/?", v1.user.UsersAPI),
         (rf"{prefix}api/v2/users/(\w+)/?", v1.user.UserAPI),
         (rf"{prefix}api/v2/tokens/?", v1.token.TokenListAPI),
         (rf"{prefix}api/v2/tokens/(\w+)/?", v1.token.TokenAPI),
-
         (rf"{prefix}api/v2/namespaces/(\w+)/admin/?", v2.admin.AdminAPI),
         (rf"{prefix}api/v2/namespaces/(\w+)/commands/?", v2.command.CommandListAPI),
         (rf"{prefix}api/v2/namespaces/(\w+)/commands/(\w+)/?", v2.command.CommandAPI),
-        (rf"{prefix}api/v2/namespaces/(\w+)/instances/(\w+)/?", v2.instance.InstanceAPI),
+        (
+            rf"{prefix}api/v2/namespaces/(\w+)/instances/(\w+)/?",
+            v2.instance.InstanceAPI,
+        ),
         (rf"{prefix}api/v2/namespaces/(\w+)/jobs/?", v2.job.JobListAPI),
         (rf"{prefix}api/v2/namespaces/(\w+)/jobs/(\w+)/?", v2.job.JobAPI),
         (rf"{prefix}api/v2/namespaces/(\w+)/queues/?", v2.queue.QueueListAPI),
