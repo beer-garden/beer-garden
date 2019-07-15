@@ -25,7 +25,12 @@ exception ConflictException {
 
 service BartenderBackend {
 
-  // Systems
+    // Namespaces
+    string getLocalNamespace() throws (1:BaseException baseEx);
+
+    set<string> getRemoteNamespaces() throws (1:BaseException baseEx);
+
+    // Systems
     string getSystem(
         1: string nameSpace,
         2: string systemId,
