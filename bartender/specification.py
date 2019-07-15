@@ -29,6 +29,21 @@ SPECIFICATION = {
         "previous_names": ["amq_publish_host"],
         "alt_env_names": ["AMQ_PUBLISH_HOST"],
     },
+    "namespaces": {
+        "type": "dict",
+        "items": {
+            "local": {
+                "type": "str",
+                "default": "default",
+                "description": "The local namespace",
+            },
+            "remote": {
+                "type": "list",
+                "required": False,
+                "items": {"namespace": {"type": "str"}},
+            },
+        },
+    },
     "amq": {
         "type": "dict",
         "items": {
