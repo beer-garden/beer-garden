@@ -41,7 +41,9 @@ class SystemAPI(BaseHandler):
         )
 
         async with ThriftClient() as client:
-            thrift_response = await client.getSystem(system_id, include_commands)
+            thrift_response = await client.getSystem(
+                self.request.namespace, system_id, include_commands
+            )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)
@@ -73,7 +75,7 @@ class SystemAPI(BaseHandler):
           - Systems
         """
         async with ThriftClient() as client:
-            await client.removeSystem(system_id)
+            await client.removeSystem(self.request.namespace, system_id)
 
         self.set_status(204)
 
@@ -127,7 +129,7 @@ class SystemAPI(BaseHandler):
         """
         async with ThriftClient() as client:
             thrift_response = await client.updateSystem(
-                system_id, self.request.decoded_body
+                self.request.namespace, system_id, self.request.decoded_body
             )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -228,6 +230,7 @@ class SystemListAPI(BaseHandler):
 
         async with ThriftClient() as client:
             thrift_response = await client.querySystems(
+                self.request.namespace,
                 filter_params,
                 order_by,
                 include_fields,
@@ -270,7 +273,9 @@ class SystemListAPI(BaseHandler):
         """
         async with ThriftClient() as client:
             try:
-                thrift_response = await client.createSystem(self.request.decoded_body)
+                thrift_response = await client.createSystem(
+                    self.request.namespace, self.request.decoded_body
+                )
             except bg_utils.bg_thrift.ConflictException:
                 raise ConflictError() from None
 

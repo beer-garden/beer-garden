@@ -32,7 +32,7 @@ class JobAPI(BaseHandler):
           - Jobs
         """
         async with ThriftClient() as client:
-            thrift_response = await client.getJob(job_id)
+            thrift_response = await client.getJob(self.request.namespace, job_id)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)
@@ -100,10 +100,14 @@ class JobAPI(BaseHandler):
                 if op.path == "/status":
                     if str(op.value).upper() == "PAUSED":
                         async with ThriftClient() as client:
-                            response = await client.pauseJob(job_id)
+                            response = await client.pauseJob(
+                                self.request.namespace, job_id
+                            )
                     elif str(op.value).upper() == "RUNNING":
                         async with ThriftClient() as client:
-                            response = await client.resumeJob(job_id)
+                            response = await client.resumeJob(
+                                self.request.namespace, job_id
+                            )
                     else:
                         raise ModelValidationError(
                             f"Unsupported status value '{op.value}'"
@@ -139,7 +143,7 @@ class JobAPI(BaseHandler):
           - Jobs
         """
         async with ThriftClient() as client:
-            await client.removeJob(job_id)
+            await client.removeJob(self.request.namespace, job_id)
 
         self.set_status(204)
 
@@ -168,7 +172,9 @@ class JobListAPI(BaseHandler):
                 filter_params[key] = self.get_query_argument(key)
 
         async with ThriftClient() as client:
-            thrift_response = await client.getJobs(filter_params)
+            thrift_response = await client.getJobs(
+                self.request.namespace, filter_params
+            )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)
@@ -200,7 +206,9 @@ class JobListAPI(BaseHandler):
           - Jobs
         """
         async with ThriftClient() as client:
-            response = await client.createJob(self.request.decoded_body)
+            response = await client.createJob(
+                self.request.namespace, self.request.decoded_body
+            )
 
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")

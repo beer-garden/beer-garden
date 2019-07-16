@@ -1,6 +1,6 @@
-from brew_view.thrift import ThriftClient
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
+from brew_view.thrift import ThriftClient
 
 
 class InstanceAPI(BaseHandler):
@@ -28,7 +28,9 @@ class InstanceAPI(BaseHandler):
           - Instances
         """
         async with ThriftClient() as client:
-            thrift_response = await client.getInstance(instance_id)
+            thrift_response = await client.getInstance(
+                self.request.namespace, instance_id
+            )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)
@@ -55,7 +57,7 @@ class InstanceAPI(BaseHandler):
           - Instances
         """
         async with ThriftClient() as client:
-            await client.removeInstance(instance_id)
+            await client.removeInstance(self.request.namespace, instance_id)
 
         self.set_status(204)
 
@@ -108,7 +110,7 @@ class InstanceAPI(BaseHandler):
         """
         async with ThriftClient() as client:
             thrift_response = await client.updateInstance(
-                instance_id, self.request.decoded_body
+                self.request.namespace, instance_id, self.request.decoded_body
             )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")

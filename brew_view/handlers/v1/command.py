@@ -28,7 +28,9 @@ class CommandAPI(BaseHandler):
           - Commands
         """
         async with ThriftClient() as client:
-            thrift_response = await client.getCommand(command_id)
+            thrift_response = await client.getCommand(
+                self.request.namespace, command_id
+            )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)
@@ -53,7 +55,7 @@ class CommandListAPI(BaseHandler):
           - Commands
         """
         async with ThriftClient() as client:
-            thrift_response = await client.getCommands()
+            thrift_response = await client.getCommands(self.request.namespace)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)

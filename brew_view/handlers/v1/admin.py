@@ -48,7 +48,7 @@ class AdminAPI(BaseHandler):
             if op.operation == "rescan":
                 check_permission(self.current_user, [Permissions.SYSTEM_CREATE])
                 async with ThriftClient() as client:
-                    await client.rescanSystemDirectory()
+                    await client.rescanSystemDirectory(self.request.namespace)
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 

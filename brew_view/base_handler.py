@@ -111,6 +111,9 @@ class BaseHandler(AuthMixin, RequestHandler):
         # Used for calculating request handling duration
         self.request.created_time = datetime.datetime.utcnow()
 
+        # Used for determining correct namespace
+        self.request.namespace = self.request.headers.get("bg-namespace")
+
         content_type = self.request.headers.get("content-type", "")
         if self.request.method.upper() in ["POST", "PATCH"] and content_type:
             content_type = content_type.split(";")

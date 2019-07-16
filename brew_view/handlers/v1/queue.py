@@ -26,7 +26,7 @@ class QueueAPI(BaseHandler):
           - Queues
         """
         async with ThriftClient() as client:
-            await client.clearQueue(queue_name)
+            await client.clearQueue(self.request.namespace, queue_name)
 
         self.set_status(204)
 
@@ -50,7 +50,7 @@ class QueueListAPI(BaseHandler):
           - Queues
         """
         async with ThriftClient() as client:
-            queues = await client.getAllQueueInfo()
+            queues = await client.getAllQueueInfo(self.request.namespace)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(queues)
@@ -69,6 +69,6 @@ class QueueListAPI(BaseHandler):
           - Queues
         """
         async with ThriftClient() as client:
-            await client.clearAllQueues()
+            await client.clearAllQueues(self.request.namespace)
 
         self.set_status(204)
