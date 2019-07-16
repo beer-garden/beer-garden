@@ -5,7 +5,7 @@ from brewtils.models import Event, Events
 
 
 def publish_event(event_type):
-    @wrapt.decorator
+    @wrapt.decorator(enabled=False)
     def wrapper(wrapped, _, args, kwargs):
         event = Event(name=event_type.name)
 
