@@ -1,26 +1,21 @@
 
-systemService.$inject = ['$http', 'NamespaceService'];
+systemService.$inject = ['$http'];
 
 
 /**
  * systemService - Service for getting systems from the API.
  * @param  {Object} $http             Angular's $http object.
- * @param  {Object} NamespaceService  Beer-Garden's namespace service.
  * @return {Object}                   Object for interacting with the system API.
  */
-export default function systemService($http, NamespaceService) {
+export default function systemService($http) {
   return {
     getSystem: (id, options = {}) => {
-      let namespace = NamespaceService.default(options.namespace);
-
-      return $http.get('api/v2/namespaces/'+namespace+'/systems/' + id,
+      return $http.get('api/v1/systems/' + id,
         {params: {include_commands: options.includeCommands}}
       );
     },
     getSystems: (options = {}) => {
-      let namespace = NamespaceService.default(options.namespace);
-
-      return $http.get('api/v2/namespaces/'+namespace+'/systems', {
+      return $http.get('api/v1/systems', {
         params: {
           dereference_nested: options.dereferenceNested,
           include_fields: options.includeFields,
@@ -28,15 +23,11 @@ export default function systemService($http, NamespaceService) {
         },
       });
     },
-    deleteSystem: (system, options = {}) => {
-      let namespace = NamespaceService.default(options.namespace);
-
-      return $http.delete('api/v2/namespaces/'+namespace+'/systems/' + system.id);
+    deleteSystem: (system) => {
+      return $http.delete('api/v1/systems/' + system.id);
     },
-    reloadSystem: (system, options = {}) => {
-      let namespace = NamespaceService.default(options.namespace);
-
-      return $http.patch('api/v2/namespaces/'+namespace+'/systems/' + system.id,
+    reloadSystem: (system) => {
+      return $http.patch('api/v1/systems/' + system.id,
         {operation: 'reload', path: '', value: ''}
       );
     },

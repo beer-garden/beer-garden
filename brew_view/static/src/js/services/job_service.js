@@ -11,29 +11,24 @@ jobService.$inject = ['$http', 'NamespaceService'];
 export default function jobService($http, NamespaceService) {
   let JobService = {};
 
-  JobService.getJobs = function(options = {}) {
-    let namespace = NamespaceService.default(options.namespace);
-    return $http.get('api/v2/namespaces/'+namespace+'/jobs');
+  JobService.getJobs = function() {
+    return $http.get('api/v1/jobs');
   };
 
-  JobService.getJob = function(id, options = {}) {
-    let namespace = NamespaceService.default(options.namespace);
-    return $http.get('api/v2/namespaces/'+namespace+'/jobs/' + id);
+  JobService.getJob = function(id) {
+    return $http.get('api/v1/jobs/' + id);
   };
 
-  JobService.createJob = function(job, options = {}) {
-    let namespace = NamespaceService.default(options.namespace);
-    return $http.post('api/v2/namespaces/'+namespace+'/jobs', job);
+  JobService.createJob = function(job) {
+    return $http.post('api/v1/jobs', job);
   };
 
-  JobService.deleteJob = function(id, options = {}) {
-    let namespace = NamespaceService.default(options.namespace);
-    return $http.delete('api/v2/namespaces/'+namespace+'/jobs/' + id);
+  JobService.deleteJob = function(id) {
+    return $http.delete('api/v1/jobs/' + id);
   };
 
-  JobService.patchJob = function(id, payload, options = {}) {
-    let namespace = NamespaceService.default(options.namespace);
-    return $http.patch('api/v2/namespaces/'+namespace+'/jobs/' + id, payload);
+  JobService.patchJob = function(id, payload) {
+    return $http.patch('api/v1/jobs/' + id, payload);
   };
 
   JobService.resumeJob = function(jobId) {

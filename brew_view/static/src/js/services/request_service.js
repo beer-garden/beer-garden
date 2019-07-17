@@ -1,32 +1,28 @@
 import _ from 'lodash';
 
-requestService.$inject = ['$q', '$http', '$timeout', 'NamespaceService'];
+requestService.$inject = ['$q', '$http', '$timeout'];
 
 /**
  * requestService - Service for accessing the Request API.
  * @param  {Object} $q                Angular's $q object.
  * @param  {Object} $http             Angular's $http object.
  * @param  {Object} $timeout          Angular's $timeout object.
- * @param  {Object} NamespaceService  Beer-Garden's namespace service.
  * @return {Object}                   An Object for interacting with the Request API.
  */
-export default function requestService($q, $http, $timeout, NamespaceService) {
+export default function requestService($q, $http, $timeout) {
   const completeStatuses = ['SUCCESS', 'ERROR', 'CANCELED'];
 
   let service = {
-    getRequests: (data, options = {}) => {
-      let namespace = NamespaceService.default(options.namespace);
+    getRequests: (data) => {
       return $http.get(
-        'api/v2/namespaces/'+namespace+'/requests', {params: data}
+        'api/v1/requests', {params: data}
       );
     },
-    getRequest: (id, options = {}) => {
-      let namespace = NamespaceService.default(options.namespace);
-      return $http.get('api/v2/namespaces/'+namespace+'/requests/' + id);
+    getRequest: (id) => {
+      return $http.get('api/v1/requests/' + id);
     },
-    createRequest: (request, options = {}) => {
-      let namespace = NamespaceService.default(options.namespace);
-      return $http.post('api/v2/namespaces/'+namespace+'/requests', request);
+    createRequest: (request) => {
+      return $http.post('api/v1/requests', request);
     },
     isComplete: (request) => {
       return _.includes(completeStatuses, request.status);
