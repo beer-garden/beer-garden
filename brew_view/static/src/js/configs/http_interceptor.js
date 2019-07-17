@@ -14,6 +14,9 @@ export function interceptorService($rootScope, $templateCache) {
         config.url.startsWith('version') || config.url.startsWith('api'))) {
       config.url = $rootScope.apiBaseUrl + config.url;
     }
+
+    config.headers['bg-namespace'] = $rootScope.getCurrentNamespace();
+
     return config;
   };
 };
