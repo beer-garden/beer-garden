@@ -3,11 +3,8 @@ import angular from 'angular';
 adminQueueController.$inject = [
   '$rootScope',
   '$scope',
-  '$q',
   '$compile',
-  '$window',
   '$interval',
-  '$http',
   'DTOptionsBuilder',
   'DTColumnBuilder',
   'QueueService',
@@ -17,11 +14,8 @@ adminQueueController.$inject = [
  * adminQueueController - Angular controller for queue index page.
  * @param  {Object} $rootScope        Angular's $rootScope object.
  * @param  {Object} $scope            Angular's $scope object.
- * @param  {Object} $q                Angular's $q object.
  * @param  {Object} $compile          Angular's $compile object.
- * @param  {Object} $window           Angular's $window object.
  * @param  {Object} $interval         Angular's $interval object.
- * @param  {Object} $http             Angular's $http object.
  * @param  {Object} DTOptionsBuilder  Datatables' options builder object.
  * @param  {Object} DTColumnBuilder   Datatables' column builder object.
  * @param  {Object} QueueService      Beer-Garden's queue service object.
@@ -29,17 +23,12 @@ adminQueueController.$inject = [
 export default function adminQueueController(
     $rootScope,
     $scope,
-    $q,
     $compile,
-    $window,
     $interval,
-    $http,
     DTOptionsBuilder,
     DTColumnBuilder,
     QueueService) {
   $scope.setWindowTitle('queues');
-
-  let preconditionPromise;
 
   $scope.alerts = [];
   $scope.dtInstance = null;
@@ -47,9 +36,8 @@ export default function adminQueueController(
   $scope.dtOptions = DTOptionsBuilder
     .fromFnPromise(
       () => {
-        // Waiting for preconditionPromise ensures that the rootScope config
-        // and systems are ready first
-        return preconditionPromise.then(
+        // Ensures that the systems are ready first
+        return $rootScope.loadSystems().then(
           () => {
             return QueueService.getQueues().then(
               $scope.successCallback,
@@ -162,21 +150,13 @@ export default function adminQueueController(
     $scope.response = response;
   };
 
-  const ensurePreconditions = function() {
-    // The table is constructed from getQueues but we need to wait for the
-    // application to have loaded systems first
-    preconditionPromise = $rootScope.systemsPromise;
-  };
-
   $scope.$on('userChange', () => {
     $scope.response = undefined;
-
-    // Make sure that preconditions are still good
-    ensurePreconditions();
 
     // Then give the datatable a kick
     $scope.dtInstance.reloadData(() => {}, false);
   });
 
-  ensurePreconditions();
+  // Force reloading so switching namespaces works
+  $rootScope.loadSystems(true);
 };
