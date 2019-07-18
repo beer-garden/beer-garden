@@ -14,6 +14,11 @@ class JobAPI(BaseHandler):
         ---
         summary: Retrieve a specific Job
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: job_id
             in: path
             required: true
@@ -66,6 +71,11 @@ class JobAPI(BaseHandler):
           }
           ```
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: job_id
             in: path
             required: true
@@ -127,6 +137,11 @@ class JobAPI(BaseHandler):
         summary: Delete a specific Job.
         description: Will remove a specific job. No further executions will occur.
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: job_id
             in: path
             required: true
@@ -154,6 +169,12 @@ class JobListAPI(BaseHandler):
         """
         ---
         summary: Retrieve all Jobs.
+        parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
         responses:
           200:
             description: Successfully retrieved all systems.
@@ -188,6 +209,11 @@ class JobListAPI(BaseHandler):
           Given a job, it will be scheduled to run on the interval
           set in the trigger argument.
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: job
             in: body
             description: The Job to create/schedule

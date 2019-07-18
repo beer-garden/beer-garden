@@ -10,6 +10,11 @@ class CommandAPI(BaseHandler):
         ---
         summary: Retrieve a specific Command
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: command_id
             in: path
             required: true
@@ -42,6 +47,12 @@ class CommandListAPI(BaseHandler):
         """
         ---
         summary: Retrieve all Commands
+        parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
         responses:
           200:
             description: All Commands

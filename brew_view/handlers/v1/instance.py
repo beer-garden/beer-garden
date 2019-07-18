@@ -10,6 +10,11 @@ class InstanceAPI(BaseHandler):
         ---
         summary: Retrieve a specific Instance
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: instance_id
             in: path
             required: true
@@ -41,6 +46,11 @@ class InstanceAPI(BaseHandler):
         ---
         summary: Delete a specific Instance
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: instance_id
             in: path
             required: true
@@ -83,6 +93,11 @@ class InstanceAPI(BaseHandler):
           }
           ```
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: instance_id
             in: path
             required: true

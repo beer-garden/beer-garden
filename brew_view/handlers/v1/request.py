@@ -16,6 +16,11 @@ class RequestAPI(BaseHandler):
         ---
         summary: Retrieve a specific Request
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: request_id
             in: path
             required: true
@@ -58,6 +63,11 @@ class RequestAPI(BaseHandler):
           }
           ```
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: request_id
             in: path
             required: true
@@ -165,6 +175,11 @@ class RequestListAPI(BaseHandler):
           { "value": "SEARCH VALUE", "regex": false }
           ```
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: include_children
             in: query
             required: false
@@ -299,6 +314,11 @@ class RequestListAPI(BaseHandler):
         ---
         summary: Create a new Request
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: request
             in: body
             description: The Request definition

@@ -13,6 +13,11 @@ class SystemAPI(BaseHandler):
         ---
         summary: Retrieve a specific System
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: system_id
             in: path
             required: true
@@ -59,6 +64,11 @@ class SystemAPI(BaseHandler):
         description: Will remove instances of local plugins from the registry, clear
             and remove message queues, and remove the system from the database.
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: system_id
             in: path
             required: true
@@ -102,6 +112,11 @@ class SystemAPI(BaseHandler):
           ```
           Where `value` is a list of new Commands.
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: system_id
             in: path
             required: true
@@ -168,6 +183,11 @@ class SystemListAPI(BaseHandler):
             This will not do what you expect: only return the system named
             'bar' will be returned.
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: include_fields
             in: query
             required: false
@@ -250,6 +270,11 @@ class SystemListAPI(BaseHandler):
             If the System does not exist it will be created. If the System
             already exists it will be updated (assuming it passes validation).
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: system
             in: body
             description: The System definition to create / update

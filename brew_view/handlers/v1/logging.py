@@ -10,6 +10,11 @@ class LoggingConfigAPI(BaseHandler):
         ---
         summary: Get the plugin logging configuration
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: system_name
             in: query
             required: false
@@ -50,6 +55,11 @@ class LoggingConfigAPI(BaseHandler):
           }
           ```
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: patch
             in: body
             required: true

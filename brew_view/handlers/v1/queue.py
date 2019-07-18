@@ -10,6 +10,11 @@ class QueueAPI(BaseHandler):
         ---
         summary: Clear a queue by canceling all requests
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: queue_name
             in: path
             required: true
@@ -37,6 +42,12 @@ class QueueListAPI(BaseHandler):
         """
         ---
         summary: Retrieve all queue information
+        parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
         responses:
           200:
             description: List of all queue information objects
@@ -60,6 +71,12 @@ class QueueListAPI(BaseHandler):
         """
         ---
         summary: Cancel and clear all requests in all queues
+        parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
         responses:
           204:
             description: All queues successfully cleared

@@ -26,6 +26,11 @@ class AdminAPI(BaseHandler):
             plugins who's directory has been removed.
           * Will add and start any new plugin directories.
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: patch
             in: body
             required: true
