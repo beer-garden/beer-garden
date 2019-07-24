@@ -4,12 +4,15 @@ import bg_utils
 
 
 class ThriftClient:
+    def __init__(self, host, port):
+        self._host = host
+        self._port = port
+
     def __enter__(self):
         self._client = make_client(
             bg_utils.bg_thrift.BartenderBackend,
-            # TODO - Obviously this needs to not be hardcoded
-            host="localhost",
-            port=9091,
+            host=self._host,
+            port=self._port,
             timeout=13000,
         )
         return self._client

@@ -34,13 +34,34 @@ SPECIFICATION = {
         "items": {
             "local": {
                 "type": "str",
-                "default": "default",
                 "description": "The local namespace",
+                "default": "default",
             },
             "remote": {
                 "type": "list",
                 "required": False,
-                "items": {"namespace": {"type": "str"}},
+                "items": {
+                    "namespace": {
+                        "type": "dict",
+                        "items": {
+                            "name": {
+                                "type": "str",
+                                "description": "The remote namespace name",
+                                "required": True,
+                            },
+                            "host": {
+                                "type": "str",
+                                "description": "The remote namespace host name",
+                                "required": True,
+                            },
+                            "port": {
+                                "type": "int",
+                                "description": "The remote namespace port",
+                                "required": True,
+                            },
+                        },
+                    }
+                },
             },
         },
     },

@@ -61,11 +61,23 @@ logger = logging.getLogger(__name__)
 parser = MongoParser()
 
 
-def namespace_router(_wrapped):
-    def handle_local(namespace):
-        # Handle locally if namespace explicitly matches local or if it's empty
-        return namespace in (bartender.config.namespaces.local, "", None)
+def remote_ns_names():
+    if not bartender.config.namespaces.remote:
+        return []
 
+    return [ns.name for ns in bartender.config.namespaces.remote]
+
+
+def handle_local(namespace):
+    # Handle locally if namespace explicitly matches local or if it's empty
+    return namespace in (bartender.config.namespaces.local, "", None)
+
+
+def handle_remote(namespace):
+    return namespace in remote_ns_names()
+
+
+def namespace_router(_wrapped):
     @wrapt.decorator
     def wrapper(wrapped, _, args, kwargs):
         target_ns = args[0]
@@ -75,10 +87,16 @@ def namespace_router(_wrapped):
 
             return wrapped(*args[1:], **kwargs)
 
-        if target_ns in bartender.config.namespaces.remote:
+        if handle_remote(target_ns):
             logger.debug(f"Forwarding {wrapped.__name__} to {target_ns}")
 
-            with ThriftClient() as client:
+            ns_info = None
+            for ns in bartender.config.namespaces.remote:
+                if ns.name == target_ns:
+                    ns_info = ns
+                    break
+
+            with ThriftClient(ns_info.host, ns_info.port) as client:
                 return getattr(client, wrapped.__name__)(*args)
 
         raise ValueError(f"Unable to find route to namespace '{target_ns}'")
@@ -95,7 +113,7 @@ class BartenderHandler(object):
 
     @staticmethod
     def getRemoteNamespaces():
-        return bartender.config.namespaces.remote or []
+        return remote_ns_names()
 
     @staticmethod
     @namespace_router

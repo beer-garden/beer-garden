@@ -56,7 +56,9 @@ metrics:
 namespaces:
   local: default
   remote:
-    - bar
+    - name: bar
+      host: localhost
+      port: 9091
 plugin:
   logging:
     config_file: dev_conf/example-plugin-logging-config.json
