@@ -67,6 +67,8 @@ export default function appRun(
 
   $rootScope.responseState = responseState;
 
+  $rootScope.getIcon = UtilityService.getIcon;
+
   $rootScope.loadConfig = function() {
     $rootScope.configPromise = UtilityService.getConfig().then(
       (response) => {
