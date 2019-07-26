@@ -104,7 +104,7 @@
               </a>
 
               <ul class="nav nav-second-level">
-                <li ng-repeat="(name, arr) in sidebarSystems | groupBy:'name'" ng-init="collapsed=false">
+                <li ng-repeat="(name, arr) in resSystems | groupBy:'name'" ng-init="collapsed=false">
                   <a ng-if="arr.length == 1"
                      ui-sref="namespace.system({name: arr[0].name, version: SystemService.getVersionForUrl(arr[0])})"
                      ui-sref-active="active">

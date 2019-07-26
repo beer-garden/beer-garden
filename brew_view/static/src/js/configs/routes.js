@@ -10,7 +10,7 @@ routeConfig.$inject = ['$stateProvider', '$urlRouterProvider', '$locationProvide
 export default function routeConfig($stateProvider, $urlRouterProvider, $locationProvider) {
   const basePath = 'partials/';
 
-  $urlRouterProvider.otherwise('/default/');
+  // $urlRouterProvider.otherwise('/default/');
 
   // // use the HTML5 History API
   // $locationProvider.html5Mode(true);
@@ -22,6 +22,18 @@ export default function routeConfig($stateProvider, $urlRouterProvider, $locatio
         namespace: {
           value: 'default',
         },
+      },
+      resolve: {
+        resConfig: (UtilityService) => {
+          return UtilityService.getConfig();
+        },
+        resSystems: ($stateParams, SystemService) => {
+          return SystemService.getSystems({}, {'bg-namespace': $stateParams.namespace});
+        },
+      },
+      controller: ($rootScope, resConfig, resSystems) => {
+        $rootScope.resConfig = resConfig.data;
+        $rootScope.resSystems = resSystems.data;
       },
     })
     .state('namespace.landing', {
