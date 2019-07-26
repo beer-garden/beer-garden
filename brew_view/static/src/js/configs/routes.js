@@ -10,33 +10,47 @@ routeConfig.$inject = ['$stateProvider', '$urlRouterProvider', '$locationProvide
 export default function routeConfig($stateProvider, $urlRouterProvider, $locationProvider) {
   const basePath = 'partials/';
 
-  // $urlRouterProvider.otherwise('/default/');
+  $urlRouterProvider.otherwise('/');
 
   // // use the HTML5 History API
   // $locationProvider.html5Mode(true);
 
   $stateProvider
-    .state('namespace', {
-      url: '/:namespace',
-      params: {
-        namespace: {
-          value: 'default',
-        },
-      },
+    .state('base', {
+      url: '/',
       resolve: {
         resConfig: (UtilityService) => {
           return UtilityService.getConfig();
         },
+        controller: ($rootScope, $state, resConfig) => {
+          $rootScope.resConfig = resConfig.data;
+
+          if ($rootScope.resConfig.namespaces.local) {
+            $state.go(
+              'base.namespace.landing',
+              {namespace: $rootScope.resConfig.namespaces.local},
+            );
+          }
+        },
+      },
+    })
+    .state('base.namespace', {
+      url: ':namespace',
+      params: {
+        namespace: {
+          value: '',
+        },
+      },
+      resolve: {
         resSystems: ($stateParams, SystemService) => {
           return SystemService.getSystems({}, {'bg-namespace': $stateParams.namespace});
         },
       },
-      controller: ($rootScope, resConfig, resSystems) => {
-        $rootScope.resConfig = resConfig.data;
+      controller: ($rootScope, resSystems) => {
         $rootScope.resSystems = resSystems.data;
       },
     })
-    .state('namespace.landing', {
+    .state('base.namespace.landing', {
       url: '/',
       templateUrl: basePath + 'landing.html',
       controller: 'LandingController',
