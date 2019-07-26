@@ -87,17 +87,17 @@ export default function routeConfig($stateProvider, $urlRouterProvider, $locatio
         },
       },
     })
-    .state('namespace.about', {
+    .state('base.namespace.about', {
       url: '/about',
       templateUrl: basePath + 'about.html',
       controller: 'AboutController',
     })
-    .state('namespace.jobs', {
+    .state('base.namespace.jobs', {
       url: '/jobs',
       templateUrl: basePath + 'job_index.html',
       controller: 'JobIndexController',
     })
-    .state('namespace.jobsCreate', {
+    .state('base.namespace.jobsCreate', {
       url: '/jobs/create',
       templateUrl: basePath + 'job_create.html',
       controller: 'JobCreateController',
@@ -107,17 +107,17 @@ export default function routeConfig($stateProvider, $urlRouterProvider, $locatio
         'command': null,
       },
     })
-    .state('namespace.job', {
+    .state('base.namespace.job', {
       'url': '/jobs/:id',
       'templateUrl': basePath + 'job_view.html',
       'controller': 'JobViewController',
     })
-    .state('namespace.commands', {
+    .state('base.namespace.commands', {
       url: '/commands',
       templateUrl: basePath + 'command_index.html',
       controller: 'CommandIndexController',
     })
-    .state('namespace.command', {
+    .state('base.namespace.command', {
       url: '/systems/:systemName/:systemVersion/commands/:name',
       templateUrl: basePath + 'command_view.html',
       controller: 'CommandViewController',
@@ -127,7 +127,7 @@ export default function routeConfig($stateProvider, $urlRouterProvider, $locatio
       },
     })
     // Unused by our UI, but helpful for external links.
-    .state('namespace.commandID', {
+    .state('base.namespace.commandID', {
       url: '/commands/:id',
       templateUrl: basePath + 'command_view.html',
       controller: 'CommandViewController',
@@ -135,22 +135,22 @@ export default function routeConfig($stateProvider, $urlRouterProvider, $locatio
         request: null,
       },
     })
-    .state('namespace.requests', {
+    .state('base.namespace.requests', {
       url: '/requests',
       templateUrl: basePath + 'request_index.html',
       controller: 'RequestIndexController',
     })
-    .state('namespace.request', {
+    .state('base.namespace.request', {
       url: '/requests/:request_id',
       templateUrl: basePath + 'request_view.html',
       controller: 'RequestViewController',
     })
-    .state('namespace.queues', {
+    .state('base.namespace.queues', {
       url: '/admin/queues',
       templateUrl: basePath + 'admin_queue.html',
       controller: 'AdminQueueController',
     })
-    .state('namespace.system_admin', {
+    .state('base.namespace.system_admin', {
       url: '/admin/systems',
       templateUrl: basePath + 'admin_system.html',
       controller: 'AdminSystemController',
