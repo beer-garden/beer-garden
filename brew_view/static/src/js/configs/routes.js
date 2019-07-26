@@ -49,12 +49,19 @@ export default function routeConfig($stateProvider, $urlRouterProvider, $locatio
         },
       },
       resolve: {
-        resSystems: ($stateParams, SystemService) => {
-          return SystemService.getSystems({}, {'bg-namespace': $stateParams.namespace});
+        systems: ($stateParams, SystemService) => {
+          return SystemService.getSystems(
+            {
+              dereferenceNested: false,
+              includeFields: 'id,name,version,description,instances,commands',
+            },
+            {'bg-namespace': $stateParams.namespace},
+          );
         },
       },
-      controller: ($rootScope, resSystems) => {
-        $rootScope.resSystems = resSystems.data;
+      controller: ($rootScope, systems) => {
+        $rootScope.sysResponse = systems;
+        $rootScope.systems = systems.data;
       },
     })
     .state('base.namespace.landing', {
@@ -68,15 +75,23 @@ export default function routeConfig($stateProvider, $urlRouterProvider, $locatio
       controller: 'LoginController',
     })
     // Unused by our UI, but helpful for external links.
-    .state('namespace.systemID', {
+    .state('base.namespace.systemID', {
       url: '/systems/:id',
       templateUrl: basePath + 'system_view.html',
       controller: 'SystemViewController',
     })
-    .state('namespace.system', {
-      'url': '/systems/:name/:version',
-      'templateUrl': basePath + 'system_view.html',
-      'controller': 'SystemViewController',
+    .state('base.namespace.system', {
+      url: '/systems/:name/:version',
+      params: {
+        name: {
+          value: '',
+        },
+        version: {
+          value: '',
+        },
+      },
+      templateUrl: basePath + 'system_view.html',
+      controller: 'SystemViewController',
     })
     .state('namespace.about', {
       url: '/about',

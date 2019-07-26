@@ -58,7 +58,7 @@ const compareVersions = function(version1, version2) {
  */
 export default function systemService($rootScope, $http, $q) {
 
-  let systems = [];
+  let systems = $rootScope.systems;
   let systemsPromise = undefined;
 
   let service = {
