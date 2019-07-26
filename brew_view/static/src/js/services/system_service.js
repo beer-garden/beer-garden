@@ -1,5 +1,5 @@
 
-systemService.$inject = ['$rootScope', '$http', '$q'];
+systemService.$inject = ['$rootScope', '$http'];
 
 /**
  * Compare two system versions. Intended to be used for sorting.
@@ -53,18 +53,11 @@ const compareVersions = function(version1, version2) {
  * systemService - Service for getting systems from the API.
  * @param  {$rootScope} $rootScope    Angular's $rootScope object.
  * @param  {Object} $http             Angular's $http object.
- * @param  {Object} $q                Angular's $q object.
  * @return {Object}                   Object for interacting with the system API.
  */
-export default function systemService($rootScope, $http, $q) {
-
-  let systems = $rootScope.systems;
-  let systemsPromise = undefined;
+export default function systemService($rootScope, $http) {
 
   let service = {
-    cachedSystems: () => {
-      return systems;
-    },
     getSystem: (id, options = {}) => {
       return $http.get('api/v1/systems/' + id,
         {params: {include_commands: options.includeCommands}}
@@ -90,43 +83,6 @@ export default function systemService($rootScope, $http, $q) {
     },
   };
 
-  service['promise'] = () => {
-    if (_.isUndefined(systemsPromise)) {
-      return service.loadSystems();
-    }
-    return systemsPromise;
-  };
-
-  service['subscribe'] = (scope, callback) => {
-    let handler = $rootScope.$on('bg-new-systems-event', callback);
-    scope.$on('$destroy', handler);
-  };
-
-  service['loadSystems'] = () => {
-    systemsPromise = service.getSystems(
-      {dereferenceNested: false, includeFields: 'id,name,version'}
-    ).then(
-      (response) => {
-        systems = response.data;
-        $rootScope.$emit('bg-new-systems-event');
-      },
-      (response) => {
-        systems = [];
-
-        // This is super annoying.
-        // If any controller is actually using this promise we need to return a
-        // rejection here, otherwise the chained promise will actually resolve
-        // (success callback will be invoked instead of failure callback).
-        // But for controllers that don't care if this fails (like the landing
-        // controller) this causes a 'possibly unhandled rejection' since they
-        // haven't constructed a pipeline based on this promise.
-        return $q.reject(response);
-      }
-    );
-
-    return systemsPromise;
-  };
-
   /**
    * Converts a system's version to the 'latest' semantic url scheme.
    * @param {Object} system - system for which you want the version URL.
@@ -135,7 +91,7 @@ export default function systemService($rootScope, $http, $q) {
   service['getVersionForUrl'] = (system) => {
     // All versions for systems with the given system name
     let versions = _.map(
-      _.filter(systems, {name: system.name}),
+      _.filter($rootScope.systems, {name: system.name}),
       _.property('version')
     );
 
@@ -151,7 +107,7 @@ export default function systemService($rootScope, $http, $q) {
    * @return {string} url to use for UI routing.
    */
   service['getSystemUrl'] = (systemId) => {
-    for (let system of systems) {
+    for (let system of $rootScope.systems) {
       if (system.id == systemId) {
         let version = service.getVersionForUrl(system);
         return '/systems/' + system.name + '/' + version;
@@ -175,29 +131,19 @@ export default function systemService($rootScope, $http, $q) {
       status: 404,
     };
 
-    return systemsPromise.then(
-      () => {
-        if (version !== 'latest') {
-          let sys = _.find(systems, {name: name, version: version});
+    if (version !== 'latest') {
+      return _.find($rootScope.systems, {name: name, version: version});
+    }
 
-          if (_.isUndefined(sys)) {
-            return $q.reject(notFound);
-          } else {
-            return $q.resolve(sys);
-          }
-        }
+    let filteredSystems = _.filter($rootScope.systems, {name: name});
+    if (_.isEmpty(filteredSystems)) {
+      return undefined;
+    }
 
-        let filteredSystems = _.filter(systems, {name: name});
-        if (_.isEmpty(filteredSystems)) {
-          return $q.reject(notFound);
-        }
+    let versions = _.map(filteredSystems, _.property('version'));
+    let sorted = versions.sort(compareVersions);
 
-        let versions = _.map(filteredSystems, _.property('version'));
-        let sorted = versions.sort(compareVersions);
-
-        return $q.resolve(_.find(filteredSystems, {version: sorted[0]}));
-      }
-    );
+    return _.find(filteredSystems, {version: sorted[0]});
   };
 
   /**
@@ -206,7 +152,7 @@ export default function systemService($rootScope, $http, $q) {
    * @return {Object} the system with this ID.
    */
   service['findSystemByID'] = (systemId) => {
-    for (let system of systems) {
+    for (let system of $rootScope.systems) {
       if (system.id === systemId) {
         return system;
       }
