@@ -21,42 +21,44 @@ export default function routeConfig($stateProvider, $urlRouterProvider, $locatio
     .state('base', {
       url: '/',
       resolve: {
-        config: (UtilityService) => {
-          return UtilityService.getConfig();
-        },
-        controller: ($rootScope, $state, config) => {
-          angular.extend($rootScope.config, camelCaseKeys(config.data));
+        config: ($rootScope, $state, UtilityService) => {
+          return UtilityService.getConfig().then(
+            (response) => {
+              angular.extend($rootScope.config, camelCaseKeys(response.data));
 
-          $rootScope.namespaces = _.concat(
-            $rootScope.config.namespaces.local,
-            $rootScope.config.namespaces.remote,
+              $rootScope.namespaces = _.concat(
+                $rootScope.config.namespaces.local,
+                $rootScope.config.namespaces.remote,
+              );
+
+              // if ($rootScope.config.namespaces.local) {
+              //   $state.go(
+              //     'base.namespace.systems',
+              //     {namespace: $rootScope.config.namespaces.local},
+              //   );
+              // }
+            }
           );
-
-          if ($rootScope.config.namespaces.local) {
-            $state.go(
-              'base.namespace.systems',
-              {namespace: $rootScope.config.namespaces.local},
-            );
-          }
         },
       },
     })
     .state('base.namespace', {
       url: ':namespace',
       resolve: {
-        systems: ($stateParams, SystemService) => {
+        systems: ($rootScope, $stateParams, SystemService) => {
           return SystemService.getSystems(
             {
               dereferenceNested: false,
               includeFields: 'id,name,version,description,instances,commands',
             },
             {'bg-namespace': $stateParams.namespace},
+          ).then(
+            (response) => {
+              $rootScope.sysResponse = response;
+              $rootScope.systems = response.data;
+            }
           );
         },
-      },
-      controller: ($rootScope, systems) => {
-        $rootScope.sysResponse = systems;
-        $rootScope.systems = systems.data;
       },
     })
     .state('login', {
