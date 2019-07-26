@@ -70,13 +70,14 @@ export default function systemService($rootScope, $http, $q) {
         {params: {include_commands: options.includeCommands}}
       );
     },
-    getSystems: (options = {}) => {
+    getSystems: (options = {}, headers={}) => {
       return $http.get('api/v1/systems', {
         params: {
           dereference_nested: options.dereferenceNested,
           include_fields: options.includeFields,
           exclude_fields: options.excludeFields,
         },
+        headers: headers,
       });
     },
     deleteSystem: (system) => {
