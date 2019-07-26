@@ -34,7 +34,7 @@ export default function routeConfig($stateProvider, $urlRouterProvider, $locatio
 
           if ($rootScope.config.namespaces.local) {
             $state.go(
-              'base.namespace.landing',
+              'base.namespace.systems',
               {namespace: $rootScope.config.namespaces.local},
             );
           }
@@ -64,10 +64,10 @@ export default function routeConfig($stateProvider, $urlRouterProvider, $locatio
         $rootScope.systems = systems.data;
       },
     })
-    .state('base.namespace.landing', {
-      url: '/',
-      templateUrl: basePath + 'landing.html',
-      controller: 'LandingController',
+    .state('base.namespace.systems', {
+      url: '/systems',
+      templateUrl: basePath + 'system_index.html',
+      controller: 'SystemIndexController',
     })
     .state('login', {
       url: '/login',

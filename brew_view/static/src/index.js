@@ -95,9 +95,9 @@ import {adminUserController, newUserController} from './js/controllers/admin_use
 import {adminRoleController, newRoleController} from './js/controllers/admin_role.js';
 import commandIndexController from './js/controllers/command_index.js';
 import commandViewController from './js/controllers/command_view.js';
-import landingController from './js/controllers/landing.js';
 import requestIndexController from './js/controllers/request_index.js';
 import requestViewController, {slideAnimation} from './js/controllers/request_view.js';
+import systemIndexController from './js/controllers/system_index.js';
 import systemViewController from './js/controllers/system_view.js';
 import jobIndexController from './js/controllers/job_index.js';
 import jobViewController from './js/controllers/job_view.js';
@@ -112,9 +112,9 @@ import './partials/admin_user.html';
 import './partials/admin_role.html';
 import './partials/command_index.html';
 import './partials/command_view.html';
-import './partials/landing.html';
 import './partials/request_index.html';
 import './partials/request_view.html';
+import './partials/system_index.html';
 import './partials/system_view.html';
 import './partials/job_index.html';
 import './partials/job_view.html';
@@ -183,9 +183,9 @@ angular.module('bgApp',
 .controller('NewRoleController', newRoleController)
 .controller('CommandIndexController', commandIndexController)
 .controller('CommandViewController', commandViewController)
-.controller('LandingController', landingController)
 .controller('RequestIndexController', requestIndexController)
 .controller('RequestViewController', requestViewController)
+.controller('SystemIndexController', systemIndexController)
 .controller('SystemViewController', systemViewController)
 .controller('JobIndexController', jobIndexController)
 .controller('JobViewController', jobViewController)

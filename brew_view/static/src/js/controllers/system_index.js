@@ -1,5 +1,5 @@
 
-landingController.$inject = [
+systemIndexController.$inject = [
   '$scope',
   '$rootScope',
   '$state',
@@ -8,14 +8,14 @@ landingController.$inject = [
 ];
 
 /**
- * landingController - Controller for the landing page.
+ * systemIndexController - Controller for the system index page.
  * @param  {Object} $scope         Angular's $scope object.
  * @param  {Object} $rootScope     Angular's $rootScope object.
  * @param  {Object} $state         Angular's $state object.
  * @param  {Object} SystemService  Beer-Garden's sytem service.
  * @param  {Object} UtilityService Beer-Garden's utility service.
  */
-export default function landingController(
+export default function systemIndexController(
     $scope,
     $rootScope,
     $state,
