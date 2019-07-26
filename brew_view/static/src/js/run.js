@@ -69,23 +69,6 @@ export default function appRun(
 
   $rootScope.getIcon = UtilityService.getIcon;
 
-  $rootScope.loadConfig = function() {
-    $rootScope.configPromise = UtilityService.getConfig().then(
-      (response) => {
-        angular.extend($rootScope.config, camelCaseKeys(response.data));
-
-        $rootScope.namespaces = _.concat(
-          $rootScope.config.namespaces.local,
-          $rootScope.config.namespaces.remote,
-        );
-      },
-      (response) => {
-        return $q.reject(response);
-      }
-    );
-    return $rootScope.configPromise;
-  };
-
   $rootScope.loadUser = function(token) {
     $rootScope.userPromise = UserService.loadUser(token).then(
       (response) => {
@@ -125,17 +108,12 @@ export default function appRun(
       TokenService.handleToken(token);
     }
 
-    $rootScope.loadConfig().then(
-      () => {
-        SystemService.loadSystems();
-        $rootScope.loadUser(token).catch(
-          // This prevents the situation where the user needs to logout but the
-          // logout button isn't displayed because there's no user loaded
-          // (happens if the server secret changes)
-          (response) => {
-            $rootScope.doLogout();
-          }
-        );
+    $rootScope.loadUser(token).catch(
+      // This prevents the situation where the user needs to logout but the
+      // logout button isn't displayed because there's no user loaded
+      // (happens if the server secret changes)
+      (response) => {
+        $rootScope.doLogout();
       }
     );
 
@@ -206,12 +184,8 @@ export default function appRun(
   };
 
   $rootScope.setWindowTitle = function(...titleParts) {
-    $rootScope.configPromise.then(
-      () => {
-        titleParts.push($rootScope.config.applicationName);
-        $rootScope.title = _.join(titleParts, ' - ');
-      }
-    );
+    titleParts.push($rootScope.config.applicationName);
+    $rootScope.title = _.join(titleParts, ' - ');
   };
 
   $rootScope.initialLoad();
