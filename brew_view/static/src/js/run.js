@@ -150,6 +150,20 @@ export default function appRun(
     return $stateParams.namespace == namespace;
   };
 
+  $rootScope.changeNamespace = (namespace) => {
+    let target_state;
+    let current_state = $state.current.name;
+
+    // TODO - should probably put this in a transition hook
+    if (current_state == "base") {
+      target_state = 'base.namespace.systems';
+    } else {
+      target_state = current_state;
+    }
+
+    $state.go(target_state, {namespace: namespace});
+  };
+
   $rootScope.isUser = function(user) {
     return user && user.username !== 'anonymous';
   };

@@ -44,7 +44,7 @@
             <ul class="dropdown-menu">
               <li ng-repeat="namespace in namespaces">
                 <div style="padding: 3px 15px; cursor: pointer;"
-                     ui-sref="{namespace: namespace}">
+                     ng-click="changeNamespace(namespace)">
                   <span class="fa"
                         ng-class="{'fa-check': isCurrentNamespace(namespace), 'fa-fw': !isCurrentNamespace(namespace)}"></span>
                   <span>{{namespace}}</span>
