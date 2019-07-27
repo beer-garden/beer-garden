@@ -227,6 +227,8 @@ def create_job(job):
         job.delete()
         raise
 
+    return job
+
 
 def pause_job(job_id):
     bartender.application.scheduler.pause_job(job_id, jobstore="beer_garden")
