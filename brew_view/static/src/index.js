@@ -112,6 +112,7 @@ import './partials/admin_user.html';
 import './partials/admin_role.html';
 import './partials/command_index.html';
 import './partials/command_view.html';
+import './partials/landing.html';
 import './partials/request_index.html';
 import './partials/request_view.html';
 import './partials/system_index.html';

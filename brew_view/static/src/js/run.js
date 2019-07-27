@@ -10,6 +10,7 @@ appRun.$inject = [
   '$http',
   '$q',
   '$uibModal',
+  '$transitions',
   'localStorageService',
   'UtilityService',
   'SystemService',
@@ -41,6 +42,7 @@ export default function appRun(
     $http,
     $q,
     $uibModal,
+    $transitions,
     localStorageService,
     UtilityService,
     SystemService,
@@ -59,6 +61,7 @@ export default function appRun(
 
   $rootScope.config = {};
   $rootScope.namespaces = [];
+  $rootScope.currentNamespace = undefined;
 
   $rootScope.themes = {
     'default': false,
@@ -91,12 +94,13 @@ export default function appRun(
   };
 
   $rootScope.changeUser = function(token) {
-    // We need to reload systems as those permisisons could have changed
-    SystemService.loadSystems();
+    // // We need to reload systems as those permisisons could have changed
+    // SystemService.loadSystems();
 
     $rootScope.loadUser(token).then(
       () => {
-        $rootScope.$broadcast('userChange');
+        $state.reload();
+        // $rootScope.$broadcast('userChange');
       }
     );
   };
@@ -117,7 +121,8 @@ export default function appRun(
       }
     );
 
-    EventService.connect();
+    // Can't connect here - events are namespace dependent
+    // EventService.connect();
   };
 
   $rootScope.hasPermission = function(user, permissions) {
@@ -143,25 +148,24 @@ export default function appRun(
   };
 
   $rootScope.getCurrentNamespace = function() {
-    return $stateParams.namespace;
+    return $rootScope.currentNamespace;
+  };
+
+  $rootScope.setCurrentNamespace = (namespace) => {
+    $rootScope.currentNamespace = namespace;
   };
 
   $rootScope.isCurrentNamespace = function(namespace) {
-    return $stateParams.namespace == namespace;
+    return $rootScope.currentNamespace == namespace;
   };
 
   $rootScope.changeNamespace = (namespace) => {
-    let target_state;
-    let current_state = $state.current.name;
+    let cur_state = $state.current.name;
 
-    // TODO - should probably put this in a transition hook
-    if (current_state == "base") {
-      target_state = 'base.namespace.systems';
-    } else {
-      target_state = current_state;
-    }
-
-    $state.go(target_state, {namespace: namespace});
+    $state.go(
+      cur_state === "base.landing" ? "base.namespace.systems" : cur_state,
+      {namespace: namespace}
+    );
   };
 
   $rootScope.isUser = function(user) {
@@ -201,6 +205,22 @@ export default function appRun(
     titleParts.push($rootScope.config.applicationName);
     $rootScope.title = _.join(titleParts, ' - ');
   };
+
+  $rootScope.mainButton = () => {
+    if ($stateParams.namespace) {
+      $state.go('base.namespace.systems');
+    } else {
+      $state.go('base.landing');
+    }
+  };
+
+  $transitions.onStart({name: 'base.namespace'}, function(transition, state) {
+    $rootScope.setCurrentNamespace(transition.params('to').namespace);
+  });
+
+  $transitions.onSuccess({to: 'base'}, () => {
+    $state.go('base.landing');
+  });
 
   $rootScope.initialLoad();
 };

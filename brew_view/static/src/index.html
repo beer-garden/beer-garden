@@ -30,7 +30,7 @@
           <span class='icon-bar'></span>
           <span class='icon-bar'></span>
         </button>
-        <a class="navbar-brand" ui-sref="base.namespace.systems">
+        <a style="cursor:pointer" class="navbar-brand" ng-click="mainButton()">
           <i ng-class="getIcon(config.iconDefault)"></i>
           <span ng-cloak>{{config.applicationName}}</span>
         </a>
@@ -106,7 +106,7 @@
               <ul class="nav nav-second-level">
                 <li ng-repeat="(name, arr) in systems | groupBy:'name'" ng-init="collapsed=false">
                   <a ng-if="arr.length == 1"
-                     ui-sref="base.namespace.system({name: arr[0].name, version: SystemService.getVersionForUrl(arr[0])})"
+                     ui-sref="base.namespace.system({systemName: arr[0].name, systemVersion: arr[0].version})"
                      ui-sref-active="active">
                     <i class="fa fa-cog"></i>
                     <span>{{arr[0].display_name || arr[0].name}}</span>
@@ -122,7 +122,7 @@
                       ng-style="{'max-height': (!collapsed) ? (arr.length*40 + 'px') : '0px'}"
                       class="nav nav-third-level show-more">
                     <li ng-repeat="system in arr">
-                      <a ui-sref="base.namespace.system({name: system.name, version: SystemService.getVersionForUrl(system)})"
+                      <a ui-sref="base.namespace.system({systemName: system.name, systemVersion: system})"
                          ui-sref-active="active">
                         <span>{{system.version}}</span>
                       </a>

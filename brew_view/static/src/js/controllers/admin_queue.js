@@ -42,13 +42,17 @@ export default function adminQueueController(
   $scope.dtOptions = DTOptionsBuilder
     .fromFnPromise(
       () => {
-        return $q.all({
-          systems: SystemService.promise(),
-          queues: QueueService.getQueues(),
-        }).then(
+        return QueueService.getQueues().then(
           $scope.successCallback,
           $scope.failureCallback
         );
+        // return $q.all({
+        //   systems: SystemService.promise(),
+        //   queues: QueueService.getQueues(),
+        // }).then(
+        //   $scope.successCallback,
+        //   $scope.failureCallback
+        // );
       }
     )
     .withBootstrap()
@@ -67,7 +71,7 @@ export default function adminQueueController(
       .renderWith(function(data, type, full) {
         let version = SystemService.getVersionForUrl(SystemService.findSystemByID(full.system_id));
         return '<a ui-sref=' +
-               '"namespace.system({name: \'' + full.system+ '\', version: \'' + version + '\'})">' +
+               '"base.namespace.system({systemName: \'' + full.system+ '\', systemVersion: \'' + version + '\'})">' +
                (full.display || data) + '</a>';
       }),
     DTColumnBuilder
@@ -145,7 +149,8 @@ export default function adminQueueController(
   });
 
   $scope.successCallback = function(response) {
-    $scope.response = response.queues;
+    // $scope.response = response.queues;
+    $scope.response = response;
     return $scope.response.data;
   };
 
@@ -153,13 +158,13 @@ export default function adminQueueController(
     $scope.response = response;
   };
 
-  $scope.$on('userChange', () => {
-    $scope.response = undefined;
+  // $scope.$on('userChange', () => {
+  //   $scope.response = undefined;
 
-    // Then give the datatable a kick
-    $scope.dtInstance.reloadData(() => {}, false);
-  });
+  //   // Then give the datatable a kick
+  //   $scope.dtInstance.reloadData(() => {}, false);
+  // });
 
-  // Force reloading so switching namespaces works
-  SystemService.loadSystems();
+  // // Force reloading so switching namespaces works
+  // SystemService.loadSystems();
 };

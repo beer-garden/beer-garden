@@ -34,7 +34,9 @@
           <td>{{data.version}}</td>
           <td>{{ command.description || "No Description Provided" }}</td>
           <td>
-            <a ui-sref="namespace.command(getCommandStateParams(command))"
+            <!-- <a ui-sref="base.namespace.system.command(getCommandStateParams(command))"
+               class="btn btn-primary center-block">Make it Happen!</a> -->
+            <a ui-sref="base.namespace.command({systemName: data.name, systemVersion: data.version, commandName: command.name})"
                class="btn btn-primary center-block">Make it Happen!</a>
           </td>
         </tr>

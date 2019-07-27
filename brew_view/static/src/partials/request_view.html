@@ -20,7 +20,7 @@
 <div ng-if="responseState(response) === 'success'">
   <ol class="tagline breadcrumb" ng-show="request_tree.length > 1">
     <li ng-repeat="request in request_tree = getParentTree(data)" ng-class="{active: $last}"
-      ><span ng-if="!$last"><a ui-sref="namespace.request({request_id: request.id})">{{request.command}}</a></span
+      ><span ng-if="!$last"><a ui-sref="base.namespace.request({requestId: request.id})">{{request.command}}</a></span
       ><span ng-if="$last">{{request.command}}</span>
     </li>
   </ol>
@@ -71,7 +71,7 @@
           <td>
             <div>
               <span class="fa fa-chevron-right" style="visibility: hidden" />
-              <a class="child-link" ui-sref="namespace.request({request_id: child.id})">{{child.command}}</a>
+              <a class="child-link" ui-sref="base.namespace.request({requestId: child.id})">{{child.command}}</a>
             </div>
           </td>
           <td><div>{{child.metadata.system_display_name || child.system}}</div></td>
