@@ -18,7 +18,6 @@ from bg_utils.mongo.models import Choices, Request, System
 from brewtils.choices import parse
 from brewtils.errors import ModelValidationError, RequestPublishException, ConflictError
 from brewtils.models import Events
-from brewtils.rest.system_client import SystemClient
 from brewtils.schema_parser import SchemaParser
 
 logger = logging.getLogger(__name__)
@@ -29,8 +28,6 @@ request_map = {}
 class RequestValidator(object):
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-
-        self._client = SystemClient(system_name=None, **bartender.config.web)
 
         self._session = Session()
         if not bartender.config.web.ca_verify:
@@ -264,27 +261,30 @@ class RequestValidator(object):
 
                 if isinstance(choices.value, six.string_types):
                     parsed_value = parse(choices.value, parse_as="func")
-                    response = self._client.send_bg_request(
-                        _command=parsed_value["name"],
-                        _system_name=request.system,
-                        _system_version=request.system_version,
-                        _instance_name=request.instance_name,
-                        **map_param_values(parsed_value["args"]),
+
+                    choices_request = Request(
+                        system=request.system,
+                        system_version=request.system_version,
+                        instance_name=request.instance_name,
+                        command=parsed_value["name"],
+                        parameters=map_param_values(parsed_value["args"]),
                     )
                 elif isinstance(choices.value, dict):
                     parsed_value = parse(choices.value["command"], parse_as="func")
-                    response = self._client.send_bg_request(
-                        _command=parsed_value["name"],
-                        _system_name=choices.value.get("system"),
-                        _system_version=choices.value.get("version"),
-                        _instance_name=choices.value.get("instance_name", "default"),
-                        **map_param_values(parsed_value["args"]),
+                    choices_request = Request(
+                        system=choices.value.get("system"),
+                        system_version=choices.value.get("version"),
+                        instance_name=choices.value.get("instance_name", "default"),
+                        command=parsed_value["name"],
+                        parameters=map_param_values(parsed_value["args"]),
                     )
                 else:
                     raise ModelValidationError(
                         "Unable to validate choices for parameter '%s' - Choices value"
                         " must be a string or dictionary " % command_parameter.key
                     )
+
+                response = process_request(choices_request, wait_timeout=10)
 
                 parsed_output = json.loads(response.output)
                 if isinstance(parsed_output, list):
