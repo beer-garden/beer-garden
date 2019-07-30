@@ -1,9 +1,9 @@
 import logging
 import logging.config
 
+import bartender._version
 import bg_utils
 import brewtils.rest
-import bartender._version
 from bartender.app import BartenderApp
 from bartender.errors import ConfigurationError
 from bartender.specification import get_default_logging_config
@@ -21,7 +21,9 @@ def setup_bartender(spec, cli_args):
     global application, app_logging_config, config, logger
 
     config = bg_utils.load_application_config(spec, cli_args)
-    config.web.url_prefix = brewtils.rest.normalize_url_prefix(config.web.url_prefix)
+    config.plugin.local.web.url_prefix = brewtils.rest.normalize_url_prefix(
+        config.plugin.local.web.url_prefix
+    )
 
     app_logging_config = bg_utils.setup_application_logging(
         config, get_default_logging_config(config.log.level, config.log.file)
