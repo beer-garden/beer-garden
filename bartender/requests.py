@@ -30,11 +30,11 @@ class RequestValidator(object):
         self.logger = logging.getLogger(__name__)
 
         self._session = Session()
-        if not bartender.config.web.ca_verify:
+        if not bartender.config.validator.url.ca_verify:
             urllib3.disable_warnings()
             self._session.verify = False
-        elif bartender.config.web.ca_cert:
-            self._session.verify = bartender.config.web.ca_cert
+        elif bartender.config.validator.url.ca_cert:
+            self._session.verify = bartender.config.validator.url.ca_cert
 
     def validate_request(self, request):
         """Validation to be called before you save a request from a user
@@ -284,7 +284,10 @@ class RequestValidator(object):
                         " must be a string or dictionary " % command_parameter.key
                     )
 
-                response = process_request(choices_request, wait_timeout=10)
+                response = process_request(
+                    choices_request,
+                    wait_timeout=bartender.config.validator.command.timeout,
+                )
 
                 parsed_output = json.loads(response.output)
                 if isinstance(parsed_output, list):

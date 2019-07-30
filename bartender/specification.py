@@ -356,66 +356,6 @@ SPECIFICATION = {
             }
         },
     },
-    "web": {
-        "type": "dict",
-        "items": {
-            "ca_cert": {
-                "type": "str",
-                "description": "Path to CA certificate file to use",
-                "required": False,
-                "previous_names": ["ca_cert"],
-                "alt_env_names": ["CA_CERT"],
-            },
-            "ca_verify": {
-                "type": "bool",
-                "default": True,
-                "description": "Verify external certificates",
-                "required": False,
-                "previous_names": ["ca_verify"],
-                "alt_env_names": ["CA_VERIFY"],
-            },
-            "host": {
-                "type": "str",
-                "default": "localhost",
-                "description": "Hostname of the API server",
-                "previous_names": ["web_host"],
-            },
-            "port": {
-                "type": "int",
-                "default": 2337,
-                "description": "Port of the API server",
-                "previous_names": ["web_port"],
-            },
-            "ssl_enabled": {
-                "type": "bool",
-                "default": False,
-                "description": "Is the API server using SSL",
-                "previous_names": ["ssl_enabled"],
-                "alt_env_names": ["SSL_ENABLED"],
-                "cli_separator": "_",
-            },
-            "username": {
-                "type": "str",
-                "description": "Username that Bartender will use for "
-                "authentication (needs bg-all role)",
-                "required": False,
-            },
-            "password": {
-                "type": "str",
-                "description": "Password that Bartender will use for "
-                "authentication (needs bg-all role)",
-                "required": False,
-            },
-            "url_prefix": {
-                "type": "str",
-                "default": None,
-                "description": "URL prefix of the API server",
-                "required": False,
-                "previous_names": ["url_prefix"],
-                "alt_env_names": ["URL_PREFIX"],
-            },
-        },
-    },
     "thrift": {
         "type": "dict",
         "items": {
@@ -532,6 +472,54 @@ SPECIFICATION = {
                             },
                         },
                     },
+                    "web": {
+                        "type": "dict",
+                        "items": {
+                            "ca_cert": {
+                                "type": "str",
+                                "description": "Path to CA certificate file to use",
+                                "required": False,
+                                "previous_names": ["ca_cert"],
+                                "alt_env_names": ["CA_CERT"],
+                            },
+                            "ca_verify": {
+                                "type": "bool",
+                                "default": True,
+                                "description": "Verify external certificates",
+                                "required": False,
+                                "previous_names": ["ca_verify"],
+                                "alt_env_names": ["CA_VERIFY"],
+                            },
+                            "host": {
+                                "type": "str",
+                                "default": "localhost",
+                                "description": "Hostname of the API server",
+                                "previous_names": ["web_host"],
+                            },
+                            "port": {
+                                "type": "int",
+                                "default": 2337,
+                                "description": "Port of the API server",
+                                "previous_names": ["web_port"],
+                            },
+                            "ssl_enabled": {
+                                "type": "bool",
+                                "default": False,
+                                "description": "Is the API server using SSL",
+                                "previous_names": ["ssl_enabled"],
+                                "alt_env_names": ["SSL_ENABLED"],
+                                "cli_separator": "_",
+                            },
+                            "url_prefix": {
+                                "type": "str",
+                                "default": None,
+                                "description": "URL prefix of the API server",
+                                "required": False,
+                                "previous_names": ["url_prefix"],
+                                "alt_env_names": ["URL_PREFIX"],
+                            },
+                        },
+                    },
                 },
             },
         },
@@ -578,6 +566,38 @@ SPECIFICATION = {
                         "description": (
                             "Default maximum instances of a job to run concurrently."
                         ),
+                    },
+                },
+            },
+        },
+    },
+    "validator": {
+        "type": "dict",
+        "items": {
+            "command": {
+                "type": "dict",
+                "items": {
+                    "timeout": {
+                        "type": "int",
+                        "default": 10,
+                        "description": "Time to wait for a command-based choices validation",
+                        "required": False,
+                    }
+                },
+            },
+            "url": {
+                "type": "dict",
+                "items": {
+                    "ca_cert": {
+                        "type": "str",
+                        "description": "CA file for validating url-based choices",
+                        "required": False,
+                    },
+                    "ca_verify": {
+                        "type": "bool",
+                        "default": True,
+                        "description": "Verify external certificates for url-based choices",
+                        "required": False,
                     },
                 },
             },
