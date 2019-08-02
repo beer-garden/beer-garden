@@ -35,7 +35,7 @@ help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 deps: ## install javascript dependencies
-	yarn install
+	npm install
 
 
 # Cleaning
@@ -46,14 +46,15 @@ clean-test: ## remove test and coverage artifacts
 	echo "TODO: clean javascript tests"
 
 clean-all: clean-build clean-test ## clean everything
-	rm -f yarn-error.log
+	rm -f npm-debug.log
+	rm -f npm-error.log
 
 clean: clean-all ## alias of clean-all
 
 
 # Linting
 lint: ## check style with eslit
-	yarn lint
+	npm run lint
 
 
 # Testing / Coverage
@@ -66,4 +67,4 @@ coverage: ## check code coverage
 
 # Packaging
 package: ## builds distribution
-	yarn build
+	npm run build
