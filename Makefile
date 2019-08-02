@@ -124,9 +124,7 @@ docker-login: ## log in to the docker registry
 
 docker-build: ## build the docker images
 	docker build -t $(DOCKER_NAME):latest --build-arg VERSION=$(VERSION) -f Dockerfile .
-	docker build -t $(DOCKER_NAME):latest-python2 --build-arg VERSION=$(VERSION) -f Dockerfile.2 .
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)
-	docker tag $(DOCKER_NAME):latest-python2 $(DOCKER_NAME):$(VERSION)-python2
 
 docker-build-unstable: package clean-python ## build nightly docker image
 	docker build -t $(DOCKER_NAME):unstable -f Dockerfile.unstable .
@@ -140,9 +138,7 @@ publish-package: package ## upload a package
 	twine upload dist/*
 
 publish-docker: docker-build ## push the docker images
-	docker push $(DOCKER_NAME):$(VERSION)-python2
 	docker push $(DOCKER_NAME):$(VERSION)
-	docker push $(DOCKER_NAME):latest-python2
 	docker push $(DOCKER_NAME):latest
 
 publish-docker-unstable: docker-build-unstable ## push the unstable docker image

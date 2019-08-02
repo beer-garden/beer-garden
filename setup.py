@@ -34,23 +34,15 @@ setup(
         "prometheus-client==0.7.1",
         "pyrabbit2==1.0.7",
     ],
-    extras_require={
-        ':python_version=="2.7"': [
-            "future>=0.16.0",
-            "futures>=3.1.1",
-            "subprocess32>=3.2.7",
-        ]
-    },
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
     ],
     entry_points={
         "console_scripts": [
