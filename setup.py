@@ -35,7 +35,6 @@ setup(
         "prometheus_client==0.7.1",
         "tornado==6.0.3",
     ],
-    extras_require={':python_version=="2.7"': ["futures>=3.1.1"]},
     entry_points={
         "console_scripts": [
             "generate_brew_view_config=brew_view.__main__:generate_config",
