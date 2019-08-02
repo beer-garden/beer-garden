@@ -1,4 +1,3 @@
-
 import brew_view.handlers.v2.admin
 import brew_view.handlers.v2.command
 import brew_view.handlers.v2.instance

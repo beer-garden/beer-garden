@@ -1,20 +1,11 @@
-import logging
-
-import mongoengine.errors
-
-from bg_utils.mongo.models import Command
-from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
+from brew_view.thrift import ThriftClient
 
 
 class CommandAPI(BaseHandler):
-
-    parser = MongoParser()
-    logger = logging.getLogger(__name__)
-
     @authenticated(permissions=[Permissions.COMMAND_READ])
-    def get(self, namespace, command_id):
+    async def get(self, namespace, command_id):
         """
         ---
         summary: Retrieve a specific Command
@@ -41,21 +32,16 @@ class CommandAPI(BaseHandler):
         tags:
           - Commands
         """
-        self.write(
-            self.parser.serialize_command(
-                Command.objects.get(id=str(command_id), namespace=namespace),
-                to_string=False
-            )
-        )
+        async with ThriftClient() as client:
+            thrift_response = await client.getCommand(namespace, command_id)
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(thrift_response)
 
 
 class CommandListAPI(BaseHandler):
-
-    parser = MongoParser()
-    logger = logging.getLogger(__name__)
-
     @authenticated(permissions=[Permissions.COMMAND_READ])
-    def get(self, namespace):
+    async def get(self, namespace):
         """
         ---
         summary: Retrieve all Commands
@@ -77,19 +63,8 @@ class CommandListAPI(BaseHandler):
         tags:
           - Commands
         """
-        self.logger.debug("Getting Commands")
+        async with ThriftClient() as client:
+            thrift_response = await client.getCommands(namespace)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        try:
-            self.write(
-                self.parser.serialize_command(
-                    Command.objects(namespace=namespace), many=True, to_string=True
-                )
-            )
-        except mongoengine.errors.DoesNotExist as ex:
-            self.logger.error(
-                "Got an error while attempting to serialize commands. "
-                "This error usually indicates "
-                "there are orphans in the database."
-            )
-            raise mongoengine.errors.InvalidDocumentError(ex)
+        self.write(thrift_response)

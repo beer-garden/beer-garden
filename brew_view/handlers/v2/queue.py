@@ -1,22 +1,11 @@
-import logging
-
-from tornado.gen import coroutine
-
-from bg_utils.mongo.models import System
-from bg_utils.mongo.parser import MongoParser
-from brew_view import thrift_context
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
-from brewtils.models import Events, Queue
+from brew_view.thrift import ThriftClient
 
 
 class QueueAPI(BaseHandler):
-
-    logger = logging.getLogger(__name__)
-
-    @coroutine
     @authenticated(permissions=[Permissions.QUEUE_DELETE])
-    def delete(self, namespace, queue_name):
+    async def delete(self, namespace, queue_name):
         """
         ---
         summary: Clear a queue by canceling all requests
@@ -41,23 +30,15 @@ class QueueAPI(BaseHandler):
         tags:
           - Queues
         """
-        self.request.event.name = Events.QUEUE_CLEARED.name
-        self.request.event.payload = {"queue_name": queue_name}
-
-        with thrift_context() as client:
-            yield client.clearQueue(queue_name)
+        async with ThriftClient() as client:
+            await client.clearQueue(namespace, queue_name)
 
         self.set_status(204)
 
 
 class QueueListAPI(BaseHandler):
-
-    parser = MongoParser()
-    logger = logging.getLogger(__name__)
-
-    @coroutine
     @authenticated(permissions=[Permissions.QUEUE_READ])
-    def get(self, namespace):
+    async def get(self, namespace):
         """
         ---
         summary: Retrieve all queue information
@@ -79,45 +60,14 @@ class QueueListAPI(BaseHandler):
         tags:
           - Queues
         """
-        self.logger.debug("Getting all queues")
-
-        queues = []
-        systems = System.objects(namespace=namespace).select_related(max_depth=1)
-
-        for system in systems:
-            for instance in system.instances:
-
-                queue = Queue(
-                    name="UNKNOWN",
-                    system=system.name,
-                    version=system.version,
-                    instance=instance.name,
-                    system_id=str(system.id),
-                    display=system.display_name,
-                    size=-1,
-                )
-
-                with thrift_context() as client:
-                    try:
-                        queue_info = yield client.getQueueInfo(
-                            system.name, system.version, instance.name
-                        )
-                        queue.name = queue_info.name
-                        queue.size = queue_info.size
-                    except Exception:
-                        self.logger.error(
-                            "Error getting queue size for %s[%s]-%s"
-                            % (system.name, instance.name, system.version)
-                        )
-
-                queues.append(queue)
+        async with ThriftClient() as client:
+            queues = await client.getAllQueueInfo(namespace)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(self.parser.serialize_queue(queues, to_string=True, many=True))
+        self.write(queues)
 
-    @coroutine
     @authenticated(permissions=[Permissions.QUEUE_DELETE])
-    def delete(self, namespace):
+    async def delete(self, namespace):
         """
         ---
         summary: Cancel and clear all requests in all queues
@@ -135,9 +85,7 @@ class QueueListAPI(BaseHandler):
         tags:
           - Queues
         """
-        self.request.event.name = Events.ALL_QUEUES_CLEARED.name
-
-        with thrift_context() as client:
-            yield client.clearAllQueues()
+        async with ThriftClient() as client:
+            await client.clearAllQueues(namespace)
 
         self.set_status(204)

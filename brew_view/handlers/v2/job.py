@@ -1,24 +1,17 @@
 # -*- coding: utf-8 -*-
-import logging
 
-from tornado.gen import coroutine
-
-import brew_view
-from bg_utils.mongo.models import Job
-from bg_utils.mongo.parser import MongoParser
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
-from brew_view.scheduler.runner import run_job
+
+from brew_view.thrift import ThriftClient
 from brewtils.errors import ModelValidationError
+from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import JobSchema
 
 
 class JobAPI(BaseHandler):
-    logger = logging.getLogger(__name__)
-    parser = MongoParser()
-
     @authenticated(permissions=[Permissions.JOB_READ])
-    def get(self, namespace, job_id):
+    async def get(self, namespace, job_id):
         """
         ---
         summary: Retrieve a specific Job
@@ -45,12 +38,14 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
-        document = Job.objects.get(id=job_id, namespace=namespace)
+        async with ThriftClient() as client:
+            thrift_response = await client.getJob(namespace, job_id)
+
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(self.parser.serialize_job(document, to_string=False))
+        self.write(thrift_response)
 
     @authenticated(permissions=[Permissions.JOB_UPDATE])
-    def patch(self, namespace, job_id):
+    async def patch(self, namespace, job_id):
         """
         ---
         summary: Pause/Resume a job
@@ -108,8 +103,7 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
-        job = Job.objects.get(id=job_id, namespace=namespace)
-        operations = self.parser.parse_patch(
+        operations = SchemaParser.parse_patch(
             self.request.decoded_body, many=True, from_string=True
         )
 
@@ -117,35 +111,25 @@ class JobAPI(BaseHandler):
             if op.operation == "update":
                 if op.path == "/status":
                     if str(op.value).upper() == "PAUSED":
-                        brew_view.request_scheduler.pause_job(
-                            job_id, jobstore="beer_garden"
-                        )
-                        job.status = "PAUSED"
+                        async with ThriftClient() as client:
+                            response = await client.pauseJob(namespace, job_id)
                     elif str(op.value).upper() == "RUNNING":
-                        brew_view.request_scheduler.resume_job(
-                            job_id, jobstore="beer_garden"
-                        )
-                        job.status = "RUNNING"
+                        async with ThriftClient() as client:
+                            response = await client.resumeJob(namespace, job_id)
                     else:
-                        error_msg = "Unsupported status value '%s'" % op.value
-                        self.logger.warning(error_msg)
-                        raise ModelValidationError(error_msg)
+                        raise ModelValidationError(
+                            f"Unsupported status value '{op.value}'"
+                        )
                 else:
-                    error_msg = "Unsupported path value '%s'" % op.path
-                    self.logger.warning(error_msg)
-                    raise ModelValidationError(error_msg)
+                    raise ModelValidationError(f"Unsupported path value '{op.path}'")
             else:
-                error_msg = "Unsupported operation '%s'" % op.operation
-                self.logger.warning(error_msg)
-                raise ModelValidationError(error_msg)
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
-        job.save()
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(self.parser.serialize_job(job, to_string=False))
+        self.write(response)
 
-    @coroutine
     @authenticated(permissions=[Permissions.JOB_DELETE])
-    def delete(self, namespace, job_id):
+    async def delete(self, namespace, job_id):
         """
         ---
         summary: Delete a specific Job.
@@ -171,17 +155,15 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
-        brew_view.request_scheduler.remove_job(job_id, jobstore="beer_garden")
+        async with ThriftClient() as client:
+            await client.removeJob(namespace, job_id)
+
         self.set_status(204)
 
 
 class JobListAPI(BaseHandler):
-
-    parser = MongoParser()
-    logger = logging.getLogger(__name__)
-
     @authenticated(permissions=[Permissions.JOB_READ])
-    def get(self, namespace):
+    async def get(self, namespace):
         """
         ---
         summary: Retrieve all Jobs.
@@ -203,21 +185,19 @@ class JobListAPI(BaseHandler):
         tags:
           - Jobs
         """
-        filter_params = {"namespace": namespace}
+        filter_params = {}
         for key in self.request.arguments.keys():
             if key in JobSchema.get_attribute_names():
                 filter_params[key] = self.get_query_argument(key)
 
-        self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(
-            self.parser.serialize_job(
-                Job.objects.filter(**filter_params), to_string=True, many=True
-            )
-        )
+        async with ThriftClient() as client:
+            thrift_response = await client.getJobs(namespace, filter_params)
 
-    @coroutine
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(thrift_response)
+
     @authenticated(permissions=[Permissions.JOB_CREATE])
-    def post(self, namespace):
+    async def post(self, namespace):
         """
         ---
         summary: Schedules a Job to be run.
@@ -247,32 +227,9 @@ class JobListAPI(BaseHandler):
         tags:
           - Jobs
         """
-        document = self.parser.parse_job(self.request.decoded_body, from_string=True)
-        document.namespace = namespace
-        # We have to save here, because we need an ID to pass
-        # to the scheduler.
-        document.save()
-
-        try:
-            brew_view.request_scheduler.add_job(
-                run_job,
-                None,
-                kwargs={
-                    "request_template": document.request_template,
-                    "job_id": str(document.id),
-                },
-                name=document.name,
-                misfire_grace_time=document.misfire_grace_time,
-                coalesce=document.coalesce,
-                max_instances=3,
-                jobstore="beer_garden",
-                replace_existing=False,
-                id=str(document.id),
-            )
-        except Exception:
-            document.delete()
-            raise
+        async with ThriftClient() as client:
+            response = await client.createJob(namespace, self.request.decoded_body)
 
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(self.parser.serialize_job(document, to_string=False))
+        self.write(response)
