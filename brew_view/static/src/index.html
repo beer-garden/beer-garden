@@ -15,7 +15,7 @@
           rel="shortcut icon">
   </head>
 
-  <body ng-cloak ng-controller="ApplicationController">
+  <body ng-cloak>
     <!-- Navbar Start -->
     <nav class="navbar navbar-default navbar-static-top"
          role="navigation"
@@ -30,7 +30,7 @@
           <span class='icon-bar'></span>
           <span class='icon-bar'></span>
         </button>
-        <a class="navbar-brand" ui-sref="namespace.landing">
+        <a style="cursor:pointer" class="navbar-brand" ng-click="mainButton()">
           <i ng-class="getIcon(config.iconDefault)"></i>
           <span ng-cloak>{{config.applicationName}}</span>
         </a>
@@ -44,7 +44,7 @@
             <ul class="dropdown-menu">
               <li ng-repeat="namespace in namespaces">
                 <div style="padding: 3px 15px; cursor: pointer;"
-                     ui-sref="{namespace: namespace}">
+                     ng-click="changeNamespace(namespace)">
                   <span class="fa"
                         ng-class="{'fa-check': isCurrentNamespace(namespace), 'fa-fw': !isCurrentNamespace(namespace)}"></span>
                   <span>{{namespace}}</span>
@@ -86,7 +86,7 @@
         </li>
 
         <li>
-          <a ui-sref="namespace.about" ui-sref-active="active">About</a>
+          <a ui-sref="base.namespace.about" ui-sref-active="active">About</a>
         </li>
       </ul>
       <!-- Navbar Top End -->
@@ -106,7 +106,7 @@
               <ul class="nav nav-second-level">
                 <li ng-repeat="(name, arr) in systems | groupBy:'name'" ng-init="collapsed=false">
                   <a ng-if="arr.length == 1"
-                     ui-sref="namespace.system({name: arr[0].name, version: getVersionForUrl(arr[0])})"
+                     ui-sref="base.namespace.system({systemName: arr[0].name, systemVersion: arr[0].version})"
                      ui-sref-active="active">
                     <i class="fa fa-cog"></i>
                     <span>{{arr[0].display_name || arr[0].name}}</span>
@@ -122,7 +122,7 @@
                       ng-style="{'max-height': (!collapsed) ? (arr.length*40 + 'px') : '0px'}"
                       class="nav nav-third-level show-more">
                     <li ng-repeat="system in arr">
-                      <a ui-sref="namespace.system({name: system.name, version: getVersionForUrl(system)})"
+                      <a ui-sref="base.namespace.system({systemName: system.name, systemVersion: system})"
                          ui-sref-active="active">
                         <span>{{system.version}}</span>
                       </a>
@@ -133,21 +133,21 @@
 
             </li>
             <li ng-show="hasPermission(user, 'bg-command-read')">
-              <a ui-sref="namespace.commands"
+              <a ui-sref="base.namespace.commands"
                  ng-class="{active: ($state.current.name.startsWith('command'))}">
                 <i class="fa fa-fw fa-send-o"></i>
                 <span>Commands</span>
               </a>
             </li>
             <li ng-show="hasPermission(user, 'bg-request-read')">
-              <a ui-sref="namespace.requests"
+              <a ui-sref="base.namespace.requests"
                  ng-class="{active: ($state.current.name.startsWith('request'))}">
                 <i class="fa fa-fw fa-tasks"></i>
                 <span>Requests</span>
               </a>
             </li>
             <li ng-show="hasPermission(user, 'bg-job-read')">
-              <a ui-sref="namespace.jobs"
+              <a ui-sref="base.namespace.jobs"
                  ng-class="{active: ($state.current.name.startsWith('job'))}">
                 <i class="fa fa-fw fa-calendar"></i>
                 <span>Scheduler</span>
@@ -161,13 +161,13 @@
               </a>
               <ul class="nav nav-second-level" ng-cloak>
                 <li>
-                  <a ui-sref="namespace.system_admin" ui-sref-active="active">
+                  <a ui-sref="base.namespace.system_admin" ui-sref-active="active">
                     <i class="fa fa-power-off"></i>
                     <span>Systems Management</span>
                   </a>
                 </li>
                 <li ng-show="hasPermission(user, 'bg-queue-read')">
-                  <a ui-sref="namespace.queues" ui-sref-active="active">
+                  <a ui-sref="base.namespace.queues" ui-sref-active="active">
                     <i class="fa fa-database"></i>
                     <span>Queue Management</span>
                   </a>

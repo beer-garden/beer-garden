@@ -10,6 +10,7 @@ appRun.$inject = [
   '$http',
   '$q',
   '$uibModal',
+  '$transitions',
   'localStorageService',
   'UtilityService',
   'SystemService',
@@ -41,6 +42,7 @@ export default function appRun(
     $http,
     $q,
     $uibModal,
+    $transitions,
     localStorageService,
     UtilityService,
     SystemService,
@@ -58,8 +60,8 @@ export default function appRun(
   $rootScope.apiBaseUrl = '';
 
   $rootScope.config = {};
-  $rootScope.systems = [];
   $rootScope.namespaces = [];
+  $rootScope.currentNamespace = undefined;
 
   $rootScope.themes = {
     'default': false,
@@ -68,22 +70,7 @@ export default function appRun(
 
   $rootScope.responseState = responseState;
 
-  $rootScope.loadConfig = function() {
-    $rootScope.configPromise = UtilityService.getConfig().then(
-      (response) => {
-        angular.extend($rootScope.config, camelCaseKeys(response.data));
-
-        $rootScope.namespaces = _.concat(
-          $rootScope.config.namespaces.local,
-          $rootScope.config.namespaces.remote,
-        );
-      },
-      (response) => {
-        return $q.reject(response);
-      }
-    );
-    return $rootScope.configPromise;
-  };
+  $rootScope.getIcon = UtilityService.getIcon;
 
   $rootScope.loadUser = function(token) {
     $rootScope.userPromise = UserService.loadUser(token).then(
@@ -106,36 +93,14 @@ export default function appRun(
     return $rootScope.userPromise;
   };
 
-  $rootScope.loadSystems = function() {
-    $rootScope.systemsPromise = SystemService.getSystems(
-        {dereferenceNested: false, includeFields: 'id,name,version'}
-      ).then(
-      (response) => {
-        $rootScope.systems = response.data;
-      },
-      (response) => {
-        $rootScope.systems = [];
-
-        // This is super annoying.
-        // If any controller is actually using this promise we need to return a
-        // rejection here, otherwise the chained promise will actually resolve
-        // (success callback will be invoked instead of failure callback).
-        // But for controllers that don't care if this fails (like the landing
-        // controller) this causes a 'possibly unhandled rejection' since they
-        // haven't constructed a pipeline based on this promise.
-        return $q.reject(response);
-      }
-    );
-    return $rootScope.systemsPromise;
-  };
-
   $rootScope.changeUser = function(token) {
-    // We need to reload systems as those permisisons could have changed
-    $rootScope.loadSystems();
+    // // We need to reload systems as those permisisons could have changed
+    // SystemService.loadSystems();
 
     $rootScope.loadUser(token).then(
       () => {
-        $rootScope.$broadcast('userChange');
+        $state.reload();
+        // $rootScope.$broadcast('userChange');
       }
     );
   };
@@ -147,21 +112,17 @@ export default function appRun(
       TokenService.handleToken(token);
     }
 
-    $rootScope.loadConfig().then(
-      () => {
-        $rootScope.loadSystems();
-        $rootScope.loadUser(token).catch(
-          // This prevents the situation where the user needs to logout but the
-          // logout button isn't displayed because there's no user loaded
-          // (happens if the server secret changes)
-          (response) => {
-            $rootScope.doLogout();
-          }
-        );
+    $rootScope.loadUser(token).catch(
+      // This prevents the situation where the user needs to logout but the
+      // logout button isn't displayed because there's no user loaded
+      // (happens if the server secret changes)
+      (response) => {
+        $rootScope.doLogout();
       }
     );
 
-    EventService.connect();
+    // Can't connect here - events are namespace dependent
+    // EventService.connect();
   };
 
   $rootScope.hasPermission = function(user, permissions) {
@@ -187,11 +148,24 @@ export default function appRun(
   };
 
   $rootScope.getCurrentNamespace = function() {
-    return $stateParams.namespace;
+    return $rootScope.currentNamespace;
+  };
+
+  $rootScope.setCurrentNamespace = (namespace) => {
+    $rootScope.currentNamespace = namespace;
   };
 
   $rootScope.isCurrentNamespace = function(namespace) {
-    return $stateParams.namespace == namespace;
+    return $rootScope.currentNamespace == namespace;
+  };
+
+  $rootScope.changeNamespace = (namespace) => {
+    let cur_state = $state.current.name;
+
+    $state.go(
+      cur_state === "base.landing" ? "base.namespace.systems" : cur_state,
+      {namespace: namespace}
+    );
   };
 
   $rootScope.isUser = function(user) {
@@ -228,147 +202,25 @@ export default function appRun(
   };
 
   $rootScope.setWindowTitle = function(...titleParts) {
-    $rootScope.configPromise.then(
-      () => {
-        titleParts.push($rootScope.config.applicationName);
-        $rootScope.title = _.join(titleParts, ' - ');
-      }
-    );
+    titleParts.push($rootScope.config.applicationName);
+    $rootScope.title = _.join(titleParts, ' - ');
   };
 
-  /**
-   * Compare two system versions. Intended to be used for sorting.
-   *
-   * Newer systems will be sorted to the front. For example, this would be the
-   * result of sorting with this function:
-   *
-   * [ "1.1.0.dev0", "1.0.0", "1.0.0.dev1", "1.0.0.dev0", "1.0.0.dev" ]
-   *
-   * Note that versions with less parts are considered newer.
-   *
-   * @param {string} version1 - first version
-   * @param {string} version2 - second version
-   * @return {int} - result of comparison
-   */
-  const compareVersions = function(version1, version2) {
-    let parts1 = version1.split('.');
-    let parts2 = version2.split('.');
-
-    let numParts = Math.min(parts1.length, parts2.length);
-
-    for (let i = 0; i < numParts; i++) {
-      let intPart1 = parseInt(parts1[i]);
-      let intPart2 = parseInt(parts2[i]);
-
-      if (!isNaN(intPart1) && !isNaN(intPart2)) {
-        if (intPart1 > intPart2) {
-          return -1;
-        } else if (intPart1 < intPart2) {
-          return 1;
-        }
-      } else {
-        if (parts1[i] > parts2[i]) {
-          return -1;
-        } else if (parts1[i] < parts2[i]) {
-          return 1;
-        }
-      }
-    }
-
-    if (parts1.length < parts2.length) {
-      return -1;
-    } else if (parts1.length > parts2.length) {
-      return 1;
-    }
-
-    return 0;
-  };
-
-  /**
-   * Converts a system's version to the 'latest' semantic url scheme.
-   * @param {Object} system - system for which you want the version URL.
-   * @return {string} - either the system's version or 'latest'.
-   */
-  $rootScope.getVersionForUrl = function(system) {
-    // All versions for systems with the given system name
-    let versions = _.map(
-      _.filter($rootScope.systems, {name: system.name}),
-      _.property('version')
-    );
-
-    // Sorted according to the system comparison function
-    let sorted = versions.sort(compareVersions);
-
-    return system.version == sorted[0] ? 'latest' : system.version;
-  };
-
-  /**
-   * Convert a system ObjectID to a route to use for the router.
-   * @param {string} systemId  - ObjectID for system.
-   * @return {string} url to use for UI routing.
-   */
-  $rootScope.getSystemUrl = function(systemId) {
-    for (let system of $rootScope.systems) {
-      if (system.id == systemId) {
-        let version = this.getVersionForUrl(system);
-        return '/systems/' + system.name + '/' + version;
-      }
-    }
-    return '/systems';
-  };
-
-  /**
-   * Find the system with the specified name/version (version can just
-   * be the string 'latest')
-   *
-   * @param {string} name - The name of the system you wish to find.
-   * @param {string} version - The version you want to find (or latest)
-   * @return {Object} The latest system or undefined if it is not found.
-   */
-  $rootScope.findSystem = function(name, version) {
-    let notFound = {
-      data: {message: 'No matching system'},
-      errorGroup: 'system',
-      status: 404,
-    };
-
-    return $rootScope.systemsPromise.then(
-      () => {
-        if (version !== 'latest') {
-          let sys = _.find($rootScope.systems, {name: name, version: version});
-
-          if (_.isUndefined(sys)) {
-            return $q.reject(notFound);
-          } else {
-            return $q.resolve(sys);
-          }
-        }
-
-        let filteredSystems = _.filter($rootScope.systems, {name: name});
-        if (_.isEmpty(filteredSystems)) {
-          return $q.reject(notFound);
-        }
-
-        let versions = _.map(filteredSystems, _.property('version'));
-        let sorted = versions.sort(compareVersions);
-
-        return $q.resolve(_.find(filteredSystems, {version: sorted[0]}));
-      }
-    );
-  };
-
-  /**
-   * Find the system with the given ID.
-   * @param {string} systemId - System's ObjectID
-   * @return {Object} the system with this ID.
-   */
-  $rootScope.findSystemByID = function(systemId) {
-    for (let system of $rootScope.systems) {
-      if (system.id === systemId) {
-        return system;
-      }
+  $rootScope.mainButton = () => {
+    if ($stateParams.namespace) {
+      $state.go('base.namespace.systems');
+    } else {
+      $state.go('base.landing');
     }
   };
+
+  $transitions.onStart({name: 'base.namespace'}, function(transition, state) {
+    $rootScope.setCurrentNamespace(transition.params('to').namespace);
+  });
+
+  $transitions.onSuccess({to: 'base'}, () => {
+    $state.go('base.landing');
+  });
 
   $rootScope.initialLoad();
 };

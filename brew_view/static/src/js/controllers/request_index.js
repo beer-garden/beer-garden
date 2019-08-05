@@ -132,13 +132,13 @@ export default function requestIndexController(
               'popover-title="parent request"' +
               'popover-animation="true"' +
               'popover-placement="left">' +
-                `<a ui-sref="namespace.request({request_id: '${full.parent.id}'})" ` +
+                `<a ui-sref="base.namespace.request({requestId: '${full.parent.id}'})" ` +
                   'class="fa fa-level-up fa-fw">' +
                 '</a>' +
             '</span>';
         }
 
-        return display + `<a ui-sref="namespace.request({request_id: '${full.id}'})">` + data + '</a>';
+        return display + `<a ui-sref="base.namespace.request({requestId: '${full.id}'})">` + data + '</a>';
       }),
     DTColumnBuilder
       .newColumn('system')

@@ -6,6 +6,7 @@ adminSystemController.$inject = [
   '$rootScope',
   '$interval',
   '$http',
+  '$state',
   'localStorageService',
   'SystemService',
   'InstanceService',
@@ -32,6 +33,7 @@ export default function adminSystemController(
     $rootScope,
     $interval,
     $http,
+    $state,
     localStorageService,
     SystemService,
     InstanceService,
@@ -153,18 +155,18 @@ export default function adminSystemController(
     }
   }
 
-  let loadSystems = function() {
-    SystemService.getSystems(
-      {includeFields: 'id,name,display_name,version,instances'}
-    ).then(
-      $scope.successCallback,
-      $scope.failureCallback
-    );
-  };
+  // let loadSystems = function() {
+  //   SystemService.getSystems(
+  //     {includeFields: 'id,name,display_name,version,instances'}
+  //   ).then(
+  //     $scope.successCallback,
+  //     $scope.failureCallback
+  //   );
+  // };
 
   // Periodically poll for changes (in case of websocket failure)
   let systemsUpdate = $interval(function() {
-    loadSystems();
+    // $state.go('base.namespace.system_admin', {}, {reload: 'base.namespace.system_admin'});
   }, 5000);
 
   // Need to clean up the interval and callback when done
@@ -177,13 +179,13 @@ export default function adminSystemController(
     EventService.clearCallback();
   });
 
-  let loadAll = function() {
-    $scope.response = undefined;
-    $scope.data = [];
-    $scope.alerts = [];
+  // let loadAll = function() {
+  //   $scope.response = undefined;
+  //   $scope.data = [];
+  //   $scope.alerts = [];
 
-    loadSystems();
-  };
+  //   loadSystems();
+  // };
 
   EventService.setCallback((message) => {
     let event = JSON.parse(message.data);
@@ -201,9 +203,15 @@ export default function adminSystemController(
     }
   });
 
-  $scope.$on('userChange', function() {
-    loadAll();
-  });
+  if ($rootScope.sysResponse.status == 200) {
+    $scope.successCallback($rootScope.sysResponse);
+  } else {
+    $scope.failureCallback($rootScope.sysResponse);
+  }
 
-  loadAll();
+  // $scope.$on('userChange', function() {
+  //   loadAll();
+  // });
+
+  // loadAll();
 };

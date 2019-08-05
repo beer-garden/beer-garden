@@ -6,6 +6,8 @@ commandIndexController.$inject = [
   'SystemService',
   'CommandService',
   'DTOptionsBuilder',
+  'detailSystems',
+  'commands',
 ];
 
 /**
@@ -23,7 +25,9 @@ export default function commandIndexController(
   $q,
   SystemService,
   CommandService,
-  DTOptionsBuilder) {
+  DTOptionsBuilder,
+  detailSystems,
+  commands) {
   $scope.setWindowTitle('commands');
 
   $scope.dtOptions = DTOptionsBuilder.newOptions()
@@ -41,7 +45,9 @@ export default function commandIndexController(
   };
 
   $scope.successCallback = function(response) {
-    let systems = response['systems'].data;
+  // $scope.successCallback = function(systems) {
+    // let systems = response['systems'].data;
+    let systems = response.data;
     let commands = [];
 
     // Sort the systems
@@ -74,7 +80,8 @@ export default function commandIndexController(
       });
     });
 
-    $scope.response = response['systems'];
+    // $scope.response = response['systems'];
+    $scope.response = response;
     $scope.data = commands;
   };
 
@@ -83,29 +90,31 @@ export default function commandIndexController(
     $scope.data = {};
   };
 
-  const loadCommands = function() {
-    $scope.response = undefined;
-    $scope.data = {};
+  $scope.successCallback(detailSystems);
 
-    $rootScope.systemsPromise.then(
-      () => {
-        // We don't actually use the CommandService.getCommands(), but make the
-        // call just to verify that the user has bg-command-read
-        $q.all({
-          commands: CommandService.getCommands(),
-          systems: SystemService.getSystems(),
-        }).then(
-          $scope.successCallback,
-          $scope.failureCallback
-        );
-      },
-      $scope.failureCallback
-    );
-  };
+  // const loadCommands = function() {
+  //   $scope.response = undefined;
+  //   $scope.data = {};
 
-  $scope.$on('userChange', function() {
-    loadCommands();
-  });
+  //   $rootScope.systemsPromise.then(
+  //     () => {
+  //       // We don't actually use the CommandService.getCommands(), but make the
+  //       // call just to verify that the user has bg-command-read
+  //       $q.all({
+  //         commands: CommandService.getCommands(),
+  //         systems: SystemService.getSystems(),
+  //       }).then(
+  //         $scope.successCallback,
+  //         $scope.failureCallback
+  //       );
+  //     },
+  //     $scope.failureCallback
+  //   );
+  // };
 
-  loadCommands();
+  // $scope.$on('userChange', function() {
+  //   loadCommands();
+  // });
+
+  // loadCommands();
 };

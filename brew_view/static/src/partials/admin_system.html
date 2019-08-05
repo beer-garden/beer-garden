@@ -33,7 +33,7 @@
         <div class="list-group">
           <div class="list-group-item clearfix" style="font-size: 18px;">
             <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
-              <a ui-sref="namespace.system({name: system.name, version: getVersionForUrl(system)})">
+              <a ui-sref="base.namespace.system({systemName: system.name, systemVersion: system.version})">
                 <span class="icon-color"
                       ng-class="util.getIcon(system.icon_name)"></span>
                 <span style="font-size: 18px;">{{system.version}}</span>

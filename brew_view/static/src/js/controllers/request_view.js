@@ -9,6 +9,7 @@ requestViewController.$inject = [
   '$animate',
   'RequestService',
   'SystemService',
+  'request',
 ];
 
 /**
@@ -28,7 +29,8 @@ export default function requestViewController(
     $timeout,
     $animate,
     RequestService,
-    SystemService) {
+    SystemService,
+    request) {
   $scope.service = RequestService;
 
   $scope.instanceStatus = undefined;
@@ -141,16 +143,14 @@ export default function requestViewController(
     // We need to find system attached to request
     // And find out if the status of that instance is up
     if (!RequestService.isComplete(response.data)) {
-      $scope.findSystem(response.data.system, response.data.system_version).then(
-        (bareSystem) => {
-          SystemService.getSystem(bareSystem.id, {includeCommands: false}).then(
-            (systemObj) => {
-              $scope.instanceStatus = _.find(
-                systemObj.data.instances,
-                {name: response.data.instance_name}
-              ).status;
-            }
-          );
+      let bareSystem = SystemService.findSystem(response.data.system, response.data.system_version);
+
+      SystemService.getSystem(bareSystem.id, {includeCommands: false}).then(
+        (systemObj) => {
+          $scope.instanceStatus = _.find(
+            systemObj.data.instances,
+            {name: response.data.instance_name}
+          ).status;
         }
       );
     }
@@ -164,7 +164,7 @@ export default function requestViewController(
     if ((!RequestService.isComplete(response.data)) ||
         (!_.every(response.data.children, RequestService.isComplete))) {
       $scope.timeoutRequest = $timeout(function() {
-        RequestService.getRequest($stateParams.request_id)
+        RequestService.getRequest($stateParams.requestId)
           .then($scope.successCallback, $scope.failureCallback);
       }, 3000);
     } else {
@@ -196,11 +196,11 @@ export default function requestViewController(
       parameters: request.parameters,
     };
     $state.go(
-      'namespace.command',
+      'base.namespace.command',
       {
-        name: request.command,
         systemName: request.system,
         systemVersion: request.system_version,
+        commandName: request.command,
         request: newRequest,
       }
     );
@@ -279,19 +279,25 @@ export default function requestViewController(
     return total;
   };
 
-  function loadRequest() {
-    $scope.response = undefined;
-    $scope.data = {};
-
-    RequestService.getRequest($stateParams.request_id)
-      .then($scope.successCallback, $scope.failureCallback);
+  if (request.status == 200) {
+    $scope.successCallback(request);
+  } else {
+    $scope.failureCallback(request);
   }
 
-  $scope.$on('userChange', function() {
-    loadRequest();
-  });
+  // function loadRequest() {
+  //   $scope.response = undefined;
+  //   $scope.data = {};
 
-  loadRequest();
+  //   RequestService.getRequest($stateParams.request_id)
+  //     .then($scope.successCallback, $scope.failureCallback);
+  // }
+
+  // $scope.$on('userChange', function() {
+  //   loadRequest();
+  // });
+
+  // loadRequest();
 };
 
 
