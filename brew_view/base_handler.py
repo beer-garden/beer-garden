@@ -10,9 +10,9 @@ from mongoengine.errors import (
 from thriftpy2.thrift import TException
 from tornado.web import HTTPError, RequestHandler
 
-import bg_utils
 import bg_utils.mongo.models
 import brew_view
+import brewtils.thrift
 from brew_view.authorization import AuthMixin, coalesce_permissions
 from brew_view.metrics import http_api_latency_total
 from brewtils.errors import (
@@ -38,7 +38,7 @@ class BaseHandler(AuthMixin, RequestHandler):
     error_map = {
         MongoValidationError: {"status_code": 400},
         ModelError: {"status_code": 400},
-        bg_utils.bg_thrift.InvalidSystem: {"status_code": 400},
+        brewtils.thrift.bg_thrift.InvalidSystem: {"status_code": 400},
         ExpiredSignatureError: {"status_code": 401},
         AuthorizationRequired: {"status_code": 401},
         RequestForbidden: {"status_code": 403},
@@ -48,7 +48,7 @@ class BaseHandler(AuthMixin, RequestHandler):
         ConflictError: {"status_code": 409},
         NotUniqueError: {"status_code": 409, "message": "Resource already exists"},
         RequestPublishException: {"status_code": 502},
-        bg_utils.bg_thrift.BaseException: {"status_code": 502},
+        brewtils.thrift.bg_thrift.BaseException: {"status_code": 502},
         TException: {"status_code": 503, "message": "Could not connect to Bartender"},
         socket.timeout: {"status_code": 504, "message": "Backend request timed out"},
     }
