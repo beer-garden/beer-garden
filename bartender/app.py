@@ -12,8 +12,8 @@ from pytz import utc
 from requests.exceptions import RequestException
 
 import bartender
-import bg_utils
 import brewtils.models
+import brewtils.thrift
 from bartender.local_plugins.loader import LocalPluginLoader
 from bartender.local_plugins.manager import LocalPluginsManager
 from bartender.local_plugins.monitor import LocalPluginMonitor
@@ -91,7 +91,7 @@ class BartenderApp(StoppableThread):
         self.helper_threads = [
             HelperThread(
                 make_server,
-                service=bg_utils.bg_thrift.BartenderBackend,
+                service=brewtils.thrift.bg_thrift.BartenderBackend,
                 handler=self.handler,
                 host=bartender.config.thrift.host,
                 port=bartender.config.thrift.port,

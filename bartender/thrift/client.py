@@ -1,6 +1,6 @@
 from thriftpy2.rpc import make_client
 
-import bg_utils
+import brewtils.thrift
 
 
 class ThriftClient:
@@ -10,7 +10,7 @@ class ThriftClient:
 
     def __enter__(self):
         self._client = make_client(
-            bg_utils.bg_thrift.BartenderBackend,
+            brewtils.thrift.bg_thrift.BartenderBackend,
             host=self._host,
             port=self._port,
             timeout=13000,
