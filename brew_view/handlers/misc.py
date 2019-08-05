@@ -8,8 +8,13 @@ logger = logging.getLogger(__name__)
 
 
 class ConfigHandler(BaseHandler):
-    def get(self):
+    async def get(self):
         """Subset of configuration options that the frontend needs"""
+
+        async with ThriftClient() as client:
+            local_namespace = await client.getLocalNamespace()
+            remote_namespaces = await client.getRemoteNamespaces()
+
         configs = {
             "allow_unsafe_templates": brew_view.config.application.allow_unsafe_templates,
             "application_name": brew_view.config.application.name,
@@ -19,8 +24,9 @@ class ConfigHandler(BaseHandler):
             "metrics_url": brew_view.config.metrics.prometheus.url,
             "auth_enabled": brew_view.config.auth.enabled,
             "guest_login_enabled": brew_view.config.auth.guest_login_enabled,
-            "namespaces": brew_view.config.namespaces,
+            "namespaces": {"local": local_namespace, "remote": remote_namespaces},
         }
+
         self.write(configs)
 
 

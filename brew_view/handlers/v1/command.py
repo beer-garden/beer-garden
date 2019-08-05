@@ -10,6 +10,11 @@ class CommandAPI(BaseHandler):
         ---
         summary: Retrieve a specific Command
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: command_id
             in: path
             required: true
@@ -28,7 +33,9 @@ class CommandAPI(BaseHandler):
           - Commands
         """
         async with ThriftClient() as client:
-            thrift_response = await client.getCommand(command_id)
+            thrift_response = await client.getCommand(
+                self.request.namespace, command_id
+            )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)
@@ -40,6 +47,12 @@ class CommandListAPI(BaseHandler):
         """
         ---
         summary: Retrieve all Commands
+        parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
         responses:
           200:
             description: All Commands
@@ -53,7 +66,7 @@ class CommandListAPI(BaseHandler):
           - Commands
         """
         async with ThriftClient() as client:
-            thrift_response = await client.getCommands()
+            thrift_response = await client.getCommands(self.request.namespace)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)

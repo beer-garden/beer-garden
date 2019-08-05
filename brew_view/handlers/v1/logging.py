@@ -10,6 +10,11 @@ class LoggingConfigAPI(BaseHandler):
         ---
         summary: Get the plugin logging configuration
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: system_name
             in: query
             required: false
@@ -28,7 +33,9 @@ class LoggingConfigAPI(BaseHandler):
         system_name = self.get_query_argument("system_name", default="")
 
         async with ThriftClient() as client:
-            thrift_response = await client.getPluginLogConfig(system_name)
+            thrift_response = await client.getPluginLogConfig(
+                self.request.namespace, system_name
+            )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)
@@ -48,6 +55,11 @@ class LoggingConfigAPI(BaseHandler):
           }
           ```
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: patch
             in: body
             required: true
@@ -65,7 +77,10 @@ class LoggingConfigAPI(BaseHandler):
           - Config
         """
         operations = SchemaParser.parse_patch(
-            self.request.decoded_body, many=True, from_string=True
+            self.request.namespace,
+            self.request.decoded_body,
+            many=True,
+            from_string=True,
         )
 
         for op in operations:

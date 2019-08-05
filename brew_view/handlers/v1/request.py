@@ -16,6 +16,11 @@ class RequestAPI(BaseHandler):
         ---
         summary: Retrieve a specific Request
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: request_id
             in: path
             required: true
@@ -34,7 +39,9 @@ class RequestAPI(BaseHandler):
           - Requests
         """
         async with ThriftClient() as client:
-            thrift_response = await client.getRequest(request_id)
+            thrift_response = await client.getRequest(
+                self.request.namespace, request_id
+            )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)
@@ -56,6 +63,11 @@ class RequestAPI(BaseHandler):
           }
           ```
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: request_id
             in: path
             required: true
@@ -84,7 +96,7 @@ class RequestAPI(BaseHandler):
         async with ThriftClient() as client:
             try:
                 thrift_response = await client.updateRequest(
-                    request_id, self.request.decoded_body
+                    self.request.namespace, request_id, self.request.decoded_body
                 )
             except bg_utils.bg_thrift.InvalidRequest as ex:
                 raise ModelValidationError(ex.message)
@@ -163,6 +175,11 @@ class RequestListAPI(BaseHandler):
           { "value": "SEARCH VALUE", "regex": false }
           ```
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: include_children
             in: query
             required: false
@@ -266,7 +283,9 @@ class RequestListAPI(BaseHandler):
         serialized_args = json.dumps(thrift_args)
 
         async with ThriftClient() as client:
-            raw_response = await client.getRequests(serialized_args)
+            raw_response = await client.getRequests(
+                self.request.namespace, serialized_args
+            )
 
         parsed_response = json.loads(raw_response)
 
@@ -295,6 +314,11 @@ class RequestListAPI(BaseHandler):
         ---
         summary: Create a new Request
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: request
             in: body
             description: The Request definition
@@ -355,7 +379,9 @@ class RequestListAPI(BaseHandler):
         async with ThriftClient() as client:
             try:
                 thrift_response = await client.processRequest(
-                    self.parser.serialize_request(request_model), float(wait_timeout)
+                    self.request.namespace,
+                    self.parser.serialize_request(request_model),
+                    float(wait_timeout),
                 )
             except bg_utils.bg_thrift.InvalidRequest as ex:
                 raise ModelValidationError(ex.message)

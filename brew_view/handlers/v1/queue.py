@@ -10,6 +10,11 @@ class QueueAPI(BaseHandler):
         ---
         summary: Clear a queue by canceling all requests
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: queue_name
             in: path
             required: true
@@ -26,7 +31,7 @@ class QueueAPI(BaseHandler):
           - Queues
         """
         async with ThriftClient() as client:
-            await client.clearQueue(queue_name)
+            await client.clearQueue(self.request.namespace, queue_name)
 
         self.set_status(204)
 
@@ -37,6 +42,12 @@ class QueueListAPI(BaseHandler):
         """
         ---
         summary: Retrieve all queue information
+        parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
         responses:
           200:
             description: List of all queue information objects
@@ -50,7 +61,7 @@ class QueueListAPI(BaseHandler):
           - Queues
         """
         async with ThriftClient() as client:
-            queues = await client.getAllQueueInfo()
+            queues = await client.getAllQueueInfo(self.request.namespace)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(queues)
@@ -60,6 +71,12 @@ class QueueListAPI(BaseHandler):
         """
         ---
         summary: Cancel and clear all requests in all queues
+        parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
         responses:
           204:
             description: All queues successfully cleared
@@ -69,6 +86,6 @@ class QueueListAPI(BaseHandler):
           - Queues
         """
         async with ThriftClient() as client:
-            await client.clearAllQueues()
+            await client.clearAllQueues(self.request.namespace)
 
         self.set_status(204)

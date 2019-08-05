@@ -13,6 +13,11 @@ class SystemAPI(BaseHandler):
         ---
         summary: Retrieve a specific System
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: system_id
             in: path
             required: true
@@ -41,7 +46,9 @@ class SystemAPI(BaseHandler):
         )
 
         async with ThriftClient() as client:
-            thrift_response = await client.getSystem(system_id, include_commands)
+            thrift_response = await client.getSystem(
+                self.request.namespace, system_id, include_commands
+            )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)
@@ -57,6 +64,11 @@ class SystemAPI(BaseHandler):
         description: Will remove instances of local plugins from the registry, clear
             and remove message queues, and remove the system from the database.
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: system_id
             in: path
             required: true
@@ -73,7 +85,7 @@ class SystemAPI(BaseHandler):
           - Systems
         """
         async with ThriftClient() as client:
-            await client.removeSystem(system_id)
+            await client.removeSystem(self.request.namespace, system_id)
 
         self.set_status(204)
 
@@ -100,6 +112,11 @@ class SystemAPI(BaseHandler):
           ```
           Where `value` is a list of new Commands.
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: system_id
             in: path
             required: true
@@ -127,7 +144,7 @@ class SystemAPI(BaseHandler):
         """
         async with ThriftClient() as client:
             thrift_response = await client.updateSystem(
-                system_id, self.request.decoded_body
+                self.request.namespace, system_id, self.request.decoded_body
             )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -166,6 +183,11 @@ class SystemListAPI(BaseHandler):
             This will not do what you expect: only return the system named
             'bar' will be returned.
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: include_fields
             in: query
             required: false
@@ -228,6 +250,7 @@ class SystemListAPI(BaseHandler):
 
         async with ThriftClient() as client:
             thrift_response = await client.querySystems(
+                self.request.namespace,
                 filter_params,
                 order_by,
                 include_fields,
@@ -247,6 +270,11 @@ class SystemListAPI(BaseHandler):
             If the System does not exist it will be created. If the System
             already exists it will be updated (assuming it passes validation).
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: system
             in: body
             description: The System definition to create / update
@@ -270,7 +298,9 @@ class SystemListAPI(BaseHandler):
         """
         async with ThriftClient() as client:
             try:
-                thrift_response = await client.createSystem(self.request.decoded_body)
+                thrift_response = await client.createSystem(
+                    self.request.namespace, self.request.decoded_body
+                )
             except bg_utils.bg_thrift.ConflictException:
                 raise ConflictError() from None
 

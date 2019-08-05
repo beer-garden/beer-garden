@@ -14,6 +14,11 @@ class JobAPI(BaseHandler):
         ---
         summary: Retrieve a specific Job
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: job_id
             in: path
             required: true
@@ -32,7 +37,7 @@ class JobAPI(BaseHandler):
           - Jobs
         """
         async with ThriftClient() as client:
-            thrift_response = await client.getJob(job_id)
+            thrift_response = await client.getJob(self.request.namespace, job_id)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)
@@ -66,6 +71,11 @@ class JobAPI(BaseHandler):
           }
           ```
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: job_id
             in: path
             required: true
@@ -100,10 +110,14 @@ class JobAPI(BaseHandler):
                 if op.path == "/status":
                     if str(op.value).upper() == "PAUSED":
                         async with ThriftClient() as client:
-                            response = await client.pauseJob(job_id)
+                            response = await client.pauseJob(
+                                self.request.namespace, job_id
+                            )
                     elif str(op.value).upper() == "RUNNING":
                         async with ThriftClient() as client:
-                            response = await client.resumeJob(job_id)
+                            response = await client.resumeJob(
+                                self.request.namespace, job_id
+                            )
                     else:
                         raise ModelValidationError(
                             f"Unsupported status value '{op.value}'"
@@ -123,6 +137,11 @@ class JobAPI(BaseHandler):
         summary: Delete a specific Job.
         description: Will remove a specific job. No further executions will occur.
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: job_id
             in: path
             required: true
@@ -139,7 +158,7 @@ class JobAPI(BaseHandler):
           - Jobs
         """
         async with ThriftClient() as client:
-            await client.removeJob(job_id)
+            await client.removeJob(self.request.namespace, job_id)
 
         self.set_status(204)
 
@@ -150,6 +169,12 @@ class JobListAPI(BaseHandler):
         """
         ---
         summary: Retrieve all Jobs.
+        parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
         responses:
           200:
             description: Successfully retrieved all systems.
@@ -168,7 +193,9 @@ class JobListAPI(BaseHandler):
                 filter_params[key] = self.get_query_argument(key)
 
         async with ThriftClient() as client:
-            thrift_response = await client.getJobs(filter_params)
+            thrift_response = await client.getJobs(
+                self.request.namespace, filter_params
+            )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(thrift_response)
@@ -182,6 +209,11 @@ class JobListAPI(BaseHandler):
           Given a job, it will be scheduled to run on the interval
           set in the trigger argument.
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: job
             in: body
             description: The Job to create/schedule
@@ -200,7 +232,9 @@ class JobListAPI(BaseHandler):
           - Jobs
         """
         async with ThriftClient() as client:
-            response = await client.createJob(self.request.decoded_body)
+            response = await client.createJob(
+                self.request.namespace, self.request.decoded_body
+            )
 
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")

@@ -26,6 +26,11 @@ class AdminAPI(BaseHandler):
             plugins who's directory has been removed.
           * Will add and start any new plugin directories.
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: patch
             in: body
             required: true
@@ -48,7 +53,7 @@ class AdminAPI(BaseHandler):
             if op.operation == "rescan":
                 check_permission(self.current_user, [Permissions.SYSTEM_CREATE])
                 async with ThriftClient() as client:
-                    await client.rescanSystemDirectory()
+                    await client.rescanSystemDirectory(self.request.namespace)
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
