@@ -29,8 +29,8 @@ setup(
     keywords="bartender beer beer-garden beergarden",
     install_requires=[
         "apscheduler==3.6.0",
-        "bg-utils>=3",
-        "brewtils>=3",
+        "bg-utils>=3.0.0a1",
+        "brewtils>=3.0.0a1",
         "prometheus-client==0.7.1",
         "pyrabbit2==1.0.7",
     ],
