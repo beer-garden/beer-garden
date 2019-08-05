@@ -1,4 +1,3 @@
-"""Bartender side of the thrift interface."""
 import json
 import logging
 
@@ -6,7 +5,7 @@ import mongoengine
 import wrapt
 
 import bartender
-import bg_utils
+import brewtils.thrift
 from bartender.commands import get_commands, get_command
 from bartender.instances import (
     initialize_instance,
@@ -141,9 +140,9 @@ class BartenderHandler(object):
                 )
             )
         except RequestPublishException as ex:
-            raise bg_utils.bg_thrift.PublishException(str(ex))
+            raise brewtils.thrift.bg_thrift.PublishException(str(ex))
         except (mongoengine.ValidationError, ModelValidationError, RestError) as ex:
-            raise bg_utils.bg_thrift.InvalidRequest("", str(ex))
+            raise brewtils.thrift.bg_thrift.InvalidRequest("", str(ex))
 
     @staticmethod
     @namespace_router
@@ -168,7 +167,7 @@ class BartenderHandler(object):
         try:
             instance = initialize_instance(instance_id)
         except mongoengine.DoesNotExist:
-            raise bg_utils.bg_thrift.InvalidSystem(
+            raise brewtils.thrift.bg_thrift.InvalidSystem(
                 "", f"Database error initializing instance {instance_id}"
             ) from None
 
@@ -192,7 +191,7 @@ class BartenderHandler(object):
         try:
             instance = start_instance(instance_id)
         except mongoengine.DoesNotExist:
-            raise bg_utils.bg_thrift.InvalidSystem(
+            raise brewtils.thrift.bg_thrift.InvalidSystem(
                 "", f"Couldn't find instance {instance_id}"
             ) from None
 
@@ -209,7 +208,7 @@ class BartenderHandler(object):
         try:
             instance = stop_instance(instance_id)
         except mongoengine.DoesNotExist:
-            raise bg_utils.bg_thrift.InvalidSystem(
+            raise brewtils.thrift.bg_thrift.InvalidSystem(
                 "", f"Couldn't find instance {instance_id}"
             ) from None
 
@@ -230,7 +229,7 @@ class BartenderHandler(object):
         try:
             instance = update_instance_status(instance_id, new_status)
         except mongoengine.DoesNotExist:
-            raise bg_utils.bg_thrift.InvalidSystem(
+            raise brewtils.thrift.bg_thrift.InvalidSystem(
                 instance_id, f"Couldn't find instance {instance_id}"
             ) from None
 
@@ -247,7 +246,7 @@ class BartenderHandler(object):
         try:
             remove_instance(instance_id)
         except mongoengine.DoesNotExist:
-            raise bg_utils.bg_thrift.InvalidSystem(
+            raise brewtils.thrift.bg_thrift.InvalidSystem(
                 instance_id, f"Couldn't find instance {instance_id}"
             ) from None
 
@@ -293,7 +292,7 @@ class BartenderHandler(object):
                 create_system(parser.parse_system(system, from_string=True))
             )
         except mongoengine.errors.NotUniqueError:
-            raise bg_utils.bg_thrift.ConflictException(
+            raise brewtils.thrift.bg_thrift.ConflictException(
                 "System already exists"
             ) from None
 
@@ -317,7 +316,7 @@ class BartenderHandler(object):
         try:
             reload_system(system_id)
         except mongoengine.DoesNotExist:
-            raise bg_utils.bg_thrift.InvalidSystem(
+            raise brewtils.thrift.bg_thrift.InvalidSystem(
                 "", f"Couldn't find system {system_id}"
             ) from None
 
@@ -332,7 +331,7 @@ class BartenderHandler(object):
         try:
             remove_system(system_id)
         except mongoengine.DoesNotExist:
-            raise bg_utils.bg_thrift.InvalidSystem(
+            raise brewtils.thrift.bg_thrift.InvalidSystem(
                 system_id, f"Couldn't find system {system_id}"
             ) from None
 
@@ -371,7 +370,7 @@ class BartenderHandler(object):
         try:
             clear_queue(queue_name)
         except NotFoundError as ex:
-            raise bg_utils.bg_thrift.InvalidSystem(queue_name, str(ex))
+            raise brewtils.thrift.bg_thrift.InvalidSystem(queue_name, str(ex))
 
     @staticmethod
     @namespace_router
