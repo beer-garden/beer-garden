@@ -72,13 +72,6 @@ plugin:
     timeout:
       shutdown: 10
       startup: 2
-    web:
-      ca_cert: null
-      ca_verify: true
-      host: localhost
-      port: 2337
-      ssl_enabled: false
-      url_prefix: null
   status_heartbeat: 5
   status_timeout: 30
 publish_hostname: localhost
