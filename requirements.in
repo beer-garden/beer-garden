@@ -4,7 +4,6 @@
 mongoengine < 0.16
 passlib < 1.8
 ruamel.yaml < 0.16
-thriftpy2 < 0.5
 yapconf >= 0.3.3
 futures ; python_version < "3.0"
 ruamel.ordereddict ; python_version < "3.0"

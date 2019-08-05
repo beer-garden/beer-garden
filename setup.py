@@ -22,14 +22,13 @@ setup(
     author_email=" ",
     license="MIT",
     packages=find_packages(exclude=["test", "test.*"]),
-    package_data={"": ["README.md"], "bg_utils": ["thrift/*.thrift"]},
+    package_data={"": ["README.md"]},
     install_requires=[
-        "brewtils>=2.3.0",
+        "brewtils[thrift]>=3.0.0a1",
         "mongoengine<0.16",
         "passlib<1.8",
         "pytz<2019",
         "ruamel.yaml<0.16",
-        "thriftpy2<0.5",
         "yapconf>=0.3.3",
     ],
 )
