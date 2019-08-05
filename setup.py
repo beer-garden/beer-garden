@@ -30,8 +30,8 @@ setup(
     include_package_data=True,
     install_requires=[
         "apispec==0.38.0",
-        "bg-utils>=2.4.4",
-        "brewtils>=2.4.0",
+        "bg-utils>=3",
+        "brewtils>=3",
         "prometheus_client==0.7.1",
         "tornado==6.0.3",
     ],
