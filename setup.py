@@ -22,7 +22,7 @@ setup(
     author_email=" ",
     license="MIT",
     packages=find_packages(exclude=["test", "test.*"]),
-    package_data={"": ["README.md"], "bg_utils": ["thrift/*.thrift"]},
+    package_data={"": ["README.md"]},
     install_requires=[
         "brewtils>=2.3.0",
         "mongoengine<0.16",

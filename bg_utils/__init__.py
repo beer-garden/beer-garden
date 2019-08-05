@@ -8,7 +8,6 @@ from datetime import datetime
 from io import open
 
 import six
-import thriftpy2
 import yapconf
 from ruamel.yaml import YAML
 
@@ -17,12 +16,6 @@ from ._version import __version__ as generated_version
 __version__ = generated_version
 
 logger = logging.getLogger(__name__)
-
-bg_thrift = thriftpy2.load(
-    os.path.join(os.path.dirname(__file__), "thrift", "beergarden.thrift"),
-    include_dirs=[os.path.join(os.path.dirname(__file__), "thrift")],
-    module_name="bg_thrift",
-)
 
 
 def parse_args(spec, item_names, cli_args):
