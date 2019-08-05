@@ -53,6 +53,12 @@ metrics:
     host: 0.0.0.0
     port: 2339
     url: http://localhost:3000
+namespaces:
+  local: default
+  remote:
+    - name: bar
+      host: localhost
+      port: 9091
 plugin:
   logging:
     config_file: dev_conf/example-plugin-logging-config.json
@@ -66,13 +72,6 @@ plugin:
     timeout:
       shutdown: 10
       startup: 2
-    web:
-      ca_cert: null
-      ca_verify: true
-      host: localhost
-      port: 2337
-      ssl_enabled: false
-      url_prefix: null
   status_heartbeat: 5
   status_timeout: 30
 publish_hostname: localhost

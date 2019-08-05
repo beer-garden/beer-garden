@@ -6,6 +6,7 @@ from os.path import isfile, join, abspath
 
 import bartender
 from bartender.local_plugins.plugin_runner import LocalPluginRunner
+from bartender.systems import create_system
 from bg_utils.mongo.models import Instance, System
 
 
@@ -102,19 +103,17 @@ class LocalPluginLoader(object):
         # If this system already exists we need to do some stuff
         plugin_id = None
         plugin_commands = []
-        # TODO: replace this with a call from the EasyClient
-        # plugin_system = self.easy_client.find_unique_system(
-        #     name=plugin_name, version=plugin_version)
+        # TODO: replace this with a call from bartender.systems
         plugin_system = System.find_unique(plugin_name, plugin_version)
 
         if plugin_system:
-            # Remove the current instances so they aren't left dangling
-            # TODO: This should be replaced with a network call
-            plugin_system.delete_instances()
-
             # Carry these over to the new system
             plugin_id = plugin_system.id
             plugin_commands = plugin_system.commands
+
+            # Remove the current instances so they aren't left dangling
+            # TODO: Find a way to carry over instances that aren't changing
+            plugin_system.delete_instances()
 
         plugin_system = System(
             id=plugin_id,
@@ -131,10 +130,7 @@ class LocalPluginLoader(object):
             metadata=config.get("METADATA"),
         )
 
-        # TODO: Right now, we have to save this system because the LocalPluginRunner
-        # uses the database to determine status, specifically, it calls reload on the
-        # instance object which we need to change to satisfy
-        plugin_system.deep_save()
+        create_system(plugin_system)
 
         plugin_list = []
         plugin_log_directory = bartender.config.plugin.local.log_directory
@@ -144,16 +140,14 @@ class LocalPluginLoader(object):
                 plugin_system,
                 instance_name,
                 abspath(plugin_path),
-                bartender.config.plugin.local.web.host,
-                bartender.config.plugin.local.web.port,
-                bartender.config.plugin.local.web.ssl_enabled,
+                "localhost",
+                bartender.config.thrift.port,
+                ssl_enabled=False,
                 plugin_args=plugin_args.get(instance_name),
                 environment=config["ENVIRONMENT"],
                 requirements=config["REQUIRES"],
                 plugin_log_directory=plugin_log_directory,
-                url_prefix=bartender.config.plugin.local.web.url_prefix,
-                ca_verify=bartender.config.plugin.local.web.ca_verify,
-                ca_cert=bartender.config.plugin.local.web.ca_cert,
+                connection_type="thrift",
                 username=bartender.config.plugin.local.auth.username,
                 password=bartender.config.plugin.local.auth.password,
                 log_level=config["LOG_LEVEL"],

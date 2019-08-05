@@ -29,6 +29,42 @@ SPECIFICATION = {
         "previous_names": ["amq_publish_host"],
         "alt_env_names": ["AMQ_PUBLISH_HOST"],
     },
+    "namespaces": {
+        "type": "dict",
+        "items": {
+            "local": {
+                "type": "str",
+                "description": "The local namespace",
+                "default": "default",
+            },
+            "remote": {
+                "type": "list",
+                "required": False,
+                "items": {
+                    "namespace": {
+                        "type": "dict",
+                        "items": {
+                            "name": {
+                                "type": "str",
+                                "description": "The remote namespace name",
+                                "required": True,
+                            },
+                            "host": {
+                                "type": "str",
+                                "description": "The remote namespace host name",
+                                "required": True,
+                            },
+                            "port": {
+                                "type": "int",
+                                "description": "The remote namespace port",
+                                "required": True,
+                            },
+                        },
+                    }
+                },
+            },
+        },
+    },
     "amq": {
         "type": "dict",
         "items": {
@@ -469,54 +505,6 @@ SPECIFICATION = {
                                 "description": "Seconds to wait for a plugin to start",
                                 "previous_names": ["plugin_startup_timeout"],
                                 "alt_env_names": ["PLUGIN_STARTUP_TIMEOUT"],
-                            },
-                        },
-                    },
-                    "web": {
-                        "type": "dict",
-                        "items": {
-                            "ca_cert": {
-                                "type": "str",
-                                "description": "Path to CA certificate file to use",
-                                "required": False,
-                                "previous_names": ["ca_cert"],
-                                "alt_env_names": ["CA_CERT"],
-                            },
-                            "ca_verify": {
-                                "type": "bool",
-                                "default": True,
-                                "description": "Verify external certificates",
-                                "required": False,
-                                "previous_names": ["ca_verify"],
-                                "alt_env_names": ["CA_VERIFY"],
-                            },
-                            "host": {
-                                "type": "str",
-                                "default": "localhost",
-                                "description": "Hostname of the API server",
-                                "previous_names": ["web_host"],
-                            },
-                            "port": {
-                                "type": "int",
-                                "default": 2337,
-                                "description": "Port of the API server",
-                                "previous_names": ["web_port"],
-                            },
-                            "ssl_enabled": {
-                                "type": "bool",
-                                "default": False,
-                                "description": "Is the API server using SSL",
-                                "previous_names": ["ssl_enabled"],
-                                "alt_env_names": ["SSL_ENABLED"],
-                                "cli_separator": "_",
-                            },
-                            "url_prefix": {
-                                "type": "str",
-                                "default": None,
-                                "description": "URL prefix of the API server",
-                                "required": False,
-                                "previous_names": ["url_prefix"],
-                                "alt_env_names": ["URL_PREFIX"],
                             },
                         },
                     },

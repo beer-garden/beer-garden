@@ -44,7 +44,7 @@ class LocalPluginsManager(object):
                 plugin.path_to_plugin,
                 plugin.web_host,
                 plugin.web_port,
-                plugin.ssl_enabled,
+                ssl_enabled=plugin.ssl_enabled,
                 plugin_args=plugin.plugin_args,
                 environment=plugin.environment,
                 requirements=plugin.requirements,
@@ -52,6 +52,7 @@ class LocalPluginsManager(object):
                 url_prefix=plugin.url_prefix,
                 ca_verify=plugin.ca_verify,
                 ca_cert=plugin.ca_cert,
+                connection_type=plugin.connection_type,
                 username=plugin.username,
                 password=plugin.password,
             )
