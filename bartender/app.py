@@ -71,11 +71,6 @@ class BartenderApp(StoppableThread):
                 virtual_host=bartender.config.amq.virtual_host,
                 **bartender.config.amq.connections.admin
             ),
-            "public": PikaClient(
-                host=bartender.config.publish_hostname,
-                virtual_host=bartender.config.amq.virtual_host,
-                **bartender.config.amq.connections.message
-            ),
         }
 
         self.plugin_manager = LocalPluginsManager(

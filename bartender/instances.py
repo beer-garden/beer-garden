@@ -67,7 +67,6 @@ def initialize_instance(instance_id):
         "admin": admin_queue,
         "request": req_queue,
         "connection": connection,
-        "url": bartender.application.clients["public"].connection_url,
     }
     instance.save()
 
