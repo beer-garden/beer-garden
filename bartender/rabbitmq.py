@@ -6,7 +6,6 @@ from pyrabbit2.http import HTTPError, NetworkError
 import bartender
 from bartender.requests import cancel_request
 from bg_utils.mongo.parser import MongoParser
-from brewtils.models import Request
 from brewtils.pika import TransientPikaClient
 from brewtils.schema_parser import SchemaParser
 
@@ -66,7 +65,8 @@ class PikaClient(TransientPikaClient):
     def publish_request(self, request, **kwargs):
         if "headers" not in kwargs:
             kwargs["headers"] = {}
-        kwargs["headers"]["request_id"] = str(request.id)
+        if request.id:
+            kwargs["headers"]["request_id"] = str(request.id)
 
         if "routing_key" not in kwargs:
             kwargs["routing_key"] = get_routing_key(
@@ -74,36 +74,6 @@ class PikaClient(TransientPikaClient):
             )
 
         return self.publish(SchemaParser.serialize_request(request), **kwargs)
-
-    def start(self, system=None, version=None, instance=None, clone_id=None):
-        self.publish_request(
-            Request(
-                system=system,
-                system_version=version,
-                instance_name=instance,
-                command="_start",
-                command_type="EPHEMERAL",
-                parameters={},
-            ),
-            routing_key=get_routing_key(
-                system, version, instance, clone_id, is_admin=True
-            ),
-        )
-
-    def stop(self, system=None, version=None, instance=None, clone_id=None):
-        self.publish_request(
-            Request(
-                system=system,
-                system_version=version,
-                instance_name=instance,
-                command="_stop",
-                command_type="EPHEMERAL",
-                parameters={},
-            ),
-            routing_key=get_routing_key(
-                system, version, instance, clone_id, is_admin=True
-            ),
-        )
 
 
 class PyrabbitClient(object):

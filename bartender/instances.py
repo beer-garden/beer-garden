@@ -71,8 +71,11 @@ def initialize_instance(instance_id):
     instance.save()
 
     # Send a request to start to the plugin on the plugin's admin queue
-    bartender.application.clients["pika"].start(
-        system=system.name, version=system.version, instance=instance.name
+    bartender.application.clients["pika"].publish_request(
+        bartender.start_request,
+        routing_key=get_routing_key(
+            system.name, system.version, instance.name, is_admin=True
+        ),
     )
 
     return instance
@@ -152,8 +155,11 @@ def stop_instance(instance_id):
         system = System.objects.get(instances__contains=instance)
 
         # This causes the request consumer to terminate itself, which ends the plugin
-        bartender.application.clients["pika"].stop(
-            system=system.name, version=system.version, instance=instance.name
+        bartender.application.clients["pika"].publish_request(
+            bartender.stop_request,
+            routing_key=get_routing_key(
+                system.name, system.version, instance.name, is_admin=True
+            ),
         )
 
     return instance

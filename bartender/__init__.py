@@ -6,6 +6,7 @@ import bg_utils
 from bartender.app import BartenderApp
 from bartender.errors import ConfigurationError
 from bartender.specification import get_default_logging_config
+from brewtils.models import Request
 
 __version__ = bartender._version.__version__
 
@@ -14,6 +15,9 @@ application = None
 app_logging_config = None
 config = None
 logger = None
+
+start_request = Request(command="_start", command_type="EPHEMERAL")
+stop_request = Request(command="_stop", command_type="EPHEMERAL")
 
 
 def setup_bartender(spec, cli_args):

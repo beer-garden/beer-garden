@@ -4,6 +4,7 @@ from time import sleep
 
 import bartender
 from bartender.events import publish_event
+from bartender.rabbitmq import get_routing_key
 from bg_utils.mongo.models import System, Instance
 from bg_utils.mongo.parser import MongoParser
 from brewtils.errors import ModelValidationError
@@ -162,8 +163,9 @@ def remove_system(system_id):
 
     # Remote plugins get a stop request
     else:
-        bartender.application.clients["pika"].stop(
-            system=system.name, version=system.version
+        bartender.application.clients["pika"].publish_request(
+            bartender.stop_request,
+            routing_key=get_routing_key(system.name, system.version, is_admin=True),
         )
         count = 0
         while (

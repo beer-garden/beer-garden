@@ -3,6 +3,7 @@ import logging
 import bartender
 from bartender.errors import PluginStartupError
 from bartender.local_plugins.plugin_runner import LocalPluginRunner
+from bartender.rabbitmq import get_routing_key
 from bg_utils.mongo.models import System
 
 
@@ -94,10 +95,14 @@ class LocalPluginsManager(object):
             plugin.stop()
 
             # Send a stop request. This initiates a graceful shutdown on the plugin side.
-            self.clients["pika"].stop(
-                system=plugin.system.name,
-                version=plugin.system.version,
-                instance=plugin.instance_name,
+            self.clients["pika"].publish_request(
+                bartender.stop_request,
+                routing_key=get_routing_key(
+                    plugin.system.name,
+                    plugin.system.version,
+                    plugin.instance_name,
+                    is_admin=True,
+                ),
             )
 
             # Now just wait for the plugin thread to die
