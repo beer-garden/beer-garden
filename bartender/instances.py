@@ -6,9 +6,9 @@ from datetime import datetime
 
 import bartender
 from bartender.events import publish_event
+from bartender.pika import get_routing_key, get_routing_keys
 from bg_utils.mongo.fields import StatusInfo
 from bg_utils.mongo.models import Instance, System
-from bg_utils.pika import get_routing_key, get_routing_keys
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events
 
