@@ -4,7 +4,7 @@ from pyrabbit2.http import HTTPError
 
 import bartender
 from bartender.events import publish_event
-from bartender.pika import get_routing_key
+from bartender.rabbitmq import get_routing_key
 from bg_utils.mongo.models import System
 from brewtils.errors import NotFoundError
 from brewtils.models import Queue, Events

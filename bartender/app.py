@@ -23,8 +23,7 @@ from bartender.log import load_plugin_log_config
 from bartender.metrics import PrometheusServer
 from bartender.mongo_pruner import MongoPruner
 from bartender.monitor import PluginStatusMonitor
-from bartender.pika import PikaClient
-from bartender.pyrabbit import PyrabbitClient
+from bartender.rabbitmq import PikaClient, PyrabbitClient
 from bartender.requests import RequestValidator
 from bartender.scheduler import BGJobStore
 from bartender.thrift.handler import BartenderHandler
