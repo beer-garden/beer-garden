@@ -31,9 +31,9 @@ from bartender.thrift.handler import BartenderHandler
 from bartender.thrift.server import make_server
 from bg_utils.event_publisher import EventPublishers
 from bg_utils.mongo.models import Event, Request
-from bg_utils.pika import TransientPikaClient
 from bg_utils.publishers import MongoPublisher
 from brewtils.models import Events
+from brewtils.pika import TransientPikaClient
 from brewtils.stoppable_thread import StoppableThread
 
 

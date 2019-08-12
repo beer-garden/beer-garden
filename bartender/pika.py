@@ -1,5 +1,5 @@
-from bg_utils.pika import get_routing_key, TransientPikaClient
 from brewtils.models import Request
+from brewtils.pika import TransientPikaClient
 from brewtils.schema_parser import SchemaParser
 
 
