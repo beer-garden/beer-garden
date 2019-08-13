@@ -181,28 +181,28 @@ def _setup_tornado_app():
     # These get documented in our OpenAPI (fka Swagger) documentation
     published_url_specs = [
         # V1
-        (r"{0}api/v1/commands/?".format(prefix), v1.command.CommandListAPI),
-        (r"{0}api/v1/requests/?".format(prefix), v1.request.RequestListAPI),
-        (r"{0}api/v1/systems/?".format(prefix), v1.system.SystemListAPI),
-        (r"{0}api/v1/queues/?".format(prefix), v1.queue.QueueListAPI),
-        (r"{0}api/v1/users/?".format(prefix), v1.user.UsersAPI),
-        (r"{0}api/v1/roles/?".format(prefix), v1.role.RolesAPI),
-        (r"{0}api/v1/permissions/?".format(prefix), v1.permissions.PermissionsAPI),
-        (r"{0}api/v1/tokens/?".format(prefix), v1.token.TokenListAPI),
-        (r"{0}api/v1/admin/?".format(prefix), v1.admin.AdminAPI),
-        (r"{0}api/v1/jobs/?".format(prefix), v1.job.JobListAPI),
-        (r"{0}api/v1/commands/(\w+)/?".format(prefix), v1.command.CommandAPI),
-        (r"{0}api/v1/instances/(\w+)/?".format(prefix), v1.instance.InstanceAPI),
-        (r"{0}api/v1/requests/(\w+)/?".format(prefix), v1.request.RequestAPI),
-        (r"{0}api/v1/systems/(\w+)/?".format(prefix), v1.system.SystemAPI),
-        (r"{0}api/v1/queues/([\w\.-]+)/?".format(prefix), v1.queue.QueueAPI),
-        (r"{0}api/v1/users/(\w+)/?".format(prefix), v1.user.UserAPI),
-        (r"{0}api/v1/roles/(\w+)/?".format(prefix), v1.role.RoleAPI),
-        (r"{0}api/v1/tokens/(\w+)/?".format(prefix), v1.token.TokenAPI),
-        (r"{0}api/v1/jobs/(\w+)/?".format(prefix), v1.job.JobAPI),
-        (r"{0}api/v1/config/logging/?".format(prefix), v1.logging.LoggingConfigAPI),
+        (rf"{prefix}api/v1/commands/?", v1.command.CommandListAPI),
+        (rf"{prefix}api/v1/requests/?", v1.request.RequestListAPI),
+        (rf"{prefix}api/v1/systems/?", v1.system.SystemListAPI),
+        (rf"{prefix}api/v1/queues/?", v1.queue.QueueListAPI),
+        (rf"{prefix}api/v1/users/?", v1.user.UsersAPI),
+        (rf"{prefix}api/v1/roles/?", v1.role.RolesAPI),
+        (rf"{prefix}api/v1/permissions/?", v1.permissions.PermissionsAPI),
+        (rf"{prefix}api/v1/tokens/?", v1.token.TokenListAPI),
+        (rf"{prefix}api/v1/admin/?", v1.admin.AdminAPI),
+        (rf"{prefix}api/v1/jobs/?", v1.job.JobListAPI),
+        (rf"{prefix}api/v1/commands/(\w+)/?", v1.command.CommandAPI),
+        (rf"{prefix}api/v1/instances/(\w+)/?", v1.instance.InstanceAPI),
+        (rf"{prefix}api/v1/requests/(\w+)/?", v1.request.RequestAPI),
+        (rf"{prefix}api/v1/systems/(\w+)/?", v1.system.SystemAPI),
+        (rf"{prefix}api/v1/queues/([\w\.-]+)/?", v1.queue.QueueAPI),
+        (rf"{prefix}api/v1/users/(\w+)/?", v1.user.UserAPI),
+        (rf"{prefix}api/v1/roles/(\w+)/?", v1.role.RoleAPI),
+        (rf"{prefix}api/v1/tokens/(\w+)/?", v1.token.TokenAPI),
+        (rf"{prefix}api/v1/jobs/(\w+)/?", v1.job.JobAPI),
+        (rf"{prefix}api/v1/config/logging/?", v1.logging.LoggingConfigAPI),
         # Beta
-        (r"{0}api/vbeta/events/?".format(prefix), vbeta.event.EventPublisherAPI),
+        (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
         # V2
         (rf"{prefix}api/v2/users/?", v1.user.UsersAPI),
         (rf"{prefix}api/v2/users/(\w+)/?", v1.user.UserAPI),
@@ -229,23 +229,23 @@ def _setup_tornado_app():
     unpublished_url_specs = [
         # These are a little special - unpublished but still versioned
         # The swagger spec
-        (r"{0}api/v1/spec/?".format(prefix), misc.SpecHandler),
+        (rf"{prefix}api/v1/spec/?", misc.SpecHandler),
         # Events websocket
-        (r"{0}api/v1/socket/events/?".format(prefix), v1.event.EventSocket),
+        (rf"{prefix}api/v1/socket/events/?", v1.event.EventSocket),
         # Version / configs
-        (r"{0}version/?".format(prefix), misc.VersionHandler),
-        (r"{0}config/?".format(prefix), misc.ConfigHandler),
-        (r"{0}config/swagger/?".format(prefix), misc.SwaggerConfigHandler),
+        (rf"{prefix}version/?", misc.VersionHandler),
+        (rf"{prefix}config/?", misc.ConfigHandler),
+        (rf"{prefix}config/swagger/?", misc.SwaggerConfigHandler),
         # Not sure if these are really necessary
-        (r"{0}".format(prefix[:-1]), RedirectHandler, {"url": prefix}),
+        (rf"{prefix[:-1]}", RedirectHandler, {"url": prefix}),
         (
-            r"{0}swagger/(.*)".format(prefix),
+            rf"{prefix}swagger/(.*)",
             StaticFileHandler,
             {"path": os.path.join(static_base, "swagger")},
         ),
         # Static content
         (
-            r"{0}(.*)".format(prefix),
+            rf"{prefix}(.*)",
             StaticFileHandler,
             {"path": static_base, "default_filename": "index.html"},
         ),
