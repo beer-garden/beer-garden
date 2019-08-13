@@ -1,5 +1,6 @@
 import logging
 
+import itertools
 from tornado.web import HTTPError
 from tornado.websocket import WebSocketHandler
 
@@ -8,7 +9,9 @@ from brew_view.authorization import (
     query_token_auth,
     AuthMixin,
     Permissions,
+    authenticated,
 )
+from brew_view.base_handler import BaseHandler
 from brewtils.errors import RequestForbidden
 
 logger = logging.getLogger(__name__)
@@ -17,7 +20,7 @@ logger = logging.getLogger(__name__)
 class EventSocket(AuthMixin, WebSocketHandler):
 
     closing = False
-    listeners = set()
+    listeners = {}
 
     def __init__(self, *args, **kwargs):
         super(EventSocket, self).__init__(*args, **kwargs)
@@ -27,7 +30,7 @@ class EventSocket(AuthMixin, WebSocketHandler):
     def check_origin(self, origin):
         return True
 
-    def open(self):
+    def open(self, namespace):
         if EventSocket.closing:
             self.close(reason="Shutting down")
             return
@@ -39,21 +42,27 @@ class EventSocket(AuthMixin, WebSocketHandler):
             self.close(reason=str(ex))
             return
 
-        EventSocket.listeners.add(self)
+        listeners = self.listeners.get(namespace, None)
+        if not listeners:
+            self.listeners[namespace] = set()
+
+        self.listeners[namespace].add(self)
 
     def on_close(self):
-        EventSocket.listeners.discard(self)
+        for listeners in self.listeners.values():
+            listeners.discard(self)
 
     def on_message(self, message):
         pass
 
     @classmethod
-    def publish(cls, message):
+    def publish(cls, namespace, message):
         # Don't bother if nobody is listening
-        if not len(cls.listeners):
+        listeners = cls.listeners.get(namespace, set())
+        if not len(listeners):
             return
 
-        for listener in cls.listeners:
+        for listener in listeners:
             listener.write_message(message)
 
     @classmethod
@@ -61,5 +70,37 @@ class EventSocket(AuthMixin, WebSocketHandler):
         logger.debug("Closing websocket connections")
         EventSocket.closing = True
 
-        for listener in cls.listeners:
+        for listener in itertools.chain(cls.listeners.values()):
             listener.close(reason="Shutting down")
+
+
+class EventPublisherAPI(BaseHandler):
+    @authenticated(permissions=[Permissions.EVENT_CREATE])
+    def post(self, namespace):
+        """
+        ---
+        summary: Publish a new event
+        parameters:
+          - name: namespace
+            in: path
+            required: true
+            description: The namespace
+            type: string
+          - name: event
+            in: body
+            description: The the Event object
+            schema:
+              $ref: '#/definitions/Event'
+        responses:
+          204:
+            description: An Event has been published
+          400:
+            $ref: '#/definitions/400Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Events
+        """
+        EventSocket.publish(namespace, self.request.decoded_body)
+
+        self.set_status(204)
