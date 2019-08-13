@@ -120,9 +120,6 @@ export default function appRun(
         $rootScope.doLogout();
       }
     );
-
-    // Can't connect here - events are namespace dependent
-    // EventService.connect();
   };
 
   $rootScope.hasPermission = function(user, permissions) {
@@ -216,6 +213,11 @@ export default function appRun(
 
   $transitions.onStart({name: 'base.namespace'}, function(transition, state) {
     $rootScope.setCurrentNamespace(transition.params('to').namespace);
+  });
+
+  $transitions.onSuccess({entering: 'base.namespace'}, (transition) => {
+    EventService.close();
+    EventService.connect();
   });
 
   $transitions.onSuccess({to: 'base'}, () => {

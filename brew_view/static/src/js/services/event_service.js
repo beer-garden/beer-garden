@@ -1,13 +1,14 @@
 
-eventService.$inject = ['$websocket', 'TokenService'];
+eventService.$inject = ['$rootScope', '$websocket', 'TokenService'];
 
 /**
  * eventService - Service for getting systems from the API.
- * @param  {Object} $websocket    Angular's $websocket object.
- * @param  {Object} TokenService  Service for Token information.
- * @return {Object}               Object for interacting with the event API.
+ * @param  {Object} $rootScope        Angular's $rootScope object.
+ * @param  {Object} $websocket        Angular's $websocket object.
+ * @param  {Object} TokenService      Service for Token information.
+ * @return {Object}                   Object for interacting with the event API.
  */
-export default function eventService($websocket, TokenService) {
+export default function eventService($rootScope, $websocket, TokenService) {
 
   let socketConnection = undefined;
   let messageCallback = undefined;
@@ -24,7 +25,7 @@ export default function eventService($websocket, TokenService) {
         let eventUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') +
           window.location.host +
           window.location.pathname +
-          'api/v1/socket/events';
+          `api/v2/namespaces/${$rootScope.getCurrentNamespace()}/events/socket`;
 
         let token = TokenService.getToken();
         if (token) {
