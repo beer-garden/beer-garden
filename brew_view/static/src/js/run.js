@@ -211,7 +211,7 @@ export default function appRun(
     }
   };
 
-  $transitions.onStart({name: 'base.namespace'}, function(transition, state) {
+  $transitions.onStart({}, (transition, state) => {
     $rootScope.setCurrentNamespace(transition.params('to').namespace);
   });
 
