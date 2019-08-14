@@ -2,46 +2,35 @@ import wrapt
 
 import bartender
 from brewtils.models import Event, Events
+from brewtils.schema_parser import SchemaParser
 
 
 def publish_event(event_type):
     @wrapt.decorator
     def wrapper(wrapped, _, args, kwargs):
-        event = Event(name=event_type.name)
-
-        result = None
-        payload = None
-        error = False
+        event = Event(name=event_type.name, payload="", error=False)
 
         try:
             result = wrapped(*args, **kwargs)
-        except Exception:
+        except Exception as ex:
             event.error = True
+            event.payload = str(ex)
             raise
+        else:
+            if event.name in (
+                Events.INSTANCE_INITIALIZED.name,
+                Events.INSTANCE_STARTED.name,
+                Events.INSTANCE_STOPPED.name,
+                Events.REQUEST_CREATED.name,
+                Events.REQUEST_STARTED.name,
+                Events.REQUEST_COMPLETED.name,
+                Events.SYSTEM_CREATED.name,
+                Events.SYSTEM_UPDATED.name,
+            ):
+                event.payload = SchemaParser.serialize(result, to_string=False)
+            elif event.name in (Events.QUEUE_CLEARED.name, Events.SYSTEM_REMOVED.name):
+                event.payload = {"id": args[0]}
         finally:
-            if event.name.startswith("REQUEST"):
-                event.payload = {
-                    k: str(getattr(result, k))
-                    for k in [
-                        "id",
-                        "command",
-                        "system",
-                        "system_version",
-                        "instance_name",
-                    ]
-                }
-            elif event.name == Events.SYSTEM_CREATED.name:
-                event.payload = {"id": str(result.id)}
-
-            elif event.name.startswith("SYSTEM"):
-                event.payload = {"id": args[0]}
-
-            elif event.name.startswith("INSTANCE"):
-                event.payload = {"id": args[0]}
-
-            elif event.name == Events.QUEUE_CLEARED.name:
-                event.payload = {"queue_name": args[0]}
-
             bartender.application.event_publishers.publish_event(event)
 
         return result
