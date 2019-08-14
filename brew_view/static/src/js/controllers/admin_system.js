@@ -71,21 +71,13 @@ export default function adminSystemController(
   };
 
   $scope.startInstance = function(instance) {
-    InstanceService.startInstance(instance).then(
-      () => {
-        instance.status = 'STARTING';
-      },
-      $scope.addErrorAlert
-    );
+    instance.status = 'STARTING';
+    InstanceService.startInstance(instance).catch($scope.addErrorAlert);
   };
 
   $scope.stopInstance = function(instance) {
-    InstanceService.stopInstance(instance).then(
-      () => {
-        instance.status = 'STOPPING';
-      },
-      $scope.addErrorAlert
-    );
+    instance.status = 'STOPPING';
+    InstanceService.stopInstance(instance).catch($scope.addErrorAlert);
   };
 
   $scope.addErrorAlert = function(response) {
@@ -176,7 +168,7 @@ export default function adminSystemController(
       systemsUpdate = undefined;
     }
 
-    EventService.clearCallback();
+    EventService.removeCallback('admin_system');
   });
 
   // let loadAll = function() {
@@ -187,9 +179,7 @@ export default function adminSystemController(
   //   loadSystems();
   // };
 
-  EventService.setCallback((message) => {
-    let event = JSON.parse(message.data);
-
+  EventService.addCallback('admin_system', (event) => {
     switch (event.name) {
       case 'INSTANCE_INITIALIZED':
         updateInstanceStatus(event.payload.id, 'RUNNING');

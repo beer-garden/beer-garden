@@ -11,14 +11,14 @@ eventService.$inject = ['$rootScope', '$websocket', 'TokenService'];
 export default function eventService($rootScope, $websocket, TokenService) {
 
   let socketConnection = undefined;
-  let messageCallback = undefined;
+  let messageCallbacks = {};
 
   return {
-    setCallback: (callback) => {
-      messageCallback = callback;
+    addCallback: (name, callback) => {
+      messageCallbacks[name] = callback;
     },
-    clearCallback: (callback) => {
-      messageCallback = undefined;
+    removeCallback: (name) => {
+      delete messageCallbacks[name];
     },
     connect: () => {
       if (window.WebSocket && !socketConnection) {
@@ -34,15 +34,16 @@ export default function eventService($rootScope, $websocket, TokenService) {
 
         socketConnection = $websocket(eventUrl);
 
-        socketConnection.onClose((message) => {
+        socketConnection.onMessage((message) => {
+          let event = JSON.parse(message.data);
+
+          for (let callback of _.values(messageCallbacks)) {
+            callback(event);
+          }
         });
+
         socketConnection.onError((message) => {
           console.log('Websocket error: ' + message.reason);
-        });
-        socketConnection.onMessage((message) => {
-          if (messageCallback) {
-            messageCallback(message);
-          }
         });
       }
     },
