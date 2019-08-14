@@ -322,6 +322,48 @@ SPECIFICATION = {
                     },
                 },
             },
+            "brew-view": {
+                "type": "dict",
+                "items": {
+                    "enable": {
+                        "type": "bool",
+                        "default": False,
+                        "description": "Publish events from a Brew-view websocket",
+                    },
+                    "ca_cert": {
+                        "type": "str",
+                        "description": "Path to CA certificate file to use",
+                        "required": False,
+                    },
+                    "ca_verify": {
+                        "type": "bool",
+                        "default": True,
+                        "description": "Verify external certificates",
+                        "required": False,
+                    },
+                    "host": {
+                        "type": "str",
+                        "default": "localhost",
+                        "description": "Hostname of the API server",
+                    },
+                    "port": {
+                        "type": "int",
+                        "default": 2337,
+                        "description": "Port of the API server",
+                    },
+                    "ssl_enabled": {
+                        "type": "bool",
+                        "default": False,
+                        "description": "Is the API server using SSL",
+                    },
+                    "url_prefix": {
+                        "type": "str",
+                        "default": None,
+                        "description": "URL prefix of the API server",
+                        "required": False,
+                    },
+                },
+            },
             "mongo": {
                 "type": "dict",
                 "items": {

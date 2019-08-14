@@ -28,11 +28,12 @@ from bartender.requests import RequestValidator
 from bartender.scheduler import BGJobStore
 from bartender.thrift.handler import BartenderHandler
 from bartender.thrift.server import make_server
-from bg_utils.event_publisher import EventPublishers
+from bg_utils.event_publisher import EventPublishers, EventPublisher
 from bg_utils.mongo.models import Event, Request
 from bg_utils.publishers import MongoPublisher
 from brewtils.models import Events
 from brewtils.pika import TransientPikaClient
+from brewtils.rest.easy_client import EasyClient
 from brewtils.stoppable_thread import StoppableThread
 
 
@@ -302,6 +303,22 @@ class BartenderApp(StoppableThread):
                 # )
             except Exception as ex:
                 self.logger.exception("Error starting RabbitMQ event publisher: %s", ex)
+
+        if bartender.config.event.brew_view.enable:
+
+            class BrewViewPublisher(EventPublisher):
+                def __init__(self, config):
+                    self._ez_client = EasyClient(
+                        namespace=bartender.config.namespaces.local, **config
+                    )
+
+                def publish(self, event, **kwargs):
+                    self._ez_client.publish_event(event)
+
+                def _event_serialize(self, event, **kwargs):
+                    return event
+
+            pubs["brewview"] = BrewViewPublisher(bartender.config.event.brew_view)
 
         # Metadata functions - additional metadata to be included with each event
         # pubs.metadata_funcs["public_url"] = lambda: public_url
