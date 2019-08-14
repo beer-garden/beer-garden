@@ -35,7 +35,6 @@ export default function eventService($rootScope, $websocket, TokenService) {
         socketConnection = $websocket(eventUrl);
 
         socketConnection.onClose((message) => {
-          console.log('Websocket closed: ' + message.reason);
         });
         socketConnection.onError((message) => {
           console.log('Websocket error: ' + message.reason);
