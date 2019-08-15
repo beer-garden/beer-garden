@@ -41,6 +41,14 @@ event:
     enable: false
     exchange: event
     virtual_host: /
+  brew-view:
+    ca_cert: null
+    ca_verify: true
+    enable: true
+    host: localhost
+    port: 2337
+    ssl_enabled: false
+    url_prefix: null
   mongo:
     enable: true
 log:
