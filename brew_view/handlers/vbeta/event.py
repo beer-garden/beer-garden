@@ -1,6 +1,6 @@
-import brew_view
 from brew_view.authorization import authenticated, Permissions
 from brew_view.base_handler import BaseHandler
+from brew_view.handlers.v2.event import EventSocket
 from brewtils.schema_parser import SchemaParser
 
 
@@ -14,21 +14,16 @@ class EventPublisherAPI(BaseHandler):
         ---
         summary: Publish a new event
         parameters:
+          - name: bg-namespace
+            in: header
+            required: false
+            description: Namespace to use
+            type: string
           - name: event
             in: body
             description: The the Event object
             schema:
               $ref: '#/definitions/Event'
-          - name: publisher
-            in: query
-            required: false
-            description: Specific publisher to use
-            type: array
-            collectionFormat: multi
-            items:
-              properties:
-                data:
-                  type: string
         responses:
           204:
             description: An Event has been published
@@ -37,15 +32,8 @@ class EventPublisherAPI(BaseHandler):
           50x:
             $ref: '#/definitions/50xError'
         tags:
-          - Beta
+          - Event
         """
-        event = self.parser.parse_event(self.request.decoded_body, from_string=True)
-        publishers = self.get_query_arguments("publisher")
-
-        if not publishers:
-            brew_view.event_publishers.publish_event(event)
-        else:
-            for publisher in publishers:
-                brew_view.event_publishers[publisher].publish_event(event)
+        EventSocket.publish(self.request.namespace, self.request.decoded_body)
 
         self.set_status(204)
