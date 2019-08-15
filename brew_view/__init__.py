@@ -223,6 +223,7 @@ def _setup_tornado_app():
         (rf"{prefix}api/v2/namespaces/(\w+)/requests/(\w+)/?", v2.request.RequestAPI),
         (rf"{prefix}api/v2/namespaces/(\w+)/systems/?", v2.system.SystemListAPI),
         (rf"{prefix}api/v2/namespaces/(\w+)/systems/(\w+)/?", v2.system.SystemAPI),
+        (rf"{prefix}api/v2/namespaces/(\w+)/events/?", v2.event.EventPublisherAPI),
     ]
 
     # And these do not
@@ -232,6 +233,7 @@ def _setup_tornado_app():
         (rf"{prefix}api/v1/spec/?", misc.SpecHandler),
         # Events websocket
         (rf"{prefix}api/v1/socket/events/?", v1.event.EventSocket),
+        (rf"{prefix}api/v2/namespaces/(\w+)/events/socket/?", v2.event.EventSocket),
         # Version / configs
         (rf"{prefix}version/?", misc.VersionHandler),
         (rf"{prefix}config/?", misc.ConfigHandler),
