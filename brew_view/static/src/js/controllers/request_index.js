@@ -176,9 +176,7 @@ export default function requestIndexController(
     $scope.dtInstance = _instance;
   };
 
-  EventService.setCallback((message) => {
-    let event = JSON.parse(message.data);
-
+  EventService.addCallback('request_index', (event) => {
     switch (event.name) {
       case 'REQUEST_CREATED':
       case 'REQUEST_STARTED':
@@ -188,6 +186,10 @@ export default function requestIndexController(
         }
         break;
     }
+  });
+
+  $scope.$on('$destroy', function() {
+    EventService.removeCallback('request_index');
   });
 
   $scope.$on('userChange', function() {
