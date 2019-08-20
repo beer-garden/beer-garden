@@ -41,7 +41,7 @@ event:
     enable: false
     exchange: event
     virtual_host: /
-  brew-view:
+  brew_view:
     ca_cert: null
     ca_verify: true
     enable: true

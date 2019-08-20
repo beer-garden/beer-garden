@@ -322,7 +322,7 @@ SPECIFICATION = {
                     },
                 },
             },
-            "brew-view": {
+            "brew_view": {
                 "type": "dict",
                 "items": {
                     "enable": {
