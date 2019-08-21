@@ -2,12 +2,17 @@ version: '3.5'
 
 x-definitions: &env
     # IMPORTANT!!
+    # Change this to whatever you want your namespace to be
+    BG_NAMESPACES_LOCAL: docker
+
+    # IMPORTANT!!
     # Change this to support both local and remote plugins
     # Should be resolvable from inside and outside the docker network
     BG_PUBLISH_HOSTNAME: localhost
 
-    # Brew-view still needs this for now
+    # Both still need these for now
     BG_DB_HOST: mongodb
+    BG_DB_NAME: beer_garden_v3
 
 
 services:
@@ -50,7 +55,8 @@ services:
             BG_AMQ_CONNECTIONS_MESSAGE_USER: beer_garden
             BG_AMQ_CONNECTIONS_MESSAGE_PASSWORD: password
 
-            BG_NAMESPACES_LOCAL: docker
+            BG_EVENT_BREW_VIEW_ENABLE: "true"
+            BG_EVENT_BREW_VIEW_HOST: "brew-view"
         depends_on:
             - mongodb
             - rabbitmq
