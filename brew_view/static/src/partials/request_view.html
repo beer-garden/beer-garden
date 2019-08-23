@@ -104,8 +104,11 @@
             <i class="fa fa-spinner fa-pulse fa-3x"></i>
           </div>
           <pre id="rawOutput" ng-show="!showFormatted && service.isComplete(data)">{{rawOutput}}</pre>
-          <div id="formattedOutput" ng-show="showFormatted && service.isComplete(data)">
-            <div ui-ace="{ onLoad: loadPreview }" ng-model="formattedOutput"
+          <div id="htmlOutput" ng-show="showFormatted && service.isComplete(data) && htmlOutput">
+            <div ng-bind-html="htmlOutput"></div>
+          </div>
+          <div id="jsonOutput" ng-show="showFormatted && service.isComplete(data) && jsonOutput">
+            <div ui-ace="{ onLoad: loadPreview }" ng-model="jsonOutput"
               ng-if="formattedAvailable && format_error === undefined" style="width: 100%;"></div>
           </div>
         </div>
