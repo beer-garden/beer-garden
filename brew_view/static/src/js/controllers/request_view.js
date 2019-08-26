@@ -38,7 +38,8 @@ export default function requestViewController(
   $scope.childrenCollapsed = true;
 
   $scope.rawOutput = undefined;
-  $scope.formattedOutput = '';
+  $scope.htmlOutput = '';
+  $scope.jsonOutput = '';
   $scope.formattedParameters = '';
   $scope.formattedAvailable = false;
   $scope.formatErrorTitle = undefined;
@@ -75,7 +76,8 @@ export default function requestViewController(
   };
 
   $scope.formatOutput = function() {
-    $scope.formattedOutput = '';
+    $scope.htmlOutput = '';
+    $scope.jsonOutput = '';
     $scope.formattedAvailable = false;
     $scope.showFormatted = false;
     $scope.formatErrorTitle = undefined;
@@ -86,13 +88,17 @@ export default function requestViewController(
     try {
       if (rawOutput === undefined || rawOutput == null) {
         rawOutput = 'null';
+      } else if ($scope.data.output_type == 'HTML') {
+        $scope.htmlOutput = rawOutput;
+        $scope.formattedAvailable = true;
+        $scope.showFormatted = true;
       } else if ($scope.data.output_type == 'JSON') {
         try {
           let parsedOutput = JSON.parse($scope.data.output);
           rawOutput = $scope.stringify(parsedOutput);
 
           if ($scope.countNodes($scope.formattedOutput) < 1000) {
-            $scope.formattedOutput = rawOutput;
+            $scope.jsonOutput = rawOutput;
             $scope.formattedAvailable = true;
             $scope.showFormatted = true;
           } else {
@@ -177,7 +183,8 @@ export default function requestViewController(
     $scope.data = response.data;
 
     $scope.rawOutput = undefined;
-    $scope.formattedOutput = undefined;
+    $scope.htmlOutput = undefined;
+    $scope.jsonOutput = undefined;
     $scope.formattedAvailable = false;
     $scope.showFormatted = false;
     $scope.formatErrorTitle = undefined;
