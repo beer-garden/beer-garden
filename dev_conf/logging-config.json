@@ -1,0 +1,37 @@
+{
+    "disable_existing_loggers": false, 
+    "formatters": {
+        "simple": {
+            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        }
+    }, 
+    "handlers": {
+        "brew-view": {
+            "class": "logging.StreamHandler", 
+            "formatter": "simple", 
+            "level": "INFO", 
+            "stream": "ext://sys.stdout"
+        }
+    }, 
+    "loggers": {
+        "pika": {
+            "level": "ERROR"
+        },
+        "tornado.access": {
+            "level": "WARN"
+        }, 
+        "tornado.application": {
+            "level": "WARN"
+        }, 
+        "tornado.general": {
+            "level": "WARN"
+        }
+    }, 
+    "root": {
+        "handlers": [
+            "brew-view"
+        ], 
+        "level": "INFO"
+    }, 
+    "version": 1
+}

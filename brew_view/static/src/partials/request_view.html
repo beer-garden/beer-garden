@@ -1,0 +1,125 @@
+<h1 class="page-header">
+  <span>Request View</span>
+
+  <span ng-if="responseState(response) === 'success'">
+    <small>{{data.id}}</small>
+    <button type="button"
+            ng-if="canRepeat(data)"
+            ng-click="redoRequest(data)"
+            class="btn btn-success pull-right">
+      Pour it Again
+    </button>
+    <small class="pull-right" ng-if="showInstanceStatus(data, instanceStatus)">
+      Error: Instance {{instanceStatus}}
+    </small>
+  </span>
+</h1>
+
+<fetch-data response="response"></fetch-data>
+
+<div ng-if="responseState(response) === 'success'">
+  <ol class="tagline breadcrumb" ng-show="request_tree.length > 1">
+    <li ng-repeat="request in request_tree = getParentTree(data)" ng-class="{active: $last}"
+      ><span ng-if="!$last"><a ui-sref="base.namespace.request({requestId: request.id})">{{request.command}}</a></span
+      ><span ng-if="$last">{{request.command}}</span>
+    </li>
+  </ol>
+
+  <div class="container-fluid animate-if">
+    <table id="requestTable" class="table">
+      <thead>
+        <tr>
+          <th>Command</th>
+          <th>System</th>
+          <th>System Version</th>
+          <th>Instance Name</th>
+          <th>Status</th>
+          <th ng-if="showColumn('error_class')">Error Type</th>
+          <th>Created</th>
+          <th>Updated</th>
+          <th>Comment</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-click="toggleChildren()">
+          <td>
+            <span id="chevron"
+                  ng-if="hasChildren(data)"
+                  class="fa fa-chevron-right"
+                  ng-class="{'chevron-rotate': !childrenCollapsed}">
+            </span>{{data.command}}</td>
+          <td>{{data.metadata.system_display_name || data.system}}</td>
+          <td>{{data.system_version}}</td>
+          <td>{{data.instance_name}}</td>
+          <td>{{data.status}}
+            <span uib-popover="{{statusDescriptions[data.status]}}"
+                  popover-animation="true"
+                  popover-placement="right"
+                  popover-trigger="'mouseenter'"
+                  popover-title="{{data.status}}"
+                  style="color: gray; padding-top: 5px">
+              <span class="glyphicon glyphicon-info-sign"></span>
+            </span>
+          </td>
+          <td ng-if="showColumn('error_class')">{{data.error_class}}</td>
+          <td>{{formatDate(data.created_at)}}</td>
+          <td>{{formatDate(data.updated_at)}}</td>
+          <td>{{data.comment}}</td>
+        </tr>
+
+        <tr class="child-row slide" ng-repeat="child in children">
+          <td>
+            <div>
+              <span class="fa fa-chevron-right" style="visibility: hidden" />
+              <a class="child-link" ui-sref="base.namespace.request({requestId: child.id})">{{child.command}}</a>
+            </div>
+          </td>
+          <td><div>{{child.metadata.system_display_name || child.system}}</div></td>
+          <td><div>{{child.system_version}}</div></td>
+          <td><div>{{child.instance_name}}</div></td>
+          <td><div>{{child.status}}</div></td>
+          <td ng-if="showColumn('error_class')"><div>{{child.error_class}}</div></td>
+          <td><div>{{formatDate(child.created_at)}}</div></td>
+          <td><div>{{formatDate(child.updated_at)}}</div></td>
+          <td><div>{{child.comment}}</div></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="row">
+      <div class="col-md-6">
+        <div style="margin-bottom: 10px;">
+          <span class="h3">Output</span>
+          <span ng-show="formattedAvailable && format_error === undefined" style="margin-top: 9px" class="pull-right">
+            <input bs-switch ng-model="showFormatted" switch-size="mini" type="checkbox" switch-label-width="0"
+                   switch-handle-width="70" switch-on-text="Formatted" switch-off-text="Raw">
+          </span>
+          <span ng-show="formatErrorTitle !== undefined" class="pull-right" uib-popover="{{formatErrorMsg}}"
+                popover-animation="true" popover-placement="left" popover-trigger="'mouseenter'"
+                popover-title="{{formatErrorTitle}}" style="color: gray; padding-top: 5px">
+            <span class="glyphicon glyphicon-info-sign" style="font-size: 26px"></span>
+          </span>
+        </div>
+        <div style="position: relative;">
+          <div class="w-100" style="text-align: center;" ng-hide="service.isComplete(data)">
+            <i class="fa fa-spinner fa-pulse fa-3x"></i>
+          </div>
+          <pre id="rawOutput" ng-show="!showFormatted && service.isComplete(data)">{{rawOutput}}</pre>
+          <div id="htmlOutput" ng-show="showFormatted && service.isComplete(data) && htmlOutput">
+            <div ng-bind-html="htmlOutput"></div>
+          </div>
+          <div id="jsonOutput" ng-show="showFormatted && service.isComplete(data) && jsonOutput">
+            <div ui-ace="{ onLoad: loadPreview }" ng-model="jsonOutput"
+              ng-if="formattedAvailable && format_error === undefined" style="width: 100%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div style="margin-bottom: 10px;">
+          <span class="h3">Parameters</span>
+        </div>
+        <div ui-ace="{ onLoad: loadPreview }" ng-model="formattedParameters" style="width: 100%;"></div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,17 @@
+{
+    "AMQ_ADMIN_PORT": 15672, 
+    "AMQ_HOST": "localhost", 
+    "AMQ_PORT": 5672, 
+    "AMQ_PW": "guest", 
+    "AMQ_USER": "guest", 
+    "BACKEND_HOST": "localhost", 
+    "BACKEND_PORT": 9090, 
+    "DB_HOST": "mongomock://localhost",
+    "DB_NAME": "beer_garden_test", 
+    "DB_PORT": 27017, 
+    "FLASK_SECRET_KEY": "S3CRET", 
+    "SSL_ENABLED": true, 
+    "SSL_PRIVATE_KEY": "/etc/pki/private/beergarden.pem", 
+    "SSL_PUBLIC_KEY": "/etc/pki/public/beergarden.pem", 
+    "WEB_PORT": 2337
+}

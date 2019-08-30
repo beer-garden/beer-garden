@@ -1,0 +1,17 @@
+FROM python:3.6-alpine
+WORKDIR /src
+ENTRYPOINT ["brew-view"]
+
+ENV BG_LOG_CONFIG_FILE=/src/dev_conf/logging-config.json
+
+ADD ./dev_conf/logging-config.json /src/dev_conf/
+ADD ./requirements.txt .
+ADD ./dist/*.whl ./
+
+RUN set -ex \
+    && apk add --no-cache --virtual .build-deps \
+       gcc make musl-dev libffi-dev openssl-dev git \
+    && pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir ./*.whl \
+    && apk del .build-deps
+

@@ -1,0 +1,83 @@
+<h1 class="page-header">
+  <span>Job</span>
+
+  <span ng-if="responseState(response) === 'success'">
+    <small>{{data.name}} - {{data.id}}</small>
+    <button type="button" class="btn btn-warning pull-right"
+            ng-if="data.status === 'RUNNING'"
+            ng-click="pauseJob(data.id)">
+      Pause Job
+    </button>
+    <button type="button" class="btn btn-success pull-right"
+            ng-if="data.status === 'PAUSED'"
+            ng-click="resumeJob(data.id)">
+      Resume Job
+    </button>
+    <button type="button" class="btn btn-danger pull-right"
+            confirm="Are you sure you want to delete this job?"
+            ng-click="deleteJob(data.id)">
+      Delete Job
+    </button>
+  </span>
+</h1>
+
+<fetch-data response="response"></fetch-data>
+
+<div class="container-fluid animate-if"
+     ng-if="responseState(response) === 'success'">
+  <table id="jobTable" class="table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Command</th>
+        <th>System</th>
+        <th>System Version</th>
+        <th>Instance Name</th>
+        <th>Status</th>
+        <th>Success Count</th>
+        <th>Error Count</th>
+        <th>Next Run Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{data.name}}</td>
+        <td>{{data.request_template.command}}</td>
+        <td>{{data.request_template.system}}</td>
+        <td>{{data.request_template.system_version}}</td>
+        <td>{{data.request_template.instance_name}}</td>
+        <td>{{data.status}}</td>
+        <td>{{data.success_count}}</td>
+        <td>{{data.error_count}}</td>
+        <td>{{formatDate(data.next_run_time)}}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="row">
+    <div class="col-md-6">
+      <div style="margin-bottom: 10px;">
+        <span class="h3">Trigger</span>
+      </div>
+      <div style="position: relative;">
+        <div id="trigger">
+          <div
+            ui-ace="{ onLoad: loadPreview }"
+            ng-model="formattedTrigger"
+            style="width: 100%;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div style="margin-bottom: 10px;">
+        <span class="h3">Request Template</span>
+      </div>
+      <div
+        ui-ace="{ onLoad: loadPreview }"
+        ng-model="formattedRequestTemplate"
+        style="width: 100%;">
+      </div>
+    </div>
+  </div>
+</div>
