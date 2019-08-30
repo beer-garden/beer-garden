@@ -1,8 +1,8 @@
 import json
 import logging
 
-from brew_view.authorization import authenticated, Permissions
-from brew_view.base_handler import BaseHandler
+from beer_garden.brew_view.authorization import authenticated, Permissions
+from beer_garden.brew_view.base_handler import BaseHandler
 
 
 class PermissionsAPI(BaseHandler):

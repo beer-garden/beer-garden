@@ -1,10 +1,10 @@
 import logging
 
-import bartender
-from bartender.errors import PluginStartupError
-from bartender.local_plugins.plugin_runner import LocalPluginRunner
-from bartender.rabbitmq import get_routing_key
-from bg_utils.mongo.models import System
+import beer_garden
+from beer_garden.errors import PluginStartupError
+from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
+from beer_garden.rabbitmq import get_routing_key
+from beer_garden.bg_utils.mongo.models import System
 
 
 class LocalPluginsManager(object):
@@ -96,7 +96,7 @@ class LocalPluginsManager(object):
 
             # Send a stop request. This initiates a graceful shutdown on the plugin side.
             self.clients["pika"].publish_request(
-                bartender.stop_request,
+                beer_garden.stop_request,
                 routing_key=get_routing_key(
                     plugin.system.name,
                     plugin.system.version,
@@ -107,7 +107,7 @@ class LocalPluginsManager(object):
 
             # Now just wait for the plugin thread to die
             self.logger.info("Waiting for plugin %s to stop...", plugin.unique_name)
-            plugin.join(bartender.config.plugin.local.timeout.shutdown)
+            plugin.join(beer_garden.config.plugin.local.timeout.shutdown)
 
         except Exception as ex:
             clean_shutdown = False

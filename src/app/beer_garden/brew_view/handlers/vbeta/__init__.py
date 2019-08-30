@@ -1,3 +1,3 @@
 # flake8: noqa
 
-import brew_view.handlers.vbeta.event
+import beer_garden.brew_view.handlers.vbeta.event

@@ -11,11 +11,10 @@ from tornado.ioloop import IOLoop
 from tornado.web import Application, StaticFileHandler, RedirectHandler
 from urllib3.util.url import Url
 
-import bg_utils
-import brew_view._version
-from bg_utils.mongo import setup_database
-from brew_view.authorization import anonymous_principal as load_anonymous
-from brew_view.specification import get_default_logging_config
+import beer_garden.bg_utils
+from beer_garden.bg_utils.mongo import setup_database
+from beer_garden.brew_view.authorization import anonymous_principal as load_anonymous
+from beer_garden.brew_view.specification import get_default_logging_config
 from brewtils.models import Event, Events
 from brewtils.rest import normalize_url_prefix
 from brewtils.schemas import (
@@ -37,8 +36,6 @@ from brewtils.schemas import (
     CronTriggerSchema,
 )
 
-__version__ = brew_view._version.__version__
-
 config = None
 io_loop = None
 server = None
@@ -56,9 +53,9 @@ client_ssl = None
 def setup(spec, cli_args):
     global config, logger, app_logging_config
 
-    config = bg_utils.load_application_config(spec, cli_args)
+    config = beer_garden.bg_utils.load_application_config(spec, cli_args)
 
-    app_logging_config = bg_utils.setup_application_logging(
+    app_logging_config = beer_garden.bg_utils.setup_application_logging(
         config, get_default_logging_config(config.log.level, config.log.file)
     )
     logger = logging.getLogger(__name__)
@@ -95,7 +92,7 @@ async def startup():
     logger.info(f"Starting HTTP server on {config.web.host}:{config.web.port}")
     server.listen(config.web.port, config.web.host)
 
-    brew_view.logger.info("Application is started. Hello!")
+    beer_garden.brew_view.logger.info("Application is started. Hello!")
 
 
 async def shutdown():
@@ -170,10 +167,10 @@ def _setup_application():
 
 def _setup_tornado_app():
     # Import these here so we don't have a problem importing thrift_context
-    import brew_view.handlers.v1 as v1
-    import brew_view.handlers.v2 as v2
-    import brew_view.handlers.vbeta as vbeta
-    import brew_view.handlers.misc as misc
+    import beer_garden.brew_view.handlers.v1 as v1
+    import beer_garden.brew_view.handlers.v2 as v2
+    import beer_garden.brew_view.handlers.vbeta as vbeta
+    import beer_garden.brew_view.handlers.misc as misc
 
     prefix = config.web.url_prefix
     static_base = os.path.join(os.path.dirname(__file__), "static", "dist")

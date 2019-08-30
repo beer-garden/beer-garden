@@ -1,14 +1,13 @@
 import logging
 import logging.config
 
-import bartender._version
-import bg_utils
-from bartender.app import BartenderApp
-from bartender.errors import ConfigurationError
-from bartender.specification import get_default_logging_config
+import beer_garden.bg_utils
+from beer_garden.__version__ import __version__
+from beer_garden.app import BartenderApp
+from beer_garden.errors import ConfigurationError
+from beer_garden.specification import get_default_logging_config
 from brewtils.models import Request
 
-__version__ = bartender._version.__version__
 
 # COMPONENTS #
 application = None
@@ -23,9 +22,9 @@ stop_request = Request(command="_stop", command_type="EPHEMERAL")
 def setup_bartender(spec, cli_args):
     global application, app_logging_config, config, logger
 
-    config = bg_utils.load_application_config(spec, cli_args)
+    config = beer_garden.bg_utils.load_application_config(spec, cli_args)
 
-    app_logging_config = bg_utils.setup_application_logging(
+    app_logging_config = beer_garden.bg_utils.setup_application_logging(
         config, get_default_logging_config(config.log.level, config.log.file)
     )
     logger = logging.getLogger(__name__)

@@ -4,17 +4,17 @@ from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timedelta
 
 import jwt
-from bg_utils.mongo.parser import MongoParser
+from beer_garden.bg_utils.mongo.parser import MongoParser
 from brewtils.errors import ModelValidationError
 from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
 from tornado.gen import coroutine
 from tornado.web import HTTPError
 
-import brew_view
-from bg_utils.mongo.models import Principal, RefreshToken
-from brew_view.authorization import coalesce_permissions
-from brew_view.base_handler import BaseHandler
+import beer_garden.brew_view
+from beer_garden.bg_utils.mongo.models import Principal, RefreshToken
+from beer_garden.brew_view.authorization import coalesce_permissions
+from beer_garden.brew_view.base_handler import BaseHandler
 
 
 def verify(password, password_hash):
@@ -228,8 +228,9 @@ class TokenListAPI(BaseHandler):
         try:
             principal = Principal.objects.get(username=parsed_body["username"])
             if (
-                brew_view.config.auth.guest_login_enabled
-                and principal.username == brew_view.anonymous_principal.username
+                beer_garden.brew_view.config.auth.guest_login_enabled
+                and principal.username
+                == beer_garden.brew_view.anonymous_principal.username
             ):
                 verified = True
             else:
@@ -310,14 +311,15 @@ def generate_access_token(payload, issue_time=None):
     access_payload.update(
         {
             "iat": issue_time,
-            "exp": issue_time + timedelta(seconds=brew_view.config.auth.token.lifetime),
+            "exp": issue_time
+            + timedelta(seconds=beer_garden.brew_view.config.auth.token.lifetime),
         }
     )
 
     return jwt.encode(
         access_payload,
-        key=brew_view.config.auth.token.secret,
-        algorithm=brew_view.config.auth.token.algorithm,
+        key=beer_garden.brew_view.config.auth.token.secret,
+        algorithm=beer_garden.brew_view.config.auth.token.algorithm,
     ).decode()
 
 

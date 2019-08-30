@@ -10,11 +10,11 @@ from mongoengine.errors import (
 from thriftpy2.thrift import TException
 from tornado.web import HTTPError, RequestHandler
 
-import bg_utils.mongo.models
-import brew_view
+import beer_garden.bg_utils.mongo.models
+import beer_garden.brew_view
 import brewtils.thrift
-from brew_view.authorization import AuthMixin, coalesce_permissions
-from brew_view.metrics import http_api_latency_total
+from beer_garden.brew_view.authorization import AuthMixin, coalesce_permissions
+from beer_garden.brew_view.metrics import http_api_latency_total
 from brewtils.errors import (
     ConflictError,
     ModelError,
@@ -64,7 +64,9 @@ class BaseHandler(AuthMixin, RequestHandler):
         if not refresh_id:
             return None
 
-        token = bg_utils.mongo.models.RefreshToken.objects.get(id=refresh_id)
+        token = beer_garden.bg_utils.mongo.models.RefreshToken.objects.get(
+            id=refresh_id
+        )
         now = datetime.datetime.utcnow()
         if not token or token.expires < now:
             return None
@@ -80,7 +82,7 @@ class BaseHandler(AuthMixin, RequestHandler):
 
     def get_current_user(self):
         user = AuthMixin.get_current_user(self)
-        if not user or user == brew_view.anonymous_principal:
+        if not user or user == beer_garden.brew_view.anonymous_principal:
             cookie_user = self._get_user_from_cookie()
             if cookie_user:
                 user = cookie_user
@@ -88,9 +90,9 @@ class BaseHandler(AuthMixin, RequestHandler):
 
     def set_default_headers(self):
         """Headers set here will be applied to all responses"""
-        self.set_header("BG-Version", brew_view.__version__)
+        self.set_header("BG-Version", beer_garden.__version__)
 
-        if brew_view.config.application.cors_enabled:
+        if beer_garden.brew_view.config.application.cors_enabled:
             self.set_header("Access-Control-Allow-Origin", "*")
             self.set_header("Access-Control-Allow-Headers", "Content-Type")
             self.set_header(
@@ -148,7 +150,7 @@ class BaseHandler(AuthMixin, RequestHandler):
 
     def options(self, *args, **kwargs):
 
-        if brew_view.config.application.cors_enabled:
+        if beer_garden.brew_view.config.application.cors_enabled:
             self.set_status(204)
         else:
             raise HTTPError(403, reason="CORS is disabled")
@@ -205,7 +207,7 @@ class BaseHandler(AuthMixin, RequestHandler):
                 message = error_dict.get("message", getattr(e, "message", str(e)))
                 code = error_dict.get("status_code", 500)
 
-            elif brew_view.config.application.debug_mode:
+            elif beer_garden.brew_view.config.application.debug_mode:
                 message = str(e)
 
         code = code or status_code or 500

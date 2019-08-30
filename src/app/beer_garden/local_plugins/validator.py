@@ -3,7 +3,7 @@ import sys
 from imp import load_source
 from os.path import isdir, isfile, join
 
-from bartender.errors import PluginValidationError
+from beer_garden.errors import PluginValidationError
 
 
 class LocalPluginValidator(object):

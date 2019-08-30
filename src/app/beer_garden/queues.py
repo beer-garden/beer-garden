@@ -2,10 +2,10 @@ import logging
 
 from pyrabbit2.http import HTTPError
 
-import bartender
-from bartender.events import publish_event
-from bartender.rabbitmq import get_routing_key
-from bg_utils.mongo.models import System
+import beer_garden
+from beer_garden.events import publish_event
+from beer_garden.rabbitmq import get_routing_key
+from beer_garden.bg_utils.mongo.models import System
 from brewtils.errors import NotFoundError
 from brewtils.models import Queue, Events
 
@@ -21,7 +21,7 @@ def get_queue_message_count(queue_name):
     """
     logger.debug(f"Getting queue message count for {queue_name}")
 
-    return bartender.application.clients["pyrabbit"].get_queue_size(queue_name)
+    return beer_garden.application.clients["pyrabbit"].get_queue_size(queue_name)
 
 
 def get_all_queue_info():
@@ -68,7 +68,7 @@ def clear_queue(queue_name):
     """
     logger.debug("Clearing queue %s", queue_name)
     try:
-        bartender.application.clients["pyrabbit"].clear_queue(queue_name)
+        beer_garden.application.clients["pyrabbit"].clear_queue(queue_name)
     except HTTPError as ex:
         if ex.status == 404:
             raise NotFoundError("No queue named %s" % queue_name)

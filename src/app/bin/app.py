@@ -9,6 +9,6 @@ if __name__ == "__main__":
     # package on the sys path
     sys.path.append(path.abspath(path.join(path.abspath(__file__), "..", "..")))
 
-    from bartender.__main__ import main
+    from beer_garden.__main__ import main
 
     sys.exit(main())

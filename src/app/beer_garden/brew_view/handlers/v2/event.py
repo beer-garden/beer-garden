@@ -4,14 +4,14 @@ import itertools
 from tornado.web import HTTPError
 from tornado.websocket import WebSocketHandler
 
-from brew_view.authorization import (
+from beer_garden.brew_view.authorization import (
     check_permission,
     query_token_auth,
     AuthMixin,
     Permissions,
     authenticated,
 )
-from brew_view.base_handler import BaseHandler
+from beer_garden.brew_view.base_handler import BaseHandler
 from brewtils.errors import RequestForbidden
 
 logger = logging.getLogger(__name__)

@@ -3,16 +3,16 @@ import json
 from mongoengine.errors import DoesNotExist, ValidationError
 from passlib.apps import custom_app_context
 
-import brew_view
-from bg_utils.mongo.models import Principal, Role
-from bg_utils.mongo.parser import MongoParser
-from brew_view.authorization import (
+import beer_garden.brew_view
+from beer_garden.bg_utils.mongo.models import Principal, Role
+from beer_garden.bg_utils.mongo.parser import MongoParser
+from beer_garden.brew_view.authorization import (
     authenticated,
     check_permission,
     Permissions,
     coalesce_permissions,
 )
-from brew_view.base_handler import BaseHandler
+from beer_garden.brew_view.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError, RequestForbidden
 
 
@@ -40,7 +40,7 @@ class UserAPI(BaseHandler):
           - Users
         """
         if user_identifier == "anonymous":
-            principal = brew_view.anonymous_principal
+            principal = beer_garden.brew_view.anonymous_principal
         else:
             # Need fine-grained access control here
             if user_identifier not in [

@@ -1,7 +1,7 @@
-import bg_utils
-from brew_view.authorization import authenticated, Permissions
-from brew_view.base_handler import BaseHandler
-from brew_view.thrift import ThriftClient
+import beer_garden.bg_utils
+from beer_garden.brew_view.authorization import authenticated, Permissions
+from beer_garden.brew_view.base_handler import BaseHandler
+from beer_garden.brew_view.thrift import ThriftClient
 from brewtils.errors import ConflictError
 from brewtils.schemas import SystemSchema
 
@@ -300,7 +300,7 @@ class SystemListAPI(BaseHandler):
                 thrift_response = await client.createSystem(
                     namespace, self.request.decoded_body
                 )
-            except bg_utils.bg_thrift.ConflictException:
+            except beer_garden.bg_utils.bg_thrift.ConflictException:
                 raise ConflictError() from None
 
         self.set_status(201)

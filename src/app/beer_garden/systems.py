@@ -2,11 +2,11 @@ import logging
 
 from time import sleep
 
-import bartender
-from bartender.events import publish_event
-from bartender.rabbitmq import get_routing_key
-from bg_utils.mongo.models import System, Instance
-from bg_utils.mongo.parser import MongoParser
+import beer_garden
+from beer_garden.events import publish_event
+from beer_garden.rabbitmq import get_routing_key
+from beer_garden.bg_utils.mongo.models import System, Instance
+from beer_garden.bg_utils.mongo.parser import MongoParser
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events
 from brewtils.schemas import SystemSchema
@@ -138,7 +138,7 @@ def reload_system(system_id):
     system = System.objects.get(id=system_id)
 
     logger.info("Reloading system: %s-%s", system.name, system.version)
-    bartender.application.plugin_manager.reload_system(system.name, system.version)
+    beer_garden.application.plugin_manager.reload_system(system.name, system.version)
 
 
 @publish_event(Events.SYSTEM_REMOVED)
@@ -151,26 +151,26 @@ def remove_system(system_id):
     system = System.objects.get(id=system_id)
 
     # Attempt to stop the plugins
-    registered = bartender.application.plugin_registry.get_plugins_by_system(
+    registered = beer_garden.application.plugin_registry.get_plugins_by_system(
         system.name, system.version
     )
 
     # Local plugins get stopped by us
     if registered:
         for plugin in registered:
-            bartender.application.plugin_manager.stop_plugin(plugin)
-            bartender.application.plugin_registry.remove(plugin.unique_name)
+            beer_garden.application.plugin_manager.stop_plugin(plugin)
+            beer_garden.application.plugin_registry.remove(plugin.unique_name)
 
     # Remote plugins get a stop request
     else:
-        bartender.application.clients["pika"].publish_request(
-            bartender.stop_request,
+        beer_garden.application.clients["pika"].publish_request(
+            beer_garden.stop_request,
             routing_key=get_routing_key(system.name, system.version, is_admin=True),
         )
         count = 0
         while (
             any(instance.status != "STOPPED" for instance in system.instances)
-            and count < bartender.config.plugin.local.timeout.shutdown
+            and count < beer_garden.config.plugin.local.timeout.shutdown
         ):
             sleep(1)
             count += 1
@@ -186,10 +186,10 @@ def remove_system(system_id):
         request_queue = instance.queue_info.get("request", {}).get("name")
         admin_queue = instance.queue_info.get("admin", {}).get("name")
 
-        bartender.application.clients["pyrabbit"].destroy_queue(
+        beer_garden.application.clients["pyrabbit"].destroy_queue(
             request_queue, force_disconnect=(instance.status != "STOPPED")
         )
-        bartender.application.clients["pyrabbit"].destroy_queue(
+        beer_garden.application.clients["pyrabbit"].destroy_queue(
             admin_queue, force_disconnect=(instance.status != "STOPPED")
         )
 
@@ -199,4 +199,4 @@ def remove_system(system_id):
 
 def rescan_system_directory():
     """Scans plugin directory and starts any new Systems"""
-    bartender.application.plugin_manager.scan_plugin_path()
+    beer_garden.application.plugin_manager.scan_plugin_path()

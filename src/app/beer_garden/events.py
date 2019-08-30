@@ -1,6 +1,6 @@
 import wrapt
 
-import bartender
+import beer_garden
 from brewtils.models import Event, Events
 from brewtils.schema_parser import SchemaParser
 
@@ -31,7 +31,7 @@ def publish_event(event_type):
             elif event.name in (Events.QUEUE_CLEARED.name, Events.SYSTEM_REMOVED.name):
                 event.payload = {"id": args[0]}
         finally:
-            bartender.application.event_publishers.publish_event(event)
+            beer_garden.application.event_publishers.publish_event(event)
 
         return result
 

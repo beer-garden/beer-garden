@@ -7,8 +7,8 @@ from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
 from tornado.web import HTTPError
 
-import brew_view
-from bg_utils.mongo.models import Principal, Role
+import beer_garden.brew_view
+from beer_garden.bg_utils.mongo.models import Principal, Role
 from brewtils.errors import RequestForbidden
 from brewtils.models import Principal as BrewtilsPrincipal, Role as BrewtilsRole
 
@@ -106,7 +106,7 @@ def check_permission(principal, required_permissions):
     if not permission_strings.intersection(principal.permissions):
         # Need to make a distinction between "you need to be authenticated
         # to do this" and "you've been authenticated and denied"
-        if principal == brew_view.anonymous_principal:
+        if principal == beer_garden.brew_view.anonymous_principal:
             raise HTTPError(status_code=401)
         else:
             raise RequestForbidden(
@@ -126,9 +126,12 @@ def anonymous_principal():
     without having to calculate effective permissions every time.
     """
 
-    if brew_view.config.auth.enabled and brew_view.config.auth.guest_login_enabled:
+    if (
+        beer_garden.brew_view.config.auth.enabled
+        and beer_garden.brew_view.config.auth.guest_login_enabled
+    ):
         roles = Principal.objects.get(username="anonymous").roles
-    elif brew_view.config.auth.enabled:
+    elif beer_garden.brew_view.config.auth.enabled:
         # By default, if no guest login is available, there is no anonymous
         # user, which means there are no roles.
         roles = []
@@ -235,8 +238,8 @@ def _principal_from_token(token):
     try:
         decoded = jwt.decode(
             token,
-            key=brew_view.config.auth.token.secret,
-            algorithm=brew_view.config.auth.token.algorithm,
+            key=beer_garden.brew_view.config.auth.token.secret,
+            algorithm=beer_garden.brew_view.config.auth.token.algorithm,
         )
     except jwt.exceptions.ExpiredSignatureError:
         raise HTTPError(status_code=401, log_message="Signature expired")
@@ -262,4 +265,4 @@ class AuthMixin(object):
             if principal is not None:
                 return principal
 
-        return brew_view.anonymous_principal
+        return beer_garden.brew_view.anonymous_principal

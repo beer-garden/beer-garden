@@ -1,5 +1,5 @@
-from bg_utils.event_publisher import EventPublisher
-from bg_utils.mongo.parser import MongoParser
+from .event_publisher import EventPublisher
+from .mongo.parser import MongoParser
 from brewtils.models import Events
 from brewtils.rest.client import TimeoutAdapter
 

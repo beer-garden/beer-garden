@@ -11,10 +11,10 @@ from mongoengine import Q
 from requests import Session
 from threading import Event
 
-import bartender
-from bartender.events import publish_event
-from bartender.metrics import request_created, request_started, request_completed
-from bg_utils.mongo.models import Choices, Request, System
+import beer_garden
+from beer_garden.events import publish_event
+from beer_garden.metrics import request_created, request_started, request_completed
+from beer_garden.bg_utils.mongo.models import Choices, Request, System
 from brewtils.choices import parse
 from brewtils.errors import ModelValidationError, RequestPublishException, ConflictError
 from brewtils.models import Events
@@ -30,11 +30,11 @@ class RequestValidator(object):
         self.logger = logging.getLogger(__name__)
 
         self._session = Session()
-        if not bartender.config.validator.url.ca_verify:
+        if not beer_garden.config.validator.url.ca_verify:
             urllib3.disable_warnings()
             self._session.verify = False
-        elif bartender.config.validator.url.ca_cert:
-            self._session.verify = bartender.config.validator.url.ca_cert
+        elif beer_garden.config.validator.url.ca_cert:
+            self._session.verify = beer_garden.config.validator.url.ca_cert
 
     def validate_request(self, request):
         """Validation to be called before you save a request from a user
@@ -286,7 +286,7 @@ class RequestValidator(object):
 
                 response = process_request(
                     choices_request,
-                    wait_timeout=bartender.config.validator.command.timeout,
+                    wait_timeout=beer_garden.config.validator.command.timeout,
                 )
 
                 parsed_output = json.loads(response.output)
@@ -657,7 +657,7 @@ def process_request(request, wait_timeout=-1):
     # Validates the request based on what is in the database.
     # This includes the validation of the request parameters,
     # systems are there, commands are there etc.
-    request = bartender.application.request_validator.validate_request(request)
+    request = beer_garden.application.request_validator.validate_request(request)
 
     # Once validated we need to save since validate can modify the request
     request.save()
@@ -668,7 +668,7 @@ def process_request(request, wait_timeout=-1):
 
     try:
         logger.info(f"Publishing request {request_id}")
-        bartender.application.clients["pika"].publish_request(
+        beer_garden.application.clients["pika"].publish_request(
             request, confirm=True, mandatory=True
         )
     except Exception as ex:

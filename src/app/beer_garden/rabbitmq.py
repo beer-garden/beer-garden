@@ -3,9 +3,9 @@ import logging
 from pyrabbit2.api import Client
 from pyrabbit2.http import HTTPError, NetworkError
 
-import bartender
-from bartender.requests import cancel_request
-from bg_utils.mongo.parser import MongoParser
+import beer_garden
+from beer_garden.requests import cancel_request
+from beer_garden.bg_utils.mongo.parser import MongoParser
 from brewtils.pika import TransientPikaClient
 from brewtils.schema_parser import SchemaParser
 
@@ -127,7 +127,7 @@ class PyrabbitClient(object):
         try:
             kwargs = {
                 "pattern": "^admin.*",
-                "definition": {"expires": bartender.config.amq.admin_queue_expiry},
+                "definition": {"expires": beer_garden.config.amq.admin_queue_expiry},
                 "priority": 1,
                 "apply-to": "queues",
             }

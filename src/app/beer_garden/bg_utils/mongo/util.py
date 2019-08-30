@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 def verify_db(guest_login_enabled):
     """Do everything necessary to ensure the database is in a 'good' state"""
-    from bg_utils.mongo.models import Job, Request, Role, System, Principal
+    from .models import Job, Request, Role, System, Principal
 
     for doc in (Job, Request, Role, System, Principal):
         _check_indexes(doc)
@@ -21,7 +21,7 @@ def verify_db(guest_login_enabled):
 
 def _update_request_parent_field_type():
     """Change GenericReferenceField to ReferenceField"""
-    from bg_utils.mongo.models import Request
+    from .models import Request
 
     raw_collection = Request._get_collection()
     for request in raw_collection.find({"parent._ref": {"$type": "object"}}):
@@ -31,7 +31,7 @@ def _update_request_parent_field_type():
 
 
 def _update_request_has_parent_model():
-    from bg_utils.mongo.models import Request
+    from .models import Request
 
     raw_collection = Request._get_collection()
     raw_collection.update_many({"parent": None}, {"$set": {"has_parent": False}})
@@ -42,7 +42,7 @@ def _update_request_has_parent_model():
 
 def _create_role(role):
     """Create a role if it doesn't already exist"""
-    from bg_utils.mongo.models import Role
+    from .models import Role
 
     try:
         Role.objects.get(name=role.name)
@@ -60,7 +60,7 @@ def _ensure_roles():
     Then there are roles that MUST be present. These will always be created if
     they do not exist.
     """
-    from bg_utils.mongo.models import Role
+    from .models import Role
 
     convenience_roles = [
         Role(
@@ -140,7 +140,7 @@ def _ensure_roles():
 
 
 def _should_create_admin():
-    from bg_utils.mongo.models import Principal
+    from .models import Principal
 
     count = Principal.objects.count()
 
@@ -172,7 +172,7 @@ def _ensure_users(guest_login_enabled):
     Then there are users that MUST be present. These will always be created if
     they do not exist.
     """
-    from bg_utils.mongo.models import Principal, Role
+    from .models import Principal, Role
 
     if _should_create_admin():
         default_password = os.environ.get("BG_DEFAULT_ADMIN_PASSWORD")
@@ -237,7 +237,7 @@ def _check_indexes(document_class):
     """
     from pymongo.errors import OperationFailure
     from mongoengine.connection import get_db
-    from bg_utils.mongo.models import Request
+    from .models import Request
 
     try:
         # Building the indexes could take a while so it'd be nice to give some

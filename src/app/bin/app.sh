@@ -5,5 +5,5 @@ APP_ROOT="$(dirname "$SCRIPT_DIRECTORY")"
 
 CONFIG_FILE="$APP_ROOT/dev_conf/config.yaml"
 
-CMD="bartender -c $CONFIG_FILE"
+CMD="beer_garden -c $CONFIG_FILE"
 python -m $CMD

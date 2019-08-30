@@ -1,4 +1,4 @@
-from bg_utils.mongo.models import Command
+from beer_garden.bg_utils.mongo.models import Command
 
 
 def get_command(command_id):

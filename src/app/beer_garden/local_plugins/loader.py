@@ -4,10 +4,10 @@ from imp import load_source
 from os import listdir
 from os.path import isfile, join, abspath
 
-import bartender
-from bartender.local_plugins.plugin_runner import LocalPluginRunner
-from bartender.systems import create_system
-from bg_utils.mongo.models import Instance, System
+import beer_garden
+from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
+from beer_garden.systems import create_system
+from beer_garden.bg_utils.mongo.models import Instance, System
 
 
 class LocalPluginLoader(object):
@@ -46,7 +46,7 @@ class LocalPluginLoader(object):
 
         :return: A list containing paths specifying plugins
         """
-        path = path or bartender.config.plugin.local.directory
+        path = path or beer_garden.config.plugin.local.directory
 
         if path is None:
             return []
@@ -103,7 +103,7 @@ class LocalPluginLoader(object):
         # If this system already exists we need to do some stuff
         plugin_id = None
         plugin_commands = []
-        # TODO: replace this with a call from bartender.systems
+        # TODO: replace this with a call from beer_garden.systems
         plugin_system = System.find_unique(plugin_name, plugin_version)
 
         if plugin_system:
@@ -133,7 +133,7 @@ class LocalPluginLoader(object):
         create_system(plugin_system)
 
         plugin_list = []
-        plugin_log_directory = bartender.config.plugin.local.log_directory
+        plugin_log_directory = beer_garden.config.plugin.local.log_directory
         for instance_name in plugin_instances:
             plugin = LocalPluginRunner(
                 plugin_entry,
@@ -141,15 +141,15 @@ class LocalPluginLoader(object):
                 instance_name,
                 abspath(plugin_path),
                 "localhost",
-                bartender.config.thrift.port,
+                beer_garden.config.thrift.port,
                 ssl_enabled=False,
                 plugin_args=plugin_args.get(instance_name),
                 environment=config["ENVIRONMENT"],
                 requirements=config["REQUIRES"],
                 plugin_log_directory=plugin_log_directory,
                 connection_type="thrift",
-                username=bartender.config.plugin.local.auth.username,
-                password=bartender.config.plugin.local.auth.password,
+                username=beer_garden.config.plugin.local.auth.username,
+                password=beer_garden.config.plugin.local.auth.password,
                 log_level=config["LOG_LEVEL"],
             )
 

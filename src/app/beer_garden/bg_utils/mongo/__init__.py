@@ -1,4 +1,4 @@
-from bg_utils.mongo.util import verify_db
+from .util import verify_db
 
 
 def setup_database(config):

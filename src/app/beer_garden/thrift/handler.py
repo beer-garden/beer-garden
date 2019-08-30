@@ -4,10 +4,10 @@ import logging
 import mongoengine
 import wrapt
 
-import bartender
+import beer_garden
 import brewtils.thrift
-from bartender.commands import get_commands, get_command
-from bartender.instances import (
+from beer_garden.commands import get_commands, get_command
+from beer_garden.instances import (
     initialize_instance,
     start_instance,
     stop_instance,
@@ -16,20 +16,20 @@ from bartender.instances import (
     update_instance,
     get_instance,
 )
-from bartender.log import get_plugin_log_config, load_plugin_log_config
-from bartender.queues import (
+from beer_garden.log import get_plugin_log_config, load_plugin_log_config
+from beer_garden.queues import (
     clear_all_queues,
     clear_queue,
     get_all_queue_info,
     get_queue_message_count,
 )
-from bartender.requests import (
+from beer_garden.requests import (
     get_requests,
     process_request,
     update_request,
     get_request,
 )
-from bartender.scheduler import (
+from beer_garden.scheduler import (
     create_job,
     remove_job,
     pause_job,
@@ -37,7 +37,7 @@ from bartender.scheduler import (
     get_job,
     get_jobs,
 )
-from bartender.systems import (
+from beer_garden.systems import (
     reload_system,
     remove_system,
     rescan_system_directory,
@@ -46,9 +46,9 @@ from bartender.systems import (
     query_systems,
     get_system,
 )
-from bartender.thrift.client import ThriftClient
-from bg_utils.mongo.models import Request
-from bg_utils.mongo.parser import MongoParser
+from beer_garden.thrift.client import ThriftClient
+from beer_garden.bg_utils.mongo.models import Request
+from beer_garden.bg_utils.mongo.parser import MongoParser
 from brewtils.errors import (
     ModelValidationError,
     NotFoundError,
@@ -61,15 +61,15 @@ parser = MongoParser()
 
 
 def remote_ns_names():
-    if not bartender.config.namespaces.remote:
+    if not beer_garden.config.namespaces.remote:
         return []
 
-    return [ns.name for ns in bartender.config.namespaces.remote]
+    return [ns.name for ns in beer_garden.config.namespaces.remote]
 
 
 def handle_local(namespace):
     # Handle locally if namespace explicitly matches local or if it's empty
-    return namespace in (bartender.config.namespaces.local, "", None)
+    return namespace in (beer_garden.config.namespaces.local, "", None)
 
 
 def handle_remote(namespace):
@@ -90,7 +90,7 @@ def namespace_router(_wrapped):
             logger.debug(f"Forwarding {wrapped.__name__} to {target_ns}")
 
             ns_info = None
-            for ns in bartender.config.namespaces.remote:
+            for ns in beer_garden.config.namespaces.remote:
                 if ns.name == target_ns:
                     ns_info = ns
                     break
@@ -108,7 +108,7 @@ class BartenderHandler(object):
 
     @staticmethod
     def getLocalNamespace():
-        return bartender.config.namespaces.local
+        return beer_garden.config.namespaces.local
 
     @staticmethod
     def getRemoteNamespaces():
@@ -434,4 +434,4 @@ class BartenderHandler(object):
     @namespace_router
     def getVersion():
         """Gets the current version of the backend"""
-        return bartender.__version__
+        return beer_garden.__version__

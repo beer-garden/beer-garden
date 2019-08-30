@@ -1,8 +1,8 @@
 import logging
 
-import brew_view
-from brew_view.thrift import ThriftClient
-from brew_view.base_handler import BaseHandler
+import beer_garden.brew_view
+from beer_garden.brew_view.thrift import ThriftClient
+from beer_garden.brew_view.base_handler import BaseHandler
 
 logger = logging.getLogger(__name__)
 
@@ -16,14 +16,14 @@ class ConfigHandler(BaseHandler):
             remote_namespaces = await client.getRemoteNamespaces()
 
         configs = {
-            "allow_unsafe_templates": brew_view.config.application.allow_unsafe_templates,
-            "application_name": brew_view.config.application.name,
-            "icon_default": brew_view.config.application.icon_default,
-            "debug_mode": brew_view.config.application.debug_mode,
-            "url_prefix": brew_view.config.web.url_prefix,
-            "metrics_url": brew_view.config.metrics.prometheus.url,
-            "auth_enabled": brew_view.config.auth.enabled,
-            "guest_login_enabled": brew_view.config.auth.guest_login_enabled,
+            "allow_unsafe_templates": beer_garden.brew_view.config.application.allow_unsafe_templates,
+            "application_name": beer_garden.brew_view.config.application.name,
+            "icon_default": beer_garden.brew_view.config.application.icon_default,
+            "debug_mode": beer_garden.brew_view.config.application.debug_mode,
+            "url_prefix": beer_garden.brew_view.config.web.url_prefix,
+            "metrics_url": beer_garden.brew_view.config.metrics.prometheus.url,
+            "auth_enabled": beer_garden.brew_view.config.auth.enabled,
+            "guest_login_enabled": beer_garden.brew_view.config.auth.guest_login_enabled,
             "namespaces": {"local": local_namespace, "remote": remote_namespaces},
         }
 
@@ -41,7 +41,7 @@ class VersionHandler(BaseHandler):
 
         self.write(
             {
-                "brew_view_version": brew_view.__version__,
+                "brew_view_version": beer_garden.__version__,
                 "bartender_version": bartender_version,
                 "current_api_version": "v1",
                 "supported_api_versions": ["v1"],
@@ -54,7 +54,7 @@ class SwaggerConfigHandler(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(
             {
-                "url": brew_view.config.web.url_prefix + "api/v1/spec",
+                "url": beer_garden.brew_view.config.web.url_prefix + "api/v1/spec",
                 "validatorUrl": None,
             }
         )
@@ -63,4 +63,4 @@ class SwaggerConfigHandler(BaseHandler):
 class SpecHandler(BaseHandler):
     def get(self):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(brew_view.api_spec.to_dict())
+        self.write(beer_garden.brew_view.api_spec.to_dict())

@@ -1,6 +1,6 @@
 import logging
 
-from bg_utils.mongo.models import Instance, System
+from beer_garden.bg_utils.mongo.models import Instance, System
 
 
 class LocalPluginRegistry(object):

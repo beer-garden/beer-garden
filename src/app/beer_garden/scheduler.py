@@ -9,9 +9,9 @@ from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from mongoengine import DoesNotExist
 from pytz import utc
 
-import bartender
-from bartender.requests import process_request
-from bg_utils.mongo.models import Job as BGJob, Request
+import beer_garden
+from beer_garden.requests import process_request
+from beer_garden.bg_utils.mongo.models import Job as BGJob, Request
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ def db_to_scheduler(document, scheduler, alias="beer_garden"):
         next_run_time = None
     state = {
         "id": document.id,
-        "func": "bartender.scheduler:run_job",
+        "func": "beer_garden.scheduler:run_job",
         "trigger": construct_trigger(document.trigger_type, document.trigger),
         "executor": "default",
         "args": (),
@@ -94,7 +94,7 @@ def run_job(job_id, request_template):
         logger.exception(f"Could not update job counts: {ex}")
 
     # Be a little careful here as the job could have been removed or paused
-    job = bartender.application.scheduler.get_job(job_id)
+    job = beer_garden.application.scheduler.get_job(job_id)
     if (
         job
         and job.next_run_time is not None
@@ -102,7 +102,7 @@ def run_job(job_id, request_template):
     ):
         # This essentially resets the timer on this job, which has the effect of
         # making the wait time start whenever the job finishes
-        bartender.application.scheduler.reschedule_job(job_id, trigger=job.trigger)
+        beer_garden.application.scheduler.reschedule_job(job_id, trigger=job.trigger)
 
 
 class BGJobStore(BaseJobStore):
@@ -211,7 +211,7 @@ def create_job(job):
     job.save()
 
     try:
-        bartender.application.scheduler.add_job(
+        beer_garden.application.scheduler.add_job(
             run_job,
             None,
             kwargs={"request_template": job.request_template, "job_id": str(job.id)},
@@ -231,7 +231,7 @@ def create_job(job):
 
 
 def pause_job(job_id):
-    bartender.application.scheduler.pause_job(job_id, jobstore="beer_garden")
+    beer_garden.application.scheduler.pause_job(job_id, jobstore="beer_garden")
 
     job = BGJob.objects.get(id=job_id)
     job.status = "PAUSED"
@@ -241,7 +241,7 @@ def pause_job(job_id):
 
 
 def resume_job(job_id):
-    bartender.application.scheduler.resume_job(job_id, jobstore="beer_garden")
+    beer_garden.application.scheduler.resume_job(job_id, jobstore="beer_garden")
 
     job = BGJob.objects.get(id=job_id)
     job.status = "RUNNING"
@@ -251,4 +251,4 @@ def resume_job(job_id):
 
 
 def remove_job(job_id):
-    bartender.application.scheduler.remove_job(job_id, jobstore="beer_garden")
+    beer_garden.application.scheduler.remove_job(job_id, jobstore="beer_garden")

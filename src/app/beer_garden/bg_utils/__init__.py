@@ -11,10 +11,6 @@ import six
 import yapconf
 from ruamel.yaml import YAML
 
-from ._version import __version__ as generated_version
-
-__version__ = generated_version
-
 logger = logging.getLogger(__name__)
 
 

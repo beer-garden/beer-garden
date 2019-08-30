@@ -5,10 +5,10 @@ from threading import Thread
 from time import sleep
 import signal
 
-from bartender.local_plugins.env_help import expand_string_with_environment_var
+from beer_garden.local_plugins.env_help import expand_string_with_environment_var
 from mongoengine import DoesNotExist, OperationError
 
-from bartender.local_plugins.logger import getLogLevels, getPluginLogger
+from beer_garden.local_plugins.logger import getLogLevels, getPluginLogger
 from brewtils.stoppable_thread import StoppableThread
 
 # This is the recommended import pattern, see https://github.com/google/python-subprocess32
@@ -86,7 +86,7 @@ class LocalPluginRunner(StoppableThread):
             "log_name": self.unique_name,
         }
 
-        # Logger used for bartender purposes.
+        # Logger used for beer_garden purposes.
         self.logger = getPluginLogger(
             self.unique_name,
             format_string="%(asctime)s - %(name)s - %(levelname)s - %(message)s",

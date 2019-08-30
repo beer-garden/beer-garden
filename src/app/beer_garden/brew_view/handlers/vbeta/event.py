@@ -1,6 +1,6 @@
-from brew_view.authorization import authenticated, Permissions
-from brew_view.base_handler import BaseHandler
-from brew_view.handlers.v2.event import EventSocket
+from beer_garden.brew_view.authorization import authenticated, Permissions
+from beer_garden.brew_view.base_handler import BaseHandler
+from beer_garden.brew_view.handlers.v2.event import EventSocket
 from brewtils.schema_parser import SchemaParser
 
 

@@ -2,7 +2,7 @@ from copy import copy
 
 from marshmallow.exceptions import MarshmallowError
 
-from bg_utils.mongo.models import (
+from .models import (
     System,
     Instance,
     Command,

@@ -4,11 +4,11 @@ import string
 
 from datetime import datetime
 
-import bartender
-from bartender.events import publish_event
-from bartender.rabbitmq import get_routing_key, get_routing_keys
-from bg_utils.mongo.fields import StatusInfo
-from bg_utils.mongo.models import Instance, System
+import beer_garden
+from beer_garden.events import publish_event
+from beer_garden.rabbitmq import get_routing_key, get_routing_keys
+from beer_garden.bg_utils.mongo.fields import StatusInfo
+from beer_garden.bg_utils.mongo.models import Instance, System
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events
 
@@ -36,7 +36,7 @@ def initialize_instance(instance_id):
     routing_words = [system.name, system.version, instance.name]
     req_name = get_routing_key(*routing_words)
     req_args = {"durable": True, "arguments": {"x-max-priority": 1}}
-    req_queue = bartender.application.clients["pika"].setup_queue(
+    req_queue = beer_garden.application.clients["pika"].setup_queue(
         req_name, req_args, [req_name]
     )
 
@@ -47,17 +47,17 @@ def initialize_instance(instance_id):
     )
     admin_keys = get_routing_keys(*routing_words, is_admin=True)
     admin_args = {"auto_delete": True}
-    admin_queue = bartender.application.clients["pika"].setup_queue(
+    admin_queue = beer_garden.application.clients["pika"].setup_queue(
         admin_keys[-1], admin_args, admin_keys
     )
 
     connection = {
-        "host": bartender.config.publish_hostname,
-        "port": bartender.config.amq.connections.message.port,
-        "user": bartender.config.amq.connections.message.user,
-        "password": bartender.config.amq.connections.message.password,
-        "virtual_host": bartender.config.amq.virtual_host,
-        "ssl": {"enabled": bartender.config.amq.connections.message.ssl.enabled},
+        "host": beer_garden.config.publish_hostname,
+        "port": beer_garden.config.amq.connections.message.port,
+        "user": beer_garden.config.amq.connections.message.user,
+        "password": beer_garden.config.amq.connections.message.password,
+        "virtual_host": beer_garden.config.amq.virtual_host,
+        "ssl": {"enabled": beer_garden.config.amq.connections.message.ssl.enabled},
     }
 
     instance.status = "INITIALIZING"
@@ -71,8 +71,8 @@ def initialize_instance(instance_id):
     instance.save()
 
     # Send a request to start to the plugin on the plugin's admin queue
-    bartender.application.clients["pika"].publish_request(
-        bartender.start_request,
+    beer_garden.application.clients["pika"].publish_request(
+        beer_garden.start_request,
         routing_key=get_routing_key(
             system.name, system.version, instance.name, is_admin=True
         ),
@@ -124,8 +124,8 @@ def start_instance(instance_id):
         "Starting instance %s[%s]-%s", system.name, instance.name, system.version
     )
 
-    bartender.application.plugin_manager.start_plugin(
-        bartender.application.plugin_registry.get_plugin_from_instance_id(instance.id)
+    beer_garden.application.plugin_manager.start_plugin(
+        beer_garden.application.plugin_registry.get_plugin_from_instance_id(instance.id)
     )
 
     return instance
@@ -145,18 +145,18 @@ def stop_instance(instance_id):
         "Stopping instance %s[%s]-%s", system.name, instance.name, system.version
     )
 
-    local_plugin = bartender.application.plugin_registry.get_plugin_from_instance_id(
+    local_plugin = beer_garden.application.plugin_registry.get_plugin_from_instance_id(
         instance.id
     )
 
     if local_plugin:
-        bartender.application.plugin_manager.stop_plugin(local_plugin)
+        beer_garden.application.plugin_manager.stop_plugin(local_plugin)
     else:
         system = System.objects.get(instances__contains=instance)
 
         # This causes the request consumer to terminate itself, which ends the plugin
-        bartender.application.clients["pika"].publish_request(
-            bartender.stop_request,
+        beer_garden.application.clients["pika"].publish_request(
+            beer_garden.stop_request,
             routing_key=get_routing_key(
                 system.name, system.version, instance.name, is_admin=True
             ),

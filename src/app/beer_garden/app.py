@@ -11,26 +11,26 @@ from mongoengine import Q
 from pytz import utc
 from requests.exceptions import RequestException
 
-import bartender
+import beer_garden
 import brewtils.models
 import brewtils.thrift
-from bartender.local_plugins.loader import LocalPluginLoader
-from bartender.local_plugins.manager import LocalPluginsManager
-from bartender.local_plugins.monitor import LocalPluginMonitor
-from bartender.local_plugins.registry import LocalPluginRegistry
-from bartender.local_plugins.validator import LocalPluginValidator
-from bartender.log import load_plugin_log_config
-from bartender.metrics import PrometheusServer
-from bartender.mongo_pruner import MongoPruner
-from bartender.monitor import PluginStatusMonitor
-from bartender.rabbitmq import PikaClient, PyrabbitClient
-from bartender.requests import RequestValidator
-from bartender.scheduler import BGJobStore
-from bartender.thrift.handler import BartenderHandler
-from bartender.thrift.server import make_server
-from bg_utils.event_publisher import EventPublishers, EventPublisher
-from bg_utils.mongo.models import Event, Request
-from bg_utils.publishers import MongoPublisher
+from beer_garden.local_plugins.loader import LocalPluginLoader
+from beer_garden.local_plugins.manager import LocalPluginsManager
+from beer_garden.local_plugins.monitor import LocalPluginMonitor
+from beer_garden.local_plugins.registry import LocalPluginRegistry
+from beer_garden.local_plugins.validator import LocalPluginValidator
+from beer_garden.log import load_plugin_log_config
+from beer_garden.metrics import PrometheusServer
+from beer_garden.mongo_pruner import MongoPruner
+from beer_garden.monitor import PluginStatusMonitor
+from beer_garden.rabbitmq import PikaClient, PyrabbitClient
+from beer_garden.requests import RequestValidator
+from beer_garden.scheduler import BGJobStore
+from beer_garden.thrift.handler import BartenderHandler
+from beer_garden.thrift.server import make_server
+from beer_garden.bg_utils.event_publisher import EventPublishers, EventPublisher
+from beer_garden.bg_utils.mongo.models import Event, Request
+from beer_garden.bg_utils.publishers import MongoPublisher
 from brewtils.models import Events
 from brewtils.pika import TransientPikaClient
 from brewtils.rest.easy_client import EasyClient
@@ -57,20 +57,20 @@ class BartenderApp(StoppableThread):
 
         self.clients = {
             "pika": PikaClient(
-                host=bartender.config.amq.host,
-                port=bartender.config.amq.connections.message.port,
-                ssl=bartender.config.amq.connections.message.ssl,
-                user=bartender.config.amq.connections.admin.user,
-                password=bartender.config.amq.connections.admin.password,
-                virtual_host=bartender.config.amq.virtual_host,
-                connection_attempts=bartender.config.amq.connection_attempts,
-                blocked_connection_timeout=bartender.config.amq.blocked_connection_timeout,
-                exchange=bartender.config.amq.exchange,
+                host=beer_garden.config.amq.host,
+                port=beer_garden.config.amq.connections.message.port,
+                ssl=beer_garden.config.amq.connections.message.ssl,
+                user=beer_garden.config.amq.connections.admin.user,
+                password=beer_garden.config.amq.connections.admin.password,
+                virtual_host=beer_garden.config.amq.virtual_host,
+                connection_attempts=beer_garden.config.amq.connection_attempts,
+                blocked_connection_timeout=beer_garden.config.amq.blocked_connection_timeout,
+                exchange=beer_garden.config.amq.exchange,
             ),
             "pyrabbit": PyrabbitClient(
-                host=bartender.config.amq.host,
-                virtual_host=bartender.config.amq.virtual_host,
-                **bartender.config.amq.connections.admin
+                host=beer_garden.config.amq.host,
+                virtual_host=beer_garden.config.amq.virtual_host,
+                **beer_garden.config.amq.connections.admin
             ),
         }
 
@@ -88,8 +88,8 @@ class BartenderApp(StoppableThread):
                 make_server,
                 service=brewtils.thrift.bg_thrift.BartenderBackend,
                 handler=self.handler,
-                host=bartender.config.thrift.host,
-                port=bartender.config.thrift.port,
+                host=beer_garden.config.thrift.host,
+                port=beer_garden.config.thrift.port,
             ),
             HelperThread(
                 LocalPluginMonitor,
@@ -99,8 +99,8 @@ class BartenderApp(StoppableThread):
             HelperThread(
                 PluginStatusMonitor,
                 self.clients,
-                timeout_seconds=bartender.config.plugin.status_timeout,
-                heartbeat_interval=bartender.config.plugin.status_heartbeat,
+                timeout_seconds=beer_garden.config.plugin.status_timeout,
+                heartbeat_interval=beer_garden.config.plugin.status_heartbeat,
             ),
         ]
 
@@ -113,12 +113,12 @@ class BartenderApp(StoppableThread):
                 )
             )
 
-        if bartender.config.metrics.prometheus.enabled:
+        if beer_garden.config.metrics.prometheus.enabled:
             self.helper_threads.append(
                 HelperThread(
                     PrometheusServer,
-                    bartender.config.metrics.prometheus.host,
-                    bartender.config.metrics.prometheus.port,
+                    beer_garden.config.metrics.prometheus.host,
+                    beer_garden.config.metrics.prometheus.port,
                 )
             )
 
@@ -172,7 +172,7 @@ class BartenderApp(StoppableThread):
             self.event_publishers.publish_event(
                 brewtils.models.Event(name=Events.BARTENDER_STARTED.name)
             )
-            # bartender.bv_client.publish_event(name=Events.BARTENDER_STARTED.name)
+            # beer_garden.bv_client.publish_event(name=Events.BARTENDER_STARTED.name)
         except RequestException:
             self.logger.warning("Unable to publish startup notification")
 
@@ -199,7 +199,7 @@ class BartenderApp(StoppableThread):
             self.event_publishers.publish_event(
                 brewtils.models.Event(name=Events.BARTENDER_STOPPED.name)
             )
-            # bartender.bv_client.publish_event(name=Events.BARTENDER_STOPPED.name)
+            # beer_garden.bv_client.publish_event(name=Events.BARTENDER_STOPPED.name)
         except RequestException:
             self.logger.warning("Unable to publish shutdown notification")
 
@@ -209,12 +209,12 @@ class BartenderApp(StoppableThread):
     def _setup_pruning_tasks():
 
         prune_tasks = []
-        if bartender.config.db.ttl.info > 0:
+        if beer_garden.config.db.ttl.info > 0:
             prune_tasks.append(
                 {
                     "collection": Request,
                     "field": "created_at",
-                    "delete_after": timedelta(minutes=bartender.config.db.ttl.info),
+                    "delete_after": timedelta(minutes=beer_garden.config.db.ttl.info),
                     "additional_query": (
                         Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
                     )
@@ -223,12 +223,12 @@ class BartenderApp(StoppableThread):
                 }
             )
 
-        if bartender.config.db.ttl.action > 0:
+        if beer_garden.config.db.ttl.action > 0:
             prune_tasks.append(
                 {
                     "collection": Request,
                     "field": "created_at",
-                    "delete_after": timedelta(minutes=bartender.config.db.ttl.action),
+                    "delete_after": timedelta(minutes=beer_garden.config.db.ttl.action),
                     "additional_query": (
                         Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
                     )
@@ -237,17 +237,17 @@ class BartenderApp(StoppableThread):
                 }
             )
 
-        if bartender.config.db.ttl.event > 0:
+        if beer_garden.config.db.ttl.event > 0:
             prune_tasks.append(
                 {
                     "collection": Event,
                     "field": "timestamp",
-                    "delete_after": timedelta(minutes=bartender.config.db.ttl.event),
+                    "delete_after": timedelta(minutes=beer_garden.config.db.ttl.event),
                 }
             )
 
         # Look at the various TTLs to determine how often to run the MongoPruner
-        real_ttls = [x for x in bartender.config.db.ttl.values() if x > 0]
+        real_ttls = [x for x in beer_garden.config.db.ttl.values() if x > 0]
         run_every = min(real_ttls) / 2 if real_ttls else None
 
         return prune_tasks, run_every
@@ -256,9 +256,9 @@ class BartenderApp(StoppableThread):
     def _setup_scheduler():
         job_stores = {"beer_garden": BGJobStore()}
         executors = {
-            "default": APThreadPoolExecutor(bartender.config.scheduler.max_workers)
+            "default": APThreadPoolExecutor(beer_garden.config.scheduler.max_workers)
         }
-        job_defaults = bartender.config.scheduler.job_defaults.to_dict()
+        job_defaults = beer_garden.config.scheduler.job_defaults.to_dict()
 
         return BackgroundScheduler(
             jobstores=job_stores,
@@ -276,40 +276,40 @@ class BartenderApp(StoppableThread):
             # }
         )
 
-        if bartender.config.event.mongo.enable:
+        if beer_garden.config.event.mongo.enable:
             try:
                 pubs["mongo"] = MongoPublisher()
             except Exception as ex:
                 self.logger.warning("Error starting Mongo event publisher: %s", ex)
 
-        if bartender.config.event.amq.enable:
+        if beer_garden.config.event.amq.enable:
             try:
                 pika_params = {
-                    "host": bartender.config.amq.host,
-                    "port": bartender.config.amq.connections.message.port,
-                    "ssl": bartender.config.amq.connections.message.ssl,
-                    "user": bartender.config.amq.connections.admin.user,
-                    "password": bartender.config.amq.connections.admin.password,
-                    "exchange": bartender.config.event.amq.exchange,
-                    "virtual_host": bartender.config.event.amq.virtual_host,
-                    "connection_attempts": bartender.config.amq.connection_attempts,
+                    "host": beer_garden.config.amq.host,
+                    "port": beer_garden.config.amq.connections.message.port,
+                    "ssl": beer_garden.config.amq.connections.message.ssl,
+                    "user": beer_garden.config.amq.connections.admin.user,
+                    "password": beer_garden.config.amq.connections.admin.password,
+                    "exchange": beer_garden.config.event.amq.exchange,
+                    "virtual_host": beer_garden.config.event.amq.virtual_host,
+                    "connection_attempts": beer_garden.config.amq.connection_attempts,
                 }
 
                 # Make sure the exchange exists
                 TransientPikaClient(**pika_params).declare_exchange()
 
                 # pubs["pika"] = TornadoPikaPublisher(
-                #     shutdown_timeout=bartender.config.shutdown_timeout, **pika_params
+                #     shutdown_timeout=beer_garden.config.shutdown_timeout, **pika_params
                 # )
             except Exception as ex:
                 self.logger.exception("Error starting RabbitMQ event publisher: %s", ex)
 
-        if bartender.config.event.brew_view.enable:
+        if beer_garden.config.event.brew_view.enable:
 
             class BrewViewPublisher(EventPublisher):
                 def __init__(self, config):
                     self._ez_client = EasyClient(
-                        namespace=bartender.config.namespaces.local, **config
+                        namespace=beer_garden.config.namespaces.local, **config
                     )
 
                 def publish(self, event, **kwargs):
@@ -318,7 +318,7 @@ class BartenderApp(StoppableThread):
                 def _event_serialize(self, event, **kwargs):
                     return event
 
-            pubs["brewview"] = BrewViewPublisher(bartender.config.event.brew_view)
+            pubs["brewview"] = BrewViewPublisher(beer_garden.config.event.brew_view)
 
         # Metadata functions - additional metadata to be included with each event
         # pubs.metadata_funcs["public_url"] = lambda: public_url

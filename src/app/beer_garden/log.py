@@ -1,5 +1,5 @@
-import bartender
-from bg_utils.plugin_logging_loader import PluginLoggingLoader
+import beer_garden
+from beer_garden.bg_utils.plugin_logging_loader import PluginLoggingLoader
 
 plugin_logging_config = None
 
@@ -12,7 +12,7 @@ def load_plugin_log_config():
     global plugin_logging_config
 
     plugin_logging_config = PluginLoggingLoader().load(
-        filename=bartender.config.plugin.logging.config_file,
-        level=bartender.config.plugin.logging.level,
-        default_config=bartender.app_logging_config,
+        filename=beer_garden.config.plugin.logging.config_file,
+        level=beer_garden.config.plugin.logging.level,
+        default_config=beer_garden.app_logging_config,
     )

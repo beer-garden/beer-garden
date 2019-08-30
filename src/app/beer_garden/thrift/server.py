@@ -6,7 +6,7 @@ from thriftpy2.server import TThreadedServer
 from thriftpy2.thrift import TProcessor
 from thriftpy2.transport import TServerSocket, TSSLServerSocket
 
-import bartender
+import beer_garden
 import brewtils.thrift
 from brewtils.stoppable_thread import StoppableThread
 
@@ -20,7 +20,9 @@ class BartenderThriftServer(TThreadedServer, StoppableThread):
     def __init__(self, *args, **kwargs):
         self.logger = logging.getLogger(__name__)
         self.display_name = "Thrift Server"
-        self.pool = ThreadPoolExecutor(max_workers=bartender.config.thrift.max_workers)
+        self.pool = ThreadPoolExecutor(
+            max_workers=beer_garden.config.thrift.max_workers
+        )
         self.futures = set()
         self.finished = Event()
 

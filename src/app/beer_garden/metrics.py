@@ -6,7 +6,7 @@ from prometheus_client import Gauge, Counter, Summary
 from prometheus_client.exposition import MetricsHandler
 from prometheus_client.registry import REGISTRY
 
-from bg_utils.mongo.models import Request
+from beer_garden.bg_utils.mongo.models import Request
 from brewtils.stoppable_thread import StoppableThread
 
 

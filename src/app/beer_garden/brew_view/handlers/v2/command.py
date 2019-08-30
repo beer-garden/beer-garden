@@ -1,6 +1,6 @@
-from brew_view.authorization import authenticated, Permissions
-from brew_view.base_handler import BaseHandler
-from brew_view.thrift import ThriftClient
+from beer_garden.brew_view.authorization import authenticated, Permissions
+from beer_garden.brew_view.base_handler import BaseHandler
+from beer_garden.brew_view.thrift import ThriftClient
 
 
 class CommandAPI(BaseHandler):
