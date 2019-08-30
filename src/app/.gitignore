@@ -60,7 +60,7 @@ docs/_build/
 # PyBuilder
 target/
 
-# python configuration file
+# virtualenv configuration file
 .python-version
 .venv
 

@@ -29,10 +29,14 @@ setup(
     keywords="bartender beer beer-garden beergarden",
     install_requires=[
         "apscheduler==3.6.0",
-        "bg-utils>=3.0.0a1",
         "brewtils>=3.0.0a1",
+        "mongoengine<0.16",
+        "passlib<1.8",
         "prometheus-client==0.7.1",
         "pyrabbit2==1.0.7",
+        "pytz<2019",
+        "ruamel.yaml<0.16",
+        "yapconf>=0.3.3",
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

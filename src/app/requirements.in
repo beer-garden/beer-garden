@@ -1,10 +1,12 @@
-
 # Dependencies
 -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
--e git+https://github.com/beer-garden/bg-utils@develop#egg=bg-utils
 apscheduler < 4
+mongoengine < 0.16
+passlib < 1.8
 prometheus_client < 1
 pyrabbit2 < 2
+ruamel.yaml < 0.16
+yapconf >= 0.3.3
 
 # Documentation Dependencies
 sphinx<2
@@ -17,9 +19,10 @@ codecov
 coverage
 flake8
 mock
-pytest<4
+pytest < 4
 pytest-mock
-pytz
+pytest-lazy-fixture
+pytz < 2019
 tox
 twine
 wheel
