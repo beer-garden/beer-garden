@@ -17,16 +17,16 @@ def find_version(version_file):
 
 
 setup(
-    name="bartender",
-    version=find_version("bartender/_version.py"),
-    description="Beergarden Backend",
+    name="beer-garden",
+    version=find_version("beer_garden/_version.py"),
+    description="Beergarden Application",
     long_description=readme,
-    author="The beer-garden Team",
-    author_email="bartender@beer-garden.io",
+    author="The Beer Garden Team",
+    author_email="beer@beer-garden.io",
     url="https://beer-garden.io",
     packages=(find_packages(exclude=["test", "test.*"])),
     license="MIT",
-    keywords="bartender beer beer-garden beergarden",
+    keywords="beer beer-garden beergarden",
     install_requires=[
         "apispec==0.38.0",
         "apscheduler==3.6.0",
@@ -52,10 +52,10 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "generate_bartender_config=bartender.__main__:generate_config",
-            "migrate_bartender_config=bartender.__main__:migrate_config",
-            "generate_bartender_log_config=bartender.__main__:generate_logging_config",
-            "bartender=bartender.__main__:main",
+            "generate_config=beer_garden.__main__:generate_config",
+            "migrate_config=beer_garden.__main__:migrate_config",
+            "generate_log_config=beer_garden.__main__:generate_logging_config",
+            "beer_garden=beer_garden.__main__:main",
         ]
     },
 )
