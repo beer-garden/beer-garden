@@ -1,0 +1,25 @@
+
+# Dependencies
+-e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
+-e git+https://github.com/beer-garden/bg-utils@develop#egg=bg-utils
+apscheduler < 4
+prometheus_client < 1
+pyrabbit2 < 2
+
+# Documentation Dependencies
+sphinx<2
+sphinx_rtd_theme
+watchdog
+
+# Build / Test Dependencies
+black ; python_version > "3.5"
+codecov
+coverage
+flake8
+mock
+pytest<4
+pytest-mock
+pytz
+tox
+twine
+wheel
