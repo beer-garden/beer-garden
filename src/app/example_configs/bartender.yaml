@@ -52,7 +52,7 @@ event:
   mongo:
     enable: true
 log:
-  config_file: dev_conf/logging-config.json
+  config_file: example_configs/logging-config.json
   file: null
   level: INFO
 metrics:
@@ -69,7 +69,7 @@ namespaces:
       port: 9091
 plugin:
   logging:
-    config_file: dev_conf/example-plugin-logging-config.json
+    config_file: example_configs/plugin-logging-config.json
     level: INFO
   local:
     auth:

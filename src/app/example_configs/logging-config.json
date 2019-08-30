@@ -6,7 +6,7 @@
         }
     }, 
     "handlers": {
-        "brew-view": {
+        "beer_garden": {
             "class": "logging.StreamHandler", 
             "formatter": "simple", 
             "level": "INFO", 
@@ -17,19 +17,22 @@
         "pika": {
             "level": "ERROR"
         },
+        "requests.packages.urllib3.connectionpool": {
+            "level": "WARN"
+        },
         "tornado.access": {
             "level": "WARN"
-        }, 
+        },
         "tornado.application": {
             "level": "WARN"
-        }, 
+        },
         "tornado.general": {
             "level": "WARN"
         }
     }, 
     "root": {
         "handlers": [
-            "brew-view"
+            "beer_garden"
         ], 
         "level": "INFO"
     }, 
