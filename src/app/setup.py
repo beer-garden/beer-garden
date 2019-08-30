@@ -28,6 +28,7 @@ setup(
     license="MIT",
     keywords="bartender beer beer-garden beergarden",
     install_requires=[
+        "apispec==0.38.0",
         "apscheduler==3.6.0",
         "brewtils>=3.0.0a1",
         "mongoengine<0.16",
@@ -36,6 +37,7 @@ setup(
         "pyrabbit2==1.0.7",
         "pytz<2019",
         "ruamel.yaml<0.16",
+        "tornado==6.0.3",
         "yapconf>=0.3.3",
     ],
     classifiers=[

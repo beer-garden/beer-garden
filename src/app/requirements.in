@@ -1,11 +1,13 @@
 # Dependencies
 -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
+apispec < 0.39
 apscheduler < 4
 mongoengine < 0.16
 passlib < 1.8
 prometheus_client < 1
 pyrabbit2 < 2
 ruamel.yaml < 0.16
+tornado < 7
 yapconf >= 0.3.3
 
 # Documentation Dependencies
@@ -19,9 +21,11 @@ codecov
 coverage
 flake8
 mock
+mongomock
 pytest < 4
 pytest-mock
 pytest-lazy-fixture
+pytest-tornado
 pytz < 2019
 tox
 twine
