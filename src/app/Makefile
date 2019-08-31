@@ -1,9 +1,9 @@
-# Makefile for bartender
+# Makefile for Beer Garden application
 
 PYTHON        = python
-MODULE_NAME   = bartender
+MODULE_NAME   = beer-garden
 TEST_DIR      = test
-DOCKER_NAME   = bgio/bartender
+DOCKER_NAME   = bgio/beer-garden
 VERSION      ?= 0.0.0
 
 .PHONY: clean clean-build clean-test clean-pyc help test
@@ -46,11 +46,9 @@ deps-python: ## install python dependencies
 	pip install -r requirements.txt
 
 deps-python-master: ## install bg dependencies from master
-	pip install -e git+https://github.com/beer-garden/bg-utils@master#egg=bg-utils
 	pip install -e git+https://github.com/beer-garden/brewtils@master#egg=brewtils
 
 deps-python-develop: ## install bg dependencies from develop
-	pip install -e git+https://github.com/beer-garden/bg-utils@develop#egg=bg-utils
 	pip install -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
 
 deps: deps-python ## alias of deps-python
@@ -94,9 +92,6 @@ lint: ## check style with flake8
 # Testing / Coverage
 test: ## run tests quickly with the default Python
 	pytest $(TEST_DIR)
-
-test-tox: ## run tests on every Python version with tox
-	tox
 
 coverage: ## check code coverage quickly with the default Python
 	coverage run --source $(MODULE_NAME) -m pytest $(TEST_DIR)
