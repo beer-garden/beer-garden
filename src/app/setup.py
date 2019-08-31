@@ -37,6 +37,7 @@ setup(
         "pyrabbit2==1.0.7",
         "pytz<2019",
         "ruamel.yaml<0.16",
+        "thriftpy2<0.5",
         "tornado==6.0.3",
         "yapconf>=0.3.3",
     ],

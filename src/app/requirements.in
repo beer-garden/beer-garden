@@ -7,6 +7,7 @@ passlib < 1.8
 prometheus_client < 1
 pyrabbit2 < 2
 ruamel.yaml < 0.16
+thriftpy2 < 0.5
 tornado < 7
 yapconf >= 0.3.3
 
