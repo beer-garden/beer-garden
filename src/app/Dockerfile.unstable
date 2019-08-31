@@ -1,6 +1,6 @@
 FROM python:3.7-alpine
 WORKDIR /src
-ENTRYPOINT ["bartender"]
+ENTRYPOINT ["beergarden"]
 
 ENV BG_PLUGIN_LOCAL_DIRECTORY=/plugins \
     BG_LOG_CONFIG_FILE=/src/dev_conf/logging-config.json
@@ -11,8 +11,7 @@ ADD ./dist/*.whl ./
 
 RUN set -ex \
     && apk add --no-cache --virtual .build-deps \
-        gcc make musl-dev libffi-dev openssl-dev git \
+       gcc make musl-dev libffi-dev openssl-dev git \
     && pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir ./*.whl \
     && apk del .build-deps
-
