@@ -18,7 +18,7 @@ def find_version(version_file):
 
 setup(
     name="beer-garden",
-    version=find_version("beer_garden/_version.py"),
+    version=find_version("beer_garden/__version__.py"),
     description="Beergarden Application",
     long_description=readme,
     author="The Beer Garden Team",
