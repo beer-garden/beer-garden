@@ -1,0 +1,33 @@
+# Dependencies
+-e git+https://github.com/beer-garden/brewtils@v3#egg=brewtils
+apispec < 0.39
+apscheduler < 4
+mongoengine < 0.16
+passlib < 1.8
+prometheus_client < 1
+pyrabbit2 < 2
+ruamel.yaml < 0.16
+thriftpy2 < 0.5
+tornado < 7
+yapconf >= 0.3.3
+
+# Documentation Dependencies
+sphinx<2
+sphinx_rtd_theme
+watchdog
+
+# Build / Test Dependencies
+black ; python_version > "3.5"
+codecov
+coverage
+flake8
+mock
+mongomock
+pytest < 4
+pytest-mock
+pytest-lazy-fixture
+pytest-tornado
+pytz < 2019
+tox
+twine
+wheel

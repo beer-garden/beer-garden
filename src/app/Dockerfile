@@ -1,0 +1,14 @@
+FROM python:3.7-alpine
+ARG VERSION
+ENTRYPOINT ["beergarden"]
+
+ENV BG_PLUGIN_LOCAL_DIRECTORY=/plugins \
+    BG_LOG_CONFIG_FILE=/logging-config.json
+
+ADD dev_conf/logging-config.json /logging-config.json
+
+RUN set -ex \
+    && apk add --no-cache --virtual .build-deps \
+       gcc make musl-dev libffi-dev openssl-dev \
+    && pip install --no-cache-dir beer-garden==$VERSION \
+    && apk del .build-deps

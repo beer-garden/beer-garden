@@ -1,0 +1,64 @@
+language: python
+cache: pip
+sudo: required
+dist: xenial
+
+services:
+  - docker
+
+env:
+  global:
+    # Docker User
+    - secure: "MrAgcWAZKN3fPY8AHhpQaMwgOk6KRc+Lzic3Uf1Ic94LQCghoJErT4Z9FhbRxlKPmD6bsaj/fS1YuTlfgKRZm7XpoX1tbxAL9uM+u6xgxSN1YNfDpBiUyu9zmd/pHPJEcs5Tvzu8Y2BdaJ/8g4+NVct7TUzh97+VQzp32cEzaTXE/jTIyorFMoagu2V5b/sLJp8fRbA1kLPvktZdQVRVtKt8dsQyws1FAB2H5R+uYoyFljHQ6oNw5DHYf1piIBmoUFM8vEg2X7b8DRiKmyvZoHy6ZA5V4uwrsADyB8EbGyslhRFdFzeLO4MdYBfSxvZZjrPC8kLhIis/Uqg0U0wHk6oc3an+1i23YGkDsUOR0vbOGgkoCD1P8/0BjWSHp2dNz9VRx6CDbFpAmqHDt4151xVLHbLAEYyX9SNxFyxaoOEMV97zgahiCd839+DaUp7vGUZJCVxSRyX6ZECSWHI0sftLqQFJRY1RN14pZcn1tC88WF3Xv9h4MEIBP6Nl5BCwQgd8aUXGIxFXkh1jSJ1PB0lVcaZY1mJTQtzLxNRc3Z3zH6h9vyVWxLgiHRdugigu4PuDuImtATdwuSCAcq71OTlPCYQmTOZDfCilCJ740SZRA36HyPhZ/FtNCnSGX5gKJJuirRGiCgudgL6uklgHgNSKr7ucDgmEeEjSOyMatpE="
+    # Docker Password
+    - secure: "tEV6RxMhX4Ani3F4XQkAxWnt11t2/o7iSLASYNqA4JoYFdzWXZU7Zb3EhHeEZF0WSYRFqTS+5RN9MLNPf6uTj6CRF1Y0de3j+0PIGPrxt3YowIhYmgb3fAMOfvTWjLVzlZnQKZ3xEfQRq+apWOwZwKmrO5FUe00gxLpZJhjM7odgQmggivaxfti6eFVekbebQKD9tdRqkKpBM+xRCuciiKhXjBZaUCk6o/G4+XzN8JW5+Yv95W9FTqP1xBZwaKhE1tiTg/nmC919RCFZn2CkQXZHSjFFNWux7GegbuxK3ERUKvJiqzVkM/zCyiLuWOyF45itYcNT6ZJj2P/bgtCXvRU0KHhLGDmrbDKHJlUhPN+872gyfo6NMpVJG9SZr201jGo+LOUMn7twetAFWWQ271OkA4xsZUTOPnbnnPk2EFtcFWkSeJO+XgpOTO1wdpHUytOE7rSPvuWdeBXi+6jwhMXrhsEo8nKe0tLaMHw1MrLFdP+HDgs/d4ijmd14YTp+0b5vxKbalgWXVDgN6832rLY0G5iV0Qs/lp+YKNmYlP5djgjXF4SHy2YTcqphJZKLzjxI8vRKkHGbn0pmnGBgqHked/MGfDAUBK/4vMdAKGlYr/Sm/sC3Jx0vbUwciF5lwoq5iasWTJXrv0YV5360I8EvfPIIxKzNgdYkhASUWN0="
+
+python:
+  - '3.7'
+  - '3.6'
+
+stages:
+  - lint
+  - test
+  - unstable docker deploy
+  - pypi deploy
+  - docker deploy
+
+# This is for the "test" stage
+install: "make deps-python"
+script: "make coverage"
+after_success: "codecov"
+
+jobs:
+  include:
+    - stage: lint
+      install: "pip install black flake8"
+      script: "make lint"
+      after_success: skip
+
+    - stage: unstable docker deploy
+      if: (branch = develop) AND (type != pull_request)
+      install: skip
+      script: "make docker-login publish-docker-unstable"
+      after_success: skip
+
+    - stage: pypi deploy
+      if: tag IS present
+      install: "make deps-js"
+      script: "make package-js"
+      after_success: true
+      deploy:
+        provider: pypi
+        distributions: "sdist bdist_wheel"
+        on:
+          tags: true
+        skip_cleanup: true
+        user: beerbuildbot
+        password:
+          secure: lKQ553PIEu9TCW0VqHlUTKX1dnxQbcZKMIwlbjnwRM4FFNaiD+K++JLXDC7w9eqFtlfUcNUsKfefnUOeTCjgq/qY0r53RqrYIbMtLghF2vXpQzB0tAPXmwBLQwunef5rJklPdXhUquhinXR5Ze8GGdsmOo+fNNtbkW4glmHW8NPJUOYB8Lm+UCuQH6uUJxewxz7YI4SG/6oO/cJyeVwSwzDR0Tl8kMvvuoWlzeE+vNiFgvVDQZVaP31P/fW6RuDLQYgxKUIU1WVPODTYrzcomwkWyyofTp5zvYWJRsFWjVV3Wf+MePBKNw2g0b5369Wk7SSJow2GuPe7Fci9G4fMd8tpPttEKkWmriuBPRUdTTA5Vnw6qniLRVBd4WqUJ8JNq2LZohbo1IfiIixbu2ST5OOCwoRN+vE4mY++hplBWU/f61ZLh5JINkJN/BCUA51NKdh8JKWfbDGY5c2dEfL7TvDTn0vsBciCWEzY5AUqRRlscMbgJDnyZZJa3113YKG3A8gvqfFHwWxwKc6fx93Hp/wC4nEZHxjfczHOOF32zfkqTcPTocqygBDZ/OfXWSfr0/d2KtyG+QTpn3LdVcG6xBjB3pisTGCGIp0hPObasHGf+wEKEZ4MlReed9EiSXFWzgV4B5CXWcPSuQiq7ym6aTJKTQTNlLqOUVVIMANIPns=
+
+    - stage: docker deploy
+      if: tag IS present
+      install: skip
+      script: "make docker-login publish-docker VERSION=$TRAVIS_TAG"
+      after_success: skip
