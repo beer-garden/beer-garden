@@ -1,6 +1,6 @@
 import json
 import logging
-from collections import Sequence
+from collections.abc import Sequence
 
 import re
 import six

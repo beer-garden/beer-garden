@@ -1,5 +1,5 @@
 import logging
-from collections import MutableMapping
+from collections.abc import MutableMapping
 from datetime import datetime
 
 from six import iteritems
