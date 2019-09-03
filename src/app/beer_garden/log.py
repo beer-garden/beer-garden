@@ -1,7 +1,67 @@
+import logging.config
+
+from ruamel.yaml import YAML
+
 import beer_garden
 from beer_garden.bg_utils.plugin_logging_loader import PluginLoggingLoader
 
 plugin_logging_config = None
+_LOGGING_CONFIG = None
+
+
+def setup_application_logging(config):
+    global _LOGGING_CONFIG
+    if _LOGGING_CONFIG:
+        return
+
+    logging_filename = config.get("config_file")
+
+    if logging_filename:
+        with open(logging_filename, "rt") as log_file:
+            logging_config = YAML().load(log_file)
+    else:
+        logging_config = _default_app_config(config.get("level"), config.get("file"))
+
+    logging.config.dictConfig(logging_config)
+
+    _LOGGING_CONFIG = logging_config
+
+
+def _default_app_config(level, filename):
+    if filename:
+        handler = {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": level,
+            "formatter": "simple",
+            "filename": filename,
+            "maxBytes": 10485760,
+            "backupCount": 20,
+            "encoding": "utf8",
+        }
+    else:
+        handler = {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+            "level": level,
+            "stream": "ext://sys.stdout",
+        }
+
+    return {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "simple": {"format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"}
+        },
+        "handlers": {"beer_garden": handler},
+        "loggers": {
+            "pika": {"level": "ERROR"},
+            "requests.packages.urllib3.connectionpool": {"level": "WARN"},
+            "tornado.access": {"level": "WARN"},
+            "tornado.application": {"level": "WARN"},
+            "tornado.general": {"level": "WARN"},
+        },
+        "root": {"level": level, "handlers": ["beer_garden"]},
+    }
 
 
 def get_plugin_log_config(system_name=None):
@@ -11,8 +71,9 @@ def get_plugin_log_config(system_name=None):
 def load_plugin_log_config():
     global plugin_logging_config
 
+    plugin_config = beer_garden.config.get("plugin")
     plugin_logging_config = PluginLoggingLoader().load(
-        filename=beer_garden.config.plugin.logging.config_file,
-        level=beer_garden.config.plugin.logging.level,
-        default_config=beer_garden.app_logging_config,
+        filename=plugin_config.logging.config_file,
+        level=plugin_config.logging.level,
+        default_config=_LOGGING_CONFIG,
     )

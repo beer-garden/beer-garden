@@ -55,22 +55,23 @@ class BartenderApp(StoppableThread):
             validator=self.plugin_validator, registry=self.plugin_registry
         )
 
+        amq_config = beer_garden.config.get("amq")
         self.clients = {
             "pika": PikaClient(
-                host=beer_garden.config.amq.host,
-                port=beer_garden.config.amq.connections.message.port,
-                ssl=beer_garden.config.amq.connections.message.ssl,
-                user=beer_garden.config.amq.connections.admin.user,
-                password=beer_garden.config.amq.connections.admin.password,
-                virtual_host=beer_garden.config.amq.virtual_host,
-                connection_attempts=beer_garden.config.amq.connection_attempts,
-                blocked_connection_timeout=beer_garden.config.amq.blocked_connection_timeout,
-                exchange=beer_garden.config.amq.exchange,
+                host=amq_config.host,
+                port=amq_config.port,
+                ssl=amq_config.connections.message.ssl,
+                user=amq_config.connections.admin.user,
+                password=amq_config.connections.admin.password,
+                virtual_host=amq_config.virtual_host,
+                connection_attempts=amq_config.connection_attempts,
+                blocked_connection_timeout=amq_config.blocked_connection_timeout,
+                exchange=amq_config.exchange,
             ),
             "pyrabbit": PyrabbitClient(
-                host=beer_garden.config.amq.host,
-                virtual_host=beer_garden.config.amq.virtual_host,
-                **beer_garden.config.amq.connections.admin
+                host=amq_config.host,
+                virtual_host=amq_config.virtual_host,
+                **amq_config.connections.admin
             ),
         }
 
@@ -83,13 +84,16 @@ class BartenderApp(StoppableThread):
 
         self.handler = BartenderHandler()
 
+        # TODO: The thrift portion is currently hardcoded, because it should
+        # no longer be in the config. Eventually the thrift thread will be removed.
+        plugin_config = beer_garden.config.get("plugin")
         self.helper_threads = [
             HelperThread(
                 make_server,
                 service=brewtils.thrift.bg_thrift.BartenderBackend,
                 handler=self.handler,
-                host=beer_garden.config.thrift.host,
-                port=beer_garden.config.thrift.port,
+                host="0.0.0.0",
+                port=9090,
             ),
             HelperThread(
                 LocalPluginMonitor,
@@ -99,8 +103,8 @@ class BartenderApp(StoppableThread):
             HelperThread(
                 PluginStatusMonitor,
                 self.clients,
-                timeout_seconds=beer_garden.config.plugin.status_timeout,
-                heartbeat_interval=beer_garden.config.plugin.status_heartbeat,
+                timeout_seconds=plugin_config.status_timeout,
+                heartbeat_interval=plugin_config.status_heartbeat,
             ),
         ]
 
@@ -113,12 +117,13 @@ class BartenderApp(StoppableThread):
                 )
             )
 
-        if beer_garden.config.metrics.prometheus.enabled:
+        metrics_config = beer_garden.config.get("metrics")
+        if metrics_config.prometheus.enabled:
             self.helper_threads.append(
                 HelperThread(
                     PrometheusServer,
-                    beer_garden.config.metrics.prometheus.host,
-                    beer_garden.config.metrics.prometheus.port,
+                    metrics_config.prometheus.host,
+                    metrics_config.prometheus.port,
                 )
             )
 
@@ -209,12 +214,13 @@ class BartenderApp(StoppableThread):
     def _setup_pruning_tasks():
 
         prune_tasks = []
-        if beer_garden.config.db.ttl.info > 0:
+        db_config = beer_garden.config.get("db")
+        if db_config.ttl.info > 0:
             prune_tasks.append(
                 {
                     "collection": Request,
                     "field": "created_at",
-                    "delete_after": timedelta(minutes=beer_garden.config.db.ttl.info),
+                    "delete_after": timedelta(minutes=db_config.ttl.info),
                     "additional_query": (
                         Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
                     )
@@ -223,12 +229,12 @@ class BartenderApp(StoppableThread):
                 }
             )
 
-        if beer_garden.config.db.ttl.action > 0:
+        if db_config.ttl.action > 0:
             prune_tasks.append(
                 {
                     "collection": Request,
                     "field": "created_at",
-                    "delete_after": timedelta(minutes=beer_garden.config.db.ttl.action),
+                    "delete_after": timedelta(minutes=db_config.ttl.action),
                     "additional_query": (
                         Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
                     )
@@ -237,17 +243,17 @@ class BartenderApp(StoppableThread):
                 }
             )
 
-        if beer_garden.config.db.ttl.event > 0:
+        if db_config.ttl.event > 0:
             prune_tasks.append(
                 {
                     "collection": Event,
                     "field": "timestamp",
-                    "delete_after": timedelta(minutes=beer_garden.config.db.ttl.event),
+                    "delete_after": timedelta(minutes=db_config.ttl.event),
                 }
             )
 
         # Look at the various TTLs to determine how often to run the MongoPruner
-        real_ttls = [x for x in beer_garden.config.db.ttl.values() if x > 0]
+        real_ttls = [x for x in db_config.ttl.values() if x > 0]
         run_every = min(real_ttls) / 2 if real_ttls else None
 
         return prune_tasks, run_every
@@ -255,10 +261,9 @@ class BartenderApp(StoppableThread):
     @staticmethod
     def _setup_scheduler():
         job_stores = {"beer_garden": BGJobStore()}
-        executors = {
-            "default": APThreadPoolExecutor(beer_garden.config.scheduler.max_workers)
-        }
-        job_defaults = beer_garden.config.scheduler.job_defaults.to_dict()
+        scheduler_config = beer_garden.config.get("scheduler")
+        executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
+        job_defaults = scheduler_config.job_defaults.to_dict()
 
         return BackgroundScheduler(
             jobstores=job_stores,
@@ -276,23 +281,25 @@ class BartenderApp(StoppableThread):
             # }
         )
 
-        if beer_garden.config.event.mongo.enable:
+        event_config = beer_garden.config.get("event")
+        if event_config.mongo.enable:
             try:
                 pubs["mongo"] = MongoPublisher()
             except Exception as ex:
                 self.logger.warning("Error starting Mongo event publisher: %s", ex)
 
-        if beer_garden.config.event.amq.enable:
+        amq_config = beer_garden.config.get("amq")
+        if amq_config.enable:
             try:
                 pika_params = {
-                    "host": beer_garden.config.amq.host,
-                    "port": beer_garden.config.amq.connections.message.port,
-                    "ssl": beer_garden.config.amq.connections.message.ssl,
-                    "user": beer_garden.config.amq.connections.admin.user,
-                    "password": beer_garden.config.amq.connections.admin.password,
-                    "exchange": beer_garden.config.event.amq.exchange,
-                    "virtual_host": beer_garden.config.event.amq.virtual_host,
-                    "connection_attempts": beer_garden.config.amq.connection_attempts,
+                    "host": amq_config.host,
+                    "port": amq_config.connections.message.port,
+                    "ssl": amq_config.connections.message.ssl,
+                    "user": amq_config.connections.admin.user,
+                    "password": amq_config.connections.admin.password,
+                    "exchange": event_config.amq.exchange,
+                    "virtual_host": event_config.amq.virtual_host,
+                    "connection_attempts": amq_config.connection_attempts,
                 }
 
                 # Make sure the exchange exists
@@ -304,13 +311,11 @@ class BartenderApp(StoppableThread):
             except Exception as ex:
                 self.logger.exception("Error starting RabbitMQ event publisher: %s", ex)
 
-        if beer_garden.config.event.brew_view.enable:
+        if event_config.brew_view.enable:
 
             class BrewViewPublisher(EventPublisher):
                 def __init__(self, config):
-                    self._ez_client = EasyClient(
-                        namespace=beer_garden.config.namespaces.local, **config
-                    )
+                    self._ez_client = EasyClient(namespace="default", **config)
 
                 def publish(self, event, **kwargs):
                     self._ez_client.publish_event(event)
@@ -318,7 +323,7 @@ class BartenderApp(StoppableThread):
                 def _event_serialize(self, event, **kwargs):
                     return event
 
-            pubs["brewview"] = BrewViewPublisher(beer_garden.config.event.brew_view)
+            pubs["brewview"] = BrewViewPublisher(event_config.brew_view)
 
         # Metadata functions - additional metadata to be included with each event
         # pubs.metadata_funcs["public_url"] = lambda: public_url

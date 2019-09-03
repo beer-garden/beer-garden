@@ -2,7 +2,6 @@
 
 import signal
 import sys
-from argparse import ArgumentParser
 
 from yapconf import YapconfSpec
 
@@ -22,6 +21,7 @@ def signal_handler(signal_number, stack_frame):
 
 
 def generate_logging_config():
+    # TODO: Migrate this to config module.
     spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
     beer_garden.bg_utils.generate_logging_config_file(
         spec, get_default_logging_config, sys.argv[1:]
@@ -29,11 +29,13 @@ def generate_logging_config():
 
 
 def generate_config():
+    # TODO: Migrate this to config module.
     spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
     beer_garden.bg_utils.generate_config_file(spec, sys.argv[1:])
 
 
 def migrate_config():
+    # TODO: Migrate this to config module.
     spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
     beer_garden.bg_utils.update_config_file(spec, sys.argv[1:])
 
@@ -42,13 +44,8 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
-    parser = ArgumentParser()
-    spec.add_arguments(parser)
-    args = parser.parse_args(sys.argv[1:])
-
     # Logging isn't set up until after this...
-    beer_garden.brew_view.setup(spec, vars(args))
+    beer_garden.brew_view.setup(sys.argv[1:])
 
     # Schedule things to happen after the ioloop comes up
     beer_garden.brew_view.io_loop.add_callback(beer_garden.brew_view.startup)

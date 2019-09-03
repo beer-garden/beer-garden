@@ -61,15 +61,15 @@ parser = MongoParser()
 
 
 def remote_ns_names():
-    if not beer_garden.config.namespaces.remote:
+    if not beer_garden.config.get("namespaces.remote"):
         return []
 
-    return [ns.name for ns in beer_garden.config.namespaces.remote]
+    return [ns.name for ns in beer_garden.config.get("namespaces.remote")]
 
 
 def handle_local(namespace):
     # Handle locally if namespace explicitly matches local or if it's empty
-    return namespace in (beer_garden.config.namespaces.local, "", None)
+    return namespace in (beer_garden.config.get("namespaces.local"), "", None)
 
 
 def handle_remote(namespace):
@@ -90,7 +90,7 @@ def namespace_router(_wrapped):
             logger.debug(f"Forwarding {wrapped.__name__} to {target_ns}")
 
             ns_info = None
-            for ns in beer_garden.config.namespaces.remote:
+            for ns in beer_garden.config.get("namespaces.remote"):
                 if ns.name == target_ns:
                     ns_info = ns
                     break
@@ -108,7 +108,7 @@ class BartenderHandler(object):
 
     @staticmethod
     def getLocalNamespace():
-        return beer_garden.config.namespaces.local
+        return beer_garden.config.get("namespaces.local")
 
     @staticmethod
     def getRemoteNamespaces():

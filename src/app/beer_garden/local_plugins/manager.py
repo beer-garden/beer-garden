@@ -107,7 +107,7 @@ class LocalPluginsManager(object):
 
             # Now just wait for the plugin thread to die
             self.logger.info("Waiting for plugin %s to stop...", plugin.unique_name)
-            plugin.join(beer_garden.config.plugin.local.timeout.shutdown)
+            plugin.join(beer_garden.config.get("plugin.local.timeout.shutdown"))
 
         except Exception as ex:
             clean_shutdown = False

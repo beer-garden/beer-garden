@@ -126,12 +126,10 @@ def anonymous_principal():
     without having to calculate effective permissions every time.
     """
 
-    if (
-        beer_garden.brew_view.config.auth.enabled
-        and beer_garden.brew_view.config.auth.guest_login_enabled
-    ):
+    auth_config = beer_garden.config.get("auth")
+    if auth_config.enabled and auth_config.guest_login_enabled:
         roles = Principal.objects.get(username="anonymous").roles
-    elif beer_garden.brew_view.config.auth.enabled:
+    elif auth_config.enabled:
         # By default, if no guest login is available, there is no anonymous
         # user, which means there are no roles.
         roles = []
@@ -235,11 +233,10 @@ def _principal_from_token(token):
     Returns:
         Brewtils principal if JWT is valid, None otherwise
     """
+    auth_config = beer_garden.config.get("auth")
     try:
         decoded = jwt.decode(
-            token,
-            key=beer_garden.brew_view.config.auth.token.secret,
-            algorithm=beer_garden.brew_view.config.auth.token.algorithm,
+            token, key=auth_config.token.secret, algorithm=auth_config.token.algorithm
         )
     except jwt.exceptions.ExpiredSignatureError:
         raise HTTPError(status_code=401, log_message="Signature expired")

@@ -36,7 +36,6 @@ from brewtils.schemas import (
     CronTriggerSchema,
 )
 
-config = None
 io_loop = None
 server = None
 tornado_app = None
@@ -44,20 +43,17 @@ public_url = None
 logger = None
 event_publishers = None
 api_spec = None
-app_logging_config = None
 notification_meta = None
 anonymous_principal = None
 client_ssl = None
 
 
-def setup(spec, cli_args):
-    global config, logger, app_logging_config
+def setup(cli_args):
+    global logger
 
-    config = beer_garden.bg_utils.load_application_config(spec, cli_args)
+    beer_garden.config.load(cli_args)
+    beer_garden.log.setup_application_logging(beer_garden.config.get("log"))
 
-    app_logging_config = beer_garden.bg_utils.setup_application_logging(
-        config, get_default_logging_config(config.log.level, config.log.file)
-    )
     logger = logging.getLogger(__name__)
     logger.debug("Logging configured. First post!")
 
@@ -74,23 +70,26 @@ async def startup():
     # Ensure we have a mongo connection
     logger.info("Checking for Mongo connection")
     await _progressive_backoff(
-        partial(setup_database, config), "Unable to connect to mongo, is it started?"
+        partial(setup_database, beer_garden.config),
+        "Unable to connect to mongo, is it started?",
     )
 
     # Need to wait until after mongo connection established to load
     anonymous_principal = load_anonymous()
 
-    if config.metrics.prometheus.enabled:
+    metrics_config = beer_garden.config.get("metrics")
+    if metrics_config.prometheus.enabled:
         logger.info(
             f"Starting metrics server on "
-            f"{config.metrics.prometheus.host}:{config.metrics.prometheus.port}"
+            f"{metrics_config.prometheus.host}:{metrics_config.prometheus.port}"
         )
         start_http_server(
-            config.metrics.prometheus.port, addr=config.metrics.prometheus.host
+            metrics_config.prometheus.port, addr=metrics_config.prometheus.host
         )
 
-    logger.info(f"Starting HTTP server on {config.web.host}:{config.web.port}")
-    server.listen(config.web.port, config.web.host)
+    web_config = beer_garden.config.get("web")
+    logger.info(f"Starting HTTP server on {web_config.host}:{web_config.port}")
+    server.listen(web_config.port, web_config.host)
 
     beer_garden.brew_view.logger.info("Application is started. Hello!")
 
@@ -141,10 +140,13 @@ def _setup_application():
     global io_loop, tornado_app, public_url, server, client_ssl
 
     # Tweak some config options
-    config.web.url_prefix = normalize_url_prefix(config.web.url_prefix)
-    if not config.auth.token.secret:
-        config.auth.token.secret = os.urandom(20)
-        if config.auth.enabled:
+    web_config = beer_garden.config.get("web")
+    web_config.url_prefix = normalize_url_prefix(web_config.url_prefix)
+
+    auth_config = beer_garden.config.get("auth")
+    if not auth_config.token.secret:
+        auth_config.token.secret = os.urandom(20)
+        if auth_config.enabled:
             logger.warning(
                 "Brew-view was started with authentication enabled and no "
                 "Secret. Generated tokens will not be valid across Brew-view "
@@ -152,10 +154,10 @@ def _setup_application():
             )
 
     public_url = Url(
-        scheme="https" if config.web.ssl.enabled else "http",
-        host=config.web.public_fqdn,
-        port=config.web.port,
-        path=config.web.url_prefix,
+        scheme="https" if web_config.ssl.enabled else "http",
+        host=web_config.public_fqdn,
+        port=web_config.port,
+        path=web_config.url_prefix,
     ).url
 
     tornado_app = _setup_tornado_app()
@@ -172,7 +174,8 @@ def _setup_tornado_app():
     import beer_garden.brew_view.handlers.vbeta as vbeta
     import beer_garden.brew_view.handlers.misc as misc
 
-    prefix = config.web.url_prefix
+    web_config = beer_garden.config.get("web")
+    prefix = web_config.url_prefix
     static_base = os.path.join(os.path.dirname(__file__), "static", "dist")
 
     # These get documented in our OpenAPI (fka Swagger) documentation
@@ -249,37 +252,38 @@ def _setup_tornado_app():
             {"path": static_base, "default_filename": "index.html"},
         ),
     ]
-    _load_swagger(published_url_specs, title=config.application.name)
+    app_config = beer_garden.config.get("application")
+    _load_swagger(published_url_specs, title=app_config.name)
 
     return Application(
         published_url_specs + unpublished_url_specs,
-        debug=config.application.debug_mode,
-        cookie_secret=config.auth.token.secret,
+        debug=app_config.debug_mode,
+        cookie_secret=app_config.token.secret,
     )
 
 
 def _setup_ssl_context():
-
-    if config.web.ssl.enabled:
+    web_config = beer_garden.config.get("web")
+    if web_config.ssl.enabled:
         server_ssl = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         server_ssl.load_cert_chain(
-            certfile=config.web.ssl.public_key, keyfile=config.web.ssl.private_key
+            certfile=web_config.ssl.public_key, keyfile=web_config.ssl.private_key
         )
         server_ssl.verify_mode = getattr(
-            ssl, "CERT_" + config.web.ssl.client_cert_verify.upper()
+            ssl, "CERT_" + web_config.ssl.client_cert_verify.upper()
         )
 
         client_ssl = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         client_ssl.load_cert_chain(
-            certfile=config.web.ssl.public_key, keyfile=config.web.ssl.private_key
+            certfile=web_config.ssl.public_key, keyfile=web_config.ssl.private_key
         )
 
-        if config.web.ssl.ca_cert or config.web.ssl.ca_path:
+        if web_config.ssl.ca_cert or web_config.ssl.ca_path:
             server_ssl.load_verify_locations(
-                cafile=config.web.ssl.ca_cert, capath=config.web.ssl.ca_path
+                cafile=web_config.ssl.ca_cert, capath=web_config.ssl.ca_path
             )
             client_ssl.load_verify_locations(
-                cafile=config.web.ssl.ca_cert, capath=config.web.ssl.ca_path
+                cafile=web_config.ssl.ca_cert, capath=web_config.ssl.ca_path
             )
     else:
         server_ssl = None

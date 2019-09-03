@@ -15,15 +15,19 @@ class ConfigHandler(BaseHandler):
             local_namespace = await client.getLocalNamespace()
             remote_namespaces = await client.getRemoteNamespaces()
 
+        app_config = beer_garden.config.get("application")
+        web_config = beer_garden.config.get("web")
+        metrics_config = beer_garden.config.get("metrics")
+        auth_config = beer_garden.config.get("auth")
         configs = {
-            "allow_unsafe_templates": beer_garden.brew_view.config.application.allow_unsafe_templates,
-            "application_name": beer_garden.brew_view.config.application.name,
-            "icon_default": beer_garden.brew_view.config.application.icon_default,
-            "debug_mode": beer_garden.brew_view.config.application.debug_mode,
-            "url_prefix": beer_garden.brew_view.config.web.url_prefix,
-            "metrics_url": beer_garden.brew_view.config.metrics.prometheus.url,
-            "auth_enabled": beer_garden.brew_view.config.auth.enabled,
-            "guest_login_enabled": beer_garden.brew_view.config.auth.guest_login_enabled,
+            "allow_unsafe_templates": app_config.allow_unsafe_templates,
+            "application_name": app_config.name,
+            "icon_default": app_config.icon_default,
+            "debug_mode": app_config.debug_mode,
+            "url_prefix": web_config.url_prefix,
+            "metrics_url": metrics_config.prometheus.url,
+            "auth_enabled": auth_config.enabled,
+            "guest_login_enabled": auth_config.guest_login_enabled,
             "namespaces": {"local": local_namespace, "remote": remote_namespaces},
         }
 
@@ -54,7 +58,7 @@ class SwaggerConfigHandler(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(
             {
-                "url": beer_garden.brew_view.config.web.url_prefix + "api/v1/spec",
+                "url": beer_garden.config.get("web.url_prefix") + "api/v1/spec",
                 "validatorUrl": None,
             }
         )

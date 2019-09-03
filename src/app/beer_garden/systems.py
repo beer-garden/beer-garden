@@ -168,10 +168,9 @@ def remove_system(system_id):
             routing_key=get_routing_key(system.name, system.version, is_admin=True),
         )
         count = 0
-        while (
-            any(instance.status != "STOPPED" for instance in system.instances)
-            and count < beer_garden.config.plugin.local.timeout.shutdown
-        ):
+        while any(
+            instance.status != "STOPPED" for instance in system.instances
+        ) and count < beer_garden.config.get("plugin.local.timeout.shutdown"):
             sleep(1)
             count += 1
             system.reload()

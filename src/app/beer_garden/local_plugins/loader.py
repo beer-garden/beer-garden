@@ -46,7 +46,7 @@ class LocalPluginLoader(object):
 
         :return: A list containing paths specifying plugins
         """
-        path = path or beer_garden.config.plugin.local.directory
+        path = path or beer_garden.config.get("plugin.local.directory")
 
         if path is None:
             return []
@@ -133,7 +133,7 @@ class LocalPluginLoader(object):
         create_system(plugin_system)
 
         plugin_list = []
-        plugin_log_directory = beer_garden.config.plugin.local.log_directory
+        plugin_log_directory = beer_garden.config.get("plugin.local.log_directory")
         for instance_name in plugin_instances:
             plugin = LocalPluginRunner(
                 plugin_entry,
@@ -141,15 +141,15 @@ class LocalPluginLoader(object):
                 instance_name,
                 abspath(plugin_path),
                 "localhost",
-                beer_garden.config.thrift.port,
+                9090,
                 ssl_enabled=False,
                 plugin_args=plugin_args.get(instance_name),
                 environment=config["ENVIRONMENT"],
                 requirements=config["REQUIRES"],
                 plugin_log_directory=plugin_log_directory,
                 connection_type="thrift",
-                username=beer_garden.config.plugin.local.auth.username,
-                password=beer_garden.config.plugin.local.auth.password,
+                username=beer_garden.config.get("plugin.local.auth.username"),
+                password=beer_garden.config.get("plugin.local.auth.password"),
                 log_level=config["LOG_LEVEL"],
             )
 
