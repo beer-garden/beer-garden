@@ -20,14 +20,14 @@ def setup_application_logging(config):
         with open(logging_filename, "rt") as log_file:
             logging_config = YAML().load(log_file)
     else:
-        logging_config = _default_app_config(config.get("level"), config.get("file"))
+        logging_config = default_app_config(config.get("level"), config.get("file"))
 
     logging.config.dictConfig(logging_config)
 
     _LOGGING_CONFIG = logging_config
 
 
-def _default_app_config(level, filename):
+def default_app_config(level, filename):
     if filename:
         handler = {
             "class": "logging.handlers.RotatingFileHandler",

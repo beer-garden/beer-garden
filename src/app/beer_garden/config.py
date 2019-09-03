@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
+import json
 import os
 import sys
 from argparse import ArgumentParser
 from datetime import datetime
 from typing import List
 
+import six
 from ruamel.yaml import YAML
-from yapconf import YapconfSpec
+from yapconf import YapconfSpec, dump_data
 
-__all__ = ["load", "migrate", "get"]
+from beer_garden.bg_utils import parse_args
+from beer_garden.log import default_app_config
+
+__all__ = ["load", "generate_logging", "generate", "migrate", "get"]
 
 _CONFIG = None
 
@@ -44,8 +49,119 @@ def load(args: List[str], force=False):
     _CONFIG = spec.load_config(*config_sources)
 
 
-def migrate(filename: str):
-    pass
+def generate(args: List[str]):
+    """Generate a configuration file.
+
+    Takes a specification and a series of command line arguments. Will create a
+    file at the location specified by the resolved `config` value. If none
+    exists the configuration will be printed to stdout.
+
+    Args:
+        args: Command line arguments
+
+    Returns:
+        None
+
+    Raises:
+        YapconfLoadError: Missing 'config' configuration option (file location)
+    """
+    spec = YapconfSpec(_SPECIFICATION, env_prefix="BG_")
+    config = _generate_config(spec, args)
+
+    # Bootstrap items shouldn't be in the generated config file
+    # We mimic a migration as it's the easiest way to filter out bootstrap items
+    items = [item for item in spec._yapconf_items.values() if not item.bootstrap]
+    filtered_config = {}
+    for item in items:
+        item.migrate_config(
+            config, filtered_config, always_update=False, update_defaults=False
+        )
+
+    dump_data(
+        filtered_config,
+        filename=config.configuration.file,
+        file_type=_get_config_type(config),
+    )
+
+
+def migrate(args: List[str]):
+    """Updates a configuration file in-place.
+
+    Args:
+        args: Command line arguments. Must contain an argument that specifies the
+        config file to update ('-c')
+    Returns:
+        None
+
+    Raises:
+        YapconfLoadError: Missing 'config' configuration option (file location)
+    """
+    spec = YapconfSpec(_SPECIFICATION, env_prefix="BG_")
+    config = _generate_config(spec, args)
+
+    if not config.configuration.file:
+        raise SystemExit(
+            "Please specify a config file to update" " in the CLI arguments (-c)"
+        )
+
+    current_root, current_extension = os.path.splitext(config.configuration.file)
+
+    current_type = current_extension[1:]
+    if current_type == "yml":
+        current_type = "yaml"
+
+    # Determine if a type conversion is needed
+    type_conversion = False
+    new_type = _get_config_type(config)
+    if current_type != new_type:
+        new_file = current_root + "." + new_type
+        type_conversion = True
+    else:
+        new_file = config.configuration.file
+
+    # logger.debug("About to migrate config at %s" % config.configuration.file)
+    spec.migrate_config_file(
+        config.configuration.file,
+        current_file_type=current_type,
+        output_file_name=new_file,
+        output_file_type=new_type,
+        update_defaults=True,
+        include_bootstrap=False,
+    )
+
+    if type_conversion:
+        # logger.debug("Removing old config file at %s" % config.configuration.file)
+        os.remove(config.configuration.file)
+
+
+def generate_logging(args: List[str]):
+    """Generate and save logging configuration file.
+
+    Args:
+        args: Command line arguments
+            --log-config-file: Configuration will be written to this file (will print to
+                stdout if missing)
+            --log-file: Logs will be written to this file (used in a RotatingFileHandler)
+            --log-level: Handlers will be configured with this logging level
+
+    Returns:
+        str: The logging configuration dictionary
+    """
+    spec = YapconfSpec(_SPECIFICATION, env_prefix="BG_")
+    args = parse_args(spec, ["log.config_file", "log.file", "log.level"], args)
+
+    log = args.get("log", {})
+    logging_config = default_app_config(log.get("level"), log.get("file"))
+    log_config_file = log.get("config_file")
+
+    if log_config_file is not None:
+        with open(log_config_file, "w") as f:
+            dumped = json.dumps(logging_config, indent=4, sort_keys=True)
+            f.write(six.u(dumped))
+    else:
+        print(json.dumps(logging_config, indent=4, sort_keys=True))
+
+    return logging_config
 
 
 def get(key: str):
@@ -141,6 +257,35 @@ def _backup_previous_config(filename, tmp_filename):
             "%s to %s" % (tmp_filename, filename)
         )
         raise
+
+
+def _generate_config(spec, cli_args):
+    """Generate a configuration from a spec and command line arguments.
+
+    Args:
+        spec (yapconf.YapconfSpec): Specification for the application
+        cli_args (List[str]): Command line arguments
+
+    Returns:
+        box.Box: The generated configuration object
+    """
+    parser = ArgumentParser()
+    spec.add_arguments(parser)
+    args = parser.parse_args(cli_args)
+
+    return spec.load_config(vars(args), "ENVIRONMENT")
+
+
+def _get_config_type(config):
+    """Get configuration type from a configuration"""
+
+    if config.configuration.type:
+        return config.configuration.type
+
+    if config.configuration.file and config.configuration.file.endswith("json"):
+        return "json"
+
+    return "yaml"
 
 
 _META_SPEC = {
