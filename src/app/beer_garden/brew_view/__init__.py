@@ -253,12 +253,13 @@ def _setup_tornado_app():
         ),
     ]
     app_config = beer_garden.config.get("application")
+    auth_config = beer_garden.config.get("auth")
     _load_swagger(published_url_specs, title=app_config.name)
 
     return Application(
         published_url_specs + unpublished_url_specs,
         debug=app_config.debug_mode,
-        cookie_secret=app_config.token.secret,
+        cookie_secret=auth_config.token.secret,
     )
 
 

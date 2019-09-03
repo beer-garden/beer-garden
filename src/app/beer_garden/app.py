@@ -59,7 +59,7 @@ class BartenderApp(StoppableThread):
         self.clients = {
             "pika": PikaClient(
                 host=amq_config.host,
-                port=amq_config.port,
+                port=amq_config.connections.message.port,
                 ssl=amq_config.connections.message.ssl,
                 user=amq_config.connections.admin.user,
                 password=amq_config.connections.admin.password,
@@ -288,9 +288,10 @@ class BartenderApp(StoppableThread):
             except Exception as ex:
                 self.logger.warning("Error starting Mongo event publisher: %s", ex)
 
-        amq_config = beer_garden.config.get("amq")
-        if amq_config.enable:
+        if event_config.amq.enable:
             try:
+                amq_config = beer_garden.config.get("amq")
+
                 pika_params = {
                     "host": amq_config.host,
                     "port": amq_config.connections.message.port,
