@@ -14,7 +14,6 @@ from urllib3.util.url import Url
 import beer_garden.bg_utils
 from beer_garden.bg_utils.mongo import setup_database
 from beer_garden.brew_view.authorization import anonymous_principal as load_anonymous
-from beer_garden.brew_view.specification import get_default_logging_config
 from brewtils.models import Event, Events
 from brewtils.rest import normalize_url_prefix
 from brewtils.schemas import (
