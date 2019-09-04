@@ -3,14 +3,8 @@
 import signal
 import sys
 
-from yapconf import YapconfSpec
-
 import beer_garden.bg_utils
 import beer_garden.brew_view
-from beer_garden.brew_view.specification import (
-    SPECIFICATION,
-    get_default_logging_config,
-)
 
 
 def signal_handler(signal_number, stack_frame):
@@ -18,26 +12,6 @@ def signal_handler(signal_number, stack_frame):
     beer_garden.brew_view.io_loop.add_callback_from_signal(
         beer_garden.brew_view.shutdown
     )
-
-
-def generate_logging_config():
-    # TODO: Migrate this to config module.
-    spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
-    beer_garden.bg_utils.generate_logging_config_file(
-        spec, get_default_logging_config, sys.argv[1:]
-    )
-
-
-def generate_config():
-    # TODO: Migrate this to config module.
-    spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
-    beer_garden.bg_utils.generate_config_file(spec, sys.argv[1:])
-
-
-def migrate_config():
-    # TODO: Migrate this to config module.
-    spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
-    beer_garden.bg_utils.update_config_file(spec, sys.argv[1:])
 
 
 def main():

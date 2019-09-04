@@ -25,6 +25,19 @@ amq:
   heartbeat_interval: 3600
   host: localhost
   virtual_host: /
+application:
+  allow_unsafe_templates: false
+  cors_enabled: true
+  debug_mode: true
+  icon_default: fa-beer
+  name: Beer Garden
+auth:
+  enabled: false
+  guest_login_enabled: true
+  token:
+    algorithm: HS256
+    lifetime: 1200
+    secret: IAMSUPERSECRET
 db:
   connection:
     host: localhost
@@ -64,13 +77,10 @@ metrics:
 namespaces:
   local: default
   remote:
-    - name: bar
-      host: localhost
-      port: 9091
+  - host: localhost
+    name: bar
+    port: 9091
 plugin:
-  logging:
-    config_file: example_configs/plugin-logging-config.json
-    level: INFO
   local:
     auth:
       password: password
@@ -80,6 +90,9 @@ plugin:
     timeout:
       shutdown: 10
       startup: 2
+  logging:
+    config_file: example_configs/plugin-logging-config.json
+    level: INFO
   status_heartbeat: 5
   status_timeout: 30
 publish_hostname: localhost
@@ -91,13 +104,21 @@ scheduler:
     coalesce: true
     max_instances: 3
   max_workers: 10
-thrift:
-  host: 0.0.0.0
-  max_workers: 25
-  port: 9090
 validator:
   command:
     timeout: 10
   url:
     ca_cert: null
     ca_verify: true
+web:
+  host: 0.0.0.0
+  port: 2337
+  public_fqdn: localhost
+  ssl:
+    ca_cert: null
+    ca_path: null
+    client_cert_verify: NONE
+    enabled: false
+    private_key: null
+    public_key: null
+  url_prefix: null
