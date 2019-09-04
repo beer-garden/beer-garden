@@ -198,28 +198,6 @@ class TestBgUtils(object):
 
         assert logging_config == generated_config
 
-    @pytest.mark.parametrize(
-        "file_name,file_type,expected_type",
-        [
-            (None, None, "yaml"),
-            (None, "yaml", "yaml"),
-            (None, "json", "json"),
-            ("file", None, "yaml"),
-            ("file", "yaml", "yaml"),
-            ("file", "json", "json"),
-            ("file.yaml", None, "yaml"),
-            ("file.blah", None, "yaml"),
-            ("file.json", None, "json"),
-            ("file.yaml", "yaml", "yaml"),
-            ("file.yaml", "json", "json"),
-            ("file.json", "yaml", "yaml"),
-            ("file.json", "json", "json"),
-        ],
-    )
-    def test_get_config_type(self, file_name, file_type, expected_type):
-        config = Box({"configuration": {"file": file_name, "type": file_type}})
-        assert bg_utils._get_config_type(config) == expected_type
-
 
 class TestSafeMigrate(object):
     def test_success(self, tmpdir, spec, old_config, new_config):
