@@ -52,9 +52,9 @@ def load(args: List[str], force=False):
 def generate(args: List[str]):
     """Generate a configuration file.
 
-    Takes a specification and a series of command line arguments. Will create a
-    file at the location specified by the resolved `config` value. If none
-    exists the configuration will be printed to stdout.
+    Takes a series of command line arguments and will create a file at the location
+    specified by the resolved `config` value. If none exists the configuration will be
+    printed to stdout.
 
     Args:
         args: Command line arguments
