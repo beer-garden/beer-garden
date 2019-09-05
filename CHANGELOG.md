@@ -1,5 +1,15 @@
 # Beer Garden Changelog
 
+## 2.4.9
+9/5/19
+Brew-view 2.4.13, Bartender 2.4.4, BG-utils 2.4.8
+
+#### Bug Fixes
+- HTML output is now rendered correctly (#312)
+
+#### Other Changes
+- Now using npm instead of yarn
+
 ## 2.4.8
 6/27/19
 Brew-view 2.4.12, Bartender 2.4.4, BG-utils 2.4.8
