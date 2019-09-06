@@ -10,7 +10,6 @@ import six
 from ruamel.yaml import YAML
 from yapconf import YapconfSpec, dump_data
 
-from beer_garden.bg_utils import parse_args
 from beer_garden.log import default_app_config
 
 __all__ = ["load", "generate_logging", "generate", "migrate", "get"]
@@ -148,7 +147,7 @@ def generate_logging(args: List[str]):
         str: The logging configuration dictionary
     """
     spec = YapconfSpec(_SPECIFICATION, env_prefix="BG_")
-    args = parse_args(spec, ["log.config_file", "log.file", "log.level"], args)
+    args = _parse_args(spec, ["log.config_file", "log.file", "log.level"], args)
 
     log = args.get("log", {})
     logging_config = default_app_config(log.get("level"), log.get("file"))
@@ -286,6 +285,55 @@ def _get_config_type(config):
         return "json"
 
     return "yaml"
+
+
+def _parse_args(spec, item_names, cli_args):
+    """Parse command-line arguments for specific item names
+
+    Args:
+        spec (yapconf.YapconfSpec): Specification for the application
+        item_names(List[str]): Names to parse
+        cli_args (List[str]): Command line arguments
+
+    Returns:
+        dict: Argument values
+    """
+
+    def find_item(spec, item_name):
+        name_parts = item_name.split(spec._separator)
+        base_name = name_parts[0]
+        to_return = spec.get_item(base_name)
+        for name in name_parts[1:]:
+            to_return = to_return.children[name]
+        return to_return
+
+    parser = ArgumentParser()
+    for item_name in item_names:
+        item = find_item(spec, item_name)
+        item.add_argument(parser)
+
+    args = vars(parser.parse_args(cli_args))
+    for item_name in item_names:
+        name_parts = item_name.split(spec._separator)
+        if len(name_parts) <= 1:
+            if args[name_parts[0]] is None:
+                args[name_parts[0]] = find_item(spec, item_name).default
+            continue
+
+        current_arg_value = args.get(name_parts[0], {})
+        default_value = {}
+        item = spec.get_item(name_parts[0])
+        for name in name_parts[1:]:
+            default_value[name] = {}
+            item = item.children[name]
+            current_arg_value = current_arg_value.get(name, {})
+        default_value[name_parts[-1]] = item.default
+        if not current_arg_value:
+            if not args.get(name_parts[0]):
+                args[name_parts[0]] = {}
+            args[name_parts[0]].update(default_value)
+
+    return args
 
 
 _META_SPEC = {

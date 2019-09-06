@@ -10,8 +10,8 @@ from box import Box
 from mock import patch, Mock
 from yapconf import YapconfSpec
 
-import bg_utils
-import bg_utils.mongo.models
+import beer_garden.bg_utils
+import beer_garden.bg_utils.mongo.models
 
 
 @pytest.fixture
@@ -88,26 +88,28 @@ def new_config():
     return {"log": {"config_file": None, "file": None, "level": "INFO"}}
 
 
-class TestBgUtils(object):
-    def test_parse_args(self, spec):
-        cli_args = [
-            "--log-config-file",
-            "/path/to/log/config",
-            "--log-file",
-            "/path/to/log/file",
-            "--log-level",
-            "INFO",
-        ]
-        data = bg_utils.parse_args(
-            spec, ["log.config_file", "log.file", "log.level"], cli_args
-        )
-        assert data == {
-            "log": {
-                "config_file": "/path/to/log/config",
-                "file": "/path/to/log/file",
-                "level": "INFO",
-            }
+def test_parse_args(spec):
+    cli_args = [
+        "--log-config-file",
+        "/path/to/log/config",
+        "--log-file",
+        "/path/to/log/file",
+        "--log-level",
+        "INFO",
+    ]
+    data = beer_garden.config._parse_args(
+        spec, ["log.config_file", "log.file", "log.level"], cli_args
+    )
+    assert data == {
+        "log": {
+            "config_file": "/path/to/log/config",
+            "file": "/path/to/log/file",
+            "level": "INFO",
         }
+    }
+
+
+class TestBgUtils(object):
 
     @patch("bg_utils.open")
     def test_generate_logging_config(self, open_mock, spec):
