@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 import os
+from pathlib import Path
 
 import pytest
 import yapconf
+from box import Box
 from mock import Mock
 from ruamel import yaml
 from yapconf import YapconfSpec
 
 import beer_garden.config
+from beer_garden.log import default_app_config
 
 
 class TestLoadConfig(object):
@@ -115,6 +118,24 @@ class TestUpdateConfig(object):
     def test_no_file_specified(self):
         with pytest.raises(SystemExit):
             beer_garden.config.migrate([])
+
+
+class TestGenerateLogging(object):
+
+    def test_no_file(self):
+        logging_config = beer_garden.config.generate_logging([])
+
+        assert logging_config == default_app_config("INFO", None)
+
+    def test_with_file(self, tmpdir):
+        logging_config_file = Path(tmpdir, "logging.json")
+
+        logging_config = beer_garden.config.generate_logging(
+            ["--log-config-file", str(logging_config_file)]
+        )
+
+        assert Path.exists(logging_config_file)
+        assert logging_config == default_app_config("INFO", None)
 
 
 class TestConfigGet(object):

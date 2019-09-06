@@ -89,34 +89,6 @@ def new_config():
 
 
 class TestBgUtils(object):
-
-    @patch("bg_utils.open")
-    def test_generate_logging_config(self, open_mock, spec):
-        fake_file = Mock()
-        fake_file.__exit__ = Mock()
-        fake_file.__enter__ = Mock(return_value=fake_file)
-        open_mock.return_value = fake_file
-        generated_config = {"foo": "bar"}
-        config_generator = Mock(return_value=generated_config)
-
-        logging_config = bg_utils.generate_logging_config_file(
-            spec, config_generator, ["--log-config-file", "/path/to/log/config"]
-        )
-        assert logging_config == generated_config
-        assert open_mock.called is True
-
-    @patch("bg_utils.open")
-    def test_generate_logging_config_no_file(self, open_mock, spec):
-        generated_config = {"foo": "bar"}
-        config_generator = Mock(return_value=generated_config)
-
-        logging_config = bg_utils.generate_logging_config_file(
-            spec, config_generator, []
-        )
-        config_generator.assert_called_with("INFO", None)
-        assert logging_config == generated_config
-        assert open_mock.called is False
-
     @pytest.mark.parametrize(
         "config",
         [
@@ -167,17 +139,6 @@ class TestBgUtils(object):
         app_config = Mock(log_config="/path/to/log/config")
         bg_utils.setup_application_logging(app_config, {})
         config_mock.assert_called_with({"foo": "bar"})
-
-    def test_generate_logging_config_no_mock(self, tmpdir, spec):
-        config_path = tmpdir.join("logging-config.json")
-        generated_config = {"foo": "bar"}
-        config_generator = Mock(return_value=generated_config)
-
-        logging_config = bg_utils.generate_logging_config_file(
-            spec, config_generator, ["--log-config", str(config_path)]
-        )
-
-        assert logging_config == generated_config
 
 
 class TestSafeMigrate(object):
