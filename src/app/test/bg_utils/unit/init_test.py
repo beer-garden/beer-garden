@@ -88,27 +88,6 @@ def new_config():
     return {"log": {"config_file": None, "file": None, "level": "INFO"}}
 
 
-def test_parse_args(spec):
-    cli_args = [
-        "--log-config-file",
-        "/path/to/log/config",
-        "--log-file",
-        "/path/to/log/file",
-        "--log-level",
-        "INFO",
-    ]
-    data = beer_garden.config._parse_args(
-        spec, ["log.config_file", "log.file", "log.level"], cli_args
-    )
-    assert data == {
-        "log": {
-            "config_file": "/path/to/log/config",
-            "file": "/path/to/log/file",
-            "level": "INFO",
-        }
-    }
-
-
 class TestBgUtils(object):
 
     @patch("bg_utils.open")

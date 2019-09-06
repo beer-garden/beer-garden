@@ -150,3 +150,24 @@ class TestConfigGet(object):
 def test_get_config_type(file_name, file_type, expected_type):
     config = Box({"configuration": {"file": file_name, "type": file_type}})
     assert beer_garden.config._get_config_type(config) == expected_type
+
+
+def test_parse_args():
+    cli_args = [
+        "--log-config-file",
+        "/path/to/log/config",
+        "--log-file",
+        "/path/to/log/file",
+        "--log-level",
+        "INFO",
+    ]
+    data = beer_garden.config._parse_args(
+        ["log.config_file", "log.file", "log.level"], cli_args
+    )
+    assert data == {
+        "log": {
+            "config_file": "/path/to/log/config",
+            "file": "/path/to/log/file",
+            "level": "INFO",
+        }
+    }
