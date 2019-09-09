@@ -104,7 +104,11 @@ def migrate(args: List[str]):
         YapconfLoadError: Missing 'config' configuration option (file location)
     """
     spec = YapconfSpec(_SPECIFICATION, env_prefix="BG_")
-    config = _generate_config(spec, args)
+    parser = ArgumentParser()
+    spec.add_arguments(parser)
+    args = parser.parse_args(args)
+
+    config = spec.load_config(vars(args), "ENVIRONMENT")
 
     if not config.configuration.file:
         raise SystemExit(
@@ -263,23 +267,6 @@ def _backup_previous_config(filename, tmp_filename):
             "%s to %s" % (tmp_filename, filename)
         )
         raise
-
-
-def _generate_config(spec, cli_args):
-    """Generate a configuration from a spec and command line arguments.
-
-    Args:
-        spec (yapconf.YapconfSpec): Specification for the application
-        cli_args (List[str]): Command line arguments
-
-    Returns:
-        box.Box: The generated configuration object
-    """
-    parser = ArgumentParser()
-    spec.add_arguments(parser)
-    args = parser.parse_args(cli_args)
-
-    return spec.load_filtered_config(vars(args), "ENVIRONMENT", exclude_bootstrap=True)
 
 
 def _get_config_type(config):
