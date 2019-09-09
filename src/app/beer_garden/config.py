@@ -18,7 +18,7 @@ __all__ = ["load", "generate_logging", "generate", "migrate", "get"]
 _CONFIG = None
 
 
-def load(args: List[str], force=False):
+def load(args: List[str], force=False) -> Box:
     """Load the application configuration.
 
     Attempt to load the application configuration in the following order:
@@ -32,12 +32,16 @@ def load(args: List[str], force=False):
 
     Once loaded, the configuration can be reached with the `get` method.
 
-    :param args: Command line arguments.
-    :param force: Force a reload.
+    Args:
+        args: Command line arguments
+        force: Force a reload.
+
+    Returns:
+        The configuration object
     """
     global _CONFIG
     if _CONFIG is not None and not force:
-        return
+        return _CONFIG
 
     # Parse args given as command-line arguments.
     spec = YapconfSpec(_SPECIFICATION, env_prefix="BG_")
@@ -47,6 +51,8 @@ def load(args: List[str], force=False):
 
     config_sources = _setup_config_sources(spec, cli_args)
     _CONFIG = spec.load_config(*config_sources)
+
+    return _CONFIG
 
 
 def generate(args: List[str]):

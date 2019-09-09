@@ -19,6 +19,31 @@ class TestLoadConfig(object):
         spec = YapconfSpec(beer_garden.config._SPECIFICATION)
         assert beer_garden.config._CONFIG == spec.defaults
 
+    @pytest.mark.parametrize(
+        "config",
+        [
+            # (file extension, file type, file contents)
+            ("yaml", "yaml", "log_level: DEBUG"),
+            ("json", "json", '{"log_level": "DEBUG"}'),
+            ("", "yaml", "log_level: DEBUG"),
+            ("yaml", None, "log_level: DEBUG"),
+            ("json", None, '{"log_level": "DEBUG"}'),
+            ("", None, "log_level: DEBUG"),
+        ],
+    )
+    def test_config_file(self, tmpdir, config):
+        config_file = Path(tmpdir, "config." + config[0])
+
+        cli_args = ["--configuration-file", str(config_file)]
+        if config[1]:
+            cli_args += ["--configuration-type", config[1]]
+
+        with open(config_file, "w") as f:
+            f.write(config[2])
+
+        generated_config = beer_garden.config.load(cli_args, force=True)
+        assert generated_config.log.level == "DEBUG"
+
 
 class TestGenerateConfig(object):
     def test_correctness(self, tmpdir):
@@ -121,7 +146,6 @@ class TestUpdateConfig(object):
 
 
 class TestGenerateLogging(object):
-
     def test_no_file(self):
         logging_config = beer_garden.config.generate_logging([])
 

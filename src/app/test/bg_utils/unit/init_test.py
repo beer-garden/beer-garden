@@ -89,41 +89,6 @@ def new_config():
 
 
 class TestBgUtils(object):
-    @pytest.mark.parametrize(
-        "config",
-        [
-            # (file extension, file type, file contents)
-            ("yaml", "yaml", "log_level: DEBUG"),
-            ("yaml", None, "log_level: DEBUG"),
-            ("json", None, '{"log_level": "DEBUG"}'),
-            ("json", "json", '{"log_level": "DEBUG"}'),
-            ("", "yaml", "log_level: DEBUG"),
-            ("", None, "log_level: DEBUG"),
-        ],
-    )
-    def test_setup_with_config_file(self, tmpdir, spec, config):
-
-        config_file = os.path.join(str(tmpdir), "config." + config[0])
-        cli_args = {"configuration": {"file": config_file, "type": config[1]}}
-
-        with open(config_file, "w") as f:
-            f.write(config[2])
-
-        generated_config = bg_utils.load_application_config(spec, cli_args)
-        assert generated_config.log.level == "DEBUG"
-        assert len(spec.sources) == 3
-
-    def test_load_application_config_no_file_given(self, spec):
-        config = bg_utils.load_application_config(spec, {})
-        assert type(config) == Box
-        assert len(spec.sources) == 2
-
-    @patch("bg_utils.logging.config.dictConfig")
-    def test_setup_application_logging_no_log_config(self, config_mock):
-        app_config = Box({"log": {"config_file": None}})
-        bg_utils.setup_application_logging(app_config, {})
-        config_mock.assert_called_with({})
-
     @patch("bg_utils.open")
     @patch("json.load")
     @patch("bg_utils.logging.config.dictConfig")
