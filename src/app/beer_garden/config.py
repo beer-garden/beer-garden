@@ -59,8 +59,10 @@ def generate(args: List[str]):
     """Generate a configuration file.
 
     Takes a series of command line arguments and will create a file at the location
-    specified by the resolved `config` value. If none exists the configuration will be
-    printed to stdout.
+    specified by the resolved `configuration.file` value. If that value resolves to None
+    the configuration will be printed to STDOUT.
+
+    Note that bootstrap items will not be included in the generated configuration.
 
     Args:
         args: Command line arguments
@@ -72,21 +74,20 @@ def generate(args: List[str]):
         YapconfLoadError: Missing 'config' configuration option (file location)
     """
     spec = YapconfSpec(_SPECIFICATION, env_prefix="BG_")
-    config = _generate_config(spec, args)
 
-    # Bootstrap items shouldn't be in the generated config file
-    # We mimic a migration as it's the easiest way to filter out bootstrap items
-    items = [item for item in spec._yapconf_items.values() if not item.bootstrap]
-    filtered_config = {}
-    for item in items:
-        item.migrate_config(
-            config, filtered_config, always_update=False, update_defaults=False
-        )
+    parser = ArgumentParser()
+    spec.add_arguments(parser)
+    args = parser.parse_args(args)
+
+    bootstrap = spec.load_filtered_config(vars(args), "ENVIRONMENT", bootstrap=True)
+    config = spec.load_filtered_config(
+        vars(args), "ENVIRONMENT", exclude_bootstrap=True
+    )
 
     dump_data(
-        filtered_config,
-        filename=config.configuration.file,
-        file_type=_get_config_type(config),
+        config,
+        filename=bootstrap.configuration.file,
+        file_type=_get_config_type(bootstrap),
     )
 
 
@@ -278,7 +279,7 @@ def _generate_config(spec, cli_args):
     spec.add_arguments(parser)
     args = parser.parse_args(cli_args)
 
-    return spec.load_config(vars(args), "ENVIRONMENT")
+    return spec.load_filtered_config(vars(args), "ENVIRONMENT", exclude_bootstrap=True)
 
 
 def _get_config_type(config):
