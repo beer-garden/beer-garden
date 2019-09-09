@@ -10,7 +10,7 @@ plugin_logging_config = None
 _LOGGING_CONFIG = None
 
 
-def load(config: Box) -> dict:
+def load(config: Box, force=False) -> dict:
     """Load the application logging configuration.
 
     Will attempt to use a file specified by the log_config_file config item. If that
@@ -19,13 +19,14 @@ def load(config: Box) -> dict:
 
     Args:
         config: Subsection "log" of the loaded configuration
+        force: Force a reload.
 
     Returns:
         The loaded logging configuration
 
     """
     global _LOGGING_CONFIG
-    if _LOGGING_CONFIG:
+    if _LOGGING_CONFIG is not None and not force:
         return _LOGGING_CONFIG
 
     logging_filename = config.get("config_file")
@@ -43,7 +44,7 @@ def load(config: Box) -> dict:
     return _LOGGING_CONFIG
 
 
-def default_app_config(level, filename):
+def default_app_config(level, filename=None):
     if filename:
         handler = {
             "class": "logging.handlers.RotatingFileHandler",

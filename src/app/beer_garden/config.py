@@ -34,7 +34,7 @@ def load(args: List[str], force=False) -> Box:
 
     Args:
         args: Command line arguments
-        force: Force a reload.
+        force: Force a reload
 
     Returns:
         The configuration object

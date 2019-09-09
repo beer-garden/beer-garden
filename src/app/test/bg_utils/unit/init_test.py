@@ -3,15 +3,11 @@ from __future__ import unicode_literals
 import json
 import os
 from io import open
-from ruamel import yaml
 
 import pytest
-from box import Box
 from mock import patch, Mock
+from ruamel import yaml
 from yapconf import YapconfSpec
-
-import beer_garden.bg_utils
-import beer_garden.bg_utils.mongo.models
 
 
 @pytest.fixture
@@ -86,24 +82,6 @@ def old_config():
 def new_config():
     """Represents a up-to-date config with all new values."""
     return {"log": {"config_file": None, "file": None, "level": "INFO"}}
-
-
-class TestBgUtils(object):
-    @patch("bg_utils.open")
-    @patch("json.load")
-    @patch("bg_utils.logging.config.dictConfig")
-    def test_setup_application_logging_from_file(
-        self, config_mock, json_mock, open_mock
-    ):
-        fake_file = Mock()
-        fake_file.__exit__ = Mock()
-        fake_file.__enter__ = Mock(return_value=fake_file)
-        open_mock.return_value = fake_file
-        fake_config = {"foo": "bar"}
-        json_mock.return_value = fake_config
-        app_config = Mock(log_config="/path/to/log/config")
-        bg_utils.setup_application_logging(app_config, {})
-        config_mock.assert_called_with({"foo": "bar"})
 
 
 class TestSafeMigrate(object):
