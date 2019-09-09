@@ -22,7 +22,7 @@ def setup_bartender(cli_args):
     global application, logger
 
     config.load(cli_args)
-    log.setup_application_logging(config.get("log"))
+    log.load(config.get("log"))
     logger = logging.getLogger(__name__)
 
     application = BartenderApp()

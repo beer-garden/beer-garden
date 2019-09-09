@@ -1,5 +1,6 @@
 import logging.config
 
+from box import Box
 from ruamel.yaml import YAML
 
 import beer_garden
@@ -9,10 +10,23 @@ plugin_logging_config = None
 _LOGGING_CONFIG = None
 
 
-def setup_application_logging(config):
+def load(config: Box) -> dict:
+    """Load the application logging configuration.
+
+    Will attempt to use a file specified by the log_config_file config item. If that
+    item resolves to None then will use the "default" logging configuration with the
+    values from the log_level and log_file configuration items.
+
+    Args:
+        config: Subsection "log" of the loaded configuration
+
+    Returns:
+        The loaded logging configuration
+
+    """
     global _LOGGING_CONFIG
     if _LOGGING_CONFIG:
-        return
+        return _LOGGING_CONFIG
 
     logging_filename = config.get("config_file")
 
@@ -25,6 +39,8 @@ def setup_application_logging(config):
     logging.config.dictConfig(logging_config)
 
     _LOGGING_CONFIG = logging_config
+
+    return _LOGGING_CONFIG
 
 
 def default_app_config(level, filename):
