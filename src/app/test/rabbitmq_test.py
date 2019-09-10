@@ -2,7 +2,48 @@ import pytest
 from mock import Mock, ANY
 from pyrabbit2.http import HTTPError, NetworkError
 
-from beer_garden.rabbitmq import PikaClient, PyrabbitClient
+from beer_garden.rabbitmq import (
+    PikaClient,
+    PyrabbitClient,
+    get_routing_key,
+    get_routing_keys,
+)
+
+
+def test_get_routing_key():
+    assert "system.1-0-0.instance" == get_routing_key("system", "1.0.0", "instance")
+
+
+def test_get_routing_keys():
+    assert ["system", "system.1-0-0", "system.1-0-0.instance"] == get_routing_keys(
+        "system", "1.0.0", "instance"
+    )
+
+
+def test_get_routing_keys_admin_basic():
+    assert ["admin"] == get_routing_keys(is_admin=True)
+
+
+def test_get_routing_keys_admin_no_clone_id():
+    assert [
+        "admin",
+        "admin.system",
+        "admin.system.1-0-0",
+        "admin.system.1-0-0.instance",
+    ] == get_routing_keys("system", "1.0.0", "instance", is_admin=True)
+
+
+def test_get_routing_keys_admin_clone_id():
+    expected = [
+        "admin",
+        "admin.system",
+        "admin.system.1-0-0",
+        "admin.system.1-0-0.instance",
+        "admin.system.1-0-0.instance.clone",
+    ]
+    assert expected == get_routing_keys(
+        "system", "1.0.0", "instance", "clone", is_admin=True
+    )
 
 
 class TestPikaClient(object):

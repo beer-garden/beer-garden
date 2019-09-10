@@ -2,7 +2,7 @@ import pytest
 from mock import ANY, MagicMock, Mock, PropertyMock, call
 from pika.exceptions import AMQPError
 
-from beer_garden.rabbitmq import TransientPikaClient, get_routing_key, get_routing_keys
+from beer_garden.rabbitmq import TransientPikaClient
 
 host = "localhost"
 port = 5672
@@ -93,35 +93,4 @@ class TestTransientPikaClient(object):
             body=message_mock,
             properties={},
             mandatory=True,
-        )
-
-    def test_get_routing_key(self):
-        assert "system.1-0-0.instance" == get_routing_key("system", "1.0.0", "instance")
-
-    def test_get_routing_keys(self):
-        assert ["system", "system.1-0-0", "system.1-0-0.instance"] == get_routing_keys(
-            "system", "1.0.0", "instance"
-        )
-
-    def test_get_routing_keys_admin_basic(self):
-        assert ["admin"] == get_routing_keys(is_admin=True)
-
-    def test_get_routing_keys_admin_no_clone_id(self):
-        assert [
-            "admin",
-            "admin.system",
-            "admin.system.1-0-0",
-            "admin.system.1-0-0.instance",
-        ] == get_routing_keys("system", "1.0.0", "instance", is_admin=True)
-
-    def test_get_routing_keys_admin_clone_id(self):
-        expected = [
-            "admin",
-            "admin.system",
-            "admin.system.1-0-0",
-            "admin.system.1-0-0.instance",
-            "admin.system.1-0-0.instance.clone",
-        ]
-        assert expected == get_routing_keys(
-            "system", "1.0.0", "instance", "clone", is_admin=True
         )
