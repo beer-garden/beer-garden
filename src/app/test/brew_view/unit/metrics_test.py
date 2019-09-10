@@ -3,7 +3,7 @@ from datetime import datetime
 from mock import Mock
 from time import sleep
 
-import brew_view.metrics as metrics
+import beer_garden.brew_view.metrics as metrics
 
 
 @pytest.fixture

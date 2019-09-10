@@ -12,8 +12,8 @@ into the correct default values).
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
-from bg_utils.mongo.models import Instance
-from bg_utils.mongo.parser import MongoParser
+from beer_garden.bg_utils.mongo.models import Instance
+from beer_garden.bg_utils.mongo.parser import MongoParser
 from brewtils.errors import ModelValidationError
 from brewtils.test.comparable import assert_instance_equal
 

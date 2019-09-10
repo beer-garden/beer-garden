@@ -1,32 +1,108 @@
 import pytest
-from box import Box
-from mock import Mock
+from mock import Mock, ANY
 from pyrabbit2.http import HTTPError, NetworkError
 
-from bartender.pyrabbit import PyrabbitClient
+from beer_garden.rabbitmq import (
+    PikaClient,
+    PyrabbitClient,
+    get_routing_key,
+    get_routing_keys,
+)
 
 
-@pytest.fixture
-def pyrabbit_client():
-    return Mock()
+def test_get_routing_key():
+    assert "system.1-0-0.instance" == get_routing_key("system", "1.0.0", "instance")
 
 
-@pytest.fixture
-def client(pyrabbit_client):
-    the_client = PyrabbitClient(
-        host="localhost", port=15672, user="user", password="password"
+def test_get_routing_keys():
+    assert ["system", "system.1-0-0", "system.1-0-0.instance"] == get_routing_keys(
+        "system", "1.0.0", "instance"
     )
-    the_client._client = pyrabbit_client
-
-    return the_client
 
 
-@pytest.fixture(autouse=True)
-def config(monkeypatch):
-    monkeypatch.setattr("bartender.config", Box(amq={"admin_queue_expiry": 1}))
+def test_get_routing_keys_admin_basic():
+    assert ["admin"] == get_routing_keys(is_admin=True)
+
+
+def test_get_routing_keys_admin_no_clone_id():
+    assert [
+        "admin",
+        "admin.system",
+        "admin.system.1-0-0",
+        "admin.system.1-0-0.instance",
+    ] == get_routing_keys("system", "1.0.0", "instance", is_admin=True)
+
+
+def test_get_routing_keys_admin_clone_id():
+    expected = [
+        "admin",
+        "admin.system",
+        "admin.system.1-0-0",
+        "admin.system.1-0-0.instance",
+        "admin.system.1-0-0.instance.clone",
+    ]
+    assert expected == get_routing_keys(
+        "system", "1.0.0", "instance", "clone", is_admin=True
+    )
+
+
+class TestPikaClient(object):
+    @pytest.fixture
+    def publish_mock(self):
+        return Mock()
+
+    @pytest.fixture
+    def client(self, publish_mock):
+        the_client = PikaClient(
+            host="localhost", port=5672, user="user", password="password"
+        )
+        the_client.publish = publish_mock
+
+        return the_client
+
+    def test_publish_request(self, client, bg_request, publish_mock):
+        client.publish_request(bg_request, routing_key="queue_name")
+        publish_mock.assert_called_once_with(
+            ANY, headers={"request_id": bg_request.id}, routing_key="queue_name"
+        )
+
+    def test_publish_no_routing_key(self, client, bg_request, publish_mock):
+        client.publish_request(bg_request)
+        publish_mock.assert_called_once_with(
+            ANY,
+            headers={"request_id": bg_request.id},
+            routing_key="system.1-0-0.default",
+        )
+
+    def test_publish_expiration(self, client, bg_request, publish_mock):
+        client.publish_request(bg_request, expiration=10)
+        publish_mock.assert_called_once_with(
+            ANY,
+            headers={"request_id": bg_request.id},
+            routing_key="system.1-0-0.default",
+            expiration=10,
+        )
 
 
 class TestPyrabbitClient(object):
+
+    # @pytest.fixture(autouse=True)
+    # def config(self, monkeypatch):
+    #     monkeypatch.setattr("bartender.config", Box(amq={"admin_queue_expiry": 1}))
+
+    @pytest.fixture
+    def pyrabbit_client(self):
+        return Mock()
+
+    @pytest.fixture
+    def client(self, pyrabbit_client):
+        the_client = PyrabbitClient(
+            host="localhost", port=15672, user="user", password="password"
+        )
+        the_client._client = pyrabbit_client
+
+        return the_client
+
     def test_is_alive(self, client, pyrabbit_client):
         pyrabbit_client.is_alive.return_value = True
         assert client.is_alive() is True

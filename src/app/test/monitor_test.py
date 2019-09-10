@@ -3,7 +3,7 @@ import unittest
 
 from mock import MagicMock, Mock, patch
 
-from bartender.monitor import PluginStatusMonitor
+from beer_garden.monitor import PluginStatusMonitor
 
 
 @patch("time.sleep", Mock())

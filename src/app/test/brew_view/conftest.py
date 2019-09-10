@@ -2,21 +2,8 @@ import pytest
 from mock import Mock, MagicMock
 from mongoengine import connect
 
-import brew_view
-import brewtils.test
-from bg_utils.mongo.parser import MongoParser
-from brew_view.authorization import anonymous_principal
-from test.utils import brew2mongo
-
-pytest_plugins = ["brewtils.test.fixtures"]
-
-
-def pytest_configure():
-    setattr(brewtils.test, "_running_tests", True)
-
-
-def pytest_unconfigure():
-    delattr(brewtils.test, "_running_tests")
+import beer_garden.brew_view as bv
+from beer_garden.brew_view.authorization import anonymous_principal
 
 
 @pytest.fixture
@@ -36,19 +23,19 @@ def mongo():
 
 @pytest.fixture
 def app(monkeypatch, config, mongo, event_publishers):
-    monkeypatch.setattr(brew_view, "_load_swagger", Mock())
-    monkeypatch.setattr(brew_view, "event_publishers", event_publishers)
-    monkeypatch.setattr(brew_view, "config", config)
-    monkeypatch.setattr(brew_view, "anonymous_principal", anonymous_principal())
+    monkeypatch.setattr(bv, "_load_swagger", Mock())
+    monkeypatch.setattr(bv, "event_publishers", event_publishers)
+    monkeypatch.setattr(bv, "config", config)
+    monkeypatch.setattr(bv, "anonymous_principal", anonymous_principal())
 
-    application = brew_view._setup_tornado_app()
+    application = bv._setup_tornado_app()
 
     return application
 
 
 @pytest.fixture
 def event_publishers():
-    from bg_utils.event_publisher import EventPublishers
+    from beer_garden.bg_utils.event_publisher import EventPublishers
 
     return EventPublishers(connections={"mock": MagicMock()})
 
@@ -67,42 +54,3 @@ def thrift_context(thrift_client):
             __exit__=Mock(return_value=False),
         )
     )
-
-
-@pytest.fixture
-def mongo_system(bg_system):
-    return brew2mongo(bg_system)
-
-
-@pytest.fixture
-def mongo_job(bg_job):
-    return brew2mongo(bg_job)
-
-
-@pytest.fixture
-def mongo_principal(principal_dict):
-    principal = principal_dict.copy()
-    del principal["permissions"]
-    return MongoParser().parse_principal(principal, False)
-
-
-@pytest.fixture
-def mongo_role(role_dict):
-    role = role_dict.copy()
-    role["roles"] = []
-    return MongoParser().parse_role(role, False)
-
-
-@pytest.fixture
-def mongo_bg_request(bg_request):
-    return brew2mongo(bg_request)
-
-
-@pytest.fixture
-def mongo_parent_request(parent_request):
-    return brew2mongo(parent_request)
-
-
-@pytest.fixture
-def mongo_child_request(child_request):
-    return brew2mongo(child_request)

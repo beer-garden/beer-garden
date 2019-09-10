@@ -4,8 +4,8 @@ from mock import patch, MagicMock, Mock
 from mongoengine import DoesNotExist, NotUniqueError
 from pymongo.errors import ServerSelectionTimeoutError
 
-import bg_utils
-import bg_utils.mongo.models
+import beer_garden.bg_utils
+import beer_garden.bg_utils.mongo.models
 
 
 class TestMongoUtils(object):
@@ -23,11 +23,13 @@ class TestMongoUtils(object):
         job_mock.__name__ = "Job"
         principal_mock.__name__ = "Principal"
 
-        monkeypatch.setattr(bg_utils.mongo.models, "Request", request_mock)
-        monkeypatch.setattr(bg_utils.mongo.models, "System", system_mock)
-        monkeypatch.setattr(bg_utils.mongo.models, "Role", role_mock)
-        monkeypatch.setattr(bg_utils.mongo.models, "Job", job_mock)
-        monkeypatch.setattr(bg_utils.mongo.models, "Principal", principal_mock)
+        monkeypatch.setattr(beer_garden.bg_utils.mongo.models, "Request", request_mock)
+        monkeypatch.setattr(beer_garden.bg_utils.mongo.models, "System", system_mock)
+        monkeypatch.setattr(beer_garden.bg_utils.mongo.models, "Role", role_mock)
+        monkeypatch.setattr(beer_garden.bg_utils.mongo.models, "Job", job_mock)
+        monkeypatch.setattr(
+            beer_garden.bg_utils.mongo.models, "Principal", principal_mock
+        )
 
         return {
             "request": request_mock,
@@ -54,7 +56,7 @@ class TestMongoUtils(object):
                 }
             }
         )
-        assert bg_utils.mongo.setup_database(app_config) is True
+        assert beer_garden.bg_utils.mongo.setup_database(app_config) is True
         connect_mock.assert_called_with(
             alias="aliveness",
             db="db_name",

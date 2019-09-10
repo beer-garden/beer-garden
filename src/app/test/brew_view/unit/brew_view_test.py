@@ -8,8 +8,8 @@ from tornado.ioloop import IOLoop
 from tornado.web import Application
 from yapconf import YapconfSpec
 
-import brew_view as bg
-from brew_view.specification import SPECIFICATION
+import beer_garden.brew_view as bg
+from beer_garden.brew_view.specification import SPECIFICATION
 
 
 class BeerGardenTest(unittest.TestCase):

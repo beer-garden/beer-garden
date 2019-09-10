@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from mock import patch
 
-from bg_utils.mongo.models import Job, DateTrigger, RequestTemplate
+from beer_garden.bg_utils.mongo.models import Job, DateTrigger, RequestTemplate
 from .. import TestHandlerBase
 
 

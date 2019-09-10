@@ -3,7 +3,7 @@ from concurrent.futures import Future
 
 from mock import ANY, Mock, patch
 
-from bartender.thrift.server import BartenderThriftServer, make_server
+from beer_garden.thrift.server import BartenderThriftServer, make_server
 from thriftpy2.transport import TServerSocket, TSSLServerSocket
 
 

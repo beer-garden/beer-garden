@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from mock import MagicMock, Mock, patch
 
-from bartender.mongo_pruner import MongoPruner
+from beer_garden.mongo_pruner import MongoPruner
 
 
 class MongoPrunerTest(unittest.TestCase):

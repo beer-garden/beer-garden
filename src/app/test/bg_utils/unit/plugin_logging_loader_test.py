@@ -1,7 +1,10 @@
 import unittest
 import copy
 from mock import Mock, patch
-from bg_utils.plugin_logging_loader import PluginLoggingLoader, LoggingLoadingError
+from beer_garden.bg_utils.plugin_logging_loader import (
+    PluginLoggingLoader,
+    LoggingLoadingError,
+)
 
 
 class PluginLoggingLoaderTest(unittest.TestCase):

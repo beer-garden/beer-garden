@@ -2,7 +2,7 @@ import unittest
 
 from mock import Mock, PropertyMock
 
-from bartender.local_plugins.registry import LocalPluginRegistry
+from beer_garden.local_plugins.registry import LocalPluginRegistry
 
 
 class RegistryTest(unittest.TestCase):

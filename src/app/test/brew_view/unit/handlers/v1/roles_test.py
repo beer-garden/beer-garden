@@ -2,7 +2,7 @@
 import pytest
 from tornado.httpclient import HTTPRequest
 
-from bg_utils.mongo.models import Role
+from beer_garden.bg_utils.mongo.models import Role
 from brewtils.models import PatchOperation
 from brewtils.schema_parser import SchemaParser
 

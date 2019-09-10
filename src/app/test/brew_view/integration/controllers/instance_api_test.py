@@ -2,7 +2,7 @@ import unittest
 
 from mock import MagicMock, Mock, patch
 
-import brew_view
+import beer_garden.brew_view
 from brewtils.models import Command, Instance, System
 from brewtils.schema_parser import SchemaParser
 
