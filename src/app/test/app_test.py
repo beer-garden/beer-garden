@@ -5,10 +5,10 @@ import requests.exceptions
 from mock import MagicMock, Mock, patch
 from yapconf import YapconfSpec
 
-import bartender
-from bartender.app import BartenderApp, HelperThread
-from bartender.specification import SPECIFICATION
-from bg_utils.mongo.models import Event, Request
+import beer_garden
+from beer_garden.app import BartenderApp, HelperThread
+from beer_garden.specification import SPECIFICATION
+from beer_garden.bg_utils.mongo.models import Event, Request
 
 
 @patch("bartender.app.time", Mock())

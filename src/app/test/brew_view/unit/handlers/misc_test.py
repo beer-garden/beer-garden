@@ -4,7 +4,7 @@ import json
 from tornado.gen import Future
 from mock import MagicMock, Mock, patch
 
-from brew_view._version import __version__
+from beer_garden.__version__ import __version__
 from . import TestHandlerBase
 
 

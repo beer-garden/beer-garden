@@ -3,9 +3,9 @@ import unittest
 
 from mock import Mock, patch
 
-import brew_view
-from bg_utils.mongo.models import Command, Instance, System
-from bg_utils.mongo.parser import MongoParser
+import beer_garden.brew_view
+from beer_garden.bg_utils.mongo.models import Command, Instance, System
+from beer_garden.bg_utils.mongo.parser import MongoParser
 
 
 @unittest.skip("TODO")

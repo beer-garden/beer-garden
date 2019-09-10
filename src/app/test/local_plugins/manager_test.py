@@ -3,9 +3,9 @@ import unittest
 from box import Box
 from mock import call, patch, MagicMock, Mock, PropertyMock
 
-import bartender
-from bartender.errors import PluginStartupError
-from bartender.local_plugins.manager import LocalPluginsManager
+import beer_garden
+from beer_garden.errors import PluginStartupError
+from beer_garden.local_plugins.manager import LocalPluginsManager
 
 
 class LocalPluginsManagerTest(unittest.TestCase):

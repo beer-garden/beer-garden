@@ -2,8 +2,7 @@ import pytest
 from mock import ANY, MagicMock, Mock, PropertyMock, call
 from pika.exceptions import AMQPError
 
-import bg_utils.pika
-from bg_utils.pika import TransientPikaClient, get_routing_key, get_routing_keys
+from beer_garden.rabbitmq import TransientPikaClient, get_routing_key, get_routing_keys
 
 host = "localhost"
 port = 5672

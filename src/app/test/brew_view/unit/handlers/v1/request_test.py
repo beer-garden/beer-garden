@@ -8,11 +8,16 @@ from mock import MagicMock, Mock, PropertyMock, patch
 from tornado.gen import Future
 from tornado.httpclient import HTTPRequest, HTTPClientError
 
-import bg_utils
-import brew_view
-from bg_utils.mongo.models import Request, Job, RequestTemplate, DateTrigger
-from bg_utils.mongo.models import System
-from brew_view.handlers.v1.request import RequestListAPI
+import beer_garden.bg_utils
+import beer_garden.brew_view
+from beer_garden.bg_utils.mongo.models import (
+    Request,
+    Job,
+    RequestTemplate,
+    DateTrigger,
+    System,
+)
+from beer_garden.brew_view.handlers.v1.request import RequestListAPI
 from brewtils.rest.client import RestClient
 from brewtils.schema_parser import SchemaParser
 from .. import TestHandlerBase

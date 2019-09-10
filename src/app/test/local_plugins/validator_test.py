@@ -4,8 +4,8 @@ import unittest
 
 from mock import patch, Mock
 
-from bartender.errors import PluginValidationError
-from bartender.local_plugins.validator import LocalPluginValidator
+from beer_garden.errors import PluginValidationError
+from beer_garden.local_plugins.validator import LocalPluginValidator
 
 
 class LocalPluginValidatorTest(unittest.TestCase):

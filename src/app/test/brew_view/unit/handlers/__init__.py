@@ -3,8 +3,8 @@ from mongoengine import connect
 from tornado.testing import AsyncHTTPTestCase
 from yapconf import YapconfSpec
 
-import brew_view
-from brew_view.specification import SPECIFICATION
+import beer_garden.brew_view
+from beer_garden.brew_view.specification import SPECIFICATION
 
 
 class TestHandlerBase(AsyncHTTPTestCase):

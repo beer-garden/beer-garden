@@ -10,8 +10,8 @@ from box import Box
 from mock import patch, Mock
 from yapconf import YapconfSpec
 
-import bg_utils
-import bg_utils.mongo.models
+import beer_garden.bg_utils
+import beer_garden.bg_utils.mongo.models
 
 
 @pytest.fixture

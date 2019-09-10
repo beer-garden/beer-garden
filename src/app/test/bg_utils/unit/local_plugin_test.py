@@ -3,8 +3,6 @@ import warnings
 
 from mock import Mock, patch
 
-from bg_utils.local_plugin import MultiThreadedLocalPlugin, SimpleLocalPlugin
-
 
 @patch("bg_utils.local_plugin.super", Mock())
 class SimpleLocalPluginTest(unittest.TestCase):

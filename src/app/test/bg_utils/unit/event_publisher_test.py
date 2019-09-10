@@ -1,8 +1,8 @@
 import pytest
 from mock import Mock
 
-import bg_utils
-from bg_utils.event_publisher import EventPublishers, EventPublisher
+import beer_garden.bg_utils
+from beer_garden.bg_utils.event_publisher import EventPublishers, EventPublisher
 from brewtils.models import Event
 
 

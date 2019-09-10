@@ -2,13 +2,11 @@ import pytest
 from mock import Mock, MagicMock
 from mongoengine import connect
 
-import brew_view
+import beer_garden.brew_view as bv
 import brewtils.test
-from bg_utils.mongo.parser import MongoParser
-from brew_view.authorization import anonymous_principal
-from test.utils import brew2mongo
-
-pytest_plugins = ["brewtils.test.fixtures"]
+from beer_garden.bg_utils.mongo.parser import MongoParser
+from beer_garden.brew_view.authorization import anonymous_principal
+from test.brew_view.utils import brew2mongo
 
 
 def pytest_configure():

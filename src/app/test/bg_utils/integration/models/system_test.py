@@ -3,7 +3,7 @@ import unittest
 from mock import Mock, patch
 from mongoengine.connection import connect, disconnect, get_connection
 
-from bg_utils.mongo.models import System
+from beer_garden.bg_utils.mongo.models import System
 
 
 class SystemIntegrationTest(unittest.TestCase):

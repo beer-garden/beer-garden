@@ -426,10 +426,7 @@ class TestTrigger(object):
         assert cron.get_scheduler_kwargs()["start_date"].tzinfo == pytz.utc
 
     def test_scheduler_kwargs_date(self, date):
-        expected = {
-            "run_date": pytz.utc.localize(date.run_date),
-            "timezone": pytz.utc,
-        }
+        expected = {"run_date": pytz.utc.localize(date.run_date), "timezone": pytz.utc}
         assert date.get_scheduler_kwargs() == expected
 
         date.run_date = datetime.now()
