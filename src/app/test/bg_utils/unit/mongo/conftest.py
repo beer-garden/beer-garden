@@ -2,7 +2,7 @@ import copy
 
 import pytest
 
-from bg_utils.mongo.models import Instance
+from beer_garden.bg_utils.mongo.models import Instance
 
 
 @pytest.fixture
