@@ -7,12 +7,6 @@ from beer_garden.bg_utils.mongo.models import DateTrigger
 
 
 @pytest.fixture
-def bad_id():
-    """A bad mongo ID"""
-    return "".join(["1" for _ in range(24)])
-
-
-@pytest.fixture
 def trigger_dict(ts_epoch):
     """A dictionary representing a date trigger."""
     return {"run_date": ts_epoch, "timezone": "utc"}
