@@ -6,11 +6,10 @@ from mock import MagicMock, Mock, patch
 import brew_view
 from bg_utils.mongo.models import Command, Instance, System
 from bg_utils.mongo.parser import MongoParser
-from ...utils import TestUtils
 
 
 @unittest.skip("TODO")
-class SystemAPITest(TestUtils, unittest.TestCase):
+class SystemAPITest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # brew_view.load_app(environment="test")
