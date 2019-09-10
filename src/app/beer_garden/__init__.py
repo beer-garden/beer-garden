@@ -1,14 +1,13 @@
 import logging
 import logging.config
 
+from brewtils.models import Request
+
 import beer_garden.bg_utils
 from beer_garden import config
 from beer_garden import log
 from beer_garden.__version__ import __version__
 from beer_garden.app import BartenderApp
-from beer_garden.errors import ConfigurationError
-from brewtils.models import Request
-
 
 # COMPONENTS #
 application = None

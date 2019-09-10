@@ -5,8 +5,8 @@ from mock import MagicMock, Mock, PropertyMock, patch, call
 from pika.exceptions import UnroutableError
 from pyrabbit2.http import HTTPError
 
-import bg_utils
-from bartender.thrift.handler import BartenderHandler
+import beer_garden.bg_utils
+from beer_garden.thrift.handler import BartenderHandler
 from brewtils.errors import ModelValidationError
 
 

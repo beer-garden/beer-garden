@@ -7,8 +7,8 @@ from io import open
 
 from mock import Mock
 
-import bartender.local_plugins.logger as bg_logging
-from bartender.local_plugins.logger import PluginHandler
+import beer_garden.local_plugins.logger as bg_logging
+from beer_garden.local_plugins.logger import PluginHandler
 
 
 class TestPluginHandler(object):

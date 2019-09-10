@@ -3,14 +3,14 @@ import os
 import unittest
 
 from box import Box
+from brewtils.errors import ValidationError
+from brewtils.models import Principal
 from mock import Mock, call, patch
 from yapconf import YapconfSpec
 
-import bartender as bg
-from bartender import ConfigurationError
-from bartender.specification import SPECIFICATION
-from brewtils.errors import ValidationError
-from brewtils.models import Principal
+import beer_garden as bg
+from beer_garden.errors import ConfigurationError
+from beer_garden.specification import SPECIFICATION
 
 
 class BartenderTest(unittest.TestCase):

@@ -1,3 +1,3 @@
-import brew_view as bv
+import beer_garden.brew_view as bv
 
 bv.TESTING = True

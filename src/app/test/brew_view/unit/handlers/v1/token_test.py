@@ -5,7 +5,7 @@ import json
 import datetime
 from mock import Mock, patch
 
-from bg_utils.mongo.models import RefreshToken
+from beer_garden.bg_utils.mongo.models import RefreshToken
 from .. import TestHandlerBase
 
 

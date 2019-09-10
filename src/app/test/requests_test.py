@@ -2,8 +2,14 @@ import pytest
 from box import Box
 from mock import Mock, call, patch
 
-from bartender.requests import RequestValidator
-from bg_utils.mongo.models import Command, Parameter, Request, System, Choices
+from beer_garden.requests import RequestValidator
+from beer_garden.bg_utils.mongo.models import (
+    Command,
+    Parameter,
+    Request,
+    System,
+    Choices,
+)
 from brewtils.errors import ModelValidationError
 
 

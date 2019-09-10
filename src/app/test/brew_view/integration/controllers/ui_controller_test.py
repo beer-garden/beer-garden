@@ -3,8 +3,8 @@ import unittest
 
 from mock import MagicMock, Mock, patch
 
-import brew_view
-from brew_view._version import __version__
+import beer_garden.brew_view
+from beer_garden.__version__ import __version__
 
 
 @unittest.skip("TODO")

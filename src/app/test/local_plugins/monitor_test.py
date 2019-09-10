@@ -2,7 +2,7 @@ import unittest
 
 from mock import Mock, PropertyMock, patch
 
-from bartender.local_plugins.monitor import LocalPluginMonitor
+from beer_garden.local_plugins.monitor import LocalPluginMonitor
 
 
 @patch("time.sleep", Mock())

@@ -6,7 +6,7 @@ import pytest
 from mock import Mock, PropertyMock, call, ANY
 from mongoengine import DoesNotExist
 
-from bartender.local_plugins.plugin_runner import LocalPluginRunner
+from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
 
 
 @pytest.fixture

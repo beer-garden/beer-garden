@@ -1,4 +1,4 @@
-from bg_utils.mongo.fields import DummyField
+from beer_garden.bg_utils.mongo.fields import DummyField
 
 
 class TestDummyField(object):

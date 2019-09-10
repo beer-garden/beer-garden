@@ -1,11 +1,12 @@
-import unittest
 from datetime import datetime
 
-import mongoengine
+import pytest
 import pytz
-from mock import Mock, PropertyMock, patch
+from brewtils.errors import ModelValidationError
+from brewtils.schemas import RequestTemplateSchema
+from mock import Mock
 
-from bg_utils.mongo.models import (
+from beer_garden.bg_utils.mongo.models import (
     Command,
     Instance,
     Parameter,
@@ -17,376 +18,406 @@ from bg_utils.mongo.models import (
     IntervalTrigger,
     CronTrigger,
 )
-from brewtils.errors import ModelValidationError
-from brewtils.schemas import RequestTemplateSchema
 
 
-class CommandTest(unittest.TestCase):
+class TestCommand(object):
     def test_str(self):
-        c = Command(name="foo", description="bar", parameters=[])
-        self.assertEqual("foo", str(c))
+        assert str(Command(name="foo", parameters=[])) == "foo"
 
     def test_repr(self):
         c = Command(name="foo", description="bar", parameters=[])
-        self.assertEqual("<Command: foo>", repr(c))
+        assert repr(c) == "<Command: foo>"
 
     def test_clean(self):
         Command(name="foo", parameters=[Parameter(key="foo", optional=False)]).clean()
 
-    def test_clean_empty_name(self):
-        command = Command(name="")
-        self.assertRaises(ModelValidationError, command.clean)
-
-    def test_clean_fail_bad_command_type(self):
-        command = Command(
-            name="foo", description="bar", command_type="BAD TYPE", parameters=[]
-        )
-        self.assertRaises(ModelValidationError, command.clean)
-
-    def test_clean_fail_bad_output_type(self):
-        command = Command(
-            name="foo", description="bar", output_type="BAD TYPE", parameters=[]
-        )
-        self.assertRaises(ModelValidationError, command.clean)
+    @pytest.mark.parametrize(
+        "params",
+        [
+            {"name": ""},
+            {"name": "foo", "command_type": "BAD", "parameters": []},
+            {"name": "foo", "output_type": "BAD", "parameters": []},
+        ],
+    )
+    def test_clean_empty_name(self, params):
+        with pytest.raises(ModelValidationError):
+            Command(**params).clean()
 
     def test_clean_fail_duplicate_parameter_keys(self):
         parameter = Parameter(key="foo", optional=False)
         command = Command(name="foo", parameters=[parameter, parameter])
-        self.assertRaises(ModelValidationError, command.clean)
+
+        with pytest.raises(ModelValidationError):
+            command.clean()
 
 
-class InstanceTest(unittest.TestCase):
+class TestInstance(object):
     def test_str(self):
-        self.assertEqual("name", str(Instance(name="name")))
+        assert str(Instance(name="name")) == "name"
 
     def test_repr(self):
         instance = Instance(name="name", status="RUNNING")
-        self.assertNotEqual(-1, repr(instance).find("name"))
-        self.assertNotEqual(-1, repr(instance).find("RUNNING"))
+        assert "name" in repr(instance)
+        assert "RUNNING" in repr(instance)
 
     def test_clean_bad_status(self):
-        instance = Instance(status="BAD")
-        self.assertRaises(ModelValidationError, instance.clean)
+        with pytest.raises(ModelValidationError):
+            Instance(status="BAD").clean()
 
 
-class ChoicesTest(unittest.TestCase):
+class TestChoices(object):
     def test_str(self):
-        self.assertEqual("value", str(Choices(value="value")))
+        assert str(Choices(value="value")) == "value"
 
     def test_repr(self):
         choices = Choices(type="static", display="select", strict=True, value=[1])
-        self.assertNotEqual(-1, repr(choices).find("static"))
-        self.assertNotEqual(-1, repr(choices).find("select"))
-        self.assertNotEqual(-1, repr(choices).find("[1]"))
+        assert "static" in repr(choices)
+        assert "select" in repr(choices)
+        assert "[1]" in repr(choices)
 
-    def test_clean_value_types(self):
-        self.assertRaises(
-            ModelValidationError, Choices(type="static", value="SHOULD_BE_A_LIST").clean
-        )
-        self.assertRaises(ModelValidationError, Choices(type="url", value=[1, 2]).clean)
-        self.assertRaises(
-            ModelValidationError, Choices(type="command", value=[1, 2]).clean
-        )
-
-    def test_clean_missing_dict_keys(self):
-        self.assertRaises(
-            ModelValidationError,
-            Choices(type="command", value={"command": "foo"}).clean,
-        )
+    @pytest.mark.parametrize(
+        "choice_obj",
+        [
+            Choices(type="static", value="SHOULD_BE_A_LIST"),
+            Choices(type="url", value=[1, 2]),
+            Choices(type="command", value=[1, 2]),
+            Choices(type="command", value={"command": "foo"}),
+        ],
+    )
+    def test_clean_value_types(self, choice_obj):
+        with pytest.raises(ModelValidationError):
+            choice_obj.clean()
 
     def test_clean_static(self):
         choice = Choices(type="static", value=["a", "b", "c"])
         choice.clean()
-        self.assertEqual({}, choice.details)
+        assert choice.details == {}
 
-    @patch("bg_utils.mongo.models.parse")
-    def test_clean_parse(self, parse_mock):
+    def test_clean_parse(self):
         choice = Choices(type="command", value="foo")
         choice.clean()
+        assert choice.details == {"name": "foo", "args": []}
 
-        self.assertTrue(parse_mock.called)
-        self.assertNotEqual({}, choice.details)
-
-    @patch("bg_utils.mongo.models.parse")
-    def test_clean_with_details(self, parse_mock):
+    def test_clean_with_details(self):
         choice = Choices(type="command", value="foo", details={"non": "empty"})
         choice.clean()
 
-        self.assertFalse(parse_mock.called)
-        self.assertNotEqual({}, choice.details)
+        assert choice.details == {"non": "empty"}
 
-    def test_clean_bad_parse(self):
-        command_dict = {
-            "command": "foo${arg",
-            "system": "foo",
-            "version": "1.0.0",
-            "instance_name": "default",
-        }
-
-        self.assertRaises(
-            ModelValidationError,
-            Choices(type="command", value=command_dict["command"]).clean,
-        )
-        self.assertRaises(
-            ModelValidationError, Choices(type="command", value=command_dict).clean
-        )
-        self.assertRaises(
-            ModelValidationError,
-            Choices(type="url", value="http://foo?arg=${val").clean,
-        )
+    @pytest.mark.parametrize(
+        "value",
+        [
+            "foo${arg",
+            "http://foo?arg=${val",
+            {
+                "command": "foo${arg",
+                "system": "foo",
+                "version": "1.0.0",
+                "instance_name": "default",
+            },
+        ],
+    )
+    def test_clean_bad_parse(self, value):
+        with pytest.raises(ModelValidationError):
+            Choices(type="command", value=value).clean()
 
 
-class ParameterTest(unittest.TestCase):
+class TestParameter(object):
     def test_str(self):
         p = Parameter(key="foo", description="bar", type="Boolean", optional=False)
-        self.assertEqual("foo", str(p))
+        assert str(p) == "foo"
 
     def test_repr(self):
         p = Parameter(key="foo", description="bar", type="Boolean", optional=False)
-        self.assertEqual("<Parameter: key=foo, type=Boolean, description=bar>", repr(p))
+        assert repr(p) == "<Parameter: key=foo, type=Boolean, description=bar>"
 
     def test_default_display_name(self):
         p = Parameter(key="foo")
-        self.assertEqual(p.display_name, "foo")
+        assert p.display_name == "foo"
 
     def test_clean(self):
         Parameter(key="foo", optional=False).clean()
 
     def test_clean_fail_nullable_optional_but_no_default(self):
-        p = Parameter(key="foo", optional=True, default=None, nullable=False)
-        self.assertRaises(ModelValidationError, p.clean)
+        with pytest.raises(ModelValidationError):
+            Parameter(key="foo", optional=True, default=None, nullable=False).clean()
 
     def test_clean_fail_duplicate_parameter_keys(self):
         nested = Parameter(key="foo")
-        p = Parameter(key="foo", optional=False, parameters=[nested, nested])
+        with pytest.raises(ModelValidationError):
+            Parameter(key="foo", optional=False, parameters=[nested, nested]).clean()
 
-        self.assertRaises(ModelValidationError, p.clean)
 
-
-class RequestTest(unittest.TestCase):
+class TestRequest(object):
     def test_str(self):
-        self.assertEqual("command", str(Request(command="command")))
+        assert str(Request(command="command")) == "command"
 
     def test_repr(self):
         request = Request(command="command", status="CREATED")
-        self.assertNotEqual(-1, repr(request).find("name"))
-        self.assertNotEqual(-1, repr(request).find("CREATED"))
+        assert "name" in repr(request)
+        assert "CREATED" in repr(request)
 
-    def test_clean_fail_bad_status(self):
-        request = Request(system="foo", command="bar", status="bad")
-        self.assertRaises(ModelValidationError, request.clean)
+    @pytest.mark.parametrize(
+        "request",
+        [
+            Request(system="foo", command="bar", status="bad"),
+            Request(system="foo", command="bar", command_type="BAD"),
+            Request(system="foo", command="bar", output_type="BAD"),
+        ],
+    )
+    def test_clean_fail(self, request):
+        with pytest.raises(ModelValidationError):
+            request.clean()
 
-    def test_clean_fail_bad_command_type(self):
-        request = Request(system="foo", command="bar", command_type="BAD")
-        self.assertRaises(ModelValidationError, request.clean)
-
-    def test_clean_fail_bad_output_type(self):
-        request = Request(system="foo", command="bar", output_type="BAD")
-        self.assertRaises(ModelValidationError, request.clean)
-
-    @patch("bg_utils.mongo.models.Request.objects")
-    def test_find_one_or_none_found(self, objects_mock):
-        self.assertEqual(objects_mock.get.return_value, Request.find_or_none("id"))
-
-    @patch("bg_utils.mongo.models.Request.objects")
-    def test_find_one_or_none_none_found(self, objects_mock):
-        objects_mock.get = Mock(side_effect=mongoengine.DoesNotExist)
-        self.assertIsNone(Request.find_or_none("id"))
-
-    @patch("mongoengine.Document.save", Mock())
-    def test_save_update_updated_at(self):
-        request = Request(
-            system="foo",
-            command="bar",
-            status="CREATED",
-            updated_at="this_will_be_updated",
-        )
-        request.save()
-        self.assertNotEqual(request.updated_at, "this_will_be_updated")
+    # TODO - Make these integration tests
+    # @patch("bg_utils.mongo.models.Request.objects")
+    # def test_find_one_or_none_found(self, objects_mock):
+    #     self.assertEqual(objects_mock.get.return_value, Request.find_or_none("id"))
+    #
+    # @patch("bg_utils.mongo.models.Request.objects")
+    # def test_find_one_or_none_none_found(self, objects_mock):
+    #     objects_mock.get = Mock(side_effect=mongoengine.DoesNotExist)
+    #     self.assertIsNone(Request.find_or_none("id"))
+    #
+    # @patch("mongoengine.Document.save", Mock())
+    # def test_save_update_updated_at(self):
+    #     request = Request(
+    #         system="foo",
+    #         command="bar",
+    #         status="CREATED",
+    #         updated_at="this_will_be_updated",
+    #     )
+    #     request.save()
+    #     self.assertNotEqual(request.updated_at, "this_will_be_updated")
 
     def test_template_check(self):
-        self.assertEqual(
-            len(Request.TEMPLATE_FIELDS),
-            len(RequestTemplateSchema.get_attribute_names()),
+        assert len(Request.TEMPLATE_FIELDS) == len(
+            RequestTemplateSchema.get_attribute_names()
         )
 
 
-class SystemTest(unittest.TestCase):
-    def setUp(self):
-        self.default_command = Command(name="name", description="description")
-        self.default_command.save = Mock()
-        self.default_command.validate = Mock()
-        self.default_command.delete = Mock()
+class TestSystem(object):
+    @pytest.fixture
+    def default_command(self):
+        default_command = Command(name="name", description="description")
+        default_command.save = Mock()
+        default_command.validate = Mock()
+        default_command.delete = Mock()
 
-        self.default_instance = Instance(name="default")
-        self.default_instance.save = Mock()
-        self.default_instance.validate = Mock()
-        self.default_instance.delete = Mock()
+        return default_command
 
-        self.default_system = System(
+    @pytest.fixture
+    def default_instance(self):
+        default_instance = Instance(name="default")
+        default_instance.save = Mock()
+        default_instance.validate = Mock()
+        default_instance.delete = Mock()
+
+        return default_instance
+
+    @pytest.fixture
+    def default_system(self, default_command, default_instance):
+        default_system = System(
             id="1234",
             name="foo",
             version="1.0.0",
-            instances=[self.default_instance],
-            commands=[self.default_command],
+            instances=[default_instance],
+            commands=[default_command],
         )
-        self.default_system.save = Mock()
-        self.default_system.validate = Mock()
-        self.default_system.delete = Mock()
+        default_system.save = Mock()
+        default_system.validate = Mock()
+        default_system.delete = Mock()
 
-    def tearDown(self):
-        self.default_system = None
+        return default_system
 
-    def test_str(self):
-        self.assertEqual("foo-1.0.0", str(self.default_system))
+    def test_str(self, default_system):
+        assert str(default_system) == "foo-1.0.0"
 
-    def test_repr(self):
-        self.assertNotEqual(-1, repr(self.default_system).find("foo"))
-        self.assertNotEqual(-1, repr(self.default_system).find("1.0.0"))
+    def test_repr(self, default_system):
+        assert "foo" in repr(default_system)
+        assert "1.0.0" in repr(default_system)
 
-    def test_clean(self):
-        self.default_system.clean()
+    def test_clean(self, default_system):
+        default_system.clean()
 
-    def test_clean_fail_max_instances(self):
-        self.default_system.instances.append(Instance(name="default2"))
-        self.assertRaises(ModelValidationError, self.default_system.clean)
+    def test_clean_fail_max_instances(self, default_system):
+        default_system.instances.append(Instance(name="default2"))
+        with pytest.raises(ModelValidationError):
+            default_system.clean()
 
-    def test_clean_fail_duplicate_instance_names(self):
-        self.default_system.max_instances = 2
-        self.default_system.instances.append(Instance(name="default"))
-        self.assertRaises(ModelValidationError, self.default_system.clean)
+    def test_clean_fail_duplicate_instance_names(self, default_system):
+        default_system.max_instances = 2
+        default_system.instances.append(Instance(name="default"))
+        with pytest.raises(ModelValidationError):
+            default_system.clean()
 
-    @patch("bg_utils.mongo.models.System.objects")
-    def test_find_unique_system(self, objects_mock):
-        objects_mock.get = Mock(return_value=self.default_system)
-        self.assertEqual(self.default_system, System.find_unique("foo", "1.0.0"))
+    # TODO - These need to be integration tests
+    # @patch("bg_utils.mongo.models.System.objects")
+    # def test_find_unique_system(self, objects_mock):
+    #     objects_mock.get = Mock(return_value=self.default_system)
+    #     self.assertEqual(self.default_system, System.find_unique("foo", "1.0.0"))
+    #
+    # @patch(
+    #     "bg_utils.mongo.models.System.objects",
+    #     Mock(get=Mock(side_effect=mongoengine.DoesNotExist)),
+    # )
+    # def test_find_unique_system_none(self):
+    #     self.assertIsNone(System.find_unique("foo", "1.0.0"))
+    #
+    # def test_deep_save(self, default_system):
+    #     self.default_system.deep_save()
+    #     self.assertEqual(self.default_system.save.call_count, 2)
+    #     self.assertEqual(len(self.default_system.commands), 1)
+    #     self.assertEqual(self.default_command.system, self.default_system)
+    #     self.assertEqual(self.default_command.save.call_count, 1)
+    #     self.assertEqual(self.default_instance.save.call_count, 1)
+    #
+    # def test_deep_save_validate_exception(self):
+    #     self.default_command.validate = Mock(side_effect=ValueError)
+    #
+    #     self.assertRaises(ValueError, self.default_system.deep_save)
+    #     self.assertEqual(self.default_system.commands, [self.default_command])
+    #     self.assertEqual(self.default_system.instances, [self.default_instance])
+    #     self.assertFalse(self.default_command.save.called)
+    #     self.assertFalse(self.default_instance.save.called)
+    #     self.assertFalse(self.default_system.delete.called)
+    #
+    # @patch("bg_utils.mongo.models.Command.validate", Mock())
+    # @patch("bg_utils.mongo.models.Instance.validate", Mock())
+    # def test_deep_save_save_exception(self):
+    #     self.default_instance.save = Mock(side_effect=ValueError)
+    #
+    #     self.assertRaises(ValueError, self.default_system.deep_save)
+    #     self.assertEqual(self.default_system.commands, [self.default_command])
+    #     self.assertEqual(self.default_system.instances, [self.default_instance])
+    #     self.assertTrue(self.default_command.save.called)
+    #     self.assertTrue(self.default_instance.save.called)
+    #     self.assertFalse(self.default_system.delete.called)
+    #
+    # @patch("bg_utils.mongo.models.Command.validate", Mock())
+    # @patch("bg_utils.mongo.models.Instance.validate", Mock())
+    # def test_deep_save_save_exception_not_already_exists(self):
+    #     self.default_instance.save = Mock(side_effect=ValueError)
+    #
+    #     with patch(
+    #         "bg_utils.mongo.models.System.id", new_callable=PropertyMock
+    #     ) as id_mock:
+    #         id_mock.side_effect = [None, "1234", "1234"]
+    #         self.assertRaises(ValueError, self.default_system.deep_save)
+    #
+    #     self.assertEqual(self.default_system.commands, [self.default_command])
+    #     self.assertEqual(self.default_system.instances, [self.default_instance])
+    #     self.assertTrue(self.default_command.save.called)
+    #     self.assertTrue(self.default_instance.save.called)
+    #     self.assertTrue(self.default_system.delete.called)
+    #
+    # def test_deep_delete(self):
+    #     self.default_system.deep_delete()
+    #     self.assertEqual(self.default_system.delete.call_count, 1)
+    #     self.assertEqual(self.default_command.delete.call_count, 1)
+    #     self.assertEqual(self.default_instance.delete.call_count, 1)
+    #
+    # # FYI - Have to mock out System.commands here or else MongoEngine
+    # # blows up trying to dereference them
+    # @patch("bg_utils.mongo.models.System.commands", Mock())
+    # @patch("bg_utils.mongo.models.Command.objects")
+    # def test_upsert_commands_new(self, objects_mock):
+    #     self.default_system.commands = []
+    #     objects_mock.return_value = []
+    #     new_command = Mock()
+    #
+    #     self.default_system.upsert_commands([new_command])
+    #     self.assertTrue(new_command.save.called)
+    #     self.assertTrue(self.default_system.save.called)
+    #     self.assertEqual([new_command], self.default_system.commands)
+    #
+    # @patch("bg_utils.mongo.models.System.commands", Mock())
+    # @patch("bg_utils.mongo.models.Command.objects")
+    # def test_upsert_commands_delete(self, objects_mock):
+    #     old_command = Mock()
+    #     objects_mock.return_value = [old_command]
+    #
+    #     self.default_system.upsert_commands([])
+    #     self.assertTrue(old_command.delete.called)
+    #     self.assertEqual([], self.default_system.commands)
+    #
+    # @patch("bg_utils.mongo.models.System.commands", Mock())
+    # @patch("bg_utils.mongo.models.Command.objects")
+    # def test_upsert_commands_update(self, objects_mock):
+    #     new_command = Mock(description="new desc")
+    #     old_command = Mock(id="123", description="old desc")
+    #     name_mock = PropertyMock(return_value="name")
+    #     type(new_command).name = name_mock
+    #     type(old_command).name = name_mock
+    #
+    #     objects_mock.return_value = [old_command]
+    #
+    #     self.default_system.upsert_commands([new_command])
+    #     self.assertTrue(self.default_system.save.called)
+    #     self.assertTrue(new_command.save.called)
+    #     self.assertFalse(old_command.delete.called)
+    #     self.assertEqual([new_command], self.default_system.commands)
+    #     self.assertEqual(old_command.id, self.default_system.commands[0].id)
+    #     self.assertEqual(
+    #         new_command.description, self.default_system.commands[0].description
+    #     )
+    #
+    # TODO - Same for these. They were actually in the integration test package
+    # @patch("mongoengine.queryset.QuerySet.filter", Mock(return_value=[1]))
+    # def find_unique_system(self):
+    #     system = System.find_unique("foo", "0.0.0")
+    #     assert system == 1
+    #
+    # @patch("mongoengine.queryset.QuerySet.get", Mock(return_value=[]))
+    # def find_unique_system_none(self):
+    #     system = System.find_unique("foo", "1.0.0")
+    #     assert system is None
+    #
+    # def test_system_non_unique_name(self):
+    #     s = System(name='foo', control_system='bar', instance_names=['only'])
+    #     System.ensure_indexes()
+    #     s.save()
+    #     s2 = System(name='foo', control_system='bar', instance_names=['only'])
+    #     self.assertRaises(mongoengine.NotUniqueError, s2.save)
+    #
+    # def test_system_non_unique_instance_names(self):
+    #     s = System(name='foo', control_system='bar',
+    #                instance_names=['oops', 'oops'])
+    #     System.ensure_indexes()
+    #     self.assertRaises(mongoengine.NotUniqueError, s.save)
+    #
+    # def test_default_instance_name(self):
+    #     # s = System(name='foo')
+    #     System.ensure_indexes()
+    #     self.default_system.save()
+    #     assert self.default_system.instances == []
 
-    @patch(
-        "bg_utils.mongo.models.System.objects",
-        Mock(get=Mock(side_effect=mongoengine.DoesNotExist)),
-    )
-    def test_find_unique_system_none(self):
-        self.assertIsNone(System.find_unique("foo", "1.0.0"))
 
-    def test_deep_save(self):
-        self.default_system.deep_save()
-        self.assertEqual(self.default_system.save.call_count, 2)
-        self.assertEqual(len(self.default_system.commands), 1)
-        self.assertEqual(self.default_command.system, self.default_system)
-        self.assertEqual(self.default_command.save.call_count, 1)
-        self.assertEqual(self.default_instance.save.call_count, 1)
-
-    def test_deep_save_validate_exception(self):
-        self.default_command.validate = Mock(side_effect=ValueError)
-
-        self.assertRaises(ValueError, self.default_system.deep_save)
-        self.assertEqual(self.default_system.commands, [self.default_command])
-        self.assertEqual(self.default_system.instances, [self.default_instance])
-        self.assertFalse(self.default_command.save.called)
-        self.assertFalse(self.default_instance.save.called)
-        self.assertFalse(self.default_system.delete.called)
-
-    @patch("bg_utils.mongo.models.Command.validate", Mock())
-    @patch("bg_utils.mongo.models.Instance.validate", Mock())
-    def test_deep_save_save_exception(self):
-        self.default_instance.save = Mock(side_effect=ValueError)
-
-        self.assertRaises(ValueError, self.default_system.deep_save)
-        self.assertEqual(self.default_system.commands, [self.default_command])
-        self.assertEqual(self.default_system.instances, [self.default_instance])
-        self.assertTrue(self.default_command.save.called)
-        self.assertTrue(self.default_instance.save.called)
-        self.assertFalse(self.default_system.delete.called)
-
-    @patch("bg_utils.mongo.models.Command.validate", Mock())
-    @patch("bg_utils.mongo.models.Instance.validate", Mock())
-    def test_deep_save_save_exception_not_already_exists(self):
-        self.default_instance.save = Mock(side_effect=ValueError)
-
-        with patch(
-            "bg_utils.mongo.models.System.id", new_callable=PropertyMock
-        ) as id_mock:
-            id_mock.side_effect = [None, "1234", "1234"]
-            self.assertRaises(ValueError, self.default_system.deep_save)
-
-        self.assertEqual(self.default_system.commands, [self.default_command])
-        self.assertEqual(self.default_system.instances, [self.default_instance])
-        self.assertTrue(self.default_command.save.called)
-        self.assertTrue(self.default_instance.save.called)
-        self.assertTrue(self.default_system.delete.called)
-
-    def test_deep_delete(self):
-        self.default_system.deep_delete()
-        self.assertEqual(self.default_system.delete.call_count, 1)
-        self.assertEqual(self.default_command.delete.call_count, 1)
-        self.assertEqual(self.default_instance.delete.call_count, 1)
-
-    # FYI - Have to mock out System.commands here or else MongoEngine
-    # blows up trying to dereference them
-    @patch("bg_utils.mongo.models.System.commands", Mock())
-    @patch("bg_utils.mongo.models.Command.objects")
-    def test_upsert_commands_new(self, objects_mock):
-        self.default_system.commands = []
-        objects_mock.return_value = []
-        new_command = Mock()
-
-        self.default_system.upsert_commands([new_command])
-        self.assertTrue(new_command.save.called)
-        self.assertTrue(self.default_system.save.called)
-        self.assertEqual([new_command], self.default_system.commands)
-
-    @patch("bg_utils.mongo.models.System.commands", Mock())
-    @patch("bg_utils.mongo.models.Command.objects")
-    def test_upsert_commands_delete(self, objects_mock):
-        old_command = Mock()
-        objects_mock.return_value = [old_command]
-
-        self.default_system.upsert_commands([])
-        self.assertTrue(old_command.delete.called)
-        self.assertEqual([], self.default_system.commands)
-
-    @patch("bg_utils.mongo.models.System.commands", Mock())
-    @patch("bg_utils.mongo.models.Command.objects")
-    def test_upsert_commands_update(self, objects_mock):
-        new_command = Mock(description="new desc")
-        old_command = Mock(id="123", description="old desc")
-        name_mock = PropertyMock(return_value="name")
-        type(new_command).name = name_mock
-        type(old_command).name = name_mock
-
-        objects_mock.return_value = [old_command]
-
-        self.default_system.upsert_commands([new_command])
-        self.assertTrue(self.default_system.save.called)
-        self.assertTrue(new_command.save.called)
-        self.assertFalse(old_command.delete.called)
-        self.assertEqual([new_command], self.default_system.commands)
-        self.assertEqual(old_command.id, self.default_system.commands[0].id)
-        self.assertEqual(
-            new_command.description, self.default_system.commands[0].description
-        )
-
-
-class JobTest(unittest.TestCase):
+class TestJob(object):
     def test_invalid_trigger_type(self):
-        job = Job(trigger_type="INVALID_TRIGGER_TYPE")
-        with self.assertRaises(ModelValidationError):
-            job.clean()
+        with pytest.raises(ModelValidationError):
+            Job(trigger_type="INVALID_TRIGGER_TYPE").clean()
 
     def test_trigger_mismatch(self):
         date_trigger = DateTrigger()
-        job = Job(trigger_type="cron", trigger=date_trigger)
-        with self.assertRaises(ModelValidationError):
-            job.clean()
+        with pytest.raises(ModelValidationError):
+            Job(trigger_type="cron", trigger=date_trigger).clean()
 
 
-class TriggerTest(unittest.TestCase):
-    def setUp(self):
-        self.interval = IntervalTrigger()
-        self.cron = CronTrigger()
-        self.date = DateTrigger(run_date=datetime.now())
+class TestTrigger(object):
+    @pytest.fixture
+    def interval(self):
+        return IntervalTrigger()
 
-    def test_scheduler_kwargs_interval(self):
+    @pytest.fixture
+    def cron(self):
+        return CronTrigger()
+
+    @pytest.fixture
+    def date(self):
+        return DateTrigger(run_date=datetime.now())
+
+    def test_scheduler_kwargs_interval(self, interval):
         expected = {
             "weeks": 0,
             "days": 0,
@@ -399,13 +430,12 @@ class TriggerTest(unittest.TestCase):
             "jitter": None,
             "reschedule_on_finish": False,
         }
-        self.assertEqual(self.interval.get_scheduler_kwargs(), expected)
+        assert interval.get_scheduler_kwargs() == expected
 
-        self.interval.start_date = datetime.now()
-        start_date = self.interval.get_scheduler_kwargs()["start_date"]
-        self.assertEqual(start_date.tzinfo, pytz.utc)
+        interval.start_date = datetime.now()
+        assert interval.get_scheduler_kwargs()["start_date"].tzinfo == pytz.utc
 
-    def test_scheduler_kwargs_cron(self):
+    def test_scheduler_kwargs_cron(self, cron):
         expected = {
             "year": "*",
             "month": "1",
@@ -420,19 +450,14 @@ class TriggerTest(unittest.TestCase):
             "timezone": pytz.utc,
             "jitter": None,
         }
-        self.assertEqual(self.cron.get_scheduler_kwargs(), expected)
+        assert cron.get_scheduler_kwargs() == expected
 
-        self.cron.start_date = datetime.now()
-        start_date = self.cron.get_scheduler_kwargs()["start_date"]
-        self.assertEqual(start_date.tzinfo, pytz.utc)
+        cron.start_date = datetime.now()
+        assert cron.get_scheduler_kwargs()["start_date"].tzinfo == pytz.utc
 
-    def test_scheduler_kwargs_date(self):
-        expected = {
-            "run_date": pytz.utc.localize(self.date.run_date),
-            "timezone": pytz.utc,
-        }
-        self.assertEqual(self.date.get_scheduler_kwargs(), expected)
+    def test_scheduler_kwargs_date(self, date):
+        expected = {"run_date": pytz.utc.localize(date.run_date), "timezone": pytz.utc}
+        assert date.get_scheduler_kwargs() == expected
 
-        self.date.run_date = datetime.now()
-        start_date = self.date.get_scheduler_kwargs()["run_date"]
-        self.assertEqual(start_date.tzinfo, pytz.utc)
+        date.run_date = datetime.now()
+        assert date.get_scheduler_kwargs()["run_date"].tzinfo == pytz.utc

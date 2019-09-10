@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import pytest
+from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.job import Job as APJob
+from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.base import BaseScheduler
 from apscheduler.triggers.date import DateTrigger
 from mock import Mock
@@ -8,10 +10,10 @@ from mock import patch
 from mongoengine import connect
 from pytz import utc
 
-import brew_view
-from bg_utils.mongo.models import Job
-from brew_view.scheduler import BGJobStore
-from brew_view.scheduler import run_job
+import beer_garden
+from beer_garden.app import BartenderApp
+from beer_garden.bg_utils.mongo.models import Job
+from beer_garden.scheduler import BGJobStore, run_job
 
 
 @pytest.fixture

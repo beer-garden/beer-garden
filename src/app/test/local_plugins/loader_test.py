@@ -5,7 +5,7 @@ import unittest
 
 from mock import call, patch, Mock
 
-from bartender.local_plugins.loader import LocalPluginLoader
+from beer_garden.local_plugins.loader import LocalPluginLoader
 
 
 class PluginLoaderTest(unittest.TestCase):

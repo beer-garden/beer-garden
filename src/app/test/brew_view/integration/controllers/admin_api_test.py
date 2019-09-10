@@ -2,7 +2,7 @@ import unittest
 
 from mock import MagicMock, Mock, patch
 
-import brew_view
+import beer_garden.brew_view
 
 
 @unittest.skip("TODO")
