@@ -23,19 +23,19 @@ def mongo():
 
 @pytest.fixture
 def app(monkeypatch, config, mongo, event_publishers):
-    monkeypatch.setattr(brew_view, "_load_swagger", Mock())
-    monkeypatch.setattr(brew_view, "event_publishers", event_publishers)
-    monkeypatch.setattr(brew_view, "config", config)
-    monkeypatch.setattr(brew_view, "anonymous_principal", anonymous_principal())
+    monkeypatch.setattr(bv, "_load_swagger", Mock())
+    monkeypatch.setattr(bv, "event_publishers", event_publishers)
+    monkeypatch.setattr(bv, "config", config)
+    monkeypatch.setattr(bv, "anonymous_principal", anonymous_principal())
 
-    application = brew_view._setup_tornado_app()
+    application = bv._setup_tornado_app()
 
     return application
 
 
 @pytest.fixture
 def event_publishers():
-    from bg_utils.event_publisher import EventPublishers
+    from beer_garden.bg_utils.event_publisher import EventPublishers
 
     return EventPublishers(connections={"mock": MagicMock()})
 

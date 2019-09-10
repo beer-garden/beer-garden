@@ -16,14 +16,16 @@ class TestHandlerBase(AsyncHTTPTestCase):
         server_patch.start()
 
         spec = YapconfSpec(SPECIFICATION)
-        brew_view.setup(spec, {})
+        beer_garden.brew_view.setup(spec, {})
 
         # Setup anonymous user for testing.
-        brew_view.anonymous_principal = brew_view.load_anonymous()
+        beer_garden.brew_view.anonymous_principal = (
+            beer_garden.brew_view.load_anonymous()
+        )
 
         connect("beer_garden", host="mongomock://localhost")
 
-        cls.app = brew_view.tornado_app
+        cls.app = beer_garden.brew_view.tornado_app
 
     def get_app(self):
         return self.app
