@@ -26,11 +26,12 @@ request_map = {}
 
 
 class RequestValidator(object):
-    def __init__(self):
+    def __init__(self, validator_config):
         self.logger = logging.getLogger(__name__)
 
+        self._command_timeout = validator_config.command.timeout
+
         self._session = Session()
-        validator_config = beer_garden.config.get("validator")
         if not validator_config.url.ca_verify:
             urllib3.disable_warnings()
             self._session.verify = False
@@ -286,8 +287,7 @@ class RequestValidator(object):
                     )
 
                 response = process_request(
-                    choices_request,
-                    wait_timeout=beer_garden.config.get("validator.command.timeout"),
+                    choices_request, wait_timeout=self._command_timeout
                 )
 
                 parsed_output = json.loads(response.output)

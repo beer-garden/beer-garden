@@ -43,7 +43,7 @@ class BartenderApp(StoppableThread):
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-        self.request_validator = RequestValidator()
+        self.request_validator = RequestValidator(beer_garden.config.get("validator"))
         self.plugin_registry = LocalPluginRegistry()
         self.plugin_validator = LocalPluginValidator()
         self.scheduler = self._setup_scheduler()

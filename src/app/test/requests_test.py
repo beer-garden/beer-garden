@@ -1,8 +1,8 @@
 import pytest
 from box import Box
+from brewtils.errors import ModelValidationError
 from mock import Mock, call, patch
 
-from beer_garden.requests import RequestValidator
 from beer_garden.bg_utils.mongo.models import (
     Command,
     Parameter,
@@ -10,21 +10,7 @@ from beer_garden.bg_utils.mongo.models import (
     System,
     Choices,
 )
-from brewtils.errors import ModelValidationError
-
-
-@pytest.fixture
-def config_mock():
-    return Box(
-        web={
-            "host": "web_host",
-            "port": 123,
-            "ca_verify": False,
-            "ssl_enabled": False,
-            "url_prefix": None,
-            "ca_cert": None,
-        }
-    )
+from beer_garden.requests import RequestValidator
 
 
 @pytest.fixture
@@ -35,9 +21,9 @@ def system_find(monkeypatch):
 
 
 @pytest.fixture
-def validator(monkeypatch, config_mock):
-    monkeypatch.setattr("bartender.config", config_mock)
-    return RequestValidator()
+def validator(monkeypatch):
+    config = Box({"command": {"timeout": 10}, "url": {"ca_verify": False}})
+    return RequestValidator(config)
 
 
 def make_param(**kwargs):
@@ -73,14 +59,16 @@ def make_request(**kwargs):
 
 
 class TestSessionConfig(object):
-    def test_verify(self, monkeypatch, config_mock):
+    def test_verify(self):
         cert_mock = Mock()
-        config_mock.web.ca_cert = cert_mock
-        config_mock.web.ca_verify = True
-        monkeypatch.setattr("bartender.config", config_mock)
+        config = Box(
+            {
+                "command": {"timeout": 10},
+                "url": {"ca_verify": True, "ca_cert": cert_mock},
+            }
+        )
 
-        validator = RequestValidator()
-        assert validator._session.verify == cert_mock
+        assert RequestValidator(config)._session.verify == cert_mock
 
     def test_no_verify(self, validator):
         assert validator._session.verify is False
