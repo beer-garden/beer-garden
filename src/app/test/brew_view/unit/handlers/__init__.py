@@ -1,10 +1,8 @@
 from mock import patch
 from mongoengine import connect
 from tornado.testing import AsyncHTTPTestCase
-from yapconf import YapconfSpec
 
 import beer_garden.brew_view
-from beer_garden.brew_view.specification import SPECIFICATION
 
 
 class TestHandlerBase(AsyncHTTPTestCase):
@@ -15,8 +13,7 @@ class TestHandlerBase(AsyncHTTPTestCase):
         server_patch = patch("brew_view.HTTPServer")
         server_patch.start()
 
-        spec = YapconfSpec(SPECIFICATION)
-        beer_garden.brew_view.setup(spec, {})
+        beer_garden.brew_view.setup([])
 
         # Setup anonymous user for testing.
         beer_garden.brew_view.anonymous_principal = (

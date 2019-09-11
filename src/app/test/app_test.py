@@ -3,11 +3,8 @@ from datetime import timedelta
 
 import requests.exceptions
 from mock import MagicMock, Mock, patch
-from yapconf import YapconfSpec
 
-import beer_garden
 from beer_garden.app import BartenderApp, HelperThread
-from beer_garden.specification import SPECIFICATION
 from beer_garden.bg_utils.mongo.models import Event, Request
 
 

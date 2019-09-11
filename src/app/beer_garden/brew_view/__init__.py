@@ -1,20 +1,10 @@
 import logging
 import os
-from asyncio import sleep
-
 import ssl
-from apispec import APISpec
+from asyncio import sleep
 from functools import partial
-from prometheus_client.exposition import start_http_server
-from tornado.httpserver import HTTPServer
-from tornado.ioloop import IOLoop
-from tornado.web import Application, StaticFileHandler, RedirectHandler
-from urllib3.util.url import Url
 
-import beer_garden.bg_utils
-from beer_garden.bg_utils.mongo import setup_database
-from beer_garden.brew_view.authorization import anonymous_principal as load_anonymous
-from brewtils.models import Event, Events
+from apispec import APISpec
 from brewtils.rest import normalize_url_prefix
 from brewtils.schemas import (
     ParameterSchema,
@@ -34,6 +24,15 @@ from brewtils.schemas import (
     IntervalTriggerSchema,
     CronTriggerSchema,
 )
+from prometheus_client.exposition import start_http_server
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
+from tornado.web import Application, StaticFileHandler, RedirectHandler
+from urllib3.util.url import Url
+
+import beer_garden.bg_utils
+from beer_garden.bg_utils.mongo import setup_database
+from beer_garden.brew_view.authorization import anonymous_principal as load_anonymous
 
 io_loop = None
 server = None
@@ -51,12 +50,12 @@ def setup(cli_args):
     global logger
 
     beer_garden.config.load(cli_args)
-    beer_garden.log.setup_application_logging(beer_garden.config.get("log"))
 
+    beer_garden.log.load(beer_garden.config.get("log"))
     logger = logging.getLogger(__name__)
-    logger.debug("Logging configured. First post!")
 
     _setup_application()
+    logger.debug("Successfully loaded the brew-view application")
 
 
 async def startup():

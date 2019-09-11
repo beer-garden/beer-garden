@@ -6,11 +6,9 @@ from box import Box
 from brewtils.errors import ValidationError
 from brewtils.models import Principal
 from mock import Mock, call, patch
-from yapconf import YapconfSpec
 
 import beer_garden as bg
 from beer_garden.errors import ConfigurationError
-from beer_garden.specification import SPECIFICATION
 
 
 class BartenderTest(unittest.TestCase):

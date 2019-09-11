@@ -9,7 +9,6 @@ from tornado.web import Application
 from yapconf import YapconfSpec
 
 import beer_garden.brew_view as bg
-from beer_garden.brew_view.specification import SPECIFICATION
 
 
 class BeerGardenTest(unittest.TestCase):

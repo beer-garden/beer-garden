@@ -4,8 +4,8 @@ import logging.config
 from brewtils.models import Request
 
 import beer_garden.bg_utils
-from beer_garden import config
-from beer_garden import log
+import beer_garden.config
+import beer_garden.log
 from beer_garden.__version__ import __version__
 from beer_garden.app import BartenderApp
 
@@ -20,12 +20,12 @@ stop_request = Request(command="_stop", command_type="EPHEMERAL")
 def setup_bartender(cli_args):
     global application, logger
 
-    config.load(cli_args)
-    log.load(config.get("log"))
+    beer_garden.config.load(cli_args)
+
+    beer_garden.log.load(beer_garden.config.get("log"))
     logger = logging.getLogger(__name__)
 
     application = BartenderApp()
-
     logger.debug("Successfully loaded the bartender application")
 
 
