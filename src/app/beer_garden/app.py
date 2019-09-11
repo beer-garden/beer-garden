@@ -80,6 +80,7 @@ class BartenderApp(StoppableThread):
             validator=self.plugin_validator,
             registry=self.plugin_registry,
             clients=self.clients,
+            shutdown_timeout=beer_garden.config.get("plugin.local.timeout.shutdown"),
         )
 
         self.handler = BartenderHandler()

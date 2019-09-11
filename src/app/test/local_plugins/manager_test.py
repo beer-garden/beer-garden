@@ -44,6 +44,7 @@ class LocalPluginsManagerTest(unittest.TestCase):
             self.fake_plugin_validator,
             self.registry,
             self.clients,
+            shutdown_timeout=10,
         )
 
     def test_start_plugin_initializing(self):

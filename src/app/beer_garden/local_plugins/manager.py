@@ -10,12 +10,13 @@ from beer_garden.bg_utils.mongo.models import System
 class LocalPluginsManager(object):
     """LocalPluginsManager that is capable of stopping/starting and restarting plugins"""
 
-    def __init__(self, loader, validator, registry, clients):
+    def __init__(self, loader, validator, registry, clients, shutdown_timeout):
         self.logger = logging.getLogger(__name__)
         self.loader = loader
         self.validator = validator
         self.registry = registry
         self.clients = clients
+        self.shutdown_timeout = shutdown_timeout
 
     def start_plugin(self, plugin):
         """Start a specific plugin.
@@ -107,7 +108,7 @@ class LocalPluginsManager(object):
 
             # Now just wait for the plugin thread to die
             self.logger.info("Waiting for plugin %s to stop...", plugin.unique_name)
-            plugin.join(beer_garden.config.get("plugin.local.timeout.shutdown"))
+            plugin.join(self.shutdown_timeout)
 
         except Exception as ex:
             clean_shutdown = False
