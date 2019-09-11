@@ -20,28 +20,22 @@ class TestLoadConfig(object):
         assert beer_garden.config._CONFIG == spec.defaults
 
     @pytest.mark.parametrize(
-        "config",
+        "extension,contents",
         [
-            # (file extension, file type, file contents)
-            ("yaml", "yaml", "log_level: DEBUG"),
-            ("json", "json", '{"log_level": "DEBUG"}'),
-            ("", "yaml", "log_level: DEBUG"),
-            ("yaml", None, "log_level: DEBUG"),
-            ("json", None, '{"log_level": "DEBUG"}'),
-            ("", None, "log_level: DEBUG"),
+            ("yaml", "log_level: DEBUG"),
+            ("yml", "log_level: DEBUG"),
+            ("json", '{"log_level": "DEBUG"}'),
+            ("", '{"log_level": "DEBUG"}'),
+            ("", "log_level: DEBUG"),
         ],
     )
-    def test_config_file(self, tmpdir, config):
-        config_file = Path(tmpdir, "config." + config[0])
-
-        cli_args = ["--configuration-file", str(config_file)]
-        if config[1]:
-            cli_args += ["--configuration-type", config[1]]
+    def test_config_file(self, tmpdir, extension, contents):
+        config_file = Path(tmpdir, f"config.{extension}")
 
         with open(config_file, "w") as f:
-            f.write(config[2])
+            f.write(contents)
 
-        beer_garden.config.load(cli_args, force=True)
+        beer_garden.config.load(["-c", str(config_file)], force=True)
         assert beer_garden.config.get("log.level") == "DEBUG"
 
 
@@ -65,29 +59,19 @@ class TestGenerateConfig(object):
 
         # Ensure that bootstrap items were not written to file
         assert config.configuration.file is None
-        assert config.configuration.type is None
 
         with open(config_file) as f:
             yaml_config = yaml.safe_load(f)
         assert "configuration" not in yaml_config
 
-    @pytest.mark.parametrize("file_type", ["json", "yaml"])
-    def test_create_file(self, tmpdir, file_type):
-        filename = os.path.join(str(tmpdir), "temp." + file_type)
-        beer_garden.config.generate(["-c", filename, "-t", file_type])
-
-        assert os.path.getsize(filename) > 0
-
-    @pytest.mark.parametrize("file_type", ["json", "yaml"])
-    def test_file_infer_type(self, tmpdir, file_type):
-        filename = os.path.join(str(tmpdir), "temp." + file_type)
+    def test_create_file(self, tmpdir):
+        filename = os.path.join(str(tmpdir), "config.yaml")
         beer_garden.config.generate(["-c", filename])
 
         assert os.path.getsize(filename) > 0
 
-    @pytest.mark.parametrize("file_type", ["json", "yaml"])
-    def test_stdout(self, capsys, file_type):
-        beer_garden.config.generate(["-t", file_type])
+    def test_stdout(self, capsys):
+        beer_garden.config.generate([])
 
         # Just make sure we printed something
         assert capsys.readouterr().out
@@ -104,29 +88,32 @@ class TestGenerateConfig(object):
 
 
 class TestUpdateConfig(object):
-    @pytest.mark.parametrize(
-        "extension,file_type", [("json", "json"), ("yaml", "yaml"), ("yml", "yaml")]
-    )
-    def test_success(self, tmpdir, extension, file_type):
+    @pytest.mark.parametrize("extension", ["yaml", "yml"])
+    def test_success(self, tmpdir, extension):
         config_file = os.path.join(str(tmpdir), "config." + extension)
 
-        beer_garden.config.generate(["-c", config_file])
-        beer_garden.config.migrate(["-c", config_file])
+        beer_garden.config.generate(["-c", config_file, "--log-level", "DEBUG"])
 
+        beer_garden.config.migrate(["-c", config_file])
         assert os.path.exists(config_file)
 
-    @pytest.mark.parametrize(
-        "current_type,new_type", [("json", "yaml"), ("yaml", "json")]
-    )
-    def test_change_type(self, tmpdir, current_type, new_type):
-        current_config = os.path.join(str(tmpdir), "config." + current_type)
-        new_config = os.path.join(str(tmpdir), "config." + new_type)
+        beer_garden.config.load(["-c", config_file], force=True)
+        assert beer_garden.config.get("log.level") == "DEBUG"
 
-        beer_garden.config.generate(["-c", current_config])
-        beer_garden.config.migrate(["-c", current_config, "-t", new_type])
+    def test_change_type(self, tmpdir):
+        current_config = os.path.join(str(tmpdir), "config.json")
+        new_config = os.path.join(str(tmpdir), "config.yaml")
+
+        with open(current_config, "w") as f:
+            f.write('{"log_level": "DEBUG"}')
+
+        beer_garden.config.migrate(["-c", current_config])
 
         assert os.path.exists(new_config)
         assert not os.path.exists(current_config)
+
+        beer_garden.config.load(["-c", new_config], force=True)
+        assert beer_garden.config.get("log.level") == "DEBUG"
 
     def test_change_type_error(self, monkeypatch, tmpdir):
         config_file = os.path.join(str(tmpdir), "config.json")
@@ -136,7 +123,7 @@ class TestUpdateConfig(object):
         monkeypatch.setattr(yapconf.spec.YapconfSpec, "migrate_config_file", error_mock)
 
         with pytest.raises(ValueError):
-            beer_garden.config.migrate(["-c", config_file, "-t", "yaml"])
+            beer_garden.config.migrate(["-c", config_file])
 
         assert os.path.exists(config_file)
 
@@ -353,29 +340,6 @@ class TestSafeMigrate(object):
 
         # Both the tmp file and the old JSON should still be there.
         assert len(os.listdir(tmpdir)) == 2
-
-
-@pytest.mark.parametrize(
-    "file_name,file_type,expected_type",
-    [
-        (None, None, "yaml"),
-        (None, "yaml", "yaml"),
-        (None, "json", "json"),
-        ("file", None, "yaml"),
-        ("file", "yaml", "yaml"),
-        ("file", "json", "json"),
-        ("file.yaml", None, "yaml"),
-        ("file.blah", None, "yaml"),
-        ("file.json", None, "json"),
-        ("file.yaml", "yaml", "yaml"),
-        ("file.yaml", "json", "json"),
-        ("file.json", "yaml", "yaml"),
-        ("file.json", "json", "json"),
-    ],
-)
-def test_get_config_type(file_name, file_type, expected_type):
-    config = Box({"configuration": {"file": file_name, "type": file_type}})
-    assert beer_garden.config._get_config_type(config) == expected_type
 
 
 def test_parse_args():

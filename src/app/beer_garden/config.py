@@ -68,11 +68,7 @@ def generate(args: Sequence[str]):
     bootstrap = spec.load_filtered_config(cli_vars, "ENVIRONMENT", bootstrap=True)
     config = spec.load_filtered_config(cli_vars, "ENVIRONMENT", exclude_bootstrap=True)
 
-    dump_data(
-        config,
-        filename=bootstrap.configuration.file,
-        file_type=_get_config_type(bootstrap),
-    )
+    dump_data(config, filename=bootstrap.configuration.file, file_type="yaml")
 
 
 def migrate(args: Sequence[str]):
@@ -104,7 +100,7 @@ def migrate(args: Sequence[str]):
 
     # Determine if a type conversion is needed
     type_conversion = False
-    new_type = _get_config_type(config)
+    new_type = "yaml"
     if current_type != new_type:
         new_file = current_root + "." + new_type
         type_conversion = True
@@ -253,18 +249,6 @@ def _backup_previous_config(filename, tmp_filename):
         raise
 
 
-def _get_config_type(config):
-    """Get configuration type from a configuration"""
-
-    if config.configuration.type:
-        return config.configuration.type
-
-    if config.configuration.file and config.configuration.file.endswith("json"):
-        return "json"
-
-    return "yaml"
-
-
 def _parse_args(args: Sequence[str]) -> Tuple[YapconfSpec, dict]:
     """Construct a spec and parse command line arguments
 
@@ -295,15 +279,7 @@ _META_SPEC = {
             "bootstrap": True,
             "previous_names": ["config"],
             "alt_env_names": ["CONFIG"],
-        },
-        "type": {
-            "type": "str",
-            "description": "Configuration file type",
-            "required": False,
-            "cli_short_name": "t",
-            "bootstrap": True,
-            "choices": ["json", "yaml"],
-        },
+        }
     },
 }
 
