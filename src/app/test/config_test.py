@@ -41,8 +41,8 @@ class TestLoadConfig(object):
         with open(config_file, "w") as f:
             f.write(config[2])
 
-        generated_config = beer_garden.config.load(cli_args, force=True)
-        assert generated_config.log.level == "DEBUG"
+        beer_garden.config.load(cli_args, force=True)
+        assert beer_garden.config.get("log.level") == "DEBUG"
 
 
 class TestGenerateConfig(object):
@@ -262,8 +262,8 @@ class TestSafeMigrate(object):
                 old_config, stream=f, default_flow_style=False, encoding="utf-8"
             )
 
-        generated_config = beer_garden.config.load(["-c", str(config_file)], force=True)
-        assert generated_config.log.level == "INFO"
+        beer_garden.config.load(["-c", str(config_file)], force=True)
+        assert beer_garden.config.get("log.level") == "INFO"
 
         with open(config_file) as f:
             new_config_value = yaml.safe_load(f)
@@ -277,8 +277,8 @@ class TestSafeMigrate(object):
                 new_config, stream=f, default_flow_style=False, encoding="utf-8"
             )
 
-        generated_config = beer_garden.config.load(["-c", str(config_file)], force=True)
-        assert generated_config.log.level == "INFO"
+        beer_garden.config.load(["-c", str(config_file)], force=True)
+        assert beer_garden.config.get("log.level") == "INFO"
 
         with open(config_file) as f:
             new_config_value = yaml.safe_load(f)
@@ -300,7 +300,7 @@ class TestSafeMigrate(object):
                 old_config, stream=f, default_flow_style=False, encoding="utf-8"
             )
 
-        generated_config = beer_garden.config.load(["-c", str(config_file)], force=True)
+        beer_garden.config.load(["-c", str(config_file)], force=True)
 
         # Make sure we printed something
         assert capsys.readouterr().err
@@ -312,7 +312,7 @@ class TestSafeMigrate(object):
         assert new_config_value == old_config
 
         # And the values should be unchanged
-        assert generated_config.log.level == "INFO"
+        assert beer_garden.config.get("log.level") == "INFO"
 
     def test_rename_failure(self, capsys, tmpdir, spec, config_file, old_config):
         with open(config_file, "w") as f:
@@ -321,14 +321,12 @@ class TestSafeMigrate(object):
             )
 
         with patch("os.rename", Mock(side_effect=ValueError)):
-            generated_config = beer_garden.config.load(
-                ["-c", str(config_file)], force=True
-            )
+            beer_garden.config.load(["-c", str(config_file)], force=True)
 
         # Make sure we printed something
         assert capsys.readouterr().err
 
-        assert generated_config.log.level == "INFO"
+        assert beer_garden.config.get("log.level") == "INFO"
 
         # Both the tmp file and the old JSON should still be there.
         assert len(os.listdir(tmpdir)) == 2

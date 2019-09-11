@@ -7,7 +7,6 @@ from datetime import datetime
 from typing import Tuple, Sequence
 
 import six
-from box import Box
 from ruamel.yaml import YAML
 from yapconf import YapconfSpec, dump_data
 
@@ -18,7 +17,7 @@ __all__ = ["load", "generate_logging", "generate", "migrate", "get"]
 _CONFIG = None
 
 
-def load(args: Sequence[str], force=False) -> Box:
+def load(args: Sequence[str], force=False) -> None:
     """Load the application configuration.
 
     Attempt to load the application configuration in the following order:
@@ -35,20 +34,15 @@ def load(args: Sequence[str], force=False) -> Box:
     Args:
         args: Command line arguments
         force: Force a reload
-
-    Returns:
-        The configuration object
     """
     global _CONFIG
     if _CONFIG is not None and not force:
-        return _CONFIG
+        return
 
     spec, cli_vars = _parse_args(args)
 
     config_sources = _setup_config_sources(spec, cli_vars)
     _CONFIG = spec.load_config(*config_sources)
-
-    return _CONFIG
 
 
 def generate(args: Sequence[str]):
