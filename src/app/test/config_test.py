@@ -381,7 +381,7 @@ def test_get_config_type(file_name, file_type, expected_type):
 
 
 def test_parse_args():
-    cli_args = [
+    input_args = [
         "--log-config-file",
         "/path/to/log/config",
         "--log-file",
@@ -389,13 +389,11 @@ def test_parse_args():
         "--log-level",
         "INFO",
     ]
-    data = beer_garden.config._parse_args(
-        ["log.config_file", "log.file", "log.level"], cli_args
-    )
-    assert data == {
-        "log": {
-            "config_file": "/path/to/log/config",
-            "file": "/path/to/log/file",
-            "level": "INFO",
-        }
+
+    _, cli_vars = beer_garden.config._parse_args(input_args)
+
+    assert cli_vars["log"] == {
+        "config_file": "/path/to/log/config",
+        "file": "/path/to/log/file",
+        "level": "INFO",
     }

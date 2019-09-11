@@ -4,7 +4,7 @@ import os
 import sys
 from argparse import ArgumentParser
 from datetime import datetime
-from typing import List
+from typing import Tuple, Sequence
 
 import six
 from box import Box
@@ -18,7 +18,7 @@ __all__ = ["load", "generate_logging", "generate", "migrate", "get"]
 _CONFIG = None
 
 
-def load(args: List[str], force=False) -> Box:
+def load(args: Sequence[str], force=False) -> Box:
     """Load the application configuration.
 
     Attempt to load the application configuration in the following order:
@@ -43,19 +43,15 @@ def load(args: List[str], force=False) -> Box:
     if _CONFIG is not None and not force:
         return _CONFIG
 
-    # Parse args given as command-line arguments.
-    spec = YapconfSpec(_SPECIFICATION, env_prefix="BG_")
-    parser = ArgumentParser()
-    spec.add_arguments(parser)
-    cli_args = vars(parser.parse_args(args))
+    spec, cli_vars = _parse_args(args)
 
-    config_sources = _setup_config_sources(spec, cli_args)
+    config_sources = _setup_config_sources(spec, cli_vars)
     _CONFIG = spec.load_config(*config_sources)
 
     return _CONFIG
 
 
-def generate(args: List[str]):
+def generate(args: Sequence[str]):
     """Generate a configuration file.
 
     Takes a series of command line arguments and will create a file at the location
@@ -73,16 +69,10 @@ def generate(args: List[str]):
     Raises:
         YapconfLoadError: Missing 'config' configuration option (file location)
     """
-    spec = YapconfSpec(_SPECIFICATION, env_prefix="BG_")
+    spec, cli_vars = _parse_args(args)
 
-    parser = ArgumentParser()
-    spec.add_arguments(parser)
-    args = parser.parse_args(args)
-
-    bootstrap = spec.load_filtered_config(vars(args), "ENVIRONMENT", bootstrap=True)
-    config = spec.load_filtered_config(
-        vars(args), "ENVIRONMENT", exclude_bootstrap=True
-    )
+    bootstrap = spec.load_filtered_config(cli_vars, "ENVIRONMENT", bootstrap=True)
+    config = spec.load_filtered_config(cli_vars, "ENVIRONMENT", exclude_bootstrap=True)
 
     dump_data(
         config,
@@ -91,7 +81,7 @@ def generate(args: List[str]):
     )
 
 
-def migrate(args: List[str]):
+def migrate(args: Sequence[str]):
     """Updates a configuration file in-place.
 
     Args:
@@ -103,12 +93,9 @@ def migrate(args: List[str]):
     Raises:
         YapconfLoadError: Missing 'config' configuration option (file location)
     """
-    spec = YapconfSpec(_SPECIFICATION, env_prefix="BG_")
-    parser = ArgumentParser()
-    spec.add_arguments(parser)
-    args = parser.parse_args(args)
+    spec, cli_vars = _parse_args(args)
 
-    config = spec.load_config(vars(args), "ENVIRONMENT")
+    config = spec.load_config(cli_vars, "ENVIRONMENT")
 
     if not config.configuration.file:
         raise SystemExit(
@@ -145,7 +132,7 @@ def migrate(args: List[str]):
         os.remove(config.configuration.file)
 
 
-def generate_logging(args: List[str]):
+def generate_logging(args: Sequence[str]):
     """Generate and save logging configuration file.
 
     Args:
@@ -158,9 +145,12 @@ def generate_logging(args: List[str]):
     Returns:
         str: The logging configuration dictionary
     """
-    args = _parse_args(["log.config_file", "log.file", "log.level"], args)
+    spec, cli_vars = _parse_args(args)
+    filtered_args = spec.load_filtered_config(
+        cli_vars, include=["log.config_file", "log.file", "log.level"]
+    )
 
-    log = args.get("log", {})
+    log = filtered_args.get("log", {})
     logging_config = default_app_config(log.get("level"), log.get("file"))
     log_config_file = log.get("config_file")
 
@@ -197,8 +187,8 @@ def get(key: str):
     return value
 
 
-def _setup_config_sources(spec, cli_args):
-    spec.add_source("cli_args", "dict", data=cli_args)
+def _setup_config_sources(spec, cli_vars):
+    spec.add_source("cli_args", "dict", data=cli_vars)
     spec.add_source("ENVIRONMENT", "environment")
 
     config_sources = ["cli_args", "ENVIRONMENT"]
@@ -281,22 +271,22 @@ def _get_config_type(config):
     return "yaml"
 
 
-def _parse_args(item_names: List[str], args: List[str]) -> Box:
-    """Parse command-line arguments for specific item names
+def _parse_args(args: Sequence[str]) -> Tuple[YapconfSpec, dict]:
+    """Construct a spec and parse command line arguments
 
     Args:
-        item_names: Names to parse
         args: Command line arguments
 
     Returns:
         Config object with only the named items
     """
-    spec = YapconfSpec(_SPECIFICATION)
+    spec = YapconfSpec(_SPECIFICATION, env_prefix="BG_")
+
     parser = ArgumentParser()
     spec.add_arguments(parser)
-    cli_args = vars(parser.parse_args(args))
+    cli_vars = vars(parser.parse_args(args))
 
-    return spec.load_filtered_config(cli_args, include=item_names)
+    return spec, cli_vars
 
 
 _META_SPEC = {
