@@ -1,7 +1,7 @@
 # Makefile for Beer Garden application
 
 PYTHON        = python
-MODULE_NAME   = beer-garden
+MODULE_NAME   = beer_garden
 TEST_DIR      = test
 DOCKER_NAME   = bgio/beer-garden
 VERSION      ?= 0.0.0
