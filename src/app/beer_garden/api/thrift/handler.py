@@ -46,7 +46,7 @@ from beer_garden.systems import (
     query_systems,
     get_system,
 )
-from beer_garden.thrift.client import ThriftClient
+from beer_garden.api.thrift.client import ThriftClient
 from beer_garden.bg_utils.mongo.models import Request
 from beer_garden.bg_utils.mongo.parser import MongoParser
 from brewtils.errors import (

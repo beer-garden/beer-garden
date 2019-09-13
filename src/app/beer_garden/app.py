@@ -26,8 +26,8 @@ from beer_garden.monitor import PluginStatusMonitor
 from beer_garden.rabbitmq import PikaClient, PyrabbitClient
 from beer_garden.requests import RequestValidator
 from beer_garden.scheduler import BGJobStore
-from beer_garden.thrift.handler import BartenderHandler
-from beer_garden.thrift.server import make_server
+from beer_garden.api.thrift.handler import BartenderHandler
+from beer_garden.api.thrift.server import make_server
 from beer_garden.bg_utils.event_publisher import EventPublishers, EventPublisher
 from beer_garden.bg_utils.mongo.models import Event, Request
 from beer_garden.bg_utils.publishers import MongoPublisher
