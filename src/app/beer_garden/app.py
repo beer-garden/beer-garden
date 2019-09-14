@@ -1,8 +1,8 @@
 from __future__ import division
 
 import logging
-
 import time
+
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import timedelta
@@ -13,7 +13,6 @@ from requests.exceptions import RequestException
 
 import beer_garden
 import brewtils.models
-import brewtils.thrift
 from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.local_plugins.manager import LocalPluginsManager
 from beer_garden.local_plugins.monitor import LocalPluginMonitor
@@ -26,8 +25,6 @@ from beer_garden.monitor import PluginStatusMonitor
 from beer_garden.rabbitmq import PikaClient, PyrabbitClient
 from beer_garden.requests import RequestValidator
 from beer_garden.scheduler import BGJobStore
-from beer_garden.api.thrift.handler import BartenderHandler
-from beer_garden.api.thrift.server import make_server
 from beer_garden.bg_utils.event_publisher import EventPublishers, EventPublisher
 from beer_garden.bg_utils.mongo.models import Event, Request
 from beer_garden.bg_utils.publishers import MongoPublisher
@@ -84,19 +81,8 @@ class BartenderApp(StoppableThread):
             shutdown_timeout=beer_garden.config.get("plugin.local.timeout.shutdown"),
         )
 
-        self.handler = BartenderHandler()
-
-        # TODO: The thrift portion is currently hardcoded, because it should
-        # no longer be in the config. Eventually the thrift thread will be removed.
         plugin_config = beer_garden.config.get("plugin")
         self.helper_threads = [
-            HelperThread(
-                make_server,
-                service=brewtils.thrift.bg_thrift.BartenderBackend,
-                handler=self.handler,
-                host="0.0.0.0",
-                port=9090,
-            ),
             HelperThread(
                 LocalPluginMonitor,
                 plugin_manager=self.plugin_manager,
@@ -129,10 +115,14 @@ class BartenderApp(StoppableThread):
                 )
             )
 
+        # self._entry_point = self.get_entry_point()
+
         super(BartenderApp, self).__init__(logger=self.logger, name="BartenderApp")
 
     def run(self):
         self._startup()
+
+        # self._entry_point.run()
 
         while not self.stopped():
             for helper_thread in self.helper_threads:
@@ -145,6 +135,9 @@ class BartenderApp(StoppableThread):
             time.sleep(0.1)
 
         self._shutdown()
+
+    # def stop(self):
+    #     self._entry_point.stop()
 
     def _startup(self):
         self.logger.info("Starting Bartender...")
@@ -183,10 +176,10 @@ class BartenderApp(StoppableThread):
         except RequestException:
             self.logger.warning("Unable to publish startup notification")
 
-        self.logger.info("Bartender started")
+        self.logger.info("Beer-garden startup completed")
 
     def _shutdown(self):
-        self.logger.info("Shutting down Bartender...")
+        self.logger.info("Beginning Beer-garden shutdown process")
 
         if self.scheduler.running:
             self.logger.info("Pausing scheduler - no more jobs will be run")
@@ -194,7 +187,7 @@ class BartenderApp(StoppableThread):
 
         self.plugin_manager.stop_all_plugins()
 
-        self.logger.info("Stopping helper threads...")
+        self.logger.info("Stopping helper threads")
         for helper_thread in reversed(self.helper_threads):
             helper_thread.stop()
 
@@ -210,7 +203,7 @@ class BartenderApp(StoppableThread):
         except RequestException:
             self.logger.warning("Unable to publish shutdown notification")
 
-        self.logger.info("Successfully shut down Bartender")
+        self.logger.info("Successfully shut down Beer-garden")
 
     @staticmethod
     def _setup_pruning_tasks():

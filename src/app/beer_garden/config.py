@@ -564,6 +564,32 @@ _DB_SPEC = {
     },
 }
 
+_ENTRY_SPEC = {
+    "type": "dict",
+    "items": {
+        "http": {
+            "type": "dict",
+            "items": {
+                "enable": {
+                    "type": "bool",
+                    "default": True,
+                    "description": "Run an HTTP server"
+                },
+            },
+        },
+        "thrift": {
+            "type": "dict",
+            "items": {
+                "enable": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Run an thrift server"
+                },
+            },
+        },
+    },
+}
+
 _EVENT_SPEC = {
     "type": "dict",
     "items": {
@@ -1026,6 +1052,7 @@ _SPECIFICATION = {
     "auth": _AUTH_SPEC,
     "configuration": _META_SPEC,
     "db": _DB_SPEC,
+    "entry": _ENTRY_SPEC,
     "event": _EVENT_SPEC,
     "log": _LOG_SPEC,
     "metrics": _METRICS_SPEC,
