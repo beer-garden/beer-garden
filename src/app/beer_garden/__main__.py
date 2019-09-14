@@ -5,7 +5,7 @@ import sys
 from functools import partial
 
 import beer_garden
-import beer_garden.api.brew_view
+import beer_garden.api.http
 import beer_garden.api.thrift
 from beer_garden import progressive_backoff
 from beer_garden.bg_utils.mongo import setup_database
@@ -45,7 +45,7 @@ def migrate_config():
 def get_entry_point():
 
     if beer_garden.config.get("entry.http.enable"):
-        return beer_garden.api.brew_view
+        return beer_garden.api.http
     elif beer_garden.config.get("entry.thrift.enable"):
         return beer_garden.api.thrift
 
