@@ -2,8 +2,6 @@
 import logging
 import os
 import ssl
-from asyncio import sleep
-from functools import partial
 
 from apispec import APISpec
 from brewtils.rest import normalize_url_prefix
@@ -33,7 +31,6 @@ from urllib3.util.url import Url
 
 import beer_garden.bg_utils
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
-from beer_garden.bg_utils.mongo import setup_database
 
 io_loop = None
 server = None
@@ -47,16 +44,26 @@ anonymous_principal = None
 client_ssl = None
 
 
-def setup(cli_args):
+def run():
     global logger
-
-    beer_garden.config.load(cli_args)
-
-    beer_garden.log.load(beer_garden.config.get("log"))
     logger = logging.getLogger(__name__)
 
     _setup_application()
-    logger.debug("Successfully loaded the application")
+
+    # Schedule things to happen after the ioloop comes up
+    io_loop.add_callback(beer_garden.api.http.startup)
+
+    logger.info("Starting IO loop")
+
+    io_loop.start()
+
+    logger.info("Application is shut down. Goodbye!")
+
+
+def stop():
+    logger.info("Received a shutdown request.")
+    # TODO - Should this be 'from_signal'?
+    io_loop.add_callback_from_signal(beer_garden.api.http.shutdown)
 
 
 async def startup():
@@ -65,13 +72,6 @@ async def startup():
     This is the first thing called from within the ioloop context.
     """
     global anonymous_principal
-
-    # Ensure we have a mongo connection
-    logger.info("Checking for Mongo connection")
-    await _progressive_backoff(
-        partial(setup_database, beer_garden.config),
-        "Unable to connect to mongo, is it started?",
-    )
 
     # Need to wait until after mongo connection established to load
     anonymous_principal = load_anonymous()
@@ -122,16 +122,6 @@ async def shutdown():
 
     logger.info("Stopping IO loop")
     io_loop.add_callback(io_loop.stop)
-
-
-async def _progressive_backoff(func, failure_message):
-    wait_time = 1
-    while not func():
-        logger.warning(failure_message)
-        logger.warning(f"Waiting {wait_time} seconds before next attempt")
-
-        await sleep(wait_time)
-        wait_time = min(wait_time * 2, 30)
 
 
 def _setup_application():

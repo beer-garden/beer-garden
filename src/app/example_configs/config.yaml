@@ -49,6 +49,11 @@ db:
     action: -1
     event: 15
     info: 15
+entry:
+  http:
+    enable: false
+  thrift:
+    enable: false
 event:
   amq:
     enable: false
@@ -57,7 +62,7 @@ event:
   brew_view:
     ca_cert: null
     ca_verify: true
-    enable: true
+    enable: false
     host: localhost
     port: 2337
     ssl_enabled: false
