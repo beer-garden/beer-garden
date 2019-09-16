@@ -702,10 +702,12 @@ def process_request(request, wait_timeout=-1):
     return request
 
 
-def update_request(request, patch):
+def update_request(request_id, patch):
     status = None
     output = None
     error_class = None
+
+    request = Request.objects.get(id=request_id)
 
     for op in patch:
         if op.operation == "replace":

@@ -13,59 +13,12 @@ from brewtils.errors import (
 )
 
 import beer_garden
+import beer_garden.api
 from beer_garden.api.thrift.client import ThriftClient
-from beer_garden.bg_utils.mongo.models import Request
 from beer_garden.bg_utils.mongo.parser import MongoParser
-from beer_garden.commands import get_commands, get_command
-from beer_garden.instances import (
-    initialize_instance,
-    start_instance,
-    stop_instance,
-    remove_instance,
-    update_instance_status,
-    update_instance,
-    get_instance,
-)
-from beer_garden.log import get_plugin_log_config, load_plugin_log_config
-from beer_garden.queues import (
-    clear_all_queues,
-    clear_queue,
-    get_all_queue_info,
-    get_queue_message_count,
-)
-from beer_garden.requests import (
-    get_requests,
-    process_request,
-    update_request,
-    get_request,
-)
-from beer_garden.scheduler import (
-    create_job,
-    remove_job,
-    pause_job,
-    resume_job,
-    get_job,
-    get_jobs,
-)
-from beer_garden.systems import (
-    reload_system,
-    remove_system,
-    rescan_system_directory,
-    create_system,
-    update_system,
-    query_systems,
-    get_system,
-)
 
 logger = logging.getLogger(__name__)
 parser = MongoParser()
-
-
-def remote_ns_names():
-    if not beer_garden.config.get("namespaces.remote"):
-        return []
-
-    return [ns.name for ns in beer_garden.config.get("namespaces.remote")]
 
 
 def handle_local(namespace):
@@ -74,7 +27,7 @@ def handle_local(namespace):
 
 
 def handle_remote(namespace):
-    return namespace in remote_ns_names()
+    return namespace in beer_garden.api.remote_ns_names()
 
 
 def namespace_router(_wrapped):
@@ -109,21 +62,21 @@ class BartenderHandler(object):
 
     @staticmethod
     def getLocalNamespace():
-        return beer_garden.config.get("namespaces.local")
+        return beer_garden.api.get_local_namespace()
 
     @staticmethod
     def getRemoteNamespaces():
-        return remote_ns_names()
+        return beer_garden.api.get_remote_namespaces()
 
     @staticmethod
     @namespace_router
     def getRequest(request_id):
-        return parser.serialize_request(get_request(request_id))
+        return parser.serialize_request(beer_garden.api.get_request(request_id))
 
     @staticmethod
     @namespace_router
     def getRequests(query):
-        return json.dumps(get_requests(**json.loads(query)))
+        return json.dumps(beer_garden.api.get_requests(**json.loads(query)))
 
     @staticmethod
     @namespace_router
@@ -136,7 +89,7 @@ class BartenderHandler(object):
         """
         try:
             return parser.serialize_request(
-                process_request(
+                beer_garden.api.process_request(
                     parser.parse_request(request, from_string=True), wait_timeout
                 )
             )
@@ -148,17 +101,19 @@ class BartenderHandler(object):
     @staticmethod
     @namespace_router
     def updateRequest(request_id, patch):
-        request = Request.objects.get(id=request_id)
         parsed_patch = parser.parse_patch(patch, many=True, from_string=True)
 
-        return parser.serialize_request(update_request(request, parsed_patch))
+        return parser.serialize_request(
+            beer_garden.api.update_request(request_id, parsed_patch)
+        )
 
     @staticmethod
     @namespace_router
     def getInstance(instance_id):
-        return parser.serialize_instance(get_instance(instance_id))
+        return parser.serialize_instance(beer_garden.api.get_instance(instance_id))
 
     @staticmethod
+    @namespace_router
     def initializeInstance(instance_id):
         """Initializes an instance.
 
@@ -166,7 +121,7 @@ class BartenderHandler(object):
         :return: QueueInformation object describing message queue for this system
         """
         try:
-            instance = initialize_instance(instance_id)
+            instance = beer_garden.api.initialize_instance(instance_id)
         except mongoengine.DoesNotExist:
             raise brewtils.thrift.bg_thrift.InvalidSystem(
                 "", f"Database error initializing instance {instance_id}"
@@ -179,7 +134,9 @@ class BartenderHandler(object):
     def updateInstance(instance_id, patch):
         parsed_patch = parser.parse_patch(patch, many=True, from_string=True)
 
-        return parser.serialize_instance(update_instance(instance_id, parsed_patch))
+        return parser.serialize_instance(
+            beer_garden.api.update_instance(instance_id, parsed_patch)
+        )
 
     @staticmethod
     @namespace_router
@@ -190,7 +147,7 @@ class BartenderHandler(object):
         :return: None
         """
         try:
-            instance = start_instance(instance_id)
+            instance = beer_garden.api.start_instance(instance_id)
         except mongoengine.DoesNotExist:
             raise brewtils.thrift.bg_thrift.InvalidSystem(
                 "", f"Couldn't find instance {instance_id}"
@@ -207,7 +164,7 @@ class BartenderHandler(object):
         :return: None
         """
         try:
-            instance = stop_instance(instance_id)
+            instance = beer_garden.api.stop_instance(instance_id)
         except mongoengine.DoesNotExist:
             raise brewtils.thrift.bg_thrift.InvalidSystem(
                 "", f"Couldn't find instance {instance_id}"
@@ -228,7 +185,7 @@ class BartenderHandler(object):
 
         """
         try:
-            instance = update_instance_status(instance_id, new_status)
+            instance = beer_garden.api.update_instance_status(instance_id, new_status)
         except mongoengine.DoesNotExist:
             raise brewtils.thrift.bg_thrift.InvalidSystem(
                 instance_id, f"Couldn't find instance {instance_id}"
@@ -245,7 +202,7 @@ class BartenderHandler(object):
         :return: None
         """
         try:
-            remove_instance(instance_id)
+            beer_garden.api.remove_instance(instance_id)
         except mongoengine.DoesNotExist:
             raise brewtils.thrift.bg_thrift.InvalidSystem(
                 instance_id, f"Couldn't find instance {instance_id}"
@@ -256,7 +213,9 @@ class BartenderHandler(object):
     def getSystem(system_id, include_commands):
         serialize_params = {} if include_commands else {"exclude": {"commands"}}
 
-        return parser.serialize_system(get_system(system_id), **serialize_params)
+        return parser.serialize_system(
+            beer_garden.api.get_system(system_id), **serialize_params
+        )
 
     @staticmethod
     @namespace_router
@@ -282,7 +241,7 @@ class BartenderHandler(object):
             serialize_params["exclude"] = exclude_fields
 
         return parser.serialize_system(
-            query_systems(**query_params), **serialize_params
+            beer_garden.api.query_systems(**query_params), **serialize_params
         )
 
     @staticmethod
@@ -290,7 +249,9 @@ class BartenderHandler(object):
     def createSystem(system):
         try:
             return parser.serialize_system(
-                create_system(parser.parse_system(system, from_string=True))
+                beer_garden.api.create_system(
+                    parser.parse_system(system, from_string=True)
+                )
             )
         except mongoengine.errors.NotUniqueError:
             raise brewtils.thrift.bg_thrift.ConflictException(
@@ -301,7 +262,7 @@ class BartenderHandler(object):
     @namespace_router
     def updateSystem(system_id, operations):
         return parser.serialize_system(
-            update_system(
+            beer_garden.api.update_system(
                 system_id, parser.parse_patch(operations, many=True, from_string=True)
             )
         )
@@ -315,7 +276,7 @@ class BartenderHandler(object):
         :return None
         """
         try:
-            reload_system(system_id)
+            beer_garden.api.reload_system(system_id)
         except mongoengine.DoesNotExist:
             raise brewtils.thrift.bg_thrift.InvalidSystem(
                 "", f"Couldn't find system {system_id}"
@@ -330,7 +291,7 @@ class BartenderHandler(object):
         :return:
         """
         try:
-            remove_system(system_id)
+            beer_garden.api.remove_system(system_id)
         except mongoengine.DoesNotExist:
             raise brewtils.thrift.bg_thrift.InvalidSystem(
                 system_id, f"Couldn't find system {system_id}"
@@ -340,7 +301,7 @@ class BartenderHandler(object):
     @namespace_router
     def rescanSystemDirectory():
         """Scans plugin directory and starts any new Systems"""
-        rescan_system_directory()
+        beer_garden.api.rescan_system_directory()
 
     @staticmethod
     @namespace_router
@@ -351,12 +312,14 @@ class BartenderHandler(object):
         :return: number of messages currently on the queue
         :raises Exception: If queue does not exist
         """
-        return get_queue_message_count(queue_name)
+        return beer_garden.api.get_queue_message_count(queue_name)
 
     @staticmethod
     @namespace_router
     def getAllQueueInfo():
-        return parser.serialize_queue(get_all_queue_info(), to_string=True, many=True)
+        return parser.serialize_queue(
+            beer_garden.api.get_all_queue_info(), to_string=True, many=True
+        )
 
     @staticmethod
     @namespace_router
@@ -369,7 +332,7 @@ class BartenderHandler(object):
         :raises InvalidSystem: If the system_name/instance_name does not match a queue
         """
         try:
-            clear_queue(queue_name)
+            beer_garden.api.clear_queue(queue_name)
         except NotFoundError as ex:
             raise brewtils.thrift.bg_thrift.InvalidSystem(queue_name, str(ex))
 
@@ -377,62 +340,66 @@ class BartenderHandler(object):
     @namespace_router
     def clearAllQueues():
         """Clears all queues that Bartender knows about"""
-        clear_all_queues()
+        beer_garden.api.clear_all_queues()
 
     @staticmethod
     @namespace_router
     def getJob(job_id):
-        return parser.serialize_job(get_job(job_id))
+        return parser.serialize_job(beer_garden.api.get_job(job_id))
 
     @staticmethod
     @namespace_router
     def getJobs(filter_params):
-        return parser.serialize_job(get_jobs(filter_params), many=True)
+        return parser.serialize_job(beer_garden.api.get_jobs(filter_params), many=True)
 
     @staticmethod
     @namespace_router
     def createJob(job):
-        return parser.serialize_job(create_job(parser.parse_job(job, from_string=True)))
+        return parser.serialize_job(
+            beer_garden.api.create_job(parser.parse_job(job, from_string=True))
+        )
 
     @staticmethod
     @namespace_router
     def pauseJob(job_id):
-        return parser.serialize_job(pause_job(job_id))
+        return parser.serialize_job(beer_garden.api.pause_job(job_id))
 
     @staticmethod
     @namespace_router
     def resumeJob(job_id):
-        return parser.serialize_job(resume_job(job_id))
+        return parser.serialize_job(beer_garden.api.resume_job(job_id))
 
     @staticmethod
     @namespace_router
     def removeJob(job_id):
-        remove_job(job_id)
+        beer_garden.api.remove_job(job_id)
 
     @staticmethod
     @namespace_router
     def getCommand(command_id):
-        return parser.serialize_command(get_command(command_id))
+        return parser.serialize_command(beer_garden.api.get_command(command_id))
 
     @staticmethod
     @namespace_router
     def getCommands():
-        return parser.serialize_command(get_commands(), many=True)
+        return parser.serialize_command(beer_garden.api.get_commands(), many=True)
 
     @staticmethod
     @namespace_router
     def getPluginLogConfig(system_name):
-        return parser.serialize_logging_config(get_plugin_log_config(system_name))
+        return parser.serialize_logging_config(
+            beer_garden.api.get_plugin_log_config(system_name)
+        )
 
     @staticmethod
     @namespace_router
     def reloadPluginLogConfig():
-        load_plugin_log_config()
-
-        return parser.serialize_logging_config(get_plugin_log_config())
+        return parser.serialize_logging_config(
+            beer_garden.api.reload_plugin_log_config()
+        )
 
     @staticmethod
     @namespace_router
     def getVersion():
         """Gets the current version of the backend"""
-        return beer_garden.__version__
+        return beer_garden.api.get_version()
