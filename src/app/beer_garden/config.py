@@ -573,8 +573,8 @@ _ENTRY_SPEC = {
                 "enable": {
                     "type": "bool",
                     "default": True,
-                    "description": "Run an HTTP server"
-                },
+                    "description": "Run an HTTP server",
+                }
             },
         },
         "thrift": {
@@ -583,8 +583,8 @@ _ENTRY_SPEC = {
                 "enable": {
                     "type": "bool",
                     "default": False,
-                    "description": "Run an thrift server"
-                },
+                    "description": "Run an thrift server",
+                }
             },
         },
     },
