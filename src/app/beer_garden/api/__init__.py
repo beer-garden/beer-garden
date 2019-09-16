@@ -8,7 +8,6 @@ import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
-from beer_garden.bg_utils.mongo.models import Request
 
 
 def remote_ns_names():
@@ -45,9 +44,7 @@ def process_request(request, wait_timeout):
 
 
 def update_request(request_id, patch):
-    request = Request.objects.get(id=request_id)
-
-    return beer_garden.requests.update_request(request, patch)
+    return beer_garden.requests.update_request(request_id, patch)
 
 
 def get_instance(instance_id):
