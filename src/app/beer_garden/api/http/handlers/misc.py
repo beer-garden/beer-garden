@@ -1,7 +1,7 @@
 import logging
 
 import beer_garden.api.http
-from beer_garden.api.http.thrift import ThriftClient
+from beer_garden.api.thrift.client import ThriftClient
 from beer_garden.api.http.base_handler import BaseHandler
 
 logger = logging.getLogger(__name__)

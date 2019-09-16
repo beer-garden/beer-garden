@@ -4,7 +4,7 @@ import beer_garden.bg_utils
 from beer_garden.bg_utils.mongo.models import Request
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.thrift import ThriftClient
+from beer_garden.api.thrift.client import ThriftClient
 from brewtils.errors import ModelValidationError, RequestPublishException
 from brewtils.schema_parser import SchemaParser
 

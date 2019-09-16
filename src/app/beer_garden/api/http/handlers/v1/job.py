@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.thrift import ThriftClient
+from beer_garden.api.thrift.client import ThriftClient
 from brewtils.errors import ModelValidationError
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import JobSchema
