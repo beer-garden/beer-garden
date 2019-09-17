@@ -27,53 +27,53 @@ class PluginLoaderTest(unittest.TestCase):
         self.mock_registry = Mock()
         self.plugin_path = "/path/to/plugins"
 
-        system_patcher = patch("bartender.local_plugins.loader.System")
+        system_patcher = patch("beer_garden.local_plugins.loader.System")
         self.addCleanup(system_patcher.stop)
         self.system_mock = system_patcher.start()
         self.system_mock.find_unique = Mock(return_value=None)
 
-        config_patcher = patch("bartender.config")
-        self.addCleanup(config_patcher.stop)
-        self.config_mock = config_patcher.start()
-        self.config_mock.plugin.local.directory = self.plugin_path
-        self.config_mock.plugin.local.log_directory = None
+        # config_patcher = patch("beer_garden.config")
+        # self.addCleanup(config_patcher.stop)
+        # self.config_mock = config_patcher.start()
+        # self.config_mock.plugin.local.directory = self.plugin_path
+        # self.config_mock.plugin.local.log_directory = None
 
         self.loader = LocalPluginLoader(self.mock_validator, self.mock_registry)
 
     @patch(
-        "bartender.local_plugins.loader.LocalPluginLoader.scan_plugin_path",
+        "beer_garden.local_plugins.loader.LocalPluginLoader.scan_plugin_path",
         Mock(return_value=["pl1", "pl2"]),
     )
     @patch(
-        "bartender.local_plugins.loader.LocalPluginLoader.validate_plugin_requirements"
+        "beer_garden.local_plugins.loader.LocalPluginLoader.validate_plugin_requirements"
     )
-    @patch("bartender.local_plugins.loader.LocalPluginLoader.load_plugin")
+    @patch("beer_garden.local_plugins.loader.LocalPluginLoader.load_plugin")
     def test_load_plugins(self, load_plugin_mock, validate_mock):
         self.loader.load_plugins()
         load_plugin_mock.assert_has_calls([call("pl1"), call("pl2")], any_order=False)
         validate_mock.assert_called_once_with()
 
     @patch(
-        "bartender.local_plugins.loader.LocalPluginLoader.scan_plugin_path",
+        "beer_garden.local_plugins.loader.LocalPluginLoader.scan_plugin_path",
         Mock(return_value=[]),
     )
     @patch(
-        "bartender.local_plugins.loader.LocalPluginLoader.validate_plugin_requirements"
+        "beer_garden.local_plugins.loader.LocalPluginLoader.validate_plugin_requirements"
     )
-    @patch("bartender.local_plugins.loader.LocalPluginLoader.load_plugin")
+    @patch("beer_garden.local_plugins.loader.LocalPluginLoader.load_plugin")
     def test_load_plugins_empty(self, load_plugin_mock, validate_mock):
         self.loader.load_plugins()
         self.assertFalse(load_plugin_mock.called)
         validate_mock.assert_called_once_with()
 
     @patch(
-        "bartender.local_plugins.loader.LocalPluginLoader.scan_plugin_path",
+        "beer_garden.local_plugins.loader.LocalPluginLoader.scan_plugin_path",
         Mock(return_value=["pl1", "pl2"]),
     )
     @patch(
-        "bartender.local_plugins.loader.LocalPluginLoader.validate_plugin_requirements"
+        "beer_garden.local_plugins.loader.LocalPluginLoader.validate_plugin_requirements"
     )
-    @patch("bartender.local_plugins.loader.LocalPluginLoader.load_plugin")
+    @patch("beer_garden.local_plugins.loader.LocalPluginLoader.load_plugin")
     def test_load_plugins_exception(self, load_plugin_mock, validate_mock):
         load_plugin_mock.side_effect = [ValueError()]
         self.loader.load_plugins()
@@ -81,21 +81,22 @@ class PluginLoaderTest(unittest.TestCase):
         validate_mock.assert_called_once_with()
 
     @patch(
-        "bartender.local_plugins.loader.listdir", Mock(return_value=["file1", "file2"])
+        "beer_garden.local_plugins.loader.listdir",
+        Mock(return_value=["file1", "file2"]),
     )
-    @patch("bartender.local_plugins.loader.isfile", Mock(side_effect=[False, True]))
-    @patch("bartender.local_plugins.loader.LocalPluginLoader.load_plugin", Mock())
+    @patch("beer_garden.local_plugins.loader.isfile", Mock(side_effect=[False, True]))
+    @patch("beer_garden.local_plugins.loader.LocalPluginLoader.load_plugin", Mock())
     def test_scan_plugin_path(self):
         self.assertEqual(
-            [os.path.join(self.plugin_path, "file1")], self.loader.scan_plugin_path()
+            [os.path.join(self.plugin_path, "file1")],
+            self.loader.scan_plugin_path(path=self.plugin_path),
         )
 
-    @patch("bartender.local_plugins.loader.listdir", Mock(return_value=[]))
+    @patch("beer_garden.local_plugins.loader.listdir", Mock(return_value=[]))
     def test_scan_plugin_path_empty(self):
-        self.assertEqual([], self.loader.scan_plugin_path())
+        self.assertEqual([], self.loader.scan_plugin_path(path=self.plugin_path))
 
     def test_scan_plugin_path_no_path(self):
-        self.config_mock.plugin.local.directory = None
         self.assertEqual([], self.loader.scan_plugin_path())
 
     def test_validate_plugin_requirements_no_plugins(self):
@@ -135,7 +136,7 @@ class PluginLoaderTest(unittest.TestCase):
         self.assertEqual(self.mock_registry.remove.call_count, 1)
         self.mock_registry.remove.assert_called_with("bar")
 
-    @patch("bartender.local_plugins.loader.LocalPluginLoader._load_plugin_config")
+    @patch("beer_garden.local_plugins.loader.LocalPluginLoader._load_plugin_config")
     def test_load_plugin(self, config_mock):
         config_mock.return_value = self.default_config
         self.mock_registry.plugin_exists = Mock(return_value=False)
@@ -144,20 +145,20 @@ class PluginLoaderTest(unittest.TestCase):
         self.assertTrue(self.loader.load_plugin("/path/to/foo-0.1"))
         self.assertTrue(self.mock_registry.register_plugin.called)
 
-    @patch("bartender.local_plugins.loader.LocalPluginLoader._load_plugin_config")
+    @patch("beer_garden.local_plugins.loader.LocalPluginLoader._load_plugin_config")
     def test_load_plugin_already_exists(self, config_mock):
         config_mock.return_value = self.default_config
         self.mock_registry.plugin_exists = Mock(return_value=False)
         self.mock_validator.validate_plugin = Mock(return_value=True)
 
-        plugin_mock = Mock()
+        plugin_mock = Mock(name="plugin_mock")
         self.system_mock.find_unique = Mock(return_value=plugin_mock)
 
         self.assertTrue(self.loader.load_plugin("/path/to/foo-0.1"))
         self.assertTrue(self.mock_registry.register_plugin.called)
         self.assertTrue(plugin_mock.delete_instances.called)
 
-    @patch("bartender.local_plugins.loader.LocalPluginLoader._load_plugin_config")
+    @patch("beer_garden.local_plugins.loader.LocalPluginLoader._load_plugin_config")
     def test_load_plugin_multiple_instances(self, config_mock):
         config = copy.deepcopy(self.default_config)
         config["INSTANCES"] = ["i1", "i2"]
@@ -174,8 +175,8 @@ class PluginLoaderTest(unittest.TestCase):
         self.mock_validator.validate_plugin = Mock(return_value=False)
         self.assertFalse(self.loader.load_plugin("path/to/foo-0.1"))
 
-    @patch("bartender.local_plugins.loader.sys")
-    @patch("bartender.local_plugins.loader.load_source")
+    @patch("beer_garden.local_plugins.loader.sys")
+    @patch("beer_garden.local_plugins.loader.load_source")
     def test_load_plugin_config_all_attributes(self, load_source_mock, sys_mock):
         module_name = "BGPLUGINCONFIG"
         sys_mock.modules = {module_name: ""}
@@ -205,8 +206,8 @@ class PluginLoaderTest(unittest.TestCase):
             },
         )
 
-    @patch("bartender.local_plugins.loader.sys")
-    @patch("bartender.local_plugins.loader.load_source")
+    @patch("beer_garden.local_plugins.loader.sys")
+    @patch("beer_garden.local_plugins.loader.load_source")
     def test_load_plugin_config_only_required_attributes(
         self, load_source_mock, sys_mock
     ):
@@ -238,8 +239,8 @@ class PluginLoaderTest(unittest.TestCase):
             },
         )
 
-    @patch("bartender.local_plugins.loader.sys")
-    @patch("bartender.local_plugins.loader.load_source")
+    @patch("beer_garden.local_plugins.loader.sys")
+    @patch("beer_garden.local_plugins.loader.load_source")
     def test_load_plugin_config_instances_provided_no_plugin_args(
         self, load_source_mock, sys_mock
     ):
@@ -261,8 +262,8 @@ class PluginLoaderTest(unittest.TestCase):
         self.assertEqual(config["INSTANCES"], ["instance1", "instance2"])
         self.assertEqual(config["PLUGIN_ARGS"], {"instance1": None, "instance2": None})
 
-    @patch("bartender.local_plugins.loader.sys")
-    @patch("bartender.local_plugins.loader.load_source")
+    @patch("beer_garden.local_plugins.loader.sys")
+    @patch("beer_garden.local_plugins.loader.load_source")
     def test_load_plugin_config_plugin_args_list_provided_no_instances(
         self, load_source_mock, sys_mock
     ):
@@ -284,8 +285,8 @@ class PluginLoaderTest(unittest.TestCase):
         self.assertEqual(config["INSTANCES"], ["default"])
         self.assertEqual(config["PLUGIN_ARGS"], {"default": ["arg1"]})
 
-    @patch("bartender.local_plugins.loader.sys")
-    @patch("bartender.local_plugins.loader.load_source")
+    @patch("beer_garden.local_plugins.loader.sys")
+    @patch("beer_garden.local_plugins.loader.load_source")
     def test_load_plugin_config_plugin_args_dict_no_instances(
         self, load_source_mock, sys_mock
     ):
@@ -309,8 +310,8 @@ class PluginLoaderTest(unittest.TestCase):
         self.assertTrue(sorted(config["INSTANCES"]) == sorted(expected))
         self.assertEqual(config["PLUGIN_ARGS"], {"foo": ["arg1"], "bar": ["arg2"]})
 
-    @patch("bartender.local_plugins.loader.sys")
-    @patch("bartender.local_plugins.loader.load_source")
+    @patch("beer_garden.local_plugins.loader.sys")
+    @patch("beer_garden.local_plugins.loader.load_source")
     def test_load_plugin_config_invalid_plugin_args(self, load_source_mock, sys_mock):
         module_name = "BGPLUGINCONFIG"
         sys_mock.modules = {module_name: ""}
@@ -327,8 +328,8 @@ class PluginLoaderTest(unittest.TestCase):
 
         self.assertRaises(ValueError, self.loader._load_plugin_config, path_mock)
 
-    @patch("bartender.local_plugins.loader.sys")
-    @patch("bartender.local_plugins.loader.load_source")
+    @patch("beer_garden.local_plugins.loader.sys")
+    @patch("beer_garden.local_plugins.loader.load_source")
     def test_load_plugin_config_instance_and_args_provided_args_list(
         self, load_source_mock, sys_mock
     ):
@@ -352,8 +353,8 @@ class PluginLoaderTest(unittest.TestCase):
         self.assertTrue(sorted(config["INSTANCES"]) == sorted(expected))
         self.assertEqual(config["PLUGIN_ARGS"], {"foo": ["arg1"], "bar": ["arg1"]})
 
-    @patch("bartender.local_plugins.loader.sys")
-    @patch("bartender.local_plugins.loader.load_source")
+    @patch("beer_garden.local_plugins.loader.sys")
+    @patch("beer_garden.local_plugins.loader.load_source")
     def test_load_plugin_config_log_level(self, load_source_mock, sys_mock):
         module_name = "BGPLUGINCONFIG"
         sys_mock.modules = {module_name: ""}
@@ -372,8 +373,8 @@ class PluginLoaderTest(unittest.TestCase):
         config = self.loader._load_plugin_config(path_mock)
         self.assertEqual(config["LOG_LEVEL"], logging.DEBUG)
 
-    @patch("bartender.local_plugins.loader.sys")
-    @patch("bartender.local_plugins.loader.load_source")
+    @patch("beer_garden.local_plugins.loader.sys")
+    @patch("beer_garden.local_plugins.loader.load_source")
     def test_load_plugin_config_log_level_bad(self, load_source_mock, sys_mock):
         module_name = "BGPLUGINCONFIG"
         sys_mock.modules = {module_name: ""}

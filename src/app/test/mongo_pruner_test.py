@@ -24,7 +24,7 @@ class MongoPrunerTest(unittest.TestCase):
 
         self.mongo_pruner.add_task(**self.task)
 
-    @patch("bartender.mongo_pruner.Q", MagicMock())
+    @patch("beer_garden.mongo_pruner.Q", MagicMock())
     def test_prune_something(self):
         self.mongo_pruner._stop_event = Mock(wait=Mock(side_effect=[False, True]))
 

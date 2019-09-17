@@ -2,6 +2,7 @@ import copy
 
 import brewtils.test
 import pytest
+from mongoengine import connect
 
 from beer_garden.bg_utils.mongo.models import Instance
 from beer_garden.bg_utils.mongo.parser import MongoParser
@@ -17,6 +18,11 @@ def pytest_configure():
 
 def pytest_unconfigure():
     delattr(brewtils.test, "_running_tests")
+
+
+@pytest.fixture()
+def mongo_conn():
+    connect("beer_garden", host="mongomock://localhost")
 
 
 @pytest.fixture

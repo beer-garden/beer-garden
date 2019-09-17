@@ -1,25 +1,20 @@
 # -*- coding: utf-8 -*-
 import pytest
-from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.job import Job as APJob
-from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.base import BaseScheduler
 from apscheduler.triggers.date import DateTrigger
 from mock import Mock
 from mock import patch
-from mongoengine import connect
 from pytz import utc
 
 import beer_garden
-from beer_garden.app import BartenderApp
 from beer_garden.bg_utils.mongo.models import Job
 from beer_garden.scheduler import BGJobStore, run_job
 
 
 @pytest.fixture
-def jobstore():
+def jobstore(mongo_conn):
     """A Beer Garden Job Store."""
-    connect("beer_garden", host="mongomock://localhost")
     js = BGJobStore()
     yield js
     js.remove_all_jobs()
@@ -44,21 +39,24 @@ def ap_job(mongo_job, bg_request_template):
     return APJob(**job_kwargs)
 
 
-def test_run_job(monkeypatch, bg_request_template):
-    mock_scheduler = Mock()
-    mock_scheduler.get_job.return_value = None
-    monkeypatch.setattr(brew_view, "request_scheduler", mock_scheduler)
+class TestRunJob(object):
+    def test_run_job(self, monkeypatch, bg_request_template):
+        mock_scheduler = Mock()
+        mock_scheduler.get_job.return_value = None
+        monkeypatch.setattr(brew_view, "request_scheduler", mock_scheduler)
 
-    with patch("brew_view.easy_client") as client_mock:
-        run_job("job_id", bg_request_template)
+        with patch("brew_view.easy_client") as client_mock:
+            run_job("job_id", bg_request_template)
 
-    client_mock.create_request.assert_called_with(bg_request_template, blocking=True)
-    assert bg_request_template.metadata["_bg_job_id"] == "job_id"
+        client_mock.create_request.assert_called_with(
+            bg_request_template, blocking=True
+        )
+        assert bg_request_template.metadata["_bg_job_id"] == "job_id"
 
 
 class TestJobStore(object):
     @pytest.fixture(autouse=True)
-    def drop_systems(self, app):
+    def drop_systems(self, mongo_conn):
         Job.drop_collection()
 
     def test_lookup_nonexistent_job(self, jobstore, bad_id):
@@ -79,7 +77,7 @@ class TestJobStore(object):
         assert isinstance(apjob, APJob)
         state = apjob.__getstate__()
         assert state["id"] == mongo_job.id
-        assert state["func"] == "brew_view.scheduler:run_job"
+        assert state["func"] == "beer_garden.scheduler:run_job"
         assert state["executor"] == "default"
         assert state["args"] == ()
         assert state["kwargs"] == {
@@ -103,7 +101,7 @@ class TestJobStore(object):
 
     def test_get_due_jobs_invalid_job(self, jobstore, mongo_job):
         mongo_job.save()
-        with patch("brew_view.scheduler.db_to_scheduler") as convert_mock:
+        with patch("beer_garden.scheduler.db_to_scheduler") as convert_mock:
             convert_mock.side_effect = ValueError
             assert len(jobstore.get_all_jobs()) == 0
 

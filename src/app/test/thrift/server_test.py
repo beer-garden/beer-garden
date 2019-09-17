@@ -15,12 +15,10 @@ class ThriftServerTest(unittest.TestCase):
         self.trans_mock = Mock()
         self.pool_mock = Mock()
 
-        with patch("bartender.config") as config_mock:
-            config_mock.thrift.max_workers = 25
-            self.server = BartenderThriftServer(self.processor_mock, self.trans_mock)
-            self.server.pool = self.pool_mock
+        self.server = BartenderThriftServer(self.processor_mock, self.trans_mock)
+        self.server.pool = self.pool_mock
 
-    @patch("bartender.thrift.server.BartenderThriftServer.serve")
+    @patch("beer_garden.thrift.server.BartenderThriftServer.serve")
     def test_run(self, serve_mock):
         finished_mock = Mock()
         self.server.finished = finished_mock
@@ -50,7 +48,8 @@ class ThriftServerTest(unittest.TestCase):
         self.assertTrue(self.server.finished.is_set())
 
     @patch(
-        "bartender.thrift.server.BartenderThriftServer.stopped", Mock(return_value=True)
+        "beer_garden.thrift.server.BartenderThriftServer.stopped",
+        Mock(return_value=True),
     )
     def test_serve_already_stopped(self):
         self.server.serve()
@@ -58,7 +57,7 @@ class ThriftServerTest(unittest.TestCase):
         self.assertFalse(self.trans_mock.accept.called)
 
     @patch(
-        "bartender.thrift.server.BartenderThriftServer.stopped",
+        "beer_garden.thrift.server.BartenderThriftServer.stopped",
         Mock(side_effect=[False, True]),
     )
     def test_serve(self):
@@ -74,7 +73,7 @@ class ThriftServerTest(unittest.TestCase):
         self.assertFalse(logger_mock.exception.called)
 
     @patch(
-        "bartender.thrift.server.BartenderThriftServer.stopped",
+        "beer_garden.thrift.server.BartenderThriftServer.stopped",
         Mock(side_effect=[False, True]),
     )
     def test_serve_exception(self):
@@ -88,7 +87,7 @@ class ThriftServerTest(unittest.TestCase):
         self.assertTrue(logger_mock.exception.called)
 
     @patch(
-        "bartender.thrift.server.BartenderThriftServer.stopped",
+        "beer_garden.thrift.server.BartenderThriftServer.stopped",
         Mock(side_effect=[False, True, True]),
     )
     def test_serve_exit_exception(self):
@@ -105,13 +104,11 @@ class ThriftServerTest(unittest.TestCase):
 
 
 class MakeServerTest(unittest.TestCase):
-    @patch("bartender.config", Mock(thrift=Mock(max_workers=1)))
     def test_make_server_no_cert(self):
         server = make_server(Mock(), Mock())
         self.assertIsInstance(server.trans, TServerSocket)
         self.assertNotIsInstance(server.trans, TSSLServerSocket)
 
-    @patch("bartender.config", Mock(thrift=Mock(max_workers=1)))
     @patch("thriftpy2.transport.sslsocket.os", Mock())
     @patch("thriftpy2.transport.sslsocket.create_thriftpy_context", Mock())
     def test_make_server_with_cert(self):
