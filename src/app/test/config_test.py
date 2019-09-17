@@ -133,18 +133,21 @@ class TestUpdateConfig(object):
 
 
 class TestGenerateLogging(object):
-    def test_no_file(self):
+    def test_no_file(self, capsys):
         logging_config = beer_garden.config.generate_logging([])
+        captured = capsys.readouterr()
 
+        assert not captured.out == ""
         assert logging_config == default_app_config("INFO", None)
 
-    def test_with_file(self, tmpdir):
+    def test_with_file(self, tmpdir, capsys):
         logging_config_file = Path(tmpdir, "logging.json")
-
         logging_config = beer_garden.config.generate_logging(
             ["--log-config-file", str(logging_config_file)]
         )
+        captured = capsys.readouterr()
 
+        assert captured.out == ""
         assert Path.exists(logging_config_file)
         assert logging_config == default_app_config("INFO", None)
 

@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-import json
 import os
 import sys
 from argparse import ArgumentParser
 from datetime import datetime
 from typing import Tuple, Sequence, Union
 
-import six
 from box import Box
 from ruamel.yaml import YAML
 from yapconf import YapconfSpec, dump_data
@@ -143,12 +141,7 @@ def generate_logging(args: Sequence[str]):
     logging_config = default_app_config(log.get("level"), log.get("file"))
     log_config_file = log.get("config_file")
 
-    if log_config_file is not None:
-        with open(log_config_file, "w") as f:
-            dumped = json.dumps(logging_config, indent=4, sort_keys=True)
-            f.write(six.u(dumped))
-    else:
-        print(json.dumps(logging_config, indent=4, sort_keys=True))
+    dump_data(logging_config, filename=log_config_file, file_type="json")
 
     return logging_config
 
