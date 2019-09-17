@@ -86,11 +86,6 @@ class TestPikaClient(object):
 
 
 class TestPyrabbitClient(object):
-
-    # @pytest.fixture(autouse=True)
-    # def config(self, monkeypatch):
-    #     monkeypatch.setattr("bartender.config", Box(amq={"admin_queue_expiry": 1}))
-
     @pytest.fixture
     def pyrabbit_client(self):
         return Mock()
@@ -98,7 +93,11 @@ class TestPyrabbitClient(object):
     @pytest.fixture
     def client(self, pyrabbit_client):
         the_client = PyrabbitClient(
-            host="localhost", port=15672, user="user", password="password"
+            host="localhost",
+            port=15672,
+            user="user",
+            password="password",
+            admin_expires=3600000,
         )
         the_client._client = pyrabbit_client
 

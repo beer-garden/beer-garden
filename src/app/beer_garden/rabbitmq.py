@@ -87,8 +87,10 @@ class PyrabbitClient(object):
         password="guest",
         virtual_host="/",
         ssl=None,
+        admin_expires=None,
     ):
         self.logger = logging.getLogger(__name__)
+        self._admin_expires = admin_expires
 
         # Pyrabbit won't infer the default virtual host ('/'). So we need to enforce it
         self._virtual_host = virtual_host or "/"
@@ -128,7 +130,7 @@ class PyrabbitClient(object):
             kwargs = {
                 "pattern": "^admin.*",
                 "definition": {
-                    "expires": beer_garden.config.get("amq.admin_queue_expiry")
+                    "expires": self._admin_expires
                 },
                 "priority": 1,
                 "apply-to": "queues",
