@@ -55,7 +55,7 @@ def setup(cli_args):
     logger = logging.getLogger(__name__)
 
     _setup_application()
-    logger.debug("Successfully loaded the brew-view application")
+    logger.debug("Successfully loaded the application")
 
 
 async def startup():

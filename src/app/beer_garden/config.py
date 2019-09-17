@@ -17,7 +17,7 @@ __all__ = ["load", "generate_logging", "generate", "migrate", "get"]
 _CONFIG = None
 
 
-def load(args: Sequence[str], force=False) -> None:
+def load(args: Sequence[str], force: bool = False) -> None:
     """Load the application configuration.
 
     Attempt to load the application configuration in the following order:
@@ -107,7 +107,6 @@ def migrate(args: Sequence[str]):
     else:
         new_file = config.configuration.file
 
-    # logger.debug("About to migrate config at %s" % config.configuration.file)
     spec.migrate_config_file(
         config.configuration.file,
         current_file_type=current_type,
@@ -118,7 +117,6 @@ def migrate(args: Sequence[str]):
     )
 
     if type_conversion:
-        # logger.debug("Removing old config file at %s" % config.configuration.file)
         os.remove(config.configuration.file)
 
 
