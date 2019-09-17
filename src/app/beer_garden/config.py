@@ -4,9 +4,10 @@ import os
 import sys
 from argparse import ArgumentParser
 from datetime import datetime
-from typing import Tuple, Sequence
+from typing import Tuple, Sequence, Union
 
 import six
+from box import Box
 from ruamel.yaml import YAML
 from yapconf import YapconfSpec, dump_data
 
@@ -42,7 +43,7 @@ def load(args: Sequence[str], force: bool = False) -> None:
     spec, cli_vars = _parse_args(args)
 
     config_sources = _setup_config_sources(spec, cli_vars)
-    _CONFIG = spec.load_config(*config_sources)
+    _CONFIG = Box(spec.load_config(*config_sources).to_dict(), frozen_box=True)
 
 
 def generate(args: Sequence[str]):
@@ -152,11 +153,14 @@ def generate_logging(args: Sequence[str]):
     return logging_config
 
 
-def get(key: str):
+def get(key: str) -> Union[str, int, float, bool, complex, Box, None]:
     """Get specified key from the config.
 
     Nested keys can be separated with a "." If the key does not exist, then
     a None will be returned.
+
+    If the requested value is a container (has child items) then the returned value will
+    be an immutable (frozen) ``box.Box`` object.
 
     Args:
         key: The key to get, nested keys are separated with "."

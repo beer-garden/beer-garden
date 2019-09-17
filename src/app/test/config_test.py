@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 import yapconf
-from box import Box
+from box import BoxError
 from mock import Mock, patch
 from ruamel import yaml
 from yapconf import YapconfSpec
@@ -150,15 +150,26 @@ class TestGenerateLogging(object):
 
 
 class TestConfigGet(object):
-    def test_gets(self):
+    @pytest.fixture(autouse=True)
+    def load_config(self):
         beer_garden.config.load([], force=True)
-        amq = beer_garden.config.get("amq")
-        assert amq.host == "localhost"
-        assert amq["host"] == "localhost"
-        assert beer_garden.config.get("publish_hostname") == "localhost"
-        assert beer_garden.config.get("amq.host") == "localhost"
-        assert beer_garden.config.get("INVALID_KEY") is None
-        assert beer_garden.config.get("") is None
+
+    @pytest.mark.parametrize(
+        "key,expected",
+        [
+            ("publish_hostname", "localhost"),
+            ("amq.host", "localhost"),
+            ("validator.command", {"timeout": 10}),
+            ("INVALID_KEY", None),
+            ("", None),
+        ],
+    )
+    def test_get(self, key, expected):
+        assert beer_garden.config.get(key) == expected
+
+    def test_immutable(self):
+        with pytest.raises(BoxError):
+            beer_garden.config.get("log")["level"] = "not allowed"
 
 
 class TestSafeMigrate(object):
