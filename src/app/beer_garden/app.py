@@ -71,6 +71,7 @@ class BartenderApp(StoppableThread):
             "pyrabbit": PyrabbitClient(
                 host=amq_config.host,
                 virtual_host=amq_config.virtual_host,
+                admin_expires=amq_config.admin_queue_expiry,
                 **amq_config.connections.admin
             ),
         }

@@ -2,6 +2,7 @@ import pytest
 from mock import Mock, ANY
 from pyrabbit2.http import HTTPError, NetworkError
 
+import beer_garden.rabbitmq
 from beer_garden.rabbitmq import (
     PikaClient,
     PyrabbitClient,
@@ -85,11 +86,6 @@ class TestPikaClient(object):
 
 
 class TestPyrabbitClient(object):
-
-    # @pytest.fixture(autouse=True)
-    # def config(self, monkeypatch):
-    #     monkeypatch.setattr("bartender.config", Box(amq={"admin_queue_expiry": 1}))
-
     @pytest.fixture
     def pyrabbit_client(self):
         return Mock()
@@ -97,7 +93,11 @@ class TestPyrabbitClient(object):
     @pytest.fixture
     def client(self, pyrabbit_client):
         the_client = PyrabbitClient(
-            host="localhost", port=15672, user="user", password="password"
+            host="localhost",
+            port=15672,
+            user="user",
+            password="password",
+            admin_expires=3600000,
         )
         the_client._client = pyrabbit_client
 
@@ -180,14 +180,13 @@ class TestPyrabbitClient(object):
         pyrabbit_client.get_messages.return_value = [{"payload": fake_request}]
 
         parser_mock = Mock(parse_request=Mock(return_value=fake_request))
-        monkeypatch.setattr("bartender.pyrabbit.MongoParser", parser_mock)
+        monkeypatch.setattr("beer_garden.rabbitmq.MongoParser", parser_mock)
 
-        bv_client_mock = Mock()
-        monkeypatch.setattr("bartender.bv_client", bv_client_mock)
+        cancel_mock = Mock()
+        monkeypatch.setattr(beer_garden.rabbitmq, "cancel_request", cancel_mock)
 
         client.clear_queue("queue")
-        bv_client_mock.update_request.assert_called_with("id", status="CANCELED")
-        parser_mock.parse_request.assert_called_with(fake_request, from_string=True)
+        cancel_mock.assert_called_once_with(fake_request)
 
     def test_clear_queue_bad_payload(self, monkeypatch, client, pyrabbit_client):
         fake_request = Mock(id="id", status="CREATED")
@@ -195,7 +194,7 @@ class TestPyrabbitClient(object):
         pyrabbit_client.get_messages.return_value = [{"payload": fake_request}]
 
         parser_mock = Mock(parse_request=Mock(side_effect=ValueError))
-        monkeypatch.setattr("bartender.pyrabbit.MongoParser", parser_mock)
+        monkeypatch.setattr("beer_garden.rabbitmq.MongoParser", parser_mock)
 
         client.clear_queue("queue")
         assert fake_request.status == "CREATED"
@@ -213,7 +212,7 @@ class TestPyrabbitClient(object):
         pyrabbit_client.get_messages.return_value = []
 
         parser_mock = Mock()
-        monkeypatch.setattr("bartender.pyrabbit.MongoParser", parser_mock)
+        monkeypatch.setattr("beer_garden.rabbitmq.MongoParser", parser_mock)
 
         client.clear_queue("queue")
         assert pyrabbit_client.get_messages.called is True

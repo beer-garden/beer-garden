@@ -10,7 +10,7 @@ from beer_garden.local_plugins.manager import LocalPluginsManager
 
 class LocalPluginsManagerTest(unittest.TestCase):
     def setUp(self):
-        bartender.config = Box(default_box=True)
+        beer_garden.config = Box(default_box=True)
 
         self.fake_plugin_loader = Mock()
         self.fake_plugin_validator = Mock()
@@ -63,7 +63,7 @@ class LocalPluginsManagerTest(unittest.TestCase):
         )
         self.assertFalse(self.fake_plugin.start.called)
 
-    @patch("bartender.local_plugins.manager.LocalPluginRunner")
+    @patch("beer_garden.local_plugins.manager.LocalPluginRunner")
     def test_start_plugin_stopped(self, plugin_mock):
         self.fake_plugin.status = "STOPPED"
         new_plugin = Mock()
@@ -81,7 +81,7 @@ class LocalPluginsManagerTest(unittest.TestCase):
 
         self.manager.stop_plugin(self.fake_plugin)
         self.fake_plugin.stop.assert_called_once_with()
-        self.assertTrue(self.clients["pika"].stop.called)
+        self.assertTrue(self.clients["pika"].publish_request.called)
         self.assertTrue(self.fake_plugin.join.called)
         self.assertFalse(self.fake_plugin.kill.called)
 
@@ -112,8 +112,8 @@ class LocalPluginsManagerTest(unittest.TestCase):
         self.assertTrue(self.fake_plugin.join.called)
         self.assertEqual("DEAD", self.fake_plugin.status)
 
-    @patch("bartender.local_plugins.manager.LocalPluginsManager.start_plugin")
-    @patch("bartender.local_plugins.manager.LocalPluginsManager.stop_plugin")
+    @patch("beer_garden.local_plugins.manager.LocalPluginsManager.start_plugin")
+    @patch("beer_garden.local_plugins.manager.LocalPluginsManager.stop_plugin")
     def test_restart(self, stop_mock, start_mock):
         self.manager.restart_plugin(self.fake_plugin)
         stop_mock.assert_called_once_with(self.fake_plugin)
@@ -145,42 +145,42 @@ class LocalPluginsManagerTest(unittest.TestCase):
         self.assertRaises(Exception, self.manager.reload_system, "name", "version")
 
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._start_multiple_plugins"
+        "beer_garden.local_plugins.manager.LocalPluginsManager._start_multiple_plugins"
     )
     def test_start_all_plugins(self, start_multiple_mock):
         self.manager.start_all_plugins()
         start_multiple_mock.assert_called_once_with([self.fake_plugin])
 
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_all_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_all_system_names",
         Mock(return_value=[]),
     )
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_running_system_names",
         Mock(return_value=[]),
     )
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_failed_system_names",
         Mock(return_value=[]),
     )
-    @patch("bartender.local_plugins.manager.LocalPluginsManager.start_plugin")
+    @patch("beer_garden.local_plugins.manager.LocalPluginsManager.start_plugin")
     def test_start_multiple_plugins_empty(self, start_mock):
         self.manager._start_multiple_plugins([])
         self.assertEqual(start_mock.call_count, 0)
 
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_all_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_all_system_names",
         Mock(return_value=[]),
     )
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_running_system_names",
         Mock(return_value=[]),
     )
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_failed_system_names",
         Mock(return_value=[]),
     )
-    @patch("bartender.local_plugins.manager.LocalPluginsManager.start_plugin")
+    @patch("beer_garden.local_plugins.manager.LocalPluginsManager.start_plugin")
     def test_start_multiple_plugins_no_requirements(self, start_mock):
         fake_plugin_2 = Mock(
             system=self.system_mock,
@@ -199,36 +199,36 @@ class LocalPluginsManagerTest(unittest.TestCase):
         )
 
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_all_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_all_system_names",
         Mock(return_value=[]),
     )
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_running_system_names",
         Mock(return_value=[]),
     )
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_failed_system_names",
         Mock(return_value=[]),
     )
-    @patch("bartender.local_plugins.manager.LocalPluginsManager._mark_as_failed")
+    @patch("beer_garden.local_plugins.manager.LocalPluginsManager._mark_as_failed")
     def test_start_multiple_plugins_invalid_requirements(self, fail_mock):
         self.fake_plugin.requirements = ["DNE"]
         self.manager._start_multiple_plugins([self.fake_plugin])
         fail_mock.assert_called_once_with(self.fake_plugin)
 
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_all_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_all_system_names",
         Mock(return_value=["system_name", "system_name_2"]),
     )
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_running_system_names",
         Mock(return_value=[]),
     )
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_failed_system_names",
         Mock(return_value=[]),
     )
-    @patch("bartender.local_plugins.manager.LocalPluginsManager.start_plugin")
+    @patch("beer_garden.local_plugins.manager.LocalPluginsManager.start_plugin")
     def test_start_multiple_plugins(self, start_mock):
         system_mock_2 = Mock(version="1.0.0", instances=[Mock(name="default")])
         type(system_mock_2).name = PropertyMock(return_value="system_name_2")
@@ -249,18 +249,18 @@ class LocalPluginsManagerTest(unittest.TestCase):
         )
 
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_all_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_all_system_names",
         Mock(return_value=["system_name", "system_name_2"]),
     )
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_running_system_names",
         Mock(return_value=[]),
     )
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_failed_system_names",
         Mock(return_value=[]),
     )
-    @patch("bartender.local_plugins.manager.LocalPluginsManager.start_plugin")
+    @patch("beer_garden.local_plugins.manager.LocalPluginsManager.start_plugin")
     def test_start_multiple_plugins_skip_first(self, start_mock):
 
         system_mock_2 = Mock(version="1.0.0", instances=[Mock(name="default")])
@@ -282,18 +282,18 @@ class LocalPluginsManagerTest(unittest.TestCase):
         )
 
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_all_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_all_system_names",
         Mock(return_value=["system_name", "system_name_2"]),
     )
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_running_system_names",
         Mock(return_value=["system_name"]),
     )
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_failed_system_names",
         Mock(return_value=[]),
     )
-    @patch("bartender.local_plugins.manager.LocalPluginsManager.start_plugin")
+    @patch("beer_garden.local_plugins.manager.LocalPluginsManager.start_plugin")
     def test_start_multiple_plugins_requirement_already_running(self, start_mock):
 
         system_mock_2 = Mock(version="1.0.0", instances=[Mock(name="default")])
@@ -313,19 +313,19 @@ class LocalPluginsManagerTest(unittest.TestCase):
         start_mock.assert_has_calls([call(fake_plugin_2)], any_order=True)
 
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_all_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_all_system_names",
         Mock(return_value=["system_name", "system_name_2"]),
     )
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_running_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_running_system_names",
         Mock(return_value=[]),
     )
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._get_failed_system_names",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._get_failed_system_names",
         Mock(return_value=[]),
     )
-    @patch("bartender.local_plugins.manager.LocalPluginsManager._mark_as_failed")
-    @patch("bartender.local_plugins.manager.LocalPluginsManager.start_plugin")
+    @patch("beer_garden.local_plugins.manager.LocalPluginsManager._mark_as_failed")
+    @patch("beer_garden.local_plugins.manager.LocalPluginsManager.start_plugin")
     def test_start_multiple_plugins_failed_requirement_start(
         self, start_mock, fail_mock
     ):
@@ -349,23 +349,23 @@ class LocalPluginsManagerTest(unittest.TestCase):
         start_mock.assert_called_once_with(self.fake_plugin)
         fail_mock.assert_called_once_with(fake_plugin_2)
 
-    @patch("bartender.local_plugins.manager.System")
+    @patch("beer_garden.local_plugins.manager.System")
     def test_get_all_system_names(self, system_mock):
         system_mock.objects.return_value = [self.system_mock]
         self.assertEqual([self.system_mock.name], self.manager._get_all_system_names())
 
-    @patch("bartender.local_plugins.manager.LocalPluginsManager.stop_plugin")
+    @patch("beer_garden.local_plugins.manager.LocalPluginsManager.stop_plugin")
     def test_stop_all_plugins(self, stop_mock):
         self.manager.stop_all_plugins()
         stop_mock.assert_called_once_with(self.fake_plugin)
 
-    @patch("bartender.local_plugins.manager.LocalPluginsManager.stop_plugin")
+    @patch("beer_garden.local_plugins.manager.LocalPluginsManager.stop_plugin")
     def test_stop_all_plugins_empty(self, stop_mock):
         self.registry.get_all_plugins = Mock(return_value=[])
         self.manager.stop_all_plugins()
         self.assertEqual(stop_mock.call_count, 0)
 
-    @patch("bartender.local_plugins.manager.LocalPluginsManager.stop_plugin")
+    @patch("beer_garden.local_plugins.manager.LocalPluginsManager.stop_plugin")
     def test_stop_all_plugins_exception(self, stop_mock):
         stop_mock.side_effect = [Exception(), None]
         self.manager.logger = Mock()
@@ -379,7 +379,7 @@ class LocalPluginsManagerTest(unittest.TestCase):
         stop_mock.assert_has_calls([call(self.fake_plugin), call(self.fake_plugin)])
 
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._start_multiple_plugins",
+        "beer_garden.local_plugins.manager.LocalPluginsManager._start_multiple_plugins",
         Mock(),
     )
     def test_scan_plugin_path_no_change(self):
@@ -391,7 +391,7 @@ class LocalPluginsManagerTest(unittest.TestCase):
         self.assertEqual(0, self.fake_plugin_loader.load_plugin.call_count)
 
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._start_multiple_plugins"
+        "beer_garden.local_plugins.manager.LocalPluginsManager._start_multiple_plugins"
     )
     def test_scan_plugin_path_one_new(self, start_mock):
         self.fake_plugin_loader.scan_plugin_path = Mock(
@@ -407,7 +407,7 @@ class LocalPluginsManagerTest(unittest.TestCase):
         start_mock.assert_called_once_with([self.fake_plugin])
 
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._start_multiple_plugins"
+        "beer_garden.local_plugins.manager.LocalPluginsManager._start_multiple_plugins"
     )
     def test_scan_plugin_path_two_new_could_not_load_one(self, start_mock):
         self.fake_plugin_loader.scan_plugin_path = Mock(
@@ -424,7 +424,7 @@ class LocalPluginsManagerTest(unittest.TestCase):
         start_mock.assert_called_once_with([self.fake_plugin])
 
     @patch(
-        "bartender.local_plugins.manager.LocalPluginsManager._start_multiple_plugins"
+        "beer_garden.local_plugins.manager.LocalPluginsManager._start_multiple_plugins"
     )
     def test_scan_plugin_path_one_exception(self, start_mock):
         self.fake_plugin_loader.scan_plugin_path = Mock(
@@ -474,7 +474,7 @@ class LocalPluginsManagerTest(unittest.TestCase):
         self.manager.unpause_plugin("unique_name")
         self.assertEqual(self.fake_plugin.status, "RUNNING")
 
-    @patch("bartender.local_plugins.manager.System.find_unique")
+    @patch("beer_garden.local_plugins.manager.System.find_unique")
     def test_mark_as_failed(self, find_system_mock):
         find_system_mock.return_value = self.system_mock
 
@@ -482,7 +482,7 @@ class LocalPluginsManagerTest(unittest.TestCase):
         self.assertEqual(self.instance_mock.status, "DEAD")
         self.assertTrue(self.system_mock.deep_save.called)
 
-    @patch("bartender.local_plugins.manager.System.objects")
+    @patch("beer_garden.local_plugins.manager.System.objects")
     def test_get_failed_system_names(self, objects_mock):
 
         # Construct another fake system with all dead instances
@@ -496,7 +496,7 @@ class LocalPluginsManagerTest(unittest.TestCase):
         failed_plugins = self.manager._get_failed_system_names()
         self.assertEqual(failed_plugins, ["dead_system"])
 
-    @patch("bartender.local_plugins.manager.System.objects")
+    @patch("beer_garden.local_plugins.manager.System.objects")
     def test_get_failed_system_names_one_live_instance(self, objects_mock):
         instance_mock_2 = Mock(status="DEAD")
         type(instance_mock_2).name = PropertyMock(return_value="default_2")

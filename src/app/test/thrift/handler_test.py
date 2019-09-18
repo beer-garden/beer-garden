@@ -1,6 +1,7 @@
 import unittest
 
 import mongoengine
+import pytest
 from mock import MagicMock, Mock, PropertyMock, patch, call
 from pika.exceptions import UnroutableError
 from pyrabbit2.http import HTTPError
@@ -10,6 +11,7 @@ from beer_garden.thrift.handler import BartenderHandler
 from brewtils.errors import ModelValidationError
 
 
+@pytest.mark.skip
 class BartenderHandlerTest(unittest.TestCase):
     def setUp(self):
         self.registry = Mock()
