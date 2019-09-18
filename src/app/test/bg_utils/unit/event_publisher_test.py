@@ -75,7 +75,9 @@ class TestEventPublisher(object):
 
     def test_event_serialize(self, monkeypatch, event, publisher):
         parser = Mock()
-        monkeypatch.setattr(bg_utils.event_publisher, "SchemaParser", parser)
+        monkeypatch.setattr(
+            beer_garden.bg_utils.event_publisher, "SchemaParser", parser
+        )
 
         publisher._event_serialize(event)
         parser.serialize_event.assert_called_once_with(event)
