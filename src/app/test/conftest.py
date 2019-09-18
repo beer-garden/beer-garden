@@ -77,3 +77,8 @@ def mongo_parent_request(parent_request):
 @pytest.fixture
 def mongo_child_request(child_request):
     return brew2mongo(child_request)
+
+
+@pytest.fixture
+def mongo_request_template(bg_request_template):
+    return brew2mongo(bg_request_template)
