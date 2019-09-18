@@ -14,6 +14,7 @@ class FakeClient(object):
 
     def __call__(self, *args, **kwargs):
         from beer_garden.api.thrift.handler import BartenderHandler
+
         return asyncio.get_event_loop().run_in_executor(
             pool, getattr(BartenderHandler, args[0]), *args[1:]
         )

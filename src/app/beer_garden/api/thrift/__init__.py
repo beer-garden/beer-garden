@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 
 import brewtils.thrift
@@ -5,16 +6,17 @@ import brewtils.thrift
 from beer_garden.api.thrift.handler import BartenderHandler
 from beer_garden.api.thrift.server import make_server
 
-server = None
+logger = None
+the_server = None
 
 
 def run():
-    global logger, server
+    global logger, the_server
     logger = logging.getLogger(__name__)
 
     # TODO: The thrift portion is currently hardcoded, because it should
     # no longer be in the config. Eventually the thrift thread will be removed.
-    server = make_server(
+    the_server = make_server(
         service=brewtils.thrift.bg_thrift.BartenderBackend,
         handler=BartenderHandler(),
         host="0.0.0.0",
@@ -23,11 +25,11 @@ def run():
 
     logger.info("Starting Thrift server")
 
-    server.run()
+    the_server.run()
 
     logger.info("Application is shut down. Goodbye!")
 
 
 def stop():
     logger.info("Received a shutdown request.")
-    server.stop()
+    the_server.stop()

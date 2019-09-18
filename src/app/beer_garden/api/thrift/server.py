@@ -1,14 +1,13 @@
+# -*- coding: utf-8 -*-
 import logging
 from concurrent.futures import wait, ThreadPoolExecutor, ALL_COMPLETED
-
 from threading import Event
+
+import brewtils.thrift
+from brewtils.stoppable_thread import StoppableThread
 from thriftpy2.server import TThreadedServer
 from thriftpy2.thrift import TProcessor
 from thriftpy2.transport import TServerSocket, TSSLServerSocket
-
-import beer_garden
-import brewtils.thrift
-from brewtils.stoppable_thread import StoppableThread
 
 
 class BartenderThriftServer(TThreadedServer, StoppableThread):
