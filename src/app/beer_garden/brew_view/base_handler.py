@@ -92,7 +92,7 @@ class BaseHandler(AuthMixin, RequestHandler):
         """Headers set here will be applied to all responses"""
         self.set_header("BG-Version", beer_garden.__version__)
 
-        if beer_garden.brew_view.config.application.cors_enabled:
+        if beer_garden.config.get("application.cors_enabled"):
             self.set_header("Access-Control-Allow-Origin", "*")
             self.set_header("Access-Control-Allow-Headers", "Content-Type")
             self.set_header(
@@ -150,7 +150,7 @@ class BaseHandler(AuthMixin, RequestHandler):
 
     def options(self, *args, **kwargs):
 
-        if beer_garden.brew_view.config.application.cors_enabled:
+        if beer_garden.config.get("application.cors_enabled"):
             self.set_status(204)
         else:
             raise HTTPError(403, reason="CORS is disabled")
@@ -207,7 +207,7 @@ class BaseHandler(AuthMixin, RequestHandler):
                 message = error_dict.get("message", getattr(e, "message", str(e)))
                 code = error_dict.get("status_code", 500)
 
-            elif beer_garden.brew_view.config.application.debug_mode:
+            elif beer_garden.config.get("application.debug_mode"):
                 message = str(e)
 
         code = code or status_code or 500

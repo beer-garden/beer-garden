@@ -51,13 +51,14 @@ def initialize_instance(instance_id):
         admin_keys[-1], admin_args, admin_keys
     )
 
+    amq_config = beer_garden.config.get("amq")
     connection = {
-        "host": beer_garden.config.publish_hostname,
-        "port": beer_garden.config.amq.connections.message.port,
-        "user": beer_garden.config.amq.connections.message.user,
-        "password": beer_garden.config.amq.connections.message.password,
-        "virtual_host": beer_garden.config.amq.virtual_host,
-        "ssl": {"enabled": beer_garden.config.amq.connections.message.ssl.enabled},
+        "host": beer_garden.config.get("publish_hostname"),
+        "port": amq_config.connections.message.port,
+        "user": amq_config.connections.message.user,
+        "password": amq_config.connections.message.password,
+        "virtual_host": amq_config.virtual_host,
+        "ssl": {"enabled": amq_config.connections.message.ssl.enabled},
     }
 
     instance.status = "INITIALIZING"

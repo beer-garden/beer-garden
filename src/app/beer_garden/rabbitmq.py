@@ -127,7 +127,9 @@ class PyrabbitClient(object):
         try:
             kwargs = {
                 "pattern": "^admin.*",
-                "definition": {"expires": beer_garden.config.amq.admin_queue_expiry},
+                "definition": {
+                    "expires": beer_garden.config.get("amq.admin_queue_expiry")
+                },
                 "priority": 1,
                 "apply-to": "queues",
             }

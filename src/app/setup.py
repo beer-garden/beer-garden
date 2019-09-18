@@ -39,7 +39,7 @@ setup(
         "ruamel.yaml<0.16",
         "thriftpy2<0.5",
         "tornado==6.0.3",
-        "yapconf>=0.3.3",
+        "yapconf>=0.3.5",
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

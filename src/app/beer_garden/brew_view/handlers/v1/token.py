@@ -228,7 +228,7 @@ class TokenListAPI(BaseHandler):
         try:
             principal = Principal.objects.get(username=parsed_body["username"])
             if (
-                beer_garden.brew_view.config.auth.guest_login_enabled
+                beer_garden.config.get("auth.guest_login_enabled")
                 and principal.username
                 == beer_garden.brew_view.anonymous_principal.username
             ):
@@ -305,21 +305,21 @@ def generate_tokens(principal, expire_days):
 
 
 def generate_access_token(payload, issue_time=None):
+    auth_config = beer_garden.config.get("auth")
     issue_time = issue_time or datetime.utcnow()
 
     access_payload = payload.copy()
     access_payload.update(
         {
             "iat": issue_time,
-            "exp": issue_time
-            + timedelta(seconds=beer_garden.brew_view.config.auth.token.lifetime),
+            "exp": issue_time + timedelta(seconds=auth_config.token.lifetime),
         }
     )
 
     return jwt.encode(
         access_payload,
-        key=beer_garden.brew_view.config.auth.token.secret,
-        algorithm=beer_garden.brew_view.config.auth.token.algorithm,
+        key=auth_config.token.secret,
+        algorithm=auth_config.token.algorithm,
     ).decode()
 
 

@@ -2,16 +2,12 @@
 
 import signal
 import sys
-from argparse import ArgumentParser
 from functools import partial
 
-from yapconf import YapconfSpec
-
 import beer_garden
-import beer_garden.bg_utils
 from beer_garden import progressive_backoff
-from beer_garden.specification import SPECIFICATION, get_default_logging_config
 from beer_garden.bg_utils.mongo import setup_database
+from beer_garden.config import generate_logging, generate, migrate
 
 
 def signal_handler(signal_number, stack_frame):
@@ -30,32 +26,22 @@ def signal_handler(signal_number, stack_frame):
 
 
 def generate_logging_config():
-    spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
-    beer_garden.bg_utils.generate_logging_config_file(
-        spec, get_default_logging_config, sys.argv[1:]
-    )
+    generate_logging(sys.argv[1:])
 
 
 def generate_config():
-    spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
-    beer_garden.bg_utils.generate_config_file(spec, sys.argv[1:])
+    generate(sys.argv[1:])
 
 
 def migrate_config():
-    spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
-    beer_garden.bg_utils.update_config_file(spec, sys.argv[1:])
+    migrate(sys.argv[1:])
 
 
 def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    spec = YapconfSpec(SPECIFICATION, env_prefix="BG_")
-    parser = ArgumentParser()
-    spec.add_arguments(parser)
-    args = parser.parse_args(sys.argv[1:])
-
-    beer_garden.setup_bartender(spec=spec, cli_args=vars(args))
+    beer_garden.setup_bartender(sys.argv[1:])
 
     # Ensure we have a mongo connection
     progressive_backoff(

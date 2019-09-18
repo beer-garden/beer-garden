@@ -17,15 +17,17 @@ def setup_database(config):
     from mongoengine import connect, register_connection
     from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 
+    db_config = config.get("db")
+
     try:
         # Set timeouts here to a low value - we don't want to wait 30
         # seconds if there's no database
         conn = connect(
             alias="aliveness",
-            db=config.db.name,
+            db=db_config["name"],
             socketTimeoutMS=1000,
             serverSelectionTimeoutMS=1000,
-            **config.db.connection
+            **db_config["connection"]
         )
 
         # The 'connect' method won't actually fail
@@ -39,10 +41,10 @@ def setup_database(config):
 
     # Now register the default connection with real timeouts
     # Yes, mongoengine uses 'db' in connect and 'name' in register_connection
-    register_connection("default", name=config.db.name, **config.db.connection)
+    register_connection("default", name=db_config["name"], **db_config["connection"])
 
     try:
-        guest_login_enabled = config.auth.guest_login_enabled
+        guest_login_enabled = config.get("auth.guest_login_enabled")
     except KeyError:
         guest_login_enabled = None
 

@@ -1,6 +1,6 @@
 import json
 import logging
-from collections import Sequence
+from collections.abc import Sequence
 
 import re
 import six
@@ -26,15 +26,17 @@ request_map = {}
 
 
 class RequestValidator(object):
-    def __init__(self):
+    def __init__(self, validator_config):
         self.logger = logging.getLogger(__name__)
 
+        self._command_timeout = validator_config.command.timeout
+
         self._session = Session()
-        if not beer_garden.config.validator.url.ca_verify:
+        if not validator_config.url.ca_verify:
             urllib3.disable_warnings()
             self._session.verify = False
-        elif beer_garden.config.validator.url.ca_cert:
-            self._session.verify = beer_garden.config.validator.url.ca_cert
+        elif validator_config.url.ca_cert:
+            self._session.verify = validator_config.url.ca_cert
 
     def validate_request(self, request):
         """Validation to be called before you save a request from a user
@@ -285,8 +287,7 @@ class RequestValidator(object):
                     )
 
                 response = process_request(
-                    choices_request,
-                    wait_timeout=beer_garden.config.validator.command.timeout,
+                    choices_request, wait_timeout=self._command_timeout
                 )
 
                 parsed_output = json.loads(response.output)
