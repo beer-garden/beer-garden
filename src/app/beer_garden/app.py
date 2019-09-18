@@ -1,19 +1,24 @@
-from __future__ import division
-
+# -*- coding: utf-8 -*-
 import logging
-
 import time
-from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
-from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import timedelta
 from functools import partial
-from mongoengine import Q
+
+import brewtils.models
+from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
+from apscheduler.schedulers.background import BackgroundScheduler
+from brewtils.models import Events
+from brewtils.pika import TransientPikaClient
+from brewtils.rest.easy_client import EasyClient
+from brewtils.stoppable_thread import StoppableThread
 from pytz import utc
 from requests.exceptions import RequestException
 
 import beer_garden
-import brewtils.models
-import brewtils.thrift
+from beer_garden.api.thrift.handler import BartenderHandler
+from beer_garden.api.thrift.server import make_server
+from beer_garden.bg_utils.event_publisher import EventPublishers, EventPublisher
+from beer_garden.bg_utils.publishers import MongoPublisher
 from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.local_plugins.manager import LocalPluginsManager
 from beer_garden.local_plugins.monitor import LocalPluginMonitor
@@ -26,15 +31,6 @@ from beer_garden.monitor import PluginStatusMonitor
 from beer_garden.rabbitmq import PikaClient, PyrabbitClient
 from beer_garden.requests import RequestValidator
 from beer_garden.scheduler import BGJobStore
-from beer_garden.api.thrift.handler import BartenderHandler
-from beer_garden.api.thrift.server import make_server
-from beer_garden.bg_utils.event_publisher import EventPublishers, EventPublisher
-from beer_garden.bg_utils.mongo.models import Event, Request
-from beer_garden.bg_utils.publishers import MongoPublisher
-from brewtils.models import Events
-from brewtils.pika import TransientPikaClient
-from brewtils.rest.easy_client import EasyClient
-from brewtils.stoppable_thread import StoppableThread
 
 
 class BartenderApp(StoppableThread):
@@ -116,7 +112,9 @@ class BartenderApp(StoppableThread):
         ]
 
         # Only want to run the MongoPruner if it would do anything
-        tasks, run_every = self._setup_pruning_tasks()
+        tasks, run_every = MongoPruner.determine_tasks(
+            **beer_garden.config.get("db.ttl")
+        )
         if run_every:
             self.helper_threads.append(
                 HelperThread(
@@ -216,54 +214,6 @@ class BartenderApp(StoppableThread):
             self.logger.warning("Unable to publish shutdown notification")
 
         self.logger.info("Successfully shut down Bartender")
-
-    @staticmethod
-    def _setup_pruning_tasks():
-
-        prune_tasks = []
-        db_config = beer_garden.config.get("db")
-        if db_config.ttl.info > 0:
-            prune_tasks.append(
-                {
-                    "collection": Request,
-                    "field": "created_at",
-                    "delete_after": timedelta(minutes=db_config.ttl.info),
-                    "additional_query": (
-                        Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
-                    )
-                    & Q(has_parent=False)
-                    & Q(command_type="INFO"),
-                }
-            )
-
-        if db_config.ttl.action > 0:
-            prune_tasks.append(
-                {
-                    "collection": Request,
-                    "field": "created_at",
-                    "delete_after": timedelta(minutes=db_config.ttl.action),
-                    "additional_query": (
-                        Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
-                    )
-                    & Q(has_parent=False)
-                    & Q(command_type="ACTION"),
-                }
-            )
-
-        if db_config.ttl.event > 0:
-            prune_tasks.append(
-                {
-                    "collection": Event,
-                    "field": "timestamp",
-                    "delete_after": timedelta(minutes=db_config.ttl.event),
-                }
-            )
-
-        # Look at the various TTLs to determine how often to run the MongoPruner
-        real_ttls = [x for x in db_config.ttl.values() if x > 0]
-        run_every = min(real_ttls) / 2 if real_ttls else None
-
-        return prune_tasks, run_every
 
     @staticmethod
     def _setup_scheduler():
