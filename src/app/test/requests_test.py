@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 import pytest
 from box import Box
 from brewtils.errors import ModelValidationError
 from mock import Mock, call, patch
 
+import beer_garden.requests
 from beer_garden.bg_utils.mongo.models import (
     Command,
     Parameter,
@@ -21,9 +23,14 @@ def system_find(monkeypatch):
 
 
 @pytest.fixture
-def validator(monkeypatch):
-    config = Box({"command": {"timeout": 10}, "url": {"ca_verify": False}})
-    return RequestValidator(config)
+def validator(monkeypatch, mongo_conn):
+    val = RequestValidator(
+        Box({"command": {"timeout": 10}, "url": {"ca_verify": False}})
+    )
+
+    monkeypatch.setattr(beer_garden, "application", Mock(request_validator=val))
+
+    return val
 
 
 def make_param(**kwargs):
@@ -56,6 +63,14 @@ def make_request(**kwargs):
     }
     defaults.update(**kwargs)
     return Mock(spec=Request, **defaults)
+
+
+def _process_mock(monkeypatch, return_value=""):
+    process_mock = Mock()
+    process_mock.return_value.output = return_value
+    monkeypatch.setattr(beer_garden.requests, "process_request", process_mock)
+
+    return process_mock
 
 
 class TestSessionConfig(object):
@@ -192,7 +207,7 @@ class TestGetAndValidateParameters(object):
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(req, command)
 
-    @patch("bartender.requests.RequestValidator._validate_parameter_based_on_type")
+    @patch("beer_garden.requests.RequestValidator._validate_parameter_based_on_type")
     def test_extract_parameter_non_multi_calls_no_default(
         self, validate_mock, validator
     ):
@@ -204,7 +219,7 @@ class TestGetAndValidateParameters(object):
         validator.get_and_validate_parameters(req, command)
         validate_mock.assert_called_once_with("value1", command_parameter, command, req)
 
-    @patch("bartender.requests.RequestValidator._validate_parameter_based_on_type")
+    @patch("beer_garden.requests.RequestValidator._validate_parameter_based_on_type")
     def test_extract_parameter_non_multi_calls_with_default(
         self, validate_mock, validator
     ):
@@ -218,7 +233,7 @@ class TestGetAndValidateParameters(object):
             "default_value", command_parameter, command, req
         )
 
-    @patch("bartender.requests.RequestValidator._validate_parameter_based_on_type")
+    @patch("beer_garden.requests.RequestValidator._validate_parameter_based_on_type")
     def test_update_and_validate_parameter_extract_parameter_multi(
         self, validate_mock, validator
     ):
@@ -466,7 +481,7 @@ class TestValidateChoices(object):
             make_request(parameters={"p1": "a", "p2": "1"}),
         ],
     )
-    def test_validate_choices_dictionary(self, validator, req):
+    def test_dictionary(self, validator, req):
         choices_value = {"a": ["1", "2", "3"], "b": ["4", "5", "6"], "null": ["7"]}
 
         command = Mock(
@@ -498,7 +513,7 @@ class TestValidateChoices(object):
             make_request(parameters={"p1": "c", "p2": "1"}),
         ],
     )
-    def test_validate_choices_dictionary_bad_parameters(self, validator, req):
+    def test_dictionary_bad_parameters(self, validator, req):
         choices_value = {"a": ["1", "2", "3"], "b": ["4", "5", "6"]}
 
         command = Mock(
@@ -519,7 +534,7 @@ class TestValidateChoices(object):
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(req, command)
 
-    def test_validate_choices_invalid_parameters(self, validator):
+    def test_invalid_parameters(self, validator):
         command = Mock(
             parameters=[
                 make_param(key="p1", choices=Mock(type="static", value=["a", "b"])),
@@ -535,20 +550,7 @@ class TestValidateChoices(object):
             req = make_request(parameters={"p1": "1", "p2": "a"})
             validator.get_and_validate_parameters(req, command)
 
-    @pytest.mark.parametrize(
-        "req",
-        [
-            make_request(instance_name="i1", parameters={"p1": "1"}),
-            make_request(instance_name="i2", parameters={"p1": "4"}),
-            pytest.param(
-                make_request(instance_name="i1", parameters={"p1": "4"}),
-                marks=pytest.mark.xfail(raises=ModelValidationError),
-            ),
-        ],
-    )
-    def test_validate_choices_instance_name_key(self, validator, req):
-        choices_value = {"i1": ["1", "2", "3"], "i2": ["4", "5", "6"]}
-
+    class TestInstanceNameKey(object):
         command = Mock(
             parameters=[
                 make_param(
@@ -556,29 +558,30 @@ class TestValidateChoices(object):
                     optional=False,
                     choices=Mock(
                         type="static",
-                        value=choices_value,
+                        value={"i1": ["1", "2", "3"], "i2": ["4", "5", "6"]},
                         details={"key_reference": "instance_name"},
                     ),
                 )
             ]
         )
-        validator.get_and_validate_parameters(req, command)
 
-    @pytest.mark.parametrize(
-        "req",
-        [
-            make_request(parameters={"p1": "a", "p2": "1"}),
-            pytest.param(
-                make_request(parameters={"p1": "Fail"}),
-                marks=pytest.mark.xfail(raises=ModelValidationError),
-            ),
-        ],
-    )
-    def test_validate_choices_command_using_parameter_argument(self, validator, req):
-        mock_client = Mock()
-        mock_client.send_bg_request.return_value.output = '["1"]'
-        validator._client = mock_client
+        @pytest.mark.parametrize(
+            "req",
+            [
+                make_request(instance_name="i1", parameters={"p1": "1"}),
+                make_request(instance_name="i2", parameters={"p1": "4"}),
+            ],
+        )
+        def test_success(self, validator, req):
+            validator.get_and_validate_parameters(req, self.command)
 
+        def test_failure(self, validator):
+            req = make_request(instance_name="i1", parameters={"p1": "4"})
+
+            with pytest.raises(ModelValidationError):
+                validator.get_and_validate_parameters(req, self.command)
+
+    class TestCommandParameterArgument(object):
         command = Mock(
             parameters=[
                 make_param(key="p1", choices=Mock(type="static", value=["a", "b"])),
@@ -589,33 +592,28 @@ class TestValidateChoices(object):
                 ),
             ]
         )
-        validator.get_and_validate_parameters(req, command)
-        mock_client.send_bg_request.assert_called_with(
-            _command="c2",
-            _system_name="s1",
-            _system_version="1",
-            _instance_name="i1",
-            p="a",
-        )
 
-    @pytest.mark.parametrize(
-        "req",
-        [
-            make_request(parameters={"p1": "1"}),
-            make_request(instance_name="i2", parameters={"p1": "1"}),
-            pytest.param(
-                make_request(parameters={"p1": "Fail"}),
-                marks=pytest.mark.xfail(raises=ModelValidationError),
-            ),
-        ],
-    )
-    def test_validate_choices_command_using_instance_name_argument(
-        self, validator, req
-    ):
-        mock_client = Mock()
-        mock_client.send_bg_request.return_value.output = '["1"]'
-        validator._client = mock_client
+        def test_success(self, monkeypatch, validator):
+            process_mock = _process_mock(monkeypatch, return_value='["1"]')
+            req = make_request(parameters={"p1": "a", "p2": "1"})
 
+            validator.get_and_validate_parameters(req, self.command)
+
+            choices_request = process_mock.call_args[0][0]
+            assert choices_request.command == "c2"
+            assert choices_request.system == "s1"
+            assert choices_request.system_version == "1"
+            assert choices_request.instance_name == "i1"
+            assert choices_request.parameters == {"p": "a"}
+
+        def test_failure(self, monkeypatch, validator):
+            _process_mock(monkeypatch, return_value='["1"]')
+            req = make_request(parameters={"p1": "Fail"})
+
+            with pytest.raises(ModelValidationError):
+                validator.get_and_validate_parameters(req, self.command)
+
+    class TestCommandInstanceNameArgument(object):
         command = Mock(
             parameters=[
                 make_param(
@@ -626,14 +624,31 @@ class TestValidateChoices(object):
             ]
         )
 
-        validator.get_and_validate_parameters(req, command)
-        mock_client.send_bg_request.assert_called_with(
-            _command="c2",
-            _system_name="s1",
-            _system_version="1",
-            _instance_name=req.instance_name,
-            p=req.instance_name,
+        @pytest.mark.parametrize(
+            "req",
+            [
+                make_request(parameters={"p1": "1"}),
+                make_request(instance_name="i2", parameters={"p1": "1"}),
+            ],
         )
+        def test_success(self, monkeypatch, validator, req):
+            process_mock = _process_mock(monkeypatch, return_value='["1"]')
+
+            validator.get_and_validate_parameters(req, self.command)
+
+            choices_request = process_mock.call_args[0][0]
+            assert choices_request.command == "c2"
+            assert choices_request.system == "s1"
+            assert choices_request.system_version == "1"
+            assert choices_request.instance_name == req.instance_name
+            assert choices_request.parameters == {"p": req.instance_name}
+
+        def test_failure(self, monkeypatch, validator):
+            _process_mock(monkeypatch, return_value='["1"]')
+            req = make_request(parameters={"p1": "Fail"})
+
+            with pytest.raises(ModelValidationError):
+                validator.get_and_validate_parameters(req, self.command)
 
     def test_validate_value_in_choices_no_choices(self, validator):
         req = Request(system="foo", command="command1", parameters={"key1": "value"})
@@ -760,10 +775,8 @@ class TestValidateChoices(object):
         validator.get_and_validate_parameters(req, command)
         session_mock.get.assert_called_with("http://localhost", params={})
 
-    def test_validate_command_choices_dict_value(self, validator):
-        mock_client = Mock()
-        mock_client.send_bg_request.return_value.output = '["value"]'
-        validator._client = mock_client
+    def test_validate_command_choices_dict_value(self, monkeypatch, validator):
+        process_mock = _process_mock(monkeypatch, return_value='["value"]')
 
         request = Request(
             system="foo",
@@ -789,17 +802,15 @@ class TestValidateChoices(object):
         )
 
         validator.get_and_validate_parameters(request, command)
-        mock_client.send_bg_request.assert_called_with(
-            _command="command_name",
-            _system_name="foo",
-            _system_version="0.0.1",
-            _instance_name="default",
-        )
 
-    def test_validate_command_choices_bad_value_type(self, validator):
-        mock_client = Mock()
-        mock_client.send_bg_request.return_value.output = '["value"]'
-        validator._client = mock_client
+        choices_request = process_mock.call_args[0][0]
+        assert choices_request.command == "command_name"
+        assert choices_request.system == "foo"
+        assert choices_request.system_version == "0.0.1"
+        assert choices_request.instance_name == "default"
+
+    def test_validate_command_choices_bad_value_type(self, monkeypatch, validator):
+        _process_mock(monkeypatch, return_value='["value"]')
 
         request = Request(
             system="foo",
@@ -819,10 +830,10 @@ class TestValidateChoices(object):
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(request, command)
 
-    def test_validate_command_choices_simple_list_response(self, validator):
-        mock_client = Mock()
-        mock_client.send_bg_request.return_value.output = '["value"]'
-        validator._client = mock_client
+    def test_validate_command_choices_simple_list_response(
+        self, monkeypatch, validator
+    ):
+        process_mock = _process_mock(monkeypatch, return_value='["value"]')
 
         request = Request(
             system="foo",
@@ -842,17 +853,17 @@ class TestValidateChoices(object):
         )
 
         validator.get_and_validate_parameters(request, command)
-        mock_client.send_bg_request.assert_called_with(
-            _command="command_name",
-            _system_name="foo",
-            _system_version="0.0.1",
-            _instance_name="instance_name",
-        )
 
-    def test_validate_command_choices_dictionary_list_response(self, validator):
-        mock_client = Mock()
-        mock_client.send_bg_request.return_value.output = '[{"value": "value"}]'
-        validator._client = mock_client
+        choices_request = process_mock.call_args[0][0]
+        assert choices_request.command == "command_name"
+        assert choices_request.system == "foo"
+        assert choices_request.system_version == "0.0.1"
+        assert choices_request.instance_name == "instance_name"
+
+    def test_validate_command_choices_dictionary_list_response(
+        self, monkeypatch, validator
+    ):
+        process_mock = _process_mock(monkeypatch, return_value='[{"value": "value"}]')
 
         request = Request(
             system="foo",
@@ -872,17 +883,15 @@ class TestValidateChoices(object):
         )
 
         validator.get_and_validate_parameters(request, command)
-        mock_client.send_bg_request.assert_called_with(
-            _command="command_name",
-            _system_name="foo",
-            _system_version="0.0.1",
-            _instance_name="instance_name",
-        )
 
-    def test_validate_command_choices_bad_parameter(self, validator):
-        mock_client = Mock()
-        mock_client.send_bg_request.return_value.output = '{"value": "value"}'
-        validator._client = mock_client
+        choices_request = process_mock.call_args[0][0]
+        assert choices_request.command == "command_name"
+        assert choices_request.system == "foo"
+        assert choices_request.system_version == "0.0.1"
+        assert choices_request.instance_name == "instance_name"
+
+    def test_validate_command_choices_bad_parameter(self, monkeypatch, validator):
+        _process_mock(monkeypatch, return_value='{"value": "value"}')
 
         request = Request(
             system="foo",
@@ -904,10 +913,8 @@ class TestValidateChoices(object):
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(request, command)
 
-    def test_validate_command_choices_empty_list_output(self, validator):
-        mock_client = Mock()
-        mock_client.send_bg_request.return_value = Mock(output="[]")
-        validator._client = mock_client
+    def test_validate_command_choices_empty_list_output(self, monkeypatch, validator):
+        _process_mock(monkeypatch, return_value="[]")
 
         request = Request(
             system="foo",
@@ -929,10 +936,8 @@ class TestValidateChoices(object):
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(request, command)
 
-    def test_validate_command_choices_bad_output_type(self, validator):
-        mock_client = Mock()
-        mock_client.send_bg_request.return_value = Mock(output='{"value": "value"}')
-        validator._client = mock_client
+    def test_validate_command_choices_bad_output_type(self, monkeypatch, validator):
+        _process_mock(monkeypatch, return_value='{"value": "value"}')
 
         request = Request(
             system="foo",

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import pytest
+from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.job import Job as APJob
+from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.base import BaseScheduler
 from apscheduler.triggers.date import DateTrigger
 from mock import Mock
@@ -21,14 +23,14 @@ def jobstore(mongo_conn):
 
 
 @pytest.fixture
-def ap_job(mongo_job, bg_request_template):
+def ap_job(mongo_job, mongo_request_template):
     job_kwargs = {
         "func": Mock(),
         "scheduler": Mock(BaseScheduler, timezone=utc),
         "trigger": DateTrigger(),
         "executor": "default",
         "args": (),
-        "kwargs": {"request_template": bg_request_template},
+        "kwargs": {"request_template": mongo_request_template},
         "id": str(mongo_job.id),
         "misfire_grace_time": mongo_job.misfire_grace_time,
         "coalesce": mongo_job.coalesce,
@@ -39,19 +41,32 @@ def ap_job(mongo_job, bg_request_template):
     return APJob(**job_kwargs)
 
 
+@pytest.fixture
+def scheduler(jobstore):
+    job_stores = {"beer_garden": jobstore}
+    executors = {"default": APThreadPoolExecutor(1)}
+    job_defaults = {"coalesce": True, "max_instances": 3}
+
+    return BackgroundScheduler(
+        jobstores=job_stores,
+        executors=executors,
+        job_defaults=job_defaults,
+        timezone=utc,
+    )
+
+
 class TestRunJob(object):
-    def test_run_job(self, monkeypatch, bg_request_template):
-        mock_scheduler = Mock()
-        mock_scheduler.get_job.return_value = None
-        monkeypatch.setattr(brew_view, "request_scheduler", mock_scheduler)
+    def test_run_job(self, monkeypatch, scheduler, mongo_request_template):
+        process_mock = Mock()
+        monkeypatch.setattr(beer_garden.scheduler, "process_request", process_mock)
 
-        with patch("brew_view.easy_client") as client_mock:
-            run_job("job_id", bg_request_template)
+        app_mock = Mock(scheduler=scheduler)
+        monkeypatch.setattr(beer_garden, "application", app_mock)
 
-        client_mock.create_request.assert_called_with(
-            bg_request_template, blocking=True
-        )
-        assert bg_request_template.metadata["_bg_job_id"] == "job_id"
+        run_job("job_id", mongo_request_template)
+
+        created_request = process_mock.call_args[0][0]
+        assert created_request["metadata"]["_bg_job_id"] == "job_id"
 
 
 class TestJobStore(object):

@@ -157,7 +157,7 @@ class PluginLoggingLoaderTest(unittest.TestCase):
             },
         )
 
-    @patch("bg_utils.plugin_logging_loader.open")
+    @patch("beer_garden.bg_utils.plugin_logging_loader.open")
     @patch("json.load")
     def test_setup_application_logging_from_file(self, json_mock, open_mock):
         fake_file = Mock()
