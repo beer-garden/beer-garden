@@ -1,302 +1,187 @@
-import os
 import sys
-import unittest
 
-from mock import patch, Mock
+import pytest
+from mock import Mock
 
 from beer_garden.errors import PluginValidationError
-from beer_garden.local_plugins.validator import LocalPluginValidator
 
 
-class LocalPluginValidatorTest(unittest.TestCase):
-    def setUp(self):
-        self.validator = LocalPluginValidator()
+@pytest.fixture
+def config():
+    return {"NAME": "FOO", "VERSION": "1", "PLUGIN_ENTRY": "entry.py"}
 
-    @patch(
-        "bartender.local_plugins.validator.LocalPluginValidator.validate_plugin_path",
-        Mock(),
-    )
-    @patch(
-        "bartender.local_plugins.validator.LocalPluginValidator.validate_plugin_config",
-        Mock(),
-    )
-    def test_validate_plugin_calls(self):
-        rv = self.validator.validate_plugin("/path/to/plugin")
-        self.assertEqual(self.validator.validate_plugin_path.call_count, 1)
-        self.assertEqual(self.validator.validate_plugin_config.call_count, 1)
-        self.assertEqual(rv, True)
 
-    @patch(
-        "bartender.local_plugins.validator.LocalPluginValidator.validate_plugin_path",
-        Mock(side_effect=PluginValidationError("foo")),
-    )
-    def test_validate_plugin_error(self):
-        rv = self.validator.validate_plugin("/path/to/plugin")
-        self.assertEqual(rv, False)
+@pytest.fixture
+def config_file(tmp_path, config):
+    serialized_config = [f"{key}='{value}'" for key, value in config.items()]
 
-    @patch("bartender.local_plugins.validator.isfile", Mock(return_value=True))
-    @patch(
-        "bartender.local_plugins.validator.LocalPluginValidator.validate_plugin_path",
-        Mock(),
-    )
-    @patch(
-        "bartender.local_plugins.validator.LocalPluginValidator.validate_entry_point",
-        Mock(),
-    )
-    @patch(
-        "bartender.local_plugins.validator.LocalPluginValidator.validate_instances_and_args",
-        Mock(),
-    )
-    @patch(
-        "bartender.local_plugins.validator.LocalPluginValidator.validate_plugin_environment",
-        Mock(),
-    )
-    @patch("bartender.local_plugins.validator.load_source")
-    def test_validate_plugin_load_plugin_config(self, mock_load):
-        mock_load.return_value = {}
-        self.validator.validate_plugin("/path/to/plugin")
-        mock_load.assert_called_with(
-            "BGPLUGINCONFIG", "/path/to/plugin/%s" % self.validator.CONFIG_NAME
-        )
+    config_file = tmp_path / "beer.conf"
+    config_file.write_text("\n".join(serialized_config))
 
-    @patch("bartender.local_plugins.validator.isfile", Mock(return_value=True))
-    @patch(
-        "bartender.local_plugins.validator.LocalPluginValidator.validate_plugin_path",
-        Mock(),
-    )
-    @patch(
-        "bartender.local_plugins.validator.LocalPluginValidator.validate_entry_point",
-        Mock(),
-    )
-    @patch(
-        "bartender.local_plugins.validator.LocalPluginValidator.validate_instances_and_args",
-        Mock(),
-    )
-    @patch(
-        "bartender.local_plugins.validator.LocalPluginValidator.validate_plugin_environment",
-        Mock(),
-    )
-    @patch("bartender.local_plugins.validator.load_source")
-    def test_validate_remove_plugin_config_from_sys_modules(self, mock_load):
-        def side_effect(module_name, value):
-            sys.modules[module_name] = value
 
-        mock_load.side_effect = side_effect
-        self.validator.validate_plugin("/path/to/plugin")
-        self.assertNotIn("BGPLUGINCONFIG", sys.modules)
+@pytest.fixture
+def entry_point(tmp_path, config):
+    (tmp_path / config["PLUGIN_ENTRY"]).touch()
 
-    def test_validate_plugin_path_bad(self):
-        self.assertRaises(
-            PluginValidationError,
-            self.validator.validate_plugin_path,
-            "/path/to/non-existant/foo",
-        )
 
-    def test_validate_plugin_path_none(self):
-        self.assertRaises(
-            PluginValidationError, self.validator.validate_plugin_path, None
-        )
+class TestValidatePlugin(object):
+    def test_success(self, tmp_path, validator, config_file, entry_point):
+        assert validator.validate_plugin(tmp_path) is True
 
-    def test_validate_plugin_path_good(self):
-        current_directory = os.path.dirname(os.path.abspath(__file__))
-        self.assertTrue(self.validator.validate_plugin_path(current_directory))
+        assert "BGPLUGINCONFIG" not in sys.modules
 
-    def test_validate_plugin_config_none(self):
-        self.assertRaises(
-            PluginValidationError, self.validator.validate_plugin_config, None
-        )
+    def test_failure_missing_conf(self, tmp_path, validator):
+        # Not having the config_file fixture makes validation fail
+        assert validator.validate_plugin(tmp_path) is False
 
-    @patch("bartender.local_plugins.validator.isfile")
-    def test_validate_plugin_config_not_a_file(self, isfile_mock):
-        isfile_mock.return_value = False
-        self.assertRaises(
-            PluginValidationError, self.validator.validate_plugin_config, "not_a_file"
-        )
-        isfile_mock.assert_called_with("not_a_file/%s" % self.validator.CONFIG_NAME)
+        assert "BGPLUGINCONFIG" not in sys.modules
 
-    def test_validate_entry_point_none_config_module(self):
-        self.assertRaises(
-            PluginValidationError,
-            self.validator.validate_entry_point,
-            None,
-            "/path/to/plugin",
-        )
+    def test_failure_missing_entry(self, tmp_path, validator, config_file):
+        # Not having the entry_point fixture makes validation fail
+        assert validator.validate_plugin(tmp_path) is False
 
-    def test_validate_entry_point_none_path_to_plugin(self):
-        self.assertRaises(
-            PluginValidationError, self.validator.validate_entry_point, {}, None
-        )
+        assert "BGPLUGINCONFIG" not in sys.modules
 
-    def test_validate_entry_point_no_entry_point_key(self):
-        self.assertRaises(
-            PluginValidationError,
-            self.validator.validate_entry_point,
-            Mock(spec=[]),
-            "/path/to/plugin",
-        )
 
-    def test_validate_entry_point_bad_entry_point(self):
-        self.assertRaises(
-            PluginValidationError,
-            self.validator.validate_entry_point,
-            Mock(spec=[self.validator.ENTRY_POINT_KEY], PLUGIN_ENTRY="not_a_file"),
-            "/path/to/plugin",
-        )
+class TestValidatePath(object):
+    def test_success(self, tmpdir, validator):
+        assert validator.validate_plugin_path(tmpdir) is True
 
-    @patch("bartender.local_plugins.validator.isfile", Mock(return_value=True))
-    def test_validate_entry_point_good_file(self):
-        self.validator.validate_entry_point(
-            Mock(PLUGIN_ENTRY="is_totally_a_file"), "/path/to/plugin"
-        )
+    @pytest.mark.parametrize("path", [None, "/path/to/nowhere"])
+    def test_failure(self, validator, path):
+        with pytest.raises(PluginValidationError):
+            validator.validate_plugin_path(path)
 
-    @patch("bartender.local_plugins.validator.isdir", Mock(return_value=True))
-    @patch("bartender.local_plugins.validator.isfile")
-    def test_validate_entry_point_good_package(self, isfile_mock):
-        def is_special_file(name):
-            return "__init__" in name or "__main__" in name
+    @pytest.mark.parametrize("path_to_plugin", [None, "/path/to/nowhere"])
+    def test_validate_config_failure(self, validator, path_to_plugin):
+        with pytest.raises(PluginValidationError):
+            validator.validate_plugin_config(path_to_plugin)
 
-        isfile_mock.side_effect = is_special_file
 
-        self.validator.validate_entry_point(
-            Mock(PLUGIN_ENTRY="-m plugin"), "/path/to/plugin"
-        )
+class TestRequiredConfigKeys(object):
+    def test_none_config(self, validator):
+        with pytest.raises(PluginValidationError):
+            validator.validate_required_config_keys(None)
 
-    def test_validate_individual_plugin_arguments_not_none_or_list(self):
-        self.assertRaises(
-            PluginValidationError,
-            self.validator.validate_individual_plugin_arguments,
-            "notalistornone",
-        )
-
-    def test_validate_individual_plugin_arguments_none(self):
-        self.assertTrue(self.validator.validate_individual_plugin_arguments(None))
-
-    def test_validate_individual_plugin_arguments_bad_list(self):
-        self.assertRaises(
-            PluginValidationError,
-            self.validator.validate_individual_plugin_arguments,
-            [{"foo": "bar"}],
-        )
-
-    def test_validate_individual_plugin_arguments_good_list(self):
-        self.assertTrue(self.validator.validate_individual_plugin_arguments(["good"]))
-
-    def test_validate_plugin_environment_none_config(self):
-        self.assertRaises(
-            PluginValidationError, self.validator.validate_plugin_environment, None
-        )
-
-    def test_validate_plugin_environment_no_environment(self):
-        self.assertTrue(self.validator.validate_plugin_environment(Mock(spec=[])))
-
-    def test_validate_plugin_environment_bad_environment(self):
-        self.assertRaises(
-            PluginValidationError,
-            self.validator.validate_plugin_environment,
-            Mock(ENVIRONMENT="notadict"),
-        )
-
-    def test_validate_plugin_environment_bad_key(self):
-        self.assertRaises(
-            PluginValidationError,
-            self.validator.validate_plugin_environment,
-            Mock(ENVIRONMENT={1: "int_key_not_allowed"}),
-        )
-
-    def test_validate_plugin_environment_with_bg_prefix_key(self):
-        self.assertRaises(
-            PluginValidationError,
-            self.validator.validate_plugin_environment,
-            Mock(ENVIRONMENT={"BG_foo": "that_key_is_not_allowed"}),
-        )
-
-    def test_validate_plugin_environment_bad_value(self):
-        self.assertRaises(
-            PluginValidationError,
-            self.validator.validate_plugin_environment,
-            Mock(ENVIRONMENT={"foos": ["foo1", "foo2"]}),
-        )
-
-    def test_validate_plugin_environment_good(self):
-        self.assertTrue(
-            self.validator.validate_plugin_environment(Mock(ENVIRONMENT={"foo": "bar"}))
-        )
-
-    @patch("bartender.local_plugins.validator.isfile", Mock(return_value=True))
-    @patch("bartender.local_plugins.validator.LocalPluginValidator._load_plugin_config")
-    def test_validate_plugin_config_missing_required_key(self, load_config_mock):
+    def test_missing_required_key(self, validator):
         config_module = Mock(
             VERSION="0.0.1",
             PLUGIN_ENTRY="/path/to/entry.py",
             spec=["VERSION", "PLUGIN_ENTRY"],
         )
-        load_config_mock.return_value = config_module
-        self.assertRaises(
-            PluginValidationError,
-            self.validator.validate_plugin_config,
-            "/path/to/beer.conf",
-        )
 
-    @patch("bartender.local_plugins.validator.isfile", Mock(return_value=True))
-    @patch("bartender.local_plugins.validator.LocalPluginValidator._load_plugin_config")
-    def test_validate_plugin_config_good(self, load_config_mock):
+        with pytest.raises(PluginValidationError):
+            validator.validate_required_config_keys(config_module)
+
+    def test_success(self, validator):
         config_module = Mock(
             NAME="name",
             VERSION="0.0.1",
             PLUGIN_ENTRY="/path/to/entry.py",
             spec=["NAME", "VERSION", "PLUGIN_ENTRY"],
         )
-        load_config_mock.return_value = config_module
-        self.assertTrue(self.validator.validate_plugin_config("/path/to/beer.conf"))
 
-    def test_validate_instances_and_args_none_config_module(self):
-        self.assertRaises(
-            PluginValidationError, self.validator.validate_instances_and_args, None
+        # No exception raised = success
+        assert validator.validate_required_config_keys(config_module) is None
+
+
+class TestEntryPoint(object):
+    def test_none_config_module(self, validator):
+        with pytest.raises(PluginValidationError):
+            validator.validate_entry_point(None, "/path/to/nowhere")
+
+    def test_none_path_to_plugin(self, validator):
+        with pytest.raises(PluginValidationError):
+            validator.validate_entry_point({}, None)
+
+    def test_no_entry_point_key(self, validator):
+        with pytest.raises(PluginValidationError):
+            validator.validate_entry_point(Mock(spec=[]), "/path/to/nowhere")
+
+    def test_not_a_file(self, validator):
+        with pytest.raises(PluginValidationError):
+            validator.validate_entry_point(
+                Mock(spec=[validator.ENTRY_POINT_KEY], PLUGIN_ENTRY="not_a_file"),
+                "/path/to/nowhere",
+            )
+
+    def test_good_file(self, tmp_path, validator):
+        (tmp_path / "entry.py").touch()
+
+        validator.validate_entry_point(
+            Mock(spec=[validator.ENTRY_POINT_KEY], PLUGIN_ENTRY="entry.py"), tmp_path
         )
 
-    def test_validate_instances_and_args_both_none(self):
-        config_module = Mock(spec=[])
-        self.assertTrue(
-            PluginValidationError,
-            self.validator.validate_instances_and_args(config_module),
-        )
+    def test_good_package(self, tmp_path, validator):
+        plugin_dir = tmp_path / "plugin"
+        plugin_dir.mkdir()
 
-    def test_validate_instances_and_args_invalid_instances(self):
-        config_module = Mock(INSTANCES="THIS_IS_WRONG", PLUGIN_ARGS=None)
-        self.assertRaises(
-            PluginValidationError,
-            self.validator.validate_instances_and_args,
-            config_module,
-        )
+        (plugin_dir / "__init__.py").touch()
+        (plugin_dir / "__main__.py").touch()
 
-    def test_validate_instances_and_args_good_args(self):
-        config_module = Mock(INSTANCES=None, PLUGIN_ARGS=["foo", "bar"])
-        self.assertTrue(self.validator.validate_instances_and_args(config_module))
+        validator.validate_entry_point(Mock(PLUGIN_ENTRY="-m plugin"), tmp_path)
 
-    def test_validate_instances_and_args_invalid_args(self):
-        config_module = Mock(INSTANCES=None, PLUGIN_ARGS="THIS IS WRONG")
-        self.assertRaises(
-            PluginValidationError,
-            self.validator.validate_instances_and_args,
-            config_module,
-        )
 
-    def test_validate_instances_and_args_invalid_plugin_arg_key(self):
-        config_module = Mock(INSTANCES=["foo"], PLUGIN_ARGS={"bar": ["arg1"]})
-        self.assertRaises(
-            PluginValidationError,
-            self.validator.validate_instances_and_args,
-            config_module,
-        )
+class TestInstancesAndArgs(object):
+    @pytest.mark.parametrize(
+        "instances,args",
+        [(None, ["foo", "bar"]), (["foo"], {"foo": ["arg1"]}), (None, None)],
+    )
+    def test_success(self, validator, instances, args):
+        config_module = Mock(INSTANCES=instances, PLUGIN_ARGS=args, spec=[])
+        assert validator.validate_instances_and_args(config_module) is True
 
-    def test_validate_instances_and_args_missing_plugin_arg_key(self):
-        config_module = Mock(INSTANCES=["foo"], PLUGIN_ARGS={})
-        self.assertRaises(
-            PluginValidationError,
-            self.validator.validate_instances_and_args,
-            config_module,
-        )
+    @pytest.mark.parametrize(
+        "instances,args",
+        [
+            ("THIS IS WRONG", None),
+            (None, "THIS IS WRONG"),
+            (["foo"], {"bar": ["arg1"]}),
+            (["foo"], {}),
+        ],
+    )
+    def test_failure(self, validator, instances, args):
+        config_module = Mock(INSTANCES=instances, PLUGIN_ARGS=args)
+        with pytest.raises(PluginValidationError):
+            validator.validate_instances_and_args(config_module)
 
-    def test_validate_instance_and_args_both_provided_good(self):
-        config_module = Mock(INSTANCES=["foo"], PLUGIN_ARGS={"foo": ["arg1"]})
-        self.assertTrue(self.validator.validate_instances_and_args(config_module))
+    def test_none_config_module(self, validator):
+        with pytest.raises(PluginValidationError):
+            validator.validate_instances_and_args(None)
+
+
+class TestIndividualPluginArguments(object):
+    @pytest.mark.parametrize("args", [None, ["good"]])
+    def test_success(self, validator, args):
+        assert validator.validate_individual_plugin_arguments(args) is True
+
+    @pytest.mark.parametrize("args", ["string", [{"foo": "bar"}]])
+    def test_failure(self, validator, args):
+        with pytest.raises(PluginValidationError):
+            validator.validate_individual_plugin_arguments(args)
+
+
+class TestPluginEnvironment(object):
+    @pytest.mark.parametrize(
+        "args",
+        [
+            Mock(spec=[]),  # No environment
+            Mock(ENVIRONMENT={"foo": "bar"}),  # Good environment
+        ],
+    )
+    def test_success(self, validator, args):
+        assert validator.validate_plugin_environment(args) is True
+
+    @pytest.mark.parametrize(
+        "args",
+        [
+            None,
+            Mock(ENVIRONMENT="notadict"),
+            Mock(ENVIRONMENT={1: "int_key_not_allowed"}),
+            Mock(ENVIRONMENT={"BG_foo": "that_key_is_not_allowed"}),
+            Mock(ENVIRONMENT={"foos": ["foo1", "foo2"]}),
+        ],
+    )
+    def test_failure(self, validator, args):
+        with pytest.raises(PluginValidationError):
+            validator.validate_plugin_environment(args)
