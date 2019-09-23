@@ -16,9 +16,7 @@ class TestHandlerBase(AsyncHTTPTestCase):
         beer_garden.api.http.setup([])
 
         # Setup anonymous user for testing.
-        beer_garden.api.http.anonymous_principal = (
-            beer_garden.api.http.load_anonymous()
-        )
+        beer_garden.api.http.anonymous_principal = beer_garden.api.http.load_anonymous()
 
         connect("beer_garden", host="mongomock://localhost")
 
