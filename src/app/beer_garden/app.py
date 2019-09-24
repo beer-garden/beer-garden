@@ -52,7 +52,12 @@ class BartenderApp(StoppableThread):
         load_plugin_log_config()
 
         self.plugin_loader = LocalPluginLoader(
-            validator=self.plugin_validator, registry=self.plugin_registry
+            validator=self.plugin_validator,
+            registry=self.plugin_registry,
+            local_plugin_dir=beer_garden.config.get("plugin.local.directory"),
+            plugin_log_directory=beer_garden.config.get("plugin.local.log_directory"),
+            username=beer_garden.config.get("plugin.local.auth.username"),
+            password=beer_garden.config.get("plugin.local.auth.password"),
         )
 
         amq_config = beer_garden.config.get("amq")
