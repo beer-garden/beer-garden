@@ -25,6 +25,11 @@ def entry_point(tmp_path, config):
 
 
 class TestValidatePlugin(object):
+    @pytest.fixture(autouse=True)
+    def remove_module(self):
+        if "BGPLUGINCONFIG" in sys.modules:
+            del sys.modules["BGPLUGINCONFIG"]
+
     def test_success(self, tmp_path, validator, config_file, entry_point):
         assert validator.validate_plugin(tmp_path) is True
 

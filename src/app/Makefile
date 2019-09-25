@@ -91,7 +91,8 @@ lint: ## check style with flake8
 
 # Testing / Coverage
 test: ## run tests quickly with the default Python
-	pytest $(TEST_DIR)
+	#pytest $(TEST_DIR)
+	pytest --tb=no -W ignore $(TEST_DIR)
 
 coverage: ## check code coverage quickly with the default Python
 	coverage run --source $(MODULE_NAME) -m pytest $(TEST_DIR)
