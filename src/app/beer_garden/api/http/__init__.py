@@ -128,10 +128,6 @@ def _setup_application():
     """Setup things that can be taken care of before io loop is started"""
     global io_loop, tornado_app, public_url, server, client_ssl
 
-    # Tweak some config options
-    web_config = beer_garden.config.get("web")
-    web_config.url_prefix = normalize_url_prefix(web_config.url_prefix)
-
     auth_config = beer_garden.config.get("auth")
     if not auth_config.token.secret:
         auth_config.token.secret = os.urandom(20)
@@ -142,11 +138,12 @@ def _setup_application():
                 "restarts. To prevent this set the auth.token.secret config."
             )
 
+    web_config = beer_garden.config.get("web")
     public_url = Url(
         scheme="https" if web_config.ssl.enabled else "http",
         host=web_config.public_fqdn,
         port=web_config.port,
-        path=web_config.url_prefix,
+        path=normalize_url_prefix(web_config.url_prefix),
     ).url
 
     tornado_app = _setup_tornado_app()
@@ -164,7 +161,7 @@ def _setup_tornado_app():
     import beer_garden.api.http.handlers.misc as misc
 
     web_config = beer_garden.config.get("web")
-    prefix = web_config.url_prefix
+    prefix = normalize_url_prefix(web_config.url_prefix)
     static_base = os.path.join(os.path.dirname(__file__), "static", "dist")
 
     # These get documented in our OpenAPI (fka Swagger) documentation

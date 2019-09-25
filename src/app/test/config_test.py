@@ -178,7 +178,6 @@ class TestConfigGet(object):
 class TestSafeMigrate(object):
     @pytest.fixture
     def spec(self, monkeypatch):
-        # return YapconfSpec(
         raw_spec = {
             "log": {
                 "type": "dict",
