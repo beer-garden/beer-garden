@@ -55,7 +55,6 @@ class LocalPluginRunner(StoppableThread):
         self.url_prefix = url_prefix
         self.ca_verify = ca_verify
         self.ca_cert = ca_cert
-        self.connection_type = kwargs.get("connection_type", "thrift")
         self.username = kwargs.get("username", None)
         self.password = kwargs.get("password", None)
         self.plugin_default_log_level = kwargs.get("log_level", logging.INFO)
@@ -242,7 +241,6 @@ class LocalPluginRunner(StoppableThread):
             "BG_URL_PREFIX": self.url_prefix,
             "BG_CA_VERIFY": self.ca_verify,
             "BG_CA_CERT": self.ca_cert,
-            "BG_CONNECTION_TYPE": self.connection_type,
             "BG_USERNAME": self.username,
             "BG_PASSWORD": self.password,
             "BG_LOG_LEVEL": logging.getLevelName(self.plugin_default_log_level),
