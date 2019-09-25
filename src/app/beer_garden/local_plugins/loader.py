@@ -3,6 +3,7 @@ import sys
 from imp import load_source
 from os import listdir
 from os.path import isfile, join, abspath
+from typing import List
 
 import beer_garden
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
@@ -15,17 +16,34 @@ class LocalPluginLoader(object):
 
     logger = logging.getLogger(__name__)
 
-    def __init__(self, validator, registry):
+    def __init__(
+        self,
+        validator,
+        registry,
+        local_plugin_dir=None,
+        plugin_log_directory=None,
+        username=None,
+        password=None,
+    ):
         self.validator = validator
         self.registry = registry
 
-    def load_plugins(self):
+        self._local_plugin_dir = local_plugin_dir
+        self._plugin_log_directory = plugin_log_directory
+        self._username = username
+        self._password = password
+
+    def load_plugins(self, path: str = None) -> None:
         """Load all plugins
 
         After each has been loaded, it checks the requirements to ensure
         the plugin can be loaded correctly.
+
+        Args:
+            path: The path to scan for plugins. If none will default to the
+            plugin path specified at initialization.
         """
-        for plugin_path in self.scan_plugin_path():
+        for plugin_path in self.scan_plugin_path(path=path):
             try:
                 self.load_plugin(plugin_path)
             except Exception as ex:
@@ -35,18 +53,20 @@ class LocalPluginLoader(object):
 
         self.validate_plugin_requirements()
 
-    def scan_plugin_path(self, path=None):
+    def scan_plugin_path(self, path: str = None) -> List[str]:
         """Find valid plugin directories in a given path.
 
         Note: This scan does not walk the directory tree - all plugins must be
         in the top level of the given path.
 
-        :param path: The path to scan for plugins. If none will default to the
+        Args:
+            path: The path to scan for plugins. If none will default to the
             plugin path specified at initialization.
 
-        :return: A list containing paths specifying plugins
+        Returns:
+            Paths specifying plugins
         """
-        path = path or beer_garden.config.get("plugin.local.directory")
+        path = path or self._local_plugin_dir
 
         if path is None:
             return []
@@ -133,7 +153,6 @@ class LocalPluginLoader(object):
         create_system(plugin_system)
 
         plugin_list = []
-        plugin_log_directory = beer_garden.config.get("plugin.local.log_directory")
         for instance_name in plugin_instances:
             plugin = LocalPluginRunner(
                 plugin_entry,
@@ -146,10 +165,10 @@ class LocalPluginLoader(object):
                 plugin_args=plugin_args.get(instance_name),
                 environment=config["ENVIRONMENT"],
                 requirements=config["REQUIRES"],
-                plugin_log_directory=plugin_log_directory,
+                plugin_log_directory=self._plugin_log_directory,
                 connection_type="thrift",
-                username=beer_garden.config.get("plugin.local.auth.username"),
-                password=beer_garden.config.get("plugin.local.auth.password"),
+                username=self._username,
+                password=self._password,
                 log_level=config["LOG_LEVEL"],
             )
 

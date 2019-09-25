@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import unittest
 
 from tornado.gen import Future
 from mock import MagicMock, Mock, patch
@@ -8,6 +9,7 @@ from beer_garden.__version__ import __version__
 from . import TestHandlerBase
 
 
+@unittest.skip("TODO")
 class ConfigHandlerTest(TestHandlerBase):
     def test_config(self):
         import brew_view
@@ -22,6 +24,7 @@ class ConfigHandlerTest(TestHandlerBase):
         )
 
 
+@unittest.skip("TODO")
 class VersionHandlerTest(TestHandlerBase):
     def setUp(self):
         self.client_mock = Mock(name="client_mock")

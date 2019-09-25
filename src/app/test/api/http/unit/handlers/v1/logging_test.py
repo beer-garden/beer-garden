@@ -7,6 +7,7 @@ from mock import patch
 from .. import TestHandlerBase
 
 
+@unittest.skip("TODO")
 class LoggingApiTest(TestHandlerBase):
     def setUp(self):
         super(LoggingApiTest, self).setUp()

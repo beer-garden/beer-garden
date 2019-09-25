@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import unittest
 
 from mock import MagicMock, Mock, PropertyMock, patch
 from tornado.gen import Future
@@ -7,6 +8,7 @@ from tornado.gen import Future
 from .. import TestHandlerBase
 
 
+@unittest.skip("TODO")
 class QueueAPITest(TestHandlerBase):
     def setUp(self):
         self.client_mock = Mock(name="client_mock")
@@ -25,6 +27,7 @@ class QueueAPITest(TestHandlerBase):
         self.client_mock.clearQueue.assert_called_once_with("name")
 
 
+@unittest.skip("TODO")
 class QueueListAPITest(TestHandlerBase):
     def setUp(self):
         self.instance_mock = Mock(status="RUNNING")

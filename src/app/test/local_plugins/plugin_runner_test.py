@@ -128,12 +128,12 @@ class TestPluginRunner(object):
         assert plugin_env.get("FOO") == "BAR"
 
     def test_process_creation(self, mocker, plugin):
-        mocker.patch("bartender.local_plugins.plugin_runner.Thread")
+        mocker.patch("beer_garden.local_plugins.plugin_runner.Thread")
         process_mock = mocker.patch(
-            "bartender.local_plugins.plugin_runner.subprocess.Popen"
+            "beer_garden.local_plugins.plugin_runner.subprocess.Popen"
         )
         env_mock = mocker.patch(
-            "bartender.local_plugins.plugin_runner."
+            "beer_garden.local_plugins.plugin_runner."
             "LocalPluginRunner._generate_plugin_environment"
         )
 
@@ -161,10 +161,10 @@ class TestPluginRunner(object):
     def test_run_plugin_io_thread_stop(
         self, mocker, plugin, process_poll, stopped, error_called
     ):
-        thread_mock = mocker.patch("bartender.local_plugins.plugin_runner.Thread")
-        sleep_mock = mocker.patch("bartender.local_plugins.plugin_runner.sleep")
+        thread_mock = mocker.patch("beer_garden.local_plugins.plugin_runner.Thread")
+        sleep_mock = mocker.patch("beer_garden.local_plugins.plugin_runner.sleep")
         process_mock = mocker.patch(
-            "bartender.local_plugins.plugin_runner.subprocess.Popen"
+            "beer_garden.local_plugins.plugin_runner.subprocess.Popen"
         )
         plugin.stopped = Mock(return_value=stopped)
 
@@ -210,7 +210,7 @@ class TestPluginRunner(object):
         second item should be a ``call`` describing how the logger was called
         """
         process_mock = mocker.patch(
-            "bartender.local_plugins.plugin_runner.subprocess.Popen"
+            "beer_garden.local_plugins.plugin_runner.subprocess.Popen"
         )
         plugin.stopped = Mock(return_value=True)
 
@@ -256,7 +256,7 @@ class TestPluginRunner(object):
 
     def test_run_call_throw_exception(self, mocker, plugin):
         mocker.patch(
-            "bartender.local_plugins.plugin_runner.subprocess.Popen",
+            "beer_garden.local_plugins.plugin_runner.subprocess.Popen",
             Mock(side_effect=ValueError("error_message")),
         )
 

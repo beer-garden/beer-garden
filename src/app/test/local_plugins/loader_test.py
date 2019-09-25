@@ -1,394 +1,346 @@
 import logging
-import os
-import copy
-import unittest
+import sys
+import textwrap
 
-from mock import call, patch, Mock
+import pytest
+from mock import Mock
 
+from beer_garden.bg_utils.mongo.models import System
 from beer_garden.local_plugins.loader import LocalPluginLoader
 
 
-class PluginLoaderTest(unittest.TestCase):
-    def setUp(self):
+@pytest.fixture
+def config_all():
+    return {
+        "NAME": "foo",
+        "VERSION": "1.0",
+        "PLUGIN_ENTRY": "entry.py",
+        "DESCRIPTION": "",
+        "INSTANCES": ["default"],
+        "PLUGIN_ARGS": {"default": None},
+        "REQUIRES": [],
+        "METADATA": {},
+        "ENVIRONMENT": {},
+        "ICON_NAME": None,
+        "DISPLAY_NAME": None,
+        "LOG_LEVEL": logging.INFO,
+    }
 
-        self.default_config = {
-            "NAME": "foo",
-            "VERSION": "1.0",
-            "PLUGIN_ENTRY": "main.py",
-            "INSTANCES": ["default"],
-            "PLUGIN_ARGS": {"default": None},
-            "REQUIRES": [],
-            "METADATA": {},
-            "ENVIRONMENT": {},
-            "LOG_LEVEL": "INFO",
-        }
 
-        self.mock_validator = Mock()
-        self.mock_registry = Mock()
-        self.plugin_path = "/path/to/plugins"
-
-        system_patcher = patch("beer_garden.local_plugins.loader.System")
-        self.addCleanup(system_patcher.stop)
-        self.system_mock = system_patcher.start()
-        self.system_mock.find_unique = Mock(return_value=None)
-
-        # config_patcher = patch("beer_garden.config")
-        # self.addCleanup(config_patcher.stop)
-        # self.config_mock = config_patcher.start()
-        # self.config_mock.plugin.local.directory = self.plugin_path
-        # self.config_mock.plugin.local.log_directory = None
-
-        self.loader = LocalPluginLoader(self.mock_validator, self.mock_registry)
-
-    @patch(
-        "beer_garden.local_plugins.loader.LocalPluginLoader.scan_plugin_path",
-        Mock(return_value=["pl1", "pl2"]),
+@pytest.fixture
+def config_all_serialized():
+    return textwrap.dedent(
+        """
+            NAME='foo'
+            VERSION='1.0'
+            PLUGIN_ENTRY='entry.py'
+            DESCRIPTION=''
+            INSTANCES=['default']
+            PLUGIN_ARGS={'default': None}
+            REQUIRES=[]
+            METADATA={}
+            ENVIRONMENT={}
+            ICON_NAME=None
+            DISPLAY_NAME=None
+            LOG_LEVEL='INFO'
+        """
     )
-    @patch(
-        "beer_garden.local_plugins.loader.LocalPluginLoader.validate_plugin_requirements"
+
+
+@pytest.fixture
+def plugin_1(tmp_path, config_all_serialized):
+    plugin_1 = tmp_path / "plugin_1"
+    plugin_1.mkdir()
+
+    write_file(plugin_1, config_all_serialized)
+
+    return plugin_1
+
+
+def write_file(plugin_path, file_contents):
+    config_file = plugin_path / "beer.conf"
+    config_file.write_text(file_contents)
+
+    return config_file
+
+
+@pytest.fixture
+def registry():
+    reg = Mock()
+    reg.get_all_plugins.return_value = []
+    reg.get_unique_plugin_names.return_value = []
+    return reg
+
+
+@pytest.fixture
+def validator():
+    return Mock()
+
+
+@pytest.fixture
+def loader(registry, validator):
+    return LocalPluginLoader(validator, registry)
+
+
+class TestLoadPlugins(object):
+    def test_empty(self, tmp_path, loader):
+        loader.load_plugins(path=tmp_path)
+
+    def test_exception(self, monkeypatch, tmp_path, loader):
+        monkeypatch.setattr(loader, "load_plugin", Mock(side_effect=ValueError()))
+
+        # Just ensure that an exception during loading does NOT propagate out
+        loader.load_plugins(path=tmp_path)
+
+
+class TestScanPluginPath(object):
+    def test_empty_path(self, tmp_path, loader):
+        assert loader.scan_plugin_path(path=tmp_path) == []
+
+    def test_none_path(self, tmp_path, loader):
+        assert loader.scan_plugin_path() == []
+
+    def test_plugins(self, tmp_path, loader):
+        plugin_1 = tmp_path / "plugin_1"
+        plugin_2 = tmp_path / "plugin_2"
+
+        plugin_1.mkdir()
+        plugin_2.mkdir()
+
+        assert loader.scan_plugin_path(path=tmp_path) == [str(plugin_1), str(plugin_2)]
+
+
+class TestValidatePluginRequirements(object):
+    def test_no_plugins(self, loader, registry):
+        loader.validate_plugin_requirements()
+        assert not registry.remove.called
+
+    def test_no_requirements(self, loader, registry):
+        registry.get_all_plugins.return_value = [
+            Mock(requirements=[], plugin_name="foo"),
+            Mock(requirements=[], plugin_name="bar"),
+        ]
+
+        loader.validate_plugin_requirements()
+        assert not registry.remove.called
+
+    def test_good_requirements(self, loader, registry):
+        registry.get_all_plugins.return_value = [
+            Mock(requirements=[], plugin_name="foo"),
+            Mock(requirements=["foo"], plugin_name="bar"),
+        ]
+        registry.get_unique_plugin_names.return_value = ["foo", "bar"]
+
+        loader.validate_plugin_requirements()
+        assert not registry.remove.called
+
+    def test_requirements_not_found(self, loader, registry):
+        registry.get_all_plugins.return_value = [
+            Mock(requirements=[], plugin_name="foo"),
+            Mock(requirements=["NOT_FOUND"], plugin_name="bar", unique_name="bar"),
+        ]
+        registry.get_unique_plugin_names.return_value = ["foo", "bar"]
+
+        loader.validate_plugin_requirements()
+        registry.remove.assert_called_once_with("bar")
+
+
+class TestLoadPlugin(object):
+    @pytest.fixture(autouse=True)
+    def drop_systems(self, mongo_conn):
+        System.drop_collection()
+
+    def test_new(self, loader, registry, plugin_1):
+        plugin_runners = loader.load_plugin(str(plugin_1))
+
+        assert len(plugin_runners) == 1
+        assert plugin_runners[0].name == "foo[default]-1.0"
+        assert plugin_runners[0].entry_point == "entry.py"
+
+    def test_existing(self, loader, registry, plugin_1):
+        system_id = "58542eb571afd47ead90face"
+        System(id=system_id, name="foo", version="1.0").save()
+
+        plugin_runners = loader.load_plugin(str(plugin_1))
+
+        assert len(plugin_runners) == 1
+        assert str(plugin_runners[0].system.id) == system_id
+        assert plugin_runners[0].name == "foo[default]-1.0"
+        assert plugin_runners[0].entry_point == "entry.py"
+
+    def test_multiple_instances(self, tmp_path, loader):
+        plugin = tmp_path / "plugin"
+        plugin.mkdir()
+
+        write_file(
+            plugin,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+                INSTANCES=["instance1", "instance2"]
+            """
+            ),
+        )
+
+        plugin_runners = loader.load_plugin(str(plugin))
+        assert len(plugin_runners) == 2
+
+        sorted_runners = sorted(plugin_runners, key=lambda x: x.name)
+        assert sorted_runners[0].name == "foo[instance1]-1.0"
+        assert sorted_runners[0].entry_point == "entry.py"
+        assert sorted_runners[1].name == "foo[instance2]-1.0"
+        assert sorted_runners[1].entry_point == "entry.py"
+
+    def test_invalid(self, loader, validator):
+        validator.validate_plugin.return_value = False
+        assert loader.load_plugin("/invalid/plugin") is False
+
+
+class TestLoadPluginConfig(object):
+    def test_all_attributes(self, tmp_path, loader, config_all, config_all_serialized):
+        config_file = write_file(tmp_path, config_all_serialized)
+
+        assert loader._load_plugin_config(str(config_file)) == config_all
+        assert "BGPLUGINCONFIG" not in sys.modules
+
+    def test_required_attributes(self, tmp_path, loader, config_all):
+        config_file = write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+            """
+            ),
+        )
+
+        assert loader._load_plugin_config(str(config_file)) == config_all
+        assert "BGPLUGINCONFIG" not in sys.modules
+
+    def test_instances_no_plugin_args(self, tmp_path, loader):
+        config_file = write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+                INSTANCES=["instance1", "instance2"]
+                PLUGIN_ARGS=None
+            """
+            ),
+        )
+
+        loaded_config = loader._load_plugin_config(str(config_file))
+
+        assert loaded_config["INSTANCES"] == ["instance1", "instance2"]
+        assert loaded_config["PLUGIN_ARGS"] == {"instance1": None, "instance2": None}
+        assert "BGPLUGINCONFIG" not in sys.modules
+
+    def test_plugin_args_list_no_instances(self, tmp_path, loader):
+        config_file = write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+                INSTANCES=None
+                PLUGIN_ARGS=["arg1"]
+            """
+            ),
+        )
+
+        loaded_config = loader._load_plugin_config(str(config_file))
+
+        assert loaded_config["INSTANCES"] == ["default"]
+        assert loaded_config["PLUGIN_ARGS"] == {"default": ["arg1"]}
+        assert "BGPLUGINCONFIG" not in sys.modules
+
+    def test_plugin_args_dict_no_instances(self, tmp_path, loader):
+        config_file = write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+                INSTANCES=None
+                PLUGIN_ARGS={"foo": ["arg1"], "bar": ["arg2"]}
+            """
+            ),
+        )
+
+        loaded_config = loader._load_plugin_config(str(config_file))
+
+        assert sorted(loaded_config["INSTANCES"]) == sorted(["foo", "bar"])
+        assert loaded_config["PLUGIN_ARGS"] == {"foo": ["arg1"], "bar": ["arg2"]}
+        assert "BGPLUGINCONFIG" not in sys.modules
+
+    def test_instance_and_args_list(self, tmp_path, loader):
+        config_file = write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+                INSTANCES=["foo", "bar"]
+                PLUGIN_ARGS=["arg1"]
+            """
+            ),
+        )
+
+        loaded_config = loader._load_plugin_config(str(config_file))
+
+        assert sorted(loaded_config["INSTANCES"]) == sorted(["foo", "bar"])
+        assert loaded_config["PLUGIN_ARGS"] == {"foo": ["arg1"], "bar": ["arg1"]}
+        assert "BGPLUGINCONFIG" not in sys.modules
+
+    @pytest.mark.parametrize(
+        "value,expected",
+        [
+            ("DEBUG", logging.DEBUG),
+            ("WARNING", logging.WARNING),
+            ("INVALID", logging.INFO),
+        ],
     )
-    @patch("beer_garden.local_plugins.loader.LocalPluginLoader.load_plugin")
-    def test_load_plugins(self, load_plugin_mock, validate_mock):
-        self.loader.load_plugins()
-        load_plugin_mock.assert_has_calls([call("pl1"), call("pl2")], any_order=False)
-        validate_mock.assert_called_once_with()
-
-    @patch(
-        "beer_garden.local_plugins.loader.LocalPluginLoader.scan_plugin_path",
-        Mock(return_value=[]),
-    )
-    @patch(
-        "beer_garden.local_plugins.loader.LocalPluginLoader.validate_plugin_requirements"
-    )
-    @patch("beer_garden.local_plugins.loader.LocalPluginLoader.load_plugin")
-    def test_load_plugins_empty(self, load_plugin_mock, validate_mock):
-        self.loader.load_plugins()
-        self.assertFalse(load_plugin_mock.called)
-        validate_mock.assert_called_once_with()
-
-    @patch(
-        "beer_garden.local_plugins.loader.LocalPluginLoader.scan_plugin_path",
-        Mock(return_value=["pl1", "pl2"]),
-    )
-    @patch(
-        "beer_garden.local_plugins.loader.LocalPluginLoader.validate_plugin_requirements"
-    )
-    @patch("beer_garden.local_plugins.loader.LocalPluginLoader.load_plugin")
-    def test_load_plugins_exception(self, load_plugin_mock, validate_mock):
-        load_plugin_mock.side_effect = [ValueError()]
-        self.loader.load_plugins()
-        load_plugin_mock.assert_has_calls([call("pl1"), call("pl2")], any_order=False)
-        validate_mock.assert_called_once_with()
-
-    @patch(
-        "beer_garden.local_plugins.loader.listdir",
-        Mock(return_value=["file1", "file2"]),
-    )
-    @patch("beer_garden.local_plugins.loader.isfile", Mock(side_effect=[False, True]))
-    @patch("beer_garden.local_plugins.loader.LocalPluginLoader.load_plugin", Mock())
-    def test_scan_plugin_path(self):
-        self.assertEqual(
-            [os.path.join(self.plugin_path, "file1")],
-            self.loader.scan_plugin_path(path=self.plugin_path),
+    def test_log_level(self, tmp_path, loader, value, expected):
+        config_file = write_file(
+            tmp_path,
+            textwrap.dedent(
+                f"""
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+                LOG_LEVEL='{value}'
+            """
+            ),
         )
 
-    @patch("beer_garden.local_plugins.loader.listdir", Mock(return_value=[]))
-    def test_scan_plugin_path_empty(self):
-        self.assertEqual([], self.loader.scan_plugin_path(path=self.plugin_path))
+        loaded_config = loader._load_plugin_config(str(config_file))
 
-    def test_scan_plugin_path_no_path(self):
-        self.assertEqual([], self.loader.scan_plugin_path())
+        assert loaded_config["LOG_LEVEL"] == expected
+        assert "BGPLUGINCONFIG" not in sys.modules
 
-    def test_validate_plugin_requirements_no_plugins(self):
-        self.mock_registry.get_all_plugins = Mock(return_value=[])
-        self.assertEqual(self.mock_registry.remove.call_count, 0)
-
-    def test_validate_plugin_requirements_no_requirements(self):
-        self.mock_registry.get_all_plugins = Mock(
-            return_value=[
-                Mock(requirements=[], plugin_name="foo"),
-                Mock(requirements=[], plugin_name="bar"),
-            ]
-        )
-        self.loader.validate_plugin_requirements()
-        self.assertEqual(self.mock_registry.remove.call_count, 0)
-
-    def test_validate_plugin_requirements_good_requirements(self):
-        self.mock_registry.get_all_plugins = Mock(
-            return_value=[
-                Mock(requirements=[], plugin_name="foo"),
-                Mock(requirements=["foo"], plugin_name="bar"),
-            ]
-        )
-        self.mock_registry.get_unique_plugin_names = Mock(return_value=["foo", "bar"])
-        self.loader.validate_plugin_requirements()
-        self.assertEqual(self.mock_registry.remove.call_count, 0)
-
-    def test_validate_plugin_requirements_not_found(self):
-        self.mock_registry.get_all_plugins = Mock(
-            return_value=[
-                Mock(requirements=[], plugin_name="foo"),
-                Mock(requirements=["NOT_FOUND"], plugin_name="bar", unique_name="bar"),
-            ]
-        )
-        self.mock_registry.get_unique_plugin_names = Mock(return_value=["foo", "bar"])
-        self.loader.validate_plugin_requirements()
-        self.assertEqual(self.mock_registry.remove.call_count, 1)
-        self.mock_registry.remove.assert_called_with("bar")
-
-    @patch("beer_garden.local_plugins.loader.LocalPluginLoader._load_plugin_config")
-    def test_load_plugin(self, config_mock):
-        config_mock.return_value = self.default_config
-        self.mock_registry.plugin_exists = Mock(return_value=False)
-        self.mock_validator.validate_plugin = Mock(return_value=True)
-
-        self.assertTrue(self.loader.load_plugin("/path/to/foo-0.1"))
-        self.assertTrue(self.mock_registry.register_plugin.called)
-
-    @patch("beer_garden.local_plugins.loader.LocalPluginLoader._load_plugin_config")
-    def test_load_plugin_already_exists(self, config_mock):
-        config_mock.return_value = self.default_config
-        self.mock_registry.plugin_exists = Mock(return_value=False)
-        self.mock_validator.validate_plugin = Mock(return_value=True)
-
-        plugin_mock = Mock(name="plugin_mock")
-        self.system_mock.find_unique = Mock(return_value=plugin_mock)
-
-        self.assertTrue(self.loader.load_plugin("/path/to/foo-0.1"))
-        self.assertTrue(self.mock_registry.register_plugin.called)
-        self.assertTrue(plugin_mock.delete_instances.called)
-
-    @patch("beer_garden.local_plugins.loader.LocalPluginLoader._load_plugin_config")
-    def test_load_plugin_multiple_instances(self, config_mock):
-        config = copy.deepcopy(self.default_config)
-        config["INSTANCES"] = ["i1", "i2"]
-        config["PLUGIN_ARGS"] = {"i1": [], "i2": []}
-
-        config_mock.return_value = config
-        self.mock_registry.plugin_exists = Mock(return_value=False)
-        self.mock_validator.validate_plugin = Mock(return_value=True)
-
-        self.assertTrue(self.loader.load_plugin("/path/to/foo-0.1"))
-        self.assertEqual(2, self.mock_registry.register_plugin.call_count)
-
-    def test_load_plugin_invalid_plugin(self):
-        self.mock_validator.validate_plugin = Mock(return_value=False)
-        self.assertFalse(self.loader.load_plugin("path/to/foo-0.1"))
-
-    @patch("beer_garden.local_plugins.loader.sys")
-    @patch("beer_garden.local_plugins.loader.load_source")
-    def test_load_plugin_config_all_attributes(self, load_source_mock, sys_mock):
-        module_name = "BGPLUGINCONFIG"
-        sys_mock.modules = {module_name: ""}
-
-        path_mock = Mock()
-        config_mock = Mock()
-        load_source_mock.return_value = config_mock
-
-        config = self.loader._load_plugin_config(path_mock)
-        load_source_mock.assert_called_once_with(module_name, path_mock)
-        self.assertNotIn(module_name, sys_mock.modules)
-        self.assertEqual(
-            config,
-            {
-                "NAME": config_mock.NAME,
-                "VERSION": config_mock.VERSION,
-                "PLUGIN_ENTRY": config_mock.PLUGIN_ENTRY,
-                "DESCRIPTION": config_mock.DESCRIPTION,
-                "ICON_NAME": config_mock.ICON_NAME,
-                "DISPLAY_NAME": config_mock.DISPLAY_NAME,
-                "REQUIRES": config_mock.REQUIRES,
-                "ENVIRONMENT": config_mock.ENVIRONMENT,
-                "INSTANCES": config_mock.INSTANCES,
-                "METADATA": config_mock.METADATA,
-                "PLUGIN_ARGS": config_mock.PLUGIN_ARGS,
-                "LOG_LEVEL": logging.INFO,
-            },
+    @pytest.mark.xfail
+    def test_invalid_args(self, tmp_path, loader):
+        config_file = write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+                PLUGIN_ARGS="invalid"
+            """
+            ),
         )
 
-    @patch("beer_garden.local_plugins.loader.sys")
-    @patch("beer_garden.local_plugins.loader.load_source")
-    def test_load_plugin_config_only_required_attributes(
-        self, load_source_mock, sys_mock
-    ):
-        module_name = "BGPLUGINCONFIG"
-        sys_mock.modules = {module_name: ""}
+        with pytest.raises(ValueError):
+            loader._load_plugin_config(str(config_file))
 
-        path_mock = Mock()
-        config_mock = Mock(spec=["NAME", "VERSION", "PLUGIN_ENTRY"])
-        load_source_mock.return_value = config_mock
-
-        config = self.loader._load_plugin_config(path_mock)
-        load_source_mock.assert_called_once_with(module_name, path_mock)
-        self.assertNotIn(module_name, sys_mock.modules)
-        self.assertEqual(
-            config,
-            {
-                "NAME": config_mock.NAME,
-                "VERSION": config_mock.VERSION,
-                "PLUGIN_ENTRY": config_mock.PLUGIN_ENTRY,
-                "DESCRIPTION": "",
-                "ICON_NAME": None,
-                "DISPLAY_NAME": None,
-                "REQUIRES": [],
-                "ENVIRONMENT": {},
-                "INSTANCES": ["default"],
-                "METADATA": {},
-                "PLUGIN_ARGS": {"default": None},
-                "LOG_LEVEL": logging.INFO,
-            },
-        )
-
-    @patch("beer_garden.local_plugins.loader.sys")
-    @patch("beer_garden.local_plugins.loader.load_source")
-    def test_load_plugin_config_instances_provided_no_plugin_args(
-        self, load_source_mock, sys_mock
-    ):
-        module_name = "BGPLUGINCONFIG"
-        sys_mock.modules = {module_name: ""}
-
-        path_mock = Mock()
-        config_mock = Mock(
-            INSTANCES=["instance1", "instance2"],
-            PLUGIN_ARGS=None,
-            NAME="name",
-            VERSION="0.0.1",
-            PLUGIN_ENTRY="/path/to/file",
-        )
-        load_source_mock.return_value = config_mock
-
-        config = self.loader._load_plugin_config(path_mock)
-
-        self.assertEqual(config["INSTANCES"], ["instance1", "instance2"])
-        self.assertEqual(config["PLUGIN_ARGS"], {"instance1": None, "instance2": None})
-
-    @patch("beer_garden.local_plugins.loader.sys")
-    @patch("beer_garden.local_plugins.loader.load_source")
-    def test_load_plugin_config_plugin_args_list_provided_no_instances(
-        self, load_source_mock, sys_mock
-    ):
-        module_name = "BGPLUGINCONFIG"
-        sys_mock.modules = {module_name: ""}
-
-        path_mock = Mock()
-        config_mock = Mock(
-            INSTANCES=None,
-            PLUGIN_ARGS=["arg1"],
-            NAME="name",
-            VERSION="0.0.1",
-            PLUGIN_ENTRY="/path/to/file",
-        )
-        load_source_mock.return_value = config_mock
-
-        config = self.loader._load_plugin_config(path_mock)
-
-        self.assertEqual(config["INSTANCES"], ["default"])
-        self.assertEqual(config["PLUGIN_ARGS"], {"default": ["arg1"]})
-
-    @patch("beer_garden.local_plugins.loader.sys")
-    @patch("beer_garden.local_plugins.loader.load_source")
-    def test_load_plugin_config_plugin_args_dict_no_instances(
-        self, load_source_mock, sys_mock
-    ):
-        module_name = "BGPLUGINCONFIG"
-        sys_mock.modules = {module_name: ""}
-
-        path_mock = Mock()
-        config_mock = Mock(
-            INSTANCES=None,
-            PLUGIN_ARGS={"foo": ["arg1"], "bar": ["arg2"]},
-            NAME="name",
-            VERSION="0.0.1",
-            PLUGIN_ENTRY="/path/to/file",
-        )
-        load_source_mock.return_value = config_mock
-
-        config = self.loader._load_plugin_config(path_mock)
-
-        expected = ["foo", "bar"]
-        self.assertTrue(len(config["INSTANCES"]) == len(expected))
-        self.assertTrue(sorted(config["INSTANCES"]) == sorted(expected))
-        self.assertEqual(config["PLUGIN_ARGS"], {"foo": ["arg1"], "bar": ["arg2"]})
-
-    @patch("beer_garden.local_plugins.loader.sys")
-    @patch("beer_garden.local_plugins.loader.load_source")
-    def test_load_plugin_config_invalid_plugin_args(self, load_source_mock, sys_mock):
-        module_name = "BGPLUGINCONFIG"
-        sys_mock.modules = {module_name: ""}
-
-        path_mock = Mock()
-        config_mock = Mock(
-            INSTANCES=None,
-            PLUGIN_ARGS="invalid",
-            NAME="name",
-            VERSION="0.0.1",
-            PLUGIN_ENTRY="/path/to/file",
-        )
-        load_source_mock.return_value = config_mock
-
-        self.assertRaises(ValueError, self.loader._load_plugin_config, path_mock)
-
-    @patch("beer_garden.local_plugins.loader.sys")
-    @patch("beer_garden.local_plugins.loader.load_source")
-    def test_load_plugin_config_instance_and_args_provided_args_list(
-        self, load_source_mock, sys_mock
-    ):
-        module_name = "BGPLUGINCONFIG"
-        sys_mock.modules = {module_name: ""}
-
-        path_mock = Mock()
-        config_mock = Mock(
-            INSTANCES=["foo", "bar"],
-            PLUGIN_ARGS=["arg1"],
-            NAME="name",
-            VERSION="0.0.1",
-            PLUGIN_ENTRY="/path/to/file",
-        )
-        load_source_mock.return_value = config_mock
-
-        config = self.loader._load_plugin_config(path_mock)
-
-        expected = ["foo", "bar"]
-        self.assertTrue(len(config["INSTANCES"]) == len(expected))
-        self.assertTrue(sorted(config["INSTANCES"]) == sorted(expected))
-        self.assertEqual(config["PLUGIN_ARGS"], {"foo": ["arg1"], "bar": ["arg1"]})
-
-    @patch("beer_garden.local_plugins.loader.sys")
-    @patch("beer_garden.local_plugins.loader.load_source")
-    def test_load_plugin_config_log_level(self, load_source_mock, sys_mock):
-        module_name = "BGPLUGINCONFIG"
-        sys_mock.modules = {module_name: ""}
-
-        path_mock = Mock()
-        config_mock = Mock(
-            INSTANCES=["foo", "bar"],
-            PLUGIN_ARGS=["arg1"],
-            NAME="name",
-            VERSION="0.0.1",
-            PLUGIN_ENTRY="/path/to/file",
-            LOG_LEVEL="DEBUG",
-        )
-        load_source_mock.return_value = config_mock
-
-        config = self.loader._load_plugin_config(path_mock)
-        self.assertEqual(config["LOG_LEVEL"], logging.DEBUG)
-
-    @patch("beer_garden.local_plugins.loader.sys")
-    @patch("beer_garden.local_plugins.loader.load_source")
-    def test_load_plugin_config_log_level_bad(self, load_source_mock, sys_mock):
-        module_name = "BGPLUGINCONFIG"
-        sys_mock.modules = {module_name: ""}
-
-        path_mock = Mock()
-        config_mock = Mock(
-            INSTANCES=["foo", "bar"],
-            PLUGIN_ARGS=["arg1"],
-            NAME="name",
-            VERSION="0.0.1",
-            PLUGIN_ENTRY="/path/to/file",
-            LOG_LEVEL="INVALID",
-        )
-        load_source_mock.return_value = config_mock
-
-        config = self.loader._load_plugin_config(path_mock)
-        self.assertEqual(config["LOG_LEVEL"], logging.INFO)
+        assert "BGPLUGINCONFIG" not in sys.modules
