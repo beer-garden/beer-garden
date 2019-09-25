@@ -4,7 +4,7 @@ import beer_garden.bg_utils
 from beer_garden.bg_utils.mongo.models import Request
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.thrift import ThriftClient
+from beer_garden.api.http.client import ExecutorClient
 from brewtils.errors import ModelValidationError, RequestPublishException
 from brewtils.schema_parser import SchemaParser
 
@@ -38,7 +38,7 @@ class RequestAPI(BaseHandler):
         tags:
           - Requests
         """
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             thrift_response = await client.getRequest(namespace, request_id)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -91,7 +91,7 @@ class RequestAPI(BaseHandler):
         tags:
           - Requests
         """
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             try:
                 thrift_response = await client.updateRequest(
                     namespace, request_id, self.request.decoded_body
@@ -279,7 +279,7 @@ class RequestListAPI(BaseHandler):
 
         serialized_args = json.dumps(thrift_args)
 
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             raw_response = await client.getRequests(namespace, serialized_args)
 
         parsed_response = json.loads(raw_response)
@@ -371,7 +371,7 @@ class RequestListAPI(BaseHandler):
             # Also don't publish latency measurements
             self.request.ignore_latency = True
 
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             try:
                 thrift_response = await client.processRequest(
                     namespace,

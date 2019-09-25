@@ -1,5 +1,5 @@
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.thrift import ThriftClient
+from beer_garden.api.http.client import ExecutorClient
 from brewtils.errors import ModelValidationError
 from brewtils.schema_parser import SchemaParser
 
@@ -32,7 +32,7 @@ class LoggingConfigAPI(BaseHandler):
         """
         system_name = self.get_query_argument("system_name", default="")
 
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             thrift_response = await client.getPluginLogConfig(
                 self.request.namespace, system_name
             )
@@ -85,7 +85,7 @@ class LoggingConfigAPI(BaseHandler):
 
         for op in operations:
             if op.operation == "reload":
-                async with ThriftClient() as client:
+                async with ExecutorClient() as client:
                     thrift_response = await client.reloadPluginLogConfig()
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")

@@ -1,6 +1,6 @@
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.thrift import ThriftClient
+from beer_garden.api.http.client import ExecutorClient
 
 
 class CommandAPI(BaseHandler):
@@ -32,7 +32,7 @@ class CommandAPI(BaseHandler):
         tags:
           - Commands
         """
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             thrift_response = await client.getCommand(
                 self.request.namespace, command_id
             )
@@ -65,7 +65,7 @@ class CommandListAPI(BaseHandler):
         tags:
           - Commands
         """
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             thrift_response = await client.getCommands(self.request.namespace)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")

@@ -1,7 +1,7 @@
 import beer_garden.bg_utils
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.thrift import ThriftClient
+from beer_garden.api.http.client import ExecutorClient
 from brewtils.errors import ConflictError
 from brewtils.schemas import SystemSchema
 
@@ -45,7 +45,7 @@ class SystemAPI(BaseHandler):
             self.get_query_argument("include_commands", default="").lower() != "false"
         )
 
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             thrift_response = await client.getSystem(
                 self.request.namespace, system_id, include_commands
             )
@@ -84,7 +84,7 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             await client.removeSystem(self.request.namespace, system_id)
 
         self.set_status(204)
@@ -142,7 +142,7 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             thrift_response = await client.updateSystem(
                 self.request.namespace, system_id, self.request.decoded_body
             )
@@ -248,7 +248,7 @@ class SystemListAPI(BaseHandler):
             if key in self.REQUEST_FIELDS:
                 filter_params[key] = self.get_query_argument(key)
 
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             thrift_response = await client.querySystems(
                 self.request.namespace,
                 filter_params,
@@ -296,7 +296,7 @@ class SystemListAPI(BaseHandler):
         tags:
           - Systems
         """
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             try:
                 thrift_response = await client.createSystem(
                     self.request.namespace, self.request.decoded_body

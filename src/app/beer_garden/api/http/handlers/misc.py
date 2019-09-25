@@ -1,7 +1,7 @@
 import logging
 
 import beer_garden.api.http
-from beer_garden.api.http.thrift import ThriftClient
+from beer_garden.api.http.client import ExecutorClient
 from beer_garden.api.http.base_handler import BaseHandler
 
 logger = logging.getLogger(__name__)
@@ -11,7 +11,7 @@ class ConfigHandler(BaseHandler):
     async def get(self):
         """Subset of configuration options that the frontend needs"""
 
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             local_namespace = await client.getLocalNamespace()
             remote_namespaces = await client.getRemoteNamespaces()
 
@@ -37,7 +37,7 @@ class ConfigHandler(BaseHandler):
 class VersionHandler(BaseHandler):
     async def get(self):
         try:
-            async with ThriftClient() as client:
+            async with ExecutorClient() as client:
                 bartender_version = await client.getVersion()
         except Exception as ex:
             logger.exception(f"Error determining Bartender version - Caused by:\n{ex}")

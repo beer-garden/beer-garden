@@ -1,6 +1,6 @@
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.thrift import ThriftClient
+from beer_garden.api.http.client import ExecutorClient
 
 
 class InstanceAPI(BaseHandler):
@@ -32,7 +32,7 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             thrift_response = await client.getInstance(namespace, instance_id)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -64,7 +64,7 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             await client.removeInstance(namespace, instance_id)
 
         self.set_status(204)
@@ -121,7 +121,7 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             thrift_response = await client.updateInstance(
                 namespace, instance_id, self.request.decoded_body
             )

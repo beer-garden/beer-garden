@@ -6,7 +6,7 @@ from brewtils.schemas import JobSchema
 
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.thrift import ThriftClient
+from beer_garden.api.http.client import ExecutorClient
 
 
 class JobAPI(BaseHandler):
@@ -38,7 +38,7 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             thrift_response = await client.getJob(namespace, job_id)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -111,10 +111,10 @@ class JobAPI(BaseHandler):
             if op.operation == "update":
                 if op.path == "/status":
                     if str(op.value).upper() == "PAUSED":
-                        async with ThriftClient() as client:
+                        async with ExecutorClient() as client:
                             response = await client.pauseJob(namespace, job_id)
                     elif str(op.value).upper() == "RUNNING":
-                        async with ThriftClient() as client:
+                        async with ExecutorClient() as client:
                             response = await client.resumeJob(namespace, job_id)
                     else:
                         raise ModelValidationError(
@@ -155,7 +155,7 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             await client.removeJob(namespace, job_id)
 
         self.set_status(204)
@@ -190,7 +190,7 @@ class JobListAPI(BaseHandler):
             if key in JobSchema.get_attribute_names():
                 filter_params[key] = self.get_query_argument(key)
 
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             thrift_response = await client.getJobs(namespace, filter_params)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -227,7 +227,7 @@ class JobListAPI(BaseHandler):
         tags:
           - Jobs
         """
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             response = await client.createJob(namespace, self.request.decoded_body)
 
         self.set_status(201)

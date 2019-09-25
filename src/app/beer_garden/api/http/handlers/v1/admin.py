@@ -1,6 +1,6 @@
 from beer_garden.api.http.authorization import check_permission, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.thrift import ThriftClient
+from beer_garden.api.http.client import ExecutorClient
 from brewtils.errors import ModelValidationError
 from brewtils.schema_parser import SchemaParser
 
@@ -52,7 +52,7 @@ class AdminAPI(BaseHandler):
         for op in operations:
             if op.operation == "rescan":
                 check_permission(self.current_user, [Permissions.SYSTEM_CREATE])
-                async with ThriftClient() as client:
+                async with ExecutorClient() as client:
                     await client.rescanSystemDirectory(self.request.namespace)
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
