@@ -4,6 +4,7 @@ import brewtils.test
 import pytest
 from mongoengine import connect
 
+import beer_garden
 from beer_garden.bg_utils.mongo.models import Instance
 from beer_garden.bg_utils.mongo.parser import MongoParser
 from test.bg_utils.unit.mongo import brew2mongo
@@ -13,11 +14,11 @@ pytest_plugins = ["brewtils.test.fixtures"]
 
 # This is so the comparison helpers in brewtils.text.comparison to work correctly
 def pytest_configure():
-    setattr(brewtils.test, "_running_tests", True)
+    setattr(beer_garden, "_running_tests", True)
 
 
 def pytest_unconfigure():
-    delattr(brewtils.test, "_running_tests")
+    delattr(beer_garden, "_running_tests")
 
 
 @pytest.fixture()
