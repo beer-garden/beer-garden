@@ -32,30 +32,30 @@ class TestEventPublishers(object):
         assert event.metadata["mock"] == "Hello"
 
     def test_publish_event_exception(self, caplog, connection, publishers):
-        connection.publish_event = Mock(side_effect=Exception)
+        connection.publish_event.side_effect = ValueError("Oops!")
 
         publishers.publish_event(Mock())
-        assert 1 == len(caplog.records)
-        assert "ERROR" == caplog.records[0].levelname
+        assert len(caplog.records) == 1
+        assert caplog.records[0].levelname == "ERROR"
 
     def test_shutdown(self, connection, publishers):
         publishers.shutdown()
         assert connection.shutdown.called is True
 
     def test_magic(self, connection, publishers):
-        assert connection == publishers["mock"]
-        assert 1 == len(publishers)
+        assert publishers["mock"] == connection
+        assert len(publishers) == 1
 
         for name in publishers:
-            assert "mock" == name
+            assert name == "mock"
 
         connection2 = Mock()
         publishers["mock2"] = connection2
-        assert connection2 == publishers["mock2"]
-        assert 2 == len(publishers)
+        assert publishers["mock2"] == connection2
+        assert len(publishers) == 2
 
         del publishers["mock2"]
-        assert 1 == len(publishers)
+        assert len(publishers) == 1
 
 
 class TestEventPublisher(object):
@@ -71,7 +71,7 @@ class TestEventPublisher(object):
         assert publish_mock.called is True
 
     def test_event_prepare(self, event, publisher):
-        assert event == publisher._event_prepare(event)
+        assert publisher._event_prepare(event) == event
 
     def test_event_serialize(self, monkeypatch, event, publisher):
         parser = Mock()
@@ -83,4 +83,4 @@ class TestEventPublisher(object):
         parser.serialize_event.assert_called_once_with(event)
 
     def test_event_publish_args(self, event, publisher):
-        assert {} == publisher._event_publish_args(event)
+        assert publisher._event_publish_args(event) == {}

@@ -1,11 +1,20 @@
 import json
+import logging.config
 from pathlib import Path
+
+import pytest
+from mock import Mock
 
 import beer_garden.log
 from beer_garden.log import default_app_config
 
 
 class TestLoad(object):
+    @pytest.fixture(autouse=True)
+    def patch_global_logging(self, monkeypatch):
+        """The config needs to not change or else it messes up subsequent tests"""
+        monkeypatch.setattr(logging.config, "dictConfig", Mock())
+
     def test_level(self, tmpdir):
         level = "DEBUG"
 
