@@ -1,7 +1,7 @@
 {
-  "name": "brew_view",
-  "version": "0.0.2",
-  "description": "Front End to a Command and Control Framework",
+  "name": "beer_garden",
+  "version": "0.0.1",
+  "description": "Beer-garden frontend user interface",
   "main": "app.py",
   "dependencies": {
     "@beer-garden/addons": "^0.5.0",
@@ -89,7 +89,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/beer-garden/brew-view.git"
+    "url": "https://github.com/beer-garden/beer-garden.git"
   },
   "keywords": [
     "beergarden",

@@ -1,8 +1,4 @@
-# Makefile for brew-view
-
-MODULE_NAME   = brew_view
-PYTHON_TEST_DIR = test/unit
-JS_DIR = brew_view/static
+# Makefile for Beer-garden UI
 
 .PHONY: clean clean-build clean-test help test deps
 .DEFAULT_GOAL := help
@@ -66,5 +62,5 @@ coverage: ## check code coverage
 
 
 # Packaging
-package: ## builds distribution
+package: clean ## builds distribution
 	npm run build
