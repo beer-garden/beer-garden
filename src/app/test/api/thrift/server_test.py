@@ -18,7 +18,7 @@ class ThriftServerTest(unittest.TestCase):
         self.server = BartenderThriftServer(self.processor_mock, self.trans_mock)
         self.server.pool = self.pool_mock
 
-    @patch("beer_garden.thrift.server.BartenderThriftServer.serve")
+    @patch("beer_garden.api.thrift.server.BartenderThriftServer.serve")
     def test_run(self, serve_mock):
         finished_mock = Mock()
         self.server.finished = finished_mock
@@ -48,7 +48,7 @@ class ThriftServerTest(unittest.TestCase):
         self.assertTrue(self.server.finished.is_set())
 
     @patch(
-        "beer_garden.thrift.server.BartenderThriftServer.stopped",
+        "beer_garden.api.thrift.server.BartenderThriftServer.stopped",
         Mock(return_value=True),
     )
     def test_serve_already_stopped(self):
@@ -57,7 +57,7 @@ class ThriftServerTest(unittest.TestCase):
         self.assertFalse(self.trans_mock.accept.called)
 
     @patch(
-        "beer_garden.thrift.server.BartenderThriftServer.stopped",
+        "beer_garden.api.thrift.server.BartenderThriftServer.stopped",
         Mock(side_effect=[False, True]),
     )
     def test_serve(self):
@@ -73,7 +73,7 @@ class ThriftServerTest(unittest.TestCase):
         self.assertFalse(logger_mock.exception.called)
 
     @patch(
-        "beer_garden.thrift.server.BartenderThriftServer.stopped",
+        "beer_garden.api.thrift.server.BartenderThriftServer.stopped",
         Mock(side_effect=[False, True]),
     )
     def test_serve_exception(self):
@@ -87,7 +87,7 @@ class ThriftServerTest(unittest.TestCase):
         self.assertTrue(logger_mock.exception.called)
 
     @patch(
-        "beer_garden.thrift.server.BartenderThriftServer.stopped",
+        "beer_garden.api.thrift.server.BartenderThriftServer.stopped",
         Mock(side_effect=[False, True, True]),
     )
     def test_serve_exit_exception(self):
