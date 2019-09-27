@@ -85,7 +85,8 @@ format: ## Run black formatter in-line
 
 # Linting
 lint: ## check style with flake8
-	flake8 $(MODULE_NAME) $(TEST_DIR)
+	#flake8 $(MODULE_NAME) $(TEST_DIR)
+	flake8 $(MODULE_NAME)
 	black --check $(MODULE_NAME) $(TEST_DIR)
 
 
