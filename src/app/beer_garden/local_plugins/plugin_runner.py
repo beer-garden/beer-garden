@@ -1,15 +1,16 @@
+# -*- coding: utf-8 -*-
 import logging
 import os
+import signal
 import sys
 from threading import Thread
 from time import sleep
-import signal
 
-from beer_garden.local_plugins.env_help import expand_string_with_environment_var
+from brewtils.stoppable_thread import StoppableThread
 from mongoengine import DoesNotExist, OperationError
 
+from beer_garden.local_plugins.env_help import expand_string_with_environment_var
 from beer_garden.local_plugins.logger import getLogLevels, getPluginLogger
-from brewtils.stoppable_thread import StoppableThread
 
 # This is the recommended import pattern, see https://github.com/google/python-subprocess32
 if os.name == "posix" and sys.version_info[0] < 3:

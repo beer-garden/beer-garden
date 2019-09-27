@@ -1,10 +1,10 @@
+# -*- coding: utf-8 -*-
 import logging
 from collections.abc import MutableMapping
 from datetime import datetime
 
-from six import iteritems
-
 from brewtils.schema_parser import SchemaParser
+from six import iteritems
 
 
 class EventPublishers(MutableMapping):

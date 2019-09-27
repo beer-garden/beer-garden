@@ -1,3 +1,5 @@
+# flake8: noqa
+
 import beer_garden.api.http.handlers.v2.admin
 import beer_garden.api.http.handlers.v2.command
 import beer_garden.api.http.handlers.v2.event

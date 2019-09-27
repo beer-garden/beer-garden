@@ -1,5 +1,6 @@
-from mongoengine.base import BaseField
+# -*- coding: utf-8 -*-
 from mongoengine import EmbeddedDocument, DateTimeField
+from mongoengine.base import BaseField
 
 
 class DummyField(BaseField):

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from beer_garden.bg_utils.mongo.models import Command
 
 

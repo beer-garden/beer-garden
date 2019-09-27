@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
 import json
 import logging
-from collections.abc import Sequence
-
 import re
-import six
-import urllib3
 from builtins import str
+from collections.abc import Sequence
 from functools import reduce
-from mongoengine import Q
-from requests import Session
 from threading import Event
 
-import beer_garden
-from beer_garden.events import publish_event
-from beer_garden.metrics import request_created, request_started, request_completed
-from beer_garden.bg_utils.mongo.models import Choices, Request, System
+import six
+import urllib3
 from brewtils.choices import parse
 from brewtils.errors import ModelValidationError, RequestPublishException, ConflictError
 from brewtils.models import Events
 from brewtils.schema_parser import SchemaParser
+from mongoengine import Q
+from requests import Session
+
+import beer_garden
+from beer_garden.bg_utils.mongo.models import Choices, Request, System
+from beer_garden.events import publish_event
+from beer_garden.metrics import request_created, request_started, request_completed
 
 logger = logging.getLogger(__name__)
 

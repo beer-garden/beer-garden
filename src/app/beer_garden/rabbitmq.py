@@ -1,13 +1,13 @@
+# -*- coding: utf-8 -*-
 import logging
 
+from brewtils.pika import TransientPikaClient
+from brewtils.schema_parser import SchemaParser
 from pyrabbit2.api import Client
 from pyrabbit2.http import HTTPError, NetworkError
 
-import beer_garden
-from beer_garden.requests import cancel_request
 from beer_garden.bg_utils.mongo.parser import MongoParser
-from brewtils.pika import TransientPikaClient
-from brewtils.schema_parser import SchemaParser
+from beer_garden.requests import cancel_request
 
 
 def get_routing_key(*args, **kwargs):

@@ -1,13 +1,14 @@
+# -*- coding: utf-8 -*-
 import logging
 
+from brewtils.errors import NotFoundError
+from brewtils.models import Queue, Events
 from pyrabbit2.http import HTTPError
 
 import beer_garden
+from beer_garden.bg_utils.mongo.models import System
 from beer_garden.events import publish_event
 from beer_garden.rabbitmq import get_routing_key
-from beer_garden.bg_utils.mongo.models import System
-from brewtils.errors import NotFoundError
-from brewtils.models import Queue, Events
 
 logger = logging.getLogger(__name__)
 

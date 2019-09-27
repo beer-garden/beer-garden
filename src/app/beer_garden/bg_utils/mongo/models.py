@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
 import copy
+import datetime
 import logging
 
-import datetime
 import pytz
 import six
 

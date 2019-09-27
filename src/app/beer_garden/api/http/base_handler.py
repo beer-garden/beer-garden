@@ -1,20 +1,9 @@
+# -*- coding: utf-8 -*-
 import datetime
 import re
 import socket
-from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
-from mongoengine.errors import (
-    DoesNotExist,
-    NotUniqueError,
-    ValidationError as MongoValidationError,
-)
-from thriftpy2.thrift import TException
-from tornado.web import HTTPError, RequestHandler
 
-import beer_garden.bg_utils.mongo.models
-import beer_garden.api.http
 import brewtils.thrift
-from beer_garden.api.http.authorization import AuthMixin, coalesce_permissions
-from beer_garden.api.http.metrics import http_api_latency_total
 from brewtils.errors import (
     ConflictError,
     ModelError,
@@ -24,6 +13,19 @@ from brewtils.errors import (
     WaitExceededError,
     AuthorizationRequired,
 )
+from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
+from mongoengine.errors import (
+    DoesNotExist,
+    NotUniqueError,
+    ValidationError as MongoValidationError,
+)
+from thriftpy2.thrift import TException
+from tornado.web import HTTPError, RequestHandler
+
+import beer_garden.api.http
+import beer_garden.bg_utils.mongo.models
+from beer_garden.api.http.authorization import AuthMixin, coalesce_permissions
+from beer_garden.api.http.metrics import http_api_latency_total
 
 
 class BaseHandler(AuthMixin, RequestHandler):

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 import sys
 from imp import load_source
@@ -5,10 +6,9 @@ from os import listdir
 from os.path import isfile, join, abspath
 from typing import List
 
-import beer_garden
+from beer_garden.bg_utils.mongo.models import Instance, System
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
 from beer_garden.systems import create_system
-from beer_garden.bg_utils.mongo.models import Instance, System
 
 
 class LocalPluginLoader(object):

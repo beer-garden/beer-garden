@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 def string_contains_environment_var(string):
     """Determines whether or not there is a valid environment variable in the string"""
     parts = string.split("$")

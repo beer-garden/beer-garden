@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 import logging.config
 
@@ -8,6 +9,16 @@ import beer_garden.config
 import beer_garden.log
 from beer_garden.__version__ import __version__
 from beer_garden.app import BartenderApp
+
+__all__ = [
+    "__version__",
+    "application",
+    "logger",
+    "start_request",
+    "stop_request",
+    "setup_bartender",
+    "progressive_backoff",
+]
 
 # COMPONENTS #
 application = None

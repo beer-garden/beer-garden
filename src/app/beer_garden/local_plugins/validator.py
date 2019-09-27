@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 import sys
 from imp import load_source

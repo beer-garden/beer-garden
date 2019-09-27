@@ -1,11 +1,21 @@
+# -*- coding: utf-8 -*-
 import json
 import logging
 
+import brewtils.thrift
 import mongoengine
 import wrapt
+from brewtils.errors import (
+    ModelValidationError,
+    NotFoundError,
+    RequestPublishException,
+    RestError,
+)
 
 import beer_garden
-import brewtils.thrift
+from beer_garden.api.thrift.client import ThriftClient
+from beer_garden.bg_utils.mongo.models import Request
+from beer_garden.bg_utils.mongo.parser import MongoParser
 from beer_garden.commands import get_commands, get_command
 from beer_garden.instances import (
     initialize_instance,
@@ -45,15 +55,6 @@ from beer_garden.systems import (
     update_system,
     query_systems,
     get_system,
-)
-from beer_garden.api.thrift.client import ThriftClient
-from beer_garden.bg_utils.mongo.models import Request
-from beer_garden.bg_utils.mongo.parser import MongoParser
-from brewtils.errors import (
-    ModelValidationError,
-    NotFoundError,
-    RequestPublishException,
-    RestError,
 )
 
 logger = logging.getLogger(__name__)

@@ -1,5 +1,8 @@
+# -*- coding: utf-8 -*-
 from copy import copy
 
+from brewtils.errors import ModelValidationError
+from brewtils.schema_parser import SchemaParser
 from marshmallow.exceptions import MarshmallowError
 
 from .models import (
@@ -19,8 +22,6 @@ from .models import (
     IntervalTrigger,
     CronTrigger,
 )
-from brewtils.errors import ModelValidationError
-from brewtils.schema_parser import SchemaParser
 
 
 class MongoParser(SchemaParser):

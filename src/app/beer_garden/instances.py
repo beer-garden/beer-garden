@@ -1,16 +1,17 @@
+# -*- coding: utf-8 -*-
 import logging
 import random
 import string
-
 from datetime import datetime
 
-import beer_garden
-from beer_garden.events import publish_event
-from beer_garden.rabbitmq import get_routing_key, get_routing_keys
-from beer_garden.bg_utils.mongo.fields import StatusInfo
-from beer_garden.bg_utils.mongo.models import Instance, System
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events
+
+import beer_garden
+from beer_garden.bg_utils.mongo.fields import StatusInfo
+from beer_garden.bg_utils.mongo.models import Instance, System
+from beer_garden.events import publish_event
+from beer_garden.rabbitmq import get_routing_key, get_routing_keys
 
 logger = logging.getLogger(__name__)
 

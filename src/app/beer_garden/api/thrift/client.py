@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from thriftpy2.rpc import make_client
 
 import brewtils.thrift

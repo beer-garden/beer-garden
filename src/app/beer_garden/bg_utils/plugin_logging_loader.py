@@ -1,7 +1,9 @@
-import logging
+# -*- coding: utf-8 -*-
 import copy
-import six
 import json
+import logging
+
+import six
 from brewtils.models import LoggingConfig
 
 

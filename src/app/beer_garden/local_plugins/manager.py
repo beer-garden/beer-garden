@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
 import logging
 
 import beer_garden
+from beer_garden.bg_utils.mongo.models import System
 from beer_garden.errors import PluginStartupError
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
 from beer_garden.rabbitmq import get_routing_key
-from beer_garden.bg_utils.mongo.models import System
 
 
 class LocalPluginsManager(object):

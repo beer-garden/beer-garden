@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 import os
 import ssl
@@ -31,8 +32,8 @@ from tornado.web import Application, StaticFileHandler, RedirectHandler
 from urllib3.util.url import Url
 
 import beer_garden.bg_utils
-from beer_garden.bg_utils.mongo import setup_database
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
+from beer_garden.bg_utils.mongo import setup_database
 
 io_loop = None
 server = None

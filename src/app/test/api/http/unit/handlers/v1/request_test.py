@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 import copy
+import datetime
 import json
 
-import datetime
 import pytest
+from brewtils.rest.client import RestClient
+from brewtils.schema_parser import SchemaParser
 from mock import MagicMock, Mock, PropertyMock, patch
 from tornado.gen import Future
 from tornado.httpclient import HTTPRequest, HTTPClientError
 
+import beer_garden
+from beer_garden.api.http.handlers.v1.request import RequestListAPI
 from beer_garden.bg_utils.mongo.models import (
     Request,
     Job,
@@ -15,9 +19,6 @@ from beer_garden.bg_utils.mongo.models import (
     DateTrigger,
     System,
 )
-from beer_garden.api.http.handlers.v1.request import RequestListAPI
-from brewtils.rest.client import RestClient
-from brewtils.schema_parser import SchemaParser
 from .. import TestHandlerBase
 
 
@@ -35,14 +36,18 @@ def clear_requests(app):
 @pytest.fixture(autouse=True)
 def thrift(monkeypatch, thrift_context, thrift_client, process_future):
     thrift_client.processRequest.return_value = process_future
-    monkeypatch.setattr(brew_view.handlers.v1.request, "thrift_context", thrift_context)
+    monkeypatch.setattr(
+        beer_garden.api.http.handlers.v1.request, "thrift_context", thrift_context
+    )
 
 
 @pytest.fixture(autouse=True)
 def latency_total(monkeypatch):
     latency_total = Mock()
     monkeypatch.setattr(
-        brew_view.handlers.v1.request, "http_api_latency_total", latency_total
+        beer_garden.api.http.handlers.v1.request,
+        "http_api_latency_total",
+        latency_total,
     )
     return latency_total
 
@@ -507,13 +512,15 @@ class RequestListAPITest(TestHandlerBase):
         self.request_mock.__getitem__.return_value = self.request_mock
         self.request_mock.__len__.return_value = 1
 
-        mongo_patcher = patch("brew_view.handlers.v1.request.Request.objects")
+        mongo_patcher = patch(
+            "beer_garden.api.http.handlers.v1.request.Request.objects"
+        )
         self.addCleanup(mongo_patcher.stop)
         self.mongo_mock = mongo_patcher.start()
         self.mongo_mock.count.return_value = 1
 
         serialize_patcher = patch(
-            "brew_view.handlers.v1.request.MongoParser.serialize_request"
+            "beer_garden.api.http.handlers.v1.request.MongoParser.serialize_request"
         )
         self.addCleanup(serialize_patcher.stop)
         self.serialize_mock = serialize_patcher.start()
@@ -528,7 +535,7 @@ class RequestListAPITest(TestHandlerBase):
 
         super(RequestListAPITest, self).setUp()
 
-    @patch("brew_view.handlers.v1.request.RequestListAPI._get_query_set")
+    @patch("beer_garden.api.http.handlers.v1.request.RequestListAPI._get_query_set")
     def test_get(self, get_query_set_mock):
         query_set = MagicMock()
         query_set.count.return_value = 1
@@ -546,9 +553,9 @@ class RequestListAPITest(TestHandlerBase):
         self.assertEqual("1", response.headers["recordsTotal"])
         self.assertEqual("1", response.headers["draw"])
 
-    @patch("brew_view.handlers.v1.request.System.objects")
-    @patch("brew_view.handlers.v1.request.MongoParser.parse_request")
-    @patch("brew_view.handlers.v1.request.thrift_context")
+    @patch("beer_garden.api.http.handlers.v1.request.System.objects")
+    @patch("beer_garden.api.http.handlers.v1.request.MongoParser.parse_request")
+    @patch("beer_garden.api.http.handlers.v1.request.thrift_context")
     def test_post_json(self, context_mock, parse_mock, system_mock):
         context_mock.return_value = self.fake_context
         self.client_mock.processRequest.return_value = self.future_mock
@@ -571,8 +578,8 @@ class RequestListAPITest(TestHandlerBase):
         self.assertTrue(self.request_mock.save.called)
         self.client_mock.processRequest.assert_called_once_with(self.request_mock.id)
 
-    @patch("brew_view.handlers.v1.request.MongoParser.parse_request")
-    @patch("brew_view.handlers.v1.request.thrift_context")
+    @patch("beer_garden.api.http.handlers.v1.request.MongoParser.parse_request")
+    @patch("beer_garden.api.http.handlers.v1.request.thrift_context")
     def test_post_invalid(self, context_mock, parse_mock):
         context_mock.return_value = self.fake_context
         self.client_mock.processRequest.return_value = self.future_mock
@@ -589,8 +596,8 @@ class RequestListAPITest(TestHandlerBase):
         self.assertTrue(self.request_mock.delete.called)
         self.assertTrue(self.client_mock.processRequest.called)
 
-    @patch("brew_view.handlers.v1.request.MongoParser.parse_request")
-    @patch("brew_view.handlers.v1.request.thrift_context")
+    @patch("beer_garden.api.http.handlers.v1.request.MongoParser.parse_request")
+    @patch("beer_garden.api.http.handlers.v1.request.thrift_context")
     def test_post_publishing_exception(self, context_mock, parse_mock):
         context_mock.return_value = self.fake_context
         self.client_mock.processRequest.return_value = self.future_mock
@@ -606,8 +613,8 @@ class RequestListAPITest(TestHandlerBase):
         self.assertEqual(response.code, 502)
         self.assertTrue(self.request_mock.delete.called)
 
-    @patch("brew_view.handlers.v1.request.MongoParser.parse_request")
-    @patch("brew_view.handlers.v1.request.thrift_context")
+    @patch("beer_garden.api.http.handlers.v1.request.MongoParser.parse_request")
+    @patch("beer_garden.api.http.handlers.v1.request.thrift_context")
     def test_post_exception(self, context_mock, parse_mock):
         context_mock.return_value = self.fake_context
         self.future_mock.set_exception(Exception())
@@ -631,8 +638,8 @@ class RequestListAPITest(TestHandlerBase):
         )
         self.assertEqual(response.code, 400)
 
-    @patch("brew_view.handlers.v1.request.MongoParser.parse_request")
-    @patch("brew_view.handlers.v1.request.thrift_context")
+    @patch("beer_garden.api.http.handlers.v1.request.MongoParser.parse_request")
+    @patch("beer_garden.api.http.handlers.v1.request.thrift_context")
     def test_post_instance_status_exception(self, context_mock, parse_mock):
         context_mock.return_value = self.fake_context
         self.client_mock.processRequest.return_value = self.future_mock

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 
 from beer_garden.bg_utils.mongo.models import Instance, System

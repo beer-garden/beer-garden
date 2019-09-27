@@ -1,16 +1,17 @@
+# -*- coding: utf-8 -*-
 import base64
 from enum import Enum
 
 import jwt
 import wrapt
+from brewtils.errors import RequestForbidden
+from brewtils.models import Principal as BrewtilsPrincipal, Role as BrewtilsRole
 from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
 from tornado.web import HTTPError
 
 import beer_garden.api.http
 from beer_garden.bg_utils.mongo.models import Principal, Role
-from brewtils.errors import RequestForbidden
-from brewtils.models import Principal as BrewtilsPrincipal, Role as BrewtilsRole
 
 
 class Permissions(Enum):

@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
 from .event_publisher import EventPublisher
 from .mongo.parser import MongoParser
-from brewtils.models import Events
-from brewtils.rest.client import TimeoutAdapter
 
-from requests import Session
+# from brewtils.models import Events
+# from brewtils.rest.client import TimeoutAdapter
+#
+# from requests import Session
 
 
 # class WebhookPublisher(EventPublisher):

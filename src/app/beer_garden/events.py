@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
 import wrapt
-
-import beer_garden
 from brewtils.models import Event, Events
 from brewtils.schema_parser import SchemaParser
+
+import beer_garden
 
 
 def publish_event(event_type):

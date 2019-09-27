@@ -1,13 +1,14 @@
+# -*- coding: utf-8 -*-
+import datetime
 import logging
 from http.server import ThreadingHTTPServer
 
-import datetime
+from brewtils.stoppable_thread import StoppableThread
 from prometheus_client import Gauge, Counter, Summary
 from prometheus_client.exposition import MetricsHandler
 from prometheus_client.registry import REGISTRY
 
 from beer_garden.bg_utils.mongo.models import Request
-from brewtils.stoppable_thread import StoppableThread
 
 
 class PrometheusServer(StoppableThread):
