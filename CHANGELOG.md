@@ -1,5 +1,16 @@
 # Beer Garden Changelog
 
+## 2.4.10
+9/27/19
+Brew-view 2.4.14, Bartender 2.4.5, BG-utils 2.4.8
+
+#### Bug Fixes
+- Static choices with alternate display text no longer fail validation (#325)
+
+#### Other Changes
+- Typeahead parameters now use a scrollable display (#318)
+- Better stacktrace logging for local plugins (#317)
+
 ## 2.4.9
 9/5/19
 Brew-view 2.4.13, Bartender 2.4.4, BG-utils 2.4.8
