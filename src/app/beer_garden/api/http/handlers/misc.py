@@ -16,7 +16,7 @@ class ConfigHandler(BaseHandler):
             remote_namespaces = await client.getRemoteNamespaces()
 
         app_config = beer_garden.config.get("application")
-        web_config = beer_garden.config.get("web")
+        http_config = beer_garden.config.get("entry.http")
         metrics_config = beer_garden.config.get("metrics")
         auth_config = beer_garden.config.get("auth")
         configs = {
@@ -24,7 +24,7 @@ class ConfigHandler(BaseHandler):
             "application_name": app_config.name,
             "icon_default": app_config.icon_default,
             "debug_mode": app_config.debug_mode,
-            "url_prefix": web_config.url_prefix,
+            "url_prefix": http_config.url_prefix,
             "metrics_url": metrics_config.prometheus.url,
             "auth_enabled": auth_config.enabled,
             "guest_login_enabled": auth_config.guest_login_enabled,
@@ -58,7 +58,7 @@ class SwaggerConfigHandler(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(
             {
-                "url": beer_garden.config.get("web.url_prefix") + "api/v1/spec",
+                "url": beer_garden.config.get("entry.http.url_prefix") + "api/v1/spec",
                 "validatorUrl": None,
             }
         )

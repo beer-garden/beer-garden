@@ -86,9 +86,9 @@ async def startup():
             metrics_config.prometheus.port, addr=metrics_config.prometheus.host
         )
 
-    web_config = beer_garden.config.get("web")
-    logger.info(f"Starting HTTP server on {web_config.host}:{web_config.port}")
-    server.listen(web_config.port, web_config.host)
+    http_config = beer_garden.config.get("entry.http")
+    logger.info(f"Starting HTTP server on {http_config.host}:{http_config.port}")
+    server.listen(http_config.port, http_config.host)
 
     beer_garden.api.http.logger.info("Application is started. Hello!")
 
@@ -138,12 +138,12 @@ def _setup_application():
                 "restarts. To prevent this set the auth.token.secret config."
             )
 
-    web_config = beer_garden.config.get("web")
+    http_config = beer_garden.config.get("entry.http")
     public_url = Url(
-        scheme="https" if web_config.ssl.enabled else "http",
-        host=web_config.public_fqdn,
-        port=web_config.port,
-        path=normalize_url_prefix(web_config.url_prefix),
+        scheme="https" if http_config.ssl.enabled else "http",
+        host=http_config.public_fqdn,
+        port=http_config.port,
+        path=normalize_url_prefix(http_config.url_prefix),
     ).url
 
     tornado_app = _setup_tornado_app()
@@ -160,8 +160,7 @@ def _setup_tornado_app():
     import beer_garden.api.http.handlers.vbeta as vbeta
     import beer_garden.api.http.handlers.misc as misc
 
-    web_config = beer_garden.config.get("web")
-    prefix = normalize_url_prefix(web_config.url_prefix)
+    prefix = normalize_url_prefix(beer_garden.config.get("entry.http.url_prefix"))
     static_base = os.path.join(os.path.dirname(__file__), "static", "dist")
 
     # These get documented in our OpenAPI (fka Swagger) documentation
@@ -250,27 +249,27 @@ def _setup_tornado_app():
 
 
 def _setup_ssl_context():
-    web_config = beer_garden.config.get("web")
-    if web_config.ssl.enabled:
+    http_config = beer_garden.config.get("entry.http")
+    if http_config.ssl.enabled:
         server_ssl = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         server_ssl.load_cert_chain(
-            certfile=web_config.ssl.public_key, keyfile=web_config.ssl.private_key
+            certfile=http_config.ssl.public_key, keyfile=http_config.ssl.private_key
         )
         server_ssl.verify_mode = getattr(
-            ssl, "CERT_" + web_config.ssl.client_cert_verify.upper()
+            ssl, "CERT_" + http_config.ssl.client_cert_verify.upper()
         )
 
         client_ssl = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         client_ssl.load_cert_chain(
-            certfile=web_config.ssl.public_key, keyfile=web_config.ssl.private_key
+            certfile=http_config.ssl.public_key, keyfile=http_config.ssl.private_key
         )
 
-        if web_config.ssl.ca_cert or web_config.ssl.ca_path:
+        if http_config.ssl.ca_cert or http_config.ssl.ca_path:
             server_ssl.load_verify_locations(
-                cafile=web_config.ssl.ca_cert, capath=web_config.ssl.ca_path
+                cafile=http_config.ssl.ca_cert, capath=http_config.ssl.ca_path
             )
             client_ssl.load_verify_locations(
-                cafile=web_config.ssl.ca_cert, capath=web_config.ssl.ca_path
+                cafile=http_config.ssl.ca_cert, capath=http_config.ssl.ca_path
             )
     else:
         server_ssl = None
