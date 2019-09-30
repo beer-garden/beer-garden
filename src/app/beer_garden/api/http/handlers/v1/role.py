@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from mongoengine.errors import DoesNotExist
 
 import beer_garden.api.http

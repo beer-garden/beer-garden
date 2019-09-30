@@ -25,6 +25,7 @@ from tornado.web import HTTPError, RequestHandler
 import beer_garden.api.http
 import beer_garden.bg_utils.mongo.models
 from beer_garden.api.http.authorization import AuthMixin, coalesce_permissions
+from beer_garden.api.http.client import ExecutorClient
 from beer_garden.api.http.metrics import http_api_latency_total
 
 
@@ -108,6 +109,9 @@ class BaseHandler(AuthMixin, RequestHandler):
         for mongo_id in re.findall(self.MONGO_ID_PATTERN, self.request.path):
             to_return = to_return.replace(mongo_id, "<ID>")
         return to_return
+
+    def initialize(self):
+        self.client = ExecutorClient()
 
     def prepare(self):
         """Called before each verb handler"""

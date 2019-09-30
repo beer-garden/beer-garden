@@ -1,9 +1,9 @@
-import beer_garden.bg_utils
+# -*- coding: utf-8 -*-
+from brewtils.schema_parser import SchemaParser
+from brewtils.schemas import SystemSchema
+
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.client import ExecutorClient
-from brewtils.errors import ConflictError
-from brewtils.schemas import SystemSchema
 
 
 class SystemAPI(BaseHandler):
@@ -41,17 +41,14 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        include_commands = (
-            self.get_query_argument("include_commands", default="").lower() != "false"
-        )
+        # include_commands = (
+        #     self.get_query_argument("include_commands", default="").lower() != "false"
+        # )
 
-        async with ExecutorClient() as client:
-            thrift_response = await client.getSystem(
-                self.request.namespace, system_id, include_commands
-            )
+        response = await self.client.get_system(self.request.namespace, system_id)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)
 
     @authenticated(permissions=[Permissions.SYSTEM_DELETE])
     async def delete(self, system_id):
@@ -84,8 +81,7 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        async with ExecutorClient() as client:
-            await client.removeSystem(self.request.namespace, system_id)
+        await self.client.remove_system(self.request.namespace, system_id)
 
         self.set_status(204)
 
@@ -142,13 +138,14 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        async with ExecutorClient() as client:
-            thrift_response = await client.updateSystem(
-                self.request.namespace, system_id, self.request.decoded_body
-            )
+        response = await self.client.update_system(
+            self.request.namespace,
+            system_id,
+            SchemaParser.parse_patch(self.request.decoded_body, from_string=True),
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)
 
 
 class SystemListAPI(BaseHandler):
@@ -241,25 +238,30 @@ class SystemListAPI(BaseHandler):
 
         # TODO - Handle multiple query arguments with the same key
         # for example: (?name=foo&name=bar) ... what should that mean?
-        filter_params = {}
-
         # Need to use self.request.query_arguments to get all the query args
+        filter_params = {}
         for key in self.request.query_arguments:
             if key in self.REQUEST_FIELDS:
                 filter_params[key] = self.get_query_argument(key)
 
-        async with ExecutorClient() as client:
-            thrift_response = await client.querySystems(
-                self.request.namespace,
-                filter_params,
-                order_by,
-                include_fields,
-                exclude_fields,
-                dereference_nested,
-            )
+        serialize_kwargs = {"to_string": True, "many": True}
+        if include_fields:
+            serialize_kwargs["only"] = include_fields
+        if exclude_fields:
+            serialize_kwargs["exclude"] = exclude_fields
+
+        response = await self.client.query_systems(
+            self.request.namespace,
+            serialize_kwargs=serialize_kwargs,
+            filter_params=filter_params,
+            order_by=order_by,
+            include_fields=include_fields,
+            exclude_fields=exclude_fields,
+            dereference_nested=dereference_nested,
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)
 
     @authenticated(permissions=[Permissions.SYSTEM_CREATE])
     async def post(self):
@@ -296,14 +298,11 @@ class SystemListAPI(BaseHandler):
         tags:
           - Systems
         """
-        async with ExecutorClient() as client:
-            try:
-                thrift_response = await client.createSystem(
-                    self.request.namespace, self.request.decoded_body
-                )
-            except beer_garden.bg_utils.bg_thrift.ConflictException:
-                raise ConflictError() from None
+        response = await self.client.create_system(
+            self.request.namespace,
+            SchemaParser.parse_system(self.request.decoded_body, from_string=True),
+        )
 
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)

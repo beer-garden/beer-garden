@@ -1,7 +1,6 @@
 import logging
 
 import beer_garden.api.http
-from beer_garden.api.http.client import ExecutorClient
 from beer_garden.api.http.base_handler import BaseHandler
 
 logger = logging.getLogger(__name__)
@@ -11,9 +10,8 @@ class ConfigHandler(BaseHandler):
     async def get(self):
         """Subset of configuration options that the frontend needs"""
 
-        async with ExecutorClient() as client:
-            local_namespace = await client.getLocalNamespace()
-            remote_namespaces = await client.getRemoteNamespaces()
+        local_namespace = await self.client.get_local_namespace()
+        remote_namespaces = await self.client.get_remote_namespaces()
 
         app_config = beer_garden.config.get("application")
         http_config = beer_garden.config.get("entry.http")
@@ -37,16 +35,15 @@ class ConfigHandler(BaseHandler):
 class VersionHandler(BaseHandler):
     async def get(self):
         try:
-            async with ExecutorClient() as client:
-                bartender_version = await client.getVersion()
+            version = await self.client.get_version()
         except Exception as ex:
-            logger.exception(f"Error determining Bartender version - Caused by:\n{ex}")
-            bartender_version = "unknown"
+            logger.exception(f"Error determining version - Caused by:\n{ex}")
+            version = "unknown"
 
         self.write(
             {
                 "brew_view_version": beer_garden.__version__,
-                "bartender_version": bartender_version,
+                "bartender_version": version,
                 "current_api_version": "v1",
                 "supported_api_versions": ["v1"],
             }

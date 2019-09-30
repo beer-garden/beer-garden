@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+from brewtils.schema_parser import SchemaParser
+
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.client import ExecutorClient
 
 
 class InstanceAPI(BaseHandler):
@@ -32,13 +34,10 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        async with ExecutorClient() as client:
-            thrift_response = await client.getInstance(
-                self.request.namespace, instance_id
-            )
+        response = await self.client.get_instance(self.request.namespace, instance_id)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)
 
     @authenticated(permissions=[Permissions.INSTANCE_DELETE])
     async def delete(self, instance_id):
@@ -66,8 +65,7 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        async with ExecutorClient() as client:
-            await client.removeInstance(self.request.namespace, instance_id)
+        await self.client.remove_instance(self.request.namespace, instance_id)
 
         self.set_status(204)
 
@@ -123,10 +121,11 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        async with ExecutorClient() as client:
-            thrift_response = await client.updateInstance(
-                self.request.namespace, instance_id, self.request.decoded_body
-            )
+        response = await self.client.update_instance(
+            self.request.namespace,
+            instance_id,
+            SchemaParser.parse_patch(self.request.decoded_body, from_string=True),
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)
