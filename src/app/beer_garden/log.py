@@ -88,3 +88,9 @@ def load_plugin_log_config():
         level=plugin_config.logging.level,
         default_config=_LOGGING_CONFIG,
     )
+
+
+def reload_plugin_log_config():
+    load_plugin_log_config()
+
+    return get_plugin_log_config()
