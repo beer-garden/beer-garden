@@ -1,8 +1,11 @@
 import logging
 from time import sleep
+from typing import List, Sequence, Dict
 
+import brewtils.models
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events
+from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema
 
 import beer_garden
@@ -19,17 +22,48 @@ parser = MongoParser()
 logger = logging.getLogger(__name__)
 
 
-def get_system(system_id):
-    return System.objects.get(id=system_id)
+def get_system(system_id: str) -> brewtils.models.System:
+    """Retrieve an individual System
+
+    Args:
+        system_id: The System ID
+
+    Returns:
+        The System
+
+    """
+    return SchemaParser.parse_system(
+        SchemaParser.serialize_system(
+            System.objects.get(id=system_id), to_string=False
+        ),
+        from_string=False,
+    )
 
 
 def query_systems(
-    filter_params=None,
-    order_by="name",
-    include_fields=None,
-    exclude_fields=None,
-    dereference_nested=True,
-):
+    filter_params: Dict[str, str] = None,
+    order_by: str = "name",
+    include_fields: Sequence[str] = None,
+    exclude_fields: Sequence[str] = None,
+    dereference_nested: bool = True,
+) -> List[brewtils.models.System]:
+    """Search for Systems
+
+    It's possible to specify `include_fields` _and_ `exclude_fields`. This doesn't make
+    a lot of sense, but you can do it. If the same field is in both `exclude_fields`
+    takes priority (the field will NOT be included in the response).
+
+    Args:
+        filter_params: Dict of filtering parameters
+        order_by: System attribute that will be used to order the result list
+        include_fields: Fields to include for matching Systems
+        exclude_fields: Fields to exclude for matching Systems
+        dereference_nested: Flag specifying if Commands and Instances should be fetched
+
+    Returns:
+        The list of Systems that matched the query
+
+    """
     query_set = System.objects.order_by(order_by)
 
     if include_fields:
@@ -41,12 +75,29 @@ def query_systems(
     if not dereference_nested:
         query_set = query_set.no_dereference()
 
-    return query_set.filter(**filter_params)
+    filtered = query_set.filter(**(filter_params or {}))
+
+    return SchemaParser.parse_system(
+        SchemaParser.serialize_system(filtered, to_string=False, many=True),
+        from_string=False,
+        many=True,
+    )
 
 
 @publish_event(Events.SYSTEM_CREATED)
-def create_system(system):
-    """Create a new system"""
+def create_system(system: brewtils.models.System) -> brewtils.models.System:
+    """Create a new System
+
+    Args:
+        system: The System to create
+
+    Returns:
+        The created System
+
+    """
+    system = MongoParser.parse_system(
+        SchemaParser.serialize_system(system, to_string=False), from_string=False
+    )
 
     # Assign a default 'main' instance if there aren't any instances and there can
     # only be one
@@ -65,11 +116,25 @@ def create_system(system):
 
     system.deep_save()
 
-    return system
+    return SchemaParser.parse_system(
+        MongoParser.serialize_system(system, to_string=False), from_string=False
+    )
 
 
 @publish_event(Events.SYSTEM_UPDATED)
-def update_system(system_id, operations):
+def update_system(
+    system_id: str, operations: Sequence[brewtils.models.PatchOperation]
+) -> brewtils.models.System:
+    """Update an already existing System
+
+    Args:
+        system_id: The ID of the System to be updated
+        operations: List of patch operations
+
+    Returns:
+        The updated System
+
+    """
     system = System.objects.get(id=system_id)
 
     for op in operations:
@@ -126,14 +191,20 @@ def update_system(system_id, operations):
 
     system.reload()
 
-    return system
+    return SchemaParser.parse_system(
+        MongoParser.serialize_system(system, to_string=False), from_string=False
+    )
 
 
-def reload_system(system_id):
+def reload_system(system_id: str) -> None:
     """Reload a system configuration
 
-    :param system_id: The system id
-    :return None
+    Args:
+        system_id: The System ID
+
+    Returns:
+        None
+
     """
     system = System.objects.get(id=system_id)
 
@@ -142,11 +213,15 @@ def reload_system(system_id):
 
 
 @publish_event(Events.SYSTEM_REMOVED)
-def remove_system(system_id):
-    """Removes a system from the registry if necessary.
+def remove_system(system_id: str) -> None:
+    """Remove a system
 
-    :param system_id: The system id
-    :return:
+    Args:
+        system_id: The System ID
+
+    Returns:
+        None
+
     """
     system = System.objects.get(id=system_id)
 
@@ -196,6 +271,6 @@ def remove_system(system_id):
     system.deep_delete()
 
 
-def rescan_system_directory():
+def rescan_system_directory() -> None:
     """Scans plugin directory and starts any new Systems"""
     beer_garden.application.plugin_manager.scan_plugin_path()
