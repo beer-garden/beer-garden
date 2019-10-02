@@ -40,6 +40,7 @@ class ExecutorClient(object):
 
         return self.serialize(result, **(serialize_kwargs or {}))
 
+    # TODO - This really needs to be handled by the Parser subsystem
     @classmethod
     def serialize(cls, model, to_string=True, **kwargs):
         """Convenience method to serialize any model type

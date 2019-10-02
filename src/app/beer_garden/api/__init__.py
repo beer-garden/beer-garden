@@ -34,16 +34,6 @@ def namespace_router(_wrapped):
 
         if handle_remote(target_ns):
             pass
-            # logger.debug(f"Forwarding {wrapped.__name__} to {target_ns}")
-            #
-            # ns_info = None
-            # for ns in beer_garden.config.get("namespaces.remote"):
-            #     if ns.name == target_ns:
-            #         ns_info = ns
-            #         break
-            #
-            # with ThriftClient(ns_info.host, ns_info.port) as client:
-            #     return getattr(client, wrapped.__name__)(*args)
 
         raise ValueError(f"Unable to find route to namespace '{target_ns}'")
 

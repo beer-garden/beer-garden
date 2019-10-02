@@ -41,6 +41,7 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
+        # TODO - This is part of the v1 API, need to work this back in
         # include_commands = (
         #     self.get_query_argument("include_commands", default="").lower() != "false"
         # )
