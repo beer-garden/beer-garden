@@ -1,7 +1,8 @@
-from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.thrift import ThriftClient
+# -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError
 from brewtils.schema_parser import SchemaParser
+
+from beer_garden.api.http.base_handler import BaseHandler
 
 
 class LoggingConfigAPI(BaseHandler):
@@ -32,13 +33,12 @@ class LoggingConfigAPI(BaseHandler):
         """
         system_name = self.get_query_argument("system_name", default="")
 
-        async with ThriftClient() as client:
-            thrift_response = await client.getPluginLogConfig(
-                self.request.namespace, system_name
-            )
+        response = await self.client.get_plugin_log_config(
+            self.request.namespace, system_name
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)
 
     async def patch(self):
         """
@@ -77,18 +77,16 @@ class LoggingConfigAPI(BaseHandler):
           - Config
         """
         operations = SchemaParser.parse_patch(
-            self.request.namespace,
-            self.request.decoded_body,
-            many=True,
-            from_string=True,
+            self.request.decoded_body, many=True, from_string=True
         )
 
         for op in operations:
             if op.operation == "reload":
-                async with ThriftClient() as client:
-                    thrift_response = await client.reloadPluginLogConfig()
+                response = await self.client.reload_plugin_log_config(
+                    self.request.namespace
+                )
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)

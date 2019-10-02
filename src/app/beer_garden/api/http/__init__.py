@@ -2,8 +2,6 @@
 import logging
 import os
 import ssl
-from asyncio import sleep
-from functools import partial
 
 from apispec import APISpec
 from brewtils.rest import normalize_url_prefix
@@ -33,7 +31,6 @@ from urllib3.util.url import Url
 
 import beer_garden.bg_utils
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
-from beer_garden.bg_utils.mongo import setup_database
 
 io_loop = None
 server = None
@@ -47,16 +44,26 @@ anonymous_principal = None
 client_ssl = None
 
 
-def setup(cli_args):
+def run():
     global logger
-
-    beer_garden.config.load(cli_args)
-
-    beer_garden.log.load(beer_garden.config.get("log"))
     logger = logging.getLogger(__name__)
 
     _setup_application()
-    logger.debug("Successfully loaded the application")
+
+    # Schedule things to happen after the ioloop comes up
+    io_loop.add_callback(beer_garden.api.http.startup)
+
+    logger.info("Starting IO loop")
+
+    io_loop.start()
+
+    logger.info("Application is shut down. Goodbye!")
+
+
+def stop():
+    logger.info("Received a shutdown request.")
+    # TODO - Should this be 'from_signal'?
+    io_loop.add_callback_from_signal(beer_garden.api.http.shutdown)
 
 
 async def startup():
@@ -65,13 +72,6 @@ async def startup():
     This is the first thing called from within the ioloop context.
     """
     global anonymous_principal
-
-    # Ensure we have a mongo connection
-    logger.info("Checking for Mongo connection")
-    await _progressive_backoff(
-        partial(setup_database, beer_garden.config),
-        "Unable to connect to mongo, is it started?",
-    )
 
     # Need to wait until after mongo connection established to load
     anonymous_principal = load_anonymous()
@@ -86,9 +86,9 @@ async def startup():
             metrics_config.prometheus.port, addr=metrics_config.prometheus.host
         )
 
-    web_config = beer_garden.config.get("web")
-    logger.info(f"Starting HTTP server on {web_config.host}:{web_config.port}")
-    server.listen(web_config.port, web_config.host)
+    http_config = beer_garden.config.get("entry.http")
+    logger.info(f"Starting HTTP server on {http_config.host}:{http_config.port}")
+    server.listen(http_config.port, http_config.host)
 
     beer_garden.api.http.logger.info("Application is started. Hello!")
 
@@ -124,23 +124,9 @@ async def shutdown():
     io_loop.add_callback(io_loop.stop)
 
 
-async def _progressive_backoff(func, failure_message):
-    wait_time = 1
-    while not func():
-        logger.warning(failure_message)
-        logger.warning(f"Waiting {wait_time} seconds before next attempt")
-
-        await sleep(wait_time)
-        wait_time = min(wait_time * 2, 30)
-
-
 def _setup_application():
     """Setup things that can be taken care of before io loop is started"""
     global io_loop, tornado_app, public_url, server, client_ssl
-
-    # Tweak some config options
-    web_config = beer_garden.config.get("web")
-    web_config.url_prefix = normalize_url_prefix(web_config.url_prefix)
 
     auth_config = beer_garden.config.get("auth")
     if not auth_config.token.secret:
@@ -152,11 +138,12 @@ def _setup_application():
                 "restarts. To prevent this set the auth.token.secret config."
             )
 
+    http_config = beer_garden.config.get("entry.http")
     public_url = Url(
-        scheme="https" if web_config.ssl.enabled else "http",
-        host=web_config.public_fqdn,
-        port=web_config.port,
-        path=web_config.url_prefix,
+        scheme="https" if http_config.ssl.enabled else "http",
+        host=http_config.public_fqdn,
+        port=http_config.port,
+        path=normalize_url_prefix(http_config.url_prefix),
     ).url
 
     tornado_app = _setup_tornado_app()
@@ -173,8 +160,7 @@ def _setup_tornado_app():
     import beer_garden.api.http.handlers.vbeta as vbeta
     import beer_garden.api.http.handlers.misc as misc
 
-    web_config = beer_garden.config.get("web")
-    prefix = web_config.url_prefix
+    prefix = normalize_url_prefix(beer_garden.config.get("entry.http.url_prefix"))
 
     # These get documented in our OpenAPI (fka Swagger) documentation
     published_url_specs = [
@@ -251,27 +237,27 @@ def _setup_tornado_app():
 
 
 def _setup_ssl_context():
-    web_config = beer_garden.config.get("web")
-    if web_config.ssl.enabled:
+    http_config = beer_garden.config.get("entry.http")
+    if http_config.ssl.enabled:
         server_ssl = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         server_ssl.load_cert_chain(
-            certfile=web_config.ssl.public_key, keyfile=web_config.ssl.private_key
+            certfile=http_config.ssl.public_key, keyfile=http_config.ssl.private_key
         )
         server_ssl.verify_mode = getattr(
-            ssl, "CERT_" + web_config.ssl.client_cert_verify.upper()
+            ssl, "CERT_" + http_config.ssl.client_cert_verify.upper()
         )
 
         client_ssl = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         client_ssl.load_cert_chain(
-            certfile=web_config.ssl.public_key, keyfile=web_config.ssl.private_key
+            certfile=http_config.ssl.public_key, keyfile=http_config.ssl.private_key
         )
 
-        if web_config.ssl.ca_cert or web_config.ssl.ca_path:
+        if http_config.ssl.ca_cert or http_config.ssl.ca_path:
             server_ssl.load_verify_locations(
-                cafile=web_config.ssl.ca_cert, capath=web_config.ssl.ca_path
+                cafile=http_config.ssl.ca_cert, capath=http_config.ssl.ca_path
             )
             client_ssl.load_verify_locations(
-                cafile=web_config.ssl.ca_cert, capath=web_config.ssl.ca_path
+                cafile=http_config.ssl.ca_cert, capath=http_config.ssl.ca_path
             )
     else:
         server_ssl = None

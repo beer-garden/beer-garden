@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 import logging
+from typing import List, Dict
 
+import brewtils.models
 from apscheduler.job import Job as APJob
 from apscheduler.jobstores.base import BaseJobStore
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
+from brewtils.schema_parser import SchemaParser
 from mongoengine import DoesNotExist
 from pytz import utc
 
 import beer_garden
 from beer_garden.bg_utils.mongo.models import Job as BGJob, Request
+from beer_garden.bg_utils.mongo.parser import MongoParser
 from beer_garden.requests import process_request
 
 logger = logging.getLogger(__name__)
@@ -196,16 +200,36 @@ class BGJobStore(BaseJobStore):
         return jobs
 
 
-def get_job(job_id):
-    return BGJob.objects.get(id=job_id)
+def get_job(job_id: str) -> brewtils.models.Job:
+    return SchemaParser.parse_job(
+        SchemaParser.serialize_job(BGJob.objects.get(id=job_id), to_string=False),
+        from_string=False,
+    )
 
 
-def get_jobs(filter_params=None):
-    filter_params = filter_params or {}
-    return BGJob.objects.filter(**filter_params)
+def get_jobs(filter_params: Dict = None) -> List[brewtils.models.Job]:
+    return SchemaParser.parse_job(
+        SchemaParser.serialize_job(
+            BGJob.objects.filter(**filter_params or {}), to_string=False, many=True
+        ),
+        from_string=False,
+        many=True,
+    )
 
 
-def create_job(job):
+def create_job(job: brewtils.models.Job) -> brewtils.models.Job:
+    """Create a new Job and add it to the scheduler
+
+    Args:
+        job: The Job to be added
+
+    Returns:
+        The added Job
+    """
+    job = MongoParser.parse_job(
+        SchemaParser.serialize_job(job, to_string=False), from_string=False
+    )
+
     # We have to save here, because we need an ID to pass
     # to the scheduler.
     job.save()
@@ -227,28 +251,60 @@ def create_job(job):
         job.delete()
         raise
 
-    return job
+    return SchemaParser.parse_job(
+        SchemaParser.serialize_job(job, to_string=False), from_string=False
+    )
 
 
-def pause_job(job_id):
+def pause_job(job_id: str) -> brewtils.models.Job:
+    """Pause a Job
+
+    Args:
+        job_id: The Job ID
+
+    Returns:
+        The Job definition
+    """
     beer_garden.application.scheduler.pause_job(job_id, jobstore="beer_garden")
 
     job = BGJob.objects.get(id=job_id)
     job.status = "PAUSED"
     job.save()
 
-    return job
+    return SchemaParser.parse_job(
+        SchemaParser.serialize_job(job, to_string=False), from_string=False
+    )
 
 
-def resume_job(job_id):
+def resume_job(job_id: str) -> brewtils.models.Job:
+    """Resume a Job
+
+    Args:
+        job_id: The Job ID
+
+    Returns:
+        The Job definition
+    """
     beer_garden.application.scheduler.resume_job(job_id, jobstore="beer_garden")
 
     job = BGJob.objects.get(id=job_id)
     job.status = "RUNNING"
     job.save()
 
-    return job
+    return SchemaParser.parse_job(
+        SchemaParser.serialize_job(job, to_string=False), from_string=False
+    )
 
 
-def remove_job(job_id):
+def remove_job(job_id: str) -> None:
+    """Remove a Job
+
+    Args:
+        job_id: The Job ID
+
+    Returns:
+        None
+    """
+    # TODO - Should this be removing the Job from the DB?
+
     beer_garden.application.scheduler.remove_job(job_id, jobstore="beer_garden")

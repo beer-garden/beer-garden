@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from thriftpy2.rpc import make_client
+from thriftpy2.rpc import make_aio_client, make_client
 
 import brewtils.thrift
 
 
-class ThriftClient:
+class ThriftClient(object):
     def __init__(self, host, port):
         self._host = host
         self._port = port
@@ -19,4 +19,17 @@ class ThriftClient:
         return self._client
 
     def __exit__(self, exc_type, exc, tb):
+        self._client.close()
+
+    async def __aenter__(self):
+        self._client = await make_aio_client(
+            brewtils.thrift.bg_thrift.BartenderBackend,
+            # These hard coded values should not exist after the refactor.
+            host="0.0.0.0",
+            port=9090,
+            socket_timeout=13000,
+        )
+        return self._client
+
+    async def __aexit__(self, exc_type, exc, tb):
         self._client.close()

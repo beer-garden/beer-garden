@@ -15,8 +15,6 @@ from pytz import utc
 from requests.exceptions import RequestException
 
 import beer_garden
-from beer_garden.api.thrift.handler import BartenderHandler
-from beer_garden.api.thrift.server import make_server
 from beer_garden.bg_utils.event_publisher import EventPublishers, EventPublisher
 from beer_garden.bg_utils.publishers import MongoPublisher
 from beer_garden.local_plugins.loader import LocalPluginLoader
@@ -85,19 +83,8 @@ class BartenderApp(StoppableThread):
             shutdown_timeout=beer_garden.config.get("plugin.local.timeout.shutdown"),
         )
 
-        self.handler = BartenderHandler()
-
-        # TODO: The thrift portion is currently hardcoded, because it should
-        # no longer be in the config. Eventually the thrift thread will be removed.
         plugin_config = beer_garden.config.get("plugin")
         self.helper_threads = [
-            HelperThread(
-                make_server,
-                service=brewtils.thrift.bg_thrift.BartenderBackend,
-                handler=self.handler,
-                host="0.0.0.0",
-                port=9090,
-            ),
             HelperThread(
                 LocalPluginMonitor,
                 plugin_manager=self.plugin_manager,
@@ -186,10 +173,10 @@ class BartenderApp(StoppableThread):
         except RequestException:
             self.logger.warning("Unable to publish startup notification")
 
-        self.logger.info("Bartender started")
+        self.logger.info("Beer-garden startup completed")
 
     def _shutdown(self):
-        self.logger.info("Shutting down Bartender...")
+        self.logger.info("Beginning Beer-garden shutdown process")
 
         if self.scheduler.running:
             self.logger.info("Pausing scheduler - no more jobs will be run")
@@ -197,7 +184,7 @@ class BartenderApp(StoppableThread):
 
         self.plugin_manager.stop_all_plugins()
 
-        self.logger.info("Stopping helper threads...")
+        self.logger.info("Stopping helper threads")
         for helper_thread in reversed(self.helper_threads):
             helper_thread.stop()
 
@@ -213,7 +200,7 @@ class BartenderApp(StoppableThread):
         except RequestException:
             self.logger.warning("Unable to publish shutdown notification")
 
-        self.logger.info("Successfully shut down Bartender")
+        self.logger.info("Successfully shut down Beer-garden")
 
     @staticmethod
     def _setup_scheduler():

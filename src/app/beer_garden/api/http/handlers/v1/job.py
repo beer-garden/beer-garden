@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from beer_garden.api.http.authorization import authenticated, Permissions
-from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.thrift import ThriftClient
 from brewtils.errors import ModelValidationError
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import JobSchema
+
+from beer_garden.api.http.authorization import authenticated, Permissions
+from beer_garden.api.http.base_handler import BaseHandler
 
 
 class JobAPI(BaseHandler):
@@ -36,11 +36,10 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
-        async with ThriftClient() as client:
-            thrift_response = await client.getJob(self.request.namespace, job_id)
+        response = await self.client.get_job(self.request.namespace, job_id)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)
 
     @authenticated(permissions=[Permissions.JOB_UPDATE])
     async def patch(self, job_id):
@@ -109,15 +108,13 @@ class JobAPI(BaseHandler):
             if op.operation == "update":
                 if op.path == "/status":
                     if str(op.value).upper() == "PAUSED":
-                        async with ThriftClient() as client:
-                            response = await client.pauseJob(
-                                self.request.namespace, job_id
-                            )
+                        response = await self.client.pause_job(
+                            self.request.namespace, job_id
+                        )
                     elif str(op.value).upper() == "RUNNING":
-                        async with ThriftClient() as client:
-                            response = await client.resumeJob(
-                                self.request.namespace, job_id
-                            )
+                        response = await self.client.resume_job(
+                            self.request.namespace, job_id
+                        )
                     else:
                         raise ModelValidationError(
                             f"Unsupported status value '{op.value}'"
@@ -157,8 +154,7 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
-        async with ThriftClient() as client:
-            await client.removeJob(self.request.namespace, job_id)
+        await self.client.remove_job(self.request.namespace, job_id)
 
         self.set_status(204)
 
@@ -192,13 +188,10 @@ class JobListAPI(BaseHandler):
             if key in JobSchema.get_attribute_names():
                 filter_params[key] = self.get_query_argument(key)
 
-        async with ThriftClient() as client:
-            thrift_response = await client.getJobs(
-                self.request.namespace, filter_params
-            )
+        response = await self.client.get_jobs(self.request.namespace, filter_params)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)
 
     @authenticated(permissions=[Permissions.JOB_CREATE])
     async def post(self):
@@ -231,10 +224,10 @@ class JobListAPI(BaseHandler):
         tags:
           - Jobs
         """
-        async with ThriftClient() as client:
-            response = await client.createJob(
-                self.request.namespace, self.request.decoded_body
-            )
+        response = await self.client.create_job(
+            self.request.namespace,
+            SchemaParser.parse_job(self.request.decoded_body, from_string=True),
+        )
 
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")

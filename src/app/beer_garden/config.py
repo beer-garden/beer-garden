@@ -564,6 +564,115 @@ _DB_SPEC = {
     },
 }
 
+_HTTP_SPEC = {
+    "type": "dict",
+    "items": {
+        "enable": {
+            "type": "bool",
+            "default": True,
+            "description": "Run an HTTP server",
+        },
+        "ssl": {
+            "type": "dict",
+            "items": {
+                "enabled": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Serve content using SSL",
+                    "previous_names": ["ssl_enabled"],
+                    "alt_env_names": ["SSL_ENABLED"],
+                    "cli_separator": "_",
+                },
+                "private_key": {
+                    "type": "str",
+                    "description": "Path to a private key",
+                    "required": False,
+                    "previous_names": ["ssl_private_key"],
+                    "alt_env_names": ["SSL_PRIVATE_KEY"],
+                },
+                "public_key": {
+                    "type": "str",
+                    "description": "Path to a public key",
+                    "required": False,
+                    "previous_names": ["ssl_public_key"],
+                    "alt_env_names": ["SSL_PUBLIC_KEY"],
+                },
+                "ca_cert": {
+                    "type": "str",
+                    "description": (
+                        "Path to CA certificate file to use for SSLContext"
+                    ),
+                    "required": False,
+                    "previous_names": ["ca_cert"],
+                    "alt_env_names": ["CA_CERT"],
+                },
+                "ca_path": {
+                    "type": "str",
+                    "description": (
+                        "Path to CA certificate path to use for SSLContext"
+                    ),
+                    "required": False,
+                    "previous_names": ["ca_path"],
+                    "alt_env_names": ["CA_PATH"],
+                },
+                "client_cert_verify": {
+                    "type": "str",
+                    "description": (
+                        "Client certificate mode to use when handling requests"
+                    ),
+                    "choices": ["NONE", "OPTIONAL", "REQUIRED"],
+                    "default": "NONE",
+                    "previous_names": ["client_cert_verify"],
+                    "alt_env_names": ["CLIENT_CERT_VERIFY"],
+                },
+            },
+        },
+        "port": {
+            "type": "int",
+            "default": 2337,
+            "description": "Serve content on this port",
+            "previous_names": ["web_port"],
+        },
+        "url_prefix": {
+            "type": "str",
+            "default": None,
+            "description": "URL path prefix",
+            "required": False,
+            "previous_names": ["url_prefix"],
+            "alt_env_names": ["URL_PREFIX"],
+        },
+        "host": {
+            "type": "str",
+            "default": "0.0.0.0",
+            "description": "Host for the HTTP Server to bind to",
+        },
+        "public_fqdn": {
+            "type": "str",
+            "default": "localhost",
+            "description": "Public fully-qualified domain name",
+            "previous_names": ["public_fqdn"],
+            "alt_env_names": ["PUBLIC_FQDN"],
+        },
+    },
+}
+
+_ENTRY_SPEC = {
+    "type": "dict",
+    "items": {
+        "http": _HTTP_SPEC,
+        "thrift": {
+            "type": "dict",
+            "items": {
+                "enable": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Run an thrift server",
+                }
+            },
+        },
+    },
+}
+
 _EVENT_SPEC = {
     "type": "dict",
     "items": {
@@ -920,93 +1029,6 @@ _VALIDATOR_SPEC = {
     },
 }
 
-_WEB_SPEC = {
-    "type": "dict",
-    "items": {
-        "ssl": {
-            "type": "dict",
-            "items": {
-                "enabled": {
-                    "type": "bool",
-                    "default": False,
-                    "description": "Serve content using SSL",
-                    "previous_names": ["ssl_enabled"],
-                    "alt_env_names": ["SSL_ENABLED"],
-                    "cli_separator": "_",
-                },
-                "private_key": {
-                    "type": "str",
-                    "description": "Path to a private key",
-                    "required": False,
-                    "previous_names": ["ssl_private_key"],
-                    "alt_env_names": ["SSL_PRIVATE_KEY"],
-                },
-                "public_key": {
-                    "type": "str",
-                    "description": "Path to a public key",
-                    "required": False,
-                    "previous_names": ["ssl_public_key"],
-                    "alt_env_names": ["SSL_PUBLIC_KEY"],
-                },
-                "ca_cert": {
-                    "type": "str",
-                    "description": (
-                        "Path to CA certificate file to use for SSLContext"
-                    ),
-                    "required": False,
-                    "previous_names": ["ca_cert"],
-                    "alt_env_names": ["CA_CERT"],
-                },
-                "ca_path": {
-                    "type": "str",
-                    "description": (
-                        "Path to CA certificate path to use for SSLContext"
-                    ),
-                    "required": False,
-                    "previous_names": ["ca_path"],
-                    "alt_env_names": ["CA_PATH"],
-                },
-                "client_cert_verify": {
-                    "type": "str",
-                    "description": (
-                        "Client certificate mode to use when handling requests"
-                    ),
-                    "choices": ["NONE", "OPTIONAL", "REQUIRED"],
-                    "default": "NONE",
-                    "previous_names": ["client_cert_verify"],
-                    "alt_env_names": ["CLIENT_CERT_VERIFY"],
-                },
-            },
-        },
-        "port": {
-            "type": "int",
-            "default": 2337,
-            "description": "Serve content on this port",
-            "previous_names": ["web_port"],
-        },
-        "url_prefix": {
-            "type": "str",
-            "default": None,
-            "description": "URL path prefix",
-            "required": False,
-            "previous_names": ["url_prefix"],
-            "alt_env_names": ["URL_PREFIX"],
-        },
-        "host": {
-            "type": "str",
-            "default": "0.0.0.0",
-            "description": "Host for the HTTP Server to bind to",
-        },
-        "public_fqdn": {
-            "type": "str",
-            "default": "localhost",
-            "description": "Public fully-qualified domain name",
-            "previous_names": ["public_fqdn"],
-            "alt_env_names": ["PUBLIC_FQDN"],
-        },
-    },
-}
-
 # I have omitted the following from the spec
 #
 # * "backend" - there should be no need for this
@@ -1026,6 +1048,7 @@ _SPECIFICATION = {
     "auth": _AUTH_SPEC,
     "configuration": _META_SPEC,
     "db": _DB_SPEC,
+    "entry": _ENTRY_SPEC,
     "event": _EVENT_SPEC,
     "log": _LOG_SPEC,
     "metrics": _METRICS_SPEC,
@@ -1033,5 +1056,4 @@ _SPECIFICATION = {
     "plugin": _PLUGIN_SPEC,
     "scheduler": _SCHEDULER_SPEC,
     "validator": _VALIDATOR_SPEC,
-    "web": _WEB_SPEC,
 }

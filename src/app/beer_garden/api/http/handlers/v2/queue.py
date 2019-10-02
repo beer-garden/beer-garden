@@ -1,6 +1,6 @@
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.thrift import ThriftClient
+from beer_garden.api.http.client import ExecutorClient
 
 
 class QueueAPI(BaseHandler):
@@ -30,7 +30,7 @@ class QueueAPI(BaseHandler):
         tags:
           - Queues
         """
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             await client.clearQueue(namespace, queue_name)
 
         self.set_status(204)
@@ -60,7 +60,7 @@ class QueueListAPI(BaseHandler):
         tags:
           - Queues
         """
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             queues = await client.getAllQueueInfo(namespace)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -85,7 +85,7 @@ class QueueListAPI(BaseHandler):
         tags:
           - Queues
         """
-        async with ThriftClient() as client:
+        async with ExecutorClient() as client:
             await client.clearAllQueues(namespace)
 
         self.set_status(204)

@@ -1,12 +1,12 @@
+# -*- coding: utf-8 -*-
 import json
 
-import beer_garden.bg_utils
-from beer_garden.api.http.authorization import authenticated, Permissions
-from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.thrift import ThriftClient
-from brewtils.errors import ModelValidationError, RequestPublishException
+from brewtils.errors import ModelValidationError
 from brewtils.models import Request
 from brewtils.schema_parser import SchemaParser
+
+from beer_garden.api.http.authorization import authenticated, Permissions
+from beer_garden.api.http.base_handler import BaseHandler
 
 
 class RequestAPI(BaseHandler):
@@ -38,13 +38,10 @@ class RequestAPI(BaseHandler):
         tags:
           - Requests
         """
-        async with ThriftClient() as client:
-            thrift_response = await client.getRequest(
-                self.request.namespace, request_id
-            )
+        response = await self.client.get_request(self.request.namespace, request_id)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)
 
     @authenticated(permissions=[Permissions.REQUEST_UPDATE])
     async def patch(self, request_id):
@@ -93,15 +90,14 @@ class RequestAPI(BaseHandler):
         tags:
           - Requests
         """
-        async with ThriftClient() as client:
-            try:
-                thrift_response = await client.updateRequest(
-                    self.request.namespace, request_id, self.request.decoded_body
-                )
-            except beer_garden.bg_utils.bg_thrift.InvalidRequest as ex:
-                raise ModelValidationError(ex.message)
+        response = await self.client.update_request(
+            self.request.namespace,
+            request_id,
+            SchemaParser.parse_patch(self.request.decoded_body, from_string=True),
+        )
 
-        self.write(thrift_response)
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(response)
 
 
 class RequestListAPI(BaseHandler):
@@ -271,33 +267,26 @@ class RequestListAPI(BaseHandler):
         search_arg = self.get_query_argument("search", default=None)
         child_arg = self.get_query_argument("include_children", default="")
 
-        thrift_args = {
+        query_args = {
             "columns": [json.loads(c) for c in columns_arg],
             "order": json.loads(order_arg) if order_arg else None,
             "search": json.loads(search_arg) if search_arg else None,
             "include_children": bool(child_arg.lower() == "true"),
-            "start": int(self.get_argument("start", default=0)),
-            "length": int(self.get_argument("length", default=100)),
+            "start": int(self.get_argument("start", default="0")),
+            "length": int(self.get_argument("length", default="100")),
         }
 
-        serialized_args = json.dumps(thrift_args)
-
-        async with ThriftClient() as client:
-            raw_response = await client.getRequests(
-                self.request.namespace, serialized_args
-            )
-
-        parsed_response = json.loads(raw_response)
+        response = await self.client.get_requests(self.request.namespace, **query_args)
 
         response_headers = {
             # These are a courtesy for non-datatables requests. We want people
             # making a request with no headers to realize they probably aren't
             # getting the full dataset
-            "start": thrift_args["start"],
-            "length": parsed_response["length"],
+            "start": query_args["start"],
+            "length": response["length"],
             # And these are required by datatables
-            "recordsFiltered": parsed_response["filtered_count"],
-            "recordsTotal": parsed_response["total_count"],
+            "recordsFiltered": response["filtered_count"],
+            "recordsTotal": response["total_count"],
             "draw": self.get_argument("draw", ""),
         }
 
@@ -306,7 +295,7 @@ class RequestListAPI(BaseHandler):
             self.add_header("Access-Control-Expose-Headers", key)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(parsed_response["requests"])
+        self.write(response["requests"])
 
     @authenticated(permissions=[Permissions.REQUEST_CREATE])
     async def post(self):
@@ -371,27 +360,18 @@ class RequestListAPI(BaseHandler):
 
         wait_timeout = 0
         if self.get_argument("blocking", default="").lower() == "true":
-            wait_timeout = self.get_argument("timeout", default=-1)
+            wait_timeout = float(self.get_argument("timeout", default="-1"))
 
             # Also don't publish latency measurements
             self.request.ignore_latency = True
 
-        async with ThriftClient() as client:
-            try:
-                thrift_response = await client.processRequest(
-                    self.request.namespace,
-                    self.parser.serialize_request(request_model),
-                    float(wait_timeout),
-                )
-            except beer_garden.bg_utils.bg_thrift.InvalidRequest as ex:
-                raise ModelValidationError(ex.message)
-            except beer_garden.bg_utils.bg_thrift.PublishException as ex:
-                raise RequestPublishException(ex.message)
-
-        processed_request = self.parser.parse_request(thrift_response, from_string=True)
+        response = await self.client.process_request(
+            self.request.namespace, request_model, wait_timeout
+        )
 
         self.set_status(201)
-        self.write(self.parser.serialize_request(processed_request, to_string=False))
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(response)
 
     def _parse_form_request(self):
         args = {"parameters": {}}

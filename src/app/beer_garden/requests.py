@@ -3,10 +3,11 @@ import json
 import logging
 import re
 from builtins import str
-from collections.abc import Sequence
 from functools import reduce
 from threading import Event
+from typing import Dict, Sequence, Union
 
+import brewtils.models
 import six
 import urllib3
 from brewtils.choices import parse
@@ -18,6 +19,7 @@ from requests import Session
 
 import beer_garden
 from beer_garden.bg_utils.mongo.models import Choices, Request, System
+from beer_garden.bg_utils.mongo.parser import MongoParser
 from beer_garden.events import publish_event
 from beer_garden.metrics import request_created, request_started, request_completed
 
@@ -512,20 +514,49 @@ class RequestValidator(object):
             )
 
 
-def get_request(request_id):
+def get_request(request_id: str) -> brewtils.models.Request:
+    """Retrieve an individual Request
+
+    Args:
+        request_id: The Request ID
+
+    Returns:
+        The Request
+
+    """
     request = Request.objects.get(id=request_id)
     request.children = Request.objects(parent=request)
 
-    return request
+    return SchemaParser.parse_request(
+        MongoParser.serialize_request(request, to_string=False), from_string=False
+    )
 
 
 def get_requests(
-    start=0, length=100, columns=None, order=None, search=None, include_children=False
-):
+    start: int = 0,
+    length: int = 100,
+    columns: Sequence[Dict] = None,
+    order: Dict[str, Union[str, int]] = None,
+    search: Dict[str, str] = None,
+    include_children: bool = False,
+) -> Dict[str, Union[str, int]]:
     """Search for requests
 
-    :return query_set: The QuerySet representing this query
-    :return requested_fields: The fields to be returned for each Request
+    Args:
+        start: Slicing start
+        length: Slicing count
+        columns: Datatables definition of columns to include
+        order: Dictionary specifying how to order results
+        search: Dictionary specifying an overall (text) search term
+        include_children: Bool specifying whether to include child requests in search
+
+    Returns:
+        A dict with the following keys:
+            * requests: The list of Requests that matched the query
+            * length: THe number of requests being returned
+            * filtered_count: The total number of requests that matched the query
+            * total_count: Total number of requests
+
     """
     search_params = []
     requested_fields = []
@@ -643,11 +674,13 @@ def get_requests(
 
 
 @publish_event(Events.REQUEST_CREATED)
-def process_request(request, wait_timeout=-1):
+def process_request(
+    new_request: brewtils.models.Request, wait_timeout: float = -1
+) -> brewtils.models.Request:
     """Validates and publishes a Request.
 
     Args:
-        request: The Request
+        new_request: The Request
         wait_timeout: Float describing amount of time to wait for request to complete
             <0: Wait forever
             0: Don't wait at all
@@ -655,7 +688,12 @@ def process_request(request, wait_timeout=-1):
 
     Returns:
         The processed Request
+
     """
+    request = MongoParser.parse_request(
+        MongoParser.serialize_request(new_request, to_string=False), from_string=False
+    )
+
     # Validates the request based on what is in the database.
     # This includes the validation of the request parameters,
     # systems are there, commands are there etc.
@@ -699,13 +737,35 @@ def process_request(request, wait_timeout=-1):
         finally:
             request_map.pop(request_id, None)
 
-    return request
+    return SchemaParser.parse_request(
+        MongoParser.serialize_request(new_request, to_string=False), from_string=False
+    )
 
 
-def update_request(request, patch):
+def update_request(request_id: str, patch: Dict) -> brewtils.models.Request:
+    """Update a Request
+
+    Args:
+        request_id: The ID of the Request to update
+        patch: The updates to apply to the Request
+
+    Returns:
+        The modified Request
+
+    Raises:
+        ModelValidationError: The Request is already completed
+
+    """
     status = None
     output = None
     error_class = None
+
+    request = SchemaParser.parse_request(
+        MongoParser.serialize_request(
+            Request.objects.get(id=request_id), to_string=False
+        ),
+        from_string=False,
+    )
 
     for op in patch:
         if op.operation == "replace":
@@ -730,7 +790,23 @@ def update_request(request, patch):
 
 
 @publish_event(Events.REQUEST_STARTED)
-def start_request(request):
+def start_request(request: brewtils.models.Request) -> brewtils.models.Request:
+    """Mark a Request as IN PROGRESS
+
+    Args:
+        request: The Request to start
+
+    Returns:
+        The modified Request
+
+    Raises:
+        ModelValidationError: The Request is already completed
+
+    """
+    request = MongoParser.parse_request(
+        MongoParser.serialize_request(request, to_string=False), from_string=False
+    )
+
     if request.status in Request.COMPLETED_STATUSES:
         raise ModelValidationError("Cannot update a completed request")
 
@@ -740,11 +816,37 @@ def start_request(request):
     # Metrics
     request_started(request)
 
-    return request
+    return SchemaParser.parse_request(
+        SchemaParser.serialize_request(request, to_string=False), from_string=False
+    )
 
 
 @publish_event(Events.REQUEST_COMPLETED)
-def complete_request(request, status, output=None, error_class=None):
+def complete_request(
+    request: brewtils.models.Request,
+    status: str,
+    output: str = None,
+    error_class: str = None,
+) -> brewtils.models.Request:
+    """Mark a Request as completed
+
+    Args:
+        request: The Request to complete
+        status: The status to apply to the Request
+        output: The output to apply to the Request
+        error_class: The error class to apply to the Request
+
+    Returns:
+        The modified Request
+
+    Raises:
+        ModelValidationError: The Request is already completed
+
+    """
+    request = MongoParser.parse_request(
+        MongoParser.serialize_request(request, to_string=False), from_string=False
+    )
+
     if request.status in Request.COMPLETED_STATUSES:
         raise ModelValidationError("Cannot update a completed request")
 
@@ -761,10 +863,28 @@ def complete_request(request, status, output=None, error_class=None):
     # Metrics
     request_completed(request)
 
-    return request
+    return SchemaParser.parse_request(
+        SchemaParser.serialize_request(request, to_string=False), from_string=False
+    )
 
 
-def cancel_request(request):
+def cancel_request(request: brewtils.models.Request) -> brewtils.models.Request:
+    """Mark a Request as CANCELED
+
+    Args:
+        request: The Request to cancel
+
+    Returns:
+        The modified Request
+
+    Raises:
+        ModelValidationError: The Request is already completed
+
+    """
+    request = MongoParser.parse_request(
+        MongoParser.serialize_request(request, to_string=False), from_string=False
+    )
+
     if request.status in Request.COMPLETED_STATUSES:
         raise ModelValidationError("Cannot cancel a completed request")
 
@@ -773,4 +893,6 @@ def cancel_request(request):
 
     # TODO - Metrics here?
 
-    return request
+    return SchemaParser.parse_request(
+        SchemaParser.serialize_request(request, to_string=False), from_string=False
+    )

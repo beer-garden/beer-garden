@@ -5,14 +5,19 @@ import sys
 from functools import partial
 
 import beer_garden
+import beer_garden.api.http
+import beer_garden.api.thrift
 from beer_garden import progressive_backoff
 from beer_garden.bg_utils.mongo import setup_database
 from beer_garden.config import generate_logging, generate, migrate
+
+entry_point = None
 
 
 def signal_handler(signal_number, stack_frame):
     beer_garden.logger.info("Last call! Looks like we gotta shut down.")
     beer_garden.application.stop()
+    entry_point.stop()
 
     beer_garden.logger.info(
         "Closing time! You don't have to go home, but you can't stay here."
@@ -37,7 +42,19 @@ def migrate_config():
     migrate(sys.argv[1:])
 
 
+def get_entry_point():
+
+    if beer_garden.config.get("entry.http.enable"):
+        return beer_garden.api.http
+    elif beer_garden.config.get("entry.thrift.enable"):
+        return beer_garden.api.thrift
+
+    raise Exception("Please enable an entrypoint")
+
+
 def main():
+    global entry_point
+
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
@@ -78,7 +95,10 @@ def main():
         # for a signal to be sent to us. If you choose to change this please test thoroughly
         # when deployed via system packages (apt/yum) as well as python packages and docker.
         # Thanks!
-        signal.pause()
+        # signal.pause()
+        # TODO - THOROUGHLY test as requested :)
+        entry_point = get_entry_point()
+        entry_point.run()
 
     beer_garden.logger.info("Don't forget to drive safe!")
 
