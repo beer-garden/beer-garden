@@ -26,7 +26,7 @@ from brewtils.schemas import (
 from prometheus_client.exposition import start_http_server
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
-from tornado.web import Application, StaticFileHandler, RedirectHandler
+from tornado.web import Application, RedirectHandler
 from urllib3.util.url import Url
 
 import beer_garden.bg_utils
@@ -161,7 +161,6 @@ def _setup_tornado_app():
     import beer_garden.api.http.handlers.misc as misc
 
     prefix = normalize_url_prefix(beer_garden.config.get("entry.http.url_prefix"))
-    static_base = os.path.join(os.path.dirname(__file__), "static", "dist")
 
     # These get documented in our OpenAPI (fka Swagger) documentation
     published_url_specs = [
@@ -223,19 +222,8 @@ def _setup_tornado_app():
         (rf"{prefix}version/?", misc.VersionHandler),
         (rf"{prefix}config/?", misc.ConfigHandler),
         (rf"{prefix}config/swagger/?", misc.SwaggerConfigHandler),
-        # Not sure if these are really necessary
+        # Not sure if this is really necessary
         (rf"{prefix[:-1]}", RedirectHandler, {"url": prefix}),
-        (
-            rf"{prefix}swagger/(.*)",
-            StaticFileHandler,
-            {"path": os.path.join(static_base, "swagger")},
-        ),
-        # Static content
-        (
-            rf"{prefix}(.*)",
-            StaticFileHandler,
-            {"path": static_base, "default_filename": "index.html"},
-        ),
     ]
     app_config = beer_garden.config.get("application")
     auth_config = beer_garden.config.get("auth")
