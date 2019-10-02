@@ -251,7 +251,7 @@ class SystemListAPI(BaseHandler):
         if exclude_fields:
             serialize_kwargs["exclude"] = exclude_fields
 
-        response = await self.client.query_systems(
+        response = await self.client.get_systems(
             self.request.namespace,
             serialize_kwargs=serialize_kwargs,
             filter_params=filter_params,

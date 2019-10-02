@@ -40,7 +40,7 @@ def get_system(system_id: str) -> brewtils.models.System:
     )
 
 
-def query_systems(
+def get_systems(
     filter_params: Dict[str, str] = None,
     order_by: str = "name",
     include_fields: Sequence[str] = None,

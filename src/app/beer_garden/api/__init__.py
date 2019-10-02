@@ -77,7 +77,7 @@ remove_instance = namespace_router(beer_garden.instances.remove_instance)
 
 # Systems
 get_system = namespace_router(beer_garden.systems.get_system)
-query_systems = namespace_router(beer_garden.systems.query_systems)
+get_systems = namespace_router(beer_garden.systems.get_systems)
 create_system = namespace_router(beer_garden.systems.create_system)
 update_system = namespace_router(beer_garden.systems.update_system)
 reload_system = namespace_router(beer_garden.systems.reload_system)
