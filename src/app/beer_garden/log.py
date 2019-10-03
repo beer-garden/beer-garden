@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging.config
+import logging.handlers
 
 from ruamel.yaml import YAML
 
@@ -73,6 +74,13 @@ def default_app_config(level, filename=None):
         },
         "root": {"level": level, "handlers": ["beer_garden"]},
     }
+
+
+def setup_entry_point_logging(queue):
+    """Set up logging for an entry point process"""
+    root = logging.getLogger()
+    root.addHandler(logging.handlers.QueueHandler(queue))
+    root.setLevel(logging.DEBUG)
 
 
 def get_plugin_log_config(system_name=None):

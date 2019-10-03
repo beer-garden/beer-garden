@@ -52,6 +52,7 @@ class Application(StoppableThread):
     clients = None
     helper_threads = None
     entry_points = None
+    log_queue = None
 
     def __init__(self):
         super(Application, self).__init__(
@@ -144,12 +145,17 @@ class Application(StoppableThread):
                 )
             )
 
+        context = multiprocessing.get_context("spawn")
+        self.log_queue = context.Queue()
         self.entry_points = []
         for entry_name, entry_value in beer_garden.config.get("entry").items():
             if entry_value.get("enable"):
                 pkg = getattr(beer_garden.api, entry_name)
-                process = multiprocessing.get_context("spawn").Process(
-                    target=pkg.run, args=(beer_garden.config.get(),), daemon=True
+                process = context.Process(
+                    target=pkg.run,
+                    args=(beer_garden.config.get(), self.log_queue),
+                    name=f"BGEntryPoint-{entry_name}",
+                    daemon=True,
                 )
                 self.entry_points.append(process)
 
@@ -162,7 +168,12 @@ class Application(StoppableThread):
                     self.logger.warning(f"{helper.display_name} is dead, restarting")
                     helper.start()
 
-            # TODO - Check on entry points
+            if not self.log_queue.empty():
+                record = self.log_queue.get()
+                logger = logging.getLogger(record.name)
+
+                if logger.isEnabledFor(record.levelno):
+                    logger.handle(record)
 
             time.sleep(0.1)
 
@@ -271,7 +282,19 @@ class Application(StoppableThread):
         # The entry points have their own signal handlers, so just wait for them
         self.logger.debug("Waiting for entry points to stop")
         for entry_point in self.entry_points:
-            entry_point.join()
+            entry_point.join(timeout=10)
+            if entry_point.exitcode is None:
+                self.logger.warning(
+                    f"Process {entry_point.name} is still running - sending SIGTERM"
+                )
+                entry_point.terminate()
+
+            entry_point.join(timeout=10)
+            if entry_point.exitcode is None:
+                self.logger.warning(
+                    f"Process {entry_point.name} is STILL running - sending SIGKILL"
+                )
+                entry_point.kill()
 
         self.logger.info("Successfully shut down Beer-garden")
 

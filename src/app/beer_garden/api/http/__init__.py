@@ -49,7 +49,7 @@ def signal_handler(signal_number, stack_frame):
     stop()
 
 
-def run(config):
+def run(config, log_queue):
     global logger
 
     signal.signal(signal.SIGINT, signal_handler)
@@ -58,7 +58,7 @@ def run(config):
     # Absolute first thing to do is set the config
     beer_garden.config._CONFIG = config
 
-    beer_garden.log.load(beer_garden.config.get("log"))
+    beer_garden.log.setup_entry_point_logging(log_queue)
     logger = logging.getLogger(__name__)
 
     _setup_application()
