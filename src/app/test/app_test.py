@@ -6,7 +6,7 @@ import requests.exceptions
 from mock import MagicMock, Mock, patch
 
 import beer_garden
-from beer_garden.app import BartenderApp, HelperThread
+from beer_garden.app import Application, HelperThread
 
 
 @patch("beer_garden.app.time", Mock())
@@ -15,7 +15,7 @@ class BartenderAppTest(unittest.TestCase):
         beer_garden.config.load([])
         beer_garden.log.load({"level": "INFO"})
 
-        self.app = BartenderApp()
+        self.app = Application()
         self.thrift_server = Mock()
         self.queue_manager = Mock()
         self.local_monitor = Mock()
@@ -25,8 +25,8 @@ class BartenderAppTest(unittest.TestCase):
         self.clients = MagicMock()
         self.mongo_pruner = Mock()
 
-    @patch("beer_garden.app.BartenderApp._shutdown")
-    @patch("beer_garden.app.BartenderApp._startup")
+    @patch("beer_garden.app.Application._shutdown")
+    @patch("beer_garden.app.Application._startup")
     def test_run(self, startup_mock, shutdown_mock):
         self.app.helper_threads = []
         self.app.stopped = Mock(side_effect=[False, True])
@@ -35,8 +35,8 @@ class BartenderAppTest(unittest.TestCase):
         startup_mock.assert_called_once_with()
         shutdown_mock.assert_called_once_with()
 
-    @patch("beer_garden.app.BartenderApp._shutdown", Mock())
-    @patch("beer_garden.app.BartenderApp._startup", Mock())
+    @patch("beer_garden.app.Application._shutdown", Mock())
+    @patch("beer_garden.app.Application._startup", Mock())
     def test_helper_thread_restart(self):
         helper_mock = Mock()
         helper_mock.thread.isAlive.return_value = False
@@ -46,7 +46,7 @@ class BartenderAppTest(unittest.TestCase):
         self.app.run()
         helper_mock.start.assert_called_once_with()
 
-    @patch("beer_garden.app.BartenderApp._shutdown", Mock())
+    @patch("beer_garden.app.Application._shutdown", Mock())
     def test_startup(self):
         self.app.stopped = Mock(return_value=True)
         self.app.thrift_server = self.thrift_server
@@ -81,7 +81,7 @@ class BartenderAppTest(unittest.TestCase):
 
         self.app._startup()
 
-    @patch("beer_garden.app.BartenderApp._startup", Mock())
+    @patch("beer_garden.app.Application._startup", Mock())
     def test_shutdown(self):
         self.app.stopped = Mock(return_value=True)
         self.app.plugin_manager = self.plugin_manager

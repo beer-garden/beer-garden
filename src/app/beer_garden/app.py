@@ -31,7 +31,7 @@ from beer_garden.requests import RequestValidator
 from beer_garden.scheduler import BGJobStore
 
 
-class BartenderApp(StoppableThread):
+class Application(StoppableThread):
     """Main Application that Runs the Beergarden Backend."""
 
     def __init__(self):
@@ -119,7 +119,7 @@ class BartenderApp(StoppableThread):
                 )
             )
 
-        super(BartenderApp, self).__init__(logger=self.logger, name="BartenderApp")
+        super(Application, self).__init__(logger=self.logger, name="Application")
 
     def run(self):
         self._startup()

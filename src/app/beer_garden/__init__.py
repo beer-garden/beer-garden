@@ -8,7 +8,7 @@ import beer_garden.bg_utils
 import beer_garden.config
 import beer_garden.log
 from beer_garden.__version__ import __version__
-from beer_garden.app import BartenderApp
+from beer_garden.app import Application
 
 __all__ = [
     "__version__",
@@ -36,7 +36,7 @@ def setup_bartender(cli_args):
     beer_garden.log.load(beer_garden.config.get("log"))
     logger = logging.getLogger(__name__)
 
-    application = BartenderApp()
+    application = Application()
     logger.debug("Successfully loaded the bartender application")
 
 
