@@ -15,6 +15,7 @@ from pytz import utc
 from requests.exceptions import RequestException
 
 import beer_garden
+import beer_garden.api
 from beer_garden.bg_utils.event_publisher import EventPublishers, EventPublisher
 from beer_garden.bg_utils.publishers import MongoPublisher
 from beer_garden.local_plugins.loader import LocalPluginLoader
@@ -135,6 +136,19 @@ class Application(StoppableThread):
             time.sleep(0.1)
 
         self._shutdown()
+
+    def _get_entry_points(self):
+        entry_points = []
+
+        if beer_garden.config.get("entry.http.enable"):
+            entry_points.append(beer_garden.api.http)
+        elif beer_garden.config.get("entry.thrift.enable"):
+            entry_points.append(beer_garden.api.thrift)
+
+        if len(entry_points) == 0:
+            raise Exception("Please enable an entrypoint")
+
+        return entry_points
 
     def _startup(self):
         self.logger.info("Starting Bartender...")

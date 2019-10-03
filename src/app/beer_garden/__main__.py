@@ -11,13 +11,10 @@ from beer_garden import progressive_backoff
 from beer_garden.bg_utils.mongo import setup_database
 from beer_garden.config import generate_logging, generate, migrate
 
-entry_point = None
-
 
 def signal_handler(signal_number, stack_frame):
     beer_garden.logger.info("Last call! Looks like we gotta shut down.")
     beer_garden.application.stop()
-    entry_point.stop()
 
     beer_garden.logger.info(
         "Closing time! You don't have to go home, but you can't stay here."
@@ -42,18 +39,7 @@ def migrate_config():
     migrate(sys.argv[1:])
 
 
-def get_entry_point():
-
-    if beer_garden.config.get("entry.http.enable"):
-        return beer_garden.api.http
-    elif beer_garden.config.get("entry.thrift.enable"):
-        return beer_garden.api.thrift
-
-    raise Exception("Please enable an entrypoint")
-
-
 def main():
-    global entry_point
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
@@ -86,19 +72,15 @@ def main():
         beer_garden.logger.info("Hi, what can I get you to drink?")
         beer_garden.application.start()
 
-        beer_garden.logger.info("Let me know if you need anything else!")
+        beer_garden.logger.info("All set! Let me know if you need anything else!")
 
-        # You may be wondering why we don't just call beer_garden.application.join() or .wait().
-        # Well, you're in luck because I'm going to tell you why. Either of these methods
-        # cause the main python thread to lock out our signal handler, which means we cannot
-        # shut down gracefully in some circumstances. So instead we simply use pause() to wait
-        # for a signal to be sent to us. If you choose to change this please test thoroughly
-        # when deployed via system packages (apt/yum) as well as python packages and docker.
-        # Thanks!
-        # signal.pause()
-        # TODO - THOROUGHLY test as requested :)
-        entry_point = get_entry_point()
-        entry_point.run()
+        # Need to be careful here because a simple join() or wait() can cause the main
+        # python thread to lock out our signal handler, which means we cannot shut down
+        # gracefully in some circumstances. So instead we use pause() to wait on a
+        # signal. If you choose to change this please test thoroughly when deployed via
+        # system packages (apt/yum) as well as python packages and docker.
+        # Thanks! :)
+        signal.pause()
 
     beer_garden.logger.info("Don't forget to drive safe!")
 
