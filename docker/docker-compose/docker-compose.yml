@@ -77,6 +77,8 @@ services:
         image: mongo:4.0
         networks:
             - bg-network
+        ports:
+          - "27017:27017"
         volumes:
             - mongo-data:/data/db
             - mongo-config:/data/configdb
