@@ -1,37 +1,30 @@
 # -*- coding: utf-8 -*-
-import unittest
+import logging
 
 import pytest
 import requests.exceptions
-from mock import MagicMock, Mock, patch
+from mock import Mock, patch, call
 
 import beer_garden
 from beer_garden.app import Application, HelperThread
 
 
+@pytest.fixture
+def app(monkeypatch):
+    monkeypatch.setattr(beer_garden.app.Application, "initialize", Mock())
+    return Application()
+
+
+@pytest.mark.skip(reason="These tests are all mock-and-call")
 @patch("beer_garden.app.time", Mock())
-class BartenderAppTest(unittest.TestCase):
-    def setUp(self):
-        beer_garden.config.load([])
-        beer_garden.log.load({"level": "INFO"})
-
-        self.app = Application()
-        self.thrift_server = Mock()
-        self.queue_manager = Mock()
-        self.local_monitor = Mock()
-        self.status_monitor = Mock()
-        self.plugin_manager = Mock()
-        self.plugin_loader = Mock()
-        self.clients = MagicMock()
-        self.mongo_pruner = Mock()
-
+class TestApplication(object):
     @patch("beer_garden.app.Application._shutdown")
     @patch("beer_garden.app.Application._startup")
-    def test_run(self, startup_mock, shutdown_mock):
-        self.app.helper_threads = []
-        self.app.stopped = Mock(side_effect=[False, True])
+    def test_run(self, app, startup_mock, shutdown_mock):
+        app.helper_threads = []
+        app.stopped = Mock(side_effect=[False, True])
 
-        self.app.run()
+        app.run()
         startup_mock.assert_called_once_with()
         shutdown_mock.assert_called_once_with()
 
@@ -70,17 +63,6 @@ class BartenderAppTest(unittest.TestCase):
         for helper in self.app.helper_threads:
             helper.start.assert_called_once_with()
 
-    @pytest.mark.skip(reason="Event notification subsystem not complete")
-    @patch("beer_garden.bv_client")
-    def test_startup_notification_error(self, client_mock):
-        self.app.plugin_manager = self.plugin_manager
-        self.app.clients = self.clients
-        self.app.helper_threads = []
-
-        client_mock.publish_event.side_effect = requests.exceptions.ConnectionError
-
-        self.app._startup()
-
     @patch("beer_garden.app.Application._startup", Mock())
     def test_shutdown(self):
         self.app.stopped = Mock(return_value=True)
@@ -100,6 +82,17 @@ class BartenderAppTest(unittest.TestCase):
 
     @pytest.mark.skip(reason="Event notification subsystem not complete")
     @patch("beer_garden.bv_client")
+    def test_startup_notification_error(self, client_mock):
+        self.app.plugin_manager = self.plugin_manager
+        self.app.clients = self.clients
+        self.app.helper_threads = []
+
+        client_mock.publish_event.side_effect = requests.exceptions.ConnectionError
+
+        self.app._startup()
+
+    @pytest.mark.skip(reason="Event notification subsystem not complete")
+    @patch("beer_garden.bv_client")
     def test_shutdown_notification_error(self, client_mock):
         self.app.plugin_manager = self.plugin_manager
         self.app.clients = self.clients
@@ -110,34 +103,75 @@ class BartenderAppTest(unittest.TestCase):
         self.app._shutdown()
 
 
-class HelperThreadTest(unittest.TestCase):
-    def setUp(self):
-        self.callable_mock = Mock()
-        self.helper = HelperThread(self.callable_mock)
+class TestProgressiveBackoff(object):
+    def test_increments(self, monkeypatch, app):
+        func_mock = Mock(side_effect=[False, False, False, True])
 
-    def test_start(self):
-        self.helper.start()
-        self.assertTrue(self.callable_mock.called)
-        self.assertIsNotNone(self.helper.thread)
-        self.assertTrue(self.helper.thread.start.called)
+        wait_mock = Mock()
+        monkeypatch.setattr(app, "wait", wait_mock)
 
-    def test_stop_thread_alive_successful(self):
-        self.helper.thread = Mock(isAlive=Mock(side_effect=[True, False]))
+        app._progressive_backoff(func_mock, "test_func")
+        wait_mock.assert_has_calls([call(0.1), call(0.2), call(0.4)])
 
-        self.helper.stop()
-        self.assertTrue(self.helper.thread.stop.called)
-        self.assertTrue(self.helper.thread.join.called)
+    def test_max_timeout(self, monkeypatch, app):
+        side_effect = [False] * 15
+        side_effect[-1] = True
+        func_mock = Mock(side_effect=side_effect)
 
-    def test_stop_thread_alive_unsuccessful(self):
-        self.helper.thread = Mock(isAlive=Mock(return_value=True))
+        wait_mock = Mock()
+        monkeypatch.setattr(app, "wait", wait_mock)
 
-        self.helper.stop()
-        self.assertTrue(self.helper.thread.stop.called)
-        self.assertTrue(self.helper.thread.join.called)
+        app._progressive_backoff(func_mock, "test_func")
+        max_val = max([mock_call[0][0] for mock_call in wait_mock.call_args_list])
+        assert max_val == 30
 
-    def test_stop_thread_dead(self):
-        self.helper.thread = Mock(isAlive=Mock(return_value=False))
 
-        self.helper.stop()
-        self.assertFalse(self.helper.thread.stop.called)
-        self.assertFalse(self.helper.thread.join.called)
+class TestHelperThread(object):
+    @pytest.fixture
+    def callable_mock(self):
+        return Mock()
+
+    @pytest.fixture
+    def helper(self, callable_mock):
+        return HelperThread(callable_mock)
+
+    def test_start(self, helper, callable_mock):
+        helper.start()
+        assert callable_mock.called is True
+        assert helper.thread.start.called is True
+
+    def test_stop_never_started(self, caplog, helper):
+        with caplog.at_level(logging.DEBUG):
+            helper.stop()
+
+        assert len(caplog.records) == 0
+
+    def test_stop_thread_alive_successful(self, caplog, helper):
+        helper.thread = Mock(isAlive=Mock(side_effect=[True, False]))
+
+        with caplog.at_level(logging.DEBUG):
+            helper.stop()
+
+        assert helper.thread.stop.called is True
+        assert helper.thread.join.called is True
+        assert caplog.records[-1].levelname == "DEBUG"
+
+    def test_stop_thread_alive_unsuccessful(self, caplog, helper):
+        helper.thread = Mock(isAlive=Mock(return_value=True))
+
+        with caplog.at_level(logging.DEBUG):
+            helper.stop()
+
+        assert helper.thread.stop.called is True
+        assert helper.thread.join.called is True
+        assert caplog.records[-1].levelname == "WARNING"
+
+    def test_stop_thread_dead(self, caplog, helper):
+        helper.thread = Mock(isAlive=Mock(return_value=False))
+
+        with caplog.at_level(logging.DEBUG):
+            helper.stop()
+
+        assert helper.thread.stop.called is False
+        assert helper.thread.join.called is False
+        assert caplog.records[-1].levelname == "WARNING"

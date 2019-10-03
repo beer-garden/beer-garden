@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import logging
-import time
 from datetime import timedelta
 from functools import partial
 
 import brewtils.models
+import time
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils.models import Events
@@ -17,6 +17,7 @@ from requests.exceptions import RequestException
 import beer_garden
 import beer_garden.api
 from beer_garden.bg_utils.event_publisher import EventPublishers, EventPublisher
+from beer_garden.bg_utils.mongo import setup_database
 from beer_garden.bg_utils.publishers import MongoPublisher
 from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.local_plugins.manager import LocalPluginsManager
@@ -33,11 +34,32 @@ from beer_garden.scheduler import BGJobStore
 
 
 class Application(StoppableThread):
-    """Main Application that Runs the Beergarden Backend."""
+    """Main Beer-garden application
+
+    This class is basically a wrapper around the various singletons that need to exist
+    in order for Beer-garden to function.
+
+    """
+
+    request_validator = None
+    plugin_registry = None
+    plugin_validator = None
+    scheduler = None
+    event_publishers = None
+    plugin_loader = None
+    plugin_manager = None
+    clients = None
+    helper_threads = None
 
     def __init__(self):
-        self.logger = logging.getLogger(__name__)
+        super(Application, self).__init__(
+            name="Application", logger=logging.getLogger(__name__)
+        )
 
+        self.initialize()
+
+    def initialize(self):
+        """Actually construct all the various component pieces"""
         self.request_validator = RequestValidator(beer_garden.config.get("validator"))
         self.plugin_registry = LocalPluginRegistry()
         self.plugin_validator = LocalPluginValidator()
@@ -120,8 +142,6 @@ class Application(StoppableThread):
                 )
             )
 
-        super(Application, self).__init__(logger=self.logger, name="Application")
-
     def run(self):
         self._startup()
 
@@ -137,6 +157,33 @@ class Application(StoppableThread):
 
         self._shutdown()
 
+    def _ensure_connections(self):
+        # Mongo connection
+        self._progressive_backoff(
+            partial(setup_database, beer_garden.config),
+            "Unable to connect to mongo, is it started?",
+        )
+
+        # Message queue connections
+        self._progressive_backoff(
+            beer_garden.application.clients["pika"].is_alive,
+            "Unable to connect to rabbitmq, is it started?",
+        )
+        self._progressive_backoff(
+            beer_garden.application.clients["pyrabbit"].is_alive,
+            "Unable to connect to rabbitmq admin interface. "
+            "Is the management plugin enabled?",
+        )
+
+    def _progressive_backoff(self, func, failure_message):
+        wait_time = 0.1
+        while not self.stopped() and not func():
+            self.logger.warning(failure_message)
+            self.logger.warning("Waiting %.1f seconds before next attempt", wait_time)
+
+            self.wait(wait_time)
+            wait_time = min(wait_time * 2, 30)
+
     def _get_entry_points(self):
         entry_points = []
 
@@ -151,32 +198,35 @@ class Application(StoppableThread):
         return entry_points
 
     def _startup(self):
-        self.logger.info("Starting Bartender...")
+        self.logger.debug("Starting Application...")
 
-        self.logger.info("Verifying message virtual host...")
+        self.logger.debug("Ensuring connections...")
+        self._ensure_connections()
+
+        self.logger.debug("Verifying message virtual host...")
         self.clients["pyrabbit"].verify_virtual_host()
 
-        self.logger.info("Ensuring admin queue expiration policy...")
+        self.logger.debug("Ensuring admin queue expiration policy...")
         self.clients["pyrabbit"].ensure_admin_expiry()
 
-        self.logger.info("Declaring message exchange...")
+        self.logger.debug("Declaring message exchange...")
         self.clients["pika"].declare_exchange()
 
-        self.logger.info("Starting event publishers")
+        self.logger.debug("Starting event publishers")
         self.event_publishers = self._setup_event_publishers()
         # self.event_publishers = self._setup_event_publishers(client_ssl)
 
-        self.logger.info("Starting helper threads...")
+        self.logger.debug("Starting helper threads...")
         for helper_thread in self.helper_threads:
             helper_thread.start()
 
-        self.logger.info("Loading all local plugins...")
+        self.logger.debug("Loading all local plugins...")
         self.plugin_loader.load_plugins()
 
-        self.logger.info("Starting all local plugins...")
+        self.logger.debug("Starting all local plugins...")
         self.plugin_manager.start_all_plugins()
 
-        self.logger.info("Starting scheduler")
+        self.logger.debug("Starting scheduler")
         self.scheduler.start()
 
         try:
@@ -187,23 +237,25 @@ class Application(StoppableThread):
         except RequestException:
             self.logger.warning("Unable to publish startup notification")
 
-        self.logger.info("Beer-garden startup completed")
+        self.logger.info("All set! Let me know if you need anything else!")
 
     def _shutdown(self):
-        self.logger.info("Beginning Beer-garden shutdown process")
+        self.logger.info(
+            "Closing time! You don't have to go home, but you can't stay here."
+        )
 
         if self.scheduler.running:
-            self.logger.info("Pausing scheduler - no more jobs will be run")
+            self.logger.debug("Pausing scheduler - no more jobs will be run")
             self.scheduler.pause()
 
         self.plugin_manager.stop_all_plugins()
 
-        self.logger.info("Stopping helper threads")
+        self.logger.debug("Stopping helper threads")
         for helper_thread in reversed(self.helper_threads):
             helper_thread.stop()
 
         if self.scheduler.running:
-            self.logger.info("Shutting down scheduler")
+            self.logger.debug("Shutting down scheduler")
             self.scheduler.shutdown(wait=False)
 
         try:
@@ -303,6 +355,10 @@ class HelperThread(object):
         self.thread.start()
 
     def stop(self):
+        # Thread was never started - nothing to do
+        if not getattr(self, "thread"):
+            return
+
         if not self.thread.isAlive():
             self.logger.warning(
                 "Uh-oh. Looks like a bad shutdown - the %s " "was already stopped",

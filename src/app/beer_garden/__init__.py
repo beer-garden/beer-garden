@@ -8,7 +8,6 @@ import beer_garden.bg_utils
 import beer_garden.config
 import beer_garden.log
 from beer_garden.__version__ import __version__
-from beer_garden.app import Application
 
 __all__ = [
     "__version__",
@@ -17,7 +16,6 @@ __all__ = [
     "start_request",
     "stop_request",
     "load_config",
-    "progressive_backoff",
 ]
 
 # COMPONENTS #
@@ -36,13 +34,3 @@ def load_config(cli_args):
 
     logger = logging.getLogger(__name__)
     logger.debug("Successfully loaded configuration")
-
-
-def progressive_backoff(func, stoppable_thread, failure_message):
-    wait_time = 0.1
-    while not stoppable_thread.stopped() and not func():
-        logger.warning(failure_message)
-        logger.warning("Waiting %.1f seconds before next attempt", wait_time)
-
-        stoppable_thread.wait(wait_time)
-        wait_time = min(wait_time * 2, 30)
