@@ -8,6 +8,7 @@ import beer_garden
 import beer_garden.api.http
 import beer_garden.api.thrift
 from beer_garden import progressive_backoff
+from beer_garden.app import Application
 from beer_garden.bg_utils.mongo import setup_database
 from beer_garden.config import generate_logging, generate, migrate
 
@@ -40,12 +41,16 @@ def migrate_config():
 
 
 def main():
+    # Absolute first thing to do is load the config
+    beer_garden.load_config(sys.argv[1:])
+
+    # Need to create the application before registering the signal handlers
+    beer_garden.application = Application()
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    beer_garden.setup_bartender(sys.argv[1:])
-
+    # Todo - these checks should really move into the application
     # Ensure we have a mongo connection
     progressive_backoff(
         partial(setup_database, beer_garden.config),
@@ -66,8 +71,7 @@ def main():
         "Is the management plugin enabled?",
     )
 
-    # Since we wait for RabbitMQ we could already be shutting down
-    # In that case we don't want to start
+    # We could already be shutting down, in which case we don't want to start
     if not beer_garden.application.stopped():
         beer_garden.logger.info("Hi, what can I get you to drink?")
         beer_garden.application.start()

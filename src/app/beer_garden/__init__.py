@@ -16,7 +16,7 @@ __all__ = [
     "logger",
     "start_request",
     "stop_request",
-    "setup_bartender",
+    "load_config",
     "progressive_backoff",
 ]
 
@@ -28,16 +28,14 @@ start_request = Request(command="_start", command_type="EPHEMERAL")
 stop_request = Request(command="_stop", command_type="EPHEMERAL")
 
 
-def setup_bartender(cli_args):
-    global application, logger
+def load_config(cli_args):
+    global logger
 
     beer_garden.config.load(cli_args)
-
     beer_garden.log.load(beer_garden.config.get("log"))
-    logger = logging.getLogger(__name__)
 
-    application = Application()
-    logger.debug("Successfully loaded the bartender application")
+    logger = logging.getLogger(__name__)
+    logger.debug("Successfully loaded configuration")
 
 
 def progressive_backoff(func, stoppable_thread, failure_message):
