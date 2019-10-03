@@ -141,7 +141,7 @@ def generate_logging(args: Sequence[str]):
     logging_config = default_app_config(log.get("level"), log.get("file"))
     log_config_file = log.get("config_file")
 
-    dump_data(logging_config, filename=log_config_file, file_type="json")
+    dump_data(logging_config, filename=log_config_file, file_type="yaml")
 
     return logging_config
 

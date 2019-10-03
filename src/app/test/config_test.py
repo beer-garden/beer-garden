@@ -141,7 +141,7 @@ class TestGenerateLogging(object):
         assert logging_config == default_app_config("INFO", None)
 
     def test_with_file(self, tmpdir, capsys):
-        logging_config_file = Path(tmpdir, "logging.json")
+        logging_config_file = Path(tmpdir, "logging.yaml")
         logging_config = beer_garden.config.generate_logging(
             ["--log-config-file", str(logging_config_file)]
         )
