@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import multiprocessing
 from datetime import timedelta
 from functools import partial
 
@@ -50,6 +51,7 @@ class Application(StoppableThread):
     plugin_manager = None
     clients = None
     helper_threads = None
+    entry_points = None
 
     def __init__(self):
         super(Application, self).__init__(
@@ -94,7 +96,7 @@ class Application(StoppableThread):
                 host=amq_config.host,
                 virtual_host=amq_config.virtual_host,
                 admin_expires=amq_config.admin_queue_expiry,
-                **amq_config.connections.admin
+                **amq_config.connections.admin,
             ),
         }
 
@@ -142,16 +144,25 @@ class Application(StoppableThread):
                 )
             )
 
+        self.entry_points = []
+        for entry_name, entry_value in beer_garden.config.get("entry").items():
+            if entry_value.get("enable"):
+                pkg = getattr(beer_garden.api, entry_name)
+                process = multiprocessing.get_context("spawn").Process(
+                    target=pkg.run, args=(beer_garden.config.get(),), daemon=True
+                )
+                self.entry_points.append(process)
+
     def run(self):
         self._startup()
 
         while not self.stopped():
-            for helper_thread in self.helper_threads:
-                if not helper_thread.thread.isAlive():
-                    self.logger.warning(
-                        "%s is dead, restarting" % helper_thread.display_name
-                    )
-                    helper_thread.start()
+            for helper in self.helper_threads:
+                if not helper.thread.isAlive():
+                    self.logger.warning(f"{helper.display_name} is dead, restarting")
+                    helper.start()
+
+            # TODO - Check on entry points
 
             time.sleep(0.1)
 
@@ -184,19 +195,6 @@ class Application(StoppableThread):
             self.wait(wait_time)
             wait_time = min(wait_time * 2, 30)
 
-    def _get_entry_points(self):
-        entry_points = []
-
-        if beer_garden.config.get("entry.http.enable"):
-            entry_points.append(beer_garden.api.http)
-        elif beer_garden.config.get("entry.thrift.enable"):
-            entry_points.append(beer_garden.api.thrift)
-
-        if len(entry_points) == 0:
-            raise Exception("Please enable an entrypoint")
-
-        return entry_points
-
     def _startup(self):
         self.logger.debug("Starting Application...")
 
@@ -219,6 +217,10 @@ class Application(StoppableThread):
         self.logger.debug("Starting helper threads...")
         for helper_thread in self.helper_threads:
             helper_thread.start()
+
+        self.logger.debug("Starting entry points...")
+        for entry_point in self.entry_points:
+            entry_point.start()
 
         self.logger.debug("Loading all local plugins...")
         self.plugin_loader.load_plugins()
@@ -265,6 +267,11 @@ class Application(StoppableThread):
             # beer_garden.bv_client.publish_event(name=Events.BARTENDER_STOPPED.name)
         except RequestException:
             self.logger.warning("Unable to publish shutdown notification")
+
+        # The entry points have their own signal handlers, so just wait for them
+        self.logger.debug("Waiting for entry points to stop")
+        for entry_point in self.entry_points:
+            entry_point.join()
 
         self.logger.info("Successfully shut down Beer-garden")
 

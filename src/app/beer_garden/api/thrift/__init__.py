@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import logging
+import signal
 
 import brewtils.thrift
 
+import beer_garden.config
 from beer_garden.api.thrift.handler import BartenderHandler
 from beer_garden.api.thrift.server import make_server
 
@@ -10,8 +12,20 @@ logger = None
 the_server = None
 
 
-def run():
+def signal_handler(signal_number, stack_frame):
+    stop()
+
+
+def run(config):
     global logger, the_server
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    # Absolute first thing to do is set the config
+    beer_garden.config._CONFIG = config
+
+    beer_garden.log.load(beer_garden.config.get("log"))
     logger = logging.getLogger(__name__)
 
     # TODO: The thrift portion is currently hardcoded, because it should
