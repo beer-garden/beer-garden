@@ -3,7 +3,7 @@ import os
 import sys
 from argparse import ArgumentParser
 from datetime import datetime
-from typing import Tuple, Sequence, Union
+from typing import Tuple, Sequence, Union, Optional
 
 from box import Box
 from ruamel.yaml import YAML
@@ -146,11 +146,13 @@ def generate_logging(args: Sequence[str]):
     return logging_config
 
 
-def get(key: str) -> Union[str, int, float, bool, complex, Box, None]:
+def get(key: Optional[str] = None) -> Union[str, int, float, bool, complex, Box, None]:
     """Get specified key from the config.
 
     Nested keys can be separated with a "." If the key does not exist, then
     a None will be returned.
+
+    If the key itself is None, then the entire config will be returned.
 
     If the requested value is a container (has child items) then the returned value will
     be an immutable (frozen) ``box.Box`` object.
@@ -161,8 +163,8 @@ def get(key: str) -> Union[str, int, float, bool, complex, Box, None]:
     Returns:
         The value of the key in the config.
     """
-    if not key:
-        return None
+    if key is None:
+        return _CONFIG
 
     value = _CONFIG
     for key_part in key.split("."):
