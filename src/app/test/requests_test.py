@@ -5,13 +5,7 @@ from brewtils.errors import ModelValidationError
 from mock import Mock, call, patch
 
 import beer_garden.requests
-from beer_garden.bg_utils.mongo.models import (
-    Command,
-    Parameter,
-    Request,
-    System,
-    Choices,
-)
+from beer_garden.db.mongo.models import Command, Parameter, Request, System, Choices
 from beer_garden.requests import RequestValidator
 
 

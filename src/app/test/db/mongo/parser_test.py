@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Testing for the Mongo version of the SchemaParser
 
 I migrated this to pytest but the only tests here were for Instances. I didn't add
@@ -12,8 +13,8 @@ into the correct default values).
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
-from beer_garden.bg_utils.mongo.models import Instance
-from beer_garden.bg_utils.mongo.parser import MongoParser
+from beer_garden.db.mongo.models import Instance
+from beer_garden.db.mongo.parser import MongoParser
 from brewtils.errors import ModelValidationError
 from brewtils.test.comparable import assert_instance_equal
 

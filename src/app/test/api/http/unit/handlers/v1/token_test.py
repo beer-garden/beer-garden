@@ -7,7 +7,7 @@ import unittest
 
 from mock import Mock, patch
 
-from beer_garden.bg_utils.mongo.models import RefreshToken
+from beer_garden.db.mongo.models import RefreshToken
 from .. import TestHandlerBase
 
 

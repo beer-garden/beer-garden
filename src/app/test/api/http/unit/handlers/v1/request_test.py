@@ -12,7 +12,7 @@ from tornado.httpclient import HTTPRequest, HTTPClientError
 
 import beer_garden
 from beer_garden.api.http.handlers.v1.request import RequestListAPI
-from beer_garden.bg_utils.mongo.models import (
+from beer_garden.db.mongo.models import (
     Request,
     Job,
     RequestTemplate,

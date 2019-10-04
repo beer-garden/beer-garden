@@ -2,8 +2,8 @@
 from mongoengine.errors import DoesNotExist
 
 import beer_garden.api.http
-from beer_garden.bg_utils.mongo.models import Role
-from beer_garden.bg_utils.mongo.parser import MongoParser
+from beer_garden.db.mongo.models import Role
+from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.api.http.authorization import (
     anonymous_principal,
     authenticated,

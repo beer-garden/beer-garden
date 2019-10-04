@@ -8,7 +8,7 @@ import beer_garden
 import beer_garden.api.http
 import beer_garden.api.thrift
 from beer_garden import progressive_backoff
-from beer_garden.bg_utils.mongo import setup_database
+from beer_garden.db.mongo import setup_database
 from beer_garden.config import generate_logging, generate, migrate
 
 entry_point = None

@@ -22,7 +22,7 @@ from thriftpy2.thrift import TException
 from tornado.web import HTTPError, RequestHandler
 
 import beer_garden.api.http
-import beer_garden.bg_utils.mongo.models
+import beer_garden.db.mongo.models
 from beer_garden.api.http.authorization import AuthMixin, coalesce_permissions
 from beer_garden.api.http.client import ExecutorClient
 from beer_garden.api.http.metrics import http_api_latency_total
@@ -64,9 +64,7 @@ class BaseHandler(AuthMixin, RequestHandler):
         if not refresh_id:
             return None
 
-        token = beer_garden.bg_utils.mongo.models.RefreshToken.objects.get(
-            id=refresh_id
-        )
+        token = beer_garden.db.mongo.models.RefreshToken.objects.get(id=refresh_id)
         now = datetime.datetime.utcnow()
         if not token or token.expires < now:
             return None

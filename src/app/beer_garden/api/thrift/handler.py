@@ -15,7 +15,7 @@ from brewtils.errors import (
 import beer_garden
 import beer_garden.api
 from beer_garden.api.thrift.client import ThriftClient
-from beer_garden.bg_utils.mongo.parser import MongoParser
+from beer_garden.db.mongo.parser import MongoParser
 
 logger = logging.getLogger(__name__)
 parser = MongoParser()

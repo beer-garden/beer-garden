@@ -9,8 +9,8 @@ from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema
 
 import beer_garden
-from beer_garden.bg_utils.mongo.models import System, Instance
-from beer_garden.bg_utils.mongo.parser import MongoParser
+from beer_garden.db.mongo.models import System, Instance
+from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.events import publish_event
 from beer_garden.rabbitmq import get_routing_key
 

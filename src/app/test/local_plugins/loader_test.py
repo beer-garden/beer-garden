@@ -5,7 +5,7 @@ import textwrap
 import pytest
 from mock import Mock
 
-from beer_garden.bg_utils.mongo.models import System
+from beer_garden.db.mongo.models import System
 from beer_garden.local_plugins.loader import LocalPluginLoader
 
 

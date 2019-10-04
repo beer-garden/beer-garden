@@ -5,7 +5,7 @@ import urllib
 from mock import Mock, MagicMock, patch
 from mongoengine import Q
 
-from beer_garden.bg_utils.mongo.models import Request
+from beer_garden.db.mongo.models import Request
 
 
 @unittest.skip("TODO")

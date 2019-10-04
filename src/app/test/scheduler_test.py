@@ -10,7 +10,7 @@ from mock import patch
 from pytz import utc
 
 import beer_garden
-from beer_garden.bg_utils.mongo.models import Job
+from beer_garden.db.mongo.models import Job
 from beer_garden.scheduler import BGJobStore, run_job
 
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from .event_publisher import EventPublisher
-from .mongo.parser import MongoParser
+from beer_garden.db.mongo.parser import MongoParser
 
 # from brewtils.models import Events
 # from brewtils.rest.client import TimeoutAdapter

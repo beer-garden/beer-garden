@@ -1,4 +1,5 @@
-from beer_garden.bg_utils.mongo.fields import DummyField
+# -*- coding: utf-8 -*-
+from beer_garden.db.mongo.fields import DummyField
 
 
 class TestDummyField(object):

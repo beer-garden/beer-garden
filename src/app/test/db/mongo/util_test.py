@@ -1,11 +1,11 @@
+# -*- coding: utf-8 -*-
 import pytest
 from box import Box
 from mock import patch, MagicMock, Mock
 from mongoengine import DoesNotExist, NotUniqueError
 from pymongo.errors import ServerSelectionTimeoutError
 
-import beer_garden.bg_utils
-import beer_garden.bg_utils.mongo.models
+import beer_garden.db.mongo.models
 
 
 class TestMongoUtils(object):
@@ -23,13 +23,11 @@ class TestMongoUtils(object):
         job_mock.__name__ = "Job"
         principal_mock.__name__ = "Principal"
 
-        monkeypatch.setattr(beer_garden.bg_utils.mongo.models, "Request", request_mock)
-        monkeypatch.setattr(beer_garden.bg_utils.mongo.models, "System", system_mock)
-        monkeypatch.setattr(beer_garden.bg_utils.mongo.models, "Role", role_mock)
-        monkeypatch.setattr(beer_garden.bg_utils.mongo.models, "Job", job_mock)
-        monkeypatch.setattr(
-            beer_garden.bg_utils.mongo.models, "Principal", principal_mock
-        )
+        monkeypatch.setattr(beer_garden.db.mongo.models, "Request", request_mock)
+        monkeypatch.setattr(beer_garden.db.mongo.models, "System", system_mock)
+        monkeypatch.setattr(beer_garden.db.mongo.models, "Role", role_mock)
+        monkeypatch.setattr(beer_garden.db.mongo.models, "Job", job_mock)
+        monkeypatch.setattr(beer_garden.db.mongo.models, "Principal", principal_mock)
 
         return {
             "request": request_mock,
@@ -41,7 +39,7 @@ class TestMongoUtils(object):
 
     @patch("mongoengine.register_connection")
     @patch("mongoengine.connect")
-    @patch("beer_garden.bg_utils.mongo.verify_db")
+    @patch("beer_garden.db.mongo.verify_db")
     def test_setup_database_connect(self, verify_mock, connect_mock, register_mock):
         app_config = Box(
             {
@@ -56,7 +54,7 @@ class TestMongoUtils(object):
                 }
             }
         )
-        assert beer_garden.bg_utils.mongo.setup_database(app_config) is True
+        assert beer_garden.db.mongo.setup_database(app_config) is True
         connect_mock.assert_called_with(
             alias="aliveness",
             db="db_name",
@@ -78,10 +76,10 @@ class TestMongoUtils(object):
         verify_mock.assert_called_once_with(None)
 
     @patch("mongoengine.connect")
-    @patch("beer_garden.bg_utils.mongo.verify_db", Mock())
+    @patch("beer_garden.db.mongo.verify_db", Mock())
     def test_setup_database_connect_error(self, connect_mock):
         connect_mock.side_effect = ServerSelectionTimeoutError
-        assert beer_garden.bg_utils.mongo.setup_database(MagicMock()) is False
+        assert beer_garden.db.mongo.setup_database(MagicMock()) is False
 
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.register_connection", Mock())
@@ -93,10 +91,7 @@ class TestMongoUtils(object):
                 return_value=Mock(index_information=Mock(return_value={"index1": {}}))
             )
 
-        [
-            beer_garden.bg_utils.mongo.util._check_indexes(doc)
-            for doc in model_mocks.values()
-        ]
+        [beer_garden.db.mongo.util._check_indexes(doc) for doc in model_mocks.values()]
         for model_mock in model_mocks.values():
             assert model_mock.ensure_indexes.call_count == 1
 
@@ -110,10 +105,7 @@ class TestMongoUtils(object):
                 return_value=Mock(index_information=Mock(return_value={"index1": {}}))
             )
 
-        [
-            beer_garden.bg_utils.mongo.util._check_indexes(doc)
-            for doc in model_mocks.values()
-        ]
+        [beer_garden.db.mongo.util._check_indexes(doc) for doc in model_mocks.values()]
         for model_mock in model_mocks.values():
             assert model_mock.ensure_indexes.call_count == 1
 
@@ -138,10 +130,7 @@ class TestMongoUtils(object):
         db_mock = MagicMock()
         get_db_mock.return_value = db_mock
 
-        [
-            beer_garden.bg_utils.mongo.util._check_indexes(doc)
-            for doc in model_mocks.values()
-        ]
+        [beer_garden.db.mongo.util._check_indexes(doc) for doc in model_mocks.values()]
         assert db_mock["request"].drop_indexes.call_count == 1
         assert model_mocks["request"].ensure_indexes.called is True
 
@@ -162,7 +151,7 @@ class TestMongoUtils(object):
 
         for doc in model_mocks.values():
             with pytest.raises(OperationFailure):
-                beer_garden.bg_utils.mongo.util._check_indexes(doc)
+                beer_garden.db.mongo.util._check_indexes(doc)
 
     @patch("mongoengine.connect", Mock())
     @patch("mongoengine.connection.get_db", MagicMock())
@@ -181,7 +170,7 @@ class TestMongoUtils(object):
 
         for doc in model_mocks.values():
             with pytest.raises(OperationFailure):
-                beer_garden.bg_utils.mongo.util._check_indexes(doc)
+                beer_garden.db.mongo.util._check_indexes(doc)
 
     @patch("mongoengine.connection.get_db")
     @patch("mongoengine.connect", Mock())
@@ -210,12 +199,12 @@ class TestMongoUtils(object):
         update_parent_field_type_mock = Mock()
         update_has_parent_mock = Mock()
         monkeypatch.setattr(
-            beer_garden.bg_utils.mongo.util,
+            beer_garden.db.mongo.util,
             "_update_request_parent_field_type",
             update_parent_field_type_mock,
         )
         monkeypatch.setattr(
-            beer_garden.bg_utils.mongo.util,
+            beer_garden.db.mongo.util,
             "_update_request_has_parent_model",
             update_has_parent_mock,
         )
@@ -223,10 +212,7 @@ class TestMongoUtils(object):
         db_mock = MagicMock()
         get_db_mock.return_value = db_mock
 
-        [
-            beer_garden.bg_utils.mongo.util._check_indexes(doc)
-            for doc in model_mocks.values()
-        ]
+        [beer_garden.db.mongo.util._check_indexes(doc) for doc in model_mocks.values()]
         assert db_mock["request"].drop_indexes.call_count == 1
         assert model_mocks["request"].ensure_indexes.called is True
         assert update_parent_field_type_mock.called is True
@@ -236,25 +222,25 @@ class TestMongoUtils(object):
         role = Mock()
         model_mocks["role"].objects.get.return_value = role
 
-        beer_garden.bg_utils.mongo.util._create_role(role)
+        beer_garden.db.mongo.util._create_role(role)
         assert role.save.called is False
 
     def test_create_role_missing(self, model_mocks):
         role = Mock()
         model_mocks["role"].objects.get.side_effect = DoesNotExist
 
-        beer_garden.bg_utils.mongo.util._create_role(role)
+        beer_garden.db.mongo.util._create_role(role)
         assert role.save.called is True
 
     def test_ensure_roles(self, model_mocks):
-        beer_garden.bg_utils.mongo.util._ensure_roles()
+        beer_garden.db.mongo.util._ensure_roles()
         assert 3 == model_mocks["role"].objects.get.call_count
 
     def test_ensure_roles_new_install(self, model_mocks):
         model_mocks["role"].objects.count.return_value = 0
         model_mocks["role"].objects.get.side_effect = DoesNotExist
 
-        beer_garden.bg_utils.mongo.util._ensure_roles()
+        beer_garden.db.mongo.util._ensure_roles()
         assert 5 == model_mocks["role"].objects.get.call_count
 
     def test_ensure_roles_new_install_race_convenience(self, model_mocks):
@@ -264,7 +250,7 @@ class TestMongoUtils(object):
             DoesNotExist for _ in range(4)
         ]
 
-        beer_garden.bg_utils.mongo.util._ensure_roles()
+        beer_garden.db.mongo.util._ensure_roles()
         assert 5 == model_mocks["role"].objects.get.call_count
 
     def test_ensure_roles_new_install_race_mandatory(self, model_mocks):
@@ -275,27 +261,27 @@ class TestMongoUtils(object):
         ] + [NotUniqueError]
 
         with pytest.raises(NotUniqueError):
-            beer_garden.bg_utils.mongo.util._ensure_roles()
+            beer_garden.db.mongo.util._ensure_roles()
 
-    @patch("beer_garden.bg_utils.mongo.util._check_indexes", Mock())
-    @patch("beer_garden.bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("beer_garden.db.mongo.util._check_indexes", Mock())
+    @patch("beer_garden.db.mongo.util._ensure_roles", Mock())
     def test_ensure_users_already_exists(self, model_mocks):
         principal = model_mocks["principal"]
         principal.objects.get = Mock()
-        beer_garden.bg_utils.mongo.util.verify_db(False)
+        beer_garden.db.mongo.util.verify_db(False)
         principal.assert_not_called()
 
-    @patch("beer_garden.bg_utils.mongo.util._check_indexes", Mock())
-    @patch("beer_garden.bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("beer_garden.db.mongo.util._check_indexes", Mock())
+    @patch("beer_garden.db.mongo.util._ensure_roles", Mock())
     def test_ensure_users_others_exist(self, model_mocks):
         principal = model_mocks["principal"]
         principal.objects.count = Mock(return_value=2)
         principal.objects.get = Mock(side_effect=DoesNotExist)
-        beer_garden.bg_utils.mongo.util.verify_db(False)
+        beer_garden.db.mongo.util.verify_db(False)
         principal.assert_not_called()
 
-    @patch("beer_garden.bg_utils.mongo.util._check_indexes", Mock())
-    @patch("beer_garden.bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("beer_garden.db.mongo.util._check_indexes", Mock())
+    @patch("beer_garden.db.mongo.util._ensure_roles", Mock())
     def test_ensure_users_only_anon_exists(self, model_mocks):
         principal = model_mocks["principal"]
         principal.objects.count = Mock(return_value=1)
@@ -303,23 +289,23 @@ class TestMongoUtils(object):
         principal.objects.get = Mock(
             side_effect=[DoesNotExist, [mock_anon], DoesNotExist]
         )
-        beer_garden.bg_utils.mongo.util.verify_db(False)
+        beer_garden.db.mongo.util.verify_db(False)
         principal.assert_called_once()
 
-    @patch("beer_garden.bg_utils.mongo.util._check_indexes", Mock())
-    @patch("beer_garden.bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("beer_garden.db.mongo.util._check_indexes", Mock())
+    @patch("beer_garden.db.mongo.util._ensure_roles", Mock())
     @patch("passlib.apps.custom_app_context.hash")
     def test_ensure_users_create(self, hash_mock, model_mocks):
         principal = model_mocks["principal"]
         principal.objects.count = Mock(return_value=0)
         principal.objects.get = Mock(side_effect=DoesNotExist)
 
-        beer_garden.bg_utils.mongo.util.verify_db(False)
+        beer_garden.db.mongo.util.verify_db(False)
         principal.assert_called_once()
         hash_mock.assert_called_with("password")
 
-    @patch("beer_garden.bg_utils.mongo.util._check_indexes", Mock())
-    @patch("beer_garden.bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("beer_garden.db.mongo.util._check_indexes", Mock())
+    @patch("beer_garden.db.mongo.util._ensure_roles", Mock())
     @patch("passlib.apps.custom_app_context.hash")
     def test_ensure_users_create_env_password(self, hash_mock, model_mocks):
         principal = model_mocks["principal"]
@@ -327,37 +313,37 @@ class TestMongoUtils(object):
         principal.objects.get = Mock(side_effect=DoesNotExist)
 
         with patch.dict("os.environ", {"BG_DEFAULT_ADMIN_PASSWORD": "foo"}):
-            beer_garden.bg_utils.mongo.util.verify_db(False)
+            beer_garden.db.mongo.util.verify_db(False)
             principal.assert_called_once()
             hash_mock.assert_called_with("foo")
 
-    @patch("beer_garden.bg_utils.mongo.util._check_indexes", Mock())
-    @patch("beer_garden.bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("beer_garden.db.mongo.util._check_indexes", Mock())
+    @patch("beer_garden.db.mongo.util._ensure_roles", Mock())
     def test_ensure_users_guest_login_enabled(self, model_mocks):
         principal = model_mocks["principal"]
         principal.objects.count = Mock(return_value=0)
         principal.objects.get = Mock(side_effect=DoesNotExist)
 
-        beer_garden.bg_utils.mongo.util.verify_db(True)
+        beer_garden.db.mongo.util.verify_db(True)
         assert principal.call_count == 2
 
-    @patch("beer_garden.bg_utils.mongo.util._check_indexes", Mock())
-    @patch("beer_garden.bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("beer_garden.db.mongo.util._check_indexes", Mock())
+    @patch("beer_garden.db.mongo.util._ensure_roles", Mock())
     def test_remove_anonymous_user(self, model_mocks):
         principal = model_mocks["principal"]
         anon_user = Mock()
         principal.objects.count = Mock(return_value=0)
         principal.objects.get = Mock(return_value=anon_user)
 
-        beer_garden.bg_utils.mongo.util.verify_db(False)
+        beer_garden.db.mongo.util.verify_db(False)
         assert anon_user.delete.call_count == 1
 
-    @patch("beer_garden.bg_utils.mongo.util._check_indexes", Mock())
-    @patch("beer_garden.bg_utils.mongo.util._ensure_roles", Mock())
+    @patch("beer_garden.db.mongo.util._check_indexes", Mock())
+    @patch("beer_garden.db.mongo.util._ensure_roles", Mock())
     def test_remove_anonymous_user_guest_login_none(self, model_mocks):
         principal = model_mocks["principal"]
         anon_user = Mock()
         principal.objects.get = Mock(return_value=anon_user)
 
-        beer_garden.bg_utils.mongo.util.verify_db(None)
+        beer_garden.db.mongo.util.verify_db(None)
         assert anon_user.delete.call_count == 0

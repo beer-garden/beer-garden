@@ -3,7 +3,7 @@ import copy
 
 import pytest
 
-from beer_garden.bg_utils.mongo.models import DateTrigger
+from beer_garden.db.mongo.models import DateTrigger
 
 
 @pytest.fixture

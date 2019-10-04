@@ -6,7 +6,7 @@ from brewtils.schema_parser import SchemaParser
 from pyrabbit2.api import Client
 from pyrabbit2.http import HTTPError, NetworkError
 
-from beer_garden.bg_utils.mongo.parser import MongoParser
+from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.requests import cancel_request
 
 

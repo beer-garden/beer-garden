@@ -13,8 +13,8 @@ from mongoengine import DoesNotExist
 from pytz import utc
 
 import beer_garden
-from beer_garden.bg_utils.mongo.models import Job as BGJob, Request
-from beer_garden.bg_utils.mongo.parser import MongoParser
+from beer_garden.db.mongo.models import Job as BGJob, Request
+from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.requests import process_request
 
 logger = logging.getLogger(__name__)

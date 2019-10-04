@@ -8,8 +8,8 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Events
 
 import beer_garden
-from beer_garden.bg_utils.mongo.fields import StatusInfo
-from beer_garden.bg_utils.mongo.models import Instance, System
+from beer_garden.db.mongo.fields import StatusInfo
+from beer_garden.db.mongo.models import Instance, System
 from beer_garden.events import publish_event
 from beer_garden.rabbitmq import get_routing_key, get_routing_keys
 
