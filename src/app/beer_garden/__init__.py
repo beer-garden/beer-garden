@@ -21,6 +21,7 @@ __all__ = [
 # COMPONENTS #
 application = None
 logger = None
+entry_points = {}
 
 start_request = Request(command="_start", command_type="EPHEMERAL")
 stop_request = Request(command="_stop", command_type="EPHEMERAL")

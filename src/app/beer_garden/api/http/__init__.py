@@ -30,7 +30,9 @@ from tornado.ioloop import IOLoop
 from tornado.web import Application, RedirectHandler
 from urllib3.util.url import Url
 
+import beer_garden
 import beer_garden.bg_utils
+from beer_garden.api.entry_point import ProcessEntryPoint
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
 
 io_loop = None
@@ -43,10 +45,6 @@ api_spec = None
 notification_meta = None
 anonymous_principal = None
 client_ssl = None
-
-
-def signal_handler(signal_number, stack_frame):
-    stop()
 
 
 def run(config, log_queue):
@@ -72,7 +70,10 @@ def run(config, log_queue):
     logger.info("Http entry point is shut down. Goodbye!")
 
 
-def stop():
+beer_garden.entry_points["http"] = ProcessEntryPoint("http", run)
+
+
+def signal_handler(signal_number, stack_frame):
     logger.debug("Received a shutdown request.")
     io_loop.add_callback_from_signal(beer_garden.api.http.shutdown)
 
