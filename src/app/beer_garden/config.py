@@ -9,6 +9,7 @@ from box import Box
 from ruamel.yaml import YAML
 from yapconf import YapconfSpec, dump_data
 
+from beer_garden.errors import ConfigurationError
 from beer_garden.log import default_app_config
 
 __all__ = ["load", "generate_logging", "generate", "migrate", "get"]
@@ -172,6 +173,30 @@ def get(key: Optional[str] = None) -> Union[str, int, float, bool, complex, Box,
             return None
         value = value[key_part]
     return value
+
+
+def assign(new_config: Box, force: bool = False) -> None:
+    """Set the overall application config.
+
+    This methods sets the global configuration to the given Box object. This method is
+    only intended to be used in a subprocess context where reconstructing the
+    configuration using ``load`` would be inadvisable.
+
+    Args:
+        new_config: The configuration object to be applied
+        force: If True, set the config even if one is already set
+
+    Returns:
+        None
+
+    Raises:
+        ConfigurationError: A config is already loaded and ``force`` is False
+    """
+    global _CONFIG
+    if _CONFIG is not None and not force:
+        ConfigurationError("")
+
+    _CONFIG = new_config
 
 
 def _setup_config_sources(spec, cli_vars):

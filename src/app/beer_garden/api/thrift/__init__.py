@@ -23,7 +23,7 @@ def run(config, log_queue):
     signal.signal(signal.SIGTERM, signal_handler)
 
     # Absolute first thing to do is set the config
-    beer_garden.config._CONFIG = config
+    beer_garden.config.assign(config)
 
     beer_garden.log.setup_entry_point_logging(log_queue)
     logger = logging.getLogger(__name__)
