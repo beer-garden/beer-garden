@@ -10,16 +10,6 @@ from beer_garden.app import Application
 from beer_garden.config import generate_logging, generate, migrate
 
 
-def signal_handler(signal_number, stack_frame):
-    beer_garden.logger.info("Last call! Looks like we gotta close up.")
-    beer_garden.application.stop()
-
-    if beer_garden.application.is_alive():
-        beer_garden.application.join()
-
-    beer_garden.logger.info("OK, we're all shut down. Have a good night!")
-
-
 def generate_logging_config():
     generate_logging(sys.argv[1:])
 
@@ -39,8 +29,8 @@ def main():
     # Need to create the application before registering the signal handlers
     beer_garden.application = Application()
 
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+    signal.signal(signal.SIGINT, beer_garden.signal_handler)
+    signal.signal(signal.SIGTERM, beer_garden.signal_handler)
 
     beer_garden.logger.info("Hi! Please give me just a minute to get set up.")
     beer_garden.application.start()
