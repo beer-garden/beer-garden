@@ -4,23 +4,23 @@ amq:
   connection_attempts: 3
   connections:
     admin:
-      password: guest
+      password: password
       port: 15672
       ssl:
         ca_cert: null
         ca_verify: true
         client_cert: null
         enabled: false
-      user: guest
+      user: beer_garden
     message:
-      password: guest
+      password: password
       port: 5672
       ssl:
         ca_cert: null
         ca_verify: true
         client_cert: null
         enabled: false
-      user: guest
+      user: beer_garden
   exchange: beer_garden
   heartbeat_interval: 3600
   host: localhost
