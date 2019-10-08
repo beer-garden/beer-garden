@@ -28,6 +28,11 @@ from tornado.ioloop import IOLoop
 from tornado.web import Application, RedirectHandler
 from urllib3.util.url import Url
 
+import beer_garden
+import beer_garden.api.http.handlers.misc as misc
+import beer_garden.api.http.handlers.v1 as v1
+import beer_garden.api.http.handlers.v2 as v2
+import beer_garden.api.http.handlers.vbeta as vbeta
 import beer_garden.bg_utils
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
 
@@ -153,12 +158,6 @@ def _setup_application():
 
 
 def _setup_tornado_app():
-    # Import these here so we don't have a problem importing thrift_context
-    import beer_garden.api.http.handlers.v1 as v1
-    import beer_garden.api.http.handlers.v2 as v2
-    import beer_garden.api.http.handlers.vbeta as vbeta
-    import beer_garden.api.http.handlers.misc as misc
-
     prefix = beer_garden.config.get("entry.http.url_prefix")
 
     # These get documented in our OpenAPI (fka Swagger) documentation

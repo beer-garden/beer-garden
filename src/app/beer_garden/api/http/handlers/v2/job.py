@@ -39,10 +39,10 @@ class JobAPI(BaseHandler):
           - Jobs
         """
         async with ExecutorClient() as client:
-            thrift_response = await client.getJob(namespace, job_id)
+            response = await client.getJob(namespace, job_id)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)
 
     @authenticated(permissions=[Permissions.JOB_UPDATE])
     async def patch(self, namespace, job_id):
@@ -191,10 +191,10 @@ class JobListAPI(BaseHandler):
                 filter_params[key] = self.get_query_argument(key)
 
         async with ExecutorClient() as client:
-            thrift_response = await client.getJobs(namespace, filter_params)
+            response = await client.getJobs(namespace, filter_params)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)
 
     @authenticated(permissions=[Permissions.JOB_CREATE])
     async def post(self, namespace):

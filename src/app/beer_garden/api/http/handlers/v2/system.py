@@ -48,12 +48,10 @@ class SystemAPI(BaseHandler):
         )
 
         async with ExecutorClient() as client:
-            thrift_response = await client.getSystem(
-                namespace, system_id, include_commands
-            )
+            response = await client.getSystem(namespace, system_id, include_commands)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)
 
     @authenticated(permissions=[Permissions.SYSTEM_DELETE])
     async def delete(self, namespace, system_id):
@@ -144,12 +142,12 @@ class SystemAPI(BaseHandler):
           - Systems
         """
         async with ExecutorClient() as client:
-            thrift_response = await client.updateSystem(
+            response = await client.updateSystem(
                 namespace, system_id, self.request.decoded_body
             )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)
 
 
 class SystemListAPI(BaseHandler):
@@ -250,7 +248,7 @@ class SystemListAPI(BaseHandler):
                 filter_params[key] = self.get_query_argument(key)
 
         async with ExecutorClient() as client:
-            thrift_response = await client.querySystems(
+            response = await client.querySystems(
                 namespace,
                 filter_params,
                 order_by,
@@ -260,7 +258,7 @@ class SystemListAPI(BaseHandler):
             )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)
 
     @authenticated(permissions=[Permissions.SYSTEM_CREATE])
     async def post(self, namespace):
@@ -299,7 +297,7 @@ class SystemListAPI(BaseHandler):
         """
         async with ExecutorClient() as client:
             try:
-                thrift_response = await client.createSystem(
+                response = await client.createSystem(
                     namespace, self.request.decoded_body
                 )
             except beer_garden.bg_utils.bg_thrift.ConflictException:
@@ -307,4 +305,4 @@ class SystemListAPI(BaseHandler):
 
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)
