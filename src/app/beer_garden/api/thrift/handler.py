@@ -2,7 +2,6 @@
 import json
 import logging
 
-import brewtils.thrift
 import mongoengine
 import wrapt
 from brewtils.errors import (
@@ -14,6 +13,7 @@ from brewtils.errors import (
 
 import beer_garden
 import beer_garden.api
+import beer_garden.api.thrift
 from beer_garden.api.thrift.client import ThriftClient
 from beer_garden.db.mongo.parser import MongoParser
 
@@ -94,9 +94,9 @@ class BartenderHandler(object):
                 )
             )
         except RequestPublishException as ex:
-            raise brewtils.thrift.bg_thrift.PublishException(str(ex))
+            raise beer_garden.api.thrift.bg_thrift.PublishException(str(ex))
         except (mongoengine.ValidationError, ModelValidationError, RestError) as ex:
-            raise brewtils.thrift.bg_thrift.InvalidRequest("", str(ex))
+            raise beer_garden.api.thrift.bg_thrift.InvalidRequest("", str(ex))
 
     @staticmethod
     @namespace_router
@@ -123,7 +123,7 @@ class BartenderHandler(object):
         try:
             instance = beer_garden.api.initialize_instance(instance_id)
         except mongoengine.DoesNotExist:
-            raise brewtils.thrift.bg_thrift.InvalidSystem(
+            raise beer_garden.api.thrift.bg_thrift.InvalidSystem(
                 "", f"Database error initializing instance {instance_id}"
             ) from None
 
@@ -149,7 +149,7 @@ class BartenderHandler(object):
         try:
             instance = beer_garden.api.start_instance(instance_id)
         except mongoengine.DoesNotExist:
-            raise brewtils.thrift.bg_thrift.InvalidSystem(
+            raise beer_garden.api.thrift.bg_thrift.InvalidSystem(
                 "", f"Couldn't find instance {instance_id}"
             ) from None
 
@@ -166,7 +166,7 @@ class BartenderHandler(object):
         try:
             instance = beer_garden.api.stop_instance(instance_id)
         except mongoengine.DoesNotExist:
-            raise brewtils.thrift.bg_thrift.InvalidSystem(
+            raise beer_garden.api.thrift.bg_thrift.InvalidSystem(
                 "", f"Couldn't find instance {instance_id}"
             ) from None
 
@@ -187,7 +187,7 @@ class BartenderHandler(object):
         try:
             instance = beer_garden.api.update_instance_status(instance_id, new_status)
         except mongoengine.DoesNotExist:
-            raise brewtils.thrift.bg_thrift.InvalidSystem(
+            raise beer_garden.api.thrift.bg_thrift.InvalidSystem(
                 instance_id, f"Couldn't find instance {instance_id}"
             ) from None
 
@@ -204,7 +204,7 @@ class BartenderHandler(object):
         try:
             beer_garden.api.remove_instance(instance_id)
         except mongoengine.DoesNotExist:
-            raise brewtils.thrift.bg_thrift.InvalidSystem(
+            raise beer_garden.api.thrift.bg_thrift.InvalidSystem(
                 instance_id, f"Couldn't find instance {instance_id}"
             ) from None
 
@@ -254,7 +254,7 @@ class BartenderHandler(object):
                 )
             )
         except mongoengine.errors.NotUniqueError:
-            raise brewtils.thrift.bg_thrift.ConflictException(
+            raise beer_garden.api.thrift.bg_thrift.ConflictException(
                 "System already exists"
             ) from None
 
@@ -278,7 +278,7 @@ class BartenderHandler(object):
         try:
             beer_garden.api.reload_system(system_id)
         except mongoengine.DoesNotExist:
-            raise brewtils.thrift.bg_thrift.InvalidSystem(
+            raise beer_garden.api.thrift.bg_thrift.InvalidSystem(
                 "", f"Couldn't find system {system_id}"
             ) from None
 
@@ -293,7 +293,7 @@ class BartenderHandler(object):
         try:
             beer_garden.api.remove_system(system_id)
         except mongoengine.DoesNotExist:
-            raise brewtils.thrift.bg_thrift.InvalidSystem(
+            raise beer_garden.api.thrift.bg_thrift.InvalidSystem(
                 system_id, f"Couldn't find system {system_id}"
             ) from None
 
@@ -334,7 +334,7 @@ class BartenderHandler(object):
         try:
             beer_garden.api.clear_queue(queue_name)
         except NotFoundError as ex:
-            raise brewtils.thrift.bg_thrift.InvalidSystem(queue_name, str(ex))
+            raise beer_garden.api.thrift.bg_thrift.InvalidSystem(queue_name, str(ex))
 
     @staticmethod
     @namespace_router

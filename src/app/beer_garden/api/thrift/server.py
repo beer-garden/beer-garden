@@ -3,11 +3,12 @@ import logging
 from concurrent.futures import wait, ThreadPoolExecutor, ALL_COMPLETED
 from threading import Event
 
-import brewtils.thrift
 from brewtils.stoppable_thread import StoppableThread
 from thriftpy2.server import TThreadedServer
 from thriftpy2.thrift import TProcessor
 from thriftpy2.transport import TServerSocket, TSSLServerSocket
+
+import beer_garden.api.thrift
 
 
 class BartenderThriftServer(TThreadedServer, StoppableThread):
@@ -139,7 +140,7 @@ def make_server(
 
     return BartenderThriftServer(
         WrappedTProcessor(
-            "baseEx", brewtils.thrift.bg_thrift.BaseException, service, handler
+            "baseEx", beer_garden.api.thrift.bg_thrift.BaseException, service, handler
         ),
         server_socket,
     )
