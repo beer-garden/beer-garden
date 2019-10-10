@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import asyncio
-import copy
-import json
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
 
@@ -23,32 +21,15 @@ class ExecutorClient(object):
             self.pool, partial(getattr(beer_garden.api, args[0]), *args[1:], **kwargs)
         )
 
-        return self.serialize(result, **(serialize_kwargs or {}))
+        if (
+            result is None
+            or isinstance(result, (six.string_types, dict))
+            or (
+                isinstance(result, list)
+                and isinstance(result[0], (six.string_types, dict))
+            )
+        ):
+            return result
 
-    # TODO - This really needs to be handled by the Parser subsystem
-    @classmethod
-    def serialize(cls, model, to_string=True, **kwargs):
-        """Convenience method to serialize any model type
-
-        Args:
-            model: The model object(s) to serialize
-            to_string: True generates a JSON-formatted string, False generates a dict
-            **kwargs: Additional parameters to be passed to the Schema (e.g. many=True)
-
-        Returns:
-            A string or dict representation of the model object. Which depends on the
-            value of the to_string parameter.
-
-        """
-        if isinstance(model, (six.string_types, dict)):
-            return model
-        elif isinstance(model, list):
-            nested_kwargs = copy.copy(kwargs)
-            nested_kwargs["to_string"] = False
-            nested_kwargs["many"] = False
-
-            serialized = [cls.serialize(x, **nested_kwargs) for x in model]
-
-            return json.dumps(serialized) if to_string else serialized
-
-        return cls.parser.serialize(model, to_string=to_string, **kwargs)
+        # HTTP handlers overwhelmingly just write the response, so just serialize here
+        return SchemaParser.serialize(result, **(serialize_kwargs or {}))
