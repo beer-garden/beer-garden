@@ -9,7 +9,7 @@ from pytest_lazyfixture import lazy_fixture
 from tornado.gen import Future
 from tornado.httpclient import HTTPRequest
 
-from beer_garden.bg_utils.mongo.models import System
+from beer_garden.db.mongo.models import System
 from brewtils.models import PatchOperation, Parameter, Choices
 from brewtils.schema_parser import SchemaParser
 from brewtils.test.comparable import assert_command_equal

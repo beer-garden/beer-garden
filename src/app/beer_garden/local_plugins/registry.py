@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from beer_garden.bg_utils.mongo.models import Instance, System
+from beer_garden.db.mongo.models import Instance, System
 
 
 class LocalPluginRegistry(object):

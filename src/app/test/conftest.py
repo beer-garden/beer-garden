@@ -5,9 +5,9 @@ import pytest
 from mongoengine import connect
 
 import beer_garden
-from beer_garden.bg_utils.mongo.models import Instance
-from beer_garden.bg_utils.mongo.parser import MongoParser
-from test.bg_utils.unit.mongo import brew2mongo
+from beer_garden.db.mongo.models import Instance
+from beer_garden.db.mongo.parser import MongoParser
+from test.db.mongo import brew2mongo
 
 pytest_plugins = ["brewtils.test.fixtures"]
 

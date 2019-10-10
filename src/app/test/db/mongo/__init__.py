@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
 from functools import partial
 
 import brewtils.schemas
 from brewtils.schema_parser import SchemaParser
 from brewtils.test.comparable import assert_system_equal
 
-from beer_garden.bg_utils.mongo.parser import MongoParser
+from beer_garden.db.mongo.parser import MongoParser
 
 
 def _convert(model, parser=None):

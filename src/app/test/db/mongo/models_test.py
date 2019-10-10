@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from datetime import datetime
 
 import pytest
@@ -6,7 +7,7 @@ from brewtils.errors import ModelValidationError
 from brewtils.schemas import RequestTemplateSchema
 from mock import Mock
 
-from beer_garden.bg_utils.mongo.models import (
+from beer_garden.db.mongo.models import (
     Command,
     Instance,
     Parameter,

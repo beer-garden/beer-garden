@@ -6,7 +6,7 @@ from os import listdir
 from os.path import isfile, join, abspath
 from typing import List
 
-from beer_garden.bg_utils.mongo.models import Instance, System
+from beer_garden.db.mongo.models import Instance, System
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
 from beer_garden.systems import create_system
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from beer_garden.bg_utils.mongo.models import Command
+from beer_garden.db.mongo.models import Command
 
 
 def get_command(command_id):
