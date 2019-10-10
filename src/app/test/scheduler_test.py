@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import copy
+
 import pytest
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.job import Job as APJob
@@ -10,7 +12,11 @@ from mock import patch
 from pytz import utc
 
 import beer_garden
-from beer_garden.db.mongo.models import Job
+from beer_garden.db.mongo.models import (
+    Job,
+    RequestTemplate,
+    DateTrigger as MongoDateTrigger,
+)
 from beer_garden.scheduler import BGJobStore, run_job
 
 
@@ -39,6 +45,30 @@ def ap_job(mongo_job, mongo_request_template):
     }
     job_kwargs.setdefault("next_run_time", None)
     return APJob(**job_kwargs)
+
+
+@pytest.fixture
+def mongo_date_trigger(date_trigger_dict, ts_dt):
+    """A date trigger as a model."""
+    dict_copy = copy.deepcopy(date_trigger_dict)
+    dict_copy["run_date"] = ts_dt
+    return MongoDateTrigger(**dict_copy)
+
+
+@pytest.fixture
+def mongo_request_template(request_template_dict):
+    """Request template as a bg model."""
+    return RequestTemplate(**request_template_dict)
+
+
+@pytest.fixture
+def mongo_job(job_dict, ts_dt, mongo_request_template, mongo_date_trigger):
+    """A job as a model."""
+    dict_copy = copy.deepcopy(job_dict)
+    dict_copy["next_run_time"] = ts_dt
+    dict_copy["trigger"] = mongo_date_trigger
+    dict_copy["request_template"] = mongo_request_template
+    return Job(**dict_copy)
 
 
 @pytest.fixture
