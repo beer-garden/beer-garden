@@ -126,7 +126,7 @@ class BartenderApp(StoppableThread):
 
         while not self.stopped():
             for helper_thread in self.helper_threads:
-                if not helper_thread.thread.isAlive():
+                if not helper_thread.thread.is_alive():
                     self.logger.warning(
                         "%s is dead, restarting" % helper_thread.display_name
                     )
@@ -289,7 +289,7 @@ class HelperThread(object):
         self.thread.start()
 
     def stop(self):
-        if not self.thread.isAlive():
+        if not self.thread.is_alive():
             self.logger.warning(
                 "Uh-oh. Looks like a bad shutdown - the %s " "was already stopped",
                 self.display_name,
@@ -301,7 +301,7 @@ class HelperThread(object):
             self.logger.debug("Waiting for %s to stop...", self.display_name)
             self.thread.join(2)
 
-            if self.thread.isAlive():
+            if self.thread.is_alive():
                 self.logger.warning("%s did not stop successfully.", self.display_name)
             else:
                 self.logger.debug("%s successfully stopped", self.display_name)

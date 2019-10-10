@@ -39,7 +39,7 @@ class BartenderAppTest(unittest.TestCase):
     @patch("beer_garden.app.BartenderApp._startup", Mock())
     def test_helper_thread_restart(self):
         helper_mock = Mock()
-        helper_mock.thread.isAlive.return_value = False
+        helper_mock.thread.is_alive.return_value = False
         self.app.helper_threads = [helper_mock]
         self.app.stopped = Mock(side_effect=[False, True])
 
@@ -122,21 +122,21 @@ class HelperThreadTest(unittest.TestCase):
         self.assertTrue(self.helper.thread.start.called)
 
     def test_stop_thread_alive_successful(self):
-        self.helper.thread = Mock(isAlive=Mock(side_effect=[True, False]))
+        self.helper.thread = Mock(is_alive=Mock(side_effect=[True, False]))
 
         self.helper.stop()
         self.assertTrue(self.helper.thread.stop.called)
         self.assertTrue(self.helper.thread.join.called)
 
     def test_stop_thread_alive_unsuccessful(self):
-        self.helper.thread = Mock(isAlive=Mock(return_value=True))
+        self.helper.thread = Mock(is_alive=Mock(return_value=True))
 
         self.helper.stop()
         self.assertTrue(self.helper.thread.stop.called)
         self.assertTrue(self.helper.thread.join.called)
 
     def test_stop_thread_dead(self):
-        self.helper.thread = Mock(isAlive=Mock(return_value=False))
+        self.helper.thread = Mock(is_alive=Mock(return_value=False))
 
         self.helper.stop()
         self.assertFalse(self.helper.thread.stop.called)
