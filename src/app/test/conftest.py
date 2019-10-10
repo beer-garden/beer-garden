@@ -5,9 +5,6 @@ import pytest
 from mongoengine import connect
 
 import beer_garden
-from beer_garden.db.mongo.models import Instance
-from beer_garden.db.mongo.parser import MongoParser
-from test.db.mongo import brew2mongo
 
 pytest_plugins = ["brewtils.test.fixtures"]
 
@@ -32,56 +29,3 @@ def mongo_conn():
 def bad_id():
     """A bad mongo ID"""
     return "".join(["1" for _ in range(24)])
-
-
-# TODO - These should eventually not need to live outside the DB subsystem
-@pytest.fixture
-def mongo_system(bg_system):
-    return brew2mongo(bg_system)
-
-
-@pytest.fixture
-def mongo_instance(instance_dict, ts_dt):
-    """An instance as a model."""
-    dict_copy = copy.deepcopy(instance_dict)
-    dict_copy["status_info"]["heartbeat"] = ts_dt
-    return Instance(**dict_copy)
-
-
-@pytest.fixture
-def mongo_job(bg_job):
-    return brew2mongo(bg_job)
-
-
-@pytest.fixture
-def mongo_principal(principal_dict):
-    principal = principal_dict.copy()
-    del principal["permissions"]
-    return MongoParser().parse_principal(principal, False)
-
-
-@pytest.fixture
-def mongo_role(role_dict):
-    role = role_dict.copy()
-    role["roles"] = []
-    return MongoParser().parse_role(role, False)
-
-
-@pytest.fixture
-def mongo_bg_request(bg_request):
-    return brew2mongo(bg_request)
-
-
-@pytest.fixture
-def mongo_parent_request(parent_request):
-    return brew2mongo(parent_request)
-
-
-@pytest.fixture
-def mongo_child_request(child_request):
-    return brew2mongo(child_request)
-
-
-@pytest.fixture
-def mongo_request_template(bg_request_template):
-    return brew2mongo(bg_request_template)
