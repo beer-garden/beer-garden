@@ -17,11 +17,9 @@ class AdminAPI(BaseHandler):
 
           Currently the only operation supported is `rescan`:
           ```JSON
-          {
-            "operations": [
-              { "operation": "rescan" }
-            ]
-          }
+          [
+            { "operation": "rescan" }
+          ]
           ```
           * Will remove from the registry and database any currently stopped
             plugins who's directory has been removed.

@@ -84,11 +84,9 @@ class InstanceAPI(BaseHandler):
           * heartbeat
 
           ```JSON
-          {
-            "operations": [
-              { "operation": "" }
-            ]
-          }
+          [
+            { "operation": "" }
+          ]
           ```
         parameters:
           - name: bg-namespace

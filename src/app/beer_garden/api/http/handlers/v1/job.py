@@ -54,20 +54,12 @@ class JobAPI(BaseHandler):
 
           You can pause a job with:
           ```JSON
-          {
-            "operations": [
-              { "operation": "update", "path": "/status", "value": "PAUSED" }
-            ]
-          }
+          { "operation": "update", "path": "/status", "value": "PAUSED" }
           ```
 
           And resume it with:
           ```JSON
-          {
-            "operations": [
-                { "operation": "update", "path": "/status", "value": "RUNNING" }
-            ]
-          }
+          { "operation": "update", "path": "/status", "value": "RUNNING" }
           ```
         parameters:
           - name: bg-namespace

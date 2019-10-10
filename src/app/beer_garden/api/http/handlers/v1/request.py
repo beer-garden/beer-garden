@@ -53,11 +53,11 @@ class RequestAPI(BaseHandler):
           updates to apply. Currently the only operation supported is `replace`, with
           paths `/status`, `/output`, and `/error_class`:
           ```JSON
-          {
-            "operations": [
-              { "operation": "replace", "path": "/status", "value": "" }
-            ]
-          }
+          [
+            { "operation": "replace", "path": "/status", "value": "" },
+            { "operation": "replace", "path": "/output", "value": "" },
+            { "operation": "replace", "path": "/error_class", "value": "" }
+          ]
           ```
         parameters:
           - name: bg-namespace
