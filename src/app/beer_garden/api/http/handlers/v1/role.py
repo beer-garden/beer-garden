@@ -81,11 +81,9 @@ class RoleAPI(BaseHandler):
           The body of the request needs to contain a set of instructions
           detailing the updates to apply:
           ```JSON
-          {
-            "operations": [
-              { "operation": "add", "path": "/permissions", "value": "ALL" }
-            ]
-          }
+          [
+            { "operation": "add", "path": "/permissions", "value": "ALL" }
+          ]
           ```
         parameters:
           - name: role_id

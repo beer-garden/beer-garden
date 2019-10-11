@@ -96,16 +96,14 @@ class SystemAPI(BaseHandler):
           updates to apply.
           Currently supported operations are below:
           ```JSON
-          {
-            "operations": [
-              { "operation": "add", "path": "/instance", "value": "" },
-              { "operation": "replace", "path": "/commands", "value": "" },
-              { "operation": "replace", "path": "/description", "value": "new description"},
-              { "operation": "replace", "path": "/display_name", "value": "new display name"},
-              { "operation": "replace", "path": "/icon_name", "value": "new icon name"},
-              { "operation": "update", "path": "/metadata", "value": {"foo": "bar"}}
-            ]
-          }
+          [
+            { "operation": "add", "path": "/instance", "value": "" },
+            { "operation": "replace", "path": "/commands", "value": "" },
+            { "operation": "replace", "path": "/description", "value": "new description"},
+            { "operation": "replace", "path": "/display_name", "value": "new display name"},
+            { "operation": "replace", "path": "/icon_name", "value": "new icon name"},
+            { "operation": "update", "path": "/metadata", "value": {"foo": "bar"}}
+          ]
           ```
           Where `value` is a list of new Commands.
         parameters:

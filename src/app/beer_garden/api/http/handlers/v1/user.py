@@ -93,11 +93,9 @@ class UserAPI(BaseHandler):
           The body of the request needs to contain a set of instructions
           detailing the updates to apply:
           ```JSON
-          {
-            "operations": [
-              { "operation": "add", "path": "/roles", "value": "admin" }
-            ]
-          }
+          [
+            { "operation": "add", "path": "/roles", "value": "admin" }
+          ]
           ```
         parameters:
           - name: user_id

@@ -133,11 +133,9 @@ class TokenListAPI(BaseHandler):
           The body of the request needs to contain a set of instructions. Currently the
           only operation supported is `refresh`, with path `/payload`:
           ```JSON
-          {
-            "operations": [
-              { "operation": "refresh", "path": "/payload", "value": "REFRESH_ID" }
-            ]
-          }
+          [
+            { "operation": "refresh", "path": "/payload", "value": "REFRESH_ID" }
+          ]
           ```
           If you do not know your REFRESH_ID, it should be set in a cookie by the
           server. If you leave `value` as `null` and include this cookie, then we
