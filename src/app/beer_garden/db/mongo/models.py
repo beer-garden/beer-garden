@@ -71,14 +71,6 @@ class MongoModel(object):
     def __repr__(self):
         return self.brewtils_model.__repr__(self)
 
-    @classmethod
-    def from_brewtils(cls, model):
-        from beer_garden.db.mongo.parser import MongoParser
-
-        serialized = MongoParser.serialize(model, to_string=False)
-        mongo_model = MongoParser.parse(serialized, model, from_string=False)
-        return mongo_model
-
 
 # MongoEngine needs all EmbeddedDocuments to be defined before any Documents that
 # reference them. So Parameter must be defined before Command, and choices should be
@@ -516,8 +508,8 @@ class System(MongoModel, Document):
             self.instances = temp_instances
             self.save()
 
-        # Since we don't have actual transactions we are not in a good position here, try our
-        # best to 'roll back'
+        # Since we don't have actual transactions we are not in a good position here,
+        # so try our best to 'roll back'
         except Exception:
             self.commands = temp_commands
             self.instances = temp_instances
