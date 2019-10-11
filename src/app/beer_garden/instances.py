@@ -4,20 +4,37 @@ import random
 import string
 from datetime import datetime
 
+import brewtils.models
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events
+from brewtils.schema_parser import SchemaParser
 
 import beer_garden
 from beer_garden.db.mongo.fields import StatusInfo
 from beer_garden.db.mongo.models import Instance, System
+from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.events import publish_event
 from beer_garden.rabbitmq import get_routing_key, get_routing_keys
 
 logger = logging.getLogger(__name__)
 
 
-def get_instance(instance_id):
-    return Instance.objects.get(id=instance_id)
+def get_instance(instance_id: str) -> brewtils.models.Instance:
+    """Retrieve an individual Instance
+
+    Args:
+        instance_id: The Instance ID
+
+    Returns:
+        The Instance
+
+    """
+    return SchemaParser.parse_instance(
+        MongoParser.serialize_instance(
+            Instance.objects.get(id=instance_id), to_string=False
+        ),
+        from_string=False,
+    )
 
 
 @publish_event(Events.INSTANCE_INITIALIZED)
@@ -80,7 +97,9 @@ def initialize_instance(instance_id):
         ),
     )
 
-    return instance
+    return SchemaParser.parse_instance(
+        MongoParser.serialize_instance(instance, to_string=False), from_string=False
+    )
 
 
 def update_instance(instance_id, patch):
@@ -130,7 +149,9 @@ def start_instance(instance_id):
         beer_garden.application.plugin_registry.get_plugin_from_instance_id(instance.id)
     )
 
-    return instance
+    return SchemaParser.parse_instance(
+        MongoParser.serialize_instance(instance, to_string=False), from_string=False
+    )
 
 
 @publish_event(Events.INSTANCE_STOPPED)
@@ -164,7 +185,9 @@ def stop_instance(instance_id):
             ),
         )
 
-    return instance
+    return SchemaParser.parse_instance(
+        MongoParser.serialize_instance(instance, to_string=False), from_string=False
+    )
 
 
 def update_instance_status(instance_id, new_status):
@@ -184,7 +207,9 @@ def update_instance_status(instance_id, new_status):
     instance.status_info.heartbeat = datetime.utcnow()
     instance.save()
 
-    return instance
+    return SchemaParser.parse_instance(
+        MongoParser.serialize_instance(instance, to_string=False), from_string=False
+    )
 
 
 def remove_instance(instance_id):
