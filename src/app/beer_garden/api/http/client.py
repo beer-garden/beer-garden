@@ -21,6 +21,9 @@ class ExecutorClient(object):
             self.pool, partial(getattr(beer_garden.api, args[0]), *args[1:], **kwargs)
         )
 
+        if isinstance(result, list) and len(result) == 0:
+            return "[]"
+
         if (
             result is None
             or isinstance(result, (six.string_types, dict))
