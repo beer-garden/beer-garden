@@ -202,14 +202,14 @@ class BGJobStore(BaseJobStore):
 
 def get_job(job_id: str) -> brewtils.models.Job:
     return SchemaParser.parse_job(
-        SchemaParser.serialize_job(BGJob.objects.get(id=job_id), to_string=False),
+        MongoParser.serialize_job(BGJob.objects.get(id=job_id), to_string=False),
         from_string=False,
     )
 
 
 def get_jobs(filter_params: Dict = None) -> List[brewtils.models.Job]:
     return SchemaParser.parse_job(
-        SchemaParser.serialize_job(
+        MongoParser.serialize_job(
             BGJob.objects.filter(**filter_params or {}), to_string=False, many=True
         ),
         from_string=False,
@@ -252,7 +252,7 @@ def create_job(job: brewtils.models.Job) -> brewtils.models.Job:
         raise
 
     return SchemaParser.parse_job(
-        SchemaParser.serialize_job(job, to_string=False), from_string=False
+        MongoParser.serialize_job(job, to_string=False), from_string=False
     )
 
 
@@ -272,7 +272,7 @@ def pause_job(job_id: str) -> brewtils.models.Job:
     job.save()
 
     return SchemaParser.parse_job(
-        SchemaParser.serialize_job(job, to_string=False), from_string=False
+        MongoParser.serialize_job(job, to_string=False), from_string=False
     )
 
 
@@ -292,7 +292,7 @@ def resume_job(job_id: str) -> brewtils.models.Job:
     job.save()
 
     return SchemaParser.parse_job(
-        SchemaParser.serialize_job(job, to_string=False), from_string=False
+        MongoParser.serialize_job(job, to_string=False), from_string=False
     )
 
 

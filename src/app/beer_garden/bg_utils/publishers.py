@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from brewtils.schema_parser import SchemaParser
+
 from .event_publisher import EventPublisher
 from beer_garden.db.mongo.parser import MongoParser
 
@@ -80,5 +82,5 @@ class MongoPublisher(EventPublisher):
 
     def _event_serialize(self, event, **kwargs):
         return MongoParser.parse_event(
-            MongoParser.serialize_event(event, to_string=False)
+            SchemaParser.serialize_event(event, to_string=False)
         )

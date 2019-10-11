@@ -33,9 +33,7 @@ def get_system(system_id: str) -> brewtils.models.System:
 
     """
     return SchemaParser.parse_system(
-        SchemaParser.serialize_system(
-            System.objects.get(id=system_id), to_string=False
-        ),
+        MongoParser.serialize_system(System.objects.get(id=system_id), to_string=False),
         from_string=False,
     )
 
@@ -78,7 +76,7 @@ def get_systems(
     filtered = query_set.filter(**(filter_params or {}))
 
     return SchemaParser.parse_system(
-        SchemaParser.serialize_system(filtered, to_string=False, many=True),
+        MongoParser.serialize_system(filtered, to_string=False, many=True),
         from_string=False,
         many=True,
     )

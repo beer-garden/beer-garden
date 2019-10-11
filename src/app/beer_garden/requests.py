@@ -664,7 +664,7 @@ def get_requests(
     result = [r for r in query_set[start : start + length]]
 
     return {
-        "requests": SchemaParser.serialize_request(
+        "requests": MongoParser.serialize_request(
             result, only=requested_fields, many=True
         ),
         "length": len(result),
@@ -691,7 +691,7 @@ def process_request(
 
     """
     request = MongoParser.parse_request(
-        MongoParser.serialize_request(new_request, to_string=False), from_string=False
+        SchemaParser.serialize_request(new_request, to_string=False), from_string=False
     )
 
     # Validates the request based on what is in the database.
@@ -804,7 +804,7 @@ def start_request(request: brewtils.models.Request) -> brewtils.models.Request:
 
     """
     request = MongoParser.parse_request(
-        MongoParser.serialize_request(request, to_string=False), from_string=False
+        SchemaParser.serialize_request(request, to_string=False), from_string=False
     )
 
     if request.status in Request.COMPLETED_STATUSES:
@@ -817,7 +817,7 @@ def start_request(request: brewtils.models.Request) -> brewtils.models.Request:
     request_started(request)
 
     return SchemaParser.parse_request(
-        SchemaParser.serialize_request(request, to_string=False), from_string=False
+        MongoParser.serialize_request(request, to_string=False), from_string=False
     )
 
 
@@ -844,7 +844,7 @@ def complete_request(
 
     """
     request = MongoParser.parse_request(
-        MongoParser.serialize_request(request, to_string=False), from_string=False
+        SchemaParser.serialize_request(request, to_string=False), from_string=False
     )
 
     if request.status in Request.COMPLETED_STATUSES:
@@ -864,7 +864,7 @@ def complete_request(
     request_completed(request)
 
     return SchemaParser.parse_request(
-        SchemaParser.serialize_request(request, to_string=False), from_string=False
+        MongoParser.serialize_request(request, to_string=False), from_string=False
     )
 
 
@@ -882,7 +882,7 @@ def cancel_request(request: brewtils.models.Request) -> brewtils.models.Request:
 
     """
     request = MongoParser.parse_request(
-        MongoParser.serialize_request(request, to_string=False), from_string=False
+        SchemaParser.serialize_request(request, to_string=False), from_string=False
     )
 
     if request.status in Request.COMPLETED_STATUSES:
@@ -894,5 +894,5 @@ def cancel_request(request: brewtils.models.Request) -> brewtils.models.Request:
     # TODO - Metrics here?
 
     return SchemaParser.parse_request(
-        SchemaParser.serialize_request(request, to_string=False), from_string=False
+        MongoParser.serialize_request(request, to_string=False), from_string=False
     )

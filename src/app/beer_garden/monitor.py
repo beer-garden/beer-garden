@@ -2,9 +2,10 @@
 import logging
 from datetime import datetime, timedelta
 
+from brewtils.models import Request
 from brewtils.stoppable_thread import StoppableThread
 
-from beer_garden.db.mongo.models import Instance, Request
+from beer_garden.db.mongo.models import Instance
 
 
 class PluginStatusMonitor(StoppableThread):

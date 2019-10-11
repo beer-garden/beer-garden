@@ -5,6 +5,7 @@ import brewtils.models
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.db.mongo.models import Command
+from beer_garden.db.mongo.parser import MongoParser
 
 
 def get_command(command_id: str) -> brewtils.models.Command:
@@ -18,7 +19,7 @@ def get_command(command_id: str) -> brewtils.models.Command:
 
     """
     return SchemaParser.parse_command(
-        SchemaParser.serialize_command(
+        MongoParser.serialize_command(
             Command.objects.get(id=command_id), to_string=False
         ),
         from_string=False,
@@ -33,7 +34,7 @@ def get_commands() -> List[brewtils.models.Command]:
 
     """
     return SchemaParser.parse_command(
-        SchemaParser.serialize_command(
+        MongoParser.serialize_command(
             Command.objects.all(), to_string=False, many=True
         ),
         from_string=False,
