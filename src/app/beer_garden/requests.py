@@ -170,10 +170,10 @@ class RequestValidator(object):
             command = self.get_and_validate_command_for_system(request)
 
         if command_parameters is None:
-            command_parameters = command.parameters
+            command_parameters = command.parameters or []
 
         if request_parameters is None:
-            request_parameters = request.parameters
+            request_parameters = request.parameters or {}
 
         self._validate_no_extra_request_parameter_keys(
             request_parameters, command_parameters
