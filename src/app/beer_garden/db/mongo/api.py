@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-from typing import List, NewType, Union
+from typing import List, NewType, Optional, Union
 
 import brewtils.models
 from brewtils.models import BaseModel
 from brewtils.schema_parser import SchemaParser
+from mongoengine import DoesNotExist
 
 import beer_garden.db.mongo.models
 from beer_garden.db.mongo.models import MongoModel
@@ -12,6 +13,7 @@ from beer_garden.db.mongo.parser import MongoParser
 BrewtilsModel = NewType("BrewtilsModel", BaseModel)
 
 mongo_map = {
+    brewtils.models.Instance: beer_garden.db.mongo.models.Instance,
     brewtils.models.Request: beer_garden.db.mongo.models.Request,
     brewtils.models.System: beer_garden.db.mongo.models.System,
 }
@@ -62,10 +64,16 @@ def query(model_class: BaseModel, **kwargs) -> List[BrewtilsModel]:
     return [] if len(query_set) == 0 else to_brewtils(query_set)
 
 
-def query_unique(model_class: BaseModel, **kwargs) -> BrewtilsModel:
-    query_set = mongo_map[model_class].objects.get(**kwargs)
+def query_unique(model_class: BaseModel, **kwargs) -> Optional[BrewtilsModel]:
+    try:
+        for k, v in kwargs.items():
+            if isinstance(v, BaseModel):
+                kwargs[k] = from_brewtils(v)
 
-    return to_brewtils(query_set)
+        query_set = mongo_map[model_class].objects.get(**kwargs)
+        return to_brewtils(query_set)
+    except DoesNotExist:
+        return None
 
 
 def create(obj: BrewtilsModel) -> BrewtilsModel:
