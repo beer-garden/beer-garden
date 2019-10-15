@@ -7,18 +7,16 @@ from functools import reduce
 from threading import Event
 from typing import Dict, Sequence, Union
 
-import brewtils.models
 import six
 import urllib3
 from brewtils.choices import parse
 from brewtils.errors import ModelValidationError, RequestPublishException, ConflictError
-from brewtils.models import Events
-from brewtils.schema_parser import SchemaParser
+from brewtils.models import Choices, Events, Request, System
 from mongoengine import Q
 from requests import Session
 
 import beer_garden
-from beer_garden.db.mongo.models import Choices, Request, System
+from beer_garden.db.mongo.api import delete, query, query_unique, create, reload, update
 from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.events import publish_event
 from beer_garden.metrics import request_created, request_started, request_completed
@@ -77,7 +75,9 @@ class RequestValidator(object):
         :return: The system corresponding to this Request
         :raises ModelValidationError: There is no system that corresponds to this Request
         """
-        system = System.find_unique(request.system, request.system_version)
+        system = query_unique(
+            System, name=request.system, version=request.system_version
+        )
         if system is None:
             raise ModelValidationError(
                 "Could not find System named '%s' matching version '%s'"
@@ -514,7 +514,7 @@ class RequestValidator(object):
             )
 
 
-def get_request(request_id: str) -> brewtils.models.Request:
+def get_request(request_id: str) -> Request:
     """Retrieve an individual Request
 
     Args:
@@ -524,12 +524,10 @@ def get_request(request_id: str) -> brewtils.models.Request:
         The Request
 
     """
-    request = Request.objects.get(id=request_id)
-    request.children = Request.objects(parent=request)
+    request = query_unique(Request, id=request_id)
+    request.children = query(Request, filter_params={"parent": request})
 
-    return SchemaParser.parse_request(
-        MongoParser.serialize_request(request, to_string=False), from_string=False
-    )
+    return request
 
 
 def get_requests(
@@ -564,7 +562,9 @@ def get_requests(
     overall_search = None
     hint = []
 
-    query_set = Request.objects
+    import beer_garden.db.mongo.models
+
+    query_set = beer_garden.db.mongo.models.Request.objects
 
     if columns:
         query_columns = []
@@ -658,7 +658,7 @@ def get_requests(
 
         # Sanity check - if index is 'bad' just let mongo deal with it
         index_name = "_".join(real_hint)
-        if index_name in Request.index_names():
+        if index_name in beer_garden.db.mongo.models.Request.index_names():
             query_set = query_set.hint(index_name)
 
     result = [r for r in query_set[start : start + length]]
@@ -669,14 +669,12 @@ def get_requests(
         ),
         "length": len(result),
         "filtered_count": query_set.count(),  # This is another query
-        "total_count": Request.objects.count(),
+        "total_count": beer_garden.db.mongo.models.Request.objects.count(),
     }
 
 
 @publish_event(Events.REQUEST_CREATED)
-def process_request(
-    new_request: brewtils.models.Request, wait_timeout: float = -1
-) -> brewtils.models.Request:
+def process_request(new_request: Request, wait_timeout: float = -1) -> Request:
     """Validates and publishes a Request.
 
     Args:
@@ -690,9 +688,7 @@ def process_request(
         The processed Request
 
     """
-    request = MongoParser.parse_request(
-        SchemaParser.serialize_request(new_request, to_string=False), from_string=False
-    )
+    request = new_request
 
     # Validates the request based on what is in the database.
     # This includes the validation of the request parameters,
@@ -700,20 +696,19 @@ def process_request(
     request = beer_garden.application.request_validator.validate_request(request)
 
     # Once validated we need to save since validate can modify the request
-    request.save()
-    request_id = str(request.id)
+    request = create(request)
 
     if wait_timeout != 0:
-        request_map[request_id] = Event()
+        request_map[request.id] = Event()
 
     try:
-        logger.info(f"Publishing request {request_id}")
+        logger.info(f"Publishing request {request.id}")
         beer_garden.application.clients["pika"].publish_request(
             request, confirm=True, mandatory=True
         )
     except Exception as ex:
         # An error publishing means this request will never complete, so remove it
-        request.delete()
+        delete(request)
 
         raise RequestPublishException(
             f"Error while publishing request {request.id} to queue "
@@ -729,20 +724,18 @@ def process_request(
             wait_timeout = None
 
         try:
-            completed = request_map[request_id].wait(timeout=wait_timeout)
+            completed = request_map[request.id].wait(timeout=wait_timeout)
             if not completed:
-                raise TimeoutError(f"Timeout exceeded for request {request_id}")
+                raise TimeoutError(f"Timeout exceeded for request {request.id}")
 
-            request.reload()
+            request = reload(request)
         finally:
-            request_map.pop(request_id, None)
+            request_map.pop(request.id, None)
 
-    return SchemaParser.parse_request(
-        MongoParser.serialize_request(new_request, to_string=False), from_string=False
-    )
+    return request
 
 
-def update_request(request_id: str, patch: Dict) -> brewtils.models.Request:
+def update_request(request_id: str, patch: Dict) -> Request:
     """Update a Request
 
     Args:
@@ -760,12 +753,7 @@ def update_request(request_id: str, patch: Dict) -> brewtils.models.Request:
     output = None
     error_class = None
 
-    request = SchemaParser.parse_request(
-        MongoParser.serialize_request(
-            Request.objects.get(id=request_id), to_string=False
-        ),
-        from_string=False,
-    )
+    request = query_unique(Request, id=request_id)
 
     for op in patch:
         if op.operation == "replace":
@@ -790,7 +778,7 @@ def update_request(request_id: str, patch: Dict) -> brewtils.models.Request:
 
 
 @publish_event(Events.REQUEST_STARTED)
-def start_request(request: brewtils.models.Request) -> brewtils.models.Request:
+def start_request(request: Request) -> Request:
     """Mark a Request as IN PROGRESS
 
     Args:
@@ -803,31 +791,22 @@ def start_request(request: brewtils.models.Request) -> brewtils.models.Request:
         ModelValidationError: The Request is already completed
 
     """
-    request = MongoParser.parse_request(
-        SchemaParser.serialize_request(request, to_string=False), from_string=False
-    )
-
     if request.status in Request.COMPLETED_STATUSES:
         raise ModelValidationError("Cannot update a completed request")
 
     request.status = "IN_PROGRESS"
-    request.save()
+    request = update(request)
 
     # Metrics
     request_started(request)
 
-    return SchemaParser.parse_request(
-        MongoParser.serialize_request(request, to_string=False), from_string=False
-    )
+    return request
 
 
 @publish_event(Events.REQUEST_COMPLETED)
 def complete_request(
-    request: brewtils.models.Request,
-    status: str,
-    output: str = None,
-    error_class: str = None,
-) -> brewtils.models.Request:
+    request: Request, status: str, output: str = None, error_class: str = None
+) -> Request:
     """Mark a Request as completed
 
     Args:
@@ -843,19 +822,14 @@ def complete_request(
         ModelValidationError: The Request is already completed
 
     """
-    request = MongoParser.parse_request(
-        SchemaParser.serialize_request(request, to_string=False), from_string=False
-    )
-
     if request.status in Request.COMPLETED_STATUSES:
         raise ModelValidationError("Cannot update a completed request")
 
-    # Completing should always have a status
     request.status = status
-
     request.output = output
     request.error_class = error_class
-    request.save()
+
+    request = update(request)
 
     if str(request.id) in request_map:
         request_map[str(request.id)].set()
@@ -863,12 +837,10 @@ def complete_request(
     # Metrics
     request_completed(request)
 
-    return SchemaParser.parse_request(
-        MongoParser.serialize_request(request, to_string=False), from_string=False
-    )
+    return request
 
 
-def cancel_request(request: brewtils.models.Request) -> brewtils.models.Request:
+def cancel_request(request: Request) -> Request:
     """Mark a Request as CANCELED
 
     Args:
@@ -881,18 +853,12 @@ def cancel_request(request: brewtils.models.Request) -> brewtils.models.Request:
         ModelValidationError: The Request is already completed
 
     """
-    request = MongoParser.parse_request(
-        SchemaParser.serialize_request(request, to_string=False), from_string=False
-    )
-
     if request.status in Request.COMPLETED_STATUSES:
         raise ModelValidationError("Cannot cancel a completed request")
 
     request.status = "CANCELED"
-    request.save()
+    request = update(request)
 
     # TODO - Metrics here?
 
-    return SchemaParser.parse_request(
-        MongoParser.serialize_request(request, to_string=False), from_string=False
-    )
+    return request

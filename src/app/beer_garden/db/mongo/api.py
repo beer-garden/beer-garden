@@ -51,9 +51,15 @@ def query(model_class: BaseModel, **kwargs) -> List[BrewtilsModel]:
     if not kwargs.get("dereference_nested", True):
         query_set = query_set.no_dereference()
 
-    filtered = query_set.filter(**(kwargs.get("filter_params", {})))
+    if kwargs.get("filter_params"):
+        filter_params = kwargs["filter_params"]
 
-    return [] if len(filtered) == 0 else to_brewtils(filtered)
+        if "parent" in filter_params:
+            filter_params["parent"] = from_brewtils(filter_params["parent"])
+
+        query_set = query_set.filter(**(kwargs.get("filter_params", {})))
+
+    return [] if len(query_set) == 0 else to_brewtils(query_set)
 
 
 def query_unique(model_class: BaseModel, **kwargs) -> BrewtilsModel:
