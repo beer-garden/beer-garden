@@ -3,10 +3,11 @@ import sys
 import textwrap
 
 import pytest
+from brewtils.models import System
 from mock import Mock
 
-from beer_garden.db.mongo.models import System
 from beer_garden.local_plugins.loader import LocalPluginLoader
+from beer_garden.systems import create_system
 
 
 @pytest.fixture
@@ -148,7 +149,9 @@ class TestValidatePluginRequirements(object):
 class TestLoadPlugin(object):
     @pytest.fixture(autouse=True)
     def drop_systems(self, mongo_conn):
-        System.drop_collection()
+        import beer_garden.db.mongo.models
+
+        beer_garden.db.mongo.models.System.drop_collection()
 
     def test_new(self, loader, registry, plugin_1):
         plugin_runners = loader.load_plugin(str(plugin_1))
@@ -159,7 +162,7 @@ class TestLoadPlugin(object):
 
     def test_existing(self, loader, registry, plugin_1):
         system_id = "58542eb571afd47ead90face"
-        System(id=system_id, name="foo", version="1.0").save()
+        create_system(System(id=system_id, name="foo", version="1.0"))
 
         plugin_runners = loader.load_plugin(str(plugin_1))
 

@@ -6,8 +6,10 @@ from os import listdir
 from os.path import isfile, join, abspath
 from typing import List
 
+from brewtils.models import Instance, System
+
+from beer_garden.db.mongo.api import query_unique
 import beer_garden.config
-from beer_garden.db.mongo.models import Instance, System
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
 from beer_garden.systems import create_system
 
@@ -115,35 +117,37 @@ class LocalPluginLoader(object):
 
         plugin_config = self._load_plugin_config(join(plugin_path, "beer.conf"))
 
-        plugin_name = plugin_config["NAME"]
-        plugin_version = plugin_config["VERSION"]
-        plugin_entry = plugin_config["PLUGIN_ENTRY"]
-        plugin_instances = plugin_config["INSTANCES"]
-        plugin_args = plugin_config["PLUGIN_ARGS"]
+        config_name = plugin_config["NAME"]
+        config_version = plugin_config["VERSION"]
+        config_entry = plugin_config["PLUGIN_ENTRY"]
+        config_instances = plugin_config["INSTANCES"]
+        config_args = plugin_config["PLUGIN_ARGS"]
 
-        # If this system already exists we need to do some stuff
         plugin_id = None
         plugin_commands = []
-        # TODO: replace this with a call from beer_garden.systems
-        plugin_system = System.find_unique(plugin_name, plugin_version)
+        plugin_instances = [Instance(name=name) for name in config_instances]
 
+        # If this system already exists we need to do some stuff
+        plugin_system = query_unique(System, name=config_name, version=config_version)
         if plugin_system:
             # Carry these over to the new system
             plugin_id = plugin_system.id
             plugin_commands = plugin_system.commands
 
-            # Remove the current instances so they aren't left dangling
-            # TODO: Find a way to carry over instances that aren't changing
-            plugin_system.delete_instances()
+            for instance in plugin_instances:
+                existing_instance = plugin_system.get_instance(instance.name)
+                if existing_instance:
+                    instance.id = existing_instance.id
+
+            # TODO - Remove dangling instances
+            # plugin_system.delete_instances()
 
         plugin_system = System(
             id=plugin_id,
-            name=plugin_name,
-            version=plugin_version,
+            name=config_name,
+            version=config_version,
             commands=plugin_commands,
-            instances=[
-                Instance(name=instance_name) for instance_name in plugin_instances
-            ],
+            instances=plugin_instances,
             max_instances=len(plugin_instances),
             description=plugin_config.get("DESCRIPTION"),
             icon_name=plugin_config.get("ICON_NAME"),
@@ -154,17 +158,17 @@ class LocalPluginLoader(object):
         create_system(plugin_system)
 
         plugin_list = []
-        for instance_name in plugin_instances:
+        for instance in plugin_instances:
             # TODO - Local plugin runner shouldn't require HTTP entry point
             plugin = LocalPluginRunner(
-                plugin_entry,
+                config_entry,
                 plugin_system,
-                instance_name,
+                instance.name,
                 abspath(plugin_path),
                 beer_garden.config.get("entry.http.host"),
                 beer_garden.config.get("entry.http.port"),
                 ssl_enabled=beer_garden.config.get("entry.http.ssl.enabled"),
-                plugin_args=plugin_args.get(instance_name),
+                plugin_args=config_args.get(instance.name),
                 environment=plugin_config["ENVIRONMENT"],
                 requirements=plugin_config["REQUIRES"],
                 plugin_log_directory=self._plugin_log_directory,
