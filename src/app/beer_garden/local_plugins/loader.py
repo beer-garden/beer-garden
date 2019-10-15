@@ -6,6 +6,7 @@ from os import listdir
 from os.path import isfile, join, abspath
 from typing import List
 
+import beer_garden.config
 from beer_garden.db.mongo.models import Instance, System
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
 from beer_garden.systems import create_system
@@ -112,13 +113,13 @@ class LocalPluginLoader(object):
             )
             return False
 
-        config = self._load_plugin_config(join(plugin_path, "beer.conf"))
+        plugin_config = self._load_plugin_config(join(plugin_path, "beer.conf"))
 
-        plugin_name = config["NAME"]
-        plugin_version = config["VERSION"]
-        plugin_entry = config["PLUGIN_ENTRY"]
-        plugin_instances = config["INSTANCES"]
-        plugin_args = config["PLUGIN_ARGS"]
+        plugin_name = plugin_config["NAME"]
+        plugin_version = plugin_config["VERSION"]
+        plugin_entry = plugin_config["PLUGIN_ENTRY"]
+        plugin_instances = plugin_config["INSTANCES"]
+        plugin_args = plugin_config["PLUGIN_ARGS"]
 
         # If this system already exists we need to do some stuff
         plugin_id = None
@@ -144,32 +145,35 @@ class LocalPluginLoader(object):
                 Instance(name=instance_name) for instance_name in plugin_instances
             ],
             max_instances=len(plugin_instances),
-            description=config.get("DESCRIPTION"),
-            icon_name=config.get("ICON_NAME"),
-            display_name=config.get("DISPLAY_NAME"),
-            metadata=config.get("METADATA"),
+            description=plugin_config.get("DESCRIPTION"),
+            icon_name=plugin_config.get("ICON_NAME"),
+            display_name=plugin_config.get("DISPLAY_NAME"),
+            metadata=plugin_config.get("METADATA"),
         )
 
         create_system(plugin_system)
 
         plugin_list = []
         for instance_name in plugin_instances:
+            # TODO - Local plugin runner shouldn't require HTTP entry point
             plugin = LocalPluginRunner(
                 plugin_entry,
                 plugin_system,
                 instance_name,
                 abspath(plugin_path),
-                "localhost",
-                9090,
-                ssl_enabled=False,
+                beer_garden.config.get("entry.http.host"),
+                beer_garden.config.get("entry.http.port"),
+                ssl_enabled=beer_garden.config.get("entry.http.ssl.enabled"),
                 plugin_args=plugin_args.get(instance_name),
-                environment=config["ENVIRONMENT"],
-                requirements=config["REQUIRES"],
+                environment=plugin_config["ENVIRONMENT"],
+                requirements=plugin_config["REQUIRES"],
                 plugin_log_directory=self._plugin_log_directory,
-                connection_type="thrift",
+                url_prefix=beer_garden.config.get("entry.http.url_prefix"),
+                ca_verify=False,
+                ca_cert=beer_garden.config.get("entry.http.ssl.ca_cert"),
                 username=self._username,
                 password=self._password,
-                log_level=config["LOG_LEVEL"],
+                log_level=plugin_config["LOG_LEVEL"],
             )
 
             self.registry.register_plugin(plugin)
