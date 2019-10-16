@@ -35,4 +35,8 @@ class ExecutorClient(object):
             return result
 
         # HTTP handlers overwhelmingly just write the response, so just serialize here
+        serialize_kwargs = serialize_kwargs or {}
+        if "to_string" not in serialize_kwargs:
+            serialize_kwargs["to_string"] = True
+
         return SchemaParser.serialize(result, **(serialize_kwargs or {}))
