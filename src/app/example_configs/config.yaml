@@ -62,7 +62,7 @@ entry:
       enabled: false
       private_key: null
       public_key: null
-    url_prefix: null
+    url_prefix: /
   thrift:
     enable: false
 event:
@@ -77,7 +77,7 @@ event:
     host: localhost
     port: 2337
     ssl_enabled: false
-    url_prefix: null
+    url_prefix: /
   mongo:
     enable: true
 log:
