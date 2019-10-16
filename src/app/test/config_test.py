@@ -38,6 +38,32 @@ class TestLoadConfig(object):
         beer_garden.config.load(["-c", str(config_file)], force=True)
         assert beer_garden.config.get("log.level") == "DEBUG"
 
+    # These are pretty much identical to the brewtils tests for normalize prefix
+    @pytest.mark.parametrize(
+        "normalized,initial",
+        [
+            ("/", "/"),
+            ("/example/", "example"),
+            ("/example/", "/example"),
+            ("/example/", "example/"),
+            ("/example/", "/example/"),
+            ("/beer/garden/", "beer/garden"),
+            ("/beer/garden/", "/beer/garden"),
+            ("/beer/garden/", "/beer/garden/"),
+        ],
+    )
+    def test_normalize_url_prefix(self, normalized, initial):
+        cli_args = [
+            "--entry-http-url-prefix",
+            initial,
+            "--event-brew_view-url-prefix",
+            initial,
+        ]
+        beer_garden.config.load(cli_args, force=True)
+
+        assert beer_garden.config.get("entry.http.url_prefix") == normalized
+        assert beer_garden.config.get("event.brew_view.url_prefix") == normalized
+
 
 class TestGenerateConfig(object):
     def test_correctness(self, tmpdir):
