@@ -17,7 +17,7 @@ class TestLoadConfig(object):
     def test_no_config_file(self):
         beer_garden.config.load([], force=True)
         spec = YapconfSpec(beer_garden.config._SPECIFICATION)
-        assert beer_garden.config._CONFIG == spec.defaults
+        assert beer_garden.config._CONFIG.to_dict() == spec.defaults
 
     @pytest.mark.parametrize(
         "extension,contents",
