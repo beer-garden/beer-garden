@@ -1,7 +1,5 @@
 import logging
 
-from brewtils import normalize_url_prefix
-
 import beer_garden.api.http
 from beer_garden.api.http.base_handler import BaseHandler
 
@@ -24,7 +22,7 @@ class ConfigHandler(BaseHandler):
             "application_name": app_config.name,
             "icon_default": app_config.icon_default,
             "debug_mode": app_config.debug_mode,
-            "url_prefix": normalize_url_prefix(http_config.url_prefix),
+            "url_prefix": http_config.url_prefix,
             "metrics_url": metrics_config.prometheus.url,
             "auth_enabled": auth_config.enabled,
             "guest_login_enabled": auth_config.guest_login_enabled,
@@ -54,9 +52,13 @@ class VersionHandler(BaseHandler):
 
 class SwaggerConfigHandler(BaseHandler):
     def get(self):
-        prefix = normalize_url_prefix(beer_garden.config.get("entry.http.url_prefix"))
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write({"url": f"{prefix}api/v1/spec", "validatorUrl": None})
+        self.write(
+            {
+                "url": f"{beer_garden.config.get('entry.http.url_prefix')}api/v1/spec",
+                "validatorUrl": None,
+            }
+        )
 
 
 class SpecHandler(BaseHandler):
