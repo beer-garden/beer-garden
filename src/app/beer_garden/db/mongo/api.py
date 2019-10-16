@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import List, NewType, Optional, Union
+from typing import Generic, List, NewType, Optional, Type, Union
 
 import brewtils.models
 from brewtils.models import BaseModel
@@ -10,7 +10,18 @@ import beer_garden.db.mongo.models
 from beer_garden.db.mongo.models import MongoModel
 from beer_garden.db.mongo.parser import MongoParser
 
-BrewtilsModel = NewType("BrewtilsModel", BaseModel)
+ModelType = Union[
+    Type[brewtils.models.Instance],
+    Type[brewtils.models.Request],
+    Type[brewtils.models.System],
+]
+
+ModelItem = Union[
+    brewtils.models.Instance,
+    brewtils.models.Request,
+    brewtils.models.System,
+]
+
 
 mongo_map = {
     brewtils.models.Instance: beer_garden.db.mongo.models.Instance,
@@ -19,7 +30,7 @@ mongo_map = {
 }
 
 
-def from_brewtils(obj: BrewtilsModel) -> MongoModel:
+def from_brewtils(obj: ModelItem) -> MongoModel:
     model_dict = SchemaParser.serialize(obj, to_string=False)
     mongo_obj = MongoParser.parse(model_dict, type(obj), from_string=False)
     return mongo_obj
@@ -27,7 +38,7 @@ def from_brewtils(obj: BrewtilsModel) -> MongoModel:
 
 def to_brewtils(
     obj: Union[MongoModel, List[MongoModel]]
-) -> Union[BrewtilsModel, List[BrewtilsModel]]:
+) -> Union[ModelItem, List[ModelItem]]:
     if obj is None or (isinstance(obj, list) and len(obj) == 0):
         return obj
 
@@ -38,7 +49,7 @@ def to_brewtils(
     return SchemaParser.parse(serialized, model_class, from_string=False, many=many)
 
 
-def query(model_class: BaseModel, **kwargs) -> List[BrewtilsModel]:
+def query(model_class: ModelType, **kwargs) -> List[ModelItem]:
     query_set = mongo_map[model_class].objects
 
     if kwargs.get("order_by"):
@@ -64,7 +75,7 @@ def query(model_class: BaseModel, **kwargs) -> List[BrewtilsModel]:
     return [] if len(query_set) == 0 else to_brewtils(query_set)
 
 
-def query_unique(model_class: BaseModel, **kwargs) -> Optional[BrewtilsModel]:
+def query_unique(model_class: ModelType, **kwargs) -> Optional[ModelItem]:
     try:
         for k, v in kwargs.items():
             if isinstance(v, BaseModel):
@@ -76,7 +87,7 @@ def query_unique(model_class: BaseModel, **kwargs) -> Optional[BrewtilsModel]:
         return None
 
 
-def create(obj: BrewtilsModel) -> BrewtilsModel:
+def create(obj: ModelItem) -> ModelItem:
     mongo_obj = from_brewtils(obj)
 
     if hasattr(mongo_obj, "deep_save"):
@@ -87,11 +98,11 @@ def create(obj: BrewtilsModel) -> BrewtilsModel:
     return to_brewtils(mongo_obj)
 
 
-def update(obj: BrewtilsModel) -> BrewtilsModel:
+def update(obj: ModelItem) -> ModelItem:
     return create(obj)
 
 
-def delete(obj: BrewtilsModel) -> None:
+def delete(obj: ModelItem) -> None:
     mongo_obj = from_brewtils(obj)
 
     if hasattr(mongo_obj, "deep_delete"):
@@ -100,7 +111,7 @@ def delete(obj: BrewtilsModel) -> None:
         mongo_obj.delete()
 
 
-def reload(obj: BrewtilsModel) -> BrewtilsModel:
+def reload(obj: ModelItem) -> ModelItem:
     existing_obj = mongo_map[type(obj)].objects.get(id=obj.id)
 
     return to_brewtils(existing_obj)
