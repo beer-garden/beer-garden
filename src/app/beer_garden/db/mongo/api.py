@@ -11,12 +11,14 @@ from beer_garden.db.mongo.models import MongoModel
 from beer_garden.db.mongo.parser import MongoParser
 
 ModelType = Union[
+    Type[brewtils.models.Command],
     Type[brewtils.models.Instance],
     Type[brewtils.models.Request],
     Type[brewtils.models.System],
 ]
 
 ModelItem = Union[
+    brewtils.models.Command,
     brewtils.models.Instance,
     brewtils.models.Request,
     brewtils.models.System,
@@ -24,6 +26,7 @@ ModelItem = Union[
 
 
 mongo_map = {
+    brewtils.models.Command: beer_garden.db.mongo.models.Command,
     brewtils.models.Instance: beer_garden.db.mongo.models.Instance,
     brewtils.models.Request: beer_garden.db.mongo.models.Request,
     brewtils.models.System: beer_garden.db.mongo.models.System,

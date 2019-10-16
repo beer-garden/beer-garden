@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 from typing import List
 
-import brewtils.models
-from brewtils.schema_parser import SchemaParser
+from brewtils.models import Command
 
-from beer_garden.db.mongo.models import Command
-from beer_garden.db.mongo.parser import MongoParser
+from beer_garden.db.mongo.api import query_unique, query
 
 
-def get_command(command_id: str) -> brewtils.models.Command:
+def get_command(command_id: str) -> Command:
     """Retrieve an individual Command
 
     Args:
@@ -18,25 +16,14 @@ def get_command(command_id: str) -> brewtils.models.Command:
         The Command
 
     """
-    return SchemaParser.parse_command(
-        MongoParser.serialize_command(
-            Command.objects.get(id=command_id), to_string=False
-        ),
-        from_string=False,
-    )
+    return query_unique(Command, id=command_id)
 
 
-def get_commands() -> List[brewtils.models.Command]:
+def get_commands() -> List[Command]:
     """Retrieve all Commands
 
     Returns:
         The Commands
 
     """
-    return SchemaParser.parse_command(
-        MongoParser.serialize_command(
-            Command.objects.all(), to_string=False, many=True
-        ),
-        from_string=False,
-        many=True,
-    )
+    return query(Command)
