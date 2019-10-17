@@ -3,64 +3,59 @@ import logging
 
 from apscheduler.job import Job as APJob
 from apscheduler.jobstores.base import BaseJobStore
+from apscheduler.triggers.base import BaseTrigger
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
-from mongoengine import DoesNotExist
+from brewtils.models import Job
 from pytz import utc
 
-from beer_garden.db.mongo.api import to_brewtils
-from beer_garden.db.mongo.models import Job as BGJob
+from beer_garden.db.mongo.api import delete, query, query_unique, update
+from beer_garden.db.mongo.models import Job as MongoJob
 from beer_garden.scheduler import IntervalTrigger
 
 logger = logging.getLogger(__name__)
 
 
-def construct_trigger(trigger_type, bg_trigger):
-    """Construct an apscheduler trigger based on type and mongo document."""
-    trigger_type = trigger_type
-    trigger_kwargs = bg_trigger.get_scheduler_kwargs()
-
+def construct_trigger(trigger_type: str, bg_trigger) -> BaseTrigger:
+    """Convert a Beergarden trigger to an APScheduler one."""
     if trigger_type == "date":
-        return DateTrigger(**trigger_kwargs)
+        return DateTrigger(**bg_trigger.scheduler_kwargs)
     elif trigger_type == "interval":
-        return IntervalTrigger(**trigger_kwargs)
+        return IntervalTrigger(**bg_trigger.scheduler_kwargs)
     elif trigger_type == "cron":
-        return CronTrigger(**trigger_kwargs)
+        return CronTrigger(**bg_trigger.scheduler_kwargs)
     else:
         raise ValueError("Invalid trigger type %s" % trigger_type)
 
 
-def db_to_scheduler(document, scheduler, alias="beer_garden"):
-    """Convert a database job to a scheduler's job."""
-    job = APJob.__new__(APJob)
-    job._scheduler = scheduler
-    job._jobstore_alias = alias
+def construct_job(job: Job, scheduler, alias="beer_garden"):
+    """Convert a Beergarden job to an APScheduler one."""
+    if job is None:
+        return None
 
-    if document.next_run_time:
-        next_run_time = utc.localize(document.next_run_time)
-    else:
-        next_run_time = None
+    trigger = construct_trigger(job.trigger_type, job.trigger)
+    next_run_time = utc.localize(job.next_run_time) if job.next_run_time else None
 
-    job.__setstate__(
+    ap_job = APJob.__new__(APJob)
+    ap_job._scheduler = scheduler
+    ap_job._jobstore_alias = alias
+    ap_job.__setstate__(
         {
-            "id": document.id,
+            "id": job.id,
             "func": "beer_garden.scheduler:run_job",
-            "trigger": construct_trigger(document.trigger_type, document.trigger),
+            "trigger": trigger,
             "executor": "default",
             "args": (),
-            "kwargs": {
-                "request_template": to_brewtils(document.request_template),
-                "job_id": str(document.id),
-            },
-            "name": document.name,
-            "misfire_grace_time": document.misfire_grace_time,
-            "coalesce": document.coalesce,
-            "max_instances": document.max_instances,
+            "kwargs": {"request_template": job.request_template, "job_id": job.id},
+            "name": job.name,
+            "misfire_grace_time": job.misfire_grace_time,
+            "coalesce": job.coalesce,
+            "max_instances": job.max_instances,
             "next_run_time": next_run_time,
         }
     )
 
-    return job
+    return ap_job
 
 
 class MongoJobStore(BaseJobStore):
@@ -73,11 +68,7 @@ class MongoJobStore(BaseJobStore):
         Returns:
             An apscheduler job or None.
         """
-        try:
-            document = BGJob.objects.get(id=job_id)
-            return db_to_scheduler(document, self._scheduler, self._alias)
-        except DoesNotExist:
-            return None
+        return construct_job(query_unique(Job, id=job_id), self._scheduler, self._alias)
 
     def get_due_jobs(self, now):
         """Find due jobs and convert them to apscheduler jobs."""
@@ -85,70 +76,64 @@ class MongoJobStore(BaseJobStore):
 
     def get_next_run_time(self):
         """Get the next run time as a localized datetime."""
-        try:
-            document = (
-                BGJob.objects(next_run_time__ne=None)
-                .order_by("next_run_time")
-                .fields(next_run_time=1)
-                .first()
-            )
+        jobs = query(
+            Job,
+            filter_params={"next_run_time__ne": None},
+            include_fields=["next_run_time"],
+            order_by="next_run_time",
+        )
 
-            if document:
-                return utc.localize(document.next_run_time)
-        except DoesNotExist:
-            return None
+        return None if not jobs else utc.localize(jobs[0].next_run_time)
 
     def get_all_jobs(self):
         """Get all jobs in apscheduler speak."""
-        return self._get_jobs({})
+        return self._get_jobs()
 
-    def add_job(self, job):
+    def add_job(self, job: APJob) -> None:
         """Just updates the next_run_time.
 
         Notes:
-
-            The jobstore only needs to update the object that has already
-            been saved to the database. It is slightly tricky to generate
-            the ``next_run_time`` on the apscheduler job, so we just let
-            the scheduler do it for us. After that, we update our job's
-            next_run_time to be whatever the scheduler set.
+            The jobstore only needs to update the object that has already been saved to
+            the database. It is slightly tricky to generate the ``next_run_time`` on the
+             apscheduler job, so we just let the scheduler do it for us. After that, we
+             update our job's next_run_time to be whatever the scheduler set.
 
         Args:
             job: The job from the scheduler
         """
-        document = BGJob.objects.get(id=job.id)
-        document.next_run_time = job.next_run_time
-        document.save()
+        db_job = query_unique(Job, id=job.id)
+        db_job.next_run_time = job.next_run_time
+        update(db_job)
 
-    def update_job(self, job):
+    def update_job(self, job: APJob) -> None:
         """Update the next_run_time for the job."""
-        document = BGJob.objects.get(id=job.id)
-        document.next_run_time = job.next_run_time
-        document.save()
+        db_job = query_unique(Job, id=job.id)
+        db_job.next_run_time = job.next_run_time
+        update(db_job)
 
     def remove_job(self, job_id):
         """Remove job with the given ID."""
-        BGJob.objects.get(id=job_id).delete()
+        delete(query_unique(Job, id=job_id))
 
     def remove_all_jobs(self):
         """Remove all jobs."""
-        BGJob.objects.delete()
+        MongoJob.objects.delete()
 
-    def _get_jobs(self, conditions):
+    def _get_jobs(self, conditions=None):
         jobs = []
         failed_jobs = []
-        for document in BGJob.objects(**conditions).order_by("next_run_time"):
+
+        for job in query(Job, filter_params=conditions, order_by="next_run_time"):
             try:
-                jobs.append(db_to_scheduler(document, self._scheduler, self._alias))
-            except Exception:
+                jobs.append(construct_job(job, self._scheduler, self._alias))
+            except Exception as ex:
+                failed_jobs.append(job)
                 logger.exception(
-                    "Removing job %s, exception occurred while restoring:" % document.id
+                    f"Exception while restoring job {job.id}, about to remove: {ex}"
                 )
-                failed_jobs.append(document)
 
         # Remove all the jobs we failed to restore
-        if failed_jobs:
-            for document in failed_jobs:
-                document.delete()
+        for job in failed_jobs:
+            delete(job)
 
         return jobs
