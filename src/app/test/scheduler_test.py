@@ -7,6 +7,7 @@ from apscheduler.job import Job as APJob
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.base import BaseScheduler
 from apscheduler.triggers.date import DateTrigger
+from brewtils.test.comparable import assert_request_template_equal
 from mock import Mock
 from mock import patch
 from pytz import utc
@@ -116,7 +117,7 @@ class TestJobStore(object):
         mongo_job.save()
         assert len(jobstore.get_all_jobs()) == 1
 
-    def test_lookup_job_state(self, jobstore, mongo_job):
+    def test_lookup_job_state(self, jobstore, mongo_job, bg_request_template):
         mongo_job.save()
         apjob = jobstore.lookup_job(str(mongo_job.id))
         assert isinstance(apjob, APJob)
@@ -125,15 +126,15 @@ class TestJobStore(object):
         assert state["func"] == "beer_garden.scheduler:run_job"
         assert state["executor"] == "default"
         assert state["args"] == ()
-        assert state["kwargs"] == {
-            "request_template": mongo_job.request_template,
-            "job_id": str(mongo_job.id),
-        }
         assert state["name"] == mongo_job.name
         assert state["misfire_grace_time"] == mongo_job.misfire_grace_time
         assert state["coalesce"] == mongo_job.coalesce
         assert state["max_instances"] == 3
         assert state["next_run_time"] == utc.localize(mongo_job.next_run_time)
+        assert state["kwargs"]["job_id"] == str(mongo_job.id)
+        assert_request_template_equal(
+            state["kwargs"]["request_template"], bg_request_template
+        )
 
         assert isinstance(state["trigger"], DateTrigger)
 

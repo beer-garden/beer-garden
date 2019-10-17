@@ -2,19 +2,25 @@
 import logging
 from typing import List, Dict
 
-import brewtils.models
 from apscheduler.job import Job as APJob
 from apscheduler.jobstores.base import BaseJobStore
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
-from brewtils.schema_parser import SchemaParser
+from brewtils.models import Job, Request
 from mongoengine import DoesNotExist
 from pytz import utc
 
 import beer_garden
-from beer_garden.db.mongo.models import Job as BGJob, Request
-from beer_garden.db.mongo.parser import MongoParser
+from beer_garden.db.mongo.api import (
+    query_unique,
+    query,
+    create,
+    delete,
+    update,
+    to_brewtils,
+)
+from beer_garden.db.mongo.models import Job as BGJob
 from beer_garden.requests import process_request
 
 logger = logging.getLogger(__name__)
@@ -45,29 +51,33 @@ def construct_trigger(trigger_type, bg_trigger):
 def db_to_scheduler(document, scheduler, alias="beer_garden"):
     """Convert a database job to a scheduler's job."""
     job = APJob.__new__(APJob)
+    job._scheduler = scheduler
+    job._jobstore_alias = alias
+
     if document.next_run_time:
         next_run_time = utc.localize(document.next_run_time)
     else:
         next_run_time = None
-    state = {
-        "id": document.id,
-        "func": "beer_garden.scheduler:run_job",
-        "trigger": construct_trigger(document.trigger_type, document.trigger),
-        "executor": "default",
-        "args": (),
-        "kwargs": {
-            "request_template": document.request_template,
-            "job_id": str(document.id),
-        },
-        "name": document.name,
-        "misfire_grace_time": document.misfire_grace_time,
-        "coalesce": document.coalesce,
-        "max_instances": document.max_instances,
-        "next_run_time": next_run_time,
-    }
-    job.__setstate__(state)
-    job._scheduler = scheduler
-    job._jobstore_alias = alias
+
+    job.__setstate__(
+        {
+            "id": document.id,
+            "func": "beer_garden.scheduler:run_job",
+            "trigger": construct_trigger(document.trigger_type, document.trigger),
+            "executor": "default",
+            "args": (),
+            "kwargs": {
+                "request_template": to_brewtils(document.request_template),
+                "job_id": str(document.id),
+            },
+            "name": document.name,
+            "misfire_grace_time": document.misfire_grace_time,
+            "coalesce": document.coalesce,
+            "max_instances": document.max_instances,
+            "next_run_time": next_run_time,
+        }
+    )
+
     return job
 
 
@@ -80,20 +90,19 @@ def run_job(job_id, request_template):
         job_id: The Beer-Garden job ID that triggered this event.
         request_template: Request template specified by the job.
     """
-    request = Request(**request_template.to_mongo())
-    request.metadata["_bg_job_id"] = job_id
+    request_template.metadata["_bg_job_id"] = job_id
 
     # TODO - Possibly allow specifying blocking timeout on the job definition
     # Want to wait for completion here
-    process_request(request, wait_timeout=-1)
+    request = process_request(request_template, wait_timeout=-1)
 
     try:
-        document = BGJob.objects.get(id=job_id)
+        db_job = query_unique(Job, id=job_id)
         if request.status == "ERROR":
-            document.error_count += 1
+            db_job.error_count += 1
         elif request.status == "SUCCESS":
-            document.success_count += 1
-        document.save()
+            db_job.success_count += 1
+        update(db_job)
     except Exception as ex:
         logger.exception(f"Could not update job counts: {ex}")
 
@@ -200,24 +209,15 @@ class BGJobStore(BaseJobStore):
         return jobs
 
 
-def get_job(job_id: str) -> brewtils.models.Job:
-    return SchemaParser.parse_job(
-        MongoParser.serialize_job(BGJob.objects.get(id=job_id), to_string=False),
-        from_string=False,
-    )
+def get_job(job_id: str) -> Job:
+    return query_unique(Job, id=job_id)
 
 
-def get_jobs(filter_params: Dict = None) -> List[brewtils.models.Job]:
-    return SchemaParser.parse_job(
-        MongoParser.serialize_job(
-            BGJob.objects.filter(**filter_params or {}), to_string=False, many=True
-        ),
-        from_string=False,
-        many=True,
-    )
+def get_jobs(filter_params: Dict = None) -> List[Job]:
+    return query(Job, filter_params=filter_params)
 
 
-def create_job(job: brewtils.models.Job) -> brewtils.models.Job:
+def create_job(job: Job) -> Job:
     """Create a new Job and add it to the scheduler
 
     Args:
@@ -226,13 +226,8 @@ def create_job(job: brewtils.models.Job) -> brewtils.models.Job:
     Returns:
         The added Job
     """
-    job = MongoParser.parse_job(
-        SchemaParser.serialize_job(job, to_string=False), from_string=False
-    )
-
-    # We have to save here, because we need an ID to pass
-    # to the scheduler.
-    job.save()
+    # Save first so we have an ID to pass to the scheduler
+    job = create(job)
 
     try:
         beer_garden.application.scheduler.add_job(
@@ -248,15 +243,13 @@ def create_job(job: brewtils.models.Job) -> brewtils.models.Job:
             id=str(job.id),
         )
     except Exception:
-        job.delete()
+        delete(job)
         raise
 
-    return SchemaParser.parse_job(
-        MongoParser.serialize_job(job, to_string=False), from_string=False
-    )
+    return job
 
 
-def pause_job(job_id: str) -> brewtils.models.Job:
+def pause_job(job_id: str) -> Job:
     """Pause a Job
 
     Args:
@@ -267,16 +260,14 @@ def pause_job(job_id: str) -> brewtils.models.Job:
     """
     beer_garden.application.scheduler.pause_job(job_id, jobstore="beer_garden")
 
-    job = BGJob.objects.get(id=job_id)
+    job = query_unique(Job, id=job_id)
     job.status = "PAUSED"
-    job.save()
+    job = update(job)
 
-    return SchemaParser.parse_job(
-        MongoParser.serialize_job(job, to_string=False), from_string=False
-    )
+    return job
 
 
-def resume_job(job_id: str) -> brewtils.models.Job:
+def resume_job(job_id: str) -> Job:
     """Resume a Job
 
     Args:
@@ -287,13 +278,11 @@ def resume_job(job_id: str) -> brewtils.models.Job:
     """
     beer_garden.application.scheduler.resume_job(job_id, jobstore="beer_garden")
 
-    job = BGJob.objects.get(id=job_id)
+    job = query_unique(Job, id=job_id)
     job.status = "RUNNING"
-    job.save()
+    job = update(job)
 
-    return SchemaParser.parse_job(
-        MongoParser.serialize_job(job, to_string=False), from_string=False
-    )
+    return job
 
 
 def remove_job(job_id: str) -> None:
@@ -305,6 +294,5 @@ def remove_job(job_id: str) -> None:
     Returns:
         None
     """
-    # TODO - Should this be removing the Job from the DB?
-
+    # The scheduler takes care of removing the Job from the database
     beer_garden.application.scheduler.remove_job(job_id, jobstore="beer_garden")
