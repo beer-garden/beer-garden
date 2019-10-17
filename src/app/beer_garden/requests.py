@@ -11,7 +11,7 @@ import six
 import urllib3
 from brewtils.choices import parse
 from brewtils.errors import ModelValidationError, RequestPublishException, ConflictError
-from brewtils.models import Choices, Events, Request, System
+from brewtils.models import Choices, Events, Request, System, RequestTemplate
 from mongoengine import Q
 from requests import Session
 
@@ -674,7 +674,9 @@ def get_requests(
 
 
 @publish_event(Events.REQUEST_CREATED)
-def process_request(new_request: Request, wait_timeout: float = -1) -> Request:
+def process_request(
+    new_request: Union[Request, RequestTemplate], wait_timeout: float = -1
+) -> Request:
     """Validates and publishes a Request.
 
     Args:
@@ -688,7 +690,15 @@ def process_request(new_request: Request, wait_timeout: float = -1) -> Request:
         The processed Request
 
     """
-    request = new_request
+    if type(new_request) == Request:
+        request = new_request
+    elif type(new_request) == RequestTemplate:
+        request = Request.from_template(new_request)
+    else:
+        raise TypeError(
+            f"new_request type is {type(new_request)}, expected "
+            f"brewtils.models.Request or brewtils.models.RequestTemplate,"
+        )
 
     # Validates the request based on what is in the database.
     # This includes the validation of the request parameters,
