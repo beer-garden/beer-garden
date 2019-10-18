@@ -16,7 +16,7 @@ from mongoengine import Q
 from requests import Session
 
 import beer_garden
-from beer_garden.db.mongo.api import delete, query, query_unique, create, reload, update
+from beer_garden.db.api import delete, query, query_unique, create, reload, update
 from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.events import publish_event
 from beer_garden.metrics import request_created, request_started, request_completed

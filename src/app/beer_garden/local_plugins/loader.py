@@ -8,7 +8,7 @@ from typing import List
 
 from brewtils.models import Instance, System
 
-from beer_garden.db.mongo.api import query_unique
+from beer_garden.db.api import query_unique
 import beer_garden.config
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
 from beer_garden.systems import create_system

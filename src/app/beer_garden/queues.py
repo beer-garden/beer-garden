@@ -6,7 +6,7 @@ from brewtils.models import Events, Queue, System
 from pyrabbit2.http import HTTPError
 
 import beer_garden
-from beer_garden.db.mongo.api import query
+from beer_garden.db.api import query
 from beer_garden.events import publish_event
 from beer_garden.rabbitmq import get_routing_key
 

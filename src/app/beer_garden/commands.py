@@ -3,7 +3,7 @@ from typing import List
 
 from brewtils.models import Command
 
-from beer_garden.db.mongo.api import query_unique, query
+from beer_garden.db.api import query_unique, query
 
 
 def get_command(command_id: str) -> Command:

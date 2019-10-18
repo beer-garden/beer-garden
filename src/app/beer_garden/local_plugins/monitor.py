@@ -4,7 +4,7 @@ import logging
 from brewtils.models import Instance
 from brewtils.stoppable_thread import StoppableThread
 
-from beer_garden.db.mongo.api import query_unique, update
+from beer_garden.db.api import query_unique, update
 
 
 class LocalPluginMonitor(StoppableThread):

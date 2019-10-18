@@ -6,7 +6,7 @@ from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from brewtils.models import Job
 
 import beer_garden
-from beer_garden.db.mongo.api import create, delete, query, query_unique, update
+from beer_garden.db.api import create, delete, query, query_unique, update
 from beer_garden.requests import process_request
 
 logger = logging.getLogger(__name__)

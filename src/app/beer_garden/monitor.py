@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from brewtils.models import Instance, Request
 from brewtils.stoppable_thread import StoppableThread
 
-from beer_garden.db.mongo.api import query, update
+from beer_garden.db.api import query, update
 
 
 class PluginStatusMonitor(StoppableThread):

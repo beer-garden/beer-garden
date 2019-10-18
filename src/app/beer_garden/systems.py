@@ -8,7 +8,7 @@ from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema
 
 import beer_garden
-from beer_garden.db.mongo.api import delete, query, query_unique, create, reload, update
+from beer_garden.db.api import delete, query, query_unique, create, reload, update
 from beer_garden.events import publish_event
 from beer_garden.rabbitmq import get_routing_key
 
