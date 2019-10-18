@@ -36,8 +36,8 @@ def pika_client():
 
 
 @pytest.fixture
-def plugin(bg_system):
-    return Mock(
+def plugin(monkeypatch, bg_system):
+    plug = Mock(
         system=bg_system,
         unique_name="unique_name",
         path_to_plugin="path/name-0.0.1",
@@ -48,50 +48,17 @@ def plugin(bg_system):
         status="RUNNING",
     )
 
+    monkeypatch.setattr(beer_garden.local_plugins.manager, "update", Mock())
+    monkeypatch.setattr(
+        beer_garden.local_plugins.manager, "query_unique", Mock(return_value=plug)
+    )
+
+    return plug
+
 
 @pytest.fixture
 def manager(loader, validator, registry, pika_client):
     return LocalPluginsManager(loader, validator, registry, {"pika": pika_client}, 1)
-
-
-# class TestLocalPluginsManager(object):
-# def setUp(self):
-#     beer_garden.config = Box(default_box=True)
-#
-#     self.fake_plugin_loader = Mock()
-#     self.fake_plugin_validator = Mock()
-#     self.clients = MagicMock()
-#
-#     self.instance_mock = Mock(status="RUNNING")
-#     type(self.instance_mock).name = PropertyMock(return_value="default")
-#     self.system_mock = Mock(version="1.0.0", instances=[self.instance_mock])
-#     type(self.system_mock).name = PropertyMock(return_value="system_name")
-#
-#     self.fake_plugin = Mock(
-#         system=self.system_mock,
-#         unique_name="unique_name",
-#         path_to_plugin="path/name-0.0.1",
-#         requirements=[],
-#         entry_point="main.py",
-#         plugin_args=[],
-#         instance_name="default",
-#         status="RUNNING",
-#     )
-#
-#     self.registry = Mock(
-#         get_plugin=Mock(return_value=self.fake_plugin),
-#         get_unique_plugin_names=Mock(return_value=["system_name"]),
-#         get_all_plugins=Mock(return_value=[self.fake_plugin]),
-#         get_plugins_by_system=Mock(return_value=[self.fake_plugin]),
-#     )
-#
-#     self.manager = LocalPluginsManager(
-#         self.fake_plugin_loader,
-#         self.fake_plugin_validator,
-#         self.registry,
-#         self.clients,
-#         shutdown_timeout=10,
-#     )
 
 
 class TestStartPlugin(object):
@@ -124,9 +91,9 @@ class TestStartPlugin(object):
 
         assert manager.start_plugin(plugin) is True
 
+        assert plugin.status == "STARTING"
         assert plugin.start.called is False
         assert new_plugin.start.called is True
-        assert new_plugin.status == "STARTING"
 
         registry.remove.assert_called_once_with(plugin.unique_name)
         registry.register_plugin.assert_called_once_with(new_plugin)
@@ -330,9 +297,9 @@ class TestStartMultiple(object):
 
 
 def test_get_all_system_names(monkeypatch, manager, bg_system):
-    system_mock = Mock()
-    system_mock.objects.return_value = [bg_system]
-    monkeypatch.setattr(beer_garden.local_plugins.manager, "System", system_mock)
+    monkeypatch.setattr(
+        beer_garden.local_plugins.manager, "query", Mock(return_value=[bg_system])
+    )
 
     assert manager._get_all_system_names() == [bg_system.name]
 
@@ -425,9 +392,11 @@ class TestScanPluginPath(object):
 def test_mark_as_failed(monkeypatch, manager, plugin, bg_instance):
     bg_system_mock = Mock(instances=[bg_instance])
 
-    system_mock = Mock()
-    system_mock.find_unique.return_value = bg_system_mock
-    monkeypatch.setattr(beer_garden.local_plugins.manager, "System", system_mock)
+    monkeypatch.setattr(
+        beer_garden.local_plugins.manager,
+        "query_unique",
+        Mock(return_value=bg_system_mock),
+    )
 
     manager._mark_as_failed(plugin)
     assert bg_instance.status == "DEAD"
@@ -437,9 +406,9 @@ class TestGetFailedSystemNames(object):
     def test_one_failed(self, monkeypatch, manager, bg_system):
         bg_system.instances[0].status = "DEAD"
 
-        system_mock = Mock()
-        system_mock.objects.return_value = [bg_system]
-        monkeypatch.setattr(beer_garden.local_plugins.manager, "System", system_mock)
+        monkeypatch.setattr(
+            beer_garden.local_plugins.manager, "query", Mock(return_value=[bg_system])
+        )
 
         assert manager._get_failed_system_names() == [bg_system.name]
 
@@ -447,8 +416,8 @@ class TestGetFailedSystemNames(object):
         # Add one dead instance to system with one running one
         bg_system.instances.append(Instance(status="DEAD"))
 
-        system_mock = Mock()
-        system_mock.objects.return_value = [bg_system]
-        monkeypatch.setattr(beer_garden.local_plugins.manager, "System", system_mock)
+        monkeypatch.setattr(
+            beer_garden.local_plugins.manager, "query", Mock(return_value=[bg_system])
+        )
 
         assert manager._get_failed_system_names() == []
