@@ -2,10 +2,10 @@
 import logging
 from datetime import datetime, timedelta
 
-from brewtils.models import Request
+from brewtils.models import Instance, Request
 from brewtils.stoppable_thread import StoppableThread
 
-from beer_garden.db.mongo.models import Instance
+from beer_garden.db.mongo.api import query, update
 
 
 class PluginStatusMonitor(StoppableThread):
@@ -45,7 +45,7 @@ class PluginStatusMonitor(StoppableThread):
     def check_status(self):
         """Update instance status if necessary"""
 
-        for instance in Instance.objects:
+        for instance in query(Instance):
             if self.stopped():
                 break
 
@@ -57,11 +57,11 @@ class PluginStatusMonitor(StoppableThread):
                     and datetime.utcnow() - last_heartbeat >= self.timeout
                 ):
                     instance.status = "UNRESPONSIVE"
-                    instance.save()
+                    update(instance)
                 elif (
                     instance.status
                     in ["UNRESPONSIVE", "STARTING", "INITIALIZING", "UNKNOWN"]
                     and datetime.utcnow() - last_heartbeat < self.timeout
                 ):
                     instance.status = "RUNNING"
-                    instance.save()
+                    update(instance)

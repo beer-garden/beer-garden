@@ -1,102 +1,110 @@
-import datetime
-import unittest
+# -*- coding: utf-8 -*-
+import pytest
+from mock import Mock, patch
 
-from mock import MagicMock, Mock, patch
-
+import beer_garden.monitor
 from beer_garden.monitor import PluginStatusMonitor
 
 
+@pytest.fixture
+def pika_client():
+    return Mock()
+
+
+@pytest.fixture
+def monitor(pika_client):
+    return PluginStatusMonitor({"pika": pika_client})
+
+
 @patch("time.sleep", Mock())
-class PluginStatusMonitorTest(unittest.TestCase):
-    def setUp(self):
-        instance_patcher = patch("beer_garden.monitor.Instance")
-        self.addCleanup(instance_patcher.stop)
-        self.instance_patch = instance_patcher.start()
-        self.instance_patch.objects = []
+class TestPluginStatusMonitor(object):
+    def test_run_stopped(self, monkeypatch, monitor):
+        check_mock = Mock()
+        request_mock = Mock()
+        monkeypatch.setattr(monitor, "check_status", check_mock)
+        monkeypatch.setattr(monitor, "request_status", request_mock)
 
-        self.clients = MagicMock()
-        self.monitor = PluginStatusMonitor(self.clients)
+        stop_mock = Mock(wait=Mock(return_value=True))
+        monkeypatch.setattr(monitor, "_stop_event", stop_mock)
 
-    @patch("beer_garden.monitor.PluginStatusMonitor.request_status")
-    @patch("beer_garden.monitor.PluginStatusMonitor.check_status")
-    def test_run_stopped(self, check_mock, request_mock):
-        self.monitor._stop_event = Mock(wait=Mock(return_value=True))
-        self.monitor.run()
-        self.assertFalse(request_mock.called)
-        self.assertFalse(check_mock.called)
+        monitor.run()
 
-    @patch("beer_garden.monitor.PluginStatusMonitor.request_status")
-    @patch("beer_garden.monitor.PluginStatusMonitor.check_status")
-    def test_run(self, check_mock, request_mock):
-        self.monitor._stop_event = Mock(wait=Mock(side_effect=[False, True]))
-        self.monitor.run()
-        self.assertEqual(request_mock.call_count, 1)
-        self.assertEqual(check_mock.call_count, 1)
+        assert check_mock.called is False
+        assert request_mock.called is False
 
-    def test_request_status(self):
-        self.monitor.request_status()
-        expiration = str(self.monitor.heartbeat_interval * 1000)
-        self.clients["pika"].publish_request.assert_called_once_with(
-            self.monitor.status_request, routing_key="admin", expiration=expiration
+    def test_run(self, monkeypatch, monitor):
+        check_mock = Mock()
+        request_mock = Mock()
+        monkeypatch.setattr(monitor, "check_status", check_mock)
+        monkeypatch.setattr(monitor, "request_status", request_mock)
+
+        stop_mock = Mock(wait=Mock(side_effect=[False, True]))
+        monkeypatch.setattr(monitor, "_stop_event", stop_mock)
+
+        monitor.run()
+
+        assert check_mock.called is True
+        assert request_mock.called is True
+
+    def test_request_status(self, monitor, pika_client):
+        monitor.request_status()
+        expiration = str(monitor.heartbeat_interval * 1000)
+
+        pika_client.publish_request.assert_called_once_with(
+            monitor.status_request, routing_key="admin", expiration=expiration
         )
 
-    def test_request_status_exception(self):
-        self.clients["pika"].publish_request.side_effect = IOError
-        self.monitor.request_status()
-        expiration = str(self.monitor.heartbeat_interval * 1000)
-        self.clients["pika"].publish_request.assert_called_once_with(
-            self.monitor.status_request, routing_key="admin", expiration=expiration
+    def test_request_status_exception(self, monitor, pika_client):
+        pika_client.publish_request.side_effect = IOError
+
+        monitor.request_status()
+        expiration = str(monitor.heartbeat_interval * 1000)
+        pika_client.publish_request.assert_called_once_with(
+            monitor.status_request, routing_key="admin", expiration=expiration
         )
 
-    @patch("beer_garden.monitor.PluginStatusMonitor.stopped")
-    def test_check_status_empty(self, stopped_mock):
-        self.monitor.check_status()
-        self.assertFalse(stopped_mock.called)
+    def test_break_on_stop(self, monkeypatch, monitor, bg_instance):
+        stopped_mock = Mock(return_value=True)
+        monkeypatch.setattr(monitor, "stopped", stopped_mock)
 
-    @patch("beer_garden.monitor.PluginStatusMonitor.stopped")
-    def test_check_status_break_on_stop(self, stopped_mock):
-        stopped_mock.return_value = True
-        instance_mock = Mock(
-            status="RUNNING", status_info={"heartbeat": datetime.datetime(2017, 1, 1)}
+        monkeypatch.setattr(
+            beer_garden.monitor, "query", Mock(return_value=[bg_instance])
         )
-        self.instance_patch.objects = [instance_mock]
 
-        self.monitor.check_status()
-        self.assertTrue(stopped_mock.called)
+        monitor.check_status()
+        assert stopped_mock.called is True
 
-    @patch(
-        "beer_garden.monitor.PluginStatusMonitor.stopped",
-        Mock(side_effect=[False, True]),
-    )
-    @patch(
-        "beer_garden.monitor.datetime",
-        Mock(utcnow=Mock(return_value=datetime.datetime(2017, 1, 1, second=45))),
-    )
-    def test_check_status_mark_as_unresponsive(self):
-        instance_mock = Mock(
-            status="RUNNING", status_info={"heartbeat": datetime.datetime(2017, 1, 1)}
+    def test_mark_as_unresponsive(self, monkeypatch, monitor, bg_instance):
+        stopped_mock = Mock(side_effect=[False, True])
+        monkeypatch.setattr(monitor, "stopped", stopped_mock)
+
+        update_mock = Mock()
+        monkeypatch.setattr(beer_garden.monitor, "update", update_mock)
+
+        monkeypatch.setattr(
+            beer_garden.monitor, "query", Mock(return_value=[bg_instance])
         )
-        self.instance_patch.objects = [instance_mock]
 
-        self.monitor.check_status()
-        self.assertEqual("UNRESPONSIVE", instance_mock.status)
-        self.assertTrue(instance_mock.save.called)
+        monitor.check_status()
+        assert bg_instance.status == "UNRESPONSIVE"
+        assert update_mock.called is True
 
-    @patch(
-        "beer_garden.monitor.PluginStatusMonitor.stopped",
-        Mock(side_effect=[False, True]),
-    )
-    @patch(
-        "beer_garden.monitor.datetime",
-        Mock(utcnow=Mock(return_value=datetime.datetime(2017, 1, 1))),
-    )
-    def test_check_status_mark_as_running(self):
-        instance_mock = Mock(
-            status="UNRESPONSIVE",
-            status_info={"heartbeat": datetime.datetime(2017, 1, 1)},
+    def test_mark_as_running(self, monkeypatch, monitor, bg_instance, ts_dt):
+        stopped_mock = Mock(side_effect=[False, True])
+        monkeypatch.setattr(monitor, "stopped", stopped_mock)
+
+        update_mock = Mock()
+        monkeypatch.setattr(beer_garden.monitor, "update", update_mock)
+
+        bg_instance.status = "UNRESPONSIVE"
+        monkeypatch.setattr(
+            beer_garden.monitor, "query", Mock(return_value=[bg_instance])
         )
-        self.instance_patch.objects = [instance_mock]
 
-        self.monitor.check_status()
-        self.assertEqual("RUNNING", instance_mock.status)
-        self.assertTrue(instance_mock.save.called)
+        monkeypatch.setattr(
+            beer_garden.monitor, "datetime", Mock(utcnow=Mock(return_value=ts_dt))
+        )
+
+        monitor.check_status()
+        assert bg_instance.status == "RUNNING"
+        assert update_mock.called is True
