@@ -152,7 +152,7 @@ class LocalPluginsManager(object):
                 system_version,
             )
             self.logger.error(message)
-            raise Exception(message)
+            raise Exception(message)  # TODO - Should not be raising Exception
 
         path_to_plugin = plugins[0].path_to_plugin
 
