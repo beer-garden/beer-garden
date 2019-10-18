@@ -442,38 +442,6 @@ class LocalPluginsManagerTest(unittest.TestCase):
         )
         start_mock.assert_called_once_with([self.fake_plugin])
 
-    def test_pause_plugin_none(self):
-        self.registry.get_plugin = Mock(return_value=None)
-        self.manager.logger = Mock()
-        self.manager.pause_plugin("unique_name")
-        self.assertEqual(self.manager.logger.warning.call_count, 1)
-
-    def test_pause_plugin_not_running(self):
-        self.fake_plugin.status = "STOPPED"
-        self.manager.pause_plugin("unique_name")
-        self.assertEqual(self.fake_plugin.status, "STOPPED")
-
-    def test_pause_plugin_running(self):
-        self.fake_plugin.status = "RUNNING"
-        self.manager.pause_plugin("unique_name")
-        self.assertEqual(self.fake_plugin.status, "PAUSED")
-
-    def test_unpause_plugin_none(self):
-        self.registry.get_plugin = Mock(return_value=None)
-        self.manager.logger = Mock()
-        self.manager.unpause_plugin("unique_name")
-        self.assertTrue(self.manager.logger.warning.called)
-
-    def test_unpause_plugin_not_paused(self):
-        self.fake_plugin.status = "RUNNING"
-        self.manager.unpause_plugin("unique_name")
-        self.assertEqual(self.fake_plugin.status, "RUNNING")
-
-    def test_unpause_plugin_paused(self):
-        self.fake_plugin.status = "PAUSED"
-        self.manager.unpause_plugin("unique_name")
-        self.assertEqual(self.fake_plugin.status, "RUNNING")
-
     @patch("beer_garden.local_plugins.manager.System.find_unique")
     def test_mark_as_failed(self, find_system_mock):
         find_system_mock.return_value = self.system_mock
