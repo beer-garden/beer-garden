@@ -9,9 +9,10 @@ logger = logging.getLogger(__name__)
 class ConfigHandler(BaseHandler):
     async def get(self):
         """Subset of configuration options that the frontend needs"""
-
         local_namespace = await self.client.get_local_namespace()
-        remote_namespaces = await self.client.get_remote_namespaces()
+        remote_namespaces = await self.client.get_remote_namespaces(
+            serialize_kwargs={"to_string": False}
+        )
 
         app_config = beer_garden.config.get("application")
         http_config = beer_garden.config.get("entry.http")

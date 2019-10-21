@@ -32,11 +32,23 @@ class ExecutorClient(object):
         if isinstance(result, six.string_types):
             return result
 
-        if (
-            result is None
-            or isinstance(result, dict)
-            or (isinstance(result, list) and not isinstance(result[0], BaseModel))
-        ):
+        if self.json_dump(result):
             return json.dumps(result) if serialize_kwargs["to_string"] else result
 
         return SchemaParser.serialize(result, **(serialize_kwargs or {}))
+
+    @staticmethod
+    def json_dump(result) -> bool:
+        """Determine whether to just json dump the result"""
+        if result is None:
+            return True
+
+        if isinstance(result, dict):
+            return True
+
+        if isinstance(result, list) and (
+            len(result) == 0 or not isinstance(result[0], BaseModel)
+        ):
+            return True
+
+        return False
