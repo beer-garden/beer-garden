@@ -58,6 +58,27 @@ def to_brewtils(
     return SchemaParser.parse(serialized, model_class, from_string=False, many=many)
 
 
+def count(model_class: ModelType, **kwargs) -> int:
+    for k, v in kwargs.items():
+        if isinstance(v, BaseModel):
+            kwargs[k] = from_brewtils(v)
+
+    query_set = mongo_map[model_class].objects(**kwargs)
+    return query_set.count()
+
+
+def query_unique(model_class: ModelType, **kwargs) -> Optional[ModelItem]:
+    try:
+        for k, v in kwargs.items():
+            if isinstance(v, BaseModel):
+                kwargs[k] = from_brewtils(v)
+
+        query_set = mongo_map[model_class].objects.get(**kwargs)
+        return to_brewtils(query_set)
+    except DoesNotExist:
+        return None
+
+
 def query(model_class: ModelType, **kwargs) -> List[ModelItem]:
     query_set = mongo_map[model_class].objects
 
@@ -82,18 +103,6 @@ def query(model_class: ModelType, **kwargs) -> List[ModelItem]:
         query_set = query_set.filter(**(kwargs.get("filter_params", {})))
 
     return [] if len(query_set) == 0 else to_brewtils(query_set)
-
-
-def query_unique(model_class: ModelType, **kwargs) -> Optional[ModelItem]:
-    try:
-        for k, v in kwargs.items():
-            if isinstance(v, BaseModel):
-                kwargs[k] = from_brewtils(v)
-
-        query_set = mongo_map[model_class].objects.get(**kwargs)
-        return to_brewtils(query_set)
-    except DoesNotExist:
-        return None
 
 
 def create(obj: ModelItem) -> ModelItem:

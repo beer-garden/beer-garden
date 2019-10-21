@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import beer_garden.db.mongo.api
 
-query = beer_garden.db.mongo.api.query
+count = beer_garden.db.mongo.api.count
 query_unique = beer_garden.db.mongo.api.query_unique
+query = beer_garden.db.mongo.api.query
 create = beer_garden.db.mongo.api.create
 update = beer_garden.db.mongo.api.update
 delete = beer_garden.db.mongo.api.delete
