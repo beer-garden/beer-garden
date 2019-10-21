@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Generic, List, NewType, Optional, Type, Union
+from typing import List, Optional, Type, Union
 
 import brewtils.models
 from brewtils.models import BaseModel
