@@ -7,7 +7,6 @@ from threading import Thread
 from time import sleep
 
 from brewtils.stoppable_thread import StoppableThread
-from mongoengine import DoesNotExist, OperationError
 
 from beer_garden.local_plugins.env_help import expand_string_with_environment_var
 from beer_garden.local_plugins.logger import getLogLevels, getPluginLogger
@@ -104,30 +103,6 @@ class LocalPluginRunner(StoppableThread):
         )
 
         StoppableThread.__init__(self, logger=self.logger, name=self.unique_name)
-
-    @property
-    def status(self):
-        try:
-            # TODO: Remove this reload. We have to find a better way to store the status
-            # that doesn't require a database connection.
-            self.instance.reload()
-            return self.instance.status
-        except (DoesNotExist, OperationError):
-            self.logger.error("Error getting status of plugin %s" % self.unique_name)
-            return "UNKNOWN"
-
-    @status.setter
-    def status(self, value):
-        try:
-            # TODO: Remove this reload. We have to find a better way to store the status
-            # that doesn't require a database connection.
-            self.instance.reload()
-            self.instance.status = value
-            self.instance.save()
-        except (DoesNotExist, OperationError):
-            self.logger.error(
-                "Error updating status of plugin %s to %s" % (self.unique_name, value)
-            )
 
     def kill(self):
         """Kills the plugin by killing the underlying process."""
