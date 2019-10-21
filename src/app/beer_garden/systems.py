@@ -180,20 +180,26 @@ def update_system(system_id: str, operations: Sequence[PatchOperation]) -> Syste
     return system
 
 
-def reload_system(system_id: str) -> None:
+def reload_system(system_id: str) -> brewtils.models.System:
     """Reload a system configuration
 
     Args:
         system_id: The System ID
 
     Returns:
-        None
+        The updated System
 
     """
     system = query_unique(System, id=system_id)
 
     logger.info("Reloading system: %s-%s", system.name, system.version)
     beer_garden.application.plugin_manager.reload_system(system.name, system.version)
+
+    system.reload()
+
+    return SchemaParser.parse_system(
+        MongoParser.serialize_system(system, to_string=False), from_string=False
+    )
 
 
 @publish_event(Events.SYSTEM_REMOVED)
