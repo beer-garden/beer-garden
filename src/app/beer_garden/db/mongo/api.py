@@ -80,7 +80,46 @@ def query_unique(model_class: ModelType, **kwargs) -> Optional[ModelItem]:
 
 
 def query(model_class: ModelType, **kwargs) -> List[ModelItem]:
+    """Query a collection
+
+    It's possible to specify `include_fields` _and_ `exclude_fields`. This doesn't make
+    a lot of sense, but you can do it. If the same field is in both `exclude_fields`
+    takes priority (the field will NOT be included in the response).
+
+    Args:
+        model_class: The Brewtils model class to query for
+        **kwargs: Arguments to control the query. Valid options are:
+            filter_params: Dict of filtering parameters
+            order_by: Field that will be used to order the result list
+            include_fields: Model fields to include
+            exclude_fields: Model fields to exclude
+            dereference_nested: Flag specifying if related models should be fetched
+            text_search: A text search parameter
+            hint: A hint specifying the index to use (cannot be used with text_search)
+            start: Slicing start
+            length: Slicing count
+
+    Returns:
+        A list of Brewtils models
+
+    """
     query_set = mongo_map[model_class].objects
+
+    if kwargs.get("filter_params"):
+        filter_params = kwargs["filter_params"]
+
+        if "parent" in filter_params:
+            filter_params["parent"] = from_brewtils(filter_params["parent"])
+
+        query_set = query_set.filter(**(kwargs.get("filter_params", {})))
+
+    # Bad things happen if you try to use a hint with a text search.
+    if kwargs.get("text_search"):
+        query_set = query_set.search_text(kwargs.get("text_search"))
+    elif kwargs.get("hint"):
+        # Sanity check - if index is 'bad' just let mongo deal with it
+        if kwargs.get("hint") in mongo_map[model_class].index_names():
+            query_set = query_set.hint(kwargs.get("hint"))
 
     if kwargs.get("order_by"):
         query_set = query_set.order_by(kwargs.get("order_by"))
@@ -94,13 +133,11 @@ def query(model_class: ModelType, **kwargs) -> List[ModelItem]:
     if not kwargs.get("dereference_nested", True):
         query_set = query_set.no_dereference()
 
-    if kwargs.get("filter_params"):
-        filter_params = kwargs["filter_params"]
+    if kwargs.get("start"):
+        query_set = query_set.skip(int(kwargs.get("start")))
 
-        if "parent" in filter_params:
-            filter_params["parent"] = from_brewtils(filter_params["parent"])
-
-        query_set = query_set.filter(**(kwargs.get("filter_params", {})))
+    if kwargs.get("length"):
+        query_set = query_set.limit(int(kwargs.get("length")))
 
     return [] if len(query_set) == 0 else to_brewtils(query_set)
 
