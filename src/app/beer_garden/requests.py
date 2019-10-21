@@ -2,22 +2,19 @@
 import json
 import logging
 import re
-from builtins import str
-from functools import reduce
 from threading import Event
-from typing import Dict, Sequence, Union
+from typing import Dict, List, Sequence, Union
 
 import six
 import urllib3
 from brewtils.choices import parse
 from brewtils.errors import ModelValidationError, RequestPublishException, ConflictError
 from brewtils.models import Choices, Events, Request, System, RequestTemplate
-from mongoengine import Q
+from builtins import str
 from requests import Session
 
 import beer_garden
-from beer_garden.db.api import delete, query, query_unique, create, reload, update
-from beer_garden.db.mongo.parser import MongoParser
+from beer_garden.db.api import create, delete, query, query_unique, reload, update
 from beer_garden.events import publish_event
 from beer_garden.metrics import request_created, request_started, request_completed
 
@@ -530,147 +527,17 @@ def get_request(request_id: str) -> Request:
     return request
 
 
-def get_requests(
-    start: int = 0,
-    length: int = 100,
-    columns: Sequence[Dict] = None,
-    order: Dict[str, Union[str, int]] = None,
-    search: Dict[str, str] = None,
-    include_children: bool = False,
-) -> Dict[str, Union[str, int]]:
-    """Search for requests
+def get_requests(**kwargs) -> List[Request]:
+    """Search for Requests
 
     Args:
-        start: Slicing start
-        length: Slicing count
-        columns: Datatables definition of columns to include
-        order: Dictionary specifying how to order results
-        search: Dictionary specifying an overall (text) search term
-        include_children: Bool specifying whether to include child requests in search
+        kwargs: Parameters to be passed to the DB query
 
     Returns:
-        A dict with the following keys:
-            * requests: The list of Requests that matched the query
-            * length: THe number of requests being returned
-            * filtered_count: The total number of requests that matched the query
-            * total_count: Total number of requests
+        The list of Requests that matched the query
 
     """
-    search_params = []
-    requested_fields = []
-    order_by = None
-    overall_search = None
-    hint = []
-
-    import beer_garden.db.mongo.models
-
-    query_set = beer_garden.db.mongo.models.Request.objects
-
-    if columns:
-        query_columns = []
-
-        for column in columns:
-            query_columns.append(column)
-
-            if column["data"]:
-                requested_fields.append(column["data"])
-
-            if (
-                "searchable" in column
-                and column["searchable"]
-                and column["search"]["value"]
-            ):
-                if column["data"] in ["created_at", "updated_at"]:
-                    search_dates = column["search"]["value"].split("~")
-                    start_query = Q()
-                    end_query = Q()
-
-                    if search_dates[0]:
-                        start_query = Q(**{column["data"] + "__gte": search_dates[0]})
-                    if search_dates[1]:
-                        end_query = Q(**{column["data"] + "__lte": search_dates[1]})
-
-                    search_query = start_query & end_query
-                elif column["data"] == "status":
-                    search_query = Q(
-                        **{column["data"] + "__exact": column["search"]["value"]}
-                    )
-                elif column["data"] == "comment":
-                    search_query = Q(
-                        **{column["data"] + "__contains": column["search"]["value"]}
-                    )
-                else:
-                    search_query = Q(
-                        **{column["data"] + "__startswith": column["search"]["value"]}
-                    )
-
-                search_params.append(search_query)
-                hint.append(column["data"])
-
-        if order:
-            order_by = query_columns[order.get("column")]["data"]
-
-            hint.append(order_by)
-
-            if order.get("dir") == "desc":
-                order_by = "-" + order_by
-
-    if search:
-        if search["value"]:
-            overall_search = '"' + search["value"] + '"'
-
-    if not include_children:
-        search_params.append(Q(has_parent=False))
-
-    # Now we can construct the actual query parameters
-    query_params = reduce(lambda x, y: x & y, search_params, Q())
-    query_set = query_set.filter(query_params)
-
-    # And set the ordering
-    if order_by:
-        query_set = query_set.order_by(order_by)
-
-    # Marshmallow treats [] as 'serialize nothing' which is not what we
-    # want, so translate to None
-    if requested_fields:
-        query_set = query_set.only(*requested_fields)
-    else:
-        requested_fields = None
-
-    # Mongo seems to prefer using only the ['parent', '<sort field>']
-    # index, even when also filtering. So we have to help it pick the right index.
-    # BUT pymongo will blow up if you try to use a hint with a text search.
-    if overall_search:
-        query_set = query_set.search_text(overall_search)
-    else:
-        real_hint = []
-
-        if not include_children:
-            real_hint.append("parent")
-
-        if "created_at" in hint:
-            real_hint.append("created_at")
-        for index in ["command", "system", "instance_name", "status"]:
-            if index in hint:
-                real_hint.append(index)
-                break
-        real_hint.append("index")
-
-        # Sanity check - if index is 'bad' just let mongo deal with it
-        index_name = "_".join(real_hint)
-        if index_name in beer_garden.db.mongo.models.Request.index_names():
-            query_set = query_set.hint(index_name)
-
-    result = [r for r in query_set[start : start + length]]
-
-    return {
-        "requests": MongoParser.serialize_request(
-            result, only=requested_fields, many=True
-        ),
-        "length": len(result),
-        "filtered_count": query_set.count(),  # This is another query
-        "total_count": beer_garden.db.mongo.models.Request.objects.count(),
-    }
+    return query(Request, **kwargs)
 
 
 @publish_event(Events.REQUEST_CREATED)
