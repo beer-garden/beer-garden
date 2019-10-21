@@ -55,7 +55,6 @@ class LocalPluginsManager(object):
                 url_prefix=plugin.url_prefix,
                 ca_verify=plugin.ca_verify,
                 ca_cert=plugin.ca_cert,
-                connection_type=plugin.connection_type,
                 username=plugin.username,
                 password=plugin.password,
             )
