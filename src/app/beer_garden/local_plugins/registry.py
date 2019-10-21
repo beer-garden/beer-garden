@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from beer_garden.db.mongo.models import Instance, System
+from brewtils.models import Instance, System
+
+from beer_garden.db.api import query_unique
 
 
 class LocalPluginRegistry(object):
@@ -30,8 +32,8 @@ class LocalPluginRegistry(object):
                 return plugin
 
     def get_plugin_from_instance_id(self, instance_id):
-        instance = Instance.objects.get(id=instance_id)
-        system = System.objects.get(instances__contains=instance)
+        instance = query_unique(Instance, id=instance_id)
+        system = query_unique(System, instances__contains=instance)
         unique_name = self.get_unique_name(system.name, system.version, instance.name)
 
         return self.get_plugin(unique_name)
