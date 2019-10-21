@@ -152,7 +152,7 @@ class LocalPluginsManager(object):
                 system_version,
             )
             self.logger.error(message)
-            raise Exception(message)
+            raise Exception(message)  # TODO - Should not be raising Exception
 
         path_to_plugin = plugins[0].path_to_plugin
 
@@ -323,25 +323,3 @@ class LocalPluginsManager(object):
                 self.logger.exception(ex)
 
         self._start_multiple_plugins(new_plugins)
-
-    def pause_plugin(self, unique_name):
-        """Pause a plugin. Not Used yet."""
-        plugin = self.registry.get_plugin(unique_name)
-
-        if plugin is None:
-            self.logger.warning("Plugin %s is not loaded.", unique_name)
-            return
-
-        if plugin.status == "RUNNING":
-            plugin.status = "PAUSED"
-
-    def unpause_plugin(self, unique_name):
-        """Unpause a plugin. Not Used yet."""
-        plugin = self.registry.get_plugin(unique_name)
-
-        if plugin is None:
-            self.logger.warning("Plugin %s is not loaded.", unique_name)
-            return
-
-        if plugin.status == "PAUSED":
-            plugin.status = "RUNNING"
