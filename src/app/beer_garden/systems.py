@@ -30,50 +30,17 @@ def get_system(system_id: str) -> System:
     return query_unique(System, id=system_id)
 
 
-def get_systems(
-    # filter_params: Dict[str, str] = None,
-    # order_by: str = "name",
-    # include_fields: Sequence[str] = None,
-    # exclude_fields: Sequence[str] = None,
-    # dereference_nested: bool = True,
-    **kwargs
-) -> List[System]:
+def get_systems(**kwargs) -> List[System]:
     """Search for Systems
 
-    It's possible to specify `include_fields` _and_ `exclude_fields`. This doesn't make
-    a lot of sense, but you can do it. If the same field is in both `exclude_fields`
-    takes priority (the field will NOT be included in the response).
-
     Args:
-        filter_params: Dict of filtering parameters
-        order_by: System attribute that will be used to order the result list
-        include_fields: Fields to include for matching Systems
-        exclude_fields: Fields to exclude for matching Systems
-        dereference_nested: Flag specifying if Commands and Instances should be fetched
+        kwargs: Parameters to be passed to the DB query
 
     Returns:
         The list of Systems that matched the query
 
     """
     return query(System, **kwargs)
-    # query_set = System.objects.order_by(order_by)
-    #
-    # if include_fields:
-    #     query_set = query_set.only(*include_fields)
-    #
-    # if exclude_fields:
-    #     query_set = query_set.exclude(*exclude_fields)
-    #
-    # if not dereference_nested:
-    #     query_set = query_set.no_dereference()
-    #
-    # filtered = query_set.filter(**(filter_params or {}))
-    #
-    # return SchemaParser.parse_system(
-    #     MongoParser.serialize_system(filtered, to_string=False, many=True),
-    #     from_string=False,
-    #     many=True,
-    # )
 
 
 @publish_event(Events.SYSTEM_CREATED)
