@@ -378,18 +378,6 @@ class Request(MongoModel, Document):
                 'type "%s"' % (str(self), self.output_type)
             )
 
-    @staticmethod
-    def find_or_none(system_id):
-        """Find a particular System
-
-         :param system_id: The ID of the system to search for
-         :return: The system with the given id, or None if system does not exist
-         """
-        try:
-            return Request.objects.get(id=system_id)
-        except DoesNotExist:
-            return None
-
 
 class System(MongoModel, Document):
     brewtils_model = brewtils.models.System
@@ -532,19 +520,6 @@ class System(MongoModel, Document):
         """Delete all instances associated with this system"""
         for instance in self.instances:
             instance.delete()
-
-    @classmethod
-    def find_unique(cls, name, version):
-        """Find a unique system using its name and version
-
-        :param name: The name
-        :param version: The version
-        :return: One system instance if found, None otherwise
-        """
-        try:
-            return cls.objects.get(name=name, version=version)
-        except DoesNotExist:
-            return None
 
 
 class Event(MongoModel, Document):
