@@ -28,15 +28,10 @@ ModelItem = Union[
     brewtils.models.System,
 ]
 
-
-mongo_map = {
-    brewtils.models.Command: beer_garden.db.mongo.models.Command,
-    brewtils.models.Instance: beer_garden.db.mongo.models.Instance,
-    brewtils.models.Job: beer_garden.db.mongo.models.Job,
-    brewtils.models.Request: beer_garden.db.mongo.models.Request,
-    brewtils.models.RequestTemplate: beer_garden.db.mongo.models.RequestTemplate,
-    brewtils.models.System: beer_garden.db.mongo.models.System,
-}
+_model_map = {}
+for model_name in beer_garden.db.mongo.models.__all__:
+    mongo_class = getattr(beer_garden.db.mongo.models, model_name)
+    _model_map[mongo_class.brewtils_model] = mongo_class
 
 
 def from_brewtils(obj: ModelItem) -> MongoModel:
@@ -63,7 +58,7 @@ def count(model_class: ModelType, **kwargs) -> int:
         if isinstance(v, BaseModel):
             kwargs[k] = from_brewtils(v)
 
-    query_set = mongo_map[model_class].objects(**kwargs)
+    query_set = _model_map[model_class].objects(**kwargs)
     return query_set.count()
 
 
@@ -73,7 +68,7 @@ def query_unique(model_class: ModelType, **kwargs) -> Optional[ModelItem]:
             if isinstance(v, BaseModel):
                 kwargs[k] = from_brewtils(v)
 
-        query_set = mongo_map[model_class].objects.get(**kwargs)
+        query_set = _model_map[model_class].objects.get(**kwargs)
         return to_brewtils(query_set)
     except DoesNotExist:
         return None
@@ -103,7 +98,7 @@ def query(model_class: ModelType, **kwargs) -> List[ModelItem]:
         A list of Brewtils models
 
     """
-    query_set = mongo_map[model_class].objects
+    query_set = _model_map[model_class].objects
 
     if kwargs.get("filter_params"):
         filter_params = kwargs["filter_params"]
@@ -118,7 +113,7 @@ def query(model_class: ModelType, **kwargs) -> List[ModelItem]:
         query_set = query_set.search_text(kwargs.get("text_search"))
     elif kwargs.get("hint"):
         # Sanity check - if index is 'bad' just let mongo deal with it
-        if kwargs.get("hint") in mongo_map[model_class].index_names():
+        if kwargs.get("hint") in _model_map[model_class].index_names():
             query_set = query_set.hint(kwargs.get("hint"))
 
     if kwargs.get("order_by"):
@@ -167,6 +162,6 @@ def delete(obj: ModelItem) -> None:
 
 
 def reload(obj: ModelItem) -> ModelItem:
-    existing_obj = mongo_map[type(obj)].objects.get(id=obj.id)
+    existing_obj = _model_map[type(obj)].objects.get(id=obj.id)
 
     return to_brewtils(existing_obj)
