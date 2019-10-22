@@ -35,6 +35,15 @@ for model_name in beer_garden.db.mongo.models.__all__:
 
 
 def from_brewtils(obj: ModelItem) -> MongoModel:
+    """Convert an item from its Brewtils model to its  one
+
+    Args:
+        obj: The Brewtils model item
+
+    Returns:
+        The Mongo model item
+
+    """
     model_dict = SchemaParser.serialize(obj, to_string=False)
     mongo_obj = MongoParser.parse(model_dict, type(obj), from_string=False)
     return mongo_obj
@@ -43,6 +52,15 @@ def from_brewtils(obj: ModelItem) -> MongoModel:
 def to_brewtils(
     obj: Union[MongoModel, List[MongoModel]]
 ) -> Union[ModelItem, List[ModelItem]]:
+    """Convert an item from its Mongo model to its Brewtils one
+
+    Args:
+        obj: The Mongo model item
+
+    Returns:
+        The Brewtils model item
+
+    """
     if obj is None or (isinstance(obj, list) and len(obj) == 0):
         return obj
 
@@ -54,6 +72,17 @@ def to_brewtils(
 
 
 def count(model_class: ModelType, **kwargs) -> int:
+    """Count the number of items matching a query
+
+    Args:
+        model_class: The Brewtils model class to query for
+        **kwargs: Arguments to control the query. Equivalent to 'filter_params' from the
+            'query' function.
+
+    Returns:
+        The number of items
+
+    """
     for k, v in kwargs.items():
         if isinstance(v, BaseModel):
             kwargs[k] = from_brewtils(v)
@@ -63,6 +92,25 @@ def count(model_class: ModelType, **kwargs) -> int:
 
 
 def query_unique(model_class: ModelType, **kwargs) -> Optional[ModelItem]:
+    """Query a collection for a unique item
+
+    This will search a collection for a single specific item. If no item matching the
+    kwarg parameters is found it will return None.
+
+    If more than one item matching is found a MultipleObjectsReturned will be raised.
+
+    Args:
+        model_class: The Brewtils model class to query for
+        **kwargs: Arguments to control the query. Equivalent to 'filter_params' from the
+            'query' function.
+
+    Returns:
+        A single Brewtils model
+
+    Raises:
+        mongoengine.MultipleObjectsReturned: More than one matching item exists
+
+    """
     try:
         for k, v in kwargs.items():
             if isinstance(v, BaseModel):
@@ -138,6 +186,18 @@ def query(model_class: ModelType, **kwargs) -> List[ModelItem]:
 
 
 def create(obj: ModelItem) -> ModelItem:
+    """Save a new item to the database
+
+    If the Mongo model corresponding to the Brewtils model has a "deep_save" method
+    then that will be called. Otherwise the normal "save" will be used.
+
+    Args:
+        obj: The Brewtils model to save
+
+    Returns:
+        The saved Brewtils model
+
+    """
     mongo_obj = from_brewtils(obj)
 
     if hasattr(mongo_obj, "deep_save"):
@@ -149,10 +209,33 @@ def create(obj: ModelItem) -> ModelItem:
 
 
 def update(obj: ModelItem) -> ModelItem:
+    """Save changes to an item to the database
+
+    Currently this is functionally identical to the "create" function.
+
+    Args:
+        obj: The Brewtils model to save
+
+    Returns:
+        The saved Brewtils model
+
+    """
     return create(obj)
 
 
 def delete(obj: ModelItem) -> None:
+    """Delete an item from the database
+
+    If the Mongo model corresponding to the Brewtils model has a "deep_delete" method
+    then that will be called. Otherwise the normal "delete" will be used.
+
+    Args:
+        obj: The Brewtils model to delete
+
+    Returns:
+        None
+
+    """
     mongo_obj = from_brewtils(obj)
 
     if hasattr(mongo_obj, "deep_delete"):
@@ -162,6 +245,15 @@ def delete(obj: ModelItem) -> None:
 
 
 def reload(obj: ModelItem) -> ModelItem:
+    """Reload an item from the database
+
+    Args:
+        obj: The Brewtils model to reload
+
+    Returns:
+        The updated Brewtils model
+
+    """
     existing_obj = _model_map[type(obj)].objects.get(id=obj.id)
 
     return to_brewtils(existing_obj)
