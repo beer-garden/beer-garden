@@ -71,6 +71,10 @@ class MongoModel(object):
     def __repr__(self):
         return self.brewtils_model.__repr__(self)
 
+    @classmethod
+    def index_names(cls):
+        return [index["name"] for index in cls._meta["indexes"]]
+
 
 # MongoEngine needs all EmbeddedDocuments to be defined before any Documents that
 # reference them. So Parameter must be defined before Command, and choices should be
@@ -385,10 +389,6 @@ class Request(MongoModel, Document):
             return Request.objects.get(id=system_id)
         except DoesNotExist:
             return None
-
-    @classmethod
-    def index_names(cls):
-        return [index["name"] for index in cls._meta["indexes"]]
 
 
 class System(MongoModel, Document):
