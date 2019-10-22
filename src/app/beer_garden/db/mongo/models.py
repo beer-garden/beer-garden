@@ -674,7 +674,7 @@ class Job(MongoModel, Document):
     name = StringField(required=True)
     trigger_type = StringField(required=True, choices=BrewtilsJob.TRIGGER_TYPES)
     trigger = GenericEmbeddedDocumentField(choices=list(TRIGGER_MODEL_MAPPING.values()))
-    request_template = EmbeddedDocumentField("RequestTemplate")
+    request_template = EmbeddedDocumentField("RequestTemplate", required=True)
     misfire_grace_time = IntField()
     coalesce = BooleanField(default=True)
     next_run_time = DateTimeField()
