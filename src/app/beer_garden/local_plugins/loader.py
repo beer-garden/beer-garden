@@ -155,7 +155,7 @@ class LocalPluginLoader(object):
             metadata=plugin_config.get("METADATA"),
         )
 
-        create_system(plugin_system)
+        plugin_system = create_system(plugin_system)
 
         plugin_list = []
         for instance in plugin_instances:
