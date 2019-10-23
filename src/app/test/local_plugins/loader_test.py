@@ -3,9 +3,10 @@ import sys
 import textwrap
 
 import pytest
-from brewtils.models import System
+from brewtils.models import System, Instance
 from mock import Mock
 
+import beer_garden.db.api as db
 from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.systems import create_system
 
@@ -148,26 +149,16 @@ class TestValidatePluginRequirements(object):
 
 class TestLoadPlugin(object):
     @pytest.fixture(autouse=True)
-    def drop_systems(self, mongo_conn):
+    def drop_collections(self, mongo_conn):
         import beer_garden.db.mongo.models
 
+        beer_garden.db.mongo.models.Instance.drop_collection()
         beer_garden.db.mongo.models.System.drop_collection()
 
-    def test_new(self, loader, registry, plugin_1):
+    def test_single_instance(self, loader, registry, plugin_1):
         plugin_runners = loader.load_plugin(str(plugin_1))
 
         assert len(plugin_runners) == 1
-        assert plugin_runners[0].name == "foo[default]-1.0"
-        assert plugin_runners[0].entry_point == "entry.py"
-
-    def test_existing(self, loader, registry, plugin_1):
-        system_id = "58542eb571afd47ead90face"
-        create_system(System(id=system_id, name="foo", version="1.0"))
-
-        plugin_runners = loader.load_plugin(str(plugin_1))
-
-        assert len(plugin_runners) == 1
-        assert str(plugin_runners[0].system.id) == system_id
         assert plugin_runners[0].name == "foo[default]-1.0"
         assert plugin_runners[0].entry_point == "entry.py"
 
@@ -195,6 +186,71 @@ class TestLoadPlugin(object):
         assert sorted_runners[0].entry_point == "entry.py"
         assert sorted_runners[1].name == "foo[instance2]-1.0"
         assert sorted_runners[1].entry_point == "entry.py"
+
+    def test_existing(self, loader, registry, plugin_1):
+        system_id = "58542eb571afd47ead90face"
+        instance_id = "58542eb571afd47ead90beef"
+        create_system(
+            System(
+                id=system_id,
+                name="foo",
+                version="1.0",
+                instances=[Instance(id=instance_id)],
+            )
+        )
+
+        plugin_runners = loader.load_plugin(str(plugin_1))
+
+        assert len(plugin_runners) == 1
+        assert str(plugin_runners[0].system.id) == system_id
+        assert str(plugin_runners[0].instance.id) == instance_id
+        assert plugin_runners[0].name == "foo[default]-1.0"
+        assert plugin_runners[0].entry_point == "entry.py"
+
+    def test_existing_multiple(self, tmp_path, loader, registry, plugin_1, bg_instance):
+        """This is mainly to test that Instance IDs are correct
+
+        We save a system with 2 instances:
+         - instance1, 58542eb571afd47ead90beef
+         - instance2, 58542eb571afd47ead90beee
+
+        Then we load a plugin that defines instances [instance2, instance3].
+
+        Correct behavior is:
+         - instance1 removed from the database
+         - instance3 created in the database
+         - instance2 remains in the database, and the ID remains the same
+        """
+        instance1 = Instance(name="instance1", id="58542eb571afd47ead90beef")
+        instance2 = Instance(name="instance2", id="58542eb571afd47ead90beee")
+        create_system(
+            System(name="foo", version="1.0", instances=[instance1, instance2])
+        )
+
+        plugin = tmp_path / "plugin"
+        plugin.mkdir()
+
+        write_file(
+            plugin,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+                INSTANCES=["instance2", "instance3"]
+            """
+            ),
+        )
+
+        plugin_runners = loader.load_plugin(str(plugin))
+        assert len(plugin_runners) == 2
+
+        assert db.query_unique(Instance, name="instance1") is None
+        assert db.query_unique(Instance, name="instance3") is not None
+
+        instance2_db = db.query_unique(Instance, name="instance2")
+        assert instance2_db is not None
+        assert instance2_db.id == instance2.id
 
     def test_invalid(self, loader, validator):
         validator.validate_plugin.return_value = False

@@ -8,7 +8,7 @@ from typing import List
 
 from brewtils.models import Instance, System
 
-from beer_garden.db.api import query_unique
+from beer_garden.db.api import delete, query_unique
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
 from beer_garden.systems import create_system
 
@@ -129,19 +129,21 @@ class LocalPluginLoader(object):
         plugin_instances = [Instance(name=name) for name in config_instances]
 
         # If this system already exists we need to do some stuff
-        plugin_system = query_unique(System, name=config_name, version=config_version)
-        if plugin_system:
-            # Carry these over to the new system
-            plugin_id = plugin_system.id
-            plugin_commands = plugin_system.commands
+        existing_system = query_unique(System, name=config_name, version=config_version)
+        if existing_system:
+            # Carry these over to the new system wholesale
+            plugin_id = existing_system.id
+            plugin_commands = existing_system.commands
 
+            # Any previously existing instances should keep the same id
             for instance in plugin_instances:
-                existing_instance = plugin_system.get_instance(instance.name)
-                if existing_instance:
-                    instance.id = existing_instance.id
+                if existing_system.has_instance(instance.name):
+                    instance.id = existing_system.get_instance(instance.name).id
 
-            # TODO - Remove dangling instances
-            # plugin_system.delete_instances()
+            # And any instances that no longer exist should be removed
+            for instance in existing_system.instances:
+                if instance.name not in config_instances:
+                    delete(instance)
 
         plugin_system = System(
             id=plugin_id,
