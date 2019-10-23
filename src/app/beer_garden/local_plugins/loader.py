@@ -9,7 +9,6 @@ from typing import List
 from brewtils.models import Instance, System
 
 from beer_garden.db.api import query_unique
-import beer_garden.config
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
 from beer_garden.systems import create_system
 
@@ -25,6 +24,7 @@ class LocalPluginLoader(object):
         registry,
         local_plugin_dir=None,
         plugin_log_directory=None,
+        connection_info=None,
         username=None,
         password=None,
     ):
@@ -33,6 +33,7 @@ class LocalPluginLoader(object):
 
         self._local_plugin_dir = local_plugin_dir
         self._plugin_log_directory = plugin_log_directory
+        self._connection_info = connection_info
         self._username = username
         self._password = password
 
@@ -165,16 +166,16 @@ class LocalPluginLoader(object):
                 plugin_system,
                 instance.name,
                 abspath(plugin_path),
-                beer_garden.config.get("entry.http.host"),
-                beer_garden.config.get("entry.http.port"),
-                ssl_enabled=beer_garden.config.get("entry.http.ssl.enabled"),
+                self._connection_info.host,
+                self._connection_info.port,
+                ssl_enabled=self._connection_info.ssl.enabled,
                 plugin_args=config_args.get(instance.name),
                 environment=plugin_config["ENVIRONMENT"],
                 requirements=plugin_config["REQUIRES"],
                 plugin_log_directory=self._plugin_log_directory,
-                url_prefix=beer_garden.config.get("entry.http.url_prefix"),
+                url_prefix=self._connection_info.url_prefix,
                 ca_verify=False,
-                ca_cert=beer_garden.config.get("entry.http.ssl.ca_cert"),
+                ca_cert=self._connection_info.ssl.ca_cert,
                 username=self._username,
                 password=self._password,
                 log_level=plugin_config["LOG_LEVEL"],

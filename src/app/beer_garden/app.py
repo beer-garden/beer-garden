@@ -50,6 +50,7 @@ class BartenderApp(StoppableThread):
             registry=self.plugin_registry,
             local_plugin_dir=beer_garden.config.get("plugin.local.directory"),
             plugin_log_directory=beer_garden.config.get("plugin.local.log_directory"),
+            connection_info=beer_garden.config.get("entry.http"),
             username=beer_garden.config.get("plugin.local.auth.username"),
             password=beer_garden.config.get("plugin.local.auth.password"),
         )

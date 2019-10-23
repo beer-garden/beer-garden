@@ -80,7 +80,7 @@ def validator():
 
 @pytest.fixture
 def loader(registry, validator):
-    return LocalPluginLoader(validator, registry)
+    return LocalPluginLoader(validator, registry, connection_info=Mock())
 
 
 class TestLoadPlugins(object):
