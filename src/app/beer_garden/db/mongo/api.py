@@ -151,8 +151,10 @@ def query(model_class: ModelType, **kwargs) -> List[ModelItem]:
     if kwargs.get("filter_params"):
         filter_params = kwargs["filter_params"]
 
-        if "parent" in filter_params:
-            filter_params["parent"] = from_brewtils(filter_params["parent"])
+        # If any values are brewtils models those need to be converted
+        for key in filter_params:
+            if isinstance(filter_params[key], BaseModel):
+                filter_params[key] = from_brewtils(filter_params[key])
 
         query_set = query_set.filter(**(kwargs.get("filter_params", {})))
 
