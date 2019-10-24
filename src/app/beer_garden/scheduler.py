@@ -6,7 +6,7 @@ from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from brewtils.models import Job
 
 import beer_garden
-from beer_garden.db.api import create, delete, query, query_unique, update
+import beer_garden.db.api as db
 from beer_garden.requests import process_request
 
 logger = logging.getLogger(__name__)
@@ -36,12 +36,12 @@ def run_job(job_id, request_template):
     request = process_request(request_template, wait_timeout=-1)
 
     try:
-        db_job = query_unique(Job, id=job_id)
+        db_job = db.query_unique(Job, id=job_id)
         if request.status == "ERROR":
             db_job.error_count += 1
         elif request.status == "SUCCESS":
             db_job.success_count += 1
-        update(db_job)
+        db.update(db_job)
     except Exception as ex:
         logger.exception(f"Could not update job counts: {ex}")
 
@@ -58,11 +58,11 @@ def run_job(job_id, request_template):
 
 
 def get_job(job_id: str) -> Job:
-    return query_unique(Job, id=job_id)
+    return db.query_unique(Job, id=job_id)
 
 
 def get_jobs(filter_params: Dict = None) -> List[Job]:
-    return query(Job, filter_params=filter_params)
+    return db.query(Job, filter_params=filter_params)
 
 
 def create_job(job: Job) -> Job:
@@ -75,7 +75,7 @@ def create_job(job: Job) -> Job:
         The added Job
     """
     # Save first so we have an ID to pass to the scheduler
-    job = create(job)
+    job = db.create(job)
 
     try:
         beer_garden.application.scheduler.add_job(
@@ -91,7 +91,7 @@ def create_job(job: Job) -> Job:
             id=str(job.id),
         )
     except Exception:
-        delete(job)
+        db.delete(job)
         raise
 
     return job
@@ -108,9 +108,9 @@ def pause_job(job_id: str) -> Job:
     """
     beer_garden.application.scheduler.pause_job(job_id, jobstore="beer_garden")
 
-    job = query_unique(Job, id=job_id)
+    job = db.query_unique(Job, id=job_id)
     job.status = "PAUSED"
-    job = update(job)
+    job = db.update(job)
 
     return job
 
@@ -126,9 +126,9 @@ def resume_job(job_id: str) -> Job:
     """
     beer_garden.application.scheduler.resume_job(job_id, jobstore="beer_garden")
 
-    job = query_unique(Job, id=job_id)
+    job = db.query_unique(Job, id=job_id)
     job.status = "RUNNING"
-    job = update(job)
+    job = db.update(job)
 
     return job
 

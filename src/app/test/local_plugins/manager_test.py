@@ -48,9 +48,9 @@ def plugin(monkeypatch, bg_system):
         status="RUNNING",
     )
 
-    monkeypatch.setattr(beer_garden.local_plugins.manager, "update", Mock())
+    monkeypatch.setattr(beer_garden.local_plugins.manager.db, "update", Mock())
     monkeypatch.setattr(
-        beer_garden.local_plugins.manager, "query_unique", Mock(return_value=plug)
+        beer_garden.local_plugins.manager.db, "query_unique", Mock(return_value=plug)
     )
 
     return plug
@@ -298,7 +298,7 @@ class TestStartMultiple(object):
 
 def test_get_all_system_names(monkeypatch, manager, bg_system):
     monkeypatch.setattr(
-        beer_garden.local_plugins.manager, "query", Mock(return_value=[bg_system])
+        beer_garden.local_plugins.manager.db, "query", Mock(return_value=[bg_system])
     )
 
     assert manager._get_all_system_names() == [bg_system.name]
@@ -393,7 +393,7 @@ def test_mark_as_failed(monkeypatch, manager, plugin, bg_instance):
     bg_system_mock = Mock(instances=[bg_instance])
 
     monkeypatch.setattr(
-        beer_garden.local_plugins.manager,
+        beer_garden.local_plugins.manager.db,
         "query_unique",
         Mock(return_value=bg_system_mock),
     )
@@ -407,7 +407,9 @@ class TestGetFailedSystemNames(object):
         bg_system.instances[0].status = "DEAD"
 
         monkeypatch.setattr(
-            beer_garden.local_plugins.manager, "query", Mock(return_value=[bg_system])
+            beer_garden.local_plugins.manager.db,
+            "query",
+            Mock(return_value=[bg_system]),
         )
 
         assert manager._get_failed_system_names() == [bg_system.name]
@@ -417,7 +419,9 @@ class TestGetFailedSystemNames(object):
         bg_system.instances.append(Instance(status="DEAD"))
 
         monkeypatch.setattr(
-            beer_garden.local_plugins.manager, "query", Mock(return_value=[bg_system])
+            beer_garden.local_plugins.manager.db,
+            "query",
+            Mock(return_value=[bg_system]),
         )
 
         assert manager._get_failed_system_names() == []

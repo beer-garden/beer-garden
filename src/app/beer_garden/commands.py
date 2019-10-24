@@ -3,7 +3,7 @@ from typing import List
 
 from brewtils.models import Command
 
-from beer_garden.db.api import query_unique, query
+import beer_garden.db.api as db
 
 
 def get_command(command_id: str) -> Command:
@@ -16,7 +16,7 @@ def get_command(command_id: str) -> Command:
         The Command
 
     """
-    return query_unique(Command, id=command_id)
+    return db.query_unique(Command, id=command_id)
 
 
 def get_commands() -> List[Command]:
@@ -26,4 +26,4 @@ def get_commands() -> List[Command]:
         The Commands
 
     """
-    return query(Command)
+    return db.query(Command)

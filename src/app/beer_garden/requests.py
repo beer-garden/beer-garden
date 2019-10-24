@@ -14,7 +14,7 @@ from builtins import str
 from requests import Session
 
 import beer_garden
-from beer_garden.db.api import create, delete, query, query_unique, reload, update
+import beer_garden.db.api as db
 from beer_garden.events import publish_event
 from beer_garden.metrics import request_created, request_started, request_completed
 
@@ -72,7 +72,7 @@ class RequestValidator(object):
         :return: The system corresponding to this Request
         :raises ModelValidationError: There is no system that corresponds to this Request
         """
-        system = query_unique(
+        system = db.query_unique(
             System, name=request.system, version=request.system_version
         )
         if system is None:
@@ -521,8 +521,8 @@ def get_request(request_id: str) -> Request:
         The Request
 
     """
-    request = query_unique(Request, id=request_id)
-    request.children = query(Request, filter_params={"parent": request})
+    request = db.query_unique(Request, id=request_id)
+    request.children = db.query(Request, filter_params={"parent": request})
 
     return request
 
@@ -537,7 +537,7 @@ def get_requests(**kwargs) -> List[Request]:
         The list of Requests that matched the query
 
     """
-    return query(Request, **kwargs)
+    return db.query(Request, **kwargs)
 
 
 @publish_event(Events.REQUEST_CREATED)
@@ -573,7 +573,7 @@ def process_request(
     request = beer_garden.application.request_validator.validate_request(request)
 
     # Once validated we need to save since validate can modify the request
-    request = create(request)
+    request = db.create(request)
 
     if wait_timeout != 0:
         request_map[request.id] = Event()
@@ -585,7 +585,7 @@ def process_request(
         )
     except Exception as ex:
         # An error publishing means this request will never complete, so remove it
-        delete(request)
+        db.delete(request)
 
         raise RequestPublishException(
             f"Error while publishing request {request.id} to queue "
@@ -605,7 +605,7 @@ def process_request(
             if not completed:
                 raise TimeoutError(f"Timeout exceeded for request {request.id}")
 
-            request = reload(request)
+            request = db.reload(request)
         finally:
             request_map.pop(request.id, None)
 
@@ -630,7 +630,7 @@ def update_request(request_id: str, patch: Dict) -> Request:
     output = None
     error_class = None
 
-    request = query_unique(Request, id=request_id)
+    request = db.query_unique(Request, id=request_id)
 
     for op in patch:
         if op.operation == "replace":
@@ -672,7 +672,7 @@ def start_request(request: Request) -> Request:
         raise ModelValidationError("Cannot update a completed request")
 
     request.status = "IN_PROGRESS"
-    request = update(request)
+    request = db.update(request)
 
     # Metrics
     request_started(request)
@@ -706,7 +706,7 @@ def complete_request(
     request.output = output
     request.error_class = error_class
 
-    request = update(request)
+    request = db.update(request)
 
     if str(request.id) in request_map:
         request_map[str(request.id)].set()
@@ -734,7 +734,7 @@ def cancel_request(request: Request) -> Request:
         raise ModelValidationError("Cannot cancel a completed request")
 
     request.status = "CANCELED"
-    request = update(request)
+    request = db.update(request)
 
     # TODO - Metrics here?
 

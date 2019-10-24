@@ -6,7 +6,7 @@ from brewtils.models import Events, Queue, System
 from pyrabbit2.http import HTTPError
 
 import beer_garden
-from beer_garden.db.api import query
+import beer_garden.db.api as db
 from beer_garden.events import publish_event
 from beer_garden.rabbitmq import get_routing_key
 
@@ -30,7 +30,7 @@ def get_all_queue_info():
     :raises Exception: If queue does not exist
     """
     queues = []
-    systems = query(System)
+    systems = db.query(System)
 
     for system in systems:
         for instance in system.instances:
@@ -81,7 +81,7 @@ def clear_all_queues():
 
     :return: None
     """
-    systems = query(System)
+    systems = db.query(System)
 
     for system in systems:
         for instance in system.instances:

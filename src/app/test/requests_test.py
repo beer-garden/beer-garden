@@ -12,7 +12,7 @@ from beer_garden.requests import RequestValidator
 @pytest.fixture
 def system_find(monkeypatch):
     find_mock = Mock()
-    monkeypatch.setattr(beer_garden.requests, "query_unique", find_mock)
+    monkeypatch.setattr(beer_garden.requests.db, "query_unique", find_mock)
     return find_mock
 
 

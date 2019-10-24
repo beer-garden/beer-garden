@@ -1,14 +1,14 @@
 import logging
-from time import sleep
 from typing import List, Sequence
 
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events, Instance, System, PatchOperation
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema
+from time import sleep
 
 import beer_garden
-from beer_garden.db.api import delete, query, query_unique, create, reload, update
+import beer_garden.db.api as db
 from beer_garden.events import publish_event
 from beer_garden.rabbitmq import get_routing_key
 
@@ -27,7 +27,7 @@ def get_system(system_id: str) -> System:
         The System
 
     """
-    return query_unique(System, id=system_id)
+    return db.query_unique(System, id=system_id)
 
 
 def get_systems(**kwargs) -> List[System]:
@@ -40,7 +40,7 @@ def get_systems(**kwargs) -> List[System]:
         The list of Systems that matched the query
 
     """
-    return query(System, **kwargs)
+    return db.query(System, **kwargs)
 
 
 @publish_event(Events.SYSTEM_CREATED)
@@ -69,7 +69,7 @@ def create_system(system: System) -> System:
         if not system.max_instances:
             system.max_instances = len(system.instances)
 
-    system = create(system)
+    system = db.create(system)
 
     return system
 
@@ -86,7 +86,7 @@ def update_system(system_id: str, operations: Sequence[PatchOperation]) -> Syste
         The updated System
 
     """
-    system = query_unique(System, id=system_id)
+    system = db.query_unique(System, id=system_id)
 
     for op in operations:
         if op.operation == "replace":
@@ -113,7 +113,7 @@ def update_system(system_id: str, operations: Sequence[PatchOperation]) -> Syste
 
                 setattr(system, attr, value)
 
-                update(system)
+                db.update(system)
             else:
                 raise ModelValidationError(f"Unsupported path for replace '{op.path}'")
         elif op.operation == "add":
@@ -128,13 +128,13 @@ def update_system(system_id: str, operations: Sequence[PatchOperation]) -> Syste
 
                 system.instances.append(instance)
 
-                create(system)
+                db.create(system)
             else:
                 raise ModelValidationError(f"Unsupported path for add '{op.path}'")
         elif op.operation == "update":
             if op.path == "/metadata":
                 system.metadata.update(op.value)
-                update(system)
+                db.update(system)
             else:
                 raise ModelValidationError(f"Unsupported path for update '{op.path}'")
         elif op.operation == "reload":
@@ -142,7 +142,7 @@ def update_system(system_id: str, operations: Sequence[PatchOperation]) -> Syste
         else:
             raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
-    system = reload(system)
+    system = db.reload(system)
 
     return system
 
@@ -157,12 +157,12 @@ def reload_system(system_id: str) -> System:
         The updated System
 
     """
-    system = query_unique(System, id=system_id)
+    system = db.query_unique(System, id=system_id)
 
     logger.info("Reloading system: %s-%s", system.name, system.version)
     beer_garden.application.plugin_manager.reload_system(system.name, system.version)
 
-    system = update(system)
+    system = db.update(system)
 
     return system
 
@@ -178,7 +178,7 @@ def remove_system(system_id: str) -> None:
         None
 
     """
-    system = query_unique(System, id=system_id)
+    system = db.query_unique(System, id=system_id)
 
     # Attempt to stop the plugins
     registered = beer_garden.application.plugin_registry.get_plugins_by_system(
@@ -203,9 +203,9 @@ def remove_system(system_id: str) -> None:
         ) and count < beer_garden.config.get("plugin.local.timeout.shutdown"):
             sleep(1)
             count += 1
-            system = reload(system)
+            system = db.reload(system)
 
-    system = reload(system)
+    system = db.reload(system)
 
     # Now clean up the message queues
     for instance in system.instances:
@@ -223,7 +223,7 @@ def remove_system(system_id: str) -> None:
         )
 
     # Finally, actually delete the system
-    delete(system)
+    db.delete(system)
 
 
 def rescan_system_directory() -> None:

@@ -68,7 +68,7 @@ class TestPluginStatusMonitor(object):
         monkeypatch.setattr(monitor, "stopped", stopped_mock)
 
         monkeypatch.setattr(
-            beer_garden.monitor, "query", Mock(return_value=[bg_instance])
+            beer_garden.monitor.db, "query", Mock(return_value=[bg_instance])
         )
 
         monitor.check_status()
@@ -79,10 +79,10 @@ class TestPluginStatusMonitor(object):
         monkeypatch.setattr(monitor, "stopped", stopped_mock)
 
         update_mock = Mock()
-        monkeypatch.setattr(beer_garden.monitor, "update", update_mock)
+        monkeypatch.setattr(beer_garden.monitor.db, "update", update_mock)
 
         monkeypatch.setattr(
-            beer_garden.monitor, "query", Mock(return_value=[bg_instance])
+            beer_garden.monitor.db, "query", Mock(return_value=[bg_instance])
         )
 
         monitor.check_status()
@@ -94,11 +94,11 @@ class TestPluginStatusMonitor(object):
         monkeypatch.setattr(monitor, "stopped", stopped_mock)
 
         update_mock = Mock()
-        monkeypatch.setattr(beer_garden.monitor, "update", update_mock)
+        monkeypatch.setattr(beer_garden.monitor.db, "update", update_mock)
 
         bg_instance.status = "UNRESPONSIVE"
         monkeypatch.setattr(
-            beer_garden.monitor, "query", Mock(return_value=[bg_instance])
+            beer_garden.monitor.db, "query", Mock(return_value=[bg_instance])
         )
 
         monkeypatch.setattr(

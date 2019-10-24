@@ -36,7 +36,7 @@ class TestMetrics(object):
     ):
         bg_request.status = status
 
-        monkeypatch.setattr(metrics, "query", Mock(return_value=[bg_request]))
+        monkeypatch.setattr(metrics.db, "query", Mock(return_value=[bg_request]))
 
         metrics.initialize_counts()
         assert queued == metrics.queued_request_gauge.labels.return_value.inc.call_count

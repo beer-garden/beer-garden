@@ -9,7 +9,7 @@ from prometheus_client import Gauge, Counter, Summary
 from prometheus_client.exposition import MetricsHandler
 from prometheus_client.registry import REGISTRY
 
-from beer_garden.db.api import query
+import beer_garden.db.api as db
 
 
 class PrometheusServer(StoppableThread):
@@ -81,7 +81,9 @@ def request_latency(start_time):
 
 
 def initialize_counts():
-    requests = query(Request, filter_params={"status__in": ["CREATED", "IN_PROGRESS"]})
+    requests = db.query(
+        Request, filter_params={"status__in": ["CREATED", "IN_PROGRESS"]}
+    )
     for request in requests:
         label_args = {
             "system": request.system,

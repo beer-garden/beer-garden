@@ -4,7 +4,7 @@ import logging
 from brewtils.models import Instance, System
 
 import beer_garden
-from beer_garden.db.api import query, query_unique, update
+import beer_garden.db.api as db
 from beer_garden.errors import PluginStartupError
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
 from beer_garden.rabbitmq import get_routing_key
@@ -35,7 +35,7 @@ class LocalPluginsManager(object):
         """
         self.logger.info("Starting plugin %s", plugin.unique_name)
 
-        plugin_instance = query_unique(Instance, id=plugin.instance.id)
+        plugin_instance = db.query_unique(Instance, id=plugin.instance.id)
         plugin_status = plugin_instance.status
 
         if plugin_status in ["RUNNING", "STARTING"]:
@@ -69,7 +69,7 @@ class LocalPluginsManager(object):
             raise PluginStartupError("Plugin in an invalid state (%s)" % plugin_status)
 
         plugin_instance.status = "STARTING"
-        update(plugin_instance)
+        db.update(plugin_instance)
 
         new_plugin.start()
 
@@ -83,7 +83,7 @@ class LocalPluginsManager(object):
         """
         self.logger.info("Stopping plugin %s", plugin.unique_name)
 
-        plugin_instance = query_unique(Instance, id=plugin.instance.id)
+        plugin_instance = db.query_unique(Instance, id=plugin.instance.id)
         plugin_status = plugin_instance.status
 
         # Need to mark the plugin as dead if it doesn't shut down cleanly
@@ -101,7 +101,7 @@ class LocalPluginsManager(object):
                 )
             else:
                 plugin_instance.status = "STOPPING"
-                update(plugin_instance)
+                db.update(plugin_instance)
 
             # Plugin must be marked as stopped before sending shutdown message
             plugin.stop()
@@ -143,7 +143,7 @@ class LocalPluginsManager(object):
                 plugin.unique_name,
             )
             plugin_instance.status = "DEAD"
-            update(plugin_instance)
+            db.update(plugin_instance)
 
     def restart_plugin(self, plugin):
         self.stop_plugin(plugin)
@@ -178,7 +178,7 @@ class LocalPluginsManager(object):
             raise Exception(message)
 
         for plugin in plugins:
-            plugin_instance = query_unique(Instance, id=plugin.instance.id)
+            plugin_instance = db.query_unique(Instance, id=plugin.instance.id)
             plugin_status = plugin_instance.status
             if plugin_status == "RUNNING":
                 message = "Could not reload system %s-%s: running instances" % (
@@ -268,12 +268,12 @@ class LocalPluginsManager(object):
 
     @staticmethod
     def _get_all_system_names():
-        return [system.name for system in query(System, include_fields=["name"])]
+        return [system.name for system in db.query(System, include_fields=["name"])]
 
     @staticmethod
     def _get_running_system_names():
         running_system_names = []
-        for system in query(System):
+        for system in db.query(System):
             if all([instance.status == "RUNNING" for instance in system.instances]):
                 running_system_names.append(system.name)
 
@@ -282,7 +282,7 @@ class LocalPluginsManager(object):
     @staticmethod
     def _get_failed_system_names():
         failed_system_names = []
-        for system in query(System):
+        for system in db.query(System):
             if all([instance.status == "DEAD" for instance in system.instances]):
                 failed_system_names.append(system.name)
 
@@ -290,13 +290,13 @@ class LocalPluginsManager(object):
 
     @staticmethod
     def _mark_as_failed(plugin):
-        system = query_unique(
+        system = db.query_unique(
             System, name=plugin.system.name, version=plugin.system.version
         )
         for instance in system.instances:
             if instance.name == plugin.instance_name:
                 instance.status = "DEAD"
-        update(system)
+        db.update(system)
 
     def stop_all_plugins(self):
         """Attempt to stop all plugins."""

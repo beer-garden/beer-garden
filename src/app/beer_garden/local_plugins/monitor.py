@@ -4,7 +4,7 @@ import logging
 from brewtils.models import Instance
 from brewtils.stoppable_thread import StoppableThread
 
-from beer_garden.db.api import query_unique, update
+import beer_garden.db.api as db
 
 
 class LocalPluginMonitor(StoppableThread):
@@ -46,7 +46,7 @@ class LocalPluginMonitor(StoppableThread):
                 and plugin.process.poll() is not None
                 and not plugin.stopped()
             ):
-                plugin_instance = query_unique(Instance, id=plugin.instance.id)
+                plugin_instance = db.query_unique(Instance, id=plugin.instance.id)
                 plugin_status = plugin_instance.status
 
                 if plugin_status == "RUNNING":
@@ -61,7 +61,7 @@ class LocalPluginMonitor(StoppableThread):
                     self.logger.warning("Restarting plugin: %s", plugin.unique_name)
 
                     plugin_instance.status = "DEAD"
-                    update(plugin_instance)
+                    db.update(plugin_instance)
 
                     self.plugin_manager.restart_plugin(plugin)
                 elif plugin_status == "STARTING":
@@ -74,4 +74,4 @@ class LocalPluginMonitor(StoppableThread):
                     )
 
                     plugin_instance.status = "DEAD"
-                    update(plugin_instance)
+                    db.update(plugin_instance)

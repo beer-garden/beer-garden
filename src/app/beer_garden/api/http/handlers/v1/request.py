@@ -6,9 +6,9 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Request
 from brewtils.schema_parser import SchemaParser
 
+import beer_garden.db.api as db
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.db.api import count
 
 
 class RequestAPI(BaseHandler):
@@ -288,8 +288,8 @@ class RequestListAPI(BaseHandler):
             "start": query_args["start"],
             "length": len(requests),
             # And these are required by datatables
-            "recordsFiltered": count(Request, **query_args["filter_params"]),
-            "recordsTotal": count(Request),
+            "recordsFiltered": db.count(Request, **query_args["filter_params"]),
+            "recordsTotal": db.count(Request),
             "draw": self.get_argument("draw", ""),
         }
 

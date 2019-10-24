@@ -47,14 +47,16 @@ def query_mock(monkeypatch, running_plugin, stopped_plugin):
             return stopped_plugin
 
     monkeypatch.setattr(
-        beer_garden.local_plugins.monitor, "query_unique", Mock(side_effect=query_func)
+        beer_garden.local_plugins.monitor.db,
+        "query_unique",
+        Mock(side_effect=query_func),
     )
 
 
 @pytest.fixture(autouse=True)
 def update_mock(monkeypatch):
     update_mock = Mock()
-    monkeypatch.setattr(beer_garden.local_plugins.monitor, "update", update_mock)
+    monkeypatch.setattr(beer_garden.local_plugins.monitor.db, "update", update_mock)
     return update_mock
 
 

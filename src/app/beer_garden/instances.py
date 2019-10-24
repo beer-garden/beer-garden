@@ -8,7 +8,7 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Events, Instance, System
 
 import beer_garden
-from beer_garden.db.api import query_unique, delete, update
+import beer_garden.db.api as db
 from beer_garden.events import publish_event
 from beer_garden.rabbitmq import get_routing_key, get_routing_keys
 
@@ -25,7 +25,7 @@ def get_instance(instance_id: str) -> Instance:
         The Instance
 
     """
-    return query_unique(Instance, id=instance_id)
+    return db.query_unique(Instance, id=instance_id)
 
 
 @publish_event(Events.INSTANCE_INITIALIZED)
@@ -35,8 +35,8 @@ def initialize_instance(instance_id):
     :param instance_id: The ID of the instance
     :return: QueueInformation object describing message queue for this system
     """
-    instance = query_unique(Instance, id=instance_id)
-    system = query_unique(System, instances__contains=instance)
+    instance = db.query_unique(Instance, id=instance_id)
+    system = db.query_unique(System, instances__contains=instance)
 
     logger.info(
         "Initializing instance %s[%s]-%s", system.name, instance.name, system.version
@@ -78,7 +78,7 @@ def initialize_instance(instance_id):
         "request": req_queue,
         "connection": connection,
     }
-    instance = update(instance)
+    instance = db.update(instance)
 
     # Send a request to start to the plugin on the plugin's admin queue
     beer_garden.application.clients["pika"].publish_request(
@@ -127,8 +127,8 @@ def start_instance(instance_id):
     :param instance_id: The Instance id
     :return: None
     """
-    instance = query_unique(Instance, id=instance_id)
-    system = query_unique(System, instances__contains=instance)
+    instance = db.query_unique(Instance, id=instance_id)
+    system = db.query_unique(System, instances__contains=instance)
 
     logger.info(
         "Starting instance %s[%s]-%s", system.name, instance.name, system.version
@@ -148,8 +148,8 @@ def stop_instance(instance_id):
     :param instance_id: The Instance id
     :return: None
     """
-    instance = query_unique(Instance, id=instance_id)
-    system = query_unique(System, instances__contains=instance)
+    instance = db.query_unique(Instance, id=instance_id)
+    system = db.query_unique(System, instances__contains=instance)
 
     logger.info(
         "Stopping instance %s[%s]-%s", system.name, instance.name, system.version
@@ -185,11 +185,11 @@ def update_instance_status(instance_id, new_status):
     Returns:
         The updated instance
     """
-    instance = query_unique(Instance, id=instance_id)
+    instance = db.query_unique(Instance, id=instance_id)
     instance.status = new_status
     instance.status_info["heartbeat"] = datetime.utcnow()
 
-    instance = update(instance)
+    instance = db.update(instance)
 
     return instance
 
@@ -203,4 +203,4 @@ def remove_instance(instance_id):
     Returns:
         None
     """
-    delete(query_unique(Instance, id=instance_id))
+    db.delete(db.query_unique(Instance, id=instance_id))
