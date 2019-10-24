@@ -103,8 +103,7 @@ def update_system(system_id: str, operations: Sequence[PatchOperation]) -> Syste
                         f"different commands"
                     )
 
-                # TODO - Move this somewhere
-                # system.upsert_commands(new_commands)
+                system = db.replace_commands(system, new_commands)
             elif op.path in ["/description", "/icon_name", "/display_name"]:
                 # If we set an attribute to None mongoengine marks that
                 # attribute for deletion, so we don't do that.

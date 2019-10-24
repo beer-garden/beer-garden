@@ -8,3 +8,4 @@ create = beer_garden.db.mongo.api.create
 update = beer_garden.db.mongo.api.update
 delete = beer_garden.db.mongo.api.delete
 reload = beer_garden.db.mongo.api.reload
+replace_commands = beer_garden.db.mongo.api.replace_commands

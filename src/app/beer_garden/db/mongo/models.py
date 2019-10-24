@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import copy
 import datetime
 import logging
 
@@ -416,36 +415,6 @@ class System(MongoModel, Document):
             raise ModelValidationError(
                 "Can not save System %s: Duplicate instance names" % str(self)
             )
-
-    def upsert_commands(self, commands):
-        """Updates or inserts a list of commands.
-
-        Assumes the commands passed in are more important than what is currently in the db. It
-        will delete commands that are not listed in the dictionary.
-
-        :param commands: The list of new commands
-        :return: None
-        """
-        old_commands = Command.objects(system=self)
-        old_names = {command.name: command.id for command in old_commands}
-
-        new_commands = copy.copy(commands)
-        for command in new_commands:
-            # If this command is already in the DB we want to preserve the ID
-            if command.name in list(old_names.keys()):
-                command.id = old_names[command.name]
-
-            command.system = self
-            command.save()
-
-        # Clean up orphan commands
-        new_names = [command.name for command in new_commands]
-        for command in old_commands:
-            if command.name not in new_names:
-                command.delete()
-
-        self.commands = new_commands
-        self.save()
 
     def deep_save(self):
         """Deep save. Saves Commands, Instances, and the System
