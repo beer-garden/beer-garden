@@ -112,7 +112,7 @@ def update_system(system_id: str, operations: Sequence[PatchOperation]) -> Syste
 
                 setattr(system, attr, value)
 
-                db.update(system)
+                system = db.update(system)
             else:
                 raise ModelValidationError(f"Unsupported path for replace '{op.path}'")
         elif op.operation == "add":
@@ -127,21 +127,19 @@ def update_system(system_id: str, operations: Sequence[PatchOperation]) -> Syste
 
                 system.instances.append(instance)
 
-                db.create(system)
+                system = db.create(system)
             else:
                 raise ModelValidationError(f"Unsupported path for add '{op.path}'")
         elif op.operation == "update":
             if op.path == "/metadata":
                 system.metadata.update(op.value)
-                db.update(system)
+                system = db.update(system)
             else:
                 raise ModelValidationError(f"Unsupported path for update '{op.path}'")
         elif op.operation == "reload":
-            return reload_system(system_id)
+            system = reload_system(system_id)
         else:
             raise ModelValidationError(f"Unsupported operation '{op.operation}'")
-
-    system = db.reload(system)
 
     return system
 
