@@ -33,8 +33,8 @@ def get_system(system_id: str) -> System:
 def get_systems(**kwargs) -> List[System]:
     """Search for Systems
 
-    Args:
-        kwargs: Parameters to be passed to the DB query
+    Keyword Args:
+        Parameters to be passed to the DB query
 
     Returns:
         The list of Systems that matched the query
