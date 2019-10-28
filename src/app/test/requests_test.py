@@ -5,14 +5,14 @@ from brewtils.errors import ModelValidationError
 from mock import Mock, call, patch
 
 import beer_garden.requests
-from beer_garden.db.mongo.models import Command, Parameter, Request, System, Choices
+from brewtils.models import Command, Parameter, Request, Choices
 from beer_garden.requests import RequestValidator
 
 
 @pytest.fixture
 def system_find(monkeypatch):
     find_mock = Mock()
-    monkeypatch.setattr(System, "find_unique", find_mock)
+    monkeypatch.setattr(beer_garden.requests.db, "query_unique", find_mock)
     return find_mock
 
 
@@ -274,7 +274,7 @@ class TestGetAndValidateParameters(object):
     ):
         req = Request(system="foo", command="command1", parameters={})
         command_parameter = Parameter(
-            key="key1", multi=False, nullable=True, default=None
+            key="key1", multi=False, nullable=True, default=None, optional=True
         )
         command = Mock(parameters=[command_parameter])
         validated_parameters = validator.get_and_validate_parameters(req, command)
@@ -789,8 +789,9 @@ class TestValidateChoices(object):
             parameters=[
                 Parameter(
                     key="key1",
+                    type="String",
                     optional=False,
-                    choices=Choices(type="command", value=choices_value),
+                    choices=Choices(type="command", value=choices_value, strict=True),
                 )
             ]
         )
@@ -816,7 +817,10 @@ class TestValidateChoices(object):
         command = Mock(
             parameters=[
                 Parameter(
-                    key="key1", optional=False, choices=Choices(type="command", value=1)
+                    key="key1",
+                    type="String",
+                    optional=False,
+                    choices=Choices(type="command", value=1, strict=True),
                 )
             ]
         )
@@ -840,7 +844,8 @@ class TestValidateChoices(object):
             parameters=[
                 Parameter(
                     key="key1",
-                    choices=Choices(type="command", value="command_name"),
+                    type="String",
+                    choices=Choices(type="command", value="command_name", strict=True),
                     optional=False,
                 )
             ]
@@ -870,7 +875,8 @@ class TestValidateChoices(object):
             parameters=[
                 Parameter(
                     key="key1",
-                    choices=Choices(type="command", value="command_name"),
+                    type="String",
+                    choices=Choices(type="command", value="command_name", strict=True),
                     optional=False,
                 )
             ]
@@ -898,7 +904,8 @@ class TestValidateChoices(object):
             parameters=[
                 Parameter(
                     key="key1",
-                    choices=Choices(type="foo", value="command_name"),
+                    type="String",
+                    choices=Choices(type="foo", value="command_name", strict=True),
                     optional=False,
                 )
             ]
@@ -921,7 +928,8 @@ class TestValidateChoices(object):
             parameters=[
                 Parameter(
                     key="key1",
-                    choices=Choices(type="command", value="command_name"),
+                    type="String",
+                    choices=Choices(type="command", value="command_name", strict=True),
                     optional=False,
                 )
             ]
@@ -944,7 +952,8 @@ class TestValidateChoices(object):
             parameters=[
                 Parameter(
                     key="key1",
-                    choices=Choices(type="command", value="command_name"),
+                    type="String",
+                    choices=Choices(type="command", value="command_name", strict=True),
                     optional=False,
                 )
             ]

@@ -24,11 +24,11 @@ from beer_garden.local_plugins.registry import LocalPluginRegistry
 from beer_garden.local_plugins.validator import LocalPluginValidator
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
-from beer_garden.mongo_pruner import MongoPruner
+from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.monitor import PluginStatusMonitor
 from beer_garden.rabbitmq import PikaClient, PyrabbitClient
 from beer_garden.requests import RequestValidator
-from beer_garden.scheduler import BGJobStore
+from beer_garden.db.mongo.jobstore import MongoJobStore
 
 
 class BartenderApp(StoppableThread):
@@ -205,7 +205,7 @@ class BartenderApp(StoppableThread):
 
     @staticmethod
     def _setup_scheduler():
-        job_stores = {"beer_garden": BGJobStore()}
+        job_stores = {"beer_garden": MongoJobStore()}
         scheduler_config = beer_garden.config.get("scheduler")
         executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
         job_defaults = scheduler_config.job_defaults.to_dict()

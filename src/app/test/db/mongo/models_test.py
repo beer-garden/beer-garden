@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
 
 import pytest
-import pytz
 from brewtils.errors import ModelValidationError
 from brewtils.schemas import RequestTemplateSchema
 from mock import Mock
@@ -16,8 +14,6 @@ from beer_garden.db.mongo.models import (
     Choices,
     Job,
     DateTrigger,
-    IntervalTrigger,
-    CronTrigger,
 )
 
 
@@ -403,62 +399,3 @@ class TestJob(object):
         date_trigger = DateTrigger()
         with pytest.raises(ModelValidationError):
             Job(trigger_type="cron", trigger=date_trigger).clean()
-
-
-class TestTrigger(object):
-    @pytest.fixture
-    def interval(self):
-        return IntervalTrigger()
-
-    @pytest.fixture
-    def cron(self):
-        return CronTrigger()
-
-    @pytest.fixture
-    def date(self):
-        return DateTrigger(run_date=datetime.now())
-
-    def test_scheduler_kwargs_interval(self, interval):
-        expected = {
-            "weeks": 0,
-            "days": 0,
-            "hours": 0,
-            "minutes": 0,
-            "seconds": 0,
-            "start_date": None,
-            "end_date": None,
-            "timezone": pytz.utc,
-            "jitter": None,
-            "reschedule_on_finish": False,
-        }
-        assert interval.get_scheduler_kwargs() == expected
-
-        interval.start_date = datetime.now()
-        assert interval.get_scheduler_kwargs()["start_date"].tzinfo == pytz.utc
-
-    def test_scheduler_kwargs_cron(self, cron):
-        expected = {
-            "year": "*",
-            "month": "1",
-            "day": "1",
-            "week": "*",
-            "day_of_week": "*",
-            "hour": "0",
-            "minute": "0",
-            "second": "0",
-            "start_date": None,
-            "end_date": None,
-            "timezone": pytz.utc,
-            "jitter": None,
-        }
-        assert cron.get_scheduler_kwargs() == expected
-
-        cron.start_date = datetime.now()
-        assert cron.get_scheduler_kwargs()["start_date"].tzinfo == pytz.utc
-
-    def test_scheduler_kwargs_date(self, date):
-        expected = {"run_date": pytz.utc.localize(date.run_date), "timezone": pytz.utc}
-        assert date.get_scheduler_kwargs() == expected
-
-        date.run_date = datetime.now()
-        assert date.get_scheduler_kwargs()["run_date"].tzinfo == pytz.utc

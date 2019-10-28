@@ -180,7 +180,7 @@ class TestPyrabbitClient(object):
         pyrabbit_client.get_messages.return_value = [{"payload": fake_request}]
 
         parser_mock = Mock(parse_request=Mock(return_value=fake_request))
-        monkeypatch.setattr("beer_garden.rabbitmq.MongoParser", parser_mock)
+        monkeypatch.setattr("beer_garden.rabbitmq.SchemaParser", parser_mock)
 
         cancel_mock = Mock()
         monkeypatch.setattr(beer_garden.rabbitmq, "cancel_request", cancel_mock)
@@ -194,7 +194,7 @@ class TestPyrabbitClient(object):
         pyrabbit_client.get_messages.return_value = [{"payload": fake_request}]
 
         parser_mock = Mock(parse_request=Mock(side_effect=ValueError))
-        monkeypatch.setattr("beer_garden.rabbitmq.MongoParser", parser_mock)
+        monkeypatch.setattr("beer_garden.rabbitmq.SchemaParser", parser_mock)
 
         client.clear_queue("queue")
         assert fake_request.status == "CREATED"
@@ -212,7 +212,7 @@ class TestPyrabbitClient(object):
         pyrabbit_client.get_messages.return_value = []
 
         parser_mock = Mock()
-        monkeypatch.setattr("beer_garden.rabbitmq.MongoParser", parser_mock)
+        monkeypatch.setattr("beer_garden.rabbitmq.SchemaParser", parser_mock)
 
         client.clear_queue("queue")
         assert pyrabbit_client.get_messages.called is True

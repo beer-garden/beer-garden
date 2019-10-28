@@ -1,28 +1,23 @@
 import logging
-from time import sleep
-from typing import List, Sequence, Dict
+from typing import List, Sequence
 
-import brewtils.models
 from brewtils.errors import ModelValidationError
-from brewtils.models import Events
+from brewtils.models import Events, Instance, System, PatchOperation
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema
+from time import sleep
 
 import beer_garden
-from beer_garden.db.mongo.models import System, Instance
-from beer_garden.db.mongo.parser import MongoParser
+import beer_garden.db.api as db
 from beer_garden.events import publish_event
 from beer_garden.rabbitmq import get_routing_key
 
 REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
-# system_lock = RLock()
-parser = MongoParser()
-
 logger = logging.getLogger(__name__)
 
 
-def get_system(system_id: str) -> brewtils.models.System:
+def get_system(system_id: str) -> System:
     """Retrieve an individual System
 
     Args:
@@ -32,58 +27,24 @@ def get_system(system_id: str) -> brewtils.models.System:
         The System
 
     """
-    return SchemaParser.parse_system(
-        MongoParser.serialize_system(System.objects.get(id=system_id), to_string=False),
-        from_string=False,
-    )
+    return db.query_unique(System, id=system_id)
 
 
-def get_systems(
-    filter_params: Dict[str, str] = None,
-    order_by: str = "name",
-    include_fields: Sequence[str] = None,
-    exclude_fields: Sequence[str] = None,
-    dereference_nested: bool = True,
-) -> List[brewtils.models.System]:
+def get_systems(**kwargs) -> List[System]:
     """Search for Systems
 
-    It's possible to specify `include_fields` _and_ `exclude_fields`. This doesn't make
-    a lot of sense, but you can do it. If the same field is in both `exclude_fields`
-    takes priority (the field will NOT be included in the response).
-
-    Args:
-        filter_params: Dict of filtering parameters
-        order_by: System attribute that will be used to order the result list
-        include_fields: Fields to include for matching Systems
-        exclude_fields: Fields to exclude for matching Systems
-        dereference_nested: Flag specifying if Commands and Instances should be fetched
+    Keyword Args:
+        Parameters to be passed to the DB query
 
     Returns:
         The list of Systems that matched the query
 
     """
-    query_set = System.objects.order_by(order_by)
-
-    if include_fields:
-        query_set = query_set.only(*include_fields)
-
-    if exclude_fields:
-        query_set = query_set.exclude(*exclude_fields)
-
-    if not dereference_nested:
-        query_set = query_set.no_dereference()
-
-    filtered = query_set.filter(**(filter_params or {}))
-
-    return SchemaParser.parse_system(
-        MongoParser.serialize_system(filtered, to_string=False, many=True),
-        from_string=False,
-        many=True,
-    )
+    return db.query(System, **kwargs)
 
 
 @publish_event(Events.SYSTEM_CREATED)
-def create_system(system: brewtils.models.System) -> brewtils.models.System:
+def create_system(system: System) -> System:
     """Create a new System
 
     Args:
@@ -93,10 +54,6 @@ def create_system(system: brewtils.models.System) -> brewtils.models.System:
         The created System
 
     """
-    system = MongoParser.parse_system(
-        SchemaParser.serialize_system(system, to_string=False), from_string=False
-    )
-
     # Assign a default 'main' instance if there aren't any instances and there can
     # only be one
     if not system.instances or len(system.instances) == 0:
@@ -112,17 +69,13 @@ def create_system(system: brewtils.models.System) -> brewtils.models.System:
         if not system.max_instances:
             system.max_instances = len(system.instances)
 
-    system.deep_save()
+    system = db.create(system)
 
-    return SchemaParser.parse_system(
-        MongoParser.serialize_system(system, to_string=False), from_string=False
-    )
+    return system
 
 
 @publish_event(Events.SYSTEM_UPDATED)
-def update_system(
-    system_id: str, operations: Sequence[brewtils.models.PatchOperation]
-) -> brewtils.models.System:
+def update_system(system_id: str, operations: Sequence[PatchOperation]) -> System:
     """Update an already existing System
 
     Args:
@@ -133,12 +86,12 @@ def update_system(
         The updated System
 
     """
-    system = System.objects.get(id=system_id)
+    system = db.query_unique(System, id=system_id)
 
     for op in operations:
         if op.operation == "replace":
             if op.path == "/commands":
-                new_commands = parser.parse_command(op.value, many=True)
+                new_commands = SchemaParser.parse_command(op.value, many=True)
 
                 if (
                     system.commands
@@ -150,7 +103,7 @@ def update_system(
                         f"different commands"
                     )
 
-                system.upsert_commands(new_commands)
+                system = db.replace_commands(system, new_commands)
             elif op.path in ["/description", "/icon_name", "/display_name"]:
                 # If we set an attribute to None mongoengine marks that
                 # attribute for deletion, so we don't do that.
@@ -159,12 +112,12 @@ def update_system(
 
                 setattr(system, attr, value)
 
-                system.save()
+                system = db.update(system)
             else:
                 raise ModelValidationError(f"Unsupported path for replace '{op.path}'")
         elif op.operation == "add":
             if op.path == "/instance":
-                instance = parser.parse_instance(op.value)
+                instance = SchemaParser.parse_instance(op.value)
 
                 if len(system.instances) >= system.max_instances:
                     raise ModelValidationError(
@@ -173,28 +126,25 @@ def update_system(
                     )
 
                 system.instances.append(instance)
-                system.deep_save()
+
+                system = db.create(system)
             else:
                 raise ModelValidationError(f"Unsupported path for add '{op.path}'")
         elif op.operation == "update":
             if op.path == "/metadata":
                 system.metadata.update(op.value)
-                system.save()
+                system = db.update(system)
             else:
                 raise ModelValidationError(f"Unsupported path for update '{op.path}'")
         elif op.operation == "reload":
-            return reload_system(system_id)
+            system = reload_system(system_id)
         else:
             raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
-    system.reload()
-
-    return SchemaParser.parse_system(
-        MongoParser.serialize_system(system, to_string=False), from_string=False
-    )
+    return system
 
 
-def reload_system(system_id: str) -> brewtils.models.System:
+def reload_system(system_id: str) -> System:
     """Reload a system configuration
 
     Args:
@@ -204,16 +154,14 @@ def reload_system(system_id: str) -> brewtils.models.System:
         The updated System
 
     """
-    system = System.objects.get(id=system_id)
+    system = db.query_unique(System, id=system_id)
 
     logger.info("Reloading system: %s-%s", system.name, system.version)
     beer_garden.application.plugin_manager.reload_system(system.name, system.version)
 
-    system.reload()
+    system = db.update(system)
 
-    return SchemaParser.parse_system(
-        MongoParser.serialize_system(system, to_string=False), from_string=False
-    )
+    return system
 
 
 @publish_event(Events.SYSTEM_REMOVED)
@@ -227,7 +175,7 @@ def remove_system(system_id: str) -> None:
         None
 
     """
-    system = System.objects.get(id=system_id)
+    system = db.query_unique(System, id=system_id)
 
     # Attempt to stop the plugins
     registered = beer_garden.application.plugin_registry.get_plugins_by_system(
@@ -252,9 +200,9 @@ def remove_system(system_id: str) -> None:
         ) and count < beer_garden.config.get("plugin.local.timeout.shutdown"):
             sleep(1)
             count += 1
-            system.reload()
+            system = db.reload(system)
 
-    system.reload()
+    system = db.reload(system)
 
     # Now clean up the message queues
     for instance in system.instances:
@@ -272,7 +220,7 @@ def remove_system(system_id: str) -> None:
         )
 
     # Finally, actually delete the system
-    system.deep_delete()
+    db.delete(system)
 
 
 def rescan_system_directory() -> None:

@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import json
+from typing import Sequence
 
 from brewtils.errors import ModelValidationError
 from brewtils.models import Request
 from brewtils.schema_parser import SchemaParser
 
+import beer_garden.db.api as db
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
 
@@ -262,31 +264,32 @@ class RequestListAPI(BaseHandler):
         tags:
           - Requests
         """
-        columns_arg = self.get_query_arguments("columns")
-        order_arg = self.get_query_argument("order", default=None)
-        search_arg = self.get_query_argument("search", default=None)
-        child_arg = self.get_query_argument("include_children", default="")
+        # V1 API is a mess, it's basically written for datatables
+        query_args = self._parse_datatables_parameters()
 
-        query_args = {
-            "columns": [json.loads(c) for c in columns_arg],
-            "order": json.loads(order_arg) if order_arg else None,
-            "search": json.loads(search_arg) if search_arg else None,
-            "include_children": bool(child_arg.lower() == "true"),
-            "start": int(self.get_argument("start", default="0")),
-            "length": int(self.get_argument("length", default="100")),
-        }
+        # There are also some sane parameters
+        query_args["start"] = self.get_argument("start", default="0")
+        query_args["length"] = self.get_argument("length", default="100")
 
-        response = await self.client.get_requests(self.request.namespace, **query_args)
+        # We want to get a list back from the DB so we can count the number of items
+        serialize_kwargs = {"to_string": False}
+
+        # If a field specification is provided it must also be passed to the serializer
+        # Also, be aware that serialize_kwargs["only"] = [] means 'serialize nothing'
+        if query_args.get("include_fields"):
+            serialize_kwargs["only"] = query_args.get("include_fields")
+
+        requests = await self.client.get_requests(
+            self.request.namespace, serialize_kwargs=serialize_kwargs, **query_args
+        )
 
         response_headers = {
-            # These are a courtesy for non-datatables requests. We want people
-            # making a request with no headers to realize they probably aren't
-            # getting the full dataset
+            # These are for information
             "start": query_args["start"],
-            "length": response["length"],
+            "length": len(requests),
             # And these are required by datatables
-            "recordsFiltered": response["filtered_count"],
-            "recordsTotal": response["total_count"],
+            "recordsFiltered": db.count(Request, **query_args["filter_params"]),
+            "recordsTotal": db.count(Request),
             "draw": self.get_argument("draw", ""),
         }
 
@@ -295,7 +298,7 @@ class RequestListAPI(BaseHandler):
             self.add_header("Access-Control-Expose-Headers", key)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(response["requests"])
+        self.write(json.dumps(requests))
 
     @authenticated(permissions=[Permissions.REQUEST_CREATE])
     async def post(self):
@@ -373,7 +376,7 @@ class RequestListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    def _parse_form_request(self):
+    def _parse_form_request(self) -> Request:
         args = {"parameters": {}}
 
         for key, value in self.request.body_arguments.items():
@@ -385,3 +388,125 @@ class RequestListAPI(BaseHandler):
                 args[key] = decoded_param
 
         return Request(**args)
+
+    def _parse_datatables_parameters(self) -> dict:
+        """Parse the HTTP request's datatables query parameters
+
+        Returns:
+            Dict of things to pass to the DB query:
+                filter_params: Dict of filters
+                include_fields: List of fields to include
+                text_search: Text search field
+                order_by: Ordering field
+                hint: The hint (index) to use
+
+        """
+        # These are what this function is populating
+        filter_params = {}
+        include_fields = []
+        order_by = None
+        text_search = None
+
+        # These are internal helpers
+        query_columns = []
+        hint_helper = []
+
+        # Start by pulling out the query parameters
+        columns_arg = self.get_query_arguments("columns")
+        order_arg = self.get_query_argument("order", default="{}")
+        search_arg = self.get_query_argument("search", default="{}")
+        child_arg = self.get_query_argument("include_children", default="false")
+
+        # And parse them into usable forms
+        columns = [json.loads(c) for c in columns_arg]
+        order = json.loads(order_arg)
+        search = json.loads(search_arg)
+        include_children = bool(child_arg.lower() == "true")
+
+        # Cool, now we can do stuff
+        if search and search["value"]:
+            text_search = '"' + search["value"] + '"'
+
+        if not include_children:
+            filter_params["has_parent"] = False
+
+        for column in columns:
+            query_columns.append(column)
+
+            if column["data"]:
+                include_fields.append(column["data"])
+
+            if (
+                "searchable" in column
+                and column["searchable"]
+                and column["search"]["value"]
+            ):
+                if column["data"] in ["created_at", "updated_at"]:
+                    search_dates = column["search"]["value"].split("~")
+
+                    if search_dates[0]:
+                        filter_params[column["data"] + "__gte"] = search_dates[0]
+                    if search_dates[1]:
+                        filter_params[column["data"] + "__lte"] = search_dates[1]
+
+                elif column["data"] == "status":
+                    filter_params[column["data"] + "__exact"] = column["search"][
+                        "value"
+                    ]
+
+                elif column["data"] == "comment":
+                    filter_params[column["data"] + "__contains"] = column["search"][
+                        "value"
+                    ]
+
+                else:
+                    filter_params[column["data"] + "__startswith"] = column["search"][
+                        "value"
+                    ]
+
+                hint_helper.append(column["data"])
+
+        if order:
+            order_by = query_columns[order.get("column")]["data"]
+
+            hint_helper.append(order_by)
+
+            if order.get("dir") == "desc":
+                order_by = "-" + order_by
+
+        return {
+            "filter_params": filter_params,
+            "include_fields": include_fields,
+            "text_search": text_search,
+            "order_by": order_by,
+            "hint": self._determine_hint(hint_helper, include_children),
+        }
+
+    @staticmethod
+    def _determine_hint(hint_helper: Sequence[str], include_children: bool) -> str:
+        """Function that will figure out correct index to use
+
+        This is necessary since it seems that the ['parent', '<sort field>'] index is
+        always used, even when also filtering.
+
+        Args:
+            hint_helper: List of relevant hint information
+            include_children: Whether child requests are to be included
+
+        Returns:
+            The correct hint to use
+
+        """
+        real_hint = []
+        if not include_children:
+            real_hint.append("parent")
+
+        if "created_at" in hint_helper:
+            real_hint.append("created_at")
+        for index in ["command", "system", "instance_name", "status"]:
+            if index in hint_helper:
+                real_hint.append(index)
+                break
+        real_hint.append("index")
+
+        return "_".join(real_hint)

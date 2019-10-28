@@ -5,7 +5,7 @@ import pytest
 from mock import MagicMock, Mock, patch
 
 from beer_garden.db.mongo.models import Request, Event
-from beer_garden.mongo_pruner import MongoPruner
+from beer_garden.db.mongo.pruner import MongoPruner
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def pruner(task):
 
 
 class TestMongoPruner(object):
-    @patch("beer_garden.mongo_pruner.Q", MagicMock())
+    @patch("beer_garden.db.mongo.pruner.Q", MagicMock())
     def test_prune_something(self, pruner, collection_mock):
         pruner._stop_event = Mock(wait=Mock(side_effect=[False, True]))
 

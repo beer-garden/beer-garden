@@ -1,5 +1,4 @@
-import copy
-
+# -*- coding: utf-8 -*-
 import brewtils.test
 import pytest
 from mongoengine import connect
@@ -29,3 +28,13 @@ def mongo_conn():
 def bad_id():
     """A bad mongo ID"""
     return "".join(["1" for _ in range(24)])
+
+
+@pytest.fixture
+def jobstore(mongo_conn):
+    """A Beer Garden Job Store."""
+    from beer_garden.db.mongo.jobstore import MongoJobStore
+
+    js = MongoJobStore()
+    yield js
+    js.remove_all_jobs()
