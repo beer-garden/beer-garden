@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import logging
-import time
 from datetime import timedelta
 from functools import partial
 
 import brewtils.models
+import time
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils.models import Events
@@ -15,8 +15,11 @@ from pytz import utc
 from requests.exceptions import RequestException
 
 import beer_garden
+import beer_garden.db.api as db
 from beer_garden.bg_utils.event_publisher import EventPublishers, EventPublisher
 from beer_garden.bg_utils.publishers import MongoPublisher
+from beer_garden.db.mongo.jobstore import MongoJobStore
+from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.local_plugins.manager import LocalPluginsManager
 from beer_garden.local_plugins.monitor import LocalPluginMonitor
@@ -24,11 +27,9 @@ from beer_garden.local_plugins.registry import LocalPluginRegistry
 from beer_garden.local_plugins.validator import LocalPluginValidator
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
-from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.monitor import PluginStatusMonitor
 from beer_garden.rabbitmq import PikaClient, PyrabbitClient
 from beer_garden.requests import RequestValidator
-from beer_garden.db.mongo.jobstore import MongoJobStore
 
 
 class BartenderApp(StoppableThread):
@@ -140,6 +141,9 @@ class BartenderApp(StoppableThread):
     def _startup(self):
         self.logger.info("Starting Bartender...")
 
+        self.logger.debug("Setting up database...")
+        self._setup_database()
+
         self.logger.info("Verifying message virtual host...")
         self.clients["pyrabbit"].verify_virtual_host()
 
@@ -202,6 +206,11 @@ class BartenderApp(StoppableThread):
             self.logger.warning("Unable to publish shutdown notification")
 
         self.logger.info("Successfully shut down Beer-garden")
+
+    @staticmethod
+    def _setup_database():
+        db.create_connection(db_config=beer_garden.config.get("db"))
+        db.initial_setup(beer_garden.config.get("auth.guest_login_enabled"))
 
     @staticmethod
     def _setup_scheduler():

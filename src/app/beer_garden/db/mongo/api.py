@@ -2,11 +2,14 @@
 from typing import List, Optional, Type, Union
 
 import brewtils.models
+from box import Box
 from brewtils.models import BaseModel
 from brewtils.schema_parser import SchemaParser
-from mongoengine import DoesNotExist
+from mongoengine import connect, register_connection, DoesNotExist
+from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 
 import beer_garden.db.mongo.models
+from beer_garden.db.mongo.util import check_indexes, ensure_roles, ensure_users
 from beer_garden.db.mongo.models import MongoModel
 from beer_garden.db.mongo.parser import MongoParser
 
@@ -69,6 +72,75 @@ def to_brewtils(
     model_class = obj[0].brewtils_model if many else obj.brewtils_model
 
     return SchemaParser.parse(serialized, model_class, from_string=False, many=many)
+
+
+def check_connection(db_config: Box):
+    """Check connectivity to the mongo database
+
+    Args:
+        db_config: Yapconf-generated configuration object
+
+    Returns:
+        bool: True if successful, False otherwise (unable to connect)
+
+    Raises:
+        Any mongoengine or pymongo error *except* ConnectionFailure,
+        ServerSelectionTimeoutError
+    """
+    try:
+        # Set timeouts here to a low value - we don't want to wait 30
+        # seconds if there's no database
+        conn = connect(
+            alias="aliveness",
+            db=db_config["name"],
+            socketTimeoutMS=1000,
+            serverSelectionTimeoutMS=1000,
+            **db_config["connection"]
+        )
+
+        # The 'connect' method won't actually fail
+        # An exception won't be raised until we actually try to do something
+        conn.server_info()
+
+        # Close the aliveness connection - the timeouts are too low
+        conn.close()
+    except (ConnectionFailure, ServerSelectionTimeoutError):
+        return False
+
+    return True
+
+
+def create_connection(connection_alias: str = "default", db_config: Box = None) -> None:
+    """Register a database connection
+
+    Args:
+        connection_alias: Alias for this connection
+        db_config: Yapconf-generated configuration object
+
+    Returns:
+        None
+    """
+    # Now register the default connection with real timeouts
+    # Yes, mongoengine uses 'db' in connect and 'name' in register_connection
+    register_connection(
+        connection_alias, name=db_config["name"], **db_config["connection"]
+    )
+
+
+def initial_setup(guest_login_enabled):
+    """Do everything necessary to ensure the database is in a 'good' state"""
+
+    for doc in (
+        beer_garden.db.mongo.models.Job,
+        beer_garden.db.mongo.models.Request,
+        beer_garden.db.mongo.models.Role,
+        beer_garden.db.mongo.models.System,
+        beer_garden.db.mongo.models.Principal,
+    ):
+        check_indexes(doc)
+
+    ensure_roles()
+    ensure_users(guest_login_enabled)
 
 
 def count(model_class: ModelType, **kwargs) -> int:

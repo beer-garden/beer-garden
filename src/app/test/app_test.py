@@ -47,6 +47,7 @@ class BartenderAppTest(unittest.TestCase):
         helper_mock.start.assert_called_once_with()
 
     @patch("beer_garden.app.BartenderApp._shutdown", Mock())
+    @patch("beer_garden.app.BartenderApp._setup_database", Mock())
     def test_startup(self):
         self.app.stopped = Mock(return_value=True)
         self.app.thrift_server = self.thrift_server
