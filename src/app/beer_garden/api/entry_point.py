@@ -19,6 +19,14 @@ class EntryPoint(object):
 
     This class represents an entry point into Beergarden.
 
+    To create a new entry point:
+    - Make a new subpackage under beer_garden.api
+    - In that package's __init__ add a `run` function that will run the entry point
+    process and a `signal_handler` function that will stop it
+    - Add the new entry point to the configuration spec as a child of the "entry" dict.
+    The name of the new dict must match the subpackage name, and the new entry must
+    have an `enable` flag as an immediate child.
+
     Args:
         name: Part of the process name. Full name will be "BGEntryPoint-{name}"
         target: The method that will be called when the process starts
@@ -99,6 +107,15 @@ class EntryPoint(object):
         signal_handler: Callable[[int, FrameType], None],
     ) -> Any:
         """Helper method that sets up the process environment before calling `target`
+
+        This does several things that are needed by all entry points:
+        - Sets up the signal handler function that will be used to terminate the process
+        - Sets the global application configuration
+        - Configures logging to send all records back to the main application process
+        - Creates and registers a connection to the database
+
+        It then calls the actual entry point target, which will be the `run` method in
+        the subpackage's __init__.
 
         Args:
             config:
