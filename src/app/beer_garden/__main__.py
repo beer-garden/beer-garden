@@ -8,8 +8,8 @@ import beer_garden
 import beer_garden.api.http
 import beer_garden.api.thrift
 from beer_garden import progressive_backoff
-from beer_garden.db.mongo import setup_database
 from beer_garden.config import generate_logging, generate, migrate
+from beer_garden.db.mongo.api import check_connection
 
 entry_point = None
 
@@ -62,7 +62,7 @@ def main():
 
     # Ensure we have a mongo connection
     progressive_backoff(
-        partial(setup_database, beer_garden.config),
+        partial(check_connection, beer_garden.config.get("db")),
         beer_garden.application,
         "Unable to connect to mongo, is it started?",
     )
