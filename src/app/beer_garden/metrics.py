@@ -3,12 +3,13 @@ import datetime
 import logging
 from http.server import ThreadingHTTPServer
 
+from brewtils.models import Request
 from brewtils.stoppable_thread import StoppableThread
 from prometheus_client import Gauge, Counter, Summary
 from prometheus_client.exposition import MetricsHandler
 from prometheus_client.registry import REGISTRY
 
-from beer_garden.bg_utils.mongo.models import Request
+import beer_garden.db.api as db
 
 
 class PrometheusServer(StoppableThread):
@@ -80,7 +81,10 @@ def request_latency(start_time):
 
 
 def initialize_counts():
-    for request in Request.objects(status__in=["CREATED", "IN_PROGRESS"]):
+    requests = db.query(
+        Request, filter_params={"status__in": ["CREATED", "IN_PROGRESS"]}
+    )
+    for request in requests:
         label_args = {
             "system": request.system,
             "system_version": request.system_version,

@@ -17,7 +17,7 @@ class TestLoadConfig(object):
     def test_no_config_file(self):
         beer_garden.config.load([], force=True)
         spec = YapconfSpec(beer_garden.config._SPECIFICATION)
-        assert beer_garden.config._CONFIG == spec.defaults
+        assert beer_garden.config._CONFIG.to_dict() == spec.defaults
 
     @pytest.mark.parametrize(
         "extension,contents",
@@ -37,6 +37,32 @@ class TestLoadConfig(object):
 
         beer_garden.config.load(["-c", str(config_file)], force=True)
         assert beer_garden.config.get("log.level") == "DEBUG"
+
+    # These are pretty much identical to the brewtils tests for normalize prefix
+    @pytest.mark.parametrize(
+        "normalized,initial",
+        [
+            ("/", "/"),
+            ("/example/", "example"),
+            ("/example/", "/example"),
+            ("/example/", "example/"),
+            ("/example/", "/example/"),
+            ("/beer/garden/", "beer/garden"),
+            ("/beer/garden/", "/beer/garden"),
+            ("/beer/garden/", "/beer/garden/"),
+        ],
+    )
+    def test_normalize_url_prefix(self, normalized, initial):
+        cli_args = [
+            "--entry-http-url-prefix",
+            initial,
+            "--event-brew_view-url-prefix",
+            initial,
+        ]
+        beer_garden.config.load(cli_args, force=True)
+
+        assert beer_garden.config.get("entry.http.url_prefix") == normalized
+        assert beer_garden.config.get("event.brew_view.url_prefix") == normalized
 
 
 class TestGenerateConfig(object):
@@ -141,7 +167,7 @@ class TestGenerateLogging(object):
         assert logging_config == default_app_config("INFO", None)
 
     def test_with_file(self, tmpdir, capsys):
-        logging_config_file = Path(tmpdir, "logging.json")
+        logging_config_file = Path(tmpdir, "logging.yaml")
         logging_config = beer_garden.config.generate_logging(
             ["--log-config-file", str(logging_config_file)]
         )

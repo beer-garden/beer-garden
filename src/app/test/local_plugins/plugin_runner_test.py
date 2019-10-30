@@ -60,25 +60,6 @@ class TestPluginRunner(object):
     def test_unique_name(self, plugin):
         assert plugin.unique_name == "system_name[default]-1.0.0"
 
-    def test_get_status(self, plugin, instance_mock):
-        assert plugin.status == "RUNNING"
-        assert instance_mock.reload.called
-
-    def test_get_status_error(self, plugin, instance_mock):
-        instance_mock.reload.side_effect = DoesNotExist
-        assert plugin.status == "UNKNOWN"
-        assert instance_mock.reload.called
-
-    def test_set_status(self, plugin, instance_mock):
-        plugin.status = "STOPPED"
-        assert plugin.status == "STOPPED"
-        assert instance_mock.save.called
-
-    def test_set_status_error(self, plugin, instance_mock):
-        instance_mock.reload.side_effect = DoesNotExist
-        plugin.status = "STOPPED"
-        assert not instance_mock.save.called
-
     def test_plugin_loggers_levels(self, plugin, system_mock):
         # We have to null out the handlers, otherwise we will end up
         # using a cached handler.

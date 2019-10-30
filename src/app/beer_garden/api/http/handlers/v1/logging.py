@@ -48,11 +48,7 @@ class LoggingConfigAPI(BaseHandler):
           The body of the request needs to contain a set of instructions detailing the
           operation to make. Currently supported operations are below:
           ```JSON
-          {
-            "operations": [
-                { "operation": "reload" }
-            ]
-          }
+          { "operation": "reload" }
           ```
         parameters:
           - name: bg-namespace

@@ -147,14 +147,14 @@ export default function adminSystemController(
     }
   }
 
-  // let loadSystems = function() {
-  //   SystemService.getSystems(
-  //     {includeFields: 'id,name,display_name,version,instances'}
-  //   ).then(
-  //     $scope.successCallback,
-  //     $scope.failureCallback
-  //   );
-  // };
+  let loadSystems = function() {
+    SystemService.getSystems(
+      {includeFields: 'id,name,display_name,version,instances'}
+    ).then(
+      $scope.successCallback,
+      $scope.failureCallback
+    );
+  };
 
   // Periodically poll for changes (in case of websocket failure)
   let systemsUpdate = $interval(function() {
@@ -171,13 +171,13 @@ export default function adminSystemController(
     EventService.removeCallback('admin_system');
   });
 
-  // let loadAll = function() {
-  //   $scope.response = undefined;
-  //   $scope.data = [];
-  //   $scope.alerts = [];
+  let loadAll = function() {
+    $scope.response = undefined;
+    $scope.data = [];
+    $scope.alerts = [];
 
-  //   loadSystems();
-  // };
+    loadSystems();
+  };
 
   EventService.addCallback('admin_system', (event) => {
     switch (event.name) {
@@ -199,9 +199,9 @@ export default function adminSystemController(
     $scope.failureCallback($rootScope.sysResponse);
   }
 
-  // $scope.$on('userChange', function() {
-  //   loadAll();
-  // });
+  $scope.$on('userChange', function() {
+    loadAll();
+  });
 
-  // loadAll();
+  loadAll();
 };

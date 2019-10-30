@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
+import os
 import signal
 
-import brewtils.thrift
+import thriftpy2
 
 import beer_garden.config
 from beer_garden.api.thrift.handler import BartenderHandler
@@ -10,6 +11,11 @@ from beer_garden.api.thrift.server import make_server
 
 logger = None
 the_server = None
+
+bg_thrift = thriftpy2.load(
+    os.path.join(os.path.dirname(__file__), "beergarden.thrift"),
+    module_name="bg_thrift",
+)
 
 
 def signal_handler(signal_number, stack_frame):
@@ -31,7 +37,7 @@ def run(config, log_queue):
     # TODO: The thrift portion is currently hardcoded, because it should
     # no longer be in the config. Eventually the thrift thread will be removed.
     the_server = make_server(
-        service=brewtils.thrift.bg_thrift.BartenderBackend,
+        service=bg_thrift.BartenderBackend,
         handler=BartenderHandler(),
         host="0.0.0.0",
         port=9090,

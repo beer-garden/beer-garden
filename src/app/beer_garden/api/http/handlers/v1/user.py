@@ -5,8 +5,8 @@ from mongoengine.errors import DoesNotExist, ValidationError
 from passlib.apps import custom_app_context
 
 import beer_garden.api.http
-from beer_garden.bg_utils.mongo.models import Principal, Role
-from beer_garden.bg_utils.mongo.parser import MongoParser
+from beer_garden.db.mongo.models import Principal, Role
+from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.api.http.authorization import (
     authenticated,
     check_permission,
@@ -93,11 +93,9 @@ class UserAPI(BaseHandler):
           The body of the request needs to contain a set of instructions
           detailing the updates to apply:
           ```JSON
-          {
-            "operations": [
-              { "operation": "add", "path": "/roles", "value": "admin" }
-            ]
-          }
+          [
+            { "operation": "add", "path": "/roles", "value": "admin" }
+          ]
           ```
         parameters:
           - name: user_id

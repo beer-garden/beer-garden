@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import logging
 
+from brewtils.models import Instance, System
+
 import beer_garden
-from beer_garden.bg_utils.mongo.models import System
+import beer_garden.db.api as db
 from beer_garden.errors import PluginStartupError
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
 from beer_garden.rabbitmq import get_routing_key
@@ -33,13 +35,16 @@ class LocalPluginsManager(object):
         """
         self.logger.info("Starting plugin %s", plugin.unique_name)
 
-        if plugin.status in ["RUNNING", "STARTING"]:
+        plugin_instance = db.query_unique(Instance, id=plugin.instance.id)
+        plugin_status = plugin_instance.status
+
+        if plugin_status in ["RUNNING", "STARTING"]:
             self.logger.info("Plugin %s is already running.", plugin.unique_name)
             return True
 
-        if plugin.status == "INITIALIZING":
+        if plugin_status == "INITIALIZING":
             new_plugin = plugin
-        elif plugin.status in ["DEAD", "STOPPED"]:
+        elif plugin_status in ["DEAD", "STOPPED"]:
             new_plugin = LocalPluginRunner(
                 plugin.entry_point,
                 plugin.system,
@@ -55,16 +60,17 @@ class LocalPluginsManager(object):
                 url_prefix=plugin.url_prefix,
                 ca_verify=plugin.ca_verify,
                 ca_cert=plugin.ca_cert,
-                connection_type=plugin.connection_type,
                 username=plugin.username,
                 password=plugin.password,
             )
             self.registry.remove(plugin.unique_name)
             self.registry.register_plugin(new_plugin)
         else:
-            raise PluginStartupError("Plugin in an invalid state (%s)" % plugin.status)
+            raise PluginStartupError("Plugin in an invalid state (%s)" % plugin_status)
 
-        new_plugin.status = "STARTING"
+        plugin_instance.status = "STARTING"
+        db.update(plugin_instance)
+
         new_plugin.start()
 
         return True
@@ -77,21 +83,25 @@ class LocalPluginsManager(object):
         """
         self.logger.info("Stopping plugin %s", plugin.unique_name)
 
+        plugin_instance = db.query_unique(Instance, id=plugin.instance.id)
+        plugin_status = plugin_instance.status
+
         # Need to mark the plugin as dead if it doesn't shut down cleanly
         clean_shutdown = True
 
         try:
-            if plugin.status in ["DEAD", "STOPPED", "STOPPING"]:
+            if plugin_status in ["DEAD", "STOPPED", "STOPPING"]:
                 self.logger.info("Plugin %s was already stopped", plugin.unique_name)
                 return
-            elif plugin.status == "UNKNOWN":
+            elif plugin_status == "UNKNOWN":
                 self.logger.warning(
                     "Couldn't determine status of plugin %s, "
                     "still attempting to stop",
                     plugin.unique_name,
                 )
             else:
-                plugin.status = "STOPPING"
+                plugin_instance.status = "STOPPING"
+                db.update(plugin_instance)
 
             # Plugin must be marked as stopped before sending shutdown message
             plugin.stop()
@@ -132,7 +142,8 @@ class LocalPluginsManager(object):
                 "Plugin %s did not shutdown cleanly, " "marking as DEAD",
                 plugin.unique_name,
             )
-            plugin.status = "DEAD"
+            plugin_instance.status = "DEAD"
+            db.update(plugin_instance)
 
     def restart_plugin(self, plugin):
         self.stop_plugin(plugin)
@@ -152,7 +163,7 @@ class LocalPluginsManager(object):
                 system_version,
             )
             self.logger.error(message)
-            raise Exception(message)
+            raise Exception(message)  # TODO - Should not be raising Exception
 
         path_to_plugin = plugins[0].path_to_plugin
 
@@ -167,7 +178,9 @@ class LocalPluginsManager(object):
             raise Exception(message)
 
         for plugin in plugins:
-            if plugin.status == "RUNNING":
+            plugin_instance = db.query_unique(Instance, id=plugin.instance.id)
+            plugin_status = plugin_instance.status
+            if plugin_status == "RUNNING":
                 message = "Could not reload system %s-%s: running instances" % (
                     system_name,
                     system_version,
@@ -255,12 +268,12 @@ class LocalPluginsManager(object):
 
     @staticmethod
     def _get_all_system_names():
-        return [system.name for system in System.objects()]
+        return [system.name for system in db.query(System, include_fields=["name"])]
 
     @staticmethod
     def _get_running_system_names():
         running_system_names = []
-        for system in System.objects():
+        for system in db.query(System):
             if all([instance.status == "RUNNING" for instance in system.instances]):
                 running_system_names.append(system.name)
 
@@ -269,7 +282,7 @@ class LocalPluginsManager(object):
     @staticmethod
     def _get_failed_system_names():
         failed_system_names = []
-        for system in System.objects():
+        for system in db.query(System):
             if all([instance.status == "DEAD" for instance in system.instances]):
                 failed_system_names.append(system.name)
 
@@ -277,11 +290,13 @@ class LocalPluginsManager(object):
 
     @staticmethod
     def _mark_as_failed(plugin):
-        system = System.find_unique(plugin.system.name, plugin.system.version)
+        system = db.query_unique(
+            System, name=plugin.system.name, version=plugin.system.version
+        )
         for instance in system.instances:
             if instance.name == plugin.instance_name:
                 instance.status = "DEAD"
-        system.deep_save()
+        db.update(system)
 
     def stop_all_plugins(self):
         """Attempt to stop all plugins."""
@@ -323,25 +338,3 @@ class LocalPluginsManager(object):
                 self.logger.exception(ex)
 
         self._start_multiple_plugins(new_plugins)
-
-    def pause_plugin(self, unique_name):
-        """Pause a plugin. Not Used yet."""
-        plugin = self.registry.get_plugin(unique_name)
-
-        if plugin is None:
-            self.logger.warning("Plugin %s is not loaded.", unique_name)
-            return
-
-        if plugin.status == "RUNNING":
-            plugin.status = "PAUSED"
-
-    def unpause_plugin(self, unique_name):
-        """Unpause a plugin. Not Used yet."""
-        plugin = self.registry.get_plugin(unique_name)
-
-        if plugin is None:
-            self.logger.warning("Plugin %s is not loaded.", unique_name)
-            return
-
-        if plugin.status == "PAUSED":
-            plugin.status = "RUNNING"

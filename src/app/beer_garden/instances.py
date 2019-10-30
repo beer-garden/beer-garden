@@ -5,19 +5,27 @@ import string
 from datetime import datetime
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Events
+from brewtils.models import Events, Instance, System
 
 import beer_garden
-from beer_garden.bg_utils.mongo.fields import StatusInfo
-from beer_garden.bg_utils.mongo.models import Instance, System
+import beer_garden.db.api as db
 from beer_garden.events import publish_event
 from beer_garden.rabbitmq import get_routing_key, get_routing_keys
 
 logger = logging.getLogger(__name__)
 
 
-def get_instance(instance_id):
-    return Instance.objects.get(id=instance_id)
+def get_instance(instance_id: str) -> Instance:
+    """Retrieve an individual Instance
+
+    Args:
+        instance_id: The Instance ID
+
+    Returns:
+        The Instance
+
+    """
+    return db.query_unique(Instance, id=instance_id)
 
 
 @publish_event(Events.INSTANCE_INITIALIZED)
@@ -27,8 +35,8 @@ def initialize_instance(instance_id):
     :param instance_id: The ID of the instance
     :return: QueueInformation object describing message queue for this system
     """
-    instance = Instance.objects.get(id=instance_id)
-    system = System.objects.get(instances__contains=instance)
+    instance = db.query_unique(Instance, id=instance_id)
+    system = db.query_unique(System, instances__contains=instance)
 
     logger.info(
         "Initializing instance %s[%s]-%s", system.name, instance.name, system.version
@@ -63,14 +71,14 @@ def initialize_instance(instance_id):
     }
 
     instance.status = "INITIALIZING"
-    instance.status_info = StatusInfo(heartbeat=datetime.utcnow())
+    instance.status_info = {"heartbeat": datetime.utcnow()}
     instance.queue_type = "rabbitmq"
     instance.queue_info = {
         "admin": admin_queue,
         "request": req_queue,
         "connection": connection,
     }
-    instance.save()
+    instance = db.update(instance)
 
     # Send a request to start to the plugin on the plugin's admin queue
     beer_garden.application.clients["pika"].publish_request(
@@ -119,8 +127,8 @@ def start_instance(instance_id):
     :param instance_id: The Instance id
     :return: None
     """
-    instance = Instance.objects.get(id=instance_id)
-    system = System.objects.get(instances__contains=instance)
+    instance = db.query_unique(Instance, id=instance_id)
+    system = db.query_unique(System, instances__contains=instance)
 
     logger.info(
         "Starting instance %s[%s]-%s", system.name, instance.name, system.version
@@ -140,8 +148,8 @@ def stop_instance(instance_id):
     :param instance_id: The Instance id
     :return: None
     """
-    instance = Instance.objects.get(id=instance_id)
-    system = System.objects.get(instances__contains=instance)
+    instance = db.query_unique(Instance, id=instance_id)
+    system = db.query_unique(System, instances__contains=instance)
 
     logger.info(
         "Stopping instance %s[%s]-%s", system.name, instance.name, system.version
@@ -154,8 +162,6 @@ def stop_instance(instance_id):
     if local_plugin:
         beer_garden.application.plugin_manager.stop_plugin(local_plugin)
     else:
-        system = System.objects.get(instances__contains=instance)
-
         # This causes the request consumer to terminate itself, which ends the plugin
         beer_garden.application.clients["pika"].publish_request(
             beer_garden.stop_request,
@@ -179,10 +185,11 @@ def update_instance_status(instance_id, new_status):
     Returns:
         The updated instance
     """
-    instance = Instance.objects.get(id=instance_id)
+    instance = db.query_unique(Instance, id=instance_id)
     instance.status = new_status
-    instance.status_info.heartbeat = datetime.utcnow()
-    instance.save()
+    instance.status_info["heartbeat"] = datetime.utcnow()
+
+    instance = db.update(instance)
 
     return instance
 
@@ -196,4 +203,4 @@ def remove_instance(instance_id):
     Returns:
         None
     """
-    Instance.objects.get(id=instance_id).delete()
+    db.delete(db.query_unique(Instance, id=instance_id))

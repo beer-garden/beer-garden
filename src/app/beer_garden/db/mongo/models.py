@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import copy
 import datetime
 import logging
 
@@ -31,24 +30,16 @@ from mongoengine import (
 )
 from mongoengine.errors import DoesNotExist
 
+import brewtils.models
 from .fields import DummyField, StatusInfo
 from brewtils.choices import parse
 from brewtils.errors import ModelValidationError
 from brewtils.models import (
-    Choices as BrewtilsChoices,
     Command as BrewtilsCommand,
     Instance as BrewtilsInstance,
     Parameter as BrewtilsParameter,
     Request as BrewtilsRequest,
-    System as BrewtilsSystem,
-    Event as BrewtilsEvent,
-    Principal as BrewtilsPrincipal,
-    Role as BrewtilsRole,
     Job as BrewtilsJob,
-    RequestTemplate as BrewtilsRequestTemplate,
-    DateTrigger as BrewtilsDateTrigger,
-    CronTrigger as BrewtilsCronTrigger,
-    IntervalTrigger as BrewtilsIntervalTrigger,
 )
 
 __all__ = [
@@ -70,25 +61,38 @@ __all__ = [
 ]
 
 
-# MongoEngine needs all EmbeddedDocuments to be defined before any Documents that reference them
-# So Parameter must be defined before Command, and choices should be defined before Parameter
+class MongoModel(object):
+    brewtils_model = None
+
+    def __str__(self):
+        return self.brewtils_model.__str__(self)
+
+    def __repr__(self):
+        return self.brewtils_model.__repr__(self)
+
+    @classmethod
+    def index_names(cls):
+        return [index["name"] for index in cls._meta["indexes"]]
 
 
-class Choices(EmbeddedDocument, BrewtilsChoices):
-    display = StringField(required=True, choices=BrewtilsChoices.DISPLAYS)
+# MongoEngine needs all EmbeddedDocuments to be defined before any Documents that
+# reference them. So Parameter must be defined before Command, and choices should be
+# defined before Parameter
+
+
+class Choices(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.Choices
+
+    display = StringField(required=True, choices=brewtils.models.Choices.DISPLAYS)
     strict = BooleanField(required=True, default=True)
-    type = StringField(required=True, default="static", choices=BrewtilsChoices.TYPES)
+    type = StringField(
+        required=True, default="static", choices=brewtils.models.Choices.TYPES
+    )
     value = DynamicField(required=True)
     details = DictField()
 
     def __init__(self, *args, **kwargs):
         EmbeddedDocument.__init__(self, *args, **kwargs)
-
-    def __str__(self):
-        return BrewtilsChoices.__str__(self)
-
-    def __repr__(self):
-        return BrewtilsChoices.__repr__(self)
 
     def clean(self):
         if self.type == "static" and not isinstance(self.value, (list, dict)):
@@ -131,8 +135,8 @@ class Choices(EmbeddedDocument, BrewtilsChoices):
             )
 
 
-class Parameter(EmbeddedDocument, BrewtilsParameter):
-    """Mongo-Backed BREWMASTER Parameter Object"""
+class Parameter(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.Parameter
 
     key = StringField(required=True)
     type = StringField(required=True, default="Any", choices=BrewtilsParameter.TYPES)
@@ -158,12 +162,6 @@ class Parameter(EmbeddedDocument, BrewtilsParameter):
 
         EmbeddedDocument.__init__(self, *args, **kwargs)
 
-    def __str__(self):
-        return BrewtilsParameter.__str__(self)
-
-    def __repr__(self):
-        return BrewtilsParameter.__repr__(self)
-
     def clean(self):
         """Validate before saving to the database"""
 
@@ -183,8 +181,8 @@ class Parameter(EmbeddedDocument, BrewtilsParameter):
             )
 
 
-class Command(Document, BrewtilsCommand):
-    """Mongo-Backed BREWMASTER Command Object"""
+class Command(MongoModel, Document):
+    brewtils_model = brewtils.models.Command
 
     name = StringField(required=True, unique_with="system")
     description = StringField()
@@ -196,12 +194,6 @@ class Command(Document, BrewtilsCommand):
     template = StringField()
     icon_name = StringField()
     system = ReferenceField("System")
-
-    def __str__(self):
-        return BrewtilsCommand.__str__(self)
-
-    def __repr__(self):
-        return BrewtilsCommand.__repr__(self)
 
     def clean(self):
         """Validate before saving to the database"""
@@ -233,8 +225,8 @@ class Command(Document, BrewtilsCommand):
             )
 
 
-class Instance(Document, BrewtilsInstance):
-    """Mongo-Backed BREWMASTER Instance Object"""
+class Instance(MongoModel, Document):
+    brewtils_model = brewtils.models.Instance
 
     name = StringField(required=True, default="default")
     description = StringField()
@@ -244,12 +236,6 @@ class Instance(Document, BrewtilsInstance):
     queue_info = DictField()
     icon_name = StringField()
     metadata = DictField()
-
-    def __str__(self):
-        return BrewtilsInstance.__str__(self)
-
-    def __repr__(self):
-        return BrewtilsInstance.__repr__(self)
 
     def clean(self):
         """Validate before saving to the database"""
@@ -261,8 +247,8 @@ class Instance(Document, BrewtilsInstance):
             )
 
 
-class Request(Document, BrewtilsRequest):
-    """Mongo-Backed BREWMASTER Request Object"""
+class Request(MongoModel, Document):
+    brewtils_model = brewtils.models.Request
 
     # These fields are duplicated for job types, changes to this field
     # necessitate a change to the RequestTemplateSchema in brewtils.
@@ -360,12 +346,6 @@ class Request(Document, BrewtilsRequest):
 
     logger = logging.getLogger(__name__)
 
-    def __str__(self):
-        return BrewtilsRequest.__str__(self)
-
-    def __repr__(self):
-        return BrewtilsRequest.__repr__(self)
-
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.utcnow()
         super(Request, self).save(*args, **kwargs)
@@ -397,25 +377,9 @@ class Request(Document, BrewtilsRequest):
                 'type "%s"' % (str(self), self.output_type)
             )
 
-    @staticmethod
-    def find_or_none(system_id):
-        """Find a particular System
 
-         :param system_id: The ID of the system to search for
-         :return: The system with the given id, or None if system does not exist
-         """
-        try:
-            return Request.objects.get(id=system_id)
-        except DoesNotExist:
-            return None
-
-    @classmethod
-    def index_names(cls):
-        return [index["name"] for index in cls._meta["indexes"]]
-
-
-class System(Document, BrewtilsSystem):
-    """Mongo-Backed BREWMASTER System Object"""
+class System(MongoModel, Document):
+    brewtils_model = brewtils.models.System
 
     name = StringField(required=True)
     description = StringField()
@@ -435,12 +399,6 @@ class System(Document, BrewtilsSystem):
         ],
     }
 
-    def __str__(self):
-        return BrewtilsSystem.__str__(self)
-
-    def __repr__(self):
-        return BrewtilsSystem.__repr__(self)
-
     def clean(self):
         """Validate before saving to the database"""
 
@@ -457,36 +415,6 @@ class System(Document, BrewtilsSystem):
             raise ModelValidationError(
                 "Can not save System %s: Duplicate instance names" % str(self)
             )
-
-    def upsert_commands(self, commands):
-        """Updates or inserts a list of commands.
-
-        Assumes the commands passed in are more important than what is currently in the db. It
-        will delete commands that are not listed in the dictionary.
-
-        :param commands: The list of new commands
-        :return: None
-        """
-        old_commands = Command.objects(system=self)
-        old_names = {command.name: command.id for command in old_commands}
-
-        new_commands = copy.copy(commands)
-        for command in new_commands:
-            # If this command is already in the DB we want to preserve the ID
-            if command.name in list(old_names.keys()):
-                command.id = old_names[command.name]
-
-            command.system = self
-            command.save()
-
-        # Clean up orphan commands
-        new_names = [command.name for command in new_commands]
-        for command in old_commands:
-            if command.name not in new_names:
-                command.delete()
-
-        self.commands = new_commands
-        self.save()
 
     def deep_save(self):
         """Deep save. Saves Commands, Instances, and the System
@@ -537,8 +465,8 @@ class System(Document, BrewtilsSystem):
             self.instances = temp_instances
             self.save()
 
-        # Since we don't have actual transactions we are not in a good position here, try our
-        # best to 'roll back'
+        # Since we don't have actual transactions we are not in a good position here,
+        # so try our best to 'roll back'
         except Exception:
             self.commands = temp_commands
             self.instances = temp_instances
@@ -562,21 +490,9 @@ class System(Document, BrewtilsSystem):
         for instance in self.instances:
             instance.delete()
 
-    @classmethod
-    def find_unique(cls, name, version):
-        """Find a unique system using its name and version
 
-        :param name: The name
-        :param version: The version
-        :return: One system instance if found, None otherwise
-        """
-        try:
-            return cls.objects.get(name=name, version=version)
-        except DoesNotExist:
-            return None
-
-
-class Event(Document, BrewtilsEvent):
+class Event(MongoModel, Document):
+    brewtils_model = brewtils.models.Event
 
     name = StringField(required=True)
     payload = DictField()
@@ -584,14 +500,9 @@ class Event(Document, BrewtilsEvent):
     metadata = DictField()
     timestamp = DateTimeField()
 
-    def __str__(self):
-        return BrewtilsEvent.__str__(self)
 
-    def __repr__(self):
-        return BrewtilsEvent.__repr__(self)
-
-
-class Role(Document, BrewtilsRole):
+class Role(MongoModel, Document):
+    brewtils_model = brewtils.models.Role
 
     name = StringField(required=True)
     description = StringField()
@@ -605,7 +516,8 @@ class Role(Document, BrewtilsRole):
     }
 
 
-class Principal(Document, BrewtilsPrincipal):
+class Principal(MongoModel, Document):
+    brewtils_model = brewtils.models.Principal
 
     username = StringField(required=True)
     hash = StringField()
@@ -621,6 +533,7 @@ class Principal(Document, BrewtilsPrincipal):
 
 
 class RefreshToken(Document):
+    brewtils_model = brewtils.models.RefreshToken
 
     issued = DateTimeField(required=True)
     expires = DateTimeField(required=True)
@@ -639,41 +552,22 @@ class RefreshToken(Document):
             return None
 
 
-class RequestTemplate(EmbeddedDocument, BrewtilsRequestTemplate):
+class RequestTemplate(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.RequestTemplate
 
     for field_name, field_info in Request.TEMPLATE_FIELDS.items():
         locals()[field_name] = field_info["field"](**field_info["kwargs"])
 
-    def __str__(self):
-        return BrewtilsRequestTemplate.__str__(self)
 
-    def __repr__(self):
-        return BrewtilsRequestTemplate.__repr__(self)
-
-
-class DateTrigger(EmbeddedDocument, BrewtilsDateTrigger):
+class DateTrigger(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.DateTrigger
 
     run_date = DateTimeField(required=True)
     timezone = StringField(required=False, default="utc", chocies=pytz.all_timezones)
 
-    def __str__(self):
-        return BrewtilsDateTrigger.__str__(self)
 
-    def __repr__(self):
-        return BrewtilsDateTrigger.__repr__(self)
-
-    @staticmethod
-    def get_scheduler_attribute_names():
-        return ["run_date", "timezone"]
-
-    def get_scheduler_kwargs(self):
-        """Get kwargs for schedulers version of this trigger."""
-        tz = pytz.timezone(self.timezone)
-        localized_date = tz.localize(self.run_date)
-        return {"run_date": localized_date, "timezone": tz}
-
-
-class IntervalTrigger(EmbeddedDocument, BrewtilsIntervalTrigger):
+class IntervalTrigger(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.IntervalTrigger
 
     weeks = IntField(default=0)
     days = IntField(default=0)
@@ -686,42 +580,9 @@ class IntervalTrigger(EmbeddedDocument, BrewtilsIntervalTrigger):
     jitter = IntField(required=False)
     reschedule_on_finish = BooleanField(required=False, default=False)
 
-    def __str__(self):
-        return BrewtilsIntervalTrigger.__str__(self)
 
-    def __repr__(self):
-        return BrewtilsIntervalTrigger.__repr__(self)
-
-    @staticmethod
-    def get_scheduler_attribute_names():
-        return [
-            "weeks",
-            "days",
-            "hours",
-            "minutes",
-            "seconds",
-            "start_date",
-            "end_date",
-            "timezone",
-            "jitter",
-            "reschedule_on_finish",
-        ]
-
-    def get_scheduler_kwargs(self):
-        """Get kwargs for schedulers version of this trigger."""
-        tz = pytz.timezone(self.timezone)
-        start_date = tz.localize(self.start_date) if self.start_date else None
-        end_date = tz.localize(self.start_date) if self.start_date else None
-        kwargs = {"timezone": tz, "start_date": start_date, "end_date": end_date}
-        for key in self.get_scheduler_attribute_names():
-            if key in ["timezone", "start_date", "end_date"]:
-                continue
-
-            kwargs[key] = getattr(self, key)
-        return kwargs
-
-
-class CronTrigger(EmbeddedDocument, BrewtilsCronTrigger):
+class CronTrigger(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.CronTrigger
 
     year = StringField(default="*")
     month = StringField(default="1")
@@ -736,44 +597,9 @@ class CronTrigger(EmbeddedDocument, BrewtilsCronTrigger):
     timezone = StringField(required=False, default="utc", chocies=pytz.all_timezones)
     jitter = IntField(required=False)
 
-    def __str__(self):
-        return BrewtilsCronTrigger.__str__(self)
 
-    def __repr__(self):
-        return BrewtilsCronTrigger.__repr__(self)
-
-    @staticmethod
-    def get_scheduler_attribute_names():
-        return [
-            "year",
-            "month",
-            "day",
-            "week",
-            "day_of_week",
-            "hour",
-            "minute",
-            "second",
-            "start_date",
-            "end_date",
-            "timezone",
-            "jitter",
-        ]
-
-    def get_scheduler_kwargs(self):
-        """Get kwargs for schedulers version of this trigger."""
-        tz = pytz.timezone(self.timezone)
-        start_date = tz.localize(self.start_date) if self.start_date else None
-        end_date = tz.localize(self.start_date) if self.start_date else None
-        kwargs = {"timezone": tz, "start_date": start_date, "end_date": end_date}
-        for key in self.get_scheduler_attribute_names():
-            if key in ["timezone", "start_date", "end_date"]:
-                continue
-
-            kwargs[key] = getattr(self, key)
-        return kwargs
-
-
-class Job(Document, BrewtilsJob):
+class Job(MongoModel, Document):
+    brewtils_model = brewtils.models.Job
 
     meta = {
         "auto_create_index": False,
@@ -792,7 +618,7 @@ class Job(Document, BrewtilsJob):
     name = StringField(required=True)
     trigger_type = StringField(required=True, choices=BrewtilsJob.TRIGGER_TYPES)
     trigger = GenericEmbeddedDocumentField(choices=list(TRIGGER_MODEL_MAPPING.values()))
-    request_template = EmbeddedDocumentField("RequestTemplate")
+    request_template = EmbeddedDocumentField("RequestTemplate", required=True)
     misfire_grace_time = IntField()
     coalesce = BooleanField(default=True)
     next_run_time = DateTimeField()
@@ -802,12 +628,6 @@ class Job(Document, BrewtilsJob):
         required=True, choices=BrewtilsJob.STATUS_TYPES, default="RUNNING"
     )
     max_instances = IntField(default=3, min_value=1)
-
-    def __str__(self):
-        return BrewtilsJob.__str__(self)
-
-    def __repr__(self):
-        return BrewtilsJob.__repr__(self)
 
     def clean(self):
         """Validate before saving to the database"""

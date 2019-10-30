@@ -6,7 +6,6 @@ from brewtils.schema_parser import SchemaParser
 from pyrabbit2.api import Client
 from pyrabbit2.http import HTTPError, NetworkError
 
-from beer_garden.bg_utils.mongo.parser import MongoParser
 from beer_garden.requests import cancel_request
 
 
@@ -175,11 +174,9 @@ class PyrabbitClient(object):
             if messages and len(messages) > 0:
                 message = messages[0]
                 try:
-                    request = MongoParser.parse_request(
+                    request = SchemaParser.parse_request(
                         message["payload"], from_string=True
                     )
-
-                    self.logger.debug(f"Canceling Request {request.id}")
                     cancel_request(request)
                 except Exception as ex:
                     self.logger.exception(f"Error canceling message: {ex}")

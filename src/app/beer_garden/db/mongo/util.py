@@ -8,50 +8,7 @@ from passlib.apps import custom_app_context
 logger = logging.getLogger(__name__)
 
 
-def verify_db(guest_login_enabled):
-    """Do everything necessary to ensure the database is in a 'good' state"""
-    from .models import Job, Request, Role, System, Principal
-
-    for doc in (Job, Request, Role, System, Principal):
-        _check_indexes(doc)
-
-    _ensure_roles()
-    _ensure_users(guest_login_enabled)
-
-
-def _update_request_parent_field_type():
-    """Change GenericReferenceField to ReferenceField"""
-    from .models import Request
-
-    raw_collection = Request._get_collection()
-    for request in raw_collection.find({"parent._ref": {"$type": "object"}}):
-        raw_collection.update_one(
-            {"_id": request["_id"]}, {"$set": {"parent": request["parent"]["_ref"]}}
-        )
-
-
-def _update_request_has_parent_model():
-    from .models import Request
-
-    raw_collection = Request._get_collection()
-    raw_collection.update_many({"parent": None}, {"$set": {"has_parent": False}})
-    raw_collection.update_many(
-        {"parent": {"$not": {"$eq": None}}}, {"$set": {"has_parent": True}}
-    )
-
-
-def _create_role(role):
-    """Create a role if it doesn't already exist"""
-    from .models import Role
-
-    try:
-        Role.objects.get(name=role.name)
-    except DoesNotExist:
-        logger.warning("Role %s missing, about to create" % role.name)
-        role.save()
-
-
-def _ensure_roles():
+def ensure_roles():
     """Create roles if necessary
 
     There are certain 'convenience' roles that will be created if this is a new
@@ -139,31 +96,7 @@ def _ensure_roles():
         _create_role(role)
 
 
-def _should_create_admin():
-    from .models import Principal
-
-    count = Principal.objects.count()
-
-    if count == 0:
-        return True
-
-    try:
-        Principal.objects.get(username="admin")
-        return False
-    except DoesNotExist:
-        pass
-
-    if count == 1:
-        principal = Principal.objects.get()[0]
-        return principal.username == "anonymous"
-
-    # By default, if they have created other users that are not just the
-    # anonymous users, we assume they do not want to re-create the admin
-    # user.
-    return False
-
-
-def _ensure_users(guest_login_enabled):
+def ensure_users(guest_login_enabled):
     """Create users if necessary
 
     There are certain 'convenience' users that will be created if this is a new
@@ -218,7 +151,7 @@ def _ensure_users(guest_login_enabled):
             ).save()
 
 
-def _check_indexes(document_class):
+def check_indexes(document_class):
     """Ensures indexes are correct.
 
     If any indexes are missing they will be created.
@@ -313,3 +246,59 @@ def _check_indexes(document_class):
                 document_class.__name__,
             )
             raise
+
+
+def _update_request_parent_field_type():
+    """Change GenericReferenceField to ReferenceField"""
+    from .models import Request
+
+    raw_collection = Request._get_collection()
+    for request in raw_collection.find({"parent._ref": {"$type": "object"}}):
+        raw_collection.update_one(
+            {"_id": request["_id"]}, {"$set": {"parent": request["parent"]["_ref"]}}
+        )
+
+
+def _update_request_has_parent_model():
+    from .models import Request
+
+    raw_collection = Request._get_collection()
+    raw_collection.update_many({"parent": None}, {"$set": {"has_parent": False}})
+    raw_collection.update_many(
+        {"parent": {"$not": {"$eq": None}}}, {"$set": {"has_parent": True}}
+    )
+
+
+def _create_role(role):
+    """Create a role if it doesn't already exist"""
+    from .models import Role
+
+    try:
+        Role.objects.get(name=role.name)
+    except DoesNotExist:
+        logger.warning("Role %s missing, about to create" % role.name)
+        role.save()
+
+
+def _should_create_admin():
+    from .models import Principal
+
+    count = Principal.objects.count()
+
+    if count == 0:
+        return True
+
+    try:
+        Principal.objects.get(username="admin")
+        return False
+    except DoesNotExist:
+        pass
+
+    if count == 1:
+        principal = Principal.objects.get()[0]
+        return principal.username == "anonymous"
+
+    # By default, if they have created other users that are not just the
+    # anonymous users, we assume they do not want to re-create the admin
+    # user.
+    return False

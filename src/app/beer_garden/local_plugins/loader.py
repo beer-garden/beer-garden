@@ -6,7 +6,9 @@ from os import listdir
 from os.path import isfile, join, abspath
 from typing import List
 
-from beer_garden.bg_utils.mongo.models import Instance, System
+from brewtils.models import Instance, System
+
+import beer_garden.db.api as db
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
 from beer_garden.systems import create_system
 
@@ -22,6 +24,7 @@ class LocalPluginLoader(object):
         registry,
         local_plugin_dir=None,
         plugin_log_directory=None,
+        connection_info=None,
         username=None,
         password=None,
     ):
@@ -30,6 +33,7 @@ class LocalPluginLoader(object):
 
         self._local_plugin_dir = local_plugin_dir
         self._plugin_log_directory = plugin_log_directory
+        self._connection_info = connection_info
         self._username = username
         self._password = password
 
@@ -112,64 +116,73 @@ class LocalPluginLoader(object):
             )
             return False
 
-        config = self._load_plugin_config(join(plugin_path, "beer.conf"))
+        plugin_config = self._load_plugin_config(join(plugin_path, "beer.conf"))
 
-        plugin_name = config["NAME"]
-        plugin_version = config["VERSION"]
-        plugin_entry = config["PLUGIN_ENTRY"]
-        plugin_instances = config["INSTANCES"]
-        plugin_args = config["PLUGIN_ARGS"]
+        config_name = plugin_config["NAME"]
+        config_version = plugin_config["VERSION"]
+        config_entry = plugin_config["PLUGIN_ENTRY"]
+        config_instances = plugin_config["INSTANCES"]
+        config_args = plugin_config["PLUGIN_ARGS"]
 
-        # If this system already exists we need to do some stuff
         plugin_id = None
         plugin_commands = []
-        # TODO: replace this with a call from beer_garden.systems
-        plugin_system = System.find_unique(plugin_name, plugin_version)
+        plugin_instances = [Instance(name=name) for name in config_instances]
 
-        if plugin_system:
-            # Carry these over to the new system
-            plugin_id = plugin_system.id
-            plugin_commands = plugin_system.commands
+        # If this system already exists we need to do some stuff
+        existing_system = db.query_unique(
+            System, name=config_name, version=config_version
+        )
+        if existing_system:
+            # Carry these over to the new system wholesale
+            plugin_id = existing_system.id
+            plugin_commands = existing_system.commands
 
-            # Remove the current instances so they aren't left dangling
-            # TODO: Find a way to carry over instances that aren't changing
-            plugin_system.delete_instances()
+            # Any previously existing instances should keep the same id
+            for instance in plugin_instances:
+                if existing_system.has_instance(instance.name):
+                    instance.id = existing_system.get_instance(instance.name).id
+
+            # And any instances that no longer exist should be removed
+            for instance in existing_system.instances:
+                if instance.name not in config_instances:
+                    db.delete(instance)
 
         plugin_system = System(
             id=plugin_id,
-            name=plugin_name,
-            version=plugin_version,
+            name=config_name,
+            version=config_version,
             commands=plugin_commands,
-            instances=[
-                Instance(name=instance_name) for instance_name in plugin_instances
-            ],
+            instances=plugin_instances,
             max_instances=len(plugin_instances),
-            description=config.get("DESCRIPTION"),
-            icon_name=config.get("ICON_NAME"),
-            display_name=config.get("DISPLAY_NAME"),
-            metadata=config.get("METADATA"),
+            description=plugin_config.get("DESCRIPTION"),
+            icon_name=plugin_config.get("ICON_NAME"),
+            display_name=plugin_config.get("DISPLAY_NAME"),
+            metadata=plugin_config.get("METADATA"),
         )
 
-        create_system(plugin_system)
+        plugin_system = create_system(plugin_system)
 
         plugin_list = []
-        for instance_name in plugin_instances:
+        for instance in plugin_instances:
+            # TODO - Local plugin runner shouldn't require HTTP entry point
             plugin = LocalPluginRunner(
-                plugin_entry,
+                config_entry,
                 plugin_system,
-                instance_name,
+                instance.name,
                 abspath(plugin_path),
-                "localhost",
-                9090,
-                ssl_enabled=False,
-                plugin_args=plugin_args.get(instance_name),
-                environment=config["ENVIRONMENT"],
-                requirements=config["REQUIRES"],
+                self._connection_info.host,
+                self._connection_info.port,
+                ssl_enabled=self._connection_info.ssl.enabled,
+                plugin_args=config_args.get(instance.name),
+                environment=plugin_config["ENVIRONMENT"],
+                requirements=plugin_config["REQUIRES"],
                 plugin_log_directory=self._plugin_log_directory,
-                connection_type="thrift",
+                url_prefix=self._connection_info.url_prefix,
+                ca_verify=False,
+                ca_cert=self._connection_info.ssl.ca_cert,
                 username=self._username,
                 password=self._password,
-                log_level=config["LOG_LEVEL"],
+                log_level=plugin_config["LOG_LEVEL"],
             )
 
             self.registry.register_plugin(plugin)

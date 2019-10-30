@@ -1,5 +1,7 @@
-import pytest
+# -*- coding: utf-8 -*-
 from datetime import datetime
+
+import pytest
 from mock import Mock
 from time import sleep
 
@@ -34,9 +36,7 @@ class TestMetrics(object):
     ):
         bg_request.status = status
 
-        requests_mock = Mock()
-        requests_mock.objects.return_value = [bg_request]
-        monkeypatch.setattr(metrics, "Request", requests_mock)
+        monkeypatch.setattr(metrics.db, "query", Mock(return_value=[bg_request]))
 
         metrics.initialize_counts()
         assert queued == metrics.queued_request_gauge.labels.return_value.inc.call_count

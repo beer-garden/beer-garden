@@ -33,10 +33,10 @@ class InstanceAPI(BaseHandler):
           - Instances
         """
         async with ExecutorClient() as client:
-            thrift_response = await client.getInstance(namespace, instance_id)
+            response = await client.getInstance(namespace, instance_id)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)
 
     @authenticated(permissions=[Permissions.INSTANCE_DELETE])
     async def delete(self, namespace, instance_id):
@@ -122,9 +122,9 @@ class InstanceAPI(BaseHandler):
           - Instances
         """
         async with ExecutorClient() as client:
-            thrift_response = await client.updateInstance(
+            response = await client.updateInstance(
                 namespace, instance_id, self.request.decoded_body
             )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)

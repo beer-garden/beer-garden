@@ -2,7 +2,7 @@
 -e git+https://github.com/beer-garden/brewtils@v3#egg=brewtils
 apispec < 0.39
 apscheduler < 4
-mongoengine < 0.16
+mongoengine < 0.19
 passlib < 1.8
 prometheus_client < 1
 pyrabbit2 < 2

@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Tuple, Sequence, Union, Optional
 
 from box import Box
+from brewtils.rest import normalize_url_prefix as normalize
 from ruamel.yaml import YAML
 from yapconf import YapconfSpec, dump_data
 
@@ -40,9 +41,18 @@ def load(args: Sequence[str], force: bool = False) -> None:
         return
 
     spec, cli_vars = _parse_args(args)
-
     config_sources = _setup_config_sources(spec, cli_vars)
-    _CONFIG = Box(spec.load_config(*config_sources).to_dict(), frozen_box=True)
+
+    raw_config = spec.load_config(*config_sources)
+
+    # Create a Box with default to avoid KeyErrors
+    config = Box(raw_config.to_dict(), default_box=True)
+    if config.entry.http.url_prefix:
+        config.entry.http.url_prefix = normalize(config.entry.http.url_prefix)
+    if config.event.brew_view.url_prefix:
+        config.event.brew_view.url_prefix = normalize(config.event.brew_view.url_prefix)
+
+    _CONFIG = Box(config.to_dict(), frozen_box=True)
 
 
 def generate(args: Sequence[str]):
@@ -142,7 +152,7 @@ def generate_logging(args: Sequence[str]):
     logging_config = default_app_config(log.get("level"), log.get("file"))
     log_config_file = log.get("config_file")
 
-    dump_data(logging_config, filename=log_config_file, file_type="json")
+    dump_data(logging_config, filename=log_config_file, file_type="yaml")
 
     return logging_config
 
@@ -662,7 +672,7 @@ _HTTP_SPEC = {
         },
         "url_prefix": {
             "type": "str",
-            "default": None,
+            "default": "/",
             "description": "URL path prefix",
             "required": False,
             "previous_names": ["url_prefix"],
@@ -762,7 +772,7 @@ _EVENT_SPEC = {
                 },
                 "url_prefix": {
                     "type": "str",
-                    "default": None,
+                    "default": "/",
                     "description": "URL prefix of the API server",
                     "required": False,
                 },

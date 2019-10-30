@@ -1,6 +1,7 @@
 import pytest
 from mock import Mock
 
+import beer_garden.local_plugins.monitor
 from beer_garden.local_plugins.monitor import LocalPluginMonitor
 
 
@@ -35,6 +36,28 @@ def stopped_plugin():
     plug.process.poll.return_value = 1
     plug.stopped.return_value = True
     return plug
+
+
+@pytest.fixture(autouse=True)
+def query_mock(monkeypatch, running_plugin, stopped_plugin):
+    def query_func(_, **kwargs):
+        if kwargs["id"] == running_plugin.instance.id:
+            return running_plugin
+        elif kwargs["id"] == stopped_plugin.instance.id:
+            return stopped_plugin
+
+    monkeypatch.setattr(
+        beer_garden.local_plugins.monitor.db,
+        "query_unique",
+        Mock(side_effect=query_func),
+    )
+
+
+@pytest.fixture(autouse=True)
+def update_mock(monkeypatch):
+    update_mock = Mock()
+    monkeypatch.setattr(beer_garden.local_plugins.monitor.db, "update", update_mock)
+    return update_mock
 
 
 class TestLocalPluginMonitor(object):

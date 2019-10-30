@@ -5,7 +5,7 @@ from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timedelta
 
 import jwt
-from beer_garden.bg_utils.mongo.parser import MongoParser
+from beer_garden.db.mongo.parser import MongoParser
 from brewtils.errors import ModelValidationError
 from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
@@ -13,7 +13,7 @@ from tornado.gen import coroutine
 from tornado.web import HTTPError
 
 import beer_garden.api.http
-from beer_garden.bg_utils.mongo.models import Principal, RefreshToken
+from beer_garden.db.mongo.models import Principal, RefreshToken
 from beer_garden.api.http.authorization import coalesce_permissions
 from beer_garden.api.http.base_handler import BaseHandler
 
@@ -133,11 +133,9 @@ class TokenListAPI(BaseHandler):
           The body of the request needs to contain a set of instructions. Currently the
           only operation supported is `refresh`, with path `/payload`:
           ```JSON
-          {
-            "operations": [
-              { "operation": "refresh", "path": "/payload", "value": "REFRESH_ID" }
-            ]
-          }
+          [
+            { "operation": "refresh", "path": "/payload", "value": "REFRESH_ID" }
+          ]
           ```
           If you do not know your REFRESH_ID, it should be set in a cookie by the
           server. If you leave `value` as `null` and include this cookie, then we

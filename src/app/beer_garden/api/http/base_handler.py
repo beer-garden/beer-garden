@@ -3,7 +3,6 @@ import datetime
 import re
 import socket
 
-import brewtils.thrift
 from brewtils.errors import (
     ConflictError,
     ModelError,
@@ -23,7 +22,7 @@ from thriftpy2.thrift import TException
 from tornado.web import HTTPError, RequestHandler
 
 import beer_garden.api.http
-import beer_garden.bg_utils.mongo.models
+import beer_garden.db.mongo.models
 from beer_garden.api.http.authorization import AuthMixin, coalesce_permissions
 from beer_garden.api.http.client import ExecutorClient
 from beer_garden.api.http.metrics import http_api_latency_total
@@ -41,7 +40,6 @@ class BaseHandler(AuthMixin, RequestHandler):
     error_map = {
         MongoValidationError: {"status_code": 400},
         ModelError: {"status_code": 400},
-        brewtils.thrift.bg_thrift.InvalidSystem: {"status_code": 400},
         ExpiredSignatureError: {"status_code": 401},
         AuthorizationRequired: {"status_code": 401},
         RequestForbidden: {"status_code": 403},
@@ -51,7 +49,6 @@ class BaseHandler(AuthMixin, RequestHandler):
         ConflictError: {"status_code": 409},
         NotUniqueError: {"status_code": 409, "message": "Resource already exists"},
         RequestPublishException: {"status_code": 502},
-        brewtils.thrift.bg_thrift.BaseException: {"status_code": 502},
         TException: {"status_code": 503, "message": "Could not connect to Bartender"},
         socket.timeout: {"status_code": 504, "message": "Backend request timed out"},
     }
@@ -67,9 +64,7 @@ class BaseHandler(AuthMixin, RequestHandler):
         if not refresh_id:
             return None
 
-        token = beer_garden.bg_utils.mongo.models.RefreshToken.objects.get(
-            id=refresh_id
-        )
+        token = beer_garden.db.mongo.models.RefreshToken.objects.get(id=refresh_id)
         now = datetime.datetime.utcnow()
         if not token or token.expires < now:
             return None

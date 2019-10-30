@@ -32,7 +32,7 @@ class TestApplication(object):
     @patch("beer_garden.app.Application._startup", Mock())
     def test_helper_thread_restart(self):
         helper_mock = Mock()
-        helper_mock.thread.isAlive.return_value = False
+        helper_mock.thread.is_alive.return_value = False
         self.app.helper_threads = [helper_mock]
         self.app.stopped = Mock(side_effect=[False, True])
 
@@ -40,6 +40,7 @@ class TestApplication(object):
         helper_mock.start.assert_called_once_with()
 
     @patch("beer_garden.app.Application._shutdown", Mock())
+    @patch("beer_garden.app.Application._setup_database", Mock())
     def test_startup(self):
         self.app.stopped = Mock(return_value=True)
         self.app.thrift_server = self.thrift_server
@@ -147,7 +148,7 @@ class TestHelperThread(object):
         assert len(caplog.records) == 0
 
     def test_stop_thread_alive_successful(self, caplog, helper):
-        helper.thread = Mock(isAlive=Mock(side_effect=[True, False]))
+        helper.thread = Mock(is_alive=Mock(side_effect=[True, False]))
 
         with caplog.at_level(logging.DEBUG):
             helper.stop()
@@ -157,7 +158,7 @@ class TestHelperThread(object):
         assert caplog.records[-1].levelname == "DEBUG"
 
     def test_stop_thread_alive_unsuccessful(self, caplog, helper):
-        helper.thread = Mock(isAlive=Mock(return_value=True))
+        helper.thread = Mock(is_alive=Mock(return_value=True))
 
         with caplog.at_level(logging.DEBUG):
             helper.stop()
@@ -167,7 +168,7 @@ class TestHelperThread(object):
         assert caplog.records[-1].levelname == "WARNING"
 
     def test_stop_thread_dead(self, caplog, helper):
-        helper.thread = Mock(isAlive=Mock(return_value=False))
+        helper.thread = Mock(is_alive=Mock(return_value=False))
 
         with caplog.at_level(logging.DEBUG):
             helper.stop()

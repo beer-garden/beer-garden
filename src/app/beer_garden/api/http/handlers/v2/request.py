@@ -1,7 +1,7 @@
 import json
 
 import beer_garden.bg_utils
-from beer_garden.bg_utils.mongo.models import Request
+from beer_garden.db.mongo.models import Request
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.api.http.client import ExecutorClient
@@ -39,10 +39,10 @@ class RequestAPI(BaseHandler):
           - Requests
         """
         async with ExecutorClient() as client:
-            thrift_response = await client.getRequest(namespace, request_id)
+            response = await client.getRequest(namespace, request_id)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(thrift_response)
+        self.write(response)
 
     @authenticated(permissions=[Permissions.REQUEST_UPDATE])
     async def patch(self, namespace, request_id):
@@ -93,13 +93,13 @@ class RequestAPI(BaseHandler):
         """
         async with ExecutorClient() as client:
             try:
-                thrift_response = await client.updateRequest(
+                response = await client.updateRequest(
                     namespace, request_id, self.request.decoded_body
                 )
             except beer_garden.bg_utils.bg_thrift.InvalidRequest as ex:
                 raise ModelValidationError(ex.message)
 
-        self.write(thrift_response)
+        self.write(response)
 
 
 class RequestListAPI(BaseHandler):
@@ -373,7 +373,7 @@ class RequestListAPI(BaseHandler):
 
         async with ExecutorClient() as client:
             try:
-                thrift_response = await client.processRequest(
+                response = await client.processRequest(
                     namespace,
                     self.parser.serialize_request(request_model),
                     float(wait_timeout),
@@ -383,7 +383,7 @@ class RequestListAPI(BaseHandler):
             except beer_garden.bg_utils.bg_thrift.PublishException as ex:
                 raise RequestPublishException(ex.message)
 
-        processed_request = self.parser.parse_request(thrift_response, from_string=True)
+        processed_request = self.parser.parse_request(response, from_string=True)
 
         self.set_status(201)
         self.write(self.parser.serialize_request(processed_request, to_string=False))

@@ -1,26 +1,11 @@
 # -*- coding: utf-8 -*-
 import asyncio
-import copy
 import json
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
 
 import six
-from brewtils.models import (
-    System,
-    Instance,
-    Command,
-    Parameter,
-    Request,
-    PatchOperation,
-    LoggingConfig,
-    Event,
-    Queue,
-    Principal,
-    Role,
-    RefreshToken,
-    Job,
-)
+from brewtils.models import BaseModel
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.api
@@ -38,62 +23,32 @@ class ExecutorClient(object):
             self.pool, partial(getattr(beer_garden.api, args[0]), *args[1:], **kwargs)
         )
 
-        return self.serialize(result, **(serialize_kwargs or {}))
+        # Handlers overwhelmingly just write the response so default to serializing
+        serialize_kwargs = serialize_kwargs or {}
+        if "to_string" not in serialize_kwargs:
+            serialize_kwargs["to_string"] = True
 
-    # TODO - This really needs to be handled by the Parser subsystem
-    @classmethod
-    def serialize(cls, model, to_string=True, **kwargs):
-        """Convenience method to serialize any model type
+        # We're not going to ever double-serialize a string
+        if isinstance(result, six.string_types):
+            return result
 
-        Args:
-            model: The model object(s) to serialize
-            to_string: True generates a JSON-formatted string, False generates a dict
-            **kwargs: Additional parameters to be passed to the Schema (e.g. many=True)
+        if self.json_dump(result):
+            return json.dumps(result) if serialize_kwargs["to_string"] else result
 
-        Returns:
-            A string or dict representation of the model object. Which depends on the
-            value of the to_string parameter.
+        return SchemaParser.serialize(result, **(serialize_kwargs or {}))
 
-        """
-        if isinstance(model, (six.string_types, dict)):
-            return model
-        elif isinstance(model, System):
-            return cls.parser.serialize_system(model, to_string=to_string, **kwargs)
-        elif isinstance(model, Instance):
-            return cls.parser.serialize_instance(model, to_string=to_string, **kwargs)
-        elif isinstance(model, Command):
-            return cls.parser.serialize_command(model, to_string=to_string, **kwargs)
-        elif isinstance(model, Parameter):
-            return cls.parser.serialize_parameter(model, to_string=to_string, **kwargs)
-        elif isinstance(model, Request):
-            return cls.parser.serialize_request(model, to_string=to_string, **kwargs)
-        elif isinstance(model, PatchOperation):
-            return cls.parser.serialize_patch(model, to_string=to_string, **kwargs)
-        elif isinstance(model, LoggingConfig):
-            return cls.parser.serialize_logging_config(
-                model, to_string=to_string, **kwargs
-            )
-        elif isinstance(model, Event):
-            return cls.parser.serialize_event(model, to_string=to_string, **kwargs)
-        elif isinstance(model, Queue):
-            return cls.parser.serialize_queue(model, to_string=to_string, **kwargs)
-        elif isinstance(model, Principal):
-            return cls.parser.serialize_principal(model, to_string=to_string, **kwargs)
-        elif isinstance(model, Role):
-            return cls.parser.serialize_role(model, to_string=to_string, **kwargs)
-        elif isinstance(model, RefreshToken):
-            return cls.parser.serialize_refresh_token(
-                model, to_string=to_string, **kwargs
-            )
-        elif isinstance(model, Job):
-            return cls.parser.serialize_job(model, to_string=to_string, **kwargs)
-        elif isinstance(model, list):
-            nested_kwargs = copy.copy(kwargs)
-            nested_kwargs["to_string"] = False
-            nested_kwargs["many"] = False
+    @staticmethod
+    def json_dump(result) -> bool:
+        """Determine whether to just json dump the result"""
+        if result is None:
+            return True
 
-            serialized = [cls.serialize(x, **nested_kwargs) for x in model]
+        if isinstance(result, dict):
+            return True
 
-            return json.dumps(serialized) if to_string else serialized
+        if isinstance(result, list) and (
+            len(result) == 0 or not isinstance(result[0], BaseModel)
+        ):
+            return True
 
-        raise ValueError("Unable to determine model type")
+        return False

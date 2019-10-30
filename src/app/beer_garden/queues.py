@@ -2,11 +2,11 @@
 import logging
 
 from brewtils.errors import NotFoundError
-from brewtils.models import Queue, Events
+from brewtils.models import Events, Queue, System
 from pyrabbit2.http import HTTPError
 
 import beer_garden
-from beer_garden.bg_utils.mongo.models import System
+import beer_garden.db.api as db
 from beer_garden.events import publish_event
 from beer_garden.rabbitmq import get_routing_key
 
@@ -20,8 +20,6 @@ def get_queue_message_count(queue_name):
     :return: number of messages currently on the queue
     :raises Exception: If queue does not exist
     """
-    logger.debug(f"Getting queue message count for {queue_name}")
-
     return beer_garden.application.clients["pyrabbit"].get_queue_size(queue_name)
 
 
@@ -32,7 +30,7 @@ def get_all_queue_info():
     :raises Exception: If queue does not exist
     """
     queues = []
-    systems = System.objects.all().select_related(max_depth=1)
+    systems = db.query(System)
 
     for system in systems:
         for instance in system.instances:
@@ -83,8 +81,7 @@ def clear_all_queues():
 
     :return: None
     """
-    logger.debug("Clearing all queues")
-    systems = System.objects.all()
+    systems = db.query(System)
 
     for system in systems:
         for instance in system.instances:

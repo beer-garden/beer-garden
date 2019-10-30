@@ -17,9 +17,11 @@ from requests.exceptions import RequestException
 
 import beer_garden
 import beer_garden.api
+import beer_garden.db.api as db
 from beer_garden.bg_utils.event_publisher import EventPublishers, EventPublisher
-from beer_garden.bg_utils.mongo import setup_database
 from beer_garden.bg_utils.publishers import MongoPublisher
+from beer_garden.db.mongo.jobstore import MongoJobStore
+from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.local_plugins.manager import LocalPluginsManager
 from beer_garden.local_plugins.monitor import LocalPluginMonitor
@@ -27,11 +29,9 @@ from beer_garden.local_plugins.registry import LocalPluginRegistry
 from beer_garden.local_plugins.validator import LocalPluginValidator
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
-from beer_garden.mongo_pruner import MongoPruner
 from beer_garden.monitor import PluginStatusMonitor
 from beer_garden.rabbitmq import PikaClient, PyrabbitClient
 from beer_garden.requests import RequestValidator
-from beer_garden.scheduler import BGJobStore
 
 
 class Application(StoppableThread):
@@ -76,6 +76,7 @@ class Application(StoppableThread):
             registry=self.plugin_registry,
             local_plugin_dir=beer_garden.config.get("plugin.local.directory"),
             plugin_log_directory=beer_garden.config.get("plugin.local.log_directory"),
+            connection_info=beer_garden.config.get("entry.http"),
             username=beer_garden.config.get("plugin.local.auth.username"),
             password=beer_garden.config.get("plugin.local.auth.password"),
         )
@@ -157,7 +158,7 @@ class Application(StoppableThread):
 
         while not self.stopped():
             for helper in self.helper_threads:
-                if not helper.thread.isAlive():
+                if not helper.thread.is_alive():
                     self.logger.warning(f"{helper.display_name} is dead, restarting")
                     helper.start()
 
@@ -175,7 +176,7 @@ class Application(StoppableThread):
     def _ensure_connections(self):
         # Mongo connection
         self._progressive_backoff(
-            partial(setup_database, beer_garden.config),
+            partial(db.check_connection, beer_garden.config.get("db")),
             "Unable to connect to mongo, is it started?",
         )
 
@@ -205,7 +206,10 @@ class Application(StoppableThread):
         self.logger.debug("Ensuring connections...")
         self._ensure_connections()
 
-        self.logger.debug("Verifying message virtual host...")
+        self.logger.debug("Setting up database...")
+        self._setup_database()
+
+        self.logger.info("Verifying message virtual host...")
         self.clients["pyrabbit"].verify_virtual_host()
 
         self.logger.debug("Ensuring admin queue expiration policy...")
@@ -281,8 +285,13 @@ class Application(StoppableThread):
         self.logger.info("Successfully shut down Beer-garden")
 
     @staticmethod
+    def _setup_database():
+        db.create_connection(db_config=beer_garden.config.get("db"))
+        db.initial_setup(beer_garden.config.get("auth.guest_login_enabled"))
+
+    @staticmethod
     def _setup_scheduler():
-        job_stores = {"beer_garden": BGJobStore()}
+        job_stores = {"beer_garden": MongoJobStore()}
         scheduler_config = beer_garden.config.get("scheduler")
         executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
         job_defaults = scheduler_config.job_defaults.to_dict()
@@ -371,7 +380,7 @@ class HelperThread(object):
         if not getattr(self, "thread"):
             return
 
-        if not self.thread.isAlive():
+        if not self.thread.is_alive():
             self.logger.warning(
                 "Uh-oh. Looks like a bad shutdown - the %s " "was already stopped",
                 self.display_name,
@@ -383,7 +392,7 @@ class HelperThread(object):
             self.logger.debug("Waiting for %s to stop...", self.display_name)
             self.thread.join(2)
 
-            if self.thread.isAlive():
+            if self.thread.is_alive():
                 self.logger.warning("%s did not stop successfully.", self.display_name)
             else:
                 self.logger.debug("%s successfully stopped", self.display_name)

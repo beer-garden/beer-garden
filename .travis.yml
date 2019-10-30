@@ -1,11 +1,6 @@
 language: python
 cache: pip
-sudo: required
-dist: xenial
-
-services:
-  - docker
-
+#
 #env:
 #  global:
 #    # Docker User
@@ -23,12 +18,6 @@ stages:
   - pypi deploy
   - docker deploy
 
-# This is for the "test" stage
-before_install: "cd src/app"
-install: "make deps-python"
-script: "make coverage"
-after_success: "codecov"
-
 jobs:
   include:
     - stage: lint
@@ -36,6 +25,12 @@ jobs:
       install: "pip install black flake8"
       script: "make lint"
       after_success: skip
+
+    - stage: test
+      before_install: "cd src/app"
+      install: "make deps-python"
+      script: "make coverage"
+      after_success: "codecov"
 
     - stage: unstable docker deploy
       if: (branch = develop) AND (type != pull_request)
@@ -69,10 +64,11 @@ jobs:
 
 # Integration tests
 
-#sudo: required
-#
 #language: python
 #cache: pip
+#sudo: required
+#dist: xenial
+#
 #python:
 #  - "2.7"
 #  - "3.4"
@@ -80,6 +76,7 @@ jobs:
 #  - "3.6"
 #
 #services:
+#  - docker
 #  - mongodb
 #  - rabbitmq
 #
