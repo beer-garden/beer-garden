@@ -282,6 +282,14 @@ class Application(StoppableThread):
         for entry_point in self.entry_points:
             entry_point.stop(timeout=10)
 
+        # Need to clean out the logging queue after entry points shut down
+        while not self.log_queue.empty():
+            record = self.log_queue.get()
+            logger = logging.getLogger(record.name)
+
+            if logger.isEnabledFor(record.levelno):
+                logger.handle(record)
+
         self.logger.info("Successfully shut down Beer-garden")
 
     @staticmethod
