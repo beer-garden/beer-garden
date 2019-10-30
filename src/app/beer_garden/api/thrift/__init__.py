@@ -5,8 +5,6 @@ import types
 
 import thriftpy2
 
-import beer_garden
-from beer_garden.api.entry_point import EntryPoint
 from beer_garden.api.thrift.handler import BartenderHandler
 from beer_garden.api.thrift.server import make_server
 
@@ -36,13 +34,8 @@ def run():
 
     the_server.run()
 
-    logger.info("Application is shut down. Goodbye!")
+    logger.info("Thrift server is shut down. Goodbye!")
 
 
 def signal_handler(_: int, __: types.FrameType):
     the_server.stop()
-
-
-beer_garden.entry_points["thrift"] = EntryPoint(
-    "thrift", run, signal_handler=signal_handler
-)

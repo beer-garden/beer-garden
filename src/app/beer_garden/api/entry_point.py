@@ -4,12 +4,14 @@ import signal
 from multiprocessing.context import BaseContext
 from multiprocessing.queues import Queue
 from types import FrameType
-from typing import Any, Callable
+from typing import Any, Callable, TypeVar
 
 from box import Box
 
 import beer_garden.config
 import beer_garden.db.api as db
+
+T = TypeVar("T", bound="EntryPoint")
 
 
 class EntryPoint(object):
@@ -35,7 +37,11 @@ class EntryPoint(object):
         self._target = target
         self._signal_handler = signal_handler
         self._process = None
-        self._enabled = False
+
+    @classmethod
+    def create(cls, module_name: str) -> T:
+        module = getattr(beer_garden.api, module_name)
+        return EntryPoint(module_name, module.run, signal_handler=module.signal_handler)
 
     def start(self, context: BaseContext, log_queue: Queue) -> None:
         """Start the entry point process

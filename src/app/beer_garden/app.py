@@ -18,6 +18,7 @@ from requests.exceptions import RequestException
 import beer_garden
 import beer_garden.api
 import beer_garden.db.api as db
+from beer_garden.api.entry_point import EntryPoint
 from beer_garden.bg_utils.event_publisher import EventPublishers, EventPublisher
 from beer_garden.bg_utils.publishers import MongoPublisher
 from beer_garden.db.mongo.jobstore import MongoJobStore
@@ -53,6 +54,7 @@ class Application(StoppableThread):
     helper_threads = None
     context = None
     log_queue = None
+    entry_points = []
 
     def __init__(self):
         super(Application, self).__init__(
@@ -151,7 +153,7 @@ class Application(StoppableThread):
 
         for entry_name, entry_value in beer_garden.config.get("entry").items():
             if entry_value.get("enable"):
-                beer_garden.entry_points[entry_name].enabled = True
+                self.entry_points.append(EntryPoint.create(entry_name))
 
     def run(self):
         self._startup()
@@ -227,9 +229,8 @@ class Application(StoppableThread):
             helper_thread.start()
 
         self.logger.debug("Starting entry points...")
-        for entry_point in beer_garden.entry_points.values():
-            if entry_point.enabled:
-                entry_point.start(context=self.context, log_queue=self.log_queue)
+        for entry_point in self.entry_points:
+            entry_point.start(context=self.context, log_queue=self.log_queue)
 
         self.logger.debug("Loading all local plugins...")
         self.plugin_loader.load_plugins()
@@ -278,9 +279,8 @@ class Application(StoppableThread):
             self.logger.warning("Unable to publish shutdown notification")
 
         self.logger.debug("Stopping entry points")
-        for entry_point in beer_garden.entry_points.values():
-            if entry_point.enabled:
-                entry_point.stop(timeout=10)
+        for entry_point in self.entry_points:
+            entry_point.stop(timeout=10)
 
         self.logger.info("Successfully shut down Beer-garden")
 

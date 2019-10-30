@@ -35,7 +35,6 @@ import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.v2 as v2
 import beer_garden.api.http.handlers.vbeta as vbeta
 import beer_garden.bg_utils
-from beer_garden.api.entry_point import EntryPoint
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
 
 io_loop = None
@@ -67,11 +66,6 @@ def run():
 
 def signal_handler(_: int, __: types.FrameType):
     io_loop.add_callback_from_signal(shutdown)
-
-
-beer_garden.entry_points["http"] = EntryPoint(
-    "http", run, signal_handler=signal_handler
-)
 
 
 async def startup():
