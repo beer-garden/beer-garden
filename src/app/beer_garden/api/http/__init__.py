@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 import os
-import signal
 import ssl
+import types
 
 from apispec import APISpec
 from brewtils.schemas import (
@@ -35,7 +35,7 @@ import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.v2 as v2
 import beer_garden.api.http.handlers.vbeta as vbeta
 import beer_garden.bg_utils
-from beer_garden.api.entry_point import ProcessEntryPoint
+from beer_garden.api.entry_point import EntryPoint
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
 
 io_loop = None
@@ -50,22 +50,14 @@ anonymous_principal = None
 client_ssl = None
 
 
-def run(config, log_queue):
+def run():
     global logger
-
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-
-    # Absolute first thing to do is set the config
-    beer_garden.config.assign(config)
-
-    beer_garden.log.setup_entry_point_logging(log_queue)
     logger = logging.getLogger(__name__)
 
     _setup_application()
 
     # Schedule things to happen after the ioloop comes up
-    io_loop.add_callback(beer_garden.api.http.startup)
+    io_loop.add_callback(startup)
 
     logger.debug("Starting IO loop")
     io_loop.start()
@@ -73,12 +65,13 @@ def run(config, log_queue):
     logger.info("Http entry point is shut down. Goodbye!")
 
 
-beer_garden.entry_points["http"] = ProcessEntryPoint("http", run)
+def signal_handler(_: int, __: types.FrameType):
+    io_loop.add_callback_from_signal(shutdown)
 
 
-def signal_handler(signal_number, stack_frame):
-    logger.debug("Received a shutdown request.")
-    io_loop.add_callback_from_signal(beer_garden.api.http.shutdown)
+beer_garden.entry_points["http"] = EntryPoint(
+    "http", run, signal_handler=signal_handler
+)
 
 
 async def startup():

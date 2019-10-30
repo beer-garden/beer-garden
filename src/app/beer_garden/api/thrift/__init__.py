@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import logging
 import os
-import signal
+import types
 
 import thriftpy2
 
-import beer_garden.config
+import beer_garden
+from beer_garden.api.entry_point import EntryPoint
 from beer_garden.api.thrift.handler import BartenderHandler
 from beer_garden.api.thrift.server import make_server
 
@@ -18,20 +19,8 @@ bg_thrift = thriftpy2.load(
 )
 
 
-def signal_handler(signal_number, stack_frame):
-    stop()
-
-
-def run(config, log_queue):
+def run():
     global logger, the_server
-
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-
-    # Absolute first thing to do is set the config
-    beer_garden.config.assign(config)
-
-    beer_garden.log.setup_entry_point_logging(log_queue)
     logger = logging.getLogger(__name__)
 
     # TODO: The thrift portion is currently hardcoded, because it should
@@ -50,6 +39,10 @@ def run(config, log_queue):
     logger.info("Application is shut down. Goodbye!")
 
 
-def stop():
-    logger.info("Received a shutdown request.")
+def signal_handler(_: int, __: types.FrameType):
     the_server.stop()
+
+
+beer_garden.entry_points["thrift"] = EntryPoint(
+    "thrift", run, signal_handler=signal_handler
+)
