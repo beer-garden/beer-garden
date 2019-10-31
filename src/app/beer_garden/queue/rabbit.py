@@ -15,6 +15,10 @@ logger = logging.getLogger(__name__)
 clients = {}
 
 
+def check_connection(connection_name: str):
+    return clients[connection_name].is_alive()
+
+
 def create_clients(amq_config):
     global clients
     clients = {
@@ -67,6 +71,10 @@ def put(request: Request, **kwargs) -> None:
         )
 
     clients["pika"].publish(SchemaParser.serialize_request(request), **kwargs)
+
+
+def count(queue_name: str) -> int:
+    return clients["pyrabbit"].get_queue_size(queue_name)
 
 
 def clear(queue_name: str, instance: Instance = None) -> None:
