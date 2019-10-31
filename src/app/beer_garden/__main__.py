@@ -7,9 +7,9 @@ from functools import partial
 import beer_garden
 import beer_garden.api.http
 import beer_garden.api.thrift
+import beer_garden.db.api as db
 from beer_garden import progressive_backoff
 from beer_garden.config import generate_logging, generate, migrate
-from beer_garden.db.mongo.api import check_connection
 
 entry_point = None
 
@@ -62,23 +62,25 @@ def main():
 
     # Ensure we have a mongo connection
     progressive_backoff(
-        partial(check_connection, beer_garden.config.get("db")),
+        partial(db.check_connection, beer_garden.config.get("db")),
         beer_garden.application,
         "Unable to connect to mongo, is it started?",
     )
 
     # Ensure we have message queue connections
-    progressive_backoff(
-        beer_garden.application.clients["pika"].is_alive,
-        beer_garden.application,
-        "Unable to connect to rabbitmq, is it started?",
-    )
-    progressive_backoff(
-        beer_garden.application.clients["pyrabbit"].is_alive,
-        beer_garden.application,
-        "Unable to connect to rabbitmq admin interface. "
-        "Is the management plugin enabled?",
-    )
+    # progressive_backoff(
+    #     partial(queue.check_connection, "pika"),
+    #     # beer_garden.application.clients["pika"].is_alive,
+    #     beer_garden.application,
+    #     "Unable to connect to rabbitmq, is it started?",
+    # )
+    # progressive_backoff(
+    #     partial(queue.check_connection, "pyrabbit"),
+    #     # beer_garden.application.clients["pyrabbit"].is_alive,
+    #     beer_garden.application,
+    #     "Unable to connect to rabbitmq admin interface. "
+    #     "Is the management plugin enabled?",
+    # )
 
     # Since we wait for RabbitMQ we could already be shutting down
     # In that case we don't want to start
