@@ -28,6 +28,10 @@ class ExecutorClient(object):
         if "to_string" not in serialize_kwargs:
             serialize_kwargs["to_string"] = True
 
+        # If we don't want to serialize at all, we're done!
+        if not serialize_kwargs.get("serialize", True):
+            return result
+
         # We're not going to ever double-serialize a string
         if isinstance(result, six.string_types):
             return result
