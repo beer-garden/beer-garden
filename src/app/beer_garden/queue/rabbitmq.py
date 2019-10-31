@@ -6,7 +6,7 @@ from brewtils.schema_parser import SchemaParser
 from pyrabbit2.api import Client
 from pyrabbit2.http import HTTPError, NetworkError
 
-from beer_garden.requests import cancel_request
+import beer_garden.requests
 
 
 def get_routing_key(*args, **kwargs):
@@ -177,7 +177,7 @@ class PyrabbitClient(object):
                     request = SchemaParser.parse_request(
                         message["payload"], from_string=True
                     )
-                    cancel_request(request)
+                    beer_garden.requests.cancel_request(request)
                 except Exception as ex:
                     self.logger.exception(f"Error canceling message: {ex}")
             else:

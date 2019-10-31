@@ -22,7 +22,6 @@ class BartenderAppTest(unittest.TestCase):
         self.status_monitor = Mock()
         self.plugin_manager = Mock()
         self.plugin_loader = Mock()
-        self.clients = MagicMock()
         self.mongo_pruner = Mock()
 
     @patch("beer_garden.app.BartenderApp._shutdown")
@@ -48,13 +47,13 @@ class BartenderAppTest(unittest.TestCase):
 
     @patch("beer_garden.app.BartenderApp._shutdown", Mock())
     @patch("beer_garden.app.BartenderApp._setup_database", Mock())
+    @patch("beer_garden.app.BartenderApp._setup_queues", Mock())
     def test_startup(self):
         self.app.stopped = Mock(return_value=True)
         self.app.thrift_server = self.thrift_server
         self.app.local_monitor = self.local_monitor
         self.app.status_monitor = self.status_monitor
         self.app.plugin_loader = self.plugin_loader
-        self.app.clients = self.clients
         self.app.plugin_manager = self.plugin_manager
         self.app.queue_manager = self.queue_manager
         self.app.helper_threads = [

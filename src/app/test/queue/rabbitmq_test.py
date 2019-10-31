@@ -3,6 +3,7 @@ from mock import Mock, ANY
 from pyrabbit2.http import HTTPError, NetworkError
 
 import beer_garden.queue.rabbitmq
+import beer_garden.requests
 from beer_garden.queue.rabbitmq import (
     PikaClient,
     PyrabbitClient,
@@ -183,7 +184,7 @@ class TestPyrabbitClient(object):
         monkeypatch.setattr("beer_garden.queue.rabbitmq.SchemaParser", parser_mock)
 
         cancel_mock = Mock()
-        monkeypatch.setattr(beer_garden.queue.rabbitmq, "cancel_request", cancel_mock)
+        monkeypatch.setattr(beer_garden.requests, "cancel_request", cancel_mock)
 
         client.clear_queue("queue")
         cancel_mock.assert_called_once_with(fake_request)

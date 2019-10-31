@@ -7,6 +7,7 @@ from pyrabbit2.http import HTTPError
 
 import beer_garden
 import beer_garden.db.api as db
+import beer_garden.queue.api as queue
 from beer_garden.events import publish_event
 from beer_garden.queue.rabbitmq import get_routing_key
 
@@ -67,7 +68,7 @@ def clear_queue(queue_name):
     """
     logger.debug("Clearing queue %s", queue_name)
     try:
-        beer_garden.application.clients["pyrabbit"].clear_queue(queue_name)
+        queue.clear(queue_name)
     except HTTPError as ex:
         if ex.status == 404:
             raise NotFoundError("No queue named %s" % queue_name)
