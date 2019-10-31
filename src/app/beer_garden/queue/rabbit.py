@@ -77,7 +77,7 @@ def count(queue_name: str) -> int:
     return clients["pyrabbit"].get_queue_size(queue_name)
 
 
-def clear(queue_name: str, instance: Instance = None) -> None:
+def clear(queue_name: str) -> None:
     logger.debug("Clearing queue %s", queue_name)
     try:
         clients["pyrabbit"].clear_queue(queue_name)
