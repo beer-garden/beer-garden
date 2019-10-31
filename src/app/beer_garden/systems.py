@@ -12,7 +12,7 @@ import beer_garden
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 from beer_garden.events import publish_event
-from beer_garden.queue.rabbitmq import get_routing_key
+from beer_garden.queue.rabbit import get_routing_key
 
 REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 

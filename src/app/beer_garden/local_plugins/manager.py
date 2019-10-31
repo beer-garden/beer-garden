@@ -8,7 +8,7 @@ import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 from beer_garden.errors import PluginStartupError
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
-from beer_garden.queue.rabbitmq import get_routing_key
+from beer_garden.queue.rabbit import get_routing_key
 
 
 class LocalPluginsManager(object):
