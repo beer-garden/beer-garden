@@ -2,8 +2,8 @@ import pytest
 from mock import Mock, ANY
 from pyrabbit2.http import HTTPError, NetworkError
 
-import beer_garden.rabbitmq
-from beer_garden.rabbitmq import (
+import beer_garden.queue.rabbitmq
+from beer_garden.queue.rabbitmq import (
     PikaClient,
     PyrabbitClient,
     get_routing_key,
@@ -180,10 +180,10 @@ class TestPyrabbitClient(object):
         pyrabbit_client.get_messages.return_value = [{"payload": fake_request}]
 
         parser_mock = Mock(parse_request=Mock(return_value=fake_request))
-        monkeypatch.setattr("beer_garden.rabbitmq.SchemaParser", parser_mock)
+        monkeypatch.setattr("beer_garden.queue.rabbitmq.SchemaParser", parser_mock)
 
         cancel_mock = Mock()
-        monkeypatch.setattr(beer_garden.rabbitmq, "cancel_request", cancel_mock)
+        monkeypatch.setattr(beer_garden.queue.rabbitmq, "cancel_request", cancel_mock)
 
         client.clear_queue("queue")
         cancel_mock.assert_called_once_with(fake_request)
@@ -194,7 +194,7 @@ class TestPyrabbitClient(object):
         pyrabbit_client.get_messages.return_value = [{"payload": fake_request}]
 
         parser_mock = Mock(parse_request=Mock(side_effect=ValueError))
-        monkeypatch.setattr("beer_garden.rabbitmq.SchemaParser", parser_mock)
+        monkeypatch.setattr("beer_garden.queue.rabbitmq.SchemaParser", parser_mock)
 
         client.clear_queue("queue")
         assert fake_request.status == "CREATED"
@@ -212,7 +212,7 @@ class TestPyrabbitClient(object):
         pyrabbit_client.get_messages.return_value = []
 
         parser_mock = Mock()
-        monkeypatch.setattr("beer_garden.rabbitmq.SchemaParser", parser_mock)
+        monkeypatch.setattr("beer_garden.queue.rabbitmq.SchemaParser", parser_mock)
 
         client.clear_queue("queue")
         assert pyrabbit_client.get_messages.called is True

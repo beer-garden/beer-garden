@@ -8,7 +8,7 @@ from pyrabbit2.http import HTTPError
 import beer_garden
 import beer_garden.db.api as db
 from beer_garden.events import publish_event
-from beer_garden.rabbitmq import get_routing_key
+from beer_garden.queue.rabbitmq import get_routing_key
 
 logger = logging.getLogger(__name__)
 

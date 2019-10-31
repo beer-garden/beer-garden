@@ -28,7 +28,7 @@ from beer_garden.local_plugins.validator import LocalPluginValidator
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import PluginStatusMonitor
-from beer_garden.rabbitmq import PikaClient, PyrabbitClient
+from beer_garden.queue.rabbitmq import PikaClient, PyrabbitClient
 from beer_garden.requests import RequestValidator
 
 
