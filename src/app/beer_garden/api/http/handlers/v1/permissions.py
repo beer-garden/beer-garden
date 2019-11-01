@@ -2,7 +2,7 @@
 import json
 import logging
 
-from beer_garden.api.http.authorization import authenticated, Permissions
+from beer_garden.api.auth import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
 
 

@@ -5,12 +5,10 @@ from tornado.web import HTTPError
 from tornado.websocket import WebSocketHandler
 
 from beer_garden.api.http.authorization import (
-    check_permission,
     query_token_auth,
     AuthMixin,
-    Permissions,
-    authenticated,
 )
+from beer_garden.api.auth import Permissions, authenticated, check_permission
 from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import RequestForbidden
 

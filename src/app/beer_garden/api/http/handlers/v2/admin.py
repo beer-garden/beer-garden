@@ -1,4 +1,4 @@
-from beer_garden.api.http.authorization import check_permission, Permissions
+from beer_garden.api.auth import Permissions, check_permission
 from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.api.http.client import ExecutorClient
 from brewtils.errors import ModelValidationError

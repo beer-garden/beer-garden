@@ -2,7 +2,7 @@ import json
 
 import beer_garden.bg_utils
 from beer_garden.db.mongo.models import Request
-from beer_garden.api.http.authorization import authenticated, Permissions
+from beer_garden.api.auth import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.api.http.client import ExecutorClient
 from brewtils.errors import ModelValidationError, RequestPublishException

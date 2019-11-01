@@ -3,7 +3,7 @@ from brewtils.errors import ModelValidationError
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import JobSchema
 
-from beer_garden.api.http.authorization import authenticated, Permissions
+from beer_garden.api.auth import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
 
 

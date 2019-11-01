@@ -14,7 +14,7 @@ from tornado.web import HTTPError
 
 import beer_garden.api.http
 from beer_garden.db.mongo.models import Principal, RefreshToken
-from beer_garden.api.http.authorization import coalesce_permissions
+from beer_garden.api.auth import coalesce_permissions
 from beer_garden.api.http.base_handler import BaseHandler
 
 
