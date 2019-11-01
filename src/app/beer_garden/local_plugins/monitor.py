@@ -5,6 +5,7 @@ from brewtils.models import Instance
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.db.api as db
+from beer_garden.local_plugins.registry import LocalPluginRegistry
 
 
 class LocalPluginMonitor(StoppableThread):
@@ -13,11 +14,11 @@ class LocalPluginMonitor(StoppableThread):
     When one is down and out, it will attempt to restart that plugin.
     """
 
-    def __init__(self, plugin_manager, registry):
+    def __init__(self, plugin_manager):
         self.logger = logging.getLogger(__name__)
         self.display_name = "Local Plugin Monitor"
         self.plugin_manager = plugin_manager
-        self.registry = registry
+        self.registry = LocalPluginRegistry.instance()
 
         super(LocalPluginMonitor, self).__init__(
             logger=self.logger, name="LocalPluginMonitor"

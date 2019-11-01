@@ -8,6 +8,8 @@ from mock import Mock
 
 import beer_garden.db.api as db
 from beer_garden.local_plugins.loader import LocalPluginLoader
+from beer_garden.local_plugins.registry import LocalPluginRegistry
+from beer_garden.local_plugins.validator import LocalPluginValidator
 from beer_garden.systems import create_system
 
 
@@ -67,21 +69,24 @@ def write_file(plugin_path, file_contents):
 
 
 @pytest.fixture
-def registry():
+def registry(monkeypatch):
     reg = Mock()
     reg.get_all_plugins.return_value = []
     reg.get_unique_plugin_names.return_value = []
+    monkeypatch.setattr(LocalPluginRegistry, "_instance", reg)
     return reg
 
 
 @pytest.fixture
-def validator():
-    return Mock()
+def validator(monkeypatch):
+    val = Mock()
+    monkeypatch.setattr(LocalPluginValidator, "_instance", val)
+    return val
 
 
 @pytest.fixture
 def loader(registry, validator):
-    return LocalPluginLoader(validator, registry, connection_info=Mock())
+    return LocalPluginLoader(connection_info=Mock())
 
 
 class TestLoadPlugins(object):

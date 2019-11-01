@@ -9,9 +9,17 @@ import beer_garden.db.api as db
 class LocalPluginRegistry(object):
     """Plugin Registry that is responsible for keeping track of plugins and their status"""
 
+    _instance = None
+
     def __init__(self):
         self._registry = []
         self.logger = logging.getLogger(__name__)
+
+    @classmethod
+    def instance(cls):
+        if not cls._instance:
+            cls._instance = cls()
+        return cls._instance
 
     def get_all_plugins(self):
         """Return a safe copy of all plugins"""

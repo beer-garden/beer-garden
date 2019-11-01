@@ -23,16 +23,13 @@ from beer_garden.bg_utils.event_publisher import EventPublishers, EventPublisher
 from beer_garden.bg_utils.publishers import MongoPublisher
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
-from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.local_plugins.manager import LocalPluginsManager
+from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.local_plugins.monitor import LocalPluginMonitor
-from beer_garden.local_plugins.registry import LocalPluginRegistry
-from beer_garden.local_plugins.validator import LocalPluginValidator
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import PluginStatusMonitor
 from beer_garden.rabbitmq import PikaClient, PyrabbitClient
-from beer_garden.requests import RequestValidator
 
 
 class Application(StoppableThread):
@@ -44,11 +41,8 @@ class Application(StoppableThread):
     """
 
     request_validator = None
-    plugin_registry = None
-    plugin_validator = None
     scheduler = None
     event_publishers = None
-    plugin_loader = None
     plugin_manager = None
     clients = None
     helper_threads = None
@@ -65,23 +59,10 @@ class Application(StoppableThread):
 
     def initialize(self):
         """Actually construct all the various component pieces"""
-        self.request_validator = RequestValidator(beer_garden.config.get("validator"))
-        self.plugin_registry = LocalPluginRegistry()
-        self.plugin_validator = LocalPluginValidator()
         self.scheduler = self._setup_scheduler()
         self.event_publishers = EventPublishers()
 
         load_plugin_log_config()
-
-        self.plugin_loader = LocalPluginLoader(
-            validator=self.plugin_validator,
-            registry=self.plugin_registry,
-            local_plugin_dir=beer_garden.config.get("plugin.local.directory"),
-            plugin_log_directory=beer_garden.config.get("plugin.local.log_directory"),
-            connection_info=beer_garden.config.get("entry.http"),
-            username=beer_garden.config.get("plugin.local.auth.username"),
-            password=beer_garden.config.get("plugin.local.auth.password"),
-        )
 
         amq_config = beer_garden.config.get("amq")
         self.clients = {
@@ -105,20 +86,13 @@ class Application(StoppableThread):
         }
 
         self.plugin_manager = LocalPluginsManager(
-            loader=self.plugin_loader,
-            validator=self.plugin_validator,
-            registry=self.plugin_registry,
             clients=self.clients,
             shutdown_timeout=beer_garden.config.get("plugin.local.timeout.shutdown"),
         )
 
         plugin_config = beer_garden.config.get("plugin")
         self.helper_threads = [
-            HelperThread(
-                LocalPluginMonitor,
-                plugin_manager=self.plugin_manager,
-                registry=self.plugin_registry,
-            ),
+            HelperThread(LocalPluginMonitor, plugin_manager=self.plugin_manager),
             HelperThread(
                 PluginStatusMonitor,
                 self.clients,
@@ -233,7 +207,7 @@ class Application(StoppableThread):
             entry_point.start(context=self.context, log_queue=self.log_queue)
 
         self.logger.debug("Loading all local plugins...")
-        self.plugin_loader.load_plugins()
+        LocalPluginLoader.instance().load_plugins()
 
         self.logger.debug("Starting all local plugins...")
         self.plugin_manager.start_all_plugins()

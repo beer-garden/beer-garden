@@ -7,27 +7,36 @@ from mock import call, Mock
 
 import beer_garden
 from beer_garden.errors import PluginStartupError
+from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.local_plugins.manager import LocalPluginsManager
+from beer_garden.local_plugins.registry import LocalPluginRegistry
+from beer_garden.local_plugins.validator import LocalPluginValidator
 
 
 @pytest.fixture
-def loader():
-    return Mock()
+def loader(monkeypatch):
+    load = Mock()
+    monkeypatch.setattr(LocalPluginLoader, "_instance", load)
+    return load
 
 
 @pytest.fixture
-def validator():
-    return Mock()
+def validator(monkeypatch):
+    val = Mock()
+    monkeypatch.setattr(LocalPluginValidator, "_instance", val)
+    return val
 
 
 @pytest.fixture
-def registry(plugin, bg_system):
-    return Mock(
+def registry(monkeypatch, plugin, bg_system):
+    reg = Mock(
         get_plugin=Mock(return_value=plugin),
         get_unique_plugin_names=Mock(return_value=[bg_system.name]),
         get_all_plugins=Mock(return_value=[plugin]),
         get_plugins_by_system=Mock(return_value=[plugin]),
     )
+    monkeypatch.setattr(LocalPluginRegistry, "_instance", reg)
+    return reg
 
 
 @pytest.fixture
@@ -58,7 +67,7 @@ def plugin(monkeypatch, bg_system):
 
 @pytest.fixture
 def manager(loader, validator, registry, pika_client):
-    return LocalPluginsManager(loader, validator, registry, {"pika": pika_client}, 1)
+    return LocalPluginsManager({"pika": pika_client}, 1)
 
 
 class TestStartPlugin(object):

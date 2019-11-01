@@ -3,21 +3,24 @@ from mock import Mock
 
 import beer_garden.local_plugins.monitor
 from beer_garden.local_plugins.monitor import LocalPluginMonitor
+from beer_garden.local_plugins.registry import LocalPluginRegistry
 
 
 @pytest.fixture
-def manager():
+def manager(monkeypatch):
     return Mock()
 
 
 @pytest.fixture
-def registry():
-    return Mock()
+def registry(monkeypatch):
+    reg = Mock()
+    monkeypatch.setattr(LocalPluginRegistry, "_instance", reg)
+    return reg
 
 
 @pytest.fixture
 def monitor(manager, registry):
-    return LocalPluginMonitor(manager, registry)
+    return LocalPluginMonitor(manager)
 
 
 @pytest.fixture

@@ -6,18 +6,21 @@ from brewtils.models import Instance, System
 import beer_garden
 import beer_garden.db.api as db
 from beer_garden.errors import PluginStartupError
+from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
+from beer_garden.local_plugins.registry import LocalPluginRegistry
+from beer_garden.local_plugins.validator import LocalPluginValidator
 from beer_garden.rabbitmq import get_routing_key
 
 
 class LocalPluginsManager(object):
     """LocalPluginsManager that is capable of stopping/starting and restarting plugins"""
 
-    def __init__(self, loader, validator, registry, clients, shutdown_timeout):
+    def __init__(self, clients, shutdown_timeout):
         self.logger = logging.getLogger(__name__)
-        self.loader = loader
-        self.validator = validator
-        self.registry = registry
+        self.loader = LocalPluginLoader.instance()
+        self.validator = LocalPluginValidator.instance()
+        self.registry = LocalPluginRegistry.instance()
         self.clients = clients
         self.shutdown_timeout = shutdown_timeout
 

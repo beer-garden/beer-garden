@@ -13,7 +13,7 @@ from brewtils.models import Choices, Events, Request, System, RequestTemplate
 from builtins import str
 from requests import Session
 
-import beer_garden
+import beer_garden.config
 import beer_garden.db.api as db
 from beer_garden.events import publish_event
 from beer_garden.metrics import request_created, request_started, request_completed
@@ -24,6 +24,10 @@ request_map = {}
 
 
 class RequestValidator(object):
+    """Class responsible for validating Requests"""
+
+    _instance = None
+
     def __init__(self, validator_config):
         self.logger = logging.getLogger(__name__)
 
@@ -35,6 +39,12 @@ class RequestValidator(object):
             self._session.verify = False
         elif validator_config.url.ca_cert:
             self._session.verify = validator_config.url.ca_cert
+
+    @classmethod
+    def instance(cls):
+        if not cls._instance:
+            cls._instance = cls(beer_garden.config.get("validator"))
+        return cls._instance
 
     def validate_request(self, request):
         """Validation to be called before you save a request from a user
@@ -570,7 +580,7 @@ def process_request(
     # Validates the request based on what is in the database.
     # This includes the validation of the request parameters,
     # systems are there, commands are there etc.
-    request = beer_garden.application.request_validator.validate_request(request)
+    request = RequestValidator.instance().validate_request(request)
 
     # Once validated we need to save since validate can modify the request
     request = db.create(request)
