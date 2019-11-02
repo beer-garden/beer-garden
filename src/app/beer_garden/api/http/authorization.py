@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import base64
+import datetime
 
 import jwt
 from brewtils.models import Principal as BrewtilsPrincipal, Role as BrewtilsRole
 from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
-from tornado.web import HTTPError
+from tornado.web import HTTPError, RequestHandler
 
 import beer_garden.api.http
 from beer_garden.api.auth import coalesce_permissions
@@ -127,17 +128,44 @@ def _principal_from_token(token):
     )
 
 
-class AuthMixin(object):
+class AuthMixin(RequestHandler):
 
-    auth_providers = [bearer_auth, basic_auth]
+    auth_providers = [bearer_auth, basic_auth, query_token_auth]
+
+    REFRESH_COOKIE_NAME = "refresh_id"
+    REFRESH_COOKIE_EXP = 14
 
     def get_current_user(self):
-        """Use registered handlers to determine current user"""
-
         for provider in self.auth_providers:
-            principal = provider(self.request)
+            user = provider(self.request)
 
-            if principal is not None:
-                return principal
+            if user is not None:
+                return user
+
+        cookie_user = self.get_user_from_cookie()
+        if cookie_user:
+            return cookie_user
 
         return beer_garden.api.http.anonymous_principal
+
+    def get_user_from_cookie(self):
+        refresh_id = self.get_secure_cookie(self.REFRESH_COOKIE_NAME)
+        if not refresh_id:
+            return None
+
+        decoded_refresh = refresh_id.decode()
+        token = beer_garden.db.mongo.models.RefreshToken.objects.get(id=decoded_refresh)
+
+        now = datetime.datetime.utcnow()
+        if not token or token.expires < now:
+            return None
+
+        principal = token.get_principal()
+        if not principal:
+            return None
+
+        _, principal.permissions = coalesce_permissions(principal.roles)
+        token.expires = now + datetime.timedelta(days=self.REFRESH_COOKIE_EXP)
+        token.save()
+
+        return principal

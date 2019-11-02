@@ -4,9 +4,7 @@ from mongoengine.errors import DoesNotExist
 import beer_garden.api.http
 from beer_garden.db.mongo.models import Role
 from beer_garden.db.mongo.parser import MongoParser
-from beer_garden.api.http.authorization import (
-    anonymous_principal,
-)
+from beer_garden.api.http.authorization import anonymous_principal
 from beer_garden.api.auth import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError

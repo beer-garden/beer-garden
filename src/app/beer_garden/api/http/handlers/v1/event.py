@@ -4,10 +4,7 @@ import logging
 from tornado.web import HTTPError
 from tornado.websocket import WebSocketHandler
 
-from beer_garden.api.http.authorization import (
-    query_token_auth,
-    AuthMixin,
-)
+from beer_garden.api.http.authorization import AuthMixin
 from beer_garden.api.auth import Permissions, check_permission
 from brewtils.errors import RequestForbidden
 
@@ -21,8 +18,6 @@ class EventSocket(AuthMixin, WebSocketHandler):
 
     def __init__(self, *args, **kwargs):
         super(EventSocket, self).__init__(*args, **kwargs)
-
-        self.auth_providers.append(query_token_auth)
 
     def check_origin(self, origin):
         return True

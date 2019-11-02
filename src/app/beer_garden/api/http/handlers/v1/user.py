@@ -4,7 +4,12 @@ import json
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.api.http
-from beer_garden.api.auth import Permissions, authenticated, check_permission, coalesce_permissions
+from beer_garden.api.auth import (
+    Permissions,
+    authenticated,
+    check_permission,
+    coalesce_permissions,
+)
 from beer_garden.api.http.base_handler import BaseHandler
 
 
