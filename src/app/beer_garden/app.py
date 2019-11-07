@@ -65,7 +65,7 @@ class Application(StoppableThread):
         load_plugin_log_config()
 
         self.plugin_manager = LocalPluginsManager(
-            shutdown_timeout=beer_garden.config.get("plugin.local.timeout.shutdown"),
+            shutdown_timeout=beer_garden.config.get("plugin.local.timeout.shutdown")
         )
 
         plugin_config = beer_garden.config.get("plugin")
@@ -126,24 +126,6 @@ class Application(StoppableThread):
 
         self._shutdown()
 
-    def _ensure_connections(self):
-        # Mongo connection
-        self._progressive_backoff(
-            partial(db.check_connection, beer_garden.config.get("db")),
-            "Unable to connect to mongo, is it started?",
-        )
-
-        # Message queue connections
-        self._progressive_backoff(
-            beer_garden.application.clients["pika"].is_alive,
-            "Unable to connect to rabbitmq, is it started?",
-        )
-        self._progressive_backoff(
-            beer_garden.application.clients["pyrabbit"].is_alive,
-            "Unable to connect to rabbitmq admin interface. "
-            "Is the management plugin enabled?",
-        )
-
     def _progressive_backoff(self, func, failure_message):
         wait_time = 0.1
         while not self.stopped() and not func():
@@ -155,9 +137,6 @@ class Application(StoppableThread):
 
     def _startup(self):
         self.logger.debug("Starting Application...")
-
-        self.logger.debug("Ensuring connections...")
-        self._ensure_connections()
 
         self.logger.debug("Setting up database...")
         self._setup_database()
@@ -237,14 +216,41 @@ class Application(StoppableThread):
 
         self.logger.info("Successfully shut down Beer-garden")
 
-    @staticmethod
-    def _setup_database():
+    def _setup_database(self):
+        """Startup tasks related to the database
+
+        This will:
+          - ensure a connection to the database (using a connection with short timeouts)
+          - create the actual connection to the database
+          - ensure the database is in a good state
+        """
+        self._progressive_backoff(
+            partial(db.check_connection, beer_garden.config.get("db")),
+            "Unable to connect to mongo, is it started?",
+        )
         db.create_connection(db_config=beer_garden.config.get("db"))
         db.initial_setup(beer_garden.config.get("auth.guest_login_enabled"))
 
-    @staticmethod
-    def _setup_queues():
+    def _setup_queues(self):
+        """Startup tasks related to the message queues
+
+        This will:
+          - create the message queue clients
+          - make sure that all clients have active connections
+          - ensure the broker and queues are in a good state
+        """
         queue.create_clients(beer_garden.config.get("amq"))
+
+        self._progressive_backoff(
+            partial(queue.check_connection, "pika"),
+            "Unable to connect to rabbitmq, is it started?",
+        )
+        self._progressive_backoff(
+            partial(queue.check_connection, "pyrabbit"),
+            "Unable to connect to rabbitmq admin interface. "
+            "Is the management plugin enabled?",
+        )
+
         queue.initial_setup()
 
     @staticmethod
