@@ -16,6 +16,7 @@ from requests.exceptions import RequestException
 
 import beer_garden
 import beer_garden.db.api as db
+import beer_garden.queue.api as queue
 from beer_garden.bg_utils.event_publisher import EventPublishers, EventPublisher
 from beer_garden.bg_utils.publishers import MongoPublisher
 from beer_garden.db.mongo.jobstore import MongoJobStore
@@ -28,7 +29,6 @@ from beer_garden.local_plugins.validator import LocalPluginValidator
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import PluginStatusMonitor
-from beer_garden.rabbitmq import PikaClient, PyrabbitClient
 from beer_garden.requests import RequestValidator
 
 
@@ -56,32 +56,10 @@ class BartenderApp(StoppableThread):
             password=beer_garden.config.get("plugin.local.auth.password"),
         )
 
-        amq_config = beer_garden.config.get("amq")
-        self.clients = {
-            "pika": PikaClient(
-                host=amq_config.host,
-                port=amq_config.connections.message.port,
-                ssl=amq_config.connections.message.ssl,
-                user=amq_config.connections.admin.user,
-                password=amq_config.connections.admin.password,
-                virtual_host=amq_config.virtual_host,
-                connection_attempts=amq_config.connection_attempts,
-                blocked_connection_timeout=amq_config.blocked_connection_timeout,
-                exchange=amq_config.exchange,
-            ),
-            "pyrabbit": PyrabbitClient(
-                host=amq_config.host,
-                virtual_host=amq_config.virtual_host,
-                admin_expires=amq_config.admin_queue_expiry,
-                **amq_config.connections.admin
-            ),
-        }
-
         self.plugin_manager = LocalPluginsManager(
             loader=self.plugin_loader,
             validator=self.plugin_validator,
             registry=self.plugin_registry,
-            clients=self.clients,
             shutdown_timeout=beer_garden.config.get("plugin.local.timeout.shutdown"),
         )
 
@@ -94,7 +72,6 @@ class BartenderApp(StoppableThread):
             ),
             HelperThread(
                 PluginStatusMonitor,
-                self.clients,
                 timeout_seconds=plugin_config.status_timeout,
                 heartbeat_interval=plugin_config.status_heartbeat,
             ),
@@ -144,14 +121,8 @@ class BartenderApp(StoppableThread):
         self.logger.debug("Setting up database...")
         self._setup_database()
 
-        self.logger.info("Verifying message virtual host...")
-        self.clients["pyrabbit"].verify_virtual_host()
-
-        self.logger.info("Ensuring admin queue expiration policy...")
-        self.clients["pyrabbit"].ensure_admin_expiry()
-
-        self.logger.info("Declaring message exchange...")
-        self.clients["pika"].declare_exchange()
+        self.logger.debug("Setting up queues...")
+        self._setup_queues()
 
         self.logger.info("Starting event publishers")
         self.event_publishers = self._setup_event_publishers()
@@ -211,6 +182,11 @@ class BartenderApp(StoppableThread):
     def _setup_database():
         db.create_connection(db_config=beer_garden.config.get("db"))
         db.initial_setup(beer_garden.config.get("auth.guest_login_enabled"))
+
+    @staticmethod
+    def _setup_queues():
+        queue.create_clients(beer_garden.config.get("amq"))
+        queue.initial_setup()
 
     @staticmethod
     def _setup_scheduler():

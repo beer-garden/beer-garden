@@ -7,13 +7,15 @@ from beer_garden.monitor import PluginStatusMonitor
 
 
 @pytest.fixture
-def pika_client():
-    return Mock()
+def queue_mock(monkeypatch):
+    queue = Mock()
+    monkeypatch.setattr(beer_garden.monitor, "queue", queue)
+    return queue
 
 
 @pytest.fixture
-def monitor(pika_client):
-    return PluginStatusMonitor({"pika": pika_client})
+def monitor():
+    return PluginStatusMonitor()
 
 
 @patch("time.sleep", Mock())
@@ -46,20 +48,20 @@ class TestPluginStatusMonitor(object):
         assert check_mock.called is True
         assert request_mock.called is True
 
-    def test_request_status(self, monitor, pika_client):
+    def test_request_status(self, monitor, queue_mock):
         monitor.request_status()
         expiration = str(monitor.heartbeat_interval * 1000)
 
-        pika_client.publish_request.assert_called_once_with(
+        queue_mock.put.assert_called_once_with(
             monitor.status_request, routing_key="admin", expiration=expiration
         )
 
-    def test_request_status_exception(self, monitor, pika_client):
-        pika_client.publish_request.side_effect = IOError
+    def test_request_status_exception(self, monitor, queue_mock):
+        queue_mock.put.side_effect = IOError
 
         monitor.request_status()
         expiration = str(monitor.heartbeat_interval * 1000)
-        pika_client.publish_request.assert_called_once_with(
+        queue_mock.put.assert_called_once_with(
             monitor.status_request, routing_key="admin", expiration=expiration
         )
 

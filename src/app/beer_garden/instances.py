@@ -9,8 +9,9 @@ from brewtils.models import Events, Instance, PatchOperation, System
 
 import beer_garden
 import beer_garden.db.api as db
+import beer_garden.queue.api as queue
 from beer_garden.events import publish_event
-from beer_garden.rabbitmq import get_routing_key, get_routing_keys
+from beer_garden.queue.rabbit import get_routing_key, get_routing_keys
 
 logger = logging.getLogger(__name__)
 
@@ -48,22 +49,20 @@ def initialize_instance(instance_id: str) -> Instance:
     )
 
     routing_words = [system.name, system.version, instance.name]
-    req_name = get_routing_key(*routing_words)
-    req_args = {"durable": True, "arguments": {"x-max-priority": 1}}
-    req_queue = beer_garden.application.clients["pika"].setup_queue(
-        req_name, req_args, [req_name]
+
+    request_queue_name = get_routing_key(*routing_words)
+    request_queue = queue.create(
+        request_queue_name,
+        [request_queue_name],
+        durable=True,
+        arguments={"x-max-priority": 1},
     )
 
-    routing_words.append(
-        "".join(
-            random.choice(string.ascii_lowercase + string.digits) for _ in range(10)
-        )
-    )
+    suffix = [random.choice(string.ascii_lowercase + string.digits) for _ in range(10)]
+    routing_words.append("".join(suffix))
+
     admin_keys = get_routing_keys(*routing_words, is_admin=True)
-    admin_args = {"auto_delete": True}
-    admin_queue = beer_garden.application.clients["pika"].setup_queue(
-        admin_keys[-1], admin_args, admin_keys
-    )
+    admin_queue = queue.create(admin_keys[-1], admin_keys, auto_delete=True)
 
     amq_config = beer_garden.config.get("amq")
     connection = {
@@ -79,14 +78,14 @@ def initialize_instance(instance_id: str) -> Instance:
     instance.status_info = {"heartbeat": datetime.utcnow()}
     instance.queue_type = "rabbitmq"
     instance.queue_info = {
-        "admin": admin_queue,
-        "request": req_queue,
+        "admin": {"name": admin_queue.name},
+        "request": {"name": request_queue.name},
         "connection": connection,
     }
     instance = db.update(instance)
 
     # Send a request to start to the plugin on the plugin's admin queue
-    beer_garden.application.clients["pika"].publish_request(
+    queue.put(
         beer_garden.start_request,
         routing_key=get_routing_key(
             system.name, system.version, instance.name, is_admin=True
@@ -183,7 +182,7 @@ def stop_instance(instance_id: str) -> Instance:
         beer_garden.application.plugin_manager.stop_plugin(local_plugin)
     else:
         # This causes the request consumer to terminate itself, which ends the plugin
-        beer_garden.application.clients["pika"].publish_request(
+        queue.put(
             beer_garden.stop_request,
             routing_key=get_routing_key(
                 system.name, system.version, instance.name, is_admin=True

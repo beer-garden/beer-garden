@@ -1,14 +1,9 @@
 import pytest
-from mock import Mock, ANY
+from mock import Mock
 from pyrabbit2.http import HTTPError, NetworkError
 
-import beer_garden.rabbitmq
-from beer_garden.rabbitmq import (
-    PikaClient,
-    PyrabbitClient,
-    get_routing_key,
-    get_routing_keys,
-)
+import beer_garden.requests
+from beer_garden.queue.rabbit import PyrabbitClient, get_routing_key, get_routing_keys
 
 
 def test_get_routing_key():
@@ -47,42 +42,42 @@ def test_get_routing_keys_admin_clone_id():
     )
 
 
-class TestPikaClient(object):
-    @pytest.fixture
-    def publish_mock(self):
-        return Mock()
-
-    @pytest.fixture
-    def client(self, publish_mock):
-        the_client = PikaClient(
-            host="localhost", port=5672, user="user", password="password"
-        )
-        the_client.publish = publish_mock
-
-        return the_client
-
-    def test_publish_request(self, client, bg_request, publish_mock):
-        client.publish_request(bg_request, routing_key="queue_name")
-        publish_mock.assert_called_once_with(
-            ANY, headers={"request_id": bg_request.id}, routing_key="queue_name"
-        )
-
-    def test_publish_no_routing_key(self, client, bg_request, publish_mock):
-        client.publish_request(bg_request)
-        publish_mock.assert_called_once_with(
-            ANY,
-            headers={"request_id": bg_request.id},
-            routing_key="system.1-0-0.default",
-        )
-
-    def test_publish_expiration(self, client, bg_request, publish_mock):
-        client.publish_request(bg_request, expiration=10)
-        publish_mock.assert_called_once_with(
-            ANY,
-            headers={"request_id": bg_request.id},
-            routing_key="system.1-0-0.default",
-            expiration=10,
-        )
+# class TestPikaClient(object):
+#     @pytest.fixture
+#     def publish_mock(self):
+#         return Mock()
+#
+#     @pytest.fixture
+#     def client(self, publish_mock):
+#         the_client = PikaClient(
+#             host="localhost", port=5672, user="user", password="password"
+#         )
+#         the_client.publish = publish_mock
+#
+#         return the_client
+#
+#     def test_publish_request(self, client, bg_request, publish_mock):
+#         client.publish_request(bg_request, routing_key="queue_name")
+#         publish_mock.assert_called_once_with(
+#             ANY, headers={"request_id": bg_request.id}, routing_key="queue_name"
+#         )
+#
+#     def test_publish_no_routing_key(self, client, bg_request, publish_mock):
+#         client.publish_request(bg_request)
+#         publish_mock.assert_called_once_with(
+#             ANY,
+#             headers={"request_id": bg_request.id},
+#             routing_key="system.1-0-0.default",
+#         )
+#
+#     def test_publish_expiration(self, client, bg_request, publish_mock):
+#         client.publish_request(bg_request, expiration=10)
+#         publish_mock.assert_called_once_with(
+#             ANY,
+#             headers={"request_id": bg_request.id},
+#             routing_key="system.1-0-0.default",
+#             expiration=10,
+#         )
 
 
 class TestPyrabbitClient(object):
@@ -180,10 +175,10 @@ class TestPyrabbitClient(object):
         pyrabbit_client.get_messages.return_value = [{"payload": fake_request}]
 
         parser_mock = Mock(parse_request=Mock(return_value=fake_request))
-        monkeypatch.setattr("beer_garden.rabbitmq.SchemaParser", parser_mock)
+        monkeypatch.setattr("beer_garden.queue.rabbit.SchemaParser", parser_mock)
 
         cancel_mock = Mock()
-        monkeypatch.setattr(beer_garden.rabbitmq, "cancel_request", cancel_mock)
+        monkeypatch.setattr(beer_garden.requests, "cancel_request", cancel_mock)
 
         client.clear_queue("queue")
         cancel_mock.assert_called_once_with(fake_request)
@@ -194,7 +189,7 @@ class TestPyrabbitClient(object):
         pyrabbit_client.get_messages.return_value = [{"payload": fake_request}]
 
         parser_mock = Mock(parse_request=Mock(side_effect=ValueError))
-        monkeypatch.setattr("beer_garden.rabbitmq.SchemaParser", parser_mock)
+        monkeypatch.setattr("beer_garden.queue.rabbit.SchemaParser", parser_mock)
 
         client.clear_queue("queue")
         assert fake_request.status == "CREATED"
@@ -212,7 +207,7 @@ class TestPyrabbitClient(object):
         pyrabbit_client.get_messages.return_value = []
 
         parser_mock = Mock()
-        monkeypatch.setattr("beer_garden.rabbitmq.SchemaParser", parser_mock)
+        monkeypatch.setattr("beer_garden.queue.rabbit.SchemaParser", parser_mock)
 
         client.clear_queue("queue")
         assert pyrabbit_client.get_messages.called is True
