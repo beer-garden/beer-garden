@@ -10,6 +10,7 @@ from box import Box
 
 import beer_garden.config
 import beer_garden.db.api as db
+import beer_garden.queue.api as queue
 
 T = TypeVar("T", bound="EntryPoint")
 
@@ -137,6 +138,9 @@ class EntryPoint(object):
 
         # Set up a database connection
         db.create_connection(db_config=beer_garden.config.get("db"))
+
+        # Set up message queue connections
+        queue.create_clients(beer_garden.config.get("amq"))
 
         # Now invoke the actual process target
         return target()
