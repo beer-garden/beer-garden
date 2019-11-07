@@ -5,12 +5,13 @@ import string
 from datetime import datetime
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Events, Instance, System
+from brewtils.models import Events, Instance, PatchOperation, System
 
 import beer_garden
 import beer_garden.db.api as db
+import beer_garden.queue.api as queue
 from beer_garden.events import publish_event
-from beer_garden.rabbitmq import get_routing_key, get_routing_keys
+from beer_garden.queue.rabbit import get_routing_key, get_routing_keys
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +30,16 @@ def get_instance(instance_id: str) -> Instance:
 
 
 @publish_event(Events.INSTANCE_INITIALIZED)
-def initialize_instance(instance_id):
+def initialize_instance(instance_id: str) -> Instance:
     """Initializes an instance.
 
-    :param instance_id: The ID of the instance
-    :return: QueueInformation object describing message queue for this system
+    This does a lot of stuff right now.
+
+    Args:
+        instance_id: The Instance ID
+
+    Returns:
+        The updated Instance
     """
     instance = db.query_unique(Instance, id=instance_id)
     system = db.query_unique(System, instances__contains=instance)
@@ -43,22 +49,20 @@ def initialize_instance(instance_id):
     )
 
     routing_words = [system.name, system.version, instance.name]
-    req_name = get_routing_key(*routing_words)
-    req_args = {"durable": True, "arguments": {"x-max-priority": 1}}
-    req_queue = beer_garden.application.clients["pika"].setup_queue(
-        req_name, req_args, [req_name]
+
+    request_queue_name = get_routing_key(*routing_words)
+    request_queue = queue.create(
+        request_queue_name,
+        [request_queue_name],
+        durable=True,
+        arguments={"x-max-priority": 1},
     )
 
-    routing_words.append(
-        "".join(
-            random.choice(string.ascii_lowercase + string.digits) for _ in range(10)
-        )
-    )
+    suffix = [random.choice(string.ascii_lowercase + string.digits) for _ in range(10)]
+    routing_words.append("".join(suffix))
+
     admin_keys = get_routing_keys(*routing_words, is_admin=True)
-    admin_args = {"auto_delete": True}
-    admin_queue = beer_garden.application.clients["pika"].setup_queue(
-        admin_keys[-1], admin_args, admin_keys
-    )
+    admin_queue = queue.create(admin_keys[-1], admin_keys, auto_delete=True)
 
     amq_config = beer_garden.config.get("amq")
     connection = {
@@ -74,14 +78,14 @@ def initialize_instance(instance_id):
     instance.status_info = {"heartbeat": datetime.utcnow()}
     instance.queue_type = "rabbitmq"
     instance.queue_info = {
-        "admin": admin_queue,
-        "request": req_queue,
+        "admin": {"name": admin_queue.name},
+        "request": {"name": request_queue.name},
         "connection": connection,
     }
     instance = db.update(instance)
 
     # Send a request to start to the plugin on the plugin's admin queue
-    beer_garden.application.clients["pika"].publish_request(
+    queue.put(
         beer_garden.start_request,
         routing_key=get_routing_key(
             system.name, system.version, instance.name, is_admin=True
@@ -91,7 +95,16 @@ def initialize_instance(instance_id):
     return instance
 
 
-def update_instance(instance_id, patch):
+def update_instance(instance_id: str, patch: PatchOperation) -> Instance:
+    """Applies updates to an instance.
+
+    Args:
+        instance_id: The Instance ID
+        patch: Patch definition to apply
+
+    Returns:
+        The updated Instance
+    """
     instance = None
 
     for op in patch:
@@ -121,11 +134,14 @@ def update_instance(instance_id, patch):
 
 
 @publish_event(Events.INSTANCE_STARTED)
-def start_instance(instance_id):
+def start_instance(instance_id: str) -> Instance:
     """Starts an instance.
 
-    :param instance_id: The Instance id
-    :return: None
+    Args:
+        instance_id: The Instance ID
+
+    Returns:
+        The updated Instance
     """
     instance = db.query_unique(Instance, id=instance_id)
     system = db.query_unique(System, instances__contains=instance)
@@ -142,11 +158,14 @@ def start_instance(instance_id):
 
 
 @publish_event(Events.INSTANCE_STOPPED)
-def stop_instance(instance_id):
-    """Stops an instance.
+def stop_instance(instance_id: str) -> Instance:
+    """Stops an Instance.
 
-    :param instance_id: The Instance id
-    :return: None
+    Args:
+        instance_id: The Instance ID
+
+    Returns:
+        The updated Instance
     """
     instance = db.query_unique(Instance, id=instance_id)
     system = db.query_unique(System, instances__contains=instance)
@@ -163,7 +182,7 @@ def stop_instance(instance_id):
         beer_garden.application.plugin_manager.stop_plugin(local_plugin)
     else:
         # This causes the request consumer to terminate itself, which ends the plugin
-        beer_garden.application.clients["pika"].publish_request(
+        queue.put(
             beer_garden.stop_request,
             routing_key=get_routing_key(
                 system.name, system.version, instance.name, is_admin=True
@@ -173,17 +192,17 @@ def stop_instance(instance_id):
     return instance
 
 
-def update_instance_status(instance_id, new_status):
-    """Update an instance status.
+def update_instance_status(instance_id: str, new_status: str) -> Instance:
+    """Update an Instance status.
 
     Will also update the status_info heartbeat.
 
     Args:
-        instance_id: The instance ID
+        instance_id: The Instance ID
         new_status: The new status
 
     Returns:
-        The updated instance
+        The updated Instance
     """
     instance = db.query_unique(Instance, id=instance_id)
     instance.status = new_status
@@ -194,11 +213,11 @@ def update_instance_status(instance_id, new_status):
     return instance
 
 
-def remove_instance(instance_id):
-    """Removes an instance
+def remove_instance(instance_id: str) -> None:
+    """Removes an Instance
 
     Args:
-        instance_id: The instance ID
+        instance_id: The Instance ID
 
     Returns:
         None

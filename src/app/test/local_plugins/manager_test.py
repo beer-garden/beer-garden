@@ -40,11 +40,6 @@ def registry(monkeypatch, plugin, bg_system):
 
 
 @pytest.fixture
-def pika_client():
-    return Mock()
-
-
-@pytest.fixture
 def plugin(monkeypatch, bg_system):
     plug = Mock(
         system=bg_system,
@@ -65,9 +60,8 @@ def plugin(monkeypatch, bg_system):
     return plug
 
 
-@pytest.fixture
-def manager(loader, validator, registry, pika_client):
-    return LocalPluginsManager({"pika": pika_client}, 1)
+def manager(loader, validator, registry):
+    return LocalPluginsManager(1)
 
 
 class TestStartPlugin(object):
@@ -109,55 +103,61 @@ class TestStartPlugin(object):
 
 
 class TestStopPlugin(object):
-    def test_running(self, manager, plugin, pika_client):
+    @pytest.fixture
+    def queue_mock(self, monkeypatch):
+        queue = Mock()
+        monkeypatch.setattr(beer_garden.local_plugins.manager, "queue", queue)
+        return queue
+
+    def test_running(self, manager, plugin, queue_mock):
         plugin.is_alive.return_value = False
 
         manager.stop_plugin(plugin)
         assert plugin.status == "STOPPING"
-        assert pika_client.publish_request.called is True
+        assert queue_mock.put.called is True
         assert plugin.stop.called is True
         assert plugin.join.called is True
         assert plugin.kill.called is False
 
-    def test_stopped(self, manager, plugin, pika_client):
+    def test_stopped(self, manager, plugin, queue_mock):
         plugin.is_alive.return_value = False
         plugin.status = "STOPPED"
 
         manager.stop_plugin(plugin)
         assert plugin.status == "STOPPED"
-        assert pika_client.publish_request.called is False
+        assert queue_mock.put.called is False
         assert plugin.stop.called is False
         assert plugin.join.called is False
         assert plugin.kill.called is False
 
-    def test_unknown(self, manager, plugin, pika_client):
+    def test_unknown(self, manager, plugin, queue_mock):
         plugin.is_alive.return_value = False
         plugin.status = "UNKNOWN"
 
         manager.stop_plugin(plugin)
         assert plugin.status == "UNKNOWN"
-        assert pika_client.publish_request.called is True
+        assert queue_mock.put.called is True
         assert plugin.stop.called is True
         assert plugin.join.called is True
         assert plugin.kill.called is False
 
-    def test_exception(self, manager, plugin, pika_client):
+    def test_exception(self, manager, plugin, queue_mock):
         plugin.is_alive.return_value = True
         plugin.stop.side_effect = Exception()
 
         manager.stop_plugin(plugin)
         assert plugin.status == "DEAD"
-        assert pika_client.publish_request.called is False
+        assert queue_mock.put.called is False
         assert plugin.stop.called is True
         assert plugin.join.called is False
         assert plugin.kill.called is True
 
-    def test_unsuccessful(self, manager, plugin, pika_client):
+    def test_unsuccessful(self, manager, plugin, queue_mock):
         plugin.is_alive.return_value = True
 
         manager.stop_plugin(plugin)
         assert plugin.status == "DEAD"
-        assert pika_client.publish_request.called is True
+        assert queue_mock.put.called is True
         assert plugin.stop.called is True
         assert plugin.join.called is True
         assert plugin.kill.called is True

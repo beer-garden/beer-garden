@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import logging
 from typing import List, Sequence
 
@@ -9,8 +10,9 @@ from time import sleep
 
 import beer_garden
 import beer_garden.db.api as db
+import beer_garden.queue.api as queue
 from beer_garden.events import publish_event
-from beer_garden.rabbitmq import get_routing_key
+from beer_garden.queue.rabbit import get_routing_key
 
 REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
@@ -190,7 +192,7 @@ def remove_system(system_id: str) -> None:
 
     # Remote plugins get a stop request
     else:
-        beer_garden.application.clients["pika"].publish_request(
+        queue.put(
             beer_garden.stop_request,
             routing_key=get_routing_key(system.name, system.version, is_admin=True),
         )
@@ -211,13 +213,10 @@ def remove_system(system_id: str) -> None:
         # stopping an instance that was not properly started.
         request_queue = instance.queue_info.get("request", {}).get("name")
         admin_queue = instance.queue_info.get("admin", {}).get("name")
+        force_disconnect = instance.status != "STOPPED"
 
-        beer_garden.application.clients["pyrabbit"].destroy_queue(
-            request_queue, force_disconnect=(instance.status != "STOPPED")
-        )
-        beer_garden.application.clients["pyrabbit"].destroy_queue(
-            admin_queue, force_disconnect=(instance.status != "STOPPED")
-        )
+        queue.remove(request_queue, force_disconnect=force_disconnect)
+        queue.remove(admin_queue, force_disconnect=force_disconnect)
 
     # Finally, actually delete the system
     db.delete(system)

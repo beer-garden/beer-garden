@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
 import multiprocessing
+import time
 from datetime import timedelta
 from functools import partial
 
 import brewtils.models
-import time
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils.models import Events
@@ -18,18 +18,18 @@ from requests.exceptions import RequestException
 import beer_garden
 import beer_garden.api
 import beer_garden.db.api as db
+import beer_garden.queue.api as queue
 from beer_garden.api.entry_point import EntryPoint
 from beer_garden.bg_utils.event_publisher import EventPublishers, EventPublisher
 from beer_garden.bg_utils.publishers import MongoPublisher
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
-from beer_garden.local_plugins.manager import LocalPluginsManager
 from beer_garden.local_plugins.loader import LocalPluginLoader
+from beer_garden.local_plugins.manager import LocalPluginsManager
 from beer_garden.local_plugins.monitor import LocalPluginMonitor
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import PluginStatusMonitor
-from beer_garden.rabbitmq import PikaClient, PyrabbitClient
 
 
 class Application(StoppableThread):
@@ -64,29 +64,7 @@ class Application(StoppableThread):
 
         load_plugin_log_config()
 
-        amq_config = beer_garden.config.get("amq")
-        self.clients = {
-            "pika": PikaClient(
-                host=amq_config.host,
-                port=amq_config.connections.message.port,
-                ssl=amq_config.connections.message.ssl,
-                user=amq_config.connections.admin.user,
-                password=amq_config.connections.admin.password,
-                virtual_host=amq_config.virtual_host,
-                connection_attempts=amq_config.connection_attempts,
-                blocked_connection_timeout=amq_config.blocked_connection_timeout,
-                exchange=amq_config.exchange,
-            ),
-            "pyrabbit": PyrabbitClient(
-                host=amq_config.host,
-                virtual_host=amq_config.virtual_host,
-                admin_expires=amq_config.admin_queue_expiry,
-                **amq_config.connections.admin,
-            ),
-        }
-
         self.plugin_manager = LocalPluginsManager(
-            clients=self.clients,
             shutdown_timeout=beer_garden.config.get("plugin.local.timeout.shutdown"),
         )
 
@@ -95,7 +73,6 @@ class Application(StoppableThread):
             HelperThread(LocalPluginMonitor, plugin_manager=self.plugin_manager),
             HelperThread(
                 PluginStatusMonitor,
-                self.clients,
                 timeout_seconds=plugin_config.status_timeout,
                 heartbeat_interval=plugin_config.status_heartbeat,
             ),
@@ -185,14 +162,8 @@ class Application(StoppableThread):
         self.logger.debug("Setting up database...")
         self._setup_database()
 
-        self.logger.info("Verifying message virtual host...")
-        self.clients["pyrabbit"].verify_virtual_host()
-
-        self.logger.debug("Ensuring admin queue expiration policy...")
-        self.clients["pyrabbit"].ensure_admin_expiry()
-
-        self.logger.debug("Declaring message exchange...")
-        self.clients["pika"].declare_exchange()
+        self.logger.debug("Setting up queues...")
+        self._setup_queues()
 
         self.logger.debug("Starting event publishers")
         self.event_publishers = self._setup_event_publishers()
@@ -270,6 +241,11 @@ class Application(StoppableThread):
     def _setup_database():
         db.create_connection(db_config=beer_garden.config.get("db"))
         db.initial_setup(beer_garden.config.get("auth.guest_login_enabled"))
+
+    @staticmethod
+    def _setup_queues():
+        queue.create_clients(beer_garden.config.get("amq"))
+        queue.initial_setup()
 
     @staticmethod
     def _setup_scheduler():

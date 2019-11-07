@@ -15,6 +15,7 @@ from requests import Session
 
 import beer_garden.config
 import beer_garden.db.api as db
+import beer_garden.queue.api as queue
 from beer_garden.events import publish_event
 from beer_garden.metrics import request_created, request_started, request_completed
 
@@ -590,9 +591,7 @@ def process_request(
 
     try:
         logger.info(f"Publishing request {request.id}")
-        beer_garden.application.clients["pika"].publish_request(
-            request, confirm=True, mandatory=True
-        )
+        queue.put(request, confirm=True, mandatory=True)
     except Exception as ex:
         # An error publishing means this request will never complete, so remove it
         db.delete(request)

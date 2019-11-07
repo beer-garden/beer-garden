@@ -41,13 +41,13 @@ class TestApplication(object):
 
     @patch("beer_garden.app.Application._shutdown", Mock())
     @patch("beer_garden.app.Application._setup_database", Mock())
+    @patch("beer_garden.app.Application._setup_queues", Mock())
     def test_startup(self):
         self.app.stopped = Mock(return_value=True)
         self.app.thrift_server = self.thrift_server
         self.app.local_monitor = self.local_monitor
         self.app.status_monitor = self.status_monitor
         self.app.plugin_loader = self.plugin_loader
-        self.app.clients = self.clients
         self.app.plugin_manager = self.plugin_manager
         self.app.queue_manager = self.queue_manager
         self.app.helper_threads = [

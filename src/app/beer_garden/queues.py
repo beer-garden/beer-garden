@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from brewtils.errors import NotFoundError
 from brewtils.models import Events, Queue, System
-from pyrabbit2.http import HTTPError
 
-import beer_garden
 import beer_garden.db.api as db
+import beer_garden.queue.api as queue
 from beer_garden.events import publish_event
-from beer_garden.rabbitmq import get_routing_key
+from beer_garden.queue.rabbit import get_routing_key
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +18,7 @@ def get_queue_message_count(queue_name):
     :return: number of messages currently on the queue
     :raises Exception: If queue does not exist
     """
-    return beer_garden.application.clients["pyrabbit"].get_queue_size(queue_name)
+    return queue.count(queue_name)
 
 
 def get_all_queue_info():
@@ -65,14 +63,7 @@ def clear_queue(queue_name):
     :param queue_name: The queue to clean
     :raises InvalidSystem: If the system_name/instance_name does not match a queue
     """
-    logger.debug("Clearing queue %s", queue_name)
-    try:
-        beer_garden.application.clients["pyrabbit"].clear_queue(queue_name)
-    except HTTPError as ex:
-        if ex.status == 404:
-            raise NotFoundError("No queue named %s" % queue_name)
-        else:
-            raise
+    queue.clear(queue_name)
 
 
 @publish_event(Events.ALL_QUEUES_CLEARED)

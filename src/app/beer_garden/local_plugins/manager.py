@@ -5,23 +5,23 @@ from brewtils.models import Instance, System
 
 import beer_garden
 import beer_garden.db.api as db
+import beer_garden.queue.api as queue
 from beer_garden.errors import PluginStartupError
 from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
 from beer_garden.local_plugins.registry import LocalPluginRegistry
 from beer_garden.local_plugins.validator import LocalPluginValidator
-from beer_garden.rabbitmq import get_routing_key
+from beer_garden.queue.rabbit import get_routing_key
 
 
 class LocalPluginsManager(object):
     """LocalPluginsManager that is capable of stopping/starting and restarting plugins"""
 
-    def __init__(self, clients, shutdown_timeout):
+    def __init__(self, shutdown_timeout):
         self.logger = logging.getLogger(__name__)
         self.loader = LocalPluginLoader.instance()
         self.validator = LocalPluginValidator.instance()
         self.registry = LocalPluginRegistry.instance()
-        self.clients = clients
         self.shutdown_timeout = shutdown_timeout
 
     def start_plugin(self, plugin):
@@ -110,7 +110,7 @@ class LocalPluginsManager(object):
             plugin.stop()
 
             # Send a stop request. This initiates a graceful shutdown on the plugin side.
-            self.clients["pika"].publish_request(
+            queue.put(
                 beer_garden.stop_request,
                 routing_key=get_routing_key(
                     plugin.system.name,

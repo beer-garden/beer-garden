@@ -6,15 +6,15 @@ from brewtils.models import Instance, Request
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.db.api as db
+import beer_garden.queue.api as queue
 
 
 class PluginStatusMonitor(StoppableThread):
     """Monitor plugin heartbeats and update plugin status"""
 
-    def __init__(self, clients, heartbeat_interval=10, timeout_seconds=30):
+    def __init__(self, heartbeat_interval=10, timeout_seconds=30):
         self.logger = logging.getLogger(__name__)
         self.display_name = "Plugin Status Monitor"
-        self.clients = clients
         self.heartbeat_interval = heartbeat_interval
         self.timeout = timedelta(seconds=timeout_seconds)
         self.status_request = Request(command="_status", command_type="EPHEMERAL")
@@ -34,7 +34,7 @@ class PluginStatusMonitor(StoppableThread):
 
     def request_status(self):
         try:
-            self.clients["pika"].publish_request(
+            queue.put(
                 self.status_request,
                 routing_key="admin",
                 expiration=str(self.heartbeat_interval * 1000),

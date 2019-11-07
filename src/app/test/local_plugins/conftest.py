@@ -25,7 +25,7 @@ def loader(validator, registry):
 
 @pytest.fixture
 def manager(loader, validator, registry):
-    return LocalPluginsManager(MagicMock(), 10)
+    return LocalPluginsManager(10)
 
 
 @pytest.fixture
