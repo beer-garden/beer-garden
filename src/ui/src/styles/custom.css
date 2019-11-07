@@ -217,6 +217,11 @@ table.dataTable{
     overflow: auto;
 }
 
+[uib-typeahead-popup].dropdown-menu{
+    max-height: 195px;
+    overflow: auto;
+}
+
 .red-border{
     border: 2px solid red;
     border-radius: 4px;

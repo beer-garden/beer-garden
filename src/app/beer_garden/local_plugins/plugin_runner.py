@@ -96,11 +96,6 @@ class LocalPluginRunner(StoppableThread):
         self.unformatted_logger = getPluginLogger(
             self.unique_name + "-uf", **log_config
         )
-        self.timestamp_logger = getPluginLogger(
-            self.unique_name + "-ts",
-            format_string="%(asctime)s - %(message)s",
-            **log_config
-        )
 
         StoppableThread.__init__(self, logger=self.logger, name=self.unique_name)
 
@@ -179,26 +174,23 @@ class LocalPluginRunner(StoppableThread):
         the plugin has its own logger and formatter. In that case we log to our
         unformatted logger at the same level to keep the original formatting.
 
-        If we can't determine the log level then we'll add a timestamp to the
-        start and log the message at ``default_level``. That way we guarantee
-        messages are outputted (this is usually caused by a plugin writing to
-        STDOUT / STDERR directly or raising an exception with a stacktrace).
+        If we can't determine the log level then we'll log the message at
+        ``default_level``. That way we guarantee messages are outputted (this
+        is usually caused by a plugin writing to STDOUT / STDERR directly or
+        raising an exception with a stacktrace).
         """
         stream_reader = iter(stream.readline, "")
 
         for raw_line in stream_reader:
             line = raw_line.rstrip()
 
-            level_to_log = None
+            level_to_log = default_level
             for level in self.log_levels:
                 if line.find(level) != -1:
                     level_to_log = getattr(logging, level)
                     break
 
-            if level_to_log:
-                self.unformatted_logger.log(level_to_log, line)
-            else:
-                self.timestamp_logger.log(default_level, line)
+            self.unformatted_logger.log(level_to_log, line)
 
         if self.process.poll() is None:
             self.logger.debug("Process isn't quite dead yet, reading IO again")
