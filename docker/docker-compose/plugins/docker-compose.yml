@@ -42,8 +42,18 @@ services:
         command: ["custom_display"]
         <<: *plugin
 
-    dynamic:
+    dynamic-d1:
         command: ["dynamic"]
+        environment:
+            BG_INSTANCE_NAME: d1
+            <<: *common-env
+        <<: *plugin
+
+    dynamic-d2:
+        command: ["dynamic"]
+        environment:
+            BG_INSTANCE_NAME: d2
+            <<: *common-env
         <<: *plugin
 
     echo:
