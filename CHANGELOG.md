@@ -1,5 +1,17 @@
 # Beer Garden Changelog
 
+## 2.4.11
+11/12/19
+Brew-view 2.4.15, Bartender 2.4.6, BG-utils 2.4.9
+
+#### Bug Fixes
+- Requests should now survive a broker restart (#352)
+- Fixed issue where admin role and user pages could fail to update (#345)
+
+#### Other Changes
+- Admin queues are now durable (#356)
+- Admin queues are no longer created with the auto-delete flag (#350)
+
 ## 2.4.10
 9/27/19
 Brew-view 2.4.14, Bartender 2.4.5, BG-utils 2.4.8
