@@ -469,6 +469,41 @@ class TestValidateParameterType(object):
 
 class TestValidateChoices(object):
     @pytest.mark.parametrize(
+        "req,choices",
+        [
+            (
+                make_request(parameters={"p1": "a"}),
+                Mock(type="static", value=["a", "b"]),
+            ),
+            (
+                make_request(parameters={"p1": "b"}),
+                Mock(type="static", value=["a", "b"]),
+            ),
+            (
+                make_request(parameters={"p1": "a"}),
+                Mock(
+                    type="static",
+                    value=[{"value": "a", "text": "A"}, {"value": "b", "text": "B"}],
+                ),
+            ),
+            (
+                make_request(parameters={"p1": "a"}),
+                Mock(type="static", value=["a", {"value": "b", "text": "B"}]),
+            ),
+            (
+                make_request(parameters={"p1": "b"}),
+                Mock(type="static", value=["a", {"value": "b", "text": "B"}]),
+            ),
+        ],
+    )
+    def test_simple(self, validator, req, choices):
+        command = Mock(
+            parameters=[make_param(key="p1", choices=choices, optional=False)]
+        )
+
+        validator.get_and_validate_parameters(req, command)
+
+    @pytest.mark.parametrize(
         "req",
         [
             make_request(parameters={"p2": "7"}),

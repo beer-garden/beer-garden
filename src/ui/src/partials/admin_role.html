@@ -34,7 +34,7 @@
         <div ng-repeat="roleName in roleNames">
           <input type="checkbox" id="{{roleName}}"
             ng-model="selectedRole.roles[roleName]"
-            ng-click="roleChange(roleName)"
+            ng-change="roleChange(roleName)"
             ng-disabled="isRoleDisabled(roleName)" />
           <label for="{{roleName}}"
             ng-style="color(selectedRole.id, 'roles.'+roleName)"
@@ -46,7 +46,7 @@
           <span ng-repeat="permission in permGroup" class="col-sm-3">
             <input type="checkbox" id="{{permission}}"
               ng-model="selectedRole.permissions[permission]"
-              ng-click="permissionChange(selectedRole.id)"
+              ng-change="permissionChange(permission)"
               ng-disabled="isPermissionDisabled(permission)" />
             <label for="{{permission}}"
               ng-style="color(selectedRole.id, 'permissions.'+permission)"

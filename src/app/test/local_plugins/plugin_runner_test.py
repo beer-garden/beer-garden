@@ -64,7 +64,6 @@ class TestPluginRunner(object):
         # We have to null out the handlers, otherwise we will end up
         # using a cached handler.
         plugin.unformatted_logger.handlers = []
-        plugin.timestamp_logger.handlers = []
         runner = LocalPluginRunner(
             "entry_point",
             system_mock,
@@ -77,7 +76,6 @@ class TestPluginRunner(object):
         )
         assert runner.logger.level == logging.getLogger(__name__).getEffectiveLevel()
         assert runner.unformatted_logger.level == logging.DEBUG
-        assert runner.timestamp_logger.level == logging.DEBUG
 
     def test_generate_plugin_environment(self, plugin):
         plugin_env = {
@@ -167,15 +165,13 @@ class TestPluginRunner(object):
                 ["print to stdout", "INFO: hello", "ERROR: world", ""],
                 ["print to stderr", "WARNING: - on stderr", ""],
                 {
-                    "timestamp_logger": [
+                    "unformatted_logger": [
                         call(logging.INFO, "print to stdout"),
                         call(logging.ERROR, "print to stderr"),
-                    ],
-                    "unformatted_logger": [
                         call(logging.INFO, "INFO: hello"),
                         call(logging.WARNING, "WARNING: - on stderr"),
                         call(logging.ERROR, "ERROR: world"),
-                    ],
+                    ]
                 },
             )
         ],
@@ -206,7 +202,6 @@ class TestPluginRunner(object):
         )
 
         plugin.unformatted_logger = Mock(name="unformatted")
-        plugin.timestamp_logger = Mock(name="timestamp")
 
         plugin.run()
 

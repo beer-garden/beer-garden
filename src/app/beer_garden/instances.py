@@ -62,7 +62,7 @@ def initialize_instance(instance_id: str) -> Instance:
     routing_words.append("".join(suffix))
 
     admin_keys = get_routing_keys(*routing_words, is_admin=True)
-    admin_queue = queue.create(admin_keys[-1], admin_keys, auto_delete=True)
+    admin_queue = queue.create(admin_keys[-1], admin_keys, durable=True)
 
     amq_config = beer_garden.config.get("amq")
     connection = {

@@ -206,15 +206,15 @@ export function adminRoleController(
     }
   };
 
-  $scope.permissionChange = function(roleId) {
-    let original = _.find($scope.serverRoles, {'id': roleId});
-    let changed = _.find($scope.roles, {'id': roleId});
+  $scope.permissionChange = function(permission) {
+    let changed = $scope.selectedRole;
+    let original = _.find($scope.serverRoles, {'id': changed.id});
 
-    changed.permissionsChanged = false;
-    for (let key in changed.permissions) {
-      if (changed.permissions[key] != original.permissions[key]) {
-       changed.permissionsChanged = true;
-      }
+    // Since this is a result of a click, we need to update primary permissions
+    changed.primaryPermissions[permission] = changed.permissions[permission];
+
+    if (changed.permissions[permission] != original.permissions[permission]){
+        changed.permissionsChanged = true;
     }
   };
 
