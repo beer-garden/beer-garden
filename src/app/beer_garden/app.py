@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
 import multiprocessing
-import time
 from datetime import timedelta
 from functools import partial
 
@@ -111,13 +110,11 @@ class Application(StoppableThread):
     def run(self):
         self._startup()
 
-        while not self.stopped():
+        while not self.wait(0.1):
             for helper in self.helper_threads:
                 if not helper.thread.is_alive():
                     self.logger.warning(f"{helper.display_name} is dead, restarting")
                     helper.start()
-
-            time.sleep(0.1)
 
         self._shutdown()
 
