@@ -90,7 +90,6 @@ class EntryPoint(object):
         Returns:
             None
         """
-        # TODO - Should we start with INT?
         self._process.terminate()
         self._process.join(timeout=timeout)
 
@@ -127,10 +126,11 @@ class EntryPoint(object):
         Returns:
             The result of the `target` function
         """
-        signal.signal(signal.SIGINT, signal_handler)
+        # Set the process to ignore SIGINT and exit on SIGTERM
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
         signal.signal(signal.SIGTERM, signal_handler)
 
-        # Absolute first thing to do is set the config
+        # First thing to do is set the config
         beer_garden.config.assign(config)
 
         # Then set up logging to push everything back to the main process
