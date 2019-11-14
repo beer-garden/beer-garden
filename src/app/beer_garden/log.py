@@ -2,6 +2,7 @@
 import logging.config
 import logging.handlers
 
+from brewtils.stoppable_thread import StoppableThread
 from ruamel.yaml import YAML
 
 import beer_garden
@@ -74,6 +75,23 @@ def default_app_config(level, filename=None):
         },
         "root": {"level": level, "handlers": ["beer_garden"]},
     }
+
+
+class EntryPointLogger(StoppableThread):
+    """Helper thread that reads and processes the logging queue"""
+
+    def __init__(self, log_queue):
+        super().__init__(name="EntryPointLogger")
+        self._queue = log_queue
+
+    def run(self):
+        while not self.wait(0.1):
+            while not self._queue.empty():
+                record = self._queue.get()
+                logger = logging.getLogger(record.name)
+
+                if logger.isEnabledFor(record.levelno):
+                    logger.handle(record)
 
 
 def setup_entry_point_logging(queue):

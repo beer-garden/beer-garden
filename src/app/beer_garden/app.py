@@ -27,7 +27,7 @@ from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.local_plugins.manager import LocalPluginsManager
 from beer_garden.local_plugins.monitor import LocalPluginMonitor
-from beer_garden.log import load_plugin_log_config
+from beer_garden.log import load_plugin_log_config, EntryPointLogger
 from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import PluginStatusMonitor
 
@@ -48,6 +48,7 @@ class Application(StoppableThread):
     helper_threads = None
     context = None
     log_queue = None
+    log_reader = None
     entry_points = []
 
     def __init__(self):
@@ -101,6 +102,7 @@ class Application(StoppableThread):
 
         self.context = multiprocessing.get_context("spawn")
         self.log_queue = self.context.Queue()
+        self.log_reader = HelperThread(EntryPointLogger, log_queue=self.log_queue)
 
         for entry_name, entry_value in beer_garden.config.get("entry").items():
             if entry_value.get("enable"):
@@ -114,13 +116,6 @@ class Application(StoppableThread):
                 if not helper.thread.is_alive():
                     self.logger.warning(f"{helper.display_name} is dead, restarting")
                     helper.start()
-
-            if not self.log_queue.empty():
-                record = self.log_queue.get()
-                logger = logging.getLogger(record.name)
-
-                if logger.isEnabledFor(record.levelno):
-                    logger.handle(record)
 
             time.sleep(0.1)
 
@@ -151,6 +146,9 @@ class Application(StoppableThread):
         self.logger.debug("Starting helper threads...")
         for helper_thread in self.helper_threads:
             helper_thread.start()
+
+        self.logger.info("Starting log reader...")
+        self.log_reader.start()
 
         self.logger.debug("Starting entry points...")
         for entry_point in self.entry_points:
@@ -206,13 +204,8 @@ class Application(StoppableThread):
         for entry_point in self.entry_points:
             entry_point.stop(timeout=10)
 
-        # Need to clean out the logging queue after entry points shut down
-        while not self.log_queue.empty():
-            record = self.log_queue.get()
-            logger = logging.getLogger(record.name)
-
-            if logger.isEnabledFor(record.levelno):
-                logger.handle(record)
+        self.logger.info("Stopping log reader")
+        self.log_reader.stop()
 
         self.logger.info("Successfully shut down Beer-garden")
 
