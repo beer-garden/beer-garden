@@ -8,8 +8,11 @@ from typing import List
 
 from brewtils.models import Instance, System
 
+import beer_garden.config
 import beer_garden.db.api as db
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
+from beer_garden.local_plugins.registry import LocalPluginRegistry
+from beer_garden.local_plugins.validator import LocalPluginValidator
 from beer_garden.systems import create_system
 
 
@@ -18,24 +21,38 @@ class LocalPluginLoader(object):
 
     logger = logging.getLogger(__name__)
 
+    _instance = None
+
     def __init__(
         self,
-        validator,
-        registry,
         local_plugin_dir=None,
         plugin_log_directory=None,
         connection_info=None,
         username=None,
         password=None,
     ):
-        self.validator = validator
-        self.registry = registry
+        self.validator = LocalPluginValidator.instance()
+        self.registry = LocalPluginRegistry.instance()
 
         self._local_plugin_dir = local_plugin_dir
         self._plugin_log_directory = plugin_log_directory
         self._connection_info = connection_info
         self._username = username
         self._password = password
+
+    @classmethod
+    def instance(cls):
+        if not cls._instance:
+            cls._instance = cls(
+                local_plugin_dir=beer_garden.config.get("plugin.local.directory"),
+                plugin_log_directory=beer_garden.config.get(
+                    "plugin.local.log_directory"
+                ),
+                connection_info=beer_garden.config.get("entry.http"),
+                username=beer_garden.config.get("plugin.local.auth.username"),
+                password=beer_garden.config.get("plugin.local.auth.password"),
+            )
+        return cls._instance
 
     def load_plugins(self, path: str = None) -> None:
         """Load all plugins

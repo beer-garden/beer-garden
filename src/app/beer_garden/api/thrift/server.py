@@ -80,7 +80,7 @@ class BartenderThriftServer(TThreadedServer, StoppableThread):
                 self.futures.add(future)
                 future.add_done_callback(lambda x: self.futures.remove(x))
             except OSError as ex:
-                if not self.stopped() or ex.errno != 22:
+                if not self.stopped() or ex.errno not in (9, 22):
                     self.logger.exception(ex)
             except Exception as ex:
                 self.logger.exception(ex)

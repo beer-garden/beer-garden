@@ -3,13 +3,14 @@ import os
 import sys
 from argparse import ArgumentParser
 from datetime import datetime
-from typing import Tuple, Sequence, Union
+from typing import Tuple, Sequence, Union, Optional
 
 from box import Box
 from brewtils.rest import normalize_url_prefix as normalize
 from ruamel.yaml import YAML
 from yapconf import YapconfSpec, dump_data
 
+from beer_garden.errors import ConfigurationError
 from beer_garden.log import default_app_config
 
 __all__ = ["load", "generate_logging", "generate", "migrate", "get"]
@@ -156,11 +157,13 @@ def generate_logging(args: Sequence[str]):
     return logging_config
 
 
-def get(key: str) -> Union[str, int, float, bool, complex, Box, None]:
+def get(key: Optional[str] = None) -> Union[str, int, float, bool, complex, Box, None]:
     """Get specified key from the config.
 
     Nested keys can be separated with a "." If the key does not exist, then
     a None will be returned.
+
+    If the key itself is None, then the entire config will be returned.
 
     If the requested value is a container (has child items) then the returned value will
     be an immutable (frozen) ``box.Box`` object.
@@ -171,8 +174,8 @@ def get(key: str) -> Union[str, int, float, bool, complex, Box, None]:
     Returns:
         The value of the key in the config.
     """
-    if not key:
-        return None
+    if key is None:
+        return _CONFIG
 
     value = _CONFIG
     for key_part in key.split("."):
@@ -180,6 +183,30 @@ def get(key: str) -> Union[str, int, float, bool, complex, Box, None]:
             return None
         value = value[key_part]
     return value
+
+
+def assign(new_config: Box, force: bool = False) -> None:
+    """Set the overall application config.
+
+    This methods sets the global configuration to the given Box object. This method is
+    only intended to be used in a subprocess context where reconstructing the
+    configuration using ``load`` would be inadvisable.
+
+    Args:
+        new_config: The configuration object to be applied
+        force: If True, set the config even if one is already set
+
+    Returns:
+        None
+
+    Raises:
+        ConfigurationError: A config is already loaded and ``force`` is False
+    """
+    global _CONFIG
+    if _CONFIG is not None and not force:
+        ConfigurationError("")
+
+    _CONFIG = new_config
 
 
 def _setup_config_sources(spec, cli_vars):

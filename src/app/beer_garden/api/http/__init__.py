@@ -2,6 +2,7 @@
 import logging
 import os
 import ssl
+import types
 
 from apispec import APISpec
 from brewtils.schemas import (
@@ -55,19 +56,16 @@ def run():
     _setup_application()
 
     # Schedule things to happen after the ioloop comes up
-    io_loop.add_callback(beer_garden.api.http.startup)
+    io_loop.add_callback(startup)
 
-    logger.info("Starting IO loop")
-
+    logger.debug("Starting IO loop")
     io_loop.start()
 
-    logger.info("Application is shut down. Goodbye!")
+    logger.info("Http entry point is shut down. Goodbye!")
 
 
-def stop():
-    logger.info("Received a shutdown request.")
-    # TODO - Should this be 'from_signal'?
-    io_loop.add_callback_from_signal(beer_garden.api.http.shutdown)
+def signal_handler(_: int, __: types.FrameType):
+    io_loop.add_callback_from_signal(shutdown)
 
 
 async def startup():
@@ -94,7 +92,7 @@ async def startup():
     logger.info(f"Starting HTTP server on {http_config.host}:{http_config.port}")
     server.listen(http_config.port, http_config.host)
 
-    beer_garden.api.http.logger.info("Application is started. Hello!")
+    beer_garden.api.http.logger.info("Http entry point is started. Hello!")
 
 
 async def shutdown():
@@ -109,7 +107,7 @@ async def shutdown():
     This execution is normally scheduled by the signal handler.
     """
 
-    logger.info("Stopping server for new HTTP connections")
+    logger.debug("Stopping server for new HTTP connections")
     server.stop()
 
     # if event_publishers:
@@ -121,10 +119,10 @@ async def shutdown():
 
     # We need to do this before the scheduler shuts down completely in order to kick any
     # currently waiting request creations
-    logger.info("Closing all open HTTP connections")
+    logger.debug("Closing all open HTTP connections")
     await server.close_all_connections()
 
-    logger.info("Stopping IO loop")
+    logger.debug("Stopping IO loop")
     io_loop.add_callback(io_loop.stop)
 
 

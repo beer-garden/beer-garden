@@ -196,6 +196,9 @@ class TestConfigGet(object):
     def test_get(self, key, expected):
         assert beer_garden.config.get(key) == expected
 
+    def test_get_all(self):
+        assert beer_garden.config.get() == beer_garden.config._CONFIG
+
     def test_immutable(self):
         with pytest.raises(BoxError):
             beer_garden.config.get("log")["level"] = "not allowed"

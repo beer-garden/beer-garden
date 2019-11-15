@@ -18,8 +18,16 @@ class LocalPluginValidator(object):
     ARGS_KEY = "PLUGIN_ARGS"
     REQUIRED_KEYS = [NAME_KEY, VERSION_KEY, ENTRY_POINT_KEY]
 
+    _instance = None
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
+
+    @classmethod
+    def instance(cls):
+        if not cls._instance:
+            cls._instance = cls()
+        return cls._instance
 
     def validate_plugin(self, path_to_plugin):
         """Validates a Plugin and its arguments

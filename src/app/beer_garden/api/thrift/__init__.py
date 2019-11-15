@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import os
+import types
 
 import thriftpy2
 
@@ -33,9 +34,8 @@ def run():
 
     the_server.run()
 
-    logger.info("Application is shut down. Goodbye!")
+    logger.info("Thrift server is shut down. Goodbye!")
 
 
-def stop():
-    logger.info("Received a shutdown request.")
+def signal_handler(_: int, __: types.FrameType):
     the_server.stop()
