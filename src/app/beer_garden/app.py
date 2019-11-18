@@ -7,6 +7,9 @@ from functools import partial
 import brewtils.models
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
+
+from beer_garden.bg_events.events_manager import EventsManager
+from beer_garden.bg_events.parent_listener import ParentListener
 from brewtils.models import Events
 from brewtils.pika import TransientPikaClient
 from brewtils.rest.easy_client import EasyClient
@@ -168,6 +171,10 @@ class Application(StoppableThread):
         except RequestException:
             self.logger.warning("Unable to publish startup notification")
 
+        self.logger.info("Starting local events manager...")
+        self._setup_event_listeners()
+
+        self.eventsManager.add_event("Startup", {"Status": "Online"})
         self.logger.info("All set! Let me know if you need anything else!")
 
     def _shutdown(self):
@@ -203,6 +210,9 @@ class Application(StoppableThread):
 
         self.logger.info("Stopping log reader")
         self.log_reader.stop()
+
+        self.logger.info("Stopping local events manager")
+        self.eventsManager.stop()
 
         self.logger.info("Successfully shut down Beer-garden")
 
@@ -257,6 +267,15 @@ class Application(StoppableThread):
             timezone=utc,
         )
 
+    def _setup_event_listeners(self):
+        self.eventsManager = EventsManager()
+
+        event_config = beer_garden.config.get("event")
+        if event_config.parent.enable:
+            self.eventsManager.register_listener(ParentListener(event_config.parent))
+
+        self.eventsManager.start()
+
     # def _setup_event_publishers(self, ssl_context):
     def _setup_event_publishers(self):
         # Create the collection of event publishers and add concrete publishers
@@ -298,7 +317,6 @@ class Application(StoppableThread):
                 self.logger.exception("Error starting RabbitMQ event publisher: %s", ex)
 
         if event_config.brew_view.enable:
-
             class BrewViewPublisher(EventPublisher):
                 def __init__(self, config):
                     self._ez_client = EasyClient(namespace="default", **config)
