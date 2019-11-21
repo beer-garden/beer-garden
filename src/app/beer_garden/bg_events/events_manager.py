@@ -1,4 +1,4 @@
-from multiprocessing import Process, Queue
+from multiprocessing import Queue
 
 from beer_garden.bg_events.parent_listener import ParentListener
 from brewtils.stoppable_thread import StoppableThread
@@ -25,22 +25,17 @@ class EventsManager(StoppableThread):
             while not self.events_queue.empty():
                 event_type, event = self.events_queue.get()
 
-                event_processes = list()
-
-                self.logger.info("Event's Manager is spawning processes")
                 for event_listener in self.events_listeners:
-                    process = Process(target=event_listener.receive_next_message, args=(event_type, event))
-                    process.start()
-                    event_processes.append(process)
+                    event_listener.receive_next_message(event_type, event)
 
-                for process in event_processes:
-                    process.join()
-
-                self.logger.info("Event's Manager is closed processes")
+        for event_listener in self.events_listeners:
+            event_listener.stop()
 
     def register_listener(self, event_listener):
+
+        event_listener.start()
         self.events_listeners.append(event_listener)
-        self.logger.info("Event's Manager is added listener")
 
     def build_listeners(self):
+
         self.register_listener(ParentListener())

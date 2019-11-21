@@ -3,11 +3,10 @@ from beer_garden.bg_events.event_listener import EventListener
 import requests
 
 
-# from requests import Session
-
 class ParentListener(EventListener):
 
     def __init__(self, config):
+        super().__init__()
         self.endpoint = '{}://{}:{}{}api/v2/events'.format('https' if config.ssl.enabled else 'http', config.public_fqdn,
                                                            config.port, config.url_prefix)
 
