@@ -229,6 +229,7 @@ def _setup_tornado_app():
         published_url_specs + unpublished_url_specs,
         debug=app_config.debug_mode,
         cookie_secret=auth_config.token.secret,
+        autoreload=False,
     )
 
 
