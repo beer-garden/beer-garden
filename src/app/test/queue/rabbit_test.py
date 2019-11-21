@@ -6,27 +6,38 @@ import beer_garden.requests
 from beer_garden.queue.rabbit import PyrabbitClient, get_routing_key, get_routing_keys
 
 
-def test_get_routing_key():
-    assert "system.1-0-0.instance" == get_routing_key("system", "1.0.0", "instance")
+class TestGetRoutingKey(object):
+    def test_basic(self):
+        assert "system.1-0-0.instance" == get_routing_key("system", "1.0.0", "instance")
 
-
-def test_get_routing_keys():
-    assert ["system", "system.1-0-0", "system.1-0-0.instance"] == get_routing_keys(
-        "system", "1.0.0", "instance"
+    @pytest.mark.parametrize(
+        "args,expected",
+        [
+            (("system", "1.0.0", "instance"), "admin.system.1-0-0.instance"),
+            ((None, None, None), "admin"),
+        ],
     )
+    def test_admin(self, args, expected):
+        assert get_routing_key(*args, is_admin=True) == expected
 
 
-def test_get_routing_keys_admin_basic():
-    assert ["admin"] == get_routing_keys(is_admin=True)
+class TestGetRoutingKeys(object):
+    def test_basic(self):
+        assert ["system", "system.1-0-0", "system.1-0-0.instance"] == get_routing_keys(
+            "system", "1.0.0", "instance"
+        )
 
+    def test_admin(self):
+        assert ["admin"] == get_routing_keys(is_admin=True)
+        assert ["admin"] == get_routing_keys(is_admin=True)
 
-def test_get_routing_keys_admin_no_clone_id():
-    assert [
-        "admin",
-        "admin.system",
-        "admin.system.1-0-0",
-        "admin.system.1-0-0.instance",
-    ] == get_routing_keys("system", "1.0.0", "instance", is_admin=True)
+    def test_admin_no_clone_id(self):
+        assert [
+            "admin",
+            "admin.system",
+            "admin.system.1-0-0",
+            "admin.system.1-0-0.instance",
+        ] == get_routing_keys("system", "1.0.0", "instance", is_admin=True)
 
 
 def test_get_routing_keys_admin_clone_id():

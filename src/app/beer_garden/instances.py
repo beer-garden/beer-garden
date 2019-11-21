@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
 import logging
-import random
-import string
 from datetime import datetime
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Events, Instance, PatchOperation, System
+from brewtils.models import Events, Instance, PatchOperation, System, Request
 
 import beer_garden
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 from beer_garden.events.events_manager import publish_event
-from beer_garden.queue.rabbit import get_routing_key, get_routing_keys
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +30,6 @@ def get_instance(instance_id: str) -> Instance:
 def initialize_instance(instance_id: str) -> Instance:
     """Initializes an instance.
 
-    This does a lot of stuff right now.
-
     Args:
         instance_id: The Instance ID
 
@@ -45,52 +40,19 @@ def initialize_instance(instance_id: str) -> Instance:
     system = db.query_unique(System, instances__contains=instance)
 
     logger.info(
-        "Initializing instance %s[%s]-%s", system.name, instance.name, system.version
+        f"Initializing instance {system.name}[{instance.name}]-{system.version}"
     )
 
-    routing_words = [system.name, system.version, instance.name]
-
-    request_queue_name = get_routing_key(*routing_words)
-    request_queue = queue.create(
-        request_queue_name,
-        [request_queue_name],
-        durable=True,
-        arguments={"x-max-priority": 1},
-    )
-
-    suffix = [random.choice(string.ascii_lowercase + string.digits) for _ in range(10)]
-    routing_words.append("".join(suffix))
-
-    admin_keys = get_routing_keys(*routing_words, is_admin=True)
-    admin_queue = queue.create(admin_keys[-1], admin_keys, durable=True)
-
-    amq_config = beer_garden.config.get("amq")
-    connection = {
-        "host": beer_garden.config.get("publish_hostname"),
-        "port": amq_config.connections.message.port,
-        "user": amq_config.connections.message.user,
-        "password": amq_config.connections.message.password,
-        "virtual_host": amq_config.virtual_host,
-        "ssl": {"enabled": amq_config.connections.message.ssl.enabled},
-    }
+    queue_spec = queue.create(instance)
 
     instance.status = "INITIALIZING"
     instance.status_info = {"heartbeat": datetime.utcnow()}
-    instance.queue_type = "rabbitmq"
-    instance.queue_info = {
-        "admin": {"name": admin_queue.name},
-        "request": {"name": request_queue.name},
-        "connection": connection,
-    }
+    instance.queue_type = queue_spec["queue_type"]
+    instance.queue_info = queue_spec["queue_info"]
+
     instance = db.update(instance)
 
-    # Send a request to start to the plugin on the plugin's admin queue
-    queue.put(
-        beer_garden.start_request,
-        routing_key=get_routing_key(
-            system.name, system.version, instance.name, is_admin=True
-        ),
-    )
+    start_instance(instance_id)
 
     return instance
 
@@ -146,13 +108,20 @@ def start_instance(instance_id: str) -> Instance:
     instance = db.query_unique(Instance, id=instance_id)
     system = db.query_unique(System, instances__contains=instance)
 
-    logger.info(
-        "Starting instance %s[%s]-%s", system.name, instance.name, system.version
-    )
+    logger.info(f"Starting instance {system.name}[{instance.name}]-{system.version}")
 
-    beer_garden.application.plugin_manager.start_plugin(
-        beer_garden.application.plugin_registry.get_plugin_from_instance_id(instance.id)
+    # Send a request to start to the plugin on the plugin's admin queue
+    request = Request.from_template(
+        beer_garden.start_request,
+        system=system.name,
+        system_version=system.version,
+        instance_name=instance.name,
     )
+    queue.put(request, is_admin=True)
+
+    # beer_garden.application.plugin_manager.start_plugin(
+    #     beer_garden.application.plugin_registry.get_plugin_from_instance_id(instance.id)
+    # )
 
     return instance
 
@@ -170,24 +139,30 @@ def stop_instance(instance_id: str) -> Instance:
     instance = db.query_unique(Instance, id=instance_id)
     system = db.query_unique(System, instances__contains=instance)
 
-    logger.info(
-        "Stopping instance %s[%s]-%s", system.name, instance.name, system.version
-    )
+    logger.info(f"Stopping instance {system.name}[{instance.name}]-{system.version}")
 
-    local_plugin = beer_garden.application.plugin_registry.get_plugin_from_instance_id(
-        instance.id
+    request = Request.from_template(
+        beer_garden.stop_request,
+        system=system.name,
+        system_version=system.version,
+        instance_name=instance.name,
     )
+    queue.put(request, is_admin=True)
 
-    if local_plugin:
-        beer_garden.application.plugin_manager.stop_plugin(local_plugin)
-    else:
-        # This causes the request consumer to terminate itself, which ends the plugin
-        queue.put(
-            beer_garden.stop_request,
-            routing_key=get_routing_key(
-                system.name, system.version, instance.name, is_admin=True
-            ),
-        )
+    # local_plugin = beer_garden.application.plugin_registry.get_plugin_from_instance_id(
+    #     instance.id
+    # )
+    #
+    # if local_plugin:
+    #     beer_garden.application.plugin_manager.stop_plugin(local_plugin)
+    # else:
+    #     # This causes the request consumer to terminate itself, which ends the plugin
+    #     queue.put(
+    #         beer_garden.stop_request,
+    #         routing_key=get_routing_key(
+    #             system.name, system.version, instance.name, is_admin=True
+    #         ),
+    #     )
 
     return instance
 
