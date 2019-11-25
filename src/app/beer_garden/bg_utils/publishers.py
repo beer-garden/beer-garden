@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from brewtils.schema_parser import SchemaParser
+# from brewtils.schema_parser import SchemaParser
 
-from .event_publisher import EventPublisher
-from beer_garden.db.mongo.parser import MongoParser
+# from .event_publisher import EventPublisher
+# from beer_garden.db.mongo.parser import MongoParser
 
 # from brewtils.models import Events
 # from brewtils.rest.client import TimeoutAdapter
@@ -74,13 +74,13 @@ from beer_garden.db.mongo.parser import MongoParser
 #         self._socket.shutdown()
 
 
-class MongoPublisher(EventPublisher):
-    """Publisher implementation that 'publishes' to Mongo"""
-
-    def publish(self, message, **kwargs):
-        message.save()
-
-    def _event_serialize(self, event, **kwargs):
-        return MongoParser.parse_event(
-            SchemaParser.serialize_event(event, to_string=False)
-        )
+# class MongoPublisher(EventPublisher):
+#     """Publisher implementation that 'publishes' to Mongo"""
+#
+#     def publish(self, message, **kwargs):
+#         message.save()
+#
+#     def _event_serialize(self, event, **kwargs):
+#         return MongoParser.parse_event(
+#             SchemaParser.serialize_event(event, to_string=False)
+#         )

@@ -81,18 +81,19 @@ event:
   mongo:
     enable: true
   parent:
-    enable: false
-    host: 0.0.0.0
-    port: 2337
-    public_fqdn: localhost
-    ssl:
-      ca_cert: null
-      ca_path: null
-      client_cert_verify: NONE
-      enabled: false
-      private_key: null
-      public_key: null
-    url_prefix: /
+    http:
+      enable: false
+      host: 0.0.0.0
+      port: 2337
+      public_fqdn: localhost
+      ssl:
+        ca_cert: null
+        ca_path: null
+        client_cert_verify: NONE
+        enabled: false
+        private_key: null
+        public_key: null
+      url_prefix: /
 log:
   config_file: example_configs/logging-config.json
   file: null

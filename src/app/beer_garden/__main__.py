@@ -26,6 +26,9 @@ def main():
     # Absolute first thing to do is load the config
     beer_garden.load_config(sys.argv[1:])
 
+    # Register the events handler before the application starts
+    beer_garden.establish_events_manager()
+
     # Need to create the application before registering the signal handlers
     beer_garden.application = Application()
 

@@ -2,6 +2,8 @@ from beer_garden.bg_events.event_listener import EventListener
 
 import requests
 
+from brewtils.schema_parser import SchemaParser
+
 
 class ParentListener(EventListener):
     """
@@ -28,4 +30,6 @@ class ParentListener(EventListener):
         :param event: The Event to be processed
         :return:
         """
-        r = requests.post(self.endpoint, json={"event": event})
+        requests.post(
+            self.endpoint, json=SchemaParser.serialize(event, to_string=False)
+        )

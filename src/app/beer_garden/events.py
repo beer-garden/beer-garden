@@ -10,7 +10,7 @@ def publish_event(event_type):
     # TODO - This is kind of gross
     # TODO x2 - Enable this at some point
     # @wrapt.decorator(enabled=lambda: not getattr(beer_garden, "_running_tests", False))
-    @wrapt.decorator(enabled=False)
+    @wrapt.decorator(enabled=True)
     def wrapper(wrapped, _, args, kwargs):
         event = Event(name=event_type.name, payload="", error=False)
 
@@ -34,8 +34,18 @@ def publish_event(event_type):
                 event.payload = SchemaParser.serialize(result, to_string=False)
             elif event.name in (Events.QUEUE_CLEARED.name, Events.SYSTEM_REMOVED.name):
                 event.payload = {"id": args[0]}
+            elif event.name in (
+                Events.DB_CREATE.name,
+                Events.DB_DELETE.name,
+                Events.DB_UPDATE.name,
+            ):
+                event.payload = {
+                    type(args[0]).schema: SchemaParser.serialize(
+                        args[0], to_string=False
+                    )
+                }
         finally:
-            beer_garden.application.event_publishers.publish_event(event)
+            beer_garden.events_manager.add_event(event)
 
         return result
 
