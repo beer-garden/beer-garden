@@ -35,5 +35,5 @@ class EventListener(StoppableThread):
 
         while not self.wait(0.1):
             while not self.events_queue.empty():
-                event_type, event = self.events_queue.get()
-                self.process_next_message(event_type, event)
+                event = self.events_queue.get()
+                self.process_next_message(event)
