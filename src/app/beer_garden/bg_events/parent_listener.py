@@ -15,8 +15,12 @@ class ParentListener(EventListener):
         :param config:
         """
         super().__init__()
-        self.endpoint = '{}://{}:{}{}api/v2/events'.format('https' if config.ssl.enabled else 'http', config.public_fqdn,
-                                                           config.port, config.url_prefix)
+        self.endpoint = "{}://{}:{}{}api/v2/events".format(
+            "https" if config.ssl.enabled else "http",
+            config.public_fqdn,
+            config.port,
+            config.url_prefix,
+        )
 
     def process_next_message(self, event):
         """
@@ -24,4 +28,4 @@ class ParentListener(EventListener):
         :param event: The Event to be processed
         :return:
         """
-        r = requests.post(self.endpoint, json={'event': event})
+        r = requests.post(self.endpoint, json={"event": event})

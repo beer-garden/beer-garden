@@ -1,6 +1,6 @@
 from multiprocessing import Queue
 
-from beer_garden.bg_events.parent_listener import ParentListener
+from beer_garden.bg_events.event_listener import EventListener
 from brewtils.stoppable_thread import StoppableThread
 from brewtils.models import Event
 
@@ -36,7 +36,7 @@ class EventsManager(StoppableThread):
         for event_listener in self.events_listeners:
             event_listener.stop()
 
-    def register_listener(self, event_listener):
+    def register_listener(self, event_listener: EventListener):
         """Register and start an EventsListener
 
         :param event_listener: Register an EventsListener

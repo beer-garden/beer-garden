@@ -500,7 +500,7 @@ _AUTH_SPEC = {
             "type": "bool",
             "default": True,
             "description": "Only applicable if auth is enabled. If set to "
-                           "true, guests can login without username/passwords.",
+            "true, guests can login without username/passwords.",
         },
         "token": {
             "type": "dict",
@@ -577,7 +577,7 @@ _DB_SPEC = {
                     "type": "int",
                     "default": 15,
                     "description": "Number of minutes to wait before deleting "
-                                   "events (negative number for never)",
+                    "events (negative number for never)",
                     "previous_names": ["event_mongo_ttl"],
                     "alt_env_names": ["EVENT_MONGO_TTL"],
                 },
@@ -585,7 +585,7 @@ _DB_SPEC = {
                     "type": "int",
                     "default": -1,
                     "description": "Number of minutes to wait before deleting "
-                                   "ACTION requests (negative number for never)",
+                    "ACTION requests (negative number for never)",
                     "previous_names": ["action_request_ttl"],
                     "alt_env_names": ["ACTION_REQUEST_TTL"],
                 },
@@ -793,95 +793,82 @@ _EVENT_SPEC = {
         "parent": {
             "type": "dict",
             "items": {
-                "enable": {
-                    "type": "bool",
-                    "default": True,
-                    "description": "Run an HTTP server",
-                },
-                "ssl": {
+                "http": {
                     "type": "dict",
                     "items": {
-                        "enabled": {
+                        "enable": {
                             "type": "bool",
-                            "default": False,
-                            "description": "Serve content using SSL",
-                            "previous_names": ["ssl_enabled"],
-                            "alt_env_names": ["SSL_ENABLED"],
-                            "cli_separator": "_",
+                            "default": True,
+                            "description": "Run an HTTP server",
                         },
-                        "private_key": {
+                        "ssl": {
+                            "type": "dict",
+                            "items": {
+                                "enabled": {
+                                    "type": "bool",
+                                    "default": False,
+                                    "description": "Serve content using SSL",
+                                    "cli_separator": "_",
+                                },
+                                "private_key": {
+                                    "type": "str",
+                                    "description": "Path to a private key",
+                                    "required": False,
+                                },
+                                "public_key": {
+                                    "type": "str",
+                                    "description": "Path to a public key",
+                                    "required": False,
+                                },
+                                "ca_cert": {
+                                    "type": "str",
+                                    "description": (
+                                        "Path to CA certificate file to use for SSLContext"
+                                    ),
+                                    "required": False,
+                                },
+                                "ca_path": {
+                                    "type": "str",
+                                    "description": (
+                                        "Path to CA certificate path to use for SSLContext"
+                                    ),
+                                    "required": False,
+                                },
+                                "client_cert_verify": {
+                                    "type": "str",
+                                    "description": (
+                                        "Client certificate mode to use when handling requests"
+                                    ),
+                                    "choices": ["NONE", "OPTIONAL", "REQUIRED"],
+                                    "default": "NONE",
+                                },
+                            },
+                        },
+                        "port": {
+                            "type": "int",
+                            "default": 2337,
+                            "description": "Serve content on this port",
+                        },
+                        "url_prefix": {
                             "type": "str",
-                            "description": "Path to a private key",
+                            "default": "/",
+                            "description": "URL path prefix",
                             "required": False,
-                            "previous_names": ["ssl_private_key"],
-                            "alt_env_names": ["SSL_PRIVATE_KEY"],
                         },
-                        "public_key": {
+                        "host": {
                             "type": "str",
-                            "description": "Path to a public key",
-                            "required": False,
-                            "previous_names": ["ssl_public_key"],
-                            "alt_env_names": ["SSL_PUBLIC_KEY"],
+                            "default": "0.0.0.0",
+                            "description": "Host for the HTTP Server to bind to",
                         },
-                        "ca_cert": {
+                        "public_fqdn": {
                             "type": "str",
-                            "description": (
-                                "Path to CA certificate file to use for SSLContext"
-                            ),
-                            "required": False,
-                            "previous_names": ["ca_cert"],
-                            "alt_env_names": ["CA_CERT"],
-                        },
-                        "ca_path": {
-                            "type": "str",
-                            "description": (
-                                "Path to CA certificate path to use for SSLContext"
-                            ),
-                            "required": False,
-                            "previous_names": ["ca_path"],
-                            "alt_env_names": ["CA_PATH"],
-                        },
-                        "client_cert_verify": {
-                            "type": "str",
-                            "description": (
-                                "Client certificate mode to use when handling requests"
-                            ),
-                            "choices": ["NONE", "OPTIONAL", "REQUIRED"],
-                            "default": "NONE",
-                            "previous_names": ["client_cert_verify"],
-                            "alt_env_names": ["CLIENT_CERT_VERIFY"],
+                            "default": "localhost",
+                            "description": "Public fully-qualified domain name",
                         },
                     },
-                },
-                "port": {
-                    "type": "int",
-                    "default": 2337,
-                    "description": "Serve content on this port",
-                    "previous_names": ["web_port"],
-                },
-                "url_prefix": {
-                    "type": "str",
-                    "default": "/",
-                    "description": "URL path prefix",
-                    "required": False,
-                    "previous_names": ["url_prefix"],
-                    "alt_env_names": ["URL_PREFIX"],
-                },
-                "host": {
-                    "type": "str",
-                    "default": "0.0.0.0",
-                    "description": "Host for the HTTP Server to bind to",
-                },
-                "public_fqdn": {
-                    "type": "str",
-                    "default": "localhost",
-                    "description": "Public fully-qualified domain name",
-                    "previous_names": ["public_fqdn"],
-                    "alt_env_names": ["PUBLIC_FQDN"],
-                },
+                }
             },
-        }
-
+        },
     },
 }
 
@@ -994,7 +981,7 @@ _PLUGIN_SPEC = {
                 "level": {
                     "type": "str",
                     "description": "Default log level for plugins (could be "
-                                   "overwritten by plugin_log_config value)",
+                    "overwritten by plugin_log_config value)",
                     "default": "INFO",
                     "choices": [
                         "DEBUG",
@@ -1028,13 +1015,13 @@ _PLUGIN_SPEC = {
                         "username": {
                             "type": "str",
                             "description": "Username that local plugins will use for "
-                                           "authentication (needs bg-plugin role)",
+                            "authentication (needs bg-plugin role)",
                             "required": False,
                         },
                         "password": {
                             "type": "str",
                             "description": "Password that local plugins will use for "
-                                           "authentication (needs bg-plugin role)",
+                            "authentication (needs bg-plugin role)",
                             "required": False,
                         },
                     },
@@ -1086,13 +1073,13 @@ _SCHEDULER_SPEC = {
                 "username": {
                     "type": "str",
                     "description": "Username that scheduler will use for "
-                                   "authentication (needs bg-admin role)",
+                    "authentication (needs bg-admin role)",
                     "required": False,
                 },
                 "password": {
                     "type": "str",
                     "description": "Password that scheduler will use for "
-                                   "authentication (needs bg-admin role)",
+                    "authentication (needs bg-admin role)",
                     "required": False,
                 },
             },
