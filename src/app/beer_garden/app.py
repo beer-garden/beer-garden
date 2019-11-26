@@ -152,9 +152,6 @@ class Application(StoppableThread):
         self.logger.debug("Starting scheduler")
         self.scheduler.start()
 
-        self.logger.info("Starting local events manager...")
-        self._setup_event_listeners()
-
         try:
             beer_garden.events_manager.add_event(
                 brewtils.models.Event(name=Events.BARTENDER_STARTED.name)
@@ -253,15 +250,6 @@ class Application(StoppableThread):
             timezone=utc,
         )
 
-    def _setup_event_listeners(self):
-
-        event_config = beer_garden.config.get("event")
-        if event_config.parent.http.enable:
-            beer_garden.events_manager.register_listener(
-                ParentListener(event_config.parent.http)
-            )
-
-        beer_garden.events_manager.start()
 
 
 class HelperThread(object):

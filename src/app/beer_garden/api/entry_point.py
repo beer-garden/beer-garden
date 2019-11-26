@@ -133,6 +133,9 @@ class EntryPoint(object):
         # First thing to do is set the config
         beer_garden.config.assign(config)
 
+        # Then setup Event Manager Queue
+        beer_garden.establish_events_manager()
+
         # Then set up logging to push everything back to the main process
         beer_garden.log.setup_entry_point_logging(log_queue)
 

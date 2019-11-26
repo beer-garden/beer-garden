@@ -3,6 +3,7 @@ import logging
 import logging.config
 
 from beer_garden.bg_events.events_manager import EventsManager
+from beer_garden.bg_events.parent_listener import ParentListener
 from brewtils.models import Request
 
 import beer_garden.bg_utils
@@ -23,7 +24,7 @@ __all__ = [
 # COMPONENTS #
 application = None
 logger = None
-events_manager = None
+events_manager = EventsManager()
 
 start_request = Request(command="_start", command_type="EPHEMERAL")
 stop_request = Request(command="_stop", command_type="EPHEMERAL")
@@ -42,6 +43,14 @@ def signal_handler(signal_number, stack_frame):
 def establish_events_manager():
     global events_manager
     events_manager = EventsManager()
+
+    event_config = beer_garden.config.get("event")
+    if event_config.parent.http.enable:
+        beer_garden.events_manager.register_listener(
+            ParentListener(event_config.parent.http)
+        )
+
+    beer_garden.events_manager.start()
 
 
 def load_config(cli_args):

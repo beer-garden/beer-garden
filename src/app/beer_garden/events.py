@@ -40,8 +40,8 @@ def publish_event(event_type):
                 Events.DB_UPDATE.name,
             ):
                 event.payload = {
-                    type(args[0]).schema: SchemaParser.serialize(
-                        args[0], to_string=False
+                    type(result).schema: SchemaParser.serialize(
+                        result, to_string=False
                     )
                 }
         finally:
