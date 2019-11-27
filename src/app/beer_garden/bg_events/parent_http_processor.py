@@ -1,11 +1,12 @@
-from beer_garden.bg_events.event_listener import EventListener
+
 
 import requests
 
+from beer_garden.bg_events.events_manager import EventProcessor
 from brewtils.schema_parser import SchemaParser
 
 
-class ParentListener(EventListener):
+class ParentHttpProcessor(EventProcessor):
     """
     This is an example stubbed out for how parent listeners could publish events.
     """
@@ -30,6 +31,7 @@ class ParentListener(EventListener):
         :param event: The Event to be processed
         :return:
         """
+        print('Publish: ' + event.name)
         requests.post(
             self.endpoint, json=SchemaParser.serialize(event, to_string=False)
         )

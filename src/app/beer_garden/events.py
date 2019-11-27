@@ -45,7 +45,8 @@ def publish_event(event_type):
                     )
                 }
         finally:
-            beer_garden.events_manager.add_event(event)
+            print('Put Event: ' + event.name)
+            #beer_garden.events_queue.put(event)
 
         return result
 

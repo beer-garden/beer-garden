@@ -3,12 +3,14 @@ import logging
 import multiprocessing
 from datetime import timedelta
 from functools import partial
+from multiprocessing import Queue
 
 import brewtils.models
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from beer_garden.bg_events.parent_listener import ParentListener
+from beer_garden.bg_events.events_manager import EventsManager
+from beer_garden.bg_events.parent_http_processor import ParentHttpProcessor
 from brewtils.models import Events
 from brewtils.stoppable_thread import StoppableThread
 from pytz import utc
@@ -27,6 +29,13 @@ from beer_garden.local_plugins.monitor import LocalPluginMonitor
 from beer_garden.log import load_plugin_log_config, EntryPointLogger
 from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import PluginStatusMonitor
+
+#events_queue = None
+
+
+#def setup_event_queue(queue: Queue):
+    #global events_queue
+    #events_queue = queue
 
 
 class Application(StoppableThread):
@@ -99,6 +108,9 @@ class Application(StoppableThread):
         self.log_queue = self.context.Queue()
         self.log_reader = HelperThread(EntryPointLogger, log_queue=self.log_queue)
 
+        #self.events_queue =
+        #setup_event_queue(self.context.Queue())
+
         for entry_name, entry_value in beer_garden.config.get("entry").items():
             if entry_value.get("enable"):
                 self.entry_points.append(EntryPoint.create(entry_name))
@@ -139,9 +151,12 @@ class Application(StoppableThread):
         self.logger.info("Starting log reader...")
         self.log_reader.start()
 
+        self.logger.info("Setting up Event Manager")
+        self._setup_events_manager()
+
         self.logger.debug("Starting entry points...")
         for entry_point in self.entry_points:
-            entry_point.start(context=self.context, log_queue=self.log_queue)
+            entry_point.start(context=self.context, log_queue=self.log_queue, events_queue=beer_garden.events_queue)
 
         self.logger.debug("Loading all local plugins...")
         LocalPluginLoader.instance().load_plugins()
@@ -153,7 +168,7 @@ class Application(StoppableThread):
         self.scheduler.start()
 
         try:
-            beer_garden.events_manager.add_event(
+            self.events_manager.add_event(
                 brewtils.models.Event(name=Events.BARTENDER_STARTED.name)
             )
         except RequestException:
@@ -181,7 +196,7 @@ class Application(StoppableThread):
             self.scheduler.shutdown(wait=False)
 
         try:
-            beer_garden.events_manager.add_event(
+            self.events_manager.add_event(
                 brewtils.models.Event(name=Events.BARTENDER_STOPPED.name)
             )
         except RequestException:
@@ -195,7 +210,7 @@ class Application(StoppableThread):
         self.log_reader.stop()
 
         self.logger.info("Stopping local events manager")
-        beer_garden.events_manager.stop()
+        self.events_manager.stop()
 
         self.logger.info("Successfully shut down Beer-garden")
 
@@ -213,6 +228,17 @@ class Application(StoppableThread):
         )
         db.create_connection(db_config=beer_garden.config.get("db"))
         db.initial_setup(beer_garden.config.get("auth.guest_login_enabled"))
+
+    def _setup_events_manager(self):
+        self.events_manager = EventsManager(beer_garden.events_queue)
+
+        event_config = beer_garden.config.get("event")
+        if event_config.parent.http.enable:
+            self.events_manager.register_listener(
+                ParentHttpProcessor(event_config.parent.http)
+            )
+
+        self.events_manager.start()
 
     def _setup_queues(self):
         """Startup tasks related to the message queues
@@ -249,7 +275,6 @@ class Application(StoppableThread):
             job_defaults=job_defaults,
             timezone=utc,
         )
-
 
 
 class HelperThread(object):

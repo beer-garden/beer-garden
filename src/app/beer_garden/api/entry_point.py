@@ -52,7 +52,7 @@ class EntryPoint(object):
         module = getattr(beer_garden.api, module_name)
         return EntryPoint(module_name, module.run, signal_handler=module.signal_handler)
 
-    def start(self, context: BaseContext, log_queue: Queue) -> None:
+    def start(self, context: BaseContext, log_queue: Queue, events_queue: Queue) -> None:
         """Start the entry point process
 
         Args:
@@ -69,6 +69,7 @@ class EntryPoint(object):
             args=(
                 beer_garden.config.get(),
                 log_queue,
+                events_queue,
                 self._target,
                 self._signal_handler,
             ),
@@ -103,6 +104,7 @@ class EntryPoint(object):
     def _target_wrapper(
         config: Box,
         log_queue: Queue,
+        event_queue: Queue,
         target: Callable,
         signal_handler: Callable[[int, FrameType], None],
     ) -> Any:
@@ -134,7 +136,7 @@ class EntryPoint(object):
         beer_garden.config.assign(config)
 
         # Then setup Event Manager Queue
-        beer_garden.establish_events_manager()
+        beer_garden.establish_events_queue(event_queue)
 
         # Then set up logging to push everything back to the main process
         beer_garden.log.setup_entry_point_logging(log_queue)

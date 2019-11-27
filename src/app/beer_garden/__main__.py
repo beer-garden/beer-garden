@@ -2,6 +2,7 @@
 
 import signal
 import sys
+from multiprocessing import Queue
 
 import beer_garden
 import beer_garden.api.http
@@ -27,8 +28,11 @@ def main():
     beer_garden.load_config(sys.argv[1:])
 
     # Register the events handler before the application starts
-    beer_garden.logger.info("Starting local events manager...")
-    beer_garden.establish_events_manager()
+    #beer_garden.logger.info("Starting local events manager...")
+    #beer_garden.establish_events_manager()
+
+    events_queue = Queue()
+    beer_garden.establish_events_queue(events_queue)
 
     # Need to create the application before registering the signal handlers
     beer_garden.application = Application()
