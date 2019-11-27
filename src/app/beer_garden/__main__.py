@@ -31,8 +31,7 @@ def main():
     #beer_garden.logger.info("Starting local events manager...")
     #beer_garden.establish_events_manager()
 
-    events_queue = Queue()
-    beer_garden.establish_events_queue(events_queue)
+    beer_garden.establish_events_queue()
 
     # Need to create the application before registering the signal handlers
     beer_garden.application = Application()

@@ -45,8 +45,7 @@ def publish_event(event_type):
                     )
                 }
         finally:
-            print('Put Event: ' + event.name)
-            #beer_garden.events_queue.put(event)
+            beer_garden.events_queue.put(event)
 
         return result
 

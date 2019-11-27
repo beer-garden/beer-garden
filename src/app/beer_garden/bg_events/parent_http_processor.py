@@ -31,7 +31,6 @@ class ParentHttpProcessor(EventProcessor):
         :param event: The Event to be processed
         :return:
         """
-        print('Publish: ' + event.name)
         requests.post(
             self.endpoint, json=SchemaParser.serialize(event, to_string=False)
         )

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import logging.config
+import multiprocessing
 from multiprocessing import Queue
 
 from beer_garden.bg_events.events_manager import EventsManager
@@ -60,8 +61,13 @@ def signal_handler(signal_number, stack_frame):
 #
 #     beer_garden.events_manager.start()
 
-def establish_events_queue(queue: Queue):
+def establish_events_queue(queue: Queue = None):
     global events_queue
+
+    if queue is None:
+        context = multiprocessing.get_context("spawn")
+        queue = context.Queue()
+
     events_queue = queue
 
 
