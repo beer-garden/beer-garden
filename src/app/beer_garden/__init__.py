@@ -2,7 +2,6 @@
 import logging
 import logging.config
 
-from beer_garden.events.parent_http_processor import ParentHttpProcessor
 from brewtils.models import Request
 
 import beer_garden.bg_utils

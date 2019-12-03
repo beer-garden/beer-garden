@@ -68,10 +68,12 @@ class EventsManager(StoppableThread):
     Class to accept multiple events and forward to Event Listeners running is separate threads
     """
 
-    def __init__(self, events_queue):
+    events_queue = None
+
+    def __init__(self, queue):
         super().__init__(name="EventsManagerLogger")
         self.events_listeners = list()
-        self.events_queue = events_queue
+        self.events_queue = queue
 
     def add_event(self, event: Event):
         """Add event to the management queue
@@ -79,9 +81,6 @@ class EventsManager(StoppableThread):
         :param event: The Event to be published
         """
         self.events_queue.put(event)
-
-    def set_queue(self, events_queue: Queue):
-        self.events_queue = events_queue
 
     def run(self):
         """
@@ -107,7 +106,6 @@ class EventsManager(StoppableThread):
 
 def publish_event(event_type):
     # TODO - This is kind of gross
-    # TODO x2 - Enable this at some point
     # @wrapt.decorator(enabled=lambda: not getattr(beer_garden, "_running_tests", False))
     @wrapt.decorator(enabled=True)
     def wrapper(wrapped, _, args, kwargs):
