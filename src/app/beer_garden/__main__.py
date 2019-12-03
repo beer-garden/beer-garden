@@ -28,9 +28,6 @@ def main():
     beer_garden.load_config(sys.argv[1:])
 
     # Register the events handler before the application starts
-    #beer_garden.logger.info("Starting local events manager...")
-    #beer_garden.establish_events_manager()
-
     beer_garden.establish_events_queue()
 
     # Need to create the application before registering the signal handlers

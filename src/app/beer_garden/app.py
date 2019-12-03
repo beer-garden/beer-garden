@@ -30,14 +30,6 @@ from beer_garden.log import load_plugin_log_config, EntryPointLogger
 from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import PluginStatusMonitor
 
-#events_queue = None
-
-
-#def setup_event_queue(queue: Queue):
-    #global events_queue
-    #events_queue = queue
-
-
 class Application(StoppableThread):
     """Main Beer-garden application
 
@@ -107,9 +99,6 @@ class Application(StoppableThread):
         self.context = multiprocessing.get_context("spawn")
         self.log_queue = self.context.Queue()
         self.log_reader = HelperThread(EntryPointLogger, log_queue=self.log_queue)
-
-        #self.events_queue =
-        #setup_event_queue(self.context.Queue())
 
         for entry_name, entry_value in beer_garden.config.get("entry").items():
             if entry_value.get("enable"):
