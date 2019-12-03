@@ -1,7 +1,30 @@
+import wrapt
+
+import multiprocessing
 from multiprocessing import Queue
 
 from brewtils.stoppable_thread import StoppableThread
-from brewtils.models import Event
+from brewtils.models import Event, Events
+from brewtils.schema_parser import SchemaParser
+
+
+import beer_garden
+
+__all__ = ["events_queue"]
+
+# COMPONENTS #
+events_queue = None
+
+
+def establish_events_queue(queue: Queue = None):
+    global events_queue
+
+    if queue is None:
+        context = multiprocessing.get_context("spawn")
+        queue = context.Queue()
+
+    events_queue = queue
+
 
 class EventProcessor(StoppableThread):
     """
@@ -80,3 +103,47 @@ class EventsManager(StoppableThread):
         """
         event_listener.start()
         self.events_listeners.append(event_listener)
+
+
+def publish_event(event_type):
+    # TODO - This is kind of gross
+    # TODO x2 - Enable this at some point
+    # @wrapt.decorator(enabled=lambda: not getattr(beer_garden, "_running_tests", False))
+    @wrapt.decorator(enabled=True)
+    def wrapper(wrapped, _, args, kwargs):
+        event = Event(name=event_type.name, payload="", error=False)
+
+        try:
+            result = wrapped(*args, **kwargs)
+        except Exception as ex:
+            event.error = True
+            event.payload = str(ex)
+            raise
+        else:
+            if event.name in (
+                Events.INSTANCE_INITIALIZED.name,
+                Events.INSTANCE_STARTED.name,
+                Events.INSTANCE_STOPPED.name,
+                Events.REQUEST_CREATED.name,
+                Events.REQUEST_STARTED.name,
+                Events.REQUEST_COMPLETED.name,
+                Events.SYSTEM_CREATED.name,
+                Events.SYSTEM_UPDATED.name,
+            ):
+                event.payload = SchemaParser.serialize(result, to_string=False)
+            elif event.name in (Events.QUEUE_CLEARED.name, Events.SYSTEM_REMOVED.name):
+                event.payload = {"id": args[0]}
+            elif event.name in (
+                Events.DB_CREATE.name,
+                Events.DB_DELETE.name,
+                Events.DB_UPDATE.name,
+            ):
+                event.payload = {
+                    type(result).schema: SchemaParser.serialize(result, to_string=False)
+                }
+        finally:
+            beer_garden.events.events_manager.events_queue.put(event)
+
+        return result
+
+    return wrapper

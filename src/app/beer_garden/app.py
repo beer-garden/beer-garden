@@ -3,14 +3,13 @@ import logging
 import multiprocessing
 from datetime import timedelta
 from functools import partial
-from multiprocessing import Queue
 
 import brewtils.models
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from beer_garden.bg_events.events_manager import EventsManager
-from beer_garden.bg_events.parent_http_processor import ParentHttpProcessor
+from beer_garden.events.events_manager import EventsManager
+from beer_garden.events.parent_http_processor import ParentHttpProcessor
 from brewtils.models import Events
 from brewtils.stoppable_thread import StoppableThread
 from pytz import utc
@@ -29,6 +28,7 @@ from beer_garden.local_plugins.monitor import LocalPluginMonitor
 from beer_garden.log import load_plugin_log_config, EntryPointLogger
 from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import PluginStatusMonitor
+
 
 class Application(StoppableThread):
     """Main Beer-garden application
@@ -64,6 +64,9 @@ class Application(StoppableThread):
         self.plugin_manager = LocalPluginsManager(
             shutdown_timeout=beer_garden.config.get("plugin.local.timeout.shutdown")
         )
+
+        self.logger.info("Setting up Event Manager")
+        self._setup_events_manager()
 
         plugin_config = beer_garden.config.get("plugin")
         self.helper_threads = [
@@ -140,12 +143,13 @@ class Application(StoppableThread):
         self.logger.info("Starting log reader...")
         self.log_reader.start()
 
-        self.logger.info("Setting up Event Manager")
-        self._setup_events_manager()
-
         self.logger.debug("Starting entry points...")
         for entry_point in self.entry_points:
-            entry_point.start(context=self.context, log_queue=self.log_queue, events_queue=beer_garden.events_queue)
+            entry_point.start(
+                context=self.context,
+                log_queue=self.log_queue,
+                events_queue=beer_garden.events.events_manager.events_queue,
+            )
 
         self.logger.debug("Loading all local plugins...")
         LocalPluginLoader.instance().load_plugins()
@@ -219,7 +223,11 @@ class Application(StoppableThread):
         db.initial_setup(beer_garden.config.get("auth.guest_login_enabled"))
 
     def _setup_events_manager(self):
-        self.events_manager = EventsManager(beer_garden.events_queue)
+        beer_garden.events.events_manager.establish_events_queue()
+
+        self.events_manager = EventsManager(
+            beer_garden.events.events_manager.events_queue
+        )
 
         event_config = beer_garden.config.get("event")
         if event_config.parent.http.enable:

@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 import logging.config
-import multiprocessing
-from multiprocessing import Queue
 
-from beer_garden.bg_events.events_manager import EventsManager
-from beer_garden.bg_events.parent_http_processor import ParentHttpProcessor
+from beer_garden.events.parent_http_processor import ParentHttpProcessor
 from brewtils.models import Request
 
 import beer_garden.bg_utils
@@ -20,13 +17,11 @@ __all__ = [
     "start_request",
     "stop_request",
     "load_config",
-    "events_queue"
 ]
 
 # COMPONENTS #
 application = None
 logger = None
-events_queue = None
 
 start_request = Request(command="_start", command_type="EPHEMERAL")
 stop_request = Request(command="_stop", command_type="EPHEMERAL")
@@ -40,16 +35,6 @@ def signal_handler(signal_number, stack_frame):
         beer_garden.application.join()
 
     beer_garden.logger.info("OK, we're all shut down. Have a good night!")
-
-
-def establish_events_queue(queue: Queue = None):
-    global events_queue
-
-    if queue is None:
-        context = multiprocessing.get_context("spawn")
-        queue = context.Queue()
-
-    events_queue = queue
 
 
 def load_config(cli_args):

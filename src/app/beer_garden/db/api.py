@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import beer_garden.db.mongo.api
-from beer_garden.events import publish_event
+from beer_garden.events.events_manager import publish_event
 from brewtils.models import Events
 
 check_connection = beer_garden.db.mongo.api.check_connection
@@ -15,20 +15,20 @@ replace_commands = beer_garden.db.mongo.api.replace_commands
 
 
 @publish_event(Events.DB_CREATE)
-def create_function(obj):
+def _create(obj):
     return beer_garden.db.mongo.api.create(obj)
 
 
 @publish_event(Events.DB_CREATE)
-def update_function(obj):
+def _update(obj):
     return beer_garden.db.mongo.api.update(obj)
 
 
 @publish_event(Events.DB_DELETE)
-def delete_function(obj):
+def _delete(obj):
     return beer_garden.db.mongo.api.delete(obj)
 
 
-create = create_function
-update = update_function
-delete = delete_function
+create = _create
+update = _update
+delete = _delete

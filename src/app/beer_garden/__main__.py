@@ -2,7 +2,6 @@
 
 import signal
 import sys
-from multiprocessing import Queue
 
 import beer_garden
 import beer_garden.api.http
@@ -26,9 +25,6 @@ def migrate_config():
 def main():
     # Absolute first thing to do is load the config
     beer_garden.load_config(sys.argv[1:])
-
-    # Register the events handler before the application starts
-    beer_garden.establish_events_queue()
 
     # Need to create the application before registering the signal handlers
     beer_garden.application = Application()

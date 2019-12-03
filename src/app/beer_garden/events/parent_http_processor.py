@@ -1,8 +1,6 @@
-
-
 import requests
 
-from beer_garden.bg_events.events_manager import EventProcessor
+from beer_garden.events.events_manager import EventProcessor
 from brewtils.schema_parser import SchemaParser
 
 
