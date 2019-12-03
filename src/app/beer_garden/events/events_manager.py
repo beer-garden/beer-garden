@@ -72,7 +72,7 @@ class EventsManager(StoppableThread):
 
     def __init__(self, queue):
         super().__init__(name="EventsManagerLogger")
-        self.events_listeners = list()
+        self.event_processors = list()
         self.events_queue = queue
 
     def add_event(self, event: Event):
@@ -89,19 +89,19 @@ class EventsManager(StoppableThread):
         while not self.wait(0.1):
             while not self.events_queue.empty():
                 event = self.events_queue.get()
-                for event_listener in self.events_listeners:
-                    event_listener.receive_next_message(event)
+                for event_processor in self.event_processors:
+                    event_processor.receive_next_message(event)
 
-        for event_listener in self.events_listeners:
-            event_listener.stop()
+        for event_processor in self.event_processors:
+            event_processor.stop()
 
-    def register_listener(self, event_listener: EventProcessor):
-        """Register and start an EventsListener
+    def register_processor(self, event_processor: EventProcessor):
+        """Register and start an EventProcessor
 
-        :param event_listener: Register an EventsListener
+        :param event_processor: Register an EventProcessor
         """
-        event_listener.start()
-        self.events_listeners.append(event_listener)
+        event_processor.start()
+        self.event_processors.append(event_processor)
 
 
 def publish_event(event_type):
