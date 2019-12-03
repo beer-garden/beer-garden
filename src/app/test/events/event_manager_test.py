@@ -6,7 +6,6 @@ from brewtils.models import Event
 
 
 class TestEventManager(object):
-
     @pytest.fixture
     def event(self):
         return Event(name="mock", payload="Hello!")
