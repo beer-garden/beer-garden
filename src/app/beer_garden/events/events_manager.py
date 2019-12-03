@@ -106,8 +106,7 @@ class EventsManager(StoppableThread):
 
 def publish_event(event_type):
     # TODO - This is kind of gross
-    # @wrapt.decorator(enabled=lambda: not getattr(beer_garden, "_running_tests", False))
-    @wrapt.decorator(enabled=True)
+    @wrapt.decorator(enabled=lambda: not getattr(beer_garden, "_running_tests", False))
     def wrapper(wrapped, _, args, kwargs):
         event = Event(name=event_type.name, payload="", error=False)
 

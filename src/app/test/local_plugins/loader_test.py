@@ -3,8 +3,11 @@ import sys
 import textwrap
 
 import pytest
+import wrapt
+
+import beer_garden
 from brewtils.models import System, Instance
-from mock import Mock
+from mock import Mock, patch
 
 import beer_garden.db.api as db
 from beer_garden.local_plugins.loader import LocalPluginLoader
@@ -152,6 +155,15 @@ class TestValidatePluginRequirements(object):
         registry.remove.assert_called_once_with("bar")
 
 
+def mock_publish_event(event_type):
+    # TODO - This is kind of gross
+    @wrapt.decorator(enabled=True)
+    def wrapper(wrapped, _, args, kwargs):
+        return wrapped(*args, **kwargs)
+
+    return wrapper
+
+
 class TestLoadPlugin(object):
     @pytest.fixture(autouse=True)
     def drop_collections(self, mongo_conn):
@@ -226,6 +238,7 @@ class TestLoadPlugin(object):
          - instance3 created in the database
          - instance2 remains in the database, and the ID remains the same
         """
+
         instance1 = Instance(name="instance1", id="58542eb571afd47ead90beef")
         instance2 = Instance(name="instance2", id="58542eb571afd47ead90beee")
         create_system(
