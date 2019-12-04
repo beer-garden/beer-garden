@@ -257,9 +257,11 @@ class Request(MongoModel, Document):
         "system_version": {"field": StringField, "kwargs": {"required": True}},
         "instance_name": {"field": StringField, "kwargs": {"required": True}},
         "command": {"field": StringField, "kwargs": {"required": True}},
+        "command_type": {"field": StringField, "kwargs": {}},
         "parameters": {"field": DictField, "kwargs": {}},
         "comment": {"field": StringField, "kwargs": {"required": False}},
         "metadata": {"field": DictField, "kwargs": {}},
+        "output_type": {"field": StringField, "kwargs": {}},
     }
 
     for field_name, field_info in TEMPLATE_FIELDS.items():
