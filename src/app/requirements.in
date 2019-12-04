@@ -21,6 +21,7 @@ black ; python_version > "3.5"
 codecov
 coverage
 flake8
+flake8-bugbear
 mock
 mongomock
 pytest < 4
