@@ -14,7 +14,7 @@ import beer_garden.api.thrift
 class BartenderThriftServer(TThreadedServer, StoppableThread):
     """Thrift server that uses a ThreadPoolExecutor to process requests"""
 
-    # Amount of time (in seconds) after shutdown requested to wait for workers to finish processing
+    # Amount of time (in seconds) after shutdown requested to wait for workers to finish
     WORKER_TIMEOUT = 5
 
     def __init__(self, *args, **kwargs):
@@ -42,7 +42,7 @@ class BartenderThriftServer(TThreadedServer, StoppableThread):
         # Mark the thread as stopping
         StoppableThread.stop(self)
 
-        # Close the socket - this will kick us out of the self.trans.accept() call with an exception
+        # Close the socket - this will break self.trans.accept() call with an exception
         self.trans.close()
 
         # Wait some amount of time for all the futures to complete
@@ -50,10 +50,10 @@ class BartenderThriftServer(TThreadedServer, StoppableThread):
             self.futures, timeout=self.WORKER_TIMEOUT, return_when=ALL_COMPLETED
         )
 
-        # If there are still workers remaining after the timeout then we remove references to them.
-        # We need to do this because workers are daemons but concurrent.futures.thread adds a
-        # hook to join all workers with no timeout when shutting down. So any hung worker would
-        # prevent the application from shutting down.
+        # If there are still workers remaining after the timeout then we remove
+        # references to them. We need to do this because workers are daemons but
+        # concurrent.futures.thread adds a hook to join all workers with no timeout when
+        # shutting down. So any hung worker prevents the application from shutting down.
         if futures_status.not_done:
             self.logger.warning(
                 "There were still unfinished worker "
@@ -87,7 +87,7 @@ class BartenderThriftServer(TThreadedServer, StoppableThread):
 
 
 class WrappedTProcessor(TProcessor):
-    """Processor that fails gracefully if a handler method raises an unexpected exception"""
+    """Processor that gracefully handles unexpected exceptions"""
 
     def __init__(self, default_exception_name, default_exception_cls, *args, **kwargs):
         super(WrappedTProcessor, self).__init__(*args, **kwargs)

@@ -270,7 +270,7 @@ class PyrabbitClient(object):
 
 
 def get_routing_keys(*args, **kwargs):
-    """Get a list of routing keys for a plugin in order from least specific to most specific.
+    """Get a list of routing keys, ordered from least specific to most specific
 
     Will return all possible routing keys to get a message to a particular system.
 
@@ -286,15 +286,24 @@ def get_routing_keys(*args, **kwargs):
             ['admin', 'admin.test_system', 'admin.test_system.1-0-0']
 
         ['test_system', '1.0.0', 'default'], is_admin=True:
-            ['admin', 'admin.test_system', 'admin.test_system.1-0-0',
-                'admin.test_system.1-0-0.default']
+            [
+                'admin',
+                'admin.test_system',
+                'admin.test_system.1-0-0',
+                'admin.test_system.1-0-0.default',
+            ]
 
         ['test_system', '1.0.0', 'default', 'random_text'], is_admin=True:
-            ['admin', 'admin.test_system', 'admin.test_system.1-0-0',
-                'admin.test_system.1-0-0.default', 'admin.test_system.1-0-0.default.random_text']
+            [
+                'admin',
+                'admin.test_system',
+                'admin.test_system.1-0-0',
+                'admin.test_system.1-0-0.default',
+                'admin.test_system.1-0-0.default.random_text',
+            ]
 
-    NOTE: Because RabbitMQ uses '.' as the word delimiter all '.' in routing words will be
-        replaced with '-'
+    NOTE: Because RabbitMQ uses '.' as the word delimiter all '.' in routing words will
+    be replaced with '-'
 
     :param args: List of routing key words to include in the routing keys
     :param kwargs: is_admin: Will prepend 'admin' to all generated keys if True

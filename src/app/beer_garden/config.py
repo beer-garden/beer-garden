@@ -592,7 +592,8 @@ _DB_SPEC = {
                 "info": {
                     "type": "int",
                     "default": 15,
-                    "description": "Number of minutes to wait before deleting INFO request",
+                    "description": "Number of minutes to wait before deleting "
+                    "INFO requests (negative number for never)",
                     "previous_names": ["info_request_ttl"],
                     "alt_env_names": ["INFO_REQUEST_TTL"],
                 },
@@ -924,7 +925,8 @@ _PLUGIN_SPEC = {
         "status_timeout": {
             "type": "int",
             "default": 30,
-            "description": "Amount of time to wait before marking a plugin as unresponsive",
+            "description": "Amount of time to wait before marking a plugin as"
+            "unresponsive",
             "previous_names": ["plugin_status_timeout "],
         },
         "local": {
@@ -967,7 +969,8 @@ _PLUGIN_SPEC = {
                         "shutdown": {
                             "type": "int",
                             "default": 10,
-                            "description": "Seconds to wait for a plugin to stop gracefully",
+                            "description": "Seconds to wait for a plugin to stop"
+                            "gracefully",
                             "previous_names": ["plugin_shutdown_timeout"],
                             "alt_env_names": ["PLUGIN_SHUTDOWN_TIMEOUT"],
                         },

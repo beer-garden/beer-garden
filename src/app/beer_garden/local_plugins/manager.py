@@ -15,7 +15,7 @@ from beer_garden.queue.rabbit import get_routing_key
 
 
 class LocalPluginsManager(object):
-    """LocalPluginsManager that is capable of stopping/starting and restarting plugins"""
+    """Manager that is capable of stopping/starting and restarting plugins"""
 
     def __init__(self, shutdown_timeout):
         self.logger = logging.getLogger(__name__)
@@ -27,14 +27,14 @@ class LocalPluginsManager(object):
     def start_plugin(self, plugin):
         """Start a specific plugin.
 
-        If a plugin cannot Be found (i.e. it was not loaded) then it will not do anything
+        If a plugin cannot be found (i.e. it was not loaded) then it will not do anything
         If the plugin is already running, it will do nothing.
-        If a plugin instance has not started after the PLUGIN_STARTUP_TIMEOUT it will mark that
-        instance as stopped
+        If a plugin instance has not started after the PLUGIN_STARTUP_TIMEOUT it will
+        mark that instance as stopped
 
         :param plugin: The plugin to start
-        :return: True if any plugin instances successfully started. False if the plugin does
-            not exist or all instances failed to start
+        :return: True if any plugin instances successfully started. False if the plugin
+        does not exist or all instances failed to start
         """
         self.logger.info("Starting plugin %s", plugin.unique_name)
 
@@ -109,7 +109,7 @@ class LocalPluginsManager(object):
             # Plugin must be marked as stopped before sending shutdown message
             plugin.stop()
 
-            # Send a stop request. This initiates a graceful shutdown on the plugin side.
+            # Send a stop request to initiate a graceful shutdown
             queue.put(
                 beer_garden.stop_request,
                 routing_key=get_routing_key(
@@ -204,8 +204,8 @@ class LocalPluginsManager(object):
     def _start_multiple_plugins(self, plugins_to_start):
         """Starts multiple plugins, respecting required plugin dependencies.
 
-        It will consider requirements of other plugins. If the plugin requires others, then it
-        will be skipped until its requirements are loaded.
+        It will consider requirements of other plugins. If the plugin requires others,
+        then it will be skipped until its requirements are loaded.
 
         Failure is a little tricky.
 

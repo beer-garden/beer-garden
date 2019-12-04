@@ -423,9 +423,9 @@ class System(MongoModel, Document):
 
         Mongoengine cannot save bidirectional references in one shot because
         'You can only reference documents once they have been saved to the database'
-        So we must mangle the System to have no Commands, save it, save the individual Commands
-        with the System reference, update the System with the Command list, and then save the
-        System again
+        So we must mangle the System to have no Commands, save it, save the individual
+        Commands with the System reference, update the System with the Command list, and
+        then save the System again
         """
 
         # Note if this system is already saved
@@ -436,14 +436,15 @@ class System(MongoModel, Document):
         temp_instances = self.instances
 
         try:
-            # Before we start saving things try to make sure everything will validate correctly
-            # This means multiple passes through the collections, but we want to minimize the
-            # chances of having to bail out after saving something since we don't have transactions
+            # Before we start saving things try to make sure everything will validate
+            # correctly. This means multiple passes through the collections, but we want
+            # to minimize the chances of having to bail out after saving something since
+            # we don't have transactions
 
-            # However, we have to start by saving the System. We need it in the database so the
-            # Commands will validate against it correctly (the ability to undo this is why we
-            # saved off delete_on_error earlier) The reference lists must be empty or else we
-            # encounter the bidirectional reference issue
+            # However, we have to start by saving the System. We need it in the database
+            # so the Commands will validate against it correctly (the ability to undo
+            # this is why we saved off delete_on_error earlier) The reference lists must
+            # be empty or else we encounter the bidirectional reference issue
             self.commands = []
             self.instances = []
             self.save()
