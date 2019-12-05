@@ -3,8 +3,11 @@ import sys
 import textwrap
 
 import pytest
+import wrapt
+
+import beer_garden
 from brewtils.models import System, Instance
-from mock import Mock
+from mock import Mock, patch
 
 import beer_garden.db.api as db
 from beer_garden.local_plugins.loader import LocalPluginLoader
@@ -226,6 +229,7 @@ class TestLoadPlugin(object):
          - instance3 created in the database
          - instance2 remains in the database, and the ID remains the same
         """
+
         instance1 = Instance(name="instance1", id="58542eb571afd47ead90beef")
         instance2 = Instance(name="instance2", id="58542eb571afd47ead90beee")
         create_system(

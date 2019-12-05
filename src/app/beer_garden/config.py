@@ -790,6 +790,85 @@ _EVENT_SPEC = {
                 }
             },
         },
+        "parent": {
+            "type": "dict",
+            "items": {
+                "http": {
+                    "type": "dict",
+                    "items": {
+                        "enable": {
+                            "type": "bool",
+                            "default": True,
+                            "description": "Run an HTTP server",
+                        },
+                        "ssl": {
+                            "type": "dict",
+                            "items": {
+                                "enabled": {
+                                    "type": "bool",
+                                    "default": False,
+                                    "description": "Serve content using SSL",
+                                    "cli_separator": "_",
+                                },
+                                "private_key": {
+                                    "type": "str",
+                                    "description": "Path to a private key",
+                                    "required": False,
+                                },
+                                "public_key": {
+                                    "type": "str",
+                                    "description": "Path to a public key",
+                                    "required": False,
+                                },
+                                "ca_cert": {
+                                    "type": "str",
+                                    "description": (
+                                        "Path to CA certificate file to use for SSLContext"
+                                    ),
+                                    "required": False,
+                                },
+                                "ca_path": {
+                                    "type": "str",
+                                    "description": (
+                                        "Path to CA certificate path to use for SSLContext"
+                                    ),
+                                    "required": False,
+                                },
+                                "client_cert_verify": {
+                                    "type": "str",
+                                    "description": (
+                                        "Client certificate mode to use when handling requests"
+                                    ),
+                                    "choices": ["NONE", "OPTIONAL", "REQUIRED"],
+                                    "default": "NONE",
+                                },
+                            },
+                        },
+                        "port": {
+                            "type": "int",
+                            "default": 2337,
+                            "description": "Serve content on this port",
+                        },
+                        "url_prefix": {
+                            "type": "str",
+                            "default": "/",
+                            "description": "URL path prefix",
+                            "required": False,
+                        },
+                        "host": {
+                            "type": "str",
+                            "default": "0.0.0.0",
+                            "description": "Host for the HTTP Server to bind to",
+                        },
+                        "public_fqdn": {
+                            "type": "str",
+                            "default": "localhost",
+                            "description": "Public fully-qualified domain name",
+                        },
+                    },
+                }
+            },
+        },
     },
 }
 

@@ -17,7 +17,7 @@ from requests import Session
 import beer_garden.config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
-from beer_garden.events import publish_event
+from beer_garden.events.events_manager import publish_event
 from beer_garden.metrics import request_created, request_started, request_completed
 
 logger = logging.getLogger(__name__)

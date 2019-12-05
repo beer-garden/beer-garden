@@ -7,9 +7,10 @@ from functools import partial
 import brewtils.models
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
+
+from beer_garden.events.events_manager import EventsManager
+from beer_garden.events.parent_http_processor import ParentHttpProcessor
 from brewtils.models import Events
-from brewtils.pika import TransientPikaClient
-from brewtils.rest.easy_client import EasyClient
 from brewtils.stoppable_thread import StoppableThread
 from pytz import utc
 from requests.exceptions import RequestException
@@ -19,8 +20,6 @@ import beer_garden.api
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 from beer_garden.api.entry_point import EntryPoint
-from beer_garden.bg_utils.event_publisher import EventPublishers, EventPublisher
-from beer_garden.bg_utils.publishers import MongoPublisher
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.local_plugins.loader import LocalPluginLoader
@@ -41,7 +40,6 @@ class Application(StoppableThread):
 
     request_validator = None
     scheduler = None
-    event_publishers = None
     plugin_manager = None
     clients = None
     helper_threads = None
@@ -60,13 +58,15 @@ class Application(StoppableThread):
     def initialize(self):
         """Actually construct all the various component pieces"""
         self.scheduler = self._setup_scheduler()
-        self.event_publishers = EventPublishers()
 
         load_plugin_log_config()
 
         self.plugin_manager = LocalPluginsManager(
             shutdown_timeout=beer_garden.config.get("plugin.local.timeout.shutdown")
         )
+
+        self.logger.info("Setting up Event Manager")
+        self._setup_events_manager()
 
         plugin_config = beer_garden.config.get("plugin")
         self.helper_threads = [
@@ -136,10 +136,6 @@ class Application(StoppableThread):
         self.logger.debug("Setting up queues...")
         self._setup_queues()
 
-        self.logger.debug("Starting event publishers")
-        self.event_publishers = self._setup_event_publishers()
-        # self.event_publishers = self._setup_event_publishers(client_ssl)
-
         self.logger.debug("Starting helper threads...")
         for helper_thread in self.helper_threads:
             helper_thread.start()
@@ -149,7 +145,11 @@ class Application(StoppableThread):
 
         self.logger.debug("Starting entry points...")
         for entry_point in self.entry_points:
-            entry_point.start(context=self.context, log_queue=self.log_queue)
+            entry_point.start(
+                context=self.context,
+                log_queue=self.log_queue,
+                events_queue=beer_garden.events.events_manager.events_queue,
+            )
 
         self.logger.debug("Loading all local plugins...")
         LocalPluginLoader.instance().load_plugins()
@@ -161,10 +161,9 @@ class Application(StoppableThread):
         self.scheduler.start()
 
         try:
-            self.event_publishers.publish_event(
+            self.events_manager.add_event(
                 brewtils.models.Event(name=Events.BARTENDER_STARTED.name)
             )
-            # beer_garden.bv_client.publish_event(name=Events.BARTENDER_STARTED.name)
         except RequestException:
             self.logger.warning("Unable to publish startup notification")
 
@@ -190,10 +189,9 @@ class Application(StoppableThread):
             self.scheduler.shutdown(wait=False)
 
         try:
-            self.event_publishers.publish_event(
+            self.events_manager.add_event(
                 brewtils.models.Event(name=Events.BARTENDER_STOPPED.name)
             )
-            # beer_garden.bv_client.publish_event(name=Events.BARTENDER_STOPPED.name)
         except RequestException:
             self.logger.warning("Unable to publish shutdown notification")
 
@@ -203,6 +201,9 @@ class Application(StoppableThread):
 
         self.logger.info("Stopping log reader")
         self.log_reader.stop()
+
+        self.logger.info("Stopping local events manager")
+        self.events_manager.stop()
 
         self.logger.info("Successfully shut down Beer-garden")
 
@@ -220,6 +221,21 @@ class Application(StoppableThread):
         )
         db.create_connection(db_config=beer_garden.config.get("db"))
         db.initial_setup(beer_garden.config.get("auth.guest_login_enabled"))
+
+    def _setup_events_manager(self):
+        beer_garden.events.events_manager.establish_events_queue()
+
+        self.events_manager = EventsManager(
+            beer_garden.events.events_manager.events_queue
+        )
+
+        event_config = beer_garden.config.get("event")
+        if event_config.parent.http.enable:
+            self.events_manager.register_processor(
+                ParentHttpProcessor(event_config.parent.http)
+            )
+
+        self.events_manager.start()
 
     def _setup_queues(self):
         """Startup tasks related to the message queues
@@ -256,65 +272,6 @@ class Application(StoppableThread):
             job_defaults=job_defaults,
             timezone=utc,
         )
-
-    # def _setup_event_publishers(self, ssl_context):
-    def _setup_event_publishers(self):
-        # Create the collection of event publishers and add concrete publishers
-        pubs = EventPublishers(
-            # {
-            #     "webhook": WebhookPublisher(ssl_context=ssl_context),
-            # }
-        )
-
-        event_config = beer_garden.config.get("event")
-        if event_config.mongo.enable:
-            try:
-                pubs["mongo"] = MongoPublisher()
-            except Exception as ex:
-                self.logger.warning("Error starting Mongo event publisher: %s", ex)
-
-        if event_config.amq.enable:
-            try:
-                amq_config = beer_garden.config.get("amq")
-
-                pika_params = {
-                    "host": amq_config.host,
-                    "port": amq_config.connections.message.port,
-                    "ssl": amq_config.connections.message.ssl,
-                    "user": amq_config.connections.admin.user,
-                    "password": amq_config.connections.admin.password,
-                    "exchange": event_config.amq.exchange,
-                    "virtual_host": event_config.amq.virtual_host,
-                    "connection_attempts": amq_config.connection_attempts,
-                }
-
-                # Make sure the exchange exists
-                TransientPikaClient(**pika_params).declare_exchange()
-
-                # pubs["pika"] = TornadoPikaPublisher(
-                #     shutdown_timeout=beer_garden.config.shutdown_timeout, **pika_params
-                # )
-            except Exception as ex:
-                self.logger.exception("Error starting RabbitMQ event publisher: %s", ex)
-
-        if event_config.brew_view.enable:
-
-            class BrewViewPublisher(EventPublisher):
-                def __init__(self, config):
-                    self._ez_client = EasyClient(namespace="default", **config)
-
-                def publish(self, event, **kwargs):
-                    self._ez_client.publish_event(event)
-
-                def _event_serialize(self, event, **kwargs):
-                    return event
-
-            pubs["brewview"] = BrewViewPublisher(event_config.brew_view)
-
-        # Metadata functions - additional metadata to be included with each event
-        # pubs.metadata_funcs["public_url"] = lambda: public_url
-
-        return pubs
 
 
 class HelperThread(object):
