@@ -155,15 +155,6 @@ class TestValidatePluginRequirements(object):
         registry.remove.assert_called_once_with("bar")
 
 
-def mock_publish_event(event_type):
-    # TODO - This is kind of gross
-    @wrapt.decorator(enabled=True)
-    def wrapper(wrapped, _, args, kwargs):
-        return wrapped(*args, **kwargs)
-
-    return wrapper
-
-
 class TestLoadPlugin(object):
     @pytest.fixture(autouse=True)
     def drop_collections(self, mongo_conn):
