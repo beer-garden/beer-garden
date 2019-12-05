@@ -75,6 +75,7 @@ services:
 
     mongodb:
         image: mongo:4.0
+        restart: always
         networks:
             - bg-network
         ports:
@@ -82,7 +83,6 @@ services:
         volumes:
             - mongo-data:/data/db
             - mongo-config:/data/configdb
-        restart: always
 
     prometheus:
         image: prom/prometheus:v2.3.2
@@ -97,6 +97,7 @@ services:
 
     rabbitmq:
         image: rabbitmq:management-alpine
+        restart: always
         hostname: rabbitmq
         networks:
             - bg-network
