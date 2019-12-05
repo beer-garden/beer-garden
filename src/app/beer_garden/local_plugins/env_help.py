@@ -47,7 +47,7 @@ def string_contains_environment_var(string):
 
 
 def is_string_environment_variable(string):
-    """Determines if string being sent in without the $ is a valid environmnet variable"""
+    """Determine if a string is a valid environment variable"""
     if len(string) == 0:
         return False
 

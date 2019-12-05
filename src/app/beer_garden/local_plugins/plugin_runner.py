@@ -11,7 +11,7 @@ from brewtils.stoppable_thread import StoppableThread
 from beer_garden.local_plugins.env_help import expand_string_with_environment_var
 from beer_garden.local_plugins.logger import getLogLevels, getPluginLogger
 
-# This is the recommended import pattern, see https://github.com/google/python-subprocess32
+# Recommended import pattern, see https://github.com/google/python-subprocess32
 if os.name == "posix" and sys.version_info[0] < 3:
     import subprocess32 as subprocess
 else:
@@ -109,9 +109,9 @@ class LocalPluginRunner(StoppableThread):
     def run(self):
         """Runs the plugin
 
-        Run the plugin using the entry point specified with the generated environment in its own
-        subprocess. Pipes STDOUT and STDERR such that when the plugin stops executing
-        (or IO is flushed) it will log it.
+        Run the plugin using the entry point specified with the generated environment in
+        its own subprocess. Pipes STDOUT and STDERR such that when the plugin stops
+        executing (or IO is flushed) it will log it.
         """
         try:
             self.logger.info(

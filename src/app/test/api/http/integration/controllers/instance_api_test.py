@@ -42,7 +42,8 @@ class InstanceAPITest(unittest.TestCase):
         self.app.patch(
             "/api/v1/systems/id",
             content_type="application/json",
-            data='{"operations": [{"operation": "replace", "path": "/status", "value": "RUNNING"}]}',
+            data='{"operations": [{"operation": "replace", "path": "/status", '
+            '"value": "RUNNING"}]}',
         )
 
         self.assertEqual(1, backend_mock.startSystem.call_count)
@@ -55,7 +56,8 @@ class InstanceAPITest(unittest.TestCase):
         self.app.patch(
             "/api/v1/systems/id",
             content_type="application/json",
-            data='{"operations": [{"operation": "replace", "path": "/status", "value": "STOPPED"}]}',
+            data='{"operations": [{"operation": "replace", "path": "/status", '
+            '"value": "STOPPED"}]}',
         )
 
         self.assertEqual(1, backend_mock.stopSystem.call_count)

@@ -160,11 +160,11 @@ class RequestValidator(object):
     ):
         """Validates all request parameters
 
-        Note: It is significant that we build the parameters as a separate object and then assign
-        it. This is significant because when you are setting a value to None, mongoengine
-        interprets this as "mark the item for deletion" meaning that when you save that attribute,
-        it will actually get deleted. Sounds weird right? Well at least you didn't have to
-        troubleshoot it.
+        Note: It is significant that we build the parameters as a separate object and
+        then assign it. This is significant because when you are setting a value to
+        None, mongoengine interprets this as "mark the item for deletion" meaning that
+        when you save that attribute, it will actually get deleted. Sounds weird right?
+        Well at least you didn't have to troubleshoot it.
 
         :param request: The Request to validate
         :param command: The the Command for this request. Will attempt to discover if None.
@@ -242,7 +242,7 @@ class RequestValidator(object):
                     if key == "instance_name":
                         key_reference_value = request.instance_name
                     else:
-                        # Mongoengine stores None keys as 'null', so use that instead of None
+                        # Mongoengine stores None keys as 'null', use instead of None
                         key_reference_value = request.parameters.get(key) or "null"
 
                     raw_allowed = choices.value.get(key_reference_value)
@@ -327,8 +327,8 @@ class RequestValidator(object):
                 for single_value in value:
                     if single_value not in allowed_values:
                         raise ModelValidationError(
-                            "Value '%s' is not a valid choice for parameter with key '%s'. "
-                            "Valid choices are: %s"
+                            "Value '%s' is not a valid choice for parameter with key "
+                            "'%s'. Valid choices are: %s"
                             % (single_value, command_parameter.key, allowed_values)
                         )
             else:
@@ -432,8 +432,8 @@ class RequestValidator(object):
     def _validate_required_parameter_is_included_in_request(
         self, request, command_parameter, request_parameters
     ):
-        """If the parameter is required but was not provided in the request_parameters and does
-        not have a default, then raise a ValidationError"""
+        """If the parameter is required but was not provided in the request_parameters
+        and does not have a default, then raise a ValidationError"""
         self.logger.debug(
             "Validating that Required Parameters are included in the request."
         )
@@ -450,8 +450,8 @@ class RequestValidator(object):
     def _validate_no_extra_request_parameter_keys(
         self, request_parameters, command_parameters
     ):
-        """Validate that all the parameters passed in were valid keys. If there is a key specified
-        that is not noted in the database, then a validation error is thrown"""
+        """Validate that all the parameters passed in were valid keys. If there is a key
+         specified that is not noted in the database, then a validation error is thrown"""
         self.logger.debug("Validating Keys")
         valid_keys = [cp.key for cp in command_parameters]
         self.logger.debug("Valid Keys are : %s" % valid_keys)

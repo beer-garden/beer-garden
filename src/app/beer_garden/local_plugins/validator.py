@@ -108,16 +108,20 @@ class LocalPluginValidator(object):
     def _load_plugin_config(self, path_to_plugin):
         """Loads an already validated plugin Config.
 
-        That is, it assumes path_to_config will exist and that it can load it succesfully"""
+        It assumes path_to_config will exist and that it can load it successfully
+        """
         path_to_config = join(path_to_plugin, self.CONFIG_NAME)
 
         return load_source("BGPLUGINCONFIG", path_to_config)
 
     def validate_entry_point(self, config_module, path_to_plugin):
-        """Validates a plugin's entry point. Returns True or throws a PluginValidationError
+        """Validates a plugin's entry point.
 
-        An entry point is considered valid if the config has an entry with key PLUGIN_ENTRY
-        and the value is a path to either a file or the name of a runnable Python module.
+        Returns True or throws a PluginValidationError
+
+        An entry point is considered valid if the config has an entry with key
+        PLUGIN_ENTRY and the value is a path to either a file or the name of a runnable
+        Python module.
 
         :param config_module: The previously loaded configuration for the plugin
         :param path_to_plugin: The path to the root of the plugin
@@ -172,8 +176,9 @@ class LocalPluginValidator(object):
             for instance_name, instance_args in plugin_args.items():
                 if instances is not None and instance_name not in instances:
                     raise PluginValidationError(
-                        "'%s' contains key '%s' but that instance is not specified in the '%s'"
-                        "entry." % (self.ARGS_KEY, instance_name, self.INSTANCES_KEY)
+                        "'%s' contains key '%s' but that instance is not specified in "
+                        "the '%s'entry."
+                        % (self.ARGS_KEY, instance_name, self.INSTANCES_KEY)
                     )
                 self.validate_individual_plugin_arguments(instance_args)
 
@@ -181,8 +186,8 @@ class LocalPluginValidator(object):
                 for instance_name in instances:
                     if instance_name not in plugin_args.keys():
                         raise PluginValidationError(
-                            "'%s' contains key '%s' but that instance is not specified in the "
-                            "'%s' entry."
+                            "'%s' contains key '%s' but that instance is not specified "
+                            "in the '%s' entry."
                             % (self.INSTANCES_KEY, instance_name, self.ARGS_KEY)
                         )
 
@@ -260,24 +265,27 @@ class LocalPluginValidator(object):
 
                 if key.startswith("BG_"):
                     self.logger.error(
-                        "Invalid key: %s specified for plugin environment. The 'BG_' prefix is a "
-                        "special case for beer-garden only environment variables. You will have to "
-                        "pick another name. Sorry for the inconvenience." % key
+                        "Invalid key: %s specified for plugin environment. The 'BG_' "
+                        "prefix is a special case for beer-garden only environment "
+                        "variables. You will have to pick another name. Sorry for the "
+                        "inconvenience." % key
                     )
                     raise PluginValidationError(
-                        "Invalid key: %s specified for plugin environment. The 'BG_' prefix "
-                        "is a special case for beer-garden only environment variables. You will "
-                        "have to pick another name. Sorry for the inconvenience." % key
+                        "Invalid key: %s specified for plugin environment. The 'BG_' "
+                        "prefix is a special case for beer-garden only environment "
+                        "variables. You will have to pick another name. Sorry for the "
+                        "inconvenience." % key
                     )
 
                 if not isinstance(value, str):
                     self.logger.error(
-                        "Invalid Key: %s specified for plugin environment. This must be a String.",
+                        "Invalid Key: %s specified for plugin environment. This must "
+                        "be a String.",
                         value,
                     )
                     raise PluginValidationError(
-                        "Invalid Value: %s specified for plugin environment. This must be a "
-                        "String." % value
+                        "Invalid Value: %s specified for plugin environment. This must "
+                        "be a String." % value
                     )
 
         return True

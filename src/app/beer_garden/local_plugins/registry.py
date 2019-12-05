@@ -7,7 +7,7 @@ import beer_garden.db.api as db
 
 
 class LocalPluginRegistry(object):
-    """Plugin Registry that is responsible for keeping track of plugins and their status"""
+    """Registry that is responsible for keeping track of plugins and their status"""
 
     _instance = None
 
@@ -66,7 +66,7 @@ class LocalPluginRegistry(object):
         process via the PluginLoader. Only used when there is no need for the plugin
         anymore (system shutdown or plugin is failing to start)
 
-        :param unique_name: The unique name of the plugin, in the form of name[instance]-version
+        :param unique_name: The unique name of the plugin, name[instance]-version
         :return: None
         """
         for index, plugin in enumerate(self._registry):

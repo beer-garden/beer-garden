@@ -24,6 +24,7 @@ docutils==0.15.2          # via readme-renderer, sphinx
 entrypoints==0.3          # via flake8
 filelock==3.0.12          # via tox
 flake8==3.7.8
+flake8-bugbear==19.8.0
 idna==2.8                 # via requests
 imagesize==1.1.0          # via sphinx
 importlib-metadata==0.19  # via pluggy, tox

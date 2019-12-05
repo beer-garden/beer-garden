@@ -40,7 +40,8 @@ class PluginLoggingLoader(object):
 
         :param filename: Filename of the plugin logging configuration to load
         :param level: A default level for the loggers
-        :param default_config: A default configuration to fallback on if no plugin log is present
+        :param default_config: A default configuration to fallback on if no plugin log
+        is present
         :return: A valid LoggingConfig object
         """
         config_from_file = cls._load_config_from_file(filename)
@@ -85,7 +86,7 @@ class PluginLoggingLoader(object):
 
     @classmethod
     def _parse_python_logging_config(cls, python_logging_config, level):
-        """Used to convert a python logging configuration into a plugin logging configuration.
+        """Convert a python logging configuration into a plugin logging configuration.
 
         :param python_logging_config:
         :param level:
@@ -115,8 +116,9 @@ class PluginLoggingLoader(object):
     def _parse_python_handlers(cls, handlers, level):
         """Convert python handlers into handlers that the plugins can understand.
 
-        Namely, this takes a python configuration of handlers, inspects class names/handler names
-        and returns only the ones that the bindings are responsible for implementing.
+        Namely, this takes a python configuration of handlers, inspects class
+        names/handler names and returns only the ones that the bindings are responsible
+        for implementing.
 
         :param handlers:
         :param level:
