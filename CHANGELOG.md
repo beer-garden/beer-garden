@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+## 2.4.12
+12/5/19
+Brew-view 2.4.16, Bartender 2.4.6, BG-utils 2.4.9
+
+#### Added Features
+- Added configuration flag to allow rendering unsanitized output (#360)
+
 ## 2.4.11
 11/12/19
 Brew-view 2.4.15, Bartender 2.4.6, BG-utils 2.4.9
