@@ -663,6 +663,13 @@ _HTTP_SPEC = {
                     "previous_names": ["client_cert_verify"],
                     "alt_env_names": ["CLIENT_CERT_VERIFY"],
                 },
+                "client_cert_auth": {
+                    "type": "str",
+                    "description": (
+                        "Client certificate auth field to use when handling requests"
+                    ),
+                    "default": "EMAILADDRESS",
+                },
             },
         },
         "port": {
@@ -690,6 +697,24 @@ _HTTP_SPEC = {
             "description": "Public fully-qualified domain name",
             "previous_names": ["public_fqdn"],
             "alt_env_names": ["PUBLIC_FQDN"],
+        },
+        "behind_proxy": {
+            "type": "dict",
+            "items": {
+                "enabled": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Enable if you are running behind a proxy services "
+                                   "with HTTPS enabled",
+
+                },
+                "user_entity": {
+                    "type": "str",
+                    "default": "X-Client-Cert-Dn",
+                    "description": "Field populated by Proxy service to identify client "
+                                   "persona",
+                },
+            },
         },
     },
 }

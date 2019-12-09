@@ -47,7 +47,8 @@ api_spec = None
 notification_meta = None
 anonymous_principal = None
 client_ssl = None
-
+client_auth = None
+proxy_user_entity = None
 
 def run():
     global logger
@@ -128,7 +129,7 @@ async def shutdown():
 
 def _setup_application():
     """Setup things that can be taken care of before io loop is started"""
-    global io_loop, tornado_app, public_url, server, client_ssl
+    global io_loop, tornado_app, public_url, server, client_ssl, client_auth, proxy_user_entity
 
     auth_config = beer_garden.config.get("auth")
     if not auth_config.token.secret:
@@ -147,6 +148,11 @@ def _setup_application():
         port=http_config.port,
         path=http_config.url_prefix,
     ).url
+
+    client_auth = http_config.ssl.client_cert_auth
+
+    if http_config.behind_proxy.enabled:
+        proxy_user_entity = http_config.behind_proxy.user_entity
 
     tornado_app = _setup_tornado_app()
     server_ssl, client_ssl = _setup_ssl_context()

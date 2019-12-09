@@ -17,6 +17,8 @@ from beer_garden.db.mongo.models import Principal, RefreshToken
 from beer_garden.api.http.authorization import coalesce_permissions
 from beer_garden.api.http.base_handler import BaseHandler
 
+from src.app.beer_garden.api.http.authorization import AuthMixin
+
 
 def verify(password, password_hash):
     return custom_app_context.verify(password, password_hash)
@@ -225,7 +227,12 @@ class TokenListAPI(BaseHandler):
         parsed_body = json.loads(self.request.decoded_body)
 
         try:
-            principal = Principal.objects.get(username=parsed_body["username"])
+            if "username" in parsed_body.keys():
+                principal = Principal.objects.get(username=parsed_body["username"])
+            else:
+                principal = AuthMixin.get_current_user()
+                if principal is None:
+                    raise DoesNotExist
             if (
                 beer_garden.config.get("auth.guest_login_enabled")
                 and principal.username
@@ -233,9 +240,7 @@ class TokenListAPI(BaseHandler):
             ):
                 verified = True
             else:
-                verified = yield self.executor.submit(
-                    verify, str(parsed_body["password"]), str(principal.hash)
-                )
+                verified = verify(str(parsed_body["password"]), str(principal.hash))
 
             if verified:
                 tokens = generate_tokens(principal, self.REFRESH_COOKIE_EXP)

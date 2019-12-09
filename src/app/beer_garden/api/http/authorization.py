@@ -9,6 +9,7 @@ from brewtils.models import Principal as BrewtilsPrincipal, Role as BrewtilsRole
 from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
 from tornado.web import HTTPError
+import json
 
 import beer_garden.api.http
 from beer_garden.db.mongo.models import Principal, Role
@@ -71,7 +72,6 @@ def authenticated(permissions=None):
 
     @wrapt.decorator
     def wrapper(wrapped, instance, args, kwargs):
-
         # The interplay between wrapt and gen.coroutine causes things to get
         # a little confused, so we have to be flexible
         handler = instance or args[0]
@@ -179,6 +179,7 @@ def basic_auth(request):
     username, password = auth_decoded.split(":")
 
     try:
+        print('Basic Auth="%s"' % username)
         principal = Principal.objects.get(username=username)
 
         if custom_app_context.verify(password, principal.hash):
@@ -207,6 +208,68 @@ def bearer_auth(request):
     token = auth_header.split(" ")[1]
 
     return _principal_from_token(token)
+
+
+def proxy_auth(request):
+    if beer_garden.api.http.proxy_user_entity is None:
+        return None
+    user_entity = request.headers.get(beer_garden.api.http.proxy_user_entity)
+
+    if not user_entity:
+        return None
+
+    try:
+        entity = json.loads(user_entity)
+    except json.JSONDecodeError:
+        entity = dict()
+        for certField in user_entity.split(','):
+            field, value = certField.split('=')
+
+            if field in entity.keys():
+                entity[field.upper()] = entity[field] + value
+            else:
+                entity[field.upper()] = value
+
+    username = None
+    if beer_garden.api.http.client_auth.upper() in entity.keys():
+        username = entity[beer_garden.api.http.client_auth.upper()].lower()
+    if username is None:
+        return None
+    try:
+        principal = Principal.objects.get(username=username)
+        _, permissions = coalesce_permissions(principal.roles)
+        principal.permissions = permissions
+        return principal
+    except DoesNotExist:
+        # Don't handle this differently to prevent an attacker from being able
+        #  to enumerate a list of user names
+        pass
+    return None
+
+
+def cert_auth(request):
+    try:
+        cert = request.get_ssl_certificate()
+    except:
+        return None
+    username = None
+    if cert is not None:
+        for subject in cert['subject']:
+            for field in subject:
+                if field[0].upper() == beer_garden.api.http.client_auth.upper():
+                    username = field[1].lower()
+    if username is None:
+        return None
+    try:
+        principal = Principal.objects.get(username=username)
+        _, permissions = coalesce_permissions(principal.roles)
+        principal.permissions = permissions
+        return principal
+    except DoesNotExist:
+        # Don't handle this differently to prevent an attacker from being able
+        #  to enumerate a list of user names
+        pass
+    return None
 
 
 def query_token_auth(request):
@@ -251,8 +314,7 @@ def _principal_from_token(token):
 
 
 class AuthMixin(object):
-
-    auth_providers = [bearer_auth, basic_auth]
+    auth_providers = [proxy_auth, cert_auth, bearer_auth, basic_auth]
 
     def get_current_user(self):
         """Use registered handlers to determine current user"""
