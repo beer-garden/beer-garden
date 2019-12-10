@@ -1,21 +1,14 @@
 import pytest
-from mock import MagicMock
 
 from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.local_plugins.manager import LocalPluginsManager
 from beer_garden.local_plugins.monitor import LocalPluginMonitor
 from beer_garden.local_plugins.registry import LocalPluginRegistry
-from beer_garden.local_plugins.validator import LocalPluginValidator
 
 
 @pytest.fixture
 def registry():
     return LocalPluginRegistry()
-
-
-@pytest.fixture
-def validator():
-    return LocalPluginValidator()
 
 
 @pytest.fixture
