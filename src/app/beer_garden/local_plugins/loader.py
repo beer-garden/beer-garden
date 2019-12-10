@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
-import sys
-from imp import load_source
-from os import listdir
-from os.path import isfile, join, abspath
+from importlib.machinery import SourceFileLoader
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
 from typing import List
 
 from brewtils.models import Instance, System
@@ -11,8 +10,10 @@ from brewtils.models import Instance, System
 import beer_garden.config
 import beer_garden.db.api as db
 import beer_garden.local_plugins.validator as validator
+from beer_garden.errors import PluginValidationError
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
 from beer_garden.local_plugins.registry import LocalPluginRegistry
+from beer_garden.local_plugins.validator import CONFIG_NAME
 from beer_garden.systems import create_system
 
 
@@ -25,16 +26,16 @@ class LocalPluginLoader(object):
 
     def __init__(
         self,
-        local_plugin_dir=None,
-        plugin_log_directory=None,
+        plugin_dir=None,
+        log_dir=None,
         connection_info=None,
         username=None,
         password=None,
     ):
         self.registry = LocalPluginRegistry.instance()
 
-        self._local_plugin_dir = local_plugin_dir
-        self._plugin_log_directory = plugin_log_directory
+        self._plugin_path = Path(plugin_dir) if plugin_dir else None
+        self._log_dir = log_dir
         self._connection_info = connection_info
         self._username = username
         self._password = password
@@ -43,10 +44,8 @@ class LocalPluginLoader(object):
     def instance(cls):
         if not cls._instance:
             cls._instance = cls(
-                local_plugin_dir=beer_garden.config.get("plugin.local.directory"),
-                plugin_log_directory=beer_garden.config.get(
-                    "plugin.local.log_directory"
-                ),
+                plugin_dir=beer_garden.config.get("plugin.local.directory"),
+                log_dir=beer_garden.config.get("plugin.local.log_directory"),
                 connection_info=beer_garden.config.get("entry.http"),
                 username=beer_garden.config.get("plugin.local.auth.username"),
                 password=beer_garden.config.get("plugin.local.auth.password"),
@@ -71,7 +70,7 @@ class LocalPluginLoader(object):
                     "Exception while loading plugin %s: %s", plugin_path, ex
                 )
 
-    def scan_plugin_path(self, path: str = None) -> List[str]:
+    def scan_plugin_path(self, path: Path = None) -> List[Path]:
         """Find valid plugin directories in a given path.
 
         Note: This scan does not walk the directory tree - all plugins must be
@@ -79,38 +78,39 @@ class LocalPluginLoader(object):
 
         Args:
             path: The path to scan for plugins. If none will default to the
-            plugin path specified at initialization.
+                plugin path specified at initialization.
 
         Returns:
-            Paths specifying plugins
+            Potential paths containing plugins
         """
-        path = path or self._local_plugin_dir
+        path = path or self._plugin_path
 
         if path is None:
             return []
-        else:
-            return [
-                abspath(join(path, plugin))
-                for plugin in listdir(path)
-                if not isfile(join(path, plugin))
-            ]
 
-    def load_plugin(self, plugin_path):
+        return [x for x in path.iterdir() if x.is_dir()]
+
+    def load_plugin(self, plugin_path: Path) -> List[LocalPluginRunner]:
         """Loads a plugin given a path to a plugin directory.
 
         It will use the validator to validate the plugin before registering the
         plugin in the database as well as adding an entry to the plugin map.
 
-        :param plugin_path: The path of the plugin to load
-        :return: The loaded plugin
-        """
-        if not validator.validate_plugin(plugin_path):
-            self.logger.warning(
-                "Not loading plugin at %s because it was invalid.", plugin_path
-            )
-            return False
+        Args:
+            plugin_path: The path of the plugin
 
-        plugin_config = self._load_plugin_config(join(plugin_path, "beer.conf"))
+        Returns:
+            A list of plugin runners
+
+        """
+        if not plugin_path or not plugin_path.is_dir():
+            raise PluginValidationError(f"Plugin path {plugin_path} is not a directory")
+
+        try:
+            plugin_config = self._load_config(plugin_path)
+        except PluginValidationError as ex:
+            self.logger.error(f"Error loading config for plugin at {plugin_path}: {ex}")
+            return []
 
         config_name = plugin_config["NAME"]
         config_version = plugin_config["VERSION"]
@@ -163,14 +163,14 @@ class LocalPluginLoader(object):
                 config_entry,
                 plugin_system,
                 instance.name,
-                abspath(plugin_path),
+                str(plugin_path),
                 self._connection_info.host,
                 self._connection_info.port,
                 ssl_enabled=self._connection_info.ssl.enabled,
                 plugin_args=config_args.get(instance.name),
                 environment=plugin_config["ENVIRONMENT"],
                 requirements=plugin_config["REQUIRES"],
-                plugin_log_directory=self._plugin_log_directory,
+                plugin_log_directory=self._log_dir,
                 url_prefix=self._connection_info.url_prefix,
                 ca_verify=False,
                 ca_cert=self._connection_info.ssl.ca_cert,
@@ -184,11 +184,23 @@ class LocalPluginLoader(object):
 
         return plugin_list
 
-    def _load_plugin_config(self, path_to_config):
-        """Loads a validated plugin config"""
-        self.logger.debug("Loading configuration at %s", path_to_config)
+    def _load_config(self, plugin_path: Path) -> dict:
+        """Loads a plugin config"""
+        config_file = plugin_path / CONFIG_NAME
 
-        config_module = load_source("BGPLUGINCONFIG", path_to_config)
+        if not config_file.exists():
+            raise PluginValidationError("Config file does not exist")
+
+        if not config_file.is_file():
+            raise PluginValidationError("Config file is not actually a file")
+
+        # Need to construct our own Loader here, the default doesn't work with .conf
+        loader = SourceFileLoader("bg_plugin_config", str(config_file))
+        spec = spec_from_file_location("bg_plugin_config", config_file, loader=loader)
+        config_module = module_from_spec(spec)
+        spec.loader.exec_module(config_module)
+
+        validator.validate_config(config_module, plugin_path)
 
         instances = getattr(config_module, "INSTANCES", None)
         plugin_args = getattr(config_module, "PLUGIN_ARGS", None)
@@ -234,9 +246,6 @@ class LocalPluginLoader(object):
             "METADATA": getattr(config_module, "METADATA", {}),
             "LOG_LEVEL": log_level,
         }
-
-        if "BGPLUGINCONFIG" in sys.modules:
-            del sys.modules["BGPLUGINCONFIG"]
 
         return config
 

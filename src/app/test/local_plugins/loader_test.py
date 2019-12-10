@@ -1,18 +1,18 @@
 import logging
 import sys
 import textwrap
+from pathlib import Path
 
 import pytest
-import wrapt
-
-import beer_garden
 from brewtils.models import System, Instance
-from mock import Mock, patch
+from mock import Mock
 
 import beer_garden.db.api as db
-import beer_garden.local_plugins.validator as validator
+import beer_garden.local_plugins.loader
+from beer_garden.errors import PluginValidationError
 from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.local_plugins.registry import LocalPluginRegistry
+from beer_garden.local_plugins.validator import CONFIG_NAME
 from beer_garden.systems import create_system
 
 
@@ -110,7 +110,7 @@ class TestScanPluginPath(object):
         plugin_1.mkdir()
         plugin_2.mkdir()
 
-        assert loader.scan_plugin_path(path=tmp_path) == [str(plugin_1), str(plugin_2)]
+        assert loader.scan_plugin_path(path=tmp_path) == [plugin_1, plugin_2]
 
 
 class TestLoadPlugin(object):
@@ -121,8 +121,19 @@ class TestLoadPlugin(object):
         beer_garden.db.mongo.models.Instance.drop_collection()
         beer_garden.db.mongo.models.System.drop_collection()
 
+    @pytest.fixture(autouse=True)
+    def validator(self, monkeypatch):
+        val = Mock()
+        monkeypatch.setattr(beer_garden.local_plugins.loader, "validator", val)
+        return val
+
+    @pytest.mark.parametrize("path", [None, Path("/not/real")])
+    def test_bad_path(self, loader, path):
+        with pytest.raises(PluginValidationError):
+            loader.load_plugin(path)
+
     def test_single_instance(self, loader, registry, plugin_1):
-        plugin_runners = loader.load_plugin(str(plugin_1))
+        plugin_runners = loader.load_plugin(plugin_1)
 
         assert len(plugin_runners) == 1
         assert plugin_runners[0].name == "foo[default]-1.0"
@@ -144,7 +155,7 @@ class TestLoadPlugin(object):
             ),
         )
 
-        plugin_runners = loader.load_plugin(str(plugin))
+        plugin_runners = loader.load_plugin(plugin)
         assert len(plugin_runners) == 2
 
         sorted_runners = sorted(plugin_runners, key=lambda x: x.name)
@@ -165,7 +176,7 @@ class TestLoadPlugin(object):
             )
         )
 
-        plugin_runners = loader.load_plugin(str(plugin_1))
+        plugin_runners = loader.load_plugin(plugin_1)
 
         assert len(plugin_runners) == 1
         assert str(plugin_runners[0].system.id) == system_id
@@ -209,7 +220,7 @@ class TestLoadPlugin(object):
             ),
         )
 
-        plugin_runners = loader.load_plugin(str(plugin))
+        plugin_runners = loader.load_plugin(plugin)
         assert len(plugin_runners) == 2
 
         assert db.query_unique(Instance, name="instance1") is None
@@ -219,20 +230,39 @@ class TestLoadPlugin(object):
         assert instance2_db is not None
         assert instance2_db.id == instance2.id
 
-    def test_invalid(self, loader, validator):
-        validator.validate_plugin.return_value = False
-        assert loader.load_plugin("/invalid/plugin") is False
+    def test_bad_config(self, monkeypatch, caplog, tmp_path, loader, validator):
+        monkeypatch.setattr(
+            loader, "_load_config", Mock(side_effect=PluginValidationError)
+        )
+
+        with caplog.at_level(logging.ERROR):
+            assert loader.load_plugin(tmp_path) == []
+
+        assert len(caplog.records) == 1
 
 
-class TestLoadPluginConfig(object):
+class TestLoadConfig(object):
+    @pytest.fixture(autouse=True)
+    def entry_point(self, tmp_path):
+        (tmp_path / "entry.py").touch()
+
+    def test_failure_missing_conf_file(self, tmp_path, loader):
+        with pytest.raises(PluginValidationError):
+            loader._load_config(tmp_path)
+
+    def test_failure_directory_conf_file(self, tmp_path, loader):
+        (tmp_path / CONFIG_NAME).mkdir()
+
+        with pytest.raises(PluginValidationError):
+            loader._load_config(tmp_path)
+
     def test_all_attributes(self, tmp_path, loader, config_all, config_all_serialized):
-        config_file = write_file(tmp_path, config_all_serialized)
+        write_file(tmp_path, config_all_serialized)
 
-        assert loader._load_plugin_config(str(config_file)) == config_all
-        assert "BGPLUGINCONFIG" not in sys.modules
+        assert loader._load_config(tmp_path) == config_all
 
     def test_required_attributes(self, tmp_path, loader, config_all):
-        config_file = write_file(
+        write_file(
             tmp_path,
             textwrap.dedent(
                 """
@@ -243,11 +273,10 @@ class TestLoadPluginConfig(object):
             ),
         )
 
-        assert loader._load_plugin_config(str(config_file)) == config_all
-        assert "BGPLUGINCONFIG" not in sys.modules
+        assert loader._load_config(tmp_path) == config_all
 
     def test_instances_no_plugin_args(self, tmp_path, loader):
-        config_file = write_file(
+        write_file(
             tmp_path,
             textwrap.dedent(
                 """
@@ -260,14 +289,12 @@ class TestLoadPluginConfig(object):
             ),
         )
 
-        loaded_config = loader._load_plugin_config(str(config_file))
-
+        loaded_config = loader._load_config(tmp_path)
         assert loaded_config["INSTANCES"] == ["instance1", "instance2"]
         assert loaded_config["PLUGIN_ARGS"] == {"instance1": None, "instance2": None}
-        assert "BGPLUGINCONFIG" not in sys.modules
 
     def test_plugin_args_list_no_instances(self, tmp_path, loader):
-        config_file = write_file(
+        write_file(
             tmp_path,
             textwrap.dedent(
                 """
@@ -280,14 +307,12 @@ class TestLoadPluginConfig(object):
             ),
         )
 
-        loaded_config = loader._load_plugin_config(str(config_file))
-
+        loaded_config = loader._load_config(tmp_path)
         assert loaded_config["INSTANCES"] == ["default"]
         assert loaded_config["PLUGIN_ARGS"] == {"default": ["arg1"]}
-        assert "BGPLUGINCONFIG" not in sys.modules
 
     def test_plugin_args_dict_no_instances(self, tmp_path, loader):
-        config_file = write_file(
+        write_file(
             tmp_path,
             textwrap.dedent(
                 """
@@ -300,14 +325,12 @@ class TestLoadPluginConfig(object):
             ),
         )
 
-        loaded_config = loader._load_plugin_config(str(config_file))
-
+        loaded_config = loader._load_config(tmp_path)
         assert sorted(loaded_config["INSTANCES"]) == sorted(["foo", "bar"])
         assert loaded_config["PLUGIN_ARGS"] == {"foo": ["arg1"], "bar": ["arg2"]}
-        assert "BGPLUGINCONFIG" not in sys.modules
 
     def test_instance_and_args_list(self, tmp_path, loader):
-        config_file = write_file(
+        write_file(
             tmp_path,
             textwrap.dedent(
                 """
@@ -320,11 +343,9 @@ class TestLoadPluginConfig(object):
             ),
         )
 
-        loaded_config = loader._load_plugin_config(str(config_file))
-
+        loaded_config = loader._load_config(tmp_path)
         assert sorted(loaded_config["INSTANCES"]) == sorted(["foo", "bar"])
         assert loaded_config["PLUGIN_ARGS"] == {"foo": ["arg1"], "bar": ["arg1"]}
-        assert "BGPLUGINCONFIG" not in sys.modules
 
     @pytest.mark.parametrize(
         "value,expected",
@@ -335,7 +356,7 @@ class TestLoadPluginConfig(object):
         ],
     )
     def test_log_level(self, tmp_path, loader, value, expected):
-        config_file = write_file(
+        write_file(
             tmp_path,
             textwrap.dedent(
                 f"""
@@ -347,14 +368,12 @@ class TestLoadPluginConfig(object):
             ),
         )
 
-        loaded_config = loader._load_plugin_config(str(config_file))
-
+        loaded_config = loader._load_config(tmp_path)
         assert loaded_config["LOG_LEVEL"] == expected
         assert "BGPLUGINCONFIG" not in sys.modules
 
-    @pytest.mark.xfail
     def test_invalid_args(self, tmp_path, loader):
-        config_file = write_file(
+        write_file(
             tmp_path,
             textwrap.dedent(
                 """
@@ -366,7 +385,5 @@ class TestLoadPluginConfig(object):
             ),
         )
 
-        with pytest.raises(ValueError):
-            loader._load_plugin_config(str(config_file))
-
-        assert "BGPLUGINCONFIG" not in sys.modules
+        with pytest.raises(PluginValidationError):
+            loader._load_config(tmp_path)

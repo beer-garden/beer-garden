@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from pathlib import Path
-
 import pytest
 from box import Box
 from mock import Mock
-from pytest_lazyfixture import lazy_fixture
 
 import beer_garden.local_plugins.validator as validator
 from beer_garden.errors import PluginValidationError
@@ -29,26 +26,14 @@ def entry_point(tmp_path, config):
     (tmp_path / config["PLUGIN_ENTRY"]).touch()
 
 
-@pytest.fixture
-def bad_path():
-    return Path("/path/to/nowhere")
+class TestValidateConfig(object):
+    # noinspection PyTypeChecker
+    def test_none(self):
+        with pytest.raises(PluginValidationError):
+            validator.validate_config(None, None)
 
-
-class TestValidatePlugin(object):
-    def test_success(self, tmp_path, config_file, entry_point):
-        assert validator.validate_plugin(tmp_path) is True
-
-    @pytest.mark.parametrize("path", [None, lazy_fixture("bad_path")])
-    def test_bad_path(self, path):
-        assert validator.validate_plugin(path) is False
-
-    def test_failure_missing_conf(self, tmp_path):
-        # Not having the config_file fixture makes validation fail
-        assert validator.validate_plugin(tmp_path) is False
-
-    def test_failure_missing_entry(self, tmp_path, config_file):
-        # Not having the entry_point fixture makes validation fail
-        assert validator.validate_plugin(tmp_path) is False
+    def test_success(self, tmp_path, config, entry_point):
+        assert validator.validate_config(config, tmp_path) is None
 
 
 class TestRequiredConfigKeys(object):
@@ -80,17 +65,12 @@ class TestRequiredConfigKeys(object):
 
 class TestEntryPoint(object):
     def test_not_a_file(self, tmp_path, config):
-        config.PLUGIN_ENTRY = "not_a_file"
-
+        # Not having the entry_point fixture makes this fail
         with pytest.raises(PluginValidationError):
             validator._entry_point(config, tmp_path)
 
-    def test_good_file(self, tmp_path, config):
-        (tmp_path / "entry.py").touch()
-
-        config.PLUGIN_ENTRY = "entry.py"
-
-        validator._entry_point(config, tmp_path)
+    def test_good_file(self, tmp_path, config, entry_point):
+        assert validator._entry_point(config, tmp_path) is None
 
     def test_good_package(self, tmp_path, config):
         plugin_dir = tmp_path / "plugin"

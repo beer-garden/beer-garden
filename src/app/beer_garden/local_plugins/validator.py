@@ -1,14 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import logging
-import sys
-from importlib.machinery import SourceFileLoader
-from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
+from types import ModuleType
 
 from beer_garden.errors import PluginValidationError
-
-logger = logging.getLogger(__name__)
 
 CONFIG_NAME = "beer.conf"
 NAME_KEY = "NAME"
@@ -20,51 +15,28 @@ ENVIRONMENT_KEY = "ENVIRONMENT"
 REQUIRED_KEYS = [NAME_KEY, VERSION_KEY, ENTRY_POINT_KEY]
 
 
-def validate_plugin(path: Path) -> bool:
+def validate_config(config_module: ModuleType, path: Path) -> None:
     """Validate a plugin directory is valid
 
     Args:
-        path: The path where the plugin lives
+        config_module: Configuration module to validate
+        path: Path to directory containing plugin
 
     Returns:
-        True: Validation was successful
-        False: Validation was not successful
+        None
+
+    Raises:
+        PluginValidationError: Validation was not successful
 
     """
-    try:
-        if not path or not path.is_dir():
-            raise PluginValidationError(f"Plugin path {path} is not a directory")
+    if config_module is None:
+        raise PluginValidationError(f"Error loading config module {CONFIG_NAME}")
 
-        config_file = path / CONFIG_NAME
-
-        if not config_file.exists():
-            raise PluginValidationError("Config file does not exist")
-
-        if not config_file.is_file():
-            raise PluginValidationError("Config file is not actually a file")
-
-        # Need to construct our own Loader here, the default doesn't work with .conf
-        loader = SourceFileLoader("bg_plugin_config", str(config_file))
-        spec = spec_from_file_location("bg_plugin_config", config_file, loader=loader)
-        config_module = module_from_spec(spec)
-        spec.loader.exec_module(config_module)
-
-        if config_module is None:
-            raise PluginValidationError(f"Error loading config module {CONFIG_NAME}")
-
-        _required_keys(config_module)
-        _entry_point(config_module, path)
-        _instances(config_module)
-        _args(config_module)
-        _environment(config_module)
-    except PluginValidationError as ex:
-        logger.exception(f"Error while validating plugin at {path}: {ex}")
-        return False
-    finally:
-        if "BGPLUGINCONFIG" in sys.modules:
-            del sys.modules["BGPLUGINCONFIG"]
-
-    return True
+    _required_keys(config_module)
+    _entry_point(config_module, path)
+    _instances(config_module)
+    _args(config_module)
+    _environment(config_module)
 
 
 def _required_keys(config_module) -> None:
