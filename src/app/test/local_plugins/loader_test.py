@@ -10,9 +10,9 @@ from brewtils.models import System, Instance
 from mock import Mock, patch
 
 import beer_garden.db.api as db
+import beer_garden.local_plugins.validator as validator
 from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.local_plugins.registry import LocalPluginRegistry
-from beer_garden.local_plugins.validator import LocalPluginValidator
 from beer_garden.systems import create_system
 
 
@@ -81,14 +81,7 @@ def registry(monkeypatch):
 
 
 @pytest.fixture
-def validator(monkeypatch):
-    val = Mock()
-    monkeypatch.setattr(LocalPluginValidator, "_instance", val)
-    return val
-
-
-@pytest.fixture
-def loader(registry, validator):
+def loader(registry):
     return LocalPluginLoader(connection_info=Mock())
 
 
@@ -118,41 +111,6 @@ class TestScanPluginPath(object):
         plugin_2.mkdir()
 
         assert loader.scan_plugin_path(path=tmp_path) == [str(plugin_1), str(plugin_2)]
-
-
-class TestValidatePluginRequirements(object):
-    def test_no_plugins(self, loader, registry):
-        loader.validate_plugin_requirements()
-        assert not registry.remove.called
-
-    def test_no_requirements(self, loader, registry):
-        registry.get_all_plugins.return_value = [
-            Mock(requirements=[], plugin_name="foo"),
-            Mock(requirements=[], plugin_name="bar"),
-        ]
-
-        loader.validate_plugin_requirements()
-        assert not registry.remove.called
-
-    def test_good_requirements(self, loader, registry):
-        registry.get_all_plugins.return_value = [
-            Mock(requirements=[], plugin_name="foo"),
-            Mock(requirements=["foo"], plugin_name="bar"),
-        ]
-        registry.get_unique_plugin_names.return_value = ["foo", "bar"]
-
-        loader.validate_plugin_requirements()
-        assert not registry.remove.called
-
-    def test_requirements_not_found(self, loader, registry):
-        registry.get_all_plugins.return_value = [
-            Mock(requirements=[], plugin_name="foo"),
-            Mock(requirements=["NOT_FOUND"], plugin_name="bar", unique_name="bar"),
-        ]
-        registry.get_unique_plugin_names.return_value = ["foo", "bar"]
-
-        loader.validate_plugin_requirements()
-        registry.remove.assert_called_once_with("bar")
 
 
 class TestLoadPlugin(object):

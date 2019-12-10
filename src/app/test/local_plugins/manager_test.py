@@ -2,7 +2,6 @@
 import logging
 
 import pytest
-from brewtils.models import Instance, System
 from mock import call, Mock
 
 import beer_garden
@@ -10,7 +9,6 @@ from beer_garden.errors import PluginStartupError
 from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.local_plugins.manager import LocalPluginsManager
 from beer_garden.local_plugins.registry import LocalPluginRegistry
-from beer_garden.local_plugins.validator import LocalPluginValidator
 
 
 @pytest.fixture
@@ -18,13 +16,6 @@ def loader(monkeypatch):
     load = Mock()
     monkeypatch.setattr(LocalPluginLoader, "_instance", load)
     return load
-
-
-@pytest.fixture
-def validator(monkeypatch):
-    val = Mock()
-    monkeypatch.setattr(LocalPluginValidator, "_instance", val)
-    return val
 
 
 @pytest.fixture
@@ -60,7 +51,8 @@ def plugin(monkeypatch, bg_system):
     return plug
 
 
-def manager(loader, validator, registry):
+@pytest.fixture
+def manager(loader, registry):
     return LocalPluginsManager(1)
 
 
@@ -176,6 +168,12 @@ class TestRestartPlugin(object):
 
 
 class TestReloadSystem(object):
+    @pytest.fixture
+    def validator(self, monkeypatch):
+        val = Mock()
+        monkeypatch.setattr(beer_garden.local_plugins.manager, "validator", val)
+        return val
+
     def test_none(self, manager, registry, plugin):
         registry.get_plugins_by_system.return_value = []
         with pytest.raises(Exception):
@@ -202,115 +200,10 @@ class TestReloadSystem(object):
 
 def test_start_all_plugins(monkeypatch, manager, plugin):
     start_mock = Mock()
-    monkeypatch.setattr(manager, "_start_multiple_plugins", start_mock)
+    monkeypatch.setattr(manager, "start_plugin", start_mock)
 
     manager.start_all_plugins()
-    start_mock.assert_called_once_with([plugin])
-
-
-class TestStartMultiple(object):
-    @pytest.fixture(autouse=True)
-    def mock_getter(self, monkeypatch, manager):
-        monkeypatch.setattr(manager, "_get_all_system_names", Mock(return_value=[]))
-        monkeypatch.setattr(manager, "_get_running_system_names", Mock(return_value=[]))
-        monkeypatch.setattr(manager, "_get_failed_system_names", Mock(return_value=[]))
-
-    @pytest.fixture
-    def system_2(self):
-        return System(name="system_name_2")
-
-    @pytest.fixture
-    def plugin_2(self, system_2):
-        return Mock(
-            system=system_2,
-            unique_name="unique_name2",
-            path_to_plugin="path/name-0.0.1",
-            requirements=[],
-            entry_point="main.py",
-            plugin_args=[],
-            instance_name="default2",
-            status="RUNNING",
-        )
-
-    def test_empty(self, monkeypatch, manager):
-        start_mock = Mock()
-        monkeypatch.setattr(manager, "start_plugin", start_mock)
-
-        manager._start_multiple_plugins([])
-        assert start_mock.called is False
-
-    def test_no_requirements(self, monkeypatch, manager, plugin, plugin_2, bg_system):
-        start_mock = Mock()
-        monkeypatch.setattr(manager, "start_plugin", start_mock)
-
-        manager._start_multiple_plugins([plugin, plugin_2])
-        start_mock.assert_has_calls([call(plugin), call(plugin_2)], any_order=True)
-
-    def test_invalid_requirements(self, monkeypatch, manager, plugin):
-        fail_mock = Mock()
-        monkeypatch.setattr(manager, "_mark_as_failed", fail_mock)
-
-        plugin.requirements = ["DNE"]
-
-        manager._start_multiple_plugins([plugin])
-        fail_mock.assert_called_once_with(plugin)
-
-    def test_skip_first(
-        self, monkeypatch, manager, bg_system, system_2, plugin, plugin_2
-    ):
-        start_mock = Mock()
-        monkeypatch.setattr(manager, "start_plugin", start_mock)
-
-        manager._get_all_system_names.return_value = [bg_system.name, system_2.name]
-
-        plugin_2.requirements = [bg_system.name]
-
-        manager._start_multiple_plugins([plugin, plugin_2])
-        start_mock.assert_has_calls([call(plugin), call(plugin_2)], any_order=True)
-
-    def test_requirement_already_running(
-        self, monkeypatch, manager, bg_system, plugin_2
-    ):
-        start_mock = Mock()
-        monkeypatch.setattr(manager, "start_plugin", start_mock)
-
-        manager._get_all_system_names.return_value = [
-            bg_system.name,
-            plugin_2.system.name,
-        ]
-        manager._get_running_system_names.return_value = [bg_system.name]
-
-        plugin_2.requirements = [bg_system.name]
-
-        manager._start_multiple_plugins([plugin_2])
-        start_mock.assert_has_calls([call(plugin_2)], any_order=True)
-
-    def test_failed_requirement_start(
-        self, monkeypatch, manager, bg_system, plugin, plugin_2
-    ):
-        start_mock = Mock(return_value=False)
-        monkeypatch.setattr(manager, "start_plugin", start_mock)
-        fail_mock = Mock()
-        monkeypatch.setattr(manager, "_mark_as_failed", fail_mock)
-
-        manager._get_all_system_names.return_value = [
-            bg_system.name,
-            plugin_2.system.name,
-        ]
-
-        plugin_2.requirements = [bg_system.name]
-
-        manager._start_multiple_plugins([plugin, plugin_2])
-        start_mock.assert_called_once_with(plugin)
-        fail_mock.assert_called_once_with(plugin_2)
-
-
-def test_get_all_system_names(monkeypatch, manager, bg_system):
-    monkeypatch.setattr(
-        beer_garden.local_plugins.manager.db, "query", Mock(return_value=[bg_system])
-    )
-
-    assert manager._get_all_system_names() == [bg_system.name]
+    start_mock.assert_called_once_with(plugin)
 
 
 class TestStopAllPlugins(object):
@@ -347,8 +240,6 @@ class TestStopAllPlugins(object):
 
 class TestScanPluginPath(object):
     def test_no_change(self, monkeypatch, manager, loader, registry, plugin):
-        monkeypatch.setattr(manager, "_start_multiple_plugins", Mock())
-
         loader.scan_plugin_path.return_value = [plugin.path_to_plugin]
         registry.get_all_plugins.return_value = [plugin]
 
@@ -357,7 +248,7 @@ class TestScanPluginPath(object):
 
     def test_one_new(self, monkeypatch, manager, loader, registry, plugin):
         start_mock = Mock()
-        monkeypatch.setattr(manager, "_start_multiple_plugins", start_mock)
+        monkeypatch.setattr(manager, "start_plugin", start_mock)
 
         loader.scan_plugin_path.return_value = [plugin.path_to_plugin]
         loader.load_plugin.return_value = [plugin]
@@ -365,13 +256,13 @@ class TestScanPluginPath(object):
 
         manager.scan_plugin_path()
         loader.load_plugin.assert_called_once_with(plugin.path_to_plugin)
-        start_mock.assert_called_once_with([plugin])
+        start_mock.assert_called_once_with(plugin)
 
     def test_two_new_could_not_load_one(
         self, monkeypatch, manager, loader, registry, plugin
     ):
         start_mock = Mock()
-        monkeypatch.setattr(manager, "_start_multiple_plugins", start_mock)
+        monkeypatch.setattr(manager, "start_plugin", start_mock)
 
         loader.scan_plugin_path.return_value = [plugin.path_to_plugin, "path/tw-0.0.1"]
         loader.load_plugin.side_effect = [[plugin], []]
@@ -381,11 +272,11 @@ class TestScanPluginPath(object):
         loader.load_plugin.assert_has_calls(
             [call(plugin.path_to_plugin), call("path/tw-0.0.1")], any_order=True
         )
-        start_mock.assert_called_once_with([plugin])
+        start_mock.assert_called_once_with(plugin)
 
     def test_one_exception(self, monkeypatch, manager, loader, registry, plugin):
         start_mock = Mock()
-        monkeypatch.setattr(manager, "_start_multiple_plugins", start_mock)
+        monkeypatch.setattr(manager, "start_plugin", start_mock)
 
         loader.scan_plugin_path.return_value = [plugin.path_to_plugin, "path/tw-0.0.1"]
         loader.load_plugin.side_effect = [[plugin], Exception()]
@@ -395,42 +286,4 @@ class TestScanPluginPath(object):
         loader.load_plugin.assert_has_calls(
             [call(plugin.path_to_plugin), call("path/tw-0.0.1")], any_order=True
         )
-        start_mock.assert_called_once_with([plugin])
-
-
-def test_mark_as_failed(monkeypatch, manager, plugin, bg_instance):
-    bg_system_mock = Mock(instances=[bg_instance])
-
-    monkeypatch.setattr(
-        beer_garden.local_plugins.manager.db,
-        "query_unique",
-        Mock(return_value=bg_system_mock),
-    )
-
-    manager._mark_as_failed(plugin)
-    assert bg_instance.status == "DEAD"
-
-
-class TestGetFailedSystemNames(object):
-    def test_one_failed(self, monkeypatch, manager, bg_system):
-        bg_system.instances[0].status = "DEAD"
-
-        monkeypatch.setattr(
-            beer_garden.local_plugins.manager.db,
-            "query",
-            Mock(return_value=[bg_system]),
-        )
-
-        assert manager._get_failed_system_names() == [bg_system.name]
-
-    def test_one_failed_one_running(self, monkeypatch, manager, bg_system):
-        # Add one dead instance to system with one running one
-        bg_system.instances.append(Instance(status="DEAD"))
-
-        monkeypatch.setattr(
-            beer_garden.local_plugins.manager.db,
-            "query",
-            Mock(return_value=[bg_system]),
-        )
-
-        assert manager._get_failed_system_names() == []
+        start_mock.assert_called_once_with(plugin)

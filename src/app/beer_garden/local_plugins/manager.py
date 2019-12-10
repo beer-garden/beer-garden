@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
+
 import logging
 
-from brewtils.models import Instance, System
+from brewtils.models import Instance
 
 import beer_garden
 import beer_garden.db.api as db
+import beer_garden.local_plugins.validator as validator
 import beer_garden.queue.api as queue
 from beer_garden.errors import PluginStartupError
 from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
 from beer_garden.local_plugins.registry import LocalPluginRegistry
-from beer_garden.local_plugins.validator import LocalPluginValidator
 from beer_garden.queue.rabbit import get_routing_key
 
 
@@ -20,7 +21,6 @@ class LocalPluginsManager(object):
     def __init__(self, shutdown_timeout):
         self.logger = logging.getLogger(__name__)
         self.loader = LocalPluginLoader.instance()
-        self.validator = LocalPluginValidator.instance()
         self.registry = LocalPluginRegistry.instance()
         self.shutdown_timeout = shutdown_timeout
 
@@ -172,7 +172,7 @@ class LocalPluginsManager(object):
 
         # Verify the new configuration is valid before we remove the
         # current plugins from the registry
-        if not self.validator.validate_plugin(path_to_plugin):
+        if not validator.validate_plugin(path_to_plugin):
             message = (
                 "Could not reload system %s-%s: new configuration is not valid"
                 % (system_name, system_version)
@@ -197,109 +197,11 @@ class LocalPluginsManager(object):
         self.loader.load_plugin(path_to_plugin)
 
     def start_all_plugins(self):
-        """Attempts to start all plugins in the registry."""
-        self.logger.info("Starting all plugins")
-        self._start_multiple_plugins(self.registry.get_all_plugins())
+        """Attempts to start all plugins"""
+        self.logger.debug("Starting all plugins")
 
-    def _start_multiple_plugins(self, plugins_to_start):
-        """Starts multiple plugins, respecting required plugin dependencies.
-
-        It will consider requirements of other plugins. If the plugin requires others,
-        then it will be skipped until its requirements are loaded.
-
-        Failure is a little tricky.
-
-        :param plugins_to_start: List of plugin names to be started
-        :return: None
-        """
-        start_list = list(plugins_to_start)
-
-        system_names = self._get_all_system_names()
-        failed_system_names = self._get_failed_system_names()
-        started_plugin_names = self._get_running_system_names()
-
-        while len(start_list) != 0:
-            plugin = start_list.pop()
-            attempt_to_start = True
-
-            self.logger.debug("Checking plugin %s's requirements.", plugin.unique_name)
-            for required_plugin_name in plugin.requirements:
-                if required_plugin_name not in system_names:
-                    self.logger.warning(
-                        "Plugin %s lists system %s as a required system, "
-                        "but that system is not available.",
-                        plugin.unique_name,
-                        required_plugin_name,
-                    )
-                    self._mark_as_failed(plugin)
-                    failed_system_names.append(plugin.system.name)
-                    attempt_to_start = False
-                    break
-
-                elif required_plugin_name in failed_system_names:
-                    self.logger.warning(
-                        "Plugin %s lists plugin %s as a required plugin, "
-                        "but plugin %s failed to start,"
-                        " thus plugin %s cannot start.",
-                        plugin.unique_name,
-                        required_plugin_name,
-                        required_plugin_name,
-                        plugin.unique_name,
-                    )
-                    self._mark_as_failed(plugin)
-                    failed_system_names.append(plugin.system.name)
-                    attempt_to_start = False
-                    break
-
-                elif required_plugin_name not in started_plugin_names:
-                    self.logger.debug(
-                        "Skipping Starting Plugin %s because its "
-                        "requirements have yet to be started.",
-                        plugin.unique_name,
-                    )
-                    start_list.insert(0, plugin)
-                    attempt_to_start = False
-                    break
-
-            if attempt_to_start:
-                if self.start_plugin(plugin):
-                    started_plugin_names.append(plugin.system.name)
-                else:
-                    failed_system_names.append(plugin.system.name)
-
-        self.logger.info("Finished starting plugins.")
-
-    @staticmethod
-    def _get_all_system_names():
-        return [system.name for system in db.query(System, include_fields=["name"])]
-
-    @staticmethod
-    def _get_running_system_names():
-        running_system_names = []
-        for system in db.query(System):
-            if all([instance.status == "RUNNING" for instance in system.instances]):
-                running_system_names.append(system.name)
-
-        return running_system_names
-
-    @staticmethod
-    def _get_failed_system_names():
-        failed_system_names = []
-        for system in db.query(System):
-            if all([instance.status == "DEAD" for instance in system.instances]):
-                failed_system_names.append(system.name)
-
-        return failed_system_names
-
-    @staticmethod
-    def _mark_as_failed(plugin):
-        system = db.query_unique(
-            System, name=plugin.system.name, version=plugin.system.version
-        )
-        for instance in system.instances:
-            if instance.name == plugin.instance_name:
-                instance.status = "DEAD"
-        db.update(system)
+        for plugin in self.registry.get_all_plugins():
+            self.start_plugin(plugin)
 
     def stop_all_plugins(self):
         """Attempt to stop all plugins."""
@@ -324,7 +226,6 @@ class LocalPluginsManager(object):
             [plugin.path_to_plugin for plugin in self.registry.get_all_plugins()]
         )
 
-        new_plugins = []
         for plugin_path in scanned_plugins_paths.difference(existing_plugin_paths):
             try:
                 loaded_plugins = self.loader.load_plugin(plugin_path)
@@ -333,11 +234,9 @@ class LocalPluginsManager(object):
                     raise Exception("Couldn't load plugin at %s" % plugin_path)
 
                 for plugin in loaded_plugins:
-                    new_plugins.append(plugin)
+                    self.start_plugin(plugin)
             except Exception as ex:
                 self.logger.error(
                     "Error while attempting to load plugin at %s", plugin_path
                 )
                 self.logger.exception(ex)
-
-        self._start_multiple_plugins(new_plugins)

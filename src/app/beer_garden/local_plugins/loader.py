@@ -10,9 +10,9 @@ from brewtils.models import Instance, System
 
 import beer_garden.config
 import beer_garden.db.api as db
+import beer_garden.local_plugins.validator as validator
 from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
 from beer_garden.local_plugins.registry import LocalPluginRegistry
-from beer_garden.local_plugins.validator import LocalPluginValidator
 from beer_garden.systems import create_system
 
 
@@ -31,7 +31,6 @@ class LocalPluginLoader(object):
         username=None,
         password=None,
     ):
-        self.validator = LocalPluginValidator.instance()
         self.registry = LocalPluginRegistry.instance()
 
         self._local_plugin_dir = local_plugin_dir
@@ -72,8 +71,6 @@ class LocalPluginLoader(object):
                     "Exception while loading plugin %s: %s", plugin_path, ex
                 )
 
-        self.validate_plugin_requirements()
-
     def scan_plugin_path(self, path: str = None) -> List[str]:
         """Find valid plugin directories in a given path.
 
@@ -98,26 +95,6 @@ class LocalPluginLoader(object):
                 if not isfile(join(path, plugin))
             ]
 
-    def validate_plugin_requirements(self):
-        """Validate requirements for each plugin can be satisfied"""
-        plugin_list = self.registry.get_all_plugins()
-        plugin_names = self.registry.get_unique_plugin_names()
-        plugins_to_remove = []
-
-        for plugin in plugin_list:
-            for required_plugin in plugin.requirements:
-                if required_plugin not in plugin_names:
-                    self.logger.warning(
-                        "Not loading plugin %s - plugin requirement %s is not "
-                        "a known plugin.",
-                        plugin.system.name,
-                        required_plugin,
-                    )
-                    plugins_to_remove.append(plugin)
-
-        for plugin in plugins_to_remove:
-            self.registry.remove(plugin.unique_name)
-
     def load_plugin(self, plugin_path):
         """Loads a plugin given a path to a plugin directory.
 
@@ -127,7 +104,7 @@ class LocalPluginLoader(object):
         :param plugin_path: The path of the plugin to load
         :return: The loaded plugin
         """
-        if not self.validator.validate_plugin(plugin_path):
+        if not validator.validate_plugin(plugin_path):
             self.logger.warning(
                 "Not loading plugin at %s because it was invalid.", plugin_path
             )
