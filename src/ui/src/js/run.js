@@ -111,6 +111,11 @@ export default function appRun(
     if (token) {
       TokenService.handleToken(token);
     }
+    else {
+        // Attempt login through Certs
+        TokenService.doLogin(null, null);
+        let token = localStorageService.get('token');
+    }
 
     $rootScope.loadUser(token).catch(
       // This prevents the situation where the user needs to logout but the
@@ -119,7 +124,12 @@ export default function appRun(
       (response) => {
         $rootScope.doLogout();
       }
+    ).then(
+        () => {
+            $state.reload();
+          }
     );
+
   };
 
   $rootScope.hasPermission = function(user, permissions) {
