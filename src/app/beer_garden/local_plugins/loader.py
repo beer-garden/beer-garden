@@ -204,8 +204,8 @@ class LocalPluginLoader(object):
 
         instances = getattr(config_module, "INSTANCES", None)
         plugin_args = getattr(config_module, "PLUGIN_ARGS", None)
-        user_log_level = getattr(config_module, "LOG_LEVEL", "INFO")
-        log_level = self._convert_log_level(user_log_level)
+        log_name = getattr(config_module, "LOG_LEVEL", "INFO")
+        log_level = getattr(logging, str(log_name).upper(), logging.INFO)
 
         if instances is None and plugin_args is None:
             instances = ["default"]
@@ -235,22 +235,16 @@ class LocalPluginLoader(object):
         config = {
             "NAME": config_module.NAME,
             "VERSION": config_module.VERSION,
-            "INSTANCES": instances,
             "PLUGIN_ENTRY": config_module.PLUGIN_ENTRY,
+            "INSTANCES": instances,
             "PLUGIN_ARGS": plugin_args,
+            "LOG_LEVEL": log_level,
             "DESCRIPTION": getattr(config_module, "DESCRIPTION", ""),
             "ICON_NAME": getattr(config_module, "ICON_NAME", None),
             "DISPLAY_NAME": getattr(config_module, "DISPLAY_NAME", None),
             "REQUIRES": getattr(config_module, "REQUIRES", []),
             "ENVIRONMENT": getattr(config_module, "ENVIRONMENT", {}),
             "METADATA": getattr(config_module, "METADATA", {}),
-            "LOG_LEVEL": log_level,
         }
 
         return config
-
-    def _convert_log_level(self, level_name):
-        try:
-            return getattr(logging, str(level_name).upper())
-        except AttributeError:
-            return logging.INFO
