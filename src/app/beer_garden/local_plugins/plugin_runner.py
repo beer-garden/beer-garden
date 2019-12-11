@@ -2,6 +2,7 @@
 import logging
 import os
 import signal
+import subprocess
 import sys
 from threading import Thread
 from time import sleep
@@ -10,12 +11,6 @@ from brewtils.stoppable_thread import StoppableThread
 
 from beer_garden.local_plugins.env_help import expand_string_with_environment_var
 from beer_garden.local_plugins.logger import getLogLevels, getPluginLogger
-
-# Recommended import pattern, see https://github.com/google/python-subprocess32
-if os.name == "posix" and sys.version_info[0] < 3:
-    import subprocess32 as subprocess
-else:
-    import subprocess
 
 
 class LocalPluginRunner(StoppableThread):
