@@ -103,7 +103,8 @@ class TokenListAPI(BaseHandler):
     def __init__(self, *args, **kwargs):
         super(TokenListAPI, self).__init__(*args, **kwargs)
 
-        self.executor = ProcessPoolExecutor()
+        # TODO Find a new way to break out password validator within a deamon process
+        # self.executor = ProcessPoolExecutor()
 
     def get(self):
         """
@@ -227,20 +228,24 @@ class TokenListAPI(BaseHandler):
         parsed_body = json.loads(self.request.decoded_body)
 
         try:
-            if "username" in parsed_body.keys():
+            if "username" in parsed_body.keys() and parsed_body["username"] is not None:
                 principal = Principal.objects.get(username=parsed_body["username"])
+
+                if (
+                        beer_garden.config.get("auth.guest_login_enabled")
+                        and principal.username
+                        == beer_garden.api.http.anonymous_principal.username
+                ):
+                    verified = True
+                else:
+                    # TODO Break this out to a separate thread to prevent locking
+                    verified = verify(str(parsed_body["password"]), str(principal.hash))
             else:
-                principal = AuthMixin.get_current_user()
+                principal = self.get_current_user()
                 if principal is None:
                     raise DoesNotExist
-            if (
-                beer_garden.config.get("auth.guest_login_enabled")
-                and principal.username
-                == beer_garden.api.http.anonymous_principal.username
-            ):
-                verified = True
-            else:
-                verified = verify(str(parsed_body["password"]), str(principal.hash))
+                else:
+                    verified = True
 
             if verified:
                 tokens = generate_tokens(principal, self.REFRESH_COOKIE_EXP)
