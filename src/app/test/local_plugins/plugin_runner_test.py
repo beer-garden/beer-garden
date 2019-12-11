@@ -6,7 +6,7 @@ import pytest
 from mock import Mock, PropertyMock, call, ANY
 from mongoengine import DoesNotExist
 
-from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
+from beer_garden.local_plugins.plugin_runner import PluginRunner
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def system_mock(instance_mock):
 
 @pytest.fixture
 def plugin(system_mock):
-    return LocalPluginRunner(
+    return PluginRunner(
         "entry_point",
         system_mock,
         "default",
@@ -45,7 +45,7 @@ class TestPluginRunner(object):
         ],
     )
     def test_init_entry_point(self, system_mock, entry_point, expected):
-        plugin = LocalPluginRunner(
+        plugin = PluginRunner(
             entry_point,
             system_mock,
             "instance_name",
@@ -64,7 +64,7 @@ class TestPluginRunner(object):
         # We have to null out the handlers, otherwise we will end up
         # using a cached handler.
         plugin.unformatted_logger.handlers = []
-        runner = LocalPluginRunner(
+        runner = PluginRunner(
             "entry_point",
             system_mock,
             "default",
@@ -113,7 +113,7 @@ class TestPluginRunner(object):
         )
         env_mock = mocker.patch(
             "beer_garden.local_plugins.plugin_runner."
-            "LocalPluginRunner._generate_plugin_environment"
+            "PluginRunner._generate_plugin_environment"
         )
 
         process_mock.return_value = Mock(poll=Mock(return_value="Not None"))

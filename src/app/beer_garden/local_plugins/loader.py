@@ -11,7 +11,7 @@ import beer_garden.config
 import beer_garden.db.api as db
 import beer_garden.local_plugins.validator as validator
 from beer_garden.errors import PluginValidationError
-from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
+from beer_garden.local_plugins.plugin_runner import PluginRunner
 from beer_garden.local_plugins.registry import LocalPluginRegistry
 from beer_garden.local_plugins.validator import CONFIG_NAME
 from beer_garden.systems import create_system
@@ -90,7 +90,7 @@ class LocalPluginLoader(object):
 
         return [x for x in path.iterdir() if x.is_dir()]
 
-    def load_plugin(self, plugin_path: Path) -> List[LocalPluginRunner]:
+    def load_plugin(self, plugin_path: Path) -> List[PluginRunner]:
         """Loads a plugin given a path to a plugin directory.
 
         It will use the validator to validate the plugin before registering the
@@ -159,7 +159,7 @@ class LocalPluginLoader(object):
         plugin_list = []
         for instance in plugin_instances:
             # TODO - Local plugin runner shouldn't require HTTP entry point
-            plugin = LocalPluginRunner(
+            plugin = PluginRunner(
                 config_entry,
                 plugin_system,
                 instance.name,

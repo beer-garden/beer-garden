@@ -80,7 +80,7 @@ class TestStartPlugin(object):
         new_plugin = Mock()
         monkeypatch.setattr(
             beer_garden.local_plugins.manager,
-            "LocalPluginRunner",
+            "PluginRunner",
             Mock(return_value=new_plugin),
         )
 

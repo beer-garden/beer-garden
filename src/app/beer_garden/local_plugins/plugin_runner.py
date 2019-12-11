@@ -13,10 +13,14 @@ from beer_garden.local_plugins.env_help import expand_string_with_environment_va
 from beer_garden.local_plugins.logger import getLogLevels, getPluginLogger
 
 
-class LocalPluginRunner(StoppableThread):
-    """Class for running a local plugin in its own process.
+class PluginRunner(StoppableThread):
+    """Thread that 'manages' a Plugin process.
 
-    Can be stopped/started and killed like a normal process"""
+    A runner will take care of creating and starting a process that will run the
+    plugin entry point. It will then monitor that process's STDOUT and STDERR and will
+    log anything it sees.
+
+    """
 
     def __init__(
         self,

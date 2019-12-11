@@ -10,7 +10,7 @@ import beer_garden.local_plugins.validator as validator
 import beer_garden.queue.api as queue
 from beer_garden.errors import PluginStartupError
 from beer_garden.local_plugins.loader import LocalPluginLoader
-from beer_garden.local_plugins.plugin_runner import LocalPluginRunner
+from beer_garden.local_plugins.plugin_runner import PluginRunner
 from beer_garden.local_plugins.registry import LocalPluginRegistry
 from beer_garden.queue.rabbit import get_routing_key
 
@@ -48,7 +48,7 @@ class LocalPluginsManager(object):
         if plugin_status == "INITIALIZING":
             new_plugin = plugin
         elif plugin_status in ["DEAD", "STOPPED"]:
-            new_plugin = LocalPluginRunner(
+            new_plugin = PluginRunner(
                 plugin.entry_point,
                 plugin.system,
                 plugin.instance_name,
