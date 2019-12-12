@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
+
 import logging
-import os
 import signal
 import subprocess
 import sys
+from pathlib import Path
 from threading import Thread
 from time import sleep
 
+from brewtils.models import System
 from brewtils.stoppable_thread import StoppableThread
 
-from beer_garden.local_plugins.env_help import expand_string_with_environment_var
 from beer_garden.local_plugins.logger import getLogLevels, getPluginLogger
 
 
@@ -25,38 +26,18 @@ class PluginRunner(StoppableThread):
     def __init__(
         self,
         entry_point,
-        system,
-        instance_name,
-        path_to_plugin,
-        web_host,
-        web_port,
-        ssl_enabled=None,
-        plugin_args=None,
-        environment=None,
-        requirements=None,
+        system: System,
+        instance_name: str,
+        working_dir: Path,
+        environment: dict,
         plugin_log_directory=None,
-        url_prefix=None,
-        ca_verify=True,
-        ca_cert=None,
         **kwargs
     ):
         self.entry_point = entry_point
         self.system = system
         self.instance_name = instance_name
-        self.path_to_plugin = path_to_plugin
-        self.web_host = web_host
-        self.web_port = web_port
-        self.ssl_enabled = ssl_enabled
-        self.plugin_args = plugin_args or []
-        self.environment = environment or {}
-        self.requirements = requirements or []
-        self.plugin_log_directory = plugin_log_directory
-        self.url_prefix = url_prefix
-        self.ca_verify = ca_verify
-        self.ca_cert = ca_cert
-        self.username = kwargs.get("username", None)
-        self.password = kwargs.get("password", None)
-        self.plugin_default_log_level = kwargs.get("log_level", logging.INFO)
+        self.working_dir = working_dir
+        self.environment = environment
 
         for instance in self.system.instances:
             if instance.name == self.instance_name:
@@ -70,7 +51,9 @@ class PluginRunner(StoppableThread):
             self.executable.append(self.entry_point.split(" ", 1)[1])
         else:
             self.executable.append(self.entry_point)
-        self.executable += self.plugin_args
+
+        if kwargs.get("plugin_args"):
+            self.executable += kwargs.get("plugin_args")
 
         self.unique_name = "%s[%s]-%s" % (
             self.system.name,
@@ -79,8 +62,9 @@ class PluginRunner(StoppableThread):
         )
 
         self.log_levels = getLogLevels()
+
         log_config = {
-            "log_directory": self.plugin_log_directory,
+            "log_directory": plugin_log_directory,
             "log_name": self.unique_name,
         }
 
@@ -91,7 +75,7 @@ class PluginRunner(StoppableThread):
             **log_config
         )
 
-        log_config["log_level"] = self.plugin_default_log_level
+        log_config["log_level"] = kwargs.get("log_level", logging.INFO)
         self.unformatted_logger = getPluginLogger(
             self.unique_name + "-uf", **log_config
         )
@@ -122,8 +106,8 @@ class PluginRunner(StoppableThread):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 universal_newlines=True,
-                env=self._generate_plugin_environment(),
-                cwd=os.path.abspath(self.path_to_plugin),
+                env=self.environment,
+                cwd=str(self.working_dir.resolve()),
                 preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_IGN),
             )
 
@@ -194,29 +178,3 @@ class PluginRunner(StoppableThread):
         if self.process.poll() is None:
             self.logger.debug("Process isn't quite dead yet, reading IO again")
             self._check_io(stream, default_level)
-
-    def _generate_plugin_environment(self):
-
-        plugin_env = {
-            "BG_NAME": self.system.name,
-            "BG_VERSION": self.system.version,
-            "BG_INSTANCE_NAME": self.instance_name,
-            "BG_PLUGIN_PATH": self.path_to_plugin,
-            "BG_WEB_HOST": self.web_host,
-            "BG_WEB_PORT": self.web_port,
-            "BG_SSL_ENABLED": self.ssl_enabled,
-            "BG_URL_PREFIX": self.url_prefix,
-            "BG_CA_VERIFY": self.ca_verify,
-            "BG_CA_CERT": self.ca_cert,
-            "BG_USERNAME": self.username,
-            "BG_PASSWORD": self.password,
-            "BG_LOG_LEVEL": logging.getLevelName(self.plugin_default_log_level),
-        }
-
-        for key, value in plugin_env.items():
-            plugin_env[key] = str(value)
-
-        for key, value in self.environment.items():
-            plugin_env[key] = expand_string_with_environment_var(str(value), plugin_env)
-
-        return plugin_env
