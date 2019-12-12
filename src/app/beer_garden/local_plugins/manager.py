@@ -4,15 +4,13 @@ import logging
 
 from brewtils.models import Instance
 
-import beer_garden
 import beer_garden.db.api as db
 import beer_garden.local_plugins.validator as validator
-import beer_garden.queue.api as queue
 from beer_garden.errors import PluginStartupError
+from beer_garden.instances import stop_instance
 from beer_garden.local_plugins.loader import LocalPluginLoader
 from beer_garden.local_plugins.plugin_runner import PluginRunner
 from beer_garden.local_plugins.registry import LocalPluginRegistry
-from beer_garden.queue.rabbit import get_routing_key
 
 
 class LocalPluginsManager(object):
@@ -109,16 +107,7 @@ class LocalPluginsManager(object):
             # Plugin must be marked as stopped before sending shutdown message
             plugin.stop()
 
-            # Send a stop request to initiate a graceful shutdown
-            queue.put(
-                beer_garden.stop_request,
-                routing_key=get_routing_key(
-                    plugin.system.name,
-                    plugin.system.version,
-                    plugin.instance_name,
-                    is_admin=True,
-                ),
-            )
+            stop_instance(plugin_instance.id)
 
             # Now just wait for the plugin thread to die
             self.logger.info("Waiting for plugin %s to stop...", plugin.unique_name)

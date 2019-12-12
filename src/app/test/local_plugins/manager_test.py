@@ -96,60 +96,60 @@ class TestStartPlugin(object):
 
 class TestStopPlugin(object):
     @pytest.fixture
-    def queue_mock(self, monkeypatch):
-        queue = Mock()
-        monkeypatch.setattr(beer_garden.local_plugins.manager, "queue", queue)
-        return queue
+    def stop_mock(self, monkeypatch):
+        m = Mock()
+        monkeypatch.setattr(beer_garden.local_plugins.manager, "stop_instance", m)
+        return m
 
-    def test_running(self, manager, plugin, queue_mock):
+    def test_running(self, manager, plugin, stop_mock):
         plugin.is_alive.return_value = False
 
         manager.stop_plugin(plugin)
         assert plugin.status == "STOPPING"
-        assert queue_mock.put.called is True
+        assert stop_mock.called is True
         assert plugin.stop.called is True
         assert plugin.join.called is True
         assert plugin.kill.called is False
 
-    def test_stopped(self, manager, plugin, queue_mock):
+    def test_stopped(self, manager, plugin, stop_mock):
         plugin.is_alive.return_value = False
         plugin.status = "STOPPED"
 
         manager.stop_plugin(plugin)
         assert plugin.status == "STOPPED"
-        assert queue_mock.put.called is False
+        assert stop_mock.called is False
         assert plugin.stop.called is False
         assert plugin.join.called is False
         assert plugin.kill.called is False
 
-    def test_unknown(self, manager, plugin, queue_mock):
+    def test_unknown(self, manager, plugin, stop_mock):
         plugin.is_alive.return_value = False
         plugin.status = "UNKNOWN"
 
         manager.stop_plugin(plugin)
         assert plugin.status == "UNKNOWN"
-        assert queue_mock.put.called is True
+        assert stop_mock.called is True
         assert plugin.stop.called is True
         assert plugin.join.called is True
         assert plugin.kill.called is False
 
-    def test_exception(self, manager, plugin, queue_mock):
+    def test_exception(self, manager, plugin, stop_mock):
         plugin.is_alive.return_value = True
         plugin.stop.side_effect = Exception()
 
         manager.stop_plugin(plugin)
         assert plugin.status == "DEAD"
-        assert queue_mock.put.called is False
+        assert stop_mock.called is False
         assert plugin.stop.called is True
         assert plugin.join.called is False
         assert plugin.kill.called is True
 
-    def test_unsuccessful(self, manager, plugin, queue_mock):
+    def test_unsuccessful(self, manager, plugin, stop_mock):
         plugin.is_alive.return_value = True
 
         manager.stop_plugin(plugin)
         assert plugin.status == "DEAD"
-        assert queue_mock.put.called is True
+        assert stop_mock.called is True
         assert plugin.stop.called is True
         assert plugin.join.called is True
         assert plugin.kill.called is True
