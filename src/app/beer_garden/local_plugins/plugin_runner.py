@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -101,14 +100,15 @@ class PluginRunner(StoppableThread):
                 "Starting plugin %s subprocess: %s", self.unique_name, self.executable
             )
             self.process = subprocess.Popen(
-                self.executable,
-                bufsize=0,
+                args=self.executable,
+                env=self.environment,
+                cwd=str(self.working_dir.resolve()),
+                start_new_session=True,
+                close_fds=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 universal_newlines=True,
-                env=self.environment,
-                cwd=str(self.working_dir.resolve()),
-                preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_IGN),
+                bufsize=1,
             )
 
             # Reading the process IO is blocking and we need to shutdown
