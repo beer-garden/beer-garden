@@ -7,6 +7,7 @@ from passlib.apps import custom_app_context
 import beer_garden.api.http
 from beer_garden.db.mongo.models import Principal, Role
 from beer_garden.db.mongo.parser import MongoParser
+from brewtils.schema_parser import SchemaParser
 from beer_garden.api.http.authorization import (
     authenticated,
     check_permission,
@@ -57,7 +58,10 @@ class UserAPI(BaseHandler):
 
         principal.permissions = coalesce_permissions(principal.roles)[1]
 
-        self.write(MongoParser.serialize_principal(principal, to_string=False))
+        if isinstance(principal, Principal):
+            self.write(MongoParser.serialize_principal(principal, to_string=False))
+        else:
+            self.write(SchemaParser.serialize_principal(principal, to_string=False))
 
     @authenticated(permissions=[Permissions.USER_DELETE])
     def delete(self, user_id):
