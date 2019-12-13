@@ -130,6 +130,7 @@ def anonymous_principal():
     auth_config = beer_garden.config.get("auth")
     if auth_config.enabled and auth_config.guest_login_enabled:
         roles = Principal.objects.get(username="anonymous").roles
+
     elif auth_config.enabled:
         # By default, if no guest login is available, there is no anonymous
         # user, which means there are no roles.
@@ -222,8 +223,8 @@ def proxy_auth(request):
         entity = json.loads(user_entity)
     except json.JSONDecodeError:
         entity = dict()
-        for certField in user_entity.split(','):
-            field, value = certField.split('=')
+        for certField in user_entity.split(","):
+            field, value = certField.split("=")
 
             if field in entity.keys():
                 entity[field.upper()] = entity[field] + value
@@ -254,7 +255,7 @@ def cert_auth(request):
         return None
     username = None
     if cert is not None:
-        for subject in cert['subject']:
+        for subject in cert["subject"]:
             for field in subject:
                 if field[0].upper() == beer_garden.api.http.client_auth.upper():
                     username = field[1].lower()

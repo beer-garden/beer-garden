@@ -232,9 +232,9 @@ class TokenListAPI(BaseHandler):
                 principal = Principal.objects.get(username=parsed_body["username"])
 
                 if (
-                        beer_garden.config.get("auth.guest_login_enabled")
-                        and principal.username
-                        == beer_garden.api.http.anonymous_principal.username
+                    beer_garden.config.get("auth.guest_login_enabled")
+                    and principal.username
+                    == beer_garden.api.http.anonymous_principal.username
                 ):
                     verified = True
                 else:
