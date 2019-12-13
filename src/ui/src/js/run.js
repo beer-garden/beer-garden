@@ -86,6 +86,8 @@ export default function appRun(
         $rootScope.changeTheme(theme);
 
         $rootScope.user = user;
+
+        $state.reload();
       }, (response) => {
         return $q.reject(response);
       }
@@ -115,6 +117,7 @@ export default function appRun(
         // Attempt login through Certs
         TokenService.doLogin(null, null);
         let token = localStorageService.get('token');
+        $state.reload();
     }
 
     $rootScope.loadUser(token).catch(
@@ -124,10 +127,6 @@ export default function appRun(
       (response) => {
         $rootScope.doLogout();
       }
-    ).then(
-        () => {
-            $state.reload();
-          }
     );
 
   };
