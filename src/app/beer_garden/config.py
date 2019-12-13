@@ -705,14 +705,13 @@ _HTTP_SPEC = {
                     "type": "bool",
                     "default": False,
                     "description": "Enable if you are running behind a proxy services "
-                                   "with HTTPS enabled",
-
+                    "with HTTPS enabled",
                 },
                 "user_entity": {
                     "type": "str",
                     "default": "X-Client-Cert-Dn",
                     "description": "Field populated by Proxy service to identify client "
-                                   "persona",
+                    "persona",
                 },
             },
         },
