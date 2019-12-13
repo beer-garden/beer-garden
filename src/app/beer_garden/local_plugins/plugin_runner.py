@@ -2,13 +2,12 @@
 
 import logging
 import subprocess
-import sys
 from pathlib import Path
 from threading import Thread
-from time import sleep
+from typing import Sequence
 
-from brewtils.models import System
 from brewtils.stoppable_thread import StoppableThread
+from time import sleep
 
 from beer_garden.local_plugins.logger import getLogLevels, getPluginLogger
 
@@ -24,41 +23,19 @@ class PluginRunner(StoppableThread):
 
     def __init__(
         self,
-        entry_point,
-        system: System,
-        instance_name: str,
-        working_dir: Path,
-        environment: dict,
+        unique_name: str,
+        process_args: Sequence[str],
+        process_cwd: Path,
+        process_env: dict,
         plugin_log_directory=None,
-        **kwargs
+        **kwargs,
     ):
-        self.entry_point = entry_point
-        self.system = system
-        self.instance_name = instance_name
-        self.working_dir = working_dir
-        self.environment = environment
+        self.unique_name = unique_name
 
-        for instance in self.system.instances:
-            if instance.name == self.instance_name:
-                self.instance = instance
-                break
-
+        self.process_args = process_args
+        self.process_cwd = process_cwd
+        self.process_env = process_env
         self.process = None
-        self.executable = [sys.executable]
-        if self.entry_point.startswith("-m "):
-            self.executable.append("-m")
-            self.executable.append(self.entry_point.split(" ", 1)[1])
-        else:
-            self.executable.append(self.entry_point)
-
-        if kwargs.get("plugin_args"):
-            self.executable += kwargs.get("plugin_args")
-
-        self.unique_name = "%s[%s]-%s" % (
-            self.system.name,
-            self.instance_name,
-            self.system.version,
-        )
 
         self.log_levels = getLogLevels()
 
@@ -71,7 +48,7 @@ class PluginRunner(StoppableThread):
         self.logger = getPluginLogger(
             self.unique_name,
             format_string="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            **log_config
+            **log_config,
         )
 
         log_config["log_level"] = kwargs.get("log_level", logging.INFO)
@@ -97,12 +74,12 @@ class PluginRunner(StoppableThread):
         """
         try:
             self.logger.info(
-                "Starting plugin %s subprocess: %s", self.unique_name, self.executable
+                f"Starting plugin {self.unique_name} subprocess: {self.process_args}"
             )
             self.process = subprocess.Popen(
-                args=self.executable,
-                env=self.environment,
-                cwd=str(self.working_dir.resolve()),
+                args=self.process_args,
+                env=self.process_env,
+                cwd=str(self.process_cwd.resolve()),
                 start_new_session=True,
                 close_fds=True,
                 stdout=subprocess.PIPE,

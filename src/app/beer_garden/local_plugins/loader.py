@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import sys
 from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
@@ -114,21 +115,24 @@ class LocalPluginLoader(object):
             return []
 
         # Generate the System definition for this plugin
-        plugin_system = self._generate_system(plugin_config)
+        system = self._generate_system(plugin_config)
 
         plugin_list = []
         for instance_name in plugin_config["INSTANCES"]:
-            plugin_environment = self._generate_environment(
-                plugin_system, instance_name, plugin_config, plugin_path
+
+            process_args = self._generate_process_args(
+                plugin_config, system, instance_name
+            )
+
+            process_env = self._generate_environment(
+                system, instance_name, plugin_config, plugin_path
             )
 
             plugin = PluginRunner(
-                plugin_config["PLUGIN_ENTRY"],
-                plugin_system,
-                instance_name,
-                plugin_path,
-                environment=plugin_environment,
-                plugin_args=plugin_config["PLUGIN_ARGS"].get(instance_name),
+                unique_name=f"{system.name}[{instance_name}]-{system.version}",
+                process_args=process_args,
+                process_cwd=plugin_path,
+                process_env=process_env,
                 plugin_log_directory=self._log_dir,
                 log_level=plugin_config["LOG_LEVEL"],
             )
@@ -138,7 +142,24 @@ class LocalPluginLoader(object):
 
         return plugin_list
 
-    def _load_config(self, plugin_path: Path) -> dict:
+    @staticmethod
+    def _generate_process_args(plugin_config, system, instance_name):
+        process_args = [sys.executable]
+
+        plugin_entry = plugin_config.get("PLUGIN_ENTRY")
+        if plugin_entry:
+            process_args += plugin_entry.split(" ")
+        else:
+            process_args += ["-m", system.name]
+
+        plugin_args = plugin_config["PLUGIN_ARGS"].get(instance_name)
+        if plugin_args:
+            process_args += plugin_args
+
+        return process_args
+
+    @staticmethod
+    def _load_config(plugin_path: Path) -> dict:
         """Loads a plugin config"""
         config_file = plugin_path / CONFIG_NAME
 
@@ -187,9 +208,9 @@ class LocalPluginLoader(object):
         config = {
             "NAME": config_module.NAME,
             "VERSION": config_module.VERSION,
-            "PLUGIN_ENTRY": config_module.PLUGIN_ENTRY,
             "INSTANCES": instances,
             "PLUGIN_ARGS": plugin_args,
+            "PLUGIN_ENTRY": getattr(config_module, "PLUGIN_ENTRY", None),
             "LOG_LEVEL": getattr(config_module, "LOG_LEVEL", "INFO"),
             "DESCRIPTION": getattr(config_module, "DESCRIPTION", ""),
             "ICON_NAME": getattr(config_module, "ICON_NAME", None),
