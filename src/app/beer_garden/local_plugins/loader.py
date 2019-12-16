@@ -1,21 +1,41 @@
 # -*- coding: utf-8 -*-
+import json
 import logging
 import random
 import string
-
 import sys
+from enum import Enum
 from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
+from types import ModuleType
 from typing import List
 
+from brewtils.specification import _SYSTEM_SPEC
+
 import beer_garden.config
-import beer_garden.local_plugins.validator as validator
 from beer_garden.errors import PluginValidationError
 from beer_garden.local_plugins.env_help import expand_string_with_environment_var
 from beer_garden.local_plugins.plugin_runner import PluginRunner
 from beer_garden.local_plugins.registry import LocalPluginRegistry
-from beer_garden.local_plugins.validator import CONFIG_NAME
+
+CONFIG_NAME = "beer.conf"
+
+
+class ConfigKeys(Enum):
+    PLUGIN_ENTRY = 1
+    INSTANCES = 2
+    PLUGIN_ARGS = 3
+    ENVIRONMENT = 4
+    LOG_LEVEL = 5
+
+    NAME = 6
+    VERSION = 7
+    DESCRIPTION = 8
+    MAX_INSTANCES = 9
+    ICON_NAME = 10
+    DISPLAY_NAME = 11
+    METADATA = 12
 
 
 class LocalPluginLoader(object):
@@ -104,11 +124,19 @@ class LocalPluginLoader(object):
             A list of plugin runners
 
         """
-        if not plugin_path or not plugin_path.is_dir():
+        config_file = plugin_path / CONFIG_NAME
+
+        if not plugin_path:
+            raise PluginValidationError(f"Plugin path {plugin_path} does not exist")
+        if not plugin_path.is_dir():
             raise PluginValidationError(f"Plugin path {plugin_path} is not a directory")
+        if not config_file.exists():
+            raise PluginValidationError(f"Config file {config_file} does not exist")
+        if not config_file.is_file():
+            raise PluginValidationError(f"Config file {config_file} is not a file")
 
         try:
-            plugin_config = self._load_config(plugin_path)
+            plugin_config = _load_config(config_file)
         except PluginValidationError as ex:
             self.logger.error(f"Error loading config for plugin at {plugin_path}: {ex}")
             return []
@@ -130,7 +158,7 @@ class LocalPluginLoader(object):
                 process_cwd=plugin_path,
                 process_env=process_env,
                 plugin_log_directory=self._log_dir,
-                log_level=plugin_config["LOG_LEVEL"],
+                log_level=plugin_config.get("LOG_LEVEL"),
             )
 
             self.registry.register_plugin(plugin)
@@ -155,93 +183,112 @@ class LocalPluginLoader(object):
 
         return process_args
 
-    @staticmethod
-    def _load_config(plugin_path: Path) -> dict:
-        """Loads a plugin config"""
-        config_file = plugin_path / CONFIG_NAME
-
-        if not config_file.exists():
-            raise PluginValidationError("Config file does not exist")
-
-        if not config_file.is_file():
-            raise PluginValidationError("Config file is not actually a file")
-
-        # Need to construct our own Loader here, the default doesn't work with .conf
-        loader = SourceFileLoader("bg_plugin_config", str(config_file))
-        spec = spec_from_file_location("bg_plugin_config", config_file, loader=loader)
-        config_module = module_from_spec(spec)
-        spec.loader.exec_module(config_module)
-
-        # validator.validate_config(config_module, plugin_path)
-
-        instances = getattr(config_module, "INSTANCES", None)
-        plugin_args = getattr(config_module, "PLUGIN_ARGS", None)
-
-        if instances is None and plugin_args is None:
-            instances = ["default"]
-            plugin_args = {"default": None}
-
-        elif plugin_args is None:
-            plugin_args = {}
-            for instance_name in instances:
-                plugin_args[instance_name] = None
-
-        elif instances is None:
-            if isinstance(plugin_args, list):
-                instances = ["default"]
-                plugin_args = {"default": plugin_args}
-            elif isinstance(plugin_args, dict):
-                instances = list(plugin_args.keys())
-            else:
-                raise ValueError("Unknown plugin args type: %s" % plugin_args)
-
-        elif isinstance(plugin_args, list):
-            temp_args = {}
-            for instance_name in instances:
-                temp_args[instance_name] = plugin_args
-
-            plugin_args = temp_args
-
-        config = {
-            "NAME": getattr(config_module, "NAME", None),
-            "VERSION": getattr(config_module, "VERSION", None),
-            "INSTANCES": instances,
-            "PLUGIN_ARGS": plugin_args,
-            "PLUGIN_ENTRY": getattr(config_module, "PLUGIN_ENTRY", None),
-            "LOG_LEVEL": getattr(config_module, "LOG_LEVEL", "INFO"),
-            "DESCRIPTION": getattr(config_module, "DESCRIPTION", ""),
-            "ICON_NAME": getattr(config_module, "ICON_NAME", None),
-            "DISPLAY_NAME": getattr(config_module, "DISPLAY_NAME", None),
-            "REQUIRES": getattr(config_module, "REQUIRES", []),
-            "ENVIRONMENT": getattr(config_module, "ENVIRONMENT", {}),
-            "METADATA": getattr(config_module, "METADATA", {}),
-        }
-
-        return config
-
     def _generate_environment(self, instance_name, plugin_config, plugin_path):
-        plugin_env = {
-            "BG_NAME": plugin_config["NAME"],
-            "BG_VERSION": plugin_config["VERSION"],
-            "BG_INSTANCE_NAME": instance_name,
-            "BG_PLUGIN_PATH": plugin_path.resolve(),
-            "BG_LOG_LEVEL": plugin_config["LOG_LEVEL"],
-            "BG_HOST": self._connection_info.host,
-            "BG_PORT": self._connection_info.port,
-            "BG_URL_PREFIX": self._connection_info.url_prefix,
-            "BG_SSL_ENABLED": self._connection_info.ssl.enabled,
-            "BG_CA_CERT": self._connection_info.ssl.ca_cert,
-            "BG_CA_VERIFY": False,  # TODO - Fix this
-            "BG_USERNAME": self._username,
-            "BG_PASSWORD": self._password,
-        }
+        env = {}
+
+        # System info comes from config file
+        for key in _SYSTEM_SPEC:
+            key = key.upper()
+
+            if key in plugin_config:
+                env["BG_" + key] = plugin_config.get(key)
+
+        # Connection info comes from Beer-garden config
+        env.update(
+            {
+                "BG_HOST": self._connection_info.host,
+                "BG_PORT": self._connection_info.port,
+                "BG_URL_PREFIX": self._connection_info.url_prefix,
+                "BG_SSL_ENABLED": self._connection_info.ssl.enabled,
+                "BG_CA_CERT": self._connection_info.ssl.ca_cert,
+                "BG_CA_VERIFY": False,  # TODO - Fix this
+            }
+        )
+
+        # The rest
+        env.update(
+            {
+                "BG_INSTANCE_NAME": instance_name,
+                "BG_PLUGIN_PATH": plugin_path.resolve(),
+                "BG_USERNAME": self._username,
+                "BG_PASSWORD": self._password,
+            }
+        )
+
+        if "LOG_LEVEL" in plugin_config:
+            env["BG_LOG_LEVEL"] = plugin_config["LOG_LEVEL"]
+
+        # ENVIRONMENT from beer.conf
+        for key, value in plugin_config.get("ENVIRONMENT", {}).items():
+            env[key] = expand_string_with_environment_var(str(value), env)
 
         # Ensure values are all strings
-        for key, value in plugin_env.items():
-            plugin_env[key] = str(value)
+        for key, value in env.items():
+            env[key] = json.dumps(value) if isinstance(value, dict) else str(value)
 
-        # Merge in the ENVIRONMENT from beer.conf
-        for key, value in plugin_config["ENVIRONMENT"].items():
-            plugin_env[key] = expand_string_with_environment_var(str(value), plugin_env)
+        return env
 
-        return plugin_env
+
+def _load_config(config_file: Path) -> dict:
+    """Loads a plugin config"""
+
+    config_module = _config_from_beer_conf(config_file)
+
+    # validator.validate_config(config_module, plugin_path)
+
+    config = {}
+    for key in ConfigKeys:
+        if hasattr(config_module, key.name):
+            config[key.name] = getattr(config_module, key.name)
+
+    # Instances and arguments need some normalization
+    config.update(
+        _normalize_instance_args(config.get("INSTANCES"), config.get("PLUGIN_ARGS"))
+    )
+
+    return config
+
+
+def _config_from_beer_conf(config_file: Path) -> ModuleType:
+    """Load a beer.conf file as a Python module"""
+
+    # Need to construct our own Loader here, the default doesn't work with .conf
+    loader = SourceFileLoader("bg_plugin_config", str(config_file))
+    spec = spec_from_file_location("bg_plugin_config", config_file, loader=loader)
+    config_module = module_from_spec(spec)
+    spec.loader.exec_module(config_module)
+
+    return config_module
+
+
+def _normalize_instance_args(instances, args):
+    """Normalize the different ways instances and arguments can be specified"""
+    if instances is None and args is None:
+        instances = ["default"]
+        args = {"default": None}
+
+    elif args is None:
+        args = {}
+        for instance_name in instances:
+            args[instance_name] = None
+
+    elif instances is None:
+        if isinstance(args, list):
+            instances = ["default"]
+            args = {"default": args}
+        elif isinstance(args, dict):
+            instances = list(args.keys())
+        else:
+            raise ValueError(f"PLUGIN_ARGS must be list or dict, found {type(args)}")
+
+    elif isinstance(args, list):
+        temp_args = {}
+        for instance_name in instances:
+            temp_args[instance_name] = args
+
+        args = temp_args
+
+    else:
+        raise PluginValidationError("Invalid INSTANCES and PLUGIN_ARGS combination")
+
+    return {"INSTANCES": instances, "PLUGIN_ARGS": args}
