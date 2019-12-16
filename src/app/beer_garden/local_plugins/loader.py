@@ -1,22 +1,21 @@
 # -*- coding: utf-8 -*-
 import logging
+import random
+import string
+
 import sys
 from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from typing import List
 
-from brewtils.models import Instance, System
-
 import beer_garden.config
-import beer_garden.db.api as db
 import beer_garden.local_plugins.validator as validator
 from beer_garden.errors import PluginValidationError
 from beer_garden.local_plugins.env_help import expand_string_with_environment_var
 from beer_garden.local_plugins.plugin_runner import PluginRunner
 from beer_garden.local_plugins.registry import LocalPluginRegistry
 from beer_garden.local_plugins.validator import CONFIG_NAME
-from beer_garden.systems import create_system
 
 
 class LocalPluginLoader(object):
@@ -114,22 +113,19 @@ class LocalPluginLoader(object):
             self.logger.error(f"Error loading config for plugin at {plugin_path}: {ex}")
             return []
 
-        # Generate the System definition for this plugin
-        system = self._generate_system(plugin_config)
-
         plugin_list = []
         for instance_name in plugin_config["INSTANCES"]:
 
-            process_args = self._generate_process_args(
-                plugin_config, system, instance_name
-            )
+            process_args = self._generate_process_args(plugin_config, instance_name)
 
             process_env = self._generate_environment(
-                system, instance_name, plugin_config, plugin_path
+                instance_name, plugin_config, plugin_path
             )
 
+            unique = "".join([random.choice(string.ascii_lowercase) for _ in range(10)])
+
             plugin = PluginRunner(
-                unique_name=f"{system.name}[{instance_name}]-{system.version}",
+                unique_name=unique,
                 process_args=process_args,
                 process_cwd=plugin_path,
                 process_env=process_env,
@@ -143,14 +139,15 @@ class LocalPluginLoader(object):
         return plugin_list
 
     @staticmethod
-    def _generate_process_args(plugin_config, system, instance_name):
+    def _generate_process_args(plugin_config, instance_name):
         process_args = [sys.executable]
 
-        plugin_entry = plugin_config.get("PLUGIN_ENTRY")
-        if plugin_entry:
-            process_args += plugin_entry.split(" ")
+        if plugin_config.get("PLUGIN_ENTRY"):
+            process_args += plugin_config["PLUGIN_ENTRY"].split(" ")
+        elif plugin_config.get("NAME"):
+            process_args += ["-m", plugin_config["NAME"]]
         else:
-            process_args += ["-m", system.name]
+            raise PluginValidationError("Can't generate process args")
 
         plugin_args = plugin_config["PLUGIN_ARGS"].get(instance_name)
         if plugin_args:
@@ -175,7 +172,7 @@ class LocalPluginLoader(object):
         config_module = module_from_spec(spec)
         spec.loader.exec_module(config_module)
 
-        validator.validate_config(config_module, plugin_path)
+        # validator.validate_config(config_module, plugin_path)
 
         instances = getattr(config_module, "INSTANCES", None)
         plugin_args = getattr(config_module, "PLUGIN_ARGS", None)
@@ -206,8 +203,8 @@ class LocalPluginLoader(object):
             plugin_args = temp_args
 
         config = {
-            "NAME": config_module.NAME,
-            "VERSION": config_module.VERSION,
+            "NAME": getattr(config_module, "NAME", None),
+            "VERSION": getattr(config_module, "VERSION", None),
             "INSTANCES": instances,
             "PLUGIN_ARGS": plugin_args,
             "PLUGIN_ENTRY": getattr(config_module, "PLUGIN_ENTRY", None),
@@ -222,54 +219,10 @@ class LocalPluginLoader(object):
 
         return config
 
-    @staticmethod
-    def _generate_system(plugin_config) -> System:
-        config_name = plugin_config["NAME"]
-        config_version = plugin_config["VERSION"]
-        config_instances = plugin_config["INSTANCES"]
-
-        plugin_id = None
-        plugin_commands = []
-        plugin_instances = [Instance(name=name) for name in config_instances]
-
-        # If this system already exists we need to do some stuff
-        existing_system = db.query_unique(
-            System, name=config_name, version=config_version
-        )
-        if existing_system:
-            # Carry these over to the new system wholesale
-            plugin_id = existing_system.id
-            plugin_commands = existing_system.commands
-
-            # Any previously existing instances should keep the same id
-            for instance in plugin_instances:
-                if existing_system.has_instance(instance.name):
-                    instance.id = existing_system.get_instance(instance.name).id
-
-            # And any instances that no longer exist should be removed
-            for instance in existing_system.instances:
-                if instance.name not in config_instances:
-                    db.delete(instance)
-
-        plugin_system = System(
-            id=plugin_id,
-            name=config_name,
-            version=config_version,
-            commands=plugin_commands,
-            instances=plugin_instances,
-            max_instances=len(plugin_instances),
-            description=plugin_config.get("DESCRIPTION"),
-            icon_name=plugin_config.get("ICON_NAME"),
-            display_name=plugin_config.get("DISPLAY_NAME"),
-            metadata=plugin_config.get("METADATA"),
-        )
-
-        return create_system(plugin_system)
-
-    def _generate_environment(self, system, instance_name, plugin_config, plugin_path):
+    def _generate_environment(self, instance_name, plugin_config, plugin_path):
         plugin_env = {
-            "BG_NAME": system.name,
-            "BG_VERSION": system.version,
+            "BG_NAME": plugin_config["NAME"],
+            "BG_VERSION": plugin_config["VERSION"],
             "BG_INSTANCE_NAME": instance_name,
             "BG_PLUGIN_PATH": plugin_path.resolve(),
             "BG_LOG_LEVEL": plugin_config["LOG_LEVEL"],
