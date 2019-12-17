@@ -717,7 +717,7 @@ _HTTP_SPEC = {
                     "default": "EMAILADDRESS",
                     "description": "Proxy service object field to identify client persona",
                 },
-                "role_entity": {
+                "role_entity_field": {
                     "type": "str",
                     "description": "Proxy service to identify client roles",
                 },

@@ -156,7 +156,7 @@ def _setup_application():
     if http_config.behind_proxy.enabled:
         proxy_user_entity = http_config.behind_proxy.user_entity_object
         proxy_username = http_config.behind_proxy.user_entity_field
-        proxy_role_entity = http_config.behind_proxy.role_entity
+        proxy_role_entity = http_config.behind_proxy.role_entity_field
 
     tornado_app = _setup_tornado_app()
     server_ssl, client_ssl = _setup_ssl_context()

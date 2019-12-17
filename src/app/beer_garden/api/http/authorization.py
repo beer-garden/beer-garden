@@ -241,8 +241,8 @@ def proxy_auth(request):
                 entity[field] = value
 
     username = None
-    if beer_garden.api.http.client_auth.upper() in entity.keys():
-        username = entity[beer_garden.api.http.proxy_username.upper()].lower()
+    if beer_garden.api.http.client_auth in entity.keys():
+        username = entity[beer_garden.api.http.proxy_username].lower()
     if username is None:
         return None
 

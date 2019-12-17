@@ -51,6 +51,11 @@ db:
     info: 15
 entry:
   http:
+    behind_proxy:
+      enabled: false
+      role_entity_field: None
+      user_entity_field: EMAILADDRESS
+      user_entity_object: X-Client-Cert-Dn
     enable: false
     host: 0.0.0.0
     port: 2337
@@ -58,14 +63,11 @@ entry:
     ssl:
       ca_cert: null
       ca_path: null
-      client_cert_verify: NONE
       client_cert_auth: EMAILADDRESS
+      client_cert_verify: NONE
       enabled: false
       private_key: null
       public_key: null
-    behind_proxy:
-      enabled: false
-      user_entity: X-Client-Cert-Dn
     url_prefix: /
   thrift:
     enable: false
