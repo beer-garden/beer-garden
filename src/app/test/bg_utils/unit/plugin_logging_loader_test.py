@@ -158,14 +158,14 @@ class PluginLoggingLoaderTest(unittest.TestCase):
         )
 
     @patch("beer_garden.bg_utils.plugin_logging_loader.open")
-    @patch("json.load")
-    def test_setup_application_logging_from_file(self, json_mock, open_mock):
+    @patch("beer_garden.bg_utils.plugin_logging_loader.yaml")
+    def test_setup_application_logging_from_file(self, yaml_mock, open_mock):
         fake_file = Mock()
         fake_file.__exit__ = Mock()
         fake_file.__enter__ = Mock(return_value=fake_file)
         open_mock.return_value = fake_file
         fake_config = {"level": "DEBUG", "handlers": {}, "formatters": {}}
-        json_mock.return_value = fake_config
+        yaml_mock.safe_load.return_value = fake_config
         config = self.loader.load(
             filename="fake_file", level="INFO", default_config=None
         )

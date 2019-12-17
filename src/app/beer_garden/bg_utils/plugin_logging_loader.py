@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import copy
-import json
 import logging
 
 import six
 from brewtils.models import LoggingConfig
+from ruamel import yaml
 
 
 class LoggingLoadingError(Exception):
@@ -293,11 +293,8 @@ class PluginLoggingLoader(object):
         :return:
         """
         if filename:
-            cls.logger.debug(
-                "Plugin logging configuration provided. Loading from %s" % filename
-            )
             with open(filename) as log_config_file:
-                return json.load(log_config_file)
+                return yaml.safe_load(log_config_file)
         else:
             cls.logger.debug("No plugin logging configuration provided.")
             return {}
