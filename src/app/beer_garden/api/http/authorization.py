@@ -212,6 +212,15 @@ def bearer_auth(request):
 
 
 def proxy_auth(request):
+    """Determine a principle from custom proxy Authorization headers. Only enable if you
+    control the proxy and can ensure the fields are populated properly.
+
+    Args:
+        request: The request to authenticate
+
+    Returns:
+        Brewtils principal if proxy headers are valid, None otherwise
+    """
     if beer_garden.api.http.proxy_user_entity is None:
         return None
     user_entity = request.headers.get(beer_garden.api.http.proxy_user_entity)
@@ -227,15 +236,43 @@ def proxy_auth(request):
             field, value = certField.split("=")
 
             if field in entity.keys():
-                entity[field.upper()] = entity[field] + value
+                entity[field] = entity[field] + value
             else:
-                entity[field.upper()] = value
+                entity[field] = value
 
     username = None
     if beer_garden.api.http.client_auth.upper() in entity.keys():
-        username = entity[beer_garden.api.http.client_auth.upper()].lower()
+        username = entity[beer_garden.api.http.proxy_username.upper()].lower()
     if username is None:
         return None
+
+    if beer_garden.api.http.proxy_role_entity:
+        roles = list()
+
+        if beer_garden.api.http.proxy_role_entity in entity.keys():
+            user_roles = entity[beer_garden.api.http.proxy_role_entity]
+            if user_roles:
+                for role in user_roles:
+                    try:
+                        roles.append(Role.objects.get(name=role))
+                    except DoesNotExist:
+                        roles.append(Role(name=role, permissions=[]))
+        else:
+            user_roles = request.headers.get(beer_garden.api.http.proxy_role_entity)
+            if user_roles:
+                for role in user_roles.split(","):
+                    try:
+                        roles.append(Role.objects.get(name=role))
+                    except DoesNotExist:
+                        roles.append(Role(name=role, permissions=[]))
+
+        _, permissions = coalesce_permissions(roles)
+
+        principal = BrewtilsPrincipal(
+            id="proxy", username=username, roles=roles, permissions=permissions
+        )
+        return principal
+
     try:
         principal = Principal.objects.get(username=username)
         _, permissions = coalesce_permissions(principal.roles)

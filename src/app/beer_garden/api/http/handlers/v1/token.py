@@ -17,8 +17,6 @@ from beer_garden.db.mongo.models import Principal, RefreshToken
 from beer_garden.api.http.authorization import coalesce_permissions
 from beer_garden.api.http.base_handler import BaseHandler
 
-from src.app.beer_garden.api.http.authorization import AuthMixin
-
 
 def verify(password, password_hash):
     return custom_app_context.verify(password, password_hash)
@@ -255,8 +253,10 @@ class TokenListAPI(BaseHandler):
                 # update their password, and then login again. In the short term, this
                 # will be enough. This is really meant only to work for our UI so
                 # backwards compatibility is not a concern.
-                if principal.metadata.get("auto_change") and not principal.metadata.get(
-                    "changed"
+                if (
+                    principal.metadata
+                    and principal.metadata.get("auto_change")
+                    and not principal.metadata.get("changed")
                 ):
                     self.set_header("change_password_required", "true")
 

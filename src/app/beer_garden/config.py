@@ -707,11 +707,19 @@ _HTTP_SPEC = {
                     "description": "Enable if you are running behind a proxy services "
                     "with HTTPS enabled",
                 },
-                "user_entity": {
+                "user_entity_object": {
                     "type": "str",
                     "default": "X-Client-Cert-Dn",
-                    "description": "Field populated by Proxy service to identify client "
-                    "persona",
+                    "description": "Proxy service object to identify client persona",
+                },
+                "user_entity_field": {
+                    "type": "str",
+                    "default": "EMAILADDRESS",
+                    "description": "Proxy service object field to identify client persona",
+                },
+                "role_entity": {
+                    "type": "str",
+                    "description": "Proxy service to identify client roles",
                 },
             },
         },

@@ -13,6 +13,7 @@ from beer_garden.api.http.authorization import (
     check_permission,
     Permissions,
     coalesce_permissions,
+    proxy_auth,
 )
 from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError, RequestForbidden
@@ -43,6 +44,8 @@ class UserAPI(BaseHandler):
         """
         if user_identifier == "anonymous":
             principal = beer_garden.api.http.anonymous_principal
+        elif user_identifier == "proxy":
+            principal = proxy_auth(self.request)
         else:
             # Need fine-grained access control here
             if user_identifier not in [
