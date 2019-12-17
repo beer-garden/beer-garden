@@ -719,6 +719,7 @@ _HTTP_SPEC = {
                 },
                 "role_entity_field": {
                     "type": "str",
+                    "required": False,
                     "description": "Proxy service to identify client roles",
                 },
             },
