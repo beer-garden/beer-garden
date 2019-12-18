@@ -4,6 +4,8 @@ import logging.handlers
 import os
 import sys
 
+log_levels = [n for n in getattr(logging, "_nameToLevel").keys()]
+
 
 class PluginHandler(object):
     """Basic Logging Handler for Plugins"""
@@ -22,8 +24,7 @@ class PluginHandler(object):
         raise AttributeError(attr)
 
 
-# Since we are imitating the logging module, we will allow camel case method names
-def getPluginLogger(
+def plugin_logger(
     name, format_string=None, log_directory=None, log_name=None, log_level=None
 ):
     """Get a logger for a plugin
@@ -63,12 +64,3 @@ def getPluginLogger(
     log.setLevel(log_level)
 
     return log
-
-
-def getLogLevels():
-    try:
-        # Python 2
-        return [n for n in getattr(logging, "_levelNames").keys() if isinstance(n, str)]
-    except AttributeError:
-        # Python 3
-        return [n for n in getattr(logging, "_nameToLevel").keys()]
