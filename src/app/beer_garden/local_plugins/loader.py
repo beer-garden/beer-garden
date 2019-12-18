@@ -157,8 +157,6 @@ class LocalPluginLoader(object):
                 process_args=process_args,
                 process_cwd=plugin_path,
                 process_env=process_env,
-                plugin_log_directory=self._log_dir,
-                log_level=plugin_config.get("LOG_LEVEL"),
             )
 
             self.registry.register_plugin(plugin)
