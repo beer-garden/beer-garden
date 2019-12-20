@@ -3,18 +3,15 @@
 import logging
 import subprocess
 from pathlib import Path
+from threading import Thread
 from typing import Sequence
 
-from brewtils.stoppable_thread import StoppableThread
-from time import sleep
 
-
-class PluginRunner(StoppableThread):
+class PluginRunner(Thread):
     """Thread that 'manages' a Plugin process.
 
     A runner will take care of creating and starting a process that will run the
-    plugin entry point. It will then monitor that process's STDOUT and STDERR and will
-    log anything it sees.
+    plugin entry point.
 
     """
 
@@ -33,7 +30,7 @@ class PluginRunner(StoppableThread):
         self.process_env = process_env
         self.process = None
 
-        StoppableThread.__init__(self, logger=self.logger, name=self.unique_name)
+        Thread.__init__(self, name=self.unique_name)
 
     def kill(self):
         """Kills the plugin by killing the underlying process."""
@@ -51,7 +48,7 @@ class PluginRunner(StoppableThread):
         self.logger.info(f"Starting plugin {self.unique_name}: {self.process_args}")
 
         try:
-            self.process = subprocess.Popen(
+            self.process = subprocess.run(
                 args=self.process_args,
                 env=self.process_env,
                 cwd=str(self.process_cwd.resolve()),
@@ -60,14 +57,6 @@ class PluginRunner(StoppableThread):
                 universal_newlines=True,
                 bufsize=1,
             )
-
-            # Just spin here until until the process is no longer alive
-            while self.process.poll() is None:
-                sleep(0.1)
-
-            # If stopped wasn't set then this was not expected
-            if not self.stopped():
-                self.logger.error(f"Plugin {self.unique_name} unexpectedly shutdown!")
 
             self.logger.info(f"Plugin {self.unique_name} is officially stopped")
 
