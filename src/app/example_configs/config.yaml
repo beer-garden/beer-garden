@@ -51,7 +51,7 @@ db:
     info: 15
 entry:
   http:
-    enable: false
+    enable: true
     host: 0.0.0.0
     port: 2337
     public_fqdn: localhost
@@ -82,10 +82,18 @@ event:
     enable: true
   parent:
     http:
-      enable: false
+      enable: true
       host: 0.0.0.0
       port: 2337
       public_fqdn: localhost
+      url_prefix: /
+      callback:
+        host: 0.0.0.0
+        port: 2337
+        public_fqdn: localhost
+        url_prefix: /
+        remote_user: bg_remote
+        ssl_enabled: false
       ssl:
         ca_cert: null
         ca_path: null
@@ -93,7 +101,7 @@ event:
         enabled: false
         private_key: null
         public_key: null
-      url_prefix: /
+
 log:
   config_file: example_configs/logging-config.json
   file: null

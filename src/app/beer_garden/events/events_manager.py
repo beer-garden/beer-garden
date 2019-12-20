@@ -7,7 +7,6 @@ from brewtils.stoppable_thread import StoppableThread
 from brewtils.models import Event, Events
 from brewtils.schema_parser import SchemaParser
 
-
 import beer_garden
 
 __all__ = ["events_queue"]
@@ -41,6 +40,7 @@ class EventProcessor(StoppableThread):
 
         :param event: The Event to be published
         """
+
         self.events_queue.put(event)
 
     def process_next_message(self, event):
@@ -118,25 +118,30 @@ def publish_event(event_type):
             raise
         else:
             if event.name in (
-                Events.INSTANCE_INITIALIZED.name,
-                Events.INSTANCE_STARTED.name,
-                Events.INSTANCE_STOPPED.name,
-                Events.REQUEST_CREATED.name,
-                Events.REQUEST_STARTED.name,
-                Events.REQUEST_COMPLETED.name,
-                Events.SYSTEM_CREATED.name,
-                Events.SYSTEM_UPDATED.name,
+                    Events.INSTANCE_INITIALIZED.name,
+                    Events.INSTANCE_STARTED.name,
+                    Events.INSTANCE_STOPPED.name,
+                    Events.REQUEST_CREATED.name,
+                    Events.REQUEST_STARTED.name,
+                    Events.REQUEST_COMPLETED.name,
+                    Events.SYSTEM_CREATED.name,
+                    Events.SYSTEM_UPDATED.name,
             ):
                 event.payload = SchemaParser.serialize(result, to_string=False)
             elif event.name in (Events.QUEUE_CLEARED.name, Events.SYSTEM_REMOVED.name):
                 event.payload = {"id": args[0]}
             elif event.name in (
-                Events.DB_CREATE.name,
-                Events.DB_DELETE.name,
-                Events.DB_UPDATE.name,
+                    Events.DB_CREATE.name,
+                    Events.DB_UPDATE.name,
             ):
                 event.payload = {
                     type(result).schema: SchemaParser.serialize(result, to_string=False)
+                }
+            elif event.name in (
+                    Events.DB_DELETE.name,
+            ):
+                event.payload = {
+                    type(args[0]).schema: SchemaParser.serialize(args[0], to_string=False)
                 }
         finally:
             beer_garden.events.events_manager.events_queue.put(event)

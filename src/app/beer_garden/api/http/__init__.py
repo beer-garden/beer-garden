@@ -22,6 +22,7 @@ from brewtils.schemas import (
     DateTriggerSchema,
     IntervalTriggerSchema,
     CronTriggerSchema,
+    NamespaceSchema,
 )
 from prometheus_client.exposition import start_http_server
 from tornado.httpserver import HTTPServer
@@ -181,6 +182,9 @@ def _setup_tornado_app():
         (rf"{prefix}api/v1/tokens/(\w+)/?", v1.token.TokenAPI),
         (rf"{prefix}api/v1/jobs/(\w+)/?", v1.job.JobAPI),
         (rf"{prefix}api/v1/config/logging/?", v1.logging.LoggingConfigAPI),
+
+        (rf"{prefix}api/v1/namespace/(\w+)/?", v1.namespace.NamespaceAPI),
+
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
         # V2
@@ -328,7 +332,11 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("User", schema=PrincipalSchema)
     api_spec.definition("Role", schema=RoleSchema)
     api_spec.definition("Queue", schema=QueueSchema)
+
     api_spec.definition("RefreshToken", schema=RefreshTokenSchema)
+
+    api_spec.definition("Namespace", schema=NamespaceSchema)
+
     api_spec.definition("_patch", schema=PatchSchema)
     api_spec.definition(
         "Patch",

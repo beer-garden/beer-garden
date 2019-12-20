@@ -845,6 +845,43 @@ _EVENT_SPEC = {
                                 },
                             },
                         },
+                        "callback": {
+                            "type": "dict",
+                            "items": {
+                                "port": {
+                                    "type": "int",
+                                    "default": 2337,
+                                    "description": "Serve content on this port",
+                                },
+                                "url_prefix": {
+                                    "type": "str",
+                                    "default": "/",
+                                    "description": "URL path prefix",
+                                    "required": False,
+                                },
+                                "host": {
+                                    "type": "str",
+                                    "default": "0.0.0.0",
+                                    "description": "Host for the HTTP Server to bind to",
+                                },
+                                "public_fqdn": {
+                                    "type": "str",
+                                    "default": "localhost",
+                                    "description": "Public fully-qualified domain name",
+                                },
+                                "remote_user": {
+                                    "type": "str",
+                                    "default": "bg_remote",
+                                    "description": "Remote User that Parent can callback as",
+                                },
+                                "ssl_enabled": {
+                                    "type": "bool",
+                                    "default": False,
+                                    "description": "Serve content using SSL",
+                                    "cli_separator": "_",
+                                },
+                            },
+                        },
                         "port": {
                             "type": "int",
                             "default": 2337,
