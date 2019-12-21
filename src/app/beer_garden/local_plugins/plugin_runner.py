@@ -17,7 +17,7 @@ class PluginRunner(Thread):
 
     def __init__(
         self,
-        unique_name: str,
+        runner_id: str,
         process_args: Sequence[str],
         process_cwd: Path,
         process_env: dict,
@@ -25,17 +25,17 @@ class PluginRunner(Thread):
         self.logger = logging.getLogger(__name__)
         self.process = None
 
-        self.unique_name = unique_name
+        self.runner_id = runner_id
         self.process_args = process_args
         self.process_cwd = process_cwd
         self.process_env = process_env
 
-        Thread.__init__(self, name=self.unique_name)
+        Thread.__init__(self, name=self.runner_id)
 
     def kill(self):
         """Kills the plugin by killing the underlying process."""
         if self.process and self.process.poll() is None:
-            self.logger.warning(f"About to kill plugin {self.unique_name}")
+            self.logger.warning(f"About to kill process {self.runner_id}")
             self.process.kill()
 
     def run(self):
@@ -45,7 +45,7 @@ class PluginRunner(Thread):
         its own subprocess. Pipes STDOUT and STDERR such that when the plugin stops
         executing (or IO is flushed) it will log it.
         """
-        self.logger.info(f"Starting plugin {self.unique_name}: {self.process_args}")
+        self.logger.info(f"Starting runner {self.runner_id}: {self.process_args}")
 
         try:
             self.process = subprocess.run(
@@ -58,7 +58,7 @@ class PluginRunner(Thread):
                 bufsize=1,
             )
 
-            self.logger.info(f"Plugin {self.unique_name} is officially stopped")
+            self.logger.info(f"Runner {self.runner_id} is officially stopped")
 
         except Exception as ex:
-            self.logger.exception(f"Plugin {self.unique_name} died: {ex}")
+            self.logger.exception(f"Runner {self.runner_id} died: {ex}")

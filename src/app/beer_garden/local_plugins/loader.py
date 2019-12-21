@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
+
 import json
 import logging
-import random
 import string
 import sys
 from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
+from random import choice
 from types import ModuleType
-from typing import List
+from typing import List, Dict
 
 from brewtils.specification import _SYSTEM_SPEC
 
@@ -19,7 +20,7 @@ from beer_garden.local_plugins.env_help import expand_string_with_environment_va
 from beer_garden.local_plugins.plugin_runner import PluginRunner
 from beer_garden.local_plugins.validator import validate_config
 
-runners = []
+runners = {}
 
 
 class RunnerManager(object):
@@ -45,7 +46,7 @@ class RunnerManager(object):
 
     @classmethod
     def current_paths(cls):
-        return [r.process_cwd for r in runners]
+        return [r.process_cwd for r in runners.values()]
 
     @classmethod
     def instance(cls):
@@ -60,22 +61,23 @@ class RunnerManager(object):
         return cls._instance
 
     def start_all(self):
-        for runner in runners:
+        for runner in runners.values():
             runner.start()
 
-    def stop(self, runner):
-        runners.remove(runner)
+    def stop(self, runner_id):
+        del runners[runner_id]
 
-    def restart(self, runner):
+    def restart(self, runner_id):
+        old_runner = runners[runner_id]
+
         new_runner = PluginRunner(
-            unique_name=runner.unique_name,
-            process_args=runner.process_args,
-            process_cwd=runner.process_cwd,
-            process_env=runner.process_env,
+            runner_id=old_runner.runner_id,
+            process_args=old_runner.process_args,
+            process_cwd=old_runner.process_cwd,
+            process_env=old_runner.process_env,
         )
 
-        runners.remove(runner)
-        runners.append(new_runner)
+        runners[runner_id] = new_runner
 
         new_runner.start()
 
@@ -94,12 +96,11 @@ class RunnerManager(object):
         for path in plugin_path.iterdir():
             try:
                 if path.is_dir() and path not in self.current_paths():
-                    for runner in self.create_runners(path):
-                        runners.append(runner)
+                    runners.update(self.create_runners(path))
             except Exception as ex:
                 self.logger.exception(f"Error loading plugin at {path}: {ex}")
 
-    def create_runners(self, plugin_path: Path) -> List[PluginRunner]:
+    def create_runners(self, plugin_path: Path) -> Dict[str, PluginRunner]:
         """Creates PluginRunners for a particular plugin directory
 
         It will use the validator to validate the plugin before registering the
@@ -127,22 +128,22 @@ class RunnerManager(object):
             plugin_config = _load_config(config_file)
         except PluginValidationError as ex:
             self.logger.error(f"Error loading config for plugin at {plugin_path}: {ex}")
-            return []
+            return {}
 
-        new_runners = []
+        new_runners = {}
 
         for instance_name in plugin_config["INSTANCES"]:
+            runner_id = "".join([choice(string.ascii_letters) for _ in range(10)])
             process_args = self._process_args(plugin_config, instance_name)
-            process_env = self._environment(instance_name, plugin_config, plugin_path)
-            unique = "".join([random.choice(string.ascii_lowercase) for _ in range(10)])
+            process_env = self._environment(
+                plugin_config, instance_name, plugin_path, runner_id
+            )
 
-            new_runners.append(
-                PluginRunner(
-                    unique_name=unique,
-                    process_args=process_args,
-                    process_cwd=plugin_path,
-                    process_env=process_env,
-                )
+            new_runners[runner_id] = PluginRunner(
+                runner_id=runner_id,
+                process_args=process_args,
+                process_cwd=plugin_path,
+                process_env=process_env,
             )
 
         return new_runners
@@ -164,7 +165,7 @@ class RunnerManager(object):
 
         return process_args
 
-    def _environment(self, instance_name, plugin_config, plugin_path):
+    def _environment(self, plugin_config, instance_name, plugin_path, runner_id):
         env = {}
 
         # System info comes from config file
@@ -190,6 +191,7 @@ class RunnerManager(object):
         env.update(
             {
                 "BG_INSTANCE_NAME": instance_name,
+                "BG_RUNNER_ID": runner_id,
                 "BG_PLUGIN_PATH": plugin_path.resolve(),
                 "BG_USERNAME": self._username,
                 "BG_PASSWORD": self._password,
