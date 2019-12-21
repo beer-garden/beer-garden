@@ -23,12 +23,12 @@ class PluginRunner(Thread):
         process_env: dict,
     ):
         self.logger = logging.getLogger(__name__)
-        self.unique_name = unique_name
+        self.process = None
 
+        self.unique_name = unique_name
         self.process_args = process_args
         self.process_cwd = process_cwd
         self.process_env = process_env
-        self.process = None
 
         Thread.__init__(self, name=self.unique_name)
 

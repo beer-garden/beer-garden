@@ -4,7 +4,6 @@ import logging
 import random
 import string
 import sys
-from enum import Enum
 from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
@@ -15,31 +14,16 @@ from brewtils.specification import _SYSTEM_SPEC
 
 import beer_garden.config
 from beer_garden.errors import PluginValidationError
+from beer_garden.local_plugins import ConfigKeys, CONFIG_NAME
 from beer_garden.local_plugins.env_help import expand_string_with_environment_var
 from beer_garden.local_plugins.plugin_runner import PluginRunner
-from beer_garden.local_plugins.registry import LocalPluginRegistry
+from beer_garden.local_plugins.validator import validate_config
 
-CONFIG_NAME = "beer.conf"
-
-
-class ConfigKeys(Enum):
-    PLUGIN_ENTRY = 1
-    INSTANCES = 2
-    PLUGIN_ARGS = 3
-    ENVIRONMENT = 4
-    LOG_LEVEL = 5
-
-    NAME = 6
-    VERSION = 7
-    DESCRIPTION = 8
-    MAX_INSTANCES = 9
-    ICON_NAME = 10
-    DISPLAY_NAME = 11
-    METADATA = 12
+runners = []
 
 
-class LocalPluginLoader(object):
-    """Class that helps with loading local plugins"""
+class RunnerManager(object):
+    """Manages creation and destruction of PluginRunners"""
 
     logger = logging.getLogger(__name__)
 
@@ -53,13 +37,15 @@ class LocalPluginLoader(object):
         username=None,
         password=None,
     ):
-        self.registry = LocalPluginRegistry.instance()
-
         self._plugin_path = Path(plugin_dir) if plugin_dir else None
         self._log_dir = log_dir
         self._connection_info = connection_info
         self._username = username
         self._password = password
+
+    @classmethod
+    def current_paths(cls):
+        return [r.process_cwd for r in runners]
 
     @classmethod
     def instance(cls):
@@ -73,26 +59,28 @@ class LocalPluginLoader(object):
             )
         return cls._instance
 
-    def load_plugins(self, path: str = None) -> None:
-        """Load all plugins
+    def start_all(self):
+        for runner in runners:
+            runner.start()
 
-        After each has been loaded, it checks the requirements to ensure
-        the plugin can be loaded correctly.
+    def stop(self, runner):
+        runners.remove(runner)
 
-        Args:
-            path: The path to scan for plugins. If none will default to the
-            plugin path specified at initialization.
-        """
-        for plugin_path in self.scan_plugin_path(path=path):
-            try:
-                self.load_plugin(plugin_path)
-            except Exception as ex:
-                self.logger.exception(
-                    "Exception while loading plugin %s: %s", plugin_path, ex
-                )
+    def restart(self, runner):
+        new_runner = PluginRunner(
+            unique_name=runner.unique_name,
+            process_args=runner.process_args,
+            process_cwd=runner.process_cwd,
+            process_env=runner.process_env,
+        )
 
-    def scan_plugin_path(self, path: Path = None) -> List[Path]:
-        """Find valid plugin directories in a given path.
+        runners.remove(runner)
+        runners.append(new_runner)
+
+        new_runner.start()
+
+    def load_new(self, path: str = None) -> None:
+        """Create PluginRunners for all plugins in a directory
 
         Note: This scan does not walk the directory tree - all plugins must be
         in the top level of the given path.
@@ -100,19 +88,19 @@ class LocalPluginLoader(object):
         Args:
             path: The path to scan for plugins. If none will default to the
                 plugin path specified at initialization.
-
-        Returns:
-            Potential paths containing plugins
         """
-        path = path or self._plugin_path
+        plugin_path = path or self._plugin_path
 
-        if path is None:
-            return []
+        for path in plugin_path.iterdir():
+            try:
+                if path.is_dir() and path not in self.current_paths():
+                    for runner in self.create_runners(path):
+                        runners.append(runner)
+            except Exception as ex:
+                self.logger.exception(f"Error loading plugin at {path}: {ex}")
 
-        return [x for x in path.iterdir() if x.is_dir()]
-
-    def load_plugin(self, plugin_path: Path) -> List[PluginRunner]:
-        """Loads a plugin given a path to a plugin directory.
+    def create_runners(self, plugin_path: Path) -> List[PluginRunner]:
+        """Creates PluginRunners for a particular plugin directory
 
         It will use the validator to validate the plugin before registering the
         plugin in the database as well as adding an entry to the plugin map.
@@ -141,31 +129,26 @@ class LocalPluginLoader(object):
             self.logger.error(f"Error loading config for plugin at {plugin_path}: {ex}")
             return []
 
-        plugin_list = []
+        new_runners = []
+
         for instance_name in plugin_config["INSTANCES"]:
-
-            process_args = self._generate_process_args(plugin_config, instance_name)
-
-            process_env = self._generate_environment(
-                instance_name, plugin_config, plugin_path
-            )
-
+            process_args = self._process_args(plugin_config, instance_name)
+            process_env = self._environment(instance_name, plugin_config, plugin_path)
             unique = "".join([random.choice(string.ascii_lowercase) for _ in range(10)])
 
-            plugin = PluginRunner(
-                unique_name=unique,
-                process_args=process_args,
-                process_cwd=plugin_path,
-                process_env=process_env,
+            new_runners.append(
+                PluginRunner(
+                    unique_name=unique,
+                    process_args=process_args,
+                    process_cwd=plugin_path,
+                    process_env=process_env,
+                )
             )
 
-            self.registry.register_plugin(plugin)
-            plugin_list.append(plugin)
-
-        return plugin_list
+        return new_runners
 
     @staticmethod
-    def _generate_process_args(plugin_config, instance_name):
+    def _process_args(plugin_config, instance_name):
         process_args = [sys.executable]
 
         if plugin_config.get("PLUGIN_ENTRY"):
@@ -181,7 +164,7 @@ class LocalPluginLoader(object):
 
         return process_args
 
-    def _generate_environment(self, instance_name, plugin_config, plugin_path):
+    def _environment(self, instance_name, plugin_config, plugin_path):
         env = {}
 
         # System info comes from config file
@@ -232,7 +215,7 @@ def _load_config(config_file: Path) -> dict:
 
     config_module = _config_from_beer_conf(config_file)
 
-    # validator.validate_config(config_module, plugin_path)
+    validate_config(config_module, config_file.parent)
 
     config = {}
     for key in ConfigKeys:
