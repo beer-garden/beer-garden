@@ -38,7 +38,7 @@ pip install -r requirements.txt
 There's a helper script for running the application in the `bin` directory, and example configs in the `example_config` directory. So an easy way to start the application is like this:
 
 ```
-python bin/app.py -c example_configs/config.yaml --entry-http-enable
+python bin/app.py -c example_configs/config.yaml
 ```
 
 #### Start the UI
