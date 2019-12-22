@@ -30,7 +30,9 @@ class MongoParser(SchemaParser):
         }
     )
 
-    @staticmethod
-    def _get_schema_name(model):
+    @classmethod
+    def _get_schema_name(cls, model):
         if isinstance(model, beer_garden.db.mongo.models.MongoModel):
             return model.brewtils_model.schema
+        else:
+            return super(MongoParser, cls)._get_schema_name(model)
