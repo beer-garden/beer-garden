@@ -659,6 +659,12 @@ class Namespace(MongoModel, Document):
     connection_params = DictField()
     remote_username = StringField()
 
+    meta = {
+        "auto_create_index": False,  # We need to manage this ourselves
+        "index_background": True,
+        "indexes": [{"name": "unique_index", "fields": ["namespace"], "unique": True}],
+    }
+
     def clean(self):
         """Validate before saving to the database"""
 
@@ -667,3 +673,5 @@ class Namespace(MongoModel, Document):
                 "Can not save Instance %s: Invalid status '%s' "
                 "provided." % (self.name, self.status)
             )
+
+

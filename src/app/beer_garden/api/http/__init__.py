@@ -183,7 +183,7 @@ def _setup_tornado_app():
         (rf"{prefix}api/v1/jobs/(\w+)/?", v1.job.JobAPI),
         (rf"{prefix}api/v1/config/logging/?", v1.logging.LoggingConfigAPI),
 
-        (rf"{prefix}api/v1/namespace/(\w+)/?", v1.namespace.NamespaceAPI),
+        (rf"{prefix}api/v1/namespaces/(\w+)/?", v1.namespace.NamespaceAPI),
 
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
