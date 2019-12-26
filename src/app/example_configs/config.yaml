@@ -95,7 +95,7 @@ event:
         public_key: null
       url_prefix: /
 log:
-  config_file: example_configs/logging-config.json
+  config_file: example_configs/logging-config.yaml
   file: null
   level: INFO
 metrics:
