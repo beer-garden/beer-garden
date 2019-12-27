@@ -121,7 +121,7 @@ plugin:
       shutdown: 10
       startup: 2
   logging:
-    config_file: example_configs/plugin-logging-config.json
+    config_file: example_configs/plugin-logging.yaml
     level: INFO
   status_heartbeat: 5
   status_timeout: 30

@@ -144,6 +144,9 @@ class EntryPoint(object):
         # Then set up logging to push everything back to the main process
         beer_garden.log.setup_entry_point_logging(log_queue)
 
+        # Also set up plugin logging
+        beer_garden.log.load_plugin_log_config()
+
         # Set up a database connection
         db.create_connection(db_config=beer_garden.config.get("db"))
 
