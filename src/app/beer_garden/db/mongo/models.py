@@ -218,7 +218,7 @@ class Command(MongoModel, Document):
             )
 
         if len(self.parameters) != len(
-                set(parameter.key for parameter in self.parameters)
+            set(parameter.key for parameter in self.parameters)
         ):
             raise ModelValidationError(
                 "Can not save Command %s: Contains Parameters "
@@ -363,8 +363,8 @@ class Request(MongoModel, Document):
             )
 
         if (
-                self.command_type is not None
-                and self.command_type not in BrewtilsRequest.COMMAND_TYPES
+            self.command_type is not None
+            and self.command_type not in BrewtilsRequest.COMMAND_TYPES
         ):
             raise ModelValidationError(
                 "Can not save Request %s: Invalid "
@@ -372,8 +372,8 @@ class Request(MongoModel, Document):
             )
 
         if (
-                self.output_type is not None
-                and self.output_type not in BrewtilsRequest.OUTPUT_TYPES
+            self.output_type is not None
+            and self.output_type not in BrewtilsRequest.OUTPUT_TYPES
         ):
             raise ModelValidationError(
                 "Can not save Request %s: Invalid output "
@@ -413,7 +413,7 @@ class System(MongoModel, Document):
             )
 
         if len(self.instances) != len(
-                set(instance.name for instance in self.instances)
+            set(instance.name for instance in self.instances)
         ):
             raise ModelValidationError(
                 "Can not save System %s: Duplicate instance names" % str(self)
@@ -673,5 +673,3 @@ class Namespace(MongoModel, Document):
                 "Can not save Instance %s: Invalid status '%s' "
                 "provided." % (self.name, self.status)
             )
-
-

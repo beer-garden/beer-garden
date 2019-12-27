@@ -100,8 +100,6 @@ def create_namespace(namespace: Namespace) -> Namespace:
 
     """
 
-
-
     namespace.status = "INITIALIZING"
     namespace.status_info["heartbeat"] = datetime.utcnow()
     db_namespace = db.query_unique(Namespace, namespace=namespace.namespace)
