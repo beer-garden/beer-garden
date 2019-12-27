@@ -95,6 +95,7 @@ def initialize_instance(instance_id: str) -> Instance:
     return instance
 
 
+@publish_event(Events.INSTANCE_UPDATED)
 def update_instance(instance_id: str, patch: PatchOperation) -> Instance:
     """Applies updates to an instance.
 

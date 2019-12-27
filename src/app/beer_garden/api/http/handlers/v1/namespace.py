@@ -6,7 +6,6 @@ from beer_garden.api.http.base_handler import BaseHandler
 
 
 class NamespaceAPI(BaseHandler):
-
     @authenticated(permissions=[Permissions.SYSTEM_READ])
     async def get(self, namespace):
         """
@@ -149,7 +148,7 @@ class NamespaceAPI(BaseHandler):
           - Namespace
         """
         response = await self.client.create_namespace(
-            SchemaParser.parse_namespace(self.request.decoded_body, from_string=True),
+            SchemaParser.parse_namespace(self.request.decoded_body, from_string=True)
         )
 
         self.set_status(201)

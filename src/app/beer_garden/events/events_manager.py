@@ -52,6 +52,13 @@ class EventProcessor(StoppableThread):
         """
         pass
 
+    def clear_queue(self):
+        # Stop accepting events so Beergarden can stop
+
+        # Purge local queue to prevent future processes
+        while not self.events_queue.empty():
+            self.events_queue.get()
+
     def run(self):
         """
         Processes events while Listener is active
@@ -118,31 +125,28 @@ def publish_event(event_type):
             raise
         else:
             if event.name in (
-                    Events.INSTANCE_INITIALIZED.name,
-                    Events.INSTANCE_STARTED.name,
-                    Events.INSTANCE_STOPPED.name,
-                    Events.REQUEST_CREATED.name,
-                    Events.REQUEST_STARTED.name,
-                    Events.REQUEST_COMPLETED.name,
-                    Events.SYSTEM_CREATED.name,
-                    Events.SYSTEM_UPDATED.name,
+                Events.INSTANCE_INITIALIZED.name,
+                Events.INSTANCE_STARTED.name,
+                Events.INSTANCE_STOPPED.name,
+                Events.REQUEST_CREATED.name,
+                Events.REQUEST_STARTED.name,
+                Events.REQUEST_COMPLETED.name,
+                Events.SYSTEM_CREATED.name,
             ):
-                event.payload = SchemaParser.serialize(result, to_string=False)
+                event.payload = result
+            elif event.name in (
+                Events.INSTANCE_UPDATED.name,
+                Events.REQUEST_UPDATED.name,
+                Events.SYSTEM_UPDATED.name,
+            ):
+                event.payload = result
+                event.metadata = args[1]
             elif event.name in (Events.QUEUE_CLEARED.name, Events.SYSTEM_REMOVED.name):
                 event.payload = {"id": args[0]}
-            elif event.name in (
-                    Events.DB_CREATE.name,
-                    Events.DB_UPDATE.name,
-            ):
-                event.payload = {
-                    type(result).schema: SchemaParser.serialize(result, to_string=False)
-                }
-            elif event.name in (
-                    Events.DB_DELETE.name,
-            ):
-                event.payload = {
-                    type(args[0]).schema: SchemaParser.serialize(args[0], to_string=False)
-                }
+            elif event.name in (Events.DB_CREATE.name, Events.DB_UPDATE.name):
+                event.payload = result
+            elif event.name in (Events.DB_DELETE.name,):
+                event.payload = args[0]
         finally:
             beer_garden.events.events_manager.events_queue.put(event)
 

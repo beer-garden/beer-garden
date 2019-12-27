@@ -58,7 +58,7 @@ __all__ = [
     "DateTrigger",
     "CronTrigger",
     "IntervalTrigger",
-    "Namespace"
+    "Namespace",
 ]
 
 
@@ -107,7 +107,7 @@ class Choices(MongoModel, EmbeddedDocument):
                 "the value was not a string" % self.value
             )
         elif self.type == "command" and not isinstance(
-                self.value, (six.string_types, dict)
+            self.value, (six.string_types, dict)
         ):
             raise ModelValidationError(
                 "Error saving choices '%s' - type was 'command' "
@@ -174,7 +174,7 @@ class Parameter(MongoModel, EmbeddedDocument):
             )
 
         if len(self.parameters) != len(
-                set(parameter.key for parameter in self.parameters)
+            set(parameter.key for parameter in self.parameters)
         ):
             raise ModelValidationError(
                 "Can not save Parameter %s: Contains Parameters "

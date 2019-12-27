@@ -20,7 +20,7 @@ ModelType = Union[
     Type[brewtils.models.Request],
     Type[brewtils.models.RequestTemplate],
     Type[brewtils.models.System],
-    Type[brewtils.models.Namespace]
+    Type[brewtils.models.Namespace],
 ]
 
 ModelItem = Union[
