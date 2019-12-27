@@ -69,7 +69,7 @@ def update_namespace_status(namespace_label: str, new_status: str) -> Namespace:
     namespace.status_info["heartbeat"] = datetime.utcnow()
 
     namespace = db.update(namespace)
-    logger.info("Updating Namespace: " + namespace_label + " To: " + new_status)
+    logger.info("Downstream Namespace " + namespace_label + " is now " + new_status)
     return namespace
 
 
@@ -84,7 +84,6 @@ def remove_namespace(namespace_label: str) -> None:
             None
 
         """
-    logger.info("Deleting Namespace:" + namespace_label)
     namespace = db.query_unique(Namespace, namespace=namespace_label)
     db.delete(namespace)
 
@@ -100,8 +99,20 @@ def create_namespace(namespace: Namespace) -> Namespace:
         The created Namespace
 
     """
+
+
+
     namespace.status = "INITIALIZING"
     namespace.status_info["heartbeat"] = datetime.utcnow()
-    namespace = db.create(namespace)
-    logger.info("Creating Namespace:" + namespace.namespace)
+    db_namespace = db.query_unique(Namespace, namespace=namespace.namespace)
+    if db_namespace:
+        db_namespace.status = namespace.status
+        db_namespace.status_info = namespace.status_info
+        db_namespace.connection_type = namespace.connection_type
+        db_namespace.connection_params = namespace.connection_params
+
+        namespace = db.update(db_namespace)
+    else:
+        namespace = db.create(namespace)
+
     return namespace
