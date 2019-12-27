@@ -7,9 +7,6 @@ from functools import partial
 import brewtils.models
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
-
-from beer_garden.events.events_manager import EventsManager
-from beer_garden.events.parent_http_processor import ParentHttpProcessor
 from brewtils.models import Events
 from brewtils.stoppable_thread import StoppableThread
 from pytz import utc
@@ -22,9 +19,11 @@ import beer_garden.queue.api as queue
 from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
-from beer_garden.local_plugins.loader import LocalPluginLoader
+from beer_garden.events.events_manager import EventsManager
+from beer_garden.events.parent_http_processor import ParentHttpProcessor
+from beer_garden.local_plugins.loader import RunnerManager
 from beer_garden.local_plugins.manager import LocalPluginsManager
-from beer_garden.local_plugins.monitor import LocalPluginMonitor
+from beer_garden.local_plugins.monitor import ProcessMonitor
 from beer_garden.log import load_plugin_log_config, EntryPointLogger
 from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import PluginStatusMonitor
@@ -70,7 +69,7 @@ class Application(StoppableThread):
 
         plugin_config = beer_garden.config.get("plugin")
         self.helper_threads = [
-            HelperThread(LocalPluginMonitor, plugin_manager=self.plugin_manager),
+            HelperThread(ProcessMonitor),
             HelperThread(
                 PluginStatusMonitor,
                 timeout_seconds=plugin_config.status_timeout,
@@ -152,10 +151,10 @@ class Application(StoppableThread):
             )
 
         self.logger.debug("Loading all local plugins...")
-        LocalPluginLoader.instance().load_plugins()
+        RunnerManager.instance().load_new()
 
         self.logger.debug("Starting all local plugins...")
-        self.plugin_manager.start_all_plugins()
+        RunnerManager.instance().start_all()
 
         self.logger.debug("Starting scheduler")
         self.scheduler.start()
