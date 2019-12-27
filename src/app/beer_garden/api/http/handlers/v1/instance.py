@@ -99,6 +99,11 @@ class InstanceAPI(BaseHandler):
             required: true
             description: The ID of the Instance
             type: string
+          - name: runner_id
+            in: query
+            required: false
+            description: The ID of the Instance
+            type: string
           - name: patch
             in: body
             required: true
