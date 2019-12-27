@@ -177,8 +177,6 @@ class Application(StoppableThread):
             self.logger.debug("Pausing scheduler - no more jobs will be run")
             self.scheduler.pause()
 
-        self.plugin_manager.stop_all_plugins()
-
         self.logger.debug("Stopping helper threads")
         for helper_thread in reversed(self.helper_threads):
             helper_thread.stop()
@@ -186,6 +184,8 @@ class Application(StoppableThread):
         if self.scheduler.running:
             self.logger.debug("Shutting down scheduler")
             self.scheduler.shutdown(wait=False)
+
+        self.plugin_manager.stop_all_plugins()
 
         try:
             self.events_manager.add_event(
