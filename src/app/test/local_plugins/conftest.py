@@ -1,8 +1,7 @@
 import pytest
 
-from beer_garden.local_plugins.loader import LocalPluginLoader
-from beer_garden.local_plugins.manager import LocalPluginsManager
 from beer_garden.local_plugins.monitor import LocalPluginMonitor
+from beer_garden.local_plugins.manager import LocalPluginsManager, PluginRunner
 from beer_garden.local_plugins.registry import LocalPluginRegistry
 
 

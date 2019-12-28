@@ -5,7 +5,7 @@ from brewtils.models import Instance
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.db.api as db
-from beer_garden.local_plugins.registry import LocalPluginRegistry
+from beer_garden.local_plugins.manager import runners, RunnerManager
 
 
 class LocalPluginMonitor(StoppableThread):

@@ -21,8 +21,7 @@ from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.events.events_manager import EventsManager
 from beer_garden.events.parent_http_processor import ParentHttpProcessor
-from beer_garden.local_plugins.loader import RunnerManager
-from beer_garden.local_plugins.manager import LocalPluginsManager
+from beer_garden.local_plugins.manager import LocalPluginsManager, RunnerManager
 from beer_garden.local_plugins.monitor import ProcessMonitor
 from beer_garden.log import load_plugin_log_config, EntryPointLogger
 from beer_garden.metrics import PrometheusServer
