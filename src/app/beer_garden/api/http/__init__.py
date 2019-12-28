@@ -34,7 +34,6 @@ import beer_garden.api.http.handlers.misc as misc
 import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.v2 as v2
 import beer_garden.api.http.handlers.vbeta as vbeta
-import beer_garden.bg_utils
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
 
 io_loop = None

@@ -4,7 +4,6 @@ import logging.config
 
 from brewtils.models import Request
 
-import beer_garden.bg_utils
 import beer_garden.config
 import beer_garden.log
 from beer_garden.__version__ import __version__
