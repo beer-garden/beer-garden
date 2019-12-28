@@ -23,3 +23,9 @@ class ShutdownError(Exception):
     """Backend has been shut down"""
 
     pass
+
+
+class LoggingLoadingError(Exception):
+    """Unable to load Plugin logging configuration"""
+
+    pass
