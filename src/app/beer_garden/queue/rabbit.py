@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import Sequence
+import random
+import string
 
 import pyrabbit2.api
 import pyrabbit2.http
 from brewtils.errors import NotFoundError
-from brewtils.models import Queue, Request
+from brewtils.models import Instance, Request, System
 from brewtils.pika import TransientPikaClient
 from brewtils.schema_parser import SchemaParser
 
+import beer_garden.db.api as db
 import beer_garden.requests
 
 logger = logging.getLogger(__name__)
@@ -54,21 +56,80 @@ def initial_setup():
     clients["pika"].declare_exchange()
 
 
-def create(name: str, routing_keys: Sequence[str], **kwargs) -> Queue:
-    clients["pika"].setup_queue(name, kwargs, routing_keys)
+def create(instance: Instance) -> dict:
+    """Create request and admin queues for a given instance
 
-    return Queue(name=name)
+    Args:
+        instance: The instance to create queues for
+
+    Returns:
+        Dictionary describing the created queues
+    """
+    system = db.query_unique(System, instances__contains=instance)
+
+    routing_words = [system.name, system.version, instance.name]
+    request_queue_name = get_routing_key(*routing_words)
+    clients["pika"].setup_queue(
+        request_queue_name,
+        {"durable": True, "arguments": {"x-max-priority": 1}},
+        [request_queue_name],
+    )
+
+    suffix = [random.choice(string.ascii_lowercase + string.digits) for _ in range(10)]
+    routing_words.append("".join(suffix))
+
+    admin_keys = get_routing_keys(*routing_words, is_admin=True)
+    admin_queue_name = admin_keys[-1]
+    clients["pika"].setup_queue(admin_queue_name, {"durable": True}, admin_keys)
+
+    amq_config = beer_garden.config.get("amq")
+    connection = {
+        "host": beer_garden.config.get("publish_hostname"),
+        "port": amq_config.connections.message.port,
+        "user": amq_config.connections.message.user,
+        "password": amq_config.connections.message.password,
+        "virtual_host": amq_config.virtual_host,
+        "ssl": {"enabled": amq_config.connections.message.ssl.enabled},
+    }
+
+    return {
+        "queue_type": "rabbitmq",
+        "queue_info": {
+            "admin": {"name": admin_queue_name},
+            "request": {"name": request_queue_name},
+            "connection": connection,
+        },
+    }
 
 
-def put(request: Request, **kwargs) -> None:
-    if "headers" not in kwargs:
-        kwargs["headers"] = {}
+def put(request: Request, headers: dict = None, **kwargs) -> None:
+    """Put a Request on a queue
+
+    If a routing_key is specified in the kwargs, it will be used. If not, system and
+    instance info on the Request will be used, along with the ``is_admin`` kwarg.
+
+    If the Request has an ID it will be added to the headers as 'request_id'.
+
+    Args:
+        request: The Request to publish
+        headers: Headers to use when publishing
+        **kwargs:
+            is_admin: Will be passed to get_routing_key
+            Other arguments will be passed to the client publish method
+
+    Returns:
+        None
+    """
+    kwargs["headers"] = headers or {}
     if request.id:
         kwargs["headers"]["request_id"] = request.id
 
     if "routing_key" not in kwargs:
         kwargs["routing_key"] = get_routing_key(
-            request.system, request.system_version, request.instance_name
+            request.system,
+            request.system_version,
+            request.instance_name,
+            is_admin=kwargs.get("is_admin", False),
         )
 
     clients["pika"].publish(SchemaParser.serialize_request(request), **kwargs)

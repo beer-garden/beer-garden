@@ -2,7 +2,7 @@
 import logging
 import logging.config
 
-from brewtils.models import Request
+from brewtils.models import RequestTemplate
 
 import beer_garden.config
 import beer_garden.log
@@ -21,8 +21,8 @@ __all__ = [
 application = None
 logger = None
 
-start_request = Request(command="_start", command_type="EPHEMERAL")
-stop_request = Request(command="_stop", command_type="EPHEMERAL")
+start_request = RequestTemplate(command="_start", command_type="EPHEMERAL")
+stop_request = RequestTemplate(command="_stop", command_type="EPHEMERAL")
 
 
 def signal_handler(signal_number, stack_frame):
