@@ -21,7 +21,7 @@ from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.events.events_manager import EventsManager
 from beer_garden.events.parent_http_processor import ParentHttpProcessor
-from beer_garden.local_plugins.manager import LocalPluginsManager, RunnerManager
+from beer_garden.local_plugins.manager import RunnerManager
 from beer_garden.log import load_plugin_log_config, EntryPointLogger
 from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import PluginStatusMonitor
@@ -37,7 +37,6 @@ class Application(StoppableThread):
 
     request_validator = None
     scheduler = None
-    plugin_manager = None
     clients = None
     helper_threads = None
     context = None
@@ -57,10 +56,6 @@ class Application(StoppableThread):
         self.scheduler = self._setup_scheduler()
 
         load_plugin_log_config()
-
-        self.plugin_manager = LocalPluginsManager(
-            shutdown_timeout=beer_garden.config.get("plugin.local.timeout.shutdown")
-        )
 
         self.logger.info("Setting up Event Manager")
         self._setup_events_manager()
@@ -189,7 +184,7 @@ class Application(StoppableThread):
         RunnerManager.instance().stop()
 
         self.logger.debug("Stopping local plugins")
-        self.plugin_manager.stop_all_plugins()
+        RunnerManager.instance().stop_all()
 
         try:
             self.events_manager.add_event(

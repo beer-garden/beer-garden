@@ -127,6 +127,12 @@ class RunnerManager(StoppableThread):
             runner.start()
 
     @classmethod
+    def stop_all(cls):
+        """Attempt to stop all plugins."""
+        # TODO - This currently stops all plugins, not just local ones
+        queue.put(Request.from_template(beer_garden.stop_request), is_admin=True)
+
+    @classmethod
     def remove(cls, runner_id):
         del cls.runners[runner_id]
 
