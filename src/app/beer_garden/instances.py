@@ -119,10 +119,6 @@ def start_instance(instance_id: str) -> Instance:
     )
     queue.put(request, is_admin=True)
 
-    # beer_garden.application.plugin_manager.start_plugin(
-    #     beer_garden.application.plugin_registry.get_plugin_from_instance_id(instance.id)
-    # )
-
     return instance
 
 
@@ -148,21 +144,6 @@ def stop_instance(instance_id: str) -> Instance:
         instance_name=instance.name,
     )
     queue.put(request, is_admin=True)
-
-    # local_plugin = beer_garden.application.plugin_registry.get_plugin_from_instance_id(
-    #     instance.id
-    # )
-    #
-    # if local_plugin:
-    #     beer_garden.application.plugin_manager.stop_plugin(local_plugin)
-    # else:
-    #     # This causes the request consumer to terminate itself, which ends the plugin
-    #     queue.put(
-    #         beer_garden.stop_request,
-    #         routing_key=get_routing_key(
-    #             system.name, system.version, instance.name, is_admin=True
-    #         ),
-    #     )
 
     return instance
 
