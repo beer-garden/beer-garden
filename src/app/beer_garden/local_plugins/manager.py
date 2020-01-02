@@ -73,7 +73,7 @@ class RunnerManager(StoppableThread):
             if self.stopped():
                 break
 
-            if runner.process:
+            if runner.process.poll() is not None:
                 self.logger.warning(f"Runner {runner_id} stopped, restarting")
                 self.restart(runner_id)
 
@@ -129,8 +129,26 @@ class RunnerManager(StoppableThread):
     @classmethod
     def stop_all(cls):
         """Attempt to stop all plugins."""
-        # TODO - This currently stops all plugins, not just local ones
-        queue.put(Request.from_template(beer_garden.stop_request), is_admin=True)
+        from time import sleep
+        sleep(1)
+
+        for runner_id in cls.runners:
+            cls.stop_one(runner_id)
+
+    @classmethod
+    def stop_one(cls, runner_id):
+        runner = cls.runners[runner_id]
+
+        if not runner.is_alive():
+            cls.logger.info(f"Runner {runner_id} was already stopped")
+            return
+
+        # try:
+        #     cls.logger.info(f"About to stop runner {runner_id}")
+        #     runner.terminate(timeout=3)
+        # except subprocess.TimeoutExpired:
+        #     cls.logger.error(f"Runner {runner_id} didn't terminate, about to kill")
+        #     runner.kill()
 
     @classmethod
     def remove(cls, runner_id):

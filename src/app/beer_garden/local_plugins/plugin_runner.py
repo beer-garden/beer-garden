@@ -4,6 +4,7 @@ import logging
 import subprocess
 from pathlib import Path
 from threading import Thread
+from time import sleep
 from typing import Sequence
 
 
@@ -33,7 +34,7 @@ class PluginRunner(Thread):
         Thread.__init__(self, name=self.runner_id)
 
     def kill(self):
-        """Kills the plugin by killing the underlying process."""
+        """Kill the underlying plugin process with SIGKILL"""
         if self.process and self.process.poll() is None:
             self.logger.warning(f"About to kill process {self.runner_id}")
             self.process.kill()
@@ -48,15 +49,18 @@ class PluginRunner(Thread):
         self.logger.info(f"Starting runner {self.runner_id}: {self.process_args}")
 
         try:
-            self.process = subprocess.run(
+            self.process = subprocess.Popen(
                 args=self.process_args,
                 env=self.process_env,
                 cwd=str(self.process_cwd.resolve()),
+                restore_signals=False,
                 start_new_session=True,
                 close_fds=True,
-                universal_newlines=True,
-                bufsize=1,
             )
+
+            # Just spin here until until the process is no longer alive
+            while self.process.poll() is None:
+                sleep(0.1)
 
             self.logger.info(f"Runner {self.runner_id} is officially stopped")
 
