@@ -3,6 +3,7 @@
 import json
 import logging
 import string
+from dataclasses import dataclass
 from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
@@ -26,6 +27,13 @@ from beer_garden.local_plugins import ConfigKeys, CONFIG_NAME
 from beer_garden.local_plugins.env_help import expand_string_with_environment_var
 from beer_garden.local_plugins.plugin_runner import PluginRunner
 from beer_garden.local_plugins.validator import validate_config
+
+
+@dataclass
+class Runner:
+    instance: PluginRunner
+    restart: bool = False
+    dead: bool = False
 
 
 class RunnerManager(StoppableThread):
@@ -73,41 +81,17 @@ class RunnerManager(StoppableThread):
             if self.stopped():
                 break
 
-            if runner.process.poll() is not None:
-                self.logger.warning(f"Runner {runner_id} stopped, restarting")
-                self.restart(runner_id)
-
-            # TODO - Add logic so plugins failing to start don't retry forever
-            # if (
-            #     runner.process
-            #     and runner.process.poll() is not None
-            #     and not runner.stopped()
-            # ):
-            #     plugin_instance = db.query_unique(Instance, id=runner.instance.id)
-            #     plugin_status = plugin_instance.status
-            #
-            #     if plugin_status == "RUNNING":
-            #         plugin_instance.status = "DEAD"
-            #         db.update(plugin_instance)
-            #
-            #         self.logger.warning(
-            #             f"It looks like plugin {runner.unique_name} has stopped "
-            #             f"running. If this is happening often, you should talk to the "
-            #             f"plugin developer. Attempting to restart."
-            #         )
-            #
-            #         self.plugin_manager.restart_plugin(runner)
-            #     elif plugin_status == "STARTING":
-            #         self.logger.warning(
-            #             f"Plugin {runner.unique_name} failed to start, marking as dead."
-            #         )
-            #
-            #         plugin_instance.status = "DEAD"
-            #         db.update(plugin_instance)
+            if runner.instance.process.poll() is not None:
+                if runner.restart:
+                    self.logger.warning(f"Runner {runner_id} stopped, restarting")
+                    self.restart(runner_id)
+                elif not runner.dead:
+                    self.logger.warning(f"Runner {runner_id} is dead, not restarting")
+                    runner.dead = True
 
     @classmethod
     def current_paths(cls):
-        return [r.process_cwd for r in cls.runners.values()]
+        return [r.instance.process_cwd for r in cls.runners.values()]
 
     @classmethod
     def instance(cls):
@@ -124,7 +108,7 @@ class RunnerManager(StoppableThread):
     @classmethod
     def start_all(cls):
         for runner in cls.runners.values():
-            runner.start()
+            runner.instance.start()
 
     @classmethod
     def stop_all(cls):
@@ -139,7 +123,7 @@ class RunnerManager(StoppableThread):
     def stop_one(cls, runner_id):
         runner = cls.runners[runner_id]
 
-        if not runner.is_alive():
+        if not runner.instance.is_alive():
             cls.logger.info(f"Runner {runner_id} was already stopped")
             return
 
@@ -188,7 +172,7 @@ class RunnerManager(StoppableThread):
             except Exception as ex:
                 self.logger.exception(f"Error loading plugin at {path}: {ex}")
 
-    def create_runners(self, plugin_path: Path) -> Dict[str, PluginRunner]:
+    def create_runners(self, plugin_path: Path) -> Dict[str, Runner]:
         """Creates PluginRunners for a particular plugin directory
 
         It will use the validator to validate the plugin before registering the
@@ -227,11 +211,13 @@ class RunnerManager(StoppableThread):
                 plugin_config, instance_name, plugin_path, runner_id
             )
 
-            new_runners[runner_id] = PluginRunner(
-                runner_id=runner_id,
-                process_args=process_args,
-                process_cwd=plugin_path,
-                process_env=process_env,
+            new_runners[runner_id] = Runner(
+                instance=PluginRunner(
+                    runner_id=runner_id,
+                    process_args=process_args,
+                    process_cwd=plugin_path,
+                    process_env=process_env,
+                )
             )
 
         return new_runners
