@@ -21,12 +21,12 @@ from beer_garden.errors import PluginValidationError
 from beer_garden.local_plugins import ConfigKeys, CONFIG_NAME
 from beer_garden.local_plugins.env_help import expand_string_with_environment_var
 from beer_garden.local_plugins.plugin_runner import PluginRunner
-from beer_garden.local_plugins.validator import validate_config
 
 
 @dataclass
 class Runner:
     instance: PluginRunner
+    instance_id: str = ""
     restart: bool = False
     dead: bool = False
 
@@ -192,7 +192,7 @@ class RunnerManager(StoppableThread):
             raise PluginValidationError(f"Config file {config_file} is not a file")
 
         try:
-            plugin_config = _load_config(config_file)
+            plugin_config = ConfigLoader.load(config_file)
         except PluginValidationError as ex:
             self.logger.error(f"Error loading config for plugin at {plugin_path}: {ex}")
             return {}
@@ -281,66 +281,217 @@ class RunnerManager(StoppableThread):
         return env
 
 
-def _load_config(config_file: Path) -> dict:
-    """Loads a plugin config"""
+class ConfigLoader(object):
+    @staticmethod
+    def load(config_file: Path) -> dict:
+        """Loads a plugin config"""
 
-    config_module = _config_from_beer_conf(config_file)
+        config_module = ConfigLoader._config_from_beer_conf(config_file)
 
-    validate_config(config_module, config_file.parent)
+        ConfigLoader._validate(config_module, config_file.parent)
 
-    config = {}
-    for key in ConfigKeys:
-        if hasattr(config_module, key.name):
-            config[key.name] = getattr(config_module, key.name)
+        config = {}
+        for key in ConfigKeys:
+            if hasattr(config_module, key.name):
+                config[key.name] = getattr(config_module, key.name)
 
-    # Instances and arguments need some normalization
-    config.update(
-        _normalize_instance_args(config.get("INSTANCES"), config.get("PLUGIN_ARGS"))
-    )
+        # Instances and arguments need some normalization
+        config.update(
+            ConfigLoader._normalize_instance_args(config.get("INSTANCES"), config.get("PLUGIN_ARGS"))
+        )
 
-    return config
+        return config
 
+    @staticmethod
+    def _config_from_beer_conf(config_file: Path) -> ModuleType:
+        """Load a beer.conf file as a Python module"""
 
-def _config_from_beer_conf(config_file: Path) -> ModuleType:
-    """Load a beer.conf file as a Python module"""
+        # Need to construct our own Loader here, the default doesn't work with .conf
+        loader = SourceFileLoader("bg_plugin_config", str(config_file))
+        spec = spec_from_file_location("bg_plugin_config", config_file, loader=loader)
+        config_module = module_from_spec(spec)
+        spec.loader.exec_module(config_module)
 
-    # Need to construct our own Loader here, the default doesn't work with .conf
-    loader = SourceFileLoader("bg_plugin_config", str(config_file))
-    spec = spec_from_file_location("bg_plugin_config", config_file, loader=loader)
-    config_module = module_from_spec(spec)
-    spec.loader.exec_module(config_module)
+        return config_module
 
-    return config_module
-
-
-def _normalize_instance_args(instances, args):
-    """Normalize the different ways instances and arguments can be specified"""
-    if instances is None and args is None:
-        instances = ["default"]
-        args = {"default": None}
-
-    elif args is None:
-        args = {}
-        for instance_name in instances:
-            args[instance_name] = None
-
-    elif instances is None:
-        if isinstance(args, list):
+    @staticmethod
+    def _normalize_instance_args(instances, args):
+        """Normalize the different ways instances and arguments can be specified"""
+        if instances is None and args is None:
             instances = ["default"]
-            args = {"default": args}
-        elif isinstance(args, dict):
-            instances = list(args.keys())
+            args = {"default": None}
+
+        elif args is None:
+            args = {}
+            for instance_name in instances:
+                args[instance_name] = None
+
+        elif instances is None:
+            if isinstance(args, list):
+                instances = ["default"]
+                args = {"default": args}
+            elif isinstance(args, dict):
+                instances = list(args.keys())
+            else:
+                raise ValueError(f"PLUGIN_ARGS must be list or dict, found {type(args)}")
+
+        elif isinstance(args, list):
+            temp_args = {}
+            for instance_name in instances:
+                temp_args[instance_name] = args
+
+            args = temp_args
+
         else:
-            raise ValueError(f"PLUGIN_ARGS must be list or dict, found {type(args)}")
+            raise PluginValidationError("Invalid INSTANCES and PLUGIN_ARGS combination")
 
-    elif isinstance(args, list):
-        temp_args = {}
-        for instance_name in instances:
-            temp_args[instance_name] = args
+        return {"INSTANCES": instances, "PLUGIN_ARGS": args}
 
-        args = temp_args
+    @staticmethod
+    def _validate(config_module: ModuleType, path: Path) -> None:
+        """Validate a plugin directory is valid
 
-    else:
-        raise PluginValidationError("Invalid INSTANCES and PLUGIN_ARGS combination")
+        Args:
+            config_module: Configuration module to validate
+            path: Path to directory containing plugin
 
-    return {"INSTANCES": instances, "PLUGIN_ARGS": args}
+        Returns:
+            None
+
+        Raises:
+            PluginValidationError: Validation was not successful
+
+        """
+        ConfigLoader._entry_point(config_module, path)
+        ConfigLoader._instances(config_module)
+        ConfigLoader._args(config_module)
+        ConfigLoader._environment(config_module)
+
+    @staticmethod
+    def _entry_point(config_module, path: Path) -> None:
+        """Validates a plugin's entry point.
+
+        An entry point is considered valid if the config has an entry with key
+        PLUGIN_ENTRY and the value is a path to either a file or the name of a runnable
+        Python module.
+        """
+        entry_point = getattr(config_module, ConfigKeys.PLUGIN_ENTRY.name, None)
+
+        if not entry_point:
+            return
+
+        if (path / entry_point).is_file():
+            return
+
+        entry_parts = entry_point.split(" ")
+        pkg = entry_parts[1] if entry_parts[0] == "-m" else entry_parts[0]
+        pkg_path = path / pkg
+
+        if (
+            pkg_path.is_dir()
+            and (pkg_path / "__init__.py").is_file()
+            and (pkg_path / "__main__.py").is_file()
+        ):
+            return
+
+        raise PluginValidationError(
+            f"{ConfigKeys.PLUGIN_ENTRY.name} '{entry_point}' must be a Python file or a "
+            f"runnable package"
+        )
+
+    @staticmethod
+    def _instances(config_module) -> None:
+        instances = getattr(config_module, ConfigKeys.INSTANCES.name, None)
+
+        if instances is not None and not isinstance(instances, list):
+            raise PluginValidationError(
+                f"Invalid {ConfigKeys.INSTANCES.name} entry '{instances}': if present it "
+                f"must be a list"
+            )
+
+    @staticmethod
+    def _args(config_module) -> None:
+        args = getattr(config_module, ConfigKeys.PLUGIN_ARGS.name, None)
+
+        if args is None:
+            return
+
+        if isinstance(args, list):
+            ConfigLoader._individual_args(args)
+
+        elif isinstance(args, dict):
+            instances = getattr(config_module, ConfigKeys.INSTANCES.name)
+
+            for instance_name, instance_args in args.items():
+                if instances is not None and instance_name not in instances:
+                    raise PluginValidationError(
+                        f"{ConfigKeys.PLUGIN_ARGS.name} contains key '{instance_name}' but "
+                        f"that instance is not in {ConfigKeys.INSTANCES.name}"
+                    )
+
+                ConfigLoader._individual_args(instance_args)
+
+            if instances:
+                for instance_name in instances:
+                    if instance_name not in args.keys():
+                        raise PluginValidationError(
+                            f"{ConfigKeys.INSTANCES.name} contains '{instance_name}' but "
+                            f"that instance is not in {ConfigKeys.PLUGIN_ARGS.name}"
+                        )
+
+        else:
+            raise PluginValidationError(
+                f"Invalid {ConfigKeys.PLUGIN_ARGS.name} '{args}': must be a list or dict"
+            )
+
+    @staticmethod
+    def _individual_args(args) -> None:
+        """Validates an individual PLUGIN_ARGS entry"""
+        if args is None:
+            return
+
+        if not isinstance(args, list):
+            raise PluginValidationError(
+                f"Invalid {ConfigKeys.PLUGIN_ARGS.name} entry '{args}': must be a list"
+            )
+
+        for arg in args:
+            if not isinstance(arg, str):
+                raise PluginValidationError(
+                    f"Invalid plugin argument '{arg}': must be a string"
+                )
+
+    @staticmethod
+    def _environment(config_module) -> None:
+        """Validates ENVIRONMENT if specified.
+
+        ENVIRONMENT must be a dictionary of Strings to Strings. Otherwise it is invalid.
+        """
+        env = getattr(config_module, ConfigKeys.ENVIRONMENT.name, None)
+
+        if env is None:
+            return
+
+        if not isinstance(env, dict):
+            raise PluginValidationError(
+                f"Invalid {ConfigKeys.ENVIRONMENT.name} entry '{env}': if present it must "
+                f"be a dict"
+            )
+
+        for key, value in env.items():
+            if not isinstance(key, str):
+                raise PluginValidationError(
+                    f"Invalid {ConfigKeys.ENVIRONMENT.name} key '{key}': must be a string"
+                )
+
+            if not isinstance(value, str):
+                raise PluginValidationError(
+                    f"Invalid {ConfigKeys.ENVIRONMENT.name} value '{value}': must be a string"
+                )
+
+            if key.startswith("BG_"):
+                raise PluginValidationError(
+                    f"Invalid {ConfigKeys.ENVIRONMENT.name} key '{key}': Can't specify an "
+                    f"environment variable with a 'BG_' prefix as it can mess with "
+                    f"internal Beer-garden machinery. Sorry about that :/"
+                )
