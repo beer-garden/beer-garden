@@ -10,6 +10,8 @@ from pathlib import Path
 from random import choice
 from types import ModuleType
 from typing import Dict
+from enum import Enum
+
 
 import sys
 from brewtils.specification import _SYSTEM_SPEC
@@ -18,9 +20,26 @@ from brewtils.stoppable_thread import StoppableThread
 import beer_garden
 import beer_garden.config
 from beer_garden.errors import PluginValidationError
-from beer_garden.local_plugins import ConfigKeys, CONFIG_NAME
 from beer_garden.local_plugins.env_help import expand_string_with_environment_var
 from beer_garden.local_plugins.runner import ProcessRunner
+
+CONFIG_NAME = "beer.conf"
+
+
+class ConfigKeys(Enum):
+    PLUGIN_ENTRY = 1
+    INSTANCES = 2
+    PLUGIN_ARGS = 3
+    ENVIRONMENT = 4
+    LOG_LEVEL = 5
+
+    NAME = 6
+    VERSION = 7
+    DESCRIPTION = 8
+    MAX_INSTANCES = 9
+    ICON_NAME = 10
+    DISPLAY_NAME = 11
+    METADATA = 12
 
 
 @dataclass
