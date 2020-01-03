@@ -357,6 +357,9 @@ class ConfigLoader(object):
 
             args = temp_args
 
+        elif isinstance(instances, list) and isinstance(args, dict):
+            pass
+
         else:
             raise PluginValidationError("Invalid INSTANCES and PLUGIN_ARGS combination")
 
