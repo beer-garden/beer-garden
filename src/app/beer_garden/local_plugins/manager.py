@@ -21,7 +21,7 @@ from brewtils.stoppable_thread import StoppableThread
 import beer_garden
 import beer_garden.config
 from beer_garden.errors import PluginValidationError
-from beer_garden.local_plugins.env_help import expand_string_with_environment_var
+from beer_garden.local_plugins.env_help import expand_string
 from beer_garden.local_plugins.runner import ProcessRunner
 
 CONFIG_NAME = "beer.conf"
@@ -287,7 +287,7 @@ class PluginManager(StoppableThread):
 
         # ENVIRONMENT from beer.conf
         for key, value in plugin_config.get("ENVIRONMENT", {}).items():
-            env[key] = expand_string_with_environment_var(str(value), env)
+            env[key] = expand_string(str(value), env)
 
         # Ensure values are all strings
         for key, value in env.items():
