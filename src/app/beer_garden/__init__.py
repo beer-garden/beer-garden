@@ -29,11 +29,6 @@ def signal_handler(signal_number, stack_frame):
     beer_garden.logger.info("Last call! Looks like we gotta close up.")
     beer_garden.application.stop()
 
-    if beer_garden.application.is_alive():
-        beer_garden.application.join()
-
-    beer_garden.logger.info("OK, we're all shut down. Have a good night!")
-
 
 def load_config(cli_args):
     global logger

@@ -43,7 +43,10 @@ def main():
     # Thanks! :)
     signal.pause()
 
-    beer_garden.logger.info("Don't forget to drive safe!")
+    if beer_garden.application.is_alive():
+        beer_garden.application.join()
+
+    beer_garden.logger.info("OK, we're all shut down. Have a good night!")
 
 
 if __name__ == "__main__":
