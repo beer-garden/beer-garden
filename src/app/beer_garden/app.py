@@ -66,7 +66,7 @@ class Application(StoppableThread):
                 PluginStatusMonitor,
                 timeout_seconds=plugin_config.status_timeout,
                 heartbeat_interval=plugin_config.status_heartbeat,
-            ),
+            )
         ]
 
         # Only want to run the MongoPruner if it would do anything

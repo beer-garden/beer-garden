@@ -312,7 +312,9 @@ class ConfigLoader(object):
 
         # Instances and arguments need some normalization
         config.update(
-            ConfigLoader._normalize_instance_args(config.get("INSTANCES"), config.get("PLUGIN_ARGS"))
+            ConfigLoader._normalize_instance_args(
+                config.get("INSTANCES"), config.get("PLUGIN_ARGS")
+            )
         )
 
         return config
@@ -348,7 +350,9 @@ class ConfigLoader(object):
             elif isinstance(args, dict):
                 instances = list(args.keys())
             else:
-                raise ValueError(f"PLUGIN_ARGS must be list or dict, found {type(args)}")
+                raise ValueError(
+                    f"PLUGIN_ARGS must be list or dict, found {type(args)}"
+                )
 
         elif isinstance(args, list):
             temp_args = {}
