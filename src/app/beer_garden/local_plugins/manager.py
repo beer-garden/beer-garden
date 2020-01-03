@@ -8,6 +8,7 @@ from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from random import choice
+from time import sleep
 from types import ModuleType
 from typing import Dict
 from enum import Enum
@@ -119,6 +120,7 @@ class PluginManager(StoppableThread):
 
     @classmethod
     def start_all(cls):
+        sleep(3)
         for plugin in cls.plugins.values():
             plugin.runner.start()
 
@@ -136,7 +138,6 @@ class PluginManager(StoppableThread):
             cls.logger.info(f"Plugin {plugin_id} was already stopped")
             return
 
-        from time import sleep
         sleep(1)
 
         if plugin.runner.is_alive():
