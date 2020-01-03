@@ -66,14 +66,12 @@ class PluginManager(StoppableThread):
         self.logger.info(self.display_name + " is stopped")
 
     def monitor(self):
-        """Make sure runners stay alive
+        """Ensure that processes are still alive
 
-        Iterate through all plugins, testing them one at a time.
-
-        If any of them are dead restart them, otherwise just keep chugging along.
+        Iterate through all plugins, restarting any processes that have stopped.
         """
         for plugin_id, plugin in self.plugins.items():
-            if self.stopped():
+            if self.stopped() or beer_garden.application.stopped():
                 break
 
             if plugin.runner.process.poll() is not None:
@@ -108,9 +106,6 @@ class PluginManager(StoppableThread):
     @classmethod
     def stop_all(cls):
         """Attempt to stop all plugins."""
-        from time import sleep
-        sleep(1)
-
         for plugin_id in cls.plugins:
             cls.stop_one(plugin_id)
 
@@ -122,12 +117,12 @@ class PluginManager(StoppableThread):
             cls.logger.info(f"Plugin {plugin_id} was already stopped")
             return
 
-        # try:
-        #     cls.logger.info(f"About to stop runner {runner_id}")
-        #     runner.terminate(timeout=3)
-        # except subprocess.TimeoutExpired:
-        #     cls.logger.error(f"Plugin {runner_id} didn't terminate, about to kill")
-        #     runner.kill()
+        from time import sleep
+        sleep(1)
+
+        if plugin.runner.is_alive():
+            cls.logger.info(f"About to kill plugin {plugin_id}")
+            plugin.runner.kill()
 
     @classmethod
     def remove(cls, plugin_id):
