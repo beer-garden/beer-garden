@@ -8,7 +8,7 @@ from time import sleep
 from typing import Sequence
 
 
-class PluginRunner(Thread):
+class ProcessRunner(Thread):
     """Thread that 'manages' a Plugin process.
 
     A runner will take care of creating and starting a process that will run the
@@ -62,7 +62,7 @@ class PluginRunner(Thread):
             while self.process.poll() is None:
                 sleep(0.1)
 
-            self.logger.info(f"Runner {self.runner_id} is officially stopped")
+            self.logger.info(f"Plugin {self.runner_id} is officially stopped")
 
         except Exception as ex:
-            self.logger.exception(f"Runner {self.runner_id} died: {ex}")
+            self.logger.exception(f"Plugin {self.runner_id} died: {ex}")

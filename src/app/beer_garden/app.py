@@ -21,7 +21,7 @@ from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.events.events_manager import EventsManager
 from beer_garden.events.parent_http_processor import ParentHttpProcessor
-from beer_garden.local_plugins.manager import RunnerManager
+from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config, EntryPointLogger
 from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import PluginStatusMonitor
@@ -143,13 +143,13 @@ class Application(StoppableThread):
             )
 
         self.logger.debug("Loading all local plugins...")
-        RunnerManager.instance().load_new()
+        PluginManager.instance().load_new()
 
         self.logger.debug("Starting all local plugins...")
-        RunnerManager.instance().start_all()
+        PluginManager.instance().start_all()
 
         self.logger.debug("Starting local plugin process monitoring...")
-        RunnerManager.instance().start()
+        PluginManager.instance().start()
 
         self.logger.debug("Starting scheduler")
         self.scheduler.start()
@@ -181,10 +181,10 @@ class Application(StoppableThread):
             self.scheduler.shutdown(wait=False)
 
         self.logger.debug("Stopping local plugin process monitoring")
-        RunnerManager.instance().stop()
+        PluginManager.instance().stop()
 
         self.logger.debug("Stopping local plugins")
-        RunnerManager.instance().stop_all()
+        PluginManager.instance().stop_all()
 
         try:
             self.events_manager.add_event(

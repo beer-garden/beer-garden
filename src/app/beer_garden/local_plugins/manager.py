@@ -20,22 +20,22 @@ import beer_garden.config
 from beer_garden.errors import PluginValidationError
 from beer_garden.local_plugins import ConfigKeys, CONFIG_NAME
 from beer_garden.local_plugins.env_help import expand_string_with_environment_var
-from beer_garden.local_plugins.plugin_runner import PluginRunner
+from beer_garden.local_plugins.runner import ProcessRunner
 
 
 @dataclass
-class Runner:
-    instance: PluginRunner
+class Plugin:
+    runner: ProcessRunner
     instance_id: str = ""
     restart: bool = False
     dead: bool = False
 
 
-class RunnerManager(StoppableThread):
+class PluginManager(StoppableThread):
     """Manages creation and destruction of PluginRunners"""
 
     logger = logging.getLogger(__name__)
-    runners = {}
+    plugins = {}
 
     _instance = None
 
@@ -47,7 +47,7 @@ class RunnerManager(StoppableThread):
         username=None,
         password=None,
     ):
-        self.display_name = "Runner Manager"
+        self.display_name = "Plugin Manager"
 
         self._plugin_path = Path(plugin_dir) if plugin_dir else None
         self._log_dir = log_dir
@@ -55,7 +55,7 @@ class RunnerManager(StoppableThread):
         self._username = username
         self._password = password
 
-        super().__init__(logger=self.logger, name="RunnerManager")
+        super().__init__(logger=self.logger, name="PluginManager")
 
     def run(self):
         self.logger.info(self.display_name + " is started")
@@ -72,21 +72,21 @@ class RunnerManager(StoppableThread):
 
         If any of them are dead restart them, otherwise just keep chugging along.
         """
-        for runner_id, runner in self.runners.items():
+        for plugin_id, plugin in self.plugins.items():
             if self.stopped():
                 break
 
-            if runner.instance.process.poll() is not None:
-                if runner.restart:
-                    self.logger.warning(f"Runner {runner_id} stopped, restarting")
-                    self.restart(runner_id)
-                elif not runner.dead:
-                    self.logger.warning(f"Runner {runner_id} is dead, not restarting")
-                    runner.dead = True
+            if plugin.runner.process.poll() is not None:
+                if plugin.restart:
+                    self.logger.warning(f"Plugin {plugin_id} stopped, restarting")
+                    self.restart(plugin_id)
+                elif not plugin.dead:
+                    self.logger.warning(f"Plugin {plugin_id} is dead, not restarting")
+                    plugin.dead = True
 
     @classmethod
     def current_paths(cls):
-        return [r.instance.process_cwd for r in cls.runners.values()]
+        return [plugin.runner.process_cwd for plugin in cls.plugins.values()]
 
     @classmethod
     def instance(cls):
@@ -102,8 +102,8 @@ class RunnerManager(StoppableThread):
 
     @classmethod
     def start_all(cls):
-        for runner in cls.runners.values():
-            runner.instance.start()
+        for plugin in cls.plugins.values():
+            plugin.runner.start()
 
     @classmethod
     def stop_all(cls):
@@ -111,40 +111,40 @@ class RunnerManager(StoppableThread):
         from time import sleep
         sleep(1)
 
-        for runner_id in cls.runners:
-            cls.stop_one(runner_id)
+        for plugin_id in cls.plugins:
+            cls.stop_one(plugin_id)
 
     @classmethod
-    def stop_one(cls, runner_id):
-        runner = cls.runners[runner_id]
+    def stop_one(cls, plugin_id):
+        plugin = cls.plugins[plugin_id]
 
-        if not runner.instance.is_alive():
-            cls.logger.info(f"Runner {runner_id} was already stopped")
+        if not plugin.runner.is_alive():
+            cls.logger.info(f"Plugin {plugin_id} was already stopped")
             return
 
         # try:
         #     cls.logger.info(f"About to stop runner {runner_id}")
         #     runner.terminate(timeout=3)
         # except subprocess.TimeoutExpired:
-        #     cls.logger.error(f"Runner {runner_id} didn't terminate, about to kill")
+        #     cls.logger.error(f"Plugin {runner_id} didn't terminate, about to kill")
         #     runner.kill()
 
     @classmethod
-    def remove(cls, runner_id):
-        del cls.runners[runner_id]
+    def remove(cls, plugin_id):
+        del cls.plugins[plugin_id]
 
     @classmethod
-    def restart(cls, runner_id):
-        old_runner = cls.runners[runner_id]
+    def restart(cls, plugin_id):
+        old_runner = cls.plugins[plugin_id].runner
 
-        new_runner = PluginRunner(
+        new_runner = ProcessRunner(
             runner_id=old_runner.runner_id,
             process_args=old_runner.process_args,
             process_cwd=old_runner.process_cwd,
             process_env=old_runner.process_env,
         )
 
-        cls.runners[runner_id] = new_runner
+        cls.plugins[plugin_id] = Plugin(runner=new_runner)
 
         new_runner.start()
 
@@ -163,12 +163,12 @@ class RunnerManager(StoppableThread):
         for path in plugin_path.iterdir():
             try:
                 if path.is_dir() and path not in self.current_paths():
-                    self.runners.update(self.create_runners(path))
+                    self.plugins.update(self.create_plugins(path))
             except Exception as ex:
                 self.logger.exception(f"Error loading plugin at {path}: {ex}")
 
-    def create_runners(self, plugin_path: Path) -> Dict[str, Runner]:
-        """Creates PluginRunners for a particular plugin directory
+    def create_plugins(self, plugin_path: Path) -> Dict[str, Plugin]:
+        """Creates Plugins for a particular plugin directory
 
         It will use the validator to validate the plugin before registering the
         plugin in the database as well as adding an entry to the plugin map.
@@ -197,7 +197,7 @@ class RunnerManager(StoppableThread):
             self.logger.error(f"Error loading config for plugin at {plugin_path}: {ex}")
             return {}
 
-        new_runners = {}
+        new_plugins = {}
 
         for instance_name in plugin_config["INSTANCES"]:
             runner_id = "".join([choice(string.ascii_letters) for _ in range(10)])
@@ -206,8 +206,8 @@ class RunnerManager(StoppableThread):
                 plugin_config, instance_name, plugin_path, runner_id
             )
 
-            new_runners[runner_id] = Runner(
-                instance=PluginRunner(
+            new_plugins[runner_id] = Plugin(
+                runner=ProcessRunner(
                     runner_id=runner_id,
                     process_args=process_args,
                     process_cwd=plugin_path,
@@ -215,7 +215,7 @@ class RunnerManager(StoppableThread):
                 )
             )
 
-        return new_runners
+        return new_plugins
 
     @staticmethod
     def _process_args(plugin_config, instance_name):
