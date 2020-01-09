@@ -54,7 +54,6 @@ class ProcessRunner(Thread):
                 env=self.process_env,
                 cwd=str(self.process_cwd.resolve()),
                 restore_signals=False,
-                start_new_session=True,
                 close_fds=True,
             )
 
