@@ -1,28 +1,20 @@
-import wrapt
-
-import multiprocessing
+# -*- coding: utf-8 -*-
 from multiprocessing import Queue
 
-from brewtils.stoppable_thread import StoppableThread
+import wrapt
 from brewtils.models import Event, Events
 from brewtils.schema_parser import SchemaParser
+from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden
 
-__all__ = ["events_queue"]
-
-# COMPONENTS #
-events_queue = None
+# In entry point processes this will be used to ship events back to the master process
+upstream_queue = None
 
 
-def establish_events_queue(queue: Queue = None):
-    global events_queue
-
-    if queue is None:
-        context = multiprocessing.get_context("spawn")
-        queue = context.Queue()
-
-    events_queue = queue
+def set_upstream(queue: Queue) -> None:
+    global upstream_queue
+    upstream_queue = queue
 
 
 class EventProcessor(StoppableThread):
@@ -148,7 +140,7 @@ def publish_event(event_type):
             elif event.name in (Events.DB_DELETE.name,):
                 event.payload = args[0]
         finally:
-            beer_garden.events.events_manager.events_queue.put(event)
+            upstream_queue.put(event)
 
         return result
 

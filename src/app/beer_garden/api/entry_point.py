@@ -10,6 +10,7 @@ from box import Box
 
 import beer_garden.config
 import beer_garden.db.api as db
+import beer_garden.events.events_manager
 import beer_garden.queue.api as queue
 
 T = TypeVar("T", bound="EntryPoint")
@@ -60,6 +61,7 @@ class EntryPoint(object):
         Args:
             context: multiprocessing context to use when creating the process
             log_queue: queue to use for logging consolidation
+            events_queue: queue to use to sent events to the main process
 
         Returns:
             None
@@ -138,8 +140,7 @@ class EntryPoint(object):
         beer_garden.config.assign(config)
 
         # Then setup Event Manager Queue
-        # beer_garden.establish_events_queue(event_queue)
-        beer_garden.events.events_manager.establish_events_queue(event_queue)
+        beer_garden.events.events_manager.set_upstream(event_queue)
 
         # Then set up logging to push everything back to the main process
         beer_garden.log.setup_entry_point_logging(log_queue)
