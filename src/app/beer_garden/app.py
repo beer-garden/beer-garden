@@ -57,7 +57,6 @@ class Application(StoppableThread):
 
         load_plugin_log_config()
 
-        self.logger.info("Setting up Event Manager")
         self._setup_events_manager()
 
         plugin_config = beer_garden.config.get("plugin")
@@ -99,6 +98,12 @@ class Application(StoppableThread):
                 self.entry_points.append(EntryPoint.create(entry_name))
 
     def run(self):
+        if not self._verify_mongo_connection():
+            return
+
+        if not self._verify_message_queue_connection():
+            return
+
         self._startup()
 
         while not self.wait(0.1):
@@ -118,14 +123,55 @@ class Application(StoppableThread):
             self.wait(wait_time)
             wait_time = min(wait_time * 2, 30)
 
+        return not self.stopped()
+
+    def _verify_mongo_connection(self):
+        """Verify that that the application can connect to mongo
+
+        Returns:
+            True: the verification was successful
+            False: the app was stopped before a connection could be verified
+        """
+        self.logger.debug("Verifying mongo connection...")
+        return self._progressive_backoff(
+            partial(db.check_connection, beer_garden.config.get("db")),
+            "Unable to connect to mongo, is it started?",
+        )
+
+    def _verify_message_queue_connection(self):
+        """Verify that that the application can connect to the message queue
+
+        Returns:
+            True: the verification was successful
+            False: the app was stopped before a connection could be verified
+        """
+        self.logger.debug("Verifying message queue connection...")
+        queue.create_clients(beer_garden.config.get("amq"))
+
+        if not self._progressive_backoff(
+            partial(queue.check_connection, "pika"),
+            "Unable to connect to rabbitmq, is it started?",
+        ):
+            return False
+
+        return self._progressive_backoff(
+            partial(queue.check_connection, "pyrabbit"),
+            "Unable to connect to rabbitmq admin interface. "
+            "Is the management plugin enabled?",
+        )
+
     def _startup(self):
         self.logger.debug("Starting Application...")
 
-        self.logger.debug("Setting up database...")
-        self._setup_database()
+        self.logger.debug("Starting event manager...")
+        self.events_manager.start()
 
-        self.logger.debug("Setting up queues...")
-        self._setup_queues()
+        self.logger.debug("Setting up database...")
+        db.create_connection(db_config=beer_garden.config.get("db"))
+        db.initial_setup(beer_garden.config.get("auth.guest_login_enabled"))
+
+        self.logger.debug("Setting up message queues...")
+        queue.initial_setup()
 
         self.logger.debug("Starting helper threads...")
         for helper_thread in self.helper_threads:
@@ -205,21 +251,6 @@ class Application(StoppableThread):
 
         self.logger.info("Successfully shut down Beer-garden")
 
-    def _setup_database(self):
-        """Startup tasks related to the database
-
-        This will:
-          - ensure a connection to the database (using a connection with short timeouts)
-          - create the actual connection to the database
-          - ensure the database is in a good state
-        """
-        self._progressive_backoff(
-            partial(db.check_connection, beer_garden.config.get("db")),
-            "Unable to connect to mongo, is it started?",
-        )
-        db.create_connection(db_config=beer_garden.config.get("db"))
-        db.initial_setup(beer_garden.config.get("auth.guest_login_enabled"))
-
     def _setup_events_manager(self):
         beer_garden.events.events_manager.establish_events_queue()
 
@@ -232,30 +263,6 @@ class Application(StoppableThread):
             self.events_manager.register_processor(
                 ParentHttpProcessor(event_config.parent.http)
             )
-
-        self.events_manager.start()
-
-    def _setup_queues(self):
-        """Startup tasks related to the message queues
-
-        This will:
-          - create the message queue clients
-          - make sure that all clients have active connections
-          - ensure the broker and queues are in a good state
-        """
-        queue.create_clients(beer_garden.config.get("amq"))
-
-        self._progressive_backoff(
-            partial(queue.check_connection, "pika"),
-            "Unable to connect to rabbitmq, is it started?",
-        )
-        self._progressive_backoff(
-            partial(queue.check_connection, "pyrabbit"),
-            "Unable to connect to rabbitmq admin interface. "
-            "Is the management plugin enabled?",
-        )
-
-        queue.initial_setup()
 
     @staticmethod
     def _setup_scheduler():
