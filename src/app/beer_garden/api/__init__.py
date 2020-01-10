@@ -11,7 +11,7 @@ import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
-import beer_garden.namespace
+import beer_garden.garden
 
 
 def namespace_router(_wrapped):
@@ -108,7 +108,7 @@ get_plugin_log_config = namespace_router(beer_garden.log.get_plugin_log_config)
 reload_plugin_log_config = namespace_router(beer_garden.log.reload_plugin_log_config)
 
 # Namespace Config
-get_namespace = beer_garden.namespace.get_namespace
-update_namespace = beer_garden.namespace.update_namespace
-remove_namespace = beer_garden.namespace.remove_namespace
-create_namespace = beer_garden.namespace.create_namespace
+get_garden = beer_garden.garden.get_garden
+update_garden = beer_garden.garden.update_garden
+remove_garden = beer_garden.garden.remove_garden
+create_garden = beer_garden.garden.create_garden

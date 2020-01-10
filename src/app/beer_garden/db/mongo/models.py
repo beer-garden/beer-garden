@@ -58,7 +58,7 @@ __all__ = [
     "DateTrigger",
     "CronTrigger",
     "IntervalTrigger",
-    "Namespace",
+    "Garden",
 ]
 
 
@@ -649,10 +649,10 @@ class Job(MongoModel, Document):
             )
 
 
-class Namespace(MongoModel, Document):
-    brewtils_model = brewtils.models.Namespace
+class Garden(MongoModel, Document):
+    brewtils_model = brewtils.models.Garden
 
-    namespace = StringField(required=True, default="default")
+    garden_name = StringField(required=True, default="default")
     status = StringField(default="INITIALIZING")
     status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
     connection_type = StringField()
@@ -662,7 +662,7 @@ class Namespace(MongoModel, Document):
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
         "index_background": True,
-        "indexes": [{"name": "unique_index", "fields": ["namespace"], "unique": True}],
+        "indexes": [{"name": "unique_index", "fields": ["garden_name"], "unique": True}],
     }
 
     def clean(self):

@@ -5,21 +5,21 @@ from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
 
 
-class NamespaceAPI(BaseHandler):
+class GardenAPI(BaseHandler):
     @authenticated(permissions=[Permissions.SYSTEM_READ])
-    async def get(self, namespace):
+    async def get(self, garden_name):
         """
         ---
         summary: Delete a specific Instance
         parameters:
-          - name: namespace
+          - name: garden_name
             in: path
             required: true
-            description: Namespace to use
+            description: Garden to use
             type: string
         responses:
           200:
-            description: Namespace with the given namespace
+            description: Garden with the given garden_name
             schema:
               $ref: '#/definitions/Instance'
           404:
@@ -29,25 +29,25 @@ class NamespaceAPI(BaseHandler):
         tags:
           - Namespace
         """
-        response = await self.client.get_namespace(namespace)
+        response = await self.client.get_garden(garden_name)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
     @authenticated(permissions=[Permissions.SYSTEM_DELETE])
-    async def delete(self, namespace):
+    async def delete(self, garden_name):
         """
         ---
-        summary: Delete a specific Instance
+        summary: Delete a specific Garden
         parameters:
-          - name: namespace
+          - name: garden_name
             in: path
             required: true
-            description: Namespace to use
+            description: Garden to use
             type: string
         responses:
           204:
-            description: Instance has been successfully deleted
+            description: Garden has been successfully deleted
           404:
             $ref: '#/definitions/404Error'
           50x:
@@ -55,15 +55,15 @@ class NamespaceAPI(BaseHandler):
         tags:
           - Namespace
         """
-        await self.client.remove_namespace(namespace)
+        await self.client.remove_garden(garden_name)
 
         self.set_status(204)
 
     @authenticated(permissions=[Permissions.SYSTEM_UPDATE])
-    async def patch(self, namespace):
+    async def patch(self, garden_name):
         """
         ---
-        summary: Partially update a Namespace
+        summary: Partially update a Garden
         description: |
           The body of the request needs to contain a set of instructions detailing the
           updates to apply. Currently the only operations are:
@@ -79,20 +79,20 @@ class NamespaceAPI(BaseHandler):
           ]
           ```
         parameters:
-          - name: namespace
+          - name: garden_name
             in: path
             required: true
-            description: Namespace to use
+            description: Garden to use
             type: string
           - name: patch
             in: body
             required: true
-            description: Instructions for how to update the System
+            description: Instructions for how to update the Garden
             schema:
               $ref: '#/definitions/Patch'
         responses:
           200:
-            description: Namespace with the given namespace
+            description: Garden with the given garden_name
             schema:
               $ref: '#/definitions/System'
           400:
@@ -105,7 +105,7 @@ class NamespaceAPI(BaseHandler):
           - Namespace
         """
         response = await self.client.update_namespace(
-            namespace,
+            garden_name,
             SchemaParser.parse_patch(self.request.decoded_body, from_string=True),
         )
 
@@ -113,31 +113,31 @@ class NamespaceAPI(BaseHandler):
         self.write(response)
 
     @authenticated(permissions=[Permissions.SYSTEM_CREATE])
-    async def post(self, namespace):
+    async def post(self, garden_name):
         """
         ---
-        summary: Create a new Namespace or update an existing Namespace
+        summary: Create a new Garden or update an existing Garden
         description: |
-            If the Namespace does not exist it will be created. If the Namespace
+            If the Garden does not exist it will be created. If the Garden
             already exists it will be updated (assuming it passes validation).
         parameters:
-          - name: namespace
+          - name: garden_name
             in: path
             required: true
-            description: Namespace to use
+            description: Garden to use
             type: string
           - name: namespace-body
             in: body
-            description: The Namespace definition to create / update
+            description: The Garden definition to create / update
             schema:
               $ref: '#/definitions/Namespace'
         responses:
           200:
-            description: An existing System has been updated
+            description: An existing Garden has been updated
             schema:
               $ref: '#/definitions/Namespace'
           201:
-            description: A new System has been created
+            description: A new Garden has been created
             schema:
               $ref: '#/definitions/Namespace'
           400:
@@ -147,8 +147,8 @@ class NamespaceAPI(BaseHandler):
         tags:
           - Namespace
         """
-        response = await self.client.create_namespace(
-            SchemaParser.parse_namespace(self.request.decoded_body, from_string=True)
+        response = await self.client.create_garden(
+            SchemaParser.parse_garden(self.request.decoded_body, from_string=True)
         )
 
         self.set_status(201)

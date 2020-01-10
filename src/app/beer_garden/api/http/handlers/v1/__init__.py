@@ -13,4 +13,4 @@ import beer_garden.api.http.handlers.v1.role
 import beer_garden.api.http.handlers.v1.system
 import beer_garden.api.http.handlers.v1.token
 import beer_garden.api.http.handlers.v1.user
-import beer_garden.api.http.handlers.v1.namespace
+import beer_garden.api.http.handlers.v1.garden

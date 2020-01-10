@@ -233,7 +233,7 @@ class Application(StoppableThread):
         if event_config.parent.http.enable:
             self.events_manager.register_processor(
                 ParentHttpProcessor(
-                    event_config.parent.http, beer_garden.config.get("namespaces.local")
+                    event_config.parent.http, beer_garden.config.get("garden_name")
                 )
             )
 

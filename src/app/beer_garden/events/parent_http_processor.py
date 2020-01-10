@@ -2,7 +2,7 @@ import requests
 
 from beer_garden.events.events_manager import EventProcessor
 
-from brewtils.models import Namespace, PatchOperation
+from brewtils.models import Garden, PatchOperation
 from brewtils.schema_parser import SchemaParser
 
 
@@ -11,7 +11,7 @@ class ParentHttpProcessor(EventProcessor):
     Forwards events to parent Beer Garden instance.
     """
 
-    def __init__(self, config, namespace):
+    def __init__(self, config, garden_name):
         """
 
         :param config:
@@ -26,7 +26,8 @@ class ParentHttpProcessor(EventProcessor):
 
         self.skip_events = config.skip_events
 
-        self.namespace = namespace
+        self.garden_name = garden_name
+
         self.callback = config.callback
 
         self.registered = False
@@ -109,11 +110,11 @@ class ParentHttpProcessor(EventProcessor):
                     if responses[0].status_code == 500:
                         self._build_system_from_instance(event)
 
-                elif event.name == Events.NAMESPACE_CREATED.name:
+                elif event.name == Events.GARDEN_CREATED_CREATED.name:
                     pass
-                elif event.name == Events.NAMESPACE_UPDATED.name:
+                elif event.name == Events.GARDEN_UPDATED.name:
                     pass
-                elif event.name == Events.NAMESPACE_REMOVED.name:
+                elif event.name == Events.GARDEN_REMOVED.name:
                     pass
                 elif event.name == Events.ALL_QUEUES_CLEARED.name:
                     pass
@@ -159,10 +160,10 @@ class ParentHttpProcessor(EventProcessor):
         try:
             if not self.registered:
                 response = requests.post(
-                    self.endpoint + "namespaces/" + self.namespace,
+                    self.endpoint + "garden/" + self.garden_name,
                     json=SchemaParser.serialize(
-                        Namespace(
-                            namespace=self.namespace,
+                        Garden(
+                            garden_name=self.garden_name,
                             status="INITIALIZING",
                             connection_type="https"
                             if self.callback.ssl_enabled
@@ -177,7 +178,7 @@ class ParentHttpProcessor(EventProcessor):
                     self.connected = True
             else:
                 response = self._patch(
-                    "namespaces/", self.namespace, [PatchOperation(operation="running")]
+                    "garden/", self.garden_name, [PatchOperation(operation="running")]
                 )
                 if response[0].status_code in [200, 201]:
                     self.connected = True
