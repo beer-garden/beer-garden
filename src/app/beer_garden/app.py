@@ -101,7 +101,9 @@ class Application(StoppableThread):
 
         for entry_name, entry_value in beer_garden.config.get("entry").items():
             if entry_value.get("enable"):
-                self.entry_points.append(EntryPoint.create(entry_name))
+                self.entry_points.append(
+                    EntryPoint.create(entry_name, self.context.Queue())
+                )
 
     def run(self):
         if not self._verify_mongo_connection():
