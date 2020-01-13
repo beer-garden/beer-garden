@@ -917,8 +917,8 @@ _EVENT_SPEC = {
                         },
                         "skip_events": {
                             "type": "list",
-                            "items": {"name": {"type": "str"}},
-                            "default": [],
+                            "items": {"skip_event": {"type": "str"}},
+                            "default": ("DB_CREATE",),
                             "required": False,
                             "description": "Events to be skipped",
                         },
@@ -993,7 +993,7 @@ _NAMESPACES_SPEC = {
         "local": {
             "type": "str",
             "description": "The local namespace",
-            "fallback": "garden.name",
+            "default": "default",
         },
         "remote": {
             "type": "list",
