@@ -22,7 +22,8 @@ class GardenListAPITest(unittest.TestCase):
             garden_name="default",
             status="RUNNING",
             connection_type="http",
-            connection_params={"host":"local"},)
+            connection_params={"host": "local"},
+        )
 
     @patch("mongoengine.queryset.QuerySet.order_by", Mock(return_value=[]))
     def test_get_emtpy(self):
