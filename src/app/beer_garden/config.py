@@ -298,15 +298,16 @@ def _parse_args(args: Sequence[str]) -> Tuple[YapconfSpec, dict]:
 
     return spec, cli_vars
 
+
 _GARDEN_SPEC = {
     "type": "dict",
     "bootstrap": True,
     "items": {
         "name": {
             "type": "str",
-            "default": 'default',
+            "default": "default",
             "description": "The routing name for upstream Beer Gardens to use",
-        },
+        }
     },
 }
 
@@ -511,7 +512,7 @@ _AUTH_SPEC = {
             "type": "bool",
             "default": True,
             "description": "Only applicable if auth is enabled. If set to "
-                           "true, guests can login without username/passwords.",
+            "true, guests can login without username/passwords.",
         },
         "token": {
             "type": "dict",
@@ -588,7 +589,7 @@ _DB_SPEC = {
                     "type": "int",
                     "default": 15,
                     "description": "Number of minutes to wait before deleting "
-                                   "events (negative number for never)",
+                    "events (negative number for never)",
                     "previous_names": ["event_mongo_ttl"],
                     "alt_env_names": ["EVENT_MONGO_TTL"],
                 },
@@ -596,7 +597,7 @@ _DB_SPEC = {
                     "type": "int",
                     "default": -1,
                     "description": "Number of minutes to wait before deleting "
-                                   "ACTION requests (negative number for never)",
+                    "ACTION requests (negative number for never)",
                     "previous_names": ["action_request_ttl"],
                     "alt_env_names": ["ACTION_REQUEST_TTL"],
                 },
@@ -604,7 +605,7 @@ _DB_SPEC = {
                     "type": "int",
                     "default": 15,
                     "description": "Number of minutes to wait before deleting "
-                                   "INFO requests (negative number for never)",
+                    "INFO requests (negative number for never)",
                     "previous_names": ["info_request_ttl"],
                     "alt_env_names": ["INFO_REQUEST_TTL"],
                 },
@@ -1037,7 +1038,7 @@ _PLUGIN_SPEC = {
                 "level": {
                     "type": "str",
                     "description": "Default log level for plugins (could be "
-                                   "overwritten by plugin_log_config value)",
+                    "overwritten by plugin_log_config value)",
                     "default": "INFO",
                     "choices": [
                         "DEBUG",
@@ -1060,7 +1061,7 @@ _PLUGIN_SPEC = {
             "type": "int",
             "default": 30,
             "description": "Amount of time to wait before marking a plugin as"
-                           "unresponsive",
+            "unresponsive",
             "previous_names": ["plugin_status_timeout "],
         },
         "local": {
@@ -1072,13 +1073,13 @@ _PLUGIN_SPEC = {
                         "username": {
                             "type": "str",
                             "description": "Username that local plugins will use for "
-                                           "authentication (needs bg-plugin role)",
+                            "authentication (needs bg-plugin role)",
                             "required": False,
                         },
                         "password": {
                             "type": "str",
                             "description": "Password that local plugins will use for "
-                                           "authentication (needs bg-plugin role)",
+                            "authentication (needs bg-plugin role)",
                             "required": False,
                         },
                     },
@@ -1104,7 +1105,7 @@ _PLUGIN_SPEC = {
                             "type": "int",
                             "default": 10,
                             "description": "Seconds to wait for a plugin to stop"
-                                           "gracefully",
+                            "gracefully",
                             "previous_names": ["plugin_shutdown_timeout"],
                             "alt_env_names": ["PLUGIN_SHUTDOWN_TIMEOUT"],
                         },
@@ -1131,13 +1132,13 @@ _SCHEDULER_SPEC = {
                 "username": {
                     "type": "str",
                     "description": "Username that scheduler will use for "
-                                   "authentication (needs bg-admin role)",
+                    "authentication (needs bg-admin role)",
                     "required": False,
                 },
                 "password": {
                     "type": "str",
                     "description": "Password that scheduler will use for "
-                                   "authentication (needs bg-admin role)",
+                    "authentication (needs bg-admin role)",
                     "required": False,
                 },
             },
