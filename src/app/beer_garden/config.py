@@ -301,10 +301,10 @@ def _parse_args(args: Sequence[str]) -> Tuple[YapconfSpec, dict]:
 
 _GARDEN_SPEC = {
     "type": "dict",
-    "bootstrap": True,
     "items": {
         "name": {
             "type": "str",
+            "required": True,
             "default": "default",
             "description": "The routing name for upstream Beer Gardens to use",
         }
