@@ -10,7 +10,7 @@ class GardenAPI(BaseHandler):
     async def get(self, garden_name):
         """
         ---
-        summary: Delete a specific Instance
+        summary: Retrieve a specific Garden
         parameters:
           - name: garden_name
             in: path

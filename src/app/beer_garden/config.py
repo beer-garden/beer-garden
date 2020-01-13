@@ -298,10 +298,16 @@ def _parse_args(args: Sequence[str]) -> Tuple[YapconfSpec, dict]:
 
     return spec, cli_vars
 
-_GARDEN_NAME_SPEC = {
-    "type": "str",
-    "default": 'default',
-    "description": "The routing name for upstream Beer Gardens to use",
+_GARDEN_SPEC = {
+    "type": "dict",
+    "bootstrap": True,
+    "items": {
+        "name": {
+            "type": "str",
+            "default": 'default',
+            "description": "The routing name for upstream Beer Gardens to use",
+        },
+    },
 }
 
 _META_SPEC = {
@@ -986,7 +992,7 @@ _NAMESPACES_SPEC = {
         "local": {
             "type": "str",
             "description": "The local namespace",
-            "fallback": "garden_name",
+            "fallback": "garden.name",
         },
         "remote": {
             "type": "list",
@@ -1214,12 +1220,11 @@ _SPECIFICATION = {
     "amq": _AMQ_SPEC,
     "application": _APP_SPEC,
     "auth": _AUTH_SPEC,
-    #"routing": _ROUTING_SPEC,
     "configuration": _META_SPEC,
     "db": _DB_SPEC,
     "entry": _ENTRY_SPEC,
     "event": _EVENT_SPEC,
-    "garden_name": _GARDEN_NAME_SPEC,
+    "garden": _GARDEN_SPEC,
     "log": _LOG_SPEC,
     "metrics": _METRICS_SPEC,
     "namespaces": _NAMESPACES_SPEC,
