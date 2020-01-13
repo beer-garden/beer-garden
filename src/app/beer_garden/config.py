@@ -994,6 +994,7 @@ _NAMESPACES_SPEC = {
             "type": "str",
             "description": "The local namespace",
             "default": "default",
+            "required": True,
         },
         "remote": {
             "type": "list",
