@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+## 2.4.13
+1/14/20
+Brew-view 2.4.17, Bartender 2.4.6, BG-utils 2.4.9
+
+#### Bug Fixes
+- Fixed issue where scheduler would not work with self-signed cert (#391)
+
 ## 2.4.12
 12/5/19
 Brew-view 2.4.16, Bartender 2.4.6, BG-utils 2.4.9
