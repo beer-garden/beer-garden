@@ -11,6 +11,7 @@ import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
+import beer_garden.garden
 
 
 def namespace_router(_wrapped):
@@ -90,7 +91,6 @@ get_all_queue_info = namespace_router(beer_garden.queues.get_all_queue_info)
 clear_queue = namespace_router(beer_garden.queues.clear_queue)
 clear_all_queues = namespace_router(beer_garden.queues.clear_all_queues)
 
-
 # Scheduler
 get_job = namespace_router(beer_garden.scheduler.get_job)
 get_jobs = namespace_router(beer_garden.scheduler.get_jobs)
@@ -99,12 +99,16 @@ pause_job = namespace_router(beer_garden.scheduler.pause_job)
 resume_job = namespace_router(beer_garden.scheduler.resume_job)
 remove_job = namespace_router(beer_garden.scheduler.remove_job)
 
-
 # Commands
 get_command = namespace_router(beer_garden.commands.get_command)
 get_commands = namespace_router(beer_garden.commands.get_commands)
 
-
 # Log config
 get_plugin_log_config = namespace_router(beer_garden.log.get_plugin_log_config)
 reload_plugin_log_config = namespace_router(beer_garden.log.reload_plugin_log_config)
+
+# Namespace Config
+get_garden = beer_garden.garden.get_garden
+update_garden = beer_garden.garden.update_garden
+remove_garden = beer_garden.garden.remove_garden
+create_garden = beer_garden.garden.create_garden

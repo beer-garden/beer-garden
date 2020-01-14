@@ -58,6 +58,7 @@ __all__ = [
     "DateTrigger",
     "CronTrigger",
     "IntervalTrigger",
+    "Garden",
 ]
 
 
@@ -645,4 +646,32 @@ class Job(MongoModel, Document):
             raise ModelValidationError(
                 "Cannot save job. Trigger type: %s but got trigger: %s"
                 % (self.trigger_type, type(self.trigger))
+            )
+
+
+class Garden(MongoModel, Document):
+    brewtils_model = brewtils.models.Garden
+
+    garden_name = StringField(required=True, default="default")
+    status = StringField(default="INITIALIZING")
+    status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
+    connection_type = StringField()
+    connection_params = DictField()
+    remote_username = StringField()
+
+    meta = {
+        "auto_create_index": False,  # We need to manage this ourselves
+        "index_background": True,
+        "indexes": [
+            {"name": "unique_index", "fields": ["garden_name"], "unique": True}
+        ],
+    }
+
+    def clean(self):
+        """Validate before saving to the database"""
+
+        if self.status not in BrewtilsInstance.INSTANCE_STATUSES:
+            raise ModelValidationError(
+                "Can not save Instance %s: Invalid status '%s' "
+                "provided." % (self.name, self.status)
             )

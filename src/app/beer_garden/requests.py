@@ -11,7 +11,14 @@ import six
 import urllib3
 from brewtils.choices import parse
 from brewtils.errors import ModelValidationError, RequestPublishException, ConflictError
-from brewtils.models import Choices, Events, Request, System, RequestTemplate
+from brewtils.models import (
+    Choices,
+    Events,
+    Request,
+    System,
+    RequestTemplate,
+    PatchOperation,
+)
 from requests import Session
 
 import beer_garden.config
@@ -624,7 +631,8 @@ def process_request(
     return request
 
 
-def update_request(request_id: str, patch: Dict) -> Request:
+@publish_event(Events.REQUEST_UPDATED)
+def update_request(request_id: str, patch: PatchOperation) -> Request:
     """Update a Request
 
     Args:

@@ -27,6 +27,7 @@ class MongoParser(SchemaParser):
             "DateTriggerSchema": beer_garden.db.mongo.models.DateTrigger,
             "IntervalTriggerSchema": beer_garden.db.mongo.models.IntervalTrigger,
             "CronTriggerSchema": beer_garden.db.mongo.models.CronTrigger,
+            "GardenSchema": beer_garden.db.mongo.models.Garden,
         }
     )
 

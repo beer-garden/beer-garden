@@ -82,10 +82,19 @@ event:
     enable: true
   parent:
     http:
+      callback:
+        host: 0.0.0.0
+        port: 2337
+        public_fqdn: localhost
+        remote_user: bg_remote
+        ssl_enabled: false
+        url_prefix: /
       enable: false
       host: 0.0.0.0
       port: 2337
       public_fqdn: localhost
+      skip_events:
+      - DB_CREATE
       ssl:
         ca_cert: null
         ca_path: null
@@ -94,6 +103,8 @@ event:
         private_key: null
         public_key: null
       url_prefix: /
+garden:
+  name: default
 log:
   config_file: example_configs/logging-config.yaml
   file: null
