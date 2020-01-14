@@ -6,10 +6,10 @@ from contextlib import contextmanager
 import pytest
 
 from beer_garden.local_plugins.env_help import (
-    string_contains_environment_var,
-    is_string_environment_variable,
-    get_environment_var_name_from_string,
-    expand_string_with_environment_var,
+    expand_string,
+    has_env_var,
+    is_valid_name,
+    var_name,
 )
 
 
@@ -37,8 +37,8 @@ def mangle_env(updates):
         (r"foo\$bar", False),  # Embedded escape
     ],
 )
-def test_string_contains_environment_var(data, expected):
-    assert string_contains_environment_var(data) is expected
+def test_has_env_var(data, expected):
+    assert has_env_var(data) is expected
 
 
 @pytest.mark.parametrize(
@@ -49,8 +49,8 @@ def test_string_contains_environment_var(data, expected):
         ("8FOO", False),  # First character numeric
     ],
 )
-def test_is_string_environment_variable(data, expected):
-    assert is_string_environment_variable(data) is expected
+def test_is_valid_name(data, expected):
+    assert is_valid_name(data) is expected
 
 
 @pytest.mark.parametrize(
@@ -61,8 +61,8 @@ def test_is_string_environment_variable(data, expected):
         ("FOO:BAR", "FOO"),  # New value
     ],
 )
-def test_get_environment_var_name_from_string(data, expected):
-    assert get_environment_var_name_from_string(data) == expected
+def test_var_name(data, expected):
+    assert var_name(data) == expected
 
 
 @pytest.mark.parametrize(
@@ -77,6 +77,6 @@ def test_get_environment_var_name_from_string(data, expected):
         ("Myp@$.word", "Myp@$.word", {}),
     ],
 )
-def test_expand_string_with_environment_var(data, expected, env_updates):
+def test_expand_string(data, expected, env_updates):
     with mangle_env(env_updates):
-        assert expand_string_with_environment_var(data) == expected
+        assert expand_string(data) == expected

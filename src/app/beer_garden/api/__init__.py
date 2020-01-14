@@ -7,6 +7,7 @@ import beer_garden
 import beer_garden.commands
 import beer_garden.instances
 import beer_garden.log
+import beer_garden.plugin
 import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
@@ -67,14 +68,13 @@ get_requests = namespace_router(beer_garden.requests.get_requests)
 process_request = namespace_router(beer_garden.requests.process_request)
 update_request = namespace_router(beer_garden.requests.update_request)
 
-# Instances
+# Instances / plugins
 get_instance = namespace_router(beer_garden.instances.get_instance)
-initialize_instance = namespace_router(beer_garden.instances.initialize_instance)
-update_instance = namespace_router(beer_garden.instances.update_instance)
-start_instance = namespace_router(beer_garden.instances.start_instance)
-stop_instance = namespace_router(beer_garden.instances.stop_instance)
-update_instance_status = namespace_router(beer_garden.instances.update_instance_status)
 remove_instance = namespace_router(beer_garden.instances.remove_instance)
+initialize_instance = namespace_router(beer_garden.plugin.initialize)
+start_instance = namespace_router(beer_garden.plugin.start)
+stop_instance = namespace_router(beer_garden.plugin.stop)
+update_instance_status = namespace_router(beer_garden.plugin.update_status)
 
 # Systems
 get_system = namespace_router(beer_garden.systems.get_system)

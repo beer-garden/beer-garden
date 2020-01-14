@@ -7,9 +7,6 @@ from functools import partial
 import brewtils.models
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
-
-from beer_garden.events.events_manager import EventsManager
-from beer_garden.events.parent_http_processor import ParentHttpProcessor
 from brewtils.models import Events
 from brewtils.stoppable_thread import StoppableThread
 from pytz import utc
@@ -22,9 +19,9 @@ import beer_garden.queue.api as queue
 from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
-from beer_garden.local_plugins.loader import LocalPluginLoader
-from beer_garden.local_plugins.manager import LocalPluginsManager
-from beer_garden.local_plugins.monitor import LocalPluginMonitor
+from beer_garden.events.events_manager import EventsManager
+from beer_garden.events.parent_http_processor import ParentHttpProcessor
+from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config, EntryPointLogger
 from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import PluginStatusMonitor
@@ -40,7 +37,6 @@ class Application(StoppableThread):
 
     request_validator = None
     scheduler = None
-    plugin_manager = None
     clients = None
     helper_threads = None
     context = None
@@ -61,20 +57,15 @@ class Application(StoppableThread):
 
         load_plugin_log_config()
 
-        self.plugin_manager = LocalPluginsManager(
-            shutdown_timeout=beer_garden.config.get("plugin.local.timeout.shutdown")
-        )
-
         self._setup_events_manager()
 
         plugin_config = beer_garden.config.get("plugin")
         self.helper_threads = [
-            HelperThread(LocalPluginMonitor, plugin_manager=self.plugin_manager),
             HelperThread(
                 PluginStatusMonitor,
                 timeout_seconds=plugin_config.status_timeout,
                 heartbeat_interval=plugin_config.status_heartbeat,
-            ),
+            )
         ]
 
         # Only want to run the MongoPruner if it would do anything
@@ -198,10 +189,13 @@ class Application(StoppableThread):
             )
 
         self.logger.debug("Loading all local plugins...")
-        LocalPluginLoader.instance().load_plugins()
+        PluginManager.instance().load_new()
 
         self.logger.debug("Starting all local plugins...")
-        self.plugin_manager.start_all_plugins()
+        PluginManager.instance().start_all()
+
+        self.logger.debug("Starting local plugin process monitoring...")
+        PluginManager.instance().start()
 
         self.logger.debug("Starting scheduler")
         self.scheduler.start()
@@ -224,8 +218,6 @@ class Application(StoppableThread):
             self.logger.debug("Pausing scheduler - no more jobs will be run")
             self.scheduler.pause()
 
-        self.plugin_manager.stop_all_plugins()
-
         self.logger.debug("Stopping helper threads")
         for helper_thread in reversed(self.helper_threads):
             helper_thread.stop()
@@ -233,6 +225,12 @@ class Application(StoppableThread):
         if self.scheduler.running:
             self.logger.debug("Shutting down scheduler")
             self.scheduler.shutdown(wait=False)
+
+        self.logger.debug("Stopping local plugin process monitoring")
+        PluginManager.instance().stop()
+
+        self.logger.debug("Stopping local plugins")
+        PluginManager.instance().stop_all()
 
         try:
             self.events_manager.add_event(

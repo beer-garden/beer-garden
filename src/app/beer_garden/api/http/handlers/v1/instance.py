@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from brewtils.errors import ModelValidationError
+from brewtils.models import PatchOperation
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.authorization import authenticated, Permissions
@@ -99,6 +101,11 @@ class InstanceAPI(BaseHandler):
             required: true
             description: The ID of the Instance
             type: string
+          - name: runner_id
+            in: query
+            required: false
+            description: The ID of the Instance
+            type: string
           - name: patch
             in: body
             required: true
@@ -119,11 +126,41 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        response = await self.client.update_instance(
-            self.request.namespace,
-            instance_id,
-            SchemaParser.parse_patch(self.request.decoded_body, from_string=True),
-        )
+        response = ""
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
+
+        for op in patch:
+            operation = op.operation.lower()
+
+            if operation == "initialize":
+                response = await self.client.initialize_instance(
+                    self.request.namespace, instance_id
+                )
+
+            elif operation == "start":
+                response = await self.client.start_instance(
+                    self.request.namespace, instance_id
+                )
+
+            elif operation == "stop":
+                response = await self.client.stop_instance(
+                    self.request.namespace, instance_id
+                )
+
+            elif operation == "heartbeat":
+                response = await self.client.update_instance_status(
+                    self.request.namespace, instance_id, "RUNNING"
+                )
+
+            elif operation == "replace":
+                if op.path.lower() == "/status":
+                    response = await self.client.update_instance_status(
+                        self.request.namespace, instance_id, op.value
+                    )
+                else:
+                    raise ModelValidationError(f"Unsupported path '{op.path}'")
+            else:
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

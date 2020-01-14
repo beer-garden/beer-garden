@@ -1,436 +1,486 @@
-# -*- coding: utf-8 -*-
 import logging
+import textwrap
+from pathlib import Path
 
 import pytest
+from box import Box
 from brewtils.models import Instance, System
-from mock import call, Mock
+from mock import Mock
 
-import beer_garden
-from beer_garden.errors import PluginStartupError
-from beer_garden.local_plugins.loader import LocalPluginLoader
-from beer_garden.local_plugins.manager import LocalPluginsManager
-from beer_garden.local_plugins.registry import LocalPluginRegistry
-from beer_garden.local_plugins.validator import LocalPluginValidator
+import beer_garden.db.api as db
+from beer_garden.errors import PluginValidationError
+from beer_garden.local_plugins.manager import CONFIG_NAME, ConfigLoader, PluginManager
+from beer_garden.systems import create_system
 
 
 @pytest.fixture
-def loader(monkeypatch):
-    load = Mock()
-    monkeypatch.setattr(LocalPluginLoader, "_instance", load)
-    return load
+def config_all():
+    return {
+        "NAME": "foo",
+        "VERSION": "1.0",
+        "PLUGIN_ENTRY": "entry.py",
+        "DESCRIPTION": "",
+        "INSTANCES": ["default"],
+        "PLUGIN_ARGS": {"default": None},
+        "METADATA": {},
+        "ENVIRONMENT": {},
+        "ICON_NAME": None,
+        "DISPLAY_NAME": None,
+        "LOG_LEVEL": "INFO",
+    }
 
 
 @pytest.fixture
-def validator(monkeypatch):
-    val = Mock()
-    monkeypatch.setattr(LocalPluginValidator, "_instance", val)
-    return val
-
-
-@pytest.fixture
-def registry(monkeypatch, plugin, bg_system):
-    reg = Mock(
-        get_plugin=Mock(return_value=plugin),
-        get_unique_plugin_names=Mock(return_value=[bg_system.name]),
-        get_all_plugins=Mock(return_value=[plugin]),
-        get_plugins_by_system=Mock(return_value=[plugin]),
-    )
-    monkeypatch.setattr(LocalPluginRegistry, "_instance", reg)
-    return reg
-
-
-@pytest.fixture
-def plugin(monkeypatch, bg_system):
-    plug = Mock(
-        system=bg_system,
-        unique_name="unique_name",
-        path_to_plugin="path/name-0.0.1",
-        requirements=[],
-        entry_point="main.py",
-        plugin_args=[],
-        instance_name="default",
-        status="RUNNING",
+def config_all_serialized():
+    return textwrap.dedent(
+        """
+            NAME='foo'
+            VERSION='1.0'
+            PLUGIN_ENTRY='entry.py'
+            DESCRIPTION=''
+            INSTANCES=['default']
+            PLUGIN_ARGS={'default': None}
+            REQUIRES=[]
+            METADATA={}
+            ENVIRONMENT={}
+            ICON_NAME=None
+            DISPLAY_NAME=None
+            LOG_LEVEL='INFO'
+        """
     )
 
-    monkeypatch.setattr(beer_garden.local_plugins.manager.db, "update", Mock())
-    monkeypatch.setattr(
-        beer_garden.local_plugins.manager.db, "query_unique", Mock(return_value=plug)
+
+@pytest.fixture
+def plugin_1(tmp_path, config_all_serialized):
+    plugin_1 = tmp_path / "plugin_1"
+    plugin_1.mkdir()
+
+    write_file(plugin_1, config_all_serialized)
+
+    return plugin_1
+
+
+@pytest.fixture
+def manager(tmp_path):
+    PluginManager.plugins = {}
+    return PluginManager(
+        plugin_dir=tmp_path,
+        log_dir="plugin_logs",
+        connection_info=Mock(),
+        username="username",
+        password="password",
     )
 
-    return plug
+
+def write_file(plugin_path, file_contents):
+    config_file = plugin_path / "beer.conf"
+    config_file.write_text(file_contents)
+
+    return config_file
 
 
-def manager(loader, validator, registry):
-    return LocalPluginsManager(1)
+@pytest.mark.skip
+class TestLoadPlugins(object):
+    def test_empty(self, tmp_path, loader):
+        loader.load_plugins(path=tmp_path)
+
+    def test_exception(self, monkeypatch, tmp_path, loader):
+        monkeypatch.setattr(loader, "load_plugin", Mock(side_effect=ValueError()))
+
+        # Just ensure that an exception during loading does NOT propagate out
+        loader.load_plugins(path=tmp_path)
 
 
-class TestStartPlugin(object):
-    def test_initializing(self, manager, plugin):
-        plugin.status = "INITIALIZING"
-        assert manager.start_plugin(plugin) is True
-        assert plugin.start.called is True
-        assert plugin.status == "STARTING"
+@pytest.mark.skip
+class TestLoadNew(object):
+    def test_empty_path(self, tmp_path, manager):
+        manager.load_new(path=tmp_path)
+        assert manager.plugins == {}
 
-    def test_running(self, manager, plugin):
-        assert manager.start_plugin(plugin) is True
-        assert plugin.start.called is False
+    def test_single(self, tmp_path, manager):
+        plugin_path = tmp_path / "tester"
+        plugin_path.mkdir()
+        (plugin_path / "entry.py").touch()
 
-    def test_bad_status(self, manager, plugin):
-        plugin.status = "BAD STATUS"
-        with pytest.raises(PluginStartupError):
-            manager.start_plugin(plugin)
+        write_file(plugin_path, "PLUGIN_ENTRY='entry.py'")
 
-        assert plugin.start.called is False
+        manager.load_new()
+        assert len(manager.plugins) == 1
 
-    def test_stopped(self, monkeypatch, manager, plugin, registry):
-        plugin.status = "STOPPED"
+    def test_multiple(self, tmp_path, manager):
+        plugin_path = tmp_path / "tester"
+        plugin_path.mkdir()
+        (plugin_path / "entry.py").touch()
 
-        new_plugin = Mock()
-        monkeypatch.setattr(
-            beer_garden.local_plugins.manager,
-            "LocalPluginRunner",
-            Mock(return_value=new_plugin),
+        write_file(
+            plugin_path,
+            textwrap.dedent(
+                """
+                PLUGIN_ENTRY='entry.py'
+                INSTANCES=['a', 'b']
+            """
+            ),
         )
 
-        assert manager.start_plugin(plugin) is True
-
-        assert plugin.status == "STARTING"
-        assert plugin.start.called is False
-        assert new_plugin.start.called is True
-
-        registry.remove.assert_called_once_with(plugin.unique_name)
-        registry.register_plugin.assert_called_once_with(new_plugin)
+        manager.load_new()
+        assert len(manager.plugins) == 2
 
 
-class TestStopPlugin(object):
-    @pytest.fixture
-    def queue_mock(self, monkeypatch):
-        queue = Mock()
-        monkeypatch.setattr(beer_garden.local_plugins.manager, "queue", queue)
-        return queue
+@pytest.mark.skip
+class TestLoadPlugin(object):
+    # @pytest.fixture(autouse=True)
+    # def drop_collections(self, mongo_conn):
+    #     import beer_garden.db.mongo.models
+    #
+    #     beer_garden.db.mongo.models.Instance.drop_collection()
+    #     beer_garden.db.mongo.models.System.drop_collection()
 
-    def test_running(self, manager, plugin, queue_mock):
-        plugin.is_alive.return_value = False
+    @pytest.mark.parametrize("path", [None, Path("/not/real")])
+    def test_bad_path(self, loader, path):
+        with pytest.raises(PluginValidationError):
+            loader.load_plugin(path)
 
-        manager.stop_plugin(plugin)
-        assert plugin.status == "STOPPING"
-        assert queue_mock.put.called is True
-        assert plugin.stop.called is True
-        assert plugin.join.called is True
-        assert plugin.kill.called is False
+    def test_single_instance(self, loader, registry, plugin_1):
+        plugin_runners = loader.load_plugin(plugin_1)
 
-    def test_stopped(self, manager, plugin, queue_mock):
-        plugin.is_alive.return_value = False
-        plugin.status = "STOPPED"
+        assert len(plugin_runners) == 1
+        assert plugin_runners[0].name == "foo[default]-1.0"
+        assert plugin_runners[0].entry_point == "entry.py"
 
-        manager.stop_plugin(plugin)
-        assert plugin.status == "STOPPED"
-        assert queue_mock.put.called is False
-        assert plugin.stop.called is False
-        assert plugin.join.called is False
-        assert plugin.kill.called is False
+    def test_multiple_instances(self, tmp_path, loader):
+        plugin = tmp_path / "plugin"
+        plugin.mkdir()
 
-    def test_unknown(self, manager, plugin, queue_mock):
-        plugin.is_alive.return_value = False
-        plugin.status = "UNKNOWN"
+        write_file(
+            plugin,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+                INSTANCES=["instance1", "instance2"]
+            """
+            ),
+        )
 
-        manager.stop_plugin(plugin)
-        assert plugin.status == "UNKNOWN"
-        assert queue_mock.put.called is True
-        assert plugin.stop.called is True
-        assert plugin.join.called is True
-        assert plugin.kill.called is False
+        plugin_runners = loader.load_plugin(plugin)
+        assert len(plugin_runners) == 2
 
-    def test_exception(self, manager, plugin, queue_mock):
-        plugin.is_alive.return_value = True
-        plugin.stop.side_effect = Exception()
+        sorted_runners = sorted(plugin_runners, key=lambda x: x.name)
+        assert sorted_runners[0].name == "foo[instance1]-1.0"
+        assert sorted_runners[0].entry_point == "entry.py"
+        assert sorted_runners[1].name == "foo[instance2]-1.0"
+        assert sorted_runners[1].entry_point == "entry.py"
 
-        manager.stop_plugin(plugin)
-        assert plugin.status == "DEAD"
-        assert queue_mock.put.called is False
-        assert plugin.stop.called is True
-        assert plugin.join.called is False
-        assert plugin.kill.called is True
+    def test_existing(self, loader, registry, plugin_1):
+        system_id = "58542eb571afd47ead90face"
+        instance_id = "58542eb571afd47ead90beef"
+        create_system(
+            System(
+                id=system_id,
+                name="foo",
+                version="1.0",
+                instances=[Instance(id=instance_id)],
+            )
+        )
 
-    def test_unsuccessful(self, manager, plugin, queue_mock):
-        plugin.is_alive.return_value = True
+        plugin_runners = loader.load_plugin(plugin_1)
 
-        manager.stop_plugin(plugin)
-        assert plugin.status == "DEAD"
-        assert queue_mock.put.called is True
-        assert plugin.stop.called is True
-        assert plugin.join.called is True
-        assert plugin.kill.called is True
+        assert len(plugin_runners) == 1
+        assert str(plugin_runners[0].system.id) == system_id
+        assert str(plugin_runners[0].instance.id) == instance_id
+        assert plugin_runners[0].name == "foo[default]-1.0"
+        assert plugin_runners[0].entry_point == "entry.py"
+
+    def test_existing_multiple(self, tmp_path, loader, registry, plugin_1, bg_instance):
+        """This is mainly to test that Instance IDs are correct
+
+        We save a system with 2 instances:
+         - instance1, 58542eb571afd47ead90beef
+         - instance2, 58542eb571afd47ead90beee
+
+        Then we load a plugin that defines instances [instance2, instance3].
+
+        Correct behavior is:
+         - instance1 removed from the database
+         - instance3 created in the database
+         - instance2 remains in the database, and the ID remains the same
+        """
+
+        instance1 = Instance(name="instance1", id="58542eb571afd47ead90beef")
+        instance2 = Instance(name="instance2", id="58542eb571afd47ead90beee")
+        create_system(
+            System(name="foo", version="1.0", instances=[instance1, instance2])
+        )
+
+        plugin = tmp_path / "plugin"
+        plugin.mkdir()
+
+        write_file(
+            plugin,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+                INSTANCES=["instance2", "instance3"]
+            """
+            ),
+        )
+
+        plugin_runners = loader.load_plugin(plugin)
+        assert len(plugin_runners) == 2
+
+        assert db.query_unique(Instance, name="instance1") is None
+        assert db.query_unique(Instance, name="instance3") is not None
+
+        instance2_db = db.query_unique(Instance, name="instance2")
+        assert instance2_db is not None
+        assert instance2_db.id == instance2.id
+
+    def test_bad_config(self, monkeypatch, caplog, tmp_path, loader, validator):
+        monkeypatch.setattr(
+            loader, "_load_config", Mock(side_effect=PluginValidationError)
+        )
+
+        with caplog.at_level(logging.ERROR):
+            assert loader.load_plugin(tmp_path) == []
+
+        assert len(caplog.records) == 1
 
 
-class TestRestartPlugin(object):
-    def test_restart(self, monkeypatch, manager, plugin):
-        start_mock = Mock()
-        stop_mock = Mock()
-        monkeypatch.setattr(manager, "start_plugin", start_mock)
-        monkeypatch.setattr(manager, "stop_plugin", stop_mock)
-
-        manager.restart_plugin(plugin)
-        assert stop_mock.called is True
-        assert start_mock.called is True
-
-
-class TestReloadSystem(object):
-    def test_none(self, manager, registry, plugin):
-        registry.get_plugins_by_system.return_value = []
-        with pytest.raises(Exception):
-            manager.reload_system(plugin.system.name, plugin.system.version)
-
-    def test_fail_validation(self, manager, validator, plugin):
-        validator.validate_plugin.return_value = False
-        with pytest.raises(Exception):
-            manager.reload_system(plugin.system.name, plugin.system.version)
-
-    def test_running(self, manager, validator, plugin):
-        validator.validate_plugin.return_value = True
-        with pytest.raises(Exception):
-            manager.reload_system(plugin.system.name, plugin.system.version)
-
-    def test_stopped(self, manager, validator, registry, loader, plugin):
-        plugin.status = "STOPPED"
-        validator.validate_plugin.return_value = True
-
-        manager.reload_system(plugin.system.name, plugin.system.version)
-        registry.remove.assert_called_once_with(plugin.unique_name)
-        loader.load_plugin.assert_called_once_with(plugin.path_to_plugin)
-
-
-def test_start_all_plugins(monkeypatch, manager, plugin):
-    start_mock = Mock()
-    monkeypatch.setattr(manager, "_start_multiple_plugins", start_mock)
-
-    manager.start_all_plugins()
-    start_mock.assert_called_once_with([plugin])
-
-
-class TestStartMultiple(object):
+class TestLoadConfig(object):
     @pytest.fixture(autouse=True)
-    def mock_getter(self, monkeypatch, manager):
-        monkeypatch.setattr(manager, "_get_all_system_names", Mock(return_value=[]))
-        monkeypatch.setattr(manager, "_get_running_system_names", Mock(return_value=[]))
-        monkeypatch.setattr(manager, "_get_failed_system_names", Mock(return_value=[]))
+    def entry_point(self, tmp_path):
+        (tmp_path / "entry.py").touch()
+
+    @pytest.mark.skip
+    def test_failure_missing_conf_file(self, tmp_path, loader):
+        with pytest.raises(PluginValidationError):
+            ConfigLoader._load_config(tmp_path)
+
+    @pytest.mark.skip
+    def test_failure_directory_conf_file(self, tmp_path, loader):
+        (tmp_path / CONFIG_NAME).mkdir()
+
+        with pytest.raises(PluginValidationError):
+            loader._load_config(tmp_path)
+
+    def test_all_attributes(self, tmp_path, config_all, config_all_serialized):
+        write_file(tmp_path, config_all_serialized)
+
+        assert ConfigLoader.load(tmp_path / CONFIG_NAME) == config_all
+
+    @pytest.mark.skip
+    def test_required_attributes(self, tmp_path, config_all):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+            """
+            ),
+        )
+
+        assert ConfigLoader.load(tmp_path / CONFIG_NAME) == config_all
+
+    def test_instances_no_plugin_args(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+                INSTANCES=["instance1", "instance2"]
+                PLUGIN_ARGS=None
+            """
+            ),
+        )
+
+        loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
+        assert loaded_config["INSTANCES"] == ["instance1", "instance2"]
+        assert loaded_config["PLUGIN_ARGS"] == {"instance1": None, "instance2": None}
+
+    def test_plugin_args_list_no_instances(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+                INSTANCES=None
+                PLUGIN_ARGS=["arg1"]
+            """
+            ),
+        )
+
+        loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
+        assert loaded_config["INSTANCES"] == ["default"]
+        assert loaded_config["PLUGIN_ARGS"] == {"default": ["arg1"]}
+
+    def test_plugin_args_dict_no_instances(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+                INSTANCES=None
+                PLUGIN_ARGS={"foo": ["arg1"], "bar": ["arg2"]}
+            """
+            ),
+        )
+
+        loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
+        assert sorted(loaded_config["INSTANCES"]) == sorted(["foo", "bar"])
+        assert loaded_config["PLUGIN_ARGS"] == {"foo": ["arg1"], "bar": ["arg2"]}
+
+    def test_instance_and_args_list(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+                INSTANCES=["foo", "bar"]
+                PLUGIN_ARGS=["arg1"]
+            """
+            ),
+        )
+
+        loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
+        assert sorted(loaded_config["INSTANCES"]) == sorted(["foo", "bar"])
+        assert loaded_config["PLUGIN_ARGS"] == {"foo": ["arg1"], "bar": ["arg1"]}
+
+    def test_invalid_args(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+                PLUGIN_ARGS="invalid"
+            """
+            ),
+        )
+
+        with pytest.raises(PluginValidationError):
+            ConfigLoader.load(tmp_path / CONFIG_NAME)
+
+
+class TestConfigValidation(object):
+    @pytest.fixture
+    def config(self):
+        return Box({"NAME": "FOO", "VERSION": "1", "PLUGIN_ENTRY": "entry.py"})
 
     @pytest.fixture
-    def system_2(self):
-        return System(name="system_name_2")
+    def config_file(self, tmp_path, config):
+        serialized_config = [f"{key}='{value}'" for key, value in config.items()]
+
+        config_file = tmp_path / "beer.conf"
+        config_file.write_text("\n".join(serialized_config))
 
     @pytest.fixture
-    def plugin_2(self, system_2):
-        return Mock(
-            system=system_2,
-            unique_name="unique_name2",
-            path_to_plugin="path/name-0.0.1",
-            requirements=[],
-            entry_point="main.py",
-            plugin_args=[],
-            instance_name="default2",
-            status="RUNNING",
+    def entry_point(self, tmp_path, config):
+        (tmp_path / config["PLUGIN_ENTRY"]).touch()
+
+    class TestValidateConfig(object):
+        def test_success(self, tmp_path, config, entry_point):
+            assert ConfigLoader._validate(config, tmp_path) is None
+
+        def test_failure(self, tmp_path, config):
+            # Not having the entry_point fixture makes this fail
+            with pytest.raises(PluginValidationError):
+                ConfigLoader._validate(config, tmp_path)
+
+    class TestEntryPoint(object):
+        def test_not_a_file(self, tmp_path, config):
+            # Not having the entry_point fixture makes this fail
+            with pytest.raises(PluginValidationError):
+                ConfigLoader._entry_point(config, tmp_path)
+
+        def test_good_file(self, tmp_path, config, entry_point):
+            assert ConfigLoader._entry_point(config, tmp_path) is None
+
+        def test_good_package(self, tmp_path, config):
+            plugin_dir = tmp_path / "plugin"
+            plugin_dir.mkdir()
+
+            (plugin_dir / "__init__.py").touch()
+            (plugin_dir / "__main__.py").touch()
+
+            config.PLUGIN_ENTRY = "-m plugin"
+
+            ConfigLoader._entry_point(config, tmp_path)
+
+    class TestInstances(object):
+        def test_missing(self, config):
+            assert ConfigLoader._instances(config) is None
+
+        def test_success(self, config):
+            config.INSTANCES = ["i1"]
+            assert ConfigLoader._instances(config) is None
+
+        def test_failure(self, config):
+            config.INSTANCES = "not a list"
+            with pytest.raises(PluginValidationError):
+                ConfigLoader._instances(config)
+
+    class TestArgs(object):
+        @pytest.mark.parametrize(
+            "instances,args",
+            [(None, ["foo", "bar"]), (["foo"], {"foo": ["arg1"]}), (None, None)],
         )
+        def test_success(self, config, instances, args):
+            config.INSTANCES = instances
+            config.PLUGIN_ARGS = args
+            assert ConfigLoader._args(config) is None
 
-    def test_empty(self, monkeypatch, manager):
-        start_mock = Mock()
-        monkeypatch.setattr(manager, "start_plugin", start_mock)
-
-        manager._start_multiple_plugins([])
-        assert start_mock.called is False
-
-    def test_no_requirements(self, monkeypatch, manager, plugin, plugin_2, bg_system):
-        start_mock = Mock()
-        monkeypatch.setattr(manager, "start_plugin", start_mock)
-
-        manager._start_multiple_plugins([plugin, plugin_2])
-        start_mock.assert_has_calls([call(plugin), call(plugin_2)], any_order=True)
-
-    def test_invalid_requirements(self, monkeypatch, manager, plugin):
-        fail_mock = Mock()
-        monkeypatch.setattr(manager, "_mark_as_failed", fail_mock)
-
-        plugin.requirements = ["DNE"]
-
-        manager._start_multiple_plugins([plugin])
-        fail_mock.assert_called_once_with(plugin)
-
-    def test_skip_first(
-        self, monkeypatch, manager, bg_system, system_2, plugin, plugin_2
-    ):
-        start_mock = Mock()
-        monkeypatch.setattr(manager, "start_plugin", start_mock)
-
-        manager._get_all_system_names.return_value = [bg_system.name, system_2.name]
-
-        plugin_2.requirements = [bg_system.name]
-
-        manager._start_multiple_plugins([plugin, plugin_2])
-        start_mock.assert_has_calls([call(plugin), call(plugin_2)], any_order=True)
-
-    def test_requirement_already_running(
-        self, monkeypatch, manager, bg_system, plugin_2
-    ):
-        start_mock = Mock()
-        monkeypatch.setattr(manager, "start_plugin", start_mock)
-
-        manager._get_all_system_names.return_value = [
-            bg_system.name,
-            plugin_2.system.name,
-        ]
-        manager._get_running_system_names.return_value = [bg_system.name]
-
-        plugin_2.requirements = [bg_system.name]
-
-        manager._start_multiple_plugins([plugin_2])
-        start_mock.assert_has_calls([call(plugin_2)], any_order=True)
-
-    def test_failed_requirement_start(
-        self, monkeypatch, manager, bg_system, plugin, plugin_2
-    ):
-        start_mock = Mock(return_value=False)
-        monkeypatch.setattr(manager, "start_plugin", start_mock)
-        fail_mock = Mock()
-        monkeypatch.setattr(manager, "_mark_as_failed", fail_mock)
-
-        manager._get_all_system_names.return_value = [
-            bg_system.name,
-            plugin_2.system.name,
-        ]
-
-        plugin_2.requirements = [bg_system.name]
-
-        manager._start_multiple_plugins([plugin, plugin_2])
-        start_mock.assert_called_once_with(plugin)
-        fail_mock.assert_called_once_with(plugin_2)
-
-
-def test_get_all_system_names(monkeypatch, manager, bg_system):
-    monkeypatch.setattr(
-        beer_garden.local_plugins.manager.db, "query", Mock(return_value=[bg_system])
-    )
-
-    assert manager._get_all_system_names() == [bg_system.name]
-
-
-class TestStopAllPlugins(object):
-    def test_empty(self, monkeypatch, manager, registry, plugin):
-        stop_mock = Mock()
-        monkeypatch.setattr(manager, "stop_plugin", stop_mock)
-
-        registry.get_all_plugins.return_value = []
-
-        manager.stop_all_plugins()
-        assert stop_mock.called is False
-
-    def test_one_running(self, monkeypatch, manager, plugin):
-        stop_mock = Mock()
-        monkeypatch.setattr(manager, "stop_plugin", stop_mock)
-
-        manager.stop_all_plugins()
-        stop_mock.assert_called_once_with(plugin)
-
-    def test_exception(self, monkeypatch, caplog, manager, registry, plugin):
-        stop_mock = Mock(side_effect=[Exception(), None])
-        monkeypatch.setattr(manager, "stop_plugin", stop_mock)
-
-        registry.get_all_plugins.return_value = [plugin, plugin]
-
-        with caplog.at_level(logging.WARNING):
-            manager.stop_all_plugins()
-
-        stop_mock.assert_has_calls([call(plugin), call(plugin)])
-        assert len(caplog.records) == 2
-        assert caplog.records[0].levelno == logging.ERROR
-        assert caplog.records[1].levelno == logging.ERROR
-
-
-class TestScanPluginPath(object):
-    def test_no_change(self, monkeypatch, manager, loader, registry, plugin):
-        monkeypatch.setattr(manager, "_start_multiple_plugins", Mock())
-
-        loader.scan_plugin_path.return_value = [plugin.path_to_plugin]
-        registry.get_all_plugins.return_value = [plugin]
-
-        manager.scan_plugin_path()
-        assert loader.load_plugin.called is False
-
-    def test_one_new(self, monkeypatch, manager, loader, registry, plugin):
-        start_mock = Mock()
-        monkeypatch.setattr(manager, "_start_multiple_plugins", start_mock)
-
-        loader.scan_plugin_path.return_value = [plugin.path_to_plugin]
-        loader.load_plugin.return_value = [plugin]
-        registry.get_all_plugins.return_value = []
-
-        manager.scan_plugin_path()
-        loader.load_plugin.assert_called_once_with(plugin.path_to_plugin)
-        start_mock.assert_called_once_with([plugin])
-
-    def test_two_new_could_not_load_one(
-        self, monkeypatch, manager, loader, registry, plugin
-    ):
-        start_mock = Mock()
-        monkeypatch.setattr(manager, "_start_multiple_plugins", start_mock)
-
-        loader.scan_plugin_path.return_value = [plugin.path_to_plugin, "path/tw-0.0.1"]
-        loader.load_plugin.side_effect = [[plugin], []]
-        registry.get_all_plugins.return_value = []
-
-        manager.scan_plugin_path()
-        loader.load_plugin.assert_has_calls(
-            [call(plugin.path_to_plugin), call("path/tw-0.0.1")], any_order=True
+        @pytest.mark.parametrize(
+            "instances,args",
+            [(None, "THIS IS WRONG"), (["foo"], {"bar": ["arg1"]}), (["foo"], {})],
         )
-        start_mock.assert_called_once_with([plugin])
+        def test_failure(self, config, instances, args):
+            config.INSTANCES = instances
+            config.PLUGIN_ARGS = args
+            with pytest.raises(PluginValidationError):
+                ConfigLoader._args(config)
 
-    def test_one_exception(self, monkeypatch, manager, loader, registry, plugin):
-        start_mock = Mock()
-        monkeypatch.setattr(manager, "_start_multiple_plugins", start_mock)
+    class TestIndividualArgs(object):
+        @pytest.mark.parametrize("args", [None, ["good"]])
+        def test_success(self, args):
+            assert ConfigLoader._individual_args(args) is None
 
-        loader.scan_plugin_path.return_value = [plugin.path_to_plugin, "path/tw-0.0.1"]
-        loader.load_plugin.side_effect = [[plugin], Exception()]
-        registry.get_all_plugins.return_value = []
+        @pytest.mark.parametrize("args", ["string", [{"foo": "bar"}]])
+        def test_failure(self, args):
+            with pytest.raises(PluginValidationError):
+                ConfigLoader._individual_args(args)
 
-        manager.scan_plugin_path()
-        loader.load_plugin.assert_has_calls(
-            [call(plugin.path_to_plugin), call("path/tw-0.0.1")], any_order=True
+    class TestEnvironment(object):
+        def test_missing(self, config):
+            assert ConfigLoader._environment(config) is None
+
+        def test_success(self, config):
+            config.ENVIRONMENT = {"foo": "bar"}
+            assert ConfigLoader._environment(config) is None
+
+        @pytest.mark.parametrize(
+            "env",
+            [
+                "notadict",
+                {1: "int_key_not_allowed"},
+                {"BG_foo": "that_key_is_not_allowed"},
+                {"foos": ["foo1", "foo2"]},
+            ],
         )
-        start_mock.assert_called_once_with([plugin])
-
-
-def test_mark_as_failed(monkeypatch, manager, plugin, bg_instance):
-    bg_system_mock = Mock(instances=[bg_instance])
-
-    monkeypatch.setattr(
-        beer_garden.local_plugins.manager.db,
-        "query_unique",
-        Mock(return_value=bg_system_mock),
-    )
-
-    manager._mark_as_failed(plugin)
-    assert bg_instance.status == "DEAD"
-
-
-class TestGetFailedSystemNames(object):
-    def test_one_failed(self, monkeypatch, manager, bg_system):
-        bg_system.instances[0].status = "DEAD"
-
-        monkeypatch.setattr(
-            beer_garden.local_plugins.manager.db,
-            "query",
-            Mock(return_value=[bg_system]),
-        )
-
-        assert manager._get_failed_system_names() == [bg_system.name]
-
-    def test_one_failed_one_running(self, monkeypatch, manager, bg_system):
-        # Add one dead instance to system with one running one
-        bg_system.instances.append(Instance(status="DEAD"))
-
-        monkeypatch.setattr(
-            beer_garden.local_plugins.manager.db,
-            "query",
-            Mock(return_value=[bg_system]),
-        )
-
-        assert manager._get_failed_system_names() == []
+        def test_failure(self, config, env):
+            config.ENVIRONMENT = env
+            with pytest.raises(PluginValidationError):
+                ConfigLoader._environment(config)

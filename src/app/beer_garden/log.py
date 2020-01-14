@@ -160,17 +160,18 @@ class PluginLoggingLoader(object):
         is present
         :return: A valid LoggingConfig object
         """
-        config_from_file = cls._load_config_from_file(filename)
+        config = {}
 
-        # If no config could be found from the file, default to the
-        # config passed in.
-        if config_from_file:
-            config = config_from_file
-        else:
+        if filename:
+            with open(filename) as log_config_file:
+                config = yaml.safe_load(log_config_file)
+
+        # If no config could be found from a file use the default
+        if not config:
             config = cls._parse_python_logging_config(default_config, level)
-            cls.logger.debug(config)
 
         valid_config = cls.validate_config(config, level)
+
         return valid_config
 
     @classmethod
@@ -189,6 +190,7 @@ class PluginLoggingLoader(object):
 
         default_level = cls._validate_level(config_to_validate.get("level", level))
         cls.logger.debug("Default level: %s" % default_level)
+
         handlers = cls._validate_handlers(config_to_validate.get("handlers", {}))
         formatters = cls._validate_formatters(config_to_validate.get("formatters", {}))
         loggers = cls._validate_loggers(config_to_validate.get("loggers", {}))
@@ -380,8 +382,7 @@ class PluginLoggingLoader(object):
         """
         if level not in LoggingConfig.LEVELS:
             raise LoggingLoadingError(
-                "Invalid level specified (%s) supported levels: %s"
-                % (level, LoggingConfig.LEVELS)
+                f"Invalid level '{level}', supported levels are {LoggingConfig.LEVELS}"
             )
         return level
 
@@ -400,17 +401,3 @@ class PluginLoggingLoader(object):
             return "logstash"
         else:
             raise NotImplementedError("Invalid plugin log handler (%s)" % python_class)
-
-    @classmethod
-    def _load_config_from_file(cls, filename):
-        """Loads plugin logging configuration from file.
-
-        :param filename:
-        :return:
-        """
-        if filename:
-            with open(filename) as log_config_file:
-                return yaml.safe_load(log_config_file)
-        else:
-            cls.logger.debug("No plugin logging configuration provided.")
-            return {}
