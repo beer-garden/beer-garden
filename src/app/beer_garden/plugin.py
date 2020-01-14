@@ -100,6 +100,7 @@ def stop(instance_id: str) -> Instance:
     return instance
 
 
+@publish_event(Events.INSTANCE_UPDATED)
 def update_status(instance_id: str, new_status: str) -> Instance:
     """Update an Instance status.
 

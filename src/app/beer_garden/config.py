@@ -299,6 +299,18 @@ def _parse_args(args: Sequence[str]) -> Tuple[YapconfSpec, dict]:
     return spec, cli_vars
 
 
+_GARDEN_SPEC = {
+    "type": "dict",
+    "items": {
+        "name": {
+            "type": "str",
+            "required": True,
+            "default": "default",
+            "description": "The routing name for upstream Beer Gardens to use",
+        }
+    },
+}
+
 _META_SPEC = {
     "type": "dict",
     "bootstrap": True,
@@ -845,6 +857,43 @@ _EVENT_SPEC = {
                                 },
                             },
                         },
+                        "callback": {
+                            "type": "dict",
+                            "items": {
+                                "port": {
+                                    "type": "int",
+                                    "default": 2337,
+                                    "description": "Serve content on this port",
+                                },
+                                "url_prefix": {
+                                    "type": "str",
+                                    "default": "/",
+                                    "description": "URL path prefix",
+                                    "required": False,
+                                },
+                                "host": {
+                                    "type": "str",
+                                    "default": "0.0.0.0",
+                                    "description": "Host for the HTTP Server to bind to",
+                                },
+                                "public_fqdn": {
+                                    "type": "str",
+                                    "default": "localhost",
+                                    "description": "Public fully-qualified domain name",
+                                },
+                                "remote_user": {
+                                    "type": "str",
+                                    "default": "bg_remote",
+                                    "description": "Remote User that Parent can callback as",
+                                },
+                                "ssl_enabled": {
+                                    "type": "bool",
+                                    "default": False,
+                                    "description": "Serve content using SSL",
+                                    "cli_separator": "_",
+                                },
+                            },
+                        },
                         "port": {
                             "type": "int",
                             "default": 2337,
@@ -865,6 +914,13 @@ _EVENT_SPEC = {
                             "type": "str",
                             "default": "localhost",
                             "description": "Public fully-qualified domain name",
+                        },
+                        "skip_events": {
+                            "type": "list",
+                            "items": {"skip_event": {"type": "str"}},
+                            "default": ("DB_CREATE",),
+                            "required": False,
+                            "description": "Events to be skipped",
                         },
                     },
                 }
@@ -938,6 +994,7 @@ _NAMESPACES_SPEC = {
             "type": "str",
             "description": "The local namespace",
             "default": "default",
+            "required": True,
         },
         "remote": {
             "type": "list",
@@ -1169,6 +1226,7 @@ _SPECIFICATION = {
     "db": _DB_SPEC,
     "entry": _ENTRY_SPEC,
     "event": _EVENT_SPEC,
+    "garden": _GARDEN_SPEC,
     "log": _LOG_SPEC,
     "metrics": _METRICS_SPEC,
     "namespaces": _NAMESPACES_SPEC,

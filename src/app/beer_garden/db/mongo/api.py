@@ -20,6 +20,7 @@ ModelType = Union[
     Type[brewtils.models.Request],
     Type[brewtils.models.RequestTemplate],
     Type[brewtils.models.System],
+    Type[brewtils.models.Garden],
 ]
 
 ModelItem = Union[
@@ -29,6 +30,7 @@ ModelItem = Union[
     brewtils.models.Request,
     brewtils.models.RequestTemplate,
     brewtils.models.System,
+    brewtils.models.Garden,
 ]
 
 _model_map = {}

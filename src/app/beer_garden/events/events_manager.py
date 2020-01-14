@@ -7,7 +7,6 @@ from brewtils.stoppable_thread import StoppableThread
 from brewtils.models import Event, Events
 from brewtils.schema_parser import SchemaParser
 
-
 import beer_garden
 
 __all__ = ["events_queue"]
@@ -41,6 +40,7 @@ class EventProcessor(StoppableThread):
 
         :param event: The Event to be published
         """
+
         self.events_queue.put(event)
 
     def process_next_message(self, event):
@@ -51,6 +51,13 @@ class EventProcessor(StoppableThread):
         :return:
         """
         pass
+
+    def clear_queue(self):
+        # Stop accepting events so Beergarden can stop
+
+        # Purge local queue to prevent future processes
+        while not self.events_queue.empty():
+            self.events_queue.get()
 
     def run(self):
         """
@@ -125,19 +132,21 @@ def publish_event(event_type):
                 Events.REQUEST_STARTED.name,
                 Events.REQUEST_COMPLETED.name,
                 Events.SYSTEM_CREATED.name,
+            ):
+                event.payload = result
+            elif event.name in (
+                Events.INSTANCE_UPDATED.name,
+                Events.REQUEST_UPDATED.name,
                 Events.SYSTEM_UPDATED.name,
             ):
-                event.payload = SchemaParser.serialize(result, to_string=False)
+                event.payload = result
+                event.metadata = args[1]
             elif event.name in (Events.QUEUE_CLEARED.name, Events.SYSTEM_REMOVED.name):
                 event.payload = {"id": args[0]}
-            elif event.name in (
-                Events.DB_CREATE.name,
-                Events.DB_DELETE.name,
-                Events.DB_UPDATE.name,
-            ):
-                event.payload = {
-                    type(result).schema: SchemaParser.serialize(result, to_string=False)
-                }
+            elif event.name in (Events.DB_CREATE.name, Events.DB_UPDATE.name):
+                event.payload = result
+            elif event.name in (Events.DB_DELETE.name,):
+                event.payload = args[0]
         finally:
             beer_garden.events.events_manager.events_queue.put(event)
 
