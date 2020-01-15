@@ -6,9 +6,8 @@ usage() {
   echo ""
   echo "Arguments are space separated and are as follows:"
   echo "  -l, --local              Build local version of all applications"
-  echo "  -r, --release [RELEASE]  The fedora release to target"
+  echo "  -r, --release [RELEASE]  The fedora release to target. Must be 7."
   echo ""
-  echo "RELEASE includes supported releases 6,7 for the fedora architecture."
   exit 1
 }
 
@@ -32,11 +31,11 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 if [ -z "$RELEASE" ]; then
-  echo "RELEASE must be specified."
-  usage
-elif [[ "$RELEASE" != "7" ]] && [[ "$RELEASE" != "6" ]]; then
+  echo "RELEASE not specified, using 7"
+  RELEASE="7"
+elif [[ "$RELEASE" != "7" ]]; then
   echo "Unsupported RELEASE: ${RELEASE}"
-  echo "Supported releases are 7,6"
+  echo "Supported releases are 7"
   exit 1
 fi
 
@@ -166,14 +165,7 @@ create_rpm() {
     # Put the service files in the correct location
     service_paths=()
 
-    if [[ "$RELEASE" == "6" ]]; then
-        service_files=("beer-garden")
-        for file in "${service_files[@]}"
-        do
-            cp "$SRC_SCRIPT_PATH/$file" "/etc/init.d/"
-            service_paths+=("/etc/init.d/$file")
-        done
-    elif [[ "$RELEASE" == "7" ]]; then
+    if [[ "$RELEASE" == "7" ]]; then
         args+=(-d "openssl-libs >= 1:1.0.2a-1")
 
         service_files=("beer-garden.service" "bartender.service" "brew-view.service")
