@@ -5,7 +5,6 @@ from datetime import timedelta
 from functools import partial
 
 import brewtils.models
-import sys
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils.models import Events
@@ -20,9 +19,8 @@ import beer_garden.queue.api as queue
 from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
-from beer_garden.events.events_manager import EventsManager
 from beer_garden.events.parent_http_processor import ParentHttpProcessor
-from beer_garden.events.processors import PrintProcessor
+from beer_garden.events.processors import FanoutProcessor
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import EntryPointLogger, load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
@@ -209,7 +207,7 @@ class Application(StoppableThread):
         self.scheduler.start()
 
         try:
-            self.events_manager.add_event(
+            self.events_manager.put(
                 brewtils.models.Event(name=Events.BARTENDER_STARTED.name)
             )
         except RequestException:
@@ -241,7 +239,7 @@ class Application(StoppableThread):
         PluginManager.instance().stop_all()
 
         try:
-            self.events_manager.add_event(
+            self.events_manager.put(
                 brewtils.models.Event(name=Events.BARTENDER_STOPPED.name)
             )
         except RequestException:
@@ -260,13 +258,11 @@ class Application(StoppableThread):
         self.logger.info("Successfully shut down Beer-garden")
 
     def _setup_events_manager(self):
-        manager = EventsManager(self.events_queue)
-
-        manager.register_processor(PrintProcessor(stream=sys.stderr))
+        manager = FanoutProcessor(queue=self.events_queue)
 
         http_event = beer_garden.config.get("event.parent.http")
         if http_event.enable:
-            manager.register_processor(
+            manager.register(
                 ParentHttpProcessor(http_event, beer_garden.config.get("garden_name"))
             )
 

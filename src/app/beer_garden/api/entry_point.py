@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
 import signal
-import sys
 from multiprocessing.context import BaseContext
 from multiprocessing.queues import Queue
 from types import FrameType
@@ -15,7 +14,7 @@ import beer_garden.config
 import beer_garden.db.api as db
 import beer_garden.events.events_manager
 import beer_garden.queue.api as queue
-from beer_garden.events.processors import PrintProcessor
+from beer_garden.events.processors import FanoutProcessor
 
 T = TypeVar("T", bound="EntryPoint")
 
@@ -182,8 +181,7 @@ class EntryPoint(object):
         beer_garden.events.events_manager.set_upstream(event_queue)
 
         # Start the event manager for incoming events (coming from the main process)
-        event_manager = beer_garden.events.events_manager.EventsManager(incoming_queue)
-        event_manager.register_processor(PrintProcessor(stream=sys.stdout))
+        event_manager = FanoutProcessor(name="EventManager", queue=incoming_queue)
         event_manager.start()
 
         # Now invoke the actual process target
