@@ -36,6 +36,7 @@ import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.v2 as v2
 import beer_garden.api.http.handlers.vbeta as vbeta
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
+from beer_garden.api.http.processors import WebsocketProcessor
 
 io_loop = None
 server = None
@@ -49,11 +50,13 @@ anonymous_principal = None
 client_ssl = None
 
 
-def run():
+def run(event_manager):
     global logger
     logger = logging.getLogger(__name__)
 
     _setup_application()
+
+    event_manager.register(WebsocketProcessor())
 
     # Schedule things to happen after the ioloop comes up
     io_loop.add_callback(startup)

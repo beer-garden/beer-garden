@@ -185,7 +185,7 @@ class EntryPoint(object):
         event_manager.start()
 
         # Now invoke the actual process target
-        ret_val = target()
+        ret_val = target(event_manager)
 
         # At this point we need to stop the event manager thread as well
         event_manager.stop()

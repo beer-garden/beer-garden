@@ -20,7 +20,7 @@ from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.events.parent_http_processor import ParentHttpProcessor
-from beer_garden.events.processors import FanoutProcessor
+from beer_garden.events.processors import FanoutProcessor, RequeueProcessor
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import EntryPointLogger, load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
@@ -192,6 +192,9 @@ class Application(StoppableThread):
                 context=self.context,
                 log_queue=self.log_queue,
                 events_queue=self.events_queue,
+            )
+            self.events_manager.register(
+                RequeueProcessor(queue=entry_point._downstream_queue)
             )
 
         self.logger.debug("Loading all local plugins...")
