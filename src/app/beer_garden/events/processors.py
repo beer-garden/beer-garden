@@ -2,6 +2,7 @@
 from functools import partial
 from multiprocessing import Queue
 from pprint import pprint
+from queue import Empty
 from typing import Callable, Union
 
 from brewtils.schema_parser import SchemaParser
@@ -35,9 +36,11 @@ class QueueProcessor(StoppableThread):
 
     def run(self):
         """Process events as they are received """
-        while not self.wait(0.1):
-            while not self._queue.empty():
-                self.process(self._queue.get())
+        while not self.stopped():
+            try:
+                self.process(self._queue.get(timeout=0.1))
+            except Empty:
+                pass
 
 
 class FanoutProcessor(QueueProcessor):
