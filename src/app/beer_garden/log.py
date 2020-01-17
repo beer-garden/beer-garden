@@ -6,12 +6,12 @@ import logging.handlers
 
 import six
 from brewtils.models import LoggingConfig
-from brewtils.stoppable_thread import StoppableThread
 from ruamel import yaml
 from ruamel.yaml import YAML
 
 import beer_garden
 from beer_garden.errors import LoggingLoadingError
+from beer_garden.events.processors import QueueProcessor
 
 plugin_logging_config = None
 _LOGGING_CONFIG = None
@@ -82,21 +82,14 @@ def default_app_config(level, filename=None):
     }
 
 
-class EntryPointLogger(StoppableThread):
-    """Helper thread that reads and processes the logging queue"""
+class LogProcessor(QueueProcessor):
+    """Processor that handles log records"""
 
-    def __init__(self, log_queue):
-        super().__init__(name="EntryPointLogger")
-        self._queue = log_queue
+    def process(self, item):
+        logger = logging.getLogger(item.name)
 
-    def run(self):
-        while not self.wait(0.1):
-            while not self._queue.empty():
-                record = self._queue.get()
-                logger = logging.getLogger(record.name)
-
-                if logger.isEnabledFor(record.levelno):
-                    logger.handle(record)
+        if logger.isEnabledFor(item.levelno):
+            logger.handle(item)
 
 
 def setup_entry_point_logging(queue):

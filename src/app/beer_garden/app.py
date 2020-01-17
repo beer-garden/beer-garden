@@ -22,7 +22,7 @@ from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.events.parent_http_processor import ParentHttpProcessor
 from beer_garden.events.processors import CallableProcessor, FanoutProcessor
 from beer_garden.local_plugins.manager import PluginManager
-from beer_garden.log import EntryPointLogger, load_plugin_log_config
+from beer_garden.log import LogProcessor, load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import PluginStatusMonitor
 
@@ -95,7 +95,9 @@ class Application(StoppableThread):
             )
 
         self.log_queue = self.context.Queue()
-        self.log_reader = HelperThread(EntryPointLogger, log_queue=self.log_queue)
+        self.log_reader = HelperThread(
+            LogProcessor, name="LogProcessor", queue=self.log_queue
+        )
 
         for entry_name, entry_value in beer_garden.config.get("entry").items():
             if entry_value.get("enable"):
