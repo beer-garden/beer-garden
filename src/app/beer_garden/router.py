@@ -59,16 +59,13 @@ def route_request(brewtils_obj=None, brewtils_model: str = None, obj_id: str = N
     if brewtils_model is None:
         raise ModelValidationError("Unable to identify Model Schema")
 
-    if brewtils_model is brewtils.models.PatchOperation.schema and obj_id is None:
+    elif brewtils_model is brewtils.models.PatchOperation.schema and obj_id is None:
         raise ModelValidationError("Unable to route Patch Request, no Obj id provided")
-
-    elif brewtils_obj:
-        request_object = SchemaParser.parse(brewtils_obj, brewtils_model, from_string=False)
 
     if brewtils_model in Routing_Eligible and src_garden_name is not Routable_Garden_Name.Child:
 
         if garden_name is None:
-            if route_type == Route_Type.DELETE:
+            if route_type in [Route_Type.DELETE, Route_Type.UPDATE]:
 
                 # For objects that are requested to be deleted, we need to first collect
                 # the object to determine if it should be routed.
@@ -79,31 +76,37 @@ def route_request(brewtils_obj=None, brewtils_model: str = None, obj_id: str = N
                     request_object = beer_garden.instances.get_instance(obj_id)
                     garden_name = request_object.garden_name
                     system = beer_garden.systems.get_system(instances__contains=request_object)
+                    garden_name = system.garden_name
 
                 elif brewtils_model == brewtils.models.Request.schema:
                     request_object = beer_garden.requests.get_request(obj_id)
                     system = beer_garden.systems.get_system(name_space=request_object.name_space,
                                                             name=request_object.system,
                                                             version=request_object.version)
+                    garden_name = system.garden_name
 
                 elif brewtils_model == brewtils.models.System.schema:
                     request_object = beer_garden.systems.get_system(obj_id)
+                    garden_name = request_object.garden_name
 
-            # Only they System Object contains the Garden Name that allows routing
-            if brewtils_model == brewtils.models.Instance.schema:
-                system = beer_garden.systems.get_system(instances__contains=request_object)
-                garden_name = system.garden_name
+            elif route_type is Route_Type.CREATE:
+                request_object = SchemaParser.parse(brewtils_obj, brewtils_model, from_string=False)
 
-            elif brewtils_model == brewtils.models.Request.schema:
-                system = beer_garden.systems.get_system(name_space=request_object.name_space,
-                                                        name=request_object.system,
-                                                        version=request_object.version)
-                garden_name = system.garden_name
+                if brewtils_model == brewtils.models.Instance.schema:
+                    system = beer_garden.systems.get_system(instances__contains=request_object)
+                    garden_name = system.garden_name
 
-            elif brewtils_model == brewtils.models.System.schema:
-                garden_name = request_object.garden_name
+                elif brewtils_model == brewtils.models.Request.schema:
+                    system = beer_garden.systems.get_system(name_space=request_object.name_space,
+                                                            name=request_object.system,
+                                                            version=request_object.version)
+                    garden_name = system.garden_name
+
+                elif brewtils_model == brewtils.models.System.schema:
+                    garden_name = request_object.garden_name
 
         if garden_name is not src_garden_name:
+            # TODO: Need to Write
             return forward_routing(garden_name=garden_name,
                                    brewtils_obj=brewtils_obj,
                                    brewtils_model=brewtils_model,
@@ -146,7 +149,7 @@ def route_request(brewtils_obj=None, brewtils_model: str = None, obj_id: str = N
             else:
                 return beer_garden.scheduler.get_jobs(kwargs.get('filter_params', None))
         elif route_type is Route_Type.UPDATE:
-            # Does not exist yet
+            # TODO: Does not exist yet
             # return beer_garden.scheduler.update_job(obj_id, brewtils_obj)
             pass
         elif route_type is Route_Type.DELETE:
@@ -202,7 +205,7 @@ def route_request(brewtils_obj=None, brewtils_model: str = None, obj_id: str = N
         elif route_type is Route_Type.READ:
             return beer_garden.log.get_plugin_log_config(obj_id)
         elif route_type is Route_Type.UPDATE:
-            # Does not exist
+            # TODO: Does not exist
             # return beer_garden.log.update_plugin_log_config(brewtils_obj)
             pass
         elif route_type is Route_Type.DELETE:
