@@ -20,7 +20,7 @@ from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.events.parent_http_processor import ParentHttpProcessor
-from beer_garden.events.processors import FanoutProcessor, RequeueProcessor
+from beer_garden.events.processors import CallableProcessor, FanoutProcessor
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import EntryPointLogger, load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
@@ -99,9 +99,7 @@ class Application(StoppableThread):
 
         for entry_name, entry_value in beer_garden.config.get("entry").items():
             if entry_value.get("enable"):
-                self.entry_points.append(
-                    EntryPoint.create(entry_name, self.context.Queue())
-                )
+                self.entry_points.append(EntryPoint.create(entry_name))
 
     def run(self):
         if not self._verify_mongo_connection():
@@ -194,7 +192,7 @@ class Application(StoppableThread):
                 events_queue=self.events_queue,
             )
             self.events_manager.register(
-                RequeueProcessor(queue=entry_point._downstream_queue)
+                CallableProcessor(partial(entry_point.send_event))
             )
 
         self.logger.debug("Loading all local plugins...")

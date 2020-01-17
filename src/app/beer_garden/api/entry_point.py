@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 import signal
-from multiprocessing.context import BaseContext
+from multiprocessing.connection import Connection, Pipe
+from multiprocessing.context import SpawnContext
 from multiprocessing.queues import Queue
 from types import FrameType
 from typing import Any, Callable, TypeVar
@@ -14,7 +15,6 @@ import beer_garden.config
 import beer_garden.db.api as db
 import beer_garden.events.events_manager
 import beer_garden.queue.api as queue
-from beer_garden.events.processors import FanoutProcessor
 
 T = TypeVar("T", bound="EntryPoint")
 
@@ -44,28 +44,24 @@ class EntryPoint(object):
         name: str,
         target: Callable,
         signal_handler: Callable[[int, FrameType], None],
-        downstream_queue: Queue,
     ):
         self._logger = logging.getLogger(__name__)
         self._name = name
         self._target = target
         self._signal_handler = signal_handler
-        self._downstream_queue = downstream_queue
         self._process = None
+        self._rx_conn, self._tx_conn = Pipe(duplex=False)
 
     @classmethod
-    def create(cls, module_name: str, downstream_queue: Queue) -> T:
+    def create(cls, module_name: str) -> T:
         module = getattr(beer_garden.api, module_name)
 
         return EntryPoint(
-            name=module_name,
-            target=module.run,
-            signal_handler=module.signal_handler,
-            downstream_queue=downstream_queue,
+            name=module_name, target=module.run, signal_handler=module.signal_handler
         )
 
     def start(
-        self, context: BaseContext, log_queue: Queue, events_queue: Queue
+        self, context: SpawnContext, log_queue: Queue, events_queue: Queue
     ) -> None:
         """Start the entry point process
 
@@ -85,9 +81,9 @@ class EntryPoint(object):
                 beer_garden.config.get(),
                 log_queue,
                 events_queue,
-                self._downstream_queue,
                 self._target,
                 self._signal_handler,
+                self._rx_conn,
             ),
             name=process_name,
             daemon=True,
@@ -125,16 +121,16 @@ class EntryPoint(object):
         Returns:
             None
         """
-        self._downstream_queue.put(event)
+        self._tx_conn.send(event)
 
     @staticmethod
     def _target_wrapper(
         config: Box,
         log_queue: Queue,
         event_queue: Queue,
-        incoming_queue: Queue,
         target: Callable,
         signal_handler: Callable[[int, FrameType], None],
+        rx_conn: Connection,
     ) -> Any:
         """Helper method that sets up the process environment before calling `target`
 
@@ -151,9 +147,9 @@ class EntryPoint(object):
             config:
             log_queue:
             event_queue:
-            incoming_queue:
             target:
             signal_handler:
+            rx_conn:
 
         Returns:
             The result of the `target` function
@@ -180,14 +176,5 @@ class EntryPoint(object):
         # Then setup upstream event queue (used to send events to the main process)
         beer_garden.events.events_manager.set_upstream(event_queue)
 
-        # Start the event manager for incoming events (coming from the main process)
-        event_manager = FanoutProcessor(name="EventManager", queue=incoming_queue)
-        event_manager.start()
-
         # Now invoke the actual process target
-        ret_val = target(event_manager)
-
-        # At this point we need to stop the event manager thread as well
-        event_manager.stop()
-
-        return ret_val
+        return target(rx_conn)
