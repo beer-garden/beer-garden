@@ -78,8 +78,8 @@ class FanoutProcessor(QueueProcessor):
 class PrettyPrinter(QueueProcessor):
     """Processor that just prints serialized models to a stream"""
 
-    def __init__(self, stream):
-        super().__init__()
+    def __init__(self, stream, **kwargs):
+        super().__init__(**kwargs)
         self._stream = stream
 
     def process(self, item):
@@ -89,19 +89,21 @@ class PrettyPrinter(QueueProcessor):
 class RequeueProcessor(QueueProcessor):
     """Processor that simply forwards items to another Queue"""
 
-    def __init__(self, queue):
-        super().__init__()
-        self._queue = queue
+    def __init__(self, target_queue, **kwargs):
+        super().__init__(**kwargs)
+        self._target_queue = target_queue
 
     def process(self, item):
-        self._queue.put(item)
+        self._target_queue.put(item)
 
 
 class CallableProcessor(QueueProcessor):
     """Processor that will invoke a given callable or partial with the item"""
 
-    def __init__(self, callable_obj: Union[Callable[[object], None], partial]):
-        super().__init__()
+    def __init__(
+        self, callable_obj: Union[Callable[[object], None], partial], **kwargs
+    ):
+        super().__init__(**kwargs)
         self._callable = callable_obj
 
     def process(self, item):
