@@ -9,7 +9,7 @@ import sys
 
 BUILD_IMAGE = "bgio/build"
 NODE_IMAGE = "node:10.9"
-SUPPORTED_DISTRIBUTIONS = ["centos6", "centos7"]
+SUPPORTED_DISTRIBUTIONS = ["centos7"]
 SUPPORTED_PYTHONS = ["python2", "python3"]
 BUILD_TYPES = ["rpm"]
 
