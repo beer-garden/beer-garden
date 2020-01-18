@@ -1,12 +1,12 @@
 import requests
 
-from beer_garden.events.events_manager import EventProcessor
+from beer_garden.events.processors import QueueProcessor
 
-from brewtils.models import Garden, PatchOperation
+from brewtils.models import Garden, PatchOperation, Events
 from brewtils.schema_parser import SchemaParser
 
 
-class ParentHttpProcessor(EventProcessor):
+class ParentHttpProcessor(QueueProcessor):
     """
     Forwards events to parent Beer Garden instance.
     """

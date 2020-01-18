@@ -19,10 +19,10 @@ import beer_garden.queue.api as queue
 from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
-from beer_garden.events.events_manager import EventsManager
 from beer_garden.events.parent_http_processor import ParentHttpProcessor
+from beer_garden.events.processors import CallableProcessor, FanoutProcessor
 from beer_garden.local_plugins.manager import PluginManager
-from beer_garden.log import load_plugin_log_config, EntryPointLogger
+from beer_garden.log import LogProcessor, load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import PluginStatusMonitor
 
@@ -40,6 +40,8 @@ class Application(StoppableThread):
     clients = None
     helper_threads = None
     context = None
+    events_queue = None
+    events_manager = None
     log_queue = None
     log_reader = None
     entry_points = []
@@ -53,11 +55,14 @@ class Application(StoppableThread):
 
     def initialize(self):
         """Actually construct all the various component pieces"""
+        self.context = multiprocessing.get_context("spawn")
+
+        self.events_queue = self.context.Queue()
+        self.events_manager = self._setup_events_manager()
+
         self.scheduler = self._setup_scheduler()
 
         load_plugin_log_config()
-
-        self._setup_events_manager()
 
         plugin_config = beer_garden.config.get("plugin")
         self.helper_threads = [
@@ -89,9 +94,10 @@ class Application(StoppableThread):
                 )
             )
 
-        self.context = multiprocessing.get_context("spawn")
         self.log_queue = self.context.Queue()
-        self.log_reader = HelperThread(EntryPointLogger, log_queue=self.log_queue)
+        self.log_reader = HelperThread(
+            LogProcessor, name="LogProcessor", queue=self.log_queue
+        )
 
         for entry_name, entry_value in beer_garden.config.get("entry").items():
             if entry_value.get("enable"):
@@ -185,7 +191,10 @@ class Application(StoppableThread):
             entry_point.start(
                 context=self.context,
                 log_queue=self.log_queue,
-                events_queue=beer_garden.events.events_manager.events_queue,
+                events_queue=self.events_queue,
+            )
+            self.events_manager.register(
+                CallableProcessor(partial(entry_point.send_event))
             )
 
         self.logger.debug("Loading all local plugins...")
@@ -201,7 +210,7 @@ class Application(StoppableThread):
         self.scheduler.start()
 
         try:
-            self.events_manager.add_event(
+            self.events_manager.put(
                 brewtils.models.Event(name=Events.BARTENDER_STARTED.name)
             )
         except RequestException:
@@ -233,7 +242,7 @@ class Application(StoppableThread):
         PluginManager.instance().stop_all()
 
         try:
-            self.events_manager.add_event(
+            self.events_manager.put(
                 brewtils.models.Event(name=Events.BARTENDER_STOPPED.name)
             )
         except RequestException:
@@ -252,19 +261,15 @@ class Application(StoppableThread):
         self.logger.info("Successfully shut down Beer-garden")
 
     def _setup_events_manager(self):
-        beer_garden.events.events_manager.establish_events_queue()
+        manager = FanoutProcessor(queue=self.events_queue)
 
-        self.events_manager = EventsManager(
-            beer_garden.events.events_manager.events_queue
-        )
-
-        event_config = beer_garden.config.get("event")
-        if event_config.parent.http.enable:
-            self.events_manager.register_processor(
-                ParentHttpProcessor(
-                    event_config.parent.http, beer_garden.config.get("garden_name")
-                )
+        http_event = beer_garden.config.get("event.parent.http")
+        if http_event.enable:
+            manager.register(
+                ParentHttpProcessor(http_event, beer_garden.config.get("garden_name"))
             )
+
+        return manager
 
     @staticmethod
     def _setup_scheduler():
