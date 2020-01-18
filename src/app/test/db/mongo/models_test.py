@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-from brewtils.errors import ModelValidationError
+from brewtils.errors import ModelValidationError, RequestStatusTransitionError
 from brewtils.schemas import RequestTemplateSchema
 from mock import Mock
 
+import beer_garden.db.api as db
 from beer_garden.db.mongo.models import (
     Command,
     Instance,
@@ -165,6 +166,18 @@ class TestRequest(object):
     def test_clean_fail(self, request):
         with pytest.raises(ModelValidationError):
             request.clean()
+
+    @pytest.mark.parametrize(
+        "start,end",
+        [("SUCCESS", "IN_PROGRESS"), ("SUCCESS", "ERROR"), ("IN_PROGRESS", "CREATED")],
+    )
+    def test_invalid_status_transitions(self, mongo_conn, bg_request, start, end):
+        bg_request.status = start
+        db.create(bg_request)
+
+        with pytest.raises(RequestStatusTransitionError):
+            bg_request.status = end
+            db.update(bg_request)
 
     # TODO - Make these integration tests
     # @patch("bg_utils.mongo.models.Request.objects")

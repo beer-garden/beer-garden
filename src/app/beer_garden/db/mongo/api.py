@@ -287,7 +287,8 @@ def create(obj: ModelItem) -> ModelItem:
 def update(obj: ModelItem) -> ModelItem:
     """Save changes to an item to the database
 
-    Currently this is functionally identical to the "create" function.
+    This is almost identical to the "create" function but it also calls an additional
+    clean method (clean_update) to ensure that the update is valid.
 
     Args:
         obj: The Brewtils model to save
@@ -296,7 +297,16 @@ def update(obj: ModelItem) -> ModelItem:
         The saved Brewtils model
 
     """
-    return create(obj)
+    mongo_obj = from_brewtils(obj)
+
+    mongo_obj.clean_update()
+
+    if hasattr(mongo_obj, "deep_save"):
+        mongo_obj.deep_save()
+    else:
+        mongo_obj.save()
+
+    return to_brewtils(mongo_obj)
 
 
 def delete(obj: ModelItem) -> None:
