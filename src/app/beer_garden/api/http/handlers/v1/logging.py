@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
+import json
+
+from beer_garden.router import Route_Type
 from brewtils.errors import ModelValidationError
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.base_handler import BaseHandler
+import beer_garden
 
 
 class LoggingConfigAPI(BaseHandler):
@@ -33,9 +37,8 @@ class LoggingConfigAPI(BaseHandler):
         """
         system_name = self.get_query_argument("system_name", default="")
 
-        response = await self.client.get_plugin_log_config(
-            self.request.namespace, system_name
-        )
+        response = beer_garden.router.route_request(brewtils_id=system_name, brewtils_model='LOGGING',
+                                                    route_type=Route_Type.READ)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -72,17 +75,11 @@ class LoggingConfigAPI(BaseHandler):
         tags:
           - Config
         """
-        operations = SchemaParser.parse_patch(
-            self.request.decoded_body, many=True, from_string=True
-        )
 
-        for op in operations:
-            if op.operation == "reload":
-                response = await self.client.reload_plugin_log_config(
-                    self.request.namespace
-                )
-            else:
-                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+        operations = json.load(self.request.decoded_body)
+
+        response = beer_garden.router.route_request(brewtils_obj=operations, brewtils_model='LOGGING',
+                                                    route_type=Route_Type.UPDATE)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

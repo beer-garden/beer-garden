@@ -2,6 +2,7 @@
 import logging
 from typing import List, Sequence
 
+from beer_garden.router import Route_Type
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events, Instance, System, PatchOperation
 from brewtils.schema_parser import SchemaParser
@@ -17,6 +18,25 @@ from beer_garden.queue.rabbit import get_routing_key
 REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
 logger = logging.getLogger(__name__)
+
+def route_request(brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs):
+    if route_type is Route_Type.CREATE:
+        return create_system(brewtils_obj)
+    elif route_type is Route_Type.READ:
+        if obj_id:
+            return get_system(obj_id)
+        else:
+            return get_systems(
+                serialize_kwargs=kwargs.get('serialize_kwargs', None),
+                filter_params=kwargs.get('filter_params', None),
+                order_by=kwargs.get('order_by', None),
+                include_fields=kwargs.get('include_fields', None),
+                exclude_fields=kwargs.get('exclude_fields', None),
+                dereference_nested=kwargs.get('dereference_nested', None), )
+    elif route_type is Route_Type.UPDATE:
+        return update_system(obj_id, brewtils_obj)
+    elif route_type is Route_Type.DELETE:
+        return remove_system(obj_id)
 
 
 def get_system(system_id: str) -> System:

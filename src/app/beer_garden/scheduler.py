@@ -3,6 +3,8 @@ import logging
 from typing import List, Dict
 
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
+
+from beer_garden.router import Route_Type
 from brewtils.models import Job
 
 import beer_garden
@@ -18,6 +20,22 @@ class IntervalTrigger(APInterval):
     def __init__(self, *args, **kwargs):
         self.reschedule_on_finish = kwargs.pop("reschedule_on_finish", False)
         super(IntervalTrigger, self).__init__(*args, **kwargs)
+
+
+def route_request(brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs):
+    if route_type is Route_Type.CREATE:
+        return create_job(brewtils_obj)
+    elif route_type is Route_Type.READ:
+        if obj_id:
+            return get_job(obj_id)
+        else:
+            return get_jobs(kwargs.get('filter_params', None))
+    elif route_type is Route_Type.UPDATE:
+        # TODO: Does not exist yet
+        # return beer_garden.scheduler.update_job(obj_id, brewtils_obj)
+        pass
+    elif route_type is Route_Type.DELETE:
+        return remove_job(obj_id)
 
 
 def run_job(job_id, request_template):
@@ -48,9 +66,9 @@ def run_job(job_id, request_template):
     # Be a little careful here as the job could have been removed or paused
     job = beer_garden.application.scheduler.get_job(job_id)
     if (
-        job
-        and job.next_run_time is not None
-        and getattr(job.trigger, "reschedule_on_finish", False)
+            job
+            and job.next_run_time is not None
+            and getattr(job.trigger, "reschedule_on_finish", False)
     ):
         # This essentially resets the timer on this job, which has the effect of
         # making the wait time start whenever the job finishes

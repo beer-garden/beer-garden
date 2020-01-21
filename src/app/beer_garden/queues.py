@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 
+from beer_garden.errors import RoutingRequestException
+from beer_garden.router import Route_Type
 from brewtils.models import Events, Queue, System
 
 import beer_garden.db.api as db
@@ -9,6 +11,19 @@ from beer_garden.events.events_manager import publish_event
 from beer_garden.queue.rabbit import get_routing_key
 
 logger = logging.getLogger(__name__)
+
+def route_request(brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs):
+    if route_type is Route_Type.CREATE:
+        raise RoutingRequestException("CREATE Route for Queues does not exist")
+    elif route_type is Route_Type.READ:
+        return get_all_queue_info()
+    elif route_type is Route_Type.UPDATE:
+        raise RoutingRequestException("Update Route for Queues does not exist")
+    elif route_type is Route_Type.DELETE:
+        if obj_id:
+            return clear_queue(obj_id)
+        else:
+            return clear_all_queues()
 
 
 def get_queue_message_count(queue_name):

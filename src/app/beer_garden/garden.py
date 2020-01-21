@@ -2,6 +2,7 @@
 import logging
 from datetime import datetime
 
+from beer_garden.router import Route_Type
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events, Garden, PatchOperation, System
 
@@ -11,6 +12,16 @@ from beer_garden.events.events_manager import publish_event
 
 logger = logging.getLogger(__name__)
 
+
+def route_request(brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs):
+    if route_type is Route_Type.CREATE:
+        return create_garden(brewtils_obj)
+    elif route_type is Route_Type.READ:
+        return get_garden(obj_id)
+    elif route_type is Route_Type.UPDATE:
+        return update_garden(obj_id, brewtils_obj)
+    elif route_type is Route_Type.DELETE:
+        return remove_garden(obj_id)
 
 def get_garden(garden_name: str) -> Garden:
     """Retrieve an individual Garden
