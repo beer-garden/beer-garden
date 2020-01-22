@@ -225,4 +225,8 @@ export default function appRun(
   });
 
   $rootScope.initialLoad();
+  
+  EventService.addCallback('console', (event) => {
+    console.log('Websocket message: ' + JSON.stringify(event));
+  });
 };
