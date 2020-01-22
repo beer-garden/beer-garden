@@ -33,7 +33,7 @@ from mongoengine.errors import DoesNotExist
 import brewtils.models
 from .fields import DummyField, StatusInfo
 from brewtils.choices import parse
-from brewtils.errors import ModelValidationError
+from brewtils.errors import ModelValidationError, RequestStatusTransitionError
 from brewtils.models import (
     Command as BrewtilsCommand,
     Instance as BrewtilsInstance,
@@ -74,6 +74,9 @@ class MongoModel(object):
     @classmethod
     def index_names(cls):
         return [index["name"] for index in cls._meta["indexes"]]
+
+    def clean_update(self):
+        pass
 
 
 # MongoEngine needs all EmbeddedDocuments to be defined before any Documents that
@@ -379,6 +382,28 @@ class Request(MongoModel, Document):
                 "Can not save Request %s: Invalid output "
                 'type "%s"' % (str(self), self.output_type)
             )
+
+    def clean_update(self):
+        """Ensure that the update would not result in an illegal status transition"""
+        # Get the original status
+        old_status = Request.objects.get(id=self.id).status
+
+        if self.status != old_status:
+            if old_status in BrewtilsRequest.COMPLETED_STATUSES:
+                raise RequestStatusTransitionError(
+                    f"Status for a request cannot be updated once it has been "
+                    f"completed. Current: {old_status}, Requested: {self.status}"
+                )
+
+            if (
+                old_status == "IN_PROGRESS"
+                and self.status not in BrewtilsRequest.COMPLETED_STATUSES
+            ):
+                raise RequestStatusTransitionError(
+                    f"Request status can only transition from IN_PROGRESS to a "
+                    f"completed status. Requested: {self.status}, completed statuses "
+                    f"are {BrewtilsRequest.COMPLETED_STATUSES}."
+                )
 
 
 class System(MongoModel, Document):
