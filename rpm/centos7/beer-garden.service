@@ -2,14 +2,10 @@
 
 [Unit]
 Description=Beergarden Service
-Wants=brew-view.service bartender.service
-Before=brew-view.service bartender.service
 
 [Service]
-Type=oneshot
-ExecStart=/bin/true
-RemainAfterExit=true
+Type=simple
+ExecStart=/opt/beer-garden/bin/beer-garden -c /opt/beer-garden/conf/config.yaml -l /opt/beer-garden/conf/logging.yaml
 
 [Install]
 WantedBy=multi-user.target
-Also=brew-view.service bartender.service
