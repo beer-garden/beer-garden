@@ -23,7 +23,7 @@ from beer_garden.log import process_record
 T = TypeVar("T", bound="EntryPoint")
 
 
-class EntryPoint(object):
+class EntryPoint:
     """A Beergarden API entry point
 
     This class represents an entry point into Beergarden.
@@ -57,18 +57,20 @@ class EntryPoint(object):
         name: str,
         target: Callable,
         context: SpawnContext,
-        signal_handler: Callable[[int, FrameType], None],
         log_queue: Queue,
+        signal_handler: Callable[[int, FrameType], None],
+        event_callback: Callable[[Event], None],
     ):
         self._name = name
         self._target = target
         self._context = context
-        self._signal_handler = signal_handler
         self._log_queue = log_queue
+        self._signal_handler = signal_handler
 
         self._logger = logging.getLogger(__name__)
         self._process = None
         self._ep_conn, self.mp_conn = Pipe()
+        self._event_listener = PipeListener(conn=self.mp_conn, action=event_callback)
 
     def start(self) -> None:
         """Start the entry point process"""
@@ -88,6 +90,9 @@ class EntryPoint(object):
         )
         self._process.start()
 
+        # And listen for events coming from it
+        self._event_listener.start()
+
     def stop(self, timeout: int = None) -> None:
         """Stop the process with a SIGTERM
 
@@ -101,6 +106,10 @@ class EntryPoint(object):
         Returns:
             None
         """
+        # First stop listening for events
+        self._event_listener.stop()
+
+        # Then ensure the process is terminated
         self._process.terminate()
         self._process.join(timeout=timeout)
 
@@ -223,8 +232,9 @@ class Manager:
             name=module_name,
             target=module.run,
             context=self.context,
-            signal_handler=module.signal_handler,
             log_queue=self.log_queue,
+            signal_handler=module.signal_handler,
+            event_callback=self.process_event,
         )
 
     def register_callback(self, event_name: str, callback: Callable):
@@ -236,10 +246,6 @@ class Manager:
         self.log_reader.start()
 
         for entry_point in self.entry_points:
-            listener = PipeListener(conn=entry_point.mp_conn, action=self.process)
-            listener.start()
-            self.processors.append(listener)
-
             entry_point.start()
 
     def stop(self):
@@ -248,25 +254,15 @@ class Manager:
         for entry_point in self.entry_points:
             entry_point.stop(timeout=10)
 
-        for processor in self.processors:
-            processor.stop()
+    def put(self, event: Event) -> None:
+        """Publish an event to all entry points"""
+        for entry_point in self.entry_points:
+            entry_point.send_event(event)
 
-    def put(self, item, entry_points=None):
-        """Publish an event to specified entry points.
-
-        Args:
-            item:
-
-        Returns:
-
-        """
-        for ep in self.entry_points:
-            ep.send_event(item)
-
-    def process(self, item):
+    def process_event(self, event):
         # First fire any callbacks
-        if item.name in self.callbacks:
-            for callback in self.callbacks[item.name]:
-                callback(item)
+        if event.name in self.callbacks:
+            for callback in self.callbacks[event.name]:
+                callback(event)
 
         # TODO - then send the event to all other queues
