@@ -11,7 +11,6 @@ from ruamel.yaml import YAML
 
 import beer_garden
 from beer_garden.errors import LoggingLoadingError
-from beer_garden.events.processors import QueueProcessor
 
 plugin_logging_config = None
 _LOGGING_CONFIG = None
@@ -82,14 +81,15 @@ def default_app_config(level, filename=None):
     }
 
 
-class LogProcessor(QueueProcessor):
-    """Processor that handles log records"""
+def process_record(record):
+    """Handle a log record.
 
-    def process(self, item):
-        logger = logging.getLogger(item.name)
+    Intended to be used as the ``action`` kwarg of a QueueListener.
+    """
+    logger = logging.getLogger(record.name)
 
-        if logger.isEnabledFor(item.levelno):
-            logger.handle(item)
+    if logger.isEnabledFor(record.levelno):
+        logger.handle(record)
 
 
 def setup_entry_point_logging(queue):
