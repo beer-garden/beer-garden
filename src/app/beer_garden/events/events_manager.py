@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from multiprocessing import Queue
+from multiprocessing.connection import Connection
 
 import wrapt
 from brewtils.models import Event, Events
@@ -7,12 +7,12 @@ from brewtils.models import Event, Events
 import beer_garden
 
 # In entry point processes this will be used to ship events back to the master process
-upstream_queue = None
+upstream_conn = None
 
 
-def set_upstream(queue: Queue) -> None:
-    global upstream_queue
-    upstream_queue = queue
+def set_conn(conn: Connection) -> None:
+    global upstream_conn
+    upstream_conn = conn
 
 
 def publish_event(event_type):
@@ -52,7 +52,7 @@ def publish_event(event_type):
             elif event.name in (Events.DB_DELETE.name,):
                 event.payload = args[0]
         finally:
-            upstream_queue.put(event)
+            upstream_conn.send(event)
 
         return result
 
