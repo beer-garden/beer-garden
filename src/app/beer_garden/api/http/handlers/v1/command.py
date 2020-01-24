@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.router import Route_Class, Route_Type
 
 
 class CommandAPI(BaseHandler):
@@ -10,11 +11,6 @@ class CommandAPI(BaseHandler):
         ---
         summary: Retrieve a specific Command
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: command_id
             in: path
             required: true
@@ -32,8 +28,12 @@ class CommandAPI(BaseHandler):
         tags:
           - Commands
         """
-        response = await self.client.get_command(self.request.namespace, command_id)
 
+        response = await self.client(
+            obj_id=command_id,
+            route_class=Route_Class.COMMAND,
+            route_type=Route_Type.READ,
+        )
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
@@ -44,12 +44,6 @@ class CommandListAPI(BaseHandler):
         """
         ---
         summary: Retrieve all Commands
-        parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
         responses:
           200:
             description: All Commands
@@ -62,7 +56,9 @@ class CommandListAPI(BaseHandler):
         tags:
           - Commands
         """
-        response = await self.client.get_commands(self.request.namespace)
 
+        response = await self.client(
+            route_class=Route_Class.COMMAND, route_type=Route_Type.READ
+        )
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

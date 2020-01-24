@@ -2,6 +2,7 @@
 import logging
 from typing import List, Sequence
 
+from beer_garden.errors import RoutingRequestException
 from beer_garden.router import Route_Type
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events, Instance, System, PatchOperation
@@ -19,24 +20,47 @@ REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
 logger = logging.getLogger(__name__)
 
-def route_request(brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs):
+
+def route_request(
+    brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs
+):
     if route_type is Route_Type.CREATE:
+        if brewtils_obj is None:
+            raise RoutingRequestException(
+                "An Object is required to route CREATE request for Systems"
+            )
         return create_system(brewtils_obj)
     elif route_type is Route_Type.READ:
         if obj_id:
             return get_system(obj_id)
         else:
             return get_systems(
-                serialize_kwargs=kwargs.get('serialize_kwargs', None),
-                filter_params=kwargs.get('filter_params', None),
-                order_by=kwargs.get('order_by', None),
-                include_fields=kwargs.get('include_fields', None),
-                exclude_fields=kwargs.get('exclude_fields', None),
-                dereference_nested=kwargs.get('dereference_nested', None), )
+                serialize_kwargs=kwargs.get("serialize_kwargs", None),
+                filter_params=kwargs.get("filter_params", None),
+                order_by=kwargs.get("order_by", None),
+                include_fields=kwargs.get("include_fields", None),
+                exclude_fields=kwargs.get("exclude_fields", None),
+                dereference_nested=kwargs.get("dereference_nested", None),
+            )
     elif route_type is Route_Type.UPDATE:
-        return update_system(obj_id, brewtils_obj)
+        if brewtils_obj is None:
+            raise RoutingRequestException(
+                "An Object is required to route UPDATE request for Systems"
+            )
+        if obj_id:
+            return update_system(obj_id, brewtils_obj)
+        else:
+            return update_rescan(brewtils_obj)
     elif route_type is Route_Type.DELETE:
+        if obj_id is None:
+            raise RoutingRequestException(
+                "An Identifier is required to route DELETE request for Systems"
+            )
         return remove_system(obj_id)
+    else:
+        raise RoutingRequestException(
+            "%s Route for Systems does not exist" % route_type.value
+        )
 
 
 def get_system(system_id: str) -> System:
@@ -228,7 +252,6 @@ def remove_system(system_id: str) -> None:
 
     # Now clean up the message queues
     for instance in system.instances:
-
         # It is possible for the request or admin queue to be none if we are
         # stopping an instance that was not properly started.
         request_queue = instance.queue_info.get("request", {}).get("name")
@@ -240,6 +263,14 @@ def remove_system(system_id: str) -> None:
 
     # Finally, actually delete the system
     db.delete(system)
+
+
+def update_rescan(operations: Sequence[PatchOperation]) -> None:
+    for op in operations:
+        if op.operation == "rescan":
+            rescan_system_directory()
+        else:
+            raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
 
 def rescan_system_directory() -> None:

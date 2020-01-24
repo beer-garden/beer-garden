@@ -20,17 +20,25 @@ from beer_garden.errors import LoggingLoadingError, RoutingRequestException
 plugin_logging_config = None
 _LOGGING_CONFIG = None
 
-def route_request(brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs):
+
+def route_request(
+    brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs
+):
     if route_type is Route_Type.CREATE:
         raise RoutingRequestException("CREATE Route for Logs does not exist")
     elif route_type is Route_Type.READ:
+        if obj_id is None:
+            raise RoutingRequestException(
+                "An identifier is required to route READ request for Log"
+            )
         return get_plugin_log_config(obj_id)
     elif route_type is Route_Type.UPDATE:
-        operations = SchemaParser.parse_patch(
-            brewtils_obj, many=True, from_string=False
-        )
+        if brewtils_obj is None:
+            raise RoutingRequestException(
+                "An Object is required to route UPDATE request for Log"
+            )
 
-        for op in operations:
+        for op in brewtils_obj:
             if op.operation == "reload":
                 return reload_plugin_log_config()
             else:
@@ -38,6 +46,11 @@ def route_request(brewtils_obj=None, obj_id: str = None, route_type: Route_Type 
 
     elif route_type is Route_Type.DELETE:
         raise RoutingRequestException("DELETE Route for Logs does not exist")
+    else:
+        raise RoutingRequestException(
+            "%s Route for Logs does not exist" % route_type.value
+        )
+
 
 def load(config: dict, force=False) -> None:
     """Load the application logging configuration.

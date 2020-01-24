@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import beer_garden
+from beer_garden.router import Route_Type, Route_Class
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema
 
@@ -13,11 +15,6 @@ class SystemAPI(BaseHandler):
         ---
         summary: Retrieve a specific System
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: system_id
             in: path
             required: true
@@ -46,7 +43,9 @@ class SystemAPI(BaseHandler):
         #     self.get_query_argument("include_commands", default="").lower() != "false"
         # )
 
-        response = await self.client.get_system(self.request.namespace, system_id)
+        response = await self.client(
+            obj_id=system_id, route_class=Route_Class.SYSTEM, route_type=Route_Type.READ
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -62,11 +61,6 @@ class SystemAPI(BaseHandler):
         description: Will remove instances of local plugins from the registry, clear
             and remove message queues, and remove the system from the database.
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: system_id
             in: path
             required: true
@@ -82,7 +76,12 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        await self.client.remove_system(self.request.namespace, system_id)
+
+        await self.client(
+            obj_id=system_id,
+            route_class=Route_Class.SYSTEM,
+            route_type=Route_Type.DELETE,
+        )
 
         self.set_status(204)
 
@@ -107,11 +106,6 @@ class SystemAPI(BaseHandler):
           ```
           Where `value` is a list of new Commands.
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: system_id
             in: path
             required: true
@@ -137,10 +131,14 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        response = await self.client.update_system(
-            self.request.namespace,
-            system_id,
-            SchemaParser.parse_patch(self.request.decoded_body, from_string=True),
+
+        response = await self.client(
+            obj_id=system_id,
+            brewtils_obj=SchemaParser.parse_patch(
+                self.request.decoded_body, from_string=True
+            ),
+            route_class=Route_Class.SYSTEM,
+            route_type=Route_Type.UPDATE,
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -148,7 +146,6 @@ class SystemAPI(BaseHandler):
 
 
 class SystemListAPI(BaseHandler):
-
     REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
     @authenticated(permissions=[Permissions.SYSTEM_READ])
@@ -179,11 +176,6 @@ class SystemListAPI(BaseHandler):
             This will not do what you expect: only return the system named
             'bar' will be returned.
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: include_fields
             in: query
             required: false
@@ -249,8 +241,9 @@ class SystemListAPI(BaseHandler):
         if exclude_fields:
             serialize_kwargs["exclude"] = exclude_fields
 
-        response = await self.client.get_systems(
-            self.request.namespace,
+        response = await self.client(
+            route_class=Route_Class.SYSTEM,
+            route_type=Route_Type.READ,
             serialize_kwargs=serialize_kwargs,
             filter_params=filter_params,
             order_by=order_by,
@@ -271,11 +264,6 @@ class SystemListAPI(BaseHandler):
             If the System does not exist it will be created. If the System
             already exists it will be updated (assuming it passes validation).
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: system
             in: body
             description: The System definition to create / update
@@ -297,11 +285,14 @@ class SystemListAPI(BaseHandler):
         tags:
           - Systems
         """
-        response = await self.client.create_system(
-            self.request.namespace,
-            SchemaParser.parse_system(self.request.decoded_body, from_string=True),
-        )
 
+        response = await self.client(
+            brewtils_obj=SchemaParser.parse_system(
+                self.request.decoded_body, from_string=True
+            ),
+            route_class=Route_Class.SYSTEM,
+            route_type=Route_Type.CREATE,
+        )
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

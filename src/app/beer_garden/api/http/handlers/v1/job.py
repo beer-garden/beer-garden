@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+import json
+
+import beer_garden
+from beer_garden.router import Route_Type, Route_Class
 from brewtils.errors import ModelValidationError
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import JobSchema
@@ -14,11 +18,6 @@ class JobAPI(BaseHandler):
         ---
         summary: Retrieve a specific Job
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: job_id
             in: path
             required: true
@@ -36,7 +35,10 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
-        response = await self.client.get_job(self.request.namespace, job_id)
+
+        response = await self.client(
+            obj_id=job_id, route_class=Route_Class.JOB, route_type=Route_Type.READ
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -62,11 +64,6 @@ class JobAPI(BaseHandler):
           { "operation": "update", "path": "/status", "value": "RUNNING" }
           ```
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: job_id
             in: path
             required: true
@@ -92,29 +89,15 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
-        operations = SchemaParser.parse_patch(
-            self.request.decoded_body, many=True, from_string=True
-        )
 
-        for op in operations:
-            if op.operation == "update":
-                if op.path == "/status":
-                    if str(op.value).upper() == "PAUSED":
-                        response = await self.client.pause_job(
-                            self.request.namespace, job_id
-                        )
-                    elif str(op.value).upper() == "RUNNING":
-                        response = await self.client.resume_job(
-                            self.request.namespace, job_id
-                        )
-                    else:
-                        raise ModelValidationError(
-                            f"Unsupported status value '{op.value}'"
-                        )
-                else:
-                    raise ModelValidationError(f"Unsupported path value '{op.path}'")
-            else:
-                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+        response = await self.client(
+            obj_id=job_id,
+            brewtils_obj=SchemaParser.parse_patch(
+                self.request.decoded_body, from_string=True
+            ),
+            route_class=Route_Class.JOB,
+            route_type=Route_Type.UPDATE,
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -126,11 +109,6 @@ class JobAPI(BaseHandler):
         summary: Delete a specific Job.
         description: Will remove a specific job. No further executions will occur.
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: job_id
             in: path
             required: true
@@ -146,7 +124,10 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
-        await self.client.remove_job(self.request.namespace, job_id)
+
+        await self.client(
+            obj_id=job_id, route_class=Route_Class.JOB, route_type=Route_Type.DELETE
+        )
 
         self.set_status(204)
 
@@ -157,12 +138,6 @@ class JobListAPI(BaseHandler):
         """
         ---
         summary: Retrieve all Jobs.
-        parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
         responses:
           200:
             description: Successfully retrieved all systems.
@@ -180,7 +155,11 @@ class JobListAPI(BaseHandler):
             if key in JobSchema.get_attribute_names():
                 filter_params[key] = self.get_query_argument(key)
 
-        response = await self.client.get_jobs(self.request.namespace, filter_params)
+        response = await self.client(
+            route_class=Route_Class.JOB,
+            route_type=Route_Type.READ,
+            filter_params=filter_params,
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -194,11 +173,6 @@ class JobListAPI(BaseHandler):
           Given a job, it will be scheduled to run on the interval
           set in the trigger argument.
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: job
             in: body
             description: The Job to create/schedule
@@ -216,9 +190,13 @@ class JobListAPI(BaseHandler):
         tags:
           - Jobs
         """
-        response = await self.client.create_job(
-            self.request.namespace,
-            SchemaParser.parse_job(self.request.decoded_body, from_string=True),
+
+        response = await self.client(
+            brewtils_obj=SchemaParser.parse_job(
+                self.request.decoded_body, from_string=True
+            ),
+            route_class=Route_Class.JOB,
+            route_type=Route_Type.CREATE,
         )
 
         self.set_status(201)

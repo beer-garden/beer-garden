@@ -2,6 +2,7 @@
 import logging
 from datetime import datetime
 
+from beer_garden.errors import RoutingRequestException
 from beer_garden.router import Route_Type
 from brewtils.errors import ModelValidationError
 from brewtils.models import Events, Garden, PatchOperation, System
@@ -13,15 +14,42 @@ from beer_garden.events.events_manager import publish_event
 logger = logging.getLogger(__name__)
 
 
-def route_request(brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs):
+def route_request(
+    brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs
+):
     if route_type is Route_Type.CREATE:
+        if brewtils_obj is None:
+            raise RoutingRequestException(
+                "An Object is required to route CREATE request for Garden"
+            )
+
         return create_garden(brewtils_obj)
     elif route_type is Route_Type.READ:
+        if obj_id is None:
+            raise RoutingRequestException(
+                "An identifier is required to route READ request for Garden"
+            )
+
         return get_garden(obj_id)
     elif route_type is Route_Type.UPDATE:
+        if obj_id is None or brewtils_obj is None:
+            raise RoutingRequestException(
+                "An identifier and Object are required to route UPDATE request for Garden"
+            )
+
         return update_garden(obj_id, brewtils_obj)
     elif route_type is Route_Type.DELETE:
+        if obj_id is None:
+            raise RoutingRequestException(
+                "An identifier is required to route DELETE request for Garden"
+            )
+
         return remove_garden(obj_id)
+    else:
+        raise RoutingRequestException(
+            "%s Route for Garden does not exist" % route_type.value
+        )
+
 
 def get_garden(garden_name: str) -> Garden:
     """Retrieve an individual Garden

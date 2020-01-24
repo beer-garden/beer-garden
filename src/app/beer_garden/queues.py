@@ -12,7 +12,10 @@ from beer_garden.queue.rabbit import get_routing_key
 
 logger = logging.getLogger(__name__)
 
-def route_request(brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs):
+
+def route_request(
+    brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs
+):
     if route_type is Route_Type.CREATE:
         raise RoutingRequestException("CREATE Route for Queues does not exist")
     elif route_type is Route_Type.READ:
@@ -24,6 +27,10 @@ def route_request(brewtils_obj=None, obj_id: str = None, route_type: Route_Type 
             return clear_queue(obj_id)
         else:
             return clear_all_queues()
+    else:
+        raise RoutingRequestException(
+            "Route %s for Queues does not exist" % route_type.value
+        )
 
 
 def get_queue_message_count(queue_name):

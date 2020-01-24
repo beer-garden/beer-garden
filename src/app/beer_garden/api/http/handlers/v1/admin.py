@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from beer_garden.router import Route_Class, Route_Type
 from brewtils.errors import ModelValidationError
 from brewtils.schema_parser import SchemaParser
 
@@ -25,11 +26,6 @@ class AdminAPI(BaseHandler):
             plugins who's directory has been removed.
           * Will add and start any new plugin directories.
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: patch
             in: body
             required: true
@@ -47,12 +43,14 @@ class AdminAPI(BaseHandler):
         operations = SchemaParser.parse_patch(
             self.request.decoded_body, many=True, from_string=True
         )
+        check_permission(self.current_user, [Permissions.SYSTEM_CREATE])
 
-        for op in operations:
-            if op.operation == "rescan":
-                check_permission(self.current_user, [Permissions.SYSTEM_CREATE])
-                await self.client.rescan_system_directory(self.request.namespace)
-            else:
-                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+        response = await self.client(
+            brewtils_obj=SchemaParser.parse_patch(
+                self.request.decoded_body, from_string=True
+            ),
+            route_class=Route_Class.SYSTEM,
+            route_type=Route_Type.UPDATE,
+        )
 
         self.set_status(204)

@@ -20,6 +20,10 @@ def route_request(obj_id: str = None, route_type: Route_Type = None, **kwargs):
         raise RoutingRequestException("UPDATE Route for Commands does not exist")
     elif route_type is Route_Type.DELETE:
         raise RoutingRequestException("DELETE Route for Commands does not exist")
+    else:
+        raise RoutingRequestException(
+            "%s Route for Commands does not exist" % route_type.value
+        )
 
 
 def get_command(command_id: str) -> Command:

@@ -15,15 +15,33 @@ from beer_garden.events.events_manager import publish_event
 logger = logging.getLogger(__name__)
 
 
-def route_request(brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs):
+def route_request(
+    brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs
+):
     if route_type is Route_Type.CREATE:
         raise RoutingRequestException("CREATE Route for Instances does not exist")
     elif route_type is Route_Type.READ:
+        if obj_id is None:
+            raise RoutingRequestException(
+                "An identifier is required to route READ request for Instances"
+            )
         return get_instance(obj_id)
     elif route_type is Route_Type.UPDATE:
+        if brewtils_obj is None:
+            raise RoutingRequestException(
+                "An Object is required to route UPDATE request for Instances"
+            )
         return update_instance(obj_id, brewtils_obj)
     elif route_type is Route_Type.DELETE:
+        if obj_id is None:
+            raise RoutingRequestException(
+                "An identifier is required to route DELETE request for Instances"
+            )
         return remove_instance(obj_id)
+    else:
+        raise RoutingRequestException(
+            "%s Route for Instances does not exist" % route_type.value
+        )
 
 
 def get_instance(instance_id: str) -> Instance:
@@ -70,43 +88,7 @@ def initialize_instance(instance_id: str) -> Instance:
     return instance
 
 
-@publish_event(Events.INSTANCE_UPDATED)
-def update_instance(instance_id: str, patch: PatchOperation) -> Instance:
-    """Applies updates to an instance.
 
-    Args:
-        instance_id: The Instance ID
-        patch: Patch definition to apply
-
-    Returns:
-        The updated Instance
-    """
-    instance = None
-
-    for op in patch:
-        operation = op.operation.lower()
-
-        if operation == "initialize":
-            instance = initialize_instance(instance_id)
-
-        elif operation == "start":
-            instance = start_instance(instance_id)
-
-        elif operation == "stop":
-            instance = stop_instance(instance_id)
-
-        elif operation == "heartbeat":
-            instance = update_instance_status(instance_id, "RUNNING")
-
-        elif operation == "replace":
-            if op.path.lower() == "/status":
-                instance = update_instance_status(instance_id, op.value)
-            else:
-                raise ModelValidationError(f"Unsupported path '{op.path}'")
-        else:
-            raise ModelValidationError(f"Unsupported operation '{op.operation}'")
-
-    return instance
 
 
 @publish_event(Events.INSTANCE_STARTED)
