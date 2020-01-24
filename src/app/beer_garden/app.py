@@ -18,6 +18,7 @@ import beer_garden.queue.api as queue
 from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
+from beer_garden.events.events_manager import MainEventManager
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
@@ -82,6 +83,8 @@ class Application(StoppableThread):
             )
 
         self.entry_manager = beer_garden.api.entry_point.Manager()
+
+        beer_garden.events.events_manager.manager = MainEventManager()
 
     def run(self):
         if not self._verify_mongo_connection():
