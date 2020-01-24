@@ -17,6 +17,7 @@ import beer_garden.config
 import beer_garden.db.api as db
 import beer_garden.events.events_manager
 import beer_garden.queue.api as queue
+from beer_garden.events.events_manager import EntryPointManager
 from beer_garden.events.processors import PipeListener, QueueListener
 from beer_garden.log import process_record
 
@@ -169,6 +170,9 @@ class EntryPoint:
         # Then set up logging to push everything back to the main process
         beer_garden.log.setup_entry_point_logging(log_queue)
 
+        # Set up the event manager for the entry point
+        beer_garden.events.events_manager.manager = EntryPointManager(conn=ep_conn)
+
         # Also set up plugin logging
         beer_garden.log.load_plugin_log_config()
 
@@ -178,12 +182,8 @@ class EntryPoint:
         # Set up message queue connections
         queue.create_clients(beer_garden.config.get("amq"))
 
-        # Then setup upstream event queue (used to send events to the main process)
-        # beer_garden.events.events_manager.set_upstream(event_queue)
-        beer_garden.events.events_manager.set_conn(ep_conn)
-
         # Now invoke the actual process target
-        return target(ep_conn)
+        return target()
 
 
 class Manager:
@@ -206,11 +206,10 @@ class Manager:
     log_queue: Queue = None
 
     def __init__(self):
-        self.processors = []
         self.entry_points = []
         self.callbacks = {
-            Events.INSTANCE_STOP_REQUESTED.name: [
-                lambda x: print("Instance Stop Requested", file=sys.stderr)
+            Events.INSTANCE_STOPPED.name: [
+                lambda x: print("Instance Stopped", file=sys.stderr)
             ]
         }
 

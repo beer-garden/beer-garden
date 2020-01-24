@@ -6,23 +6,23 @@ import types
 
 from apispec import APISpec
 from brewtils.schemas import (
-    ParameterSchema,
     CommandSchema,
-    InstanceSchema,
-    SystemSchema,
-    RequestSchema,
-    PatchSchema,
-    LoggingConfigSchema,
-    EventSchema,
-    QueueSchema,
-    PrincipalSchema,
-    RoleSchema,
-    RefreshTokenSchema,
-    JobSchema,
-    DateTriggerSchema,
-    IntervalTriggerSchema,
     CronTriggerSchema,
+    DateTriggerSchema,
+    EventSchema,
     GardenSchema,
+    InstanceSchema,
+    IntervalTriggerSchema,
+    JobSchema,
+    LoggingConfigSchema,
+    ParameterSchema,
+    PatchSchema,
+    PrincipalSchema,
+    QueueSchema,
+    RefreshTokenSchema,
+    RequestSchema,
+    RoleSchema,
+    SystemSchema,
 )
 from prometheus_client.exposition import start_http_server
 from tornado.httpserver import HTTPServer
@@ -35,6 +35,7 @@ import beer_garden.api.http.handlers.misc as misc
 import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.v2 as v2
 import beer_garden.api.http.handlers.vbeta as vbeta
+import beer_garden.events.events_manager
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
 from beer_garden.api.http.processors import process
 
@@ -50,7 +51,7 @@ anonymous_principal = None
 client_ssl = None
 
 
-def run(rx_conn):
+def run():
     global logger
     logger = logging.getLogger(__name__)
 
@@ -60,7 +61,11 @@ def run(rx_conn):
     io_loop.add_callback(startup)
 
     # Add a handler to process events coming from the main process
-    io_loop.add_handler(rx_conn, lambda c, _: process(c.recv()), IOLoop.READ)
+    io_loop.add_handler(
+        beer_garden.events.events_manager.manager.conn,
+        lambda c, _: process(c.recv()),
+        IOLoop.READ,
+    )
 
     logger.debug("Starting IO loop")
     io_loop.start()
