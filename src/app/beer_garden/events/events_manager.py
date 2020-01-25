@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+from typing import Callable
+
+import sys
+
 import wrapt
 from brewtils.models import Event, Events
 
@@ -14,6 +18,8 @@ class EventManagerBase:
         pass
 
     def create_event(self, name, payload, error, args=None, kwargs=None):
+        # TODO - We really need to standardize what an event looks like
+
         event = Event(name=name, payload=payload, error=error)
 
         if error:
@@ -40,6 +46,24 @@ class MainEventManager(EventManagerBase):
 
     This will be the main process's manager.
     """
+
+    def __init__(self):
+        self.callbacks = {
+            Events.INSTANCE_STOPPED.name: [
+                lambda x: print("Instance Stopped", file=sys.stderr)
+            ]
+        }
+
+    def register_callback(self, event_name: str, callback: Callable):
+        if event_name not in self.callbacks:
+            self.callbacks[event_name] = []
+        self.callbacks[event_name].append(callback)
+
+    def process_event(self, event):
+        # First fire any callbacks
+        if event.name in self.callbacks:
+            for callback in self.callbacks[event.name]:
+                callback(event)
 
     def do_publish(self, event):
         pass

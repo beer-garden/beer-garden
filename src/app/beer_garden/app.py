@@ -82,9 +82,9 @@ class Application(StoppableThread):
                 )
             )
 
-        self.entry_manager = beer_garden.api.entry_point.Manager()
-
         beer_garden.events.events_manager.manager = MainEventManager()
+
+        self.entry_manager = beer_garden.api.entry_point.Manager()
 
     def run(self):
         if not self._verify_mongo_connection():

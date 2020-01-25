@@ -8,7 +8,6 @@ from multiprocessing.queues import Queue
 from types import FrameType
 from typing import Any, Callable, TypeVar
 
-import sys
 from box import Box
 from brewtils.models import Event, Events
 
@@ -207,12 +206,6 @@ class Manager:
 
     def __init__(self):
         self.entry_points = []
-        self.callbacks = {
-            Events.INSTANCE_STOPPED.name: [
-                lambda x: print("Instance Stopped", file=sys.stderr)
-            ]
-        }
-
         self.context = multiprocessing.get_context("spawn")
         self.log_queue = self.context.Queue()
 
@@ -233,13 +226,8 @@ class Manager:
             context=self.context,
             log_queue=self.log_queue,
             signal_handler=module.signal_handler,
-            event_callback=self.process_event,
+            event_callback=beer_garden.events.events_manager.manager.process_event,
         )
-
-    def register_callback(self, event_name: str, callback: Callable):
-        if event_name not in self.callbacks:
-            self.callbacks[event_name] = []
-        self.callbacks[event_name].append(callback)
 
     def start(self):
         self.log_reader.start()
@@ -257,11 +245,3 @@ class Manager:
         """Publish an event to all entry points"""
         for entry_point in self.entry_points:
             entry_point.send_event(event)
-
-    def process_event(self, event):
-        # First fire any callbacks
-        if event.name in self.callbacks:
-            for callback in self.callbacks[event.name]:
-                callback(event)
-
-        # TODO - then send the event to all other queues
