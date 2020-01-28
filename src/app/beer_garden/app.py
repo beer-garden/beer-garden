@@ -3,7 +3,6 @@ import logging
 from datetime import timedelta
 from functools import partial
 
-import brewtils.models
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils.models import Event, Events
@@ -19,6 +18,7 @@ from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.events.events_manager import MainEventManager, publish
+from beer_garden.events.parent_http_processor import ParentHttpProcessor
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
@@ -223,11 +223,11 @@ class Application(StoppableThread):
             Events.ENTRY_STARTED.name, lambda x: PluginManager.instance().start_all()
         )
 
-        # http_event = beer_garden.config.get("event.parent.http")
-        # if http_event.enable:
-        #     event_manager.register(
-        #         ParentHttpProcessor(http_event, beer_garden.config.get("garden_name"))
-        #     )
+        http_event = beer_garden.config.get("event.parent.http")
+        if http_event.enable:
+            event_manager.register_forward(
+                ParentHttpProcessor(http_event, beer_garden.config.get("garden_name"))
+            )
 
         return event_manager
 
