@@ -28,7 +28,6 @@ class EventManagerBase:
 
         else:
             if event.name in (
-                Events.INSTANCE_UPDATED.name,
                 Events.REQUEST_UPDATED.name,
                 Events.SYSTEM_UPDATED.name,
             ):
