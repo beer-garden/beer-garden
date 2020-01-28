@@ -213,6 +213,7 @@ class Manager:
             name="LogProcessor", queue=self.log_queue, action=process_record
         )
 
+    def create_all(self):
         for entry_name, entry_value in beer_garden.config.get("entry").items():
             if entry_value.get("enable"):
                 self.entry_points.append(self.create(entry_name))

@@ -82,9 +82,9 @@ class Application(StoppableThread):
                 )
             )
 
-        beer_garden.events.events_manager.manager = self._setup_events_manager()
-
         self.entry_manager = beer_garden.api.entry_point.Manager()
+
+        beer_garden.events.events_manager.manager = self._setup_events_manager()
 
     def run(self):
         if not self._verify_mongo_connection():
@@ -163,7 +163,8 @@ class Application(StoppableThread):
         for helper_thread in self.helper_threads:
             helper_thread.start()
 
-        self.logger.debug("Starting entry points...")
+        self.logger.debug("Creating and starting entry points...")
+        self.entry_manager.create_all()
         self.entry_manager.start()
 
         self.logger.debug("Loading all local plugins...")
@@ -211,9 +212,11 @@ class Application(StoppableThread):
 
         self.logger.info("Successfully shut down Beer-garden")
 
-    @staticmethod
-    def _setup_events_manager():
+    def _setup_events_manager(self):
         event_manager = MainEventManager()
+
+        # This will forward all events down into the entry points
+        event_manager.register_forward(self.entry_manager)
 
         # Start local plugins after the entry point comes up
         event_manager.register_callback(

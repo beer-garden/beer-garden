@@ -49,11 +49,15 @@ class MainEventManager(EventManagerBase):
     """
 
     def __init__(self):
+        self.forward_queues = []
         self.callbacks = {
             Events.INSTANCE_STOPPED.name: [
                 lambda x: print("Instance Stopped", file=sys.stderr)
             ]
         }
+
+    def register_forward(self, new_queue):
+        self.forward_queues.append(new_queue)
 
     def register_callback(self, event_name: str, callback: Callable):
         if event_name not in self.callbacks:
@@ -65,6 +69,10 @@ class MainEventManager(EventManagerBase):
         if event.name in self.callbacks:
             for callback in self.callbacks[event.name]:
                 callback(event)
+
+        # Then forward to any registered queues
+        for queue in self.forward_queues:
+            queue.put(event)
 
     def do_publish(self, event):
         pass
