@@ -148,14 +148,22 @@ class InstanceAPI(BaseHandler):
                 )
 
             elif operation == "heartbeat":
-                response = await self.client.update_instance_status(
-                    self.request.namespace, instance_id, "RUNNING"
+                response = await self.client.update_instance(
+                    self.request.namespace, instance_id, new_status="RUNNING"
                 )
 
             elif operation == "replace":
                 if op.path.lower() == "/status":
-                    response = await self.client.update_instance_status(
-                        self.request.namespace, instance_id, op.value
+                    response = await self.client.update_instance(
+                        self.request.namespace, instance_id, new_status=op.value
+                    )
+                else:
+                    raise ModelValidationError(f"Unsupported path '{op.path}'")
+
+            elif operation == "update":
+                if op.path.lower() == "/metadata":
+                    response = await self.client.update_instance(
+                        self.request.namespace, instance_id, metadata=op.value
                     )
                 else:
                     raise ModelValidationError(f"Unsupported path '{op.path}'")

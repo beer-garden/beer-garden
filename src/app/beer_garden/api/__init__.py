@@ -74,7 +74,7 @@ remove_instance = namespace_router(beer_garden.instances.remove_instance)
 initialize_instance = namespace_router(beer_garden.plugin.initialize)
 start_instance = namespace_router(beer_garden.plugin.start)
 stop_instance = namespace_router(beer_garden.plugin.stop)
-update_instance_status = namespace_router(beer_garden.plugin.update_status)
+update_instance = namespace_router(beer_garden.plugin.update)
 
 # Systems
 get_system = namespace_router(beer_garden.systems.get_system)
