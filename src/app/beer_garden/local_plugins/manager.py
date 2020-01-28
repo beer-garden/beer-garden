@@ -13,7 +13,6 @@ from types import ModuleType
 from typing import Dict
 from enum import Enum
 
-
 import sys
 from brewtils.specification import _SYSTEM_SPEC
 from brewtils.stoppable_thread import StoppableThread
@@ -94,7 +93,7 @@ class PluginManager(StoppableThread):
             if self.stopped() or beer_garden.application.stopped():
                 break
 
-            if plugin.runner.process.poll() is not None:
+            if plugin.runner.process and plugin.runner.process.poll() is not None:
                 if plugin.restart:
                     self.logger.warning(f"Plugin {plugin_id} stopped, restarting")
                     self.restart(plugin_id)
@@ -120,7 +119,6 @@ class PluginManager(StoppableThread):
 
     @classmethod
     def start_all(cls):
-        sleep(3)
         for plugin in cls.plugins.values():
             plugin.runner.start()
 

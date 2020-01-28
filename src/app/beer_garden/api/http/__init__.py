@@ -5,6 +5,7 @@ import ssl
 import types
 
 from apispec import APISpec
+from brewtils.models import Event, Events
 from brewtils.schemas import (
     CommandSchema,
     CronTriggerSchema,
@@ -100,6 +101,10 @@ async def startup():
     http_config = beer_garden.config.get("entry.http")
     logger.info(f"Starting HTTP server on {http_config.host}:{http_config.port}")
     server.listen(http_config.port, http_config.host)
+
+    beer_garden.events.events_manager.manager.do_publish(
+        Event(name=Events.ENTRY_STARTED.name)
+    )
 
     beer_garden.api.http.logger.info("Http entry point is started. Hello!")
 

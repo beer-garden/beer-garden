@@ -82,7 +82,7 @@ class Application(StoppableThread):
                 )
             )
 
-        beer_garden.events.events_manager.manager = MainEventManager()
+        beer_garden.events.events_manager.manager = self._setup_events_manager()
 
         self.entry_manager = beer_garden.api.entry_point.Manager()
 
@@ -169,9 +169,6 @@ class Application(StoppableThread):
         self.logger.debug("Loading all local plugins...")
         PluginManager.instance().load_new()
 
-        self.logger.debug("Starting all local plugins...")
-        PluginManager.instance().start_all()
-
         self.logger.debug("Starting local plugin process monitoring...")
         PluginManager.instance().start()
 
@@ -214,16 +211,22 @@ class Application(StoppableThread):
 
         self.logger.info("Successfully shut down Beer-garden")
 
-    # def _setup_events_manager(self):
-    #     manager = FanoutProcessor(queue=self.events_queue)
-    #
-    #     http_event = beer_garden.config.get("event.parent.http")
-    #     if http_event.enable:
-    #         manager.register(
-    #             ParentHttpProcessor(http_event, beer_garden.config.get("garden_name"))
-    #         )
-    #
-    #     return manager
+    @staticmethod
+    def _setup_events_manager():
+        event_manager = MainEventManager()
+
+        # Start local plugins after the entry point comes up
+        event_manager.register_callback(
+            Events.ENTRY_STARTED.name, lambda x: PluginManager.instance().start_all()
+        )
+
+        # http_event = beer_garden.config.get("event.parent.http")
+        # if http_event.enable:
+        #     event_manager.register(
+        #         ParentHttpProcessor(http_event, beer_garden.config.get("garden_name"))
+        #     )
+
+        return event_manager
 
     @staticmethod
     def _setup_scheduler():
