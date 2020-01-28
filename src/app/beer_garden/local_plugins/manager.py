@@ -119,6 +119,8 @@ class PluginManager(StoppableThread):
 
     @classmethod
     def start_all(cls):
+        cls.logger.info("Starting all plugins")
+
         for plugin in cls.plugins.values():
             plugin.runner.start()
 

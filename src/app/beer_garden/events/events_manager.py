@@ -11,6 +11,11 @@ from brewtils.models import Event, Events
 manager = None
 
 
+def publish(event):
+    """Convenience method for publishing events"""
+    return manager.do_publish(event)
+
+
 class EventManagerBase:
     """Base event manager"""
 
@@ -27,10 +32,7 @@ class EventManagerBase:
             event.payload = str(payload)
 
         else:
-            if event.name in (
-                Events.REQUEST_UPDATED.name,
-                Events.SYSTEM_UPDATED.name,
-            ):
+            if event.name in (Events.REQUEST_UPDATED.name, Events.SYSTEM_UPDATED.name):
                 event.metadata = args[1]
             elif event.name in (Events.QUEUE_CLEARED.name, Events.SYSTEM_REMOVED.name):
                 event.payload = {"id": args[0]}

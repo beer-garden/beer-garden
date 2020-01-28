@@ -36,9 +36,9 @@ import beer_garden.api.http.handlers.misc as misc
 import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.v2 as v2
 import beer_garden.api.http.handlers.vbeta as vbeta
-import beer_garden.events.events_manager
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
 from beer_garden.api.http.processors import process
+from beer_garden.events.events_manager import publish
 
 io_loop = None
 server = None
@@ -102,11 +102,9 @@ async def startup():
     logger.info(f"Starting HTTP server on {http_config.host}:{http_config.port}")
     server.listen(http_config.port, http_config.host)
 
-    beer_garden.events.events_manager.manager.do_publish(
-        Event(name=Events.ENTRY_STARTED.name)
-    )
-
     beer_garden.api.http.logger.info("Http entry point is started. Hello!")
+
+    publish(Event(name=Events.ENTRY_STARTED.name))
 
 
 async def shutdown():

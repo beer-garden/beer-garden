@@ -6,7 +6,7 @@ from functools import partial
 import brewtils.models
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
-from brewtils.models import Events
+from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
 from pytz import utc
 
@@ -18,7 +18,7 @@ import beer_garden.queue.api as queue
 from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
-from beer_garden.events.events_manager import MainEventManager
+from beer_garden.events.events_manager import MainEventManager, publish
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
@@ -176,7 +176,7 @@ class Application(StoppableThread):
         self.scheduler.start()
 
         self.logger.debug("Publishing startup event")
-        self.entry_manager.put(brewtils.models.Event(name=Events.GARDEN_STARTED.name))
+        publish(Event(name=Events.GARDEN_STARTED.name))
 
         self.logger.info("All set! Let me know if you need anything else!")
 
@@ -204,7 +204,7 @@ class Application(StoppableThread):
         PluginManager.instance().stop_all()
 
         self.logger.debug("Publishing shutdown event")
-        self.entry_manager.put(brewtils.models.Event(name=Events.GARDEN_STOPPED.name))
+        publish(Event(name=Events.GARDEN_STOPPED.name))
 
         self.logger.debug("Stopping entry points")
         self.entry_manager.stop()
