@@ -101,7 +101,7 @@ def stop(instance_id: str) -> Instance:
 
 
 @publish_event(Events.INSTANCE_UPDATED)
-def update_status(instance_id: str, new_status: str) -> Instance:
+def update(instance_id: str, new_status: str = None, metadata: dict = None) -> Instance:
     """Update an Instance status.
 
     Will also update the status_info heartbeat.
@@ -109,13 +109,22 @@ def update_status(instance_id: str, new_status: str) -> Instance:
     Args:
         instance_id: The Instance ID
         new_status: The new status
+        metadata: New metadata
 
     Returns:
         The updated Instance
     """
     instance = db.query_unique(Instance, id=instance_id)
-    instance.status = new_status
-    instance.status_info["heartbeat"] = datetime.utcnow()
+
+    if new_status:
+        instance.status = new_status
+        instance.status_info["heartbeat"] = datetime.utcnow()
+
+    # This is ridiculous - Mongoengine strikes again
+    if metadata:
+        existing_metadata = dict(instance.metadata)
+        existing_metadata.update(metadata)
+        instance.metadata = existing_metadata
 
     instance = db.update(instance)
 
