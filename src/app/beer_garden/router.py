@@ -153,7 +153,7 @@ def route_request(
     # That way developers updating the class don't forget about routing
 
     if route_class == Route_Class.COMMAND:
-        beer_garden.commands.route_request(
+        return beer_garden.commands.route_request(
             brewtils_obj=brewtils_obj, obj_id=obj_id, route_type=route_type, **kwargs
         )
 
@@ -168,32 +168,32 @@ def route_request(
             )
 
     elif route_class == Route_Class.JOB:
-        beer_garden.scheduler.route_request(
+        return beer_garden.scheduler.route_request(
             brewtils_obj=brewtils_obj, obj_id=obj_id, route_type=route_type, **kwargs
         )
 
     elif route_class in [Route_Class.REQUEST, Route_Class.REQUEST_TEMPLATE]:
-        beer_garden.requests.route_request(
+        return beer_garden.requests.route_request(
             brewtils_obj=brewtils_obj, obj_id=obj_id, route_type=route_type, **kwargs
         )
 
     elif route_class == Route_Class.SYSTEM:
-        beer_garden.systems.route_request(
+        return beer_garden.systems.route_request(
             brewtils_obj=brewtils_obj, obj_id=obj_id, route_type=route_type, **kwargs
         )
 
     elif route_class == Route_Class.GARDEN:
-        beer_garden.garden.route_request(
+        return beer_garden.garden.route_request(
             brewtils_obj=brewtils_obj, obj_id=obj_id, route_type=route_type, **kwargs
         )
 
     elif route_class == Route_Class.LOGGING:
-        beer_garden.log.route_request(
+        return beer_garden.log.route_request(
             brewtils_obj=brewtils_obj, obj_id=obj_id, route_type=route_type, **kwargs
         )
 
     elif route_class == Route_Class.QUEUE:
-        beer_garden.queues.route_request(
+        return beer_garden.queues.route_request(
             brewtils_obj=brewtils_obj, obj_id=obj_id, route_type=route_type, **kwargs
         )
 

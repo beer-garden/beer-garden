@@ -647,7 +647,9 @@ def process_request(
             )
         # If it is not controlled locally, we need to forward it
         else:
-            raise RoutingRequestException(f"Unable to route request {request.id}, {request.garden_name} is not hosted on {get_local_garden_name()}")
+            raise RoutingRequestException(
+                f"Unable to route request {request.id}, {request.garden_name} is not hosted on {get_local_garden_name()}"
+            )
     except Exception as ex:
         # An error publishing means this request will never complete, so remove it
         db.delete(request)
