@@ -26,12 +26,6 @@ def route_request(
                 "An identifier is required to route READ request for Instances"
             )
         return get_instance(obj_id)
-    elif route_type is Route_Type.UPDATE:
-        if brewtils_obj is None:
-            raise RoutingRequestException(
-                "An Object is required to route UPDATE request for Instances"
-            )
-        return update_instance(obj_id, brewtils_obj)
     elif route_type is Route_Type.DELETE:
         if obj_id is None:
             raise RoutingRequestException(
@@ -86,9 +80,6 @@ def initialize_instance(instance_id: str) -> Instance:
     start_instance(instance_id)
 
     return instance
-
-
-
 
 
 @publish_event(Events.INSTANCE_STARTED)

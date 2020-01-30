@@ -18,6 +18,7 @@ from beer_garden.events.events_manager import publish_event
 
 logger = logging.getLogger(__name__)
 
+
 def route_request(
     brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs
 ):
@@ -32,6 +33,7 @@ def route_request(
         raise RoutingRequestException(
             "%s Route for Instances does not exist" % route_type.value
         )
+
 
 @publish_event(Events.INSTANCE_UPDATED)
 def update_instance(instance_id: str, patch: PatchOperation) -> Instance:
@@ -75,6 +77,7 @@ def update_instance(instance_id: str, patch: PatchOperation) -> Instance:
             raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
     return instance
+
 
 @publish_event(Events.INSTANCE_INITIALIZED)
 def initialize(instance_id: str, runner_id: str = None) -> Instance:
