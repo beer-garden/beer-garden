@@ -1,6 +1,6 @@
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.handlers.v2.event import EventSocket
+from beer_garden.api.http.handlers.v1.event import EventSocket
 from brewtils.schema_parser import SchemaParser
 
 
@@ -34,6 +34,6 @@ class EventPublisherAPI(BaseHandler):
         tags:
           - Event
         """
-        EventSocket.publish(self.request.namespace, self.request.decoded_body)
+        EventSocket.publish(self.request.decoded_body)
 
         self.set_status(204)
