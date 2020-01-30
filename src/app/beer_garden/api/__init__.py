@@ -13,6 +13,8 @@ import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
 
+# @TODO Remove all of these in next PR for Routing
+
 
 def namespace_router(_wrapped):
     logger = logging.getLogger(__name__)
