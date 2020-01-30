@@ -25,7 +25,7 @@ export default function eventService($rootScope, $websocket, TokenService) {
         let eventUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') +
           window.location.host +
           window.location.pathname +
-          `api/v2/namespaces/${$rootScope.getCurrentNamespace()}/events/socket`;
+          `api/v1/socket/events/`;
 
         let token = TokenService.getToken();
         if (token) {
