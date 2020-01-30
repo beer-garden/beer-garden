@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+## 2.4.14
+1/30/20
+Brew-view 2.4.18, Bartender 2.4.6, BG-utils 2.4.9
+
+#### Bug Fixes
+- Returning 418 status code when a model is too large to save (#308)
+
 ## 2.4.13
 1/14/20
 Brew-view 2.4.17, Bartender 2.4.6, BG-utils 2.4.9
