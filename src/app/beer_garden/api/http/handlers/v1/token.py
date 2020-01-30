@@ -233,10 +233,9 @@ class TokenListAPI(BaseHandler):
             ):
                 verified = True
             else:
-                # verified = yield self.executor.submit(
-                #    verify, str(parsed_body["password"]), str(principal.hash)
-                # )
-                verified = verify(str(parsed_body["password"]), str(principal.hash))
+                verified = yield self.executor.submit(
+                    verify, str(parsed_body["password"]), str(principal.hash)
+                )
 
             if verified:
                 tokens = generate_tokens(principal, self.REFRESH_COOKIE_EXP)
