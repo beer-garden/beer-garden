@@ -260,6 +260,7 @@ class Request(MongoModel, Document):
         "system": {"field": StringField, "kwargs": {"required": True}},
         "system_version": {"field": StringField, "kwargs": {"required": True}},
         "instance_name": {"field": StringField, "kwargs": {"required": True}},
+        "namespace": {"field": StringField, "kwargs": {"required": True}},
         "command": {"field": StringField, "kwargs": {"required": True}},
         "command_type": {"field": StringField, "kwargs": {}},
         "parameters": {"field": DictField, "kwargs": {}},
@@ -412,6 +413,7 @@ class System(MongoModel, Document):
     name = StringField(required=True)
     description = StringField()
     version = StringField(required=True)
+    namespace = StringField(required=True)
     max_instances = IntField(default=1)
     instances = ListField(ReferenceField(Instance, reverse_delete_rule=PULL))
     commands = ListField(ReferenceField(Command, reverse_delete_rule=PULL))
@@ -423,7 +425,11 @@ class System(MongoModel, Document):
         "auto_create_index": False,  # We need to manage this ourselves
         "index_background": True,
         "indexes": [
-            {"name": "unique_index", "fields": ["name", "version"], "unique": True}
+            {
+                "name": "unique_index",
+                "fields": ["name", "version", "namespace"],
+                "unique": True,
+            }
         ],
     }
 
@@ -524,6 +530,7 @@ class Event(MongoModel, Document):
     brewtils_model = brewtils.models.Event
 
     name = StringField(required=True)
+    namespace = StringField(required=True)
     payload = DictField()
     error = BooleanField()
     metadata = DictField()
