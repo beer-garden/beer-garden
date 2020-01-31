@@ -5,7 +5,6 @@ from brewtils.schema_parser import SchemaParser
 
 import beer_garden.api.http
 import beer_garden.api.http.handlers.v1 as v1
-import beer_garden.api.http.handlers.v2 as v2
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +22,6 @@ def process(item):
 
         beer_garden.api.http.io_loop.add_callback(
             v1.event.EventSocket.publish, serialized
-        )
-        beer_garden.api.http.io_loop.add_callback(
-            v2.event.EventSocket.publish, "default", serialized
         )
     except Exception as ex:
         logger.exception(f"{ex}")

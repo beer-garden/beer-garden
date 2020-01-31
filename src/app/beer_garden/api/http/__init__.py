@@ -34,7 +34,6 @@ from urllib3.util.url import Url
 import beer_garden
 import beer_garden.api.http.handlers.misc as misc
 import beer_garden.api.http.handlers.v1 as v1
-import beer_garden.api.http.handlers.v2 as v2
 import beer_garden.api.http.handlers.vbeta as vbeta
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
 from beer_garden.api.http.processors import process
@@ -201,7 +200,6 @@ def _setup_tornado_app():
         (rf"{prefix}api/v2/users/(\w+)/?", v1.user.UserAPI),
         (rf"{prefix}api/v2/tokens/?", v1.token.TokenListAPI),
         (rf"{prefix}api/v2/tokens/(\w+)/?", v1.token.TokenAPI),
-        (rf"{prefix}api/v2/namespaces/(\w+)/events/?", v2.event.EventPublisherAPI),
     ]
 
     # And these do not
@@ -211,7 +209,6 @@ def _setup_tornado_app():
         (rf"{prefix}api/v1/spec/?", misc.SpecHandler),
         # Events websocket
         (rf"{prefix}api/v1/socket/events/?", v1.event.EventSocket),
-        (rf"{prefix}api/v2/namespaces/(\w+)/events/socket/?", v2.event.EventSocket),
         # Version / configs
         (rf"{prefix}version/?", misc.VersionHandler),
         (rf"{prefix}config/?", misc.ConfigHandler),

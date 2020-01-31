@@ -67,7 +67,7 @@ def create(instance: Instance) -> dict:
     """
     system = db.query_unique(System, instances__contains=instance)
 
-    routing_words = [system.name, system.version, instance.name]
+    routing_words = [system.namespace, system.name, system.version, instance.name]
     request_queue_name = get_routing_key(*routing_words)
     clients["pika"].setup_queue(
         request_queue_name,
@@ -126,6 +126,7 @@ def put(request: Request, headers: dict = None, **kwargs) -> None:
 
     if "routing_key" not in kwargs:
         kwargs["routing_key"] = get_routing_key(
+            request.namespace,
             request.system,
             request.system_version,
             request.instance_name,

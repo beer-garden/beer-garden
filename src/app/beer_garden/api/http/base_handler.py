@@ -18,6 +18,7 @@ from mongoengine.errors import (
     NotUniqueError,
     ValidationError as MongoValidationError,
 )
+from pymongo.errors import DocumentTooLarge
 from thriftpy2.thrift import TException
 from tornado.web import HTTPError, RequestHandler
 
@@ -48,6 +49,7 @@ class BaseHandler(AuthMixin, RequestHandler):
         WaitExceededError: {"status_code": 408, "message": "Max wait time exceeded"},
         ConflictError: {"status_code": 409},
         NotUniqueError: {"status_code": 409, "message": "Resource already exists"},
+        DocumentTooLarge: {"status_code": 413, "message": "Resource too large"},
         RequestPublishException: {"status_code": 502},
         TException: {"status_code": 503, "message": "Could not connect to Bartender"},
         socket.timeout: {"status_code": 504, "message": "Backend request timed out"},

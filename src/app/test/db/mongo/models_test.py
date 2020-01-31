@@ -231,6 +231,7 @@ class TestSystem(object):
             id="1234",
             name="foo",
             version="1.0.0",
+            namespace="ns",
             instances=[default_instance],
             commands=[default_command],
         )
@@ -241,9 +242,10 @@ class TestSystem(object):
         return default_system
 
     def test_str(self, default_system):
-        assert str(default_system) == "foo-1.0.0"
+        assert str(default_system) == "ns:foo-1.0.0"
 
     def test_repr(self, default_system):
+        assert "ns" in repr(default_system)
         assert "foo" in repr(default_system)
         assert "1.0.0" in repr(default_system)
 
