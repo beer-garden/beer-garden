@@ -425,7 +425,11 @@ class System(MongoModel, Document):
         "auto_create_index": False,  # We need to manage this ourselves
         "index_background": True,
         "indexes": [
-            {"name": "unique_index", "fields": ["name", "version"], "unique": True}
+            {
+                "name": "unique_index",
+                "fields": ["name", "version", "namespace"],
+                "unique": True,
+            }
         ],
     }
 
