@@ -1,107 +1,128 @@
 # -*- coding: utf-8 -*-
-from typing import Callable
-
-import sys
+import logging
 
 import wrapt
 from brewtils.models import Event, Events
+
+from beer_garden.events.processors import QueueListener
 
 # In this master process this should be an instance of EventManager, and in entry points
 # it should be an instance of EntryPointManager
 manager = None
 
-
-def publish(event):
-    """Convenience method for publishing events"""
-    return manager.do_publish(event)
+logger = logging.getLogger(__name__)
 
 
-class EventManagerBase:
-    """Base event manager"""
+def publish(event: Event) -> None:
+    """Convenience method for publishing events
 
-    def do_publish(self, event):
-        pass
+    All this does is place the event on the queue for the process-wide manager to pick
+    up and process.
 
-    def create_event(self, name, payload, error, args=None, kwargs=None):
-        # TODO - We really need to standardize what an event looks like
+    Args:
+        event: The event to publish
 
-        event = Event(name=name, payload=payload, error=error)
-
-        if error:
-            # here the payload is an exception, so just stringify it
-            event.payload = str(payload)
-
-        else:
-            if event.name in (Events.REQUEST_UPDATED.name, Events.SYSTEM_UPDATED.name):
-                event.metadata = args[1]
-            elif event.name in (Events.QUEUE_CLEARED.name, Events.SYSTEM_REMOVED.name):
-                event.payload = {"id": args[0]}
-            elif event.name in (Events.DB_DELETE.name,):
-                event.payload = args[0]
-
-        self.do_publish(event)
+    Returns:
+        None
+    """
+    return manager.put(event)
 
 
-class MainEventManager(EventManagerBase):
-    """Will be used to appropriately route events.
+def publish_event(event_type: Events):
+    """Decorator that will result in an event being published
 
-    This will be the main process's manager.
+    This will attempt to publish an event regardless of whether the underlying function
+    raised or completed normally.
+
+    If the wrapped function raises the exception will be re-raised.
+
+    The event publishing *itself* will not raise anything. Any exceptions generated
+    during publishing will be logged as such, but WILL NOT BE RAISED.
+
+    Args:
+        event_type: The Event type
+
+    Raises:
+        Any: If the underlying function raised an exception it will be re-raised
+
+    Returns:
+        Any: The wrapped function result
     """
 
-    def __init__(self):
-        self.forward_queues = []
-        self.callbacks = {
-            Events.INSTANCE_STOPPED.name: [
-                lambda x: print("Instance Stopped", file=sys.stderr)
-            ]
-        }
+    @wrapt.decorator
+    def wrapper(wrapped, _, args, kwargs):
+        result = None
+        error = False
 
-    def register_forward(self, new_queue):
-        self.forward_queues.append(new_queue)
+        try:
+            # Make sure to save result here so it can be used in the finally block
+            result = wrapped(*args, **kwargs)
 
-    def register_callback(self, event_name: str, callback: Callable):
-        if event_name not in self.callbacks:
-            self.callbacks[event_name] = []
-        self.callbacks[event_name].append(callback)
+            return result
+        except Exception as ex:
+            result = ex
+            error = True
+            raise
+        finally:
+            try:
+                publish(
+                    _create_event(
+                        event_type=event_type,
+                        payload=result,
+                        error=error,
+                        args=args,
+                        kwargs=kwargs,
+                    )
+                )
+            except Exception as ex:
+                logger.exception(f"Error publishing event: {ex}")
 
-    def process_event(self, event):
-        # First fire any callbacks
-        if event.name in self.callbacks:
-            for callback in self.callbacks[event.name]:
-                callback(event)
-
-        # Then forward to any registered queues
-        for queue in self.forward_queues:
-            queue.put(event)
-
-    def do_publish(self, event):
-        pass
+    return wrapper
 
 
-class EntryPointManager(EventManagerBase):
+def _create_event(
+    event_type: Events, payload, error: bool, args=None, kwargs=None
+) -> Event:
+    """Internal helper function for publishing an event from a function invocation
+
+    Args:
+        event_type: The event type
+        payload: Payload
+        error: Event error flag
+        args: The positional arguments for the wrapped function
+        kwargs: The keyword arguments for the wrapped function
+
+    Returns:
+        None
+    """
+    # TODO - We really need to standardize what an event looks like
+
+    event = Event(name=event_type.name, payload=payload, error=error)
+
+    # The payload is an exception, so just stringify it
+    if error:
+        event.payload = str(payload)
+
+    else:
+        if event.name in (Events.REQUEST_UPDATED.name, Events.SYSTEM_UPDATED.name):
+            event.metadata = args[1]
+        elif event.name in (Events.QUEUE_CLEARED.name, Events.SYSTEM_REMOVED.name):
+            event.payload = {"id": args[0]}
+        elif event.name in (Events.DB_DELETE.name,):
+            event.payload = args[0]
+
+    return event
+
+
+class EntryPointManager(QueueListener):
     """Will be used to manage events from an entry point perspective
 
     This basically ships event up to the main process.
     """
 
-    def __init__(self, conn):
+    def __init__(self, conn, **kwargs):
+        super().__init__(**kwargs)
         self.conn = conn
 
-    def do_publish(self, event):
-        self.conn.send(event)
-
-
-def publish_event(event_type):
-    @wrapt.decorator
-    def wrapper(wrapped, _, args, kwargs):
-        try:
-            result = wrapped(*args, **kwargs)
-
-            manager.create_event(event_type.name, result, False, args, kwargs)
-
-            return result
-        except Exception as ex:
-            manager.create_event(event_type.name, ex, True, args, kwargs)
-            raise
-
-    return wrapper
+    def process(self, item):
+        self.conn.send(item)

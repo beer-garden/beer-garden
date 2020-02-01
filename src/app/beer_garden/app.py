@@ -17,8 +17,9 @@ import beer_garden.queue.api as queue
 from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
-from beer_garden.events.events_manager import MainEventManager, publish
+from beer_garden.events.events_manager import publish
 from beer_garden.events.parent_http_processor import ParentHttpProcessor
+from beer_garden.events.processors import FanoutProcessor, QueueListener
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
@@ -152,6 +153,9 @@ class Application(StoppableThread):
     def _startup(self):
         self.logger.debug("Starting Application...")
 
+        self.logger.debug("Starting event manager...")
+        beer_garden.events.events_manager.manager.start()
+
         self.logger.debug("Setting up database...")
         db.create_connection(db_config=beer_garden.config.get("db"))
         db.initial_setup(beer_garden.config.get("auth.guest_login_enabled"))
@@ -186,6 +190,9 @@ class Application(StoppableThread):
             "Closing time! You don't have to go home, but you can't stay here."
         )
 
+        self.logger.debug("Publishing shutdown event")
+        publish(Event(name=Events.GARDEN_STOPPED.name))
+
         if self.scheduler.running:
             self.logger.debug("Pausing scheduler - no more jobs will be run")
             self.scheduler.pause()
@@ -204,30 +211,34 @@ class Application(StoppableThread):
         self.logger.debug("Stopping local plugins")
         PluginManager.instance().stop_all()
 
-        self.logger.debug("Publishing shutdown event")
-        publish(Event(name=Events.GARDEN_STOPPED.name))
-
         self.logger.debug("Stopping entry points")
         self.entry_manager.stop()
+
+        self.logger.debug("Stopping event manager")
+        beer_garden.events.events_manager.manager.stop()
 
         self.logger.info("Successfully shut down Beer-garden")
 
     def _setup_events_manager(self):
-        event_manager = MainEventManager()
+        event_manager = FanoutProcessor()
 
-        # This will forward all events down into the entry points
-        event_manager.register_forward(self.entry_manager)
+        # Forward all events down into the entry points
+        event_manager.register(self.entry_manager, start=False)
 
-        # Start local plugins after the entry point comes up
-        event_manager.register_callback(
-            Events.ENTRY_STARTED.name, lambda x: PluginManager.instance().start_all()
-        )
-
+        # If necessary send all events to the parent garden
         http_event = beer_garden.config.get("event.parent.http")
         if http_event.enable:
-            event_manager.register_forward(
+            event_manager.register(
                 ParentHttpProcessor(http_event, beer_garden.config.get("garden_name"))
             )
+
+        # Register callbacks
+        def event_callback(event):
+            # Start local plugins after the entry point comes up
+            if event.name == Events.ENTRY_STARTED.name:
+                PluginManager.instance().start_all()
+
+        event_manager.register(QueueListener(action=event_callback))
 
         return event_manager
 

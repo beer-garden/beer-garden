@@ -171,6 +171,7 @@ class EntryPoint:
 
         # Set up the event manager for the entry point
         beer_garden.events.events_manager.manager = EntryPointManager(conn=ep_conn)
+        beer_garden.events.events_manager.manager.start()
 
         # Also set up plugin logging
         beer_garden.log.load_plugin_log_config()
@@ -227,7 +228,7 @@ class Manager:
             context=self.context,
             log_queue=self.log_queue,
             signal_handler=module.signal_handler,
-            event_callback=beer_garden.events.events_manager.manager.process_event,
+            event_callback=beer_garden.events.events_manager.publish,
         )
 
     def start(self):

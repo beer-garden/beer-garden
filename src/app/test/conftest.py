@@ -23,9 +23,12 @@ def pytest_unconfigure():
 @pytest.fixture(autouse=True)
 def noop_event_manager():
     """Set a noop event manager so the tests don't try to publish things"""
-    beer_garden.events.events_manager.manager = (
-        beer_garden.events.events_manager.EventManagerBase()
-    )
+
+    class NoopManager:
+        def put(self):
+            pass
+
+    beer_garden.events.events_manager.manager = NoopManager()
 
 
 @pytest.fixture()

@@ -121,17 +121,18 @@ async def shutdown():
     logger.debug("Stopping server for new HTTP connections")
     server.stop()
 
-    # if event_publishers:
-    #     logger.debug("Publishing application shutdown event")
-    #     event_publishers.publish_event(Event(name=Events.BREWVIEW_STOPPED.name))
-    #
-    #     logger.info("Shutting down event publishers")
-    #     await list(filter(lambda x: isinstance(x, Future), event_publishers.shutdown()))
+    # This will almost definitely not be published to the websocket, because it would
+    # need to make it up to the main process and back down into this process. We just
+    # publish this here in case the main process is looking for it.
+    publish(Event(name=Events.ENTRY_STOPPED.name))
 
     # We need to do this before the scheduler shuts down completely in order to kick any
     # currently waiting request creations
     logger.debug("Closing all open HTTP connections")
     await server.close_all_connections()
+
+    logger.debug("Stopping event manager")
+    beer_garden.events.events_manager.manager.stop()
 
     logger.debug("Stopping IO loop")
     io_loop.add_callback(io_loop.stop)
