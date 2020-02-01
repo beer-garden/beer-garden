@@ -9,14 +9,13 @@ from types import FrameType
 from typing import Any, Callable, TypeVar
 
 from box import Box
-from brewtils.models import Event, Events
+from brewtils.models import Event
 
 import beer_garden
 import beer_garden.config
 import beer_garden.db.api as db
 import beer_garden.events.events_manager
 import beer_garden.queue.api as queue
-from beer_garden.events.events_manager import EntryPointManager
 from beer_garden.events.processors import PipeListener, QueueListener
 from beer_garden.log import process_record
 
@@ -170,10 +169,6 @@ class EntryPoint:
         # Then set up logging to push everything back to the main process
         beer_garden.log.setup_entry_point_logging(log_queue)
 
-        # Set up the event manager for the entry point
-        beer_garden.events.events_manager.manager = EntryPointManager(conn=ep_conn)
-        beer_garden.events.events_manager.manager.start()
-
         # Also set up plugin logging
         beer_garden.log.load_plugin_log_config()
 
@@ -183,8 +178,8 @@ class EntryPoint:
         # Set up message queue connections
         queue.create_clients(beer_garden.config.get("amq"))
 
-        # Now invoke the actual process target
-        return target()
+        # Now invoke the actual process target, passing in the connection
+        return target(ep_conn)
 
 
 class Manager:

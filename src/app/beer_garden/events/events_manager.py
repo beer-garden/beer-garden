@@ -4,8 +4,6 @@ import logging
 import wrapt
 from brewtils.models import Event, Events
 
-from beer_garden.events.processors import QueueListener
-
 # In this master process this should be an instance of EventManager, and in entry points
 # it should be an instance of EntryPointManager
 manager = None
@@ -112,17 +110,3 @@ def _create_event(
             event.payload = args[0]
 
     return event
-
-
-class EntryPointManager(QueueListener):
-    """Will be used to manage events from an entry point perspective
-
-    This basically ships event up to the main process.
-    """
-
-    def __init__(self, conn, **kwargs):
-        super().__init__(**kwargs)
-        self.conn = conn
-
-    def process(self, item):
-        self.conn.send(item)

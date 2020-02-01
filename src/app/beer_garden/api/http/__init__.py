@@ -36,7 +36,7 @@ import beer_garden.api.http.handlers.misc as misc
 import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.vbeta as vbeta
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
-from beer_garden.api.http.processors import process
+from beer_garden.api.http.processors import EventManager, websocket_publish
 from beer_garden.events.events_manager import publish
 
 io_loop = None
@@ -51,21 +51,16 @@ anonymous_principal = None
 client_ssl = None
 
 
-def run():
+def run(ep_conn):
     global logger
     logger = logging.getLogger(__name__)
 
     _setup_application()
 
+    _setup_event_handling(ep_conn)
+
     # Schedule things to happen after the ioloop comes up
     io_loop.add_callback(startup)
-
-    # Add a handler to process events coming from the main process
-    io_loop.add_handler(
-        beer_garden.events.events_manager.manager.conn,
-        lambda c, _: process(c.recv()),
-        IOLoop.READ,
-    )
 
     logger.debug("Starting IO loop")
     io_loop.start()
@@ -131,9 +126,6 @@ async def shutdown():
     logger.debug("Closing all open HTTP connections")
     await server.close_all_connections()
 
-    logger.debug("Stopping event manager")
-    beer_garden.events.events_manager.manager.stop()
-
     logger.debug("Stopping IO loop")
     io_loop.add_callback(io_loop.stop)
 
@@ -141,6 +133,8 @@ async def shutdown():
 def _setup_application():
     """Setup things that can be taken care of before io loop is started"""
     global io_loop, tornado_app, public_url, server, client_ssl
+
+    io_loop = IOLoop.current()
 
     auth_config = beer_garden.config.get("auth")
     if not auth_config.token.secret:
@@ -164,7 +158,6 @@ def _setup_application():
     server_ssl, client_ssl = _setup_ssl_context()
 
     server = HTTPServer(tornado_app, ssl_options=server_ssl)
-    io_loop = IOLoop.current()
 
 
 def _setup_tornado_app():
@@ -364,3 +357,11 @@ def _load_swagger(url_specs, title=None):
     # Finally, add documentation for all our published paths
     for url_spec in url_specs:
         api_spec.add_path(urlspec=url_spec)
+
+
+def _setup_event_handling(ep_conn):
+    # This will push all events generated in the entry point up to the master process
+    beer_garden.events.events_manager.manager = EventManager(ep_conn)
+
+    # Add a handler to process events coming from the main process
+    io_loop.add_handler(ep_conn, lambda c, _: websocket_publish(c.recv()), IOLoop.READ)
