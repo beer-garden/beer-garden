@@ -44,12 +44,13 @@ class EntryPoint:
     Class Attributes:
 
     Attributes:
-        self._signal_handler: Signal handler function that will be invoked (in the
+        _signal_handler: Signal handler function that will be invoked (in the
             entry point process) when a SIGTERM is received
-        self._process: The actual entry point process object
-        self._ep_conn: End of communication pipe that is passed into the entry point
+        _process: The actual entry point process object
+        _ep_conn: End of communication pipe that is passed into the entry point
             process.
-        self.mp_conn: End of communication pipe that remains in the master process.
+        _mp_conn: End of communication pipe that remains in the master process.
+        _event_listener: Listens for events coming from the entry point.
     """
 
     def __init__(
@@ -69,8 +70,8 @@ class EntryPoint:
 
         self._logger = logging.getLogger(__name__)
         self._process = None
-        self._ep_conn, self.mp_conn = Pipe()
-        self._event_listener = PipeListener(conn=self.mp_conn, action=event_callback)
+        self._ep_conn, self._mp_conn = Pipe()
+        self._event_listener = PipeListener(conn=self._mp_conn, action=event_callback)
 
     def start(self) -> None:
         """Start the entry point process"""
@@ -128,7 +129,7 @@ class EntryPoint:
         Returns:
             None
         """
-        self.mp_conn.send(event)
+        self._mp_conn.send(event)
 
     @staticmethod
     def _target_wrapper(
