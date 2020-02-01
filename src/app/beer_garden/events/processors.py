@@ -61,33 +61,35 @@ class PipeListener(BaseProcessor):
                 self.process(self._conn.recv())
 
 
-# class FanoutProcessor(QueueProcessor):
-#     """Distributes items to multiple queues"""
-#
-#     def __init__(self, **kwargs):
-#         super().__init__(**kwargs)
-#
-#         self._processors = []
-#
-#     def run(self):
-#         super().run()
-#
-#         for processor in self._processors:
-#             if not processor.stopped():
-#                 processor.stop()
-#
-#     def process(self, event):
-#         for processor in self._processors:
-#             processor.put(event)
-#
-#     def register(self, processor: QueueProcessor, start: bool = True):
-#         """Register and start a downstream Processor
-#
-#         Args:
-#             processor: The Processor to register
-#             start: Whether to start the processor being added
-#         """
-#         self._processors.append(processor)
-#
-#         if start:
-#             processor.start()
+class FanoutProcessor(QueueListener):
+    """Distributes items to multiple queues"""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self._processors = []
+        self._processors_to_stop = []
+
+    def run(self):
+        super().run()
+
+        for processor in self._processors_to_stop:
+            if not processor.stopped():
+                processor.stop()
+
+    def process(self, event):
+        for processor in self._processors:
+            processor.put(event)
+
+    def register(self, processor, start: bool = True):
+        """Register and start a downstream Processor
+
+        Args:
+            processor: The Processor to register
+            start: Whether to start the processor being added
+        """
+        self._processors.append(processor)
+
+        if start:
+            self._processors_to_stop.append(processor)
+            processor.start()
