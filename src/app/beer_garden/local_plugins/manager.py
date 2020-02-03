@@ -47,6 +47,7 @@ class Plugin:
     runner: ProcessRunner
     instance_id: str = ""
     restart: bool = False
+    stopped: bool = False
     dead: bool = False
 
 
@@ -97,7 +98,7 @@ class PluginManager(StoppableThread):
                 if plugin.restart:
                     self.logger.warning(f"Runner {runner_id} stopped, restarting")
                     self.restart(runner_id)
-                elif not plugin.dead:
+                elif not plugin.stopped and not plugin.dead:
                     self.logger.warning(f"Runner {runner_id} is dead, not restarting")
                     plugin.dead = True
 
@@ -137,6 +138,7 @@ class PluginManager(StoppableThread):
         runner_id = cls.from_instance_id(event.payload.id)
 
         if runner_id in cls.plugins:
+            cls.plugins[runner_id].stopped = True
             cls.plugins[runner_id].restart = False
 
     @classmethod
