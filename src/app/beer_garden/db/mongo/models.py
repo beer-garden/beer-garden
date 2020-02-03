@@ -707,3 +707,8 @@ class Garden(MongoModel, Document):
                 "Can not save Instance %s: Invalid status '%s' "
                 "provided." % (self.name, self.status)
             )
+
+
+class SystemGardenMapping(MongoModel, Document):
+    system = ReferenceField("System")
+    garden = ReferenceField("Garden")
