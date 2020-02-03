@@ -84,6 +84,7 @@ class mock_request:
         self.name_space = name_space
         self.system = system
         self.version = version
+        self.schema = "RequestTemplateSchema"
 
 
 def _mock_get_request(monkeypatch):
@@ -155,6 +156,12 @@ class TestRouter(object):
         with pytest.raises(RoutingRequestException) as e:
             router.route_request(route_class=bad_route_class)
         assert str(e.value) == "No route for %s exist" % bad_route_class
+
+    def test_generate_route_class(self, monkeypatch):
+        _mock_local_garden(monkeypatch)
+        _mock_internal_routing(monkeypatch, "requests")
+
+        assert router.route_request(brewtils_obj=mock_request()) == True
 
     def test_job_routing(self, monkeypatch):
         _mock_local_garden(monkeypatch)

@@ -18,6 +18,13 @@ class Route_Type(Enum):
     DELETE = "DELETE"
 
 
+def enum_lookup(enum, value):
+    for record in enum:
+        if record.value == value:
+            return record
+    return None
+
+
 class Route_Class(Enum):
     COMMAND = brewtils.models.Command.schema
     INSTANCE = brewtils.models.Instance.schema
@@ -78,7 +85,7 @@ def route_request(
         src_garden_name = _local_garden()
 
     if route_class is None and brewtils_obj and brewtils_obj.schema:
-        route_class = brewtils_obj.schema
+        route_class = enum_lookup(Route_Class, brewtils_obj.schema)
 
     if route_class is None:
         raise RoutingRequestException("Unable to identify route")
