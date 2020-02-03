@@ -9,8 +9,18 @@ import beer_garden.api.http.handlers.v1 as v1
 logger = logging.getLogger(__name__)
 
 
-def process(item):
-    """Publish to all the Websockets"""
+class EventManager:
+    """Will simply push events across the connection to the master process"""
+
+    def __init__(self, conn):
+        self._conn = conn
+
+    def put(self, event):
+        self._conn.send(event)
+
+
+def websocket_publish(item):
+    """Will serialize an event and publish it to all event websocket endpoints"""
     try:
         # So we're going to need a better way to do this
         if item.payload:

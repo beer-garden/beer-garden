@@ -4,6 +4,7 @@ import pytest
 from mongoengine import connect
 
 import beer_garden
+import beer_garden.events.events_manager
 
 pytest_plugins = ["brewtils.test.fixtures"]
 
@@ -17,6 +18,17 @@ def pytest_configure():
 def pytest_unconfigure():
     delattr(brewtils.test, "_running_tests")
     delattr(beer_garden, "_running_tests")
+
+
+@pytest.fixture(autouse=True)
+def noop_event_manager():
+    """Set a noop event manager so the tests don't try to publish things"""
+
+    class NoopManager:
+        def put(self):
+            pass
+
+    beer_garden.events.events_manager.manager = NoopManager()
 
 
 @pytest.fixture()

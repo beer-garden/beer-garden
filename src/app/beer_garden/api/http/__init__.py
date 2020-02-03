@@ -5,24 +5,25 @@ import ssl
 import types
 
 from apispec import APISpec
+from brewtils.models import Event, Events
 from brewtils.schemas import (
-    ParameterSchema,
     CommandSchema,
-    InstanceSchema,
-    SystemSchema,
-    RequestSchema,
-    PatchSchema,
-    LoggingConfigSchema,
-    EventSchema,
-    QueueSchema,
-    PrincipalSchema,
-    RoleSchema,
-    RefreshTokenSchema,
-    JobSchema,
-    DateTriggerSchema,
-    IntervalTriggerSchema,
     CronTriggerSchema,
+    DateTriggerSchema,
+    EventSchema,
     GardenSchema,
+    InstanceSchema,
+    IntervalTriggerSchema,
+    JobSchema,
+    LoggingConfigSchema,
+    ParameterSchema,
+    PatchSchema,
+    PrincipalSchema,
+    QueueSchema,
+    RefreshTokenSchema,
+    RequestSchema,
+    RoleSchema,
+    SystemSchema,
 )
 from prometheus_client.exposition import start_http_server
 from tornado.httpserver import HTTPServer
@@ -35,7 +36,8 @@ import beer_garden.api.http.handlers.misc as misc
 import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.vbeta as vbeta
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
-from beer_garden.api.http.processors import process
+from beer_garden.api.http.processors import EventManager, websocket_publish
+from beer_garden.events.events_manager import publish
 
 io_loop = None
 server = None
@@ -49,17 +51,16 @@ anonymous_principal = None
 client_ssl = None
 
 
-def run(rx_conn):
+def run(ep_conn):
     global logger
     logger = logging.getLogger(__name__)
 
     _setup_application()
 
+    _setup_event_handling(ep_conn)
+
     # Schedule things to happen after the ioloop comes up
     io_loop.add_callback(startup)
-
-    # Add a handler to process events coming from the main process
-    io_loop.add_handler(rx_conn, lambda c, _: process(c.recv()), IOLoop.READ)
 
     logger.debug("Starting IO loop")
     io_loop.start()
@@ -97,6 +98,8 @@ async def startup():
 
     beer_garden.api.http.logger.info("Http entry point is started. Hello!")
 
+    publish(Event(name=Events.ENTRY_STARTED.name))
+
 
 async def shutdown():
     """Do shutdown things
@@ -113,12 +116,10 @@ async def shutdown():
     logger.debug("Stopping server for new HTTP connections")
     server.stop()
 
-    # if event_publishers:
-    #     logger.debug("Publishing application shutdown event")
-    #     event_publishers.publish_event(Event(name=Events.BREWVIEW_STOPPED.name))
-    #
-    #     logger.info("Shutting down event publishers")
-    #     await list(filter(lambda x: isinstance(x, Future), event_publishers.shutdown()))
+    # This will almost definitely not be published to the websocket, because it would
+    # need to make it up to the main process and back down into this process. We just
+    # publish this here in case the main process is looking for it.
+    publish(Event(name=Events.ENTRY_STOPPED.name))
 
     # We need to do this before the scheduler shuts down completely in order to kick any
     # currently waiting request creations
@@ -132,6 +133,8 @@ async def shutdown():
 def _setup_application():
     """Setup things that can be taken care of before io loop is started"""
     global io_loop, tornado_app, public_url, server, client_ssl
+
+    io_loop = IOLoop.current()
 
     auth_config = beer_garden.config.get("auth")
     if not auth_config.token.secret:
@@ -155,7 +158,6 @@ def _setup_application():
     server_ssl, client_ssl = _setup_ssl_context()
 
     server = HTTPServer(tornado_app, ssl_options=server_ssl)
-    io_loop = IOLoop.current()
 
 
 def _setup_tornado_app():
@@ -355,3 +357,11 @@ def _load_swagger(url_specs, title=None):
     # Finally, add documentation for all our published paths
     for url_spec in url_specs:
         api_spec.add_path(urlspec=url_spec)
+
+
+def _setup_event_handling(ep_conn):
+    # This will push all events generated in the entry point up to the master process
+    beer_garden.events.events_manager.manager = EventManager(ep_conn)
+
+    # Add a handler to process events coming from the main process
+    io_loop.add_handler(ep_conn, lambda c, _: websocket_publish(c.recv()), IOLoop.READ)

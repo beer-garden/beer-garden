@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError
-from brewtils.models import PatchOperation
+from brewtils.models import PatchOperation, Event, Events
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.authorization import authenticated, Permissions

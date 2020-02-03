@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+import multiprocessing
 import signal
 from multiprocessing.connection import Connection, Pipe
 from multiprocessing.context import SpawnContext
@@ -15,11 +16,13 @@ import beer_garden.config
 import beer_garden.db.api as db
 import beer_garden.events.events_manager
 import beer_garden.queue.api as queue
+from beer_garden.events.processors import PipeListener, QueueListener
+from beer_garden.log import process_record
 
 T = TypeVar("T", bound="EntryPoint")
 
 
-class EntryPoint(object):
+class EntryPoint:
     """A Beergarden API entry point
 
     This class represents an entry point into Beergarden.
@@ -37,58 +40,58 @@ class EntryPoint(object):
         target: The method that will be called when the process starts
         signal_handler: SIGTERM handler to gracefully shut down the process
 
+    Class Attributes:
+
+    Attributes:
+        _signal_handler: Signal handler function that will be invoked (in the
+            entry point process) when a SIGTERM is received
+        _process: The actual entry point process object
+        _ep_conn: End of communication pipe that is passed into the entry point
+            process.
+        _mp_conn: End of communication pipe that remains in the master process.
+        _event_listener: Listens for events coming from the entry point.
     """
 
     def __init__(
         self,
         name: str,
         target: Callable,
+        context: SpawnContext,
+        log_queue: Queue,
         signal_handler: Callable[[int, FrameType], None],
+        event_callback: Callable[[Event], None],
     ):
-        self._logger = logging.getLogger(__name__)
         self._name = name
         self._target = target
+        self._context = context
+        self._log_queue = log_queue
         self._signal_handler = signal_handler
+
+        self._logger = logging.getLogger(__name__)
         self._process = None
-        self._rx_conn, self._tx_conn = Pipe(duplex=False)
+        self._ep_conn, self._mp_conn = Pipe()
+        self._event_listener = PipeListener(conn=self._mp_conn, action=event_callback)
 
-    @classmethod
-    def create(cls, module_name: str) -> T:
-        module = getattr(beer_garden.api, module_name)
-
-        return EntryPoint(
-            name=module_name, target=module.run, signal_handler=module.signal_handler
-        )
-
-    def start(
-        self, context: SpawnContext, log_queue: Queue, events_queue: Queue
-    ) -> None:
-        """Start the entry point process
-
-        Args:
-            context: multiprocessing context to use when creating the process
-            log_queue: queue to use for logging consolidation
-            events_queue: queue to use to sent events to the main process
-
-        Returns:
-            None
-        """
+    def start(self) -> None:
+        """Start the entry point process"""
         process_name = f"BGEntryPoint-{self._name}"
 
-        self._process = context.Process(
+        self._process = self._context.Process(
             target=self._target_wrapper,
             args=(
                 beer_garden.config.get(),
-                log_queue,
-                events_queue,
+                self._log_queue,
                 self._target,
                 self._signal_handler,
-                self._rx_conn,
+                self._ep_conn,
             ),
             name=process_name,
             daemon=True,
         )
         self._process.start()
+
+        # And listen for events coming from it
+        self._event_listener.start()
 
     def stop(self, timeout: int = None) -> None:
         """Stop the process with a SIGTERM
@@ -103,6 +106,10 @@ class EntryPoint(object):
         Returns:
             None
         """
+        # First stop listening for events
+        self._event_listener.stop()
+
+        # Then ensure the process is terminated
         self._process.terminate()
         self._process.join(timeout=timeout)
 
@@ -121,16 +128,15 @@ class EntryPoint(object):
         Returns:
             None
         """
-        self._tx_conn.send(event)
+        self._mp_conn.send(event)
 
     @staticmethod
     def _target_wrapper(
         config: Box,
         log_queue: Queue,
-        event_queue: Queue,
         target: Callable,
         signal_handler: Callable[[int, FrameType], None],
-        rx_conn: Connection,
+        ep_conn: Connection,
     ) -> Any:
         """Helper method that sets up the process environment before calling `target`
 
@@ -146,10 +152,9 @@ class EntryPoint(object):
         Args:
             config:
             log_queue:
-            event_queue:
             target:
             signal_handler:
-            rx_conn:
+            ep_conn:
 
         Returns:
             The result of the `target` function
@@ -173,8 +178,68 @@ class EntryPoint(object):
         # Set up message queue connections
         queue.create_clients(beer_garden.config.get("amq"))
 
-        # Then setup upstream event queue (used to send events to the main process)
-        beer_garden.events.events_manager.set_upstream(event_queue)
+        # Now invoke the actual process target, passing in the connection
+        return target(ep_conn)
 
-        # Now invoke the actual process target
-        return target(rx_conn)
+
+class Manager:
+    """Entry points manager
+
+    This is the way events are coordinated across entry points. This class does a
+    couple of things:
+
+    - Has a list of the entry points
+    - Sets up a QueueProcessor for each of the entry point's upstream event queues. In
+    other words, this class is listening for events coming from every entry point.
+    - Allows registration of callbacks for certain types of events.
+    - When an event is received from one of the entry point queues it will fire any
+        callbacks registered for the event type.
+
+    Attributes:
+    """
+
+    context: SpawnContext = None
+    log_queue: Queue = None
+
+    def __init__(self):
+        self.entry_points = []
+        self.context = multiprocessing.get_context("spawn")
+        self.log_queue = self.context.Queue()
+
+        self.log_reader = QueueListener(
+            name="LogProcessor", queue=self.log_queue, action=process_record
+        )
+
+    def create_all(self):
+        for entry_name, entry_value in beer_garden.config.get("entry").items():
+            if entry_value.get("enable"):
+                self.entry_points.append(self.create(entry_name))
+
+    def create(self, module_name: str) -> T:
+        module = getattr(beer_garden.api, module_name)
+
+        return EntryPoint(
+            name=module_name,
+            target=module.run,
+            context=self.context,
+            log_queue=self.log_queue,
+            signal_handler=module.signal_handler,
+            event_callback=beer_garden.events.events_manager.publish,
+        )
+
+    def start(self):
+        self.log_reader.start()
+
+        for entry_point in self.entry_points:
+            entry_point.start()
+
+    def stop(self):
+        self.log_reader.stop()
+
+        for entry_point in self.entry_points:
+            entry_point.stop(timeout=10)
+
+    def put(self, event: Event) -> None:
+        """Publish an event to all entry points"""
+        for entry_point in self.entry_points:
+            entry_point.send_event(event)
