@@ -118,6 +118,35 @@ class PluginManager(StoppableThread):
         return cls._instance
 
     @classmethod
+    def associate(cls, event):
+        instance = event.payload
+
+        if instance.metadata.get("runner_id"):
+            cls.plugins[instance.metadata["runner_id"]].instance_id = instance.id
+            cls.plugins[instance.metadata["runner_id"]].restart = True
+
+    @classmethod
+    def do_start(cls, event):
+        runner_id = cls.from_instance_id(event.payload.id)
+
+        if runner_id in cls.plugins:
+            cls.restart(runner_id)
+
+    @classmethod
+    def do_stop(cls, event):
+        runner_id = cls.from_instance_id(event.payload.id)
+
+        if runner_id in cls.plugins:
+            cls.plugins[runner_id].restart = False
+
+    @classmethod
+    def from_instance_id(cls, instance_id):
+        for runner_id, plugin in cls.plugins.items():
+            if plugin.instance_id == instance_id:
+                return runner_id
+        return None
+
+    @classmethod
     def start_all(cls):
         cls.logger.info("Starting all plugins")
 

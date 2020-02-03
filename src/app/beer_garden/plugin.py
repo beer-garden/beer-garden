@@ -17,11 +17,12 @@ logger = logging.getLogger(__name__)
 
 
 @publish_event(Events.INSTANCE_INITIALIZED)
-def initialize(instance_id: str) -> Instance:
+def initialize(instance_id: str, runner_id: str = None) -> Instance:
     """Initializes an instance.
 
     Args:
         instance_id: The Instance ID
+        runner_id: The runner id to associate with this plugin, if any
 
     Returns:
         The updated Instance
@@ -39,6 +40,11 @@ def initialize(instance_id: str) -> Instance:
     instance.status_info = {"heartbeat": datetime.utcnow()}
     instance.queue_type = queue_spec["queue_type"]
     instance.queue_info = queue_spec["queue_info"]
+
+    # This is ridiculous - Mongoengine strikes again
+    metadata = dict(instance.metadata)
+    metadata.update({"runner_id": runner_id})
+    instance.metadata = metadata
 
     instance = db.update(instance)
 
