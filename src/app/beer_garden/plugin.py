@@ -65,6 +65,7 @@ def start(instance_id: str) -> Instance:
     # Send a request to start to the plugin on the plugin's admin queue
     request = Request.from_template(
         beer_garden.start_request,
+        namespace=system.namespace,
         system=system.name,
         system_version=system.version,
         instance_name=instance.name,
@@ -91,6 +92,7 @@ def stop(instance_id: str) -> Instance:
 
     request = Request.from_template(
         beer_garden.stop_request,
+        namespace=system.namespace,
         system=system.name,
         system_version=system.version,
         instance_name=instance.name,
