@@ -47,6 +47,7 @@ class Plugin:
     runner: ProcessRunner
     instance_id: str = ""
     restart: bool = False
+    stopped: bool = False
     dead: bool = False
 
 
@@ -54,7 +55,7 @@ class PluginManager(StoppableThread):
     """Manages creation and destruction of PluginRunners"""
 
     logger = logging.getLogger(__name__)
-    plugins = {}
+    plugins: Dict[str, Plugin] = {}
 
     _instance = None
 
@@ -89,16 +90,16 @@ class PluginManager(StoppableThread):
 
         Iterate through all plugins, restarting any processes that have stopped.
         """
-        for plugin_id, plugin in self.plugins.items():
+        for runner_id, plugin in self.plugins.items():
             if self.stopped() or beer_garden.application.stopped():
                 break
 
             if plugin.runner.process and plugin.runner.process.poll() is not None:
                 if plugin.restart:
-                    self.logger.warning(f"Plugin {plugin_id} stopped, restarting")
-                    self.restart(plugin_id)
-                elif not plugin.dead:
-                    self.logger.warning(f"Plugin {plugin_id} is dead, not restarting")
+                    self.logger.warning(f"Runner {runner_id} stopped, restarting")
+                    self.restart(runner_id)
+                elif not plugin.stopped and not plugin.dead:
+                    self.logger.warning(f"Runner {runner_id} is dead, not restarting")
                     plugin.dead = True
 
     @classmethod
@@ -118,6 +119,36 @@ class PluginManager(StoppableThread):
         return cls._instance
 
     @classmethod
+    def associate(cls, event):
+        instance = event.payload
+
+        if instance.metadata.get("runner_id"):
+            cls.plugins[instance.metadata["runner_id"]].instance_id = instance.id
+            cls.plugins[instance.metadata["runner_id"]].restart = True
+
+    @classmethod
+    def do_start(cls, event):
+        runner_id = cls.from_instance_id(event.payload.id)
+
+        if runner_id in cls.plugins:
+            cls.restart(runner_id)
+
+    @classmethod
+    def do_stop(cls, event):
+        runner_id = cls.from_instance_id(event.payload.id)
+
+        if runner_id in cls.plugins:
+            cls.plugins[runner_id].stopped = True
+            cls.plugins[runner_id].restart = False
+
+    @classmethod
+    def from_instance_id(cls, instance_id):
+        for runner_id, plugin in cls.plugins.items():
+            if plugin.instance_id == instance_id:
+                return runner_id
+        return None
+
+    @classmethod
     def start_all(cls):
         cls.logger.info("Starting all plugins")
 
@@ -127,21 +158,24 @@ class PluginManager(StoppableThread):
     @classmethod
     def stop_all(cls):
         """Attempt to stop all plugins."""
-        for plugin_id in cls.plugins:
-            cls.stop_one(plugin_id)
+        for runner_id in cls.plugins:
+            cls.stop_one(runner_id=runner_id)
 
     @classmethod
-    def stop_one(cls, plugin_id):
-        plugin = cls.plugins[plugin_id]
+    def stop_one(cls, runner_id=None, instance_id=None):
+        if runner_id is None:
+            runner_id = cls.from_instance_id(instance_id)
+
+        plugin = cls.plugins[runner_id]
 
         if not plugin.runner.is_alive():
-            cls.logger.info(f"Plugin {plugin_id} was already stopped")
+            cls.logger.info(f"Runner {runner_id} was already stopped")
             return
 
         sleep(1)
 
         if plugin.runner.is_alive():
-            cls.logger.info(f"About to kill plugin {plugin_id}")
+            cls.logger.info(f"About to kill runner {runner_id}")
             plugin.runner.kill()
 
     @classmethod
@@ -149,8 +183,8 @@ class PluginManager(StoppableThread):
         del cls.plugins[plugin_id]
 
     @classmethod
-    def restart(cls, plugin_id):
-        old_runner = cls.plugins[plugin_id].runner
+    def restart(cls, runner_id):
+        old_runner = cls.plugins[runner_id].runner
 
         new_runner = ProcessRunner(
             runner_id=old_runner.runner_id,
@@ -159,7 +193,7 @@ class PluginManager(StoppableThread):
             process_env=old_runner.process_env,
         )
 
-        cls.plugins[plugin_id] = Plugin(runner=new_runner)
+        cls.plugins[runner_id] = Plugin(runner=new_runner)
 
         new_runner.start()
 

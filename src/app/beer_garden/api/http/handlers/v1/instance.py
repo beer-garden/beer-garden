@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError
-from brewtils.models import PatchOperation, Event, Events
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.authorization import authenticated, Permissions
+from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
 
 
@@ -133,8 +132,12 @@ class InstanceAPI(BaseHandler):
             operation = op.operation.lower()
 
             if operation == "initialize":
+                runner_id = None
+                if op.value:
+                    runner_id = op.value.get("runner_id")
+
                 response = await self.client.initialize_instance(
-                    self.request.namespace, instance_id
+                    self.request.namespace, instance_id, runner_id=runner_id
                 )
 
             elif operation == "start":

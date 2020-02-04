@@ -237,6 +237,12 @@ class Application(StoppableThread):
             # Start local plugins after the entry point comes up
             if event.name == Events.ENTRY_STARTED.name:
                 PluginManager.instance().start_all()
+            elif event.name == Events.INSTANCE_INITIALIZED.name:
+                PluginManager.instance().associate(event)
+            elif event.name == Events.INSTANCE_STARTED.name:
+                PluginManager.instance().do_start(event)
+            elif event.name == Events.INSTANCE_STOPPED.name:
+                PluginManager.instance().do_stop(event)
 
         event_manager.register(QueueListener(action=event_callback))
 
