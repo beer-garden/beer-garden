@@ -34,8 +34,8 @@ class Route_Class(Enum):
     SYSTEM = brewtils.models.System.schema
     GARDEN = brewtils.models.Garden.schema
     EVENT = brewtils.models.Event.schema
-    LOGGING = "LOGGING"
-    QUEUE = "QUEUE"
+    LOGGING = brewtils.models.LoggingConfig.schema
+    QUEUE = brewtils.models.Queue.schema
 
 
 class Routable_Garden_Name(Enum):
@@ -56,14 +56,34 @@ def _local_garden():
     return beer_garden.config.get("garden.name")
 
 
+System_Garden_Mapping = dict()
+Garden_Connections = dict()
+
+
+def update_garden_connection(connection):
+    Garden_Connections[connection.garden_name] = connection
+
+
+def remove_garden_connection(connection):
+    Garden_Connections.pop(connection.garden_name, None)
+
+
+def update_system_mapping(system, garden_name):
+    System_Garden_Mapping[str(system)] = garden_name
+
+
+def remove_system_mapping(system):
+    System_Garden_Mapping.pop(str(system), None)
+
+
 def route_request(
-    brewtils_obj=None,
-    route_class: str = None,
-    obj_id: str = None,
-    garden_name: str = None,
-    src_garden_name: str = None,
-    route_type: Route_Type = None,
-    **kwargs
+        brewtils_obj=None,
+        route_class: str = None,
+        obj_id: str = None,
+        garden_name: str = None,
+        src_garden_name: str = None,
+        route_type: Route_Type = None,
+        **kwargs
 ):
     # Rules for Routing:
     # 1: Model Type must be approved for routing
@@ -91,8 +111,8 @@ def route_request(
         raise RoutingRequestException("Unable to identify route")
 
     if (
-        route_class in Routing_Eligible
-        and src_garden_name is not Routable_Garden_Name.CHILD
+            route_class in Routing_Eligible
+            and src_garden_name is not Routable_Garden_Name.CHILD
     ):
 
         if garden_name is None:
@@ -108,23 +128,15 @@ def route_request(
 
                 elif route_class == Route_Class.INSTANCE:
                     request_object = beer_garden.instances.get_instance(obj_id)
-                    system = beer_garden.systems.get_system(
+                    systems = beer_garden.systems.get_systems(
                         instances__contains=request_object
                     )
-                    garden_name = system.garden_name
-
-                elif route_class in [Route_Class.REQUEST, Route_Class.REQUEST_TEMPLATE]:
-                    request_object = beer_garden.requests.get_request(obj_id)
-                    system = beer_garden.systems.get_system(
-                        name_space=request_object.name_space,
-                        name=request_object.system,
-                        version=request_object.version,
-                    )
-                    garden_name = system.garden_name
+                    if len(systems) == 1:
+                        garden_name = System_Garden_Mapping.get(str(systems[0]), None)
 
                 elif route_class == Route_Class.SYSTEM:
-                    request_object = beer_garden.systems.get_system(obj_id)
-                    garden_name = request_object.garden_name
+                    system = beer_garden.systems.get_system(obj_id)
+                    garden_name = System_Garden_Mapping.get(str(system), None)
 
             elif route_type is Route_Type.CREATE:
 
@@ -132,18 +144,9 @@ def route_request(
                     request_object = SchemaParser.parse_request(
                         brewtils_obj, from_string=False
                     )
-                    system = beer_garden.systems.get_system(
-                        name_space=request_object.name_space,
-                        name=request_object.system,
-                        version=request_object.version,
-                    )
-                    garden_name = system.garden_name
 
-                elif route_class == Route_Class.SYSTEM:
-                    request_object = SchemaParser.parse_system(
-                        brewtils_obj, from_string=False
-                    )
-                    garden_name = request_object.garden_name
+                    system = "%s:%s-%s" % (request_object.namespace, request_object.system, request_object.version)
+                    garden_name = System_Garden_Mapping.get(system, None)
 
         if garden_name is not src_garden_name and garden_name is not None:
             return forward_routing(
@@ -215,16 +218,16 @@ def route_request(
 
 
 def forward_routing(
-    brewtils_obj=None,
-    route_class: str = None,
-    obj_id: str = None,
-    garden_name: str = None,
-    src_garden_name: str = None,
-    route_type: Route_Type = None,
-    **kwargs
+        brewtils_obj=None,
+        route_class: str = None,
+        obj_id: str = None,
+        garden_name: str = None,
+        src_garden_name: str = None,
+        route_type: Route_Type = None,
+        **kwargs
 ):
-    garden_routing = beer_garden.garden.get_garden(garden_name)
-    if garden_routing.connection_type in ["HTTP", "HTTPS"]:
+    garden_routing = Garden_Connections.get(garden_name, None)
+    if garden_routing and garden_routing.connection_type in ["HTTP", "HTTPS"]:
         return forward_routing_http(
             garden_routing,
             brewtils_obj=brewtils_obj,
@@ -241,13 +244,13 @@ def forward_routing(
 
 
 def forward_routing_http(
-    garden_routing,
-    brewtils_obj=None,
-    route_class: str = None,
-    obj_id: str = None,
-    src_garden_name: str = None,
-    route_type: Route_Type = None,
-    **kwargs
+        garden_routing,
+        brewtils_obj=None,
+        route_class: str = None,
+        obj_id: str = None,
+        src_garden_name: str = None,
+        route_type: Route_Type = None,
+        **kwargs
 ):
     connection = garden_routing.connection_params
     endpoint = "{}://{}:{}{}api/v1/forward".format(
