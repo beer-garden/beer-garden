@@ -4,69 +4,33 @@ import logging
 import re
 from builtins import str
 from threading import Event
-from typing import Dict, List, Sequence, Union
+from typing import List, Sequence, Union
 
 import pika.spec
 import six
 import urllib3
-
-from beer_garden.errors import RoutingRequestException
-from beer_garden.router import Route_Type
 from brewtils.choices import parse
-from brewtils.errors import ModelValidationError, RequestPublishException, ConflictError
+from brewtils.errors import ConflictError, ModelValidationError, RequestPublishException
 from brewtils.models import (
     Choices,
     Events,
-    Request,
-    System,
-    RequestTemplate,
     PatchOperation,
+    Request,
+    RequestTemplate,
+    System,
 )
 from requests import Session
 
 import beer_garden.config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
+from beer_garden.errors import RoutingRequestException
 from beer_garden.events.events_manager import publish_event
-from beer_garden.metrics import request_created, request_started, request_completed
+from beer_garden.metrics import request_completed, request_created, request_started
 
 logger = logging.getLogger(__name__)
 
 request_map = {}
-
-
-def route_request(
-    brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs
-):
-    if route_type is Route_Type.CREATE:
-        if brewtils_obj is None:
-            raise RoutingRequestException(
-                "An Object is required to route UPDATE request for Request"
-            )
-        return process_request(
-            brewtils_obj, wait_timeout=kwargs.get("wait_timeout", -1)
-        )
-    elif route_type is Route_Type.READ:
-        if obj_id:
-            return get_request(obj_id)
-        elif kwargs.get("serialize_kwargs", None):
-            return get_requests(kwargs.get("serialize_kwargs", None))
-        else:
-            raise RoutingRequestException(
-                "An Identifier OR Serialize Kwargs are required to route READ request for Request"
-            )
-    elif route_type is Route_Type.UPDATE:
-        if obj_id is None or brewtils_obj is None:
-            raise RoutingRequestException(
-                "An Identifier and Object are required to route UPDATE request for Request"
-            )
-        return update_request(obj_id, brewtils_obj)
-    elif route_type is Route_Type.DELETE:
-        raise RoutingRequestException("DELETE Route for Requests does not exist")
-    else:
-        raise RoutingRequestException(
-            "%s Route for Requests does not exist" % route_type.value
-        )
 
 
 class RequestValidator(object):
@@ -648,7 +612,8 @@ def process_request(
         # If it is not controlled locally, we need to forward it
         else:
             raise RoutingRequestException(
-                f"Unable to route request {request.id}, {request.garden_name} is not hosted on {get_local_garden_name()}"
+                f"Unable to route request {request.id}, {request.garden_name} is not "
+                f"hosted on {get_local_garden_name()}"
             )
     except Exception as ex:
         # An error publishing means this request will never complete, so remove it

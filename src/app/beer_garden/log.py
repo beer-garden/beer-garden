@@ -5,48 +5,15 @@ import logging.config
 import logging.handlers
 
 import six
-from brewtils.errors import ModelValidationError
 from brewtils.models import LoggingConfig
 from ruamel import yaml
 from ruamel.yaml import YAML
 
 import beer_garden
-from beer_garden.errors import LoggingLoadingError, RoutingRequestException
-from beer_garden.router import Route_Type
+from beer_garden.errors import LoggingLoadingError
 
 plugin_logging_config = None
 _LOGGING_CONFIG = None
-
-
-def route_request(
-    brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs
-):
-    if route_type is Route_Type.CREATE:
-        raise RoutingRequestException("CREATE Route for Logs does not exist")
-    elif route_type is Route_Type.READ:
-        if obj_id is None:
-            raise RoutingRequestException(
-                "An identifier is required to route READ request for Log"
-            )
-        return get_plugin_log_config(obj_id)
-    elif route_type is Route_Type.UPDATE:
-        if brewtils_obj is None:
-            raise RoutingRequestException(
-                "An Object is required to route UPDATE request for Log"
-            )
-
-        for op in brewtils_obj:
-            if op.operation == "reload":
-                return reload_plugin_log_config()
-            else:
-                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
-
-    elif route_type is Route_Type.DELETE:
-        raise RoutingRequestException("DELETE Route for Logs does not exist")
-    else:
-        raise RoutingRequestException(
-            "%s Route for Logs does not exist" % route_type.value
-        )
 
 
 def load(config: dict, force=False) -> None:

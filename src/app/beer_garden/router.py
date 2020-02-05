@@ -3,9 +3,19 @@ from enum import Enum
 
 import brewtils.models
 import requests
+from brewtils.errors import ModelValidationError
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden
+import beer_garden.commands
+import beer_garden.garden
+import beer_garden.instances
+import beer_garden.log
+import beer_garden.plugin
+import beer_garden.queues
+import beer_garden.requests
+import beer_garden.scheduler
+import beer_garden.systems
 from beer_garden.errors import RoutingRequestException
 
 
@@ -114,7 +124,7 @@ def route_request(
     garden_name: str = None,
     src_garden_name: str = None,
     route_type: Route_Type = None,
-    **kwargs
+    **kwargs,
 ):
     # Rules for Routing:
     # 1: Model Type must be approved for routing
@@ -191,65 +201,131 @@ def route_request(
                 obj_id=obj_id,
                 src_garden_name=Routable_Garden_Name.PARENT,
                 route_type=route_type,
-                **kwargs
+                **kwargs,
             )
-
-    # Local routing is pushed down to the model classes.
-    # That way developers updating the class don't forget about routing
 
     if route_class == Route_Class.COMMAND:
-        return beer_garden.commands.route_request(
-            brewtils_obj=brewtils_obj, obj_id=obj_id, route_type=route_type, **kwargs
-        )
+        if route_type is Route_Type.READ:
+            if obj_id:
+                return beer_garden.commands.get_command(obj_id)
+            else:
+                return beer_garden.commands.get_commands()
 
     elif route_class == Route_Class.INSTANCE:
+
         if route_type == Route_Type.UPDATE:
-            return beer_garden.plugin.route_request(
-                brewtils_obj=brewtils_obj,
-                obj_id=obj_id,
-                route_type=route_type,
-                **kwargs
-            )
+            if route_type is Route_Type.UPDATE:
+                return beer_garden.plugin.update(obj_id, brewtils_obj)
         else:
-            return beer_garden.instances.route_request(
-                brewtils_obj=brewtils_obj,
-                obj_id=obj_id,
-                route_type=route_type,
-                **kwargs
-            )
+            if route_type is Route_Type.READ:
+                return beer_garden.instances.get_instance(obj_id)
+            elif route_type is Route_Type.DELETE:
+                return beer_garden.instances.remove_instance(obj_id)
 
     elif route_class == Route_Class.JOB:
-        return beer_garden.scheduler.route_request(
-            brewtils_obj=brewtils_obj, obj_id=obj_id, route_type=route_type, **kwargs
-        )
+
+        if route_type is Route_Type.CREATE:
+            return beer_garden.scheduler.create_job(
+                SchemaParser.parse_job(brewtils_obj, from_string=False)
+            )
+        elif route_type is Route_Type.READ:
+            if obj_id:
+                return beer_garden.scheduler.get_job(obj_id)
+            else:
+                return beer_garden.scheduler.get_jobs(**kwargs)
+
+        elif route_type is Route_Type.UPDATE:
+            operations = SchemaParser.parse_patch(
+                brewtils_obj, many=True, from_string=False
+            )
+
+            for op in operations:
+                if op.operation == "update":
+                    if op.path == "/status":
+                        if str(op.value).upper() == "PAUSED":
+                            return beer_garden.scheduler.pause_job(obj_id)
+                        elif str(op.value).upper() == "RUNNING":
+                            return beer_garden.scheduler.resume_job(obj_id)
+                        else:
+                            raise ModelValidationError(
+                                f"Unsupported status value '{op.value}'"
+                            )
+                    else:
+                        raise ModelValidationError(
+                            f"Unsupported path value '{op.path}'"
+                        )
+                else:
+                    raise ModelValidationError(
+                        f"Unsupported operation '{op.operation}'"
+                    )
+
+        elif route_type is Route_Type.DELETE:
+            return beer_garden.scheduler.remove_job(obj_id)
 
     elif route_class in [Route_Class.REQUEST, Route_Class.REQUEST_TEMPLATE]:
-        return beer_garden.requests.route_request(
-            brewtils_obj=brewtils_obj, obj_id=obj_id, route_type=route_type, **kwargs
-        )
+        if route_type is Route_Type.CREATE:
+            return beer_garden.requests.process_request(brewtils_obj, **kwargs)
+        elif route_type is Route_Type.READ:
+            if obj_id:
+                return beer_garden.requests.get_request(obj_id)
+            else:
+                return beer_garden.requests.get_requests(**kwargs)
+        elif route_type is Route_Type.UPDATE:
+            return beer_garden.requests.update_request(obj_id, brewtils_obj)
 
     elif route_class == Route_Class.SYSTEM:
-        return beer_garden.systems.route_request(
-            brewtils_obj=brewtils_obj, obj_id=obj_id, route_type=route_type, **kwargs
-        )
+
+        if route_type is Route_Type.CREATE:
+            return beer_garden.systems.create_system(brewtils_obj)
+        elif route_type is Route_Type.READ:
+            if obj_id:
+                return beer_garden.systems.get_system(obj_id)
+            else:
+                return beer_garden.systems.get_systems(**kwargs)
+        elif route_type is Route_Type.UPDATE:
+            if obj_id:
+                return beer_garden.systems.update_system(obj_id, brewtils_obj)
+            else:
+                return beer_garden.systems.update_rescan(brewtils_obj)
+        elif route_type is Route_Type.DELETE:
+            return beer_garden.systems.remove_system(obj_id)
 
     elif route_class == Route_Class.GARDEN:
-        return beer_garden.garden.route_request(
-            brewtils_obj=brewtils_obj, obj_id=obj_id, route_type=route_type, **kwargs
-        )
+
+        if route_type is Route_Type.CREATE:
+            return beer_garden.garden.create_garden(brewtils_obj)
+        elif route_type is Route_Type.READ:
+            return beer_garden.garden.get_garden(obj_id)
+        elif route_type is Route_Type.UPDATE:
+            return beer_garden.garden.update_garden(obj_id, brewtils_obj)
+        elif route_type is Route_Type.DELETE:
+            return beer_garden.garden.remove_garden(obj_id)
 
     elif route_class == Route_Class.LOGGING:
-        return beer_garden.log.route_request(
-            brewtils_obj=brewtils_obj, obj_id=obj_id, route_type=route_type, **kwargs
-        )
+        if route_type is Route_Type.READ:
+            return beer_garden.log.get_plugin_log_config(obj_id)
+        elif route_type is Route_Type.UPDATE:
+            for op in brewtils_obj:
+                if op.operation == "reload":
+                    return beer_garden.log.reload_plugin_log_config()
+                else:
+                    raise ModelValidationError(
+                        f"Unsupported operation '{op.operation}'"
+                    )
 
     elif route_class == Route_Class.QUEUE:
-        return beer_garden.queues.route_request(
-            brewtils_obj=brewtils_obj, obj_id=obj_id, route_type=route_type, **kwargs
-        )
 
-    else:
-        raise RoutingRequestException("No route for %s exist" % route_class)
+        if route_type is Route_Type.READ:
+            return beer_garden.queues.get_all_queue_info()
+        elif route_type is Route_Type.DELETE:
+            if obj_id:
+                return beer_garden.queues.clear_queue(obj_id)
+            else:
+                return beer_garden.queues.clear_all_queues()
+
+    raise RoutingRequestException(
+        f"{route_type.value} route for {route_class} does not exist"
+    )
 
 
 def forward_routing(
@@ -259,7 +335,7 @@ def forward_routing(
     garden_name: str = None,
     src_garden_name: str = None,
     route_type: Route_Type = None,
-    **kwargs
+    **kwargs,
 ):
     garden_routing = Garden_Connections.get(garden_name, None)
     if garden_routing and garden_routing.connection_type in ["HTTP", "HTTPS"]:
@@ -270,7 +346,7 @@ def forward_routing(
             obj_id=obj_id,
             src_garden_name=src_garden_name,
             route_type=route_type,
-            **kwargs
+            **kwargs,
         )
     else:
         raise RoutingRequestException(
@@ -285,7 +361,7 @@ def forward_routing_http(
     obj_id: str = None,
     src_garden_name: str = None,
     route_type: Route_Type = None,
-    **kwargs
+    **kwargs,
 ):
     connection = garden_routing.connection_params
     endpoint = "{}://{}:{}{}api/v1/forward".format(

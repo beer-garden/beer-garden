@@ -1,18 +1,13 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import List, Dict
+from typing import Dict, List
 
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
-
-from beer_garden.errors import RoutingRequestException
-from beer_garden.router import Route_Type
-from brewtils.errors import ModelValidationError
 from brewtils.models import Job
 
 import beer_garden
 import beer_garden.db.api as db
 from beer_garden.requests import process_request
-from brewtils.schema_parser import SchemaParser
 
 logger = logging.getLogger(__name__)
 
@@ -23,62 +18,6 @@ class IntervalTrigger(APInterval):
     def __init__(self, *args, **kwargs):
         self.reschedule_on_finish = kwargs.pop("reschedule_on_finish", False)
         super(IntervalTrigger, self).__init__(*args, **kwargs)
-
-
-def route_request(
-    brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs
-):
-    if route_type is Route_Type.CREATE:
-        if brewtils_obj is None:
-            raise RoutingRequestException(
-                "An Object is required to route CREATE request for Scheduler"
-            )
-        return create_job(SchemaParser.parse_job(brewtils_obj, from_string=False))
-    elif route_type is Route_Type.READ:
-        if obj_id:
-            return get_job(obj_id)
-        elif kwargs.get("filter_params", None) is not None:
-            return get_jobs(kwargs.get("filter_params", None))
-        else:
-            raise RoutingRequestException(
-                "An identifier OR Filter Params are required to route READ request for "
-                "Scheduler"
-            )
-    elif route_type is Route_Type.UPDATE:
-        if obj_id is None or brewtils_obj is None:
-            raise RoutingRequestException(
-                "An identifier and Object are required to route UPDATE request for Scheduler"
-            )
-        operations = SchemaParser.parse_patch(
-            brewtils_obj, many=True, from_string=False
-        )
-
-        for op in operations:
-            if op.operation == "update":
-                if op.path == "/status":
-                    if str(op.value).upper() == "PAUSED":
-                        response = pause_job(obj_id)
-                    elif str(op.value).upper() == "RUNNING":
-                        response = resume_job(obj_id)
-                    else:
-                        raise ModelValidationError(
-                            f"Unsupported status value '{op.value}'"
-                        )
-                else:
-                    raise ModelValidationError(f"Unsupported path value '{op.path}'")
-            else:
-                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
-
-    elif route_type is Route_Type.DELETE:
-        if obj_id is None:
-            raise RoutingRequestException(
-                "An identifier is required to route DELETE request for Scheduler"
-            )
-        return remove_job(obj_id)
-    else:
-        raise RoutingRequestException(
-            "%s Route for Scheduler does not exist" % route_type.value
-        )
 
 
 def run_job(job_id, request_template):

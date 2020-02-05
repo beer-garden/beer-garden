@@ -1,29 +1,9 @@
 # -*- coding: utf-8 -*-
 from typing import List
 
-from beer_garden.errors import RoutingRequestException
-from beer_garden.router import Route_Type
 from brewtils.models import Command
 
 import beer_garden.db.api as db
-
-
-def route_request(obj_id: str = None, route_type: Route_Type = None, **kwargs):
-    if route_type is Route_Type.CREATE:
-        raise RoutingRequestException("CREATE Route for Commands does not exist")
-    elif route_type is Route_Type.READ:
-        if obj_id:
-            return get_command(obj_id)
-        else:
-            return get_commands()
-    elif route_type is Route_Type.UPDATE:
-        raise RoutingRequestException("UPDATE Route for Commands does not exist")
-    elif route_type is Route_Type.DELETE:
-        raise RoutingRequestException("DELETE Route for Commands does not exist")
-    else:
-        raise RoutingRequestException(
-            "%s Route for Commands does not exist" % route_type.value
-        )
 
 
 def get_command(command_id: str) -> Command:

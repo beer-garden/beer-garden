@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 import logging
+from time import sleep
 from typing import List, Sequence
 
-from beer_garden.errors import RoutingRequestException
-from beer_garden.router import Route_Type
 from brewtils.errors import ModelValidationError
-from brewtils.models import Events, Instance, System, PatchOperation
+from brewtils.models import Events, Instance, PatchOperation, System
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema
-from time import sleep
 
 import beer_garden
 import beer_garden.db.api as db
@@ -19,48 +17,6 @@ from beer_garden.queue.rabbit import get_routing_key
 REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
 logger = logging.getLogger(__name__)
-
-
-def route_request(
-    brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs
-):
-    if route_type is Route_Type.CREATE:
-        if brewtils_obj is None:
-            raise RoutingRequestException(
-                "An Object is required to route CREATE request for Systems"
-            )
-        return create_system(brewtils_obj)
-    elif route_type is Route_Type.READ:
-        if obj_id:
-            return get_system(obj_id)
-        else:
-            return get_systems(
-                serialize_kwargs=kwargs.get("serialize_kwargs", None),
-                filter_params=kwargs.get("filter_params", None),
-                order_by=kwargs.get("order_by", None),
-                include_fields=kwargs.get("include_fields", None),
-                exclude_fields=kwargs.get("exclude_fields", None),
-                dereference_nested=kwargs.get("dereference_nested", None),
-            )
-    elif route_type is Route_Type.UPDATE:
-        if brewtils_obj is None:
-            raise RoutingRequestException(
-                "An Object is required to route UPDATE request for Systems"
-            )
-        if obj_id:
-            return update_system(obj_id, brewtils_obj)
-        else:
-            return update_rescan(brewtils_obj)
-    elif route_type is Route_Type.DELETE:
-        if obj_id is None:
-            raise RoutingRequestException(
-                "An Identifier is required to route DELETE request for Systems"
-            )
-        return remove_system(obj_id)
-    else:
-        raise RoutingRequestException(
-            "%s Route for Systems does not exist" % route_type.value
-        )
 
 
 def get_system(system_id: str) -> System:

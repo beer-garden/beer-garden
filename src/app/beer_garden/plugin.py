@@ -11,27 +11,9 @@ import beer_garden
 import beer_garden.config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
-from beer_garden.errors import RoutingRequestException
 from beer_garden.events.events_manager import publish_event
-from beer_garden.router import Route_Type
 
 logger = logging.getLogger(__name__)
-
-
-def route_request(
-    brewtils_obj=None, obj_id: str = None, route_type: Route_Type = None, **kwargs
-):
-
-    if route_type is Route_Type.UPDATE:
-        if brewtils_obj is None:
-            raise RoutingRequestException(
-                "An Object is required to route UPDATE request for Instances"
-            )
-        return update(obj_id, brewtils_obj)
-    else:
-        raise RoutingRequestException(
-            "%s Route for Instances does not exist" % route_type.value
-        )
 
 
 @publish_event(Events.INSTANCE_INITIALIZED)
