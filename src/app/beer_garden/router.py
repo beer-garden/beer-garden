@@ -72,16 +72,18 @@ def get_garden_connection(garden_name):
 def update_garden_connection(connection):
     Garden_Connections[connection.garden_name] = connection
 
+
 def remove_garden_connection(connection):
     Garden_Connections.pop(connection.garden_name, None)
 
-def get_system_mapping(system = None, name_space = None, version = None, name = None):
+
+def get_system_mapping(system=None, name_space=None, version=None, name=None):
     if system:
         mapping = System_Garden_Mapping.get(str(system), None)
         if mapping is None:
             # @ TODO Integrate the garden mapping
-            #mapping = beer_garden.system.get_garden_mapping(system.id)
-            #System_Garden_Mapping[str(system)] = mapping
+            # mapping = beer_garden.system.get_garden_mapping(system.id)
+            # System_Garden_Mapping[str(system)] = mapping
             pass
         return mapping
     else:
@@ -89,14 +91,12 @@ def get_system_mapping(system = None, name_space = None, version = None, name = 
         mapping = System_Garden_Mapping.get(system_str, None)
         if mapping is None:
             systems = beer_garden.systems.get_systems(
-                        name_space=name_space,
-                        name=name,
-                        version=version
-                    )
+                name_space=name_space, name=name, version=version
+            )
             if len(systems) == 1:
                 # @ TODO Integrate the garden mapping
-                #mapping = beer_garden.system.get_garden_mapping(systems[0].id)
-                #System_Garden_Mapping[system_str] = mapping
+                # mapping = beer_garden.system.get_garden_mapping(systems[0].id)
+                # System_Garden_Mapping[system_str] = mapping
                 pass
         return mapping
 
@@ -110,13 +110,13 @@ def remove_system_mapping(system):
 
 
 def route_request(
-        brewtils_obj=None,
-        route_class: str = None,
-        obj_id: str = None,
-        garden_name: str = None,
-        src_garden_name: str = None,
-        route_type: Route_Type = None,
-        **kwargs
+    brewtils_obj=None,
+    route_class: str = None,
+    obj_id: str = None,
+    garden_name: str = None,
+    src_garden_name: str = None,
+    route_type: Route_Type = None,
+    **kwargs
 ):
     # Rules for Routing:
     # 1: Model Type must be approved for routing
@@ -144,8 +144,8 @@ def route_request(
         raise RoutingRequestException("Unable to identify route")
 
     if (
-            route_class in Routing_Eligible
-            and src_garden_name is not Routable_Garden_Name.CHILD
+        route_class in Routing_Eligible
+        and src_garden_name is not Routable_Garden_Name.CHILD
     ):
 
         if garden_name is None:
@@ -178,7 +178,11 @@ def route_request(
                         brewtils_obj, from_string=False
                     )
 
-                    system = "%s:%s-%s" % (request_object.namespace, request_object.system, request_object.version)
+                    system = "%s:%s-%s" % (
+                        request_object.namespace,
+                        request_object.system,
+                        request_object.version,
+                    )
                     garden_name = System_Garden_Mapping.get(system, None)
 
         if garden_name is not src_garden_name and garden_name is not None:
@@ -251,13 +255,13 @@ def route_request(
 
 
 def forward_routing(
-        brewtils_obj=None,
-        route_class: str = None,
-        obj_id: str = None,
-        garden_name: str = None,
-        src_garden_name: str = None,
-        route_type: Route_Type = None,
-        **kwargs
+    brewtils_obj=None,
+    route_class: str = None,
+    obj_id: str = None,
+    garden_name: str = None,
+    src_garden_name: str = None,
+    route_type: Route_Type = None,
+    **kwargs
 ):
     garden_routing = Garden_Connections.get(garden_name, None)
     if garden_routing and garden_routing.connection_type in ["HTTP", "HTTPS"]:
@@ -277,13 +281,13 @@ def forward_routing(
 
 
 def forward_routing_http(
-        garden_routing,
-        brewtils_obj=None,
-        route_class: str = None,
-        obj_id: str = None,
-        src_garden_name: str = None,
-        route_type: Route_Type = None,
-        **kwargs
+    garden_routing,
+    brewtils_obj=None,
+    route_class: str = None,
+    obj_id: str = None,
+    src_garden_name: str = None,
+    route_type: Route_Type = None,
+    **kwargs
 ):
     connection = garden_routing.connection_params
     endpoint = "{}://{}:{}{}api/v1/forward".format(

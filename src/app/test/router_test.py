@@ -61,7 +61,7 @@ def _mock_instance_lookup(monkeypatch):
     monkeypatch.setattr(beer_garden.instances, "get_instance", instance_mock)
 
 
-class mock_system_obj():
+class mock_system_obj:
     def __init__(self, id=123):
         self.id = id
         self.namespace = "namespace"
@@ -108,7 +108,7 @@ def _mock_get_request(monkeypatch):
 
 
 def _mock_schema_parse_request(
-        monkeypatch, namespace="namespace", system="system", version="version"
+    monkeypatch, namespace="namespace", system="system", version="version"
 ):
     schema_mock = Mock()
     schema_mock.return_value = mock_request(
@@ -129,7 +129,7 @@ class mock_garden_router:
         self.garden_name = garden_name
 
 
-def _mock_get_garden(monkeypatch, garden = mock_garden_router()):
+def _mock_get_garden(monkeypatch, garden=mock_garden_router()):
     garden_mock = Mock()
     garden_mock.return_value = garden
     monkeypatch.setattr(beer_garden.garden, "get_garden", garden_mock)
@@ -141,7 +141,9 @@ def _mock_forward_http(monkeypatch, response=True):
     monkeypatch.setattr(router, "forward_routing_http", forward_http_mock)
 
 
-def _mock_create_system_mapping(system=mock_system_obj(), garden_name="default", mapped_garden_name="default"):
+def _mock_create_system_mapping(
+    system=mock_system_obj(), garden_name="default", mapped_garden_name="default"
+):
     router.update_garden_connection(mock_garden_router(garden_name=garden_name))
     router.update_system_mapping(system, mapped_garden_name)
 
@@ -164,9 +166,9 @@ class TestRouter(object):
                     src_garden_name="anything",
                 )
             assert (
-                    str(e.value)
-                    == "Unable to lookup %s for Route delete because ID was not provided"
-                    % route_class
+                str(e.value)
+                == "Unable to lookup %s for Route delete because ID was not provided"
+                % route_class
             )
 
     def test_bad_route_class(self, monkeypatch):
@@ -206,15 +208,17 @@ class TestRouter(object):
         _mock_forward(monkeypatch)
         _mock_internal_routing(monkeypatch, "fail-all")
         _mock_systems_lookup(monkeypatch)
-        _mock_create_system_mapping(garden_name="default2", mapped_garden_name="default2")
+        _mock_create_system_mapping(
+            garden_name="default2", mapped_garden_name="default2"
+        )
 
         assert (
-                router.route_request(
-                    route_class=router.Route_Class.INSTANCE,
-                    route_type=router.Route_Type.DELETE,
-                    obj_id="abc",
-                )
-                == True
+            router.route_request(
+                route_class=router.Route_Class.INSTANCE,
+                route_type=router.Route_Type.DELETE,
+                obj_id="abc",
+            )
+            == True
         )
 
         router.remove_system_mapping(mock_system_obj())
@@ -231,12 +235,12 @@ class TestRouter(object):
         _mock_create_system_mapping()
 
         assert (
-                router.route_request(
-                    route_class=router.Route_Class.INSTANCE,
-                    route_type=router.Route_Type.DELETE,
-                    obj_id="abc",
-                )
-                == True
+            router.route_request(
+                route_class=router.Route_Class.INSTANCE,
+                route_type=router.Route_Type.DELETE,
+                obj_id="abc",
+            )
+            == True
         )
 
     def test_request_forward(self, monkeypatch):
@@ -245,19 +249,21 @@ class TestRouter(object):
         # Test forwarding Request to Child
         _mock_get_request(monkeypatch)
         _mock_systems_lookup(monkeypatch)
-        _mock_create_system_mapping(garden_name="default2", mapped_garden_name="default2")
+        _mock_create_system_mapping(
+            garden_name="default2", mapped_garden_name="default2"
+        )
         _mock_forward(monkeypatch)
         _mock_internal_routing(monkeypatch, "fail-all")
 
         # Test Create Forwarding
         _mock_schema_parse_request(monkeypatch)
         assert (
-                router.route_request(
-                    route_class=router.Route_Class.REQUEST,
-                    route_type=router.Route_Type.CREATE,
-                    brewtils_obj="{}",
-                )
-                == True
+            router.route_request(
+                route_class=router.Route_Class.REQUEST,
+                route_type=router.Route_Type.CREATE,
+                brewtils_obj="{}",
+            )
+            == True
         )
 
         router.remove_system_mapping(mock_system_obj())
@@ -272,12 +278,12 @@ class TestRouter(object):
         _mock_systems_lookup(monkeypatch)
         _mock_forward(monkeypatch, response=False)
         assert (
-                router.route_request(
-                    route_class=router.Route_Class.REQUEST,
-                    route_type=router.Route_Type.DELETE,
-                    obj_id="abc",
-                )
-                == True
+            router.route_request(
+                route_class=router.Route_Class.REQUEST,
+                route_type=router.Route_Type.DELETE,
+                obj_id="abc",
+            )
+            == True
         )
 
     def test_system_forward(self, monkeypatch):
@@ -287,15 +293,17 @@ class TestRouter(object):
         _mock_system_lookup(monkeypatch)
         _mock_forward(monkeypatch)
         _mock_internal_routing(monkeypatch, "fail-all")
-        _mock_create_system_mapping(garden_name="default2", mapped_garden_name="default2")
+        _mock_create_system_mapping(
+            garden_name="default2", mapped_garden_name="default2"
+        )
 
         assert (
-                router.route_request(
-                    route_class=router.Route_Class.SYSTEM,
-                    route_type=router.Route_Type.DELETE,
-                    obj_id="abc",
-                )
-                == True
+            router.route_request(
+                route_class=router.Route_Class.SYSTEM,
+                route_type=router.Route_Type.DELETE,
+                obj_id="abc",
+            )
+            == True
         )
 
         print(router.System_Garden_Mapping)
@@ -308,25 +316,24 @@ class TestRouter(object):
         assert router.route_request(route_class=router.Route_Class.SYSTEM) == True
 
         # Test routing request internally
-        #_mock_get_request(monkeypatch)
-        #_mock_system_lookup(monkeypatch)
-        _mock_forward(monkeypatch, response='Foo')
+        # _mock_get_request(monkeypatch)
+        # _mock_system_lookup(monkeypatch)
+        _mock_forward(monkeypatch, response="Foo")
 
         assert (
-                router.route_request(
-                    route_class=router.Route_Class.SYSTEM,
-                    route_type=router.Route_Type.DELETE,
-                    obj_id="abc",
-                )
-                == True
+            router.route_request(
+                route_class=router.Route_Class.SYSTEM,
+                route_type=router.Route_Type.DELETE,
+                obj_id="abc",
+            )
+            == True
         )
 
     def test_forward_routing(self, monkeypatch):
-        garden = mock_garden_router(connection_type='HTTP')
+        garden = mock_garden_router(connection_type="HTTP")
         _mock_forward_http(monkeypatch, response=True)
         _mock_get_garden(monkeypatch, garden)
         router.update_garden_connection(garden)
-
 
         assert router.forward_routing(garden_name="default")
         router.remove_garden_connection(garden)
