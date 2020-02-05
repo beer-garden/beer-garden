@@ -1,14 +1,12 @@
+import json
 from enum import Enum
 
-from beer_garden.errors import RoutingRequestException
-from brewtils.errors import ModelValidationError
-from brewtils.models import BaseModel
-from brewtils.schema_parser import SchemaParser
 import brewtils.models
-from typing import Union
-import beer_garden
 import requests
-import json
+from brewtils.schema_parser import SchemaParser
+
+import beer_garden
+from beer_garden.errors import RoutingRequestException
 
 
 class Route_Type(Enum):
