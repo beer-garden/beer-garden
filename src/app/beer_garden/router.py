@@ -60,12 +60,45 @@ System_Garden_Mapping = dict()
 Garden_Connections = dict()
 
 
+def get_garden_connection(garden_name):
+    connection = Garden_Connections.get(garden_name, None)
+    if connection is None:
+        connection = beer_garden.garden.get_garden(garden_name)
+        Garden_Connections[garden_name] = connection
+
+    return connection
+
+
 def update_garden_connection(connection):
     Garden_Connections[connection.garden_name] = connection
 
-
 def remove_garden_connection(connection):
     Garden_Connections.pop(connection.garden_name, None)
+
+def get_system_mapping(system = None, name_space = None, version = None, name = None):
+    if system:
+        mapping = System_Garden_Mapping.get(str(system), None)
+        if mapping is None:
+            # @ TODO Integrate the garden mapping
+            #mapping = beer_garden.system.get_garden_mapping(system.id)
+            #System_Garden_Mapping[str(system)] = mapping
+            pass
+        return mapping
+    else:
+        system_str = "%s:%s-%s" % (name_space, name, version)
+        mapping = System_Garden_Mapping.get(system_str, None)
+        if mapping is None:
+            systems = beer_garden.systems.get_systems(
+                        name_space=name_space,
+                        name=name,
+                        version=version
+                    )
+            if len(systems) == 1:
+                # @ TODO Integrate the garden mapping
+                #mapping = beer_garden.system.get_garden_mapping(systems[0].id)
+                #System_Garden_Mapping[system_str] = mapping
+                pass
+        return mapping
 
 
 def update_system_mapping(system, garden_name):
