@@ -206,14 +206,14 @@ def route_request(
 
     elif route_class == Route_Class.INSTANCE:
         if route_type == Route_Type.UPDATE:
-            beer_garden.plugin.route_request(
+            return beer_garden.plugin.route_request(
                 brewtils_obj=brewtils_obj,
                 obj_id=obj_id,
                 route_type=route_type,
                 **kwargs
             )
         else:
-            beer_garden.instances.route_request(
+            return beer_garden.instances.route_request(
                 brewtils_obj=brewtils_obj,
                 obj_id=obj_id,
                 route_type=route_type,

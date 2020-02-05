@@ -11,6 +11,7 @@ import beer_garden.systems
 import beer_garden.log
 import beer_garden.queues
 import beer_garden.garden
+import beer_garden.plugin
 
 from brewtils.schema_parser import SchemaParser
 
@@ -33,6 +34,10 @@ def _mock_internal_routing(monkeypatch, route_class):
     process_mock = Mock()
     process_mock.return_value = route_class == "instances"
     monkeypatch.setattr(beer_garden.instances, "route_request", process_mock)
+
+    process_mock = Mock()
+    process_mock.return_value = route_class == "instances"
+    monkeypatch.setattr(beer_garden.plugin, "route_request", process_mock)
 
     process_mock = Mock()
     process_mock.return_value = route_class == "jobs"
