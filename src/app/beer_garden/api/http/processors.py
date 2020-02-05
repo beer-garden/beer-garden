@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
+from brewtils.models import BaseModel
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.api.http
@@ -23,7 +24,7 @@ def websocket_publish(item):
     """Will serialize an event and publish it to all event websocket endpoints"""
     try:
         # So we're going to need a better way to do this
-        if item.payload:
+        if isinstance(item.payload, BaseModel):
             item.payload = SchemaParser.serialize(item.payload)
         if item.metadata:
             item.metadata = {}
