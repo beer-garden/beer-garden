@@ -5,16 +5,15 @@
 import logging
 from datetime import datetime
 
-from beer_garden.errors import RoutingRequestException
-from beer_garden.router import Route_Type
-from brewtils.errors import ModelValidationError
-from brewtils.models import Events, Instance, Request, System, PatchOperation
+from brewtils.models import Events, Instance, Request, System
 
 import beer_garden
 import beer_garden.config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
+from beer_garden.errors import RoutingRequestException
 from beer_garden.events.events_manager import publish_event
+from beer_garden.router import Route_Type
 
 logger = logging.getLogger(__name__)
 
@@ -28,55 +27,11 @@ def route_request(
             raise RoutingRequestException(
                 "An Object is required to route UPDATE request for Instances"
             )
-        return update_instance(obj_id, brewtils_obj)
+        return update(obj_id, brewtils_obj)
     else:
         raise RoutingRequestException(
             "%s Route for Instances does not exist" % route_type.value
         )
-
-
-@publish_event(Events.INSTANCE_UPDATED)
-def update_instance(instance_id: str, patch: PatchOperation) -> Instance:
-    """Applies updates to an instance.
-
-    Args:
-        instance_id: The Instance ID
-        patch: Patch definition to apply
-
-    Returns:
-        The updated Instance
-    """
-    instance = None
-
-    for op in patch:
-        operation = op.operation.lower()
-
-        if operation == "initialize":
-            instance = initialize(instance_id)
-
-        elif operation == "start":
-            instance = start(instance_id)
-
-        elif operation == "stop":
-            instance = stop(instance_id)
-
-        elif operation == "heartbeat":
-            instance = update(instance_id, new_status="RUNNING")
-
-        elif operation == "replace":
-            if op.path.lower() == "/status":
-                instance = update(instance_id, new_status=op.value)
-            else:
-                raise ModelValidationError(f"Unsupported path '{op.path}'")
-        elif operation == "update":
-            if op.path.lower() == "/metadata":
-                instance = update(instance_id, metadata=op.value)
-            else:
-                raise ModelValidationError(f"Unsupported path '{op.path}'")
-        else:
-            raise ModelValidationError(f"Unsupported operation '{op.operation}'")
-
-    return instance
 
 
 @publish_event(Events.INSTANCE_INITIALIZED)
