@@ -28,6 +28,7 @@ class ConfigHandler(BaseHandler):
             "auth_enabled": auth_config.enabled,
             "guest_login_enabled": auth_config.guest_login_enabled,
             # "namespaces": {"local": local_namespace, "remote": remote_namespaces},
+            "namespaces": {"local": "default"},
         }
 
         self.write(configs)
