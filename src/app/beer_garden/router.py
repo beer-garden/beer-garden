@@ -215,6 +215,45 @@ def route_request(
 
         if route_type == Route_Type.UPDATE:
             if route_type is Route_Type.UPDATE:
+                for op in brewtils_obj:
+                    operation = op.operation.lower()
+
+                    if operation == "initialize":
+                        runner_id = None
+                        if op.value:
+                            runner_id = op.value.get("runner_id")
+
+                        return beer_garden.plugin.initialize(
+                            obj_id, runner_id=runner_id
+                        )
+
+                    elif operation == "start":
+                        return beer_garden.plugin.start(obj_id)
+
+                    elif operation == "stop":
+                        return beer_garden.plugin.stop(obj_id)
+
+                    elif operation == "heartbeat":
+                        return beer_garden.plugin.update(obj_id, new_status="RUNNING")
+
+                    elif operation == "replace":
+                        if op.path.lower() == "/status":
+                            return beer_garden.plugin.update(
+                                obj_id, new_status=op.value
+                            )
+                        else:
+                            raise ModelValidationError(f"Unsupported path '{op.path}'")
+
+                    elif operation == "update":
+                        if op.path.lower() == "/metadata":
+                            return beer_garden.plugin.update(obj_id, metadata=op.value)
+                        else:
+                            raise ModelValidationError(f"Unsupported path '{op.path}'")
+                    else:
+                        raise ModelValidationError(
+                            f"Unsupported operation '{op.operation}'"
+                        )
+
                 return beer_garden.plugin.update(obj_id, brewtils_obj)
         else:
             if route_type is Route_Type.READ:
