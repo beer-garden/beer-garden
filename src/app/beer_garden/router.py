@@ -4,7 +4,6 @@ from enum import Enum
 import brewtils.models
 import requests
 from brewtils.errors import ModelValidationError
-from brewtils.schema_parser import SchemaParser
 
 import beer_garden
 import beer_garden.commands
@@ -180,18 +179,12 @@ def route_request(
                     garden_name = System_Garden_Mapping.get(str(system), None)
 
             elif route_type is Route_Type.CREATE:
-
                 if route_class in [Route_Class.REQUEST, Route_Class.REQUEST_TEMPLATE]:
-                    request_object = SchemaParser.parse_request(
-                        brewtils_obj, from_string=False
+                    garden_name = get_system_mapping(
+                        name_space=brewtils_obj.namespace,
+                        system=brewtils_obj.system,
+                        version=brewtils_obj.system_version,
                     )
-
-                    system = "%s:%s-%s" % (
-                        request_object.namespace,
-                        request_object.system,
-                        request_object.version,
-                    )
-                    garden_name = System_Garden_Mapping.get(system, None)
 
         if garden_name is not src_garden_name and garden_name is not None:
             return forward_routing(
@@ -264,9 +257,7 @@ def route_request(
     elif route_class == Route_Class.JOB:
 
         if route_type is Route_Type.CREATE:
-            return beer_garden.scheduler.create_job(
-                SchemaParser.parse_job(brewtils_obj, from_string=False)
-            )
+            return beer_garden.scheduler.create_job(brewtils_obj)
         elif route_type is Route_Type.READ:
             if obj_id:
                 return beer_garden.scheduler.get_job(obj_id)
@@ -274,11 +265,7 @@ def route_request(
                 return beer_garden.scheduler.get_jobs(**kwargs)
 
         elif route_type is Route_Type.UPDATE:
-            operations = SchemaParser.parse_patch(
-                brewtils_obj, many=True, from_string=False
-            )
-
-            for op in operations:
+            for op in brewtils_obj:
                 if op.operation == "update":
                     if op.path == "/status":
                         if str(op.value).upper() == "PAUSED":
