@@ -29,3 +29,10 @@ class LoggingLoadingError(Exception):
     """Unable to load Plugin logging configuration"""
 
     pass
+
+
+# Routing
+class RoutingRequestException(Exception):
+    """Route requested is not valid"""
+
+    pass

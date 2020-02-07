@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import logging
+from time import sleep
 from typing import List, Sequence
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Events, Instance, System, PatchOperation
+from brewtils.models import Events, Instance, PatchOperation, System
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema
-from time import sleep
 
 import beer_garden
 import beer_garden.db.api as db
@@ -208,7 +208,6 @@ def remove_system(system_id: str) -> None:
 
     # Now clean up the message queues
     for instance in system.instances:
-
         # It is possible for the request or admin queue to be none if we are
         # stopping an instance that was not properly started.
         request_queue = instance.queue_info.get("request", {}).get("name")
@@ -220,6 +219,14 @@ def remove_system(system_id: str) -> None:
 
     # Finally, actually delete the system
     db.delete(system)
+
+
+def update_rescan(operations: Sequence[PatchOperation]) -> None:
+    for op in operations:
+        if op.operation == "rescan":
+            rescan_system_directory()
+        else:
+            raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
 
 def rescan_system_directory() -> None:

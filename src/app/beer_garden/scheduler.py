@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from typing import List, Dict
+from typing import Dict, List
 
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from brewtils.models import Job

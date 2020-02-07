@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from brewtils.errors import ModelValidationError
+from beer_garden.router import Route_Class, Route_Type
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.authorization import Permissions, authenticated
+from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
 
 
@@ -13,11 +13,6 @@ class InstanceAPI(BaseHandler):
         ---
         summary: Retrieve a specific Instance
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: instance_id
             in: path
             required: true
@@ -35,7 +30,12 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        response = await self.client.get_instance(self.request.namespace, instance_id)
+
+        response = await self.client(
+            obj_id=instance_id,
+            route_class=Route_Class.INSTANCE,
+            route_type=Route_Type.READ,
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -46,11 +46,6 @@ class InstanceAPI(BaseHandler):
         ---
         summary: Delete a specific Instance
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: instance_id
             in: path
             required: true
@@ -66,7 +61,12 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        await self.client.remove_instance(self.request.namespace, instance_id)
+
+        await self.client(
+            obj_id=instance_id,
+            route_class=Route_Class.INSTANCE,
+            route_type=Route_Type.DELETE,
+        )
 
         self.set_status(204)
 
@@ -90,19 +90,9 @@ class InstanceAPI(BaseHandler):
           ]
           ```
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: instance_id
             in: path
             required: true
-            description: The ID of the Instance
-            type: string
-          - name: runner_id
-            in: query
-            required: false
             description: The ID of the Instance
             type: string
           - name: patch
@@ -125,53 +115,15 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
-        response = ""
-        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
-        for op in patch:
-            operation = op.operation.lower()
-
-            if operation == "initialize":
-                runner_id = None
-                if op.value:
-                    runner_id = op.value.get("runner_id")
-
-                response = await self.client.initialize_instance(
-                    self.request.namespace, instance_id, runner_id=runner_id
-                )
-
-            elif operation == "start":
-                response = await self.client.start_instance(
-                    self.request.namespace, instance_id
-                )
-
-            elif operation == "stop":
-                response = await self.client.stop_instance(
-                    self.request.namespace, instance_id
-                )
-
-            elif operation == "heartbeat":
-                response = await self.client.update_instance(
-                    self.request.namespace, instance_id, new_status="RUNNING"
-                )
-
-            elif operation == "replace":
-                if op.path.lower() == "/status":
-                    response = await self.client.update_instance(
-                        self.request.namespace, instance_id, new_status=op.value
-                    )
-                else:
-                    raise ModelValidationError(f"Unsupported path '{op.path}'")
-
-            elif operation == "update":
-                if op.path.lower() == "/metadata":
-                    response = await self.client.update_instance(
-                        self.request.namespace, instance_id, metadata=op.value
-                    )
-                else:
-                    raise ModelValidationError(f"Unsupported path '{op.path}'")
-            else:
-                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+        response = await self.client(
+            obj_id=instance_id,
+            brewtils_obj=SchemaParser.parse_patch(
+                self.request.decoded_body, from_string=True
+            ),
+            route_class=Route_Class.INSTANCE,
+            route_type=Route_Type.UPDATE,
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

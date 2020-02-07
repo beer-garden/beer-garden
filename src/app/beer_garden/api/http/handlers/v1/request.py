@@ -2,6 +2,7 @@
 import json
 from typing import Sequence
 
+from beer_garden.router import Route_Class, Route_Type
 from brewtils.errors import ModelValidationError
 from brewtils.models import Request
 from brewtils.schema_parser import SchemaParser
@@ -18,11 +19,6 @@ class RequestAPI(BaseHandler):
         ---
         summary: Retrieve a specific Request
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: request_id
             in: path
             required: true
@@ -40,7 +36,12 @@ class RequestAPI(BaseHandler):
         tags:
           - Requests
         """
-        response = await self.client.get_request(self.request.namespace, request_id)
+
+        response = await self.client(
+            obj_id=request_id,
+            route_class=Route_Class.REQUEST,
+            route_type=Route_Type.READ,
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -62,11 +63,6 @@ class RequestAPI(BaseHandler):
           ]
           ```
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: request_id
             in: path
             required: true
@@ -92,10 +88,14 @@ class RequestAPI(BaseHandler):
         tags:
           - Requests
         """
-        response = await self.client.update_request(
-            self.request.namespace,
-            request_id,
-            SchemaParser.parse_patch(self.request.decoded_body, from_string=True),
+
+        response = await self.client(
+            obj_id=request_id,
+            brewtils_obj=SchemaParser.parse_patch(
+                self.request.decoded_body, from_string=True
+            ),
+            route_class=Route_Class.REQUEST,
+            route_type=Route_Type.UPDATE,
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -103,7 +103,6 @@ class RequestAPI(BaseHandler):
 
 
 class RequestListAPI(BaseHandler):
-
     parser = SchemaParser()
 
     @authenticated(permissions=[Permissions.REQUEST_READ])
@@ -173,11 +172,6 @@ class RequestListAPI(BaseHandler):
           { "value": "SEARCH VALUE", "regex": false }
           ```
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: include_children
             in: query
             required: false
@@ -279,8 +273,11 @@ class RequestListAPI(BaseHandler):
         if query_args.get("include_fields"):
             serialize_kwargs["only"] = query_args.get("include_fields")
 
-        requests = await self.client.get_requests(
-            self.request.namespace, serialize_kwargs=serialize_kwargs, **query_args
+        requests = await self.client(
+            route_class=Route_Class.REQUEST,
+            route_type=Route_Type.READ,
+            serialize_kwargs=serialize_kwargs,
+            **query_args
         )
 
         response_headers = {
@@ -306,11 +303,6 @@ class RequestListAPI(BaseHandler):
         ---
         summary: Create a new Request
         parameters:
-          - name: bg-namespace
-            in: header
-            required: false
-            description: Namespace to use
-            type: string
           - name: request
             in: body
             description: The Request definition
@@ -368,8 +360,11 @@ class RequestListAPI(BaseHandler):
             # Also don't publish latency measurements
             self.request.ignore_latency = True
 
-        response = await self.client.process_request(
-            self.request.namespace, request_model, wait_timeout
+        response = await self.client(
+            brewtils_obj=request_model,
+            route_class=Route_Class.REQUEST,
+            route_type=Route_Type.CREATE,
+            wait_timeout=wait_timeout,
         )
 
         self.set_status(201)

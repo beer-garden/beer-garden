@@ -3,6 +3,7 @@ import datetime
 import re
 import socket
 
+from beer_garden.errors import RoutingRequestException
 from brewtils.errors import (
     ConflictError,
     ModelError,
@@ -41,6 +42,7 @@ class BaseHandler(AuthMixin, RequestHandler):
     error_map = {
         MongoValidationError: {"status_code": 400},
         ModelError: {"status_code": 400},
+        RoutingRequestException: {"status_code": 400},
         ExpiredSignatureError: {"status_code": 401},
         AuthorizationRequired: {"status_code": 401},
         RequestForbidden: {"status_code": 403},
@@ -115,9 +117,6 @@ class BaseHandler(AuthMixin, RequestHandler):
 
         # Used for calculating request handling duration
         self.request.created_time = datetime.datetime.utcnow()
-
-        # Used for determining correct namespace
-        self.request.namespace = self.request.headers.get("bg-namespace")
 
         content_type = self.request.headers.get("content-type", "")
         if self.request.method.upper() in ["POST", "PATCH"] and content_type:

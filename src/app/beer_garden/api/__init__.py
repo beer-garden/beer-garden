@@ -12,7 +12,8 @@ import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
-import beer_garden.garden
+
+# @TODO Remove all of these in next PR for Routing
 
 
 def namespace_router(_wrapped):
@@ -106,9 +107,3 @@ get_commands = namespace_router(beer_garden.commands.get_commands)
 # Log config
 get_plugin_log_config = namespace_router(beer_garden.log.get_plugin_log_config)
 reload_plugin_log_config = namespace_router(beer_garden.log.reload_plugin_log_config)
-
-# Namespace Config
-get_garden = beer_garden.garden.get_garden
-update_garden = beer_garden.garden.update_garden
-remove_garden = beer_garden.garden.remove_garden
-create_garden = beer_garden.garden.create_garden

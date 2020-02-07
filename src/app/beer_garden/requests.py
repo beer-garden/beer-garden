@@ -4,28 +4,29 @@ import logging
 import re
 from builtins import str
 from threading import Event
-from typing import Dict, List, Sequence, Union
+from typing import List, Sequence, Union
 
 import pika.spec
 import six
 import urllib3
 from brewtils.choices import parse
-from brewtils.errors import ModelValidationError, RequestPublishException, ConflictError
+from brewtils.errors import ConflictError, ModelValidationError, RequestPublishException
 from brewtils.models import (
     Choices,
     Events,
-    Request,
-    System,
-    RequestTemplate,
     PatchOperation,
+    Request,
+    RequestTemplate,
+    System,
 )
 from requests import Session
 
 import beer_garden.config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
+from beer_garden.errors import RoutingRequestException
 from beer_garden.events.events_manager import publish_event
-from beer_garden.metrics import request_created, request_started, request_completed
+from beer_garden.metrics import request_completed, request_created, request_started
 
 logger = logging.getLogger(__name__)
 

@@ -9,18 +9,16 @@ from brewtils.models import BaseModel
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.api
+import beer_garden.router
 
 
 class ExecutorClient(object):
     parser = SchemaParser()
     pool = ThreadPoolExecutor(50)
 
-    def __getattr__(self, _api):
-        return partial(self, _api)
-
     async def __call__(self, *args, serialize_kwargs=None, **kwargs):
         result = await asyncio.get_event_loop().run_in_executor(
-            self.pool, partial(getattr(beer_garden.api, args[0]), *args[1:], **kwargs)
+            self.pool, partial(beer_garden.router.route_request, *args, **kwargs)
         )
 
         # Handlers overwhelmingly just write the response so default to serializing
