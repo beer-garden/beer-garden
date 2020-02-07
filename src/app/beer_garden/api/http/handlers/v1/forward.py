@@ -4,6 +4,7 @@ import beer_garden
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.router import Route_Type
+from brewtils.schema_parser import SchemaParser
 
 
 class ForwardAPI(BaseHandler):
@@ -75,7 +76,7 @@ class ForwardAPI(BaseHandler):
           - Forward
         """
 
-        brewtils_obj = json.load(self.request.decoded_body)
+        brewtils_obj = SchemaParser.parse(self.request.decoded_body, from_string=False)
 
         route_class = self.request.headers.get("route_class", None)
         obj_id = self.request.headers.get("obj_id", None)
