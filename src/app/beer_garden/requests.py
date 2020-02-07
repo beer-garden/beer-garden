@@ -637,19 +637,14 @@ def process_request(
 
     try:
         logger.info(f"Publishing request {request.id}")
-        # This is how you publish requests when they are connected to the local garden.
-        if request.garden_name == get_local_garden_name():
-            queue.put(
-                request,
-                confirm=True,
-                mandatory=True,
-                delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE,
-            )
-        # If it is not controlled locally, we need to forward it
-        else:
-            raise RoutingRequestException(
-                f"Unable to route request {request.id}, {request.garden_name} is not hosted on {get_local_garden_name()}"
-            )
+
+        queue.put(
+            request,
+            confirm=True,
+            mandatory=True,
+            delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE,
+        )
+
     except Exception as ex:
         # An error publishing means this request will never complete, so remove it
         db.delete(request)
