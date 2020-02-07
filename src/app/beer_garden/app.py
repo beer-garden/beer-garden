@@ -246,6 +246,22 @@ class Application(StoppableThread):
 
         event_manager.register(QueueListener(action=event_callback))
 
+        # def garden_name_router_callback(event):
+        #     if event.name in [Events.GARDEN_CREATED.name, Events.GARDEN_STARTED.name, Events.GARDEN_UPDATED.name]:
+        #         beer_garden.router.update_garden_connection(event.payload)
+        #     elif event.name in [Events.GARDEN_REMOVED.name, Events.GARDEN_STOPPED.name]:
+        #         beer_garden.router.remove_garden_connection(event.payload)
+        #
+        # event_manager.register(QueueListener(action=garden_name_router_callback))
+        #
+        # def system_router_callback(event):
+        #     if event.name in [Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name]:
+        #         beer_garden.router.update_system_mapping(event.payload)
+        #     elif event.name == Events.SYSTEM_REMOVED.name:
+        #         beer_garden.router.update_system_mapping(event.payload)
+        #
+        # event_manager.register(QueueListener(action=system_router_callback))
+
         return event_manager
 
     @staticmethod
