@@ -49,64 +49,24 @@ def publish_event(event_type: Events):
 
     @wrapt.decorator
     def wrapper(wrapped, _, args, kwargs):
-        result = None
-        error = False
+        event = Event(name=event_type.name)
 
         try:
-            # Make sure to save result here so it can be used in the finally block
             result = wrapped(*args, **kwargs)
+
+            event.payload_type = result.__class__.__name__
+            event.payload = result
 
             return result
         except Exception as ex:
-            result = ex
-            error = True
+            event.error = True
+            event.error_message = str(ex)
+
             raise
         finally:
             try:
-                publish(
-                    _create_event(
-                        event_type=event_type,
-                        payload=result,
-                        error=error,
-                        args=args,
-                        kwargs=kwargs,
-                    )
-                )
+                publish(event)
             except Exception as ex:
                 logger.exception(f"Error publishing event: {ex}")
 
     return wrapper
-
-
-def _create_event(
-    event_type: Events, payload, error: bool, args=None, kwargs=None
-) -> Event:
-    """Internal helper function for publishing an event from a function invocation
-
-    Args:
-        event_type: The event type
-        payload: Payload
-        error: Event error flag
-        args: The positional arguments for the wrapped function
-        kwargs: The keyword arguments for the wrapped function
-
-    Returns:
-        None
-    """
-    # TODO - We really need to standardize what an event looks like
-
-    event = Event(name=event_type.name, payload=payload, error=error)
-
-    # The payload is an exception, so just stringify it
-    if error:
-        event.payload = str(payload)
-
-    else:
-        if event.name in (Events.REQUEST_UPDATED.name, Events.SYSTEM_UPDATED.name):
-            event.metadata = args[1]
-        elif event.name in (Events.QUEUE_CLEARED.name, Events.SYSTEM_REMOVED.name):
-            event.payload = {"id": args[0]}
-        elif event.name in (Events.DB_DELETE.name,):
-            event.payload = args[0]
-
-    return event
