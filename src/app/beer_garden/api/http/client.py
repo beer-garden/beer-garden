@@ -16,13 +16,6 @@ class ExecutorClient(object):
     parser = SchemaParser()
     pool = ThreadPoolExecutor(50)
 
-    # def __getattr__(self, _api):
-    #     return partial(self, _api)
-
-    # async def __call__(self, *args, serialize_kwargs=None, **kwargs):
-    #     result = await asyncio.get_event_loop().run_in_executor(
-    #         self.pool, partial(getattr(beer_garden.router, args[0]), *args[1:], **kwargs)
-    #     )
     async def __call__(self, *args, serialize_kwargs=None, **kwargs):
         result = await asyncio.get_event_loop().run_in_executor(
             self.pool, partial(beer_garden.router.route_request, *args, **kwargs)
