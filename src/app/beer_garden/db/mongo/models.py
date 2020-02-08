@@ -157,6 +157,7 @@ class Parameter(MongoModel, EmbeddedDocument):
     form_input_type = StringField(
         required=False, choices=BrewtilsParameter.FORM_INPUT_TYPES
     )
+    type_info = DictField(required=False)
     parameters = ListField(EmbeddedDocumentField("Parameter"))
 
     # If no display name was set, it will default it to the same thing as the key
