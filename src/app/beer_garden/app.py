@@ -5,7 +5,7 @@ from functools import partial
 
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
-from brewtils.models import Event, Events
+from brewtils.models import Event, Events, Garden
 from brewtils.stoppable_thread import StoppableThread
 from pytz import utc
 
@@ -181,7 +181,11 @@ class Application(StoppableThread):
         self.scheduler.start()
 
         self.logger.debug("Publishing startup event")
-        publish(Event(name=Events.GARDEN_STARTED.name))
+        publish(
+            Event(
+                name=Events.GARDEN_STARTED.name, payload_type="Garden", payload=Garden()
+            )
+        )
 
         self.logger.info("All set! Let me know if you need anything else!")
 
