@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+import logging
 from multiprocessing import Queue
 from queue import Empty
 
 from brewtils.stoppable_thread import StoppableThread
+
+logger = logging.getLogger(__name__)
 
 
 class BaseProcessor(StoppableThread):
@@ -93,3 +96,18 @@ class FanoutProcessor(QueueListener):
         if start:
             self._processors_to_stop.append(processor)
             processor.start()
+
+
+class HttpEventProcessor(QueueListener):
+    """Publish events using an EasyClient"""
+
+    def __init__(self, easy_client=None, **kwargs):
+        super().__init__(**kwargs)
+
+        self._ez_client = easy_client
+
+    def process(self, item):
+        try:
+            self._ez_client.publish_event(item)
+        except Exception as ex:
+            logger.exception(f"Error publishing EasyClient event: {ex}")
