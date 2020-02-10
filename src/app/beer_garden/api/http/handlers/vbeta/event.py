@@ -3,6 +3,8 @@ from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.api.http.handlers.v1.event import EventSocket
 from brewtils.schema_parser import SchemaParser
 
+from beer_garden.events.events_manager import publish
+
 
 class EventPublisherAPI(BaseHandler):
 
@@ -34,6 +36,6 @@ class EventPublisherAPI(BaseHandler):
         tags:
           - Event
         """
-        EventSocket.publish(self.request.decoded_body)
+        publish(SchemaParser.parse_event(self.request.decoded_body, from_string=True))
 
         self.set_status(204)
