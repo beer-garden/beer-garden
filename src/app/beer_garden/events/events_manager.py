@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
+from datetime import timezone, datetime
 
 import wrapt
 from brewtils.models import Event, Events
+
+import beer_garden.config as config
 
 # In this master process this should be an instance of EventManager, and in entry points
 # it should be an instance of EntryPointManager
@@ -23,6 +26,12 @@ def publish(event: Event) -> None:
     Returns:
         None
     """
+    # Do some formatting / tweaking
+    if not event.garden:
+        event.garden = config.get("garden.name")
+    if not event.timestamp:
+        event.timestamp = datetime.now(timezone.utc)
+
     return manager.put(event)
 
 
