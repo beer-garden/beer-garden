@@ -5,6 +5,7 @@ from functools import partial
 
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
+from brewtils import EasyClient
 from brewtils.models import Event, Events, Garden
 from brewtils.stoppable_thread import StoppableThread
 from pytz import utc
@@ -18,8 +19,11 @@ from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.events.events_manager import publish
-from beer_garden.events.parent_http_processor import ParentHttpProcessor
-from beer_garden.events.processors import FanoutProcessor, QueueListener
+from beer_garden.events.processors import (
+    FanoutProcessor,
+    HttpEventProcessor,
+    QueueListener,
+)
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
@@ -232,9 +236,12 @@ class Application(StoppableThread):
         # If necessary send all events to the parent garden
         http_event = beer_garden.config.get("event.parent.http")
         if http_event.enable:
-            event_manager.register(
-                ParentHttpProcessor(http_event, beer_garden.config.get("garden_name"))
+            easy_client = EasyClient(
+                bg_host=http_event.host,
+                bg_port=http_event.port,
+                ssl_enabled=http_event.ssl.enabled,
             )
+            event_manager.register(HttpEventProcessor(easy_client=easy_client))
 
         # Register callbacks
         def event_callback(event):
