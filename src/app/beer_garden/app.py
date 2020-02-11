@@ -19,6 +19,7 @@ from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.events import publish
+from beer_garden.events.handlers import local_callbacks, downstream_callbacks
 from beer_garden.events.processors import (
     FanoutProcessor,
     HttpEventProcessor,
@@ -243,20 +244,8 @@ class Application(StoppableThread):
             )
             event_manager.register(HttpEventProcessor(easy_client=easy_client))
 
-        # Register callbacks
-        def event_callback(event):
-            if event.garden == beer_garden.config.get("garden.name"):
-                # Start local plugins after the entry point comes up
-                if event.name == Events.ENTRY_STARTED.name:
-                    PluginManager.instance().start_all()
-                elif event.name == Events.INSTANCE_INITIALIZED.name:
-                    PluginManager.instance().associate(event)
-                elif event.name == Events.INSTANCE_STARTED.name:
-                    PluginManager.instance().do_start(event)
-                elif event.name == Events.INSTANCE_STOPPED.name:
-                    PluginManager.instance().do_stop(event)
-
-        event_manager.register(QueueListener(action=event_callback))
+        event_manager.register(QueueListener(action=local_callbacks))
+        event_manager.register(QueueListener(action=downstream_callbacks))
 
         return event_manager
 
