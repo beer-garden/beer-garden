@@ -1,9 +1,8 @@
-from beer_garden.api.http.authorization import authenticated, Permissions
-from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.handlers.v1.event import EventSocket
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.events.events_manager import publish
+from beer_garden.api.http.authorization import Permissions, authenticated
+from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.events import publish
 
 
 class EventPublisherAPI(BaseHandler):

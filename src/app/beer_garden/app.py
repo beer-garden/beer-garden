@@ -13,12 +13,12 @@ from pytz import utc
 import beer_garden
 import beer_garden.api
 import beer_garden.db.api as db
-import beer_garden.events.events_manager
+import beer_garden.events
 import beer_garden.queue.api as queue
 from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
-from beer_garden.events.events_manager import publish
+from beer_garden.events import publish
 from beer_garden.events.processors import (
     FanoutProcessor,
     HttpEventProcessor,
@@ -89,7 +89,7 @@ class Application(StoppableThread):
 
         self.entry_manager = beer_garden.api.entry_point.Manager()
 
-        beer_garden.events.events_manager.manager = self._setup_events_manager()
+        beer_garden.events.manager = self._setup_events_manager()
 
     def run(self):
         if not self._verify_mongo_connection():
@@ -158,7 +158,7 @@ class Application(StoppableThread):
         self.logger.debug("Starting Application...")
 
         self.logger.debug("Starting event manager...")
-        beer_garden.events.events_manager.manager.start()
+        beer_garden.events.manager.start()
 
         self.logger.debug("Setting up database...")
         db.create_connection(db_config=beer_garden.config.get("db"))
@@ -223,7 +223,7 @@ class Application(StoppableThread):
         self.entry_manager.stop()
 
         self.logger.debug("Stopping event manager")
-        beer_garden.events.events_manager.manager.stop()
+        beer_garden.events.manager.stop()
 
         self.logger.info("Successfully shut down Beer-garden")
 
