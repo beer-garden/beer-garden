@@ -6,7 +6,7 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Events, Garden, PatchOperation
 
 import beer_garden.db.api as db
-from beer_garden.events.events_manager import publish_event
+from beer_garden.events import publish_event
 
 logger = logging.getLogger(__name__)
 

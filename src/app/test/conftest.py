@@ -4,7 +4,7 @@ import pytest
 from mongoengine import connect
 
 import beer_garden
-import beer_garden.events.events_manager
+import beer_garden.events
 
 pytest_plugins = ["brewtils.test.fixtures"]
 
@@ -28,7 +28,7 @@ def noop_event_manager():
         def put(self):
             pass
 
-    beer_garden.events.events_manager.manager = NoopManager()
+    beer_garden.events.manager = NoopManager()
 
 
 @pytest.fixture()

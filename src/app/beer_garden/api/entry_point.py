@@ -14,7 +14,7 @@ from brewtils.models import Event
 import beer_garden
 import beer_garden.config
 import beer_garden.db.api as db
-import beer_garden.events.events_manager
+import beer_garden.events
 import beer_garden.queue.api as queue
 from beer_garden.events.processors import PipeListener, QueueListener
 from beer_garden.log import process_record
@@ -224,7 +224,7 @@ class Manager:
             context=self.context,
             log_queue=self.log_queue,
             signal_handler=module.signal_handler,
-            event_callback=beer_garden.events.events_manager.publish,
+            event_callback=beer_garden.events.publish,
         )
 
     def start(self):

@@ -5,21 +5,26 @@ from functools import partial
 
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
-from brewtils.models import Event, Events
+from brewtils import EasyClient
+from brewtils.models import Event, Events, Garden
 from brewtils.stoppable_thread import StoppableThread
 from pytz import utc
 
 import beer_garden
 import beer_garden.api
 import beer_garden.db.api as db
-import beer_garden.events.events_manager
+import beer_garden.events
 import beer_garden.queue.api as queue
 from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
-from beer_garden.events.events_manager import publish
-from beer_garden.events.parent_http_processor import ParentHttpProcessor
-from beer_garden.events.processors import FanoutProcessor, QueueListener
+from beer_garden.events import publish
+from beer_garden.events.handlers import local_callbacks, downstream_callbacks
+from beer_garden.events.processors import (
+    FanoutProcessor,
+    HttpEventProcessor,
+    QueueListener,
+)
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
@@ -85,7 +90,7 @@ class Application(StoppableThread):
 
         self.entry_manager = beer_garden.api.entry_point.Manager()
 
-        beer_garden.events.events_manager.manager = self._setup_events_manager()
+        beer_garden.events.manager = self._setup_events_manager()
 
     def run(self):
         if not self._verify_mongo_connection():
@@ -154,7 +159,7 @@ class Application(StoppableThread):
         self.logger.debug("Starting Application...")
 
         self.logger.debug("Starting event manager...")
-        beer_garden.events.events_manager.manager.start()
+        beer_garden.events.manager.start()
 
         self.logger.debug("Setting up database...")
         db.create_connection(db_config=beer_garden.config.get("db"))
@@ -181,7 +186,11 @@ class Application(StoppableThread):
         self.scheduler.start()
 
         self.logger.debug("Publishing startup event")
-        publish(Event(name=Events.GARDEN_STARTED.name))
+        publish(
+            Event(
+                name=Events.GARDEN_STARTED.name, payload_type="Garden", payload=Garden()
+            )
+        )
 
         self.logger.info("All set! Let me know if you need anything else!")
 
@@ -215,7 +224,7 @@ class Application(StoppableThread):
         self.entry_manager.stop()
 
         self.logger.debug("Stopping event manager")
-        beer_garden.events.events_manager.manager.stop()
+        beer_garden.events.manager.stop()
 
         self.logger.info("Successfully shut down Beer-garden")
 
@@ -228,23 +237,15 @@ class Application(StoppableThread):
         # If necessary send all events to the parent garden
         http_event = beer_garden.config.get("event.parent.http")
         if http_event.enable:
-            event_manager.register(
-                ParentHttpProcessor(http_event, beer_garden.config.get("garden_name"))
+            easy_client = EasyClient(
+                bg_host=http_event.host,
+                bg_port=http_event.port,
+                ssl_enabled=http_event.ssl.enabled,
             )
+            event_manager.register(HttpEventProcessor(easy_client=easy_client))
 
-        # Register callbacks
-        def event_callback(event):
-            # Start local plugins after the entry point comes up
-            if event.name == Events.ENTRY_STARTED.name:
-                PluginManager.instance().start_all()
-            elif event.name == Events.INSTANCE_INITIALIZED.name:
-                PluginManager.instance().associate(event)
-            elif event.name == Events.INSTANCE_STARTED.name:
-                PluginManager.instance().do_start(event)
-            elif event.name == Events.INSTANCE_STOPPED.name:
-                PluginManager.instance().do_stop(event)
-
-        event_manager.register(QueueListener(action=event_callback))
+        event_manager.register(QueueListener(action=local_callbacks))
+        event_manager.register(QueueListener(action=downstream_callbacks))
 
         return event_manager
 
