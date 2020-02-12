@@ -41,11 +41,11 @@ def forward_elgible(forward: brewtils.models.Forward):
     :return: Booelan response on if the object should be forwarded
     """
     return (
-        forward.target_garden_name is not None
-        and forward.source_garden_name is not None
-        and forward.target_garden_name is not forward.source_garden_name
+        forward.source_garden_name is not None
         and forward.source_garden_name is not Routable_Garden_Name.CHILD.name
-        and forward.source_garden_name is not _local_garden()
+        and forward.target_garden_name is not forward.source_garden_name
+        and forward.target_garden_name is not None
+        and forward.target_garden_name is not _local_garden()
     )
 
 
