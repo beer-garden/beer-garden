@@ -1,4 +1,3 @@
-
 from enum import Enum
 from functools import partial
 
@@ -42,11 +41,11 @@ def forward_elgible(forward: brewtils.models.Forward):
     :return: Booelan response on if the object should be forwarded
     """
     return (
-            forward.target_garden_name is not None
-            and forward.source_garden_name is not None
-            and forward.target_garden_name is not forward.source_garden_name
-            and forward.source_garden_name is not Routable_Garden_Name.CHILD.name
-            and forward.source_garden_name is not _local_garden()
+        forward.target_garden_name is not None
+        and forward.source_garden_name is not None
+        and forward.target_garden_name is not forward.source_garden_name
+        and forward.source_garden_name is not Routable_Garden_Name.CHILD.name
+        and forward.source_garden_name is not _local_garden()
     )
 
 
@@ -330,4 +329,3 @@ def forward_routing_http(garden_routing, forward):
         )
 
     return ez_client.post_forward(forward)
-
