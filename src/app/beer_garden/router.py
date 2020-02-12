@@ -21,9 +21,9 @@ def _local_garden():
     return beer_garden.config.get("garden.name")
 
 
-def enum_lookup(enum, value):
+def enum_lookup(enum, name):
     for record in enum:
-        if record.value == value:
+        if record.name == name:
             return record
     return None
 
@@ -115,7 +115,7 @@ def forward_elgible_system(forward: brewtils.models.Forward):
     return forward_elgible(forward)
 
 
-def Route_Class(Enum):
+class Route_Class(Enum):
     # How to create new Route Class
     # ARG 1 = Target Module
     # ARG 2 = Target Function
