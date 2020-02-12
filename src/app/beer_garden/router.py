@@ -42,9 +42,9 @@ def forward_elgible(forward: brewtils.models.Forward):
     """
     return (
         forward.source_garden_name is not None
+        and forward.target_garden_name is not None
         and forward.source_garden_name is not Routable_Garden_Name.CHILD.name
         and forward.target_garden_name is not forward.source_garden_name
-        and forward.target_garden_name is not None
         and forward.target_garden_name is not _local_garden()
     )
 
@@ -291,6 +291,8 @@ def forward_routing(forward: brewtils.models.Forward):
     :param forward:
     :return:
     """
+    forward.source_garden_name = Routable_Garden_Name.PARENT.name
+
     garden_routing = Garden_Connections.get(forward.target_graden_name, None)
     if garden_routing and garden_routing.connection_type in ["HTTP", "HTTPS"]:
         return forward_routing_http(forward)
