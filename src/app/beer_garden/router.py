@@ -1,9 +1,9 @@
-import json
+
 from enum import Enum
+from functools import partial
 
 import brewtils.models
-import requests
-from brewtils.errors import ModelValidationError
+from brewtils import EasyClient
 
 import beer_garden
 import beer_garden.commands
@@ -18,11 +18,8 @@ import beer_garden.systems
 from beer_garden.errors import RoutingRequestException
 
 
-class Route_Type(Enum):
-    CREATE = "CREATE"
-    READ = "READ"
-    UPDATE = "UPDATE"
-    DELETE = "DELETE"
+def _local_garden():
+    return beer_garden.config.get("garden.name")
 
 
 def enum_lookup(enum, value):
@@ -32,35 +29,154 @@ def enum_lookup(enum, value):
     return None
 
 
-class Route_Class(Enum):
-    COMMAND = brewtils.models.Command.schema
-    INSTANCE = brewtils.models.Instance.schema
-    JOB = brewtils.models.Job.schema
-    REQUEST = brewtils.models.Request.schema
-    REQUEST_TEMPLATE = brewtils.models.RequestTemplate.schema
-    SYSTEM = brewtils.models.System.schema
-    GARDEN = brewtils.models.Garden.schema
-    EVENT = brewtils.models.Event.schema
-    LOGGING = brewtils.models.LoggingConfig.schema
-    QUEUE = brewtils.models.Queue.schema
-
-
 class Routable_Garden_Name(Enum):
     PARENT = 1
     CHILD = 2
 
 
-Routing_Eligible = [
-    Route_Class.INSTANCE,
-    Route_Class.REQUEST,
-    Route_Class.REQUEST_TEMPLATE,
-    Route_Class.SYSTEM,
-    Route_Class.EVENT,
-]
+def forward_elgible(forward: brewtils.models.Forward):
+    """
+    Routing logic to determine if a request should be forwarded
+
+    :param forward: Forward request object that needs to be evaluated
+    :return: Booelan response on if the object should be forwarded
+    """
+    return (
+            forward.target_garden_name is not None
+            and forward.source_garden_name is not None
+            and forward.target_garden_name is not forward.source_garden_name
+            and forward.source_garden_name is not Routable_Garden_Name.CHILD.name
+            and forward.source_garden_name is not _local_garden()
+    )
 
 
-def _local_garden():
-    return beer_garden.config.get("garden.name")
+def forward_elgible_request(forward: brewtils.models.Forward):
+    """
+    Preps Request object forwards prior to evaluation
+    :param forward: Forward request object that needs to be evaluated
+    :return: Boolean response on if the object should be forwarded
+    """
+    if forward.target_garden_name is None:
+        for arg in forward.args:
+            if arg.schema in [
+                brewtils.models.Request.schema,
+                brewtils.models.RequestTemplate.schema,
+            ]:
+                forward.target_garden_name = get_system_mapping(
+                    name_space=arg.namespace,
+                    system=arg.system,
+                    version=arg.system_version,
+                )
+    return forward_elgible(forward)
+
+
+def forward_elgible_instance(forward: brewtils.models.Forward):
+    """
+    Preps Instance object forwards prior to evaluation
+    :param forward: Forward request object that needs to be evaluated
+    :return: Boolean response on if the object should be forwarded
+    """
+    if forward.target_garden_name is None:
+        for arg in forward.args:
+            if arg.schema in [brewtils.models.Instance.schema]:
+                bg_systems = beer_garden.systems.get_systems(instances__contains=arg)
+                if len(bg_systems) == 1:
+                    forward.target_garden_name = System_Garden_Mapping.get(
+                        str(bg_systems[0]), None
+                    )
+            elif isinstance(arg, str):
+                instance = beer_garden.instances.get_instance(arg)
+                bg_systems = beer_garden.systems.get_systems(
+                    instances__contains=instance
+                )
+                if len(bg_systems) == 1:
+                    forward.target_garden_name = System_Garden_Mapping.get(
+                        str(bg_systems[0]), None
+                    )
+
+    return forward_elgible(forward)
+
+
+def forward_elgible_system(forward: brewtils.models.Forward):
+    """
+    Preps System object forwards prior to evaluation
+    :param forward: Forward request object that needs to be evaluated
+    :return: Boolean response on if the object should be forwarded
+    """
+    if forward.target_garden_name is None:
+        for arg in forward.args:
+            if arg.schema in [brewtils.models.System]:
+                forward.target_garden_name = System_Garden_Mapping.get(str(arg, None))
+            elif isinstance(arg, str):
+                system = beer_garden.systems.get_system(arg)
+                forward.target_garden_name = System_Garden_Mapping.get(
+                    str(system, None)
+                )
+
+    return forward_elgible(forward)
+
+
+def Route_Class(Enum):
+    # How to create new Route Class
+    # ARG 1 = Target Module
+    # ARG 2 = Target Function
+    # ARG 3 = Routing Eligibility Check
+
+    REQUEST_CREATE = (beer_garden.requests, "process_request", forward_elgible_request)
+    REQUEST_UPDATE = (beer_garden.requests, "update_request", None)
+    REQUEST_READ = (beer_garden.requests, "get_request", None)
+    REQUEST_READ_ALL = (beer_garden.requests, "get_requests", None)
+
+    COMMAND_READ = (beer_garden.commands, "get_command", None)
+    COMMAND_READ_ALL = (beer_garden.commands, "get_commands", None)
+
+    INSTANCE_READ = (beer_garden.instances, "get_instance", None)
+    INSTANCE_DELETE = (
+        beer_garden.instances,
+        "remove_instance",
+        forward_elgible_instance,
+    )
+    INSTANCE_UPDATE = (beer_garden.plugin, "update", forward_elgible_instance)
+    INSTANCE_INITIALIZE = (beer_garden.plugin, "initialize", None)
+    INSTANCE_START = (beer_garden.plugin, "start", None)
+
+    JOB_CREATE = (beer_garden.scheduler, "create_job", None)
+    JOB_READ = (beer_garden.scheduler, "get_job", None)
+    JOB_READ_ALL = (beer_garden.scheduler, "get_jobs", None)
+    JOB_PAUSE = (beer_garden.scheduler, "pause_job", None)
+    JOB_RESUME = (beer_garden.scheduler, "resume_job", None)
+    JOB_DELETE = (beer_garden.scheduler, "remove_job", None)
+
+    SYSTEM_CREATE = (beer_garden.systems, "create_system", None)
+    SYSTEM_READ = (beer_garden.systems, "get_system", None)
+    SYSTEM_READ_ALL = (beer_garden.systems, "get_systems", None)
+    SYSTEM_UPDATE = (beer_garden.systems, "update_system", forward_elgible_system)
+    SYSTEM_RESCAN = (beer_garden.systems, "rescan_system_directory", None)
+    SYSTEM_DELETE = (beer_garden.systems, "remove_system", forward_elgible_system)
+
+    GARDEN_CREATE = (beer_garden.garden, "create_garden", None)
+    GARDEN_READ = (beer_garden.garden, "get_garden", None)
+    GARDEN_UPDATE = (beer_garden.garden, "update_garden", None)
+    GARDEN_DELETE = (beer_garden.garden, "remove_garden", None)
+
+    LOG_READ = (beer_garden.log, "get_plugin_log_config", None)
+    LOG_RELOAD = (beer_garden.log, "reload_plugin_log_config", None)
+
+    QUEUE_READ = (beer_garden.queues, "get_all_queue_info", None)
+    QUEUE_DELETE = (beer_garden.queues, "clear_queue", None)
+    QUEUE_DELETE_ALL = (beer_garden.queues, "clear_all_queues", None)
+
+    def __init__(self, module, function, forward_eligible):
+        self.module = module
+        self.function = function
+        self.forward_eligible = forward_eligible
+
+    def execute(self, forward):
+        if forward.source_garden_name is None:
+            forward.source_garden_name = _local_garden()
+        if self.forward_eligible and self.forward_eligible(forward):
+            return forward_routing(forward)
+        return partial(self.module, self.function, *forward.args, **forward.kwargs)
 
 
 System_Garden_Mapping = dict()
@@ -68,6 +184,12 @@ Garden_Connections = dict()
 
 
 def get_garden_connection(garden_name):
+    """
+    Reaches into the database to get the garden connection information
+
+    :param garden_name:
+    :return:
+    """
     connection = Garden_Connections.get(garden_name, None)
     if connection is None:
         connection = beer_garden.garden.get_garden(garden_name)
@@ -77,14 +199,36 @@ def get_garden_connection(garden_name):
 
 
 def update_garden_connection(connection):
+    """
+    Caches the Garden Connection Information
+
+    :param connection:
+    :return:
+    """
     Garden_Connections[connection.garden_name] = connection
 
 
 def remove_garden_connection(connection):
+    """
+    Removes garden from the cache
+
+    :param connection:
+    :return:
+    """
     Garden_Connections.pop(connection.garden_name, None)
 
 
 def get_system_mapping(system=None, name_space=None, version=None, name=None):
+    """
+    Gets the cached Garden mapping information, if it is not cached, it will add it to
+    the cache
+
+    :param system:
+    :param name_space:
+    :param version:
+    :param name:
+    :return:
+    """
     if system:
         mapping = System_Garden_Mapping.get(str(system), None)
         if mapping is None:
@@ -109,313 +253,81 @@ def get_system_mapping(system=None, name_space=None, version=None, name=None):
 
 
 def update_system_mapping(system, garden_name):
+    """
+    Caches System to Garden information
+
+    :param system:
+    :param garden_name:
+    :return:
+    """
     System_Garden_Mapping[str(system)] = garden_name
 
 
 def remove_system_mapping(system):
+    """
+    Removes System mapping from cache
+
+    :param system:
+    :return:
+    """
     System_Garden_Mapping.pop(str(system), None)
 
 
-def route_request(
-    brewtils_obj=None,
-    route_class: str = None,
-    obj_id: str = None,
-    garden_name: str = None,
-    src_garden_name: str = None,
-    route_type: Route_Type = None,
-    **kwargs,
-):
-    # Rules for Routing:
-    # 1: Model Type must be approved for routing
-    # 2: Routing can only go Parent to Child
-    #   2.1: If Source is child, treat as an update
-    #   2.2: Parents will receive events through the Events Manager
-    # 3: By Default, Source of request will be assumed local
-    # 4: By Default, Routing Type will be assumed to be a READ
-    # 5: Required Combination for Routing Request
-    #   5.1: obj_id + route_class
-    #   5.2: brewtils_obj w/ schema populated
-    #   5.3: brewtils_obj + route_class
-    # 6. All UPDATE requests must use PATCH for the brewtils_obj
+def route_request(forward_class):
+    """
+    Runs the execute method of the Route Class Type
 
-    if route_type is None:
-        route_type = Route_Type.READ
-
-    if src_garden_name is None:
-        src_garden_name = _local_garden()
-
-    if route_class is None and brewtils_obj and brewtils_obj.schema:
-        route_class = enum_lookup(Route_Class, brewtils_obj.schema)
-
-    if route_class is None:
-        raise RoutingRequestException("Unable to identify route")
-
-    if (
-        route_class in Routing_Eligible
-        and src_garden_name is not Routable_Garden_Name.CHILD
-    ):
-
-        if garden_name is None:
-            if route_type in [Route_Type.DELETE, Route_Type.UPDATE]:
-
-                # For objects that are requested to be deleted, we need to first collect
-                # the object to determine if it should be routed.
-                if obj_id is None:
-                    raise RoutingRequestException(
-                        "Unable to lookup %s for Route delete because ID was not provided"
-                        % route_class
-                    )
-
-                elif route_class == Route_Class.INSTANCE:
-                    request_object = beer_garden.instances.get_instance(obj_id)
-                    systems = beer_garden.systems.get_systems(
-                        instances__contains=request_object
-                    )
-                    if len(systems) == 1:
-                        garden_name = System_Garden_Mapping.get(str(systems[0]), None)
-
-                elif route_class == Route_Class.SYSTEM:
-                    system = beer_garden.systems.get_system(obj_id)
-                    garden_name = System_Garden_Mapping.get(str(system), None)
-
-            elif route_type is Route_Type.CREATE:
-                if route_class in [Route_Class.REQUEST, Route_Class.REQUEST_TEMPLATE]:
-                    garden_name = get_system_mapping(
-                        name_space=brewtils_obj.namespace,
-                        system=brewtils_obj.system,
-                        version=brewtils_obj.system_version,
-                    )
-
-        if garden_name is not src_garden_name and garden_name is not None:
-            return forward_routing(
-                garden_name=garden_name,
-                brewtils_obj=brewtils_obj,
-                route_class=route_class,
-                obj_id=obj_id,
-                src_garden_name=Routable_Garden_Name.PARENT,
-                route_type=route_type,
-                **kwargs,
-            )
-
-    if route_class == Route_Class.COMMAND:
-        if route_type is Route_Type.READ:
-            if obj_id:
-                return beer_garden.commands.get_command(obj_id)
-            else:
-                return beer_garden.commands.get_commands()
-
-    elif route_class == Route_Class.INSTANCE:
-
-        if route_type == Route_Type.UPDATE:
-            if route_type is Route_Type.UPDATE:
-                for op in brewtils_obj:
-                    operation = op.operation.lower()
-
-                    if operation == "initialize":
-                        runner_id = None
-                        if op.value:
-                            runner_id = op.value.get("runner_id")
-
-                        return beer_garden.plugin.initialize(
-                            obj_id, runner_id=runner_id
-                        )
-
-                    elif operation == "start":
-                        return beer_garden.plugin.start(obj_id)
-
-                    elif operation == "stop":
-                        return beer_garden.plugin.stop(obj_id)
-
-                    elif operation == "heartbeat":
-                        return beer_garden.plugin.update(obj_id, new_status="RUNNING")
-
-                    elif operation == "replace":
-                        if op.path.lower() == "/status":
-                            return beer_garden.plugin.update(
-                                obj_id, new_status=op.value
-                            )
-                        else:
-                            raise ModelValidationError(f"Unsupported path '{op.path}'")
-
-                    elif operation == "update":
-                        if op.path.lower() == "/metadata":
-                            return beer_garden.plugin.update(obj_id, metadata=op.value)
-                        else:
-                            raise ModelValidationError(f"Unsupported path '{op.path}'")
-                    else:
-                        raise ModelValidationError(
-                            f"Unsupported operation '{op.operation}'"
-                        )
-
-                return beer_garden.plugin.update(obj_id, brewtils_obj)
-        else:
-            if route_type is Route_Type.READ:
-                return beer_garden.instances.get_instance(obj_id)
-            elif route_type is Route_Type.DELETE:
-                return beer_garden.instances.remove_instance(obj_id)
-
-    elif route_class == Route_Class.JOB:
-
-        if route_type is Route_Type.CREATE:
-            return beer_garden.scheduler.create_job(brewtils_obj)
-        elif route_type is Route_Type.READ:
-            if obj_id:
-                return beer_garden.scheduler.get_job(obj_id)
-            else:
-                return beer_garden.scheduler.get_jobs(**kwargs)
-
-        elif route_type is Route_Type.UPDATE:
-            for op in brewtils_obj:
-                if op.operation == "update":
-                    if op.path == "/status":
-                        if str(op.value).upper() == "PAUSED":
-                            return beer_garden.scheduler.pause_job(obj_id)
-                        elif str(op.value).upper() == "RUNNING":
-                            return beer_garden.scheduler.resume_job(obj_id)
-                        else:
-                            raise ModelValidationError(
-                                f"Unsupported status value '{op.value}'"
-                            )
-                    else:
-                        raise ModelValidationError(
-                            f"Unsupported path value '{op.path}'"
-                        )
-                else:
-                    raise ModelValidationError(
-                        f"Unsupported operation '{op.operation}'"
-                    )
-
-        elif route_type is Route_Type.DELETE:
-            return beer_garden.scheduler.remove_job(obj_id)
-
-    elif route_class in [Route_Class.REQUEST, Route_Class.REQUEST_TEMPLATE]:
-        if route_type is Route_Type.CREATE:
-            return beer_garden.requests.process_request(brewtils_obj, **kwargs)
-        elif route_type is Route_Type.READ:
-            if obj_id:
-                return beer_garden.requests.get_request(obj_id)
-            else:
-                return beer_garden.requests.get_requests(**kwargs)
-        elif route_type is Route_Type.UPDATE:
-            return beer_garden.requests.update_request(obj_id, brewtils_obj)
-
-    elif route_class == Route_Class.SYSTEM:
-
-        if route_type is Route_Type.CREATE:
-            return beer_garden.systems.create_system(brewtils_obj)
-        elif route_type is Route_Type.READ:
-            if obj_id:
-                return beer_garden.systems.get_system(obj_id)
-            else:
-                return beer_garden.systems.get_systems(**kwargs)
-        elif route_type is Route_Type.UPDATE:
-            if obj_id:
-                return beer_garden.systems.update_system(obj_id, brewtils_obj)
-            else:
-                return beer_garden.systems.update_rescan(brewtils_obj)
-        elif route_type is Route_Type.DELETE:
-            return beer_garden.systems.remove_system(obj_id)
-
-    elif route_class == Route_Class.GARDEN:
-
-        if route_type is Route_Type.CREATE:
-            return beer_garden.garden.create_garden(brewtils_obj)
-        elif route_type is Route_Type.READ:
-            return beer_garden.garden.get_garden(obj_id)
-        elif route_type is Route_Type.UPDATE:
-            return beer_garden.garden.update_garden(obj_id, brewtils_obj)
-        elif route_type is Route_Type.DELETE:
-            return beer_garden.garden.remove_garden(obj_id)
-
-    elif route_class == Route_Class.LOGGING:
-        if route_type is Route_Type.READ:
-            return beer_garden.log.get_plugin_log_config(obj_id)
-        elif route_type is Route_Type.UPDATE:
-            for op in brewtils_obj:
-                if op.operation == "reload":
-                    return beer_garden.log.reload_plugin_log_config()
-                else:
-                    raise ModelValidationError(
-                        f"Unsupported operation '{op.operation}'"
-                    )
-
-    elif route_class == Route_Class.QUEUE:
-
-        if route_type is Route_Type.READ:
-            return beer_garden.queues.get_all_queue_info()
-        elif route_type is Route_Type.DELETE:
-            if obj_id:
-                return beer_garden.queues.clear_queue(obj_id)
-            else:
-                return beer_garden.queues.clear_all_queues()
-
-    raise RoutingRequestException(
-        f"{route_type.value} route for {route_class} does not exist"
-    )
+    :param forward_class:
+    :return:
+    """
+    route_class = enum_lookup(Route_Class, forward_class.forward_type)
+    return route_class.execute(forward_class)
 
 
-def forward_routing(
-    brewtils_obj=None,
-    route_class: str = None,
-    obj_id: str = None,
-    garden_name: str = None,
-    src_garden_name: str = None,
-    route_type: Route_Type = None,
-    **kwargs,
-):
-    garden_routing = Garden_Connections.get(garden_name, None)
+def forward_routing(forward: brewtils.models.Forward):
+    """
+    Preps the Forward Object to be forwarded to child. If it is not configured, then it
+    will raise an error.
+
+    :param forward:
+    :return:
+    """
+    garden_routing = Garden_Connections.get(forward.target_graden_name, None)
     if garden_routing and garden_routing.connection_type in ["HTTP", "HTTPS"]:
-        return forward_routing_http(
-            garden_routing,
-            brewtils_obj=brewtils_obj,
-            route_class=route_class,
-            obj_id=obj_id,
-            src_garden_name=src_garden_name,
-            route_type=route_type,
-            **kwargs,
-        )
+        return forward_routing_http(forward)
     else:
         raise RoutingRequestException(
             "No forwarding route for %s exist" % garden_routing.connection_type
         )
 
 
-def forward_routing_http(
-    garden_routing,
-    brewtils_obj=None,
-    route_class: str = None,
-    obj_id: str = None,
-    src_garden_name: str = None,
-    route_type: Route_Type = None,
-    **kwargs,
-):
-    connection = garden_routing.connection_params
-    endpoint = "{}://{}:{}{}api/v1/forward".format(
-        "https" if connection["ssl"] else "http",
-        connection["public_fqdn"],
-        connection["port"],
-        connection["url_prefix"],
-    )
+def forward_routing_http(garden_routing, forward):
+    """
+    Invokes the HTTP Forwarding Logic
 
-    headers = {
-        "route_class": route_class,
-        "obj_id": obj_id,
-        "src_garden_name": src_garden_name,
-        "route_type": route_type,
-        "extra_kwargs": json.dump(kwargs),
-    }
+    :param garden_routing:
+    :param forward:
+    :return:
+    """
+    connection = garden_routing.connection_params
 
     if connection["ssl"]:
-        # @TODO Find a better place to get the SSL config info to children forwarding
         http_config = beer_garden.config.get("entry.http")
-        response = requests.post(
-            endpoint,
-            headers=headers,
-            data=brewtils_obj,
-            cert=http_config.ssl.ca_cert,
-            verify=http_config.ssl.ca_path,
+        ez_client = EasyClient(
+            bg_host=connection["public_fqdn"],
+            bg_port=connection["port"],
+            bg_url_prefix=connection["url_prefix"],
+            ssl_enabled=connection["ssl"],
+            ca_cert=http_config.ssl.ca_cert,
+            client_cert=http_config.ssl.ca_path,
         )
     else:
-        response = requests.post(endpoint, headers=headers, data=brewtils_obj)
+        ez_client = EasyClient(
+            bg_host=connection["public_fqdn"],
+            bg_port=connection["port"],
+            bg_url_prefix=connection["url_prefix"],
+            ssl_enabled=connection["ssl"],
+        )
 
-    return response.content
+    return ez_client.post_forward(forward)
+

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from beer_garden.router import Route_Class, Route_Type
 from brewtils.errors import ModelValidationError
+from brewtils.models import Forward
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.authorization import check_permission, Permissions
@@ -45,12 +45,10 @@ class AdminAPI(BaseHandler):
         )
         check_permission(self.current_user, [Permissions.SYSTEM_CREATE])
 
-        response = await self.client(
-            brewtils_obj=SchemaParser.parse_patch(
-                self.request.decoded_body, from_string=True
-            ),
-            route_class=Route_Class.SYSTEM,
-            route_type=Route_Type.UPDATE,
-        )
+        for op in operations:
+            if op.operation == "rescan":
+                response = await self.client(Forward(forward_type="SYSTEM_RESCAN"))
+            else:
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         self.set_status(204)

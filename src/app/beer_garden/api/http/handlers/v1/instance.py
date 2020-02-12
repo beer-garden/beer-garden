@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from beer_garden.router import Route_Class, Route_Type
+from brewtils.errors import ModelValidationError
+from brewtils.models import Forward
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.authorization import authenticated, Permissions
@@ -32,9 +33,7 @@ class InstanceAPI(BaseHandler):
         """
 
         response = await self.client(
-            obj_id=instance_id,
-            route_class=Route_Class.INSTANCE,
-            route_type=Route_Type.READ,
+            Forward(forward_type="INSTANCE_READ", args=[instance_id])
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -62,11 +61,7 @@ class InstanceAPI(BaseHandler):
           - Instances
         """
 
-        await self.client(
-            obj_id=instance_id,
-            route_class=Route_Class.INSTANCE,
-            route_type=Route_Type.DELETE,
-        )
+        await self.client(Forward(forward_type="INSTANCE_DELETE", args=[instance_id]))
 
         self.set_status(204)
 
@@ -115,15 +110,69 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
-        response = await self.client(
-            obj_id=instance_id,
-            brewtils_obj=SchemaParser.parse_patch(
-                self.request.decoded_body, from_string=True
-            ),
-            route_class=Route_Class.INSTANCE,
-            route_type=Route_Type.UPDATE,
-        )
+        for op in patch:
+            operation = op.operation.lower()
+
+            if operation == "initialize":
+                runner_id = None
+                if op.value:
+                    runner_id = op.value.get("runner_id")
+
+                response = await self.client(
+                    Forward(
+                        forward_type="INSTANCE_INITIALIZE",
+                        args=[instance_id],
+                        kwargs={"runner_id": runner_id},
+                    )
+                )
+
+            elif operation == "start":
+                response = await self.client(
+                    Forward(forward_type="INSTANCE_START", args=[instance_id])
+                )
+
+            elif operation == "stop":
+                response = await self.client(
+                    Forward(forward_type="INSTANCE_STOP", args=[instance_id])
+                )
+
+            elif operation == "heartbeat":
+                response = await self.client(
+                    Forward(
+                        forward_type="INSTANCE_UPDATE",
+                        args=[instance_id],
+                        kwargs={"new_status": "RUNNING"},
+                    )
+                )
+
+            elif operation == "replace":
+                if op.path.lower() == "/status":
+
+                    response = await self.client(
+                        Forward(
+                            forward_type="INSTANCE_UPDATE",
+                            args=[instance_id],
+                            kwargs={"new_status": op.value},
+                        )
+                    )
+                else:
+                    raise ModelValidationError(f"Unsupported path '{op.path}'")
+
+            elif operation == "update":
+                if op.path.lower() == "/metadata":
+                    response = await self.client(
+                        Forward(
+                            forward_type="INSTANCE_UPDATE",
+                            args=[instance_id],
+                            kwargs={"metadata": op.value},
+                        )
+                    )
+                else:
+                    raise ModelValidationError(f"Unsupported path '{op.path}'")
+            else:
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

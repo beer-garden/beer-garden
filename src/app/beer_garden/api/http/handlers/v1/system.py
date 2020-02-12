@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-import beer_garden
-from beer_garden.router import Route_Type, Route_Class
+from brewtils.models import Forward
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema
 
@@ -44,7 +43,7 @@ class SystemAPI(BaseHandler):
         # )
 
         response = await self.client(
-            obj_id=system_id, route_class=Route_Class.SYSTEM, route_type=Route_Type.READ
+            Forward(forward_type="SYSTEM_READ", args=[system_id])
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -77,11 +76,7 @@ class SystemAPI(BaseHandler):
           - Systems
         """
 
-        await self.client(
-            obj_id=system_id,
-            route_class=Route_Class.SYSTEM,
-            route_type=Route_Type.DELETE,
-        )
+        await self.client(Forward(forward_type="SYSTEM_DELETE", args=[system_id]))
 
         self.set_status(204)
 
@@ -133,12 +128,15 @@ class SystemAPI(BaseHandler):
         """
 
         response = await self.client(
-            obj_id=system_id,
-            brewtils_obj=SchemaParser.parse_patch(
-                self.request.decoded_body, from_string=True
-            ),
-            route_class=Route_Class.SYSTEM,
-            route_type=Route_Type.UPDATE,
+            Forward(
+                forward_type="SYSTEM_UPDATE",
+                args=[
+                    system_id,
+                    SchemaParser.parse_patch(
+                        self.request.decoded_body, from_string=True
+                    ),
+                ],
+            )
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -242,14 +240,17 @@ class SystemListAPI(BaseHandler):
             serialize_kwargs["exclude"] = exclude_fields
 
         response = await self.client(
-            route_class=Route_Class.SYSTEM,
-            route_type=Route_Type.READ,
-            serialize_kwargs=serialize_kwargs,
-            filter_params=filter_params,
-            order_by=order_by,
-            include_fields=include_fields,
-            exclude_fields=exclude_fields,
-            dereference_nested=dereference_nested,
+            Forward(
+                forward_type="SYSTEM_READ_ALL",
+                kwargs={
+                    "serialize_kwargs": serialize_kwargs,
+                    "filter_params": filter_params,
+                    "order_by": order_by,
+                    "include_fields": include_fields,
+                    "exclude_fields": exclude_fields,
+                    "dereference_nested": dereference_nested,
+                },
+            )
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -287,11 +288,14 @@ class SystemListAPI(BaseHandler):
         """
 
         response = await self.client(
-            brewtils_obj=SchemaParser.parse_system(
-                self.request.decoded_body, from_string=True
-            ),
-            route_class=Route_Class.SYSTEM,
-            route_type=Route_Type.CREATE,
+            Forward(
+                forward_type="SYSTEM_CREATE",
+                args=[
+                    SchemaParser.parse_system(
+                        self.request.decoded_body, from_string=True
+                    )
+                ],
+            )
         )
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")

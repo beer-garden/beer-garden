@@ -24,6 +24,7 @@ from brewtils.schemas import (
     RequestSchema,
     RoleSchema,
     SystemSchema,
+    ForwardSchema,
 )
 from prometheus_client.exposition import start_http_server
 from tornado.httpserver import HTTPServer
@@ -318,6 +319,7 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("User", schema=PrincipalSchema)
     api_spec.definition("Role", schema=RoleSchema)
     api_spec.definition("Queue", schema=QueueSchema)
+    api_spec.definition("Forward", schema=ForwardSchema)
 
     api_spec.definition("RefreshToken", schema=RefreshTokenSchema)
 

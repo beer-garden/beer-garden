@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
-import json
-
-import beer_garden
-from beer_garden.router import Route_Type, Route_Class
 from brewtils.errors import ModelValidationError
+from brewtils.models import Forward
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import JobSchema
 
@@ -36,9 +33,7 @@ class JobAPI(BaseHandler):
           - Jobs
         """
 
-        response = await self.client(
-            obj_id=job_id, route_class=Route_Class.JOB, route_type=Route_Type.READ
-        )
+        response = await self.client(Forward(forward_type="JOB_READ", args=[job_id]))
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -90,14 +85,27 @@ class JobAPI(BaseHandler):
           - Jobs
         """
 
-        response = await self.client(
-            obj_id=job_id,
-            brewtils_obj=SchemaParser.parse_patch(
-                self.request.decoded_body, from_string=True
-            ),
-            route_class=Route_Class.JOB,
-            route_type=Route_Type.UPDATE,
-        )
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
+
+        for op in patch:
+            if op.operation == "update":
+                if op.path == "/status":
+                    if str(op.value).upper() == "PAUSED":
+                        response = await self.client(
+                            Forward(forward_type="JOB_PAUSE", args=[job_id])
+                        )
+                    elif str(op.value).upper() == "RUNNING":
+                        response = await self.client(
+                            Forward(forward_type="JOB_RESUME", args=[job_id])
+                        )
+                    else:
+                        raise ModelValidationError(
+                            f"Unsupported status value '{op.value}'"
+                        )
+                else:
+                    raise ModelValidationError(f"Unsupported path value '{op.path}'")
+            else:
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -125,9 +133,7 @@ class JobAPI(BaseHandler):
           - Jobs
         """
 
-        await self.client(
-            obj_id=job_id, route_class=Route_Class.JOB, route_type=Route_Type.DELETE
-        )
+        await self.client(Forward(forward_type="JOB_DELETE", args=[job_id]))
 
         self.set_status(204)
 
@@ -156,9 +162,9 @@ class JobListAPI(BaseHandler):
                 filter_params[key] = self.get_query_argument(key)
 
         response = await self.client(
-            route_class=Route_Class.JOB,
-            route_type=Route_Type.READ,
-            filter_params=filter_params,
+            Forward(
+                forward_type="JOB_READ_ALL", kwargs={"filter_params": filter_params}
+            )
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -192,11 +198,12 @@ class JobListAPI(BaseHandler):
         """
 
         response = await self.client(
-            brewtils_obj=SchemaParser.parse_job(
-                self.request.decoded_body, from_string=True
-            ),
-            route_class=Route_Class.JOB,
-            route_type=Route_Type.CREATE,
+            Forward(
+                forward_type="JOB_CREATE",
+                args=[
+                    SchemaParser.parse_job(self.request.decoded_body, from_string=True)
+                ],
+            )
         )
 
         self.set_status(201)
