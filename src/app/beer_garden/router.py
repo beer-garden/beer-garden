@@ -135,6 +135,7 @@ class Route_Class(Enum):
     INSTANCE_UPDATE = (beer_garden.plugin.update, forward_elgible_instance)
     INSTANCE_INITIALIZE = (beer_garden.plugin.initialize, None)
     INSTANCE_START = (beer_garden.plugin.start, None)
+    INSTANCE_STOP = (beer_garden.plugin.stop, None)
 
     JOB_CREATE = (beer_garden.scheduler.create_job, None)
     JOB_READ = (beer_garden.scheduler.get_job, None)
