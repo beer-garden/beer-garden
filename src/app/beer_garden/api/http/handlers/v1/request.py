@@ -3,7 +3,7 @@ import json
 from typing import Sequence
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Request, Forward
+from brewtils.models import Request, Operation
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.db.api as db
@@ -37,7 +37,7 @@ class RequestAPI(BaseHandler):
         """
 
         response = await self.client(
-            Forward(forward_type="REQUEST_READ", args=[request_id])
+            Operation(forward_type="REQUEST_READ", args=[request_id])
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -87,7 +87,7 @@ class RequestAPI(BaseHandler):
         """
 
         response = await self.client(
-            Forward(
+            Operation(
                 forward_type="REQUEST_UPDATE",
                 args=[
                     request_id,
@@ -276,7 +276,7 @@ class RequestListAPI(BaseHandler):
         query_args["serialize_kwargs"] = serialize_kwargs
 
         requests = await self.client(
-            Forward(forward_type="REQUEST_READ_ALL", kwargs=query_args)
+            Operation(forward_type="REQUEST_READ_ALL", kwargs=query_args)
         )
 
         response_headers = {
@@ -360,7 +360,7 @@ class RequestListAPI(BaseHandler):
             self.request.ignore_latency = True
 
         response = await self.client(
-            Forward(forward_type="REQUEST_CREATE", args=[request_model])
+            Operation(forward_type="REQUEST_CREATE", args=[request_model])
         )
 
         self.set_status(201)

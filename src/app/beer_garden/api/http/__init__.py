@@ -24,7 +24,7 @@ from brewtils.schemas import (
     RequestSchema,
     RoleSchema,
     SystemSchema,
-    ForwardSchema,
+    OperationSchema,
 )
 from prometheus_client.exposition import start_http_server
 from tornado.httpserver import HTTPServer
@@ -188,7 +188,7 @@ def _setup_tornado_app():
         (rf"{prefix}api/v1/jobs/(\w+)/?", v1.job.JobAPI),
         (rf"{prefix}api/v1/config/logging/?", v1.logging.LoggingConfigAPI),
         (rf"{prefix}api/v1/garden/(\w+)/?", v1.garden.GardenAPI),
-        (rf"{prefix}api/v1/forward/?", v1.forward.ForwardAPI),
+
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
         # V2
@@ -203,6 +203,7 @@ def _setup_tornado_app():
         # These are a little special - unpublished but still versioned
         # The swagger spec
         (rf"{prefix}api/v1/spec/?", misc.SpecHandler),
+        (rf"{prefix}api/v1/forward/?", v1.forward.ForwardAPI),
         # Events websocket
         (rf"{prefix}api/v1/socket/events/?", v1.event.EventSocket),
         # Version / configs
@@ -319,7 +320,7 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("User", schema=PrincipalSchema)
     api_spec.definition("Role", schema=RoleSchema)
     api_spec.definition("Queue", schema=QueueSchema)
-    api_spec.definition("Forward", schema=ForwardSchema)
+    api_spec.definition("Operation", schema=OperationSchema)
 
     api_spec.definition("RefreshToken", schema=RefreshTokenSchema)
 

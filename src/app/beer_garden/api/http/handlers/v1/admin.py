@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError
-from brewtils.models import Forward
+from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.authorization import check_permission, Permissions
@@ -47,7 +47,7 @@ class AdminAPI(BaseHandler):
 
         for op in operations:
             if op.operation == "rescan":
-                response = await self.client(Forward(forward_type="SYSTEM_RESCAN"))
+                response = await self.client(Operation(forward_type="SYSTEM_RESCAN"))
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 

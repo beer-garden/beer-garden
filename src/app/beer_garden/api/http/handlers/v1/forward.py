@@ -34,9 +34,9 @@ class ForwardAPI(BaseHandler):
           - Forward
         """
 
-        forward = SchemaParser.parse(self.request.decoded_body, from_string=False)
+        operation = SchemaParser.parse_operation(self.request.decoded_body, from_string=False)
 
-        response = await self.client(forward)
+        response = await self.client(operation)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

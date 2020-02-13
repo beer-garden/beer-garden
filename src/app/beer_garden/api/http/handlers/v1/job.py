@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from brewtils.errors import ModelValidationError
-from brewtils.models import Forward
+from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import JobSchema
 
@@ -33,7 +33,7 @@ class JobAPI(BaseHandler):
           - Jobs
         """
 
-        response = await self.client(Forward(forward_type="JOB_READ", args=[job_id]))
+        response = await self.client(Operation(forward_type="JOB_READ", args=[job_id]))
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -92,11 +92,11 @@ class JobAPI(BaseHandler):
                 if op.path == "/status":
                     if str(op.value).upper() == "PAUSED":
                         response = await self.client(
-                            Forward(forward_type="JOB_PAUSE", args=[job_id])
+                            Operation(forward_type="JOB_PAUSE", args=[job_id])
                         )
                     elif str(op.value).upper() == "RUNNING":
                         response = await self.client(
-                            Forward(forward_type="JOB_RESUME", args=[job_id])
+                            Operation(forward_type="JOB_RESUME", args=[job_id])
                         )
                     else:
                         raise ModelValidationError(
@@ -133,7 +133,7 @@ class JobAPI(BaseHandler):
           - Jobs
         """
 
-        await self.client(Forward(forward_type="JOB_DELETE", args=[job_id]))
+        await self.client(Operation(forward_type="JOB_DELETE", args=[job_id]))
 
         self.set_status(204)
 
@@ -162,7 +162,7 @@ class JobListAPI(BaseHandler):
                 filter_params[key] = self.get_query_argument(key)
 
         response = await self.client(
-            Forward(
+            Operation(
                 forward_type="JOB_READ_ALL", kwargs={"filter_params": filter_params}
             )
         )
@@ -198,7 +198,7 @@ class JobListAPI(BaseHandler):
         """
 
         response = await self.client(
-            Forward(
+            Operation(
                 forward_type="JOB_CREATE",
                 args=[
                     SchemaParser.parse_job(self.request.decoded_body, from_string=True)

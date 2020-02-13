@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from brewtils.models import Forward
+from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema
 
@@ -43,7 +43,7 @@ class SystemAPI(BaseHandler):
         # )
 
         response = await self.client(
-            Forward(forward_type="SYSTEM_READ", args=[system_id])
+            Operation(forward_type="SYSTEM_READ", args=[system_id])
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -76,7 +76,7 @@ class SystemAPI(BaseHandler):
           - Systems
         """
 
-        await self.client(Forward(forward_type="SYSTEM_DELETE", args=[system_id]))
+        await self.client(Operation(forward_type="SYSTEM_DELETE", args=[system_id]))
 
         self.set_status(204)
 
@@ -128,7 +128,7 @@ class SystemAPI(BaseHandler):
         """
 
         response = await self.client(
-            Forward(
+            Operation(
                 forward_type="SYSTEM_UPDATE",
                 args=[
                     system_id,
@@ -240,7 +240,7 @@ class SystemListAPI(BaseHandler):
             serialize_kwargs["exclude"] = exclude_fields
 
         response = await self.client(
-            Forward(
+            Operation(
                 forward_type="SYSTEM_READ_ALL",
                 kwargs={
                     "serialize_kwargs": serialize_kwargs,
@@ -288,7 +288,7 @@ class SystemListAPI(BaseHandler):
         """
 
         response = await self.client(
-            Forward(
+            Operation(
                 forward_type="SYSTEM_CREATE",
                 args=[
                     SchemaParser.parse_system(

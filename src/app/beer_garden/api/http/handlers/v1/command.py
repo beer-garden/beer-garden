@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
-from brewtils.models import Forward
+from brewtils.models import Operation
 
 
 class CommandAPI(BaseHandler):
@@ -30,7 +30,7 @@ class CommandAPI(BaseHandler):
         """
 
         response = await self.client(
-            Forward(forward_type="COMMAND_READ", args=[command_id])
+            Operation(forward_type="COMMAND_READ", args=[command_id])
         )
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -55,6 +55,6 @@ class CommandListAPI(BaseHandler):
           - Commands
         """
 
-        response = await self.client(Forward(forward_type="COMMAND_READ_ALL"))
+        response = await self.client(Operation(forward_type="COMMAND_READ_ALL"))
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

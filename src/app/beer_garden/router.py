@@ -1,8 +1,8 @@
 from enum import Enum
 from functools import partial
+import requests
 
 import brewtils.models
-from brewtils import EasyClient
 
 import beer_garden
 import beer_garden.commands
@@ -15,13 +15,30 @@ import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
 from beer_garden.errors import RoutingRequestException
+from brewtils.schema_parser import SchemaParser
 
 
 def _local_garden():
+    """
+    Gets local garden name
+
+    Returns:
+
+    """
     return beer_garden.config.get("garden.name")
 
 
 def enum_lookup(enum, name):
+    """
+    Quick lookup function to find ENUM value
+
+    Args:
+        enum:
+        name:
+
+    Returns:
+
+    """
     for record in enum:
         if record.name == name:
             return record
@@ -33,85 +50,96 @@ class Routable_Garden_Name(Enum):
     CHILD = 2
 
 
-def forward_elgible(forward: brewtils.models.Forward):
+def forward_elgible(operation: brewtils.models.Operation):
     """
     Routing logic to determine if a request should be forwarded
 
-    :param forward: Forward request object that needs to be evaluated
-    :return: Booelan response on if the object should be forwarded
+    Args:
+        operation:
+
+    Returns:
+
     """
     return (
-        forward.source_garden_name is not None
-        and forward.target_garden_name is not None
-        and forward.source_garden_name is not Routable_Garden_Name.CHILD.name
-        and forward.target_garden_name is not forward.source_garden_name
-        and forward.target_garden_name is not _local_garden()
+            operation.source_garden_name is not None
+            and operation.target_garden_name is not None
+            and operation.source_garden_name is not Routable_Garden_Name.CHILD.name
+            and operation.target_garden_name is not operation.source_garden_name
+            and operation.target_garden_name is not _local_garden()
     )
 
 
-def forward_elgible_request(forward: brewtils.models.Forward):
+def forward_elgible_request(operation: brewtils.models.Operation):
     """
     Preps Request object forwards prior to evaluation
-    :param forward: Forward request object that needs to be evaluated
-    :return: Boolean response on if the object should be forwarded
+
+    Args:
+        forward:
+
+    Returns:
+
     """
-    # if forward.target_garden_name is None:
-    #     for arg in forward.args:
-    #         if isinstance(arg, (brewtils.models.Request, brewtils.models.RequestTemplate)):
-    #             forward.target_garden_name = get_system_mapping(
-    #                 name_space=arg.namespace,
-    #                 system=arg.system,
-    #                 version=arg.system_version,
-    #             )
-    return forward_elgible(forward)
+    if operation.target_garden_name is None:
+        for arg in operation.args:
+            if isinstance(arg, (brewtils.models.Request, brewtils.models.RequestTemplate)):
+                operation.target_garden_name = get_system_mapping(
+                    name_space=arg.namespace,
+                    system=arg.system,
+                    version=arg.system_version,
+                )
+    return forward_elgible(operation)
 
 
-def forward_elgible_instance(forward: brewtils.models.Forward):
+def forward_elgible_instance(operation: brewtils.models.Operation):
     """
     Preps Instance object forwards prior to evaluation
-    :param forward: Forward request object that needs to be evaluated
-    :return: Boolean response on if the object should be forwarded
+
+    Args:
+        operation:
+
+    Returns:
+
     """
-    if forward.target_garden_name is None:
-        for arg in forward.args:
+    if operation.target_garden_name is None:
+        for arg in operation.args:
 
             if isinstance(arg, str):
                 instance = beer_garden.instances.get_instance(arg)
                 bg_systems = beer_garden.systems.get_systems(
                     instances__contains=instance
                 )
-                # if len(bg_systems) == 1:
-                #     forward.target_garden_name = System_Garden_Mapping.get(
-                #         str(bg_systems[0]), None
-                #     )
+                if len(bg_systems) == 1:
+                    operation.target_garden_name = get_system_mapping(system=bg_systems[0])
+
             elif isinstance(arg, brewtils.models.Instance):
                 bg_systems = beer_garden.systems.get_systems(instances__contains=arg)
-                # if len(bg_systems) == 1:
-                #     forward.target_garden_name = System_Garden_Mapping.get(
-                #         str(bg_systems[0]), None
-                #     )
+                if len(bg_systems) == 1:
+                    operation.target_garden_name = get_system_mapping(system=bg_systems[0])
 
-    return forward_elgible(forward)
+    return forward_elgible(operation)
 
 
-def forward_elgible_system(forward: brewtils.models.Forward):
+def forward_elgible_system(operation: brewtils.models.Operation):
     """
-    Preps System object forwards prior to evaluation
-    :param forward: Forward request object that needs to be evaluated
-    :return: Boolean response on if the object should be forwarded
+    Preps System object operations prior to evaluation
+
+    Args:
+        operation:
+
+    Returns:
+
     """
-    if forward.target_garden_name is None:
-        for arg in forward.args:
+    if operation.target_garden_name is None:
+        for arg in operation.args:
 
             if isinstance(arg, str):
                 system = beer_garden.systems.get_system(arg)
-                #forward.target_garden_name = System_Garden_Mapping.get(
-                #    str(system, None)
-                #)
-            elif isinstance(arg, brewtils.models.System):
-                forward.target_garden_name = System_Garden_Mapping.get(str(arg, None))
+                operation.target_garden_name = get_system_mapping(system=system)
 
-    return forward_elgible(forward)
+            elif isinstance(arg, brewtils.models.System):
+                operation.target_garden_name = get_system_mapping(system=arg)
+
+    return forward_elgible(operation)
 
 
 class Route_Class(Enum):
@@ -167,15 +195,15 @@ class Route_Class(Enum):
         self.function = function
         self.forward_eligible = forward_eligible
 
-    def execute(self, forward):
-        if forward.source_garden_name is None:
-            forward.source_garden_name = _local_garden()
-        if self.forward_eligible and self.forward_eligible(forward):
-            return forward_routing(forward)
-        #Todo: Figure out why this doesn't work
-        #return partial(self.module, self.function, *forward.args, **forward.kwargs)
+    def execute(self, operation):
+        if operation.source_garden_name is None:
+            operation.source_garden_name = _local_garden()
+        if self.forward_eligible and self.forward_eligible(operation):
+            return forward_routing(operation)
+        # Todo: Figure out why this doesn't work
+        # return partial(self.module, self.function, *forward.args, **forward.kwargs)
 
-        return partial(self.value[0], *forward.args, **forward.kwargs)()
+        return partial(self.value[0], *operation.args, **operation.kwargs)()
 
 
 System_Garden_Mapping = dict()
@@ -186,13 +214,17 @@ def get_garden_connection(garden_name):
     """
     Reaches into the database to get the garden connection information
 
-    :param garden_name:
-    :return:
+    Args:
+        garden_name:
+
+    Returns:
+
     """
     connection = Garden_Connections.get(garden_name, None)
     if connection is None:
         connection = beer_garden.garden.get_garden(garden_name)
         Garden_Connections[garden_name] = connection
+        pass
 
     return connection
 
@@ -201,8 +233,11 @@ def update_garden_connection(connection):
     """
     Caches the Garden Connection Information
 
-    :param connection:
-    :return:
+    Args:
+        connection:
+
+    Returns:
+
     """
     Garden_Connections[connection.garden_name] = connection
 
@@ -211,8 +246,11 @@ def remove_garden_connection(connection):
     """
     Removes garden from the cache
 
-    :param connection:
-    :return:
+    Args:
+        connection:
+
+    Returns:
+
     """
     Garden_Connections.pop(connection.garden_name, None)
 
@@ -222,11 +260,14 @@ def get_system_mapping(system=None, name_space=None, version=None, name=None):
     Gets the cached Garden mapping information, if it is not cached, it will add it to
     the cache
 
-    :param system:
-    :param name_space:
-    :param version:
-    :param name:
-    :return:
+    Args:
+        system:
+        name_space:
+        version:
+        name:
+
+    Returns:
+
     """
     if system:
         mapping = System_Garden_Mapping.get(str(system), None)
@@ -255,79 +296,88 @@ def update_system_mapping(system, garden_name):
     """
     Caches System to Garden information
 
-    :param system:
-    :param garden_name:
-    :return:
+    Args:
+        system:
+        garden_name:
+
+    Returns:
+
     """
     System_Garden_Mapping[str(system)] = garden_name
 
 
-def remove_system_mapping(system):
+def remove_system_mapping(system: brewtils.models.System):
     """
     Removes System mapping from cache
 
-    :param system:
-    :return:
+    Args:
+        system:
+
+    Returns:
+
     """
     System_Garden_Mapping.pop(str(system), None)
 
 
-def route_request(forward_class):
+def route_request(operation):
     """
     Runs the execute method of the Route Class Type
 
-    :param forward_class:
-    :return:
+    Args:
+        operation:
+
+    Returns:
+
     """
-    route_class = enum_lookup(Route_Class, forward_class.forward_type)
-    return route_class.execute(forward_class)
+    route_class = enum_lookup(Route_Class, operation.forward_type)
+    return route_class.execute(operation)
 
 
-def forward_routing(forward: brewtils.models.Forward):
+def forward_routing(operation: brewtils.models.Operation):
     """
-    Preps the Forward Object to be forwarded to child. If it is not configured, then it
+    Preps the Operation Object to be forwarded to child. If it is not configured, then it
     will raise an error.
 
-    :param forward:
-    :return:
+    Args:
+        operation:
     """
-    forward.source_garden_name = Routable_Garden_Name.PARENT.name
+    operation.source_garden_name = Routable_Garden_Name.PARENT.name
 
-    garden_routing = Garden_Connections.get(forward.target_graden_name, None)
+    garden_routing = Garden_Connections.get(operation.target_graden_name, None)
     if garden_routing and garden_routing.connection_type in ["HTTP", "HTTPS"]:
-        return forward_routing_http(forward)
+        return forward_routing_http(operation)
     else:
         raise RoutingRequestException(
             "No forwarding route for %s exist" % garden_routing.connection_type
         )
 
 
-def forward_routing_http(garden_routing, forward):
+def forward_routing_http(garden_routing, operation):
     """
     Invokes the HTTP Forwarding Logic
 
     :param garden_routing:
-    :param forward:
+    :param operation:
     :return:
     """
     connection = garden_routing.connection_params
 
+    endpoint = "{}://{}:{}{}api/v1/forward".format(
+        "https" if connection["ssl"] else "http",
+        connection["public_fqdn"],
+        connection["port"],
+        connection["url_prefix"],
+    )
+
     if connection["ssl"]:
         http_config = beer_garden.config.get("entry.http")
-        ez_client = EasyClient(
-            bg_host=connection["public_fqdn"],
-            bg_port=connection["port"],
-            bg_url_prefix=connection["url_prefix"],
-            ssl_enabled=connection["ssl"],
-            ca_cert=http_config.ssl.ca_cert,
-            client_cert=http_config.ssl.ca_path,
-        )
-    else:
-        ez_client = EasyClient(
-            bg_host=connection["public_fqdn"],
-            bg_port=connection["port"],
-            bg_url_prefix=connection["url_prefix"],
-            ssl_enabled=connection["ssl"],
-        )
+        return requests.post(
+            endpoint,
+            data=SchemaParser.serialize_operation(operation),
+            cert=http_config.ssl.ca_cert,
+            verify=http_config.ssl.ca_path)
 
-    return ez_client.post_forward(forward)
+    else:
+        return requests.post(
+            endpoint,
+            data=SchemaParser.serialize_operation(operation))
