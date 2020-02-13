@@ -43,7 +43,7 @@ class SystemAPI(BaseHandler):
         # )
 
         response = await self.client(
-            Operation(forward_type="SYSTEM_READ", args=[system_id])
+            Operation(operation_type="SYSTEM_READ", args=[system_id])
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -76,7 +76,7 @@ class SystemAPI(BaseHandler):
           - Systems
         """
 
-        await self.client(Operation(forward_type="SYSTEM_DELETE", args=[system_id]))
+        await self.client(Operation(operation_type="SYSTEM_DELETE", args=[system_id]))
 
         self.set_status(204)
 
@@ -129,7 +129,7 @@ class SystemAPI(BaseHandler):
 
         response = await self.client(
             Operation(
-                forward_type="SYSTEM_UPDATE",
+                operation_type="SYSTEM_UPDATE",
                 args=[
                     system_id,
                     SchemaParser.parse_patch(
@@ -241,7 +241,7 @@ class SystemListAPI(BaseHandler):
 
         response = await self.client(
             Operation(
-                forward_type="SYSTEM_READ_ALL",
+                operation_type="SYSTEM_READ_ALL",
                 kwargs={
                     "serialize_kwargs": serialize_kwargs,
                     "filter_params": filter_params,
@@ -289,7 +289,7 @@ class SystemListAPI(BaseHandler):
 
         response = await self.client(
             Operation(
-                forward_type="SYSTEM_CREATE",
+                operation_type="SYSTEM_CREATE",
                 args=[
                     SchemaParser.parse_system(
                         self.request.decoded_body, from_string=True

@@ -30,7 +30,7 @@ class LoggingConfigAPI(BaseHandler):
         system_name = self.get_query_argument("system_name", default="")
 
         response = await self.client(
-            Operation(forward_type="LOG_READ", args=[system_name])
+            Operation(operation_type="LOG_READ", args=[system_name])
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -70,7 +70,7 @@ class LoggingConfigAPI(BaseHandler):
 
         for op in patch:
             if op.operation == "reload":
-                response = await self.client(Operation(forward_type="LOG_RELOAD"))
+                response = await self.client(Operation(operation_type="LOG_RELOAD"))
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 

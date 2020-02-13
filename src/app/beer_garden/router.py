@@ -329,7 +329,7 @@ def route_request(operation):
     Returns:
 
     """
-    route_class = enum_lookup(Route_Class, operation.forward_type)
+    route_class = enum_lookup(Route_Class, operation.operation_type)
     return route_class.execute(operation)
 
 

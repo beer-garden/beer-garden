@@ -47,7 +47,7 @@ class AdminAPI(BaseHandler):
 
         for op in operations:
             if op.operation == "rescan":
-                response = await self.client(Operation(forward_type="SYSTEM_RESCAN"))
+                response = await self.client(Operation(operation_type="SYSTEM_RESCAN"))
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 

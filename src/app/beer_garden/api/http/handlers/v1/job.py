@@ -33,7 +33,7 @@ class JobAPI(BaseHandler):
           - Jobs
         """
 
-        response = await self.client(Operation(forward_type="JOB_READ", args=[job_id]))
+        response = await self.client(Operation(operation_type="JOB_READ", args=[job_id]))
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -92,11 +92,11 @@ class JobAPI(BaseHandler):
                 if op.path == "/status":
                     if str(op.value).upper() == "PAUSED":
                         response = await self.client(
-                            Operation(forward_type="JOB_PAUSE", args=[job_id])
+                            Operation(operation_type="JOB_PAUSE", args=[job_id])
                         )
                     elif str(op.value).upper() == "RUNNING":
                         response = await self.client(
-                            Operation(forward_type="JOB_RESUME", args=[job_id])
+                            Operation(operation_type="JOB_RESUME", args=[job_id])
                         )
                     else:
                         raise ModelValidationError(
@@ -133,7 +133,7 @@ class JobAPI(BaseHandler):
           - Jobs
         """
 
-        await self.client(Operation(forward_type="JOB_DELETE", args=[job_id]))
+        await self.client(Operation(operation_type="JOB_DELETE", args=[job_id]))
 
         self.set_status(204)
 
@@ -163,7 +163,7 @@ class JobListAPI(BaseHandler):
 
         response = await self.client(
             Operation(
-                forward_type="JOB_READ_ALL", kwargs={"filter_params": filter_params}
+                operation_type="JOB_READ_ALL", kwargs={"filter_params": filter_params}
             )
         )
 
@@ -199,7 +199,7 @@ class JobListAPI(BaseHandler):
 
         response = await self.client(
             Operation(
-                forward_type="JOB_CREATE",
+                operation_type="JOB_CREATE",
                 args=[
                     SchemaParser.parse_job(self.request.decoded_body, from_string=True)
                 ],

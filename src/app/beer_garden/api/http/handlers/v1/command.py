@@ -30,7 +30,7 @@ class CommandAPI(BaseHandler):
         """
 
         response = await self.client(
-            Operation(forward_type="COMMAND_READ", args=[command_id])
+            Operation(operation_type="COMMAND_READ", args=[command_id])
         )
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -55,6 +55,6 @@ class CommandListAPI(BaseHandler):
           - Commands
         """
 
-        response = await self.client(Operation(forward_type="COMMAND_READ_ALL"))
+        response = await self.client(Operation(operation_type="COMMAND_READ_ALL"))
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

@@ -27,7 +27,7 @@ class QueueAPI(BaseHandler):
           - Queues
         """
 
-        await self.client(Operation(forward_type="QUEUE_DELETE", args=[queue_name]))
+        await self.client(Operation(operation_type="QUEUE_DELETE", args=[queue_name]))
 
         self.set_status(204)
 
@@ -51,7 +51,7 @@ class QueueListAPI(BaseHandler):
           - Queues
         """
 
-        response = await self.client(Operation(forward_type="QUEUE_READ"))
+        response = await self.client(Operation(operation_type="QUEUE_READ"))
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -70,6 +70,6 @@ class QueueListAPI(BaseHandler):
           - Queues
         """
 
-        await self.client(Operation(forward_type="QUEUE_DELETE_ALL"))
+        await self.client(Operation(operation_type="QUEUE_DELETE_ALL"))
 
         self.set_status(204)

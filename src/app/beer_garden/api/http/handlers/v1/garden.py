@@ -31,7 +31,7 @@ class GardenAPI(BaseHandler):
         """
 
         response = await self.client(
-            Operation(forward_type="GARDEN_READ", args=[garden_name])
+            Operation(operation_type="GARDEN_READ", args=[garden_name])
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -60,7 +60,7 @@ class GardenAPI(BaseHandler):
         """
         await self.client.remove_garden(garden_name)
 
-        await self.client(Operation(forward_type="GARDEN_DELETE", args=[garden_name]))
+        await self.client(Operation(operation_type="GARDEN_DELETE", args=[garden_name]))
         self.set_status(204)
 
     @authenticated(permissions=[Permissions.SYSTEM_UPDATE])
@@ -111,7 +111,7 @@ class GardenAPI(BaseHandler):
 
         response = await self.client(
             Operation(
-                forward_type="GARDEN_UPDATE",
+                operation_type="GARDEN_UPDATE",
                 args=[
                     garden_name,
                     SchemaParser.parse_patch(
@@ -162,7 +162,7 @@ class GardenAPI(BaseHandler):
 
         response = await self.client(
             Operation(
-                forward_type="GARDEN_CREATE",
+                operation_type="GARDEN_CREATE",
                 args=[
                     garden_name,
                     SchemaParser.parse_patch(

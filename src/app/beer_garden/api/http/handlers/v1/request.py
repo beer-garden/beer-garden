@@ -37,7 +37,7 @@ class RequestAPI(BaseHandler):
         """
 
         response = await self.client(
-            Operation(forward_type="REQUEST_READ", args=[request_id])
+            Operation(operation_type="REQUEST_READ", args=[request_id])
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -88,7 +88,7 @@ class RequestAPI(BaseHandler):
 
         response = await self.client(
             Operation(
-                forward_type="REQUEST_UPDATE",
+                operation_type="REQUEST_UPDATE",
                 args=[
                     request_id,
                     SchemaParser.parse_patch(
@@ -276,7 +276,7 @@ class RequestListAPI(BaseHandler):
         query_args["serialize_kwargs"] = serialize_kwargs
 
         requests = await self.client(
-            Operation(forward_type="REQUEST_READ_ALL", kwargs=query_args)
+            Operation(operation_type="REQUEST_READ_ALL", kwargs=query_args)
         )
 
         response_headers = {
@@ -360,7 +360,7 @@ class RequestListAPI(BaseHandler):
             self.request.ignore_latency = True
 
         response = await self.client(
-            Operation(forward_type="REQUEST_CREATE", args=[request_model])
+            Operation(operation_type="REQUEST_CREATE", args=[request_model])
         )
 
         self.set_status(201)

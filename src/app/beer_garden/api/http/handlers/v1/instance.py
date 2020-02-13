@@ -33,7 +33,7 @@ class InstanceAPI(BaseHandler):
         """
 
         response = await self.client(
-            Operation(forward_type="INSTANCE_READ", args=[instance_id])
+            Operation(operation_type="INSTANCE_READ", args=[instance_id])
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -61,7 +61,7 @@ class InstanceAPI(BaseHandler):
           - Instances
         """
 
-        await self.client(Operation(forward_type="INSTANCE_DELETE", args=[instance_id]))
+        await self.client(Operation(operation_type="INSTANCE_DELETE", args=[instance_id]))
 
         self.set_status(204)
 
@@ -122,7 +122,7 @@ class InstanceAPI(BaseHandler):
 
                 response = await self.client(
                     Operation(
-                        forward_type="INSTANCE_INITIALIZE",
+                        operation_type="INSTANCE_INITIALIZE",
                         args=[instance_id],
                         kwargs={"runner_id": runner_id},
                     )
@@ -130,18 +130,18 @@ class InstanceAPI(BaseHandler):
 
             elif operation == "start":
                 response = await self.client(
-                    Operation(forward_type="INSTANCE_START", args=[instance_id])
+                    Operation(operation_type="INSTANCE_START", args=[instance_id])
                 )
 
             elif operation == "stop":
                 response = await self.client(
-                    Operation(forward_type="INSTANCE_STOP", args=[instance_id])
+                    Operation(operation_type="INSTANCE_STOP", args=[instance_id])
                 )
 
             elif operation == "heartbeat":
                 response = await self.client(
                     Operation(
-                        forward_type="INSTANCE_UPDATE",
+                        operation_type="INSTANCE_UPDATE",
                         args=[instance_id],
                         kwargs={"new_status": "RUNNING"},
                     )
@@ -152,7 +152,7 @@ class InstanceAPI(BaseHandler):
 
                     response = await self.client(
                         Operation(
-                            forward_type="INSTANCE_UPDATE",
+                            operation_type="INSTANCE_UPDATE",
                             args=[instance_id],
                             kwargs={"new_status": op.value},
                         )
@@ -164,7 +164,7 @@ class InstanceAPI(BaseHandler):
                 if op.path.lower() == "/metadata":
                     response = await self.client(
                         Operation(
-                            forward_type="INSTANCE_UPDATE",
+                            operation_type="INSTANCE_UPDATE",
                             args=[instance_id],
                             kwargs={"metadata": op.value},
                         )
