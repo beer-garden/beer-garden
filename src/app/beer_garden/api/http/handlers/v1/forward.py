@@ -34,7 +34,9 @@ class ForwardAPI(BaseHandler):
           - Forward
         """
 
-        operation = SchemaParser.parse_operation(self.request.decoded_body, from_string=False)
+        operation = SchemaParser.parse_operation(
+            self.request.decoded_body, from_string=False
+        )
 
         response = await self.client(operation)
 

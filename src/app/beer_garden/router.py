@@ -61,11 +61,11 @@ def forward_elgible(operation: brewtils.models.Operation):
 
     """
     return (
-            operation.source_garden_name is not None
-            and operation.target_garden_name is not None
-            and operation.source_garden_name is not Routable_Garden_Name.CHILD.name
-            and operation.target_garden_name is not operation.source_garden_name
-            and operation.target_garden_name is not _local_garden()
+        operation.source_garden_name is not None
+        and operation.target_garden_name is not None
+        and operation.source_garden_name is not Routable_Garden_Name.CHILD.name
+        and operation.target_garden_name is not operation.source_garden_name
+        and operation.target_garden_name is not _local_garden()
     )
 
 
@@ -81,7 +81,9 @@ def forward_elgible_request(operation: brewtils.models.Operation):
     """
     if operation.target_garden_name is None:
         for arg in operation.args:
-            if isinstance(arg, (brewtils.models.Request, brewtils.models.RequestTemplate)):
+            if isinstance(
+                arg, (brewtils.models.Request, brewtils.models.RequestTemplate)
+            ):
                 operation.target_garden_name = get_system_mapping(
                     name_space=arg.namespace,
                     system=arg.system,
@@ -109,12 +111,16 @@ def forward_elgible_instance(operation: brewtils.models.Operation):
                     instances__contains=instance
                 )
                 if len(bg_systems) == 1:
-                    operation.target_garden_name = get_system_mapping(system=bg_systems[0])
+                    operation.target_garden_name = get_system_mapping(
+                        system=bg_systems[0]
+                    )
 
             elif isinstance(arg, brewtils.models.Instance):
                 bg_systems = beer_garden.systems.get_systems(instances__contains=arg)
                 if len(bg_systems) == 1:
-                    operation.target_garden_name = get_system_mapping(system=bg_systems[0])
+                    operation.target_garden_name = get_system_mapping(
+                        system=bg_systems[0]
+                    )
 
     return forward_elgible(operation)
 
@@ -156,10 +162,7 @@ class Route_Class(Enum):
     COMMAND_READ_ALL = (beer_garden.commands.get_commands, None)
 
     INSTANCE_READ = (beer_garden.instances.get_instance, None)
-    INSTANCE_DELETE = (
-        beer_garden.instances.remove_instance,
-        forward_elgible_instance,
-    )
+    INSTANCE_DELETE = (beer_garden.instances.remove_instance, forward_elgible_instance)
     INSTANCE_UPDATE = (beer_garden.plugin.update, forward_elgible_instance)
     INSTANCE_INITIALIZE = (beer_garden.plugin.initialize, None)
     INSTANCE_START = (beer_garden.plugin.start, None)
@@ -375,9 +378,8 @@ def forward_routing_http(garden_routing, operation):
             endpoint,
             data=SchemaParser.serialize_operation(operation),
             cert=http_config.ssl.ca_cert,
-            verify=http_config.ssl.ca_path)
+            verify=http_config.ssl.ca_path,
+        )
 
     else:
-        return requests.post(
-            endpoint,
-            data=SchemaParser.serialize_operation(operation))
+        return requests.post(endpoint, data=SchemaParser.serialize_operation(operation))

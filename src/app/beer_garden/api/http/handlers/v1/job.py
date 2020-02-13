@@ -33,7 +33,9 @@ class JobAPI(BaseHandler):
           - Jobs
         """
 
-        response = await self.client(Operation(operation_type="JOB_READ", args=[job_id]))
+        response = await self.client(
+            Operation(operation_type="JOB_READ", args=[job_id])
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

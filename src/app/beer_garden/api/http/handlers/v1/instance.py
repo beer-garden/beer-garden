@@ -61,7 +61,9 @@ class InstanceAPI(BaseHandler):
           - Instances
         """
 
-        await self.client(Operation(operation_type="INSTANCE_DELETE", args=[instance_id]))
+        await self.client(
+            Operation(operation_type="INSTANCE_DELETE", args=[instance_id])
+        )
 
         self.set_status(204)
 
