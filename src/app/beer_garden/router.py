@@ -1,8 +1,10 @@
 from enum import Enum
-from functools import partial
-import requests
+from typing import Dict
 
 import brewtils.models
+import requests
+from brewtils.models import Garden, Operation
+from brewtils.schema_parser import SchemaParser
 
 import beer_garden
 import beer_garden.commands
@@ -14,8 +16,102 @@ import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
-from beer_garden.errors import RoutingRequestException
-from brewtils.schema_parser import SchemaParser
+from beer_garden.errors import RoutingRequestException, UnknownGardenException
+
+# These are the operations that we can forward to child gardens
+routable_operations = ["REQUEST_CREATE"]
+
+System_Garden_Mapping = {}
+child_connections: Dict[str, Garden] = {
+    "child": Garden(
+        garden_name="child",
+        connection_type="HTTP",
+        connection_params={"public_fqdn": "localhost", "port": 2338},
+    )
+}
+
+
+def route(operation: Operation):
+    """Entry point into the routing subsystem
+
+    Args:
+        operation:
+
+    Returns:
+
+    """
+    # If no source garden is defined set it to the local garden
+    if operation.source_garden_name is None:
+        operation.source_garden_name = _local_garden()
+
+    if should_forward(operation):
+        return forward(operation)
+
+    return execute_local(operation)
+
+
+def should_forward(operation: brewtils.models.Operation) -> bool:
+    """Routing logic to determine if a request should be forwarded
+
+    Args:
+        operation:
+
+    Returns:
+        True if the operation should be forwarded, False if it should be executed
+    """
+    return (
+        operation.target_garden_name is not None
+        and operation.source_garden_name != Routable_Garden_Name.CHILD.name
+        and operation.target_garden_name != operation.source_garden_name
+        and operation.target_garden_name != _local_garden()
+    )
+
+
+def execute_local(operation: Operation):
+    """Execute an operation on the local garden
+
+    Args:
+        operation:
+
+    Returns:
+
+    """
+    # If there's a model present, shove it in the front
+    args = operation.args
+    if operation.model:
+        args.insert(0, operation.model)
+
+    # Get the function to execute from the enum list
+    route_class = enum_lookup(RouteClass, operation.operation_type)
+
+    return route_class.value[0](*operation.args, **operation.kwargs)
+
+
+def forward(operation: Operation):
+    """Forward an operation to a child garden
+
+    Args:
+        operation:
+
+    Raises:
+        RoutingRequestException: Could not determine a route to child
+        UnknownGardenException: The specified target garden is unknown
+    """
+    # operation.source_garden_name = Routable_Garden_Name.PARENT.name
+
+    target_garden = child_connections.get(operation.target_garden_name)
+
+    if not target_garden:
+        raise UnknownGardenException(
+            f"Unknown child garden {operation.target_garden_name}"
+        )
+
+    if target_garden.connection_type in ["HTTP", "HTTPS"]:
+        return _forward_http(operation, target_garden)
+    else:
+        raise RoutingRequestException(
+            f"Unknown connection type {target_garden.connection_type}"
+        )
 
 
 def _local_garden():
@@ -50,31 +146,12 @@ class Routable_Garden_Name(Enum):
     CHILD = 2
 
 
-def forward_elgible(operation: brewtils.models.Operation):
-    """
-    Routing logic to determine if a request should be forwarded
-
-    Args:
-        operation:
-
-    Returns:
-
-    """
-    return (
-        operation.source_garden_name is not None
-        and operation.target_garden_name is not None
-        and operation.source_garden_name is not Routable_Garden_Name.CHILD.name
-        and operation.target_garden_name is not operation.source_garden_name
-        and operation.target_garden_name is not _local_garden()
-    )
-
-
-def forward_elgible_request(operation: brewtils.models.Operation):
+def forward_elgible_request(operation: Operation):
     """
     Preps Request object forwards prior to evaluation
 
     Args:
-        forward:
+        operation:
 
     Returns:
 
@@ -148,7 +225,7 @@ def forward_elgible_system(operation: brewtils.models.Operation):
     return forward_elgible(operation)
 
 
-class Route_Class(Enum):
+class RouteClass(Enum):
     # How to create new Route Class
     # ARG 1 = Target Function
     # ARG 2 = Routing Eligibility Check
@@ -194,24 +271,6 @@ class Route_Class(Enum):
     QUEUE_DELETE = (beer_garden.queues.clear_queue, None)
     QUEUE_DELETE_ALL = (beer_garden.queues.clear_all_queues, None)
 
-    def __init__(self, function, forward_eligible):
-        self.function = function
-        self.forward_eligible = forward_eligible
-
-    def execute(self, operation):
-        if operation.source_garden_name is None:
-            operation.source_garden_name = _local_garden()
-        if self.forward_eligible and self.forward_eligible(operation):
-            return forward_routing(operation)
-        # Todo: Figure out why this doesn't work
-        # return partial(self.module, self.function, *forward.args, **forward.kwargs)
-
-        return partial(self.value[0], *operation.args, **operation.kwargs)()
-
-
-System_Garden_Mapping = dict()
-Garden_Connections = dict()
-
 
 def get_garden_connection(garden_name):
     """
@@ -223,10 +282,10 @@ def get_garden_connection(garden_name):
     Returns:
 
     """
-    connection = Garden_Connections.get(garden_name, None)
+    connection = child_connections.get(garden_name, None)
     if connection is None:
         connection = beer_garden.garden.get_garden(garden_name)
-        Garden_Connections[garden_name] = connection
+        child_connections[garden_name] = connection
         pass
 
     return connection
@@ -242,7 +301,7 @@ def update_garden_connection(connection):
     Returns:
 
     """
-    Garden_Connections[connection.garden_name] = connection
+    child_connections[connection.garden_name] = connection
 
 
 def remove_garden_connection(connection):
@@ -255,7 +314,7 @@ def remove_garden_connection(connection):
     Returns:
 
     """
-    Garden_Connections.pop(connection.garden_name, None)
+    child_connections.pop(connection.garden_name, None)
 
 
 def get_system_mapping(system=None, name_space=None, version=None, name=None):
@@ -322,57 +381,23 @@ def remove_system_mapping(system: brewtils.models.System):
     System_Garden_Mapping.pop(str(system), None)
 
 
-def route_request(operation):
-    """
-    Runs the execute method of the Route Class Type
+def _forward_http(operation: Operation, garden: Garden):
+    """Actually forward an operation using HTTP
 
     Args:
-        operation:
-
-    Returns:
-
+        operation: The operation to forward
+        garden: The Garden to forward to
     """
-    route_class = enum_lookup(Route_Class, operation.operation_type)
-    return route_class.execute(operation)
-
-
-def forward_routing(operation: brewtils.models.Operation):
-    """
-    Preps the Operation Object to be forwarded to child. If it is not configured, then it
-    will raise an error.
-
-    Args:
-        operation:
-    """
-    operation.source_garden_name = Routable_Garden_Name.PARENT.name
-
-    garden_routing = Garden_Connections.get(operation.target_graden_name, None)
-    if garden_routing and garden_routing.connection_type in ["HTTP", "HTTPS"]:
-        return forward_routing_http(operation)
-    else:
-        raise RoutingRequestException(
-            "No forwarding route for %s exist" % garden_routing.connection_type
-        )
-
-
-def forward_routing_http(garden_routing, operation):
-    """
-    Invokes the HTTP Forwarding Logic
-
-    :param garden_routing:
-    :param operation:
-    :return:
-    """
-    connection = garden_routing.connection_params
+    connection = garden.connection_params
 
     endpoint = "{}://{}:{}{}api/v1/forward".format(
-        "https" if connection["ssl"] else "http",
-        connection["public_fqdn"],
-        connection["port"],
-        connection["url_prefix"],
+        "https" if connection.get("ssl") else "http",
+        connection.get("public_fqdn"),
+        connection.get("port"),
+        connection.get("url_prefix", "/"),
     )
 
-    if connection["ssl"]:
+    if connection.get("ssl"):
         http_config = beer_garden.config.get("entry.http")
         return requests.post(
             endpoint,
@@ -382,4 +407,8 @@ def forward_routing_http(garden_routing, operation):
         )
 
     else:
-        return requests.post(endpoint, data=SchemaParser.serialize_operation(operation))
+        return requests.post(
+            endpoint,
+            data=SchemaParser.serialize_operation(operation),
+            headers={"Content-type": "application/json", "Accept": "text/plain"},
+        )

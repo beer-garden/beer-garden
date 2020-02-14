@@ -273,10 +273,9 @@ class RequestListAPI(BaseHandler):
         if query_args.get("include_fields"):
             serialize_kwargs["only"] = query_args.get("include_fields")
 
-        query_args["serialize_kwargs"] = serialize_kwargs
-
         requests = await self.client(
-            Operation(operation_type="REQUEST_READ_ALL", kwargs=query_args)
+            Operation(operation_type="REQUEST_READ_ALL", kwargs=query_args),
+            serialize_kwargs=serialize_kwargs,
         )
 
         response_headers = {
@@ -360,7 +359,13 @@ class RequestListAPI(BaseHandler):
             self.request.ignore_latency = True
 
         response = await self.client(
-            Operation(operation_type="REQUEST_CREATE", args=[request_model])
+            Operation(
+                operation_type="REQUEST_CREATE",
+                # target_garden_name="child",
+                model=request_model,
+                model_type="Request",
+                kwargs={"wait_timeout": wait_timeout},
+            )
         )
 
         self.set_status(201)

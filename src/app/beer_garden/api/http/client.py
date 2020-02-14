@@ -18,7 +18,7 @@ class ExecutorClient(object):
 
     async def __call__(self, *args, serialize_kwargs=None, **kwargs):
         result = await asyncio.get_event_loop().run_in_executor(
-            self.pool, partial(beer_garden.router.route_request, *args, **kwargs)
+            self.pool, partial(beer_garden.router.route, *args, **kwargs)
         )
 
         # Handlers overwhelmingly just write the response so default to serializing
