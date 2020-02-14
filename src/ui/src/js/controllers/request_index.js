@@ -70,7 +70,8 @@ export default function requestIndexController(
       0: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
       1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
       2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      3: {
+      3: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
+      4: {
         html: 'select',
         type: 'text',
         cssClass: 'form-inline form-control',
@@ -84,7 +85,7 @@ export default function requestIndexController(
           {value: 'ERROR', label: 'ERROR'},
         ],
       },
-      4: {
+      5: {
         html: 'range',
         type: 'text',
         attr: {
@@ -103,7 +104,7 @@ export default function requestIndexController(
           useCurrent: false,
         },
       },
-      5: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
+      6: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
     })
     .withDataProp('data')
     .withOption('order', [4, 'desc'])
@@ -151,6 +152,9 @@ export default function requestIndexController(
         return systemName;
       }),
     DTColumnBuilder
+      .newColumn('system_version')
+      .withTitle('Version'),
+    DTColumnBuilder
       .newColumn('instance_name')
       .withTitle('Instance'),
     DTColumnBuilder
@@ -160,7 +164,7 @@ export default function requestIndexController(
       .newColumn('created_at')
       .withTitle('Created')
       .withOption('type', 'date')
-      .withOption('width', '25%')
+      .withOption('width', '22%')
       .renderWith(function(data, type, full) {
         return formatDate(data);
       }),

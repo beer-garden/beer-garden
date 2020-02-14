@@ -532,6 +532,7 @@ class Event(MongoModel, Document):
 
     name = StringField(required=True)
     namespace = StringField(required=True)
+    garden = StringField()
     payload = DictField()
     error = BooleanField()
     metadata = DictField()

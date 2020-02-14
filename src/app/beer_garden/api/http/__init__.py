@@ -36,9 +36,10 @@ import beer_garden
 import beer_garden.api.http.handlers.misc as misc
 import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.vbeta as vbeta
+import beer_garden.events
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
 from beer_garden.api.http.processors import EventManager, websocket_publish
-from beer_garden.events.events_manager import publish
+from beer_garden.events import publish
 
 io_loop = None
 server = None
@@ -364,7 +365,7 @@ def _load_swagger(url_specs, title=None):
 
 def _setup_event_handling(ep_conn):
     # This will push all events generated in the entry point up to the master process
-    beer_garden.events.events_manager.manager = EventManager(ep_conn)
+    beer_garden.events.manager = EventManager(ep_conn)
 
     # Add a handler to process events coming from the main process
     io_loop.add_handler(ep_conn, lambda c, _: websocket_publish(c.recv()), IOLoop.READ)
