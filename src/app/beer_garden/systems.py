@@ -64,7 +64,7 @@ def create_system(system: System) -> System:
             system.max_instances = 1
         else:
             raise ModelValidationError(
-                f"Could not create system {system.name}-{system.version}: Systems with "
+                f"Could not create system {str(system)}: Systems with "
                 f"max_instances > 1 must also define their instances"
             )
     else:

@@ -189,6 +189,7 @@ def _setup_tornado_app():
         (rf"{prefix}api/v1/config/logging/?", v1.logging.LoggingConfigAPI),
         (rf"{prefix}api/v1/garden/(\w+)/?", v1.garden.GardenAPI),
         (rf"{prefix}api/v1/forward/?", v1.forward.ForwardAPI),
+        (rf"{prefix}api/v1/namespace/?", v1.namespace.NamespaceAPI),
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
         # V2

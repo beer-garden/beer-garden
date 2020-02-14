@@ -92,12 +92,12 @@ class RequestValidator(object):
         :raises ModelValidationError: There is no system that corresponds to this Request
         """
         system = db.query_unique(
-            System, name=request.system, version=request.system_version
+            System, name=request.system, version=request.system_version, namespace=request.namespace
         )
         if system is None:
             raise ModelValidationError(
-                "Could not find System named '%s' matching version '%s'"
-                % (request.system, request.system_version)
+                "Could not find System named '%s' matching version '%s' and namespace '%s'"
+                % (request.system, request.system_version, request.namespace)
             )
 
         if request.instance_name not in system.instance_names:
