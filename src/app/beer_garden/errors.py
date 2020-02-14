@@ -32,6 +32,12 @@ class LoggingLoadingError(Exception):
 
 
 # Routing
+class UnknownGardenException(Exception):
+    """Route requested is not valid"""
+
+    pass
+
+
 class RoutingRequestException(Exception):
     """Route requested is not valid"""
 
