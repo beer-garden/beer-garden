@@ -181,7 +181,7 @@ def remove_system(system_id: str) -> None:
 
     # Attempt to stop the plugins
     registered = beer_garden.application.plugin_registry.get_plugins_by_system(
-        system.name, system.version
+        system.name, system.version, system.namespace
     )
 
     # Local plugins get stopped by us
