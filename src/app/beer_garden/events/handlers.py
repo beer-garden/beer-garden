@@ -20,6 +20,10 @@ def local_callbacks(event: Event) -> None:
         None
     """
     if event.garden == beer_garden.config.get("garden.name"):
+        if event.error:
+            logger.error(f"Local error event ({event}): {event.error_message}")
+            return
+
         try:
             # Start local plugins after the entry point comes up
             if event.name == Events.ENTRY_STARTED.name:
@@ -44,6 +48,10 @@ def downstream_callbacks(event: Event) -> None:
         None
     """
     if event.garden != beer_garden.config.get("garden.name"):
+        if event.error:
+            logger.error(f"Downstream error event ({event}): {event.error_message}")
+            return
+
         try:
             if event.name in (Events.REQUEST_CREATED.name, Events.SYSTEM_CREATED.name):
                 db.create(event.payload)
