@@ -15,6 +15,7 @@ import beer_garden.api
 import beer_garden.db.api as db
 import beer_garden.events
 import beer_garden.queue.api as queue
+import beer_garden.router
 from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
@@ -87,6 +88,10 @@ class Application(StoppableThread):
                     metrics_config.prometheus.port,
                 )
             )
+
+        beer_garden.router.forward_processor = QueueListener(
+            action=beer_garden.router.forward
+        )
 
         self.entry_manager = beer_garden.api.entry_point.Manager()
 
@@ -172,6 +177,9 @@ class Application(StoppableThread):
         for helper_thread in self.helper_threads:
             helper_thread.start()
 
+        self.logger.debug("Starting forwarding processor...")
+        beer_garden.router.forward_processor.start()
+
         self.logger.debug("Creating and starting entry points...")
         self.entry_manager.create_all()
         self.entry_manager.start()
@@ -205,6 +213,9 @@ class Application(StoppableThread):
         if self.scheduler.running:
             self.logger.debug("Pausing scheduler - no more jobs will be run")
             self.scheduler.pause()
+
+        self.logger.debug("Stopping forwarding processor...")
+        beer_garden.router.forward_processor.stop()
 
         self.logger.debug("Stopping helper threads")
         for helper_thread in reversed(self.helper_threads):
