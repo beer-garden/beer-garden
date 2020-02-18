@@ -2,9 +2,8 @@
 import json
 from typing import Sequence
 
-from beer_garden.router import Route_Class, Route_Type
 from brewtils.errors import ModelValidationError
-from brewtils.models import Request
+from brewtils.models import Request, Operation
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.db.api as db
@@ -38,9 +37,7 @@ class RequestAPI(BaseHandler):
         """
 
         response = await self.client(
-            obj_id=request_id,
-            route_class=Route_Class.REQUEST,
-            route_type=Route_Type.READ,
+            Operation(operation_type="REQUEST_READ", args=[request_id])
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -90,12 +87,15 @@ class RequestAPI(BaseHandler):
         """
 
         response = await self.client(
-            obj_id=request_id,
-            brewtils_obj=SchemaParser.parse_patch(
-                self.request.decoded_body, from_string=True
-            ),
-            route_class=Route_Class.REQUEST,
-            route_type=Route_Type.UPDATE,
+            Operation(
+                operation_type="REQUEST_UPDATE",
+                args=[
+                    request_id,
+                    SchemaParser.parse_patch(
+                        self.request.decoded_body, from_string=True
+                    ),
+                ],
+            )
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -274,10 +274,8 @@ class RequestListAPI(BaseHandler):
             serialize_kwargs["only"] = query_args.get("include_fields")
 
         requests = await self.client(
-            route_class=Route_Class.REQUEST,
-            route_type=Route_Type.READ,
+            Operation(operation_type="REQUEST_READ_ALL", kwargs=query_args),
             serialize_kwargs=serialize_kwargs,
-            **query_args
         )
 
         response_headers = {
@@ -361,10 +359,13 @@ class RequestListAPI(BaseHandler):
             self.request.ignore_latency = True
 
         response = await self.client(
-            brewtils_obj=request_model,
-            route_class=Route_Class.REQUEST,
-            route_type=Route_Type.CREATE,
-            wait_timeout=wait_timeout,
+            Operation(
+                operation_type="REQUEST_CREATE",
+                # target_garden_name="child",
+                model=request_model,
+                model_type="Request",
+                kwargs={"wait_timeout": wait_timeout},
+            )
         )
 
         self.set_status(201)

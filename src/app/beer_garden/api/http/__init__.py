@@ -24,6 +24,7 @@ from brewtils.schemas import (
     RequestSchema,
     RoleSchema,
     SystemSchema,
+    OperationSchema,
 )
 from prometheus_client.exposition import start_http_server
 from tornado.httpserver import HTTPServer
@@ -36,9 +37,11 @@ import beer_garden.api.http.handlers.misc as misc
 import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.vbeta as vbeta
 import beer_garden.events
+import beer_garden.router
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
 from beer_garden.api.http.processors import EventManager, websocket_publish
 from beer_garden.events import publish
+from beer_garden.events.processors import QueueListener
 
 io_loop = None
 server = None
@@ -57,7 +60,7 @@ def run(ep_conn):
     logger = logging.getLogger(__name__)
 
     _setup_application()
-
+    _setup_operation_forwarding()
     _setup_event_handling(ep_conn)
 
     # Schedule things to happen after the ioloop comes up
@@ -97,6 +100,9 @@ async def startup():
     logger.info(f"Starting HTTP server on {http_config.host}:{http_config.port}")
     server.listen(http_config.port, http_config.host)
 
+    logger.debug("Starting forward processor")
+    beer_garden.router.forward_processor.start()
+
     beer_garden.api.http.logger.info("Http entry point is started. Hello!")
 
     publish(Event(name=Events.ENTRY_STARTED.name))
@@ -116,6 +122,9 @@ async def shutdown():
 
     logger.debug("Stopping server for new HTTP connections")
     server.stop()
+
+    logger.debug("Stopping forward processing")
+    beer_garden.router.forward_processor.stop()
 
     # This will almost definitely not be published to the websocket, because it would
     # need to make it up to the main process and back down into this process. We just
@@ -188,7 +197,6 @@ def _setup_tornado_app():
         (rf"{prefix}api/v1/jobs/(\w+)/?", v1.job.JobAPI),
         (rf"{prefix}api/v1/config/logging/?", v1.logging.LoggingConfigAPI),
         (rf"{prefix}api/v1/garden/(\w+)/?", v1.garden.GardenAPI),
-        (rf"{prefix}api/v1/forward/?", v1.forward.ForwardAPI),
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
         # V2
@@ -203,6 +211,7 @@ def _setup_tornado_app():
         # These are a little special - unpublished but still versioned
         # The swagger spec
         (rf"{prefix}api/v1/spec/?", misc.SpecHandler),
+        (rf"{prefix}api/v1/forward/?", v1.forward.ForwardAPI),
         # Events websocket
         (rf"{prefix}api/v1/socket/events/?", v1.event.EventSocket),
         # Version / configs
@@ -319,6 +328,7 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("User", schema=PrincipalSchema)
     api_spec.definition("Role", schema=RoleSchema)
     api_spec.definition("Queue", schema=QueueSchema)
+    api_spec.definition("Operation", schema=OperationSchema)
 
     api_spec.definition("RefreshToken", schema=RefreshTokenSchema)
 
@@ -359,6 +369,14 @@ def _load_swagger(url_specs, title=None):
     # Finally, add documentation for all our published paths
     for url_spec in url_specs:
         api_spec.add_path(urlspec=url_spec)
+
+
+def _setup_operation_forwarding():
+    # Create a forwarder to push operations to child gardens
+    # TODO - This thing is another thread. Asyncing it would be nice
+    beer_garden.router.forward_processor = QueueListener(
+        action=beer_garden.router.forward
+    )
 
 
 def _setup_event_handling(ep_conn):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.router import Route_Class, Route_Type
+from brewtils.models import Operation
 
 
 class QueueAPI(BaseHandler):
@@ -27,11 +27,7 @@ class QueueAPI(BaseHandler):
           - Queues
         """
 
-        await self.client(
-            obj_id=queue_name,
-            route_class=Route_Class.QUEUE,
-            route_type=Route_Type.DELETE,
-        )
+        await self.client(Operation(operation_type="QUEUE_DELETE", args=[queue_name]))
 
         self.set_status(204)
 
@@ -55,9 +51,7 @@ class QueueListAPI(BaseHandler):
           - Queues
         """
 
-        response = await self.client(
-            route_class=Route_Class.QUEUE, route_type=Route_Type.READ
-        )
+        response = await self.client(Operation(operation_type="QUEUE_READ"))
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -75,6 +69,7 @@ class QueueListAPI(BaseHandler):
         tags:
           - Queues
         """
-        await self.client(route_class=Route_Class.QUEUE, route_type=Route_Type.DELETE)
+
+        await self.client(Operation(operation_type="QUEUE_DELETE_ALL"))
 
         self.set_status(204)

@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-from beer_garden.router import Route_Class, Route_Type
-
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
+from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
 
@@ -32,9 +31,7 @@ class GardenAPI(BaseHandler):
         """
 
         response = await self.client(
-            obj_id=garden_name,
-            route_class=Route_Class.GARDEN,
-            route_type=Route_Type.READ,
+            Operation(operation_type="GARDEN_READ", args=[garden_name])
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -63,11 +60,7 @@ class GardenAPI(BaseHandler):
         """
         await self.client.remove_garden(garden_name)
 
-        await self.client(
-            obj_id=garden_name,
-            route_class=Route_Class.GARDEN,
-            route_type=Route_Type.DELETE,
-        )
+        await self.client(Operation(operation_type="GARDEN_DELETE", args=[garden_name]))
         self.set_status(204)
 
     @authenticated(permissions=[Permissions.SYSTEM_UPDATE])
@@ -117,12 +110,15 @@ class GardenAPI(BaseHandler):
         """
 
         response = await self.client(
-            obj_id=garden_name,
-            brewtils_obj=SchemaParser.parse_patch(
-                self.request.decoded_body, from_string=True
-            ),
-            route_class=Route_Class.GARDEN,
-            route_type=Route_Type.UPDATE,
+            Operation(
+                operation_type="GARDEN_UPDATE",
+                args=[
+                    garden_name,
+                    SchemaParser.parse_patch(
+                        self.request.decoded_body, from_string=True
+                    ),
+                ],
+            )
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -165,14 +161,16 @@ class GardenAPI(BaseHandler):
         """
 
         response = await self.client(
-            obj_id=garden_name,
-            brewtils_obj=SchemaParser.parse_garden(
-                self.request.decoded_body, from_string=True
-            ),
-            route_class=Route_Class.GARDEN,
-            route_type=Route_Type.CREATE,
+            Operation(
+                operation_type="GARDEN_CREATE",
+                args=[
+                    garden_name,
+                    SchemaParser.parse_patch(
+                        self.request.decoded_body, from_string=True
+                    ),
+                ],
+            )
         )
-
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
