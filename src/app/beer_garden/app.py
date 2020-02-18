@@ -257,6 +257,7 @@ class Application(StoppableThread):
 
         event_manager.register(QueueListener(action=local_callbacks))
         event_manager.register(QueueListener(action=downstream_callbacks))
+        event_manager.register(QueueListener(action=beer_garden.router.forward))
 
         return event_manager
 
