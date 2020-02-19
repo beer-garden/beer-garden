@@ -124,8 +124,35 @@ class GardenAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
+
+class GardenListAPI(BaseHandler):
+    @authenticated(permissions=[Permissions.SYSTEM_READ])
+    async def get(self):
+        """
+        ---
+        summary: Retrieve a list of Gardens
+        responses:
+          200:
+            description: Garden with the given garden_name
+            schema:
+              type: array
+              items:
+                $ref: '#/definitions/Garden'
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Garden
+        """
+
+        response = await self.client(Operation(operation_type="GARDEN_READ_ALL"))
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(response)
+
     @authenticated(permissions=[Permissions.SYSTEM_CREATE])
-    async def post(self, garden_name):
+    async def post(self):
         """
         ---
         summary: Create a new Garden or update an existing Garden
@@ -133,21 +160,12 @@ class GardenAPI(BaseHandler):
             If the Garden does not exist it will be created. If the Garden
             already exists it will be updated (assuming it passes validation).
         parameters:
-          - name: garden_name
-            in: path
-            required: true
-            description: Garden to use
-            type: string
-          - name: garden-body
+          - name: garden
             in: body
-            description: The Garden definition to create / update
+            description: The Garden definition to create
             schema:
               $ref: '#/definitions/Garden'
         responses:
-          200:
-            description: An existing Garden has been updated
-            schema:
-              $ref: '#/definitions/Garden'
           201:
             description: A new Garden has been created
             schema:
@@ -159,18 +177,17 @@ class GardenAPI(BaseHandler):
         tags:
           - Garden
         """
-
         response = await self.client(
             Operation(
                 operation_type="GARDEN_CREATE",
                 args=[
-                    garden_name,
-                    SchemaParser.parse_patch(
+                    SchemaParser.parse_garden(
                         self.request.decoded_body, from_string=True
-                    ),
+                    )
                 ],
             )
         )
+
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

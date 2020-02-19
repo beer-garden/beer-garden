@@ -689,9 +689,9 @@ class Garden(MongoModel, Document):
     name = StringField(required=True, default="default")
     status = StringField(default="INITIALIZING")
     status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
+    namespaces = ListField()
     connection_type = StringField()
     connection_params = DictField()
-    remote_username = StringField()
     namespaces = ListField()
     systems = ListField()
 
@@ -702,15 +702,6 @@ class Garden(MongoModel, Document):
             {"name": "unique_index", "fields": ["name"], "unique": True}
         ],
     }
-
-    def clean(self):
-        """Validate before saving to the database"""
-
-        if self.status not in BrewtilsInstance.INSTANCE_STATUSES:
-            raise ModelValidationError(
-                "Can not save Instance %s: Invalid status '%s' "
-                "provided." % (self.name, self.status)
-            )
 
 
 class SystemGardenMapping(MongoModel, Document):

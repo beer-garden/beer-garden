@@ -61,6 +61,7 @@ route_functions = {
     "SYSTEM_DELETE": beer_garden.systems.remove_system,
     "GARDEN_CREATE": beer_garden.garden.create_garden,
     "GARDEN_READ": beer_garden.garden.get_garden,
+    "GARDEN_READ_ALL": beer_garden.garden.get_gardens,
     "GARDEN_UPDATE": beer_garden.garden.update_garden,
     "GARDEN_DELETE": beer_garden.garden.remove_garden,
     "LOG_READ": beer_garden.log.get_plugin_log_config,

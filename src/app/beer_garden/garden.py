@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from datetime import datetime
+from typing import List
 
 from brewtils.errors import ModelValidationError, PluginError
 from brewtils.models import Events, Garden, PatchOperation, System
@@ -18,10 +19,20 @@ def get_garden(garden_name: str) -> Garden:
         garden_name: The name of Garden
 
     Returns:
-        The Namespace
+        The Garden
 
     """
     return db.query_unique(Garden, name=garden_name)
+
+
+def get_gardens() -> List[Garden]:
+    """Retrieve list of all Gardens
+
+    Returns:
+        The Garden list
+
+    """
+    return db.query(Garden)
 
 
 def update_garden(garden_name: str, patch: PatchOperation) -> Garden:
