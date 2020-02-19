@@ -28,7 +28,7 @@ forward_processor = None
 System_Garden_Mapping = {}
 child_connections: Dict[str, Garden] = {
     "child": Garden(
-        garden_name="child",
+        name="child",
         connection_type="HTTP",
         connection_params={"public_fqdn": "localhost", "port": 2338},
     )
