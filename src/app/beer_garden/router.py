@@ -28,7 +28,7 @@ forward_processor = None
 System_Garden_Mapping = {}
 child_connections: Dict[str, Garden] = {
     "child": Garden(
-        garden_name="child",
+        name="child",
         connection_type="HTTP",
         connection_params={"public_fqdn": "localhost", "port": 2338},
     )
@@ -67,6 +67,7 @@ route_functions = {
     "SYSTEM_DELETE": beer_garden.systems.remove_system,
     "GARDEN_CREATE": beer_garden.garden.create_garden,
     "GARDEN_READ": beer_garden.garden.get_garden,
+    "GARDEN_READ_ALL": beer_garden.garden.get_gardens,
     "GARDEN_UPDATE": beer_garden.garden.update_garden,
     "GARDEN_DELETE": beer_garden.garden.remove_garden,
     "LOG_READ": beer_garden.log.get_plugin_log_config,

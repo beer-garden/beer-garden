@@ -186,6 +186,7 @@ def _setup_tornado_app():
         (rf"{prefix}api/v1/tokens/?", v1.token.TokenListAPI),
         (rf"{prefix}api/v1/admin/?", v1.admin.AdminAPI),
         (rf"{prefix}api/v1/jobs/?", v1.job.JobListAPI),
+        (rf"{prefix}api/v1/garden/?", v1.garden.GardenListAPI),
         (rf"{prefix}api/v1/commands/(\w+)/?", v1.command.CommandAPI),
         (rf"{prefix}api/v1/instances/(\w+)/?", v1.instance.InstanceAPI),
         (rf"{prefix}api/v1/requests/(\w+)/?", v1.request.RequestAPI),
