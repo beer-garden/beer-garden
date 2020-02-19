@@ -82,7 +82,7 @@ def system_mapping_callback(event: Event) -> None:
     """
 
     if event.name in Events.SYSTEM_CREATED.name:
-        beer_garden.garden.garden_add_namespace(event.payload, event.garden)
+        beer_garden.garden.garden_add_system(event.payload, event.garden)
 
         # Caches routing information
         beer_garden.router.update_system_mapping(event.payload, event.garden)

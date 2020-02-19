@@ -21,7 +21,7 @@ def get_garden(garden_name: str) -> Garden:
         The Namespace
 
     """
-    return db.query_unique(Garden, garden_name=garden_name)
+    return db.query_unique(Garden, name=garden_name)
 
 
 def update_garden(garden_name: str, patch: PatchOperation) -> Garden:
@@ -62,7 +62,7 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
     Returns:
         The updated Garden
     """
-    garden = db.query_unique(Garden, garden_name=garden_name)
+    garden = db.query_unique(Garden, name=garden_name)
     garden.status = new_status
     garden.status_info["heartbeat"] = datetime.utcnow()
 
@@ -82,7 +82,7 @@ def remove_garden(garden_name: str) -> None:
             None
 
         """
-    garden = db.query_unique(Garden, garden_name=garden_name)
+    garden = db.query_unique(Garden, name=garden_name)
     db.delete(garden)
 
 
@@ -100,21 +100,23 @@ def create_garden(garden: Garden) -> Garden:
 
     garden.status = "INITIALIZING"
     garden.status_info["heartbeat"] = datetime.utcnow()
-    db_garden = db.query_unique(Garden, garden_name=garden.name)
+    db_garden = db.query_unique(Garden, name=garden.name)
     if db_garden:
         db_garden.status = garden.status
         db_garden.status_info = garden.status_info
         db_garden.connection_type = garden.connection_type
         db_garden.connection_params = garden.connection_params
+        db_garden.namespaces = garden.namespaces
+        db_garden.systems = garden.systems
 
-        db.update(garden)
+        db.update(db_garden)
     else:
         db.create(garden)
 
     return garden
 
 
-def garden_add_namespace(system: System, garden_name: str):
+def garden_add_system(system: System, garden_name: str):
     garden = get_garden(garden_name)
 
     if garden is None:
@@ -122,10 +124,14 @@ def garden_add_namespace(system: System, garden_name: str):
 
     if system.namespace not in garden.namespaces:
         garden.namespaces.append(system.namespace)
-        update_garden(garden)
+
+    if str(system) not in garden.systems:
+        garden.systems.append(str(system))
+
+    update_garden(garden)
 
 
 @publish_event(Events.GARDEN_UPDATED)
 def update_garden(garden: Garden):
     db.update(garden)
-
+    return garden

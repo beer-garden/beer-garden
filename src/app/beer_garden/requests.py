@@ -92,7 +92,7 @@ class RequestValidator(object):
         :raises ModelValidationError: There is no system that corresponds to this Request
         """
         system = db.query_unique(
-            System, name=request.system, version=request.system_version
+            System, namespace=request.namespace, name=request.system, version=request.system_version
         )
         if system is None:
             raise ModelValidationError(

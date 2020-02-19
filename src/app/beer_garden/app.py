@@ -182,9 +182,10 @@ class Application(StoppableThread):
         beer_garden.router.forward_processor.start()
 
         self.logger.debug("Setting up local garden information")
-        beer_garden.garden.create_garden(Garden(
-            name=beer_garden.config.get("garden.name")
-        ))
+        if beer_garden.garden.get_garden(beer_garden.config.get("garden.name")) is None:
+            beer_garden.garden.create_garden(Garden(
+                name=beer_garden.config.get("garden.name")
+            ))
 
         self.logger.debug("Creating and starting entry points...")
         self.entry_manager.create_all()

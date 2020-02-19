@@ -284,26 +284,10 @@ def get_system_mapping(system=None, name_space=None, version=None, name=None):
 
     """
     if system:
-        mapping = System_Garden_Mapping.get(str(system), None)
-        if mapping is None:
-            # @ TODO Integrate the garden mapping
-            # mapping = beer_garden.system.get_garden_mapping(system.id)
-            # System_Garden_Mapping[str(system)] = mapping
-            pass
-        return mapping
+        return System_Garden_Mapping.get(str(system), None)
     else:
         system_str = "%s:%s-%s" % (name_space, name, version)
-        mapping = System_Garden_Mapping.get(system_str, None)
-        if mapping is None:
-            systems = beer_garden.systems.get_systems(
-                name_space=name_space, name=name, version=version
-            )
-            if len(systems) == 1:
-                # @ TODO Integrate the garden mapping
-                # mapping = beer_garden.system.get_garden_mapping(systems[0].id)
-                # System_Garden_Mapping[system_str] = mapping
-                pass
-        return mapping
+        return System_Garden_Mapping.get(system_str, None)
 
 
 def update_system_mapping(system: brewtils.models.System, garden_name: str):

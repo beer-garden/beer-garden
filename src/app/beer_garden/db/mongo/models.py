@@ -686,18 +686,20 @@ class Job(MongoModel, Document):
 class Garden(MongoModel, Document):
     brewtils_model = brewtils.models.Garden
 
-    garden_name = StringField(required=True, default="default")
+    name = StringField(required=True, default="default")
     status = StringField(default="INITIALIZING")
     status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
     connection_type = StringField()
     connection_params = DictField()
     remote_username = StringField()
+    namespaces = ListField()
+    systems = ListField()
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
         "index_background": True,
         "indexes": [
-            {"name": "unique_index", "fields": ["garden_name"], "unique": True}
+            {"name": "unique_index", "fields": ["name"], "unique": True}
         ],
     }
 
