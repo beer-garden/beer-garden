@@ -20,8 +20,12 @@ from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.events import publish
-from beer_garden.events.handlers import local_callbacks, downstream_callbacks, \
-    system_mapping_callback, garden_mapping_callback
+from beer_garden.events.handlers import (
+    local_callbacks,
+    downstream_callbacks,
+    system_mapping_callback,
+    garden_mapping_callback,
+)
 from beer_garden.events.processors import (
     FanoutProcessor,
     HttpEventProcessor,
@@ -183,9 +187,9 @@ class Application(StoppableThread):
 
         self.logger.debug("Setting up local garden information")
         if beer_garden.garden.get_garden(beer_garden.config.get("garden.name")) is None:
-            beer_garden.garden.create_garden(Garden(
-                name=beer_garden.config.get("garden.name")
-            ))
+            beer_garden.garden.create_garden(
+                Garden(name=beer_garden.config.get("garden.name"))
+            )
 
         self.logger.debug("Creating and starting entry points...")
         self.entry_manager.create_all()

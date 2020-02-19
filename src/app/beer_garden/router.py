@@ -316,4 +316,3 @@ def remove_system_mapping(system: brewtils.models.System):
 
     """
     System_Garden_Mapping.pop(str(system), None)
-

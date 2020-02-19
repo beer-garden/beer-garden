@@ -131,7 +131,9 @@ def garden_add_system(system: System, garden_name: str):
     garden = get_garden(garden_name)
 
     if garden is None:
-        raise PluginError(f"Garden '{garden_name}' does not exist, unable to map '{str(system)}")
+        raise PluginError(
+            f"Garden '{garden_name}' does not exist, unable to map '{str(system)}"
+        )
 
     if system.namespace not in garden.namespaces:
         garden.namespaces.append(system.namespace)

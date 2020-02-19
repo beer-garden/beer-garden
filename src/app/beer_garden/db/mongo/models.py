@@ -698,9 +698,7 @@ class Garden(MongoModel, Document):
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
         "index_background": True,
-        "indexes": [
-            {"name": "unique_index", "fields": ["name"], "unique": True}
-        ],
+        "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
     }
 
 

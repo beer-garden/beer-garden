@@ -57,10 +57,10 @@ def downstream_callbacks(event: Event) -> None:
                 db.create(event.payload)
 
             elif event.name in (
-                    Events.REQUEST_STARTED.name,
-                    Events.REQUEST_COMPLETED.name,
-                    Events.SYSTEM_UPDATED.name,
-                    Events.INSTANCE_UPDATED.name,
+                Events.REQUEST_STARTED.name,
+                Events.REQUEST_COMPLETED.name,
+                Events.SYSTEM_UPDATED.name,
+                Events.INSTANCE_UPDATED.name,
             ):
                 db.update(event.payload)
 
