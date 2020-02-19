@@ -20,7 +20,8 @@ from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.events import publish
-from beer_garden.events.handlers import local_callbacks, downstream_callbacks
+from beer_garden.events.handlers import local_callbacks, downstream_callbacks, \
+    system_mapping_callback, garden_mapping_callback
 from beer_garden.events.processors import (
     FanoutProcessor,
     HttpEventProcessor,
@@ -180,6 +181,11 @@ class Application(StoppableThread):
         self.logger.debug("Starting forwarding processor...")
         beer_garden.router.forward_processor.start()
 
+        self.logger.debug("Setting up local garden information")
+        beer_garden.garden.create_garden(Garden(
+            name=beer_garden.config.get("garden.name")
+        ))
+
         self.logger.debug("Creating and starting entry points...")
         self.entry_manager.create_all()
         self.entry_manager.start()
@@ -257,6 +263,8 @@ class Application(StoppableThread):
 
         event_manager.register(QueueListener(action=local_callbacks))
         event_manager.register(QueueListener(action=downstream_callbacks))
+        event_manager.register(QueueListener(action=system_mapping_callback))
+        event_manager.register(QueueListener(action=garden_mapping_callback))
 
         return event_manager
 

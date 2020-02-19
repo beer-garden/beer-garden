@@ -2,8 +2,8 @@
 import logging
 from datetime import datetime
 
-from brewtils.errors import ModelValidationError
-from brewtils.models import Events, Garden, PatchOperation
+from brewtils.errors import ModelValidationError, PluginError
+from brewtils.models import Events, Garden, PatchOperation, System
 
 import beer_garden.db.api as db
 from beer_garden.events import publish_event
@@ -50,7 +50,6 @@ def update_garden(garden_name: str, patch: PatchOperation) -> Garden:
     return garden
 
 
-@publish_event(Events.GARDEN_UPDATED)
 def update_garden_status(garden_name: str, new_status: str) -> Garden:
     """Update an Garden status.
 
@@ -67,7 +66,7 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
     garden.status = new_status
     garden.status_info["heartbeat"] = datetime.utcnow()
 
-    garden = db.update(garden)
+    update_garden(garden)
     logger.info("Downstream Namespace " + garden_name + " is now " + new_status)
     return garden
 
@@ -101,15 +100,32 @@ def create_garden(garden: Garden) -> Garden:
 
     garden.status = "INITIALIZING"
     garden.status_info["heartbeat"] = datetime.utcnow()
-    db_garden = db.query_unique(Garden, garden_name=garden.garden_name)
+    db_garden = db.query_unique(Garden, garden_name=garden.name)
     if db_garden:
         db_garden.status = garden.status
         db_garden.status_info = garden.status_info
         db_garden.connection_type = garden.connection_type
         db_garden.connection_params = garden.connection_params
 
-        garden = db.update(db_garden)
+        db.update(garden)
     else:
-        garden = db.create(garden)
+        db.create(garden)
 
     return garden
+
+
+def garden_add_namespace(system: System, garden_name: str):
+    garden = get_garden(garden_name)
+
+    if garden is None:
+        raise PluginError(f"Garden '{garden_name}' does not exist, unable to map '{str(system)}")
+
+    if system.namespace not in garden.namespaces:
+        garden.namespaces.append(system.namespace)
+        update_garden(garden)
+
+
+@publish_event(Events.GARDEN_UPDATED)
+def update_garden(garden: Garden):
+    db.update(garden)
+
