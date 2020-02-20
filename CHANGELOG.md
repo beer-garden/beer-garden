@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+## 2.4.15
+2/20/20
+Brew-view 2.4.19, Bartender 2.4.6, BG-utils 2.4.10
+
+#### Bug Fixes
+- Start and end dates are correctly applied to new interval jobs (#431)
+
 ## 2.4.14
 1/30/20
 Brew-view 2.4.18, Bartender 2.4.6, BG-utils 2.4.9
