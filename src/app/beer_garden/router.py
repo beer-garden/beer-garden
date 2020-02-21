@@ -26,13 +26,7 @@ routable_operations = ["INSTANCE_START", "INSTANCE_STOP", "REQUEST_CREATE"]
 forward_processor = None
 
 System_Garden_Mapping = {}
-child_connections: Dict[str, Garden] = {
-    "child": Garden(
-        name="child",
-        connection_type="HTTP",
-        connection_params={"public_fqdn": "localhost", "port": 2338},
-    )
-}
+child_connections = dict()
 
 
 class RoutableGardenName(Enum):
@@ -250,30 +244,30 @@ def get_garden_connection(garden_name):
     return connection
 
 
-def update_garden_connection(connection):
+def update_garden_connection(garden: Garden):
     """
     Caches the Garden Connection Information
 
     Args:
-        connection:
+        garden:
 
     Returns:
 
     """
-    child_connections[connection.garden_name] = connection
+    child_connections[garden.name] = garden
 
 
-def remove_garden_connection(connection):
+def remove_garden_connection(garden: Garden):
     """
     Removes garden from the cache
 
     Args:
-        connection:
+        garden:
 
     Returns:
 
     """
-    child_connections.pop(connection.garden_name, None)
+    child_connections.pop(garden.name, None)
 
 
 def get_system_mapping(system=None, name_space=None, version=None, name=None):
@@ -291,29 +285,13 @@ def get_system_mapping(system=None, name_space=None, version=None, name=None):
 
     """
     if system:
-        mapping = System_Garden_Mapping.get(str(system), None)
-        if mapping is None:
-            # @ TODO Integrate the garden mapping
-            # mapping = beer_garden.system.get_garden_mapping(system.id)
-            # System_Garden_Mapping[str(system)] = mapping
-            pass
-        return mapping
+        return System_Garden_Mapping.get(str(system), None)
     else:
         system_str = "%s:%s-%s" % (name_space, name, version)
-        mapping = System_Garden_Mapping.get(system_str, None)
-        if mapping is None:
-            systems = beer_garden.systems.get_systems(
-                name_space=name_space, name=name, version=version
-            )
-            if len(systems) == 1:
-                # @ TODO Integrate the garden mapping
-                # mapping = beer_garden.system.get_garden_mapping(systems[0].id)
-                # System_Garden_Mapping[system_str] = mapping
-                pass
-        return mapping
+        return System_Garden_Mapping.get(system_str, None)
 
 
-def update_system_mapping(system, garden_name):
+def update_system_mapping(system: brewtils.models.System, garden_name: str):
     """
     Caches System to Garden information
 
@@ -338,125 +316,3 @@ def remove_system_mapping(system: brewtils.models.System):
 
     """
     System_Garden_Mapping.pop(str(system), None)
-
-
-# class RouteFunction(Enum):
-#     REQUEST_CREATE = beer_garden.requests.process_request
-#     REQUEST_UPDATE = beer_garden.requests.update_request
-#     REQUEST_READ = beer_garden.requests.get_request
-#     REQUEST_READ_ALL = beer_garden.requests.get_requests
-#
-#     COMMAND_READ = beer_garden.commands.get_command
-#     COMMAND_READ_ALL = beer_garden.commands.get_commands
-#
-#     INSTANCE_READ = beer_garden.instances.get_instance
-#     INSTANCE_DELETE = beer_garden.instances.remove_instance
-#     INSTANCE_UPDATE = beer_garden.plugin.update
-#     INSTANCE_INITIALIZE = beer_garden.plugin.initialize
-#     INSTANCE_START = beer_garden.plugin.start
-#     INSTANCE_STOP = beer_garden.plugin.stop
-#
-#     JOB_CREATE = beer_garden.scheduler.create_job
-#     JOB_READ = beer_garden.scheduler.get_job
-#     JOB_READ_ALL = beer_garden.scheduler.get_jobs
-#     JOB_PAUSE = beer_garden.scheduler.pause_job
-#     JOB_RESUME = beer_garden.scheduler.resume_job
-#     JOB_DELETE = beer_garden.scheduler.remove_job
-#
-#     SYSTEM_CREATE = beer_garden.systems.create_system
-#     SYSTEM_READ = beer_garden.systems.get_system
-#     SYSTEM_READ_ALL = beer_garden.systems.get_systems
-#     SYSTEM_UPDATE = beer_garden.systems.update_system
-#     SYSTEM_RESCAN = beer_garden.systems.rescan_system_directory
-#     SYSTEM_DELETE = beer_garden.systems.remove_system
-#
-#     GARDEN_CREATE = beer_garden.garden.create_garden
-#     GARDEN_READ = beer_garden.garden.get_garden
-#     GARDEN_UPDATE = beer_garden.garden.update_garden
-#     GARDEN_DELETE = beer_garden.garden.remove_garden
-#
-#     LOG_READ = beer_garden.log.get_plugin_log_config
-#     LOG_RELOAD = beer_garden.log.reload_plugin_log_config
-#
-#     QUEUE_READ = beer_garden.queues.get_all_queue_info
-#     QUEUE_DELETE = beer_garden.queues.clear_queue
-#     QUEUE_DELETE_ALL = beer_garden.queues.clear_all_queues
-#
-#
-# def forward_elgible_request(operation: Operation):
-#     """
-#     Preps Request object forwards prior to evaluation
-#
-#     Args:
-#         operation:
-#
-#     Returns:
-#
-#     """
-#     if operation.target_garden_name is None:
-#         for arg in operation.args:
-#             if isinstance(
-#                 arg, (brewtils.models.Request, brewtils.models.RequestTemplate)
-#             ):
-#                 operation.target_garden_name = get_system_mapping(
-#                     name_space=arg.namespace,
-#                     system=arg.system,
-#                     version=arg.system_version,
-#                 )
-#     return forward_elgible(operation)
-#
-#
-# def forward_elgible_instance(operation: brewtils.models.Operation):
-#     """
-#     Preps Instance object forwards prior to evaluation
-#
-#     Args:
-#         operation:
-#
-#     Returns:
-#
-#     """
-#     if operation.target_garden_name is None:
-#         for arg in operation.args:
-#
-#             if isinstance(arg, str):
-#                 instance = beer_garden.instances.get_instance(arg)
-#                 bg_systems = beer_garden.systems.get_systems(
-#                     instances__contains=instance
-#                 )
-#                 if len(bg_systems) == 1:
-#                     operation.target_garden_name = get_system_mapping(
-#                         system=bg_systems[0]
-#                     )
-#
-#             elif isinstance(arg, brewtils.models.Instance):
-#                 bg_systems = beer_garden.systems.get_systems(instances__contains=arg)
-#                 if len(bg_systems) == 1:
-#                     operation.target_garden_name = get_system_mapping(
-#                         system=bg_systems[0]
-#                     )
-#
-#     return forward_elgible(operation)
-#
-#
-# def forward_elgible_system(operation: brewtils.models.Operation):
-#     """
-#     Preps System object operations prior to evaluation
-#
-#     Args:
-#         operation:
-#
-#     Returns:
-#
-#     """
-#     if operation.target_garden_name is None:
-#         for arg in operation.args:
-#
-#             if isinstance(arg, str):
-#                 system = beer_garden.systems.get_system(arg)
-#                 operation.target_garden_name = get_system_mapping(system=system)
-#
-#             elif isinstance(arg, brewtils.models.System):
-#                 operation.target_garden_name = get_system_mapping(system=arg)
-#
-#     return forward_elgible(operation)
