@@ -25,11 +25,13 @@ export default function routeConfig($stateProvider, $urlRouterProvider, $locatio
           return UtilityService.getConfig().then(
             (response) => {
               angular.extend($rootScope.config, camelCaseKeys(response.data));
-
-              $rootScope.namespaces = _.concat(
-                $rootScope.config.namespaces.local,
-                $rootScope.config.namespaces.remote,
-              );
+            }
+          );
+        }],
+        namespaces: ['$rootScope', 'UtilityService', ($rootScope, UtilityService) => {
+          return UtilityService.getNamespaces().then(
+            (response) => {
+              $rootScope.namespaces = response.data;
             }
           );
         }],
