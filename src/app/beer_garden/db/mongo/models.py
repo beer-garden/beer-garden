@@ -408,7 +408,6 @@ class Request(MongoModel, Document):
                 )
 
 
-
 class System(MongoModel, Document):
     brewtils_model = brewtils.models.System
 

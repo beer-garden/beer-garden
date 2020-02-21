@@ -389,11 +389,11 @@ def replace_commands(
 
     return to_brewtils(mongo_system)
 
+
 def distinct_namespaces() -> List:
     namespaces = list()
 
-    single_namespace_models = [brewtils.models.Request,
-                               brewtils.models.System]
+    single_namespace_models = [brewtils.models.Request, brewtils.models.System]
 
     list_namespace_models = [brewtils.models.Garden]
 

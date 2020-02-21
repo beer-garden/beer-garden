@@ -20,11 +20,7 @@ class NamespaceAPI(BaseHandler):
           - Namespace
         """
 
-        response = await self.client(
-            Operation(operation_type="NAMESPACES_READ_ALL")
-        )
+        response = await self.client(Operation(operation_type="NAMESPACES_READ_ALL"))
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
-
-
