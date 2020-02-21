@@ -3,6 +3,7 @@ import logging
 from multiprocessing import Queue
 from queue import Empty
 
+from brewtils.models import Event
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.events
@@ -108,8 +109,9 @@ class HttpEventProcessor(QueueListener):
 
         self._ez_client = easy_client
 
-    def process(self, item):
+    def process(self, item: Event):
         try:
+            item.garden = beer_garden.config.get("garden.name")
             self._ez_client.publish_event(item)
         except Exception as ex:
             logger.exception(f"Error publishing EasyClient event: {ex}")
