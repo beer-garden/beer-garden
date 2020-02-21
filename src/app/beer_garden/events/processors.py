@@ -104,14 +104,16 @@ class FanoutProcessor(QueueListener):
 class HttpEventProcessor(QueueListener):
     """Publish events using an EasyClient"""
 
-    def __init__(self, easy_client=None, **kwargs):
+    def __init__(self, easy_client=None, skip_events=[], **kwargs):
         super().__init__(**kwargs)
 
         self._ez_client = easy_client
+        self.skip_events = skip_events
 
-    def process(self, item: Event):
+    def process(self, event: Event):
         try:
-            item.garden = beer_garden.config.get("garden.name")
-            self._ez_client.publish_event(item)
+            if event.name not in self.skip_events:
+                event.garden = beer_garden.config.get("garden.name")
+                self._ez_client.publish_event(event)
         except Exception as ex:
             logger.exception(f"Error publishing EasyClient event: {ex}")

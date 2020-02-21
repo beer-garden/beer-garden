@@ -265,7 +265,8 @@ class Application(StoppableThread):
                 bg_port=http_event.port,
                 ssl_enabled=http_event.ssl.enabled,
             )
-            event_manager.register(HttpEventProcessor(easy_client=easy_client))
+            skip_events = beer_garden.config.get("event.parent.skip_events")
+            event_manager.register(HttpEventProcessor(easy_client=easy_client, skip_events=skip_events))
 
         event_manager.register(QueueListener(action=local_callbacks))
         event_manager.register(QueueListener(action=downstream_callbacks))
