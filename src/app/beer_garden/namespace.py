@@ -1,7 +1,12 @@
+# -*- coding: utf-8 -*-
+from typing import List
+
+from brewtils.models import Garden, Request, System
+
 import beer_garden.db.api as db
 
 
-def get_namespaces():
+def get_namespaces() -> List[str]:
     """
     Get the distinct namespaces in the Garden
 
@@ -9,5 +14,8 @@ def get_namespaces():
         List
 
     """
-
-    return db.distinct_namespaces()
+    return list(
+        set(db.distinct(Request, "namespace"))
+        | set(db.distinct(System, "namespace"))
+        # set(db.distinct(Garden, "namespaces"))
+    )

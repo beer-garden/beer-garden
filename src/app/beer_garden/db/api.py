@@ -12,7 +12,7 @@ query_unique = beer_garden.db.mongo.api.query_unique
 query = beer_garden.db.mongo.api.query
 reload = beer_garden.db.mongo.api.reload
 replace_commands = beer_garden.db.mongo.api.replace_commands
-distinct_namespaces = beer_garden.db.mongo.api.distinct_namespaces
+distinct = beer_garden.db.mongo.api.distinct
 
 
 @publish_event(Events.DB_CREATE)

@@ -390,23 +390,5 @@ def replace_commands(
     return to_brewtils(mongo_system)
 
 
-def distinct_namespaces() -> List:
-    namespaces = list()
-
-    single_namespace_models = [brewtils.models.Request, brewtils.models.System]
-
-    list_namespace_models = [brewtils.models.Garden]
-
-    for model_class in single_namespace_models:
-        model = _model_map[model_class].objects
-        for namespace in model.distinct("namespace"):
-            if namespace not in namespaces:
-                namespaces.append(namespace)
-
-    for model_class in list_namespace_models:
-        model = _model_map[model_class].objects
-        for namespace in model.distinct("namespaces"):
-            if namespace not in namespaces:
-                namespaces.append(namespace)
-
-    return namespaces
+def distinct(brewtils_clazz: ModelItem, field: str) -> List:
+    return _model_map[brewtils_clazz].objects.distinct(field)
