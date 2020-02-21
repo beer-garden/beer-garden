@@ -17,6 +17,7 @@ import beer_garden.events
 import beer_garden.queue.api as queue
 import beer_garden.router
 import beer_garden.garden
+import beer_garden.namespace
 from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
@@ -188,9 +189,20 @@ class Application(StoppableThread):
 
         self.logger.debug("Setting up local garden information")
         if beer_garden.garden.get_garden(beer_garden.config.get("garden.name")) is None:
-            beer_garden.garden.create_garden(
-                Garden(name=beer_garden.config.get("garden.name"))
-            )
+            garden = Garden(name=beer_garden.config.get("garden.name"))
+
+            if beer_garden.config.get("event.parent.http.enabled"):
+                garden.connection_params = beer_garden.config.get(
+                    "event.parent.http.callback"
+                )
+                # TODO Flag to not send this
+                garden.connection_type = (
+                    "https"
+                    if beer_garden.config.get("event.parent.http.callback.ssl_enabled")
+                    else "http"
+                )
+
+            beer_garden.garden.create_garden(garden)
 
         self.logger.debug("Creating and starting entry points...")
         self.entry_manager.create_all()
@@ -206,13 +218,20 @@ class Application(StoppableThread):
         self.scheduler.start()
 
         self.logger.debug("Publishing startup event")
-        publish(
-            Event(
-                name=Events.GARDEN_STARTED.name, payload_type="Garden", payload=Garden()
-            )
-        )
+
+        self._publish_garden_change(Events.GARDEN_STARTED.name)
 
         self.logger.info("All set! Let me know if you need anything else!")
+
+    def _publish_garden_change(self, event_status):
+
+        garden = beer_garden.garden.get_garden(beer_garden.config.get("garden.name"))
+        garden.namespaces = beer_garden.namespace.get_namespaces()
+        garden.status = (
+            "INITIALIZING" if event_status == Events.GARDEN_STARTED.name else "STOPPED"
+        )
+
+        publish(Event(name=event_status, payload_type="Garden", payload=garden))
 
     def _shutdown(self):
         self.logger.info(
@@ -220,7 +239,7 @@ class Application(StoppableThread):
         )
 
         self.logger.debug("Publishing shutdown event")
-        publish(Event(name=Events.GARDEN_STOPPED.name))
+        self._publish_garden_change(Events.GARDEN_STOPPED.name)
 
         if self.scheduler.running:
             self.logger.debug("Pausing scheduler - no more jobs will be run")
