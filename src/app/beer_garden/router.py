@@ -70,7 +70,7 @@ route_functions = {
     "QUEUE_READ": beer_garden.queues.get_all_queue_info,
     "QUEUE_DELETE": beer_garden.queues.clear_queue,
     "QUEUE_DELETE_ALL": beer_garden.queues.clear_all_queues,
-    "NAMESPACES_READ_ALL": beer_garden.namespace.get_namespaces,
+    "NAMESPACE_READ_ALL": beer_garden.namespace.get_namespaces,
 }
 
 
