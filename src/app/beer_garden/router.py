@@ -26,7 +26,7 @@ routable_operations = ["INSTANCE_START", "INSTANCE_STOP", "REQUEST_CREATE"]
 forward_processor = None
 
 System_Garden_Mapping = {}
-child_connections: Dict[str, Garden] = dict()
+child_connections = dict()
 
 
 class RoutableGardenName(Enum):

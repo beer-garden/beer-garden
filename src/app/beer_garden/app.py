@@ -16,6 +16,7 @@ import beer_garden.db.api as db
 import beer_garden.events
 import beer_garden.queue.api as queue
 import beer_garden.router
+import beer_garden.garden
 from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
