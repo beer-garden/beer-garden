@@ -408,6 +408,7 @@ class Request(MongoModel, Document):
                 )
 
 
+
 class System(MongoModel, Document):
     brewtils_model = brewtils.models.System
 
@@ -692,7 +693,6 @@ class Garden(MongoModel, Document):
     namespaces = ListField()
     connection_type = StringField()
     connection_params = DictField()
-    namespaces = ListField()
     systems = ListField()
 
     meta = {
