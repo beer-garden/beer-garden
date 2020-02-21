@@ -14,8 +14,11 @@ def get_namespaces() -> List[str]:
         List
 
     """
-    return list(
-        set(db.distinct(Request, "namespace"))
-        | set(db.distinct(System, "namespace"))
-        # set(db.distinct(Garden, "namespaces"))
+    namespaces = set(
+        set(db.distinct(Request, "namespace")) | set(db.distinct(System, "namespace"))
     )
+
+    for garden in db.query(Garden, include_fields="namespaces"):
+        namespaces |= set(garden.namespaces)
+
+    return list(namespaces)
