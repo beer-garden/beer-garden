@@ -69,6 +69,7 @@ export default function systemService($rootScope, $http) {
           dereference_nested: options.dereferenceNested,
           include_fields: options.includeFields,
           exclude_fields: options.excludeFields,
+          namespace: options.namespace,
         },
         headers: headers,
       });
