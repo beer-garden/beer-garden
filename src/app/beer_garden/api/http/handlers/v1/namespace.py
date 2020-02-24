@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
-import json
 
-from brewtils.errors import ModelValidationError
-from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.models import Operation
 
+from beer_garden.api.http.base_handler import BaseHandler
 
-class NamespaceAPI(BaseHandler):
+
+class NamespaceListAPI(BaseHandler):
     async def get(self):
         """
         ---
-        summary: Get the List of Name Spaces on the Garden
+        summary: Get a list of all namespaces known to this garden
         responses:
           200:
-            description: List of Name Spaces on Garden
+            description: List of Namespaces
           50x:
             $ref: '#/definitions/50xError'
         tags:

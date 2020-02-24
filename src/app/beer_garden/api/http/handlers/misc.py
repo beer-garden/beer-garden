@@ -9,10 +9,6 @@ logger = logging.getLogger(__name__)
 class ConfigHandler(BaseHandler):
     async def get(self):
         """Subset of configuration options that the frontend needs"""
-        # TODO - Get these for reals
-        local_namespace = "default"
-        remote_namespaces = []
-
         app_config = beer_garden.config.get("application")
         http_config = beer_garden.config.get("entry.http")
         metrics_config = beer_garden.config.get("metrics")
@@ -26,7 +22,6 @@ class ConfigHandler(BaseHandler):
             "metrics_url": metrics_config.prometheus.url,
             "auth_enabled": auth_config.enabled,
             "guest_login_enabled": auth_config.guest_login_enabled,
-            "namespaces": {"local": local_namespace, "remote": remote_namespaces},
         }
 
         self.write(configs)
