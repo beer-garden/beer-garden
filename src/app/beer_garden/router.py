@@ -17,6 +17,7 @@ import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
+import beer_garden.namespace
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 
 # These are the operations that we will forward to child gardens
@@ -69,6 +70,7 @@ route_functions = {
     "QUEUE_READ": beer_garden.queues.get_all_queue_info,
     "QUEUE_DELETE": beer_garden.queues.clear_queue,
     "QUEUE_DELETE_ALL": beer_garden.queues.clear_all_queues,
+    "NAMESPACE_READ_ALL": beer_garden.namespace.get_namespaces,
 }
 
 

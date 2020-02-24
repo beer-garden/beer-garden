@@ -6,7 +6,7 @@ adminSystemController.$inject = [
   '$rootScope',
   '$interval',
   '$http',
-  '$state',
+  '$stateParams',
   'localStorageService',
   'SystemService',
   'InstanceService',
@@ -17,11 +17,12 @@ adminSystemController.$inject = [
 
 /**
  * adminSystemController - System management controller.
- * @param  {$scope} $scope          Angular's $scope object.
- * @param  {$rootScope} $rootScope  Angular's $rootScope object.
- * @param  {$interval} $interval    Angular's $interval object.
- * @param  {$http} $http            Angular's $http object.
- * @param  {localStorageService} localStorageService Storage service
+ * @param  {Object} $scope          Angular's $scope object.
+ * @param  {Object} $rootScope      Angular's $rootScope object.
+ * @param  {Object} $interval       Angular's $interval object.
+ * @param  {Object} $http           Angular's $http object.
+ * @param  {Object} $stateParams    Angular's $stateParams object.
+ * @param  {Object} localStorageService Storage service
  * @param  {Object} SystemService   Beer-Garden's system service object.
  * @param  {Object} InstanceService Beer-Garden's instance service object.
  * @param  {Object} UtilityService  Beer-Garden's utility service object.
@@ -33,7 +34,7 @@ export default function adminSystemController(
     $rootScope,
     $interval,
     $http,
-    $state,
+    $stateParams,
     localStorageService,
     SystemService,
     InstanceService,
@@ -148,9 +149,10 @@ export default function adminSystemController(
   }
 
   let loadSystems = function() {
-    SystemService.getSystems(
-      {includeFields: 'id,name,display_name,version,instances'}
-    ).then(
+    SystemService.getSystems({
+      includeFields: 'id,name,display_name,version,instances',
+      namespace: $stateParams.namespace,
+    }).then(
       $scope.successCallback,
       $scope.failureCallback
     );
