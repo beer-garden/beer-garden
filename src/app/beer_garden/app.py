@@ -14,20 +14,15 @@ import beer_garden
 import beer_garden.api
 import beer_garden.db.api as db
 import beer_garden.events
-import beer_garden.queue.api as queue
-import beer_garden.router
 import beer_garden.garden
 import beer_garden.namespace
+import beer_garden.queue.api as queue
+import beer_garden.router
 from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.events import publish
-from beer_garden.events.handlers import (
-    local_callbacks,
-    downstream_callbacks,
-    system_mapping_callback,
-    garden_mapping_callback,
-)
+from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.processors import (
     FanoutProcessor,
     HttpEventProcessor,
@@ -276,6 +271,9 @@ class Application(StoppableThread):
         # Forward all events down into the entry points
         event_manager.register(self.entry_manager, start=False)
 
+        # Register the callback processor
+        event_manager.register(QueueListener(action=garden_callbacks))
+
         # If necessary send all events to the parent garden
         http_event = beer_garden.config.get("event.parent.http")
         if http_event.enable:
@@ -285,11 +283,6 @@ class Application(StoppableThread):
                 ssl_enabled=http_event.ssl.enabled,
             )
             event_manager.register(HttpEventProcessor(easy_client=easy_client))
-
-        event_manager.register(QueueListener(action=local_callbacks))
-        event_manager.register(QueueListener(action=downstream_callbacks))
-        event_manager.register(QueueListener(action=system_mapping_callback))
-        event_manager.register(QueueListener(action=garden_mapping_callback))
 
         return event_manager
 
