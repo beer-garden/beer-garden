@@ -1,9 +1,7 @@
-from enum import Enum
 from typing import Dict
 
-import brewtils.models
 import requests
-from brewtils.models import Garden, Operation
+from brewtils.models import Garden, Operation, System
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden
@@ -12,12 +10,12 @@ import beer_garden.db.api as db
 import beer_garden.garden
 import beer_garden.instances
 import beer_garden.log
+import beer_garden.namespace
 import beer_garden.plugin
 import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
-import beer_garden.namespace
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 
 # These are the operations that we will forward to child gardens
@@ -26,13 +24,9 @@ routable_operations = ["INSTANCE_START", "INSTANCE_STOP", "REQUEST_CREATE"]
 # Processor that will be used for forwarding
 forward_processor = None
 
-System_Garden_Mapping = {}
-child_connections = dict()
-
-
-class RoutableGardenName(Enum):
-    PARENT = 1
-    CHILD = 2
+# Dict that will be used to determine which garden to use
+garden_map: Dict[str, Garden] = {}
+child_connections = {}
 
 
 route_functions = {
@@ -83,9 +77,7 @@ def route(operation: Operation):
     Returns:
 
     """
-    # If no source garden is defined set it to the local garden
-    if operation.source_garden_name is None:
-        operation.source_garden_name = _local_garden()
+    operation = _pre_route(operation)
 
     if should_forward(operation):
         return initiate_forward(operation)
@@ -93,8 +85,46 @@ def route(operation: Operation):
     return execute_local(operation)
 
 
-def should_forward(operation: brewtils.models.Operation) -> bool:
-    """Routing logic to determine if a request should be forwarded
+def _pre_route(operation: Operation):
+    """
+
+    Args:
+        operation:
+
+    Returns:
+
+    """
+    # If no source garden is defined set it to the local garden
+    if operation.source_garden_name is None:
+        operation.source_garden_name = _local_garden()
+
+    if operation.target_garden_name is None:
+        if operation.operation_type == "REQUEST_CREATE":
+            operation.target_garden_name = _garden_for_request(operation).name
+
+    return operation
+
+
+def _garden_for_request(operation: Operation):
+    """Determine target garden for a REQUEST_CREATE
+
+    Args:
+        operation:
+
+    Returns:
+
+    """
+    request = operation.model
+
+    return get_system_mapping(
+        namespace=request.namespace,
+        system=request.system,
+        version=request.system_version,
+    )
+
+
+def should_forward(operation: Operation) -> bool:
+    """Routing logic to determine if an operation should be forwardedl
 
     Args:
         operation:
@@ -104,7 +134,6 @@ def should_forward(operation: brewtils.models.Operation) -> bool:
     """
     return (
         operation.target_garden_name is not None
-        and operation.source_garden_name != RoutableGardenName.CHILD.name
         and operation.target_garden_name != operation.source_garden_name
         and operation.target_garden_name != _local_garden()
         and operation.operation_type in routable_operations
@@ -272,44 +301,42 @@ def remove_garden_connection(garden: Garden):
     child_connections.pop(garden.name, None)
 
 
-def get_system_mapping(system=None, name_space=None, version=None, name=None):
-    """
-    Gets the cached Garden mapping information, if it is not cached, it will add it to
-    the cache
+def get_system_mapping(system=None, namespace=None, version=None, name=None):
+    """Retrieve a garden from the garden map
 
     Args:
         system:
-        name_space:
+        namespace:
         version:
         name:
 
     Returns:
 
     """
-    if system:
-        return System_Garden_Mapping.get(str(system), None)
-    else:
-        system_str = "%s:%s-%s" % (name_space, name, version)
-        return System_Garden_Mapping.get(system_str, None)
+    system = system or System(namespace=namespace, name=name, version=version)
+
+    garden = garden_map.get(str(system))
+    if garden is None:
+        raise ValueError("NO GARDEN SUCKA")
+
+    return garden
 
 
-def update_system_mapping(system: brewtils.models.System, garden_name: str):
-    """
-    Caches System to Garden information
+def update_system_mapping(system: System, garden: Garden):
+    """Adds or updates a system in the garden map
 
     Args:
         system:
-        garden_name:
+        garden:
 
     Returns:
 
     """
-    System_Garden_Mapping[str(system)] = garden_name
+    garden_map[str(system)] = garden
 
 
-def remove_system_mapping(system: brewtils.models.System):
-    """
-    Removes System mapping from cache
+def remove_system_mapping(system: System):
+    """Removes a system from garden map
 
     Args:
         system:
@@ -317,4 +344,7 @@ def remove_system_mapping(system: brewtils.models.System):
     Returns:
 
     """
-    System_Garden_Mapping.pop(str(system), None)
+    try:
+        garden_map.pop(str(system))
+    except KeyError:
+        raise ValueError("System not in garden map")

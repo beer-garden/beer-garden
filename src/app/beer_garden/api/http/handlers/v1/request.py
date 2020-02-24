@@ -361,7 +361,6 @@ class RequestListAPI(BaseHandler):
         response = await self.client(
             Operation(
                 operation_type="REQUEST_CREATE",
-                # target_garden_name="child",
                 model=request_model,
                 model_type="Request",
                 kwargs={"wait_timeout": wait_timeout},
