@@ -429,7 +429,7 @@ class System(MongoModel, Document):
         "indexes": [
             {
                 "name": "unique_index",
-                "fields": ["name", "version", "namespace"],
+                "fields": ["namespace", "name", "version"],
                 "unique": True,
             }
         ],
