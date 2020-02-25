@@ -47,6 +47,7 @@ class Application(StoppableThread):
     clients = None
     helper_threads = None
     entry_manager = None
+    shared_manager = None
 
     def __init__(self):
         super(Application, self).__init__(
@@ -183,21 +184,19 @@ class Application(StoppableThread):
         beer_garden.router.forward_processor.start()
 
         self.logger.debug("Setting up local garden information")
-        if beer_garden.garden.get_garden(beer_garden.config.get("garden.name")) is None:
-            garden = Garden(name=beer_garden.config.get("garden.name"))
-
-            if beer_garden.config.get("event.parent.http.enabled"):
-                garden.connection_params = beer_garden.config.get(
-                    "event.parent.http.callback"
-                )
-                # TODO Flag to not send this
-                garden.connection_type = (
-                    "https"
-                    if beer_garden.config.get("event.parent.http.callback.ssl_enabled")
-                    else "http"
-                )
-
-            beer_garden.garden.create_garden(garden)
+        # TODO - move this to another function
+        garden = Garden(name=beer_garden.config.get("garden.name"))
+        if beer_garden.config.get("event.parent.http.enable"):
+            garden.connection_params = beer_garden.config.get(
+                "event.parent.http.callback"
+            )
+            # TODO Flag to not send this
+            garden.connection_type = (
+                "https"
+                if beer_garden.config.get("event.parent.http.callback.ssl_enabled")
+                else "http"
+            )
+        beer_garden.garden.create_garden(garden)
 
         self.logger.debug("Creating and starting entry points...")
         self.entry_manager.create_all()
