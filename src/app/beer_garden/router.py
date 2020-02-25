@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 
 import requests
 from brewtils.models import Garden, Operation, System
@@ -26,7 +26,9 @@ forward_processor = None
 
 # Dict that will be used to determine which garden to use
 garden_map: Dict[str, Garden] = {}
-child_connections = {}
+
+# List of known gardens
+gardens: List[Garden] = []
 
 
 route_functions = {
@@ -83,44 +85,6 @@ def route(operation: Operation):
         return initiate_forward(operation)
 
     return execute_local(operation)
-
-
-def _pre_route(operation: Operation):
-    """
-
-    Args:
-        operation:
-
-    Returns:
-
-    """
-    # If no source garden is defined set it to the local garden
-    if operation.source_garden_name is None:
-        operation.source_garden_name = _local_garden()
-
-    if operation.target_garden_name is None:
-        if operation.operation_type == "REQUEST_CREATE":
-            operation.target_garden_name = _garden_for_request(operation).name
-
-    return operation
-
-
-def _garden_for_request(operation: Operation):
-    """Determine target garden for a REQUEST_CREATE
-
-    Args:
-        operation:
-
-    Returns:
-
-    """
-    request = operation.model
-
-    return get_system_mapping(
-        namespace=request.namespace,
-        system=request.system,
-        version=request.system_version,
-    )
 
 
 def should_forward(operation: Operation) -> bool:
@@ -189,7 +153,11 @@ def forward(operation: Operation):
         RoutingRequestException: Could not determine a route to child
         UnknownGardenException: The specified target garden is unknown
     """
-    target_garden = child_connections.get(operation.target_garden_name)
+    target_garden = None
+    for garden in gardens:
+        if garden.name == operation.target_garden_name:
+            target_garden = garden
+            break
 
     if not target_garden:
         raise UnknownGardenException(
@@ -202,6 +170,63 @@ def forward(operation: Operation):
         raise RoutingRequestException(
             f"Unknown connection type {target_garden.connection_type}"
         )
+
+
+def add_garden(garden: Garden):
+    # Mark all systems as reachable by this garden
+    for system_name in garden.systems:
+        garden_map[system_name] = garden
+
+    # Add to the garden listing
+    gardens.append(garden)
+
+
+def remove_garden(garden: Garden):
+    # Remove all systems with this garden
+    for system_name, target_garden in garden_map.values():
+        if target_garden == garden:
+            del garden_map[system_name]
+
+    # Remove from the garden listing
+    gardens.remove(garden)
+
+
+def _pre_route(operation: Operation):
+    """
+
+    Args:
+        operation:
+
+    Returns:
+
+    """
+    # If no source garden is defined set it to the local garden
+    if operation.source_garden_name is None:
+        operation.source_garden_name = _local_garden()
+
+    if operation.target_garden_name is None:
+        if operation.operation_type == "REQUEST_CREATE":
+            operation.target_garden_name = _garden_for_request(operation).name
+
+    return operation
+
+
+def _garden_for_request(operation: Operation):
+    """Determine target garden for a REQUEST_CREATE
+
+    Args:
+        operation:
+
+    Returns:
+
+    """
+    request = operation.model
+
+    return _determine_garden(
+        namespace=request.namespace,
+        system=request.system,
+        version=request.system_version,
+    )
 
 
 def _pre_forward(operation: Operation):
@@ -256,52 +281,7 @@ def _local_garden():
     return beer_garden.config.get("garden.name")
 
 
-def get_garden_connection(garden_name):
-    """
-    Reaches into the database to get the garden connection information
-
-    Args:
-        garden_name:
-
-    Returns:
-
-    """
-    connection = child_connections.get(garden_name, None)
-    if connection is None:
-        connection = beer_garden.garden.get_garden(garden_name)
-        child_connections[garden_name] = connection
-        pass
-
-    return connection
-
-
-def update_garden_connection(garden: Garden):
-    """
-    Caches the Garden Connection Information
-
-    Args:
-        garden:
-
-    Returns:
-
-    """
-    child_connections[garden.name] = garden
-
-
-def remove_garden_connection(garden: Garden):
-    """
-    Removes garden from the cache
-
-    Args:
-        garden:
-
-    Returns:
-
-    """
-    child_connections.pop(garden.name, None)
-
-
-def get_system_mapping(system=None, namespace=None, version=None, name=None):
+def _determine_garden(system=None, namespace=None, version=None, name=None):
     """Retrieve a garden from the garden map
 
     Args:
@@ -317,34 +297,6 @@ def get_system_mapping(system=None, namespace=None, version=None, name=None):
 
     garden = garden_map.get(str(system))
     if garden is None:
-        raise ValueError("NO GARDEN SUCKA")
+        raise ValueError("Unable to determine target garden")
 
     return garden
-
-
-def update_system_mapping(system: System, garden: Garden):
-    """Adds or updates a system in the garden map
-
-    Args:
-        system:
-        garden:
-
-    Returns:
-
-    """
-    garden_map[str(system)] = garden
-
-
-def remove_system_mapping(system: System):
-    """Removes a system from garden map
-
-    Args:
-        system:
-
-    Returns:
-
-    """
-    try:
-        garden_map.pop(str(system))
-    except KeyError:
-        raise ValueError("System not in garden map")

@@ -22,17 +22,17 @@ def garden_callbacks(event: Event) -> None:
         None
     """
 
-    if event.name in (Events.SYSTEM_CREATED.name, ):
+    if event.name in (Events.SYSTEM_CREATED.name,):
         beer_garden.garden.garden_add_system(event.payload, event.garden)
 
         # Caches routing information
         beer_garden.router.update_system_mapping(event.payload, event.garden)
 
     if event.name in (Events.GARDEN_CREATED.name, Events.GARDEN_STARTED.name):
-        beer_garden.router.update_garden_connection(event.payload)
+        beer_garden.router.add_garden(event.payload)
 
-    elif event.name in (Events.GARDEN_REMOVED.name, ):
-        beer_garden.router.remove_garden_connection(event.payload)
+    elif event.name in (Events.GARDEN_REMOVED.name,):
+        beer_garden.router.remove_garden(event.payload)
 
     # Subset of events we only care about if they originate from the local garden
     if event.garden == beer_garden.config.get("garden.name"):
