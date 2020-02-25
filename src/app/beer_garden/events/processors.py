@@ -19,7 +19,10 @@ class BaseProcessor(StoppableThread):
         self._action = action
 
     def process(self, item):
-        self._action(item)
+        try:
+            self._action(item)
+        except Exception as ex:
+            logger.exception(f"Error processing: {ex}")
 
 
 class QueueListener(BaseProcessor):
