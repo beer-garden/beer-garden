@@ -267,7 +267,7 @@ class Application(StoppableThread):
             )
             skip_events = beer_garden.config.get("event.parent.skip_events")
             event_manager.register(
-                HttpEventProcessor(easy_client=easy_client, skip_events=skip_events)
+                HttpEventProcessor(easy_client=easy_client, black_list=skip_events)
             )
 
         event_manager.register(QueueListener(action=local_callbacks))
