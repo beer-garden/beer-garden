@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from mongoengine import DoesNotExist
+from mongoengine import DoesNotExist, NotUniqueError
 
 from beer_garden.db.mongo import models as mongo_models
 from brewtils import models as brewtils_models
@@ -54,59 +54,52 @@ def downstream_callbacks(event: Event) -> None:
     if event.garden != beer_garden.config.get("garden.name"):
         if event.error:
             logger.error(
-                f"Downstream error event ({event} : {event.payload}): {event.error_message}"
+                f"Downstream error event ({event} : {event.payload_type}: {event.payload}): {event.error_message}"
             )
             return
 
         if not event.payload_type:
             logger.error(
-                f"Unable to process event ({event} : {event.payload}): No Payload Type"
+                f"Unable to process event ({event} : {event.payload_type}: {event.payload}): No Payload Type"
             )
             return
 
-        # Grab the mongo DB model of the object
-        mongo_model_class_ = getattr(mongo_models, event.payload_type)
-        brewtils_model_class_ = getattr(brewtils_models, event.payload_type)
-
-        # Check model for unique fields
-        if mongo_model_class_._meta and mongo_model_class_._meta["indexes"]:
-
-            for index in mongo_model_class_._meta["indexes"]:
-                if index["unique"]:
-                    query_kwargs = {}
-                    for field in index["fields"]:
-                        query_kwargs[field] = getattr(event.payload, field)
-
-                    try:
-                        db_obj = db.query_unique(brewtils_model_class_, **query_kwargs)
-
-                        if db_obj and db_obj.id is not event.payload.id:
-                            logger.error(
-                                f"Unable to process ({event} : {event.payload}): Object already exists in database"
-                            )
-                            return
-
-                    except DoesNotExist:
-                        # If the record does not exist, then move forward with action
-                        pass
-
-        try:
-
-            if event.name in (Events.REQUEST_CREATED.name, Events.SYSTEM_CREATED.name):
+        if event.name in (Events.REQUEST_CREATED.name, Events.SYSTEM_CREATED.name):
+            try:
                 db.create(event.payload)
+            except NotUniqueError:
+                logger.error(
+                    f"Unable to process ({event} : {event.payload_type} : {event.payload}): Object already exists in database"
+                )
 
-            elif event.name in (
-                Events.REQUEST_STARTED.name,
-                Events.REQUEST_COMPLETED.name,
-                Events.SYSTEM_UPDATED.name,
-                Events.INSTANCE_UPDATED.name,
-            ):
+        elif event.name in (
+            Events.REQUEST_STARTED.name,
+            Events.REQUEST_COMPLETED.name,
+            Events.SYSTEM_UPDATED.name,
+            Events.INSTANCE_UPDATED.name,
+        ):
+
+            model_class = getattr(brewtils_models, event.payload_type)
+            record = db.query_unique(model_class, id=event.payload.id)
+
+            if record:
                 db.update(event.payload)
+            else:
+                logger.error(
+                    f"Unable to update ({event} : {event.payload_type} : {event.payload}): Object does not exists in database"
+                )
 
-            elif event.name in (Events.SYSTEM_REMOVED.name,):
+        elif event.name in (Events.SYSTEM_REMOVED.name,):
+
+            model_class = getattr(brewtils_models, event.payload_type)
+            record = db.query_unique(model_class, id=event.payload.id)
+
+            if record:
                 db.delete(event.payload)
-        except Exception as ex:
-            logger.exception(f"Error executing downstream callback for {event}: {ex}")
+            else:
+                logger.error(
+                    f"Unable to delete ({event} : {event.payload_type} : {event.payload}): Object does not exists in database"
+                )
 
 
 def system_mapping_callback(event: Event) -> None:
