@@ -164,7 +164,7 @@ def forward(operation: Operation):
             f"Unknown child garden {operation.target_garden_name}"
         )
 
-    if target_garden.connection_type in ["HTTP", "HTTPS"]:
+    if target_garden.connection_type.casefold() in ["http", "https"]:
         return _forward_http(operation, target_garden)
     else:
         raise RoutingRequestException(
@@ -206,27 +206,15 @@ def _pre_route(operation: Operation):
 
     if operation.target_garden_name is None:
         if operation.operation_type == "REQUEST_CREATE":
-            operation.target_garden_name = _garden_for_request(operation).name
+            target_garden = _determine_garden(
+                namespace=operation.model.namespace,
+                system_name=operation.model.system,
+                system_version=operation.model.system_version,
+            )
+
+            operation.target_garden_name = target_garden.name
 
     return operation
-
-
-def _garden_for_request(operation: Operation):
-    """Determine target garden for a REQUEST_CREATE
-
-    Args:
-        operation:
-
-    Returns:
-
-    """
-    request = operation.model
-
-    return _determine_garden(
-        namespace=request.namespace,
-        system=request.system,
-        version=request.system_version,
-    )
 
 
 def _pre_forward(operation: Operation):
@@ -281,19 +269,18 @@ def _local_garden():
     return beer_garden.config.get("garden.name")
 
 
-def _determine_garden(system=None, namespace=None, version=None, name=None):
+def _determine_garden(namespace=None, system_name=None, system_version=None):
     """Retrieve a garden from the garden map
 
     Args:
-        system:
         namespace:
-        version:
-        name:
+        system_name:
+        system_version:
 
     Returns:
 
     """
-    system = system or System(namespace=namespace, name=name, version=version)
+    system = System(namespace=namespace, name=system_name, version=system_version)
 
     garden = garden_map.get(str(system))
     if garden is None:
