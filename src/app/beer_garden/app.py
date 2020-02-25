@@ -6,7 +6,7 @@ from functools import partial
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils import EasyClient
-from brewtils.models import Event, Events, Garden
+from brewtils.models import Event, Events, Garden, System
 from brewtils.stoppable_thread import StoppableThread
 from pytz import utc
 
@@ -213,20 +213,9 @@ class Application(StoppableThread):
         self.scheduler.start()
 
         self.logger.debug("Publishing startup event")
-
-        self._publish_garden_change(Events.GARDEN_STARTED.name)
+        self._publish_update(Events.GARDEN_STARTED)
 
         self.logger.info("All set! Let me know if you need anything else!")
-
-    def _publish_garden_change(self, event_status):
-
-        garden = beer_garden.garden.get_garden(beer_garden.config.get("garden.name"))
-        garden.namespaces = beer_garden.namespace.get_namespaces()
-        garden.status = (
-            "INITIALIZING" if event_status == Events.GARDEN_STARTED.name else "STOPPED"
-        )
-
-        publish(Event(name=event_status, payload_type="Garden", payload=garden))
 
     def _shutdown(self):
         self.logger.info(
@@ -234,7 +223,7 @@ class Application(StoppableThread):
         )
 
         self.logger.debug("Publishing shutdown event")
-        self._publish_garden_change(Events.GARDEN_STOPPED.name)
+        self._publish_update(Events.GARDEN_STOPPED)
 
         if self.scheduler.running:
             self.logger.debug("Pausing scheduler - no more jobs will be run")
@@ -299,6 +288,16 @@ class Application(StoppableThread):
             job_defaults=job_defaults,
             timezone=utc,
         )
+
+    @staticmethod
+    def _publish_update(event: Events):
+        garden = beer_garden.garden.get_garden(beer_garden.config.get("garden.name"))
+
+        garden.namespaces = beer_garden.namespace.get_namespaces()
+        garden.systems = [str(s) for s in db.query(System)]
+        garden.status = "RUNNING" if event == Events.GARDEN_STARTED else "STOPPED"
+
+        publish(Event(name=event.name, payload_type="Garden", payload=garden))
 
 
 class HelperThread(object):
