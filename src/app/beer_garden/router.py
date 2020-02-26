@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 import requests
-from brewtils.models import Garden, Operation, System
+from brewtils.models import Garden, Instance, Operation, System
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden
@@ -115,8 +115,9 @@ def execute_local(operation: Operation):
     """
     _pre_execute(operation)
 
-    func = route_functions[operation.operation_type]
-    return func(*operation.args, **operation.kwargs)
+    return route_functions[operation.operation_type](
+        *operation.args, **operation.kwargs
+    )
 
 
 def initiate_forward(operation: Operation):
@@ -204,13 +205,22 @@ def _pre_route(operation: Operation):
     if operation.source_garden_name is None:
         operation.source_garden_name = _local_garden()
 
+    # If no target is specified see if one can be determined
     if operation.target_garden_name is None:
         if operation.operation_type == "REQUEST_CREATE":
-            target_garden = _determine_garden(
+            target_system = System(
                 namespace=operation.model.namespace,
-                system_name=operation.model.system,
-                system_version=operation.model.system_version,
+                name=operation.model.system,
+                version=operation.model.system_version,
             )
+            target_garden = _determine_garden(system=target_system)
+
+            operation.target_garden_name = target_garden.name
+
+        elif operation.operation_type in ("INSTANCE_START", "INSTANCE_STOP"):
+            target_instance = db.query_unique(Instance, id=operation.args[0])
+            target_system = db.query_unique(System, instances__contains=target_instance)
+            target_garden = _determine_garden(system=target_system)
 
             operation.target_garden_name = target_garden.name
 
@@ -269,19 +279,15 @@ def _local_garden():
     return beer_garden.config.get("garden.name")
 
 
-def _determine_garden(namespace=None, system_name=None, system_version=None):
+def _determine_garden(system):
     """Retrieve a garden from the garden map
 
     Args:
-        namespace:
-        system_name:
-        system_version:
+        system:
 
     Returns:
 
     """
-    system = System(namespace=namespace, name=system_name, version=system_version)
-
     garden = garden_map.get(str(system))
     if garden is None:
         raise ValueError("Unable to determine target garden")
