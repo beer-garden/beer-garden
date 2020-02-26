@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
+from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
@@ -76,6 +77,7 @@ class GardenAPI(BaseHandler):
           * running
           * stopped
           * block
+          * update
 
           ```JSON
           [
@@ -109,17 +111,38 @@ class GardenAPI(BaseHandler):
           - Garden
         """
 
-        response = await self.client(
-            Operation(
-                operation_type="GARDEN_UPDATE",
-                args=[
-                    garden_name,
-                    SchemaParser.parse_patch(
-                        self.request.decoded_body, from_string=True
-                    ),
-                ],
-            )
-        )
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
+
+        for op in patch:
+            operation = op.operation.lower()
+
+            if operation in ["initializing", "running", "stopped", "block"]:
+                response = await self.client(
+                    Operation(
+                        operation_type="GARDEN_UPDATE_STATUS",
+                        args=[garden_name, operation.upper()],
+                    )
+                )
+            elif operation == "heartbeat":
+                response = await self.client(
+                    Operation(
+                        operation_type="GARDEN_UPDATE_STATUS",
+                        args=[garden_name, "RUNNING"],
+                    )
+                )
+            elif operation == "config":
+                response = await self.client(
+                    Operation(
+                        operation_type="GARDEN_UPDATE_CONFIG",
+                        args=[
+                            garden_name,
+                            SchemaParser.parse_garden(op.payload, from_string=True),
+                        ],
+                    )
+                )
+
+            else:
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
