@@ -6,7 +6,7 @@ from queue import Empty
 from brewtils.models import Event
 from brewtils.stoppable_thread import StoppableThread
 
-import beer_garden.events
+import beer_garden.config
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 import beer_garden.db.mongo.api
-from beer_garden.events import publish_event
-from brewtils.models import Events
 
 check_connection = beer_garden.db.mongo.api.check_connection
 create_connection = beer_garden.db.mongo.api.create_connection
