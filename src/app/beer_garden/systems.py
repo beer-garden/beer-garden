@@ -72,7 +72,7 @@ def create_system(system: System) -> System:
             system.max_instances = len(system.instances)
 
     if system.namespace is None:
-        system.namespace = beer_garden.config.get("namespaces.name")
+        system.namespace = beer_garden.config.get("namespaces.local")
 
     system = db.create(system)
 
