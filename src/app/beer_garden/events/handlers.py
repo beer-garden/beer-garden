@@ -58,12 +58,6 @@ def downstream_callbacks(event: Event) -> None:
             )
             return
 
-        if not event.payload_type:
-            logger.error(
-                f"Unable to process event ({event} : {event.payload_type}: {event.payload}): No Payload Type"
-            )
-            return
-
         if event.name in (Events.REQUEST_CREATED.name, Events.SYSTEM_CREATED.name):
             try:
                 db.create(event.payload)
@@ -78,6 +72,11 @@ def downstream_callbacks(event: Event) -> None:
             Events.SYSTEM_UPDATED.name,
             Events.INSTANCE_UPDATED.name,
         ):
+            if not event.payload_type:
+                logger.error(
+                    f"Unable to process event ({event} : {event.payload_type}: {event.payload}): No Payload Type"
+                )
+                return
 
             model_class = getattr(brewtils_models, event.payload_type)
             record = db.query_unique(model_class, id=event.payload.id)
@@ -86,10 +85,16 @@ def downstream_callbacks(event: Event) -> None:
                 db.update(event.payload)
             else:
                 logger.error(
-                    f"Unable to update ({event} : {event.payload_type} : {event.payload}): Object does not exists in database"
+                    f"Unable to update ({event} : {event.payload_type} : {event.payload}): Object does not exist in database"
                 )
 
         elif event.name in (Events.SYSTEM_REMOVED.name,):
+
+            if not event.payload_type:
+                logger.error(
+                    f"Unable to process event ({event} : {event.payload_type}: {event.payload}): No Payload Type"
+                )
+                return
 
             model_class = getattr(brewtils_models, event.payload_type)
             record = db.query_unique(model_class, id=event.payload.id)
@@ -98,7 +103,7 @@ def downstream_callbacks(event: Event) -> None:
                 db.delete(event.payload)
             else:
                 logger.error(
-                    f"Unable to delete ({event} : {event.payload_type} : {event.payload}): Object does not exists in database"
+                    f"Unable to delete ({event} : {event.payload_type} : {event.payload}): Object does not exist in database"
                 )
 
 

@@ -13,19 +13,6 @@ query = beer_garden.db.mongo.api.query
 reload = beer_garden.db.mongo.api.reload
 replace_commands = beer_garden.db.mongo.api.replace_commands
 
-
-def _create(obj):
-    return beer_garden.db.mongo.api.create(obj)
-
-
-def _update(obj):
-    return beer_garden.db.mongo.api.update(obj)
-
-
-def _delete(obj):
-    return beer_garden.db.mongo.api.delete(obj)
-
-
-create = _create
-update = _update
-delete = _delete
+create = beer_garden.db.mongo.api.create
+update = beer_garden.db.mongo.api.update
+delete = beer_garden.db.mongo.api.delete
