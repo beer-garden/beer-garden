@@ -33,10 +33,16 @@ def garden_callbacks(event: Event) -> None:
         beer_garden.router.update_system_mapping(event.payload, event.garden)
 
     if event.name in (Events.GARDEN_CREATED.name, Events.GARDEN_STARTED.name):
-        beer_garden.router.add_garden(event.payload)
+        # Only accept local garden updates and the garden sending the event
+        # This should prevent grand-child gardens getting into the database
+        if event.payload.name in [event.garden, beer_garden.config.get("garden.name")]:
+            beer_garden.router.add_garden(event.payload)
 
     elif event.name in (Events.GARDEN_REMOVED.name,):
-        beer_garden.router.remove_garden(event.payload)
+        # Only accept local garden updates and the garden sending the event
+        # This should prevent grand-child gardens getting into the database
+        if event.payload.name in [event.garden, beer_garden.config.get("garden.name")]:
+            beer_garden.router.remove_garden(event.payload)
 
     # Subset of events we only care about if they originate from the local garden
     if event.garden == beer_garden.config.get("garden.name"):
