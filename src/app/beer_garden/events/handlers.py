@@ -36,7 +36,11 @@ def garden_callbacks(event: Event) -> None:
     ):
         # Only accept local garden updates and the garden sending the event
         # This should prevent grand-child gardens getting into the database
+
         if event.payload.name in [event.garden, beer_garden.config.get("garden.name")]:
+            garden = beer_garden.garden.get_garden(event.payload.name)
+            if garden is None:
+                beer_garden.garden.create_garden(event.payload)
             beer_garden.router.add_garden(event.payload)
 
     elif event.name in (Events.GARDEN_REMOVED.name,):

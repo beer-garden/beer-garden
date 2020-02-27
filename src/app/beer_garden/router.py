@@ -295,6 +295,11 @@ def _determine_garden(system):
     """
     garden = garden_map.get(str(system))
     if garden is None:
-        raise ValueError("Unable to determine target garden")
+
+        # If you can't find it, force a cache to make sure everything is updated
+        cache_gardens()
+        garden = garden_map.get(str(system))
+        if garden is None:
+            raise ValueError("Unable to determine target garden")
 
     return garden
