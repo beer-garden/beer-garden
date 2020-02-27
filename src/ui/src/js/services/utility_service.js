@@ -132,6 +132,9 @@ export default function utilityService($rootScope, $http) {
     getVersion: () => {
       return $http.get('version');
     },
+    getNamespaces: () => {
+      return $http.get('api/v1/namespaces');
+    },
     getIcon: (iconName) => {
       if (iconName === undefined || iconName == null) {
         if ($rootScope.config === undefined ||

@@ -25,11 +25,13 @@ export default function routeConfig($stateProvider, $urlRouterProvider, $locatio
           return UtilityService.getConfig().then(
             (response) => {
               angular.extend($rootScope.config, camelCaseKeys(response.data));
-
-              $rootScope.namespaces = _.concat(
-                $rootScope.config.namespaces.local,
-                $rootScope.config.namespaces.remote,
-              );
+            }
+          );
+        }],
+        namespaces: ['$rootScope', 'UtilityService', ($rootScope, UtilityService) => {
+          return UtilityService.getNamespaces().then(
+            (response) => {
+              $rootScope.namespaces = response.data;
             }
           );
         }],
@@ -41,11 +43,14 @@ export default function routeConfig($stateProvider, $urlRouterProvider, $locatio
     .state('base.namespace', {
       url: ':namespace',
       resolve: {
-        systems: ['$rootScope', 'SystemService', ($rootScope, SystemService) => {
+        systems: [
+        '$stateParams', '$rootScope', 'SystemService',
+        ($stateParams, $rootScope, SystemService) => {
           return SystemService.getSystems(
             {
               dereferenceNested: false,
               includeFields: 'id,name,version,description,instances,commands',
+              namespace: $stateParams.namespace,
             },
           ).then(
             (response) => {
@@ -152,13 +157,17 @@ export default function routeConfig($stateProvider, $urlRouterProvider, $locatio
       templateUrl: basePath + 'command_index.html',
       controller: 'CommandIndexController',
       resolve: {
-        detailSystems: ['SystemService', (SystemService) => {
-          return SystemService.getSystems().catch(
+        detailSystems: ['$stateParams', 'SystemService', ($stateParams, SystemService) => {
+          return SystemService.getSystems(
+            {namespace: $stateParams.namespace}
+          ).catch(
             (response) => response
           );
         }],
-        commands: ['CommandService', (CommandService) => {
-          return CommandService.getCommands().catch(
+        commands: ['$stateParams', 'CommandService', ($stateParams, CommandService) => {
+          return CommandService.getCommands(
+            {namespace: $stateParams.namespace}
+          ).catch(
             (response) => response
           );
         }],

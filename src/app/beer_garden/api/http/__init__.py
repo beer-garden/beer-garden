@@ -187,6 +187,7 @@ def _setup_tornado_app():
         (rf"{prefix}api/v1/admin/?", v1.admin.AdminAPI),
         (rf"{prefix}api/v1/jobs/?", v1.job.JobListAPI),
         (rf"{prefix}api/v1/garden/?", v1.garden.GardenListAPI),
+        (rf"{prefix}api/v1/namespaces/?", v1.namespace.NamespaceListAPI),
         (rf"{prefix}api/v1/commands/(\w+)/?", v1.command.CommandAPI),
         (rf"{prefix}api/v1/instances/(\w+)/?", v1.instance.InstanceAPI),
         (rf"{prefix}api/v1/requests/(\w+)/?", v1.request.RequestAPI),
@@ -385,4 +386,13 @@ def _setup_event_handling(ep_conn):
     beer_garden.events.manager = EventManager(ep_conn)
 
     # Add a handler to process events coming from the main process
-    io_loop.add_handler(ep_conn, lambda c, _: websocket_publish(c.recv()), IOLoop.READ)
+    io_loop.add_handler(ep_conn, lambda c, _: _event_callback(c.recv()), IOLoop.READ)
+
+
+def _event_callback(event):
+    # Everything needs to be published to the websockdet
+    websocket_publish(event)
+
+    # And then also do the routing update stuff
+    if event.name in (Events.GARDEN_CREATED.name, Events.GARDEN_STARTED.name):
+        beer_garden.router.add_garden(event.payload)

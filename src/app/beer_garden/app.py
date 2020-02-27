@@ -6,7 +6,7 @@ from functools import partial
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils import EasyClient
-from brewtils.models import Event, Events, Garden
+from brewtils.models import Event, Events, Garden, System
 from brewtils.stoppable_thread import StoppableThread
 from pytz import utc
 
@@ -14,19 +14,15 @@ import beer_garden
 import beer_garden.api
 import beer_garden.db.api as db
 import beer_garden.events
+import beer_garden.garden
+import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
-import beer_garden.garden
 from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.events import publish
-from beer_garden.events.handlers import (
-    local_callbacks,
-    downstream_callbacks,
-    system_mapping_callback,
-    garden_mapping_callback,
-)
+from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.processors import (
     FanoutProcessor,
     HttpEventProcessor,
@@ -51,6 +47,7 @@ class Application(StoppableThread):
     clients = None
     helper_threads = None
     entry_manager = None
+    shared_manager = None
 
     def __init__(self):
         super(Application, self).__init__(
@@ -187,10 +184,19 @@ class Application(StoppableThread):
         beer_garden.router.forward_processor.start()
 
         self.logger.debug("Setting up local garden information")
-        if beer_garden.garden.get_garden(beer_garden.config.get("garden.name")) is None:
-            beer_garden.garden.create_garden(
-                Garden(name=beer_garden.config.get("garden.name"))
+        # TODO - move this to another function
+        garden = Garden(name=beer_garden.config.get("garden.name"))
+        if beer_garden.config.get("event.parent.http.enable"):
+            garden.connection_params = beer_garden.config.get(
+                "event.parent.http.callback"
             )
+            # TODO Flag to not send this
+            garden.connection_type = (
+                "https"
+                if beer_garden.config.get("event.parent.http.callback.ssl_enabled")
+                else "http"
+            )
+        beer_garden.garden.create_garden(garden)
 
         self.logger.debug("Creating and starting entry points...")
         self.entry_manager.create_all()
@@ -206,11 +212,7 @@ class Application(StoppableThread):
         self.scheduler.start()
 
         self.logger.debug("Publishing startup event")
-        publish(
-            Event(
-                name=Events.GARDEN_STARTED.name, payload_type="Garden", payload=Garden()
-            )
-        )
+        self._publish_update(Events.GARDEN_STARTED)
 
         self.logger.info("All set! Let me know if you need anything else!")
 
@@ -220,7 +222,7 @@ class Application(StoppableThread):
         )
 
         self.logger.debug("Publishing shutdown event")
-        publish(Event(name=Events.GARDEN_STOPPED.name))
+        self._publish_update(Events.GARDEN_STOPPED)
 
         if self.scheduler.running:
             self.logger.debug("Pausing scheduler - no more jobs will be run")
@@ -257,6 +259,9 @@ class Application(StoppableThread):
         # Forward all events down into the entry points
         event_manager.register(self.entry_manager, start=False)
 
+        # Register the callback processor
+        event_manager.register(QueueListener(action=garden_callbacks))
+
         # If necessary send all events to the parent garden
         http_event = beer_garden.config.get("event.parent.http")
         if http_event.enable:
@@ -265,12 +270,10 @@ class Application(StoppableThread):
                 bg_port=http_event.port,
                 ssl_enabled=http_event.ssl.enabled,
             )
-            event_manager.register(HttpEventProcessor(easy_client=easy_client))
-
-        event_manager.register(QueueListener(action=local_callbacks))
-        event_manager.register(QueueListener(action=downstream_callbacks))
-        event_manager.register(QueueListener(action=system_mapping_callback))
-        event_manager.register(QueueListener(action=garden_mapping_callback))
+            skip_events = beer_garden.config.get("event.parent.skip_events")
+            event_manager.register(
+                HttpEventProcessor(easy_client=easy_client, black_list=skip_events)
+            )
 
         return event_manager
 
@@ -287,6 +290,16 @@ class Application(StoppableThread):
             job_defaults=job_defaults,
             timezone=utc,
         )
+
+    @staticmethod
+    def _publish_update(event: Events):
+        garden = beer_garden.garden.get_garden(beer_garden.config.get("garden.name"))
+
+        garden.namespaces = beer_garden.namespace.get_namespaces()
+        garden.systems = [str(s) for s in db.query(System)]
+        garden.status = "RUNNING" if event == Events.GARDEN_STARTED else "STOPPED"
+
+        publish(Event(name=event.name, payload_type="Garden", payload=garden))
 
 
 class HelperThread(object):

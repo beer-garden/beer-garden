@@ -198,6 +198,7 @@ class Command(MongoModel, Document):
     form = DictField()
     template = StringField()
     icon_name = StringField()
+    # reverse_delete_rule=CASCADE is set later, can't set until System is defined
     system = ReferenceField("System")
 
     def clean(self):
@@ -692,7 +693,6 @@ class Garden(MongoModel, Document):
     namespaces = ListField()
     connection_type = StringField()
     connection_params = DictField()
-    namespaces = ListField()
     systems = ListField()
 
     meta = {
@@ -705,3 +705,7 @@ class Garden(MongoModel, Document):
 class SystemGardenMapping(MongoModel, Document):
     system = ReferenceField("System")
     garden = ReferenceField("Garden")
+
+
+# Update the Command field now that all models are defined
+System.register_delete_rule(Command, "system", CASCADE)

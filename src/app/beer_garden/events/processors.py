@@ -3,6 +3,7 @@ import logging
 from multiprocessing import Queue
 from queue import Empty
 
+from brewtils.models import Event
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.events
@@ -13,13 +14,18 @@ logger = logging.getLogger(__name__)
 class BaseProcessor(StoppableThread):
     """Base Processor"""
 
-    def __init__(self, action=None, **kwargs):
+    def __init__(self, action=None, black_list=None, **kwargs):
         super().__init__(**kwargs)
 
         self._action = action
+        self._black_list = black_list or []
 
     def process(self, item):
-        self._action(item)
+        try:
+            if item.name not in self._black_list:
+                self._action(item)
+        except Exception as ex:
+            logger.exception(f"Error processing: {ex}")
 
 
 class QueueListener(BaseProcessor):
@@ -108,8 +114,10 @@ class HttpEventProcessor(QueueListener):
 
         self._ez_client = easy_client
 
-    def process(self, item):
+    def process(self, event: Event):
         try:
-            self._ez_client.publish_event(item)
+            if event.name not in self._black_list:
+                event.garden = beer_garden.config.get("garden.name")
+                self._ez_client.publish_event(event)
         except Exception as ex:
             logger.exception(f"Error publishing EasyClient event: {ex}")
