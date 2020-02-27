@@ -165,7 +165,11 @@ def forward(operation: Operation):
             f"Unknown child garden {operation.target_garden_name}"
         )
 
-    if target_garden.connection_type.casefold() in ["http", "https"]:
+    if target_garden.connection_type is None:
+        target_garden = beer_garden.garden.get_garden(target_garden.name)
+        cache_gardens()
+
+    if target_garden.connection_type and target_garden.connection_type.casefold() in ["http", "https"]:
         return _forward_http(operation, target_garden)
     else:
         raise RoutingRequestException(

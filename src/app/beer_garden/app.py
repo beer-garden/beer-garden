@@ -288,9 +288,6 @@ class Application(StoppableThread):
     @staticmethod
     def _publish_update(event: Events):
         garden = beer_garden.garden.get_garden(beer_garden.config.get("garden.name"))
-
-        garden.namespaces = beer_garden.namespace.get_namespaces()
-        garden.systems = [str(s) for s in db.query(System)]
         garden.status = "RUNNING" if event == Events.GARDEN_STARTED else "STOPPED"
 
         publish(Event(name=event.name, payload_type="Garden", payload=garden))

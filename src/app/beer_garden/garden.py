@@ -5,6 +5,7 @@ from typing import List
 
 from brewtils.errors import ModelValidationError, PluginError
 from brewtils.models import Events, Garden, PatchOperation, System
+import beer_garden.router
 
 import beer_garden.db.api as db
 from beer_garden.events import publish_event
@@ -39,6 +40,8 @@ def update_garden_config(garden: Garden):
     db_garden = db.query_unique(Garden, id=garden.id)
     db_garden.connection_params = garden.connection_params
     db_garden.connection_type = garden.connection_type
+
+    beer_garden.router.add_garden(db_garden)
 
     return update_garden(db_garden)
 

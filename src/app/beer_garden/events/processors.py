@@ -7,6 +7,7 @@ from brewtils.models import Event
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.events
+import beer_garden.systems
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +23,9 @@ class BaseProcessor(StoppableThread):
 
     def process(self, item):
         try:
-            if item.name not in self._black_list:
-                self._action(item)
+            if hasattr(item, "name") and item.name in self._black_list:
+                return
+            self._action(item)
         except Exception as ex:
             logger.exception(f"Error processing: {ex}")
 
@@ -118,6 +120,10 @@ class HttpEventProcessor(QueueListener):
         try:
             if event.name not in self._black_list:
                 event.garden = beer_garden.config.get("garden.name")
+
+                if event.name == Events.GARDEN_STARTED.name:
+                    event.payload.namespaces = beer_garden.namespace.get_namespaces()
+                    event.payload.systems = [str(s) for s in beer_garden.systems.get_systems()]
                 self._ez_client.publish_event(event)
         except Exception as ex:
             logger.exception(f"Error publishing EasyClient event: {ex}")

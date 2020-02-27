@@ -135,8 +135,7 @@ class GardenAPI(BaseHandler):
                     Operation(
                         operation_type="GARDEN_UPDATE_CONFIG",
                         args=[
-                            garden_name,
-                            SchemaParser.parse_garden(op.value, from_string=True),
+                            SchemaParser.parse_garden(op.value, from_string=False),
                         ],
                     )
                 )
