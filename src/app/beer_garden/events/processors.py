@@ -14,11 +14,11 @@ logger = logging.getLogger(__name__)
 class BaseProcessor(StoppableThread):
     """Base Processor"""
 
-    def __init__(self, action=None, black_list=list(), **kwargs):
+    def __init__(self, action=None, black_list=None, **kwargs):
         super().__init__(**kwargs)
 
         self._action = action
-        self._black_list = black_list
+        self._black_list = black_list or []
 
     def process(self, item):
         if item.name not in self._black_list:
