@@ -14,22 +14,6 @@ reload = beer_garden.db.mongo.api.reload
 replace_commands = beer_garden.db.mongo.api.replace_commands
 distinct = beer_garden.db.mongo.api.distinct
 
-
-@publish_event(Events.DB_CREATE)
-def _create(obj):
-    return beer_garden.db.mongo.api.create(obj)
-
-
-@publish_event(Events.DB_CREATE)
-def _update(obj):
-    return beer_garden.db.mongo.api.update(obj)
-
-
-@publish_event(Events.DB_DELETE)
-def _delete(obj):
-    return beer_garden.db.mongo.api.delete(obj)
-
-
-create = _create
-update = _update
-delete = _delete
+create = beer_garden.db.mongo.api.create
+update = beer_garden.db.mongo.api.update
+delete = beer_garden.db.mongo.api.delete
