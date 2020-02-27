@@ -208,6 +208,7 @@ def purge_system(system_id: str) -> System:
     for instance in system.instances:
         stop(instance.id)
 
+    # TODO - This is not great
     sleep(5)
 
     system = db.reload(system)
