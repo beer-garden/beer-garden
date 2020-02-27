@@ -15,12 +15,14 @@ from beer_garden.local_plugins.env_help import (
 
 @contextmanager
 def mangle_env(updates):
-    env_copy = os.environ.copy()
-    for k, v in updates.items():
-        os.environ[k] = v
+    env_orig = os.environ.copy()
+    os.environ.update(updates)
 
-    yield
-    os.environ = env_copy
+    try:
+        yield
+    finally:
+        os.environ.clear()
+        os.environ.update(env_orig)
 
 
 @pytest.mark.parametrize(

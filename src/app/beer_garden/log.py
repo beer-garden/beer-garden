@@ -301,7 +301,7 @@ class PluginLoggingLoader(object):
         :param loggers:
         :return:
         """
-        for logger_name, logger_info in six.iteritems(loggers):
+        for _logger_name, logger_info in six.iteritems(loggers):
             if logger_info.get("level"):
                 cls._validate_level(logger_info.get("level"))
 
@@ -333,7 +333,7 @@ class PluginLoggingLoader(object):
         if not formatters:
             return {"default": {"format": LoggingConfig.DEFAULT_FORMAT}}
 
-        for formatter_name, formatter_info in six.iteritems(formatters):
+        for formatter_name, _formatter_info in six.iteritems(formatters):
 
             if formatter_name not in LoggingConfig.SUPPORTED_HANDLERS + ("default",):
                 raise LoggingLoadingError(
@@ -356,7 +356,7 @@ class PluginLoggingLoader(object):
         if not handlers:
             return {"stdout": LoggingConfig.DEFAULT_HANDLER}
 
-        for handler_name, handler_config in six.iteritems(handlers):
+        for handler_name, _handler_config in six.iteritems(handlers):
             if handler_name not in LoggingConfig.SUPPORTED_HANDLERS:
                 raise LoggingLoadingError(
                     "Invalid handler specified (%s). "

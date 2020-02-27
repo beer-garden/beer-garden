@@ -10,10 +10,10 @@ from beer_garden.db.mongo.models import Event, Request
 
 
 class MongoPruner(StoppableThread):
-    def __init__(self, tasks=None, run_every=timedelta(minutes=15)):
+    def __init__(self, tasks=None, run_every=None):
         self.logger = logging.getLogger(__name__)
         self.display_name = "Mongo Pruner"
-        self._run_every = run_every.total_seconds()
+        self._run_every = (run_every or timedelta(minutes=15)).total_seconds()
         self._tasks = tasks or []
 
         super(MongoPruner, self).__init__(logger=self.logger, name="Remover")

@@ -11,8 +11,8 @@ pytest_plugins = ["brewtils.test.fixtures"]
 
 def pytest_configure():
     # This is so the comparison helpers in brewtils.text.comparison to work correctly
-    setattr(brewtils.test, "_running_tests", True)
-    setattr(beer_garden, "_running_tests", True)
+    brewtils.test._running_tests = True
+    beer_garden._running_tests = True
 
 
 def pytest_unconfigure():

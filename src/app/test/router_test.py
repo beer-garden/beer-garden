@@ -134,9 +134,9 @@ class mock_garden_router:
         self.garden_name = garden_name
 
 
-def _mock_get_garden(monkeypatch, garden=mock_garden_router()):
+def _mock_get_garden(monkeypatch, garden=None):
     garden_mock = Mock()
-    garden_mock.return_value = garden
+    garden_mock.return_value = garden or mock_garden_router()
     monkeypatch.setattr(beer_garden.garden, "get_garden", garden_mock)
 
 
@@ -147,10 +147,10 @@ def _mock_forward_http(monkeypatch, response=True):
 
 
 def _mock_create_system_mapping(
-    system=mock_system_obj(), garden_name="default", mapped_garden_name="default"
+    system=None, garden_name="default", mapped_garden_name="default"
 ):
     router.update_garden_connection(mock_garden_router(garden_name=garden_name))
-    router.update_system_mapping(system, mapped_garden_name)
+    router.update_system_mapping(system or mock_system_obj(), mapped_garden_name)
 
 
 @pytest.mark.skip(reason="Skipping until structure is settled")
@@ -188,22 +188,22 @@ class TestRouter(object):
         _mock_local_garden(monkeypatch)
         _mock_internal_routing(monkeypatch, "requests")
 
-        assert router.route_request(brewtils_obj=mock_request()) == True
+        assert router.route_request(brewtils_obj=mock_request()) is True
 
     def test_job_routing(self, monkeypatch):
         _mock_local_garden(monkeypatch)
         _mock_internal_routing(monkeypatch, "jobs")
-        assert router.route_request(route_class=router.Route_Class.JOB) == True
+        assert router.route_request(route_class=router.Route_Class.JOB) is True
 
     def test_log_routing(self, monkeypatch):
         _mock_local_garden(monkeypatch)
         _mock_internal_routing(monkeypatch, "logs")
-        assert router.route_request(route_class=router.Route_Class.LOGGING) == True
+        assert router.route_request(route_class=router.Route_Class.LOGGING) is True
 
     def test_queues_routing(self, monkeypatch):
         _mock_local_garden(monkeypatch)
         _mock_internal_routing(monkeypatch, "queues")
-        assert router.route_request(route_class=router.Route_Class.QUEUE) == True
+        assert router.route_request(route_class=router.Route_Class.QUEUE) is True
 
     def test_instance_forward(self, monkeypatch):
         _mock_local_garden(monkeypatch)
@@ -224,7 +224,7 @@ class TestRouter(object):
                 route_type=router.Route_Type.DELETE,
                 obj_id="abc",
             )
-            == True
+            is True
         )
 
         router.remove_system_mapping(mock_system_obj())
@@ -232,7 +232,7 @@ class TestRouter(object):
         # Test routing request internally
         _mock_internal_routing(monkeypatch, "instances")
         _mock_forward(monkeypatch, response=False)
-        assert router.route_request(route_class=router.Route_Class.INSTANCE) == True
+        assert router.route_request(route_class=router.Route_Class.INSTANCE) is True
 
         # Test routing request internally
         _mock_instance_lookup(monkeypatch)
@@ -246,7 +246,7 @@ class TestRouter(object):
                 route_type=router.Route_Type.DELETE,
                 obj_id="abc",
             )
-            == True
+            is True
         )
 
     def test_request_forward(self, monkeypatch):
@@ -269,7 +269,7 @@ class TestRouter(object):
                 route_type=router.Route_Type.CREATE,
                 brewtils_obj="{}",
             )
-            == True
+            is True
         )
 
         router.remove_system_mapping(mock_system_obj())
@@ -277,7 +277,7 @@ class TestRouter(object):
         # Test routing request internally
         _mock_internal_routing(monkeypatch, "requests")
         _mock_forward(monkeypatch, response=False)
-        assert router.route_request(route_class=router.Route_Class.REQUEST) == True
+        assert router.route_request(route_class=router.Route_Class.REQUEST) is True
 
         # Test routing request internally
         _mock_get_request(monkeypatch)
@@ -289,7 +289,7 @@ class TestRouter(object):
                 route_type=router.Route_Type.DELETE,
                 obj_id="abc",
             )
-            == True
+            is True
         )
 
     def test_system_forward(self, monkeypatch):
@@ -309,7 +309,7 @@ class TestRouter(object):
                 route_type=router.Route_Type.DELETE,
                 obj_id="abc",
             )
-            == True
+            is True
         )
 
         print(router.System_Garden_Mapping)
@@ -319,7 +319,7 @@ class TestRouter(object):
         # Test routing request internally
         _mock_internal_routing(monkeypatch, "systems")
         _mock_forward(monkeypatch, response=False)
-        assert router.route_request(route_class=router.Route_Class.SYSTEM) == True
+        assert router.route_request(route_class=router.Route_Class.SYSTEM) is True
 
         # Test routing request internally
         # _mock_get_request(monkeypatch)
@@ -332,7 +332,7 @@ class TestRouter(object):
                 route_type=router.Route_Type.DELETE,
                 obj_id="abc",
             )
-            == True
+            is True
         )
 
     def test_forward_routing(self, monkeypatch):

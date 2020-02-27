@@ -5,15 +5,15 @@ import pytest
 from apscheduler.job import Job as APJob
 from apscheduler.schedulers.base import BaseScheduler as APBaseScheduler
 from apscheduler.triggers.date import DateTrigger as APDateTrigger
-from brewtils.test.comparable import assert_request_template_equal, assert_trigger_equal
-from mock import patch, Mock
+from brewtils.test.comparable import assert_request_template_equal
+from mock import Mock, patch
 from pytz import utc
 
 from beer_garden.db.mongo.jobstore import construct_job
 from beer_garden.db.mongo.models import (
+    DateTrigger as MongoDateTrigger,
     Job,
     RequestTemplate,
-    DateTrigger as MongoDateTrigger,
 )
 
 
