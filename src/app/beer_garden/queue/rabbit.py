@@ -284,7 +284,9 @@ class PyrabbitClient(object):
         """
         self._client.delete_queue(self._virtual_host, queue_name)
 
-    def destroy_queue(self, queue_name: str, force_disconnect: bool = False) -> None:
+    def destroy_queue(
+        self, queue_name: str, force_disconnect: bool = False, clear_queue: bool = True
+    ) -> None:
         """Remove all remnants of a queue.
 
         Ignores exceptions and ensures all aspects of the queue are deleted.
@@ -292,6 +294,7 @@ class PyrabbitClient(object):
         Args:
             queue_name: The queue name
             force_disconnect: Attempt to forcefully disconnect consumers of this queue
+            clear_queue: Clear queue before removing
         """
         if queue_name is None:
             return
@@ -305,13 +308,14 @@ class PyrabbitClient(object):
             except Exception as ex:
                 self.logger.exception(ex)
 
-        try:
-            self.clear_queue(queue_name)
-        except pyrabbit2.http.HTTPError as ex:
-            if ex.status != 404:
+        if clear_queue:
+            try:
+                self.clear_queue(queue_name)
+            except pyrabbit2.http.HTTPError as ex:
+                if ex.status != 404:
+                    self.logger.exception(ex)
+            except Exception as ex:
                 self.logger.exception(ex)
-        except Exception as ex:
-            self.logger.exception(ex)
 
         try:
             self.delete_queue(queue_name)
