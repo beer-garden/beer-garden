@@ -170,20 +170,24 @@ def reload_system(system_id: str) -> System:
 
 
 @publish_event(Events.SYSTEM_REMOVED)
-def remove_system(system_id: str) -> None:
+def remove_system(system_id: str) -> System:
     """Remove a system
 
     Args:
         system_id: The System ID
 
     Returns:
-        None
+        The removed System
 
     """
-    db.delete(db.query_unique(System, id=system_id))
+    system = db.query_unique(System, id=system_id)
+
+    db.delete(system)
+
+    return system
 
 
-def purge_system(system_id: str) -> None:
+def purge_system(system_id: str) -> System:
     """Convenience method for *completely* removing a system
 
     This will:
@@ -195,7 +199,7 @@ def purge_system(system_id: str) -> None:
         system_id: The System ID
 
     Returns:
-        None
+        The purged system
 
     """
     system = db.query_unique(System, id=system_id)
@@ -226,7 +230,7 @@ def purge_system(system_id: str) -> None:
             )
 
     # Finally, actually delete the system
-    remove_system(system_id)
+    return remove_system(system_id)
 
 
 def update_rescan(operations: Sequence[PatchOperation]) -> None:
