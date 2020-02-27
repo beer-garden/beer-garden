@@ -30,7 +30,6 @@ garden_map: Dict[str, Garden] = {}
 # List of known gardens
 gardens: List[Garden] = []
 
-
 route_functions = {
     "REQUEST_CREATE": beer_garden.requests.process_request,
     "REQUEST_UPDATE": beer_garden.requests.update_request,
@@ -172,6 +171,11 @@ def forward(operation: Operation):
         raise RoutingRequestException(
             f"Unknown connection type {target_garden.connection_type}"
         )
+
+
+def load_gardens():
+    for garden in beer_garden.garden.get_gardens():
+        add_garden(garden)
 
 
 def add_garden(garden: Garden):
