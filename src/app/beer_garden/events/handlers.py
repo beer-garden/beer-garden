@@ -29,13 +29,18 @@ def garden_callbacks(event: Event) -> None:
     if event.name in (Events.SYSTEM_CREATED.name,):
         beer_garden.garden.garden_add_system(event.payload, event.garden)
 
-        # Caches routing information
-        beer_garden.router.update_system_mapping(event.payload, event.garden)
-
-    if event.name in (Events.GARDEN_CREATED.name, Events.GARDEN_STARTED.name):
+    if event.name in (
+        Events.GARDEN_CREATED.name,
+        Events.GARDEN_STARTED.name,
+        Events.GARDEN_UPDATED.name,
+    ):
         # Only accept local garden updates and the garden sending the event
         # This should prevent grand-child gardens getting into the database
+
         if event.payload.name in [event.garden, beer_garden.config.get("garden.name")]:
+            garden = beer_garden.garden.get_garden(event.payload.name)
+            if garden is None:
+                beer_garden.garden.create_garden(event.payload)
             beer_garden.router.add_garden(event.payload)
 
     elif event.name in (Events.GARDEN_REMOVED.name,):

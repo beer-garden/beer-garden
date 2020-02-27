@@ -16,6 +16,7 @@ import beer_garden.config
 import beer_garden.db.api as db
 import beer_garden.events
 import beer_garden.queue.api as queue
+import beer_garden.router as router
 from beer_garden.events.processors import PipeListener, QueueListener
 from beer_garden.log import process_record
 
@@ -177,6 +178,9 @@ class EntryPoint:
 
         # Set up message queue connections
         queue.create_clients(beer_garden.config.get("amq"))
+
+        # Load known gardens for routing
+        router.cache_gardens()
 
         # Now invoke the actual process target, passing in the connection
         return target(ep_conn)

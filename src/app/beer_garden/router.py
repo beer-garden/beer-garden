@@ -30,7 +30,6 @@ garden_map: Dict[str, Garden] = {}
 # List of known gardens
 gardens: List[Garden] = []
 
-
 route_functions = {
     "REQUEST_CREATE": beer_garden.requests.process_request,
     "REQUEST_UPDATE": beer_garden.requests.update_request,
@@ -174,6 +173,11 @@ def forward(operation: Operation):
         )
 
 
+def cache_gardens():
+    for garden in beer_garden.garden.get_gardens():
+        add_garden(garden)
+
+
 def add_garden(garden: Garden):
     # Mark all systems as reachable by this garden
     for system_name in garden.systems:
@@ -291,6 +295,11 @@ def _determine_garden(system):
     """
     garden = garden_map.get(str(system))
     if garden is None:
-        raise ValueError("Unable to determine target garden")
+
+        # If you can't find it, force a cache to make sure everything is updated
+        cache_gardens()
+        garden = garden_map.get(str(system))
+        if garden is None:
+            raise ValueError("Unable to determine target garden")
 
     return garden

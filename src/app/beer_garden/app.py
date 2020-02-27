@@ -189,6 +189,9 @@ class Application(StoppableThread):
             garden = Garden(name=beer_garden.config.get("garden.name"))
             beer_garden.garden.create_garden(garden)
 
+        self.logger.debug("Caching Garden Information")
+        beer_garden.router.cache_gardens()
+
         self.logger.debug("Creating and starting entry points...")
         self.entry_manager.create_all()
         self.entry_manager.start()
