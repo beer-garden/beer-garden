@@ -12,13 +12,13 @@ from pytz import utc
 
 import beer_garden
 import beer_garden.api
+import beer_garden.api.entry_point
 import beer_garden.db.api as db
 import beer_garden.events
 import beer_garden.garden
 import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
-from beer_garden.api.entry_point import EntryPoint
 from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.events import publish
@@ -310,7 +310,7 @@ class HelperThread(object):
 
     def stop(self):
         # Thread was never started - nothing to do
-        if not getattr(self, "thread"):
+        if not self.thread:
             return
 
         if not self.thread.is_alive():
