@@ -173,7 +173,7 @@ def forward(operation: Operation):
         )
 
 
-def load_gardens():
+def cache_gardens():
     for garden in beer_garden.garden.get_gardens():
         add_garden(garden)
 

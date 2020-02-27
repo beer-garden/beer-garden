@@ -104,7 +104,7 @@ event:
         public_key: null
       url_prefix: /
 garden:
-  name: default
+  name: parent_garden
 log:
   config_file: example_configs/logging-config.yaml
   file: null
@@ -116,7 +116,7 @@ metrics:
     port: 2339
     url: http://localhost:3000
 namespaces:
-  local: default
+  local: parent
   remote:
   - host: localhost
     name: bar
