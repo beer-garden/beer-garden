@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from mongoengine import DoesNotExist, NotUniqueError
-
-from beer_garden.db.mongo import models as mongo_models
 from brewtils import models as brewtils_models
 from brewtils.models import Event, Events
+from mongoengine import NotUniqueError
 
 import beer_garden.config
+import beer_garden.db.api as db
 import beer_garden.garden
 import beer_garden.router
-import beer_garden.db.api as db
 from beer_garden.local_plugins.manager import PluginManager
 
 logger = logging.getLogger(__name__)
@@ -70,9 +68,7 @@ def garden_callbacks(event: Event) -> None:
     # Subset of events we only care about if they originate from a downstream garden
     else:
         if event.error:
-            logger.error(
-                f"Downstream error event ({event} : {event.payload_type}: {event.payload}): {event.error_message}"
-            )
+            logger.error(f"Downstream error event: {event!r}")
             return
 
         if event.name in (Events.REQUEST_CREATED.name, Events.SYSTEM_CREATED.name):
@@ -80,7 +76,7 @@ def garden_callbacks(event: Event) -> None:
                 db.create(event.payload)
             except NotUniqueError:
                 logger.error(
-                    f"Unable to process ({event} : {event.payload_type} : {event.payload}): Object already exists in database"
+                    f"Error processing {event.name}: object already exists ({event!r})"
                 )
 
         elif event.name in (
@@ -91,7 +87,7 @@ def garden_callbacks(event: Event) -> None:
         ):
             if not event.payload_type:
                 logger.error(
-                    f"Unable to process event ({event} : {event.payload_type}: {event.payload}): No Payload Type"
+                    f"Error processing {event.name}: no payload type ({event!r})"
                 )
                 return
 
@@ -102,14 +98,14 @@ def garden_callbacks(event: Event) -> None:
                 db.update(event.payload)
             else:
                 logger.error(
-                    f"Unable to update ({event} : {event.payload_type} : {event.payload}): Object does not exist in database"
+                    f"Error processing {event.name}: object does not exist ({event!r})"
                 )
 
         elif event.name in (Events.SYSTEM_REMOVED.name,):
 
             if not event.payload_type:
                 logger.error(
-                    f"Unable to process event ({event} : {event.payload_type}: {event.payload}): No Payload Type"
+                    f"Error processing {event.name}: no payload type ({event!r})"
                 )
                 return
 
@@ -120,5 +116,5 @@ def garden_callbacks(event: Event) -> None:
                 db.delete(event.payload)
             else:
                 logger.error(
-                    f"Unable to delete ({event} : {event.payload_type} : {event.payload}): Object does not exist in database"
+                    f"Error processing {event.name}: object does not exist ({event!r})"
                 )

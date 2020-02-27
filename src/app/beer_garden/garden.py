@@ -7,6 +7,7 @@ from brewtils.errors import ModelValidationError, PluginError
 from brewtils.models import Events, Garden, PatchOperation, System
 import beer_garden.router
 
+
 import beer_garden.db.api as db
 from beer_garden.events import publish_event
 

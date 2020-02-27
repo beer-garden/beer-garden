@@ -64,10 +64,11 @@ class LoggingConfigAPI(BaseHandler):
           - Config
         """
 
-        patch = brewtils_obj = SchemaParser.parse_patch(
+        patch = SchemaParser.parse_patch(
             self.request.decoded_body, many=True, from_string=True
         )
 
+        response = None
         for op in patch:
             if op.operation == "reload":
                 response = await self.client(Operation(operation_type="LOG_RELOAD"))
