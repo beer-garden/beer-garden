@@ -388,3 +388,7 @@ def replace_commands(
     mongo_system.save()
 
     return to_brewtils(mongo_system)
+
+
+def distinct(brewtils_clazz: ModelItem, field: str) -> List:
+    return _model_map[brewtils_clazz].objects.distinct(field)

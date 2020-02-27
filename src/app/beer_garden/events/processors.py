@@ -21,8 +21,11 @@ class BaseProcessor(StoppableThread):
         self._black_list = black_list or []
 
     def process(self, item):
-        if item.name not in self._black_list:
-            self._action(item)
+        try:
+            if item.name not in self._black_list:
+                self._action(item)
+        except Exception as ex:
+            logger.exception(f"Error processing: {ex}")
 
 
 class QueueListener(BaseProcessor):
