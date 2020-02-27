@@ -673,14 +673,14 @@ class Job(MongoModel, Document):
 
         if self.trigger_type not in self.TRIGGER_MODEL_MAPPING:
             raise ModelValidationError(
-                "Cannot save job. No matching model for trigger type: %s"
-                % self.trigger_type
+                f"Cannot save job. No mongo model for trigger type {self.trigger_type}"
             )
 
-        if not isinstance(self.trigger, self.TRIGGER_MODEL_MAPPING[self.trigger_type]):
+        trigger_class = self.TRIGGER_MODEL_MAPPING.get(self.trigger_type)
+        if not isinstance(self.trigger, trigger_class):
             raise ModelValidationError(
-                "Cannot save job. Trigger type: %s but got trigger: %s"
-                % (self.trigger_type, type(self.trigger))
+                f"Cannot save job. Expected trigger type {self.trigger_type} but "
+                f"actual type was {type(self.trigger)}"
             )
 
 
