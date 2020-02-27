@@ -2,6 +2,7 @@
 import logging
 import random
 import string
+from typing import List
 
 import pyrabbit2.api
 import pyrabbit2.http
@@ -187,13 +188,13 @@ class PyrabbitClient(object):
             cert=ssl.get("client_cert"),
         )
 
-    def is_alive(self):
+    def is_alive(self) -> bool:
         try:
             return self._client.is_alive()
         except pyrabbit2.http.NetworkError:
             return False
 
-    def verify_virtual_host(self):
+    def verify_virtual_host(self) -> None:
         """Ensure the virtual host exists"""
         try:
             return self._client.get_vhost(self._virtual_host)
@@ -203,7 +204,7 @@ class PyrabbitClient(object):
             )
             raise
 
-    def ensure_admin_expiry(self):
+    def ensure_admin_expiry(self) -> None:
         """Ensure that the admin queue expiration policy exists"""
         try:
             kwargs = {
@@ -217,11 +218,17 @@ class PyrabbitClient(object):
             self.logger.error("Error creating admin queue expiration policy")
             raise
 
-    def get_queue_size(self, queue_name):
+    def get_queue_size(self, queue_name: str) -> int:
         """Get the number of messages in a queue.
 
-        :param queue_name: The name of the queue
-        :return: The number of messages in the queue
+        Args:
+            queue_name: The queue name
+
+        Returns:
+            The number of messages in the queue
+
+        Raises:
+            pyrabbit2.http.HTTPError: Connection error or queue does not exist
         """
         self.logger.debug("Getting queue Size for: %s", queue_name)
         try:
@@ -235,11 +242,11 @@ class PyrabbitClient(object):
                 self.logger.error("Could not connect to queue '%s'", queue_name)
             raise ex
 
-    def clear_queue(self, queue_name):
+    def clear_queue(self, queue_name: str) -> None:
         """Remove all messages in a queue.
 
-        :param queue_name: The name of the queue
-        :return:None
+        Args:
+            queue_name: The queue name
         """
         self.logger.info("Clearing Queue: %s", queue_name)
 
@@ -269,22 +276,22 @@ class PyrabbitClient(object):
 
             number_of_messages -= 1
 
-    def delete_queue(self, queue_name):
-        """Actually remove a queue.
+    def delete_queue(self, queue_name: str) -> None:
+        """Actually remove a queue
 
-        :param queue_name: The name of the queue
-        :return:
+        Args:
+            queue_name: The queue name
         """
         self._client.delete_queue(self._virtual_host, queue_name)
 
-    def destroy_queue(self, queue_name, force_disconnect=False):
+    def destroy_queue(self, queue_name: str, force_disconnect: bool = False) -> None:
         """Remove all remnants of a queue.
 
         Ignores exceptions and ensures all aspects of the queue are deleted.
 
-        :param queue_name: The queue name
-        :param force_disconnect: Attempt to forcefully disconnect consumers of this queue
-        :return:
+        Args:
+            queue_name: The queue name
+            force_disconnect: Attempt to forcefully disconnect consumers of this queue
         """
         if queue_name is None:
             return
@@ -314,7 +321,7 @@ class PyrabbitClient(object):
         except Exception as ex:
             self.logger.exception(ex)
 
-    def disconnect_consumers(self, queue_name):
+    def disconnect_consumers(self, queue_name: str) -> None:
         # If there are no channels, then there is nothing to do
         channels = self._client.get_channels() or []
         for channel in channels:
@@ -331,7 +338,7 @@ class PyrabbitClient(object):
                     )
 
 
-def get_routing_keys(*args, **kwargs):
+def get_routing_keys(*args, **kwargs) -> List[str]:
     """Get a list of routing keys, ordered from least specific to most specific
 
     Will return all possible routing keys to get a message to a particular system.
@@ -367,9 +374,14 @@ def get_routing_keys(*args, **kwargs):
     NOTE: Because RabbitMQ uses '.' as the word delimiter all '.' in routing words will
     be replaced with '-'
 
-    :param args: List of routing key words to include in the routing keys
-    :param kwargs: is_admin: Will prepend 'admin' to all generated keys if True
-    :return: List of routing keys, ordered from general to specific
+    Args:
+        List of routing key words to include in the routing keys
+
+    Keyword Args:
+        is_admin: Will prepend 'admin' to all generated keys if True
+
+    Returns:
+        List of routing keys, ordered from general to specific
     """
     routing_keys = ["admin"] if kwargs.get("is_admin", False) else []
 
