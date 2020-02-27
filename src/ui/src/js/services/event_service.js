@@ -42,15 +42,14 @@ export default function eventService($rootScope, $websocket, TokenService) {
           }
         });
 
-        socketConnection.onError((message) => {
-          console.log('Websocket error: ' + message.reason);
+        socketConnection.onClose(() => {
+          socketConnection = undefined;
         });
       }
     },
     close: () => {
       if (!_.isUndefined(socketConnection)) {
         socketConnection.close();
-        socketConnection = undefined;
       }
     },
   };
