@@ -40,8 +40,7 @@ def update_garden_config(garden: Garden):
     db_garden.connection_params = garden.connection_params
     db_garden.connection_type = garden.connection_type
 
-    update_garden(db_garden)
-    return db_garden
+    return update_garden(db_garden)
 
 
 def update_garden_status(garden_name: str, new_status: str) -> Garden:
@@ -78,6 +77,7 @@ def remove_garden(garden_name: str) -> None:
         """
     garden = db.query_unique(Garden, name=garden_name)
     db.delete(garden)
+    return garden
 
 
 @publish_event(Events.GARDEN_CREATED)
@@ -103,11 +103,10 @@ def create_garden(garden: Garden) -> Garden:
         db_garden.namespaces = garden.namespaces
         db_garden.systems = garden.systems
 
-        db.update(db_garden)
-    else:
-        db.create(garden)
+        return db.update(db_garden)
 
-    return garden
+    else:
+        return db.create(garden)
 
 
 def garden_add_system(system: System, garden_name: str):
@@ -124,10 +123,9 @@ def garden_add_system(system: System, garden_name: str):
     if str(system) not in garden.systems:
         garden.systems.append(str(system))
 
-    update_garden(garden)
+    return update_garden(garden)
 
 
 @publish_event(Events.GARDEN_UPDATED)
 def update_garden(garden: Garden):
-    db.update(garden)
-    return garden
+    return db.update(garden)
