@@ -52,5 +52,11 @@ export default function eventService($rootScope, $websocket, TokenService) {
         socketConnection.close();
       }
     },
+    state: () => {
+      if (socketConnection == undefined) {
+        return undefined;
+      }
+      return socketConnection.readyState;
+    },
   };
 };
