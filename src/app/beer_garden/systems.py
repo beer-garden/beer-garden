@@ -233,14 +233,7 @@ def purge_system(system_id: str) -> System:
     return remove_system(system_id)
 
 
-def update_rescan(operations: Sequence[PatchOperation]) -> None:
-    for op in operations:
-        if op.operation == "rescan":
-            rescan_system_directory()
-        else:
-            raise ModelValidationError(f"Unsupported operation '{op.operation}'")
-
-
+@publish_event(Events.SYSTEM_RESCAN_REQUESTED)
 def rescan_system_directory() -> None:
     """Scans plugin directory and starts any new Systems"""
-    beer_garden.application.plugin_manager.scan_plugin_path()
+    pass
