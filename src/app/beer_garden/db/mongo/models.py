@@ -101,20 +101,20 @@ class Choices(MongoModel, EmbeddedDocument):
     def clean(self):
         if self.type == "static" and not isinstance(self.value, (list, dict)):
             raise ModelValidationError(
-                "Error saving choices '%s' - type was 'static' "
-                "but the value was not a list or dictionary" % self.value
+                f"Can not save choices '{self}': type is 'static' but the value is "
+                f"not a list or dictionary"
             )
         elif self.type == "url" and not isinstance(self.value, six.string_types):
             raise ModelValidationError(
-                "Error saving choices '%s' - type was 'url' but "
-                "the value was not a string" % self.value
+                f"Can not save choices '{self}': type is 'url' but the value is "
+                f"not a string"
             )
         elif self.type == "command" and not isinstance(
             self.value, (six.string_types, dict)
         ):
             raise ModelValidationError(
-                "Error saving choices '%s' - type was 'command' "
-                "but the value was not a string or dict" % self.value
+                f"Can not save choices '{self}': type is 'command' but the value is "
+                f"not a string or dict"
             )
 
         if self.type == "command" and isinstance(self.value, dict):
@@ -122,9 +122,8 @@ class Choices(MongoModel, EmbeddedDocument):
             for required_key in ("command", "system", "version"):
                 if required_key not in value_keys:
                     raise ModelValidationError(
-                        "Error saving choices '%s' - specifying "
-                        "value as a dictionary requires a '%s' "
-                        "item" % (self.value, required_key)
+                        f"Can not save choices '{self}': specifying value as a "
+                        f"dictionary requires a '{required_key}' item"
                     )
 
         try:
@@ -135,7 +134,7 @@ class Choices(MongoModel, EmbeddedDocument):
                     self.details = parse(self.value["command"])
         except (LarkError, ParseError):
             raise ModelValidationError(
-                "Error saving choices '%s' - unable to parse" % self.value
+                f"Can not save choices '{self}': Unable to parse"
             )
 
 
@@ -172,17 +171,15 @@ class Parameter(MongoModel, EmbeddedDocument):
 
         if not self.nullable and self.optional and self.default is None:
             raise ModelValidationError(
-                "Can not save Parameter %s: For this Parameter "
-                "nulls are not allowed, but the parameter is "
-                "optional with no default defined." % self.key
+                f"Can not save Parameter {self}: For this Parameter nulls are not "
+                f"allowed, but the parameter is optional with no default defined."
             )
 
         if len(self.parameters) != len(
             set(parameter.key for parameter in self.parameters)
         ):
             raise ModelValidationError(
-                "Can not save Parameter %s: Contains Parameters "
-                "with duplicate keys" % self.key
+                f"Can not save Parameter {self}: Contains Parameters with duplicate keys"
             )
 
 
@@ -206,28 +203,26 @@ class Command(MongoModel, Document):
 
         if not self.name:
             raise ModelValidationError(
-                "Can not save Command%s: Empty name"
-                % (" for system " + (self.system.name if self.system else ""))
+                f"Can not save Command"
+                f"{' for system ' + self.system.name if self.system else ''}"
+                f": Missing name"
             )
 
         if self.command_type not in BrewtilsCommand.COMMAND_TYPES:
             raise ModelValidationError(
-                "Can not save Command %s: Invalid command type "
-                '"%s"' % (self.name, self.command_type)
+                f"Can not save Command {self}: Invalid command type '{self.command_type}'"
             )
 
         if self.output_type not in BrewtilsCommand.OUTPUT_TYPES:
             raise ModelValidationError(
-                'Can not save Command %s: Invalid output type "%s"'
-                % (self.name, self.output_type)
+                f"Can not save Command {self}: Invalid output type '{self.output_type}'"
             )
 
         if len(self.parameters) != len(
             set(parameter.key for parameter in self.parameters)
         ):
             raise ModelValidationError(
-                "Can not save Command %s: Contains Parameters "
-                "with duplicate keys" % self.name
+                f"Can not save Command {self}: Contains Parameters with duplicate keys"
             )
 
 
@@ -248,8 +243,7 @@ class Instance(MongoModel, Document):
 
         if self.status not in BrewtilsInstance.INSTANCE_STATUSES:
             raise ModelValidationError(
-                "Can not save Instance %s: Invalid status '%s' "
-                "provided." % (self.name, self.status)
+                f"Can not save Instance {self}: Invalid status '{self.status}'"
             )
 
 
@@ -364,8 +358,7 @@ class Request(MongoModel, Document):
 
         if self.status not in BrewtilsRequest.STATUS_LIST:
             raise ModelValidationError(
-                'Can not save Request %s: Invalid status "%s"'
-                % (str(self), self.status)
+                f"Can not save Request {self}: Invalid status '{self.status}'"
             )
 
         if (
@@ -373,8 +366,7 @@ class Request(MongoModel, Document):
             and self.command_type not in BrewtilsRequest.COMMAND_TYPES
         ):
             raise ModelValidationError(
-                "Can not save Request %s: Invalid "
-                'command type "%s"' % (str(self), self.command_type)
+                f"Can not save Request {self}: Invalid command type '{self.command_type}'"
             )
 
         if (
@@ -382,8 +374,7 @@ class Request(MongoModel, Document):
             and self.output_type not in BrewtilsRequest.OUTPUT_TYPES
         ):
             raise ModelValidationError(
-                "Can not save Request %s: Invalid output "
-                'type "%s"' % (str(self), self.output_type)
+                f"Can not save Request {self}: Invalid output type '{self.output_type}'"
             )
 
     def clean_update(self):
@@ -429,7 +420,7 @@ class System(MongoModel, Document):
         "indexes": [
             {
                 "name": "unique_index",
-                "fields": ["name", "version", "namespace"],
+                "fields": ["namespace", "name", "version"],
                 "unique": True,
             }
         ],
@@ -673,14 +664,14 @@ class Job(MongoModel, Document):
 
         if self.trigger_type not in self.TRIGGER_MODEL_MAPPING:
             raise ModelValidationError(
-                "Cannot save job. No matching model for trigger type: %s"
-                % self.trigger_type
+                f"Cannot save job. No mongo model for trigger type {self.trigger_type}"
             )
 
-        if not isinstance(self.trigger, self.TRIGGER_MODEL_MAPPING[self.trigger_type]):
+        trigger_class = self.TRIGGER_MODEL_MAPPING.get(self.trigger_type)
+        if not isinstance(self.trigger, trigger_class):
             raise ModelValidationError(
-                "Cannot save job. Trigger type: %s but got trigger: %s"
-                % (self.trigger_type, type(self.trigger))
+                f"Cannot save job. Expected trigger type {self.trigger_type} but "
+                f"actual type was {type(self.trigger)}"
             )
 
 
