@@ -17,16 +17,13 @@ logger = logging.getLogger(__name__)
 class BaseProcessor(StoppableThread):
     """Base Processor"""
 
-    def __init__(self, action=None, black_list=None, **kwargs):
+    def __init__(self, action=None, **kwargs):
         super().__init__(**kwargs)
 
         self._action = action
-        self._black_list = black_list or []
 
     def process(self, item):
         try:
-            if hasattr(item, "name") and item.name in self._black_list:
-                return
             self._action(item)
         except Exception as ex:
             logger.exception(f"Error processing: {ex}")
@@ -113,10 +110,11 @@ class FanoutProcessor(QueueListener):
 class HttpEventProcessor(QueueListener):
     """Publish events using an EasyClient"""
 
-    def __init__(self, easy_client=None, **kwargs):
+    def __init__(self, easy_client=None, black_list=None, **kwargs):
         super().__init__(**kwargs)
 
         self._ez_client = easy_client
+        self._black_list = black_list or []
 
     def process(self, event: Event):
         try:
