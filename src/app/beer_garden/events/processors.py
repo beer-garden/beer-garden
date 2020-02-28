@@ -125,7 +125,9 @@ class HttpEventProcessor(QueueListener):
 
                 if event.name == Events.GARDEN_STARTED.name:
                     event.payload.namespaces = beer_garden.namespace.get_namespaces()
-                    event.payload.systems = [str(s) for s in beer_garden.systems.get_systems()]
+                    event.payload.systems = [
+                        str(s) for s in beer_garden.systems.get_systems()
+                    ]
                 self._ez_client.publish_event(event)
         except Exception as ex:
             logger.exception(f"Error publishing EasyClient event: {ex}")

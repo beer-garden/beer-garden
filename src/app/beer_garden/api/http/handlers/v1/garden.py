@@ -134,9 +134,7 @@ class GardenAPI(BaseHandler):
                 response = await self.client(
                     Operation(
                         operation_type="GARDEN_UPDATE_CONFIG",
-                        args=[
-                            SchemaParser.parse_garden(op.value, from_string=False),
-                        ],
+                        args=[SchemaParser.parse_garden(op.value, from_string=False)],
                     )
                 )
 
