@@ -119,7 +119,7 @@ class PluginManager(StoppableThread):
         return cls._instance
 
     @classmethod
-    def associate(cls, event):
+    def handle_associate(cls, event):
         instance = event.payload
 
         if instance.metadata.get("runner_id"):
@@ -127,19 +127,32 @@ class PluginManager(StoppableThread):
             cls.plugins[instance.metadata["runner_id"]].restart = True
 
     @classmethod
-    def do_start(cls, event):
+    def handle_start(cls, event):
         runner_id = cls.from_instance_id(event.payload.id)
 
         if runner_id in cls.plugins:
             cls.restart(runner_id)
 
     @classmethod
-    def do_stop(cls, event):
+    def handle_stop(cls, event):
         runner_id = cls.from_instance_id(event.payload.id)
 
         if runner_id in cls.plugins:
             cls.plugins[runner_id].stopped = True
             cls.plugins[runner_id].restart = False
+
+    @classmethod
+    def handle_remove_system(cls, event):
+        system = event.payload
+
+        remove_ids = []
+        for instance in system.instances:
+            for runner_id, plugin in cls.plugins.items():
+                if instance.id == plugin.instance_id:
+                    remove_ids.append(runner_id)
+
+        for remove_id in remove_ids:
+            cls.remove(remove_id)
 
     @classmethod
     def from_instance_id(cls, instance_id):
@@ -162,6 +175,10 @@ class PluginManager(StoppableThread):
             cls.stop_one(runner_id=runner_id)
 
     @classmethod
+    def start_one(cls, runner_id: str) -> None:
+        cls.plugins[runner_id].runner.start()
+
+    @classmethod
     def stop_one(cls, runner_id=None, instance_id=None):
         if runner_id is None:
             runner_id = cls.from_instance_id(instance_id)
@@ -179,8 +196,8 @@ class PluginManager(StoppableThread):
             plugin.runner.kill()
 
     @classmethod
-    def remove(cls, plugin_id):
-        del cls.plugins[plugin_id]
+    def remove(cls, runner_id):
+        del cls.plugins[runner_id]
 
     @classmethod
     def restart(cls, runner_id):
@@ -197,7 +214,7 @@ class PluginManager(StoppableThread):
 
         new_runner.start()
 
-    def load_new(self, path: str = None) -> None:
+    def load_new(self, path: str = None) -> Dict[str, Plugin]:
         """Create PluginRunners for all plugins in a directory
 
         Note: This scan does not walk the directory tree - all plugins must be
@@ -206,15 +223,23 @@ class PluginManager(StoppableThread):
         Args:
             path: The path to scan for plugins. If none will default to the
                 plugin path specified at initialization.
+
+        Returns:
+            Newly loaded plugin dictionary
         """
         plugin_path = path or self._plugin_path
 
+        new_plugins = {}
         for path in plugin_path.iterdir():
             try:
                 if path.is_dir() and path not in self.current_paths():
-                    self.plugins.update(self.create_plugins(path))
+                    new_plugins.update(self.create_plugins(path))
             except Exception as ex:
                 self.logger.exception(f"Error loading plugin at {path}: {ex}")
+
+        self.plugins.update(new_plugins)
+
+        return new_plugins
 
     def create_plugins(self, plugin_path: Path) -> Dict[str, Plugin]:
         """Creates Plugins for a particular plugin directory
@@ -293,21 +318,16 @@ class PluginManager(StoppableThread):
             if key in plugin_config:
                 env["BG_" + key] = plugin_config.get(key)
 
-        # Connection info comes from Beer-garden config
         env.update(
             {
+                # Connection info comes from Beer-garden config
                 "BG_HOST": self._connection_info.host,
                 "BG_PORT": self._connection_info.port,
                 "BG_URL_PREFIX": self._connection_info.url_prefix,
                 "BG_SSL_ENABLED": self._connection_info.ssl.enabled,
                 "BG_CA_CERT": self._connection_info.ssl.ca_cert,
                 "BG_CA_VERIFY": False,  # TODO - Fix this
-            }
-        )
-
-        # The rest
-        env.update(
-            {
+                # The rest
                 "BG_INSTANCE_NAME": instance_name,
                 "BG_RUNNER_ID": runner_id,
                 "BG_PLUGIN_PATH": plugin_path.resolve(),

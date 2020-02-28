@@ -56,13 +56,20 @@ def garden_callbacks(event: Event) -> None:
         try:
             # Start local plugins after the entry point comes up
             if event.name == Events.ENTRY_STARTED.name:
-                PluginManager.instance().start_all()
+                PluginManager.start_all()
             elif event.name == Events.INSTANCE_INITIALIZED.name:
-                PluginManager.instance().associate(event)
+                PluginManager.handle_associate(event)
             elif event.name == Events.INSTANCE_STARTED.name:
-                PluginManager.instance().do_start(event)
+                PluginManager.handle_start(event)
             elif event.name == Events.INSTANCE_STOPPED.name:
-                PluginManager.instance().do_stop(event)
+                PluginManager.handle_stop(event)
+            elif event.name == Events.SYSTEM_REMOVED.name:
+                PluginManager.handle_remove_system(event)
+            elif event.name == Events.SYSTEM_RESCAN_REQUESTED.name:
+                new_plugins = PluginManager.instance().load_new()
+
+                for runner_id in new_plugins:
+                    PluginManager.start_one(runner_id)
         except Exception as ex:
             logger.exception(f"Error executing local callback for {event}: {ex}")
 

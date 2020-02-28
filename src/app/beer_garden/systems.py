@@ -12,7 +12,7 @@ import beer_garden
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 from beer_garden.events import publish_event
-from beer_garden.queue.rabbit import get_routing_key
+from beer_garden.plugin import stop
 
 REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
@@ -170,68 +170,71 @@ def reload_system(system_id: str) -> System:
 
 
 @publish_event(Events.SYSTEM_REMOVED)
-def remove_system(system_id: str) -> None:
+def remove_system(system_id: str) -> System:
     """Remove a system
 
     Args:
         system_id: The System ID
 
     Returns:
-        None
+        The removed System
+
+    """
+    system = db.query_unique(System, id=system_id)
+
+    db.delete(system)
+
+    return system
+
+
+def purge_system(system_id: str) -> System:
+    """Convenience method for *completely* removing a system
+
+    This will:
+    - Stop all instances of the system
+    - Remove all message queues associated with the system
+    - Remove the system from the database
+
+    Args:
+        system_id: The System ID
+
+    Returns:
+        The purged system
 
     """
     system = db.query_unique(System, id=system_id)
 
     # Attempt to stop the plugins
-    registered = beer_garden.application.plugin_registry.get_plugins_by_system(
-        system.name, system.version
-    )
+    for instance in system.instances:
+        stop(instance.id)
 
-    # Local plugins get stopped by us
-    if registered:
-        for plugin in registered:
-            beer_garden.application.plugin_manager.stop_plugin(plugin)
-            beer_garden.application.plugin_registry.remove(plugin.unique_name)
-
-    # Remote plugins get a stop request
-    else:
-        queue.put(
-            beer_garden.stop_request,
-            routing_key=get_routing_key(system.name, system.version, is_admin=True),
-        )
-        count = 0
-        while any(
-            instance.status != "STOPPED" for instance in system.instances
-        ) and count < beer_garden.config.get("plugin.local.timeout.shutdown"):
-            sleep(1)
-            count += 1
-            system = db.reload(system)
+    # TODO - This is not great
+    sleep(5)
 
     system = db.reload(system)
 
-    # Now clean up the message queues
+    # Now clean up the message queues. It's possible for the request or admin queue to
+    # be none if we are stopping an instance that was not properly started.
     for instance in system.instances:
-        # It is possible for the request or admin queue to be none if we are
-        # stopping an instance that was not properly started.
-        request_queue = instance.queue_info.get("request", {}).get("name")
-        admin_queue = instance.queue_info.get("admin", {}).get("name")
         force_disconnect = instance.status != "STOPPED"
 
-        queue.remove(request_queue, force_disconnect=force_disconnect)
-        queue.remove(admin_queue, force_disconnect=force_disconnect)
+        request_queue = instance.queue_info.get("request", {}).get("name")
+        if request_queue:
+            queue.remove(
+                request_queue, force_disconnect=force_disconnect, clear_queue=True
+            )
+
+        admin_queue = instance.queue_info.get("admin", {}).get("name")
+        if admin_queue:
+            queue.remove(
+                admin_queue, force_disconnect=force_disconnect, clear_queue=False
+            )
 
     # Finally, actually delete the system
-    db.delete(system)
+    return remove_system(system_id)
 
 
-def update_rescan(operations: Sequence[PatchOperation]) -> None:
-    for op in operations:
-        if op.operation == "rescan":
-            rescan_system_directory()
-        else:
-            raise ModelValidationError(f"Unsupported operation '{op.operation}'")
-
-
+@publish_event(Events.SYSTEM_RESCAN_REQUESTED)
 def rescan_system_directory() -> None:
     """Scans plugin directory and starts any new Systems"""
-    beer_garden.application.plugin_manager.scan_plugin_path()
+    pass
