@@ -11,6 +11,7 @@ appRun.$inject = [
   '$q',
   '$uibModal',
   '$transitions',
+  '$interval',
   'localStorageService',
   'UtilityService',
   'SystemService',
@@ -22,18 +23,21 @@ appRun.$inject = [
 
 /**
  * appRun - Runs the front-end application.
- * @param  {$rootScope} $rootScope         Angular's $rootScope object.
- * @param  {$state} $state                 Angular's $state object.
- * @param  {$stateParams} $stateParams     Angular's $stateParams object.
- * @param  {$http} $http                   Angular's $http object.
- * @param  {$q} $q                         Angular's $q object.
- * @param  {Object} $uibModal              Angular UI's $uibModal object.
- * @param  {localStorageService} localStorageService Storage service
- * @param  {UtilityService} UtilityService Service for configuration/icons.
- * @param  {SystemService} SystemService   Service for System information.
- * @param  {UserService} UserService       Service for User information.
- * @param  {TokenService} TokenService     Service for Token information.
- * @param  {RoleService} RoleService       Service for Role information.
+ * @param  {Object} $rootScope           Angular's $rootScope object.
+ * @param  {Object} $state               Angular's $state object.
+ * @param  {Object} $stateParams         Angular's $stateParams object.
+ * @param  {Object} $http                Angular's $http object.
+ * @param  {Object} $q                   Angular's $q object.
+ * @param  {Object} $uibModal            Angular UI's $uibModal object.
+ * @param  {Object} $transitions         Angular's $transitions object.
+ * @param  {Object} $interval            Angular's $interval object.
+ * @param  {Object} localStorageService  Storage service
+ * @param  {Object} UtilityService       Service for configuration/icons.
+ * @param  {Object} SystemService        Service for System information.
+ * @param  {Object} UserService          Service for User information.
+ * @param  {Object} TokenService         Service for Token information.
+ * @param  {Object} RoleService          Service for Role information.
+ * @param  {Object} EventService         Service for Event information.
  */
 export default function appRun(
     $rootScope,
@@ -43,6 +47,7 @@ export default function appRun(
     $q,
     $uibModal,
     $transitions,
+    $interval,
     localStorageService,
     UtilityService,
     SystemService,
@@ -223,10 +228,18 @@ export default function appRun(
   $transitions.onSuccess({to: 'base'}, () => {
     $state.go('base.landing');
   });
-
-  $rootScope.initialLoad();
   
   EventService.addCallback('console', (event) => {
     console.log('Websocket message: ' + JSON.stringify(event));
   });
+
+  $interval(function() {
+    let socketState = EventService.state();
+
+    if (socketState == undefined || socketState == 3) {
+      EventService.connect();
+    }
+  }, 5000);
+
+  $rootScope.initialLoad();
 };
