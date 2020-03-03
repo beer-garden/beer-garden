@@ -19,7 +19,12 @@ import beer_garden.systems
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 
 # These are the operations that we will forward to child gardens
-routable_operations = ["INSTANCE_START", "INSTANCE_STOP", "REQUEST_CREATE"]
+routable_operations = [
+    "INSTANCE_START",
+    "INSTANCE_STOP",
+    "REQUEST_CREATE",
+    "SYSTEM_DELETE",
+]
 
 # Processor that will be used for forwarding
 forward_processor = None
@@ -232,6 +237,11 @@ def _pre_route(operation: Operation):
         elif operation.operation_type in ("INSTANCE_START", "INSTANCE_STOP"):
             target_instance = db.query_unique(Instance, id=operation.args[0])
             target_system = db.query_unique(System, instances__contains=target_instance)
+            target_garden = _determine_garden(system=target_system)
+
+            operation.target_garden_name = target_garden.name
+        elif operation.operation_type in ("SYSTEM_DELETE",):
+            target_system = db.query_unique(System, id=operation.args[0])
             target_garden = _determine_garden(system=target_system)
 
             operation.target_garden_name = target_garden.name
