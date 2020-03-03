@@ -10,18 +10,18 @@ class ConfigHandler(BaseHandler):
     async def get(self):
         """Subset of configuration options that the frontend needs"""
         app_config = beer_garden.config.get("application")
-        http_config = beer_garden.config.get("entry.http")
-        metrics_config = beer_garden.config.get("metrics")
         auth_config = beer_garden.config.get("auth")
+
         configs = {
             "allow_unsafe_templates": app_config.allow_unsafe_templates,
             "application_name": app_config.name,
             "icon_default": app_config.icon_default,
             "debug_mode": app_config.debug_mode,
-            "url_prefix": http_config.url_prefix,
-            "metrics_url": metrics_config.prometheus.url,
             "auth_enabled": auth_config.enabled,
             "guest_login_enabled": auth_config.guest_login_enabled,
+            "url_prefix": beer_garden.config.get("entry.http.url_prefix"),
+            "metrics_url": beer_garden.config.get("metrics.prometheus.url"),
+            "garden_name": beer_garden.config.get("garden.name"),
         }
 
         self.write(configs)
@@ -29,16 +29,11 @@ class ConfigHandler(BaseHandler):
 
 class VersionHandler(BaseHandler):
     async def get(self):
-        try:
-            version = await self.client.get_version()
-        except Exception as ex:
-            logger.exception(f"Error determining version - Caused by:\n{ex}")
-            version = "unknown"
-
         self.write(
             {
+                "beer_garden_version": beer_garden.__version__,
                 "brew_view_version": beer_garden.__version__,
-                "bartender_version": version,
+                "bartender_version": beer_garden.__version__,
                 "current_api_version": "v1",
                 "supported_api_versions": ["v1"],
             }
