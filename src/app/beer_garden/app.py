@@ -6,7 +6,7 @@ from functools import partial
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils import EasyClient
-from brewtils.models import Event, Events, Garden, System
+from brewtils.models import Event, Events, Garden
 from brewtils.stoppable_thread import StoppableThread
 from pytz import utc
 
