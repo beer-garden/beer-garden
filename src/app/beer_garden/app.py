@@ -6,7 +6,7 @@ from functools import partial
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils import EasyClient
-from brewtils.models import Event, Events, Garden, System
+from brewtils.models import Event, Events, Garden
 from brewtils.stoppable_thread import StoppableThread
 from pytz import utc
 
@@ -288,9 +288,6 @@ class Application(StoppableThread):
     @staticmethod
     def _publish_update(event: Events):
         garden = beer_garden.garden.get_garden(beer_garden.config.get("garden.name"))
-
-        garden.namespaces = beer_garden.namespace.get_namespaces()
-        garden.systems = [str(s) for s in db.query(System)]
         garden.status = "RUNNING" if event == Events.GARDEN_STARTED else "STOPPED"
 
         publish(Event(name=event.name, payload_type="Garden", payload=garden))
