@@ -115,12 +115,6 @@ metrics:
     host: 0.0.0.0
     port: 2339
     url: http://localhost:3000
-namespaces:
-  local: default
-  remote:
-  - host: localhost
-    name: bar
-    port: 9091
 plugin:
   local:
     auth:

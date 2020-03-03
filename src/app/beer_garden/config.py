@@ -987,44 +987,6 @@ _METRICS_SPEC = {
     },
 }
 
-_NAMESPACES_SPEC = {
-    "type": "dict",
-    "items": {
-        "local": {
-            "type": "str",
-            "description": "The local namespace",
-            "default": "default",
-            "required": True,
-        },
-        "remote": {
-            "type": "list",
-            "required": False,
-            "items": {
-                "namespace": {
-                    "type": "dict",
-                    "items": {
-                        "name": {
-                            "type": "str",
-                            "description": "The remote namespace name",
-                            "required": True,
-                        },
-                        "host": {
-                            "type": "str",
-                            "description": "The remote namespace host name",
-                            "required": True,
-                        },
-                        "port": {
-                            "type": "int",
-                            "description": "The remote namespace port",
-                            "required": True,
-                        },
-                    },
-                }
-            },
-        },
-    },
-}
-
 _PLUGIN_SPEC = {
     "type": "dict",
     "items": {
@@ -1229,7 +1191,6 @@ _SPECIFICATION = {
     "garden": _GARDEN_SPEC,
     "log": _LOG_SPEC,
     "metrics": _METRICS_SPEC,
-    "namespaces": _NAMESPACES_SPEC,
     "plugin": _PLUGIN_SPEC,
     "scheduler": _SCHEDULER_SPEC,
     "validator": _VALIDATOR_SPEC,
