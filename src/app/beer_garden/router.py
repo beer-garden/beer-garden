@@ -97,10 +97,10 @@ def should_forward(operation: Operation) -> bool:
         True if the operation should be forwarded, False if it should be executed
     """
     return (
-        operation.target_garden_name is not None
-        and operation.target_garden_name != operation.source_garden_name
-        and operation.target_garden_name != _local_garden()
-        and operation.operation_type in routable_operations
+            operation.target_garden_name is not None
+            and operation.target_garden_name != operation.source_garden_name
+            and operation.target_garden_name != _local_garden()
+            and operation.operation_type in routable_operations
     )
 
 
@@ -131,7 +131,7 @@ def initiate_forward(operation: Operation):
     Args:
         operation:
     """
-    _pre_forward(operation)
+    operation = _pre_forward(operation)
 
     forward_processor.put(operation)
 
@@ -243,6 +243,10 @@ def _pre_forward(operation: Operation):
     """Called before forwarding an operation"""
     if operation.operation_type == "REQUEST_CREATE":
         operation.model = db.create(operation.model)
+        operation.model.parent = None
+        operation.model.has_parent = False
+
+    return operation
 
 
 def _pre_execute(operation: Operation):
