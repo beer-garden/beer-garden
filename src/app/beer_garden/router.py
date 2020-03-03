@@ -97,10 +97,10 @@ def should_forward(operation: Operation) -> bool:
         True if the operation should be forwarded, False if it should be executed
     """
     return (
-            operation.target_garden_name is not None
-            and operation.target_garden_name != operation.source_garden_name
-            and operation.target_garden_name != _local_garden()
-            and operation.operation_type in routable_operations
+        operation.target_garden_name is not None
+        and operation.target_garden_name != operation.source_garden_name
+        and operation.target_garden_name != _local_garden()
+        and operation.operation_type in routable_operations
     )
 
 

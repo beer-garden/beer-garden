@@ -29,16 +29,16 @@ def garden_callbacks(event: Event) -> None:
         beer_garden.garden.garden_add_system(event.payload, event.garden)
 
     if event.name in (
-            Events.GARDEN_CREATED.name,
-            Events.GARDEN_STARTED.name,
-            Events.GARDEN_UPDATED.name,
+        Events.GARDEN_CREATED.name,
+        Events.GARDEN_STARTED.name,
+        Events.GARDEN_UPDATED.name,
     ):
         # Only accept local garden updates and the garden sending the event
         # This should prevent grand-child gardens getting into the database
 
         if (
-                event.payload.name == event.garden
-                and event.payload.name != beer_garden.config.get("garden.name")
+            event.payload.name == event.garden
+            and event.payload.name != beer_garden.config.get("garden.name")
         ):
             garden = beer_garden.garden.get_garden(event.payload.name)
             if garden is None:
@@ -82,10 +82,12 @@ def garden_callbacks(event: Event) -> None:
             logger.error(f"Downstream error event: {event!r}")
             return
 
-        if event.name in (Events.REQUEST_CREATED.name,
-                          Events.REQUEST_STARTED.name,
-                          Events.REQUEST_UPDATED.name,
-                          Events.REQUEST_COMPLETED.name):
+        if event.name in (
+            Events.REQUEST_CREATED.name,
+            Events.REQUEST_STARTED.name,
+            Events.REQUEST_UPDATED.name,
+            Events.REQUEST_COMPLETED.name,
+        ):
             record = db.query_unique(Request, id=event.payload.id)
 
             if record:
@@ -101,10 +103,10 @@ def garden_callbacks(event: Event) -> None:
                 )
 
         elif event.name in (
-                Events.REQUEST_STARTED.name,
-                Events.REQUEST_COMPLETED.name,
-                Events.SYSTEM_UPDATED.name,
-                Events.INSTANCE_UPDATED.name,
+            Events.REQUEST_STARTED.name,
+            Events.REQUEST_COMPLETED.name,
+            Events.SYSTEM_UPDATED.name,
+            Events.INSTANCE_UPDATED.name,
         ):
             if not event.payload_type:
                 logger.error(
