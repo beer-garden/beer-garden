@@ -2,7 +2,6 @@ import _ from 'lodash';
 
 adminGardenController.$inject = [
   '$scope',
-  '$rootScope',
   'GardenService',
   'EventService',
 ];
@@ -10,24 +9,18 @@ adminGardenController.$inject = [
 /**
  * adminGardenController - Garden management controller.
  * @param  {Object} $scope          Angular's $scope object.
- * @param  {Object} $rootScope      Angular's $rootScope object.
  * @param  {Object} GardenService    Beer-Garden's garden service object.
  * @param  {Object} EventService    Beer-Garden's event service object.
  */
 export default function adminGardenController(
     $scope,
-    $rootScope,
     GardenService,
     EventService) {
   $scope.setWindowTitle('gardens');
 
   $scope.successCallback = function(response) {
     $scope.response = response;
-    $rootScope.systems = response.data;
 
-    $scope.data = _.groupBy(response.data, (value) => {
-      return value.display_name || value.name;
-    });
   };
 
   $scope.failureCallback = function(response) {
@@ -35,31 +28,28 @@ export default function adminGardenController(
     $scope.data = [];
   };
 
+  let loadGardens = function() {
+    GardenService.getGardens().then(
+      $scope.successCallback,
+      $scope.failureCallback
+    );
+  };
+
   let loadAll = function() {
     $scope.response = undefined;
     $scope.data = [];
-    $scope.alerts = [];
+
+    loadGardens();
   };
 
   EventService.addCallback('admin_system', (event) => {
     switch (event.name) {
-      case 'INSTANCE_INITIALIZED':
-        updateInstanceStatus(event.payload.id, 'RUNNING');
+      case 'GARDEN_CREATED':
         break;
-      case 'INSTANCE_STOPPED':
-        updateInstanceStatus(event.payload.id, 'STOPPED');
-        break;
-      case 'SYSTEM_REMOVED':
-        removeSystem(event.payload.id);
+      case 'GARDEN_REMOVED':
         break;
     }
   });
-
-  // if ($rootScope.sysResponse.status == 200) {
-  //   $scope.successCallback($rootScope.sysResponse);
-  // } else {
-  //   $scope.failureCallback($rootScope.sysResponse);
-  // }
 
   $scope.$on('userChange', function() {
     loadAll();
