@@ -86,7 +86,7 @@
         </li>
 
         <li>
-          <a ui-sref="base.namespace.about" ui-sref-active="active">About</a>
+          <a ui-sref="base.about" ui-sref-active="active">About</a>
         </li>
       </ul>
       <!-- Navbar Top End -->
@@ -173,13 +173,13 @@
                   </a>
                 </li>
                 <li ng-show="hasPermission(user, 'bg-user-read')">
-                  <a ui-sref="user_admin" ui-sref-active="active">
+                  <a ui-sref="base.user_admin" ui-sref-active="active">
                     <i class="fa fa-user"></i>
                     <span>User Management</span>
                   </a>
                 </li>
                 <li ng-show="hasPermission(user, 'bg-role-read')">
-                  <a ui-sref="role_admin" ui-sref-active="active">
+                  <a ui-sref="base.role_admin" ui-sref-active="active">
                     <i class="fa fa-tag"></i>
                     <span>Role Management</span>
                   </a>
