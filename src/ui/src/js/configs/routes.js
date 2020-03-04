@@ -215,6 +215,11 @@ export default function routeConfig($stateProvider, $urlRouterProvider, $locatio
       templateUrl: basePath + 'admin_system.html',
       controller: 'AdminSystemController',
     })
+    .state('base.garden_admin', {
+      url: 'admin/gardens',
+      templateUrl: basePath + 'admin_garden.html',
+      controller: 'AdminGardenController',
+    })
     .state('user_admin', {
       url: '/admin/users',
       templateUrl: basePath + 'admin_user.html',
