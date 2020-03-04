@@ -1,9 +1,9 @@
-import angular from 'angular';
 import _ from 'lodash';
 
 adminGardenController.$inject = [
   '$scope',
   '$rootScope',
+  'GardenService',
   'EventService',
 ];
 
@@ -11,11 +11,13 @@ adminGardenController.$inject = [
  * adminGardenController - Garden management controller.
  * @param  {Object} $scope          Angular's $scope object.
  * @param  {Object} $rootScope      Angular's $rootScope object.
+ * @param  {Object} GardenService    Beer-Garden's garden service object.
  * @param  {Object} EventService    Beer-Garden's event service object.
  */
 export default function adminGardenController(
     $scope,
     $rootScope,
+    GardenService,
     EventService) {
   $scope.setWindowTitle('gardens');
 
