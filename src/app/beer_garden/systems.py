@@ -4,11 +4,13 @@ from time import sleep
 from typing import List, Sequence
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Events, Instance, PatchOperation, System
+from brewtils.models import Events, Instance, PatchOperation, System, Operation
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema
 
 import beer_garden
+import beer_garden.router
+import beer_garden.garden
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 from beer_garden.events import publish_event
@@ -236,5 +238,16 @@ def purge_system(system_id: str) -> System:
 
 @publish_event(Events.SYSTEM_RESCAN_REQUESTED)
 def rescan_system_directory() -> None:
-    """Scans plugin directory and starts any new Systems"""
-    pass
+    """Scans plugin directory and starts any new Systems
+
+    This will forward the request to all downstream gardens"""
+
+    local_garden = beer_garden.config.get("garden.name")
+
+    for garden in beer_garden.garden.get_gardens():
+        if garden.name != local_garden:
+            beer_garden.router.route(
+                Operation(
+                    operation_type="SYSTEM_RESCAN", target_garden_name=garden.name
+                )
+            )

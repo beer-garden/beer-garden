@@ -19,7 +19,12 @@ import beer_garden.systems
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 
 # These are the operations that we will forward to child gardens
-routable_operations = ["INSTANCE_START", "INSTANCE_STOP", "REQUEST_CREATE"]
+routable_operations = [
+    "INSTANCE_START",
+    "INSTANCE_STOP",
+    "REQUEST_CREATE",
+    "SYSTEM_RESCAN",
+]
 
 # Processor that will be used for forwarding
 forward_processor = None
