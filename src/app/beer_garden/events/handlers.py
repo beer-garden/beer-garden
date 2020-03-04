@@ -2,7 +2,7 @@
 import logging
 
 from brewtils import models as brewtils_models
-from brewtils.models import Event, Events
+from brewtils.models import Event, Events, Request
 from mongoengine import NotUniqueError
 
 import beer_garden.config
@@ -10,6 +10,7 @@ import beer_garden.db.api as db
 import beer_garden.garden
 import beer_garden.router
 from beer_garden.local_plugins.manager import PluginManager
+import beer_garden.requests
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +81,18 @@ def garden_callbacks(event: Event) -> None:
         if event.error:
             logger.error(f"Downstream error event: {event!r}")
             return
+
+        if event.name in (
+            Events.REQUEST_CREATED.name,
+            Events.REQUEST_STARTED.name,
+            Events.REQUEST_UPDATED.name,
+            Events.REQUEST_COMPLETED.name,
+        ):
+            record = db.query_unique(Request, id=event.payload.id)
+
+            if record:
+                event.payload.has_parent = record.has_parent
+                event.payload.parent = record.parent
 
         if event.name in (Events.REQUEST_CREATED.name, Events.SYSTEM_CREATED.name):
             try:

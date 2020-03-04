@@ -131,7 +131,7 @@ def initiate_forward(operation: Operation):
     Args:
         operation:
     """
-    _pre_forward(operation)
+    operation = _pre_forward(operation)
 
     forward_processor.put(operation)
 
@@ -243,6 +243,10 @@ def _pre_forward(operation: Operation):
     """Called before forwarding an operation"""
     if operation.operation_type == "REQUEST_CREATE":
         operation.model = db.create(operation.model)
+        operation.model.parent = None
+        operation.model.has_parent = False
+
+    return operation
 
 
 def _pre_execute(operation: Operation):
