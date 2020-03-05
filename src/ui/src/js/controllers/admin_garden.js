@@ -35,6 +35,10 @@ export default function adminGardenController(
     );
   };
 
+  $scope.editGarden = function(garden) {
+
+  };
+
   let loadAll = function() {
     $scope.response = undefined;
     $scope.data = [];
