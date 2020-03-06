@@ -4,8 +4,6 @@ import signal
 import sys
 
 import beer_garden
-import beer_garden.api.http
-import beer_garden.api.thrift
 from beer_garden.app import Application
 from beer_garden.config import generate_logging, generate, migrate
 

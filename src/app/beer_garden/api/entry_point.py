@@ -2,6 +2,7 @@
 import logging
 import multiprocessing
 import signal
+from importlib import import_module
 from multiprocessing.connection import Connection, Pipe
 from multiprocessing.context import SpawnContext
 from multiprocessing.queues import Queue
@@ -220,7 +221,7 @@ class Manager:
                 self.entry_points.append(self.create(entry_name))
 
     def create(self, module_name: str) -> T:
-        module = getattr(beer_garden.api, module_name)
+        module = import_module(f"beer_garden.api.{module_name}")
 
         return EntryPoint(
             name=module_name,

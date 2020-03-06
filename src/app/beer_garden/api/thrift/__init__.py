@@ -1,4 +1,13 @@
 # -*- coding: utf-8 -*-
+"""Package containing the Thrift entry point
+
+This is DEPRECATED and will not be released in a stable version. It's included here
+purely as a testing tool.
+
+Note that thriftpy2 is not listed in the project's dependencies. If you want to run this
+entry point you must install thriftpy2 first.
+"""
+
 import logging
 import os
 import types
