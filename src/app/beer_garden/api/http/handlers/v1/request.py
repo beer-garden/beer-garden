@@ -3,11 +3,11 @@ import json
 from typing import Sequence
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Request, Operation
+from brewtils.models import Operation, Request
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.db.api as db
-from beer_garden.api.http.authorization import authenticated, Permissions
+from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
 
 
@@ -85,18 +85,41 @@ class RequestAPI(BaseHandler):
         tags:
           - Requests
         """
+        operation = Operation(args=[request_id])
 
-        response = await self.client(
-            Operation(
-                operation_type="REQUEST_UPDATE",
-                args=[
-                    request_id,
-                    SchemaParser.parse_patch(
-                        self.request.decoded_body, from_string=True
-                    ),
-                ],
-            )
-        )
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
+
+        for op in patch:
+            if op.operation == "replace":
+                if op.path == "/status":
+
+                    # If we get a start just assume there's no other op in patch
+                    if op.value.upper() == "IN_PROGRESS":
+                        operation.operation_type = "REQUEST_START"
+                        operation.kwargs = {}
+                        break
+
+                    elif op.value.upper() in Request.COMPLETED_STATUSES:
+                        operation.operation_type = "REQUEST_COMPLETE"
+                        operation.kwargs["status"] = op.value
+
+                    else:
+                        raise ModelValidationError(
+                            f"Unsupported status value '{op.value}'"
+                        )
+
+                elif op.path == "/output":
+                    operation.kwargs["output"] = op.value
+
+                elif op.path == "/error_class":
+                    operation.kwargs["error_class"] = op.value
+
+                else:
+                    raise ModelValidationError(f"Unsupported path '{op.path}'")
+            else:
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+
+        response = await self.client(operation)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

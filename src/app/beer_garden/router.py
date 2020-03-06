@@ -18,21 +18,24 @@ import beer_garden.scheduler
 import beer_garden.systems
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 
+logger = logging.getLogger(__name__)
+
 # These are the operations that we will forward to child gardens
 routable_operations = ["INSTANCE_START", "INSTANCE_STOP", "REQUEST_CREATE"]
 
 # Processor that will be used for forwarding
 forward_processor = None
 
-# Dict that will be used to determine which garden to use
-garden_map: Dict[str, Garden] = {}
+# Dict of str(system) -> garden_name for determining which garden to use
+garden_lookup: Dict[str, str] = {}
 
-# List of known gardens
-gardens: List[Garden] = []
+# Dict of garden_name -> (conn_type, conn_info) to be used for actual communication
+garden_connections: Dict[str, Tuple[str, dict]] = {}
 
 route_functions = {
     "REQUEST_CREATE": beer_garden.requests.process_request,
-    "REQUEST_UPDATE": beer_garden.requests.update_request,
+    "REQUEST_START": beer_garden.requests.start_request,
+    "REQUEST_COMPLETE": beer_garden.requests.complete_request,
     "REQUEST_READ": beer_garden.requests.get_request,
     "REQUEST_READ_ALL": beer_garden.requests.get_requests,
     "COMMAND_READ": beer_garden.commands.get_command,
