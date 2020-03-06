@@ -1,0 +1,13 @@
+<h1 class="page-header">
+  <span ng-if="responseState(response) !== 'success'">Garden View</span>
+</h1>
+
+<fetch-data response="response"></fetch-data>
+
+<div id="garden-view-container"
+     class="animate-if"
+     ng-if="responseState(response) === 'success'">
+
+
+
+</div>

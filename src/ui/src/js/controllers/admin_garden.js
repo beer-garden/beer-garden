@@ -2,6 +2,7 @@ import _ from 'lodash';
 
 adminGardenController.$inject = [
   '$scope',
+  '$state',
   'GardenService',
   'EventService',
 ];
@@ -14,12 +15,14 @@ adminGardenController.$inject = [
  */
 export default function adminGardenController(
     $scope,
+    $state,
     GardenService,
     EventService) {
   $scope.setWindowTitle('gardens');
 
   $scope.successCallback = function(response) {
     $scope.response = response;
+    $scope.data = response.data;
 
   };
 
@@ -36,7 +39,11 @@ export default function adminGardenController(
   };
 
   $scope.editGarden = function(garden) {
-
+    $state.go('base.garden_admin.garden',
+      {
+        'name': garden.name,
+      }
+    );
   };
 
   let loadAll = function() {

@@ -227,8 +227,13 @@ export default function routeConfig(
     })
     .state('base.garden_admin', {
       url: 'admin/gardens/',
-      templateUrl: basePath + 'admin_garden.html',
+      templateUrl: basePath + 'admin_garden_index.html',
       controller: 'AdminGardenController',
+    })
+    .state('base.garden_admin.garden', {
+      url: ':name/',
+      templateUrl: basePath + 'admin_garden_view.html',
+      controller: 'AdminGardenViewController',
     })
     .state('base.user_admin', {
       url: 'admin/users/',
