@@ -20,7 +20,6 @@ from mongoengine.errors import (
     ValidationError as MongoValidationError,
 )
 from pymongo.errors import DocumentTooLarge
-from thriftpy2.thrift import TException
 from tornado.web import HTTPError, RequestHandler
 
 import beer_garden.api.http
@@ -53,7 +52,6 @@ class BaseHandler(AuthMixin, RequestHandler):
         NotUniqueError: {"status_code": 409, "message": "Resource already exists"},
         DocumentTooLarge: {"status_code": 413, "message": "Resource too large"},
         RequestPublishException: {"status_code": 502},
-        TException: {"status_code": 503, "message": "Could not connect to Bartender"},
         socket.timeout: {"status_code": 504, "message": "Backend request timed out"},
     }
 
