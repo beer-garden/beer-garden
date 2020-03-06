@@ -6,14 +6,13 @@ mongoengine < 0.19
 passlib < 1.8
 prometheus_client < 1
 pyrabbit2 < 2
-ruamel.yaml < 0.16
+pytz < 2021
+ruamel.yaml < 0.17
 tornado < 7
-yapconf >= 0.3.7
 
 # Documentation Dependencies
-sphinx<2
+sphinx < 2
 sphinx_rtd_theme
-watchdog
 
 # Build / Test Dependencies
 black ; python_version > "3.5"
@@ -27,7 +26,3 @@ pytest < 4
 pytest-mock
 pytest-lazy-fixture
 pytest-tornado
-pytz < 2019
-tox
-twine
-wheel
