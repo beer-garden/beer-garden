@@ -38,7 +38,7 @@ setup(
         "pytz<2019",
         "ruamel.yaml<0.16",
         "tornado==6.0.3",
-        "yapconf>=0.3.5",
+        "yapconf>=0.3.7",
     ],
     classifiers=[
         "Development Status :: 4 - Beta",

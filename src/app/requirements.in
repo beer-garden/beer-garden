@@ -8,7 +8,7 @@ prometheus_client < 1
 pyrabbit2 < 2
 ruamel.yaml < 0.16
 tornado < 7
-yapconf >= 0.3.5
+yapconf >= 0.3.7
 
 # Documentation Dependencies
 sphinx<2
