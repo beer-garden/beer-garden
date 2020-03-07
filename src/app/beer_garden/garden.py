@@ -41,8 +41,6 @@ def update_garden_config(garden: Garden):
     db_garden.connection_params = garden.connection_params
     db_garden.connection_type = garden.connection_type
 
-    beer_garden.router.add_garden(db_garden)
-
     return update_garden(db_garden)
 
 
