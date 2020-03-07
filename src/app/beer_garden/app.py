@@ -180,17 +180,11 @@ class Application(StoppableThread):
         for helper_thread in self.helper_threads:
             helper_thread.start()
 
+        self.logger.debug("Setting up garden routing...")
+        beer_garden.router.setup_routing()
+
         self.logger.debug("Starting forwarding processor...")
         beer_garden.router.forward_processor.start()
-
-        self.logger.debug("Setting up local garden information")
-        garden = beer_garden.garden.get_garden(beer_garden.config.get("garden.name"))
-        if garden is None:
-            garden = Garden(name=beer_garden.config.get("garden.name"))
-            beer_garden.garden.create_garden(garden)
-
-        self.logger.debug("Caching Garden Information")
-        beer_garden.router.cache_gardens()
 
         self.logger.debug("Creating and starting entry points...")
         self.entry_manager.create_all()
@@ -287,8 +281,20 @@ class Application(StoppableThread):
 
     @staticmethod
     def _publish_update(event: Events):
-        garden = beer_garden.garden.get_garden(beer_garden.config.get("garden.name"))
-        garden.status = "RUNNING" if event == Events.GARDEN_STARTED else "STOPPED"
+        # DO NOT DO THIS
+        # garden = beer_garden.garden.get_garden(beer_garden.config.get("garden.name"))
+
+        # INSTEAD, THIS
+        # Want to have most current info when publishing
+        known_systems = list(beer_garden.router.garden_lookup.keys())
+        known_namespaces = beer_garden.namespace.get_namespaces()
+
+        garden = Garden(
+            name=beer_garden.config.get("garden.name"),
+            status="RUNNING" if event == Events.GARDEN_STARTED else "STOPPED",
+            systems=known_systems,
+            namespaces=known_namespaces,
+        )
 
         publish(Event(name=event.name, payload_type="Garden", payload=garden))
 
