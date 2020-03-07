@@ -94,22 +94,10 @@ def create_garden(garden: Garden) -> Garden:
         The created Garden
 
     """
-
     garden.status = "INITIALIZING"
     garden.status_info["heartbeat"] = datetime.utcnow()
-    db_garden = db.query_unique(Garden, name=garden.name)
-    if db_garden:
-        db_garden.status = garden.status
-        db_garden.status_info = garden.status_info
-        db_garden.connection_type = garden.connection_type
-        db_garden.connection_params = garden.connection_params
-        db_garden.namespaces = garden.namespaces
-        db_garden.systems = garden.systems
 
-        return db.update(db_garden)
-
-    else:
-        return db.create(garden)
+    return db.create(garden)
 
 
 def garden_add_system(system: System, garden_name: str):
