@@ -644,9 +644,6 @@ def start_request(request_id: str) -> Request:
     """
     request = db.query_unique(Request, id=request_id)
 
-    if request.status in Request.COMPLETED_STATUSES:
-        raise ModelValidationError("Cannot update a completed request")
-
     request.status = "IN_PROGRESS"
     request = db.update(request)
 
@@ -677,9 +674,6 @@ def complete_request(
     """
     request = db.query_unique(Request, id=request_id)
 
-    if request.status in Request.COMPLETED_STATUSES:
-        raise ModelValidationError("Cannot update a completed request")
-
     request.status = status
     request.output = output
     request.error_class = error_class
@@ -709,9 +703,6 @@ def cancel_request(request_id: Request) -> Request:
 
     """
     request = db.query_unique(Request, id=request_id)
-
-    if request.status in Request.COMPLETED_STATUSES:
-        raise ModelValidationError("Cannot cancel a completed request")
 
     request.status = "CANCELED"
     request = db.update(request)
