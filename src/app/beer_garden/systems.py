@@ -238,3 +238,37 @@ def purge_system(system_id: str) -> System:
 def rescan_system_directory() -> None:
     """Scans plugin directory and starts any new Systems"""
     pass
+
+
+def handle_event(event):
+    # Only care about downstream garden
+    if event.garden != beer_garden.config.get("garden.name"):
+
+        if event.name == Events.SYSTEM_CREATED.name:
+            # If a downstream system is created we mark it as local, then save it
+            event.payload.local = False
+            db.create(event.payload)
+
+        elif event.name == Events.SYSTEM_UPDATED.name:
+            if not event.payload_type:
+                logger.error(f"{event.name} error: no payload type ({event!r})")
+                return
+
+            record = db.query_unique(System, id=event.payload.id)
+
+            if record:
+                db.update(event.payload)
+            else:
+                logger.error(f"{event.name} error: object does not exist ({event!r})")
+
+        elif event.name in (Events.SYSTEM_REMOVED.name,):
+            if not event.payload_type:
+                logger.error(f"{event.name} error: no payload type ({event!r})")
+                return
+
+            record = db.query_unique(System, id=event.payload.id)
+
+            if record:
+                db.delete(event.payload)
+            else:
+                logger.error(f"{event.name} error: object does not exist ({event!r})")

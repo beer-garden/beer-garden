@@ -5,9 +5,8 @@ from typing import List
 
 from brewtils.errors import PluginError
 from brewtils.models import Events, Garden, System
-import beer_garden.router
 
-
+import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.events import publish_event
 
@@ -133,3 +132,15 @@ def garden_add_system(system: System, garden_name: str):
 @publish_event(Events.GARDEN_UPDATED)
 def update_garden(garden: Garden):
     return db.update(garden)
+
+
+def handle_event(event):
+    # Only care about downstream
+    if event.garden != config.get("garden.name"):
+        if event.name in (Events.GARDEN_STARTED.name, Events.GARDEN_UPDATED.name,):
+            # Only accept the garden sending the event
+            # This should prevent grand-child gardens getting into the database
+            if event.payload.name == event.garden:
+                garden = get_garden(event.payload.name)
+                if garden is None:
+                    create_garden(event.payload)

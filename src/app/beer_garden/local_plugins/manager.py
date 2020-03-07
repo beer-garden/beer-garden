@@ -14,6 +14,7 @@ from typing import Dict
 from enum import Enum
 
 import sys
+from brewtils.models import Events
 from brewtils.specification import _SYSTEM_SPEC
 from brewtils.stoppable_thread import StoppableThread
 
@@ -117,6 +118,27 @@ class PluginManager(StoppableThread):
                 password=beer_garden.config.get("plugin.local.auth.password"),
             )
         return cls._instance
+
+    @classmethod
+    def handle_event(cls, event):
+        # Only care about local garden
+        if event.garden == beer_garden.config.get("garden.name"):
+            # Start local plugins after the entry point comes up
+            if event.name == Events.ENTRY_STARTED.name:
+                cls.start_all()
+            elif event.name == Events.INSTANCE_INITIALIZED.name:
+                cls.handle_associate(event)
+            elif event.name == Events.INSTANCE_STARTED.name:
+                cls.handle_start(event)
+            elif event.name == Events.INSTANCE_STOPPED.name:
+                cls.handle_stop(event)
+            elif event.name == Events.SYSTEM_REMOVED.name:
+                cls.handle_remove_system(event)
+            elif event.name == Events.SYSTEM_RESCAN_REQUESTED.name:
+                new_plugins = cls.instance().load_new()
+
+                for runner_id in new_plugins:
+                    cls.start_one(runner_id)
 
     @classmethod
     def handle_associate(cls, event):

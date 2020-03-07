@@ -12,6 +12,7 @@ import urllib3
 from brewtils.choices import parse
 from brewtils.errors import ConflictError, ModelValidationError, RequestPublishException
 from brewtils.models import Choices, Events, Request, RequestTemplate, System
+from mongoengine import NotUniqueError  # TODO - Don't like this outside of db package
 from requests import Session
 
 import beer_garden.config
@@ -718,3 +719,25 @@ def cancel_request(request_id: Request) -> Request:
     # TODO - Metrics here?
 
     return request
+
+
+def handle_event(event):
+    # Only care about downstream garden
+    if event.garden != beer_garden.config.get("garden.name"):
+
+        if event.name == Events.REQUEST_CREATED.name:
+            try:
+                db.create(event.payload)
+            except NotUniqueError:
+                logger.error(f"{event.name} error: object already exists ({event!r})")
+
+        elif event.name in (Events.REQUEST_STARTED.name, Events.REQUEST_COMPLETED.name):
+            existing_request = db.query_unique(Request, id=event.payload.id)
+
+            # When we send child requests to child gardens where the parent was on
+            # the local garden we remove the parent before sending them. This
+            # "corrects" the mangling when we receive the updates
+            event.payload.has_parent = existing_request.has_parent
+            event.payload.parent = existing_request.parent
+
+            db.update(event.payload)
