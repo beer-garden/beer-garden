@@ -4,11 +4,20 @@ from typing import List
 from brewtils.models import Garden, Request, System
 
 import beer_garden.db.api as db
+import beer_garden.config as config
+
+
+def default() -> str:
+    """Get the default namespace for this Garden
+
+    Returns:
+        The default namespace
+    """
+    return config.get("garden.name")
 
 
 def get_namespaces() -> List[str]:
-    """
-    Get the distinct namespaces in the Garden
+    """Get the distinct namespaces in the Garden
 
     Returns:
         List
