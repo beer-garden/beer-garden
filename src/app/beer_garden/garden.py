@@ -62,9 +62,7 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
     garden.status = new_status
     garden.status_info["heartbeat"] = datetime.utcnow()
 
-    update_garden(garden)
-    logger.info("Downstream Namespace " + garden_name + " is now " + new_status)
-    return garden
+    return update_garden(garden)
 
 
 @publish_event(Events.GARDEN_REMOVED)
