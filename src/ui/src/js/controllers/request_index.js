@@ -166,7 +166,6 @@ export default function requestIndexController(
       .newColumn('system_version')
       .withTitle('Version')
       .renderWith(function(data, type, full) {
-        let display = '';
 
         return display + `<a ui-sref="base.namespace.system({systemName: '${full.system}', systemVersion: '${full.system_version}'})">` + data + '</a>';
       }),
