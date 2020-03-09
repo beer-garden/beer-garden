@@ -26,7 +26,6 @@ from brewtils.schemas import (
     SystemSchema,
     OperationSchema,
 )
-from prometheus_client.exposition import start_http_server
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado.web import Application, RedirectHandler
@@ -85,16 +84,6 @@ async def startup():
 
     # Need to wait until after mongo connection established to load
     anonymous_principal = load_anonymous()
-
-    metrics_config = beer_garden.config.get("metrics")
-    if metrics_config.prometheus.enabled:
-        logger.info(
-            f"Starting metrics server on "
-            f"{metrics_config.prometheus.host}:{metrics_config.prometheus.port}"
-        )
-        start_http_server(
-            metrics_config.prometheus.port, addr=metrics_config.prometheus.host
-        )
 
     http_config = beer_garden.config.get("entry.http")
     logger.info(f"Starting HTTP server on {http_config.host}:{http_config.port}")
