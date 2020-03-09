@@ -336,7 +336,7 @@ def _determine_target_system(operation):
 def _determine_target_garden(system: System) -> str:
     """Retrieve a garden from the garden map"""
     try:
-        return garden_lookup.get(str(system))
+        return garden_lookup[str(system)]
     except KeyError:
         raise UnknownGardenException(f"Unable to determine target garden for {system}")
 
