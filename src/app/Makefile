@@ -117,7 +117,7 @@ package: clean package-source package-wheel ## builds source and wheel package
 
 # Docker
 docker-login: ## log in to the docker registry
-	echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USER)" --password-stdin
+	echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USER}" --password-stdin
 
 docker-build: ## build the docker images
 	docker build -t $(DOCKER_NAME):latest --build-arg VERSION=$(VERSION) -f $(DOCKERFILE_DIR)/Dockerfile .
