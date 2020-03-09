@@ -769,7 +769,7 @@ _EVENT_SPEC = {
                     "items": {
                         "enable": {
                             "type": "bool",
-                            "default": True,
+                            "default": False,
                             "description": "Run an HTTP server",
                         },
                         "ssl": {
