@@ -70,14 +70,6 @@ event:
     enable: false
     exchange: event
     virtual_host: /
-  brew_view:
-    ca_cert: null
-    ca_verify: true
-    enable: false
-    host: localhost
-    port: 2337
-    ssl_enabled: false
-    url_prefix: /
   mongo:
     enable: true
   parent:
