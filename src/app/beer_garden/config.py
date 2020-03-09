@@ -52,7 +52,7 @@ def load(args: Sequence[str], force: bool = False) -> None:
     if config.event.brew_view.url_prefix:
         config.event.brew_view.url_prefix = normalize(config.event.brew_view.url_prefix)
 
-    _CONFIG = Box(config.to_dict(), frozen_box=True)
+    _CONFIG = Box(config.to_dict())
 
 
 def generate(args: Sequence[str]):

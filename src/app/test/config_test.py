@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 import yapconf
-from box import BoxError
 from mock import Mock, patch
 from ruamel import yaml
 from yapconf import YapconfSpec
@@ -192,10 +191,6 @@ class TestConfigGet(object):
 
     def test_get_all(self):
         assert beer_garden.config.get() == beer_garden.config._CONFIG
-
-    def test_immutable(self):
-        with pytest.raises(BoxError):
-            beer_garden.config.get("log")["level"] = "not allowed"
 
 
 class TestSafeMigrate(object):
