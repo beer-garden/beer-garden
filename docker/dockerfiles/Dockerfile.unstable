@@ -3,9 +3,11 @@ WORKDIR /src
 ENTRYPOINT ["beergarden"]
 
 ENV BG_PLUGIN_LOCAL_DIRECTORY=/plugins \
-    BG_LOG_CONFIG_FILE=/src/dev_conf/logging-config.json
+    BG_PLUGIN_LOGGING_CONFIG_FILE=/src/example_configs/plugin-logging.yaml \
+    BG_LOG_CONFIG_FILE=/src/example_configs/logging-config.yaml
 
-ADD ./dev_conf/logging-config.json /src/dev_conf/
+ADD ./example_configs/logging-config.yaml /src/example_configs/
+ADD ./example_configs/plugin-logging.yaml /src/example_configs/
 ADD ./requirements.txt .
 ADD ./dist/*.whl ./
 
