@@ -2,61 +2,48 @@ version: '3.5'
 
 x-definitions: &env
     # IMPORTANT!!
-    # Change this to whatever you want your namespace to be
-    BG_NAMESPACES_LOCAL: docker
+    # Change this to whatever you want your garden name / namespace default to be
+    BG_GARDEN_NAME: docker
 
     # IMPORTANT!!
     # Change this to support both local and remote plugins
     # Should be resolvable from inside and outside the docker network
     BG_PUBLISH_HOSTNAME: localhost
 
-    # Both still need these for now
-    BG_DB_HOST: mongodb
-    BG_DB_NAME: beer_garden_v3
-
 
 services:
-    brew-view:
-        image: bgio/brew-view:v3
+    beer-garden:
+        image: bgio/beer-garden:unstable
         networks:
             - bg-network
         ports:
             - "2337:2337"
             - "2338:2338"
-        environment:
-            <<: *env
-            # For brew-view web host is really interface to bind
-            BG_WEB_HOST: 0.0.0.0
-            BG_BACKEND_HOST: bartender
-
-            # We expose grafana for you, but you can change this to an
-            # external grafana URL if you would like. It just adds a
-            # link in our About section if it is defined.
-            BG_METRICS_URL: http://localhost:3000
-        depends_on:
-            - mongodb
-            - rabbitmq
-            - bartender
-
-    bartender:
-        image: bgio/bartender:v3
-        networks:
-            - bg-network
-        ports:
-            - "9090:9090"
         volumes:
+            - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
             - ./data/localplugins:/plugins
         environment:
             <<: *env
 
+            # Point at the correct database
+            BG_DB_HOST: mongodb
+            BG_DB_NAME: beer_garden_v3
+
+            # Point at the correct message broker
             BG_AMQ_HOST: rabbitmq
             BG_AMQ_CONNECTIONS_ADMIN_USER: beer_garden
             BG_AMQ_CONNECTIONS_ADMIN_PASSWORD: password
             BG_AMQ_CONNECTIONS_MESSAGE_USER: beer_garden
             BG_AMQ_CONNECTIONS_MESSAGE_PASSWORD: password
 
-            BG_EVENT_BREW_VIEW_ENABLE: "true"
-            BG_EVENT_BREW_VIEW_HOST: "brew-view"
+            # Disable TLS
+            BG_AUTH_ENABLED: "false"
+
+            # We expose grafana for you, but you can change this to an
+            # external grafana URL if you would like. It just adds a
+            # link in our About section if it is defined.
+            BG_METRICS_URL: http://localhost:3000
+            BG_METRICS_PROMETHEUS_ENABLED: "false"
         depends_on:
             - mongodb
             - rabbitmq
