@@ -27,7 +27,7 @@
         <td>{{entry.description}}</td>
         <td>
           <a class="btn btn-primary center-block word-wrap-button"
-             ui-sref="base.namespace.commandID({commandId: entry.id})"
+             ui-sref="base.namespace.command({systemName: entry.system, systemVersion: entry.version, commandName: entry.name})"
              >Make it Happen!</a>
         </td>
       </tr>
