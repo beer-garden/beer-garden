@@ -49,7 +49,11 @@
                   ng-class="{'chevron-rotate': !childrenCollapsed}">
             </span>{{data.command}}</td>
           <td>{{data.metadata.system_display_name || data.system}}</td>
-          <td>{{data.system_version}}</td>
+          <td><div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
+              <a ui-sref="base.namespace.system({systemName: data.system, systemVersion: data.system_version})">
+                <span style="...">{{data.system_version}}</span>
+              </a>
+            </div></td>
           <td>{{data.instance_name}}</td>
           <td>{{data.status}}
             <span uib-popover="{{statusDescriptions[data.status]}}"

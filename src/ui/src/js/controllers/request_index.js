@@ -164,7 +164,12 @@ export default function requestIndexController(
       }),
     DTColumnBuilder
       .newColumn('system_version')
-      .withTitle('Version'),
+      .withTitle('Version')
+      .renderWith(function(data, type, full) {
+        let display = '';
+
+        return display + `<a ui-sref="base.namespace.system({systemName: '${full.system}', systemVersion: '${full.system_version}'})">` + data + '</a>';
+      }),
     DTColumnBuilder
       .newColumn('instance_name')
       .withTitle('Instance'),
