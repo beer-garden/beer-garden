@@ -12,7 +12,7 @@ import urllib3
 from brewtils.choices import parse
 from brewtils.errors import ConflictError, ModelValidationError, RequestPublishException
 from brewtils.models import Choices, Events, Request, RequestTemplate, System
-from mongoengine import NotUniqueError  # TODO - Don't like this outside of db package
+from mongoengine import NotUniqueError  # TODO - Outside of db package
 from requests import Session
 
 import beer_garden.config
@@ -553,7 +553,6 @@ def get_requests(**kwargs) -> List[Request]:
     return db.query(Request, **kwargs)
 
 
-@publish_event(Events.REQUEST_CREATED)
 def process_request(
     new_request: Union[Request, RequestTemplate], wait_timeout: float = -1
 ) -> Request:
@@ -586,7 +585,7 @@ def process_request(
     request = RequestValidator.instance().validate_request(request)
 
     # Once validated we need to save since validate can modify the request
-    request = db.create(request)
+    request = create_request(request)
 
     if wait_timeout != 0:
         request_map[request.id] = Event()
@@ -626,6 +625,11 @@ def process_request(
             request_map.pop(request.id, None)
 
     return request
+
+
+@publish_event(Events.REQUEST_CREATED)
+def create_request(request: Request) -> Request:
+    return db.create(request)
 
 
 @publish_event(Events.REQUEST_STARTED)
