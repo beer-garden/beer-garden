@@ -727,12 +727,12 @@ def handle_event(event):
                 logger.error(f"{event.name} error: object already exists ({event!r})")
 
         elif event.name in (Events.REQUEST_STARTED.name, Events.REQUEST_COMPLETED.name):
+            # When we send child requests to child gardens where the parent was on
+            # the local garden we remove the parent before sending them. Only setting
+            # the subset of fields that change "corrects" the parent
             existing_request = db.query_unique(Request, id=event.payload.id)
 
-            # When we send child requests to child gardens where the parent was on
-            # the local garden we remove the parent before sending them. This
-            # "corrects" the mangling when we receive the updates
-            event.payload.has_parent = existing_request.has_parent
-            event.payload.parent = existing_request.parent
+            for field in ("status", "output", "error_class"):
+                setattr(existing_request, field, getattr(event.payload, field))
 
-            db.update(event.payload)
+            db.update(existing_request)
