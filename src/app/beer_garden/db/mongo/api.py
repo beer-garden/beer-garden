@@ -279,7 +279,7 @@ def create(obj: ModelItem) -> ModelItem:
     if hasattr(mongo_obj, "deep_save"):
         mongo_obj.deep_save()
     else:
-        mongo_obj.save()
+        mongo_obj.save(force_insert=True)
 
     return to_brewtils(mongo_obj)
 
