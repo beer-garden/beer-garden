@@ -721,10 +721,8 @@ def handle_event(event):
     if event.garden != beer_garden.config.get("garden.name"):
 
         if event.name == Events.REQUEST_CREATED.name:
-            try:
+            if db.query_unique(Request, id=event.payload.id) is None:
                 db.create(event.payload)
-            except NotUniqueError:
-                logger.error(f"{event.name} error: object already exists ({event!r})")
 
         elif event.name in (Events.REQUEST_STARTED.name, Events.REQUEST_COMPLETED.name):
             # When we send child requests to child gardens where the parent was on
