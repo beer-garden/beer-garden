@@ -119,12 +119,26 @@ def update_garden(garden: Garden):
 
 
 def handle_event(event):
-    # Only care about downstream
+    """Handle garden-related events
+
+    For GARDEN events we only care about events originating from downstream. We also
+    only care about immediate children, not grandchildren.
+
+    Whenever a garden event is detected we should update that garden's database
+    representation.
+
+    This method should NOT update the routing module. Let its handler worry about that!
+    """
     if event.garden != config.get("garden.name"):
         if event.name in (Events.GARDEN_STARTED.name, Events.GARDEN_UPDATED.name,):
-            # Only accept the garden sending the event
-            # This should prevent grand-child gardens getting into the database
+
+            # Only do stuff for direct children
             if event.payload.name == event.garden:
-                garden = get_garden(event.payload.name)
-                if garden is None:
+                existing_garden = get_garden(event.payload.name)
+
+                if existing_garden is None:
                     create_garden(event.payload)
+
+                else:
+                    existing_garden.systems = event.payload.systems
+                    update_garden(existing_garden)
