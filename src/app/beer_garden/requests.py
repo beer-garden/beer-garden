@@ -645,7 +645,7 @@ def start_request(request_id: str) -> Request:
         ModelValidationError: The Request is already completed
 
     """
-    request = db.query_unique(Request, id=request_id)
+    request = db.query_unique(Request, raise_missing=True, id=request_id)
 
     request.status = "IN_PROGRESS"
     request = db.update(request)
@@ -675,7 +675,7 @@ def complete_request(
         ModelValidationError: The Request is already completed
 
     """
-    request = db.query_unique(Request, id=request_id)
+    request = db.query_unique(Request, raise_missing=True, id=request_id)
 
     request.status = status
     request.output = output
