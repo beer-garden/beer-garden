@@ -23,11 +23,14 @@
       <tr ng-repeat="entry in data | filter:query">
         <td>{{entry.system}}</td>
         <td>{{entry.name}}</td>
-        <td>{{entry.version}}</td>
+        <td>
+          <a ui-sref="base.namespace.system({systemName: entry.system, systemVersion: entry.version})"
+             >{{entry.version}}</a>
+        </td>
         <td>{{entry.description}}</td>
         <td>
           <a class="btn btn-primary center-block word-wrap-button"
-             ui-sref="base.namespace.commandID({commandId: entry.id})"
+             ui-sref="base.namespace.command({systemName: entry.system, systemVersion: entry.version, commandName: entry.name})"
              >Make it Happen!</a>
         </td>
       </tr>
