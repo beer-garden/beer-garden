@@ -12,7 +12,6 @@ import urllib3
 from brewtils.choices import parse
 from brewtils.errors import ConflictError, ModelValidationError, RequestPublishException
 from brewtils.models import Choices, Events, Request, RequestTemplate, System
-from mongoengine import NotUniqueError  # TODO - Outside of db package
 from requests import Session
 
 import beer_garden.config
