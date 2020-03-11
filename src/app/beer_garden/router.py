@@ -20,6 +20,8 @@ import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
+from beer_garden.garden import get_gardens
+from beer_garden.systems import get_systems
 
 logger = logging.getLogger(__name__)
 
@@ -210,7 +212,7 @@ def setup_routing():
 
     # We do NOT want to load local garden information from the database as the local
     # name could have changed
-    for garden in beer_garden.garden.get_gardens():
+    for garden in get_gardens():
         if garden.name != local_garden_name:
             if (
                 garden.connection_type is not None
@@ -231,7 +233,7 @@ def setup_routing():
                 logger.warning(f"Adding garden with invalid connection info: {garden}")
 
     # Now add the local systems
-    local_systems = db.query(System, filter_params={"local": True})
+    local_systems = get_systems(filter_params={"local": True})
 
     for system in local_systems:
         garden_lookup[str(system)] = local_garden_name
