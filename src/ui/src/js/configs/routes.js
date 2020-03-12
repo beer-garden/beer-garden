@@ -230,8 +230,8 @@ export default function routeConfig(
       templateUrl: basePath + 'admin_garden_index.html',
       controller: 'AdminGardenController',
     })
-    .state('base.garden_admin.garden', {
-      url: ':name/',
+    .state('base.garden_view', {
+      url: 'admin/gardens/:name/',
       templateUrl: basePath + 'admin_garden_view.html',
       controller: 'AdminGardenViewController',
     })

@@ -39,7 +39,7 @@ export default function adminGardenController(
   };
 
   $scope.editGarden = function(garden) {
-    $state.go('base.garden_admin.garden',
+    $state.go('base.garden_view',
       {
         'name': garden.name,
       }
