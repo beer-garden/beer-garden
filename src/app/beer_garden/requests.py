@@ -693,6 +693,7 @@ def complete_request(
     return request
 
 
+@publish_event(Events.REQUEST_CANCELED)
 def cancel_request(request_id: Request) -> Request:
     """Mark a Request as CANCELED
 
