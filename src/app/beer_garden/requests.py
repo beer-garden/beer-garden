@@ -590,7 +590,8 @@ def process_request(
         request_map[request.id] = Event()
 
     try:
-        logger.info(f"Publishing request {request.id}")
+        logger.info(f"Publishing {request!r}")
+
         queue.put(
             request,
             confirm=True,
