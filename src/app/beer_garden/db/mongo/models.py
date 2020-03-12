@@ -203,6 +203,7 @@ class Command(MongoModel, Document):
     schema = DictField()
     form = DictField()
     template = StringField()
+    hidden = BooleanField()
     icon_name = StringField()
     # reverse_delete_rule=CASCADE is set later, can't set until System is defined
     system = ReferenceField("System")
