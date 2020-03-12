@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 import yapconf
-from box import BoxError
 from mock import Mock, patch
 from ruamel import yaml
 from yapconf import YapconfSpec
@@ -53,16 +52,10 @@ class TestLoadConfig(object):
         ],
     )
     def test_normalize_url_prefix(self, normalized, initial):
-        cli_args = [
-            "--entry-http-url-prefix",
-            initial,
-            "--event-brew_view-url-prefix",
-            initial,
-        ]
-        beer_garden.config.load(cli_args, force=True)
+        cli_args = ["--entry-http-url-prefix", initial]
 
+        beer_garden.config.load(cli_args, force=True)
         assert beer_garden.config.get("entry.http.url_prefix") == normalized
-        assert beer_garden.config.get("event.brew_view.url_prefix") == normalized
 
 
 class TestGenerateConfig(object):
@@ -198,10 +191,6 @@ class TestConfigGet(object):
 
     def test_get_all(self):
         assert beer_garden.config.get() == beer_garden.config._CONFIG
-
-    def test_immutable(self):
-        with pytest.raises(BoxError):
-            beer_garden.config.get("log")["level"] = "not allowed"
 
 
 class TestSafeMigrate(object):
