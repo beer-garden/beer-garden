@@ -770,7 +770,7 @@ _EVENT_SPEC = {
                         "enable": {
                             "type": "bool",
                             "default": False,
-                            "description": "Run an HTTP server",
+                            "description": "Publish events to parent garden over HTTP",
                         },
                         "ssl": {
                             "type": "dict",
