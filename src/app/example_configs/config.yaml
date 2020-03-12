@@ -74,13 +74,6 @@ event:
     enable: true
   parent:
     http:
-      callback:
-        host: 0.0.0.0
-        port: 2337
-        public_fqdn: localhost
-        remote_user: bg_remote
-        ssl_enabled: false
-        url_prefix: /
       enable: false
       host: 0.0.0.0
       port: 2337
