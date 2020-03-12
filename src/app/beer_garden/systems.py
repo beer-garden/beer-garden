@@ -4,7 +4,7 @@ from time import sleep
 from typing import List, Sequence
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Events, Instance, PatchOperation, System
+from brewtils.models import Events, Instance, PatchOperation, System, Event
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema
 
@@ -240,35 +240,27 @@ def rescan_system_directory() -> None:
     pass
 
 
-def handle_event(event):
-    # Only care about downstream garden
+def handle_event(event: Event) -> None:
+    """Handle SYSTEM events
+
+    When creating or updating a system, make sure to mark as non-local first.
+
+    It's possible that we see SYSTEM_UPDATED events for systems that we don't currently
+    know about. This will happen if a new system is created on the child while the child
+    is operating in standalone mode. To handle that, just create the system.
+
+    Args:
+        event: The event to handle
+    """
     if event.garden != beer_garden.config.get("garden.name"):
 
-        if event.name == Events.SYSTEM_CREATED.name:
-            # If a downstream system is created we mark it as local, then save it
+        if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
             event.payload.local = False
-            db.create(event.payload)
 
-        elif event.name == Events.SYSTEM_UPDATED.name:
-            if not event.payload_type:
-                logger.error(f"{event.name} error: no payload type ({event!r})")
-                return
-
-            record = db.query_unique(System, id=event.payload.id)
-
-            if record:
+            if db.count(System, id=event.payload.id):
                 db.update(event.payload)
             else:
-                logger.error(f"{event.name} error: object does not exist ({event!r})")
+                db.create(event.payload)
 
-        elif event.name in (Events.SYSTEM_REMOVED.name,):
-            if not event.payload_type:
-                logger.error(f"{event.name} error: no payload type ({event!r})")
-                return
-
-            record = db.query_unique(System, id=event.payload.id)
-
-            if record:
-                db.delete(event.payload)
-            else:
-                logger.error(f"{event.name} error: object does not exist ({event!r})")
+        elif event.name == Events.SYSTEM_REMOVED.name:
+            db.delete(event.payload)
