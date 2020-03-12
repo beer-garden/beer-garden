@@ -52,7 +52,7 @@ def load(args: Sequence[str], force: bool = False) -> None:
     if config.event.brew_view.url_prefix:
         config.event.brew_view.url_prefix = normalize(config.event.brew_view.url_prefix)
 
-    _CONFIG = Box(config.to_dict(), frozen_box=True)
+    _CONFIG = Box(config.to_dict())
 
 
 def generate(args: Sequence[str]):
@@ -749,48 +749,6 @@ _EVENT_SPEC = {
                 },
             },
         },
-        "brew_view": {
-            "type": "dict",
-            "items": {
-                "enable": {
-                    "type": "bool",
-                    "default": False,
-                    "description": "Publish events from a Brew-view websocket",
-                },
-                "ca_cert": {
-                    "type": "str",
-                    "description": "Path to CA certificate file to use",
-                    "required": False,
-                },
-                "ca_verify": {
-                    "type": "bool",
-                    "default": True,
-                    "description": "Verify external certificates",
-                    "required": False,
-                },
-                "host": {
-                    "type": "str",
-                    "default": "localhost",
-                    "description": "Hostname of the API server",
-                },
-                "port": {
-                    "type": "int",
-                    "default": 2337,
-                    "description": "Port of the API server",
-                },
-                "ssl_enabled": {
-                    "type": "bool",
-                    "default": False,
-                    "description": "Is the API server using SSL",
-                },
-                "url_prefix": {
-                    "type": "str",
-                    "default": "/",
-                    "description": "URL prefix of the API server",
-                    "required": False,
-                },
-            },
-        },
         "mongo": {
             "type": "dict",
             "items": {
@@ -811,8 +769,8 @@ _EVENT_SPEC = {
                     "items": {
                         "enable": {
                             "type": "bool",
-                            "default": True,
-                            "description": "Run an HTTP server",
+                            "default": False,
+                            "description": "Publish events to parent garden over HTTP",
                         },
                         "ssl": {
                             "type": "dict",
@@ -857,43 +815,6 @@ _EVENT_SPEC = {
                                 },
                             },
                         },
-                        "callback": {
-                            "type": "dict",
-                            "items": {
-                                "port": {
-                                    "type": "int",
-                                    "default": 2337,
-                                    "description": "Serve content on this port",
-                                },
-                                "url_prefix": {
-                                    "type": "str",
-                                    "default": "/",
-                                    "description": "URL path prefix",
-                                    "required": False,
-                                },
-                                "host": {
-                                    "type": "str",
-                                    "default": "0.0.0.0",
-                                    "description": "Host for the HTTP Server to bind to",
-                                },
-                                "public_fqdn": {
-                                    "type": "str",
-                                    "default": "localhost",
-                                    "description": "Public fully-qualified domain name",
-                                },
-                                "remote_user": {
-                                    "type": "str",
-                                    "default": "bg_remote",
-                                    "description": "Remote User that Parent can callback as",
-                                },
-                                "ssl_enabled": {
-                                    "type": "bool",
-                                    "default": False,
-                                    "description": "Serve content using SSL",
-                                    "cli_separator": "_",
-                                },
-                            },
-                        },
                         "port": {
                             "type": "int",
                             "default": 2337,
@@ -918,7 +839,7 @@ _EVENT_SPEC = {
                         "skip_events": {
                             "type": "list",
                             "items": {"skip_event": {"type": "str"}},
-                            "default": ("DB_CREATE",),
+                            "default": ["DB_CREATE"],
                             "required": False,
                             "description": "Events to be skipped",
                         },

@@ -1,65 +1,66 @@
+os: linux
 language: python
 cache: pip
-#
-#env:
-#  global:
-#    # Docker User
-#    - secure: "lUFNIpVIu7B2TPW/uPg+YY0/2dMP/Rp0lSjJm5oWzezOk/vhaHCg7VqmeSMt1GXaB4oRM0B3+Ttyr5lME7zX8PfSgkTnGjdg+KeMwYP53XV+OT8OtKoap6wT6/G9GbuEFrJpOJUDuYlnm1qby2NIgQ+OBlau8ggrWgEpUYXttmSLfdntAA78h7USJJ0mJtGptrN5ADF3G+lzt29UH5lC4ot9uhtFwN7jmOTiaTBzXT4FyZdPTapd0GqormLllmrpKgFeFYQmhTFLG3TOua/Efv1XDgatOUxuqHZ3W5ThQgqc2p7zDMCUPcoqxUEVmqBr51O9v0FWItEoLFgpwb7BnG3HV41wSW5bozOJwQtv2qmY9r8+LU/PySaNJTyJBKjKjCkpzOKY6aCzIQZYZfdWh395rLHXmgpWJhfi/4p/7Cqx40ljMC+UT/AsnyVMX+wm8l3gcrFvLHHdhnjKSSRULriRkWEBidrvv1vnMN34ldgw89bzqJtsTWkR9SA9WFPP6/AV8BA15tCZdT5nHu5lGDbiILcdoHrlxyTUto2VxhXkgSCYHqIk6Ut3Lp8BUJvceLZJP/oyfhyIFkZBgZVb2X8iuV9/Mi7sB32YKxyn45Xdu5yQaHvG2LNPzrjUd88G8QUdgOBQFNMot4IGoe6SVV8XHNULQ8u1XBFR2fBm/NM="
-#    # Docker Password
-#    - secure: "pEIp6mvUKHl5LPcvKS5fXZBqiu1PaRco4gUdCnUr5m3kxjhbkDM80eQQhgCUTYrqIvQK5hJ0WXLhFfzdk0q0IcJ3m8encS5sZnDMMwPFvDeKTOhyoXctpVx4Nt+ks3js6JqejNgUNu1rgOZpJKnH31f52SRB+1XT1wvBc7MC3uck+X2Lh+d2fsnfLJuQ810SJTNnp9/3doN2QHAr5WSQkPSWKB1spCwB99azKsRX0k9j1So3OV9WbTTFukCrIXeg/hSKgjBaEk/yocNv88+R+5OHa77wv7HDToTkJ7PrMuQunc8icRMiubSrIsczB7wQ3Ta4mChHSZ0b6IxEOHjB+B1LIkQE+cThPv435cDltlaK+EdxuPn5CVDaOkQ46uHTH++UV7e+Pytq/1VQ/rlEA3xRNMmLxOzoSdZ/PvBoAnA7tLblDXupwgwcdiA04QDAGF3CQJCkmNQpP3aqC9KqodctsVnm1wmM5DJm17N6tiB+gOhNu+0QrRH20Wft1AzewR6NHJrElX4PJhnrxs8JMPftcQF4mAl24yZ7VghRrF6erHM164QlEudxzMJ9kpmTKSL560VCDTjuQmg5eZSmjMfQs2KDxvhUcQVvrI7ocjzbV3BMBQdiLfq24LlUb4pUBPHzOrmSWCeaJ608sg96/6gOZZE9J2jS6M0zzfXzQlk="
+
+env:
+  global:
+  # DOCKER_USER
+  - secure: C/nW/1SYP5gafEkCvLIU9FdcWiurZL23AGtM3CxtWmL+E5s6MwxcMlD0ejMQsqW8X6r4+A4sD8VgRA93jslOzd1dxcJ43AOPpbWeTMZ796PIgDpFBOpKuyjg+6tgsY6seJBxiU1GjkRrzfexioSmp98cFBg/7TpYYG9MjjAZcss/6QdkW/eYPpX/7CXrgcepSiuweAis4SbyACjZwAD7j5zYBTI3eLLfwgRfK2tEf+IKojtxPNfqu3dy9MZw6lJgBCgzYOeQIdovTH0AGKHNYrqIV8/WS6esIQtJfE6ibJrFtFv4b9vBRWxAHJwsGntUIFrDciOln0n6M/577vc0PrzuCum3f8cT6LswgoKTvnoFvEZ4TY6LcRhO0sZBlUKyb8eKe3Os+QRjmmTMOWX9EjXyFdPsQ4s37GgTFOY7SYPh8KqvvwtTqhRAEJA8rwMz4fphYJqgNO06EAJKhuUBCHm7HP+rc0dlu8ZVVlcKHRcc0UxM/jVl5q1H0FOEnEETtp+eCiOxjLHUlrrL50J7ZOFKr7JbCKWjrBxkoo2EEtwdnRGvk8vIo84z/WI6Y11kPio/AT+cpXq/dhE3Smxj8bTdNL9Hnp3oPb3TyesmSOJJ83KR/HRcPunZBV3Ru6mpEA4kY+3imtT6Pb1SV7mJpQZCldUvARi8G2c+qdorjvc=
+  # DOCKER_PASSWORD
+  - secure: kzsX/dDikujemq+6Q6zI6Ziu3VdFFvMz94T024qjCnx70foOHJJnN3Ov87wdivZiUgi774b4KYN9DrPirxBL6Y15jBAT4uzEVaLPgX3bN+C40TWksqHZt5BZZO8VL4fFBsvO6m+vzjn42LE+YXkTV+hPi3uyccfsii8Y1IjPwMpTzCegfsWSxOKHMRF78khY0FJREMA12HmiYr+7ICz4pml6pKpIYtfh1o2bfB9qHW90rkriJPrbGxIbl3KHc8fDEJfyWYLHO/f5PPsL8tTO2Xxpja6lQ15XgPZheX8qCnFG2i7wCe8Ri0nMD19SMIHxEauH80WTQ7YvqZFdZQTClGjxKNYszSWJuBiWMBWp5lIfPGp1YmTW/UApiFVAU6eLQoKCPNTB8TuXufEFt9QAtQ78fVDs85AfOrX/TFdxTiecj82YflqRe0YZvkhFIoy5dXBnDTX4UK5CklfqzQCYAry4U8jcwpIlYYB+KlGWEmC6J4PBPAz5VHroGsinWyh/Ftht0GA1RT2G61MbTgikd+ZljITF2JyJ77EcTjOA5Ks8+lgRFeviZeFVpfQVRDKajCYBURFQO0J01dHGJ/5PMaWT6bXFIBIK6ucKn2XZTWVQlOnRK+EreAKLxsRD2/t9qcHuyGdBW4fNhsqiETItot+ZLWN77WHWTEkWNnpE0aM=
 
 python:
-  - '3.7'
+- '3.7'
 
 stages:
-  - lint
-  - test
-  - unstable docker deploy
-  - pypi deploy
-  - docker deploy
+- lint
+- test
+- unstable docker deploy
+- pypi deploy
+- docker deploy
 
 jobs:
   include:
-    - stage: lint
-      before_install: "cd src/app"
-      install: "pip install black flake8"
-      script: "make lint"
-      after_success: skip
+  - stage: lint
+    before_install: cd src/app
+    install: pip install black flake8
+    script: make lint
+    after_success: skip
 
-    - stage: test
-      before_install: "cd src/app"
-      install: "make deps-python"
-      script: "make coverage"
-      after_success: "codecov"
+  - stage: test
+    before_install: cd src/app
+    install: make deps-python
+    script: make coverage
+    after_success: codecov
 
-    - stage: unstable docker deploy
-      if: (branch = develop) AND (type != pull_request)
-      install: skip
-      before_script: "cd src/app"
-      script: "make docker-login publish-docker-unstable"
-      after_success: skip
+  - stage: unstable docker deploy
+    if: "(branch = v3) AND (type != pull_request)"
+    install: skip
+    before_script: cd src/app
+    script: make docker-login publish-docker-unstable
+    after_success: skip
 
-    - stage: pypi deploy
-      if: tag IS present
-      install: "pip install twine wheel"
-      before_script: "cd src/app"
-      script: "make package"
-      after_success: true
-      deploy:
-        provider: pypi
-        distributions: "sdist bdist_wheel"
-        on:
-          tags: true
-        user: beerbuildbot
-        password:
-          secure: eRzIInKTfL5vu5UnF6QyE+L/GVadvVv1v/8Z8wP56DgdzBnkTgiQWzBKfsWtxDRmI8atGWyz0SatopkcTEePYucsZgIZXTFRqWJ8OiqanKylBV/r+0Cg14ADltdAipcsi3rK3I67v0kIiW823vdqSNbW0CcLjZfeiVXFObp8i8ARKF2XDjJhl4i1PK81+4e9nKlP6gTAEsvU31KM+tFD2fQsDfyQgY3s24yoCU6MpWsiWR03YHDFSWgbALhzyJaWOgtQIIMZJOKoqfhhtU9uwAVHx8nNxs2TMzd2hzNfITGaHrGWuyYtH2dbebcv9Mn3Vvl1cjv31ZU3EzxoU5lgM9twmxtMVXjcHzZEV9iH1AjS88zyTCXH8fjP5AGDANBYhOVB6PfvwRg70Sw645P+adPQBGkva3KDSKbbWgJg4ZdiVEYaZVMySZbaNueArDBH3uEtmPRVyikjH30xUb8SKx1k6wLmpBeOfbWru9WYkQ7pFLN5HWJdvta39U0oRFevpqCF5maEqYeeyxvfk7pnUwabVbRbTPXmeozhOMReMrnzUUSAF2hvJIcGshVp6AAi/4nUIGUqkbpYr0/xkauWpxrKnM7YghMGLniWK2d1od0EKXijat6nqtJxQB/+Xn5lzwSGWZCQi0I3dz5uD99ZdhqN2z6Om7XweP9/8vLWLh0=
+  - stage: pypi deploy
+    if: tag IS present
+    install: pip install twine wheel
+    before_script: cd src/app
+    script: make package
+    after_success: true
+    deploy:
+      provider: pypi
+      distributions: sdist bdist_wheel
+      on:
+        tags: true
+      user: beerbuildbot
+      password:
+        secure: eRzIInKTfL5vu5UnF6QyE+L/GVadvVv1v/8Z8wP56DgdzBnkTgiQWzBKfsWtxDRmI8atGWyz0SatopkcTEePYucsZgIZXTFRqWJ8OiqanKylBV/r+0Cg14ADltdAipcsi3rK3I67v0kIiW823vdqSNbW0CcLjZfeiVXFObp8i8ARKF2XDjJhl4i1PK81+4e9nKlP6gTAEsvU31KM+tFD2fQsDfyQgY3s24yoCU6MpWsiWR03YHDFSWgbALhzyJaWOgtQIIMZJOKoqfhhtU9uwAVHx8nNxs2TMzd2hzNfITGaHrGWuyYtH2dbebcv9Mn3Vvl1cjv31ZU3EzxoU5lgM9twmxtMVXjcHzZEV9iH1AjS88zyTCXH8fjP5AGDANBYhOVB6PfvwRg70Sw645P+adPQBGkva3KDSKbbWgJg4ZdiVEYaZVMySZbaNueArDBH3uEtmPRVyikjH30xUb8SKx1k6wLmpBeOfbWru9WYkQ7pFLN5HWJdvta39U0oRFevpqCF5maEqYeeyxvfk7pnUwabVbRbTPXmeozhOMReMrnzUUSAF2hvJIcGshVp6AAi/4nUIGUqkbpYr0/xkauWpxrKnM7YghMGLniWK2d1od0EKXijat6nqtJxQB/+Xn5lzwSGWZCQi0I3dz5uD99ZdhqN2z6Om7XweP9/8vLWLh0=
 
-    - stage: docker deploy
-      if: tag IS present
-      install: skip
-      before_script: "cd src/app"
-      script: "make docker-login publish-docker VERSION=$TRAVIS_TAG"
-      after_success: skip
+  - stage: docker deploy
+    if: tag IS present
+    install: skip
+    before_script: cd src/app
+    script: make docker-login publish-docker VERSION=$TRAVIS_TAG
+    after_success: skip
 
 
 # Integration tests

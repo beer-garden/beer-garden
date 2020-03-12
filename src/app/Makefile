@@ -1,10 +1,12 @@
 # Makefile for Beer Garden application
 
-PYTHON        = python
-MODULE_NAME   = beer_garden
-TEST_DIR      = test
-DOCKER_NAME   = bgio/beer-garden
-VERSION      ?= 0.0.0
+PYTHON         = python
+MODULE_NAME    = beer_garden
+TEST_DIR       = test
+DOCKER_NAME    = bgio/beer-garden
+DOCKERFILE_DIR = ../../docker/dockerfiles
+
+VERSION        ?= 0.0.0
 
 .PHONY: clean clean-build clean-test clean-pyc help test
 
@@ -115,14 +117,14 @@ package: clean package-source package-wheel ## builds source and wheel package
 
 # Docker
 docker-login: ## log in to the docker registry
-	echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USER)" --password-stdin
+	echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USER}" --password-stdin
 
 docker-build: ## build the docker images
-	docker build -t $(DOCKER_NAME):latest --build-arg VERSION=$(VERSION) -f Dockerfile .
+	docker build -t $(DOCKER_NAME):latest --build-arg VERSION=$(VERSION) -f $(DOCKERFILE_DIR)/Dockerfile .
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)
 
 docker-build-unstable: package clean-python ## build nightly docker image
-	docker build -t $(DOCKER_NAME):unstable -f Dockerfile.unstable .
+	docker build -t $(DOCKER_NAME):unstable -f $(DOCKERFILE_DIR)/Dockerfile.unstable .
 
 
 # Publishing

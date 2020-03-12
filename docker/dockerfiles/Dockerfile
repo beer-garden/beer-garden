@@ -3,9 +3,9 @@ ARG VERSION
 ENTRYPOINT ["beergarden"]
 
 ENV BG_PLUGIN_LOCAL_DIRECTORY=/plugins \
-    BG_LOG_CONFIG_FILE=/logging-config.json
+    BG_LOG_CONFIG_FILE=/logging-config.yaml
 
-ADD dev_conf/logging-config.json /logging-config.json
+ADD example_configs/logging-config.yaml /logging-config.yaml
 
 RUN set -ex \
     && apk add --no-cache --virtual .build-deps \

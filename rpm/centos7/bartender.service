@@ -1,9 +1,0 @@
-# The bartender service unit file
-
-[Unit]
-Description=Beergarden backend
-PartOf=beer-garden.service
-
-[Service]
-Type=simple
-ExecStart=/opt/beer-garden/bin/bartender -c /opt/beer-garden/conf/bartender-config.yaml
