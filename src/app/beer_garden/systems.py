@@ -143,24 +143,24 @@ def update_system(
     return db.update(system)
 
 
-def reload_system(system_id: str) -> System:
+@publish_event(Events.SYSTEM_RELOAD_REQUESTED)
+def reload_system(system_id: str) -> None:
     """Reload a system configuration
+
+    NOTE: All we do here is grab the system from the database and return it. That's
+    because all the work here needs to be done by the local PluginManager, and that
+    only exists in the main thread. So we publish an event requesting that the
+    appropriate action be taken.
 
     Args:
         system_id: The System ID
 
     Returns:
-        The updated System
-
+        None
     """
-    system = db.query_unique(System, id=system_id)
+    # TODO - It'd be nice to have a check here to make sure system is managed
 
-    logger.info("Reloading system: %s-%s", system.name, system.version)
-    beer_garden.application.plugin_manager.reload_system(system.name, system.version)
-
-    system = db.update(system)
-
-    return system
+    return db.query_unique(System, id=system_id)
 
 
 @publish_event(Events.SYSTEM_REMOVED)

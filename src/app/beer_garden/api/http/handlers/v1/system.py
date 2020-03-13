@@ -133,6 +133,9 @@ class SystemAPI(BaseHandler):
           - Systems
         """
         kwargs = {}
+        do_reload = False
+
+        response = ""
 
         for op in SchemaParser.parse_patch(self.request.decoded_body, from_string=True):
             if op.operation == "replace":
@@ -166,16 +169,23 @@ class SystemAPI(BaseHandler):
                         f"Unsupported path for update '{op.path}'"
                     )
 
-            # TODO - enable this
-            # elif op.operation == "reload":
-            #     system = reload_system(system_id)
+            elif op.operation == "reload":
+                do_reload = True
 
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
-        response = await self.client(
-            Operation(operation_type="SYSTEM_UPDATE", args=[system_id], kwargs=kwargs)
-        )
+        if kwargs:
+            response = await self.client(
+                Operation(
+                    operation_type="SYSTEM_UPDATE", args=[system_id], kwargs=kwargs
+                )
+            )
+
+        if do_reload:
+            await self.client(
+                Operation(operation_type="SYSTEM_RELOAD", args=[system_id])
+            )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

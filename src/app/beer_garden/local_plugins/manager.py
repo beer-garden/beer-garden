@@ -56,9 +56,10 @@ class PluginManager(StoppableThread):
     """Manages creation and destruction of PluginRunners"""
 
     logger = logging.getLogger(__name__)
-    plugins: Dict[str, Plugin] = {}
-
     _instance = None
+
+    # Runner id -> Plugin definition
+    plugins: Dict[str, Plugin] = {}
 
     def __init__(
         self,
@@ -134,6 +135,8 @@ class PluginManager(StoppableThread):
                 cls.handle_stop(event)
             elif event.name == Events.SYSTEM_REMOVED.name:
                 cls.handle_remove_system(event)
+            elif event.name == Events.SYSTEM_RELOAD_REQUESTED.name:
+                cls.instance().reload_system(event.payload)
             elif event.name == Events.SYSTEM_RESCAN_REQUESTED.name:
                 new_plugins = cls.instance().load_new()
 
@@ -175,6 +178,29 @@ class PluginManager(StoppableThread):
 
         for remove_id in remove_ids:
             cls.remove(remove_id)
+
+    def reload_system(self, system):
+        path = None
+
+        # Essentially remove the runners that need to be reloaded
+        remove_ids = []
+        for instance in system.instances:
+            for runner_id, plugin in self.plugins.items():
+                if instance.id == plugin.instance_id:
+                    remove_ids.append(runner_id)
+                    path = plugin.runner.process_cwd
+
+        for runner_id in remove_ids:
+            del self.plugins[runner_id]
+
+        new_plugins = self.create_plugins(path)
+
+        self.plugins.update(new_plugins)
+
+        # We need to start these immediately, otherwise the instance IDs won't be
+        # associated with runner IDs
+        for runner_id in new_plugins:
+            self.start_one(runner_id)
 
     @classmethod
     def from_instance_id(cls, instance_id):
