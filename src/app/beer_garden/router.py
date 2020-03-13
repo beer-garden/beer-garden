@@ -3,7 +3,7 @@ import logging
 from typing import Dict, Tuple
 
 import requests
-from brewtils.models import Events, Garden, Instance, Operation, System
+from brewtils.models import Events, Garden, Instance, Operation, Request, System
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden
@@ -96,41 +96,22 @@ def route(operation: Operation):
             f"Unknown operation type '{operation.operation_type}'"
         )
 
-    if operation.operation_type == "REQUEST_CREATE":
-        logger.debug("Creating request")
+    # Then use that to determine which garden the operation is targeting
+    operation.target_garden_name = _determine_target_garden(operation)
 
-    # If the operation isn't routable just execute it locally
-    if operation.operation_type not in routable_operations:
+    # If it's targeted at THIS garden, execute
+    if operation.target_garden_name == config.get("garden.name"):
         return execute_local(operation)
 
-    # Otherwise determine the system the operation is targeting
-    target_system = _determine_target_system(operation)
+    # Otherwise, validate that it can be forwarded
+    if operation.operation_type not in routable_operations:
+        raise RoutingRequestException(
+            f"Operation type '{operation.operation_type}' can not be forwarded"
+        )
 
-    # Then use that to determine which garden the operation is targeting
-    operation.target_garden_name = _determine_target_garden(target_system)
+    # TODO - Potentially check to ensure conn_info is not 'local' before forwarding
 
-    # Finally, forward or execute as appropriate
-    if should_forward(operation):
-        return initiate_forward(operation)
-
-    return execute_local(operation)
-
-
-def should_forward(operation: Operation) -> bool:
-    """Routing logic to determine if an operation should be forwarded
-
-    Args:
-        operation:
-
-    Returns:
-        True if the operation should be forwarded, False if it should be executed
-    """
-    return (
-        operation.target_garden_name is not None
-        and operation.target_garden_name != operation.source_garden_name
-        and operation.target_garden_name != config.get("garden.name")
-        and operation.operation_type in routable_operations
-    )
+    return initiate_forward(operation)
 
 
 def execute_local(operation: Operation):
@@ -315,32 +296,55 @@ def _pre_execute(operation: Operation) -> Operation:
     return operation
 
 
-def _determine_target_system(operation):
-    """Pull out target system based on the operation type"""
+def _determine_target_garden(operation: Operation) -> str:
+    """Determine the system the operation is targeting"""
 
-    if operation.operation_type == "SYSTEM_DELETE":
-        return db.query_unique(System, id=operation.args[0])
+    # Certain operations are ASSUMED to be targeted at the local garden
+    if (
+        "READ" in operation.operation_type
+        or "GARDEN" in operation.operation_type
+        or "JOB" in operation.operation_type
+        or operation.operation_type in ("LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
+    ):
+        return config.get("garden.name")
 
-    elif operation.operation_type in ("INSTANCE_START", "INSTANCE_STOP"):
+    # Otherwise, each operation needs to be "parsed"
+    target_system = None
+
+    if operation.operation_type in ("SYSTEM_DELETE", "SYSTEM_RELOAD", "SYSTEM_UPDATE"):
+        target_system = db.query_unique(System, id=operation.args[0])
+
+    elif "INSTANCE" in operation.operation_type:
         target_instance = db.query_unique(Instance, id=operation.args[0])
-        return db.query_unique(System, instances__contains=target_instance)
+        target_system = db.query_unique(System, instances__contains=target_instance)
 
     elif operation.operation_type == "REQUEST_CREATE":
-        return System(
+        target_system = System(
             namespace=operation.model.namespace,
             name=operation.model.system,
             version=operation.model.system_version,
         )
 
-    return None
+    elif operation.operation_type.startswith("REQUEST"):
+        request = db.query_unique(Request, id=operation.args[0])
 
+        target_system = System(
+            namespace=request.namespace,
+            name=request.system,
+            version=request.system_version,
+        )
 
-def _determine_target_garden(system: System) -> str:
-    """Retrieve a garden from the garden map"""
+    elif operation.operation_type == "QUEUE_DELETE":
+        # Need to deconstruct the queue name
+        parts = operation.args[0].split(".")
+        version = parts[2].replace("-", ".")
+
+        target_system = System(namespace=parts[0], name=parts[1], version=version)
+
     try:
-        return garden_lookup[str(system)]
+        return garden_lookup[str(target_system)]
     except KeyError:
-        raise UnknownGardenException(f"Unable to determine target garden for {system}")
+        raise UnknownGardenException(f"Unknown target garden for {operation}")
 
 
 def _forward_http(operation: Operation, conn_info: dict):
