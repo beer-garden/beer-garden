@@ -10,9 +10,9 @@ from brewtils.models import Event, Events, Garden
 from brewtils.stoppable_thread import StoppableThread
 from pytz import utc
 
-import beer_garden
 import beer_garden.api
 import beer_garden.api.entry_point
+import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.events
 import beer_garden.garden
@@ -62,7 +62,7 @@ class Application(StoppableThread):
 
         load_plugin_log_config()
 
-        plugin_config = beer_garden.config.get("plugin")
+        plugin_config = config.get("plugin")
         self.helper_threads = [
             HelperThread(
                 PluginStatusMonitor,
@@ -72,9 +72,7 @@ class Application(StoppableThread):
         ]
 
         # Only want to run the MongoPruner if it would do anything
-        tasks, run_every = MongoPruner.determine_tasks(
-            **beer_garden.config.get("db.ttl")
-        )
+        tasks, run_every = MongoPruner.determine_tasks(**config.get("db.ttl"))
         if run_every:
             self.helper_threads.append(
                 HelperThread(
@@ -82,7 +80,7 @@ class Application(StoppableThread):
                 )
             )
 
-        metrics_config = beer_garden.config.get("metrics")
+        metrics_config = config.get("metrics")
         if metrics_config.prometheus.enabled:
             self.helper_threads.append(
                 HelperThread(
@@ -137,7 +135,7 @@ class Application(StoppableThread):
         """
         self.logger.debug("Verifying mongo connection...")
         return self._progressive_backoff(
-            partial(db.check_connection, beer_garden.config.get("db")),
+            partial(db.check_connection, config.get("db")),
             "Unable to connect to mongo, is it started?",
         )
 
@@ -149,7 +147,7 @@ class Application(StoppableThread):
             False: the app was stopped before a connection could be verified
         """
         self.logger.debug("Verifying message queue connection...")
-        queue.create_clients(beer_garden.config.get("amq"))
+        queue.create_clients(config.get("amq"))
 
         if not self._progressive_backoff(
             partial(queue.check_connection, "pika"),
@@ -170,8 +168,8 @@ class Application(StoppableThread):
         beer_garden.events.manager.start()
 
         self.logger.debug("Setting up database...")
-        db.create_connection(db_config=beer_garden.config.get("db"))
-        db.initial_setup(beer_garden.config.get("auth.guest_login_enabled"))
+        db.create_connection(db_config=config.get("db"))
+        db.initial_setup(config.get("auth.guest_login_enabled"))
 
         self.logger.debug("Setting up message queues...")
         queue.initial_setup()
@@ -251,14 +249,14 @@ class Application(StoppableThread):
         event_manager.register(QueueListener(action=garden_callbacks))
 
         # If necessary send all events to the parent garden
-        http_event = beer_garden.config.get("event.parent.http")
+        http_event = config.get("event.parent.http")
         if http_event.enable:
             easy_client = EasyClient(
                 bg_host=http_event.host,
                 bg_port=http_event.port,
                 ssl_enabled=http_event.ssl.enabled,
             )
-            skip_events = beer_garden.config.get("event.parent.skip_events")
+            skip_events = config.get("event.parent.skip_events")
             event_manager.register(
                 HttpEventProcessor(easy_client=easy_client, black_list=skip_events)
             )
@@ -268,7 +266,7 @@ class Application(StoppableThread):
     @staticmethod
     def _setup_scheduler():
         job_stores = {"beer_garden": MongoJobStore()}
-        scheduler_config = beer_garden.config.get("scheduler")
+        scheduler_config = config.get("scheduler")
         executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
         job_defaults = scheduler_config.job_defaults.to_dict()
 
@@ -282,7 +280,7 @@ class Application(StoppableThread):
     @staticmethod
     def _publish_update(event: Events):
         # DO NOT DO THIS
-        # garden = beer_garden.garden.get_garden(beer_garden.config.get("garden.name"))
+        # garden = beer_garden.garden.get_garden(config.get("garden.name"))
 
         # INSTEAD, THIS
         # Want to have most current info when publishing
@@ -290,7 +288,7 @@ class Application(StoppableThread):
         known_namespaces = beer_garden.namespace.get_namespaces()
 
         garden = Garden(
-            name=beer_garden.config.get("garden.name"),
+            name=config.get("garden.name"),
             status="RUNNING" if event == Events.GARDEN_STARTED else "STOPPED",
             systems=known_systems,
             namespaces=known_namespaces,
