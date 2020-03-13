@@ -19,7 +19,6 @@ logger = None
 
 
 def signal_handler(signal_number, stack_frame):
-    beer_garden.logger.info("Last call! Looks like we gotta close up.")
     beer_garden.application.stop()
 
 
