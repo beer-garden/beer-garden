@@ -38,14 +38,19 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        # TODO - This is part of the v1 API, need to work this back in
-        # include_commands = (
-        #     self.get_query_argument("include_commands", default="").lower() != "false"
-        # )
-
         response = await self.client(
             Operation(operation_type="SYSTEM_READ", args=[system_id])
         )
+
+        # This is only here because of backwards compatibility
+        include_commands = (
+            self.get_query_argument("include_commands", default="").lower() != "false"
+        )
+
+        if not include_commands:
+            system = SchemaParser.parse_system(response, from_string=True)
+            system.commands = []
+            response = SchemaParser.serialize(system)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
