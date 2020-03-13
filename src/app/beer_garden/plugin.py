@@ -5,15 +5,16 @@
 import logging
 from datetime import datetime
 
-from brewtils.models import Events, Instance, Request, System
+from brewtils.models import Events, Instance, Request, RequestTemplate, System
 
-import beer_garden
-import beer_garden.config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 from beer_garden.events import publish_event
 
 logger = logging.getLogger(__name__)
+
+start_request = RequestTemplate(command="_start", command_type="EPHEMERAL")
+stop_request = RequestTemplate(command="_stop", command_type="EPHEMERAL")
 
 
 @publish_event(Events.INSTANCE_INITIALIZED)
@@ -70,7 +71,7 @@ def start(instance_id: str) -> Instance:
 
     # Send a request to start to the plugin on the plugin's admin queue
     request = Request.from_template(
-        beer_garden.start_request,
+        start_request,
         namespace=system.namespace,
         system=system.name,
         system_version=system.version,
@@ -97,7 +98,7 @@ def stop(instance_id: str) -> Instance:
     logger.info(f"Stopping instance {system.name}[{instance.name}]-{system.version}")
 
     request = Request.from_template(
-        beer_garden.stop_request,
+        stop_request,
         namespace=system.namespace,
         system=system.name,
         system_version=system.version,
