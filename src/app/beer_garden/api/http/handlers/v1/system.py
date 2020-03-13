@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
+from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema
 
-from beer_garden.api.http.authorization import authenticated, Permissions
+from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
 
 
@@ -126,17 +127,49 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
+        kwargs = {}
+
+        for op in SchemaParser.parse_patch(self.request.decoded_body, from_string=True):
+            if op.operation == "replace":
+                if op.path == "/commands":
+                    kwargs["new_commands"] = SchemaParser.parse_command(
+                        op.value, many=True
+                    )
+                elif op.path in ["/description", "/icon_name", "/display_name"]:
+                    kwargs[op.path.strip("/")] = op.value
+                else:
+                    raise ModelValidationError(
+                        f"Unsupported path for replace '{op.path}'"
+                    )
+
+            elif op.operation == "add":
+                if op.path == "/instance":
+                    if not kwargs.get("add_instances"):
+                        kwargs["add_instances"] = []
+
+                    kwargs["add_instances"].append(
+                        SchemaParser.parse_instance(op.value)
+                    )
+                else:
+                    raise ModelValidationError(f"Unsupported path for add '{op.path}'")
+
+            elif op.operation == "update":
+                if op.path == "/metadata":
+                    kwargs["metadata"] = op.value
+                else:
+                    raise ModelValidationError(
+                        f"Unsupported path for update '{op.path}'"
+                    )
+
+            # TODO - enable this
+            # elif op.operation == "reload":
+            #     system = reload_system(system_id)
+
+            else:
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         response = await self.client(
-            Operation(
-                operation_type="SYSTEM_UPDATE",
-                args=[
-                    system_id,
-                    SchemaParser.parse_patch(
-                        self.request.decoded_body, from_string=True
-                    ),
-                ],
-            )
+            Operation(operation_type="SYSTEM_UPDATE", args=[system_id], kwargs=kwargs)
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
