@@ -67,17 +67,18 @@ def start(instance_id: str) -> Instance:
     instance = db.query_unique(Instance, id=instance_id)
     system = db.query_unique(System, instances__contains=instance)
 
-    logger.info(f"Starting instance {system.name}[{instance.name}]-{system.version}")
+    logger.info(f"Starting instance {system}[{instance}]")
 
-    # Send a request to start to the plugin on the plugin's admin queue
-    request = Request.from_template(
-        start_request,
-        namespace=system.namespace,
-        system=system.name,
-        system_version=system.version,
-        instance_name=instance.name,
+    queue.put(
+        Request.from_template(
+            start_request,
+            namespace=system.namespace,
+            system=system.name,
+            system_version=system.version,
+            instance_name=instance.name,
+        ),
+        is_admin=True,
     )
-    queue.put(request, is_admin=True)
 
     return instance
 
@@ -95,16 +96,18 @@ def stop(instance_id: str) -> Instance:
     instance = db.query_unique(Instance, id=instance_id)
     system = db.query_unique(System, instances__contains=instance)
 
-    logger.info(f"Stopping instance {system.name}[{instance.name}]-{system.version}")
+    logger.info(f"Stopping instance {system}[{instance}]")
 
-    request = Request.from_template(
-        stop_request,
-        namespace=system.namespace,
-        system=system.name,
-        system_version=system.version,
-        instance_name=instance.name,
+    queue.put(
+        Request.from_template(
+            stop_request,
+            namespace=system.namespace,
+            system=system.name,
+            system_version=system.version,
+            instance_name=instance.name,
+        ),
+        is_admin=True,
     )
-    queue.put(request, is_admin=True)
 
     return instance
 
