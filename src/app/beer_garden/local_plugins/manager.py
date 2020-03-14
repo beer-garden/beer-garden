@@ -41,6 +41,7 @@ class ConfigKeys(Enum):
     ICON_NAME = 10
     DISPLAY_NAME = 11
     METADATA = 12
+    NAMESPACE = 13
 
 
 @dataclass
