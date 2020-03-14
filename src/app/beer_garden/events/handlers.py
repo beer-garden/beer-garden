@@ -31,6 +31,7 @@ def garden_callbacks(event: Event) -> None:
 
     # These are all the MAIN PROCESS subsystems that care about events
     for handler in [
+        beer_garden.application.handle_event,
         beer_garden.garden.handle_event,
         beer_garden.instances.handle_event,
         beer_garden.requests.handle_event,

@@ -115,6 +115,15 @@ class Application(StoppableThread):
 
         self._shutdown()
 
+    @staticmethod
+    def handle_event(event):
+        """Handle any events the application cares about"""
+        # Only care about local garden
+        if event.garden == beer_garden.config.get("garden.name"):
+            # Start local plugins after the entry point comes up
+            if event.name == Events.ENTRY_STARTED.name:
+                PluginManager.start_all()
+
     def _progressive_backoff(self, func, failure_message):
         wait_time = 0.1
         while not self.stopped() and not func():

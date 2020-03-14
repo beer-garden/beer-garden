@@ -124,10 +124,7 @@ class PluginManager(StoppableThread):
     def handle_event(cls, event):
         # Only care about local garden
         if event.garden == beer_garden.config.get("garden.name"):
-            # Start local plugins after the entry point comes up
-            if event.name == Events.ENTRY_STARTED.name:
-                cls.start_all()
-            elif event.name == Events.INSTANCE_INITIALIZED.name:
+            if event.name == Events.INSTANCE_INITIALIZED.name:
                 cls.handle_associate(event)
             elif event.name == Events.INSTANCE_STARTED.name:
                 cls.handle_start(event)
