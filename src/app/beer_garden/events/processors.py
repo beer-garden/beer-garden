@@ -50,12 +50,26 @@ class QueueListener(BaseProcessor):
             self._queue.get()
 
     def run(self):
-        """Process events as they are received """
+        """Process events as they are received"""
         while not self.stopped():
             try:
                 self.process(self._queue.get(timeout=0.1))
             except Empty:
                 pass
+
+
+class DelayListener(QueueListener):
+    """Listener that waits for an Event before running"""
+
+    def __init__(self, event=None, **kwargs):
+        super().__init__(**kwargs)
+
+        self._event = event
+
+    def run(self):
+        self._event.wait()
+
+        super().run()
 
 
 class PipeListener(BaseProcessor):
