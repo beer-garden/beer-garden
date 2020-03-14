@@ -14,12 +14,13 @@ from typing import Dict
 from enum import Enum
 
 import sys
-from brewtils.models import Events
+from brewtils.models import Events, System
 from brewtils.specification import _SYSTEM_SPEC
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden
 import beer_garden.config
+import beer_garden.db.api as db
 from beer_garden.errors import PluginValidationError
 from beer_garden.local_plugins.env_help import expand_string
 from beer_garden.local_plugins.runner import ProcessRunner
@@ -47,6 +48,7 @@ class ConfigKeys(Enum):
 @dataclass
 class Plugin:
     runner: ProcessRunner
+    # TODO - These should all probably just move into the runner
     instance_id: str = ""
     restart: bool = False
     stopped: bool = False
@@ -148,6 +150,11 @@ class PluginManager(StoppableThread):
         if instance.metadata.get("runner_id"):
             cls.plugins[instance.metadata["runner_id"]].instance_id = instance.id
             cls.plugins[instance.metadata["runner_id"]].restart = True
+
+            system = db.query_unique(System, instances__contains=instance)
+            cls.plugins[instance.metadata["runner_id"]].runner.associate(
+                system=system, instance=instance
+            )
 
     @classmethod
     def handle_start(cls, event):
