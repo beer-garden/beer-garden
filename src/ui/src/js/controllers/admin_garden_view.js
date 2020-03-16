@@ -26,31 +26,31 @@ export default function adminGardenViewController(
   $scope.systems = [];
 
   $scope.splitGardenSystems = function(systems) {
-    var splitSystems = []
+    var splitSystems = [];
 
     for (var key in systems) {
-      var system = systems[key]
+      var system = systems[key];
       var systemObj = {};
 
       systemObj['namespace'] = system.split(":")[0];
 
-      var systemVersion = system.split(":")[1]
+      var systemVersion = system.split(":")[1];
       var start = systemVersion.lastIndexOf('-');
       var end = systemVersion.length;
 
-      systemObj['name'] = systemVersion.substring(0, start);;
+      systemObj['name'] = systemVersion.substring(0, start);
       systemObj['version'] = systemVersion.substring(start+1, end);
 
       splitSystems.push(systemObj);
     }
 
-    return splitSystems
+    return splitSystems;
   }
 
   let generateGardenSF = function() {
     $scope.gardenSchema = GardenService.SCHEMA;
     $scope.gardenForm = GardenService.FORM;
-    $scope.gardenModel = GardenService.serverModelToForm($scope.data)
+    $scope.gardenModel = GardenService.serverModelToForm($scope.data);
     $scope.$broadcast('schemaFormRedraw');
   };
   $scope.successCallback = function(response) {
@@ -84,7 +84,7 @@ export default function adminGardenViewController(
     $scope.$broadcast('schemaFormValidate');
 
     if (form.$valid){
-       var garden = GardenService.formToServerModel($scope.data, model)
+       var garden = GardenService.formToServerModel($scope.data, model);
        GardenService.updateGardenConfig(garden);
 
      }

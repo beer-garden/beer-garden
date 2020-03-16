@@ -33,7 +33,7 @@ export default function gardenService($http) {
   GardenService.serverModelToForm = function(model){
 
     var values = {};
-    values['connection_type'] = model['connection_type']
+    values['connection_type'] = model['connection_type'];
      if (model.hasOwnProperty('connection_params')) {
         for (var parameter of Object.keys(model['connection_params']) ) {
           values[parameter] = model['connection_params'][parameter];
