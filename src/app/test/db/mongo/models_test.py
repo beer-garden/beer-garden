@@ -19,6 +19,10 @@ from beer_garden.db.mongo.models import (
 
 
 class TestCommand(object):
+    @pytest.fixture(autouse=True)
+    def drop(self, mongo_conn):
+        Command.drop_collection()
+
     def test_str(self):
         assert str(Command(name="foo", parameters=[])) == "foo"
 
@@ -50,6 +54,10 @@ class TestCommand(object):
 
 
 class TestInstance(object):
+    @pytest.fixture(autouse=True)
+    def drop(self, mongo_conn):
+        Instance.drop_collection()
+
     def test_str(self):
         assert str(Instance(name="name")) == "name"
 
@@ -147,6 +155,10 @@ class TestParameter(object):
 
 
 class TestRequest(object):
+    @pytest.fixture(autouse=True)
+    def drop(self, mongo_conn):
+        Request.drop_collection()
+
     def test_str(self):
         assert str(Request(command="command")) == "command"
 
@@ -171,7 +183,7 @@ class TestRequest(object):
         "start,end",
         [("SUCCESS", "IN_PROGRESS"), ("SUCCESS", "ERROR"), ("IN_PROGRESS", "CREATED")],
     )
-    def test_invalid_status_transitions(self, mongo_conn, bg_request, start, end):
+    def test_invalid_status_transitions(self, bg_request, start, end):
         bg_request.status = start
         db.create(bg_request)
 
@@ -207,6 +219,10 @@ class TestRequest(object):
 
 
 class TestSystem(object):
+    @pytest.fixture(autouse=True)
+    def drop(self, mongo_conn):
+        System.drop_collection()
+
     @pytest.fixture
     def default_command(self):
         default_command = Command(name="name", description="description")
@@ -406,6 +422,10 @@ class TestSystem(object):
 
 
 class TestJob(object):
+    @pytest.fixture(autouse=True)
+    def drop(self, mongo_conn):
+        Job.drop_collection()
+
     def test_invalid_trigger_type(self):
         with pytest.raises(ModelValidationError):
             Job(trigger_type="INVALID_TRIGGER_TYPE").clean()
