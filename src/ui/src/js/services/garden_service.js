@@ -74,7 +74,7 @@ export default function gardenService($http) {
         'description': 'This is the globally routing name that Beer Garden utilizes when routing requests and events',
         'type': 'string',
       },
-      'hostname': {
+      'host': {
         'title': 'Host Name',
         'description': 'Beer-garden hostname',
         'type': 'string',
@@ -130,7 +130,7 @@ export default function gardenService($http) {
             {
               'title': 'HTTP',
               'items': [
-                'hostname',
+                'host',
                 'port',
                 'url_prefix',
                 'ssl',
