@@ -278,7 +278,7 @@ def _forward_http(operation: Operation, garden: Garden):
 
     endpoint = "{}://{}:{}{}api/v1/forward".format(
         "https" if connection.get("ssl") else "http",
-        connection.get("public_fqdn"),
+        connection.get("host"),
         connection.get("port"),
         connection.get("url_prefix", "/"),
     )

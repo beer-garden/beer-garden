@@ -175,7 +175,7 @@ def _setup_tornado_app():
         (rf"{prefix}api/v1/tokens/?", v1.token.TokenListAPI),
         (rf"{prefix}api/v1/admin/?", v1.admin.AdminAPI),
         (rf"{prefix}api/v1/jobs/?", v1.job.JobListAPI),
-        (rf"{prefix}api/v1/garden/?", v1.garden.GardenListAPI),
+        (rf"{prefix}api/v1/gardens/?", v1.garden.GardenListAPI),
         (rf"{prefix}api/v1/namespaces/?", v1.namespace.NamespaceListAPI),
         (rf"{prefix}api/v1/commands/(\w+)/?", v1.command.CommandAPI),
         (rf"{prefix}api/v1/instances/(\w+)/?", v1.instance.InstanceAPI),
@@ -187,7 +187,7 @@ def _setup_tornado_app():
         (rf"{prefix}api/v1/tokens/(\w+)/?", v1.token.TokenAPI),
         (rf"{prefix}api/v1/jobs/(\w+)/?", v1.job.JobAPI),
         (rf"{prefix}api/v1/config/logging/?", v1.logging.LoggingConfigAPI),
-        (rf"{prefix}api/v1/garden/(\w+)/?", v1.garden.GardenAPI),
+        (rf"{prefix}api/v1/gardens/(\w+)/?", v1.garden.GardenAPI),
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
         # V2
