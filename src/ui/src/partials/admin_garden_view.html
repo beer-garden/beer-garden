@@ -1,0 +1,52 @@
+<h1 class='page-header'>
+  <span>Garden Editor</span>
+</h1>
+
+<fetch-data response="response"></fetch-data>
+
+<div id="garden-view-container"
+     class="animate-if"
+     ng-if="responseState(response) === 'success'">
+
+  <h3 class='page-header'>
+    <span>Connected Systems</span>
+  </h3>
+
+  <table
+      datatable="ng"
+      dt-options="dtOptions"
+      class="table table-striped table-bordered"
+      style="width: 100%">
+    <thead>
+      <tr>
+        <th id="th_job_name">Namespace</th>
+        <th id="th_job_status">System</th>
+        <th id="th_system">Version</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="system in systems">
+        <td><a ui-sref="base.namespace.systems({namespace: system.namespace})">{{system.namespace}}</a></span></td>
+        <td>{{system.name}}</td>
+        <td><a ui-sref="base.namespace.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})">{{system.version}}</a></span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class='page-header'>
+    <span>Connection Parameters</span>
+  </h3>
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-8">
+        <form
+            name="gardenform"
+            sf-schema="gardenSchema"
+            sf-form="gardenForm"
+            sf-model="gardenModel"
+            ng-submit="submitGardenForm(gardenform, gardenModel)"/>
+      </div>
+    </div>
+  </div>
+</div>

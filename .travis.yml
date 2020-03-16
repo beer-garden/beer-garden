@@ -36,8 +36,8 @@ jobs:
   - stage: unstable docker deploy
     if: "(branch = v3) AND (type != pull_request)"
     install: skip
-    before_script: cd src/app
-    script: make docker-login publish-docker-unstable
+    before_script: make docker-login
+    script: make publish-docker-unstable
     after_success: skip
 
   - stage: pypi deploy

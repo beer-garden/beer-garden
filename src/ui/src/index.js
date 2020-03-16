@@ -87,12 +87,15 @@ import jobService from './js/services/job_service.js';
 import errorService from './js/services/error_service.js';
 import eventService from './js/services/event_service.js';
 import namespaceService from './js/services/namespace_service.js';
+import gardenService from './js/services/garden_service.js';
 
 import aboutController from './js/controllers/about.js';
 import adminQueueController from './js/controllers/admin_queue.js';
 import adminSystemController from './js/controllers/admin_system.js';
 import {adminUserController, newUserController} from './js/controllers/admin_user.js';
 import {adminRoleController, newRoleController} from './js/controllers/admin_role.js';
+import adminGardenController from './js/controllers/admin_garden.js';
+import adminGardenViewController from './js/controllers/admin_garden_view.js';
 import commandIndexController from './js/controllers/command_index.js';
 import commandViewController from './js/controllers/command_view.js';
 import requestIndexController from './js/controllers/request_index.js';
@@ -110,6 +113,8 @@ import './partials/admin_queue.html';
 import './partials/admin_system.html';
 import './partials/admin_user.html';
 import './partials/admin_role.html';
+import './partials/admin_garden_index.html';
+import './partials/admin_garden_view.html';
 import './partials/command_index.html';
 import './partials/command_view.html';
 import './partials/landing.html';
@@ -174,6 +179,7 @@ angular.module('bgApp',
 .factory('ErrorService', errorService)
 .factory('EventService', eventService)
 .factory('NamespaceService', namespaceService)
+.factory('GardenService', gardenService)
 
 .controller('AboutController', aboutController)
 .controller('AdminQueueController', adminQueueController)
@@ -182,6 +188,8 @@ angular.module('bgApp',
 .controller('NewUserController', newUserController)
 .controller('AdminRoleController', adminRoleController)
 .controller('NewRoleController', newRoleController)
+.controller('AdminGardenController', adminGardenController)
+.controller('AdminGardenViewController', adminGardenViewController)
 .controller('CommandIndexController', commandIndexController)
 .controller('CommandViewController', commandViewController)
 .controller('RequestIndexController', requestIndexController)

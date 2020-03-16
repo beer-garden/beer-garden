@@ -26,7 +26,12 @@ from beer_garden.systems import get_systems
 logger = logging.getLogger(__name__)
 
 # These are the operations that we will forward to child gardens
-routable_operations = ["INSTANCE_START", "INSTANCE_STOP", "REQUEST_CREATE"]
+routable_operations = [
+    "INSTANCE_START",
+    "INSTANCE_STOP",
+    "REQUEST_CREATE",
+    "SYSTEM_DELETE",
+]
 
 # Processor that will be used for forwarding
 forward_processor = None
@@ -357,7 +362,7 @@ def _forward_http(operation: Operation, conn_info: dict):
     """
     endpoint = "{}://{}:{}{}api/v1/forward".format(
         "https" if conn_info.get("ssl") else "http",
-        conn_info.get("public_fqdn"),
+        conn_info.get("host"),
         conn_info.get("port"),
         conn_info.get("url_prefix", "/"),
     )

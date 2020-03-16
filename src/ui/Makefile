@@ -1,5 +1,8 @@
 # Makefile for Beer-garden UI
 
+DOCKER_NAME    = bgio/ui
+DOCKERFILE_DIR = ../../docker/dockerfiles
+
 .PHONY: clean clean-build clean-test help test deps
 .DEFAULT_GOAL := help
 define BROWSER_PYSCRIPT
@@ -64,3 +67,13 @@ coverage: ## check code coverage
 # Packaging
 package: clean ## builds distribution
 	npm run build
+
+
+# Docker
+docker-build-unstable: package ## build nightly docker image
+	docker build -t $(DOCKER_NAME):unstable -f $(DOCKERFILE_DIR)/Dockerfile-UI.unstable .
+
+
+# Publishing
+publish-docker-unstable: docker-build-unstable ## push the unstable docker image
+	docker push $(DOCKER_NAME):unstable
