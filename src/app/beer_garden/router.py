@@ -178,12 +178,19 @@ def forward(operation: Operation):
         )
 
     try:
-        if conn_type.casefold() == "http":
+        if conn_type is None:
+            raise RoutingRequestException(
+                f"Attempted to forward operation to {operation.target_garden_name} but "
+                f"the connection type was None. This probably means that the "
+                f"connection to the child garden has not been configured, please talk "
+                f"to your system administrator."
+            )
+        elif conn_type.casefold() == "http":
             return _forward_http(operation, conn_info)
         else:
             raise RoutingRequestException(f"Unknown connection type {conn_type}")
     except Exception as ex:
-        logger.exception(f"Error publishing to forward{ex}")
+        logger.exception(f"Error forwarding operation:{ex}")
 
 
 def setup_routing():
