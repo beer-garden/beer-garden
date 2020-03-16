@@ -167,6 +167,24 @@ html, body{
     max-width: 30%;
 }
 
+#gardens-container .container-item h3 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+
+.garden-table {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.garden-table.table-header {
+    font-weight: bold;
+    text-align: right;
+    padding-right: 8px;
+}
+
+
 /* Stuff for collapsed/raw output display transitions */
 #rawOutput.ng-hide, #formattedOutput.ng-hide {
     opacity: 0;
