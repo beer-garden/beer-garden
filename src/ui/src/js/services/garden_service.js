@@ -26,7 +26,6 @@ export default function gardenService($http) {
     return $http.patch('api/v1/gardens/' + garden.name, {operation: 'config', path: '', value: garden});
   }
 
-
   GardenService.deleteGarden = function(name){
     return $http.delete('api/v1/gardens/' + name);
   }

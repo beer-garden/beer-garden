@@ -25,7 +25,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="system in splitGardenSystems(data.systems)">
+      <tr ng-repeat="system in systems">
         <td><a ui-sref="base.namespace.systems({namespace: system.namespace})">{{system.namespace}}</a></span></td>
         <td>{{system.name}}</td>
         <td><a ui-sref="base.namespace.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})">{{system.version}}</a></span></td>
