@@ -143,6 +143,30 @@ html, body{
     max-width: 30%;
 }
 
+/* Stuff to make Garden Admin page look like the Systems Page */
+
+#gardens-container {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-around;
+    align-items: stretch;
+    padding-bottom: 20px;
+}
+
+#gardens-container .container-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin: 10px;
+    min-width: 30%;
+    max-width: 30%;
+}
+#gardens-container .container-item.empty {
+    height: 0;
+    min-width: 30%;
+    max-width: 30%;
+}
+
 /* Stuff for collapsed/raw output display transitions */
 #rawOutput.ng-hide, #formattedOutput.ng-hide {
     opacity: 0;
