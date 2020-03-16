@@ -255,6 +255,14 @@ def handle_event(event):
     if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
         garden_lookup[str(event.payload)] = event.garden
 
+    elif event.name == Events.GARDEN_UPDATED.name:
+        # Update the connection info
+        garden_connections[event.payload.name] = (
+            event.payload.connection_type,
+            event.payload.connection_params,
+        )
+
+    # Only take action for these events if they're from a downstream
     if event.garden != config.get("garden.name"):
         if event.name == Events.GARDEN_STARTED.name:
 
