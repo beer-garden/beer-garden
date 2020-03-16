@@ -51,6 +51,6 @@ docker-build-unstable: ## build unstable docker images
 
 
 # Publishing
-publish-docker-unstable: docker-build-unstable ## push the unstable docker image
+publish-docker-unstable: ## push the unstable docker image
 	$(MAKE) -C $(APP_DIR) publish-docker-unstable
-	$(MAKE) -C $(UI_DIR) publish-docker-unstable
+	$(MAKE) -C $(UI_DIR) deps publish-docker-unstable
