@@ -22,6 +22,30 @@ class ProcessRunner(Thread):
     A runner will take care of creating and starting a process that will run the
     plugin entry point.
 
+    Logging here is kind of wonky. I want to get to the point where the brewtils.Plugin
+    asks Beer-garden for a configuration by default - that would allow the plugin
+    processes to log directly to the correct files instead of reading STDOUT / STDERR
+    constantly. Alas, we aren't there yet.
+
+    Until then - this is how that logging works:
+    - logger is the normal python logger for this class
+    - plugin_logger is the logger used to log records coming from the plugin process
+
+    There's a bit of a chicken vs egg issue with regards to configuring logging. At
+    *runner* creation time we may or may not know the system name / version / instance
+    since the only thing *required* in the beer.conf is the entry point. This is a
+    problem because we need that info in order to name the log file correctly.
+
+    So we essentially punt on assigning a handler to the plugin_logger until the
+    Plugin actually registers. Everything read from the process gets placed into a
+    queue, and the queue won't be processed until ``associate`` is called. At that point
+    we'll have all the info necessary to create and assign a handler and we'll begin
+    processing the queue.
+
+    In the event that the Plugin process doesn't register successfully we'll dump the
+    queued records to the "normal" log. This is really all we can do - they need to go
+    *somewhere* and that's really the only sensible place.
+
     """
 
     def __init__(
@@ -32,7 +56,13 @@ class ProcessRunner(Thread):
         process_env: dict,
     ):
         self.process = None
+        self.restart = False
+        self.stopped = False
+        self.dead = False
+
         self.runner_id = runner_id
+        self.instance_id = ""
+
         self.process_args = process_args
         self.process_cwd = process_cwd
         self.process_env = process_env
