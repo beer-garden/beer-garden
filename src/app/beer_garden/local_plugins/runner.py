@@ -78,11 +78,16 @@ class ProcessRunner(Thread):
 
         Thread.__init__(self, name=self.runner_name)
 
+    def __str__(self):
+        return f"{self.runner_id}"
+
     def associate(self, system=None, instance=None):
         """Associate this runner with a specific System and Instance
 
         Right now the only thing this does is configure logging if not already done.
         """
+        self.instance_id = instance.id
+
         if not self.logger_ready.is_set():
             self._set_handler(system=system, instance=instance)
 

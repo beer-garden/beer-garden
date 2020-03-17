@@ -31,9 +31,7 @@ def initialize(instance_id: str, runner_id: str = None) -> Instance:
     instance = db.query_unique(Instance, id=instance_id)
     system = db.query_unique(System, instances__contains=instance)
 
-    logger.info(
-        f"Initializing instance {system.name}[{instance.name}]-{system.version}"
-    )
+    logger.info(f"Initializing instance {system}[{instance}]")
 
     queue_spec = queue.create(instance)
 
