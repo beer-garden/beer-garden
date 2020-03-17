@@ -122,7 +122,7 @@ class Application(StoppableThread):
         if event.garden == beer_garden.config.get("garden.name"):
             # Start local plugins after the entry point comes up
             if event.name == Events.ENTRY_STARTED.name:
-                PluginManager.start_all()
+                PluginManager.instance().scan_path()
 
     def _progressive_backoff(self, func, failure_message):
         wait_time = 0.1
@@ -196,9 +196,6 @@ class Application(StoppableThread):
         self.logger.debug("Creating and starting entry points...")
         self.entry_manager.create_all()
         self.entry_manager.start()
-
-        self.logger.debug("Loading all local plugins...")
-        PluginManager.instance().load_new()
 
         self.logger.debug("Starting local plugin process monitoring...")
         PluginManager.instance().start()

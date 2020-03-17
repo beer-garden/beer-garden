@@ -127,10 +127,7 @@ class PluginManager(StoppableThread):
             elif event.name == Events.SYSTEM_RELOAD_REQUESTED.name:
                 cls.instance().reload_system(event.payload)
             elif event.name == Events.SYSTEM_RESCAN_REQUESTED.name:
-                new_runners = cls.instance().load_new()
-
-                for runner_id in new_runners:
-                    cls.start_one(runner_id)
+                cls.instance().scan_path()
 
     @classmethod
     def handle_associate(cls, event):
@@ -256,8 +253,8 @@ class PluginManager(StoppableThread):
 
         new_runner.start()
 
-    def load_new(self, path: str = None) -> Dict[str, ProcessRunner]:
-        """Create ProcessRunner for all plugins in a directory
+    def scan_path(self, path: str = None) -> Dict[str, ProcessRunner]:
+        """Create and start ProcessRunners for valid plugins in a given directory
 
         Note: This scan does not walk the directory tree - all plugins must be
         in the top level of the given path.
@@ -267,7 +264,7 @@ class PluginManager(StoppableThread):
                 initialization.
 
         Returns:
-            Newly loaded runner dictionary
+            Newly loaded and started runner dictionary
         """
         plugin_path = path or self._plugin_path
 
@@ -280,6 +277,9 @@ class PluginManager(StoppableThread):
                 self.logger.exception(f"Error loading plugin at {path}: {ex}")
 
         self.runners.update(new_runners)
+
+        for runner_id in new_runners:
+            self.start_one(runner_id)
 
         return new_runners
 
