@@ -5,17 +5,18 @@
 <div class="container-fluid animate-if"
      ng-if="responseState(response) === 'success'">
   <div>
-
     <table
         datatable="ng"
         dt-options="dtOptions"
+        dt-instance="dtInstance"
         class="table table-striped table-bordered"
+        id="DataTable"
         style="width: 100%">
     <thead>
-          <label style="margin-left: 1250px;font-size: 14px; font-weight: normal; display: block; margin-bottom: -22px; position: absolute; z-index:4;" >
-        <input type="checkbox" id="filterHidden"
+      <label style="top: 164px;left: 1540px; font-size: 14px; font-weight: normal; display: block; position: absolute; z-index:4;" >
+          <input type="checkbox" id="filterHidden" style="position: absolute; left: -18px;top: -2px;"
             ng-model="filterHidden"
-            ng-change =  "updateItems()"
+            ng-change =  "dtInstance._renderer.rerender()"
         />Show Hidden
       </label>
       <tr>
@@ -27,7 +28,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="entry in data | filter:{hidden:filterHidden}:hiddenComparator">
+      <tr ng-repeat="entry in data | filter:query | filter:{hidden:filterHidden}:hiddenComparator">
         <td>{{entry.system}}</td>
         <td>{{entry.name}}</td>
         <td>

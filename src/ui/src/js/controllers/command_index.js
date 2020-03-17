@@ -30,17 +30,16 @@ export default function commandIndexController(
   commands) {
   $scope.setWindowTitle('commands');
   $scope.filterHidden = false;
+  $scope.dtInstance={};
   $scope.dtOptions = DTOptionsBuilder.newOptions()
     .withOption('order', [4, 'asc'])
     .withOption('autoWidth', false)
-    //.withOption('hiddenContainer', true)
     .withBootstrap();
+
 
   $scope.hiddenComparator = function(expected, actual){
     return actual || !expected;
   };
-
-
 
   $scope.stateParams = function(entry) {
     return {
@@ -91,6 +90,9 @@ export default function commandIndexController(
     // $scope.response = response['systems'];
     $scope.response = response;
     $scope.data = commands;
+
+    $scope.dtOptions.withLanguage({"info": "Showing _START_ to _END_ of _TOTAL_ entries (filtered from " +
+        $scope.data.length + " total entries)", "infoFiltered":   ""});
   };
 
   $scope.failureCallback = function(response) {

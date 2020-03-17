@@ -18,13 +18,21 @@ export default function systemViewController(
     UtilityService,
     DTOptionsBuilder,
     system) {
-      
-  $scope.util = UtilityService;
 
+
+
+  $scope.util = UtilityService;
+  $scope.filterHidden = false;
+  $scope.tableS;
+  $scope.dtInstance = {};
   $scope.dtOptions = DTOptionsBuilder.newOptions()
     .withOption('order', [4, 'asc'])
     .withOption('autoWidth', false)
     .withBootstrap();
+  $scope.hiddenComparator = function(expected, actual){
+    return actual || !expected;
+  };
+
 
   $scope.successCallback = function(response) {
     $scope.response = response;
@@ -33,8 +41,14 @@ export default function systemViewController(
       ($scope.data.display_name || $scope.data.name),
       $scope.data.version
     );
+    $scope.dtOptions.withLanguage({"info": "Showing _START_ to _END_ of _TOTAL_ entries (filtered from " +
+        $scope.data.commands.length + " total entries)", "infoFiltered":   ""});
   };
 
+  $scope.reloadData = function() {
+     tb = $scope.dtInstance;
+     $scope.dtInstance._renderer.rerender();
+  }
   $scope.failureCallback = function(response) {
     $scope.response = response;
     $scope.data = {};
