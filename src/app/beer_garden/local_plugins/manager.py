@@ -18,7 +18,7 @@ from brewtils.specification import _SYSTEM_SPEC
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden
-import beer_garden.config
+import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.errors import PluginValidationError
 from beer_garden.local_plugins.env_help import expand_string
@@ -104,18 +104,18 @@ class PluginManager(StoppableThread):
     def instance(cls):
         if not cls._instance:
             cls._instance = cls(
-                plugin_dir=beer_garden.config.get("plugin.local.directory"),
-                log_dir=beer_garden.config.get("plugin.local.log_directory"),
-                connection_info=beer_garden.config.get("entry.http"),
-                username=beer_garden.config.get("plugin.local.auth.username"),
-                password=beer_garden.config.get("plugin.local.auth.password"),
+                plugin_dir=config.get("plugin.local.directory"),
+                log_dir=config.get("plugin.local.log_directory"),
+                connection_info=config.get("entry.http"),
+                username=config.get("plugin.local.auth.username"),
+                password=config.get("plugin.local.auth.password"),
             )
         return cls._instance
 
     @classmethod
     def handle_event(cls, event):
         # Only care about local garden
-        if event.garden == beer_garden.config.get("garden.name"):
+        if event.garden == config.get("garden.name"):
             if event.name == Events.INSTANCE_INITIALIZED.name:
                 cls.handle_associate(event)
             elif event.name == Events.INSTANCE_STARTED.name:
@@ -224,14 +224,11 @@ class PluginManager(StoppableThread):
 
         runner = cls.runners[runner_id]
 
-        if not runner.is_alive():
-            cls.logger.info(f"Runner {runner_id} was already stopped")
-            return
-
-        sleep(1)
+        # The process should already be exiting so just wait for it
+        runner.join(config.get("plugin.local.timeout.shutdown"))
 
         if runner.is_alive():
-            cls.logger.info(f"About to kill runner {runner_id}")
+            cls.logger.warning(f"Runner {runner_id} still alive, about to SIGKILL")
             runner.kill()
 
     @classmethod
