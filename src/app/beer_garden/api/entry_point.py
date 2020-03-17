@@ -181,7 +181,7 @@ class EntryPoint:
         queue.create_clients(beer_garden.config.get("amq"))
 
         # Load known gardens for routing
-        router.cache_gardens()
+        router.setup_routing()
 
         # Now invoke the actual process target, passing in the connection
         return target(ep_conn)

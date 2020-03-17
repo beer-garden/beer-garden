@@ -174,10 +174,7 @@ class GardenListAPI(BaseHandler):
     async def post(self):
         """
         ---
-        summary: Create a new Garden or update an existing Garden
-        description: |
-            If the Garden does not exist it will be created. If the Garden
-            already exists it will be updated (assuming it passes validation).
+        summary: Create a new Garden
         parameters:
           - name: garden
             in: body

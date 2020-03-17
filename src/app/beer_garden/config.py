@@ -3,7 +3,7 @@ import os
 import sys
 from argparse import ArgumentParser
 from datetime import datetime
-from typing import Tuple, Sequence, Union, Optional
+from typing import Optional, Sequence, Tuple, Union
 
 from box import Box
 from brewtils.rest import normalize_url_prefix as normalize

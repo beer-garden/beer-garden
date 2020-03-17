@@ -5,9 +5,8 @@ from typing import List
 
 from brewtils.errors import PluginError
 from brewtils.models import Events, Garden, System
-import beer_garden.router
 
-
+import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.events import publish_event
 
@@ -42,8 +41,6 @@ def update_garden_config(garden: Garden):
     db_garden.connection_params = garden.connection_params
     db_garden.connection_type = garden.connection_type
 
-    beer_garden.router.add_garden(db_garden)
-
     return update_garden(db_garden)
 
 
@@ -63,9 +60,7 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
     garden.status = new_status
     garden.status_info["heartbeat"] = datetime.utcnow()
 
-    update_garden(garden)
-    logger.info("Downstream Namespace " + garden_name + " is now " + new_status)
-    return garden
+    return update_garden(garden)
 
 
 @publish_event(Events.GARDEN_REMOVED)
@@ -95,22 +90,10 @@ def create_garden(garden: Garden) -> Garden:
         The created Garden
 
     """
-
     garden.status = "INITIALIZING"
     garden.status_info["heartbeat"] = datetime.utcnow()
-    db_garden = db.query_unique(Garden, name=garden.name)
-    if db_garden:
-        db_garden.status = garden.status
-        db_garden.status_info = garden.status_info
-        db_garden.connection_type = garden.connection_type
-        db_garden.connection_params = garden.connection_params
-        db_garden.namespaces = garden.namespaces
-        db_garden.systems = garden.systems
 
-        return db.update(db_garden)
-
-    else:
-        return db.create(garden)
+    return db.create(garden)
 
 
 def garden_add_system(system: System, garden_name: str):
@@ -133,3 +116,29 @@ def garden_add_system(system: System, garden_name: str):
 @publish_event(Events.GARDEN_UPDATED)
 def update_garden(garden: Garden):
     return db.update(garden)
+
+
+def handle_event(event):
+    """Handle garden-related events
+
+    For GARDEN events we only care about events originating from downstream. We also
+    only care about immediate children, not grandchildren.
+
+    Whenever a garden event is detected we should update that garden's database
+    representation.
+
+    This method should NOT update the routing module. Let its handler worry about that!
+    """
+    if event.garden != config.get("garden.name"):
+        if event.name in (Events.GARDEN_STARTED.name, Events.GARDEN_UPDATED.name,):
+
+            # Only do stuff for direct children
+            if event.payload.name == event.garden:
+                existing_garden = get_garden(event.payload.name)
+
+                if existing_garden is None:
+                    create_garden(event.payload)
+
+                else:
+                    existing_garden.systems = event.payload.systems
+                    update_garden(existing_garden)

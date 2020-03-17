@@ -5,15 +5,16 @@
 import logging
 from datetime import datetime
 
-from brewtils.models import Events, Instance, Request, System
+from brewtils.models import Events, Instance, Request, RequestTemplate, System
 
-import beer_garden
-import beer_garden.config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 from beer_garden.events import publish_event
 
 logger = logging.getLogger(__name__)
+
+start_request = RequestTemplate(command="_start", command_type="EPHEMERAL")
+stop_request = RequestTemplate(command="_stop", command_type="EPHEMERAL")
 
 
 @publish_event(Events.INSTANCE_INITIALIZED)
@@ -30,9 +31,7 @@ def initialize(instance_id: str, runner_id: str = None) -> Instance:
     instance = db.query_unique(Instance, id=instance_id)
     system = db.query_unique(System, instances__contains=instance)
 
-    logger.info(
-        f"Initializing instance {system.name}[{instance.name}]-{system.version}"
-    )
+    logger.info(f"Initializing instance {system}[{instance}]")
 
     queue_spec = queue.create(instance)
 
@@ -66,17 +65,18 @@ def start(instance_id: str) -> Instance:
     instance = db.query_unique(Instance, id=instance_id)
     system = db.query_unique(System, instances__contains=instance)
 
-    logger.info(f"Starting instance {system.name}[{instance.name}]-{system.version}")
+    logger.info(f"Starting instance {system}[{instance}]")
 
-    # Send a request to start to the plugin on the plugin's admin queue
-    request = Request.from_template(
-        beer_garden.start_request,
-        namespace=system.namespace,
-        system=system.name,
-        system_version=system.version,
-        instance_name=instance.name,
+    queue.put(
+        Request.from_template(
+            start_request,
+            namespace=system.namespace,
+            system=system.name,
+            system_version=system.version,
+            instance_name=instance.name,
+        ),
+        is_admin=True,
     )
-    queue.put(request, is_admin=True)
 
     return instance
 
@@ -94,16 +94,18 @@ def stop(instance_id: str) -> Instance:
     instance = db.query_unique(Instance, id=instance_id)
     system = db.query_unique(System, instances__contains=instance)
 
-    logger.info(f"Stopping instance {system.name}[{instance.name}]-{system.version}")
+    logger.info(f"Stopping instance {system}[{instance}]")
 
-    request = Request.from_template(
-        beer_garden.stop_request,
-        namespace=system.namespace,
-        system=system.name,
-        system_version=system.version,
-        instance_name=instance.name,
+    queue.put(
+        Request.from_template(
+            stop_request,
+            namespace=system.namespace,
+            system=system.name,
+            system_version=system.version,
+            instance_name=instance.name,
+        ),
+        is_admin=True,
     )
-    queue.put(request, is_admin=True)
 
     return instance
 

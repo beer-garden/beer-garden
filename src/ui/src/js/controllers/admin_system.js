@@ -148,6 +148,27 @@ export default function adminSystemController(
     }
   }
 
+  /**
+   * addSystem - Add a system to the list of systems
+   * @param {string} id  The system ID
+   */
+  function addSystem(system) {
+    console.log($scope.data);
+    console.log(system);
+    let systemName = system.display_name || system.name;
+
+    // If this name is already in the dictionary need to see if it's really new
+    if ({}.hasOwnProperty.call($scope.data, systemName)) {
+      if (!_.find($scope.data, (o) => { return o.id === system.id; })) {
+        $scope.data[systemName].push(system);
+      }
+    // But if not can just create a new entry
+    } else {
+      $scope.data[systemName] = [system];
+    }
+  }
+
+
   let loadSystems = function() {
     SystemService.getSystems({
       includeFields: 'id,name,display_name,version,instances',
@@ -188,6 +209,9 @@ export default function adminSystemController(
         break;
       case 'INSTANCE_STOPPED':
         updateInstanceStatus(event.payload.id, 'STOPPED');
+        break;
+      case 'SYSTEM_CREATED':
+        addSystem(event.payload);
         break;
       case 'SYSTEM_REMOVED':
         removeSystem(event.payload.id);

@@ -192,7 +192,7 @@ class TestPyrabbitClient(object):
         monkeypatch.setattr(beer_garden.requests, "cancel_request", cancel_mock)
 
         client.clear_queue("queue")
-        cancel_mock.assert_called_once_with(fake_request)
+        cancel_mock.assert_called_once_with(fake_request.id)
 
     def test_clear_queue_bad_payload(self, monkeypatch, client, pyrabbit_client):
         fake_request = Mock(id="id", status="CREATED")

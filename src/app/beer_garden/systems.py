@@ -4,8 +4,7 @@ from time import sleep
 from typing import List, Sequence
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Events, Instance, PatchOperation, System
-from brewtils.schema_parser import SchemaParser
+from brewtils.models import Command, Event, Events, Instance, System
 from brewtils.schemas import SystemSchema
 
 import beer_garden
@@ -64,8 +63,8 @@ def create_system(system: System) -> System:
             system.max_instances = 1
         else:
             raise ModelValidationError(
-                f"Could not create system {system.name}-{system.version}: Systems with "
-                f"max_instances > 1 must also define their instances"
+                f"Could not create {system}: Systems with max_instances > 1 "
+                f"must also define their instances"
             )
     else:
         if not system.max_instances:
@@ -80,12 +79,25 @@ def create_system(system: System) -> System:
 
 
 @publish_event(Events.SYSTEM_UPDATED)
-def update_system(system_id: str, operations: Sequence[PatchOperation]) -> System:
+def update_system(
+    system_id: str,
+    new_commands: Sequence[Command] = None,
+    add_instances: Sequence[Instance] = None,
+    description: str = None,
+    display_name: str = None,
+    icon_name: str = None,
+    metadata: dict = None,
+) -> System:
     """Update an already existing System
 
     Args:
         system_id: The ID of the System to be updated
-        operations: List of patch operations
+        new_commands: List of commands to overwrite existing commands
+        add_instances: List of new instances that will be added to the current list
+        description: Replacement description
+        display_name: Replacement display_name
+        icon_name: Replacement icon_name
+        metadata: Dictionary that will be incorporated into current metadata
 
     Returns:
         The updated System
@@ -93,80 +105,62 @@ def update_system(system_id: str, operations: Sequence[PatchOperation]) -> Syste
     """
     system = db.query_unique(System, id=system_id)
 
-    for op in operations:
-        if op.operation == "replace":
-            if op.path == "/commands":
-                new_commands = SchemaParser.parse_command(op.value, many=True)
+    if new_commands:
+        if (
+            system.commands
+            and "dev" not in system.version
+            and system.has_different_commands(new_commands)
+        ):
+            raise ModelValidationError(
+                f"System {system} already exists with different commands"
+            )
 
-                if (
-                    system.commands
-                    and "dev" not in system.version
-                    and system.has_different_commands(new_commands)
-                ):
-                    raise ModelValidationError(
-                        f"System {system.name}-{system.version} already exists with "
-                        f"different commands"
-                    )
+        system = db.replace_commands(system, new_commands)
 
-                system = db.replace_commands(system, new_commands)
-            elif op.path in ["/description", "/icon_name", "/display_name"]:
-                # If we set an attribute to None mongoengine marks that
-                # attribute for deletion, so we don't do that.
-                value = "" if op.value is None else op.value
-                attr = op.path.strip("/")
+    if add_instances:
+        if len(system.instances) + len(add_instances) >= system.max_instances:
+            raise ModelValidationError(
+                f"Unable to add instance(s) to {system} - would exceed "
+                f"the system instance limit of {system.max_instances}"
+            )
 
-                setattr(system, attr, value)
+        system.instances.append(add_instances)
 
-                system = db.update(system)
-            else:
-                raise ModelValidationError(f"Unsupported path for replace '{op.path}'")
-        elif op.operation == "add":
-            if op.path == "/instance":
-                instance = SchemaParser.parse_instance(op.value)
+    if metadata:
+        system.metadata.update(metadata)
 
-                if len(system.instances) >= system.max_instances:
-                    raise ModelValidationError(
-                        f"Unable to add instance {instance.name} as it would exceed "
-                        f"the system instance limit ({system.max_instances})"
-                    )
+    # If we set an attribute to None mongoengine marks that attribute for deletion
+    # That's why we explicitly test each of these
+    if description:
+        system.description = description
 
-                system.instances.append(instance)
+    if display_name:
+        system.display_name = display_name
 
-                system = db.create(system)
-            else:
-                raise ModelValidationError(f"Unsupported path for add '{op.path}'")
-        elif op.operation == "update":
-            if op.path == "/metadata":
-                system.metadata.update(op.value)
-                system = db.update(system)
-            else:
-                raise ModelValidationError(f"Unsupported path for update '{op.path}'")
-        elif op.operation == "reload":
-            system = reload_system(system_id)
-        else:
-            raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+    if icon_name:
+        system.icon_name = icon_name
 
-    return system
+    return db.update(system)
 
 
-def reload_system(system_id: str) -> System:
+@publish_event(Events.SYSTEM_RELOAD_REQUESTED)
+def reload_system(system_id: str) -> None:
     """Reload a system configuration
+
+    NOTE: All we do here is grab the system from the database and return it. That's
+    because all the work here needs to be done by the local PluginManager, and that
+    only exists in the main thread. So we publish an event requesting that the
+    appropriate action be taken.
 
     Args:
         system_id: The System ID
 
     Returns:
-        The updated System
-
+        None
     """
-    system = db.query_unique(System, id=system_id)
+    # TODO - It'd be nice to have a check here to make sure system is managed
 
-    logger.info("Reloading system: %s-%s", system.name, system.version)
-    beer_garden.application.plugin_manager.reload_system(system.name, system.version)
-
-    system = db.update(system)
-
-    return system
+    return db.query_unique(System, id=system_id)
 
 
 @publish_event(Events.SYSTEM_REMOVED)
@@ -238,3 +232,29 @@ def purge_system(system_id: str) -> System:
 def rescan_system_directory() -> None:
     """Scans plugin directory and starts any new Systems"""
     pass
+
+
+def handle_event(event: Event) -> None:
+    """Handle SYSTEM events
+
+    When creating or updating a system, make sure to mark as non-local first.
+
+    It's possible that we see SYSTEM_UPDATED events for systems that we don't currently
+    know about. This will happen if a new system is created on the child while the child
+    is operating in standalone mode. To handle that, just create the system.
+
+    Args:
+        event: The event to handle
+    """
+    if event.garden != beer_garden.config.get("garden.name"):
+
+        if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
+            event.payload.local = False
+
+            if db.count(System, id=event.payload.id):
+                db.update(event.payload)
+            else:
+                db.create(event.payload)
+
+        elif event.name == Events.SYSTEM_REMOVED.name:
+            db.delete(event.payload)

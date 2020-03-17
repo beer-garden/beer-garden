@@ -62,7 +62,7 @@ __all__ = [
 ]
 
 
-class MongoModel(object):
+class MongoModel:
     brewtils_model = None
 
     def __str__(self):
@@ -74,6 +74,15 @@ class MongoModel(object):
     @classmethod
     def index_names(cls):
         return [index["name"] for index in cls._meta["indexes"]]
+
+    def save(self, *args, **kwargs):
+        kwargs.setdefault("write_concern", {"w": "majority"})
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        # Sigh. In delete (but not save!) write_concern things ARE the kwargs!
+        kwargs.setdefault("w", "majority")
+        return super().delete(*args, **kwargs)
 
     def clean_update(self):
         pass
@@ -413,6 +422,7 @@ class System(MongoModel, Document):
     icon_name = StringField()
     display_name = StringField()
     metadata = DictField()
+    local = BooleanField(default=True)
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves

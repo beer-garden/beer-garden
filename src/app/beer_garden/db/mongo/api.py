@@ -165,16 +165,23 @@ def count(model_class: ModelType, **kwargs) -> int:
     return query_set.count()
 
 
-def query_unique(model_class: ModelType, **kwargs) -> Optional[ModelItem]:
+def query_unique(
+    model_class: ModelType, raise_missing=False, **kwargs
+) -> Optional[ModelItem]:
     """Query a collection for a unique item
 
-    This will search a collection for a single specific item. If no item matching the
-    kwarg parameters is found it will return None.
+    This will search a collection for a single specific item.
+
+    If no item matching the kwarg parameters is found:
+    - Will return None if raise_missing=False
+    - Will raise a DoesNotExist exception if raise_missing=True
 
     If more than one item matching is found a MultipleObjectsReturned will be raised.
 
     Args:
         model_class: The Brewtils model class to query for
+        raise_missing: If True, raise an exception if an item matching the query is not
+            found. If False, will return None in that case.
         **kwargs: Arguments to control the query. Equivalent to 'filter_params' from the
             'query' function.
 
@@ -182,6 +189,7 @@ def query_unique(model_class: ModelType, **kwargs) -> Optional[ModelItem]:
         A single Brewtils model
 
     Raises:
+        mongoengine.DoesNotExist: No matching item exists (only if raise_missing=True)
         mongoengine.MultipleObjectsReturned: More than one matching item exists
 
     """
@@ -193,6 +201,8 @@ def query_unique(model_class: ModelType, **kwargs) -> Optional[ModelItem]:
         query_set = _model_map[model_class].objects.get(**kwargs)
         return to_brewtils(query_set)
     except DoesNotExist:
+        if raise_missing:
+            raise
         return None
 
 
@@ -279,7 +289,7 @@ def create(obj: ModelItem) -> ModelItem:
     if hasattr(mongo_obj, "deep_save"):
         mongo_obj.deep_save()
     else:
-        mongo_obj.save()
+        mongo_obj.save(force_insert=True)
 
     return to_brewtils(mongo_obj)
 

@@ -67,13 +67,13 @@ export default function adminQueueController(
   $scope.dtColumns = [
     DTColumnBuilder
       .newColumn('system')
-      .withTitle('System')
-      .renderWith(function(data, type, full) {
-        let version = SystemService.getVersionForUrl(SystemService.findSystemByID(full.system_id));
-        return '<a ui-sref=' +
-               '"base.namespace.system({systemName: \'' + full.system+ '\', systemVersion: \'' + version + '\'})">' +
-               (full.display || data) + '</a>';
-      }),
+      .withTitle('System'),
+      // .renderWith(function(data, type, full) {
+      //   let version = SystemService.getVersionForUrl(SystemService.findSystemByID(full.system_id));
+      //   return '<a ui-sref=' +
+      //          '"base.namespace.system({systemName: \'' + full.system+ '\', systemVersion: \'' + version + '\'})">' +
+      //          (full.display || data) + '</a>';
+      // }),
     DTColumnBuilder
       .newColumn('version')
       .withTitle('Version'),

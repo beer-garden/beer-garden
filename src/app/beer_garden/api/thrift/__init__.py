@@ -87,6 +87,10 @@ def _setup_event_handling(ep_conn):
 
 
 def _event_callback(event):
-    # Do the routing update stuff
-    if event.name in (Events.GARDEN_CREATED.name, Events.GARDEN_STARTED.name):
-        beer_garden.router.add_garden(event.payload)
+    # Register handlers that the entry point needs to care about
+    # As of now that's only the routing subsystem
+    for event_handler in [beer_garden.router.handle_event]:
+        try:
+            event_handler(event)
+        except Exception as ex:
+            logger.exception(f"Error executing callback for {event!r}: {ex}")

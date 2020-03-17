@@ -32,7 +32,9 @@ def get_all_queue_info():
 
     for system in systems:
         for instance in system.instances:
-            queue_name = get_routing_key(system.name, system.version, instance.name)
+            queue_name = get_routing_key(
+                system.namespace, system.name, system.version, instance.name
+            )
 
             queue = Queue(
                 name=queue_name,
@@ -76,5 +78,7 @@ def clear_all_queues():
 
     for system in systems:
         for instance in system.instances:
-            routing_key = get_routing_key(system.name, system.version, instance.name)
+            routing_key = get_routing_key(
+                system.namespace, system.name, system.version, instance.name
+            )
             clear_queue(routing_key)

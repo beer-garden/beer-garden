@@ -1,11 +1,14 @@
-from typing import Dict, List
+# -*- coding: utf-8 -*-
+import logging
+from typing import Dict, Tuple
 
 import requests
-from brewtils.models import Garden, Instance, Operation, System
+from brewtils.models import Events, Garden, Instance, Operation, Request, System
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden
 import beer_garden.commands
+import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.garden
 import beer_garden.instances
@@ -17,6 +20,10 @@ import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
+from beer_garden.garden import get_gardens
+from beer_garden.systems import get_systems
+
+logger = logging.getLogger(__name__)
 
 # These are the operations that we will forward to child gardens
 routable_operations = [
@@ -29,15 +36,16 @@ routable_operations = [
 # Processor that will be used for forwarding
 forward_processor = None
 
-# Dict that will be used to determine which garden to use
-garden_map: Dict[str, Garden] = {}
+# Dict of str(system) -> garden_name for determining which garden to use
+garden_lookup: Dict[str, str] = {}
 
-# List of known gardens
-gardens: List[Garden] = []
+# Dict of garden_name -> (conn_type, conn_info) to be used for actual communication
+garden_connections: Dict[str, Tuple[str, dict]] = {}
 
 route_functions = {
     "REQUEST_CREATE": beer_garden.requests.process_request,
-    "REQUEST_UPDATE": beer_garden.requests.update_request,
+    "REQUEST_START": beer_garden.requests.start_request,
+    "REQUEST_COMPLETE": beer_garden.requests.complete_request,
     "REQUEST_READ": beer_garden.requests.get_request,
     "REQUEST_READ_ALL": beer_garden.requests.get_requests,
     "COMMAND_READ": beer_garden.commands.get_command,
@@ -58,6 +66,7 @@ route_functions = {
     "SYSTEM_READ": beer_garden.systems.get_system,
     "SYSTEM_READ_ALL": beer_garden.systems.get_systems,
     "SYSTEM_UPDATE": beer_garden.systems.update_system,
+    "SYSTEM_RELOAD": beer_garden.systems.reload_system,
     "SYSTEM_RESCAN": beer_garden.systems.rescan_system_directory,
     "SYSTEM_DELETE": beer_garden.systems.purge_system,
     "GARDEN_CREATE": beer_garden.garden.create_garden,
@@ -84,29 +93,31 @@ def route(operation: Operation):
     Returns:
 
     """
+    logger.debug(f"Routing {operation}")
+
     operation = _pre_route(operation)
 
-    if should_forward(operation):
-        return initiate_forward(operation)
+    if not operation.operation_type:
+        raise RoutingRequestException(
+            f"Unknown operation type '{operation.operation_type}'"
+        )
 
-    return execute_local(operation)
+    # Then use that to determine which garden the operation is targeting
+    operation.target_garden_name = _determine_target_garden(operation)
 
+    # If it's targeted at THIS garden, execute
+    if operation.target_garden_name == config.get("garden.name"):
+        return execute_local(operation)
 
-def should_forward(operation: Operation) -> bool:
-    """Routing logic to determine if an operation should be forwardedl
+    # Otherwise, validate that it can be forwarded
+    if operation.operation_type not in routable_operations:
+        raise RoutingRequestException(
+            f"Operation type '{operation.operation_type}' can not be forwarded"
+        )
 
-    Args:
-        operation:
+    # TODO - Potentially check to ensure conn_info is not 'local' before forwarding
 
-    Returns:
-        True if the operation should be forwarded, False if it should be executed
-    """
-    return (
-        operation.target_garden_name is not None
-        and operation.target_garden_name != operation.source_garden_name
-        and operation.target_garden_name != _local_garden()
-        and operation.operation_type in routable_operations
-    )
+    return initiate_forward(operation)
 
 
 def execute_local(operation: Operation):
@@ -118,7 +129,7 @@ def execute_local(operation: Operation):
     Returns:
 
     """
-    _pre_execute(operation)
+    operation = _pre_execute(operation)
 
     return route_functions[operation.operation_type](
         *operation.args, **operation.kwargs
@@ -159,132 +170,220 @@ def forward(operation: Operation):
         RoutingRequestException: Could not determine a route to child
         UnknownGardenException: The specified target garden is unknown
     """
-    target_garden = None
-    for garden in gardens:
-        if garden.name == operation.target_garden_name:
-            target_garden = garden
-            break
-
-    if not target_garden:
+    try:
+        conn_type, conn_info = garden_connections[operation.target_garden_name]
+    except KeyError:
         raise UnknownGardenException(
             f"Unknown child garden {operation.target_garden_name}"
         )
 
-    if target_garden.connection_type is None:
-        target_garden = beer_garden.garden.get_garden(target_garden.name)
-        cache_gardens()
-
-    if target_garden.connection_type and target_garden.connection_type.casefold() in [
-        "http",
-        "https",
-    ]:
-        return _forward_http(operation, target_garden)
-    else:
-        raise RoutingRequestException(
-            f"Unknown connection type {target_garden.connection_type}"
-        )
-
-
-def cache_gardens():
-    for garden in beer_garden.garden.get_gardens():
-        add_garden(garden)
+    try:
+        if conn_type is None:
+            raise RoutingRequestException(
+                f"Attempted to forward operation to {operation.target_garden_name} but "
+                f"the connection type was None. This probably means that the "
+                f"connection to the child garden has not been configured, please talk "
+                f"to your system administrator."
+            )
+        elif conn_type.casefold() == "http":
+            return _forward_http(operation, conn_info)
+        else:
+            raise RoutingRequestException(f"Unknown connection type {conn_type}")
+    except Exception as ex:
+        logger.exception(f"Error forwarding operation:{ex}")
 
 
-def add_garden(garden: Garden):
-    # Mark all systems as reachable by this garden
-    for system_name in garden.systems:
-        garden_map[system_name] = garden
+def setup_routing():
+    """Initialize the routing subsystem
 
-    # Add to the garden listing
-    gardens.append(garden)
+    This will load the cached child garden definitions and use them to populate the
+    two dictionaries that matter, garden_lookup and garden_connections.
+
+    It will then query the database for all local systems and add those to the
+    dictionaries as well.
+    """
+    local_garden_name = config.get("garden.name")
+
+    # We do NOT want to load local garden information from the database as the local
+    # name could have changed
+    for garden in get_gardens():
+        if garden.name != local_garden_name:
+            if (
+                garden.connection_type is not None
+                and garden.connection_type.casefold() != "local"
+            ):
+                # add_garden(garden)
+
+                # Mark all systems as reachable by this garden
+                for system_name in garden.systems:
+                    garden_lookup[system_name] = garden.name
+
+                # Add to the connection lookup
+                garden_connections[garden.name] = (
+                    garden.connection_type,
+                    garden.connection_params,
+                )
+            else:
+                logger.warning(f"Adding garden with invalid connection info: {garden}")
+
+    # Now add the local systems
+    local_systems = get_systems(filter_params={"local": True})
+
+    for system in local_systems:
+        garden_lookup[str(system)] = local_garden_name
+
+    logger.debug("Routing setup complete")
+
+
+# def add_garden(garden: Garden):
+#     # Mark all systems as reachable by this garden
+#     for system_name in garden.systems:
+#         garden_lookup[system_name] = garden.name
+#
+#     # Add to the connection lookup
+#     garden_connections[garden.name] = (garden.connection_type, garden.connection_params)
 
 
 def remove_garden(garden: Garden):
     # Remove all systems with this garden
-    for system_name, target_garden in garden_map.values():
-        if target_garden == garden:
-            del garden_map[system_name]
+    for system_name, garden_name in garden_lookup.items():
+        if garden.name == garden_name:
+            del garden_lookup[system_name]
 
-    # Remove from the garden listing
-    gardens.remove(garden)
+    # Remove from the garden connection lookup
+    del garden_connections[garden.name]
 
 
-def _pre_route(operation: Operation):
+def handle_event(event):
+    """Handle events
+
+    Intended to be a callback invoked because of a downstream SYSTEM_CREATED event.
     """
+    if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
+        garden_lookup[str(event.payload)] = event.garden
 
-    Args:
-        operation:
+    elif event.name == Events.GARDEN_UPDATED.name:
+        # Update the connection info
+        garden_connections[event.payload.name] = (
+            event.payload.connection_type,
+            event.payload.connection_params,
+        )
 
-    Returns:
+    # Only take action for these events if they're from a downstream
+    if event.garden != config.get("garden.name"):
+        if event.name == Events.GARDEN_STARTED.name:
 
-    """
+            # Mark all systems as reachable by this garden
+            for system_name in event.payload.systems:
+                garden_lookup[system_name] = event.payload.name
+
+        elif event.name == Events.GARDEN_REMOVED.name:
+            remove_garden(event.payload)
+
+
+def _pre_route(operation: Operation) -> Operation:
+    """Called before any routing logic is applied"""
     # If no source garden is defined set it to the local garden
     if operation.source_garden_name is None:
-        operation.source_garden_name = _local_garden()
-
-    # If no target is specified see if one can be determined
-    if operation.target_garden_name is None:
-        if operation.operation_type == "REQUEST_CREATE":
-            target_system = System(
-                namespace=operation.model.namespace,
-                name=operation.model.system,
-                version=operation.model.system_version,
-            )
-            target_garden = _determine_garden(system=target_system)
-
-            operation.target_garden_name = target_garden.name
-
-        elif operation.operation_type in ("INSTANCE_START", "INSTANCE_STOP"):
-            target_instance = db.query_unique(Instance, id=operation.args[0])
-            target_system = db.query_unique(System, instances__contains=target_instance)
-            target_garden = _determine_garden(system=target_system)
-
-            operation.target_garden_name = target_garden.name
-        elif operation.operation_type in ("SYSTEM_DELETE",):
-            target_system = db.query_unique(System, id=operation.args[0])
-            target_garden = _determine_garden(system=target_system)
-
-            operation.target_garden_name = target_garden.name
+        operation.source_garden_name = config.get("garden.name")
 
     return operation
 
 
-def _pre_forward(operation: Operation):
+def _pre_forward(operation: Operation) -> Operation:
     """Called before forwarding an operation"""
     if operation.operation_type == "REQUEST_CREATE":
+        operation.model = beer_garden.requests.RequestValidator.instance().validate_request(
+            operation.model
+        )
+
+        # Save the request so it'll have an ID and we'll have something to update
         operation.model = db.create(operation.model)
+
+        # Clear parent before forwarding so the child doesn't freak out about an
+        # unknown request
         operation.model.parent = None
         operation.model.has_parent = False
 
     return operation
 
 
-def _pre_execute(operation: Operation):
-    """Called before executing an operation locally"""
+def _pre_execute(operation: Operation) -> Operation:
+    """Called before executing an operation"""
     # If there's a model present, shove it in the front
-    args = operation.args
     if operation.model:
-        args.insert(0, operation.model)
+        operation.args.insert(0, operation.model)
+
+    return operation
 
 
-def _forward_http(operation: Operation, garden: Garden):
+def _determine_target_garden(operation: Operation) -> str:
+    """Determine the system the operation is targeting"""
+
+    # Certain operations are ASSUMED to be targeted at the local garden
+    if (
+        "READ" in operation.operation_type
+        or "GARDEN" in operation.operation_type
+        or "JOB" in operation.operation_type
+        or operation.operation_type in ("LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
+    ):
+        return config.get("garden.name")
+
+    # Otherwise, each operation needs to be "parsed"
+    target_system = None
+
+    if operation.operation_type in ("SYSTEM_DELETE", "SYSTEM_RELOAD", "SYSTEM_UPDATE"):
+        target_system = db.query_unique(System, id=operation.args[0])
+
+    elif "INSTANCE" in operation.operation_type:
+        target_instance = db.query_unique(Instance, id=operation.args[0])
+        target_system = db.query_unique(System, instances__contains=target_instance)
+
+    elif operation.operation_type == "REQUEST_CREATE":
+        target_system = System(
+            namespace=operation.model.namespace,
+            name=operation.model.system,
+            version=operation.model.system_version,
+        )
+
+    elif operation.operation_type.startswith("REQUEST"):
+        request = db.query_unique(Request, id=operation.args[0])
+
+        target_system = System(
+            namespace=request.namespace,
+            name=request.system,
+            version=request.system_version,
+        )
+
+    elif operation.operation_type == "QUEUE_DELETE":
+        # Need to deconstruct the queue name
+        parts = operation.args[0].split(".")
+        version = parts[2].replace("-", ".")
+
+        target_system = System(namespace=parts[0], name=parts[1], version=version)
+
+    try:
+        return garden_lookup[str(target_system)]
+    except KeyError:
+        raise UnknownGardenException(f"Unknown target garden for {operation}")
+
+
+def _forward_http(operation: Operation, conn_info: dict):
     """Actually forward an operation using HTTP
 
     Args:
         operation: The operation to forward
-        garden: The Garden to forward to
+        conn_info: Connection info
     """
-    connection = garden.connection_params
-
     endpoint = "{}://{}:{}{}api/v1/forward".format(
-        "https" if connection.get("ssl") else "http",
-        connection.get("host"),
-        connection.get("port"),
-        connection.get("url_prefix", "/"),
+        "https" if conn_info.get("ssl") else "http",
+        conn_info.get("host"),
+        conn_info.get("port"),
+        conn_info.get("url_prefix", "/"),
     )
 
-    if connection.get("ssl"):
-        http_config = beer_garden.config.get("entry.http")
+    if conn_info.get("ssl"):
+        http_config = config.get("entry.http")
         return requests.post(
             endpoint,
             data=SchemaParser.serialize_operation(operation),
@@ -298,29 +397,3 @@ def _forward_http(operation: Operation, garden: Garden):
             data=SchemaParser.serialize_operation(operation),
             headers={"Content-type": "application/json", "Accept": "text/plain"},
         )
-
-
-def _local_garden():
-    """Get the local garden name"""
-    return beer_garden.config.get("garden.name")
-
-
-def _determine_garden(system):
-    """Retrieve a garden from the garden map
-
-    Args:
-        system:
-
-    Returns:
-
-    """
-    garden = garden_map.get(str(system))
-    if garden is None:
-
-        # If you can't find it, force a cache to make sure everything is updated
-        cache_gardens()
-        garden = garden_map.get(str(system))
-        if garden is None:
-            raise ValueError("Unable to determine target garden")
-
-    return garden

@@ -11,14 +11,7 @@ import six
 import urllib3
 from brewtils.choices import parse
 from brewtils.errors import ConflictError, ModelValidationError, RequestPublishException
-from brewtils.models import (
-    Choices,
-    Events,
-    PatchOperation,
-    Request,
-    RequestTemplate,
-    System,
-)
+from brewtils.models import Choices, Events, Request, RequestTemplate, System
 from requests import Session
 
 import beer_garden.config
@@ -559,7 +552,6 @@ def get_requests(**kwargs) -> List[Request]:
     return db.query(Request, **kwargs)
 
 
-@publish_event(Events.REQUEST_CREATED)
 def process_request(
     new_request: Union[Request, RequestTemplate], wait_timeout: float = -1
 ) -> Request:
@@ -592,13 +584,14 @@ def process_request(
     request = RequestValidator.instance().validate_request(request)
 
     # Once validated we need to save since validate can modify the request
-    request = db.create(request)
+    request = create_request(request)
 
     if wait_timeout != 0:
         request_map[request.id] = Event()
 
     try:
-        logger.info(f"Publishing request {request.id}")
+        logger.info(f"Publishing {request!r}")
+
         queue.put(
             request,
             confirm=True,
@@ -634,55 +627,17 @@ def process_request(
     return request
 
 
-@publish_event(Events.REQUEST_UPDATED)
-def update_request(request_id: str, patch: PatchOperation) -> Request:
-    """Update a Request
-
-    Args:
-        request_id: The ID of the Request to update
-        patch: The updates to apply to the Request
-
-    Returns:
-        The modified Request
-
-    Raises:
-        ModelValidationError: The Request is already completed
-
-    """
-    status = None
-    output = None
-    error_class = None
-
-    request = db.query_unique(Request, id=request_id)
-
-    for op in patch:
-        if op.operation == "replace":
-            if op.path == "/status":
-                if op.value.upper() in Request.STATUS_LIST:
-                    if op.value.upper() == "IN_PROGRESS":
-                        return start_request(request)
-                    else:
-                        status = op.value
-                else:
-                    raise ModelValidationError(f"Unsupported status value '{op.value}'")
-            elif op.path == "/output":
-                output = op.value
-            elif op.path == "/error_class":
-                error_class = op.value
-            else:
-                raise ModelValidationError(f"Unsupported path '{op.path}'")
-        else:
-            raise ModelValidationError(f"Unsupported operation '{op.operation}'")
-
-    return complete_request(request, status, output, error_class)
+@publish_event(Events.REQUEST_CREATED)
+def create_request(request: Request) -> Request:
+    return db.create(request)
 
 
 @publish_event(Events.REQUEST_STARTED)
-def start_request(request: Request) -> Request:
+def start_request(request_id: str) -> Request:
     """Mark a Request as IN PROGRESS
 
     Args:
-        request: The Request to start
+        request_id: The Request ID to start
 
     Returns:
         The modified Request
@@ -691,8 +646,7 @@ def start_request(request: Request) -> Request:
         ModelValidationError: The Request is already completed
 
     """
-    if request.status in Request.COMPLETED_STATUSES:
-        raise ModelValidationError("Cannot update a completed request")
+    request = db.query_unique(Request, raise_missing=True, id=request_id)
 
     request.status = "IN_PROGRESS"
     request = db.update(request)
@@ -705,12 +659,12 @@ def start_request(request: Request) -> Request:
 
 @publish_event(Events.REQUEST_COMPLETED)
 def complete_request(
-    request: Request, status: str, output: str = None, error_class: str = None
+    request_id: str, status: str = None, output: str = None, error_class: str = None
 ) -> Request:
     """Mark a Request as completed
 
     Args:
-        request: The Request to complete
+        request_id: The Request ID to complete
         status: The status to apply to the Request
         output: The output to apply to the Request
         error_class: The error class to apply to the Request
@@ -722,8 +676,7 @@ def complete_request(
         ModelValidationError: The Request is already completed
 
     """
-    if request.status in Request.COMPLETED_STATUSES:
-        raise ModelValidationError("Cannot update a completed request")
+    request = db.query_unique(Request, raise_missing=True, id=request_id)
 
     request.status = status
     request.output = output
@@ -740,11 +693,12 @@ def complete_request(
     return request
 
 
-def cancel_request(request: Request) -> Request:
+@publish_event(Events.REQUEST_CANCELED)
+def cancel_request(request_id: Request) -> Request:
     """Mark a Request as CANCELED
 
     Args:
-        request: The Request to cancel
+        request_id: The Request ID to cancel
 
     Returns:
         The modified Request
@@ -753,8 +707,7 @@ def cancel_request(request: Request) -> Request:
         ModelValidationError: The Request is already completed
 
     """
-    if request.status in Request.COMPLETED_STATUSES:
-        raise ModelValidationError("Cannot cancel a completed request")
+    request = db.query_unique(Request, id=request_id)
 
     request.status = "CANCELED"
     request = db.update(request)
@@ -762,3 +715,23 @@ def cancel_request(request: Request) -> Request:
     # TODO - Metrics here?
 
     return request
+
+
+def handle_event(event):
+    # Only care about downstream garden
+    if event.garden != beer_garden.config.get("garden.name"):
+
+        if event.name == Events.REQUEST_CREATED.name:
+            if db.query_unique(Request, id=event.payload.id) is None:
+                db.create(event.payload)
+
+        elif event.name in (Events.REQUEST_STARTED.name, Events.REQUEST_COMPLETED.name):
+            # When we send child requests to child gardens where the parent was on
+            # the local garden we remove the parent before sending them. Only setting
+            # the subset of fields that change "corrects" the parent
+            existing_request = db.query_unique(Request, id=event.payload.id)
+
+            for field in ("status", "output", "error_class"):
+                setattr(existing_request, field, getattr(event.payload, field))
+
+            db.update(existing_request)

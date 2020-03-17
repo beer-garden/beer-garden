@@ -3,22 +3,22 @@
 import json
 import logging
 import string
-from dataclasses import dataclass
+import sys
+from enum import Enum
 from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from random import choice
-from time import sleep
 from types import ModuleType
-from typing import Dict
-from enum import Enum
+from typing import List, Optional
 
-import sys
+from brewtils.models import Event, Events, System
 from brewtils.specification import _SYSTEM_SPEC
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden
-import beer_garden.config
+import beer_garden.config as config
+import beer_garden.db.api as db
 from beer_garden.errors import PluginValidationError
 from beer_garden.local_plugins.env_help import expand_string
 from beer_garden.local_plugins.runner import ProcessRunner
@@ -40,24 +40,16 @@ class ConfigKeys(Enum):
     ICON_NAME = 10
     DISPLAY_NAME = 11
     METADATA = 12
-
-
-@dataclass
-class Plugin:
-    runner: ProcessRunner
-    instance_id: str = ""
-    restart: bool = False
-    stopped: bool = False
-    dead: bool = False
+    NAMESPACE = 13
 
 
 class PluginManager(StoppableThread):
     """Manages creation and destruction of PluginRunners"""
 
     logger = logging.getLogger(__name__)
-    plugins: Dict[str, Plugin] = {}
-
     _instance = None
+
+    runners: List[ProcessRunner] = []
 
     def __init__(
         self,
@@ -88,170 +80,204 @@ class PluginManager(StoppableThread):
     def monitor(self):
         """Ensure that processes are still alive
 
-        Iterate through all plugins, restarting any processes that have stopped.
+        Iterate through all runners, restarting any processes that have stopped.
         """
-        for runner_id, plugin in self.plugins.items():
+        for runner in self.runners:
             if self.stopped() or beer_garden.application.stopped():
                 break
 
-            if plugin.runner.process and plugin.runner.process.poll() is not None:
-                if plugin.restart:
-                    self.logger.warning(f"Runner {runner_id} stopped, restarting")
-                    self.restart(runner_id)
-                elif not plugin.stopped and not plugin.dead:
-                    self.logger.warning(f"Runner {runner_id} is dead, not restarting")
-                    plugin.dead = True
+            if runner.process and runner.process.poll() is not None:
+                if runner.restart:
+                    self.logger.warning(f"Runner {runner} stopped, restarting")
+                    self.restart(runner)
+                elif not runner.stopped and not runner.dead:
+                    self.logger.warning(f"Runner {runner} is dead, not restarting")
+                    runner.dead = True
 
     @classmethod
     def current_paths(cls):
-        return [plugin.runner.process_cwd for plugin in cls.plugins.values()]
+        return [runner.process_cwd for runner in cls.runners]
 
     @classmethod
     def instance(cls):
         if not cls._instance:
             cls._instance = cls(
-                plugin_dir=beer_garden.config.get("plugin.local.directory"),
-                log_dir=beer_garden.config.get("plugin.local.log_directory"),
-                connection_info=beer_garden.config.get("entry.http"),
-                username=beer_garden.config.get("plugin.local.auth.username"),
-                password=beer_garden.config.get("plugin.local.auth.password"),
+                plugin_dir=config.get("plugin.local.directory"),
+                log_dir=config.get("plugin.local.log_directory"),
+                connection_info=config.get("entry.http"),
+                username=config.get("plugin.local.auth.username"),
+                password=config.get("plugin.local.auth.password"),
             )
         return cls._instance
 
     @classmethod
-    def handle_associate(cls, event):
-        instance = event.payload
-
-        if instance.metadata.get("runner_id"):
-            cls.plugins[instance.metadata["runner_id"]].instance_id = instance.id
-            cls.plugins[instance.metadata["runner_id"]].restart = True
+    def handle_event(cls, event):
+        # Only care about local garden
+        if event.garden == config.get("garden.name"):
+            if event.name == Events.INSTANCE_INITIALIZED.name:
+                cls.handle_associate(event)
+            elif event.name == Events.INSTANCE_STARTED.name:
+                cls.handle_start(event)
+            elif event.name == Events.INSTANCE_STOPPED.name:
+                cls.handle_stop(event)
+            elif event.name == Events.SYSTEM_REMOVED.name:
+                cls.remove_system(event.payload)
+            elif event.name == Events.SYSTEM_RELOAD_REQUESTED.name:
+                cls.instance().reload_system(event.payload)
+            elif event.name == Events.SYSTEM_RESCAN_REQUESTED.name:
+                cls.instance().scan_path()
 
     @classmethod
-    def handle_start(cls, event):
+    def handle_associate(cls, event):
+        runner_id = event.payload.metadata.get("runner_id")
+
+        if runner_id:
+            instance = event.payload
+            system = db.query_unique(System, instances__contains=instance)
+
+            runner = cls.from_runner_id(runner_id)
+            runner.associate(system=system, instance=instance)
+            runner.restart = True
+
+    @classmethod
+    def handle_start(cls, event: Event):
         runner_id = cls.from_instance_id(event.payload.id)
 
-        if runner_id in cls.plugins:
+        if runner_id in cls.runners:
             cls.restart(runner_id)
 
     @classmethod
-    def handle_stop(cls, event):
-        runner_id = cls.from_instance_id(event.payload.id)
+    def handle_stop(cls, event: Event):
+        runner = cls.from_instance_id(event.payload.id)
 
-        if runner_id in cls.plugins:
-            cls.plugins[runner_id].stopped = True
-            cls.plugins[runner_id].restart = False
+        if runner:
+            runner.stopped = True
+            runner.restart = False
+            runner.dead = False
 
     @classmethod
-    def handle_remove_system(cls, event):
-        system = event.payload
-
-        remove_ids = []
+    def remove_system(cls, system: System) -> List[ProcessRunner]:
+        remove_runners = []
         for instance in system.instances:
-            for runner_id, plugin in cls.plugins.items():
-                if instance.id == plugin.instance_id:
-                    remove_ids.append(runner_id)
+            for runner in cls.runners:
+                if instance.id == runner.instance_id:
+                    remove_runners.append(runner)
 
-        for remove_id in remove_ids:
-            cls.remove(remove_id)
+        for runner in remove_runners:
+            cls.remove(runner)
+
+        return remove_runners
+
+    def reload_system(self, system: System):
+        removed_runners = self.remove_system(system)
+
+        # All removed runners should have the same path, so just grab the first
+        new_runners = self.create_runners(removed_runners[0].process_cwd)
+
+        self.runners += new_runners
+
+        # We need to start these immediately, otherwise the instance IDs won't be
+        # associated with runner IDs
+        for runner in new_runners:
+            self.start_one(runner)
 
     @classmethod
-    def from_instance_id(cls, instance_id):
-        for runner_id, plugin in cls.plugins.items():
-            if plugin.instance_id == instance_id:
-                return runner_id
+    def from_instance_id(cls, instance_id: str) -> Optional[ProcessRunner]:
+        for runner in cls.runners:
+            if runner.instance_id == instance_id:
+                return runner
+        return None
+
+    @classmethod
+    def from_runner_id(cls, runner_id: str) -> Optional[ProcessRunner]:
+        for runner in cls.runners:
+            if runner.runner_id == runner_id:
+                return runner
         return None
 
     @classmethod
     def start_all(cls):
-        cls.logger.info("Starting all plugins")
-
-        for plugin in cls.plugins.values():
-            plugin.runner.start()
+        for runner in cls.runners:
+            runner.start()
 
     @classmethod
     def stop_all(cls):
-        """Attempt to stop all plugins."""
-        for runner_id in cls.plugins:
-            cls.stop_one(runner_id=runner_id)
+        for runner in cls.runners:
+            cls.stop_one(runner_id=runner.runner_id)
 
     @classmethod
-    def start_one(cls, runner_id: str) -> None:
-        cls.plugins[runner_id].runner.start()
+    def start_one(cls, runner: ProcessRunner) -> None:
+        runner.start()
 
     @classmethod
     def stop_one(cls, runner_id=None, instance_id=None):
-        if runner_id is None:
-            runner_id = cls.from_instance_id(instance_id)
+        runner = cls.from_runner_id(runner_id) or cls.from_instance_id(instance_id)
 
-        plugin = cls.plugins[runner_id]
+        # The process should already be exiting so just wait for it
+        runner.join(config.get("plugin.local.timeout.shutdown"))
 
-        if not plugin.runner.is_alive():
-            cls.logger.info(f"Runner {runner_id} was already stopped")
-            return
-
-        sleep(1)
-
-        if plugin.runner.is_alive():
-            cls.logger.info(f"About to kill runner {runner_id}")
-            plugin.runner.kill()
+        if runner.is_alive():
+            cls.logger.warning(f"Runner {runner_id} still alive, about to SIGKILL")
+            runner.kill()
 
     @classmethod
-    def remove(cls, runner_id):
-        del cls.plugins[runner_id]
+    def remove(cls, runner: ProcessRunner):
+        cls.runners.remove(runner)
 
     @classmethod
-    def restart(cls, runner_id):
-        old_runner = cls.plugins[runner_id].runner
-
+    def restart(cls, runner: ProcessRunner):
         new_runner = ProcessRunner(
-            runner_id=old_runner.runner_id,
-            process_args=old_runner.process_args,
-            process_cwd=old_runner.process_cwd,
-            process_env=old_runner.process_env,
+            runner_id=runner.runner_id,
+            process_args=runner.process_args,
+            process_cwd=runner.process_cwd,
+            process_env=runner.process_env,
         )
 
-        cls.plugins[runner_id] = Plugin(runner=new_runner)
+        cls.runners.remove(runner)
+        cls.runners.append(new_runner)
 
         new_runner.start()
 
-    def load_new(self, path: str = None) -> Dict[str, Plugin]:
-        """Create PluginRunners for all plugins in a directory
+    def scan_path(self, path: str = None) -> List[ProcessRunner]:
+        """Create and start ProcessRunners for valid plugins in a given directory
 
         Note: This scan does not walk the directory tree - all plugins must be
         in the top level of the given path.
 
         Args:
-            path: The path to scan for plugins. If none will default to the
-                plugin path specified at initialization.
+            path: The path to scan. If none will default to the plugin path specified at
+                initialization.
 
         Returns:
-            Newly loaded plugin dictionary
+            Newly loaded and started runner dictionary
         """
         plugin_path = path or self._plugin_path
 
-        new_plugins = {}
+        new_runners = []
         for path in plugin_path.iterdir():
             try:
                 if path.is_dir() and path not in self.current_paths():
-                    new_plugins.update(self.create_plugins(path))
+                    new_runners += self.create_runners(path)
             except Exception as ex:
                 self.logger.exception(f"Error loading plugin at {path}: {ex}")
 
-        self.plugins.update(new_plugins)
+        self.runners += new_runners
 
-        return new_plugins
+        for runner in new_runners:
+            self.start_one(runner)
 
-    def create_plugins(self, plugin_path: Path) -> Dict[str, Plugin]:
-        """Creates Plugins for a particular plugin directory
+        return new_runners
 
-        It will use the validator to validate the plugin before registering the
-        plugin in the database as well as adding an entry to the plugin map.
+    def create_runners(self, plugin_path: Path) -> List[ProcessRunner]:
+        """Creates ProcessRunners for a particular directory
+
+        It will use the validator to validate the config.
 
         Args:
             plugin_path: The path of the plugin
 
         Returns:
-            A list of plugin runners
+            Newly created runner dictionary
 
         """
         config_file = plugin_path / CONFIG_NAME
@@ -269,10 +295,9 @@ class PluginManager(StoppableThread):
             plugin_config = ConfigLoader.load(config_file)
         except PluginValidationError as ex:
             self.logger.error(f"Error loading config for plugin at {plugin_path}: {ex}")
-            return {}
+            return []
 
-        new_plugins = {}
-
+        new_runners = []
         for instance_name in plugin_config["INSTANCES"]:
             runner_id = "".join([choice(string.ascii_letters) for _ in range(10)])
             process_args = self._process_args(plugin_config, instance_name)
@@ -280,8 +305,8 @@ class PluginManager(StoppableThread):
                 plugin_config, instance_name, plugin_path, runner_id
             )
 
-            new_plugins[runner_id] = Plugin(
-                runner=ProcessRunner(
+            new_runners.append(
+                ProcessRunner(
                     runner_id=runner_id,
                     process_args=process_args,
                     process_cwd=plugin_path,
@@ -289,7 +314,7 @@ class PluginManager(StoppableThread):
                 )
             )
 
-        return new_plugins
+        return new_runners
 
     @staticmethod
     def _process_args(plugin_config, instance_name):
@@ -359,19 +384,19 @@ class ConfigLoader(object):
 
         ConfigLoader._validate(config_module, config_file.parent)
 
-        config = {}
+        config_dict = {}
         for key in ConfigKeys:
             if hasattr(config_module, key.name):
-                config[key.name] = getattr(config_module, key.name)
+                config_dict[key.name] = getattr(config_module, key.name)
 
         # Instances and arguments need some normalization
-        config.update(
+        config_dict.update(
             ConfigLoader._normalize_instance_args(
-                config.get("INSTANCES"), config.get("PLUGIN_ARGS")
+                config_dict.get("INSTANCES"), config_dict.get("PLUGIN_ARGS")
             )
         )
 
-        return config
+        return config_dict
 
     @staticmethod
     def _config_from_beer_conf(config_file: Path) -> ModuleType:

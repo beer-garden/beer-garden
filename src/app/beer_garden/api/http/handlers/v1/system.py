@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
+from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema
 
-from beer_garden.api.http.authorization import authenticated, Permissions
+from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
 
 
@@ -37,14 +38,19 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        # TODO - This is part of the v1 API, need to work this back in
-        # include_commands = (
-        #     self.get_query_argument("include_commands", default="").lower() != "false"
-        # )
-
         response = await self.client(
             Operation(operation_type="SYSTEM_READ", args=[system_id])
         )
+
+        # This is only here because of backwards compatibility
+        include_commands = (
+            self.get_query_argument("include_commands", default="").lower() != "false"
+        )
+
+        if not include_commands:
+            system = SchemaParser.parse_system(response, from_string=True)
+            system.commands = []
+            response = SchemaParser.serialize(system)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -126,18 +132,60 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
+        kwargs = {}
+        do_reload = False
 
-        response = await self.client(
-            Operation(
-                operation_type="SYSTEM_UPDATE",
-                args=[
-                    system_id,
-                    SchemaParser.parse_patch(
-                        self.request.decoded_body, from_string=True
-                    ),
-                ],
+        response = ""
+
+        for op in SchemaParser.parse_patch(self.request.decoded_body, from_string=True):
+            if op.operation == "replace":
+                if op.path == "/commands":
+                    kwargs["new_commands"] = SchemaParser.parse_command(
+                        op.value, many=True
+                    )
+                elif op.path in ["/description", "/icon_name", "/display_name"]:
+                    kwargs[op.path.strip("/")] = op.value
+                else:
+                    raise ModelValidationError(
+                        f"Unsupported path for replace '{op.path}'"
+                    )
+
+            elif op.operation == "add":
+                if op.path == "/instance":
+                    if not kwargs.get("add_instances"):
+                        kwargs["add_instances"] = []
+
+                    kwargs["add_instances"].append(
+                        SchemaParser.parse_instance(op.value)
+                    )
+                else:
+                    raise ModelValidationError(f"Unsupported path for add '{op.path}'")
+
+            elif op.operation == "update":
+                if op.path == "/metadata":
+                    kwargs["metadata"] = op.value
+                else:
+                    raise ModelValidationError(
+                        f"Unsupported path for update '{op.path}'"
+                    )
+
+            elif op.operation == "reload":
+                do_reload = True
+
+            else:
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+
+        if kwargs:
+            response = await self.client(
+                Operation(
+                    operation_type="SYSTEM_UPDATE", args=[system_id], kwargs=kwargs
+                )
             )
-        )
+
+        if do_reload:
+            await self.client(
+                Operation(operation_type="SYSTEM_RELOAD", args=[system_id])
+            )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

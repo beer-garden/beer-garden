@@ -3,13 +3,12 @@ import logging
 from multiprocessing import Queue
 from queue import Empty
 
-from brewtils.models import Event, Events
+from brewtils.models import Event
 from brewtils.stoppable_thread import StoppableThread
 
+import beer_garden.config
 import beer_garden.events
 import beer_garden.systems
-import beer_garden.config
-
 
 logger = logging.getLogger(__name__)
 
@@ -17,16 +16,13 @@ logger = logging.getLogger(__name__)
 class BaseProcessor(StoppableThread):
     """Base Processor"""
 
-    def __init__(self, action=None, black_list=None, **kwargs):
+    def __init__(self, action=None, **kwargs):
         super().__init__(**kwargs)
 
         self._action = action
-        self._black_list = black_list or []
 
     def process(self, item):
         try:
-            if hasattr(item, "name") and item.name in self._black_list:
-                return
             self._action(item)
         except Exception as ex:
             logger.exception(f"Error processing: {ex}")
@@ -54,12 +50,26 @@ class QueueListener(BaseProcessor):
             self._queue.get()
 
     def run(self):
-        """Process events as they are received """
+        """Process events as they are received"""
         while not self.stopped():
             try:
                 self.process(self._queue.get(timeout=0.1))
             except Empty:
                 pass
+
+
+class DelayListener(QueueListener):
+    """Listener that waits for an Event before running"""
+
+    def __init__(self, event=None, **kwargs):
+        super().__init__(**kwargs)
+
+        self._event = event
+
+    def run(self):
+        self._event.wait()
+
+        super().run()
 
 
 class PipeListener(BaseProcessor):
@@ -113,21 +123,16 @@ class FanoutProcessor(QueueListener):
 class HttpEventProcessor(QueueListener):
     """Publish events using an EasyClient"""
 
-    def __init__(self, easy_client=None, **kwargs):
+    def __init__(self, easy_client=None, black_list=None, **kwargs):
         super().__init__(**kwargs)
 
         self._ez_client = easy_client
+        self._black_list = black_list or []
 
     def process(self, event: Event):
         try:
             if event.name not in self._black_list:
                 event.garden = beer_garden.config.get("garden.name")
-
-                if event.name == Events.GARDEN_STARTED.name:
-                    event.payload.namespaces = beer_garden.namespace.get_namespaces()
-                    event.payload.systems = [
-                        str(s) for s in beer_garden.systems.get_systems()
-                    ]
                 self._ez_client.publish_event(event)
         except Exception as ex:
             logger.exception(f"Error publishing EasyClient event: {ex}")

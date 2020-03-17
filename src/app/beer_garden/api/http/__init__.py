@@ -382,6 +382,10 @@ def _event_callback(event):
     # Everything needs to be published to the websockdet
     websocket_publish(event)
 
-    # And then also do the routing update stuff
-    if event.name in (Events.GARDEN_CREATED.name, Events.GARDEN_STARTED.name):
-        beer_garden.router.add_garden(event.payload)
+    # And also register handlers that the entry point needs to care about
+    # As of now that's only the routing subsystem
+    for handler in [beer_garden.router.handle_event]:
+        try:
+            handler(event)
+        except Exception as ex:
+            logger.exception(f"Error executing callback for {event!r}: {ex}")

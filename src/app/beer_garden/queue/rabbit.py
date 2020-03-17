@@ -264,7 +264,7 @@ class PyrabbitClient(object):
                     request = SchemaParser.parse_request(
                         message["payload"], from_string=True
                     )
-                    beer_garden.requests.cancel_request(request)
+                    beer_garden.requests.cancel_request(request.id)
                 except Exception as ex:
                     self.logger.exception(f"Error canceling message: {ex}")
             else:
