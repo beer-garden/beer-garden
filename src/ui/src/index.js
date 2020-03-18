@@ -17,7 +17,6 @@ import 'angular-animate';
 import 'angular-confirm';
 import 'angular-filter';
 import 'angular-sanitize';
-import 'angular-websocket';
 import 'angular-ui-ace';
 import 'angular-ui-bootstrap';
 import '@uirouter/angularjs';
@@ -141,7 +140,6 @@ angular.module('bgApp',
   'datatables.light-columnfilter',
   'schemaForm',
   'angular-confirm',
-  'angular-websocket',
   'angular.filter',
   'ngAnimate',
   'frapontillo.bootstrap-switch',

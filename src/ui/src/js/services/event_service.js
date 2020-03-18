@@ -1,13 +1,14 @@
 
-eventService.$inject = ['$websocket', 'TokenService'];
+eventService.$inject = [
+  'TokenService',
+];
 
 /**
  * eventService - Service for getting systems from the API.
- * @param  {Object} $websocket        Angular's $websocket object.
  * @param  {Object} TokenService      Service for Token information.
  * @return {Object}                   Object for interacting with the event API.
  */
-export default function eventService($websocket, TokenService) {
+export default function eventService(TokenService) {
 
   let socketConnection = undefined;
   let messageCallbacks = {};
@@ -31,19 +32,19 @@ export default function eventService($websocket, TokenService) {
           eventUrl += '?token=' + token;
         }
 
-        socketConnection = $websocket(eventUrl);
+        socketConnection = new WebSocket(eventUrl);
 
-        socketConnection.onMessage((message) => {
+        socketConnection.onmessage = (message) => {
           let event = JSON.parse(message.data);
 
           for (let callback of _.values(messageCallbacks)) {
             callback(event);
           }
-        });
+        }
 
-        socketConnection.onClose(() => {
+        socketConnection.onclose = () => {
           socketConnection = undefined;
-        });
+        };
       }
     },
     close: () => {
