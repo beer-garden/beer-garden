@@ -25,7 +25,7 @@ module.exports = {
     new CopyWebpackPlugin([
         {from: 'src/index.html'},
         {from: 'src/image', to: 'image'},
-        {from: 'node_modules/swagger-ui-dist', to: 'swagger'},
+        {from: 'node_modules/swagger-ui-dist', to: 'swagger', ignore: ['*.map', '*.md']},
         {from: 'node_modules/ace-builds/src-noconflict/worker-json.js'},
     ]),
   ],
