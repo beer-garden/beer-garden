@@ -6,11 +6,12 @@ module.exports = merge(common, {
   mode: 'development',
   devtool: 'eval-source-map',
   devServer: {
-    // Uncomment this to allow external (non-localhost) connections
+    // Uncomment these to allow external (non-localhost) connections
     // host: '0.0.0.0',
+    // disableHostCheck: true,
 
-    disableHostCheck: true,
-    contentBase: path.resolve(__dirname, 'dist'),
+    compress: true,
+    contentBase: false,
     publicPath: '/',
     stats: 'minimal',
     proxy: [
