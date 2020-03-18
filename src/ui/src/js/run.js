@@ -117,6 +117,9 @@ export default function appRun(
       TokenService.handleToken(token);
     }
 
+    // Connect to the event socket
+    EventService.connect(token);
+
     $rootScope.loadUser(token).catch(
       // This prevents the situation where the user needs to logout but the
       // logout button isn't displayed because there's no user loaded
@@ -220,11 +223,6 @@ export default function appRun(
     $rootScope.setCurrentNamespace(transition.params('to').namespace);
   });
 
-  $transitions.onSuccess({entering: 'base.namespace'}, (transition) => {
-    EventService.close();
-    EventService.connect();
-  });
-
   $transitions.onSuccess({to: 'base'}, () => {
     $state.go('base.landing');
   });
@@ -234,11 +232,7 @@ export default function appRun(
   });
 
   $interval(function() {
-    let socketState = EventService.state();
-
-    if (socketState == undefined || socketState == 3) {
-      EventService.connect();
-    }
+    EventService.connect(TokenService.getToken());
   }, 5000);
 
   $rootScope.initialLoad();
