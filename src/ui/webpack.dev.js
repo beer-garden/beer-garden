@@ -3,12 +3,13 @@ const merge = require('webpack-merge');
 const common = require('./webpack.common.js');
 
 module.exports = merge(common, {
+  mode: 'development',
   devtool: 'eval-source-map',
   devServer: {
-    // Uncomment these to allow external (non-localhost) connections
+    // Uncomment this to allow external (non-localhost) connections
     // host: '0.0.0.0',
-    // disableHostCheck: true,
 
+    disableHostCheck: true,
     contentBase: path.resolve(__dirname, 'dist'),
     publicPath: '/',
     stats: 'minimal',
