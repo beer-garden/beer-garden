@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
-from mock import patch, MagicMock, Mock
+from mock import MagicMock, Mock, patch
 from mongoengine import DoesNotExist, NotUniqueError
 
 import beer_garden.db.mongo.models

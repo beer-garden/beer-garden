@@ -3,7 +3,7 @@ import logging
 
 import pytest
 import requests.exceptions
-from mock import Mock, patch, call
+from mock import Mock, call, patch
 
 import beer_garden
 from beer_garden.app import Application, HelperThread

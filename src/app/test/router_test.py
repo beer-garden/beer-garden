@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import pytest
 from box import Box
 from brewtils.models import Garden, System

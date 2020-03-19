@@ -7,14 +7,14 @@ from mock import Mock
 
 import beer_garden.db.api as db
 from beer_garden.db.mongo.models import (
+    Choices,
     Command,
+    DateTrigger,
     Instance,
+    Job,
     Parameter,
     Request,
     System,
-    Choices,
-    Job,
-    DateTrigger,
 )
 
 

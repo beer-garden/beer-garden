@@ -11,6 +11,7 @@ from passlib.apps import custom_app_context
 from tornado.web import HTTPError
 
 import beer_garden.api.http
+import beer_garden.config as config
 from beer_garden.db.mongo.models import Principal, Role
 
 
@@ -127,7 +128,7 @@ def anonymous_principal():
     without having to calculate effective permissions every time.
     """
 
-    auth_config = beer_garden.config.get("auth")
+    auth_config = config.get("auth")
     if auth_config.enabled and auth_config.guest_login_enabled:
         roles = Principal.objects.get(username="anonymous").roles
     elif auth_config.enabled:
@@ -234,7 +235,7 @@ def _principal_from_token(token):
     Returns:
         Brewtils principal if JWT is valid, None otherwise
     """
-    auth_config = beer_garden.config.get("auth")
+    auth_config = config.get("auth")
     try:
         decoded = jwt.decode(
             token, key=auth_config.token.secret, algorithm=auth_config.token.algorithm

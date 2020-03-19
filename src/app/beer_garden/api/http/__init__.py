@@ -16,6 +16,7 @@ from brewtils.schemas import (
     IntervalTriggerSchema,
     JobSchema,
     LoggingConfigSchema,
+    OperationSchema,
     ParameterSchema,
     PatchSchema,
     PrincipalSchema,
@@ -24,7 +25,6 @@ from brewtils.schemas import (
     RequestSchema,
     RoleSchema,
     SystemSchema,
-    OperationSchema,
 )
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
@@ -35,6 +35,7 @@ import beer_garden
 import beer_garden.api.http.handlers.misc as misc
 import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.vbeta as vbeta
+import beer_garden.config as config
 import beer_garden.events
 import beer_garden.router
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
@@ -85,7 +86,7 @@ async def startup():
     # Need to wait until after mongo connection established to load
     anonymous_principal = load_anonymous()
 
-    http_config = beer_garden.config.get("entry.http")
+    http_config = config.get("entry.http")
     logger.info(f"Starting HTTP server on {http_config.host}:{http_config.port}")
     server.listen(http_config.port, http_config.host)
 
@@ -135,7 +136,7 @@ def _setup_application():
 
     io_loop = IOLoop.current()
 
-    auth_config = beer_garden.config.get("auth")
+    auth_config = config.get("auth")
     if not auth_config.token.secret:
         auth_config.token.secret = os.urandom(20)
         if auth_config.enabled:
@@ -145,7 +146,7 @@ def _setup_application():
                 "restarts. To prevent this set the auth.token.secret config."
             )
 
-    http_config = beer_garden.config.get("entry.http")
+    http_config = config.get("entry.http")
     public_url = Url(
         scheme="https" if http_config.ssl.enabled else "http",
         host=http_config.public_fqdn,
@@ -160,7 +161,7 @@ def _setup_application():
 
 
 def _setup_tornado_app():
-    prefix = beer_garden.config.get("entry.http.url_prefix")
+    prefix = config.get("entry.http.url_prefix")
 
     # These get documented in our OpenAPI (fka Swagger) documentation
     published_url_specs = [
@@ -212,8 +213,9 @@ def _setup_tornado_app():
         # Not sure if this is really necessary
         (rf"{prefix[:-1]}", RedirectHandler, {"url": prefix}),
     ]
-    app_config = beer_garden.config.get("application")
-    auth_config = beer_garden.config.get("auth")
+
+    app_config = config.get("application")
+    auth_config = config.get("auth")
     _load_swagger(published_url_specs, title=app_config.name)
 
     return Application(
@@ -225,7 +227,7 @@ def _setup_tornado_app():
 
 
 def _setup_ssl_context():
-    http_config = beer_garden.config.get("entry.http")
+    http_config = config.get("entry.http")
     if http_config.ssl.enabled:
         server_ssl = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         server_ssl.load_cert_chain(

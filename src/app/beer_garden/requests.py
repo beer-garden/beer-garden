@@ -14,7 +14,7 @@ from brewtils.errors import ConflictError, ModelValidationError, RequestPublishE
 from brewtils.models import Choices, Events, Request, RequestTemplate, System
 from requests import Session
 
-import beer_garden.config
+import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 from beer_garden.events import publish_event
@@ -45,7 +45,7 @@ class RequestValidator(object):
     @classmethod
     def instance(cls):
         if not cls._instance:
-            cls._instance = cls(beer_garden.config.get("validator"))
+            cls._instance = cls(config.get("validator"))
         return cls._instance
 
     def validate_request(self, request):
@@ -719,7 +719,7 @@ def cancel_request(request_id: Request) -> Request:
 
 def handle_event(event):
     # Only care about downstream garden
-    if event.garden != beer_garden.config.get("garden.name"):
+    if event.garden != config.get("garden.name"):
 
         if event.name == Events.REQUEST_CREATED.name:
             if db.query_unique(Request, id=event.payload.id) is None:

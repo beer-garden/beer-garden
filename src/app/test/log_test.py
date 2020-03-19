@@ -10,7 +10,7 @@ from mock import Mock, patch
 
 import beer_garden.log
 from beer_garden.errors import LoggingLoadingError
-from beer_garden.log import default_app_config, PluginLoggingLoader
+from beer_garden.log import PluginLoggingLoader, default_app_config
 
 
 class TestLoad(object):

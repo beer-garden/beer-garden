@@ -2,9 +2,9 @@
 import pytest
 from box import Box
 from mock import Mock
+from pymongo.errors import ServerSelectionTimeoutError
 
 import beer_garden.db.mongo.api
-from pymongo.errors import ServerSelectionTimeoutError
 
 
 class TestCheckConnection(object):

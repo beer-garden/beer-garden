@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
+from time import sleep
 
 import pytest
 from mock import Mock
-from time import sleep
 
 import beer_garden.metrics as metrics
 

@@ -13,6 +13,7 @@ from tornado.gen import coroutine
 from tornado.web import HTTPError
 
 import beer_garden.api.http
+import beer_garden.config as config
 from beer_garden.db.mongo.models import Principal, RefreshToken
 from beer_garden.api.http.authorization import coalesce_permissions
 from beer_garden.api.http.base_handler import BaseHandler
@@ -227,7 +228,7 @@ class TokenListAPI(BaseHandler):
         try:
             principal = Principal.objects.get(username=parsed_body["username"])
             if (
-                beer_garden.config.get("auth.guest_login_enabled")
+                config.get("auth.guest_login_enabled")
                 and principal.username
                 == beer_garden.api.http.anonymous_principal.username
             ):
@@ -304,7 +305,7 @@ def generate_tokens(principal, expire_days):
 
 
 def generate_access_token(payload, issue_time=None):
-    auth_config = beer_garden.config.get("auth")
+    auth_config = config.get("auth")
     issue_time = issue_time or datetime.utcnow()
 
     access_payload = payload.copy()

@@ -7,7 +7,7 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Command, Event, Events, Instance, System
 from brewtils.schemas import SystemSchema
 
-import beer_garden
+import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 from beer_garden.events import publish_event
@@ -71,7 +71,7 @@ def create_system(system: System) -> System:
             system.max_instances = len(system.instances)
 
     if system.namespace is None:
-        system.namespace = beer_garden.config.get("garden.name")
+        system.namespace = config.get("garden.name")
 
     system = db.create(system)
 
@@ -246,7 +246,7 @@ def handle_event(event: Event) -> None:
     Args:
         event: The event to handle
     """
-    if event.garden != beer_garden.config.get("garden.name"):
+    if event.garden != config.get("garden.name"):
 
         if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
             event.payload.local = False

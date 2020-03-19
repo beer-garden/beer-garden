@@ -11,6 +11,7 @@ from brewtils.models import Instance, Request, System
 from brewtils.pika import TransientPikaClient
 from brewtils.schema_parser import SchemaParser
 
+import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.requests
 
@@ -83,9 +84,9 @@ def create(instance: Instance) -> dict:
     admin_queue_name = admin_keys[-1]
     clients["pika"].setup_queue(admin_queue_name, {"durable": True}, admin_keys)
 
-    amq_config = beer_garden.config.get("amq")
+    amq_config = config.get("amq")
     connection = {
-        "host": beer_garden.config.get("publish_hostname"),
+        "host": config.get("publish_hostname"),
         "port": amq_config.connections.message.port,
         "user": amq_config.connections.message.user,
         "password": amq_config.connections.message.password,

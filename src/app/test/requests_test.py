@@ -2,10 +2,10 @@
 import pytest
 from box import Box
 from brewtils.errors import ModelValidationError
+from brewtils.models import Choices, Command, Parameter, Request
 from mock import Mock, call, patch
 
 import beer_garden.requests
-from brewtils.models import Command, Parameter, Request, Choices
 from beer_garden.requests import RequestValidator
 
 

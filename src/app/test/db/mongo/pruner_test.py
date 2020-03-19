@@ -4,7 +4,7 @@ from datetime import timedelta
 import pytest
 from mock import MagicMock, Mock, patch
 
-from beer_garden.db.mongo.models import Request, Event
+from beer_garden.db.mongo.models import Event, Request
 from beer_garden.db.mongo.pruner import MongoPruner
 
 

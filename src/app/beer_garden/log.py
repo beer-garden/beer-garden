@@ -9,7 +9,7 @@ from brewtils.models import LoggingConfig
 from ruamel import yaml
 from ruamel.yaml import YAML
 
-import beer_garden
+import beer_garden.config as config
 from beer_garden.errors import LoggingLoadingError
 
 plugin_logging_config = None
@@ -106,7 +106,7 @@ def get_plugin_log_config(system_name=None):
 def load_plugin_log_config():
     global plugin_logging_config
 
-    plugin_config = beer_garden.config.get("plugin")
+    plugin_config = config.get("plugin")
     plugin_logging_config = PluginLoggingLoader.load(
         filename=plugin_config.logging.config_file,
         level=plugin_config.logging.level,
@@ -153,19 +153,17 @@ class PluginLoggingLoader(object):
         is present
         :return: A valid LoggingConfig object
         """
-        config = {}
+        raw_config = {}
 
         if filename:
             with open(filename) as log_config_file:
-                config = yaml.safe_load(log_config_file)
+                raw_config = yaml.safe_load(log_config_file)
 
         # If no config could be found from a file use the default
-        if not config:
-            config = cls._parse_python_logging_config(default_config, level)
+        if not raw_config:
+            raw_config = cls._parse_python_logging_config(default_config, level)
 
-        valid_config = cls.validate_config(config, level)
-
-        return valid_config
+        return cls.validate_config(raw_config, level)
 
     @classmethod
     def validate_config(cls, config_to_validate, level):

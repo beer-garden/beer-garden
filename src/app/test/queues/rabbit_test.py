@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import pytest
 from mock import Mock
 from pyrabbit2.http import HTTPError, NetworkError

@@ -3,15 +3,14 @@ import datetime
 import re
 import socket
 
-from beer_garden.errors import RoutingRequestException
 from brewtils.errors import (
+    AuthorizationRequired,
     ConflictError,
     ModelError,
     ModelValidationError,
     RequestForbidden,
     RequestPublishException,
     WaitExceededError,
-    AuthorizationRequired,
 )
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
 from mongoengine.errors import (
@@ -23,10 +22,12 @@ from pymongo.errors import DocumentTooLarge
 from tornado.web import HTTPError, RequestHandler
 
 import beer_garden.api.http
+import beer_garden.config as config
 import beer_garden.db.mongo.models
 from beer_garden.api.http.authorization import AuthMixin, coalesce_permissions
 from beer_garden.api.http.client import ExecutorClient
 from beer_garden.api.http.metrics import http_api_latency_total
+from beer_garden.errors import RoutingRequestException
 
 
 class BaseHandler(AuthMixin, RequestHandler):
@@ -92,7 +93,7 @@ class BaseHandler(AuthMixin, RequestHandler):
         """Headers set here will be applied to all responses"""
         self.set_header("BG-Version", beer_garden.__version__)
 
-        if beer_garden.config.get("application.cors_enabled"):
+        if config.get("application.cors_enabled"):
             self.set_header("Access-Control-Allow-Origin", "*")
             self.set_header("Access-Control-Allow-Headers", "Content-Type")
             self.set_header(
@@ -150,7 +151,7 @@ class BaseHandler(AuthMixin, RequestHandler):
 
     def options(self, *args, **kwargs):
 
-        if beer_garden.config.get("application.cors_enabled"):
+        if config.get("application.cors_enabled"):
             self.set_status(204)
         else:
             raise HTTPError(403, reason="CORS is disabled")
@@ -207,7 +208,7 @@ class BaseHandler(AuthMixin, RequestHandler):
                 message = error_dict.get("message", getattr(e, "message", str(e)))
                 code = error_dict.get("status_code", 500)
 
-            elif beer_garden.config.get("application.debug_mode"):
+            elif config.get("application.debug_mode"):
                 message = str(e)
 
         code = code or status_code or 500
