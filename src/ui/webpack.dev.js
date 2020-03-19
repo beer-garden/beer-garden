@@ -16,9 +16,6 @@ module.exports = merge(common, {
     /// This seemed to cause issues with the live reloading
     disableHostCheck: true,
 
-    // This is the 'other' mode for reloading, the default ('sockjs') was struggling
-    transportMode: 'ws',
-
     // Compress responses with gzip
     compress: true,
 
