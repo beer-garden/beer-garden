@@ -9,10 +9,9 @@
     <link href="index.css" rel="stylesheet">
     <link ng-if="themes.slate" ng-href="dark.css" rel="stylesheet">
 
-    <!-- Favicon -->
-    <link ng-if="config.iconDefault"
-          ng-href="image/{{config.iconDefault}}.png"
-          rel="shortcut icon">
+    <!-- Favicon - this prevents the browser requesting favicon.ico before config is loaded -->
+    <link rel="icon" href="data:,">
+    <link rel="icon" ng-if="config.iconDefault" ng-href="image/{{config.iconDefault}}.png">
   </head>
 
   <body ng-cloak>
