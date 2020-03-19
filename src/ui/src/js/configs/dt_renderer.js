@@ -31,6 +31,24 @@ export default function runDTRenderer(DTRendererService) {
         $('.dataTables_filter').prepend(childContainer);
       }
 
+      if (options.hiddenContainer) {
+
+        let hiddenContainer = $('<ul>')
+              .attr('id', 'hiddenList')
+              .css('margin-right', '20px')
+              .attr('style', 'list-style-type:none;margin-right:20px; display:inline; padding-left:0px;')
+              .append(
+                  $('<label>')
+                  .attr('for', 'childCheck')
+                  .css('padding-left', '4px')
+                  .text('Show Hidden')
+              )
+        $('.dataTables_filter').prepend(hiddenContainer);
+        var node = document.getElementById("filterHidden");
+        var list = document.getElementById("hiddenList");
+        list.insertBefore(node, list.childNodes[0]);
+      }
+
       if (options.refreshButton) {
         let refreshButton = $('<button>')
           .attr('id', 'refreshButton')

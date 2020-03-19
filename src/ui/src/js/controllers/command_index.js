@@ -34,8 +34,14 @@ export default function commandIndexController(
   $scope.dtOptions = DTOptionsBuilder.newOptions()
     .withOption('order', [4, 'asc'])
     .withOption('autoWidth', false)
+    .withOption('hiddenContainer', true)
     .withBootstrap();
 
+  $scope.nodeMove = function(location){
+    var node = document.getElementById("filterHidden");
+    var list = document.getElementById(location);
+    list.append(node, list.childNodes[0]);
+  }
 
   $scope.hiddenComparator = function(expected, actual){
     return actual || !expected;

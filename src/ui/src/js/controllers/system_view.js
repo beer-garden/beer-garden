@@ -19,20 +19,24 @@ export default function systemViewController(
     DTOptionsBuilder,
     system) {
 
-
-
   $scope.util = UtilityService;
   $scope.filterHidden = false;
-  $scope.tableS;
   $scope.dtInstance = {};
   $scope.dtOptions = DTOptionsBuilder.newOptions()
     .withOption('order', [4, 'asc'])
     .withOption('autoWidth', false)
+    .withOption('hiddenContainer', true)
     .withBootstrap();
+
   $scope.hiddenComparator = function(expected, actual){
     return actual || !expected;
   };
 
+  $scope.nodeMove = function(location){
+    var node = document.getElementById("filterHidden");
+    var list = document.getElementById(location);
+    list.append(node, list.childNodes[0]);
+  }
 
   $scope.successCallback = function(response) {
     $scope.response = response;
@@ -45,10 +49,6 @@ export default function systemViewController(
         $scope.data.commands.length + " total entries)", "infoFiltered":   ""});
   };
 
-  $scope.reloadData = function() {
-     tb = $scope.dtInstance;
-     $scope.dtInstance._renderer.rerender();
-  }
   $scope.failureCallback = function(response) {
     $scope.response = response;
     $scope.data = {};

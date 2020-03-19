@@ -1,7 +1,6 @@
 <h1 class='page-header'>Available Commands</h1>
 
 <fetch-data response="response"></fetch-data>
-
 <div class="container-fluid animate-if"
      ng-if="responseState(response) === 'success'">
   <div>
@@ -13,12 +12,12 @@
         id="DataTable"
         style="width: 100%">
     <thead>
-      <label style="top: 164px;left: 1540px; font-size: 14px; font-weight: normal; display: block; position: absolute; z-index:4;" >
-          <input type="checkbox" id="filterHidden" style="position: absolute; left: -18px;top: -2px;"
-            ng-model="filterHidden"
-            ng-change =  "dtInstance._renderer.rerender()"
-        />Show Hidden
-      </label>
+          <ul id="myList1" style="list-style-type:none;">
+              <input type="checkbox" id="filterHidden"
+                     ng-model="filterHidden"
+                     ng-change="nodeMove('myList1');dtInstance._renderer.rerender();"
+              />
+          </ul>
       <tr>
         <th id="th_system">System</th>
         <th id="th_command">Command</th>
@@ -45,4 +44,6 @@
     </tbody>
     </table>
   </div>
+
 </div>
+
