@@ -24,13 +24,20 @@ from tornado.web import HTTPError, RequestHandler
 
 import beer_garden.api.http
 import beer_garden.db.mongo.models
-from beer_garden.api.http.authorization import AuthMixin, coalesce_permissions
+from beer_garden.api.http.authorization import (
+    AuthMixin,
+    coalesce_permissions,
+    bearer_auth,
+    basic_auth,
+)
 from beer_garden.api.http.client import ExecutorClient
 from beer_garden.api.http.metrics import http_api_latency_total
 
 
 class BaseHandler(AuthMixin, RequestHandler):
     """Base handler from which all handlers inherit"""
+
+    auth_providers = frozenset([bearer_auth, basic_auth])
 
     MONGO_ID_PATTERN = r".*/([0-9a-f]{24}).*"
     REFRESH_COOKIE_NAME = "refresh_id"
