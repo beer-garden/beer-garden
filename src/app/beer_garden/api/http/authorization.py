@@ -253,7 +253,7 @@ def _principal_from_token(token):
 
 class AuthMixin(object):
 
-    auth_providers = [bearer_auth, basic_auth]
+    auth_providers: frozenset = None
 
     def get_current_user(self):
         """Use registered handlers to determine current user"""
