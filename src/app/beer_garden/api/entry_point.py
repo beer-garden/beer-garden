@@ -79,6 +79,7 @@ class EntryPoint:
         process_name = f"BGEntryPoint-{self._name}"
 
         self._process = self._context.Process(
+            name=process_name,
             target=self._target_wrapper,
             args=(
                 beer_garden.config.get(),
@@ -87,8 +88,6 @@ class EntryPoint:
                 self._signal_handler,
                 self._ep_conn,
             ),
-            name=process_name,
-            daemon=True,
         )
         self._process.start()
 
