@@ -92,30 +92,14 @@
               </a>
 
               <ul class="nav nav-second-level">
-                <li ng-repeat="(name, arr) in systems | groupBy:'name'" ng-init="collapsed=false">
-                  <a ng-if="arr.length == 1"
-                     ui-sref="base.namespace.system({systemName: arr[0].name, systemVersion: arr[0].version})"
+                <li ng-repeat="system in systems" ng-init="collapsed=false">
+                  <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
                      ui-sref-active="active">
                     <i class="fa fa-cog"></i>
-                    <span>{{arr[0].display_name || arr[0].name}}</span>
+                    <span>{{system.namespace}}</span>
+                    <span>{{system.display_name || system.name}}</span>
+                    <span>{{system.version}}</span>
                   </a>
-                  <a ng-if="arr.length > 1" ng-click="$parent.collapsed = !$parent.collapsed">
-                    <i class="fa fa-cog"></i>
-                    <span>{{arr[0].display_name || arr[0].name}}</span>
-                    <span ng-class="{'fa-angle-left': collapsed, 'fa-angle-down': !collapsed}"
-                          class="fa"
-                          style="float: right;"></span>
-                  </a>
-                  <ul ng-if="arr.length > 1"
-                      ng-style="{'max-height': (!collapsed) ? (arr.length*40 + 'px') : '0px'}"
-                      class="nav nav-third-level show-more">
-                    <li ng-repeat="system in arr">
-                      <a ui-sref="base.namespace.system({systemName: system.name, systemVersion: system})"
-                         ui-sref-active="active">
-                        <span>{{system.version}}</span>
-                      </a>
-                    </li>
-                  </ul>
                 </li>
               </ul>
 
