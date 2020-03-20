@@ -32,7 +32,6 @@ export default function runDTRenderer(DTRendererService) {
       }
 
       if (options.hiddenContainer) {
-
         let hiddenContainer = $('<ul>')
               .attr('id', 'hiddenList')
               .css('margin-right', '20px')
