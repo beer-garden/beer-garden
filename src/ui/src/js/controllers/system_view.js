@@ -28,8 +28,8 @@ export default function systemViewController(
     .withOption('hiddenContainer', true)
     .withBootstrap();
 
-  $scope.hiddenComparator = function(expected, actual){
-    return actual || !expected;
+  $scope.hiddenComparator = function(hidden, checkbox){
+    return checkbox || !hidden;
   };
 
   $scope.nodeMove = function(location){

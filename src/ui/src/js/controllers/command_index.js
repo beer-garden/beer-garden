@@ -43,8 +43,8 @@ export default function commandIndexController(
     list.append(node, list.childNodes[0]);
   }
 
-  $scope.hiddenComparator = function(expected, actual){
-    return actual || !expected;
+  $scope.hiddenComparator = function(hidden, checkbox){
+    return checkbox || !hidden;
   };
 
   $scope.stateParams = function(entry) {
