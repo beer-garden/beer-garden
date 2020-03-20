@@ -33,6 +33,30 @@ export default function requestViewController(
     request) {
   $scope.service = RequestService;
 
+ $scope.download = function() {
+      var filename = $scope.data.id;
+      var output;
+      var outputType = $scope.data.output_type;
+      if(outputType.toLowerCase() == "string"){
+        output = $scope.rawOutput;
+        filename = filename+".txt"
+      } else if(outputType.toLowerCase() == "html"){
+        output = $scope.htmlOutput;
+        filename = filename+".html"
+      } else if(outputType.toLowerCase() == "json"){
+        output = $scope.jsonOutput;
+        filename = filename+".json"
+      }
+      var element = document.createElement('a');
+      element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(output));
+      element.setAttribute('download', filename);
+      element.style.display = 'none';
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+      return;
+ };
+
   $scope.instanceStatus = undefined;
   $scope.timeoutRequest = undefined;
 
