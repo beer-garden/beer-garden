@@ -46,29 +46,8 @@ export default function routeConfig(
             }
           );
         }],
-      },
-    })
-    .state('base.landing', {
-      templateUrl: basePath + 'landing.html',
-    })
-    .state('base.about', {
-      url: 'about',
-      templateUrl: basePath + 'about.html',
-      controller: 'AboutController',
-    })
-    .state('base.namespace', {
-      url: ':namespace/',
-      resolve: {
-        systems: [
-        '$stateParams', '$rootScope', 'SystemService',
-        ($stateParams, $rootScope, SystemService) => {
-          return SystemService.getSystems(
-            {
-              dereferenceNested: false,
-              includeFields: 'id,name,version,description,instances,commands',
-              namespace: $stateParams.namespace,
-            },
-          ).then(
+        systems: [ '$rootScope', 'SystemService', ($rootScope, SystemService) => {
+          return SystemService.getSystems().then(
             (response) => {
               $rootScope.sysResponse = response;
               $rootScope.systems = response.data;
@@ -81,40 +60,65 @@ export default function routeConfig(
         }],
       },
     })
+    .state('base.landing', {
+      templateUrl: basePath + 'landing.html',
+    })
+    .state('base.about', {
+      url: 'about',
+      templateUrl: basePath + 'about.html',
+      controller: 'AboutController',
+    })
     .state('login', {
       templateUrl: basePath + 'login.html',
       controller: 'LoginController',
     })
-    .state('base.namespace.systems', {
+    .state('base.systems', {
       url: 'systems/',
       templateUrl: basePath + 'system_index.html',
       controller: 'SystemIndexController',
     })
-    .state('base.namespace.systemID', {
+    .state('base.systemID', {
       url: 'systems/:id/',
       controller: ['$state', '$stateParams', 'SystemService', ($state, $stateParams, SystemService) => {
         let sys = SystemService.findSystemByID($stateParams.id);
-        $state.go('base.namespace.system', {name: sys.name, version: sys.version});
+        $state.go('base.system', {name: sys.name, version: sys.version});
       }],
     })
-    .state('base.namespace.system', {
-      url: 'systems/:systemName/:systemVersion/',
+    .state('base.system', {
+      url: 'systems/:namespace/:systemName/:systemVersion/',
       templateUrl: basePath + 'system_view.html',
       controller: 'SystemViewController',
       resolve: {
         system: ['$stateParams', 'SystemService', ($stateParams, SystemService) => {
-          let sys = SystemService.findSystem($stateParams.systemName, $stateParams.systemVersion) || {};
+          let sys = SystemService.findSystem(
+            $stateParams.namespace, $stateParams.systemName, $stateParams.systemVersion
+          ) || {};
           return SystemService.getSystem(sys.id).catch(
             (response) => response
           );
         }],
       },
     })
-    // Don't ask me why this can't be nested as base.namespace.system.command
+    .state('base.commandID', {
+      url: 'commands/:id/',
+      controller: ['$state', '$stateParams', 'CommandService', 'SystemService',
+          ($state, $stateParams, CommandService, SystemService) => {
+        let command = CommandService.findCommandByID($stateParams.id);
+        let system = SystemService.findSystemByID(command.system.id);
+
+        $state.go('base.command', {
+          namespace: system.namespace,
+          systemName: system.name,
+          systemVersion: system.version,
+          commandName: command.name,
+        });
+      }],
+    })
+    // Don't ask me why this can't be nested as base.system.command
     // Think it's something to do with nested views... I think maybe because
-    // base.namespace.system defines a template
-    .state('base.namespace.command', {
-      url: 'systems/:systemName/:systemVersion/commands/:commandName/',
+    // base.system defines a template
+    .state('base.command', {
+      url: 'systems/:namespace/:systemName/:systemVersion/commands/:commandName/',
       templateUrl: basePath + 'command_view.html',
       controller: 'CommandViewController',
       params: {
@@ -123,31 +127,21 @@ export default function routeConfig(
       },
       resolve: {
         system: ['$stateParams', 'SystemService', ($stateParams, SystemService) => {
-          let sys = SystemService.findSystem($stateParams.systemName, $stateParams.systemVersion) || {};
-          return SystemService.getSystem(sys.id).catch(
-            (response) => response
+          return SystemService.findSystem(
+            $stateParams.namespace, $stateParams.systemName, $stateParams.systemVersion
           );
         }],
-        command: ['$stateParams', 'CommandService', 'system', ($stateParams, CommandService, system) => {
-          let cmd = _.find(system.data.commands, {name: $stateParams.commandName});
-          // if (_.isUndefined(cmd)) {
-          //   return $q.reject({status: 404, data: {message: 'No matching command'}});
-          // }
-
-          // We already have the command the system, but this is better as it
-          // validates that user has bg-command-read
-          return CommandService.getCommand(cmd.id).catch(
-            (response) => response
-          );
+        command: ['$stateParams', 'system', ($stateParams, system) => {
+          return _.find(system.commands, {name: $stateParams.commandName});
         }],
       },
     })
-    .state('base.namespace.jobs', {
+    .state('base.jobs', {
       url: 'jobs/',
       templateUrl: basePath + 'job_index.html',
       controller: 'JobIndexController',
     })
-    .state('base.namespace.jobsCreate', {
+    .state('base.jobsCreate', {
       url: 'jobs/create/',
       templateUrl: basePath + 'job_create.html',
       controller: 'JobCreateController',
@@ -157,53 +151,22 @@ export default function routeConfig(
         'command': null,
       },
     })
-    .state('base.namespace.job', {
+    .state('base.job', {
       'url': 'jobs/:id/',
       'templateUrl': basePath + 'job_view.html',
       'controller': 'JobViewController',
     })
-    .state('base.namespace.commands', {
+    .state('base.commands', {
       url: 'commands/',
       templateUrl: basePath + 'command_index.html',
       controller: 'CommandIndexController',
-      resolve: {
-        detailSystems: ['$stateParams', 'SystemService', ($stateParams, SystemService) => {
-          return SystemService.getSystems(
-            {namespace: $stateParams.namespace}
-          ).catch(
-            (response) => response
-          );
-        }],
-        commands: ['$stateParams', 'CommandService', ($stateParams, CommandService) => {
-          return CommandService.getCommands(
-            {namespace: $stateParams.namespace}
-          ).catch(
-            (response) => response
-          );
-        }],
-      },
     })
-    // .state('base.namespace.commandID', {
-    //   url: '^/commands/:commandId',
-    //   templateUrl: basePath + 'command_view.html',
-    //   controller: 'CommandViewController',
-    //   params: {
-    //     request: null,
-    //   },
-    //   systems: (SystemService) => {
-    //     return SystemService.getSystems();
-    //   },
-    //   controller: ($state, $stateParams, CommandService, systems) => {
-    //     let sys = SystemService.findSystemByID($stateParams.id);
-    //     $state.go('base.namespace.system', {name: sys.name, version: sys.version});
-    //   },
-    // })
-    .state('base.namespace.requests', {
+    .state('base.requests', {
       url: 'requests/',
       templateUrl: basePath + 'request_index.html',
       controller: 'RequestIndexController',
     })
-    .state('base.namespace.request', {
+    .state('base.request', {
       url: 'requests/:requestId/',
       templateUrl: basePath + 'request_view.html',
       controller: 'RequestViewController',
@@ -215,12 +178,12 @@ export default function routeConfig(
         }],
       },
     })
-    .state('base.namespace.queues', {
+    .state('base.queues', {
       url: 'admin/queues/',
       templateUrl: basePath + 'admin_queue.html',
       controller: 'AdminQueueController',
     })
-    .state('base.namespace.system_admin', {
+    .state('base.system_admin', {
       url: 'admin/systems/',
       templateUrl: basePath + 'admin_system.html',
       controller: 'AdminSystemController',

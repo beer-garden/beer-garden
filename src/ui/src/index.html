@@ -128,21 +128,21 @@
 
             </li>
             <li ng-show="hasPermission(user, 'bg-command-read')">
-              <a ui-sref="base.namespace.commands"
+              <a ui-sref="base.commands"
                  ng-class="{active: ($state.current.name.startsWith('command'))}">
                 <i class="fa fa-fw fa-send-o"></i>
                 <span>Commands</span>
               </a>
             </li>
             <li ng-show="hasPermission(user, 'bg-request-read')">
-              <a ui-sref="base.namespace.requests"
+              <a ui-sref="base.requests"
                  ng-class="{active: ($state.current.name.startsWith('request'))}">
                 <i class="fa fa-fw fa-tasks"></i>
                 <span>Requests</span>
               </a>
             </li>
             <li ng-show="hasPermission(user, 'bg-job-read')">
-              <a ui-sref="base.namespace.jobs"
+              <a ui-sref="base.jobs"
                  ng-class="{active: ($state.current.name.startsWith('job'))}">
                 <i class="fa fa-fw fa-calendar"></i>
                 <span>Scheduler</span>
@@ -156,13 +156,13 @@
               </a>
               <ul class="nav nav-second-level" ng-cloak>
                 <li>
-                  <a ui-sref="base.namespace.system_admin" ui-sref-active="active">
+                  <a ui-sref="base.system_admin" ui-sref-active="active">
                     <i class="fa fa-power-off"></i>
                     <span>Systems Management</span>
                   </a>
                 </li>
                 <li ng-show="hasPermission(user, 'bg-queue-read')">
-                  <a ui-sref="base.namespace.queues" ui-sref-active="active">
+                  <a ui-sref="base.queues" ui-sref-active="active">
                     <i class="fa fa-database"></i>
                     <span>Queue Management</span>
                   </a>
