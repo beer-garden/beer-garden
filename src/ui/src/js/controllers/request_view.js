@@ -37,7 +37,10 @@ export default function requestViewController(
       var filename = $scope.data.id;
       var output;
       var outputType = $scope.data.output_type;
-      if(outputType.toLowerCase() == "string"){
+      if($scope.data.output === undefined || $scope.data.output == null){
+        window.alert("No output to download");
+        return;
+      } else if(outputType.toLowerCase() == "string"){
         output = $scope.rawOutput;
         filename = filename+".txt"
       } else if(outputType.toLowerCase() == "html"){
