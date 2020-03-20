@@ -211,14 +211,6 @@ export default function appRun(
     $rootScope.title = _.join(titleParts, ' - ');
   };
 
-  $rootScope.mainButton = () => {
-    if ($stateParams.namespace) {
-      $state.go('base.namespace.systems');
-    } else {
-      $state.go('base.landing');
-    }
-  };
-
   $transitions.onStart({}, (transition, state) => {
     $rootScope.setCurrentNamespace(transition.params('to').namespace);
   });
