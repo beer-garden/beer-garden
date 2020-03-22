@@ -65,8 +65,6 @@ export default function appRun(
   $rootScope.apiBaseUrl = '';
 
   $rootScope.config = {};
-  $rootScope.namespaces = [];
-  $rootScope.currentNamespace = undefined;
 
   $rootScope.themes = {
     'default': false,
@@ -152,27 +150,6 @@ export default function appRun(
     }
   };
 
-  $rootScope.getCurrentNamespace = function() {
-    return $rootScope.currentNamespace;
-  };
-
-  $rootScope.setCurrentNamespace = (namespace) => {
-    $rootScope.currentNamespace = namespace;
-  };
-
-  $rootScope.isCurrentNamespace = function(namespace) {
-    return $rootScope.currentNamespace == namespace;
-  };
-
-  $rootScope.changeNamespace = (namespace) => {
-    let cur_state = $state.current.name;
-
-    $state.go(
-      cur_state === "base.landing" ? "base.namespace.systems" : cur_state,
-      {namespace: namespace}
-    );
-  };
-
   $rootScope.isUser = function(user) {
     return user && user.username !== 'anonymous';
   };
@@ -210,10 +187,6 @@ export default function appRun(
     titleParts.push($rootScope.config.applicationName);
     $rootScope.title = _.join(titleParts, ' - ');
   };
-
-  $transitions.onStart({}, (transition, state) => {
-    $rootScope.setCurrentNamespace(transition.params('to').namespace);
-  });
 
   $transitions.onSuccess({to: 'base'}, () => {
     $state.go('base.landing');
