@@ -218,9 +218,35 @@ export default function appRun(
   $transitions.onSuccess({to: 'base'}, () => {
     $state.go('base.landing');
   });
-  
+
   EventService.addCallback('console', (event) => {
     console.log('Websocket message: ' + JSON.stringify(event));
+  });
+
+  EventService.addCallback('global_systems', (event) => {
+    if (['SYSTEM_CREATED', 'SYSTEM_REMOVED', 'SYSTEM_UPDATED'].includes(event.name)) {
+
+      let existingSystem = SystemService.findSystemByID(event.payload.id);
+
+      switch (event.name) {
+        case 'SYSTEM_CREATED':
+          if (!existingSystem) {
+            $rootScope.systems.push(event.payload);
+          }
+          break;
+        case 'SYSTEM_REMOVED':
+          if (existingSystem) {
+            _.pull($rootScope.systems, existingSystem);
+          }
+          break;
+        case 'SYSTEM_UPDATED':
+          if (existingSystem) {
+            _.pull($rootScope.systems, existingSystem);
+            $rootScope.systems.push(event.payload);
+          }
+          break;
+      }
+    }
   });
 
   $interval(function() {
