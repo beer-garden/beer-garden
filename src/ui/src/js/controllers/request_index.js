@@ -3,7 +3,6 @@ import {formatDate} from '../services/utility_service.js';
 requestIndexController.$inject = [
   '$scope',
   '$compile',
-  '$stateParams',
   'DTOptionsBuilder',
   'DTColumnBuilder',
   'RequestService',
@@ -14,7 +13,6 @@ requestIndexController.$inject = [
  * requestIndexController - Angular controller for viewing all requests.
  * @param  {Object} $scope            Angular's $scope object.
  * @param  {Object} $compile          Angular's $compile object.
- * @param  {Object} $stateParams      Angular's $stateParams object.
  * @param  {Object} DTOptionsBuilder  Data-tables' options builder object.
  * @param  {Object} DTColumnBuilder   Data-tables' column builder object.
  * @param  {Object} RequestService    Beer-Garden Request Service.
@@ -23,7 +21,6 @@ requestIndexController.$inject = [
 export default function requestIndexController(
     $scope,
     $compile,
-    $stateParams,
     DTOptionsBuilder,
     DTColumnBuilder,
     RequestService,
@@ -37,13 +34,6 @@ export default function requestIndexController(
     .withOption('ajax', function(data, callback, settings) {
       // Need to also request ID for the href
       data.columns.push({'data': 'id'});
-
-      // And to filter on the current namespace
-      data.columns.push({
-        'data': 'namespace',
-        'searchable': true,
-        'search': {'regex': false, 'value': $stateParams.namespace},
-      });
 
       // Take include_children value from the checkbox
       if ($('#childCheck').is(":checked")) {
@@ -132,7 +122,7 @@ export default function requestIndexController(
   $scope.dtColumns = [
     DTColumnBuilder
       .newColumn('command')
-      .withTitle('Command Name')
+      .withTitle('Command')
       .renderWith(function(data, type, full) {
         let display = '';
 
@@ -152,6 +142,9 @@ export default function requestIndexController(
 
         return display + `<a ui-sref="base.namespace.request({requestId: '${full.id}'})">` + data + '</a>';
       }),
+    DTColumnBuilder
+      .newColumn('namespace')
+      .withTitle('Namespace'),
     DTColumnBuilder
       .newColumn('system')
       .withTitle('System')
