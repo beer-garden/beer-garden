@@ -3,6 +3,8 @@ systemIndexController.$inject = [
   '$scope',
   '$rootScope',
   '$state',
+  '$stateParams',
+  '$sce',
   'SystemService',
   'UtilityService',
 ];
@@ -19,6 +21,8 @@ export default function systemIndexController(
     $scope,
     $rootScope,
     $state,
+    $stateParams,
+    $sce,
     UtilityService) {
   $scope.setWindowTitle();
 
@@ -43,6 +47,40 @@ export default function systemIndexController(
       }
     );
   };
+
+  $scope.getBreadCrumbs= function() {
+    var dirDisplay =  '<a href="#!/systems/"> .. </a> / ';
+
+    if ('namespace' in $stateParams){
+      dirDisplay = dirDisplay + '<a href="#!/systems/' + $stateParams.namespace + '/">'+$stateParams.namespace+'</a>';
+      if ('system' in $stateParams){
+        dirDisplay = dirDisplay + ' / ' +
+        '<a href="#!/systems/' + $stateParams.namespace + '/' +$stateParams.system+'/">'+ $stateParams.system + '</a>';
+        if ('version' in $stateParams) {
+          dirDisplay = dirDisplay + ' / ' +
+          '<a href="#!/systems/' + $stateParams.namespace + '/' +$stateParams.system +'/' + $stateParams.version + '/">'+$stateParams.version+'</a>';
+        }
+      }
+
+    }
+
+    return $sce.trustAsHtml(dirDisplay);
+  }
+
+  $scope.getPageFilter = function (system) {
+
+    if ('namespace' in $stateParams){
+        if (system.namespace != $stateParams.namespace){
+          return false;
+        }
+        else if ('system' in $stateParams){
+          if (system.name != $stateParams.system){
+            return (system.name == $stateParams.system);
+          }
+        }
+      }
+    return true;
+  }
 
   $scope.response = $rootScope.sysResponse;
   $scope.data = $rootScope.systems;

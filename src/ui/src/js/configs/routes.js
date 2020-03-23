@@ -77,6 +77,16 @@ export default function routeConfig(
       templateUrl: basePath + 'system_index.html',
       controller: 'SystemIndexController',
     })
+    .state('base.filterNamespaces', {
+      url: 'systems/:namespace/',
+      templateUrl: basePath + 'system_index.html',
+      controller: 'SystemIndexController',
+    })
+    .state('base.filterSystems', {
+      url: 'systems/:namespace/:system',
+      templateUrl: basePath + 'system_index.html',
+      controller: 'SystemIndexController',
+    })
     .state('base.systemID', {
       url: 'systems/:id/',
       controller: ['$state', '$stateParams', 'SystemService', ($state, $stateParams, SystemService) => {
