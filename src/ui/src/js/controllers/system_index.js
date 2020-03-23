@@ -56,10 +56,6 @@ export default function systemIndexController(
       if ('system' in $stateParams){
         dirDisplay = dirDisplay + ' / ' +
         '<a href="#!/systems/' + $stateParams.namespace + '/' +$stateParams.system+'/">'+ $stateParams.system + '</a>';
-        if ('version' in $stateParams) {
-          dirDisplay = dirDisplay + ' / ' +
-          '<a href="#!/systems/' + $stateParams.namespace + '/' +$stateParams.system +'/' + $stateParams.version + '/">'+$stateParams.version+'</a>';
-        }
       }
 
     }
