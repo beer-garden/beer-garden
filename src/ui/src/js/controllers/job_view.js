@@ -67,7 +67,7 @@ export default function jobViewController(
 
   $scope.deleteJob = function(jobId) {
     JobService.deleteJob(jobId).then(
-      $state.go('base.namespace.jobs'),
+      $state.go('base.jobs'),
       $scope.failureCallback
     );
   };

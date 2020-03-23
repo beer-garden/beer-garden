@@ -160,7 +160,7 @@ export default function requestIndexController(
       .withTitle('Version')
       .renderWith(function(data, type, full) {
 
-        return `<a ui-sref="base.namespace.system({systemName: '${full.system}', systemVersion: '${full.system_version}'})">` + data + '</a>';
+        return `<a ui-sref="base.system({systemName: '${full.system}', systemVersion: '${full.system_version}', namespace: '${full.namespace}')">` + data + '</a>';
       }),
     DTColumnBuilder
       .newColumn('instance_name')

@@ -203,11 +203,12 @@ export default function requestViewController(
       parameters: request.parameters,
     };
     $state.go(
-      'base.namespace.command',
+      'base.command',
       {
         systemName: request.system,
         systemVersion: request.system_version,
         commandName: request.command,
+        namespace: request.namespace,
         request: newRequest,
       }
     );

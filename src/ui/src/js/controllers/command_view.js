@@ -146,7 +146,7 @@ export default function commandViewController(
 
     RequestService.createRequest(newRequest).then(
       function(response) {
-        $state.go('base.namespace.request', {'requestId': response.data.id})
+        $state.go('base.request', {'requestId': response.data.id})
       },
       function(response) {
         $scope.createResponse = response;
