@@ -1,15 +1,13 @@
 const webpack = require('webpack');
 const merge = require('webpack-merge');
 const common = require('./webpack.common.js');
-const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
 module.exports = merge(common, {
-  devtool: 'source-map',
-  plugins: [
-    new webpack.optimize.UglifyJsPlugin({
-      sourceMap: true,
-      mangle: true,
-    }),
-    new OptimizeCssAssetsPlugin(),
-  ],
+  mode: 'production',
+
+  // TODO - I THINK this is unnecessary with the change from
+  // ExtractTextPlugin to MiniCssExtractPlugin
+  //plugins: [
+  //  new OptimizeCssAssetsPlugin(),
+  //],
 });

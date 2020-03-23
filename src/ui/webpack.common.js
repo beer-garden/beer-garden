@@ -1,6 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
@@ -11,7 +11,6 @@ module.exports = {
   output: {
     filename: '[name].js',
     path: path.resolve(__dirname, 'dist'),
-    publicPath: '/dist/',
   },
   plugins: [
     new webpack.ProvidePlugin({
@@ -21,19 +20,11 @@ module.exports = {
       'window.jQuery': 'jquery',
       'moment': 'moment',
     }),
-    new webpack.optimize.CommonsChunkPlugin({
-      name: 'vendor',
-      minChunks: function(module) {
-        return module.context
-          && module.context.indexOf('node_modules') !== -1
-          && module.context.indexOf('bootswatch') === -1;
-      },
-    }),
-    new ExtractTextPlugin('[name].css'),
+    new MiniCssExtractPlugin(),
     new CopyWebpackPlugin([
         {from: 'src/index.html'},
         {from: 'src/image', to: 'image'},
-        {from: 'node_modules/swagger-ui-dist', to: 'swagger'},
+        {from: 'node_modules/swagger-ui-dist', to: 'swagger', ignore: ['*.map', '*.md']},
         {from: 'node_modules/ace-builds/src-noconflict/worker-json.js'},
     ]),
   ],
@@ -47,11 +38,6 @@ module.exports = {
       path.resolve(__dirname, 'node_modules'),
     ],
   },
-  externals: {
-    // This is intended for running on node. angular-websockets is requiring
-    // it but not actually using it in the browser, so just stub it out
-    'ws': 'self',
-  },
   module: {
     rules: [
       {
@@ -60,7 +46,7 @@ module.exports = {
         use: {
           loader: 'babel-loader',
           options: {
-            presets: ['env'],
+            presets: ['@babel/preset-env'],
           },
         },
       },
@@ -70,10 +56,7 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        use: ExtractTextPlugin.extract({
-          fallback: 'style-loader',
-          use: 'css-loader?sourceMap',
-        }),
+        use: [MiniCssExtractPlugin.loader, 'css-loader'],
       },
       {
         test: /\.(eot|svg|ttf|woff|woff2|gif|png)$/,

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title ng-bind="title"></title>
 
-    <link href="vendor.css" rel="stylesheet">
     <link href="index.css" rel="stylesheet">
     <link ng-if="themes.slate" ng-href="dark.css" rel="stylesheet">
 
@@ -20,37 +19,10 @@
     <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom:0">
 
       <!-- Navbar Top Start -->
-      <button type="button" class="navbar-toggle"
-              data-toggle="collapse" data-target=".navbar-collapse">
-        <span class="sr-only">Toggle Navigation</span>
-        <span class='icon-bar'></span>
-        <span class='icon-bar'></span>
-        <span class='icon-bar'></span>
-      </button>
-      <a style="cursor:pointer" class="navbar-brand" ng-click="mainButton()">
+      <a style="cursor:pointer" class="navbar-brand" ui-sref="base.systems">
         <i ng-class="getIcon(config.iconDefault)"></i>
         <span ng-cloak>{{config.applicationName}}</span>
       </a>
-
-      <ul class="nav navbar-nav navbar-top-links navbar-left">
-        <li class="dropdown">
-          <a href="" class="dropdown-toggle" data-toggle="dropdown">
-            <span>{{getCurrentNamespace()}}</span>
-            <span class="caret"></span>
-          </a>
-          <ul class="dropdown-menu">
-            <li ng-repeat="namespace in namespaces">
-              <div style="padding: 3px 15px; cursor: pointer;"
-                    ng-click="changeNamespace(namespace)">
-                <span class="fa"
-                      ng-class="{'fa-check': isCurrentNamespace(namespace), 'fa-fw': !isCurrentNamespace(namespace)}"></span>
-                <span>{{namespace}}</span>
-              </div>
-            </li>
-          </ul>
-        </li>
-      </ul>
-
       <ul class="nav navbar-nav navbar-top-links navbar-right">
 
         <li ng-show=!isUser(user)>
@@ -100,50 +72,34 @@
               </a>
 
               <ul class="nav nav-second-level">
-                <li ng-repeat="(name, arr) in systems | groupBy:'name'" ng-init="collapsed=false">
-                  <a ng-if="arr.length == 1"
-                     ui-sref="base.namespace.system({systemName: arr[0].name, systemVersion: arr[0].version})"
+                <li ng-repeat="system in systems" ng-init="collapsed=false">
+                  <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
                      ui-sref-active="active">
                     <i class="fa fa-cog"></i>
-                    <span>{{arr[0].display_name || arr[0].name}}</span>
+                    <span>{{system.namespace}}</span>
+                    <span>{{system.display_name || system.name}}</span>
+                    <span>{{system.version}}</span>
                   </a>
-                  <a ng-if="arr.length > 1" ng-click="$parent.collapsed = !$parent.collapsed">
-                    <i class="fa fa-cog"></i>
-                    <span>{{arr[0].display_name || arr[0].name}}</span>
-                    <span ng-class="{'fa-angle-left': collapsed, 'fa-angle-down': !collapsed}"
-                          class="fa"
-                          style="float: right;"></span>
-                  </a>
-                  <ul ng-if="arr.length > 1"
-                      ng-style="{'max-height': (!collapsed) ? (arr.length*40 + 'px') : '0px'}"
-                      class="nav nav-third-level show-more">
-                    <li ng-repeat="system in arr">
-                      <a ui-sref="base.namespace.system({systemName: system.name, systemVersion: system})"
-                         ui-sref-active="active">
-                        <span>{{system.version}}</span>
-                      </a>
-                    </li>
-                  </ul>
                 </li>
               </ul>
 
             </li>
             <li ng-show="hasPermission(user, 'bg-command-read')">
-              <a ui-sref="base.namespace.commands"
+              <a ui-sref="base.commands"
                  ng-class="{active: ($state.current.name.startsWith('command'))}">
                 <i class="fa fa-fw fa-send-o"></i>
                 <span>Commands</span>
               </a>
             </li>
             <li ng-show="hasPermission(user, 'bg-request-read')">
-              <a ui-sref="base.namespace.requests"
+              <a ui-sref="base.requests"
                  ng-class="{active: ($state.current.name.startsWith('request'))}">
                 <i class="fa fa-fw fa-tasks"></i>
                 <span>Requests</span>
               </a>
             </li>
             <li ng-show="hasPermission(user, 'bg-job-read')">
-              <a ui-sref="base.namespace.jobs"
+              <a ui-sref="base.jobs"
                  ng-class="{active: ($state.current.name.startsWith('job'))}">
                 <i class="fa fa-fw fa-calendar"></i>
                 <span>Scheduler</span>
@@ -157,13 +113,13 @@
               </a>
               <ul class="nav nav-second-level" ng-cloak>
                 <li>
-                  <a ui-sref="base.namespace.system_admin" ui-sref-active="active">
+                  <a ui-sref="base.system_admin" ui-sref-active="active">
                     <i class="fa fa-power-off"></i>
                     <span>Systems Management</span>
                   </a>
                 </li>
                 <li ng-show="hasPermission(user, 'bg-queue-read')">
-                  <a ui-sref="base.namespace.queues" ui-sref-active="active">
+                  <a ui-sref="base.queues" ui-sref-active="active">
                     <i class="fa fa-database"></i>
                     <span>Queue Management</span>
                   </a>
@@ -202,7 +158,6 @@
       </div>
     </div>
 
-    <script src="vendor.js"></script>
     <script src="index.js"></script>
 
   </body>

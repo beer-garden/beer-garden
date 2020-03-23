@@ -15,9 +15,6 @@ export default function commandService($http, $rootScope, SystemService) {
     getCommand: (id) => {
       return $http.get('api/v1/commands/' + id);
     },
-    // findSystem: (command) => {
-    //   return $rootScope.findSystemByID(command.system.id);
-    // },
     getStateParams: (command) => {
       let system = SystemService.findSystemByID(command.system.id);
       return {
@@ -26,6 +23,15 @@ export default function commandService($http, $rootScope, SystemService) {
         systemVersion: system.version,
         commandName: command.name,
       };
+    },
+    findCommandByID: (commandId) => {
+      for (let system of $rootScope.systems) {
+        for (let command of system.commands) {
+          if (command.id === commandId) {
+            return command;
+          }
+        }
+      }
     },
   };
 };

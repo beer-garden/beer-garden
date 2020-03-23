@@ -65,8 +65,6 @@ export default function appRun(
   $rootScope.apiBaseUrl = '';
 
   $rootScope.config = {};
-  $rootScope.namespaces = [];
-  $rootScope.currentNamespace = undefined;
 
   $rootScope.themes = {
     'default': false,
@@ -117,6 +115,9 @@ export default function appRun(
       TokenService.handleToken(token);
     }
 
+    // Connect to the event socket
+    EventService.connect(token);
+
     $rootScope.loadUser(token).catch(
       // This prevents the situation where the user needs to logout but the
       // logout button isn't displayed because there's no user loaded
@@ -147,27 +148,6 @@ export default function appRun(
     if ($rootScope.isUser($rootScope.user) && sendUpdate) {
       UserService.setTheme($rootScope.user.id, theme);
     }
-  };
-
-  $rootScope.getCurrentNamespace = function() {
-    return $rootScope.currentNamespace;
-  };
-
-  $rootScope.setCurrentNamespace = (namespace) => {
-    $rootScope.currentNamespace = namespace;
-  };
-
-  $rootScope.isCurrentNamespace = function(namespace) {
-    return $rootScope.currentNamespace == namespace;
-  };
-
-  $rootScope.changeNamespace = (namespace) => {
-    let cur_state = $state.current.name;
-
-    $state.go(
-      cur_state === "base.landing" ? "base.namespace.systems" : cur_state,
-      {namespace: namespace}
-    );
   };
 
   $rootScope.isUser = function(user) {
@@ -208,37 +188,42 @@ export default function appRun(
     $rootScope.title = _.join(titleParts, ' - ');
   };
 
-  $rootScope.mainButton = () => {
-    if ($stateParams.namespace) {
-      $state.go('base.namespace.systems');
-    } else {
-      $state.go('base.landing');
-    }
-  };
-
-  $transitions.onStart({}, (transition, state) => {
-    $rootScope.setCurrentNamespace(transition.params('to').namespace);
-  });
-
-  $transitions.onSuccess({entering: 'base.namespace'}, (transition) => {
-    EventService.close();
-    EventService.connect();
-  });
-
   $transitions.onSuccess({to: 'base'}, () => {
     $state.go('base.landing');
   });
-  
+
   EventService.addCallback('console', (event) => {
     console.log('Websocket message: ' + JSON.stringify(event));
   });
 
-  $interval(function() {
-    let socketState = EventService.state();
+  EventService.addCallback('global_systems', (event) => {
+    if (['SYSTEM_CREATED', 'SYSTEM_REMOVED', 'SYSTEM_UPDATED'].includes(event.name)) {
 
-    if (socketState == undefined || socketState == 3) {
-      EventService.connect();
+      let existingSystem = SystemService.findSystemByID(event.payload.id);
+
+      switch (event.name) {
+        case 'SYSTEM_CREATED':
+          if (!existingSystem) {
+            $rootScope.systems.push(event.payload);
+          }
+          break;
+        case 'SYSTEM_REMOVED':
+          if (existingSystem) {
+            _.pull($rootScope.systems, existingSystem);
+          }
+          break;
+        case 'SYSTEM_UPDATED':
+          if (existingSystem) {
+            _.pull($rootScope.systems, existingSystem);
+            $rootScope.systems.push(event.payload);
+          }
+          break;
+      }
     }
+  });
+
+  $interval(function() {
+    EventService.connect(TokenService.getToken());
   }, 5000);
 
   $rootScope.initialLoad();

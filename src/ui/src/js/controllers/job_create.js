@@ -177,7 +177,7 @@ export default function jobCreateController(
       let serverModel = JobService.formToServerModel(model, $scope.requestTemplate);
       JobService.createJob(serverModel).then(
         function(response) {
-          $state.go('base.namespace.job', {'id': response.data.id});
+          $state.go('base.job', {'id': response.data.id});
         },
         function(response) {
           $scope.createResponse = response;

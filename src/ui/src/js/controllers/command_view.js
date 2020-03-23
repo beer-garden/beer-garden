@@ -8,10 +8,7 @@ commandViewController.$inject = [
   '$state',
   '$stateParams',
   '$sce',
-  '$q',
-  'CommandService',
   'RequestService',
-  'SystemService',
   'SFBuilderService',
   'system',
   'command',
@@ -24,10 +21,7 @@ commandViewController.$inject = [
  * @param  {Object} $state            Angular's $state object.
  * @param  {Object} $stateParams      Angular's $stateParams object.
  * @param  {Object} $sce              Angular's $sce object.
- * @param  {Object} $q                Angular's $q object.
- * @param  {Object} CommandService    Beer-Garden's command service object.
  * @param  {Object} RequestService    Beer-Garden's request service object.
- * @param  {Object} SystemService     Beer-Garden's system service object.
  * @param  {Object} SFBuilderService  Beer-Garden's schema-form builder service object.
  */
 export default function commandViewController(
@@ -36,15 +30,12 @@ export default function commandViewController(
     $state,
     $stateParams,
     $sce,
-    $q,
-    CommandService,
     RequestService,
-    SystemService,
     SFBuilderService,
     system,
     command) {
 
-  let tempResponse;
+  let tempResponse = $rootScope.sysResponse;
 
   $scope.schema = {};
   $scope.form = [];
@@ -55,7 +46,7 @@ export default function commandViewController(
   $scope.manualOverride = false;
   $scope.manualModel = '';
 
-  $scope.system = system.data;
+  $scope.system = system;
 
   $scope.jsonValues = {
     model: '',
@@ -155,7 +146,7 @@ export default function commandViewController(
 
     RequestService.createRequest(newRequest).then(
       function(response) {
-        $state.go('base.namespace.request', {'requestId': response.data.id})
+        $state.go('base.request', {'requestId': response.data.id})
       },
       function(response) {
         $scope.createResponse = response;
@@ -211,10 +202,8 @@ export default function commandViewController(
     $scope.jsonValues.form = JSON.stringify($scope.form, undefined, 2);
   };
 
-  $scope.successCallback = function(response) {
-    tempResponse = response;
-
-    $scope.command = response.data;
+  $scope.successCallback = function(command) {
+    $scope.command = command;
     $scope.jsonValues.command = JSON.stringify($scope.command, undefined, 2);
 
     // If this command has a custom template then we're done!
@@ -225,7 +214,8 @@ export default function commandViewController(
       } else {
         $scope.template = $scope.command.template;
       }
-      $scope.response = response;
+
+      $scope.response = $rootScope.sysResponse;
     } else {
       generateSF();
     }
@@ -291,92 +281,4 @@ export default function commandViewController(
   });
 
   $scope.successCallback(command);
-
-  // /**
-  //  * Find a command, then load that command from the server.
-  //  * @param {string} commandName - command name to load.
-  //  * @return {Promise} The command promise
-  //  */
-  // const findAndLoadCommand = function(commandName) {
-  //   let command = _.find($scope.system.commands, {name: commandName});
-  //   if (_.isUndefined(command)) {
-  //     return $q.reject({status: 404, data: {message: 'No matching command'}});
-  //   }
-
-  //   // We already have the commands from the fully popluated system, so we could
-  //   // return $q.resolve({status: 200, data: command});
-  //   // But this is better as it validates that user has bg-command-read
-  //   return CommandService.getCommand(command.id);
-  // };
-
-  // /**
-  //  * Find a system in $rootScope, then request all of its commands from the API.
-  //  * @param {string} systemName - Name of the system to load.
-  //  * @param {string} systemVersion - Version of the system to load.
-  //  * @return {Promise} The system promise
-  //  */
-  // const findAndLoadSystem = function(systemName, systemVersion) {
-  //   return $rootScope.findSystem(systemName, systemVersion).then(
-  //     (bareSystem) => {
-  //       return SystemService.getSystem(bareSystem.id);
-  //     }
-  //   );
-  // };
-
-  // /**
-  //  * Load data based on state.
-  //  * Two possiblities:
-  //  * 1. We have command ID
-  //  *    Load command, then load system
-  //  * 2. We have system name + version and the command name
-  //  *    Load the full system and then find the correct command
-  //  * @param {Object} stateParams - State params.
-  //  */
-  // const loadData = function(stateParams) {
-  //   tempResponse = undefined;
-  //   $scope.response = undefined;
-  //   $scope.createResponse = undefined;
-  //   $scope.command = [];
-
-  //   $rootScope.systemsPromise.then(
-  //     () => {
-  //       if (stateParams.id) {
-  //         CommandService.getCommand(stateParams.id).then(
-  //           (cmdResponse) => {
-  //             SystemService.getSystem(cmdResponse.data.system.id).then(
-  //               (sysResponse) => {
-  //                 $scope.system = sysResponse.data;
-  //                 $scope.successCallback(cmdResponse);
-  //               },
-  //               $scope.failureCallback
-  //             );
-  //           },
-  //           $scope.failureCallback
-  //         );
-  //       } else {
-  //         // The 'root' systems list doesn't have full commands so we have to
-  //         // get a more detailed system
-  //         findAndLoadSystem(
-  //             stateParams.systemName,
-  //             stateParams.systemVersion).then(
-  //           (sysResponse) => {
-  //             $scope.system = sysResponse.data;
-  //             findAndLoadCommand(stateParams.name).then(
-  //               $scope.successCallback,
-  //               $scope.failureCallback
-  //             );
-  //           },
-  //           $scope.failureCallback
-  //         );
-  //       }
-  //     },
-  //     $scope.failureCallback
-  //   );
-  // };
-
-  // $scope.$on('userChange', () => {
-  //   loadData($stateParams);
-  // });
-
-  // loadData($stateParams);
 };

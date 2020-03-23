@@ -26,9 +26,9 @@
     </thead>
     <tbody>
       <tr ng-repeat="system in systems">
-        <td><a ui-sref="base.namespace.systems({namespace: system.namespace})">{{system.namespace}}</a></span></td>
+        <td><a ui-sref="base.systems({namespace: system.namespace})">{{system.namespace}}</a></span></td>
         <td>{{system.name}}</td>
-        <td><a ui-sref="base.namespace.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})">{{system.version}}</a></span></td>
+        <td><a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})">{{system.version}}</a></span></td>
       </tr>
     </tbody>
   </table>

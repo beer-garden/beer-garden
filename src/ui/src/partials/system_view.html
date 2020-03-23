@@ -36,7 +36,7 @@
           <td>
             <!-- <a ui-sref="base.namespace.system.command(getCommandStateParams(command))"
                class="btn btn-primary center-block">Make it Happen!</a> -->
-            <a ui-sref="base.namespace.command({systemName: data.name, systemVersion: data.version, commandName: command.name})"
+            <a ui-sref="base.command({systemName: data.name, systemVersion: data.version, namespace: data.namespace, commandName: command.name})"
                class="btn btn-primary center-block">Make it Happen!</a>
           </td>
         </tr>

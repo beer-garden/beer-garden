@@ -223,21 +223,6 @@ table.dataTable{
     table-layout: fixed;
     word-wrap: break-word;
 }
-#th_system{
-    width: 10%;
-}
-#th_command{
-    width: 25%;
-}
-#th_version{
-    width: 10%;
-}
-#th_description{
-    width: 45%;
-}
-#th_happen{
-    width: 10%;
-}
 .word-wrap-button, .btn{
     white-space: normal !important;
     word-wrap: break-word;
