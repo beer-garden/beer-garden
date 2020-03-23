@@ -35,10 +35,11 @@ export default function systemIndexController(
   };
 
   $scope.exploreSystem = function(system) {
-    $state.go('base.namespace.system',
+    $state.go('base.system',
       {
         'systemName': system.name,
         'systemVersion': system.version,
+        'namespace': system.namespace,
       }
     );
   };
