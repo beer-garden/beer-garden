@@ -72,7 +72,8 @@ export default function requestIndexController(
       1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
       2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
       3: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      4: {
+      4: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
+      5: {
         html: 'select',
         type: 'text',
         cssClass: 'form-inline form-control',
@@ -86,7 +87,7 @@ export default function requestIndexController(
           {value: 'ERROR', label: 'ERROR'},
         ],
       },
-      5: {
+      6: {
         html: 'range',
         type: 'text',
         attr: {
@@ -105,7 +106,7 @@ export default function requestIndexController(
           useCurrent: false,
         },
       },
-      6: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
+      7: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
     })
     .withDataProp('data')
     .withOption('order', [5, 'desc'])
