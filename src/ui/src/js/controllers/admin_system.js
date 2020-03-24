@@ -1,13 +1,8 @@
-import angular from 'angular';
 import _ from 'lodash';
 
 adminSystemController.$inject = [
   '$scope',
   '$rootScope',
-  '$interval',
-  '$http',
-  '$stateParams',
-  'localStorageService',
   'SystemService',
   'InstanceService',
   'UtilityService',
@@ -19,10 +14,6 @@ adminSystemController.$inject = [
  * adminSystemController - System management controller.
  * @param  {Object} $scope          Angular's $scope object.
  * @param  {Object} $rootScope      Angular's $rootScope object.
- * @param  {Object} $interval       Angular's $interval object.
- * @param  {Object} $http           Angular's $http object.
- * @param  {Object} $stateParams    Angular's $stateParams object.
- * @param  {Object} localStorageService Storage service
  * @param  {Object} SystemService   Beer-Garden's system service object.
  * @param  {Object} InstanceService Beer-Garden's instance service object.
  * @param  {Object} UtilityService  Beer-Garden's utility service object.
@@ -32,10 +23,6 @@ adminSystemController.$inject = [
 export default function adminSystemController(
     $scope,
     $rootScope,
-    $interval,
-    $http,
-    $stateParams,
-    localStorageService,
     SystemService,
     InstanceService,
     UtilityService,
@@ -91,20 +78,6 @@ export default function adminSystemController(
 
   $scope.closeAlert = function(index) {
     $scope.alerts.splice(index, 1);
-  };
-
-  $scope.successCallback = function(response) {
-    $scope.response = response;
-    $rootScope.systems = response.data;
-
-    $scope.data = _.groupBy(response.data, (value) => {
-      return value.display_name || value.name;
-    });
-  };
-
-  $scope.failureCallback = function(response) {
-    $scope.response = response;
-    $scope.data = [];
   };
 
   /**
@@ -168,38 +141,19 @@ export default function adminSystemController(
     }
   }
 
-
-  let loadSystems = function() {
-    SystemService.getSystems({
-      includeFields: 'id,name,display_name,version,instances',
-      namespace: $stateParams.namespace,
-    }).then(
-      $scope.successCallback,
-      $scope.failureCallback
-    );
-  };
-
-  // Periodically poll for changes (in case of websocket failure)
-  let systemsUpdate = $interval(function() {
-    // $state.go('base.namespace.system_admin', {}, {reload: 'base.namespace.system_admin'});
-  }, 5000);
-
-  // Need to clean up the interval and callback when done
-  $scope.$on('$destroy', function() {
-    if (angular.isDefined(systemsUpdate)) {
-      $interval.cancel(systemsUpdate);
-      systemsUpdate = undefined;
-    }
-
-    EventService.removeCallback('admin_system');
-  });
-
   let loadAll = function() {
     $scope.response = undefined;
     $scope.data = [];
     $scope.alerts = [];
 
-    loadSystems();
+    if ($rootScope.systems) {
+      $scope.response = $rootScope.sysResponse;
+      $scope.data = _.groupBy($rootScope.systems, (value) => {
+        return value.display_name || value.name;
+      });
+    } else {
+      $scope.data = [];
+    }
   };
 
   EventService.addCallback('admin_system', (event) => {
@@ -219,11 +173,10 @@ export default function adminSystemController(
     }
   });
 
-  if ($rootScope.sysResponse.status == 200) {
-    $scope.successCallback($rootScope.sysResponse);
-  } else {
-    $scope.failureCallback($rootScope.sysResponse);
-  }
+  // Need to clean up the callback when done
+  $scope.$on('$destroy', function() {
+    EventService.removeCallback('admin_system');
+  });
 
   $scope.$on('userChange', function() {
     loadAll();
