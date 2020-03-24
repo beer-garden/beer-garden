@@ -7,6 +7,7 @@ usage() {
   echo "Arguments are space separated and are as follows:"
   echo "  -l, --local              Build local version of all applications"
   echo "  -r, --release [RELEASE]  The fedora release to target. Must be 7."
+  echo "  -v, --version [VERSION]  Version for the rpm"
   echo ""
   exit 1
 }
@@ -25,6 +26,10 @@ while [[ "$#" -gt 0 ]]; do
     RELEASE="$2"
     shift
     ;;
+    -v|--version)
+    VERSION="$2"
+    shift
+    ;;
     *) echo "Unknown argument: $key"; usage;;
   esac
   shift
@@ -36,6 +41,11 @@ if [ -z "$RELEASE" ]; then
 elif [[ "$RELEASE" != "7" ]]; then
   echo "Unsupported RELEASE: ${RELEASE}"
   echo "Supported releases are 7"
+  exit 1
+fi
+
+if [ -z "$VERSION" ]; then
+  echo "VERSION not specified"
   exit 1
 fi
 
@@ -52,67 +62,39 @@ PYTHON_BIN="$APP_PATH/bin/python"
 PIP_BIN="$APP_PATH/bin/pip"
 
 SRC_PATH="/src"
-SRC_SCRIPT_PATH="$SRC_PATH/resources/centos${RELEASE}"
 
+SCRIPT_BASE="/rpm/centos${RELEASE}"
 BEFORE_INSTALL="before_install.sh"
 AFTER_INSTALL="after_install.sh"
 BEFORE_REMOVE="before_remove.sh"
 AFTER_REMOVE="after_remove.sh"
 
 get_version() {
-    echo $(cat "$SRC_PATH/$1/$2/_version.py" | cut -s -d'"' -f2)
+    echo $(cat "$SRC_PATH/$1/$2/__version__.py" | cut -s -d'"' -f2)
 }
 
 install_apps() {
-    bartender_package="bartender"
-    brew_view_package="brew-view"
 
     if [[ "$LOCAL" == "true" ]]; then
-        brewtils_package="brewtils"
-        bg_utils_package="bg-utils"
+        make -C $SRC_PATH/brewtils -e PYTHON=$PYTHON_BIN package-source
+        make -C $SRC_PATH/app -e PYTHON=$PYTHON_BIN package-source
 
-        brewtils_module="brewtils"
-        bg_utils_module="bg_utils"
-        bartender_module="bartender"
-        brew_view_module="brew_view"
+        brewtils_version=$(get_version "brewtils" "brewtils")
+        app_version=$(get_version "app" "beer_garden")
 
-        brewtils_version=$(get_version $brewtils_package $brewtils_module)
-        bg_utils_version=$(get_version $bg_utils_package $bg_utils_module)
-        bartender_version=$(get_version $bartender_package $bartender_module)
-        brew_view_version=$(get_version $brew_view_package $brew_view_module)
-
-        build_sdist $SRC_PATH/$brewtils_package
-        build_sdist $SRC_PATH/$bg_utils_package
-        build_sdist $SRC_PATH/$bartender_package
-        build_sdist $SRC_PATH/$brew_view_package
-
-        #$APP_PATH/bin/pip install \
         $PIP_BIN install \
-                "$SRC_PATH/$brewtils_package/dist/$brewtils_package-$brewtils_version.tar.gz" \
-                "$SRC_PATH/$bg_utils_package/dist/$bg_utils_package-$bg_utils_version.tar.gz" \
-                "$SRC_PATH/$bartender_package/dist/$bartender_package-$bartender_version.tar.gz" \
-                "$SRC_PATH/$brew_view_package/dist/$brew_view_package-$brew_view_version.tar.gz"
+                "$SRC_PATH/brewtils/dist/brewtils-$brewtils_version.tar.gz" \
+                "$SRC_PATH/app/dist/beer-garden-$app_version.tar.gz"
     else
         # If this isn't a local install we don't have versions
-        $PIP_BIN install --upgrade -q $bartender_package $brew_view_package
+        $PIP_BIN install --upgrade -q beer-garden
     fi
-}
-
-build_sdist() {
-    package_path=$1
-
-    pushd $package_path
-
-    ## TODO: Should we use wheels? (package-wheel)
-    make -e PYTHON=$PYTHON_BIN clean package-source
-
-    popd
 }
 
 create_rpm() {
     # We use FPM to build the RPM. FPM makes this much easier then everything else.
     # Below is an explanation of each of the flags and what they do:
-    # -f                        If the rpm already exists in $SRC_PATH/dist just overwrite it
+    # -f                        If the rpm already exists just overwrite it
     # -t rpm                    Output Type, in our case RPM
     # -n $APP_NAME              Name of the RPM
     # -v $VERSION               RPM version
@@ -131,7 +113,6 @@ create_rpm() {
     # --url                     Project site url
     # -d "$DEPS"                Specify any necessary package dependencies
 
-    VERSION=$(cat $SRC_PATH/resources/version)
     echo "Building beer-garden (${VERSION}) RPM Package..."
 
     # Construct the fpm arguments
@@ -153,10 +134,10 @@ create_rpm() {
         --directories $INCLUDE_PATH
         --directories $LIB_PATH
         --directories $SHARE_PATH
-        --before-install $SRC_SCRIPT_PATH/$BEFORE_INSTALL
-        --after-install $SRC_SCRIPT_PATH/$AFTER_INSTALL
-        --before-remove $SRC_SCRIPT_PATH/$BEFORE_REMOVE
-        --after-remove $SRC_SCRIPT_PATH/$AFTER_REMOVE
+        --before-install $SCRIPT_BASE/$BEFORE_INSTALL
+        --after-install $SCRIPT_BASE/$AFTER_INSTALL
+        --before-remove $SCRIPT_BASE/$BEFORE_REMOVE
+        --after-remove $SCRIPT_BASE/$AFTER_REMOVE
         --description "The beer-garden application"
         --license "MIT"
         --url "https://beer-garden.io"
@@ -171,15 +152,15 @@ create_rpm() {
         service_files=("beer-garden.service")
         for file in "${service_files[@]}"
         do
-            cp "$SRC_SCRIPT_PATH/$file" "/lib/systemd/system/"
+            cp "$SCRIPT_BASE/$file" "/lib/systemd/system/"
             service_paths+=("/lib/systemd/system/$file")
         done
     fi
 
 
     # Make sure we have a place to put the rpm
-    mkdir -p $SRC_PATH/dist
-    cd $SRC_PATH/dist
+    mkdir -p /rpm/dist
+    cd /rpm/dist
 
     # Build it!
     fpm "${args[@]}" "$APP_PATH" "${service_paths[@]}"
