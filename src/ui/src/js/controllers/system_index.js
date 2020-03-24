@@ -48,19 +48,20 @@ export default function systemIndexController(
     );
   };
 
-  $scope.getBreadCrumbs= function() {
-    var dirDisplay =  '<a href="#!/systems/"> .. </a> / ';
+  $scope.buildBreadCrumbs = function() {
+
+    var dirDisplay =  [".."];
 
     if ('namespace' in $stateParams){
-      dirDisplay = dirDisplay + '<a href="#!/systems/' + $stateParams.namespace + '/">'+$stateParams.namespace+'</a>';
-      if ('system' in $stateParams){
-        dirDisplay = dirDisplay + ' / ' +
-        '<a href="#!/systems/' + $stateParams.namespace + '/' +$stateParams.system+'/">'+ $stateParams.system + '</a>';
-      }
+        dirDisplay.push($stateParams.namespace);
 
+        if ('system' in $stateParams){
+          dirDisplay.push($stateParams.system);
+        }
     }
 
-    return $sce.trustAsHtml(dirDisplay);
+    $scope.breadCrumbs = dirDisplay;
+
   }
 
   $scope.getPageFilter = function (system) {

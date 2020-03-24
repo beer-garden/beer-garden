@@ -2,13 +2,18 @@
 <fetch-data response="response"></fetch-data>
 
 <div ng-if="responseState(response) === 'success'">
-  <h1 class='page-header' ng-bind-html="getBreadCrumbs()"></h1>
+  <h1 class='page-header'>
+  {{buildBreadCrumbs()}}
+  <a ui-sref="base.systems()" ng-if="breadCrumbs.length > 0">{{breadCrumbs[0]}} /</a>
+  <a ui-sref="base.filterNamespaces({namespace: breadCrumbs[1]})" ng-if="breadCrumbs.length > 1"> {{breadCrumbs[1]}} /</a>
+  <a ui-sref="base.filterSystems({namespace: breadCrumbs[1], system: breadCrumbs[2]})" ng-if="breadCrumbs.length > 2"> {{breadCrumbs[2]}} /</a>
+</h1>
   <div class="container-fluid animate-if">
     <table
         datatable="ng"
         dt-options="dtOptions"
-        valign="center"
-        class="table table-striped table-bordered w-100">
+        class="table table-striped table-bordered"
+        style="width: 100%">
       <thead>
         <tr>
           <th>Namespace</th>
