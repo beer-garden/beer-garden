@@ -26,7 +26,11 @@
       <ul class="nav navbar-nav navbar-top-links navbar-right">
 
         <li ng-show=!isUser(user)>
-          <a href="" ng-click="doLogin()">Login</a>
+
+          <a href="" ng-click="doLogin()">
+            <i class="fa fa-user"></i>
+            <span>Login</span>
+          </a>
         </li>
 
         <li ng-show="isUser(user)">
@@ -34,57 +38,14 @@
         </li>
 
         <li ng-show="isUser(user)">
-          <a ng-click="doLogout()" href="">Logout</a>
-        </li>
-
-        <li class="dropdown">
-          <a href="" class="dropdown-toggle" data-toggle="dropdown">
-            <span>Themes</span>
-            <span class="caret"></span>
+          <i class="fa fa-user"></i>
+          <a ng-click="doLogout()" href="">
+            <i class="fa fa-user"></i>
+            <span>Logout</span>
           </a>
-          <ul class="dropdown-menu">
-            <li ng-repeat="(style, enabled) in themes">
-              <div style="padding: 3px 15px; cursor: pointer;"
-                    ng-click="changeTheme(style, true)">
-                <span class="fa" ng-class="{'fa-check': enabled, 'fa-fw': !enabled}"></span>
-                <span>{{style}}</span>
-              </div>
-            </li>
-          </ul>
         </li>
 
-        <li>
-          <a ui-sref="base.about" ui-sref-active="active">About</a>
-        </li>
-      </ul>
-      <!-- Navbar Top End -->
-
-      <!-- Sidebar Start -->
-      <div class="navbar-default sidebar" role="navigation">
-        <div class="sidebar-nav navbar-collapse">
-          <ul class="nav" id="side-menu">
-
-            <li>
-              <a>
-                <i class="fa fa-cogs fa-fw"></i>
-                <span>Systems</span>
-                <span class="fa arrow"></span>
-              </a>
-
-              <ul class="nav nav-second-level">
-                <li ng-repeat="system in systems" ng-init="collapsed=false">
-                  <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
-                     ui-sref-active="active">
-                    <i class="fa fa-cog"></i>
-                    <span>{{system.namespace}}</span>
-                    <span>{{system.display_name || system.name}}</span>
-                    <span>{{system.version}}</span>
-                  </a>
-                </li>
-              </ul>
-
-            </li>
-            <li ng-show="hasPermission(user, 'bg-command-read')">
+        <li ng-show="hasPermission(user, 'bg-command-read')">
               <a ui-sref="base.commands"
                  ng-class="{active: ($state.current.name.startsWith('command'))}">
                 <i class="fa fa-fw fa-send-o"></i>
@@ -105,14 +66,15 @@
                 <span>Scheduler</span>
               </a>
             </li>
-            <li>
-              <a ui-sref-active="active">
-                <i class="fa fa-wrench fa-fw"></i>
-                <span>Administration</span>
-                <span class="fa arrow"></span>
-              </a>
-              <ul class="nav nav-second-level" ng-cloak>
-                <li>
+
+        <li class="dropdown" ui-sref-active="active">
+          <a href="" class="dropdown-toggle" data-toggle="dropdown">
+            <i class="fa fa-wrench fa-fw"></i>
+            <span>Admin</span>
+            <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu">
+             <li>
                   <a ui-sref="base.system_admin" ui-sref-active="active">
                     <i class="fa fa-power-off"></i>
                     <span>Systems Management</span>
@@ -140,6 +102,57 @@
                   <a ui-sref="base.garden_admin" ui-sref-active="active">
                     <i class="fa fa-leaf"></i>
                     <span>Garden Management</span>
+                  </a>
+                </li>
+          </ul>
+        </li>
+
+        <li class="dropdown">
+          <a href="" class="dropdown-toggle" data-toggle="dropdown">
+            <i class="fa fa-window-restore"></i>
+            <span>Themes</span>
+            <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu">
+            <li ng-repeat="(style, enabled) in themes">
+              <div style="padding: 3px 15px; cursor: pointer;"
+                    ng-click="changeTheme(style, true)">
+                <span class="fa" ng-class="{'fa-check': enabled, 'fa-fw': !enabled}"></span>
+                <span>{{style}}</span>
+              </div>
+            </li>
+          </ul>
+        </li>
+
+        <li>
+
+          <a ui-sref="base.about" ui-sref-active="active">
+            <i class="fa fa-info"></i>
+            <span>About</span>
+          </a>
+        </li>
+      </ul>
+      <!-- Navbar Top End -->
+
+      <!-- Sidebar Start -->
+      <div class="navbar-default sidebar" role="navigation">
+        <div class="sidebar-nav navbar-collapse">
+          <ul class="nav" id="side-menu" >
+            <li ng-repeat="namespace in namespaces">
+              <a>
+                <i class="fa fa-cogs fa-fw"></i>
+                <span>{{namespace}}</span>
+                <span class="fa arrow"></span>
+              </a>
+              <ul class="nav nav-second-level">
+                <li ng-repeat="system in systems" >
+                  <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
+                     ui-sref-active="active"
+                     ng-if="system.namespace == namespace">
+                    <i class="fa fa-cog"></i>
+                    <span>{{system.namespace}}</span>
+                    <span>{{system.display_name || system.name}}</span>
+                    <span>{{system.version}}</span>
                   </a>
                 </li>
               </ul>
