@@ -192,10 +192,6 @@ export default function appRun(
     $state.go('base.landing');
   });
 
-  EventService.addCallback('console', (event) => {
-    console.log('Websocket message: ' + JSON.stringify(event));
-  });
-
   EventService.addCallback('global_systems', (event) => {
     if (['SYSTEM_CREATED', 'SYSTEM_REMOVED', 'SYSTEM_UPDATED'].includes(event.name)) {
 
