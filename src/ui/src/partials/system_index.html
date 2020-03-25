@@ -4,9 +4,11 @@
 <div ng-if="responseState(response) === 'success'">
   <h1 class='page-header'>
   {{buildBreadCrumbs()}}
-  <a ui-sref="base.systems()" ng-if="breadCrumbs.length > 0">{{breadCrumbs[0]}} /</a>
-  <a ui-sref="base.filterNamespaces({namespace: breadCrumbs[1]})" ng-if="breadCrumbs.length > 1"> {{breadCrumbs[1]}} /</a>
-  <a ui-sref="base.filterSystems({namespace: breadCrumbs[1], system: breadCrumbs[2]})" ng-if="breadCrumbs.length > 2"> {{breadCrumbs[2]}} /</a>
+    <ol class="breadcrumb">
+      <li><a ui-sref="base.systems()" ng-if="breadCrumbs.length > 0">{{breadCrumbs[0]}}</a></li>
+      <li ng-if="breadCrumbs.length > 1"><a ui-sref="base.filterNamespaces({namespace: breadCrumbs[1]})" >{{breadCrumbs[1]}}</a></li>
+      <li ng-if="breadCrumbs.length > 2"><a ui-sref="base.filterSystems({namespace: breadCrumbs[1], system: breadCrumbs[2]})" >{{breadCrumbs[2]}}</a></li>
+    </ol>
 </h1>
   <div class="container-fluid animate-if">
     <table
