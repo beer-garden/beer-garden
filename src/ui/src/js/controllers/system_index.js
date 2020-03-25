@@ -4,7 +4,6 @@ systemIndexController.$inject = [
   '$rootScope',
   '$state',
   '$stateParams',
-  '$sce',
   'SystemService',
   'UtilityService',
 ];
@@ -22,8 +21,8 @@ export default function systemIndexController(
     $rootScope,
     $state,
     $stateParams,
-    $sce,
-    UtilityService) {
+    UtilityService,
+    ) {
   $scope.setWindowTitle();
 
   $scope.util = UtilityService;
@@ -60,6 +59,9 @@ export default function systemIndexController(
         }
     }
 
+    if (dirDisplay.length == 1){
+      var dirDisplay =  ["Systems"];
+    }
     $scope.breadCrumbs = dirDisplay;
 
   }
