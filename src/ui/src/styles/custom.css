@@ -75,6 +75,7 @@ html, body{
 }
 #page-wrapper{
     min-height: 100%;
+    margin: 0 auto;
 }
 .icon-color{
     color: black !important;
