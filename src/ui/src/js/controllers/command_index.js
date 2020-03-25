@@ -3,6 +3,7 @@ commandIndexController.$inject = [
   '$rootScope',
   '$scope',
   'DTOptionsBuilder',
+  'DTColumnBuilder',
 ];
 
 /**
@@ -18,9 +19,17 @@ export default function commandIndexController(
   $scope.setWindowTitle('commands');
 
   $scope.dtOptions = DTOptionsBuilder.newOptions()
-    .withOption('order', [[0, 'asc'], [1, 'asc'], [2, 'asc'], [3, 'asc']])
     .withOption('autoWidth', false)
+    .withOption('order', [[0, 'asc'], [1, 'asc'], [2, 'asc'], [3, 'asc']])
+    .withLightColumnFilter({
+      0: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
+      1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
+      2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
+      3: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
+      4: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
+    })
     .withBootstrap();
+
 
   $scope.successCallback = function(response) {
     // Pull out what we care about
@@ -28,7 +37,7 @@ export default function commandIndexController(
 
     response.data.forEach((system) => {
       system.commands.forEach((command) => {
-        commands = commands.concat({
+        commands.push({
           id: command.id,
           namespace: system.namespace,
           name: command.name,

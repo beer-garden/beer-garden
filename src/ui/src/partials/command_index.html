@@ -5,6 +5,7 @@
 <div class="container-fluid animate-if"
      ng-if="responseState(response) === 'success'">
   <div>
+
     <table
         datatable="ng"
         dt-options="dtOptions"
@@ -21,7 +22,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr ng-repeat="entry in data | filter:query">
+        <tr ng-repeat="entry in data">
           <td>{{entry.namespace}}</td>
           <td>{{entry.system}}</td>
           <td>{{entry.version}}</td>
