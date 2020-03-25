@@ -1,4 +1,13 @@
-<h1 class='page-header'>Available Commands</h1>
+<h1 class='page-header'>
+  {{buildBreadCrumbs()}}
+  <ol class="breadcrumb">
+    <li ng-if="breadCrumbs.length == 1">{{breadCrumbs[0]}}</li>
+    <li ng-if="breadCrumbs.length > 1"><a ui-sref="base.systems()" ng-if="breadCrumbs.length > 0">{{breadCrumbs[0]}}</a></li>
+    <li ng-if="breadCrumbs.length > 1"><a ui-sref="base.filterNamespaces({namespace: breadCrumbs[1]})" >{{breadCrumbs[1]}}</a></li>
+    <li ng-if="breadCrumbs.length > 2"><a ui-sref="base.filterSystems({namespace: breadCrumbs[1], system: breadCrumbs[2]})" >{{breadCrumbs[2]}}</a></li>
+    <li ng-if="breadCrumbs.length > 3"><a ui-sref="base.system({namespace: breadCrumbs[1], system: breadCrumbs[2], systemVersion: breadCrumbs[3]})" >{{breadCrumbs[3]}}</a></li>
+  </ol>
+</h1>
 
 <fetch-data response="response"></fetch-data>
 
@@ -22,7 +31,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr ng-repeat="entry in data">
+        <tr ng-repeat="entry in data | filter:getPageFilter">
           <td>{{entry.namespace}}</td>
           <td>{{entry.system}}</td>
           <td>{{entry.version}}</td>

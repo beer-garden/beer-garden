@@ -2,6 +2,7 @@
 commandIndexController.$inject = [
   '$rootScope',
   '$scope',
+  '$stateParams',
   'DTOptionsBuilder',
   'DTColumnBuilder',
 ];
@@ -15,6 +16,7 @@ commandIndexController.$inject = [
 export default function commandIndexController(
     $rootScope,
     $scope,
+    $stateParams,
     DTOptionsBuilder) {
   $scope.setWindowTitle('commands');
 
@@ -58,4 +60,48 @@ export default function commandIndexController(
   };
 
   $scope.successCallback($rootScope.sysResponse);
+
+  $scope.buildBreadCrumbs = function() {
+
+    var dirDisplay =  [".."];
+
+    if ('namespace' in $stateParams){
+        dirDisplay.push($stateParams.namespace);
+
+        if ('systemName' in $stateParams){
+          dirDisplay.push($stateParams.systemName);
+
+          if ('systemVersion' in $stateParams){
+            dirDisplay.push($stateParams.version);
+          }
+        }
+    }
+
+    if (dirDisplay.length == 1){
+      var dirDisplay =  ["Available Commands"];
+    }
+    $scope.breadCrumbs = dirDisplay;
+
+  }
+
+  $scope.getPageFilter = function (command) {
+
+    if ('namespace' in $stateParams){
+        if (command.namespace != $stateParams.namespace){
+          return false;
+        }
+     }
+     else if ('systemName' in $stateParams){
+        if (command.system != $stateParams.systemName){
+          return false
+        }
+     }
+     else if ('systemVersion' in $stateParams){
+        if (command.version != $stateParams.systemVersion){
+          return false
+        }
+     }
+
+    return true;
+  }
 };

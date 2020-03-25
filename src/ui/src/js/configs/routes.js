@@ -86,8 +86,8 @@ export default function routeConfig(
     })
     .state('base.system', {
       url: 'systems/:namespace/:systemName/:systemVersion/',
-      templateUrl: basePath + 'system_view.html',
-      controller: 'SystemViewController',
+      templateUrl: basePath + 'command_index.html',
+      controller: 'CommandIndexController',
       resolve: {
         system: ['$stateParams', 'SystemService', ($stateParams, SystemService) => {
           let sys = SystemService.findSystem(
