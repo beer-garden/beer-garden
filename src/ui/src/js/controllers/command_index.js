@@ -72,7 +72,7 @@ export default function commandIndexController(
           dirDisplay.push($stateParams.systemName);
 
           if ('systemVersion' in $stateParams){
-            dirDisplay.push($stateParams.version);
+            dirDisplay.push($stateParams.systemVersion);
           }
         }
     }

@@ -3,18 +3,21 @@
   <div ng-bind-html="template"></div>
 </div>
 
+<h1 class='page-header'>
+  {{buildBreadCrumbs()}}
+  <ol class="breadcrumb">
+    <li ng-if="breadCrumbs.length == 1">{{breadCrumbs[0]}}</li>
+    <li ng-if="breadCrumbs.length > 1"><a ui-sref="base.systems()" ng-if="breadCrumbs.length > 0">{{breadCrumbs[0]}}</a></li>
+    <li ng-if="breadCrumbs.length > 1"><a ui-sref="base.filterNamespaces({namespace: breadCrumbs[1]})" >{{breadCrumbs[1]}}</a></li>
+    <li ng-if="breadCrumbs.length > 2"><a ui-sref="base.filterSystems({namespace: breadCrumbs[1], system: breadCrumbs[2]})" >{{breadCrumbs[2]}}</a></li>
+    <li ng-if="breadCrumbs.length > 3"><a ui-sref="base.system({namespace: breadCrumbs[1], systemName: breadCrumbs[2], systemVersion: breadCrumbs[3]})" >{{breadCrumbs[3]}}</a></li>
+    <li ng-if="breadCrumbs.length > 4"><a ui-sref="base.command({namespace: breadCrumbs[1], systemName: breadCrumbs[2], systemVersion: breadCrumbs[3], commandName:breadCrumbs[4]})" >{{breadCrumbs[4]}}</a></li>
+  </ol>
+</h1>
+
 <div ng-show="!template">
-  <h1 class="page-header" ng-show="responseState(response) !== 'success'">
-    Make Request
-  </h1>
   <div ng-show="(responseState(response) === 'success')">
     <div ng-show="!manualOverride">
-      <h1 class="page-header" ng-show="!manualOverride">
-        <span>{{command.name}}<span>
-        <small>{{system.display_name || system.name}}</small>
-        <small>v{{system.version}}</small>
-        <bg-status class="pull-right" target='system.status'></bg-status>
-      </h1>
       <div class="tagline" ng-show="command.description">
         {{command.description}}
       </div>

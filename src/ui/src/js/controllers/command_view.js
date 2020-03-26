@@ -280,5 +280,30 @@ export default function commandViewController(
     $scope.response = tempResponse;
   });
 
+  $scope.buildBreadCrumbs = function() {
+
+    var dirDisplay =  [".."];
+
+    if ('namespace' in $stateParams){
+        dirDisplay.push($stateParams.namespace);
+
+        if ('systemName' in $stateParams){
+          dirDisplay.push($stateParams.systemName);
+
+          if ('systemVersion' in $stateParams){
+            dirDisplay.push($stateParams.systemVersion);
+
+            if ('commandName' in $stateParams){
+                dirDisplay.push($stateParams.commandName);
+            }
+          }
+
+        }
+    }
+
+    $scope.breadCrumbs = dirDisplay;
+
+  }
+
   $scope.successCallback(command);
 };

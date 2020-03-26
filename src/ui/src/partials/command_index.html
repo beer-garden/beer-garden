@@ -5,7 +5,7 @@
     <li ng-if="breadCrumbs.length > 1"><a ui-sref="base.systems()" ng-if="breadCrumbs.length > 0">{{breadCrumbs[0]}}</a></li>
     <li ng-if="breadCrumbs.length > 1"><a ui-sref="base.filterNamespaces({namespace: breadCrumbs[1]})" >{{breadCrumbs[1]}}</a></li>
     <li ng-if="breadCrumbs.length > 2"><a ui-sref="base.filterSystems({namespace: breadCrumbs[1], system: breadCrumbs[2]})" >{{breadCrumbs[2]}}</a></li>
-    <li ng-if="breadCrumbs.length > 3"><a ui-sref="base.system({namespace: breadCrumbs[1], system: breadCrumbs[2], systemVersion: breadCrumbs[3]})" >{{breadCrumbs[3]}}</a></li>
+    <li ng-if="breadCrumbs.length > 3"><a ui-sref="base.system({namespace: breadCrumbs[1], systemName: breadCrumbs[2], systemVersion: breadCrumbs[3]})" >{{breadCrumbs[3]}}</a></li>
   </ol>
 </h1>
 
@@ -32,9 +32,9 @@
       </thead>
       <tbody>
         <tr ng-repeat="entry in data | filter:getPageFilter">
-          <td>{{entry.namespace}}</td>
-          <td>{{entry.system}}</td>
-          <td>{{entry.version}}</td>
+          <td><a ui-sref="base.filterNamespaces({namespace: entry.namespace})" >{{entry.namespace}}</a></td>
+          <td><a ui-sref="base.filterSystems({namespace: entry.namespace, system: entry.system})" >{{entry.system}}</a></td>
+          <td><a ui-sref="base.system({namespace: entry.namespace, systemName: entry.system, systemVersion: entry.version})" >{{entry.version}}</a></td>
           <td>{{entry.name}}</td>
           <td>{{entry.description}}</td>
           <td>
