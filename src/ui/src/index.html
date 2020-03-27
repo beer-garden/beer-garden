@@ -19,11 +19,34 @@
     <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom:0">
 
       <!-- Navbar Top Start -->
-      <ul class="nav navbar-nav navbar-top-links navbar-left">
+      <a style="cursor:pointer" class="navbar-brand" ui-sref="base.systems">
+        <i ng-class="getIcon(config.iconDefault)"></i>
+        <span ng-cloak>{{config.applicationName}}</span>
+      </a>
+      <ul class="nav navbar-nav navbar-top-links navbar-right">
+
+        <li ng-show=!isUser(user)>
+          <a href="" ng-click="doLogin()">
+            <i class="fa fa-user"></i>
+            <span>Login</span>
+          </a>
+        </li>
+
+        <li ng-show="isUser(user)">
+          <a href="">Hello, {{user.username}}!</a>
+        </li>
+        <li ng-show="isUser(user)">
+          <i class="fa fa-user"></i>
+          <a ng-click="doLogout()" href="">
+            <i class="fa fa-user"></i>
+            <span>Logout</span>
+          </a>
+        </li>
         <li class="dropdown">
           <a href="" class="dropdown-toggle" data-toggle="dropdown">
-            <i ng-class="getIcon(config.iconDefault)"></i>
-            <span ng-cloak>{{config.applicationName}}</span>
+            <i class="fa fa-cog"></i>
+            <span>Systems</span>
+            <span class="caret"></span>
           </a>
           <ul class="dropdown-menu">
               <li>
@@ -44,32 +67,6 @@
                   </a>
             </li>
           </ul>
-        </li>
-      </ul>
-      <ul class="nav navbar-nav navbar-top-links navbar-right">
-
-        <li ng-show=!isUser(user)>
-          <a href="" ng-click="doLogin()">
-            <i class="fa fa-user"></i>
-            <span>Login</span>
-          </a>
-        </li>
-
-        <li ng-show="isUser(user)">
-          <a href="">Hello, {{user.username}}!</a>
-        </li>
-        <li ng-show="isUser(user)">
-          <i class="fa fa-user"></i>
-          <a ng-click="doLogout()" href="">
-            <i class="fa fa-user"></i>
-            <span>Logout</span>
-          </a>
-        </li>
-        <li >
-          <a ui-sref="base.systems">
-            <i class="fa fa-cog"></i>
-            <span>Systems</span>
-          </a>
         </li>
         <li ng-show="hasPermission(user, 'bg-command-read')">
           <a ui-sref="base.commands"
