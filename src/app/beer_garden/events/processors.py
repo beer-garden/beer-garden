@@ -93,12 +93,15 @@ class FanoutProcessor(QueueListener):
         super().__init__(**kwargs)
 
         self._processors = []
-        self._processors_to_stop = []
+        self._managed_processors = []
 
     def run(self):
+        for processor in self._managed_processors:
+            processor.start()
+
         super().run()
 
-        for processor in self._processors_to_stop:
+        for processor in self._managed_processors:
             if not processor.stopped():
                 processor.stop()
 
@@ -106,18 +109,17 @@ class FanoutProcessor(QueueListener):
         for processor in self._processors:
             processor.put(event)
 
-    def register(self, processor, start: bool = True):
+    def register(self, processor, manage: bool = True):
         """Register and start a downstream Processor
 
         Args:
             processor: The Processor to register
-            start: Whether to start the processor being added
+            manage: Whether to start and stop the processor being added
         """
         self._processors.append(processor)
 
-        if start:
-            self._processors_to_stop.append(processor)
-            processor.start()
+        if manage:
+            self._managed_processors.append(processor)
 
 
 class HttpEventProcessor(QueueListener):
