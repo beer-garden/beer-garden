@@ -32,9 +32,9 @@
       </thead>
       <tbody>
         <tr ng-repeat="entry in data | filter:getPageFilter">
-          <td><a ui-sref="base.filterNamespaces({namespace: entry.namespace})" >{{entry.namespace}}</a></td>
-          <td><a ui-sref="base.filterSystems({namespace: entry.namespace, system: entry.system})" >{{entry.system}}</a></td>
-          <td><a ui-sref="base.system({namespace: entry.namespace, systemName: entry.system, systemVersion: entry.version})" >{{entry.version}}</a></td>
+          <td>{{entry.namespace}}</td>
+          <td>{{entry.system}}</td>
+          <td>{{entry.version}}</td>
           <td>{{entry.name}}</td>
           <td>{{entry.description}}</td>
           <td>
