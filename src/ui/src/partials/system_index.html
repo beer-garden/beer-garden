@@ -40,7 +40,7 @@
           <td>{{system.commands.length}}</td>
           <td>{{system.instances.length}}</td>
           <td>
-            <a ui-sref="exploreSystem(system)"
+            <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
                class="btn btn-primary center-block"> Explore {{system.name}} commands</a>
           </td>
         </tr>

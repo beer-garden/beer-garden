@@ -53,16 +53,6 @@ export default function systemIndexController(
     $scope.data = {};
   };
 
-  $scope.exploreSystem = function(system) {
-    $state.go('base.system',
-      {
-        'systemName': system.name,
-        'systemVersion': system.version,
-        'namespace': system.namespace,
-      }
-    );
-  };
-
   $scope.buildBreadCrumbs = function() {
 
     var dirDisplay =  [".."];
