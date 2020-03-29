@@ -73,7 +73,9 @@ html, body{
     height: 100%;
     background: inherit;
 }
-
+#page-wrapper{
+    margin: 0 auto;
+}
 .icon-color{
     color: black !important;
 }

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 from typing import List, Optional, Type, Union
 
 import brewtils.models
@@ -12,6 +13,8 @@ import beer_garden.db.mongo.models
 from beer_garden.db.mongo.util import check_indexes, ensure_roles, ensure_users
 from beer_garden.db.mongo.models import MongoModel
 from beer_garden.db.mongo.parser import MongoParser
+
+logger = logging.getLogger(__name__)
 
 ModelType = Union[
     Type[brewtils.models.Command],
@@ -102,11 +105,13 @@ def check_connection(db_config: Box):
 
         # The 'connect' method won't actually fail
         # An exception won't be raised until we actually try to do something
+        logger.debug("Attempting connection")
         conn.server_info()
 
         # Close the aliveness connection - the timeouts are too low
         conn.close()
-    except (ConnectionFailure, ServerSelectionTimeoutError):
+    except (ConnectionFailure, ServerSelectionTimeoutError) as ex:
+        logger.debug(ex)
         return False
 
     return True
