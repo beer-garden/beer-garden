@@ -95,9 +95,8 @@
       <div class="col-md-6">
         <div style="margin-bottom: 10px;">
           <span class="h3">Output
-            <button type="button" class="btn pull-right" ng-click="download();">
-              <i class="fa fa-download" ></i> Download
-            </button>
+              <a class="fa fa-download pull-right" ng-href="{{downloadHref}}" download="{{filename}}"
+                 style="visibility:{{downloadVisible}};"></a>
           </span>
           <span ng-show="formattedAvailable && format_error === undefined" style="margin-top: 9px" class="pull-right">
             <input bs-switch ng-model="showFormatted" switch-size="mini" type="checkbox" switch-label-width="0"

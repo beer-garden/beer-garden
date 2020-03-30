@@ -155,6 +155,9 @@ angular.module('bgApp',
 .config(['localStorageServiceProvider', function(localStorageServiceProvider) {
   localStorageServiceProvider.setStorageType('sessionStorage');
 }])
+.config(['$compileProvider', function ($compileProvider) {
+  $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|tel|file|data):/);
+}])
 .service('APIInterceptor', interceptorService)
 .service('authInterceptorService', authInterceptorService)
 .animation('.slide', slideAnimation)
