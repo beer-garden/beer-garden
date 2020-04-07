@@ -20,14 +20,14 @@
 
       <!-- Navbar Top Start -->
       <a style="cursor:pointer" class="navbar-brand" ui-sref="base.systems">
-        <i ng-class="getIcon(config.iconDefault)"></i>
+        <i style="padding: 3px;" ng-class="getIcon(config.iconDefault)"></i>
         <span ng-cloak>{{config.applicationName}}</span>
       </a>
       <ul class="nav navbar-nav navbar-top-links navbar-right">
 
         <li ng-show=!isUser(user)>
           <a href="" ng-click="doLogin()">
-            <i class="fa fa-user"></i>
+            <i style="padding: 3px;" class="fa fa-user"></i>
             <span>Login</span>
           </a>
         </li>
@@ -36,15 +36,13 @@
           <a href="">Hello, {{user.username}}!</a>
         </li>
         <li ng-show="isUser(user)">
-          <i class="fa fa-user"></i>
           <a ng-click="doLogout()" href="">
-            <i class="fa fa-user"></i>
+            <i style="padding: 3px;" class="fa fa-user"></i>
             <span>Logout</span>
           </a>
         </li>
         <li class="dropdown">
           <a href="" class="dropdown-toggle" data-toggle="dropdown">
-            <i class="fa fa-cog"></i>
             <span>Systems</span>
             <span class="caret"></span>
           </a>
@@ -58,7 +56,6 @@
                 <li ng-repeat="system in systems | filter:searchText" >
                   <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
                      ui-sref-active="active">
-                    <i class="fa fa-cog"></i>
                     <span title="{{system.description}}">
                     <span>{{system.namespace}}</span>
                     <span>{{system.display_name || system.name}}</span>
@@ -70,61 +67,48 @@
         </li>
         <li ng-show="hasPermission(user, 'bg-command-read')">
           <a ui-sref="base.commands"
-             ng-class="{active: ($state.current.name.startsWith('command'))}">
-            <i class="fa fa-fw fa-send-o"></i>
+             ng-class="{active: ($state.current.name.startsWith('base.command'))}">
             <span>Commands</span>
           </a>
         </li>
         <li ng-show="hasPermission(user, 'bg-request-read')">
           <a ui-sref="base.requests"
-             ng-class="{active: ($state.current.name.startsWith('request'))}">
-            <i class="fa fa-fw fa-tasks"></i>
-            <span>Requests</span>
-          </a>
+             ng-class="{active: ($state.current.name.startsWith('request'))}">Requests</a>
         </li>
         <li ng-show="hasPermission(user, 'bg-job-read')">
           <a ui-sref="base.jobs"
-             ng-class="{active: ($state.current.name.startsWith('job'))}">
-            <i class="fa fa-fw fa-calendar"></i>
-            <span>Scheduler</span>
-          </a>
+             ng-class="{active: ($state.current.name.startsWith('job'))}">Scheduler</a>
         </li>
 
         <li class="dropdown" ui-sref-active="active">
           <a href="" class="dropdown-toggle" data-toggle="dropdown">
-            <i class="fa fa-wrench fa-fw"></i>
             <span>Admin</span>
             <span class="caret"></span>
           </a>
           <ul class="dropdown-menu">
             <li>
               <a ui-sref="base.system_admin" ui-sref-active="active">
-                <i class="fa fa-power-off"></i>
-                <span>Systems Management</span>
+                <span>Systems</span>
               </a>
             </li>
             <li ng-show="hasPermission(user, 'bg-queue-read')">
               <a ui-sref="base.queues" ui-sref-active="active">
-                <i class="fa fa-database"></i>
-                <span>Queue Management</span>
+                <span>Queues</span>
               </a>
             </li>
             <li ng-show="hasPermission(user, 'bg-user-read')">
               <a ui-sref="base.user_admin" ui-sref-active="active">
-                <i class="fa fa-user"></i>
-                <span>User Management</span>
+                <span>Users</span>
               </a>
             </li>
             <li ng-show="hasPermission(user, 'bg-role-read')">
               <a ui-sref="base.role_admin" ui-sref-active="active">
-                <i class="fa fa-tag"></i>
-                <span>Role Management</span>
+                <span>Roles</span>
               </a>
             </li>
             <li ng-show="hasPermission(user, 'bg-role-read')">
               <a ui-sref="base.garden_admin" ui-sref-active="active">
-                <i class="fa fa-leaf"></i>
-                <span>Garden Management</span>
+                <span>Gardens</span>
               </a>
             </li>
           </ul>
@@ -132,7 +116,6 @@
 
         <li class="dropdown">
           <a href="" class="dropdown-toggle" data-toggle="dropdown">
-            <i class="fa fa-window-restore"></i>
             <span>Themes</span>
             <span class="caret"></span>
           </a>
@@ -148,11 +131,7 @@
         </li>
 
         <li>
-
-          <a ui-sref="base.about" ui-sref-active="active">
-            <i class="fa fa-info"></i>
-            <span>About</span>
-          </a>
+          <a ui-sref="base.about" ui-sref-active="active">About</a>
         </li>
       </ul>
       <!-- Navbar Top End -->
