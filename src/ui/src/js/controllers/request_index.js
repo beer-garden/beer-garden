@@ -109,7 +109,7 @@ export default function requestIndexController(
       7: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
     })
     .withDataProp('data')
-    .withOption('order', [5, 'desc'])
+    .withOption('order', [6, 'desc'])
     .withOption('serverSide', true)
     .withOption('refreshButton', true)
     .withOption('childContainer', true)
