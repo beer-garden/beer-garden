@@ -91,7 +91,7 @@ export default function routeConfig(
       url: 'systems/:id/',
       controller: ['$state', '$stateParams', 'SystemService', ($state, $stateParams, SystemService) => {
         let sys = SystemService.findSystemByID($stateParams.id);
-        $state.go('base.system', {name: sys.name, version: sys.version});
+        $state.go('base.system', {namespace: sys.namespace, systemName: sys.name, systemVersion: sys.version});
       }],
     })
     .state('base.system', {
