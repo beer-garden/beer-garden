@@ -77,16 +77,6 @@ export default function routeConfig(
       templateUrl: basePath + 'system_index.html',
       controller: 'SystemIndexController',
     })
-    .state('base.filterNamespaces', {
-      url: 'systems/:namespace/',
-      templateUrl: basePath + 'system_index.html',
-      controller: 'SystemIndexController',
-    })
-    .state('base.filterSystems', {
-      url: 'systems/:namespace/:system',
-      templateUrl: basePath + 'system_index.html',
-      controller: 'SystemIndexController',
-    })
     .state('base.systemID', {
       url: 'systems/:id/',
       controller: ['$state', '$stateParams', 'SystemService', ($state, $stateParams, SystemService) => {
@@ -95,7 +85,7 @@ export default function routeConfig(
       }],
     })
     .state('base.system', {
-      url: 'systems/:namespace/:systemName/:systemVersion/',
+      url: 'commands?namespace&systemName&systemVersion',
       templateUrl: basePath + 'command_index.html',
       controller: 'CommandIndexController',
       resolve: {
@@ -108,6 +98,11 @@ export default function routeConfig(
           );
         }],
       },
+    })
+    .state('base.commands', {
+      url: 'commands/',
+      templateUrl: basePath + 'command_index.html',
+      controller: 'CommandIndexController',
     })
     .state('base.commandID', {
       url: 'commands/:id/',
@@ -165,11 +160,6 @@ export default function routeConfig(
       'url': 'jobs/:id/',
       'templateUrl': basePath + 'job_view.html',
       'controller': 'JobViewController',
-    })
-    .state('base.commands', {
-      url: 'commands/',
-      templateUrl: basePath + 'command_index.html',
-      controller: 'CommandIndexController',
     })
     .state('base.requests', {
       url: 'requests/',

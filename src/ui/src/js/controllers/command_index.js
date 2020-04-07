@@ -23,15 +23,17 @@ export default function commandIndexController(
   $scope.dtOptions = DTOptionsBuilder.newOptions()
     .withOption('autoWidth', false)
     .withOption('order', [[0, 'asc'], [1, 'asc'], [2, 'asc'], [3, 'asc']])
-    .withLightColumnFilter({
+    .withBootstrap();
+
+  if (!($stateParams.namespace || $stateParams.systemName || $stateParams.systemVersion)) {
+    $scope.dtOptions = $scope.dtOptions.withLightColumnFilter({
       0: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
       1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
       2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
       3: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
       4: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
     })
-    .withBootstrap();
-
+  }
 
   $scope.successCallback = function(response) {
     // Pull out what we care about
