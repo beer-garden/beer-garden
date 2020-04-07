@@ -2,9 +2,6 @@
 systemIndexController.$inject = [
   '$scope',
   '$rootScope',
-  '$state',
-  '$stateParams',
-  'SystemService',
   'UtilityService',
   'DTOptionsBuilder',
 ];
@@ -13,16 +10,11 @@ systemIndexController.$inject = [
  * systemIndexController - Controller for the system index page.
  * @param  {Object} $scope         Angular's $scope object.
  * @param  {Object} $rootScope     Angular's $rootScope object.
- * @param  {Object} $state         Angular's $state object.
- * @param  {Object} SystemService  Beer-Garden's sytem service.
  * @param  {Object} UtilityService Beer-Garden's utility service.
  */
 export default function systemIndexController(
     $scope,
     $rootScope,
-    $state,
-    $stateParams,
-    SystemService,
     UtilityService,
     DTOptionsBuilder
     ) {
@@ -52,25 +44,6 @@ export default function systemIndexController(
     $scope.response = response;
     $scope.data = {};
   };
-
-  $scope.buildBreadCrumbs = function() {
-
-    var dirDisplay =  [".."];
-
-    if ('namespace' in $stateParams){
-        dirDisplay.push($stateParams.namespace);
-
-        if ('system' in $stateParams){
-          dirDisplay.push($stateParams.system);
-        }
-    }
-
-    if (dirDisplay.length == 1){
-      var dirDisplay =  ["Systems"];
-    }
-    $scope.breadCrumbs = dirDisplay;
-
-  }
 
   $scope.response = $rootScope.sysResponse;
   $scope.data = $rootScope.systems;
