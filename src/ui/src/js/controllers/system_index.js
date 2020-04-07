@@ -72,21 +72,6 @@ export default function systemIndexController(
 
   }
 
-  $scope.getPageFilter = function (system) {
-
-    if ('namespace' in $stateParams){
-        if (system.namespace != $stateParams.namespace){
-          return false;
-        }
-        else if ('system' in $stateParams){
-          if (system.name != $stateParams.system){
-            return (system.name == $stateParams.system);
-          }
-        }
-      }
-    return true;
-  }
-
   $scope.response = $rootScope.sysResponse;
   $scope.data = $rootScope.systems;
 };

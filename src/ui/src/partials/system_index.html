@@ -32,7 +32,7 @@
       </thead>
       <tbody>
 
-        <tr ng-repeat="system in data | filter:getPageFilter" >
+        <tr ng-repeat="system in data | filter:query" >
           <td>{{system.namespace}}</td>
           <td>{{system.name}}</td>
           <td>{{system.version}}</td>

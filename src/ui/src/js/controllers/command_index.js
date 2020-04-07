@@ -79,25 +79,4 @@ export default function commandIndexController(
   };
 
   $scope.successCallback($rootScope.sysResponse);
-
-  $scope.getPageFilter = function (command) {
-
-    if ('namespace' in $stateParams){
-        if (command.namespace != $stateParams.namespace){
-          return false;
-        }
-     }
-     else if ('systemName' in $stateParams){
-        if (command.system != $stateParams.systemName){
-          return false
-        }
-     }
-     else if ('systemVersion' in $stateParams){
-        if (command.version != $stateParams.systemVersion){
-          return false
-        }
-     }
-
-    return true;
-  }
 };
