@@ -41,13 +41,18 @@ pre {
 }
 
 .tagline {
-    margin-top: -20px;
+    margin-top: -15px;
     margin-bottom: 20px;
 }
 
 .breadcrumb {
     padding-top: 3px;
     padding-bottom: 3px;
+    background-color: inherit;
+}
+.breadcrumb > li + li::before {
+    /* Default content is '/ ' which throws off the spacing */
+    content: '/';
 }
 
 .nav-tabs {
