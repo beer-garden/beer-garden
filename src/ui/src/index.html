@@ -18,7 +18,6 @@
     <!-- Navbar Start -->
     <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom:0">
 
-      <!-- Navbar Top Start -->
       <a style="cursor:pointer" class="navbar-brand" ui-sref="base.systems">
         <i style="padding: 3px;" ng-class="getIcon(config.iconDefault)"></i>
         <span ng-cloak>{{config.applicationName}}</span>
@@ -80,12 +79,19 @@
              ng-class="{active: ($state.current.name.startsWith('job'))}">Scheduler</a>
         </li>
 
-        <li class="dropdown" ui-sref-active="active">
-          <a href="" class="dropdown-toggle" data-toggle="dropdown">
-            <span>Admin</span>
-            <span class="caret"></span>
-          </a>
+        <li id="nav-extras" class="dropdown">
+          <a href="" class="fa fa-bars dropdown-toggle" data-toggle="dropdown"></a>
           <ul class="dropdown-menu">
+            <li><a ui-sref="base.about" ui-sref-active="active">About</a></li>
+            <hr>
+            <li ng-repeat="(style, enabled) in themes">
+              <div style="padding: 3px 15px; cursor: pointer;"
+                    ng-click="changeTheme(style, true)">
+                <span class="fa" ng-class="{'fa-check': enabled, 'fa-fw': !enabled}"></span>
+                <span>{{style}}</span>
+              </div>
+            </li>
+            <hr>
             <li>
               <a ui-sref="base.system_admin" ui-sref-active="active">
                 <span>Systems</span>
@@ -113,28 +119,7 @@
             </li>
           </ul>
         </li>
-
-        <li class="dropdown">
-          <a href="" class="dropdown-toggle" data-toggle="dropdown">
-            <span>Themes</span>
-            <span class="caret"></span>
-          </a>
-          <ul class="dropdown-menu">
-            <li ng-repeat="(style, enabled) in themes">
-              <div style="padding: 3px 15px; cursor: pointer;"
-                    ng-click="changeTheme(style, true)">
-                <span class="fa" ng-class="{'fa-check': enabled, 'fa-fw': !enabled}"></span>
-                <span>{{style}}</span>
-              </div>
-            </li>
-          </ul>
-        </li>
-
-        <li>
-          <a ui-sref="base.about" ui-sref-active="active">About</a>
-        </li>
       </ul>
-      <!-- Navbar Top End -->
     </nav>
     <!-- Navbar End -->
 

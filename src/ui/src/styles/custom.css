@@ -243,6 +243,10 @@ table.dataTable{
     min-width: 110px;
 }
 
+#nav-extras hr {
+    margin: 4px 0px;
+}
+
 /* Limits number of items shown in dropdowns */
 .select.dropdown-menu{
     max-height: 195px;
