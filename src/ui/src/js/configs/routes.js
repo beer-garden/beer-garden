@@ -90,19 +90,17 @@ export default function routeConfig(
       controller: 'CommandIndexController',
       resolve: {
         system: ['$stateParams', 'SystemService', ($stateParams, SystemService) => {
-          let sys = SystemService.findSystem(
+          return SystemService.findSystem(
             $stateParams.namespace, $stateParams.systemName, $stateParams.systemVersion
           ) || {};
-          return SystemService.getSystem(sys.id).catch(
-            (response) => response
-          );
         }],
       },
     })
+    // This is just an alias for base.system with no query args at this point
     .state('base.commands', {
       url: 'commands/',
       templateUrl: basePath + 'command_index.html',
-      controller: 'CommandIndexController',
+      controller: ['$state', ($state) => {$state.go('base.system');}],
     })
     .state('base.commandID', {
       url: 'commands/:id/',
