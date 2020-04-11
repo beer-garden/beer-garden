@@ -24,6 +24,26 @@
       </a>
       <ul class="nav navbar-nav navbar-top-links navbar-right">
 
+        <li class="dropdown">
+          <span data-toggle="dropdown" style="padding: 9px 15px; display: block;">
+            <i class="fa fa-search"></i>
+            <input ng-model="searchText">
+          </span>
+
+          <ul class="dropdown-menu">
+            <li ng-repeat="system in systems | filter:searchText" >
+              <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
+                ui-sref-active="active">
+                <span title="{{system.description}}">
+                  <span>{{system.namespace}}</span>
+                  <span>{{system.display_name || system.name}}</span>
+                  <span>{{system.version}}</span>
+                </span>
+              </a>
+            </li>
+          </ul>
+        </li>
+
         <li ng-show=!isUser(user)>
           <a href="" ng-click="doLogin()">
             <i style="padding: 3px;" class="fa fa-user"></i>
@@ -40,35 +60,13 @@
             <span>Logout</span>
           </a>
         </li>
-        <li class="dropdown">
-          <a href="" class="dropdown-toggle" data-toggle="dropdown">
-            <span>Systems</span>
-            <span class="caret"></span>
-          </a>
-          <ul class="dropdown-menu">
-              <li>
-                <a>
-                <i class="fa fa-search"></i>
-                <input ng-model="searchText">
-                  </a>
-              </li>
-                <li ng-repeat="system in systems | filter:searchText" >
-                  <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
-                     ui-sref-active="active">
-                    <span title="{{system.description}}">
-                    <span>{{system.namespace}}</span>
-                    <span>{{system.display_name || system.name}}</span>
-                    <span>{{system.version}}</span>
-                    </span>
-                  </a>
-            </li>
-          </ul>
+
+        <li ng-show="hasPermission(user, 'bg-system-read')">
+          <a ui-sref="base.systems" ng-class="{active: ($state.current.name.startsWith('base.systems'))}">Systems</a>
         </li>
         <li ng-show="hasPermission(user, 'bg-command-read')">
           <a ui-sref="base.commands"
-             ng-class="{active: ($state.current.name.startsWith('base.command'))}">
-            <span>Commands</span>
-          </a>
+             ng-class="{active: ($state.current.name.startsWith('base.command'))}">Commands</a>
         </li>
         <li ng-show="hasPermission(user, 'bg-request-read')">
           <a ui-sref="base.requests"
