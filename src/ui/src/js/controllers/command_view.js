@@ -220,6 +220,13 @@ export default function commandViewController(
       generateSF();
     }
 
+    $scope.breadCrumbs = [
+      $scope.system.namespace,
+      $scope.system.display_name || $scope.system.name,
+      $scope.system.version,
+      $scope.command.name,
+    ];
+
     $scope.setWindowTitle(
       $scope.command.name,
       ($scope.system.display_name || $scope.system.name),

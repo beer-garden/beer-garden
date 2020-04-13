@@ -149,7 +149,9 @@ export default function requestViewController(
     // We need to find system attached to request
     // And find out if the status of that instance is up
     if (!RequestService.isComplete(response.data)) {
-      let bareSystem = SystemService.findSystem(response.data.system, response.data.system_version);
+      let bareSystem = SystemService.findSystem(
+        response.data.namespace, response.data.system, response.data.system_version,
+      );
 
       SystemService.getSystem(bareSystem.id, {includeCommands: false}).then(
         (systemObj) => {

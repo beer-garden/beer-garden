@@ -51,7 +51,7 @@
     </thead>
     <tbody>
       <tr ng-repeat="job in data | filter:query">
-        <td><a ui-sref="base.namespace.job({id: job.id})">{{job.name}}</a></td>
+        <td><a ui-sref="base.job({id: job.id})">{{job.name}}</a></td>
         <td>{{job.status}}</td>
         <td>{{job.request_template.system}}</td>
         <td>{{job.request_template.instance_name}}</td>

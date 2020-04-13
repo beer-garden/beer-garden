@@ -4,20 +4,22 @@
 </div>
 
 <div ng-show="!template">
-  <h1 class="page-header" ng-show="responseState(response) !== 'success'">
-    Make Request
-  </h1>
+  <h1 class="page-header" ng-show="responseState(response) !== 'success'">Make Request</h1>
+
   <div ng-show="(responseState(response) === 'success')">
     <div ng-show="!manualOverride">
       <h1 class="page-header" ng-show="!manualOverride">
         <span>{{command.name}}<span>
-        <small>{{system.display_name || system.name}}</small>
-        <small>v{{system.version}}</small>
+        <small>{{command.description}}</small>
         <bg-status class="pull-right" target='system.status'></bg-status>
       </h1>
-      <div class="tagline" ng-show="command.description">
-        {{command.description}}
-      </div>
+
+      <ol class="tagline breadcrumb">
+        <li><a ui-sref="base.system({namespace: breadCrumbs[0]})">{{breadCrumbs[0]}}</a></li
+        ><li><a ui-sref="base.system({namespace: breadCrumbs[0], systemName: breadCrumbs[1]})">{{breadCrumbs[1]}}</a></li
+        ><li><a ui-sref="base.system({namespace: breadCrumbs[0], systemName: breadCrumbs[1], systemVersion: breadCrumbs[2]})">{{breadCrumbs[2]}}</a></li
+        ><li class="active">{{breadCrumbs[3]}}</li>
+      </ol>
     </div>
 
     <div class="page-header" ng-show="manualOverride">
