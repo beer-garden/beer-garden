@@ -1,13 +1,14 @@
-<h1 class='page-header'>
-  {{buildBreadCrumbs()}}
-  <ol class="breadcrumb">
-    <li ng-if="breadCrumbs.length == 1">{{breadCrumbs[0]}}</li>
-    <li ng-if="breadCrumbs.length > 1"><a ui-sref="base.systems()" ng-if="breadCrumbs.length > 0">{{breadCrumbs[0]}}</a></li>
-    <li ng-if="breadCrumbs.length > 1"><a ui-sref="base.filterNamespaces({namespace: breadCrumbs[1]})" >{{breadCrumbs[1]}}</a></li>
-    <li ng-if="breadCrumbs.length > 2"><a ui-sref="base.filterSystems({namespace: breadCrumbs[1], system: breadCrumbs[2]})" >{{breadCrumbs[2]}}</a></li>
-    <li ng-if="breadCrumbs.length > 3"><a ui-sref="base.system({namespace: breadCrumbs[1], systemName: breadCrumbs[2], systemVersion: breadCrumbs[3]})" >{{breadCrumbs[3]}}</a></li>
-  </ol>
-</h1>
+<h1 class='page-header'>Commands</h1>
+
+<ol class="tagline breadcrumb">
+  <li ng-repeat="crumb in breadCrumbs" ng-class="{active: $last}"
+    ><span ng-if="!$last"
+      ><a ng-if="$index==0" ui-sref="{systemName: null, systemVersion: null}">{{crumb}}</a
+      ><a ng-if="$index==1" ui-sref="{systemVersion: null}">{{crumb}}</a>
+    </span
+    ><span ng-if="$last">{{crumb}}</span>
+  </li>
+</ol>
 
 <fetch-data response="response"></fetch-data>
 
@@ -31,10 +32,10 @@
         </tr>
       </thead>
       <tbody>
-        <tr ng-repeat="entry in data | filter:getPageFilter">
-          <td><a ui-sref="base.filterNamespaces({namespace: entry.namespace})" >{{entry.namespace}}</a></td>
-          <td><a ui-sref="base.filterSystems({namespace: entry.namespace, system: entry.system})" >{{entry.system}}</a></td>
-          <td><a ui-sref="base.system({namespace: entry.namespace, systemName: entry.system, systemVersion: entry.version})" >{{entry.version}}</a></td>
+        <tr ng-repeat="entry in data | filter:query">
+          <td>{{entry.namespace}}</td>
+          <td>{{entry.system}}</td>
+          <td>{{entry.version}}</td>
           <td>{{entry.name}}</td>
           <td>{{entry.description}}</td>
           <td>

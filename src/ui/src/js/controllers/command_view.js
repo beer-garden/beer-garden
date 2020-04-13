@@ -220,6 +220,13 @@ export default function commandViewController(
       generateSF();
     }
 
+    $scope.breadCrumbs = [
+      $scope.system.namespace,
+      $scope.system.display_name || $scope.system.name,
+      $scope.system.version,
+      $scope.command.name,
+    ];
+
     $scope.setWindowTitle(
       $scope.command.name,
       ($scope.system.display_name || $scope.system.name),
@@ -279,31 +286,6 @@ export default function commandViewController(
   $scope.$on('sf-render-finished', () => {
     $scope.response = tempResponse;
   });
-
-  $scope.buildBreadCrumbs = function() {
-
-    var dirDisplay =  [".."];
-
-    if ('namespace' in $stateParams){
-        dirDisplay.push($stateParams.namespace);
-
-        if ('systemName' in $stateParams){
-          dirDisplay.push($stateParams.systemName);
-
-          if ('systemVersion' in $stateParams){
-            dirDisplay.push($stateParams.systemVersion);
-
-            if ('commandName' in $stateParams){
-                dirDisplay.push($stateParams.commandName);
-            }
-          }
-
-        }
-    }
-
-    $scope.breadCrumbs = dirDisplay;
-
-  }
 
   $scope.successCallback(command);
 };

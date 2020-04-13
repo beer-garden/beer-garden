@@ -23,19 +23,22 @@ export default function commandIndexController(
   $scope.dtOptions = DTOptionsBuilder.newOptions()
     .withOption('autoWidth', false)
     .withOption('order', [[0, 'asc'], [1, 'asc'], [2, 'asc'], [3, 'asc']])
-    .withLightColumnFilter({
+    .withBootstrap();
+
+  if (!($stateParams.namespace || $stateParams.systemName || $stateParams.systemVersion)) {
+    $scope.dtOptions = $scope.dtOptions.withLightColumnFilter({
       0: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
       1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
       2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
       3: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
       4: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
     })
-    .withBootstrap();
-
+  }
 
   $scope.successCallback = function(response) {
     // Pull out what we care about
     let commands = [];
+    let breadCrumbs = [];
 
     response.data.forEach((system) => {
       system.commands.forEach((command) => {
@@ -50,8 +53,24 @@ export default function commandIndexController(
       });
     });
 
+    if ($stateParams.namespace){
+      commands = _.filter(commands, {namespace: $stateParams.namespace});
+      breadCrumbs.push($stateParams.namespace);
+
+      if ($stateParams.systemName){
+        commands = _.filter(commands, {system: $stateParams.systemName});
+        breadCrumbs.push($stateParams.systemName);
+
+        if ($stateParams.systemVersion){
+          commands = _.filter(commands, {version: $stateParams.systemVersion});
+          breadCrumbs.push($stateParams.systemVersion);
+        }
+      }
+    }
+
     $scope.response = response;
     $scope.data = commands;
+    $scope.breadCrumbs = breadCrumbs;
   };
 
   $scope.failureCallback = function(response) {
@@ -60,48 +79,4 @@ export default function commandIndexController(
   };
 
   $scope.successCallback($rootScope.sysResponse);
-
-  $scope.buildBreadCrumbs = function() {
-
-    var dirDisplay =  [".."];
-
-    if ('namespace' in $stateParams){
-        dirDisplay.push($stateParams.namespace);
-
-        if ('systemName' in $stateParams){
-          dirDisplay.push($stateParams.systemName);
-
-          if ('systemVersion' in $stateParams){
-            dirDisplay.push($stateParams.systemVersion);
-          }
-        }
-    }
-
-    if (dirDisplay.length == 1){
-      var dirDisplay =  ["Available Commands"];
-    }
-    $scope.breadCrumbs = dirDisplay;
-
-  }
-
-  $scope.getPageFilter = function (command) {
-
-    if ('namespace' in $stateParams){
-        if (command.namespace != $stateParams.namespace){
-          return false;
-        }
-     }
-     else if ('systemName' in $stateParams){
-        if (command.system != $stateParams.systemName){
-          return false
-        }
-     }
-     else if ('systemVersion' in $stateParams){
-        if (command.version != $stateParams.systemVersion){
-          return false
-        }
-     }
-
-    return true;
-  }
 };

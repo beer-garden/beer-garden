@@ -77,37 +77,30 @@ export default function routeConfig(
       templateUrl: basePath + 'system_index.html',
       controller: 'SystemIndexController',
     })
-    .state('base.filterNamespaces', {
-      url: 'systems/:namespace/',
-      templateUrl: basePath + 'system_index.html',
-      controller: 'SystemIndexController',
-    })
-    .state('base.filterSystems', {
-      url: 'systems/:namespace/:system',
-      templateUrl: basePath + 'system_index.html',
-      controller: 'SystemIndexController',
-    })
     .state('base.systemID', {
       url: 'systems/:id/',
       controller: ['$state', '$stateParams', 'SystemService', ($state, $stateParams, SystemService) => {
         let sys = SystemService.findSystemByID($stateParams.id);
-        $state.go('base.system', {name: sys.name, version: sys.version});
+        $state.go('base.system', {namespace: sys.namespace, systemName: sys.name, systemVersion: sys.version});
       }],
     })
     .state('base.system', {
-      url: 'systems/:namespace/:systemName/:systemVersion/',
+      url: 'commands?namespace&systemName&systemVersion',
       templateUrl: basePath + 'command_index.html',
       controller: 'CommandIndexController',
       resolve: {
         system: ['$stateParams', 'SystemService', ($stateParams, SystemService) => {
-          let sys = SystemService.findSystem(
+          return SystemService.findSystem(
             $stateParams.namespace, $stateParams.systemName, $stateParams.systemVersion
           ) || {};
-          return SystemService.getSystem(sys.id).catch(
-            (response) => response
-          );
         }],
       },
+    })
+    // This is just an alias for base.system with no query args at this point
+    .state('base.commands', {
+      url: 'commands/',
+      templateUrl: basePath + 'command_index.html',
+      controller: ['$state', ($state) => {$state.go('base.system');}],
     })
     .state('base.commandID', {
       url: 'commands/:id/',
@@ -165,11 +158,6 @@ export default function routeConfig(
       'url': 'jobs/:id/',
       'templateUrl': basePath + 'job_view.html',
       'controller': 'JobViewController',
-    })
-    .state('base.commands', {
-      url: 'commands/',
-      templateUrl: basePath + 'command_index.html',
-      controller: 'CommandIndexController',
     })
     .state('base.requests', {
       url: 'requests/',

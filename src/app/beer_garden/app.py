@@ -249,7 +249,7 @@ class Application(StoppableThread):
         event_manager = FanoutProcessor()
 
         # Forward all events down into the entry points
-        event_manager.register(self.entry_manager, start=False)
+        event_manager.register(self.entry_manager, manage=False)
 
         # Register the callback processor
         event_manager.register(QueueListener(action=garden_callbacks))
