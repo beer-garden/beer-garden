@@ -168,13 +168,6 @@ export default function routeConfig(
       url: 'requests/:requestId/',
       templateUrl: basePath + 'request_view.html',
       controller: 'RequestViewController',
-      resolve: {
-        request: ['$stateParams', 'RequestService', ($stateParams, RequestService) => {
-          return RequestService.getRequest($stateParams.requestId).catch(
-            (response) => response
-          );
-        }],
-      },
     })
     .state('base.queues', {
       url: 'admin/queues/',
