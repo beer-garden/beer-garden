@@ -192,29 +192,46 @@ export default function appRun(
     $state.go('base.landing');
   });
 
-  EventService.addCallback('global_systems', (event) => {
-    if (['SYSTEM_CREATED', 'SYSTEM_REMOVED', 'SYSTEM_UPDATED'].includes(event.name)) {
+  function upsertSystem(system) {
+    let index = _.findIndex($rootScope.systems, {id: system.id});
 
-      let existingSystem = SystemService.findSystemByID(event.payload.id);
+    if (index == -1) {
+      $rootScope.systems.push(system);
+    } else {
+      $rootScope.systems.splice(index, 1, system);
+    }
+  }
 
-      switch (event.name) {
-        case 'SYSTEM_CREATED':
-          if (!existingSystem) {
-            $rootScope.systems.push(event.payload);
-          }
-          break;
-        case 'SYSTEM_REMOVED':
-          if (existingSystem) {
-            _.pull($rootScope.systems, existingSystem);
-          }
-          break;
-        case 'SYSTEM_UPDATED':
-          if (existingSystem) {
-            _.pull($rootScope.systems, existingSystem);
-            $rootScope.systems.push(event.payload);
-          }
-          break;
+  function removeSystem(system) {
+    let index = _.findIndex($rootScope.systems, {id: system.id});
+
+    if (index != -1) {
+      $rootScope.systems.splice(index, 1);
+    }
+  }
+
+  function updateInstance(instance) {
+    _.forEach($rootScope.systems, (sys) => {
+      let index = _.findIndex(sys.instances, {id: instance.id});
+
+      if (index != -1) {
+        sys.instances.splice(index, 1, instance);
+
+        // Returning false ends the iteration early
+        return false;
       }
+    });
+  }
+
+  EventService.addCallback('global_systems', (event) => {
+    if (['SYSTEM_CREATED', 'SYSTEM_UPDATED'].includes(event.name)) {
+      upsertSystem(event.payload);
+    }
+    else if (event.name == 'SYSTEM_REMOVED') {
+      removeSystem(event.payload);
+    }
+    else if (event.name.startsWith('INSTANCE')) {
+      updateInstance(event.payload);
     }
   });
 
