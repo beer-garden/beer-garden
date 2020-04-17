@@ -253,9 +253,9 @@ export default function requestViewController(
     return total;
   };
 
-  EventService.addCallback('request_view', (event) => {
+  function eventCallback(event) {
     if (event.name.startsWith('REQUEST')) {
-      
+
       if (event.payload.id == $stateParams.requestId) {
         $scope.successCallback(event.payload);
       }
@@ -280,9 +280,11 @@ export default function requestViewController(
         }
       }
     }
-  });
+  }
 
-  // Need to clean up the callback when done
+  EventService.addCallback('request_view', (event) => {
+    $scope.$apply(() => {eventCallback(event);})
+  });
   $scope.$on('$destroy', function() {
     EventService.removeCallback('request_view');
   });
