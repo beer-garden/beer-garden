@@ -47,7 +47,6 @@ class Application(StoppableThread):
     clients = None
     helper_threads = None
     entry_manager = None
-    shared_manager = None
 
     def __init__(self):
         super(Application, self).__init__(
