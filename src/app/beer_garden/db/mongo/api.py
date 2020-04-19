@@ -158,6 +158,12 @@ def prune_tasks(**kwargs) -> Tuple[List[dict], int]:
     return MongoPruner.determine_tasks(**kwargs)
 
 
+def get_job_store():
+    from beer_garden.db.mongo.jobstore import MongoJobStore
+
+    return MongoJobStore()
+
+
 def count(model_class: ModelType, **kwargs) -> int:
     """Count the number of items matching a query
 

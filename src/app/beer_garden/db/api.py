@@ -8,6 +8,8 @@ initial_setup = beer_garden.db.mongo.api.initial_setup
 get_pruner = beer_garden.db.mongo.api.get_pruner
 prune_tasks = beer_garden.db.mongo.api.prune_tasks
 
+get_job_store = beer_garden.db.mongo.api.get_job_store
+
 count = beer_garden.db.mongo.api.count
 query_unique = beer_garden.db.mongo.api.query_unique
 query = beer_garden.db.mongo.api.query

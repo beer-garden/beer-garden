@@ -19,7 +19,6 @@ import beer_garden.garden
 import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
-from beer_garden.db.mongo.jobstore import MongoJobStore
 from beer_garden.events import publish
 from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.processors import (
@@ -269,7 +268,7 @@ class Application(StoppableThread):
 
     @staticmethod
     def _setup_scheduler():
-        job_stores = {"beer_garden": MongoJobStore()}
+        job_stores = {"beer_garden": db.get_job_store()}
         scheduler_config = config.get("scheduler")
         executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
         job_defaults = scheduler_config.job_defaults.to_dict()
