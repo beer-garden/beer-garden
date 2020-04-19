@@ -98,7 +98,7 @@ class Application(StoppableThread):
         beer_garden.events.manager = self._setup_events_manager()
 
     def run(self):
-        if not self._verify_mongo_connection():
+        if not self._verify_db_connection():
             return
 
         if not self._verify_message_queue_connection():
@@ -134,17 +134,17 @@ class Application(StoppableThread):
 
         return not self.stopped()
 
-    def _verify_mongo_connection(self):
-        """Verify that that the application can connect to mongo
+    def _verify_db_connection(self):
+        """Verify that that the application can connect to a database
 
         Returns:
             True: the verification was successful
             False: the app was stopped before a connection could be verified
         """
-        self.logger.debug("Verifying mongo connection...")
+        self.logger.debug("Verifying database connection...")
         return self._progressive_backoff(
             partial(db.check_connection, config.get("db")),
-            "Unable to connect to mongo, is it started?",
+            "Unable to connect to database, is it started?",
         )
 
     def _verify_message_queue_connection(self):
