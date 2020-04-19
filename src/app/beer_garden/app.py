@@ -20,7 +20,6 @@ import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
 from beer_garden.db.mongo.jobstore import MongoJobStore
-from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.events import publish
 from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.processors import (
@@ -71,11 +70,11 @@ class Application(StoppableThread):
         ]
 
         # Only want to run the MongoPruner if it would do anything
-        tasks, run_every = MongoPruner.determine_tasks(**config.get("db.ttl"))
+        tasks, run_every = db.prune_tasks(**config.get("db.ttl"))
         if run_every:
             self.helper_threads.append(
                 HelperThread(
-                    MongoPruner, tasks=tasks, run_every=timedelta(minutes=run_every)
+                    db.get_pruner(), tasks=tasks, run_every=timedelta(minutes=run_every)
                 )
             )
 

@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
-import logging
-from typing import List, Optional, Type, Union
-
 import brewtils.models
+import logging
 from box import Box
 from brewtils.models import BaseModel
 from brewtils.schema_parser import SchemaParser
 from mongoengine import connect, register_connection, DoesNotExist
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
+from typing import List, Optional, Type, Union, Tuple
 
 import beer_garden.db.mongo.models
-from beer_garden.db.mongo.util import check_indexes, ensure_roles, ensure_users
 from beer_garden.db.mongo.models import MongoModel
 from beer_garden.db.mongo.parser import MongoParser
+from beer_garden.db.mongo.pruner import MongoPruner
+from beer_garden.db.mongo.util import check_indexes, ensure_roles, ensure_users
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +148,14 @@ def initial_setup(guest_login_enabled):
 
     ensure_roles()
     ensure_users(guest_login_enabled)
+
+
+def get_pruner():
+    return MongoPruner
+
+
+def prune_tasks(**kwargs) -> Tuple[List[dict], int]:
+    return MongoPruner.determine_tasks(**kwargs)
 
 
 def count(model_class: ModelType, **kwargs) -> int:
