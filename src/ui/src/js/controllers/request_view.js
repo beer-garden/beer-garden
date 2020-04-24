@@ -9,7 +9,7 @@ requestViewController.$inject = [
   '$animate',
   'RequestService',
   'SystemService',
-  'request',
+  'EventService',
 ];
 
 /**
@@ -21,6 +21,7 @@ requestViewController.$inject = [
  * @param  {$animate} $animate         Angular's $animate object.
  * @param  {Object} RequestService     Beer-Garden Request Service.
  * @param  {Object} SystemService      Beer-Garden's System Service.
+ * @param  {Object} EventService       Beer-Garden's Event Service.
  */
 export default function requestViewController(
     $scope,
@@ -30,14 +31,17 @@ export default function requestViewController(
     $animate,
     RequestService,
     SystemService,
-    request) {
-  $scope.service = RequestService;
+    EventService) {
+
+  $scope.request = undefined;
+  $scope.complete = false;
 
   $scope.instanceStatus = undefined;
   $scope.timeoutRequest = undefined;
 
   $scope.children = [];
-  $scope.childrenCollapsed = true;
+  $scope.childrenDisplay = [];
+  $scope.childrenCollapsed = false;
 
   $scope.rawOutput = undefined;
   $scope.htmlOutput = '';
@@ -65,10 +69,6 @@ export default function requestViewController(
   };
 
   $scope.canRepeat = function(request) {
-    if (request.system === 'beer_garden') {
-      return false;
-    }
-
     return RequestService.isComplete(request);
   };
 
@@ -85,18 +85,18 @@ export default function requestViewController(
     $scope.formatErrorTitle = undefined;
     $scope.formatErrorMsg = undefined;
 
-    let rawOutput = $scope.data.output;
+    let rawOutput = $scope.request.output;
 
     try {
       if (rawOutput === undefined || rawOutput == null) {
         rawOutput = 'null';
-      } else if ($scope.data.output_type == 'HTML') {
+      } else if ($scope.request.output_type == 'HTML') {
         $scope.htmlOutput = rawOutput;
         $scope.formattedAvailable = true;
         $scope.showFormatted = true;
-      } else if ($scope.data.output_type == 'JSON') {
+      } else if ($scope.request.output_type == 'JSON') {
         try {
-          let parsedOutput = JSON.parse($scope.data.output);
+          let parsedOutput = JSON.parse(rawOutput);
           rawOutput = $scope.stringify(parsedOutput);
 
           if ($scope.countNodes($scope.formattedOutput) < 1000) {
@@ -115,9 +115,9 @@ export default function requestViewController(
                                     'doesn\'t look like JSON. If this is happening often please ' +
                                     'let the plugin developer know.';
         }
-      } else if ($scope.data.output_type == 'STRING') {
+      } else if ($scope.request.output_type == 'STRING') {
         try {
-          rawOutput = $scope.stringify(JSON.parse($scope.data.output));
+          rawOutput = $scope.stringify(JSON.parse(rawOutput));
         } catch (err) { }
       }
     } finally {
@@ -127,62 +127,44 @@ export default function requestViewController(
 
   $scope.formatDate = formatDate;
 
-  $scope.successCallback = function(response) {
-    $scope.response = response;
-    $scope.data = response.data;
+  $scope.successCallback = function(request) {
+    $scope.request = request;
 
     $scope.setWindowTitle(
-      $scope.data.command,
-      ($scope.data.metadata.system_display_name || $scope.data.system),
-      $scope.data.system_version,
-      $scope.data.instance_name,
+      $scope.request.command,
+      ($scope.request.metadata.system_display_name || $scope.request.system),
+      $scope.request.system_version,
+      $scope.request.instance_name,
       'request'
     );
 
-    if (RequestService.isComplete(response.data)) {
+    if (RequestService.isComplete($scope.request)) {
       $scope.formatOutput();
+      $scope.complete = true;
     }
 
-    $scope.formattedParameters = $scope.stringify($scope.data.parameters);
+    $scope.formattedParameters = $scope.stringify($scope.request.parameters);
 
-    // If request is not yet successful
-    // We need to find system attached to request
-    // And find out if the status of that instance is up
-    if (!RequestService.isComplete(response.data)) {
-      let bareSystem = SystemService.findSystem(
-        response.data.namespace, response.data.system, response.data.system_version,
-      );
+    // Grab the status of the instance this request targets to display if necessary
+    let system = SystemService.findSystem(
+      $scope.request.namespace, $scope.request.system, $scope.request.system_version,
+    );
+    $scope.instanceStatus = _.find(system.instances, {name: $scope.request.instance_name}).status;
 
-      SystemService.getSystem(bareSystem.id, {includeCommands: false}).then(
-        (systemObj) => {
-          $scope.instanceStatus = _.find(
-            systemObj.data.instances,
-            {name: response.data.instance_name}
-          ).status;
-        }
-      );
-    }
+    // Need to update the children list, but don't update if it's empty - Events don't
+    // send children so the final REQUEST_COMPLETED update would clobber the list
+    if ($scope.request.children) {
+      $scope.children = $scope.request.children;
 
-    // If the children view is expanded we have to do a little update
-    if (!$scope.childrenCollapsed) {
-      $scope.children = response.data.children;
-    }
-
-    // If any request isn't done then we need to keep checking
-    if ((!RequestService.isComplete(response.data)) ||
-        (!_.every(response.data.children, RequestService.isComplete))) {
-      $scope.timeoutRequest = $timeout(function() {
-        RequestService.getRequest($stateParams.requestId)
-          .then($scope.successCallback, $scope.failureCallback);
-      }, 3000);
-    } else {
-      $scope.timeoutRequest = undefined;
+      if (!$scope.childrenCollapsed) {
+        $scope.childrenDisplay = $scope.request.children;
+      }
     }
   };
 
   $scope.failureCallback = function(response) {
     $scope.response = response;
-    $scope.data = response.data;
+    $scope.request = response.data;
 
     $scope.rawOutput = undefined;
     $scope.htmlOutput = undefined;
@@ -216,20 +198,10 @@ export default function requestViewController(
     );
   };
 
-  $scope.$on('$destroy', function() {
-    if ($scope.timeoutRequest) {
-      $timeout.cancel($scope.timeoutRequest);
-    }
-  });
-
-  $scope.hasParent = function(request) {
-    return request.parent !== undefined && request.parent !== null;
-  };
-
-  $scope.hasChildren = function(request) {
-    return request.children !== undefined &&
-           request.children !== null &&
-           request.children.length > 0;
+  $scope.childrenExist = function(children) {
+    return children !== undefined &&
+           children !== null &&
+           children.length > 0;
   };
 
   $scope.toggleChildren = function() {
@@ -241,27 +213,19 @@ export default function requestViewController(
     $scope.childrenCollapsed = !$scope.childrenCollapsed;
 
     if ($scope.childrenCollapsed) {
-      $scope.children = [];
+      $scope.childrenDisplay = [];
     } else {
-      $scope.children = $scope.data.children;
+      $scope.childrenDisplay = $scope.children;
     }
   };
 
-  $scope.showColumn = function(property) {
-    if ($scope.data[property] !== undefined && $scope.data[property] !== null) {
-      return true;
-    }
+  // Return true if any of the children or the parent have an error_class
+  $scope.showErrorColumn = function(request, children) {
+    return _.some(_.concat(children, [request]), 'error_class');
+  };
 
-    let show = false;
-    if ($scope.hasChildren($scope.data)) {
-      $scope.data.children.forEach(function(child) {
-        if (child[property] !== undefined && child[property] !== null) {
-          show = true;
-        }
-      });
-    }
-
-    return show;
+  $scope.hasParent = function(request) {
+    return request.parent !== undefined && request.parent !== null;
   };
 
   $scope.getParentTree = function(request) {
@@ -289,25 +253,60 @@ export default function requestViewController(
     return total;
   };
 
-  if (request.status == 200) {
-    $scope.successCallback(request);
-  } else {
-    $scope.failureCallback(request);
+  function eventCallback(event) {
+    if (event.name.startsWith('REQUEST')) {
+
+      if (event.payload.id == $stateParams.requestId) {
+        $scope.successCallback(event.payload);
+      }
+      else if (event.payload.parent.id == $stateParams.requestId) {
+        if (event.name == 'REQUEST_CREATED') {
+          $scope.children.push(event.payload);
+        } else {
+          let child = _.find($scope.children, {id: event.payload.id});
+
+          if (!child) {
+            // If we missed the REQUEST_CREATED just push this one in there
+            $scope.children.push(event.payload);
+          } else {
+            child.status = event.payload.status;
+            child.updated_at = event.payload.updated_at;
+            child.error_class = event.payload.error_class;
+          }
+        }
+
+        if (!$scope.childrenCollapsed) {
+          $scope.childrenDisplay = $scope.children;
+        }
+      }
+    }
   }
 
-  // function loadRequest() {
-  //   $scope.response = undefined;
-  //   $scope.data = {};
+  EventService.addCallback('request_view', (event) => {
+    $scope.$apply(() => {eventCallback(event);})
+  });
+  $scope.$on('$destroy', function() {
+    EventService.removeCallback('request_view');
+  });
 
-  //   RequestService.getRequest($stateParams.request_id)
-  //     .then($scope.successCallback, $scope.failureCallback);
-  // }
+  function loadRequest() {
+    $scope.response = undefined;
+    $scope.request = {};
 
-  // $scope.$on('userChange', function() {
-  //   loadRequest();
-  // });
+    RequestService.getRequest($stateParams.requestId).then(
+      (response) => {
+        $scope.response = response;
+        $scope.successCallback(response.data);
+      },
+      $scope.failureCallback,
+    );
+  }
 
-  // loadRequest();
+  $scope.$on('userChange', function() {
+    loadRequest();
+  });
+
+  loadRequest();
 };
 
 
