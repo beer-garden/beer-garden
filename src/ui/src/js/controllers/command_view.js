@@ -82,19 +82,7 @@ export default function commandViewController(
   };
 
   $scope.checkInstance = function() {
-    // Loops through all system instances to find status of the model.instance
-    for (let i=0; i < $scope.system.instances.length; i++) {
-        let instance = $scope.system.instances[i];
-
-        // Checks status to show banner if not running, hide banner if running
-        if (instance.name == $scope.model.instance_name) {
-            if (instance.status != 'RUNNING') {
-                return true;
-            } else {
-                return false;
-            }
-        }
-    }
+    return _.find($scope.system.instances, {name: $scope.model.instance_name}).status != 'RUNNING';
   };
 
   $scope.submitForm = function(form, model) {
