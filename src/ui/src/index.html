@@ -16,7 +16,10 @@
   <body ng-cloak>
 
     <!-- Navbar Start -->
-    <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom:0">
+    <!-- Static navbar for layout purposes -->
+    <nav class="navbar navbar-static-top"></nav>
+
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
 
       <a style="cursor:pointer" class="navbar-brand" ui-sref="base.systems">
         <i style="padding: 3px;" ng-class="getIcon(config.iconDefault)"></i>
