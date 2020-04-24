@@ -83,6 +83,9 @@ html, body{
     border-left: 0;
     padding: 30px;
 }
+.navbar{
+    margin-bottom: 0;
+}
 .page-header{
     margin-top: 0px;
 }
