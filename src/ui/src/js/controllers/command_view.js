@@ -183,7 +183,7 @@ export default function commandViewController(
   };
 
   $scope.scheduleRequest = function() {
-    $state.go('jobsCreate',
+    $state.go('base.jobsCreate',
       {
         'request': $scope.model,
         'system': $scope.system,
