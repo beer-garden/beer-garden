@@ -130,15 +130,19 @@ def handle_event(event):
     This method should NOT update the routing module. Let its handler worry about that!
     """
     if event.garden != config.get("garden.name"):
-        if event.name in (Events.GARDEN_STARTED.name, Events.GARDEN_UPDATED.name,):
-
+        if event.name in (
+            Events.GARDEN_STARTED.name,
+            Events.GARDEN_UPDATED.name,
+            Events.GARDEN_STOPPED.name,
+        ):
             # Only do stuff for direct children
             if event.payload.name == event.garden:
                 existing_garden = get_garden(event.payload.name)
 
                 if existing_garden is None:
                     create_garden(event.payload)
-
                 else:
-                    existing_garden.systems = event.payload.systems
+                    for attr in ("status", "status_info", "namespaces", "systems"):
+                        setattr(existing_garden, attr, getattr(event.payload, attr))
+
                     update_garden(existing_garden)
