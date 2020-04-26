@@ -8,6 +8,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils import EasyClient
 from brewtils.models import Event, Events, Garden
 from brewtils.stoppable_thread import StoppableThread
+from more_itertools import flatten
 from pytz import utc
 
 import beer_garden.api
@@ -282,19 +283,15 @@ class Application(StoppableThread):
 
     @staticmethod
     def _publish_update(event: Events):
+        # Want to have most current info when publishing
         # DO NOT DO THIS
         # garden = beer_garden.garden.get_garden(config.get("garden.name"))
-
         # INSTEAD, THIS
-        # Want to have most current info when publishing
-        known_systems = list(beer_garden.router.garden_lookup.keys())
-        known_namespaces = beer_garden.namespace.get_namespaces()
-
         garden = Garden(
             name=config.get("garden.name"),
             status="RUNNING" if event == Events.GARDEN_STARTED else "STOPPED",
-            systems=known_systems,
-            namespaces=known_namespaces,
+            namespaces=beer_garden.namespace.get_namespaces(),
+            systems=flatten([g.systems for g in beer_garden.router.gardens.values()]),
         )
 
         publish(Event(name=event.name, payload_type="Garden", payload=garden))

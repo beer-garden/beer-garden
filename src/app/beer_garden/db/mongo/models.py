@@ -694,7 +694,7 @@ class Garden(MongoModel, Document):
     namespaces = ListField()
     connection_type = StringField()
     connection_params = DictField()
-    systems = ListField()
+    systems = ListField(ReferenceField(System, reverse_delete_rule=PULL))
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
