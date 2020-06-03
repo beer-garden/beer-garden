@@ -155,6 +155,7 @@ angular.module('bgApp',
 .config(['localStorageServiceProvider', function(localStorageServiceProvider) {
   localStorageServiceProvider.setStorageType('sessionStorage');
 }])
+//Adds urls to whitelist to prevent undefined url for download link
 .config(['$compileProvider', function ($compileProvider) {
   $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|tel|file|data):/);
 }])

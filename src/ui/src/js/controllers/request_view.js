@@ -38,7 +38,7 @@ export default function requestViewController(
   $scope.childrenCollapsed = true;
   $scope.downloadHref = '';
   $scope.filename = '';
-  $scope.downloadVisible = '';
+  $scope.downloadVisible = true
   $scope.rawOutput = undefined;
   $scope.htmlOutput = '';
   $scope.jsonOutput = '';
@@ -90,7 +90,7 @@ export default function requestViewController(
     try {
       if (rawOutput === undefined || rawOutput == null) {
         rawOutput = 'null';
-        $scope.downloadVisible = 'hidden';
+        $scope.downloadVisible = false;
       } else if ($scope.data.output_type == 'HTML') {
         $scope.filename = $scope.data.id+".html";
         $scope.htmlOutput = rawOutput;
