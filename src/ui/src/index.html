@@ -80,40 +80,77 @@
              ng-class="{active: ($state.current.name.startsWith('job'))}">Scheduler</a>
         </li>
 
+        <!-- Menu Bar broken into three sections: main, themes, admin -->
+        <!-- Based on the current menu view selected will determine which elements are seen -->
         <li id="nav-extras" class="dropdown">
-          <a href="" class="fa fa-bars dropdown-toggle" data-toggle="dropdown"></a>
+          <a href="" class="fa fa-bars dropdown-toggle" data-toggle="dropdown" ng-click="setMenuPage('main')"></a>
           <ul class="dropdown-menu">
-            <li><a ui-sref="base.about" ui-sref-active="active">About</a></li>
-            <hr>
-            <li ng-repeat="(style, enabled) in themes">
+            <li ng-show="!checkMenuPage('main')">
+              <form>
+                <div style="padding: 3px 15px; cursor: pointer;"
+                     ng-click="setMenuPage('main')">
+                  <span class="fa fa-chevron-left"></span>
+                  <span>Back</span>
+                </div>
+              </form>
+            </li>
+            <li ng-show="checkMenuPage('main')">
+              <a ui-sref="base.about" ui-sref-active="active">About</a>
+            </li>
+            <li ng-show="checkMenuPage('main')" role="separator" class="divider"></li>
+            <form>
+            <li ng-show="checkMenuPage('main')">
+              <form>
+                <div style="padding: 3px 15px; cursor: pointer;"
+                     ng-click="setMenuPage('theme')">
+                  <span>Themes</span>
+                  <span class="fa fa-chevron-right"></span>
+                </div>
+              </form>
+            </li>
+            </form>
+            <li ng-show="checkMenuPage('theme')"><h5>Themes</h5></li>
+            <li ng-repeat="(style, enabled) in themes" ng-show="checkMenuPage('theme')">
               <div style="padding: 3px 15px; cursor: pointer;"
                     ng-click="changeTheme(style, true)">
                 <span class="fa" ng-class="{'fa-check': enabled, 'fa-fw': !enabled}"></span>
                 <span>{{style}}</span>
               </div>
             </li>
-            <hr>
+            <li ng-show="(hasPermission(user, 'bg-queue-read') || hasPermission(user, 'bg-role-read')) && checkMenuPage('main')" role="separator" class="divider"><li>
+            <li ng-show="(hasPermission(user, 'bg-queue-read') || hasPermission(user, 'bg-role-read')) && checkMenuPage('main')" >
+                <form>
+                  <div style="padding: 3px 15px; cursor: pointer;"
+                       ng-click="setMenuPage('admin')">
+                    <span>Admin</span>
+                    <span class="fa fa-chevron-right"></span>
+                  </div>
+                </form>
             <li>
+            <li ng-show="checkMenuPage('admin')">
+              <span>Admin</span>
+            </li>
+            <li ng-show="checkMenuPage('admin')">
               <a ui-sref="base.system_admin" ui-sref-active="active">
                 <span>Systems</span>
               </a>
             </li>
-            <li ng-show="hasPermission(user, 'bg-queue-read')">
+            <li ng-show="hasPermission(user, 'bg-queue-read') && checkMenuPage('admin')">
               <a ui-sref="base.queues" ui-sref-active="active">
                 <span>Queues</span>
               </a>
             </li>
-            <li ng-show="hasPermission(user, 'bg-user-read')">
+            <li ng-show="hasPermission(user, 'bg-user-read') && checkMenuPage('admin')">
               <a ui-sref="base.user_admin" ui-sref-active="active">
                 <span>Users</span>
               </a>
             </li>
-            <li ng-show="hasPermission(user, 'bg-role-read')">
+            <li ng-show="hasPermission(user, 'bg-role-read') && checkMenuPage('admin')">
               <a ui-sref="base.role_admin" ui-sref-active="active">
                 <span>Roles</span>
               </a>
             </li>
-            <li ng-show="hasPermission(user, 'bg-role-read')">
+            <li ng-show="hasPermission(user, 'bg-role-read') && checkMenuPage('admin')">
               <a ui-sref="base.garden_admin" ui-sref-active="active">
                 <span>Gardens</span>
               </a>
