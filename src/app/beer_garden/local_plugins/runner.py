@@ -94,7 +94,7 @@ class ProcessRunner(Thread):
     def kill(self):
         """Kill the underlying plugin process with SIGKILL"""
         if self.process and self.process.poll() is None:
-            self.logger.warning(f"About to kill process")
+            self.logger.warning("About to kill process")
             self.process.kill()
 
     def run(self):
@@ -137,7 +137,7 @@ class ProcessRunner(Thread):
             while self.process.poll() is None:
                 sleep(0.1)
 
-            self.logger.debug(f"About to join stream reader threads")
+            self.logger.debug("About to join stream reader threads")
             stdout_thread.join()
             stderr_thread.join()
 
@@ -156,11 +156,11 @@ class ProcessRunner(Thread):
                 # check will happen before we start processing
                 sleep(0.1)
 
-            self.logger.debug(f"About to stop and join log processing thread")
+            self.logger.debug("About to stop and join log processing thread")
             log_reader.stop()
             log_reader.join()
 
-            self.logger.info(f"Plugin is officially stopped")
+            self.logger.info("Plugin is officially stopped")
 
         except Exception as ex:
             self.logger.exception(f"Plugin died: {ex}")

@@ -2,14 +2,14 @@
   <span>Request View</span>
 
   <span ng-if="responseState(response) === 'success'">
-    <small>{{data.id}}</small>
+    <small>{{request.id}}</small>
     <button type="button"
-            ng-if="canRepeat(data)"
-            ng-click="redoRequest(data)"
+            ng-if="complete"
+            ng-click="redoRequest(request)"
             class="btn btn-success pull-right">
       Pour it Again
     </button>
-    <small class="pull-right" ng-if="showInstanceStatus(data, instanceStatus)">
+    <small class="pull-right" ng-if="showInstanceStatus(request, instanceStatus)">
       Error: Instance {{instanceStatus}}
     </small>
   </span>
@@ -19,8 +19,8 @@
 
 <div ng-if="responseState(response) === 'success'">
   <ol class="tagline breadcrumb" ng-show="request_tree.length > 1">
-    <li ng-repeat="request in request_tree = getParentTree(data)" ng-class="{active: $last}"
-      ><span ng-if="!$last"><a ui-sref="base.namespace.request({requestId: request.id})">{{request.command}}</a></span
+    <li ng-repeat="request in request_tree = getParentTree(request)" ng-class="{active: $last}"
+      ><span ng-if="!$last"><a ui-sref="base.request({requestId: request.id})">{{request.command}}</a></span
       ><span ng-if="$last">{{request.command}}</span>
     </li>
   </ol>
@@ -34,7 +34,7 @@
           <th>System Version</th>
           <th>Instance Name</th>
           <th>Status</th>
-          <th ng-if="showColumn('error_class')">Error Type</th>
+          <th ng-show="showErrorColumn(request, children)">Error Type</th>
           <th>Created</th>
           <th>Updated</th>
           <th>Comment</th>
@@ -44,47 +44,47 @@
         <tr ng-click="toggleChildren()">
           <td>
             <span id="chevron"
-                  ng-if="hasChildren(data)"
+                  ng-show="childrenExist(children)"
                   class="fa fa-chevron-right"
                   ng-class="{'chevron-rotate': !childrenCollapsed}">
-            </span>{{data.command}}</td>
-          <td>{{data.metadata.system_display_name || data.system}}</td>
+            </span>{{request.command}}</td>
+          <td>{{request.metadata.system_display_name || request.system}}</td>
           <td>
             <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
-              <a ui-sref="base.namespace.system({systemName: data.system, systemVersion: data.system_version})">
-                <span>{{data.system_version}}</span>
+              <a ui-sref="base.system({namespace: request.namespace, systemName: request.system, systemVersion: request.system_version})">
+                <span>{{request.system_version}}</span>
               </a>
             </div>
           </td>
-          <td>{{data.instance_name}}</td>
-          <td>{{data.status}}
-            <span uib-popover="{{statusDescriptions[data.status]}}"
+          <td>{{request.instance_name}}</td>
+          <td>{{request.status}}
+            <span uib-popover="{{statusDescriptions[request.status]}}"
                   popover-animation="true"
                   popover-placement="right"
                   popover-trigger="'mouseenter'"
-                  popover-title="{{data.status}}"
+                  popover-title="{{request.status}}"
                   style="color: gray; padding-top: 5px">
               <span class="glyphicon glyphicon-info-sign"></span>
             </span>
           </td>
-          <td ng-if="showColumn('error_class')">{{data.error_class}}</td>
-          <td>{{formatDate(data.created_at)}}</td>
-          <td>{{formatDate(data.updated_at)}}</td>
-          <td>{{data.comment}}</td>
+          <td ng-show="showErrorColumn(request, children)">{{request.error_class}}</td>
+          <td>{{formatDate(request.created_at)}}</td>
+          <td>{{formatDate(request.updated_at)}}</td>
+          <td>{{request.comment}}</td>
         </tr>
 
-        <tr class="child-row slide" ng-repeat="child in children">
+        <tr class="child-row slide" ng-repeat="child in childrenDisplay">
           <td>
             <div>
               <span class="fa fa-chevron-right" style="visibility: hidden" />
-              <a class="child-link" ui-sref="base.namespace.request({requestId: child.id})">{{child.command}}</a>
+              <a class="child-link" ui-sref="base.request({requestId: child.id})">{{child.command}}</a>
             </div>
           </td>
           <td><div>{{child.metadata.system_display_name || child.system}}</div></td>
           <td><div>{{child.system_version}}</div></td>
           <td><div>{{child.instance_name}}</div></td>
           <td><div>{{child.status}}</div></td>
-          <td ng-if="showColumn('error_class')"><div>{{child.error_class}}</div></td>
+          <td ng-show="showErrorColumn(request, children)"><div>{{child.error_class}}</div></td>
           <td><div>{{formatDate(child.created_at)}}</div></td>
           <td><div>{{formatDate(child.updated_at)}}</div></td>
           <td><div>{{child.comment}}</div></td>
@@ -106,16 +106,19 @@
           </span>
         </div>
         <div style="position: relative;">
-          <div class="w-100" style="text-align: center;" ng-hide="service.isComplete(data)">
+          <div class="w-100" style="text-align: center;" ng-hide="complete">
             <i class="fa fa-spinner fa-pulse fa-3x"></i>
           </div>
-          <pre id="rawOutput" ng-show="!showFormatted && service.isComplete(data)">{{rawOutput}}</pre>
-          <div id="htmlOutput" ng-show="showFormatted && service.isComplete(data) && htmlOutput">
-            <div ng-bind-html="htmlOutput"></div>
-          </div>
-          <div id="jsonOutput" ng-show="showFormatted && service.isComplete(data) && jsonOutput">
-            <div ui-ace="{ onLoad: loadPreview }" ng-model="jsonOutput"
-              ng-if="formattedAvailable && format_error === undefined" style="width: 100%;"></div>
+          <div ng-show="complete">
+            <pre id="rawOutput" ng-show="!showFormatted">{{rawOutput}}</pre>
+
+            <div id="htmlOutput" ng-show="showFormatted && htmlOutput">
+              <div ng-bind-html="htmlOutput"></div>
+            </div>
+            <div id="jsonOutput" ng-show="showFormatted && jsonOutput">
+              <div ui-ace="{ onLoad: loadPreview }" ng-model="jsonOutput"
+                ng-if="formattedAvailable && format_error === undefined" style="width: 100%;"></div>
+            </div>
           </div>
         </div>
       </div>

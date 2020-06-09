@@ -1,10 +1,21 @@
-<h1 class='page-header'>Available Commands</h1>
+<h1 class='page-header'>Commands</h1>
+
+<ol class="tagline breadcrumb">
+  <li ng-repeat="crumb in breadCrumbs" ng-class="{active: $last}"
+    ><span ng-if="!$last"
+      ><a ng-if="$index==0" ui-sref="{systemName: null, systemVersion: null}">{{crumb}}</a
+      ><a ng-if="$index==1" ui-sref="{systemVersion: null}">{{crumb}}</a>
+    </span
+    ><span ng-if="$last">{{crumb}}</span>
+  </li>
+</ol>
 
 <fetch-data response="response"></fetch-data>
 
 <div class="container-fluid animate-if"
      ng-if="responseState(response) === 'success'">
   <div>
+
     <table
         datatable="ng"
         dt-options="dtOptions"

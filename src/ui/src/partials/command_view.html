@@ -4,20 +4,22 @@
 </div>
 
 <div ng-show="!template">
-  <h1 class="page-header" ng-show="responseState(response) !== 'success'">
-    Make Request
-  </h1>
+  <h1 class="page-header" ng-show="responseState(response) !== 'success'">Make Request</h1>
+
   <div ng-show="(responseState(response) === 'success')">
     <div ng-show="!manualOverride">
       <h1 class="page-header" ng-show="!manualOverride">
         <span>{{command.name}}<span>
-        <small>{{system.display_name || system.name}}</small>
-        <small>v{{system.version}}</small>
+        <small>{{command.description}}</small>
         <bg-status class="pull-right" target='system.status'></bg-status>
       </h1>
-      <div class="tagline" ng-show="command.description">
-        {{command.description}}
-      </div>
+
+      <ol class="tagline breadcrumb">
+        <li><a ui-sref="base.system({namespace: breadCrumbs[0]})">{{breadCrumbs[0]}}</a></li
+        ><li><a ui-sref="base.system({namespace: breadCrumbs[0], systemName: breadCrumbs[1]})">{{breadCrumbs[1]}}</a></li
+        ><li><a ui-sref="base.system({namespace: breadCrumbs[0], systemName: breadCrumbs[1], systemVersion: breadCrumbs[2]})">{{breadCrumbs[2]}}</a></li
+        ><li class="active">{{breadCrumbs[3]}}</li>
+      </ol>
     </div>
 
     <div class="page-header" ng-show="manualOverride">
@@ -48,22 +50,14 @@
       </div>
       <div class="col-md-4">
         <h3 class="col-md-4" style="margin-top: 0px">Preview</h3>
-        <span class="pull-right">
-          <div class="dropdown-container">
-            <span style="cursor:pointer" class="dropdown-toggle" data-toggle="dropdown">
-              <i class="fa fa-cog fa-fw"></i>
-              <span class="caret"></span>
-            </span>
-            <ul class="dropdown-menu pull-right" role="menu">
-              <li>
-                <a ng-click="toggleManualOverride()">Manual Request Creation</a>
-              </li>
-              <li>
-                <a ng-click="scheduleRequest()">Schedule Request</a>
-              </li>
-            </ul>
-          </div>
-        </span>
+        <h4 class="pull-right">
+          <span uib-popover="Manual Request Creation" popover-trigger="'mouseenter'" popover-placement="left">
+            <i class="fa fa-edit" ng-click="toggleManualOverride()"></i
+          ></span
+          ><span uib-popover="Schedule Request" popover-trigger="'mouseenter'" popover-placement="left">
+            <i class="fa fa-history" ng-click="scheduleRequest()"></i
+          ></span>
+        </h4>
         <div ui-ace="{ onLoad: loadPreview }" ng-model="jsonValues.model" style="width: 100%;"></div>
       </div>
     </div>

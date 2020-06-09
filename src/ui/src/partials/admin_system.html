@@ -21,21 +21,20 @@
      class="animate-if"
      ng-if="responseState(response) === 'success'">
 
-  <div ng-repeat="(systemName, value) in data"
+  <div ng-repeat="systems in groupedSystems"
        class="container-item panel panel-default"
        style="display: block;">
     <div class="panel-heading" style="font-size: 22px;">
-      <span>{{systemName}}</span>
+      <span>{{systems[0].name}}</span>
     </div>
 
     <div class="panel-body" style="padding-bottom: 0px;">
-      <div ng-repeat="system in value">
+      <div ng-repeat="system in systems">
         <div class="list-group">
           <div class="list-group-item clearfix" style="font-size: 18px;">
             <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
               <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})">
-                <span class="icon-color"
-                      ng-class="util.getIcon(system.icon_name)"></span>
+                <span class="icon-color" ng-class="getIcon(system.icon_name)"></span>
                 <span style="font-size: 18px;">{{system.version}}</span>
               </a>
             </div>
