@@ -25,6 +25,7 @@ from mongoengine import (
     ListField,
     ReferenceField,
     StringField,
+    FileField,
     CASCADE,
     PULL,
 )
@@ -283,6 +284,7 @@ class Request(MongoModel, Document):
     )
     children = DummyField(required=False)
     output = StringField()
+    output_gridfs = FileField(required=False)
     output_type = StringField(choices=BrewtilsCommand.OUTPUT_TYPES)
     status = StringField(choices=BrewtilsRequest.STATUS_LIST, default="CREATED")
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
@@ -359,8 +361,21 @@ class Request(MongoModel, Document):
 
     logger = logging.getLogger(__name__)
 
+    def dumps(self, *args, **kwargs):
+        """If string output was over 16MB it was spilled over to the GridFS storage solution"""
+        if self.output_gridfs:
+            self.output = self.output_gridfs.read()
+            self.output_gridfs = None
+        super(Request, self).dumps(*args, **kwargs)
+
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.utcnow()
+
+        # If the output size is too large, we switch it over
+        if self.output and len(self.output.encode('utf-8')) > (1000000 * 16):
+            self.output_gridfs.put(self.output, encoding='utf-8')
+            self.output = None
+
         super(Request, self).save(*args, **kwargs)
 
     def clean(self):
