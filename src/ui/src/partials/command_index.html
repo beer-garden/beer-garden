@@ -1,6 +1,7 @@
 <h1 class='page-header'>Available Commands</h1>
 
 <fetch-data response="response"></fetch-data>
+
 <div class="container-fluid animate-if"
      ng-if="responseState(response) === 'success'">
   <div>
@@ -9,41 +10,36 @@
         dt-options="dtOptions"
         dt-instance="dtInstance"
         class="table table-striped table-bordered"
-        id="DataTable"
         style="width: 100%">
-    <thead>
+      <thead>
           <ul id="myList1" style="list-style-type:none;">
               <input type="checkbox" id="filterHidden"
                      ng-model="filterHidden"
                      ng-change="nodeMove('myList1');dtInstance._renderer.rerender();"
               />
           </ul>
-      <tr>
-        <th id="th_system">System</th>
-        <th id="th_command">Command</th>
-        <th id="th_version">Version</th>
-        <th id="th_description">Description</th>
-        <th id="th_happen"></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr ng-repeat="entry in data | filter:query | filter:{hidden:filterHidden}:hiddenComparator">
-        <td>{{entry.system}}</td>
-        <td>{{entry.name}}</td>
-        <td>
-          <a ui-sref="base.namespace.system({systemName: entry.system, systemVersion: entry.version})"
-             >{{entry.version}}</a>
-        </td>
-        <td>{{entry.description}}</td>
-        <td>
-          <a class="btn btn-primary center-block word-wrap-button"
-             ui-sref="base.namespace.command({systemName: entry.system, systemVersion: entry.version, commandName: entry.name})"
-             >Make it Happen!</a>
-        </td>
-      </tr>
-    </tbody>
+        <tr>
+          <th style="width: 10%;">Namespace</th>
+          <th style="width: 10%;">System</th>
+          <th style="width: 10%;">Version</th>
+          <th style="width: 25%;">Command</th>
+          <th style="width: 35%;">Description</th>
+          <th style="width: 10%;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="entry in data | filter:query | filter:{hidden:filterHidden}:hiddenComparator">
+          <td>{{entry.namespace}}</td>
+          <td>{{entry.system}}</td>
+          <td>{{entry.version}}</td>
+          <td>{{entry.name}}</td>
+          <td>{{entry.description}}</td>
+          <td>
+            <a class="btn btn-primary center-block word-wrap-button"
+              ui-sref="base.commandID({id: entry.id})">Make it Happen!</a>
+          </td>
+        </tr>
+      </tbody>
     </table>
   </div>
-
 </div>
-
