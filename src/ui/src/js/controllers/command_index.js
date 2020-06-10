@@ -52,7 +52,7 @@ export default function commandIndexController(
     let breadCrumbs = [];
 
     response.data.forEach((system) => {
-      system.commands.forEach((command) => 
+      system.commands.forEach((command) => {
         commands.push({
           id: command.id,
           hidden: command.hidden,
