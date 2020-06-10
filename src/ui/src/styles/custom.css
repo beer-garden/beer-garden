@@ -41,13 +41,18 @@ pre {
 }
 
 .tagline {
-    margin-top: -20px;
+    margin-top: -15px;
     margin-bottom: 20px;
 }
 
 .breadcrumb {
     padding-top: 3px;
     padding-bottom: 3px;
+    background-color: inherit;
+}
+.breadcrumb > li + li::before {
+    /* Default content is '/ ' which throws off the spacing */
+    content: '/';
 }
 
 .nav-tabs {
@@ -74,7 +79,15 @@ html, body{
     background: inherit;
 }
 #page-wrapper{
-    margin: 0 auto;
+    margin: 0;
+    border-left: 0;
+    padding: 30px;
+}
+.navbar{
+    margin-bottom: 0;
+}
+.page-header{
+    margin-top: 0px;
 }
 .icon-color{
     color: black !important;
@@ -236,6 +249,10 @@ table.dataTable{
 
 .dropdown-menu{
     min-width: 110px;
+}
+
+#nav-extras hr {
+    margin: 4px 0px;
 }
 
 /* Limits number of items shown in dropdowns */

@@ -81,23 +81,26 @@ export default function routeConfig(
       url: 'systems/:id/',
       controller: ['$state', '$stateParams', 'SystemService', ($state, $stateParams, SystemService) => {
         let sys = SystemService.findSystemByID($stateParams.id);
-        $state.go('base.system', {name: sys.name, version: sys.version});
+        $state.go('base.system', {namespace: sys.namespace, systemName: sys.name, systemVersion: sys.version});
       }],
     })
     .state('base.system', {
-      url: 'systems/:namespace/:systemName/:systemVersion/',
-      templateUrl: basePath + 'system_view.html',
-      controller: 'SystemViewController',
+      url: 'commands?namespace&systemName&systemVersion',
+      templateUrl: basePath + 'command_index.html',
+      controller: 'CommandIndexController',
       resolve: {
         system: ['$stateParams', 'SystemService', ($stateParams, SystemService) => {
-          let sys = SystemService.findSystem(
+          return SystemService.findSystem(
             $stateParams.namespace, $stateParams.systemName, $stateParams.systemVersion
           ) || {};
-          return SystemService.getSystem(sys.id).catch(
-            (response) => response
-          );
         }],
       },
+    })
+    // This is just an alias for base.system with no query args at this point
+    .state('base.commands', {
+      url: 'commands/',
+      templateUrl: basePath + 'command_index.html',
+      controller: ['$state', ($state) => {$state.go('base.system');}],
     })
     .state('base.commandID', {
       url: 'commands/:id/',
@@ -156,11 +159,6 @@ export default function routeConfig(
       'templateUrl': basePath + 'job_view.html',
       'controller': 'JobViewController',
     })
-    .state('base.commands', {
-      url: 'commands/',
-      templateUrl: basePath + 'command_index.html',
-      controller: 'CommandIndexController',
-    })
     .state('base.requests', {
       url: 'requests/',
       templateUrl: basePath + 'request_index.html',
@@ -170,13 +168,6 @@ export default function routeConfig(
       url: 'requests/:requestId/',
       templateUrl: basePath + 'request_view.html',
       controller: 'RequestViewController',
-      resolve: {
-        request: ['$stateParams', 'RequestService', ($stateParams, RequestService) => {
-          return RequestService.getRequest($stateParams.requestId).catch(
-            (response) => response
-          );
-        }],
-      },
     })
     .state('base.queues', {
       url: 'admin/queues/',

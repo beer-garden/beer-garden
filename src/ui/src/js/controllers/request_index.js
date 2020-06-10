@@ -109,7 +109,7 @@ export default function requestIndexController(
       7: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
     })
     .withDataProp('data')
-    .withOption('order', [5, 'desc'])
+    .withOption('order', [6, 'desc'])
     .withOption('serverSide', true)
     .withOption('refreshButton', true)
     .withOption('childContainer', true)
@@ -161,7 +161,11 @@ export default function requestIndexController(
       .withTitle('Version')
       .renderWith(function(data, type, full) {
 
-        return `<a ui-sref="base.system({systemName: '${full.system}', systemVersion: '${full.system_version}', namespace: '${full.namespace}')">` + data + '</a>';
+        return `<a ui-sref="base.system({
+          systemName: '${full.system}',
+          systemVersion: '${full.system_version}',
+          namespace: '${full.namespace}'})"
+          >${data}</a>`;
       }),
     DTColumnBuilder
       .newColumn('instance_name')

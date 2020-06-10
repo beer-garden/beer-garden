@@ -19,8 +19,6 @@ import beer_garden.garden
 import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
-from beer_garden.db.mongo.jobstore import MongoJobStore
-from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.events import publish
 from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.processors import (
@@ -47,7 +45,6 @@ class Application(StoppableThread):
     clients = None
     helper_threads = None
     entry_manager = None
-    shared_manager = None
 
     def __init__(self):
         super(Application, self).__init__(
@@ -72,11 +69,11 @@ class Application(StoppableThread):
         ]
 
         # Only want to run the MongoPruner if it would do anything
-        tasks, run_every = MongoPruner.determine_tasks(**config.get("db.ttl"))
+        tasks, run_every = db.prune_tasks(**config.get("db.ttl"))
         if run_every:
             self.helper_threads.append(
                 HelperThread(
-                    MongoPruner, tasks=tasks, run_every=timedelta(minutes=run_every)
+                    db.get_pruner(), tasks=tasks, run_every=timedelta(minutes=run_every)
                 )
             )
 
@@ -99,7 +96,7 @@ class Application(StoppableThread):
         beer_garden.events.manager = self._setup_events_manager()
 
     def run(self):
-        if not self._verify_mongo_connection():
+        if not self._verify_db_connection():
             return
 
         if not self._verify_message_queue_connection():
@@ -135,17 +132,17 @@ class Application(StoppableThread):
 
         return not self.stopped()
 
-    def _verify_mongo_connection(self):
-        """Verify that that the application can connect to mongo
+    def _verify_db_connection(self):
+        """Verify that that the application can connect to a database
 
         Returns:
             True: the verification was successful
             False: the app was stopped before a connection could be verified
         """
-        self.logger.debug("Verifying mongo connection...")
+        self.logger.debug("Verifying database connection...")
         return self._progressive_backoff(
             partial(db.check_connection, config.get("db")),
-            "Unable to connect to mongo, is it started?",
+            "Unable to connect to database, is it started?",
         )
 
     def _verify_message_queue_connection(self):
@@ -271,7 +268,7 @@ class Application(StoppableThread):
 
     @staticmethod
     def _setup_scheduler():
-        job_stores = {"beer_garden": MongoJobStore()}
+        job_stores = {"beer_garden": db.get_job_store()}
         scheduler_config = config.get("scheduler")
         executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
         job_defaults = scheduler_config.job_defaults.to_dict()

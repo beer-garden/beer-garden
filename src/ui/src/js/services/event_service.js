@@ -13,6 +13,14 @@ export default function eventService(TokenService) {
   let socketConnection = undefined;
   let messageCallbacks = {};
 
+  let onMessage = (message) => {
+    let event = JSON.parse(message.data);
+
+    for (let callback of _.values(messageCallbacks)) {
+      callback(event);
+    }
+  };
+
   return {
     addCallback: (name, callback) => {
       messageCallbacks[name] = callback;
@@ -33,14 +41,7 @@ export default function eventService(TokenService) {
         }
 
         socketConnection = new WebSocket(eventUrl);
-
-        socketConnection.onmessage = (message) => {
-          let event = JSON.parse(message.data);
-
-          for (let callback of _.values(messageCallbacks)) {
-            callback(event);
-          }
-        }
+        socketConnection.onmessage = onMessage;
       }
     },
     close: () => {
