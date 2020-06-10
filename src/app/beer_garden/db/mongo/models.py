@@ -372,8 +372,8 @@ class Request(MongoModel, Document):
         self.updated_at = datetime.datetime.utcnow()
 
         # If the output size is too large, we switch it over
-        if self.output and len(self.output.encode('utf-8')) > (1000000 * 16):
-            self.output_gridfs.put(self.output, encoding='utf-8')
+        if self.output and len(self.output.encode("utf-8")) > (1000000 * 16):
+            self.output_gridfs.put(self.output, encoding="utf-8")
             self.output = None
 
         super(Request, self).save(*args, **kwargs)
