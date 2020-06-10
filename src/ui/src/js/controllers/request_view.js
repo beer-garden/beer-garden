@@ -99,7 +99,7 @@ export default function requestViewController(
         try {
           let parsedOutput = JSON.parse(rawOutput);
           rawOutput = $scope.stringify(parsedOutput);
-          $scope.filename = $scope.data.id+".json";
+          $scope.filename = $scope.request.id+".json";
           if ($scope.countNodes($scope.formattedOutput) < 1000) {
             $scope.jsonOutput = rawOutput;
             $scope.formattedAvailable = true;
