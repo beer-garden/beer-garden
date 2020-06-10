@@ -2,6 +2,7 @@
 import pytest
 from box import Box
 from brewtils.models import Garden, System
+from brewtils.test.comparable import assert_garden_equal
 from mock import Mock
 
 import beer_garden.config as config
@@ -11,8 +12,9 @@ import beer_garden.router
 
 @pytest.fixture(autouse=True)
 def setup():
-    beer_garden.router.garden_lookup = {}
-    beer_garden.router.garden_connections = {}
+    beer_garden.router.gardens = {}
+    # beer_garden.router.garden_lookup = {}
+    # beer_garden.router.garden_connections = {}
 
     conf = Box(default_box=True)
     conf.garden.name = "parent"
@@ -42,14 +44,20 @@ def c_sys_2():
 @pytest.fixture
 def p_garden(p_sys_1, p_sys_2):
     return Garden(
-        name="parent", connection_type="local", systems=[str(p_sys_1), str(p_sys_2)]
+        name="parent",
+        connection_type="local",
+        systems=[p_sys_1, p_sys_2]
+        # name="parent", connection_type="local", systems=[str(p_sys_1), str(p_sys_2)]
     )
 
 
 @pytest.fixture
 def c_garden(c_sys_1, c_sys_2):
     return Garden(
-        name="child", connection_type="http", systems=[str(c_sys_1), str(c_sys_2)]
+        name="child",
+        connection_type="http",
+        systems=[c_sys_1, c_sys_2]
+        # name="child", connection_type="http", systems=[str(c_sys_1), str(c_sys_2)]
     )
 
 
@@ -76,12 +84,11 @@ class TestSetupRouting:
 
         beer_garden.router.setup_routing()
 
-        assert beer_garden.router.garden_lookup == {
-            "p:sys-1": "parent",
-            "p:sys-2": "parent",
-            "c:sys-1": "child",
-            "c:sys-2": "child",
-        }
+        assert str(c_garden) in beer_garden.router.gardens
+        assert str(p_garden) in beer_garden.router.gardens
+
+        assert_garden_equal(c_garden, beer_garden.router.gardens[str(c_garden)])
+        assert_garden_equal(p_garden, beer_garden.router.gardens[str(p_garden)])
 
     def test_ignore_local(self, get_gardens_mock, get_systems_mock, p_garden, c_garden):
         """Systems in p_garden should be ignored"""
@@ -89,7 +96,10 @@ class TestSetupRouting:
 
         beer_garden.router.setup_routing()
 
-        assert beer_garden.router.garden_lookup == {
-            "c:sys-1": "child",
-            "c:sys-2": "child",
-        }
+        assert str(c_garden) in beer_garden.router.gardens
+        assert str(p_garden) in beer_garden.router.gardens
+
+        assert_garden_equal(c_garden, beer_garden.router.gardens[str(c_garden)])
+
+        # "p_garden" is the local garden so it shouldn't have any systems
+        assert not beer_garden.router.gardens[str(p_garden)].systems
