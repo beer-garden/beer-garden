@@ -85,19 +85,10 @@
         <li id="nav-extras" class="dropdown">
           <a href="" class="fa fa-bars dropdown-toggle" data-toggle="dropdown" ng-click="setMenuPage('main')"></a>
           <ul class="dropdown-menu">
-            <li ng-show="!checkMenuPage('main')">
-              <form>
-                <div style="padding: 3px 15px; cursor: pointer;"
-                     ng-click="setMenuPage('main')">
-                  <span class="fa fa-chevron-left"></span>
-                  <span>Back</span>
-                </div>
-              </form>
-            </li>
+
             <li ng-show="checkMenuPage('main')">
               <a ui-sref="base.about" ui-sref-active="active">About</a>
             </li>
-            <li ng-show="checkMenuPage('main')" role="separator" class="divider"></li>
             <form>
             <li ng-show="checkMenuPage('main')">
               <form>
@@ -109,7 +100,16 @@
               </form>
             </li>
             </form>
-            <li ng-show="checkMenuPage('theme')"><h5>Themes</h5></li>
+            <li ng-show="checkMenuPage('theme')" >
+                <form>
+                  <div style="padding: 3px 15px; cursor: pointer;"
+                     ng-click="setMenuPage('main')">
+                  <span class="fa fa-chevron-left"></span>
+                  <span>Themes</span>
+                </div>
+                </form>
+            <li>
+            <li ng-show="checkMenuPage('theme')" role="separator" class="divider"><li>
             <li ng-repeat="(style, enabled) in themes" ng-show="checkMenuPage('theme')">
               <div style="padding: 3px 15px; cursor: pointer;"
                     ng-click="changeTheme(style, true)">
@@ -117,7 +117,6 @@
                 <span>{{style}}</span>
               </div>
             </li>
-            <li ng-show="(hasPermission(user, 'bg-queue-read') || hasPermission(user, 'bg-role-read')) && checkMenuPage('main')" role="separator" class="divider"><li>
             <li ng-show="(hasPermission(user, 'bg-queue-read') || hasPermission(user, 'bg-role-read')) && checkMenuPage('main')" >
                 <form>
                   <div style="padding: 3px 15px; cursor: pointer;"
@@ -127,9 +126,16 @@
                   </div>
                 </form>
             <li>
-            <li ng-show="checkMenuPage('admin')">
-              <span>Admin</span>
-            </li>
+            <li ng-show="(hasPermission(user, 'bg-queue-read') || hasPermission(user, 'bg-role-read')) && checkMenuPage('admin')" >
+                <form>
+                  <div style="padding: 3px 15px; cursor: pointer;"
+                     ng-click="setMenuPage('main')">
+                    <span class="fa fa-chevron-left"></span>
+                    <span>Admin</span>
+                </div>
+                </form>
+            <li>
+            <li ng-show="checkMenuPage('admin')" role="separator" class="divider"><li>
             <li ng-show="checkMenuPage('admin')">
               <a ui-sref="base.system_admin" ui-sref-active="active">
                 <span>Systems</span>
@@ -154,6 +160,8 @@
               <a ui-sref="base.garden_admin" ui-sref-active="active">
                 <span>Gardens</span>
               </a>
+            </li>
+
             </li>
           </ul>
         </li>
