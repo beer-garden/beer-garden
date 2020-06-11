@@ -26,6 +26,7 @@
     <div class="row form-group">
       <div class="col-md-2">
         <select class="w-100" size="{{users.length}}"
+          title="Select User"
           ng-model="selectedUser"
           ng-options="user.username for user in users">
         </select>
