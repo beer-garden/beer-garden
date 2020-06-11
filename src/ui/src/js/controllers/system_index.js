@@ -26,12 +26,12 @@ export default function systemIndexController(
     .withOption('autoWidth', false)
     .withOption('order', [[0, 'asc'], [1, 'asc'], [2, 'asc'], [3, 'asc']])
     .withLightColumnFilter({
-      0: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      3: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      4: {html: 'input', type: 'number', attr: {class: 'form-inline form-control'}},
-      5: {html: 'input', type: 'number', attr: {class: 'form-inline form-control'}},
+      0: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Namespace Filter'}},
+      1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'System Filter'}},
+      2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Version Filter'}},
+      3: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Description Filter'}},
+      4: {html: 'input', type: 'number', attr: {class: 'form-inline form-control', title: 'Commands Filter'}},
+      5: {html: 'input', type: 'number', attr: {class: 'form-inline form-control', title: 'Instances Filter'}},
     })
     .withBootstrap();
 
