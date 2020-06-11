@@ -42,6 +42,16 @@ def c_sys_2():
 
 
 @pytest.fixture
+def l_garden():
+    return Garden(
+        name="parent",
+        connection_type="local",
+        systems=[]
+        # name="parent", connection_type="local", systems=[str(p_sys_1), str(p_sys_2)]
+    )
+
+
+@pytest.fixture
 def p_garden(p_sys_1, p_sys_2):
     return Garden(
         name="parent",
@@ -69,18 +79,16 @@ def get_gardens_mock(monkeypatch):
 
 
 @pytest.fixture
-def get_systems_mock(monkeypatch):
+def get_local_garden_mock(monkeypatch):
     mock = Mock(return_value=[])
-    monkeypatch.setattr(beer_garden.router, "get_systems", mock)
+    monkeypatch.setattr(beer_garden.router, "get_local_garden", mock)
     return mock
 
 
 class TestSetupRouting:
-    def test_all(
-        self, get_gardens_mock, get_systems_mock, p_garden, c_garden, p_sys_1, p_sys_2
-    ):
-        get_gardens_mock.return_value = [p_garden, c_garden]
-        get_systems_mock.return_value = [p_sys_1, p_sys_2]
+    def test_all(self, get_gardens_mock, get_local_garden_mock, p_garden, c_garden):
+        get_gardens_mock.return_value = [c_garden]
+        get_local_garden_mock.return_value = p_garden
 
         beer_garden.router.setup_routing()
 
@@ -90,16 +98,19 @@ class TestSetupRouting:
         assert_garden_equal(c_garden, beer_garden.router.gardens[str(c_garden)])
         assert_garden_equal(p_garden, beer_garden.router.gardens[str(p_garden)])
 
-    def test_ignore_local(self, get_gardens_mock, get_systems_mock, p_garden, c_garden):
+    def test_ignore_local(
+        self, get_gardens_mock, get_local_garden_mock, l_garden, c_garden
+    ):
         """Systems in p_garden should be ignored"""
-        get_gardens_mock.return_value = [p_garden, c_garden]
+        get_gardens_mock.return_value = [c_garden]
+        get_local_garden_mock.return_value = l_garden
 
         beer_garden.router.setup_routing()
 
         assert str(c_garden) in beer_garden.router.gardens
-        assert str(p_garden) in beer_garden.router.gardens
+        assert str(l_garden) in beer_garden.router.gardens
 
         assert_garden_equal(c_garden, beer_garden.router.gardens[str(c_garden)])
 
-        # "p_garden" is the local garden so it shouldn't have any systems
-        assert not beer_garden.router.gardens[str(p_garden)].systems
+        # "l_garden" is the local garden so it shouldn't have any systems
+        assert not beer_garden.router.gardens[str(l_garden)].systems
