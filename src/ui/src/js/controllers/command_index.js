@@ -27,11 +27,11 @@ export default function commandIndexController(
 
   if (!($stateParams.namespace || $stateParams.systemName || $stateParams.systemVersion)) {
     $scope.dtOptions = $scope.dtOptions.withLightColumnFilter({
-      0: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      3: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      4: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
+      0: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Namespace Filter'}},
+      1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'System Filter'}},
+      2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Version Filter'}},
+      3: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Command Filter'}},
+      4: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Description Filter'}},
     })
   }
 

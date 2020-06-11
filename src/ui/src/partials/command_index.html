@@ -23,12 +23,12 @@
         style="width: 100%">
       <thead>
         <tr>
-          <th style="width: 10%;">Namespace</th>
-          <th style="width: 10%;">System</th>
-          <th style="width: 10%;">Version</th>
-          <th style="width: 25%;">Command</th>
-          <th style="width: 35%;">Description</th>
-          <th style="width: 10%;"></th>
+          <th style="width: 10%;" scope="col">Namespace</th>
+          <th style="width: 10%;" scope="col">System</th>
+          <th style="width: 10%;" scope="col">Version</th>
+          <th style="width: 25%;" scope="col">Command</th>
+          <th style="width: 35%;" scope="col">Description</th>
+          <th style="width: 10%;" scope="col"></th>
         </tr>
       </thead>
       <tbody>
@@ -40,7 +40,8 @@
           <td>{{entry.description}}</td>
           <td>
             <a class="btn btn-primary center-block word-wrap-button"
-              ui-sref="base.commandID({id: entry.id})">Make it Happen!</a>
+              ui-sref="base.commandID({id: entry.id})"
+              title="Run {{entry.name}}">Make it Happen!</a>
           </td>
         </tr>
       </tbody>
