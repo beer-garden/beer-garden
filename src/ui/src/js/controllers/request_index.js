@@ -68,11 +68,11 @@ export default function requestIndexController(
       );
     })
     .withLightColumnFilter({
-      0: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      3: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      4: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
+      0: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Command Filter'}},
+      1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Namespace Filter'}},
+      2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'System Filter'}},
+      3: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Version Filter'}},
+      4: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Instance Filter'}},
       5: {
         html: 'select',
         type: 'text',
@@ -95,9 +95,11 @@ export default function requestIndexController(
         },
         startAttr: {
           placeholder: 'start',
+          title: 'Start Timestamp Filter',
         },
         endAttr: {
           placeholder: 'end',
+          title: 'End Timestamp Filter'
         },
         picker: {
           format: 'YYYY-MM-DD HH:mm:ss',
@@ -106,7 +108,7 @@ export default function requestIndexController(
           useCurrent: false,
         },
       },
-      7: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
+      7: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Comment Filter'}},
     })
     .withDataProp('data')
     .withOption('order', [6, 'desc'])
