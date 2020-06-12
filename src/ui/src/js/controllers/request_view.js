@@ -46,6 +46,7 @@ export default function requestViewController(
   $scope.rawOutput = undefined;
   $scope.htmlOutput = '';
   $scope.jsonOutput = '';
+  $scope.resizeCheck = false;
   $scope.formattedParameters = '';
   $scope.formattedAvailable = false;
   $scope.formatErrorTitle = undefined;
@@ -70,6 +71,27 @@ export default function requestViewController(
 
   $scope.canRepeat = function(request) {
     return RequestService.isComplete(request);
+  };
+  
+  $scope.Resize = function(resizeCell) {
+    let hiddenCell = "parameterCell";
+    let resizeButton = "resizeOutput"
+    if(resizeCell.includes("parameterCell")){
+        hiddenCell = "outputCell";
+        resizeButton = "resizeParameter";
+    }
+
+    if(document.getElementById(resizeButton).getAttribute("class").includes("maximize")){
+        document.getElementById(resizeCell).setAttribute("style", "width: 100%;");
+        document.getElementById(hiddenCell).setAttribute("class", "ng-hide");
+        document.getElementById(resizeButton).setAttribute("title", "Restore");
+        document.getElementById(resizeButton).setAttribute("class", "fa fa-window-restore pull-right");
+    }else{
+        document.getElementById(resizeCell).setAttribute("style", "width: 50%;");
+        document.getElementById(hiddenCell).setAttribute("class", "col-md-6");
+        document.getElementById(resizeButton).setAttribute("title", "Maximize");
+        document.getElementById(resizeButton).setAttribute("class", "fa fa-window-maximize pull-right")
+    }
   };
 
   $scope.showInstanceStatus = function(request, instanceStatus) {

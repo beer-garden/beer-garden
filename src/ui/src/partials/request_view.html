@@ -15,6 +15,7 @@
   </span>
 </h1>
 
+
 <fetch-data response="response"></fetch-data>
 
 <div ng-if="responseState(response) === 'success'">
@@ -91,10 +92,13 @@
         </tr>
       </tbody>
     </table>
+
     <div class="row">
-      <div class="col-md-6">
+      <div id="outputCell" class="col-md-6">
         <div style="margin-bottom: 10px;">
           <span class="h3">Output
+              <a class="fa fa-window-maximize pull-right" title="Maximize" id="resizeOutput" ng-model="resizeCheck"
+                    ng-click="Resize('outputCell')" style="font-size: 0.8em; margin-top: 11px; color: black"></a>
               <a class="fa fa-download pull-right" style="font-size: 0.8em; margin-top: 12px; color: black"
                  ng-href="{{downloadHref}}" download="{{filename}}" ng-show="{{downloadVisible}}"></a>
           </span>
@@ -126,9 +130,12 @@
         </div>
       </div>
 
-      <div class="col-md-6">
+      <div id="parameterCell" class="col-md-6">
         <div style="margin-bottom: 10px;">
-          <span class="h3">Parameters</span>
+          <span class="h3">Parameters
+            <a class="fa fa-window-maximize pull-right" title="Maximize" id="resizeParameter" ng-model="resizeCheck"
+                    ng-click="Resize('parameterCell')" style="font-size: 0.8em; margin-top: 11px; color: black"></a>
+          </span>
         </div>
         <div ui-ace="{ onLoad: loadPreview }" ng-model="formattedParameters" style="width: 100%;"></div>
       </div>
