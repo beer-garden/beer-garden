@@ -46,7 +46,6 @@ export default function requestViewController(
   $scope.rawOutput = undefined;
   $scope.htmlOutput = '';
   $scope.jsonOutput = '';
-  $scope.resizeCheck = false;
   $scope.formattedParameters = '';
   $scope.formattedAvailable = false;
   $scope.formatErrorTitle = undefined;
