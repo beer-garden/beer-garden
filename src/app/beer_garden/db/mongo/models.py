@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 import logging
+import sys
 
 import pytz
 import six
@@ -374,7 +375,8 @@ class Request(MongoModel, Document):
         self.updated_at = datetime.datetime.utcnow()
 
         # If the output size is too large, we switch it over
-        if self.output and len(self.output.encode("utf-8")) > (1000000 * 16):
+        # Max size for Mongo is 16MB, switching over at 15MB to be safe
+        if self.output and sys.getsizeof(self.output) < (1000000 * 15):
             self.output_gridfs.put(self.output, encoding="utf-8")
             self.output = None
 
