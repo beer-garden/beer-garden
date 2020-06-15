@@ -41,7 +41,7 @@ class ConfigKeys(Enum):
     DISPLAY_NAME = 11
     METADATA = 12
     NAMESPACE = 13
-    PYTHONPATH = 14
+    INTERPRETER_PATH = 14
 
 
 class PluginManager(StoppableThread):
@@ -319,8 +319,8 @@ class PluginManager(StoppableThread):
 
     @staticmethod
     def _process_args(plugin_config, instance_name):
-        if plugin_config.get("PYTHONPATH"):
-            process_args = [plugin_config.get("PYTHONPATH")]
+        if plugin_config.get("INTERPRETER_PATH"):
+            process_args = [plugin_config.get("INTERPRETER_PATH")]
         else:
             process_args = [sys.executable]
 
