@@ -46,6 +46,9 @@ export default function requestViewController(
   $scope.rawOutput = undefined;
   $scope.htmlOutput = '';
   $scope.jsonOutput = '';
+  $scope.isMaximized = false;
+  $scope.displayOutput = true;
+  $scope.displayParameter = true;
   $scope.formattedParameters = '';
   $scope.formattedAvailable = false;
   $scope.formatErrorTitle = undefined;
@@ -70,6 +73,15 @@ export default function requestViewController(
 
   $scope.canRepeat = function(request) {
     return RequestService.isComplete(request);
+  };
+  
+  $scope.Resize = function(resizeCell) {
+    $scope.isMaximized=!$scope.isMaximized;
+    if(resizeCell.includes("parameterCell")){
+        $scope.displayOutput = !$scope.displayOutput;
+    }else if("outputCell"){
+        $scope.displayParameter = !$scope.displayParameter;
+    }
   };
 
   $scope.showInstanceStatus = function(request, instanceStatus) {
