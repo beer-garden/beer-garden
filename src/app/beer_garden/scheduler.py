@@ -35,8 +35,33 @@ def run_job(job_id, request_template):
     request_template.metadata["_bg_job_id"] = job_id
 
     # TODO - Possibly allow specifying blocking timeout on the job definition
-    # We now use the events to update the scheduler, no longer have to wait
-    process_request(request_template)
+    # Want to wait for completion here
+    request = process_request(request_template, wait_timeout=-1)
+
+    try:
+        db_job = db.query_unique(Job, id=job_id)
+        if db_job:
+            if request.status == "ERROR":
+                db_job.error_count += 1
+            elif request.status == "SUCCESS":
+                db_job.success_count += 1
+            db.update(db_job)
+        else:
+            # If the job is not in the database, don't proceed to update scheduler
+            return
+    except Exception as ex:
+        logger.exception(f"Could not update job counts: {ex}")
+
+    # Be a little careful here as the job could have been removed or paused
+    job = beer_garden.application.scheduler.get_job(job_id)
+    if (
+        job
+        and job.next_run_time is not None
+        and getattr(job.trigger, "reschedule_on_finish", False)
+    ):
+        # This essentially resets the timer on this job, which has the effect of
+        # making the wait time start whenever the job finishes
+        beer_garden.application.scheduler.reschedule_job(job_id, trigger=job.trigger)
 
 
 def get_job(job_id: str) -> Job:
@@ -124,42 +149,8 @@ def handle_event(event: Event) -> None:
     Args:
         event: The event to handle
     """
-    if (
-        event.name == Events.REQUEST_COMPLETED.name
-        and event.payload.metadata
-        and "_bg_job_id" in event.payload.metadata
-    ):
 
-        try:
-            db_job = db.query_unique(Job, id=event.payload.metadata["_bg_job_id"])
-            if db_job:
-                if event.payload.status == "ERROR":
-                    db_job.error_count += 1
-                elif event.payload.status == "SUCCESS":
-                    db_job.success_count += 1
-                db.update(db_job)
-            else:
-                # If the job is not in the database, don't proceed to update scheduler
-                return
-        except Exception as ex:
-            logger.exception(f"Could not update job counts: {ex}")
-
-        # Be a little careful here as the job could have been removed or paused
-        job = beer_garden.application.scheduler.get_job(
-            event.payload.metadata["_bg_job_id"]
-        )
-        if (
-            job
-            and job.next_run_time is not None
-            and getattr(job.trigger, "reschedule_on_finish", False)
-        ):
-            # This essentially resets the timer on this job, which has the effect of
-            # making the wait time start whenever the job finishes
-            beer_garden.application.scheduler.reschedule_job(
-                event.payload.metadata["_bg_job_id"], trigger=job.trigger
-            )
-
-    elif event.garden == config.get("garden.name"):
+    if event.garden == config.get("garden.name"):
 
         if event.name == Events.JOB_CREATED.name:
             try:
