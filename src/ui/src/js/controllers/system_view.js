@@ -18,13 +18,25 @@ export default function systemViewController(
     UtilityService,
     DTOptionsBuilder,
     system) {
-      
-  $scope.util = UtilityService;
 
+  $scope.util = UtilityService;
+  $scope.filterHidden = false;
+  $scope.dtInstance = {};
   $scope.dtOptions = DTOptionsBuilder.newOptions()
     .withOption('order', [4, 'asc'])
     .withOption('autoWidth', false)
+    .withOption('hiddenContainer', true)
     .withBootstrap();
+
+  $scope.hiddenComparator = function(hidden, checkbox){
+    return checkbox || !hidden;
+  };
+
+  $scope.nodeMove = function(location){
+    var node = document.getElementById("filterHidden");
+    var list = document.getElementById(location);
+    list.append(node, list.childNodes[0]);
+  }
 
   $scope.successCallback = function(response) {
     $scope.response = response;
@@ -33,6 +45,8 @@ export default function systemViewController(
       ($scope.data.display_name || $scope.data.name),
       $scope.data.version
     );
+    $scope.dtOptions.withLanguage({"info": "Showing _START_ to _END_ of _TOTAL_ entries (filtered from " +
+        $scope.data.commands.length + " total entries)", "infoFiltered":   ""});
   };
 
   $scope.failureCallback = function(response) {
