@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from beer_garden.__version__ import __version__
 
-__all__ = ["__version__", "application"]
+__all__ = [
+    "__version__",
+    "application",
+]
 
 # COMPONENTS #
 application = None
