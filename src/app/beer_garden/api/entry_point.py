@@ -177,7 +177,7 @@ class EntryPoint:
         db.create_connection(db_config=beer_garden.config.get("db"))
 
         # Set up message queue connections
-        queue.create_clients(beer_garden.config.get("amq"))
+        queue.create_clients(beer_garden.config.get("mq"))
 
         # Load known gardens for routing
         router.setup_routing()

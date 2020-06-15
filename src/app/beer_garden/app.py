@@ -154,7 +154,7 @@ class Application(StoppableThread):
             False: the app was stopped before a connection could be verified
         """
         self.logger.debug("Verifying message queue connection...")
-        queue.create_clients(config.get("amq"))
+        queue.create_clients(config.get("mq"))
 
         if not self._progressive_backoff(
             partial(queue.check_connection, "pika"),
