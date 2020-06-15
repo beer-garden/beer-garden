@@ -88,6 +88,8 @@ class MongoModel:
     def clean_update(self):
         pass
 
+    def pre_serialize(self):
+        pass
 
 # MongoEngine needs all EmbeddedDocuments to be defined before any Documents that
 # reference them. So Parameter must be defined before Command, and choices should be
@@ -284,7 +286,7 @@ class Request(MongoModel, Document):
     )
     children = DummyField(required=False)
     output = StringField()
-    output_gridfs = FileField(required=False)
+    output_gridfs = FileField()
     output_type = StringField(choices=BrewtilsCommand.OUTPUT_TYPES)
     status = StringField(choices=BrewtilsRequest.STATUS_LIST, default="CREATED")
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
@@ -361,12 +363,11 @@ class Request(MongoModel, Document):
 
     logger = logging.getLogger(__name__)
 
-    def dumps(self, *args, **kwargs):
+    def pre_serialize(self):
         """If string output was over 16MB it was spilled over to the GridFS storage solution"""
         if self.output_gridfs:
-            self.output = self.output_gridfs.read()
+            self.output = self.output_gridfs.read().decode("utf-8")
             self.output_gridfs = None
-        super(Request, self).dumps(*args, **kwargs)
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.utcnow()
