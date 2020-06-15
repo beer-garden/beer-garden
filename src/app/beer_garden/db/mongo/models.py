@@ -91,6 +91,7 @@ class MongoModel:
     def pre_serialize(self):
         pass
 
+
 # MongoEngine needs all EmbeddedDocuments to be defined before any Documents that
 # reference them. So Parameter must be defined before Command, and choices should be
 # defined before Parameter
