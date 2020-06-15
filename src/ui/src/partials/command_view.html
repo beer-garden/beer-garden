@@ -58,14 +58,17 @@
             <i class="fa fa-history" ng-click="scheduleRequest()"></i
           ></span>
         </h4>
-        <div ui-ace="{ onLoad: loadPreview }" ng-model="jsonValues.model" style="width: 100%;"></div>
+        <div ui-ace="{ onLoad: loadPreview }" ng-model="jsonValues.model" style="width: 100%;" title="Request JSON Preview"></div>
       </div>
     </div>
 
     <div ng-if="config.debugMode" class="row" style="padding-bottom: 35px;">
       <div class="col-md-4">
         <h3>Command</h3>
-        <div ui-ace="{ onLoad: loadPreview }" ng-model="jsonValues.command" style="width: 100%; height: 500px;"></div>
+        <div ui-ace="{ onLoad: loadPreview }"
+             ng-model="jsonValues.command"
+             style="width: 100%; height: 500px;"
+             title="Command JSON Preview"></div>
       </div>
       <div class="col-md-4">
         <h3>Schema</h3>
@@ -73,7 +76,7 @@
           onLoad: loadEditor,
           theme: 'dawn',
           mode: 'json'
-        }" ng-model="jsonValues.schema" ng-model-options="{ debounce: 1000 }" style="width: 100%; height: 500px;"></div>
+        }" ng-model="jsonValues.schema" ng-model-options="{ debounce: 1000 }" style="width: 100%; height: 500px;" title="Schema Editor"></div>
       </div>
       <div class="col-md-4">
         <h3>Form</h3>
@@ -81,7 +84,7 @@
           onLoad: loadEditor,
           theme: 'dawn',
           mode: 'json'
-        }" ng-model="jsonValues.form" ng-model-options="{ debounce: 1000 }" style="width: 100%; height: 500px;"></div>
+        }" ng-model="jsonValues.form" ng-model-options="{ debounce: 1000 }" style="width: 100%; height: 500px;" title="Form Editor"></div>
       </div>
     </div>
   </div>

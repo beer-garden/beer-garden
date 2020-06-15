@@ -28,15 +28,15 @@
     <table id="requestTable" class="table">
       <thead>
         <tr>
-          <th>Command</th>
-          <th>System</th>
-          <th>System Version</th>
-          <th>Instance Name</th>
-          <th>Status</th>
-          <th ng-show="showErrorColumn(request, children)">Error Type</th>
-          <th>Created</th>
-          <th>Updated</th>
-          <th>Comment</th>
+          <th scope="col">Command</th>
+          <th scope="col">System</th>
+          <th scope="col">System Version</th>
+          <th scope="col">Instance Name</th>
+          <th scope="col">Status</th>
+          <th scope="col" ng-show="showErrorColumn(request, children)">Error Type</th>
+          <th scope="col">Created</th>
+          <th scope="col">Updated</th>
+          <th scope="col">Comment</th>
         </tr>
       </thead>
       <tbody>
@@ -151,7 +151,7 @@
                    style="font-size: 0.8em; margin-top: 11px; color: black"></a>
           </span>
         </div>
-        <div ui-ace="{ onLoad: loadPreview }" ng-model="formattedParameters" style="width: 100%;"></div>
+        <div ui-ace="{ onLoad: loadPreview }" ng-model="formattedParameters" style="width: 100%;" title="Input Parameters"></div>
       </div>
     </div>
   </div>
