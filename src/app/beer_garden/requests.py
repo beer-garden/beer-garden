@@ -684,6 +684,7 @@ def complete_request(
 
     request = db.update(request)
 
+    # Required if the Entry Point spawns a wait Request
     if str(request.id) in request_map:
         request_map[str(request.id)].set()
 
@@ -735,3 +736,8 @@ def handle_event(event):
                 setattr(existing_request, field, getattr(event.payload, field))
 
             db.update(existing_request)
+
+    # Required if the main thread spawns a wait Request
+    if event.name == Events.REQUEST_COMPLETED.name:
+        if str(event.payload.id) in request_map:
+            request_map[str(event.payload.id)].set()
