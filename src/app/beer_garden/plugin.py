@@ -10,11 +10,13 @@ from brewtils.models import Events, Instance, Request, RequestTemplate, System
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 from beer_garden.events import publish_event
+import beer_garden.requests as requests
 
 logger = logging.getLogger(__name__)
 
 start_request = RequestTemplate(command="_start", command_type="EPHEMERAL")
 stop_request = RequestTemplate(command="_stop", command_type="EPHEMERAL")
+read_logs_request = RequestTemplate(command="_read_log")
 
 
 @publish_event(Events.INSTANCE_INITIALIZED)
@@ -67,15 +69,14 @@ def start(instance_id: str) -> Instance:
 
     logger.info(f"Starting instance {system}[{instance}]")
 
-    queue.put(
+    requests.admin_process_request(
         Request.from_template(
             start_request,
             namespace=system.namespace,
             system=system.name,
             system_version=system.version,
             instance_name=instance.name,
-        ),
-        is_admin=True,
+        )
     )
 
     return instance
@@ -96,15 +97,14 @@ def stop(instance_id: str) -> Instance:
 
     logger.info(f"Stopping instance {system}[{instance}]")
 
-    queue.put(
+    requests.admin_process_request(
         Request.from_template(
             stop_request,
             namespace=system.namespace,
             system=system.name,
             system_version=system.version,
             instance_name=instance.name,
-        ),
-        is_admin=True,
+        )
     )
 
     return instance
@@ -139,3 +139,37 @@ def update(instance_id: str, new_status: str = None, metadata: dict = None) -> I
     instance = db.update(instance)
 
     return instance
+
+
+def read_logs(
+    instance_id: str, start_line: int = 0, end_line: int = 50, wait_timeout: float = -1
+) -> list:
+    """Starts an instance.
+
+    Args:
+        instance_id: The Instance ID
+        start_line: Start reading log file at
+        end_line: Stop reading log file at
+        wait_timeout: Wait timeout for response
+
+    Returns:
+        List of log entries
+    """
+    instance = db.query_unique(Instance, id=instance_id)
+    system = db.query_unique(System, instances__contains=instance)
+
+    logger.info(f"Reading Logs from instance {system}[{instance}]")
+
+    request = requests.admin_process_request(
+        Request.from_template(
+            read_logs_request,
+            namespace=system.namespace,
+            system=system.name,
+            system_version=system.version,
+            instance_name=instance.name,
+            parameters={"start_line": start_line, "end_line": end_line},
+        ),
+        wait_timeout=wait_timeout,
+    )
+
+    return request.output

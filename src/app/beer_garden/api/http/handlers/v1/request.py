@@ -116,6 +116,25 @@ class RequestAPI(BaseHandler):
 
                 else:
                     raise ModelValidationError(f"Unsupported path '{op.path}'")
+            elif op.operation == "is_admin":
+                if op.path == "/status":
+                    if op.value.upper() == "IN_PROGRESS":
+                        break
+                    # If we get a start just assume there's no other op in patch
+                    if op.value.upper() in Request.COMPLETED_STATUSES:
+                        operation.operation_type = "ADMIN_REQUEST_COMPLETE"
+                        operation.kwargs["status"] = op.value
+
+                    else:
+                        raise ModelValidationError(
+                            f"Unsupported status value '{op.value}'"
+                        )
+
+                elif op.path == "/output":
+                    operation.kwargs["output"] = op.value
+
+                elif op.path == "/error_class":
+                    operation.kwargs["error_class"] = op.value
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 

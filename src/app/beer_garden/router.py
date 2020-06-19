@@ -42,6 +42,7 @@ route_functions = {
     "REQUEST_CREATE": beer_garden.requests.process_request,
     "REQUEST_START": beer_garden.requests.start_request,
     "REQUEST_COMPLETE": beer_garden.requests.complete_request,
+    "ADMIN_REQUEST_COMPLETE": beer_garden.requests.admin_complete_request,
     "REQUEST_READ": beer_garden.requests.get_request,
     "REQUEST_READ_ALL": beer_garden.requests.get_requests,
     "COMMAND_READ": beer_garden.commands.get_command,
@@ -52,6 +53,7 @@ route_functions = {
     "INSTANCE_INITIALIZE": beer_garden.plugin.initialize,
     "INSTANCE_START": beer_garden.plugin.start,
     "INSTANCE_STOP": beer_garden.plugin.stop,
+    "INSTANCE_LOGS": beer_garden.plugin.read_logs,
     "JOB_CREATE": beer_garden.scheduler.create_job,
     "JOB_READ": beer_garden.scheduler.get_job,
     "JOB_READ_ALL": beer_garden.scheduler.get_jobs,
@@ -306,7 +308,8 @@ def _determine_target_garden(operation: Operation) -> str:
         "READ" in operation.operation_type
         or "GARDEN" in operation.operation_type
         or "JOB" in operation.operation_type
-        or operation.operation_type in ("LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
+        or operation.operation_type
+        in ("LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN", "ADMIN_REQUEST_COMPLETE")
     ):
         return config.get("garden.name")
 

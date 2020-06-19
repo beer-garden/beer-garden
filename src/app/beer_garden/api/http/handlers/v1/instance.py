@@ -173,6 +173,15 @@ class InstanceAPI(BaseHandler):
                     )
                 else:
                     raise ModelValidationError(f"Unsupported path '{op.path}'")
+
+            elif operation == "logs":
+                response = await self.client(
+                    Operation(
+                        operation_type="INSTANCE_LOGS",
+                        args=[instance_id],
+                        kwargs=op.value,
+                    )
+                )
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
