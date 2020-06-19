@@ -141,6 +141,22 @@ class RequestValidator(object):
                         "the type as %s" % (request.command_type, command.command_type)
                     )
 
+                if request.output_types is None:
+                    request.output_types = command.output_types
+                elif request.output_types != command.output_types:
+                    raise ModelValidationError(
+                        "Output Types for Request was %s but the command specified "
+                        "the type as %s" % (request.output_types, command.output_types)
+                    )
+
+                if request.output_labels is None:
+                    request.output_labels = command.output_labels
+                elif request.output_labels != command.output_labels:
+                    raise ModelValidationError(
+                        "Output Types for Request was %s but the command specified "
+                        "the type as %s" % (request.output_labels, command.output_labels)
+                    )
+
                 if request.output_type is None:
                     request.output_type = command.output_type
                 elif command.output_type != request.output_type:

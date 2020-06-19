@@ -38,22 +38,16 @@ export default function requestViewController(
   $scope.instanceStatus = undefined;
   $scope.timeoutRequest = undefined;
   $scope.children = [];
-  $scope.downloadHref = '';
-  $scope.filename = '';
-  $scope.downloadVisible = true
   $scope.childrenDisplay = [];
   $scope.childrenCollapsed = false;
-  $scope.rawOutput = undefined;
-  $scope.htmlOutput = '';
-  $scope.jsonOutput = '';
+  $scope.Outputs = [];
+  $scope.downloadAllHref = '';
+  $scope.filenameAll = '';
+  $scope.downloadAllVisible = false;
+  $scope.isManyOutputs = true;
   $scope.isMaximized = false;
   $scope.displayOutput = true;
   $scope.displayParameter = true;
-  $scope.formattedParameters = '';
-  $scope.formattedAvailable = false;
-  $scope.formatErrorTitle = undefined;
-  $scope.formatErrorMsg = undefined;
-  $scope.showFormatted = false;
 
   $scope.statusDescriptions = {
     'CREATED': 'The request has been validated by beer-garden and is on the ' +
@@ -89,55 +83,103 @@ export default function requestViewController(
       instanceStatus != 'RUNNING';
   };
 
-  $scope.formatOutput = function() {
-    $scope.htmlOutput = '';
-    $scope.jsonOutput = '';
-    $scope.formattedAvailable = false;
-    $scope.showFormatted = false;
-    $scope.formatErrorTitle = undefined;
-    $scope.formatErrorMsg = undefined;
-    let rawOutput = $scope.request.output;
-    let downloadHref = 'data:text/plain;charset=utf-8,' + encodeURIComponent($scope.request.output);
-    try {
-      if (rawOutput === undefined || rawOutput == null) {
-        rawOutput = 'null';
-        $scope.downloadVisible = false;
-      } else if ($scope.request.output_type == 'HTML') {
-        $scope.filename = $scope.request.id+".html";
-        $scope.htmlOutput = rawOutput;
-        $scope.formattedAvailable = true;
-        $scope.showFormatted = true;
-      } else if ($scope.request.output_type == 'JSON') {
-        try {
-          let parsedOutput = JSON.parse(rawOutput);
-          rawOutput = $scope.stringify(parsedOutput);
-          $scope.filename = $scope.request.id+".json";
-          if ($scope.countNodes($scope.formattedOutput) < 1000) {
-            $scope.jsonOutput = rawOutput;
-            $scope.formattedAvailable = true;
-            $scope.showFormatted = true;
-          } else {
-            $scope.formatErrorTitle = 'Output is too large for collapsible view';
-            $scope.formatErrorMsg = 'This output is valid JSON, but it\'s so big that ' +
-                                      'displaying it in the collapsible viewer would crash the ' +
-                                      'page.';
-          }
-        } catch (err) {
-          $scope.formatErrorTitle = 'This JSON didn\'t parse correctly';
-          $scope.formatErrorMsg = 'beer-garden was expecting this output to be JSON but it ' +
-                                    'doesn\'t look like JSON. If this is happening often please ' +
-                                    'let the plugin developer know.';
-        }
-      } else if ($scope.request.output_type == 'STRING') {
-        try {
-          $scope.filename = $scope.request.id+".txt";
-          rawOutput = $scope.stringify(JSON.parse(rawOutput));
-        } catch (err) { }
-      }
-    } finally {
-      $scope.downloadHref = downloadHref;
-      $scope.rawOutput = rawOutput;
+  class Output {
+    constructor() {
+        this.htmlOutput = '';
+        this.jsonOutput = '';
+        this.output_type = '';
+        this.rawOutput = '';
+        this.formattedAvailable = false;
+        this.showFormatted = false;
+        this.formatErrorTitle = undefined;
+        this.formatErrorMsg = undefined;
+        this.downloadHref = '';
+        this.filename = '';
+        this.downloadVisible = true;
+        this.output_label = '';
+        this.cascadeOutput = false;
     }
+  };
+
+  $scope.formatOutput = function() {
+    $scope.Outputs = [];
+    let rawOutput = $scope.request.output
+    let rawOutputs = JSON.parse(rawOutput);
+    let output_types = $scope.request.output_types;
+    let output_labels = $scope.request.output_labels;
+    if (!Array.isArray(rawOutputs)) {
+        $scope.isManyOutputs = false;
+        if (output_types == ''){
+            output_types = [$scope.request.output_type];
+        }
+        rawOutputs = [rawOutput]
+    }
+    let i;
+    let myOutput;
+    let filename;
+    $scope.filenameAll = $scope.request.id+".txt"
+    $scope.downloadAllHref = 'data:text/plain;charset=utf-8,' + encodeURIComponent(rawOutputs);
+      for (i = 0; i < rawOutputs.length; i++) {
+        rawOutput = rawOutputs[i];
+        myOutput = new Output();
+        if ((output_labels.length == 0 || output_labels[i]==undefined) && rawOutputs.length != 1){
+            myOutput.output_label = "Output "+(i+1);
+        } else if (rawOutputs.length == 1){
+            myOutput.output_label = '';
+        } else {
+          myOutput.output_label = output_labels[i];
+        }
+        filename = $scope.request.id+"_"+myOutput.output_label;
+        myOutput.downloadHref = 'data:text/plain;charset=utf-8,' + encodeURIComponent(rawOutput);
+        try {
+          if (rawOutput === undefined || rawOutput == null || rawOutput == "") {
+            rawOutput = 'null';
+            myOutput.downloadVisible = false;
+          } else if (output_types[i] == 'HTML') {
+            $scope.downloadAllVisible = true;
+            myOutput.filename = filename+".html";
+            myOutput.htmlOutput = rawOutput;
+            myOutput.formattedAvailable = true;
+            myOutput.showFormatted = true;
+          } else if (output_types[i] == 'JSON') {
+            $scope.downloadAllVisible = true;
+            try {
+              let parsedOutput = JSON.parse(rawOutput);
+              rawOutput = $scope.stringify(parsedOutput);
+              myOutput.filename = filename+".json";
+              if ($scope.countNodes($scope.formattedOutput) < 1000) {
+                myOutput.jsonOutput = rawOutput;
+                myOutput.formattedAvailable = true;
+                myOutput.showFormatted = true;
+              } else {
+                myOutput.formatErrorTitle = 'Output is too large for collapsible view';
+                myOutput.formatErrorMsg = 'This output is valid JSON, but it\'s so big that ' +
+                                          'displaying it in the collapsible viewer would crash the ' +
+                                          'page.';
+              }
+            } catch (err) {
+              myOutput.formatErrorTitle = 'This JSON didn\'t parse correctly';
+              myOutput.formatErrorMsg = 'beer-garden was expecting this output to be JSON but it ' +
+                                        'doesn\'t look like JSON. If this is happening often please ' +
+                                        'let the plugin developer know.';
+            }
+          } else if (output_types[i] == 'STRING' || output_types[i]==undefined) {
+            $scope.downloadAllVisible = true;
+            try {
+              myOutput.filename = filename+".txt";
+              rawOutput = $scope.stringify(JSON.parse(rawOutput));
+              if (output_types[i]==undefined){
+                myOutput.formatErrorTitle = 'Output type was not specified.';
+                myOutput.formatErrorMsg = 'beer-garden was not expecting this output. If this is happening often please ' +
+                                          'let the plugin developer know.';
+              }
+            } catch (err) { }
+          }
+        } finally {
+          myOutput.rawOutput = rawOutput;
+          $scope.Outputs[i] = myOutput;
+        }
+      }
   };
 
   $scope.formatDate = formatDate;

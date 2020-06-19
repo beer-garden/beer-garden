@@ -92,46 +92,119 @@
     </table>
 
     <div class="row">
-      <div ng-style="(displayOutput && isMaximized) ? {'width': '100%'} : {'width': '50%'}" ng-show="displayOutput" class="col-md-6">
+      <div  ng-style="(displayOutput && isMaximized) ? {'width': '100%'} : {'width': '50%'}" ng-show="displayOutput" class="col-md-6">
         <div style="margin-bottom: 10px;">
-          <span class="h3">Output
-            <a class="fa fa-window-maximize pull-right"
-                 title="Maximize"
-                 ng-click="Resize('outputCell')"
-                 ng-hide="isMaximized"
-                 style="font-size: 0.8em; margin-top: 11px; color: black"></a>
-            <a class="fa fa-window-restore pull-right"
-                 title="Restore"
-                 ng-click="Resize('outputCell')"
-                 ng-hide="!isMaximized"
-                 style="font-size: 0.8em; margin-top: 11px; color: black"></a>
-            <a class="fa fa-download pull-right" style="font-size: 0.8em; margin-top: 12px; color: black"
-                 ng-href="{{downloadHref}}" download="{{filename}}" ng-show="{{downloadVisible}}"></a>
-          </span>
-          <span ng-show="formattedAvailable && format_error === undefined" style="margin-top: 9px" class="pull-right">
-            <input bs-switch ng-model="showFormatted" switch-size="mini" type="checkbox" switch-label-width="0"
-                   switch-handle-width="70" switch-on-text="Formatted" switch-off-text="Raw">
-          </span>
-          <span ng-show="formatErrorTitle !== undefined" class="pull-right" uib-popover="{{formatErrorMsg}}"
-                popover-animation="true" popover-placement="left" popover-trigger="'mouseenter'"
-                popover-title="{{formatErrorTitle}}" style="color: gray; padding-top: 5px">
-            <span class="glyphicon glyphicon-info-sign" style="font-size: 26px"></span>
-          </span>
-        </div>
-        <div style="position: relative;">
-          <div class="w-100" style="text-align: center;" ng-hide="complete">
-            <i class="fa fa-spinner fa-pulse fa-3x"></i>
-          </div>
-          <div ng-show="complete">
-            <pre id="rawOutput" ng-show="!showFormatted">{{rawOutput}}</pre>
+          <div ng-if="!isManyOutputs">
+            <span class="h3">Output
+              <a class="fa fa-window-maximize pull-right"
+                   title="Maximize"
+                   ng-click="Resize('outputCell')"
+                   ng-hide="isMaximized"
+                   style="font-size: 0.8em; margin-top: 11px; color: black"></a>
+              <a class="fa fa-window-restore pull-right"
+                   title="Restore"
+                   ng-click="Resize('outputCell')"
+                   ng-hide="!isMaximized"
+                   style="font-size: 0.8em; margin-top: 11px; color: black"></a>
+              <a class="fa fa-download pull-right" style="font-size: 0.8em; margin-top: 12px; color: black"
+                   ng-href="{{Outputs[0].downloadHref}}" download="{{Outputs[0].filename}}" ng-show="{{Outputs[0].downloadVisible}}"></a>
+            </span>
+            <span ng-show="Outputs[0].formattedAvailable && Outputs[0].format_error === undefined" style="margin-top: 9px" class="pull-right">
+              <input bs-switch ng-model="Outputs[0].showFormatted" switch-size="mini" type="checkbox" switch-label-width="0"
+                     switch-handle-width="70" switch-on-text="Formatted" switch-off-text="Raw">
+            </span>
+            <span ng-show="Outputs[0].formatErrorTitle !== undefined" class="pull-right" uib-popover="{{Outputs[0].formatErrorMsg}}"
+                  popover-animation="true" popover-placement="left" popover-trigger="'mouseenter'"
+                  popover-title="{{Outputs[0].formatErrorTitle}}" style="color: gray; padding-top: 5px">
+              <span class="glyphicon glyphicon-info-sign" style="font-size: 26px"></span>
+            </span>
 
-            <div id="htmlOutput" ng-show="showFormatted && htmlOutput">
-              <div ng-bind-html="htmlOutput"></div>
+            <div style="position: relative;">
+              <div class="w-100" style="text-align: center;" ng-hide="complete">
+                <i class="fa fa-spinner fa-pulse fa-3x"></i>
+              </div>
+              <div ng-show="complete">
+                <pre id="Outputs[0].rawOutput" ng-show="!Outputs[0].showFormatted" style="width: 100%">{{Outputs[0].rawOutput}}</pre>
+
+                <div id="Outputs[0].htmlOutput" ng-show="Outputs[0].showFormatted && Outputs[0].htmlOutput">
+                  <div ng-bind-html="Outputs[0].htmlOutput"></div>
+                </div>
+                <div id="Outputs[0].jsonOutput" ng-show="Outputs[0].showFormatted && Outputs[0].jsonOutput">
+                  <div ui-ace="{ onLoad: loadPreview }" ng-model="Outputs[0].jsonOutput"
+                    ng-if="Outputs[0].formattedAvailable && Outputs[0].format_error === undefined" style="width: 100%;"></div>
+                </div>
+              </div>
             </div>
-            <div id="jsonOutput" ng-show="showFormatted && jsonOutput">
-              <div ui-ace="{ onLoad: loadPreview }" ng-model="jsonOutput"
-                ng-if="formattedAvailable && format_error === undefined" style="width: 100%;"></div>
-            </div>
+          </div>
+          <div ng-if="isManyOutputs">
+            <table
+              datatable="ng"
+              class="table"
+              style="width: 100%">
+              <thead>
+                <span class="h3">Outputs
+                  <a class="fa fa-window-maximize pull-right"
+                       title="Maximize"
+                       ng-click="Resize('outputCell')"
+                       ng-hide="(isMaximized)"
+                       style="font-size: 0.8em; margin-top: 11px; color: black"></a>
+                  <a class="fa fa-window-restore pull-right"
+                       title="Restore"
+                       ng-click="Resize('outputCell')"
+                       ng-hide="(!isMaximized)"
+                       style="font-size: 0.8em; margin-top: 11px; color: black"></a>
+                  <a class="fa fa-download pull-right" style="font-size: .8em; margin-top: 12px; color: black"
+                           ng-href="{{downloadAllHref}}" download="{{filenameAll}}"
+                           ng-show="downloadAllVisible"></a>
+                </span>
+              </thead>
+              <tbody>
+                <tr ng-repeat="output in Outputs">
+                  <td>
+                  <span class="h3">{{output.output_label}}
+                    <a class="fa fa-arrow-up pull-right"
+                         title="Cascade"
+                         ng-click="output.cascadeOutput=!output.cascadeOutput"
+                         ng-hide="(output.cascadeOutput)"
+                         style="font-size: .8em; margin-top: 11px; color: black"></a>
+                    <a class="fa fa-arrow-down pull-right"
+                         title="Cascade"
+                         ng-click="output.cascadeOutput=!output.cascadeOutput"
+                         ng-hide="(!output.cascadeOutput)"
+                         style="font-size: .8em; margin-top: 11px; color: black"></a>
+                    <a class="fa fa-download pull-right" style="font-size: .8em; margin-top: 12px; color: black"
+                           ng-href="{{output.downloadHref}}" download="{{output.filename}}"
+                           ng-show="output.downloadVisible"></a>
+                  </span>
+                  <span ng-show="output.formattedAvailable && output.format_error === undefined && !output.cascadeOutput"
+                        style="margin-top: 9px" class="pull-right">
+                    <input bs-switch ng-model="output.showFormatted" switch-size="mini" type="checkbox" switch-label-width="0"
+                           switch-handle-width="70" switch-on-text="Formatted" switch-off-text="Raw">
+                  </span>
+                  <span ng-show="output.formatErrorTitle !== undefined" class="pull-right"
+                        uib-popover="{{output.formatErrorMsg}}" popover-animation="true" popover-placement="left"
+                        popover-trigger="'mouseenter'" popover-title="{{output.formatErrorTitle}}" style="color: gray; padding-top: 5px">
+                    <span class="glyphicon glyphicon-info-sign" style="font-size: 26px"></span>
+                  </span>
+                  <span ng-hide = output.cascadeOutput>
+                    <div class="w-100" style="text-align: center;" ng-hide="complete">
+                      <i class="fa fa-spinner fa-pulse fa-3x"></i>
+                    </div>
+                    <div ng-show="complete">
+                      <pre id="output.rawOutput" ng-show="!output.showFormatted" style="width: 100%">{{output.rawOutput}}</pre>
+                      <div id="output.htmlOutput" ng-show="output.showFormatted && output.htmlOutput">
+                        <div ng-bind-html="output.htmlOutput"></div>
+                      </div>
+                      <div id="output.jsonOutput" ng-show="output.showFormatted && output.jsonOutput">
+                        <div ui-ace="{ onLoad: loadPreview }" ng-model="output.jsonOutput"
+                          ng-if="output.formattedAvailable && output.format_error === undefined" style="width: 100%;"></div>
+                      </div>
+                    </div>
+                  </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

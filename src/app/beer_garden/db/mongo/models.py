@@ -200,6 +200,8 @@ class Command(MongoModel, Document):
     parameters = ListField(EmbeddedDocumentField("Parameter"))
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES, default="ACTION")
     output_type = StringField(choices=BrewtilsCommand.OUTPUT_TYPES, default="STRING")
+    output_types = ListField()
+    output_labels = ListField()
     schema = DictField()
     form = DictField()
     template = StringField()
@@ -273,6 +275,8 @@ class Request(MongoModel, Document):
         "comment": {"field": StringField, "kwargs": {"required": False}},
         "metadata": {"field": DictField, "kwargs": {}},
         "output_type": {"field": StringField, "kwargs": {}},
+        "output_types": {"field": ListField, "kwargs": {}},
+        "output_labels": {"field": ListField, "kwargs": {}},
     }
 
     for field_name, field_info in TEMPLATE_FIELDS.items():
@@ -284,6 +288,8 @@ class Request(MongoModel, Document):
     children = DummyField(required=False)
     output = StringField()
     output_type = StringField(choices=BrewtilsCommand.OUTPUT_TYPES)
+    output_types = ListField()
+    output_labels = ListField()
     status = StringField(choices=BrewtilsRequest.STATUS_LIST, default="CREATED")
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
     created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
