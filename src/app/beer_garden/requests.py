@@ -722,6 +722,13 @@ def handle_event(event):
     # Only care about downstream garden
     if event.garden != config.get("garden.name"):
 
+        if event.name == Events.GARDEN_STOPPED.name:
+            # When shutting down we need to close all handing connections/threads
+            # waiting for a response. This will invoke each connection/thread to be
+            # returned the current status of the Request.
+            for request_event in request_map:
+                request_map[request_event].set()
+
         if event.name == Events.REQUEST_CREATED.name:
             if db.query_unique(Request, id=event.payload.id) is None:
                 db.create(event.payload)
@@ -741,3 +748,4 @@ def handle_event(event):
     if event.name == Events.REQUEST_COMPLETED.name:
         if str(event.payload.id) in request_map:
             request_map[str(event.payload.id)].set()
+
