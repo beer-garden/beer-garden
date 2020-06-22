@@ -142,7 +142,12 @@ def update(instance_id: str, new_status: str = None, metadata: dict = None) -> I
 
 
 def read_logs(
-    instance_id: str, start_line: int = 0, end_line: int = 50,read_all=False, read_tail=False, wait_timeout: float = -1
+    instance_id: str,
+    start_line: int = 0,
+    end_line: int = 50,
+    read_all=False,
+    read_tail=False,
+    wait_timeout: float = -1,
 ) -> list:
     """Starts an instance.
 
@@ -170,10 +175,12 @@ def read_logs(
             system=system.name,
             system_version=system.version,
             instance_name=instance.name,
-            parameters={"start_line": start_line,
-                        "end_line": end_line,
-                        "read_all": read_all,
-                        "read_tail": read_tail},
+            parameters={
+                "start_line": start_line,
+                "end_line": end_line,
+                "read_all": read_all,
+                "read_tail": read_tail,
+            },
         ),
         wait_timeout=wait_timeout,
     )
