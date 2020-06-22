@@ -1,4 +1,3 @@
-
 commandIndexController.$inject = [
   '$rootScope',
   '$scope',
@@ -19,19 +18,31 @@ export default function commandIndexController(
     $stateParams,
     DTOptionsBuilder) {
   $scope.setWindowTitle('commands');
-
+  $scope.filterHidden = false;
+  $scope.dtInstance = {};
   $scope.dtOptions = DTOptionsBuilder.newOptions()
     .withOption('autoWidth', false)
+    .withOption('hiddenContainer', true)
     .withOption('order', [[0, 'asc'], [1, 'asc'], [2, 'asc'], [3, 'asc']])
     .withBootstrap();
 
+  $scope.hiddenComparator = function(hidden, checkbox){
+    return checkbox || !hidden;
+  };
+
+  $scope.nodeMove = function(location){
+    var node = document.getElementById("filterHidden");
+    var list = document.getElementById(location);
+    list.append(node, list.childNodes[0]);
+  };
+  
   if (!($stateParams.namespace || $stateParams.systemName || $stateParams.systemVersion)) {
     $scope.dtOptions = $scope.dtOptions.withLightColumnFilter({
-      0: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      3: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
-      4: {html: 'input', type: 'text', attr: {class: 'form-inline form-control'}},
+      0: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Namespace Filter'}},
+      1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'System Filter'}},
+      2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Version Filter'}},
+      3: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Command Filter'}},
+      4: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Description Filter'}},
     })
   }
 
@@ -44,6 +55,7 @@ export default function commandIndexController(
       system.commands.forEach((command) => {
         commands.push({
           id: command.id,
+          hidden: command.hidden,
           namespace: system.namespace,
           name: command.name,
           system: system.display_name || system.name,
@@ -70,6 +82,8 @@ export default function commandIndexController(
 
     $scope.response = response;
     $scope.data = commands;
+    $scope.dtOptions.withLanguage({"info": "Showing _START_ to _END_ of _TOTAL_ entries (filtered from " +
+    $scope.data.length + " total entries)", "infoFiltered":   ""});
     $scope.breadCrumbs = breadCrumbs;
   };
 

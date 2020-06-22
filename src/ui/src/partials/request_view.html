@@ -1,6 +1,5 @@
 <h1 class="page-header">
   <span>Request View</span>
-
   <span ng-if="responseState(response) === 'success'">
     <small>{{request.id}}</small>
     <button type="button"
@@ -29,15 +28,15 @@
     <table id="requestTable" class="table">
       <thead>
         <tr>
-          <th>Command</th>
-          <th>System</th>
-          <th>System Version</th>
-          <th>Instance Name</th>
-          <th>Status</th>
-          <th ng-show="showErrorColumn(request, children)">Error Type</th>
-          <th>Created</th>
-          <th>Updated</th>
-          <th>Comment</th>
+          <th scope="col">Command</th>
+          <th scope="col">System</th>
+          <th scope="col">System Version</th>
+          <th scope="col">Instance Name</th>
+          <th scope="col">Status</th>
+          <th scope="col" ng-show="showErrorColumn(request, children)">Error Type</th>
+          <th scope="col">Created</th>
+          <th scope="col">Updated</th>
+          <th scope="col">Comment</th>
         </tr>
       </thead>
       <tbody>
@@ -91,10 +90,24 @@
         </tr>
       </tbody>
     </table>
+
     <div class="row">
-      <div class="col-md-6">
+      <div ng-style="(displayOutput && isMaximized) ? {'width': '100%'} : {'width': '50%'}" ng-show="displayOutput" class="col-md-6">
         <div style="margin-bottom: 10px;">
-          <span class="h3">Output</span>
+          <span class="h3">Output
+            <a class="fa fa-window-maximize pull-right"
+                 title="Maximize"
+                 ng-click="Resize('outputCell')"
+                 ng-hide="isMaximized"
+                 style="font-size: 0.8em; margin-top: 11px; color: black"></a>
+            <a class="fa fa-window-restore pull-right"
+                 title="Restore"
+                 ng-click="Resize('outputCell')"
+                 ng-hide="!isMaximized"
+                 style="font-size: 0.8em; margin-top: 11px; color: black"></a>
+            <a class="fa fa-download pull-right" style="font-size: 0.8em; margin-top: 12px; color: black"
+                 ng-href="{{downloadHref}}" download="{{filename}}" ng-show="{{downloadVisible}}"></a>
+          </span>
           <span ng-show="formattedAvailable && format_error === undefined" style="margin-top: 9px" class="pull-right">
             <input bs-switch ng-model="showFormatted" switch-size="mini" type="checkbox" switch-label-width="0"
                    switch-handle-width="70" switch-on-text="Formatted" switch-off-text="Raw">
@@ -123,11 +136,22 @@
         </div>
       </div>
 
-      <div class="col-md-6">
+      <div ng-style="(displayParameter && isMaximized) ? {'width': '100%'} : {'width': '50%'}" ng-show="displayParameter" class="col-md-6">
         <div style="margin-bottom: 10px;">
-          <span class="h3">Parameters</span>
+          <span class="h3">Parameters
+              <a class="fa fa-window-maximize pull-right"
+                   title="Maximize"
+                   ng-click="Resize('parameterCell')"
+                   ng-hide="isMaximized"
+                   style="font-size: 0.8em; margin-top: 11px; color: black"></a>
+              <a class="fa fa-window-restore pull-right"
+                   title="Restore"
+                   ng-click="Resize('parameterCell')"
+                   ng-hide="!isMaximized"
+                   style="font-size: 0.8em; margin-top: 11px; color: black"></a>
+          </span>
         </div>
-        <div ui-ace="{ onLoad: loadPreview }" ng-model="formattedParameters" style="width: 100%;"></div>
+        <div ui-ace="{ onLoad: loadPreview }" ng-model="formattedParameters" style="width: 100%;" title="Input Parameters"></div>
       </div>
     </div>
   </div>

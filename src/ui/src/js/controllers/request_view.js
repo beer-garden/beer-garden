@@ -35,17 +35,20 @@ export default function requestViewController(
 
   $scope.request = undefined;
   $scope.complete = false;
-
   $scope.instanceStatus = undefined;
   $scope.timeoutRequest = undefined;
-
   $scope.children = [];
+  $scope.downloadHref = '';
+  $scope.filename = '';
+  $scope.downloadVisible = true
   $scope.childrenDisplay = [];
   $scope.childrenCollapsed = false;
-
   $scope.rawOutput = undefined;
   $scope.htmlOutput = '';
   $scope.jsonOutput = '';
+  $scope.isMaximized = false;
+  $scope.displayOutput = true;
+  $scope.displayParameter = true;
   $scope.formattedParameters = '';
   $scope.formattedAvailable = false;
   $scope.formatErrorTitle = undefined;
@@ -71,6 +74,15 @@ export default function requestViewController(
   $scope.canRepeat = function(request) {
     return RequestService.isComplete(request);
   };
+  
+  $scope.Resize = function(resizeCell) {
+    $scope.isMaximized=!$scope.isMaximized;
+    if(resizeCell.includes("parameterCell")){
+        $scope.displayOutput = !$scope.displayOutput;
+    }else if("outputCell"){
+        $scope.displayParameter = !$scope.displayParameter;
+    }
+  };
 
   $scope.showInstanceStatus = function(request, instanceStatus) {
     return !$scope.canRepeat(request) && instanceStatus &&
@@ -84,13 +96,14 @@ export default function requestViewController(
     $scope.showFormatted = false;
     $scope.formatErrorTitle = undefined;
     $scope.formatErrorMsg = undefined;
-
     let rawOutput = $scope.request.output;
-
+    let downloadHref = 'data:text/plain;charset=utf-8,' + encodeURIComponent($scope.request.output);
     try {
       if (rawOutput === undefined || rawOutput == null) {
         rawOutput = 'null';
+        $scope.downloadVisible = false;
       } else if ($scope.request.output_type == 'HTML') {
+        $scope.filename = $scope.request.id+".html";
         $scope.htmlOutput = rawOutput;
         $scope.formattedAvailable = true;
         $scope.showFormatted = true;
@@ -98,7 +111,7 @@ export default function requestViewController(
         try {
           let parsedOutput = JSON.parse(rawOutput);
           rawOutput = $scope.stringify(parsedOutput);
-
+          $scope.filename = $scope.request.id+".json";
           if ($scope.countNodes($scope.formattedOutput) < 1000) {
             $scope.jsonOutput = rawOutput;
             $scope.formattedAvailable = true;
@@ -117,10 +130,12 @@ export default function requestViewController(
         }
       } else if ($scope.request.output_type == 'STRING') {
         try {
+          $scope.filename = $scope.request.id+".txt";
           rawOutput = $scope.stringify(JSON.parse(rawOutput));
         } catch (err) { }
       }
     } finally {
+      $scope.downloadHref = downloadHref;
       $scope.rawOutput = rawOutput;
     }
   };

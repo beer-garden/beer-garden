@@ -30,7 +30,7 @@
         <li class="dropdown">
           <span data-toggle="dropdown" style="padding: 9px 15px; display: block;">
             <i class="fa fa-search"></i>
-            <input ng-model="searchText">
+            <input ng-model="searchText" title="Search System Names">
           </span>
 
           <ul class="dropdown-menu">
@@ -83,7 +83,7 @@
         <!-- Menu Bar broken into three sections: main, themes, admin -->
         <!-- Based on the current menu view selected will determine which elements are seen -->
         <li id="nav-extras" class="dropdown">
-          <a href="" class="fa fa-bars dropdown-toggle" data-toggle="dropdown" ng-click="setMenuPage('main')"></a>
+          <a href="" class="fa fa-bars dropdown-toggle" data-toggle="dropdown" title="Menu Drop Down" ng-click="setMenuPage('main')"></a>
           <ul class="dropdown-menu">
 
             <li ng-show="checkMenuPage('main')">

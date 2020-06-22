@@ -23,29 +23,6 @@ export default function adminGardenViewController(
   $scope.gardenSchema = null;
   $scope.gardenForm = null;
   $scope.gardenModel = {};
-  $scope.systems = [];
-
-  $scope.splitGardenSystems = function(systems) {
-    var splitSystems = [];
-
-    for (var key in systems) {
-      var system = systems[key];
-      var systemObj = {};
-
-      systemObj['namespace'] = system.split(":")[0];
-
-      var systemVersion = system.split(":")[1];
-      var start = systemVersion.lastIndexOf('-');
-      var end = systemVersion.length;
-
-      systemObj['name'] = systemVersion.substring(0, start);
-      systemObj['version'] = systemVersion.substring(start+1, end);
-
-      splitSystems.push(systemObj);
-    }
-
-    return splitSystems;
-  }
 
   let generateGardenSF = function() {
     $scope.gardenSchema = GardenService.SCHEMA;
@@ -57,7 +34,6 @@ export default function adminGardenViewController(
     $scope.response = response;
     $scope.data = response.data;
     $scope.gardenModel = response.data;
-    $scope.systems = $scope.splitGardenSystems(response.data.systems);
     generateGardenSF();
 
   };
