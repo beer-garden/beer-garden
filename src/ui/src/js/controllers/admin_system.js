@@ -116,21 +116,50 @@ export default function adminSystemController(
            '  <h3 class="modal-title" id="modal-title">Log File: {{system.name}}[{{system.version}}]-{{instance.name}}</h3>' +
            '</div>' +
            '<div class="modal-body" id="modal-body">' +
-            '<div>' +
-           '    <form ng-submit="getLogs()">' +
+           '<div uib-alert' +
+           '     ng-repeat="alert in alerts"' +
+           '     ng-class="\'alert-\' + alert.type"' +
+           '     close="closeAlert($index)">' +
+           '  {{alert.msg}}' +
+           '</div>' +
+           '<div>' +
+           '    <form ng-submit="getLogsTail()">' +
+           '      <input type="submit" value="Get Tail Logs">' +
+           '      <label for="start_line">Tail Lines</label>' +
+           '      <input type="number" id="tail_line" min="0" name="start_line" ng-model="tail_line">' +
+           '    </form>' +
+           '  </div>' +
+           '<div>' +
+           '    <form ng-submit="getLogsLines()">' +
+           '      <input type="submit" value="Get Line Logs">' +
            '      <label for="start_line">Start Line</label>' +
            '      <input type="number" id="start_line" min="0" name="start_line" ng-model="start_line">' +
            '      <label for="end_line">End Line</label>' +
            '      <input type="number" id="end_line" min="0" name="end_line" ng-model="end_line">' +
-           '      <input type="submit" value="Get Logs">' +
            '    </form>' +
+           '  </div>' +
+           '<div>' +
+           '    <form ng-submit="getLogs()">' +
+           '      <input type="submit" value="Get Full Logs">' +
+           '    </form>' +
+           '</div>' +
+           '<div id="loading"' +
+           '       class="col-md-12 text-center"' +
+           '       ng-if="loadingLogs">' +
+           '    <h1 ng-show="loadingLogs">' +
+           '      <div>Loading...</div>' +
+           '      <div><i class="fa fa-spinner fa-pulse fa-2x"></i></div>' +
+           '    </h1>' +
            '  </div>' +
            '  <div class="container-fluid animate-if"' +
            '       ng-if="logs !== undefined">' +
            '    <br>' +
+           '    <a class="fa fa-download pull-right" ' +
+           '      ng-href="{{downloadHref}}" download="{{filename}}" ng-show="displayLogs !== undefined"></a>' +
            '    <pre id="rawOutput" ng-show="displayLogs !== undefined">{{displayLogs}}</pre>' +
            '  </div>' +
            '</div>' +
+
            '<div class="modal-footer">' +
            '    <button class="btn btn-primary" type="button" ng-click="closeDialog()">Close Logs</button>' +
            '</div>',
@@ -144,33 +173,69 @@ export default function adminSystemController(
       });
       function adminSystemLogsController ($scope, $uibModalInstance, InstanceService, system, instance){
           $scope.logs = undefined;
-          $scope.start_line = 0
+          $scope.start_line = 0;
           $scope.end_line = 20;
+          $scope.tail_line=20;
+          $scope.wait_timeout = 30
           $scope.displayLogs = undefined;
           $scope.system = system;
           $scope.instance = instance;
+          $scope.loadingLogs = false
+          $scope.alerts = [{
+                              type: 'info',
+                              msg: 'Plugin must be listening to the Admin Queue ' +
+                                   'and logging to File for logs to be returned. '+
+                                   'This will only return information from the log file being actively written to.',
+                            }];
+
+
+
+          $scope.downloadHref = undefined;
+          $scope.filename = $scope.system.name+"["+$scope.system.version+"]-"+$scope.instance.name+".log";
 
           $scope.successLogs = function(response) {
+            $scope.loadingLogs = false
             $scope.logs = response.data;
             $scope.displayLogs = "";
 
             for (var i = 0; i < $scope.logs.length; i++ ){
                 $scope.displayLogs = $scope.displayLogs.concat($scope.logs[i]);
             };
+            $scope.downloadHref = 'data:text/plain;charset=utf-8,' + encodeURIComponent($scope.displayLogs);
           }
 
-          $scope.failureLogs = function(response) {
-            $scope.logs = [];
-            $scope.displayLogs = "";
-          }
-
+          $scope.getLogsLines = function(){
+            $scope.loadingLogs = true;
+            $scope.displayLogs = undefined;
+            InstanceService.showInstanceLogLines(instance.id, $scope.wait_timeout, $scope.start_line, $scope.end_line).then($scope.successLogs, $scope.addErrorAlert);
+          };
+          $scope.getLogsTail = function(){
+            $scope.loadingLogs = true;
+            $scope.displayLogs = undefined;
+            InstanceService.showInstanceLogTail(instance.id, $scope.wait_timeout, $scope.tail_line).then($scope.successLogs, $scope.addErrorAlert);
+          };
           $scope.getLogs = function(){
-            InstanceService.showInstanceLogs(instance.id, $scope.start_line, $scope.end_line).then($scope.successLogs, $scope.failureLogs);
+            $scope.loadingLogs = true;
+            $scope.displayLogs = undefined;
+            InstanceService.showInstanceLog(instance.id, $scope.wait_timeout).then($scope.successLogs, $scope.addErrorAlert);
           };
 
           $scope.closeDialog = function() {
             $uibModalInstance.close();
           }
+
+          $scope.closeAlert = function(index) {
+            $scope.alerts.splice(index, 1);
+          };
+
+          $scope.addErrorAlert = function(response) {
+            $scope.loadingLogs = false
+            $scope.alerts.push({
+              type: 'danger',
+              msg: 'Something went wrong on the backend: ' +
+                _.get(response, 'data.message', 'Please check the server logs'),
+            });
+  };
       }
     };
 

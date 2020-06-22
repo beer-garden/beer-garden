@@ -17,8 +17,14 @@ export default function instanceService($http) {
     getInstance: (instanceId) => {
         return $http.get('api/v1/instances/' + instanceId)
     },
-    showInstanceLogs: (instanceId, start_line, end_line) => {
-      return $http.patch('api/v1/instances/' + instanceId, {operation: 'logs', value:{"start_line":start_line, "end_line":end_line}});
+    showInstanceLogLines: (instanceId, wait_timeout, start_line, end_line) => {
+      return $http.patch('api/v1/instances/' + instanceId, {operation: 'logs', value:{"start_line":start_line, "end_line":end_line, "wait_timeout": wait_timeout}});
+    },
+    showInstanceLogTail: (instanceId, wait_timeout, start_line) => {
+      return $http.patch('api/v1/instances/' + instanceId, {operation: 'logs', value:{"start_line":start_line, "read_tail":true, "wait_timeout": wait_timeout}});
+    },
+    showInstanceLog: (instanceId, wait_timeout) => {
+      return $http.patch('api/v1/instances/' + instanceId, {operation: 'logs', value:{"read_all":true, "wait_timeout": wait_timeout}});
     },
   };
 };
