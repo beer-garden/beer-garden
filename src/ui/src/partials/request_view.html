@@ -95,7 +95,7 @@
       <div  ng-style="(displayOutput && isMaximized) ? {'width': '100%'} : {'width': '50%'}" ng-show="displayOutput" class="col-md-6">
         <div style="margin-bottom: 10px;">
           <div ng-if="!isManyOutputs">
-            <span class="h3">Output
+            <span class="h3">{{Outputs[0].output_label}}
               <a class="fa fa-window-maximize pull-right"
                    title="Maximize"
                    ng-click="Resize('outputCell')"

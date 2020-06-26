@@ -104,28 +104,38 @@ export default function requestViewController(
   $scope.formatOutput = function() {
     $scope.Outputs = [];
     let rawOutput = $scope.request.output
-    let rawOutputs = JSON.parse(rawOutput);
+    let rawOutputs;
+    try{
+        rawOutputs = JSON.parse(rawOutput);
+    }catch(err){}
     let output_types = $scope.request.output_types;
     let output_labels = $scope.request.output_labels;
-    if (!Array.isArray(rawOutputs)) {
+    if ((output_types.length <= 1 && output_labels.length <= 1) || rawOutputs === undefined) {
         $scope.isManyOutputs = false;
-        if (output_types == ''){
+        rawOutputs = [rawOutput]
+    }
+    if (output_types.length == 0){
             output_types = [$scope.request.output_type];
-        }
+    }
+    if(!Array.isArray(rawOutputs)){
         rawOutputs = [rawOutput]
     }
     let i;
     let myOutput;
     let filename;
     $scope.filenameAll = $scope.request.id+".txt"
-    $scope.downloadAllHref = 'data:text/plain;charset=utf-8,' + encodeURIComponent(rawOutputs);
-      for (i = 0; i < rawOutputs.length; i++) {
+    $scope.downloadAllHref = 'data:text/plain;charset=utf-8,' + encodeURIComponent($scope.stringify(rawOutputs));
+    let lengths = [rawOutputs.length, output_labels.length, output_types.length]
+      for (i = 0; i < Math.max(...lengths); i++) {
         rawOutput = rawOutputs[i];
+        if (typeof rawOutput != "string"){
+            rawOutput = $scope.stringify(rawOutput);
+        }
         myOutput = new Output();
         if ((output_labels.length == 0 || output_labels[i]==undefined) && rawOutputs.length != 1){
             myOutput.output_label = "Output "+(i+1);
-        } else if (rawOutputs.length == 1){
-            myOutput.output_label = '';
+        } else if (output_labels.length == 0){
+            myOutput.output_label = 'Output';
         } else {
           myOutput.output_label = output_labels[i];
         }
@@ -144,6 +154,7 @@ export default function requestViewController(
           } else if (output_types[i] == 'JSON') {
             $scope.downloadAllVisible = true;
             try {
+              rawOutputs[i] = rawOutput;
               let parsedOutput = JSON.parse(rawOutput);
               rawOutput = $scope.stringify(parsedOutput);
               myOutput.filename = filename+".json";
@@ -168,11 +179,6 @@ export default function requestViewController(
             try {
               myOutput.filename = filename+".txt";
               rawOutput = $scope.stringify(JSON.parse(rawOutput));
-              if (output_types[i]==undefined){
-                myOutput.formatErrorTitle = 'Output type was not specified.';
-                myOutput.formatErrorMsg = 'beer-garden was not expecting this output. If this is happening often please ' +
-                                          'let the plugin developer know.';
-              }
             } catch (err) { }
           }
         } finally {
