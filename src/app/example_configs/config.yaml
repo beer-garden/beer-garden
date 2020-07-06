@@ -1,30 +1,3 @@
-amq:
-  admin_queue_expiry: 3600000
-  blocked_connection_timeout: 5
-  connection_attempts: 3
-  connections:
-    admin:
-      password: password
-      port: 15672
-      ssl:
-        ca_cert: null
-        ca_verify: true
-        client_cert: null
-        enabled: false
-      user: beer_garden
-    message:
-      password: password
-      port: 5672
-      ssl:
-        ca_cert: null
-        ca_verify: true
-        client_cert: null
-        enabled: false
-      user: beer_garden
-  exchange: beer_garden
-  heartbeat_interval: 3600
-  host: localhost
-  virtual_host: /
 application:
   allow_unsafe_templates: false
   cors_enabled: true
@@ -66,12 +39,12 @@ entry:
   thrift:
     enable: false
 event:
-  amq:
-    enable: false
-    exchange: event
-    virtual_host: /
   mongo:
     enable: true
+  mq:
+    enable: false
+    exchange: null
+    virtual_host: /
   parent:
     http:
       enable: false
@@ -100,6 +73,33 @@ metrics:
     host: 0.0.0.0
     port: 2339
     url: http://localhost:3000
+mq:
+  admin_queue_expiry: 3600000
+  blocked_connection_timeout: 5
+  connection_attempts: 3
+  connections:
+    admin:
+      password: password
+      port: 15672
+      ssl:
+        ca_cert: null
+        ca_verify: true
+        client_cert: null
+        enabled: false
+      user: beer_garden
+    message:
+      password: password
+      port: 5672
+      ssl:
+        ca_cert: null
+        ca_verify: true
+        client_cert: null
+        enabled: false
+      user: beer_garden
+  exchange: beer_garden
+  heartbeat_interval: 3600
+  host: localhost
+  virtual_host: /
 plugin:
   local:
     auth:

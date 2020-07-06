@@ -327,7 +327,7 @@ _META_SPEC = {
     },
 }
 
-_AMQ_SSL_SPEC = {
+_MQ_SSL_SPEC = {
     "type": "dict",
     "items": {
         "enabled": {
@@ -354,13 +354,14 @@ _AMQ_SSL_SPEC = {
     },
 }
 
-_AMQ_SPEC = {
+_MQ_SPEC = {
     "type": "dict",
+    "previous_names": ["amq"],
     "items": {
         "host": {
             "type": "str",
             "default": "localhost",
-            "description": "Hostname of AMQ to use",
+            "description": "Hostname of MQ to use",
             "previous_names": ["amq_host"],
         },
         "admin_queue_expiry": {
@@ -371,7 +372,7 @@ _AMQ_SPEC = {
         "heartbeat_interval": {
             "type": "int",
             "default": 3600,
-            "description": "Heartbeat interval for AMQ",
+            "description": "Heartbeat interval for MQ",
             "previous_names": ["amq_heartbeat_interval"],
         },
         "blocked_connection_timeout": {
@@ -382,19 +383,19 @@ _AMQ_SPEC = {
         "connection_attempts": {
             "type": "int",
             "default": 3,
-            "description": "Number of retries to connect to AMQ",
+            "description": "Number of retries to connect to MQ",
             "previous_names": ["amq_connection_attempts"],
         },
         "exchange": {
             "type": "str",
             "default": "beer_garden",
-            "description": "Exchange name to use for AMQ",
+            "description": "Exchange name to use for MQ",
             "previous_names": ["amq_exchange"],
         },
         "virtual_host": {
             "type": "str",
             "default": "/",
-            "description": "Virtual host to use for AMQ",
+            "description": "Virtual host to use for MQ",
             "previous_names": ["amq_virtual_host"],
         },
         "connections": {
@@ -406,25 +407,25 @@ _AMQ_SPEC = {
                         "port": {
                             "type": "int",
                             "default": 15672,
-                            "description": "Port of the AMQ Admin host",
+                            "description": "Port of the MQ Admin host",
                             "previous_names": ["amq_admin_port"],
                             "alt_env_names": ["AMQ_ADMIN_PORT"],
                         },
                         "user": {
                             "type": "str",
                             "default": "guest",
-                            "description": "Username to login to the AMQ admin",
+                            "description": "Username to login to the MQ admin",
                             "previous_names": ["amq_admin_user"],
                             "alt_env_names": ["AMQ_ADMIN_USER"],
                         },
                         "password": {
                             "type": "str",
                             "default": "guest",
-                            "description": "Password to login to the AMQ admin",
+                            "description": "Password to login to the MQ admin",
                             "previous_names": ["amq_admin_password", "amq_admin_pw"],
                             "alt_env_names": ["AMQ_ADMIN_PASSWORD", "AMQ_ADMIN_PW"],
                         },
-                        "ssl": _AMQ_SSL_SPEC,
+                        "ssl": _MQ_SSL_SPEC,
                     },
                 },
                 "message": {
@@ -433,25 +434,25 @@ _AMQ_SPEC = {
                         "port": {
                             "type": "int",
                             "default": 5672,
-                            "description": "Port of the AMQ host",
+                            "description": "Port of the MQ host",
                             "previous_names": ["amq_port"],
                             "alt_env_names": ["AMQ_PORT"],
                         },
                         "password": {
                             "type": "str",
                             "default": "guest",
-                            "description": "Password to login to the AMQ host",
+                            "description": "Password to login to the MQ host",
                             "previous_names": ["amq_password"],
                             "alt_env_names": ["AMQ_PASSWORD"],
                         },
                         "user": {
                             "type": "str",
                             "default": "guest",
-                            "description": "Username to login to the AMQ host",
+                            "description": "Username to login to the MQ host",
                             "previous_names": ["amq_user"],
                             "alt_env_names": ["AMQ_USER"],
                         },
-                        "ssl": _AMQ_SSL_SPEC,
+                        "ssl": _MQ_SSL_SPEC,
                     },
                 },
             },
@@ -726,7 +727,7 @@ _ENTRY_SPEC = {
 _EVENT_SPEC = {
     "type": "dict",
     "items": {
-        "amq": {
+        "mq": {
             "type": "dict",
             "items": {
                 "enable": {
@@ -737,14 +738,14 @@ _EVENT_SPEC = {
                 "exchange": {
                     "type": "str",
                     "required": False,
-                    "description": "Exchange to use for AMQ events",
+                    "description": "Exchange to use for MQ events",
                     "previous_names": ["event_amq_exchange"],
                 },
                 "virtual_host": {
                     "type": "str",
                     "default": "/",
                     "required": False,
-                    "description": "Virtual host to use for AMQ events",
+                    "description": "Virtual host to use for MQ events",
                     "previous_names": ["event_amq_virtual_host"],
                 },
             },
@@ -1102,7 +1103,7 @@ _SPECIFICATION = {
         "previous_names": ["amq_publish_host"],
         "alt_env_names": ["AMQ_PUBLISH_HOST"],
     },
-    "amq": _AMQ_SPEC,
+    "mq": _MQ_SPEC,
     "application": _APP_SPEC,
     "auth": _AUTH_SPEC,
     "configuration": _META_SPEC,
