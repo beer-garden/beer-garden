@@ -55,9 +55,7 @@ def get_local_garden() -> Garden:
         name=config.get("garden.name"),
         connection_type="LOCAL",
         systems=get_systems(filter_params={"local": True}),
-        status="RUNNING",
-        status_info="This is your local Garden record, not persisted in the Database. "
-        "Changes will not be reflected",
+        status="RUNNING"
     )
     for system in local_garden.systems:
         if system.namespace not in local_garden.namespaces:
