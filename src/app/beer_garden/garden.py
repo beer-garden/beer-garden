@@ -55,7 +55,7 @@ def get_local_garden() -> Garden:
         name=config.get("garden.name"),
         connection_type="LOCAL",
         systems=get_systems(filter_params={"local": True}),
-        status="RUNNING"
+        status="RUNNING",
     )
     for system in local_garden.systems:
         if system.namespace not in local_garden.namespaces:
