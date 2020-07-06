@@ -4,6 +4,14 @@
 
 <fetch-data response="response"></fetch-data>
 
+<div uib-alert
+     ng-repeat="alert in alerts"
+     ng-class="'alert-' + alert.type"
+     close="closeAlert($index)">
+  {{alert.msg}}
+</div>
+
+
 <div id="garden-view-container"
      class="animate-if"
      ng-if="responseState(response) === 'success'">

@@ -19,6 +19,7 @@ export default function adminGardenViewController(
     EventService,
     $stateParams) {
   $scope.setWindowTitle('Configure Garden');
+  $scope.alerts = [];
 
   $scope.gardenSchema = null;
   $scope.gardenForm = null;
@@ -35,6 +36,13 @@ export default function adminGardenViewController(
     $scope.data = response.data;
     $scope.gardenModel = response.data;
     generateGardenSF();
+
+    if ($scope.data.id == null || $scope.data.connection_type == 'LOCAL'){
+      $scope.alerts.push({
+        msg: 'This is marked as your local Garden record. This record is auto generated at startup. ' +
+             'So any changes to connection info will not persisted in the Database. ',
+      });
+    }
 
   };
  $scope.failureCallback = function(response) {
@@ -72,4 +80,8 @@ export default function adminGardenViewController(
 
   loadAll();
 
+  };
+
+  $scope.closeAlert = function(index) {
+    $scope.alerts.splice(index, 1);
   };
