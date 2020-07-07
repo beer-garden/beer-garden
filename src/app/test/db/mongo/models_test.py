@@ -185,6 +185,8 @@ class TestRequest(object):
     )
     def test_invalid_status_transitions(self, bg_request, start, end):
         bg_request.status = start
+        bg_request.output = None
+
         db.create(bg_request)
 
         with pytest.raises(RequestStatusTransitionError):
