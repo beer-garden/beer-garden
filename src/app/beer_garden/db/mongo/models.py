@@ -376,7 +376,7 @@ class Request(MongoModel, Document):
 
         # If the output size is too large, we switch it over
         # Max size for Mongo is 16MB, switching over at 15MB to be safe
-        if self.output and sys.getsizeof(self.output) < (1000000 * 15):
+        if self.output and sys.getsizeof(self.output) > (1000000 * 15):
             self.output_gridfs.put(self.output, encoding="utf-8")
             self.output = None
 
