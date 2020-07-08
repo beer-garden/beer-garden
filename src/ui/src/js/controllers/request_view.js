@@ -39,7 +39,6 @@ export default function requestViewController(
   $scope.instanceStatus = undefined;
   $scope.timeoutRequest = undefined;
   $scope.children = [];
-  $scope.downloadHref = '';
   $scope.filename = '';
   $scope.downloadVisible = false;
   $scope.childrenDisplay = [];
@@ -163,7 +162,6 @@ export default function requestViewController(
 
       if ($scope.request.output) {
         $scope.downloadVisible = true;
-        $scope.downloadHref = `api/v1/requests/output/${$scope.request.id}`;
 
         if ($scope.request.output_type == 'STRING') {
           $scope.filename += ".txt";
