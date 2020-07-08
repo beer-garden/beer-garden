@@ -102,6 +102,11 @@ export default function requestViewController(
       if (rawOutput === undefined || rawOutput == null) {
         rawOutput = 'null';
         $scope.downloadVisible = false;
+      } else if ($scope.memorySizeOf(rawOutput) > 5){
+        $scope.formatErrorTitle = 'Output is too large';
+        $scope.formatErrorMsg = 'This output is so big that ' +
+                                  'displaying it in the collapsible viewer would crash the ' +
+                                  'page.';
       } else if ($scope.request.output_type == 'HTML') {
         $scope.filename = $scope.request.id+".html";
         $scope.htmlOutput = rawOutput;
@@ -112,7 +117,7 @@ export default function requestViewController(
           let parsedOutput = JSON.parse(rawOutput);
           rawOutput = $scope.stringify(parsedOutput);
           $scope.filename = $scope.request.id+".json";
-          if ($scope.countNodes($scope.formattedOutput) < 1000) {
+          if ($scope.memorySizeOf($scope.formattedOutput) < 5) {
             $scope.jsonOutput = rawOutput;
             $scope.formattedAvailable = true;
             $scope.showFormatted = true;
@@ -255,17 +260,36 @@ export default function requestViewController(
     return JSON.stringify(data, undefined, 2);
   };
 
-  $scope.countNodes = function(obj) {
-    // Arrays have type object too
-    if (typeof obj != 'object') {
-      return 1;
-    }
+  $scope.memorySizeOf = function(obj) {
+    let bytes = 0;
 
-    let total = 1;
-    for (const key of Object.keys(obj)) {
-      total += $scope.countNodes(object[key]);
-    }
-    return total;
+    function sizeOf(obj) {
+        if(obj !== null && obj !== undefined) {
+            switch(typeof obj) {
+            case 'number':
+                bytes += 8;
+                break;
+            case 'string':
+                bytes += obj.length * 2;
+                break;
+            case 'boolean':
+                bytes += 4;
+                break;
+            case 'object':
+                var objClass = Object.prototype.toString.call(obj).slice(8, -1);
+                if(objClass === 'Object' || objClass === 'Array') {
+                    for(var key in obj) {
+                        if(!obj.hasOwnProperty(key)) continue;
+                        sizeOf(obj[key]);
+                    }
+                } else bytes += obj.toString().length * 2;
+                break;
+            }
+        }
+        return bytes;
+    };
+
+    return(sizeOf(obj) / 1048576).toFixed(3)
   };
 
   function eventCallback(event) {
