@@ -99,14 +99,15 @@ export default function requestViewController(
     let rawOutput = $scope.request.output;
     let downloadHref = 'data:text/plain;charset=utf-8,' + encodeURIComponent($scope.request.output);
     try {
+      let raw_size = $scope.memorySizeOf(rawOutput)
       if (rawOutput === undefined || rawOutput == null) {
         rawOutput = 'null';
         $scope.downloadVisible = false;
-      } else if ($scope.memorySizeOf(rawOutput) > 5){
+      } else if (raw_size > 5){
         $scope.formatErrorTitle = 'Output is too large';
-        $scope.formatErrorMsg = 'This output is so big that ' +
+        $scope.formatErrorMsg = 'This output has a memory footprint of ' + raw_size  + ' MiB and ' +
                                   'displaying it in the collapsible viewer would crash the ' +
-                                  'page.';
+                                  'page. Depending on size, downloading file may take a few minutes for UI to prepare.';
       } else if ($scope.request.output_type == 'HTML') {
         $scope.filename = $scope.request.id+".html";
         $scope.htmlOutput = rawOutput;
@@ -125,7 +126,7 @@ export default function requestViewController(
             $scope.formatErrorTitle = 'Output is too large for collapsible view';
             $scope.formatErrorMsg = 'This output is valid JSON, but it\'s so big that ' +
                                       'displaying it in the collapsible viewer would crash the ' +
-                                      'page.';
+                                      'page. Downloading File might take a minute for UI to prepare.';
           }
         } catch (err) {
           $scope.formatErrorTitle = 'This JSON didn\'t parse correctly';
