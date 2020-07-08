@@ -124,7 +124,7 @@ def update_system(
                 f"the system instance limit of {system.max_instances}"
             )
 
-        system.instances.append(add_instances)
+        system.instances += add_instances
 
     if metadata:
         system.metadata.update(metadata)
