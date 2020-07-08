@@ -72,6 +72,9 @@ def to_brewtils(
     if obj is None or (isinstance(obj, list) and len(obj) == 0):
         return obj
 
+    if getattr(obj, "pre_serialize", None):
+        obj.pre_serialize()
+
     serialized = MongoParser.serialize(obj, to_string=False)
     many = True if isinstance(serialized, list) else False
     model_class = obj[0].brewtils_model if many else obj.brewtils_model
@@ -218,6 +221,7 @@ def query_unique(
                 kwargs[k] = from_brewtils(v)
 
         query_set = _model_map[model_class].objects.get(**kwargs)
+
         return to_brewtils(query_set)
     except DoesNotExist:
         if raise_missing:
