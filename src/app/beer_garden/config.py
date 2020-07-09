@@ -733,7 +733,6 @@ _PARENT_SPEC = {
                     "type": "bool",
                     "default": False,
                     "description": "Publish events to parent garden over HTTP",
-                    "alt_env_names": ["PARENT_HTTP_ENABLE"],
                 },
                 "ssl": {
                     "type": "dict",
@@ -793,7 +792,6 @@ _PARENT_SPEC = {
                     "type": "str",
                     "default": "0.0.0.0",
                     "description": "Host for the HTTP Server to bind to",
-                    "alt_env_names": ["PARENT_HTTP_HOST"],
                 },
                 "public_fqdn": {
                     "type": "str",
