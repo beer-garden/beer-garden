@@ -125,6 +125,47 @@ class RequestAPI(BaseHandler):
         self.write(response)
 
 
+class RequestOutputAPI(BaseHandler):
+    @authenticated(permissions=[Permissions.REQUEST_READ])
+    async def get(self, request_id):
+        """
+        ---
+        summary: Retrieve a specific Request output
+        parameters:
+          - name: request_id
+            in: path
+            required: true
+            description: The ID of the Request
+            type: string
+        responses:
+          200:
+            description: Request output for request with the given ID
+            type: String
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Requests
+        """
+
+        response = await self.client(
+            Operation(operation_type="REQUEST_READ", args=[request_id]),
+            serialize_kwargs={"to_string": False},
+        )
+
+        if response["output"]:
+            content_types = {
+                "HTML": "text/html; charset=UTF-8",
+                "JSON": "application/json; charset=UTF-8",
+                "STRING": "text/plain; charset=UTF-8",
+            }
+            self.set_header("Content-Type", content_types[response["output_type"]])
+            self.write(response["output"])
+        else:
+            self.set_status(204)
+
+
 class RequestListAPI(BaseHandler):
     parser = SchemaParser()
 

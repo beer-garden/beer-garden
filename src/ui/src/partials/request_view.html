@@ -106,7 +106,7 @@
                  ng-hide="!isMaximized"
                  style="font-size: 0.8em; margin-top: 11px; color: black"></a>
             <a class="fa fa-download pull-right" style="font-size: 0.8em; margin-top: 12px; color: black"
-                 ng-href="{{downloadHref}}" download="{{filename}}" ng-show="{{downloadVisible}}"></a>
+                 ng-href="api/v1/requests/output/{{request.id}}" download="{{filename}}" ng-show="downloadVisible"></a>
           </span>
           <span ng-show="formattedAvailable && format_error === undefined" style="margin-top: 9px" class="pull-right">
             <input bs-switch ng-model="showFormatted" switch-size="mini" type="checkbox" switch-label-width="0"
