@@ -24,7 +24,7 @@ class TestLoad(object):
 
         beer_garden.log.load({"level": level}, force=True)
 
-        assert beer_garden.log._LOGGING_CONFIG == default_app_config(level)
+        assert beer_garden.log._APP_LOGGING == default_app_config(level)
 
     def test_level_and_filename(self, tmpdir):
         level = "DEBUG"
@@ -32,7 +32,7 @@ class TestLoad(object):
 
         beer_garden.log.load({"level": level, "file": filename}, force=True)
 
-        assert beer_garden.log._LOGGING_CONFIG == default_app_config(
+        assert beer_garden.log._APP_LOGGING == default_app_config(
             level, filename=filename
         )
 
@@ -45,7 +45,7 @@ class TestLoad(object):
 
         beer_garden.log.load({"config_file": str(config_file)}, force=True)
 
-        assert beer_garden.log._LOGGING_CONFIG == logging_config
+        assert beer_garden.log._APP_LOGGING == logging_config
 
 
 class PluginLoggingLoaderTest(unittest.TestCase):
