@@ -45,22 +45,6 @@ event:
     enable: false
     exchange: null
     virtual_host: /
-  parent:
-    http:
-      enable: false
-      host: 0.0.0.0
-      port: 2337
-      public_fqdn: localhost
-      skip_events:
-      - DB_CREATE
-      ssl:
-        ca_cert: null
-        ca_path: null
-        client_cert_verify: NONE
-        enabled: false
-        private_key: null
-        public_key: null
-      url_prefix: /
 garden:
   name: default
 log:
@@ -100,6 +84,22 @@ mq:
   heartbeat_interval: 3600
   host: localhost
   virtual_host: /
+parent:
+  http:
+    enable: false
+    host: 0.0.0.0
+    port: 2337
+    public_fqdn: localhost
+    skip_events:
+    - DB_CREATE
+    ssl:
+      ca_cert: null
+      ca_path: null
+      client_cert_verify: NONE
+      enabled: false
+      private_key: null
+      public_key: null
+    url_prefix: /
 plugin:
   local:
     auth:

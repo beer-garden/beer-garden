@@ -724,6 +724,92 @@ _ENTRY_SPEC = {
     },
 }
 
+_PARENT_SPEC = {
+    "type": "dict",
+    "items": {
+        "http": {
+            "type": "dict",
+            "items": {
+                "enable": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Publish events to parent garden over HTTP",
+                },
+                "ssl": {
+                    "type": "dict",
+                    "items": {
+                        "enabled": {
+                            "type": "bool",
+                            "default": False,
+                            "description": "Serve content using SSL",
+                        },
+                        "private_key": {
+                            "type": "str",
+                            "description": "Path to a private key",
+                            "required": False,
+                        },
+                        "public_key": {
+                            "type": "str",
+                            "description": "Path to a public key",
+                            "required": False,
+                        },
+                        "ca_cert": {
+                            "type": "str",
+                            "description": (
+                                "Path to CA certificate file to use for SSLContext"
+                            ),
+                            "required": False,
+                        },
+                        "ca_path": {
+                            "type": "str",
+                            "description": (
+                                "Path to CA certificate path to use for SSLContext"
+                            ),
+                            "required": False,
+                        },
+                        "client_cert_verify": {
+                            "type": "str",
+                            "description": (
+                                "Client certificate mode to use when handling requests"
+                            ),
+                            "choices": ["NONE", "OPTIONAL", "REQUIRED"],
+                            "default": "NONE",
+                        },
+                    },
+                },
+                "port": {
+                    "type": "int",
+                    "default": 2337,
+                    "description": "Serve content on this port",
+                },
+                "url_prefix": {
+                    "type": "str",
+                    "default": "/",
+                    "description": "URL path prefix",
+                    "required": False,
+                },
+                "host": {
+                    "type": "str",
+                    "default": "0.0.0.0",
+                    "description": "Host for the HTTP Server to bind to",
+                },
+                "public_fqdn": {
+                    "type": "str",
+                    "default": "localhost",
+                    "description": "Public fully-qualified domain name",
+                },
+                "skip_events": {
+                    "type": "list",
+                    "items": {"skip_event": {"type": "str"}},
+                    "default": ["DB_CREATE"],
+                    "required": False,
+                    "description": "Events to be skipped",
+                },
+            },
+        }
+    },
+}
+
 _EVENT_SPEC = {
     "type": "dict",
     "items": {
@@ -759,92 +845,6 @@ _EVENT_SPEC = {
                     "description": "Persist events to Mongo",
                     "previous_names": ["event_persist_mongo"],
                     "alt_env_names": ["EVENT_PERSIST_MONGO"],
-                }
-            },
-        },
-        "parent": {
-            "type": "dict",
-            "items": {
-                "http": {
-                    "type": "dict",
-                    "items": {
-                        "enable": {
-                            "type": "bool",
-                            "default": False,
-                            "description": "Publish events to parent garden over HTTP",
-                        },
-                        "ssl": {
-                            "type": "dict",
-                            "items": {
-                                "enabled": {
-                                    "type": "bool",
-                                    "default": False,
-                                    "description": "Serve content using SSL",
-                                    "cli_separator": "_",
-                                },
-                                "private_key": {
-                                    "type": "str",
-                                    "description": "Path to a private key",
-                                    "required": False,
-                                },
-                                "public_key": {
-                                    "type": "str",
-                                    "description": "Path to a public key",
-                                    "required": False,
-                                },
-                                "ca_cert": {
-                                    "type": "str",
-                                    "description": (
-                                        "Path to CA certificate file to use for SSLContext"
-                                    ),
-                                    "required": False,
-                                },
-                                "ca_path": {
-                                    "type": "str",
-                                    "description": (
-                                        "Path to CA certificate path to use for SSLContext"
-                                    ),
-                                    "required": False,
-                                },
-                                "client_cert_verify": {
-                                    "type": "str",
-                                    "description": (
-                                        "Client certificate mode to use when handling requests"
-                                    ),
-                                    "choices": ["NONE", "OPTIONAL", "REQUIRED"],
-                                    "default": "NONE",
-                                },
-                            },
-                        },
-                        "port": {
-                            "type": "int",
-                            "default": 2337,
-                            "description": "Serve content on this port",
-                        },
-                        "url_prefix": {
-                            "type": "str",
-                            "default": "/",
-                            "description": "URL path prefix",
-                            "required": False,
-                        },
-                        "host": {
-                            "type": "str",
-                            "default": "0.0.0.0",
-                            "description": "Host for the HTTP Server to bind to",
-                        },
-                        "public_fqdn": {
-                            "type": "str",
-                            "default": "localhost",
-                            "description": "Public fully-qualified domain name",
-                        },
-                        "skip_events": {
-                            "type": "list",
-                            "items": {"skip_event": {"type": "str"}},
-                            "default": ["DB_CREATE"],
-                            "required": False,
-                            "description": "Events to be skipped",
-                        },
-                    },
                 }
             },
         },
@@ -1110,6 +1110,7 @@ _SPECIFICATION = {
     "db": _DB_SPEC,
     "entry": _ENTRY_SPEC,
     "event": _EVENT_SPEC,
+    "parent": _PARENT_SPEC,
     "garden": _GARDEN_SPEC,
     "log": _LOG_SPEC,
     "metrics": _METRICS_SPEC,

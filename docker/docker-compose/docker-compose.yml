@@ -10,6 +10,13 @@ x-definitions: &env
     # Should be resolvable from inside and outside the docker network
     BG_PUBLISH_HOSTNAME: localhost
 
+    # IMPORTANT!!
+    # If you are connection to a Parent BG instance, toggle true
+    BG_PARENT_HTTP_ENABLE: false
+
+    # IMPORTANT !!
+    # If you are connecting to a Parent BG instance, change this the resolvable DNS entry
+    BG_PARENT_HTTP_HOST: localhost
 
 services:
     beer-garden:
