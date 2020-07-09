@@ -741,7 +741,6 @@ _PARENT_SPEC = {
                             "type": "bool",
                             "default": False,
                             "description": "Serve content using SSL",
-                            "cli_separator": "_",
                         },
                         "private_key": {
                             "type": "str",
