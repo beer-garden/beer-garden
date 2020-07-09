@@ -94,9 +94,20 @@ def process_record(record):
 
 def setup_entry_point_logging(queue):
     """Set up logging for an entry point process"""
-    root = logging.getLogger()
-    root.addHandler(logging.handlers.QueueHandler(queue))
-    root.setLevel(logging.DEBUG)
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": True,
+            "handlers": {
+                "entry_point": {
+                    "class": "logging.handlers.QueueHandler",
+                    "level": "DEBUG",
+                    "queue": queue,
+                }
+            },
+            "root": {"level": "DEBUG", "handlers": ["entry_point"]},
+        }
+    )
 
 
 def get_plugin_log_config(system_name=None):
