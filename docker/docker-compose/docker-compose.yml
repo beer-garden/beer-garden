@@ -12,11 +12,11 @@ x-definitions: &env
 
     # IMPORTANT!!
     # If you are connection to a Parent BG instance, toggle true
-    BG_PARENT_HTTP: false
+    BG_PARENT_HTTP_ENABLE: false
     
     # IMPORTANT !!
     # If you are connecting to a Parent BG instance, change this the resolvable DNS entry
-    BG_PARENT_HOST: localhost
+    BG_PARENT_HTTP_HOST: localhost
 
 services:
     beer-garden:
