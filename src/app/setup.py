@@ -32,6 +32,7 @@ setup(
         "apscheduler==3.6.0",
         "brewtils>=3.0.0a1",
         "mongoengine<0.19",
+        "more-itertools<9",
         "passlib<1.8",
         "prometheus-client==0.7.1",
         "pyrabbit2==1.0.7",
