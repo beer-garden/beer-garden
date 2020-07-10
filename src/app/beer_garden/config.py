@@ -204,7 +204,7 @@ def assign(new_config: Box, force: bool = False) -> None:
     """
     global _CONFIG
     if _CONFIG is not None and not force:
-        ConfigurationError("")
+        raise ConfigurationError("Attempting to reset config without force flag")
 
     _CONFIG = new_config
 
