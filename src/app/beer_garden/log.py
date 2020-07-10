@@ -4,6 +4,7 @@ import logging
 import logging.config
 import logging.handlers
 
+import brewtils.log
 import six
 from brewtils.models import LoggingConfig
 from ruamel import yaml
@@ -12,8 +13,8 @@ from ruamel.yaml import YAML
 import beer_garden.config as config
 from beer_garden.errors import LoggingLoadingError
 
-plugin_logging_config = None
-_LOGGING_CONFIG = None
+_APP_LOGGING = None
+_PLUGIN_LOGGING = None
 
 
 def load(config: dict, force=False) -> None:
@@ -27,8 +28,8 @@ def load(config: dict, force=False) -> None:
         config: Subsection "log" of the loaded configuration
         force: Force a reload.
     """
-    global _LOGGING_CONFIG
-    if _LOGGING_CONFIG is not None and not force:
+    global _APP_LOGGING
+    if _APP_LOGGING is not None and not force:
         return
 
     logging_filename = config.get("config_file")
@@ -41,7 +42,7 @@ def load(config: dict, force=False) -> None:
 
     logging.config.dictConfig(logging_config)
 
-    _LOGGING_CONFIG = logging_config
+    _APP_LOGGING = logging_config
 
 
 def default_app_config(level, filename=None):
@@ -94,23 +95,35 @@ def process_record(record):
 
 def setup_entry_point_logging(queue):
     """Set up logging for an entry point process"""
-    root = logging.getLogger()
-    root.addHandler(logging.handlers.QueueHandler(queue))
-    root.setLevel(logging.DEBUG)
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": True,
+            "handlers": {
+                "entry_point": {
+                    "class": "logging.handlers.QueueHandler",
+                    "level": "DEBUG",
+                    "queue": queue,
+                }
+            },
+            "root": {"level": "DEBUG", "handlers": ["entry_point"]},
+        }
+    )
 
 
 def get_plugin_log_config(system_name=None):
-    return plugin_logging_config.get_plugin_log_config(system_name=system_name)
+    return _PLUGIN_LOGGING.get_plugin_log_config(system_name=system_name)
 
 
 def load_plugin_log_config():
-    global plugin_logging_config
+    global _PLUGIN_LOGGING
 
     plugin_config = config.get("plugin")
-    plugin_logging_config = PluginLoggingLoader.load(
+
+    _PLUGIN_LOGGING = PluginLoggingLoader.load(
         filename=plugin_config.logging.config_file,
         level=plugin_config.logging.level,
-        default_config=_LOGGING_CONFIG,
+        default_config=brewtils.log.default_config(level="INFO"),
     )
 
 

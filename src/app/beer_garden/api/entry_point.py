@@ -170,17 +170,24 @@ class EntryPoint:
         # Then set up logging to push everything back to the main process
         beer_garden.log.setup_entry_point_logging(log_queue)
 
-        # Also set up plugin logging
-        beer_garden.log.load_plugin_log_config()
+        try:
+            # Also set up plugin logging
+            beer_garden.log.load_plugin_log_config()
 
-        # Set up a database connection
-        db.create_connection(db_config=beer_garden.config.get("db"))
+            # Set up a database connection
+            db.create_connection(db_config=beer_garden.config.get("db"))
 
-        # Set up message queue connections
-        queue.create_clients(beer_garden.config.get("mq"))
+            # Set up message queue connections
+            queue.create_clients(beer_garden.config.get("mq"))
 
-        # Load known gardens for routing
-        router.setup_routing()
+            # Load known gardens for routing
+            router.setup_routing()
+        except Exception as ex:
+            # If we don't do this any tracebacks won't propagate back to the "real"
+            # logging. In systemd mode we don't see STDERR from entry points.
+            logging.getLogger(__name__).exception(ex)
+
+            raise Exception("Entry point initialization failed") from ex
 
         # Now invoke the actual process target, passing in the connection
         return target(ep_conn)
