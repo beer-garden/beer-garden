@@ -57,6 +57,7 @@ BIN_PATH="$APP_PATH/bin"
 INCLUDE_PATH="$APP_PATH/include"
 LIB_PATH="$APP_PATH/lib"
 SHARE_PATH="$APP_PATH/share"
+UI_PATH="$APP_PATH/ui"
 
 PYTHON_BIN="$APP_PATH/bin/python"
 PIP_BIN="$APP_PATH/bin/pip"
@@ -85,6 +86,8 @@ install_apps() {
         $PIP_BIN install \
                 "$SRC_PATH/brewtils/dist/brewtils-$brewtils_version.tar.gz" \
                 "$SRC_PATH/app/dist/beer-garden-$app_version.tar.gz"
+
+        cp -r "$SRC_PATH/ui/dist" "$UI_PATH"
     else
         # If this isn't a local install we don't have versions
         $PIP_BIN install --upgrade -q beer-garden
@@ -134,6 +137,7 @@ create_rpm() {
         --directories $INCLUDE_PATH
         --directories $LIB_PATH
         --directories $SHARE_PATH
+        --directories $UI_PATH
         --before-install $SCRIPT_BASE/$BEFORE_INSTALL
         --after-install $SCRIPT_BASE/$AFTER_INSTALL
         --before-remove $SCRIPT_BASE/$BEFORE_REMOVE
