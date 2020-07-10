@@ -18,7 +18,7 @@ def setup():
 
     conf = Box(default_box=True)
     conf.garden.name = "parent"
-    config.assign(conf)
+    config.assign(conf, force=True)
 
 
 @pytest.fixture
