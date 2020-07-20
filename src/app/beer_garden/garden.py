@@ -168,9 +168,15 @@ def handle_event(event):
                 existing_garden = get_garden(event.payload.name)
 
                 if existing_garden is None:
+                    for system in event.payload.systems:
+                        system.local = False
+
                     create_garden(event.payload)
                 else:
                     for attr in ("status", "status_info", "namespaces", "systems"):
                         setattr(existing_garden, attr, getattr(event.payload, attr))
+
+                    for system in existing_garden.systems:
+                        system.local = False
 
                     update_garden(existing_garden)
