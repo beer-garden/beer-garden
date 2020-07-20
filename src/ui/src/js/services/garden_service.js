@@ -34,7 +34,7 @@ export default function gardenService($http) {
 
     var values = {};
     values['connection_type'] = model['connection_type'];
-     if (model.hasOwnProperty('connection_params')) {
+     if (model.hasOwnProperty('connection_params') && model.connection_params != null) {
         for (var parameter of Object.keys(model['connection_params']) ) {
           values[parameter] = model['connection_params'][parameter];
         }
