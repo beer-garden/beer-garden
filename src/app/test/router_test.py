@@ -63,12 +63,7 @@ def p_garden(p_sys_1, p_sys_2):
 
 @pytest.fixture
 def c_garden(c_sys_1, c_sys_2):
-    return Garden(
-        name="child",
-        connection_type="http",
-        systems=[c_sys_1, c_sys_2]
-        # name="child", connection_type="http", systems=[str(c_sys_1), str(c_sys_2)]
-    )
+    return Garden(name="child", connection_type="http", systems=[c_sys_1, c_sys_2])
 
 
 @pytest.fixture
