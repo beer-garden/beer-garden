@@ -221,10 +221,14 @@ def setup_routing():
 
 def handle_event(event):
     """Handle events"""
-    if event.name in (
-        Events.SYSTEM_CREATED.name,
-        Events.SYSTEM_UPDATED.name,
-        Events.SYSTEM_REMOVED.name,
+    if (
+        event.name
+        in (
+            Events.SYSTEM_CREATED.name,
+            Events.SYSTEM_UPDATED.name,
+            Events.SYSTEM_REMOVED.name,
+        )
+        and event.garden in gardens
     ):
         index = None
         for i, system in enumerate(gardens[event.garden].systems):
