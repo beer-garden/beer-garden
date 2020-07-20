@@ -703,6 +703,12 @@ class Garden(MongoModel, Document):
         "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
     }
 
+    def deep_save(self):
+        for system in self.systems:
+            system.deep_save()
+
+        self.save()
+
 
 class SystemGardenMapping(MongoModel, Document):
     system = ReferenceField("System")
