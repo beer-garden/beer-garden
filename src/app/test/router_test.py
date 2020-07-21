@@ -13,8 +13,6 @@ import beer_garden.router
 @pytest.fixture(autouse=True)
 def setup():
     beer_garden.router.gardens = {}
-    # beer_garden.router.garden_lookup = {}
-    # beer_garden.router.garden_connections = {}
 
     conf = Box(default_box=True)
     conf.garden.name = "parent"
@@ -53,12 +51,7 @@ def l_garden():
 
 @pytest.fixture
 def p_garden(p_sys_1, p_sys_2):
-    return Garden(
-        name="parent",
-        connection_type="local",
-        systems=[p_sys_1, p_sys_2]
-        # name="parent", connection_type="local", systems=[str(p_sys_1), str(p_sys_2)]
-    )
+    return Garden(name="parent", connection_type="local", systems=[p_sys_1, p_sys_2])
 
 
 @pytest.fixture
