@@ -69,7 +69,7 @@ def get_gardens_mock(monkeypatch):
 @pytest.fixture
 def get_local_garden_mock(monkeypatch):
     mock = Mock(return_value=[])
-    monkeypatch.setattr(beer_garden.router, "get_local_garden", mock)
+    monkeypatch.setattr(beer_garden.router, "local_garden", mock)
     return mock
 
 

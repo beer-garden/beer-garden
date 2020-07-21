@@ -9,6 +9,7 @@ from brewtils.models import Events, Garden, System
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.events import publish_event
+from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,8 @@ def get_garden(garden_name: str) -> Garden:
 
     """
     if garden_name == config.get("garden.name"):
-        return get_local_garden()
+        return local_garden()
+
     return db.query_unique(Garden, name=garden_name)
 
 
@@ -33,35 +35,26 @@ def get_gardens() -> List[Garden]:
     """Retrieve list of all Gardens
 
     Returns:
-        The Garden list
+        All known gardens
 
     """
-
-    query_results = db.query(Garden)
-    if query_results:
-        query_results.append(get_local_garden())
-        return query_results
-    return [get_local_garden()]
+    return [local_garden()] + db.query(Garden)
 
 
-def get_local_garden() -> Garden:
-    """Retrieved the local garden object
+def local_garden() -> Garden:
+    """Get the local garden definition
 
     Returns:
-        Garden Object
+        The local Garden
 
     """
-    local_garden = Garden(
+    return Garden(
         name=config.get("garden.name"),
         connection_type="LOCAL",
-        systems=get_systems(filter_params={"local": True}),
         status="RUNNING",
+        systems=get_systems(filter_params={"local": True}),
+        namespaces=get_namespaces(),
     )
-    for system in local_garden.systems:
-        if system.namespace not in local_garden.namespaces:
-            local_garden.namespaces.append(system.namespace)
-
-    return local_garden
 
 
 def update_garden_config(garden: Garden):
