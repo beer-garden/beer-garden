@@ -301,6 +301,7 @@ class Request(MongoModel, Document):
             {"name": "command_type_index", "fields": ["command_type"]},
             {"name": "system_index", "fields": ["system"]},
             {"name": "instance_name_index", "fields": ["instance_name"]},
+            {"name": "namespace_index", "fields": ["namespace"]},
             {"name": "status_index", "fields": ["status"]},
             {"name": "created_at_index", "fields": ["created_at"]},
             {"name": "updated_at_index", "fields": ["updated_at"]},
