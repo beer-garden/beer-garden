@@ -160,6 +160,9 @@ def handle_event(event):
                 existing_garden = get_garden(event.payload.name)
 
                 if existing_garden is None:
+                    event.payload.connection_type = None
+                    event.payload.connection_params = {}
+
                     for system in event.payload.systems:
                         system.local = False
 
