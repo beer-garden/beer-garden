@@ -111,7 +111,6 @@ def create_garden(garden: Garden) -> Garden:
         The created Garden
 
     """
-    garden.status = "INITIALIZING"
     garden.status_info["heartbeat"] = datetime.utcnow()
 
     return db.create(garden)
