@@ -119,10 +119,10 @@ class ProcessRunner(Thread):
 
             # Reading process IO is blocking so needs to be in separate threads
             stdout_thread = Thread(
-                target=self._read_stream, args=(self.process.stdout, logging.INFO),
+                target=self._read_stream, args=(self.process.stdout, logging.INFO)
             )
             stderr_thread = Thread(
-                target=self._read_stream, args=(self.process.stderr, logging.ERROR),
+                target=self._read_stream, args=(self.process.stderr, logging.ERROR)
             )
             stdout_thread.start()
             stderr_thread.start()

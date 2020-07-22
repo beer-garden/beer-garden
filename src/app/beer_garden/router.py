@@ -20,7 +20,7 @@ import beer_garden.scheduler
 import beer_garden.systems
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 from beer_garden.garden import get_gardens
-from beer_garden.systems import get_systems
+from beer_garden.garden import local_garden
 
 logger = logging.getLogger(__name__)
 
@@ -215,21 +215,20 @@ def setup_routing():
                 logger.warning(f"Garden with invalid connection info: {garden!r}")
 
     # Now add the "local" garden
-    gardens[local_garden_name] = Garden(
-        name=local_garden_name,
-        connection_type="local",
-        systems=get_systems(filter_params={"local": True}),
-    )
-
+    gardens[local_garden_name] = local_garden()
     logger.debug("Routing setup complete")
 
 
 def handle_event(event):
     """Handle events"""
-    if event.name in (
-        Events.SYSTEM_CREATED.name,
-        Events.SYSTEM_UPDATED.name,
-        Events.SYSTEM_REMOVED.name,
+    if (
+        event.name
+        in (
+            Events.SYSTEM_CREATED.name,
+            Events.SYSTEM_UPDATED.name,
+            Events.SYSTEM_REMOVED.name,
+        )
+        and event.garden in gardens
     ):
         index = None
         for i, system in enumerate(gardens[event.garden].systems):

@@ -3,7 +3,6 @@ import _ from 'lodash';
 adminGardenViewController.$inject = [
   '$scope',
   'GardenService',
-  'EventService',
   '$stateParams'
 ];
 
@@ -11,32 +10,46 @@ adminGardenViewController.$inject = [
  * adminGardenController - Garden management controller.
  * @param  {Object} $scope          Angular's $scope object.
  * @param  {Object} GardenService    Beer-Garden's garden service object.
- * @param  {Object} EventService    Beer-Garden's event service object.
  */
 export default function adminGardenViewController(
     $scope,
     GardenService,
-    EventService,
     $stateParams) {
   $scope.setWindowTitle('Configure Garden');
+  $scope.alerts = [];
 
+  $scope.isLocal = false;
   $scope.gardenSchema = null;
   $scope.gardenForm = null;
   $scope.gardenModel = {};
+
+  $scope.closeAlert = function(index) {
+    $scope.alerts.splice(index, 1);
+  };
 
   let generateGardenSF = function() {
     $scope.gardenSchema = GardenService.SCHEMA;
     $scope.gardenForm = GardenService.FORM;
     $scope.gardenModel = GardenService.serverModelToForm($scope.data);
+
     $scope.$broadcast('schemaFormRedraw');
   };
+
   $scope.successCallback = function(response) {
     $scope.response = response;
     $scope.data = response.data;
-    $scope.gardenModel = response.data;
-    generateGardenSF();
 
+    if ($scope.data.id == null || $scope.data.connection_type == 'LOCAL'){
+      $scope.isLocal = true;
+      $scope.alerts.push({
+        type: 'info',
+        msg: "Since this is the local Garden it's not possible to modify connection information"
+      });
+    }
+
+    generateGardenSF();
   };
+
  $scope.failureCallback = function(response) {
     $scope.response = response;
     $scope.data = [];
@@ -60,9 +73,9 @@ export default function adminGardenViewController(
     $scope.$broadcast('schemaFormValidate');
 
     if (form.$valid){
-       var garden = GardenService.formToServerModel($scope.data, model);
-       GardenService.updateGardenConfig(garden);
+       let updated_garden = GardenService.formToServerModel($scope.data, model);
 
+       GardenService.updateGardenConfig(updated_garden);
      }
   };
 
@@ -72,4 +85,5 @@ export default function adminGardenViewController(
 
   loadAll();
 
-  };
+};
+
