@@ -11,6 +11,7 @@ requestViewController.$inject = [
   'RequestService',
   'SystemService',
   'EventService',
+  'GardenService',
 ];
 
 /**
@@ -32,7 +33,8 @@ export default function requestViewController(
     $animate,
     RequestService,
     SystemService,
-    EventService) {
+    EventService,
+    GardenService) {
 
   $scope.request = undefined;
   $scope.complete = false;
@@ -218,16 +220,48 @@ export default function requestViewController(
       comment: request.comment || '',
       parameters: request.parameters,
     };
-    $state.go(
-      'base.command',
-      {
-        systemName: request.system,
-        systemVersion: request.system_version,
-        commandName: request.command,
-        namespace: request.namespace,
-        request: newRequest,
-      }
-    );
+
+    // Here for backwards capability with old V2 Requests, if namespace is null, we try the Garden Name
+    if (request.namespace == null){
+        let gardens = GardenService.getGardens().then(
+          (response) => {
+
+            let localGarden = null;
+            for (var i = 0; i < response.data.length; i++){
+                if (response.data[i].connection_type == "LOCAL"){
+                    localGarden =  response.data[i];
+                    break;
+                }
+            }
+
+            if (localGarden != null){
+                request.namespace = localGarden.name;
+                $state.go(
+                  'base.command',
+                  {
+                    systemName: request.system,
+                    systemVersion: request.system_version,
+                    commandName: request.command,
+                    namespace: request.namespace,
+                    request: newRequest,
+                  }
+                );
+            }
+          }
+        );
+    }
+    else{
+        $state.go(
+          'base.command',
+          {
+            systemName: request.system,
+            systemVersion: request.system_version,
+            commandName: request.command,
+            namespace: request.namespace,
+            request: newRequest,
+          }
+        );
+    }
   };
 
   $scope.childrenExist = function(children) {
