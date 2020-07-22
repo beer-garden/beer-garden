@@ -234,6 +234,17 @@ def forward(operation: Operation):
         connection_type = target_garden.connection_type
 
         if connection_type is None:
+            publish(
+                Event(
+                    name=Events.GARDEN_UNRESPONSIVE.name,
+                    payload_type=operation.schema,
+                    payload=operation,
+                    error_message=f"Attempted to forward operation to garden "
+                    f"'{operation.target_garden_name}' but the connection type was None. "
+                    f"This probably means that the connection to the child garden has not "
+                    f"been configured, please talk to your system administrator.",
+                )
+            )
             raise RoutingRequestException(
                 f"Attempted to forward operation to garden "
                 f"'{operation.target_garden_name}' but the connection type was None. "
@@ -464,6 +475,9 @@ def _forward_http(operation: Operation, target_garden: Garden):
                     name=Events.GARDEN_UNRESPONSIVE.name,
                     payload_type=operation.schema,
                     payload=operation,
+                    error_message=f"Attempted to forward operation to garden "
+                    f"'{operation.target_garden_name}' but the connection returned an error code of"
+                    f"{response.status_code}. Please talk to your system administrator.",
                 )
             )
         elif target_garden.status == "UNRESPONSIVE":
@@ -477,6 +491,9 @@ def _forward_http(operation: Operation, target_garden: Garden):
                 name=Events.GARDEN_UNRESPONSIVE.name,
                 payload_type=operation.schema,
                 payload=operation,
+                error_message=f"Attempted to forward operation to garden "
+                f"'{operation.target_garden_name}' but an error occurred."
+                f"Please talk to your system administrator.",
             )
         )
         raise ex
