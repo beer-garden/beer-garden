@@ -744,6 +744,19 @@ def handle_event(event):
 
             db.update(existing_request)
 
+    # If the local garden is trying to Request an event and it fails, mark the request
+    # with an error message
+    elif (
+        event.name == Events.GARDEN_UNRESPONSIVE.name
+        and event.payload.model_type == "Request"
+    ):
+        complete_request(
+            event.payload.model.id,
+            status="ERROR",
+            error_class=f"Unable to forward request to "
+            f"Garden {event.payload.target_garden_name}",
+        )
+
     # Required if the main process spawns a wait Request
     if event.name == Events.REQUEST_COMPLETED.name:
         if str(event.payload.id) in request_map:

@@ -175,3 +175,9 @@ def handle_event(event):
                         system.local = False
 
                     update_garden(existing_garden)
+    elif event.name == Events.GARDEN_UNRESPONSIVE.name:
+        target_garden = get_garden(event.payload.target_garden_name)
+
+        # If the target garden has an error, mark it unresponsive until it is corrected
+        if target_garden.status not in ["UNRESPONSIVE", "STOPPED", "BLOCKED"]:
+            update_garden_status(event.payload.target_garden_name, "UNRESPONSIVE")
