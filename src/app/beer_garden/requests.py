@@ -751,10 +751,7 @@ def handle_event(event):
         and event.payload.model_type == "Request"
     ):
         complete_request(
-            event.payload.model.id,
-            status="ERROR",
-            error_class=f"Unable to forward request to "
-            f"Garden {event.payload.target_garden_name}",
+            event.payload.model.id, status="ERROR", error_class=event.error_message,
         )
 
     # Required if the main process spawns a wait Request
