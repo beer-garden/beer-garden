@@ -4,7 +4,7 @@ import threading
 from typing import Dict, Optional, Union
 
 import requests
-from brewtils.models import Events, Garden, Operation, Request, System
+from brewtils.models import Event, Events, Garden, Operation, Request, System
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden
@@ -21,6 +21,7 @@ import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
+from beer_garden.events import publish
 from beer_garden.events.processors import QueueListener
 from beer_garden.garden import get_garden, get_gardens
 
@@ -240,7 +241,7 @@ def forward(operation: Operation):
                 f"been configured, please talk to your system administrator."
             )
         elif connection_type.casefold() == "http":
-            return _forward_http(operation, target_garden.connection_params)
+            return _forward_http(operation, target_garden)
         else:
             raise RoutingRequestException(f"Unknown connection type {connection_type}")
     except Exception as ex:
@@ -422,13 +423,15 @@ def _determine_target_garden(operation: Operation) -> str:
     raise Exception(f"Bad operation type {operation.operation_type}")
 
 
-def _forward_http(operation: Operation, conn_info: dict):
+def _forward_http(operation: Operation, target_garden: Garden):
     """Actually forward an operation using HTTP
 
     Args:
         operation: The operation to forward
         conn_info: Connection info
     """
+
+    conn_info = target_garden.connection_params
     endpoint = "{}://{}:{}{}api/v1/forward".format(
         "https" if conn_info.get("ssl") else "http",
         conn_info.get("host"),
@@ -436,21 +439,47 @@ def _forward_http(operation: Operation, conn_info: dict):
         conn_info.get("url_prefix", "/"),
     )
 
-    if conn_info.get("ssl"):
-        http_config = config.get("entry.http")
-        return requests.post(
-            endpoint,
-            data=SchemaParser.serialize_operation(operation),
-            cert=http_config.ssl.ca_cert,
-            verify=http_config.ssl.ca_path,
-        )
+    response = None
 
-    else:
-        return requests.post(
-            endpoint,
-            data=SchemaParser.serialize_operation(operation),
-            headers={"Content-type": "application/json", "Accept": "text/plain"},
+    try:
+        if conn_info.get("ssl"):
+            http_config = config.get("entry.http")
+            response = requests.post(
+                endpoint,
+                data=SchemaParser.serialize_operation(operation),
+                cert=http_config.ssl.ca_cert,
+                verify=http_config.ssl.ca_path,
+            )
+
+        else:
+            response = requests.post(
+                endpoint,
+                data=SchemaParser.serialize_operation(operation),
+                headers={"Content-type": "application/json", "Accept": "text/plain"},
+            )
+
+        if response.status_code != 200:
+            publish(
+                Event(
+                    name=Events.GARDEN_UNRESPONSIVE.name,
+                    payload_type=operation.schema,
+                    payload=operation,
+                )
+            )
+        elif target_garden.status == "UNRESPONSIVE":
+            beer_garden.garden.update_garden_status(target_garden.name, "RUNNING")
+
+        return response
+
+    except Exception as ex:
+        publish(
+            Event(
+                name=Events.GARDEN_UNRESPONSIVE.name,
+                payload_type=operation.schema,
+                payload=operation,
+            )
         )
+        raise ex
 
 
 def _system_name_lookup(system: Union[str, System]) -> str:
