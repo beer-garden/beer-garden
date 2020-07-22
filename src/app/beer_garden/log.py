@@ -98,7 +98,7 @@ def setup_entry_point_logging(queue):
     logging.config.dictConfig(
         {
             "version": 1,
-            "disable_existing_loggers": True,
+            "disable_existing_loggers": False,
             "handlers": {
                 "entry_point": {
                     "class": "logging.handlers.QueueHandler",
