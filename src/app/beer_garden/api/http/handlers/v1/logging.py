@@ -15,7 +15,7 @@ class LoggingConfigAPI(BaseHandler):
           - name: system_name
             in: query
             required: false
-            description: Specific system name to get logging configuration
+            description: UNUSED
             type: string
         responses:
           200:
@@ -27,11 +27,7 @@ class LoggingConfigAPI(BaseHandler):
         tags:
           - Config
         """
-        system_name = self.get_query_argument("system_name", default="")
-
-        response = await self.client(
-            Operation(operation_type="LOG_READ", args=[system_name])
-        )
+        response = await self.client(Operation(operation_type="LOG_READ"))
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
