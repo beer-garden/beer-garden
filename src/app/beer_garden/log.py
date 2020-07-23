@@ -3,6 +3,7 @@ import copy
 import logging
 import logging.config
 import logging.handlers
+import string
 
 import brewtils.log
 import six
@@ -14,7 +15,6 @@ import beer_garden.config as config
 from beer_garden.errors import LoggingLoadingError
 
 _APP_LOGGING = None
-_PLUGIN_LOGGING = None
 
 
 def load(config: dict, force=False) -> None:
@@ -111,16 +111,23 @@ def setup_entry_point_logging(queue):
     )
 
 
-def get_plugin_log_config(system_name=None):
-    return _PLUGIN_LOGGING.get_plugin_log_config(system_name=system_name)
+def get_plugin_log_config(**_) -> dict:
+    """Get the plugin logging configuration
+
+    Args:
+        **_: Eventually you will be able to select a plugin logging config based on
+            selectors (system name, etc.)
+
+    Returns:
+        The plugin logging configuration
+    """
+    return PluginLoggingManager.get()
 
 
 def load_plugin_log_config():
-    global _PLUGIN_LOGGING
-
     plugin_config = config.get("plugin")
 
-    _PLUGIN_LOGGING = PluginLoggingLoader.load(
+    PluginLoggingManager.load(
         filename=plugin_config.logging.config_file,
         level=plugin_config.logging.level,
         default_config=brewtils.log.default_config(level="INFO"),
@@ -133,7 +140,7 @@ def reload_plugin_log_config():
     return get_plugin_log_config()
 
 
-class PluginLoggingLoader(object):
+class PluginLoggingManager(object):
     """A class for loading plugin logging configuration from files.
 
     Usually used by simply calling `load`. If given a filename, it will attempt to pull
@@ -142,6 +149,9 @@ class PluginLoggingLoader(object):
     logging configuration dict (i.e. something you would pass to `logging.dictConfig`).
 
     """
+
+    # Actual logging configuration
+    _PLUGIN_LOGGING: dict = None
 
     STDOUT_HANDLERS = ["logging.StreamHandler"]
     LOGSTASH_HANDLERS = ["logstash_async.handler.AsynchronousLogstashHandler"]
@@ -155,16 +165,23 @@ class PluginLoggingLoader(object):
     logger = logging.getLogger(__name__)
 
     @classmethod
-    def load(cls, filename, level, default_config):
-        """Load a LoggingConfig
+    def get(cls) -> dict:
+        """Get the logging config"""
+        return cls._PLUGIN_LOGGING
+
+    @classmethod
+    def load(cls, filename: str, level: str, default_config) -> None:
+        """Load the logging configuration
 
         If no filename is given, will fallback to the default config passed in.
 
-        :param filename: Filename of the plugin logging configuration to load
-        :param level: A default level for the loggers
-        :param default_config: A default configuration to fallback on if no plugin log
-        is present
-        :return: A valid LoggingConfig object
+        Args:
+            filename: Filename of the plugin logging configuration to load
+            level: A default level for the loggers
+            default_config: Fallback configuration for if no filename is given
+
+        Returns:
+            None
         """
         raw_config = {}
 
@@ -176,35 +193,28 @@ class PluginLoggingLoader(object):
         if not raw_config:
             raw_config = cls._parse_python_logging_config(default_config, level)
 
-        return cls.validate_config(raw_config, level)
+        cls.validate_config(raw_config, level)
+
+        cls._PLUGIN_LOGGING = raw_config
 
     @classmethod
-    def validate_config(cls, config_to_validate, level):
+    def validate_config(cls, config: dict, default_level: str) -> None:
         """Validate and return a LoggingConfig object
 
         The plugin logging configuration validates that the handlers/loggers/formatters
         follow the supported loggers/formatters/handlers that beer-garden supports.
 
-        :param config_to_validate: A dictionary to validate
-        :param level: A default level to use
+        :param config: A dictionary to validate
+        :param default_level: A default level to use
         :return: A valid LoggingConfiguration object
         """
-        if not config_to_validate:
+        if not config:
             raise LoggingLoadingError("No plugin logging configuration specified.")
 
-        default_level = cls._validate_level(config_to_validate.get("level", level))
-        cls.logger.debug("Default level: %s" % default_level)
-
-        handlers = cls._validate_handlers(config_to_validate.get("handlers", {}))
-        formatters = cls._validate_formatters(config_to_validate.get("formatters", {}))
-        loggers = cls._validate_loggers(config_to_validate.get("loggers", {}))
-
-        return LoggingConfig(
-            level=default_level,
-            handlers=handlers,
-            formatters=formatters,
-            loggers=loggers,
-        )
+        cls._validate_level(config.get("level", default_level))
+        cls._validate_handlers(config.get("handlers", {}))
+        cls._validate_formatters(config.get("formatters", {}))
+        cls._validate_loggers(config.get("loggers", {}))
 
     @classmethod
     def _parse_python_logging_config(cls, python_logging_config, level):
@@ -227,6 +237,7 @@ class PluginLoggingLoader(object):
             python_logging_config.get("formatters")
         )
         loggers = {}
+
         return {
             "level": default_level,
             "loggers": loggers,
@@ -303,8 +314,20 @@ class PluginLoggingLoader(object):
         config_to_return["formatter"] = formatter
         return config_to_return
 
+    @staticmethod
+    def _validate_level(level: str):
+        """Validate given level is in supported list.
+
+        :param level:
+        :return:
+        """
+        if level not in LoggingConfig.LEVELS:
+            raise LoggingLoadingError(
+                f"Invalid level '{level}', supported levels are {LoggingConfig.LEVELS}"
+            )
+
     @classmethod
-    def _validate_loggers(cls, loggers):
+    def _validate_loggers(cls, loggers: dict) -> None:
         """Validate logger entry of a plugin logging configuration.
 
         Validates formatters/levels/handlers for all loggers given.
@@ -321,8 +344,7 @@ class PluginLoggingLoader(object):
                     for handler_name in logger_info.get("handlers"):
                         if handler_name not in LoggingConfig.SUPPORTED_HANDLERS:
                             raise LoggingLoadingError(
-                                "Invalid handler specified (%s). Supported handlers are: %s"
-                                % (handler_name, LoggingConfig.SUPPORTED_HANDLERS)
+                                f"Invalid handler '{handler_name}', supported handlers are {LoggingConfig.SUPPORTED_HANDLERS}"
                             )
                 else:
                     cls._validate_handlers(logger_info.get("handlers"))
@@ -330,10 +352,8 @@ class PluginLoggingLoader(object):
             if logger_info.get("formatters"):
                 cls._validate_formatters(logger_info.get("formatters"))
 
-        return loggers
-
     @staticmethod
-    def _validate_formatters(formatters):
+    def _validate_formatters(formatters: dict):
         """Validate that all formatters are supported.
 
         If no formatters are passed in, then the default formatter is returned.
@@ -345,18 +365,17 @@ class PluginLoggingLoader(object):
             return {"default": {"format": LoggingConfig.DEFAULT_FORMAT}}
 
         for formatter_name, _formatter_info in six.iteritems(formatters):
+            # TODO - WTF
 
             if formatter_name not in LoggingConfig.SUPPORTED_HANDLERS + ("default",):
                 raise LoggingLoadingError(
-                    "Invalid formatters specified (%s). Supported "
+                    "Invalid formatter specified (%s). Supported "
                     "formatters are: %s"
                     % (formatter_name, LoggingConfig.SUPPORTED_HANDLERS + ("default",))
                 )
 
-        return formatters
-
     @staticmethod
-    def _validate_handlers(handlers):
+    def _validate_handlers(handlers: dict):
         """Validate that all handlers are supported.
 
         If no handlers are passed in, then the default handler is returned.
@@ -370,25 +389,8 @@ class PluginLoggingLoader(object):
         for handler_name, _handler_config in six.iteritems(handlers):
             if handler_name not in LoggingConfig.SUPPORTED_HANDLERS:
                 raise LoggingLoadingError(
-                    "Invalid handler specified (%s). "
-                    "Supported handlers are: %s"
-                    % (handler_name, LoggingConfig.SUPPORTED_HANDLERS)
+                    f"Invalid handler '{handler_name}', supported handlers are {LoggingConfig.SUPPORTED_HANDLERS}"
                 )
-
-        return handlers
-
-    @staticmethod
-    def _validate_level(level):
-        """Validate given level is in supported list.
-
-        :param level:
-        :return:
-        """
-        if level not in LoggingConfig.LEVELS:
-            raise LoggingLoadingError(
-                f"Invalid level '{level}', supported levels are {LoggingConfig.LEVELS}"
-            )
-        return level
 
     @classmethod
     def _get_standardized_handler_name(cls, python_class):
@@ -404,4 +406,4 @@ class PluginLoggingLoader(object):
         elif python_class in cls.LOGSTASH_HANDLERS:
             return "logstash"
         else:
-            raise NotImplementedError("Invalid plugin log handler (%s)" % python_class)
+            raise NotImplementedError(f"Invalid plugin log handler '{python_class}'")
