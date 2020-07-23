@@ -2,6 +2,7 @@
 import logging
 from datetime import timedelta
 from functools import partial
+from threading import Event as ThreadingEvent
 
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -46,6 +47,7 @@ class Application(StoppableThread):
     clients = None
     helper_threads = None
     entry_manager = None
+    entry_manager_start_event = None
 
     def __init__(self):
         super(Application, self).__init__(
@@ -113,14 +115,16 @@ class Application(StoppableThread):
 
         self._shutdown()
 
-    @staticmethod
-    def handle_event(event):
+    def handle_event(self, event):
         """Handle any events the application cares about"""
         # Only care about local garden
         if event.garden == beer_garden.config.get("garden.name"):
-            # Start local plugins after the entry point comes up
-            if event.name == Events.ENTRY_STARTED.name:
-                PluginManager.instance().scan_path()
+            if (
+                event.name == Events.ENTRY_STARTED.name
+                and self.entry_manager_start_event
+                and self.entry_manager.is_running()
+            ):
+                self.entry_manager_start_event.set()
 
     def _progressive_backoff(self, func, failure_message):
         wait_time = 0.1
@@ -191,12 +195,17 @@ class Application(StoppableThread):
         self.logger.debug("Starting forwarding processor...")
         beer_garden.router.forward_processor.start()
 
+        self.entry_manager_start_event = ThreadingEvent()
         self.logger.debug("Creating and starting entry points...")
         self.entry_manager.create_all()
         self.entry_manager.start()
 
+        self.logger.debug("Waiting for Entry Point to Start")
+        self.entry_manager_start_event.wait()
+
         self.logger.debug("Starting local plugin process monitoring...")
         PluginManager.instance().start()
+        PluginManager.instance().scan_path()
 
         self.logger.debug("Starting scheduler")
         self.scheduler.start()

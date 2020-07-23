@@ -10,7 +10,7 @@ from types import FrameType
 from typing import Any, Callable, TypeVar
 
 from box import Box
-from brewtils.models import Event
+from brewtils.models import Event, Events
 
 import beer_garden
 import beer_garden.config
@@ -69,10 +69,24 @@ class EntryPoint:
         self._log_queue = log_queue
         self._signal_handler = signal_handler
 
+        self.status = "INITIALIZING"
+
         self._logger = logging.getLogger(__name__)
         self._process = None
         self._ep_conn, self._mp_conn = Pipe()
-        self._event_listener = PipeListener(conn=self._mp_conn, action=event_callback)
+
+        # We use two action events. The first one executes to manage START/STOP events
+        # Then event_callback executes to invoke provided callback.
+        self._event_listener = PipeListener(
+            conn=self._mp_conn, actions=[self.entry_event_manager, event_callback]
+        )
+
+    def entry_event_manager(self, event: Event):
+        """Catches local events to update the status of the Entry"""
+        if event.name == Events.ENTRY_STARTED.name:
+            self.status = "RUNNING"
+        elif event.name == Events.ENTRY_STOPPED.name:
+            self.status = "STOPPED"
 
     def start(self) -> None:
         """Start the entry point process"""
@@ -254,3 +268,10 @@ class Manager:
         """Publish an event to all entry points"""
         for entry_point in self.entry_points:
             entry_point.send_event(event)
+
+    def is_running(self) -> bool:
+        """Checks all Entry Points to determine if everything is Running"""
+        for entry_point in self.entry_points:
+            if entry_point.status in ["INITIALIZING", "STOPPED"]:
+                return False
+        return True
