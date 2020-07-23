@@ -3,6 +3,7 @@ import _ from 'lodash';
 adminGardenViewController.$inject = [
   '$scope',
   'GardenService',
+  'EventService',
   '$stateParams'
 ];
 
@@ -14,6 +15,7 @@ adminGardenViewController.$inject = [
 export default function adminGardenViewController(
     $scope,
     GardenService,
+    EventService,
     $stateParams) {
   $scope.setWindowTitle('Configure Garden');
   $scope.alerts = [];
@@ -78,6 +80,16 @@ export default function adminGardenViewController(
        GardenService.updateGardenConfig(updated_garden);
      }
   };
+
+  EventService.addCallback('admin_garden_view', (event) => {
+    switch (event.name) {
+      case 'GARDEN_UPDATED':
+        if ($scope.data.id == event.payload.id){
+            $scope.data = event.payload;
+
+        }
+    }
+  });
 
   $scope.$on('userChange', function() {
     loadAll();

@@ -53,12 +53,25 @@ export default function adminGardenController(
     loadGardens();
   };
 
-  EventService.addCallback('admin_system', (event) => {
+  EventService.addCallback('admin_garden', (event) => {
     switch (event.name) {
       case 'GARDEN_CREATED':
-        break;
+        $scope.data.push(event.payload);
+        $apply();
       case 'GARDEN_REMOVED':
-        break;
+        let new_data = []
+        for (var i = 0; i < $scope.data.length; i++) {
+            if ($scope.data[i].id != event.payload.id){
+                new_data.push($scope.data[i]);
+            }
+        }
+        $scope.data = new_data
+      case 'GARDEN_UPDATED':
+        for (var i = 0; i < $scope.data.length; i++) {
+            if ($scope.data[i].id == event.payload.id){
+                $scope.data[i] = event.payload;
+            }
+        }
     }
   });
 
