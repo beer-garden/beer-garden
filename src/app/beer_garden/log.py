@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import copy
 
 import brewtils.log
 import logging
@@ -170,3 +171,24 @@ class PluginLoggingManager(object):
                 cls._PLUGIN_LOGGING = yaml.safe_load(log_config_file)
         else:
             cls._PLUGIN_LOGGING = default_config
+
+    @classmethod
+    def get_legacy(cls):
+        """Get configuration in the old LoggingConfig format"""
+        log_config = copy.deepcopy(cls._PLUGIN_LOGGING)
+
+        if "version" in log_config:
+            del log_config["version"]
+        if "disable_existing_loggers" in log_config:
+            del log_config["disable_existing_loggers"]
+
+        level = config.get("plugin.logging.fallback_level")
+        if "root" in log_config:
+            if "level" in log_config["root"]:
+                level = log_config["root"]["level"]
+
+            del log_config["root"]
+
+        log_config["level"] = level
+
+        return log_config
