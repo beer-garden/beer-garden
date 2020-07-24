@@ -16,7 +16,7 @@ handlers:
 #    formatter: default
 #    level: INFO
 #    maxBytes: 10485760
-#    filename: "logs/$instance_name.log"
+#    filename: "logs/%(instance_name)s.log"
 
 formatters:
   default:
