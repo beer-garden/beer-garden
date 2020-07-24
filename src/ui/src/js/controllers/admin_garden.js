@@ -75,6 +75,10 @@ export default function adminGardenController(
     }
   });
 
+  $scope.$on('$destroy', function() {
+    EventService.removeCallback('admin_garden');
+  });
+
   $scope.$on('userChange', function() {
     loadAll();
   });
