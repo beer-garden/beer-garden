@@ -123,7 +123,7 @@ def load_plugin_log_config():
     PluginLoggingManager.load(
         filename=config.get("plugin.logging.config_file"),
         default_config=brewtils.log.default_config(
-            level=config.get("plugin.logging.level")
+            level=config.get("plugin.logging.fallback_level")
         ),
     )
 
