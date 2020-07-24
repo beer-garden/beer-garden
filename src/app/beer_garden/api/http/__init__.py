@@ -188,7 +188,7 @@ def _setup_tornado_app():
         (rf"{prefix}api/v1/roles/(\w+)/?", v1.role.RoleAPI),
         (rf"{prefix}api/v1/tokens/(\w+)/?", v1.token.TokenAPI),
         (rf"{prefix}api/v1/jobs/(\w+)/?", v1.job.JobAPI),
-        (rf"{prefix}api/v1/config/logging/?", v1.logging.LoggingConfigAPI),
+        (rf"{prefix}api/v1/logging/?", v1.logging.LoggingAPI),
         (rf"{prefix}api/v1/gardens/(\w+)/?", v1.garden.GardenAPI),
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
@@ -197,6 +197,8 @@ def _setup_tornado_app():
         (rf"{prefix}api/v2/users/(\w+)/?", v1.user.UserAPI),
         (rf"{prefix}api/v2/tokens/?", v1.token.TokenListAPI),
         (rf"{prefix}api/v2/tokens/(\w+)/?", v1.token.TokenAPI),
+        # Deprecated
+        (rf"{prefix}api/v1/config/logging/?", v1.logging.LoggingConfigAPI),
     ]
 
     # And these do not

@@ -120,6 +120,15 @@ def get_plugin_log_config(**_) -> dict:
     return PluginLoggingManager.get()
 
 
+def get_plugin_log_config_legacy() -> dict:
+    """Get the old-style plugin logging configuration
+
+    Returns:
+        The plugin logging configuration
+    """
+    return PluginLoggingManager.get_legacy()
+
+
 def load_plugin_log_config():
     PluginLoggingManager.load(
         filename=config.get("plugin.logging.config_file"),
@@ -127,12 +136,6 @@ def load_plugin_log_config():
             level=config.get("plugin.logging.fallback_level")
         ),
     )
-
-
-def reload_plugin_log_config():
-    load_plugin_log_config()
-
-    return get_plugin_log_config()
 
 
 class PluginLoggingManager(object):
