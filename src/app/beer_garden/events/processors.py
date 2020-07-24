@@ -16,19 +16,15 @@ logger = logging.getLogger(__name__)
 class BaseProcessor(StoppableThread):
     """Base Processor"""
 
-    def __init__(self, action=None, actions=None, **kwargs):
+    def __init__(self, action=None, **kwargs):
         super().__init__(**kwargs)
 
         self._action = action
-        self._actions = actions
 
     def process(self, item):
         try:
-            if self._action:
-                self._action(item)
-            if self._actions:
-                for action in self._actions:
-                    action(item)
+            self._action(item)
+
         except Exception as ex:
             logger.exception(f"Error processing: {ex}")
 

@@ -74,19 +74,20 @@ class EntryPoint:
         self._logger = logging.getLogger(__name__)
         self._process = None
         self._ep_conn, self._mp_conn = Pipe()
+        self.event_callback = event_callback
 
-        # We use two action events. The first one executes to manage START/STOP events
-        # Then event_callback executes to invoke provided callback.
         self._event_listener = PipeListener(
-            conn=self._mp_conn, actions=[self.entry_event_manager, event_callback]
+            conn=self._mp_conn, action=self.entry_event_manager
         )
 
     def entry_event_manager(self, event: Event):
-        """Catches local events to update the status of the Entry"""
+        """Catches local events to update the status of the Entry prior to forwarding"""
         if event.name == Events.ENTRY_STARTED.name:
             self.status = "RUNNING"
         elif event.name == Events.ENTRY_STOPPED.name:
             self.status = "STOPPED"
+
+        self.event_callback(event)
 
     def start(self) -> None:
         """Start the entry point process"""
