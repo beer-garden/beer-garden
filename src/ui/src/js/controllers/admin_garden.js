@@ -57,21 +57,21 @@ export default function adminGardenController(
     switch (event.name) {
       case 'GARDEN_CREATED':
         $scope.data.push(event.payload);
-        $apply();
+        break;
       case 'GARDEN_REMOVED':
-        let new_data = []
         for (var i = 0; i < $scope.data.length; i++) {
-            if ($scope.data[i].id != event.payload.id){
-                new_data.push($scope.data[i]);
+            if ($scope.data[i].id == event.payload.id){
+                $scope.data.splice(i, 1)
             }
         }
-        $scope.data = new_data
+        break;
       case 'GARDEN_UPDATED':
         for (var i = 0; i < $scope.data.length; i++) {
             if ($scope.data[i].id == event.payload.id){
                 $scope.data[i] = event.payload;
             }
         }
+        break;
     }
   });
 

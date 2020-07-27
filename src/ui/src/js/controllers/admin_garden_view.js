@@ -86,8 +86,8 @@ export default function adminGardenViewController(
       case 'GARDEN_UPDATED':
         if ($scope.data.id == event.payload.id){
             $scope.data = event.payload;
-
         }
+        break
     }
   });
 
