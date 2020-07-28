@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 start_request = RequestTemplate(command="_start", command_type="EPHEMERAL")
 stop_request = RequestTemplate(command="_stop", command_type="EPHEMERAL")
-read_logs_request = RequestTemplate(command="_read_log")
+read_logs_request = RequestTemplate(command="_read_log", command_type="ADMIN")
 
 
 @publish_event(Events.INSTANCE_INITIALIZED)
@@ -69,14 +69,16 @@ def start(instance_id: str) -> Instance:
 
     logger.info(f"Starting instance {system}[{instance}]")
 
-    requests.admin_process_request(
+    requests.process_request(
         Request.from_template(
             start_request,
             namespace=system.namespace,
             system=system.name,
             system_version=system.version,
             instance_name=instance.name,
-        )
+        ),
+        is_admin=True,
+        wait_timeout=0,
     )
 
     return instance
@@ -97,14 +99,16 @@ def stop(instance_id: str) -> Instance:
 
     logger.info(f"Stopping instance {system}[{instance}]")
 
-    requests.admin_process_request(
+    requests.process_request(
         Request.from_template(
             stop_request,
             namespace=system.namespace,
             system=system.name,
             system_version=system.version,
             instance_name=instance.name,
-        )
+        ),
+        is_admin=True,
+        wait_timeout=0,
     )
 
     return instance
@@ -168,7 +172,7 @@ def read_logs(
 
     logger.info(f"Reading Logs from instance {system}[{instance}]")
 
-    request = requests.admin_process_request(
+    request = requests.process_request(
         Request.from_template(
             read_logs_request,
             namespace=system.namespace,
@@ -182,6 +186,7 @@ def read_logs(
                 "read_tail": read_tail,
             },
         ),
+        is_admin=True,
         wait_timeout=wait_timeout,
     )
 

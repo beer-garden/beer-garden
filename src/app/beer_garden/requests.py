@@ -24,8 +24,6 @@ from beer_garden.metrics import request_completed, request_created, request_star
 logger = logging.getLogger(__name__)
 
 request_map = {}
-admin_request_map = {}
-admin_request_event_map = {}
 
 
 class RequestValidator(object):
@@ -556,7 +554,9 @@ def get_requests(**kwargs) -> List[Request]:
 
 
 def process_request(
-    new_request: Union[Request, RequestTemplate], wait_timeout: float = -1
+    new_request: Union[Request, RequestTemplate],
+    wait_timeout: float = -1,
+    is_admin: bool = False,
 ) -> Request:
     """Validates and publishes a Request.
 
@@ -566,6 +566,7 @@ def process_request(
             <0: Wait forever
             0: Don't wait at all
             >0: Wait this long
+        is_admin: Reserved for administrative commands
 
     Returns:
         The processed Request
@@ -584,7 +585,10 @@ def process_request(
     # Validates the request based on what is in the database.
     # This includes the validation of the request parameters,
     # systems are there, commands are there etc.
-    request = RequestValidator.instance().validate_request(request)
+    # Validation is only required for non Admin commands because Admin commands
+    # are hard coded to map Plugin functions
+    if not is_admin:
+        request = RequestValidator.instance().validate_request(request)
 
     # Once validated we need to save since validate can modify the request
     request = create_request(request)
@@ -597,6 +601,7 @@ def process_request(
 
         queue.put(
             request,
+            is_admin=is_admin,
             confirm=True,
             mandatory=True,
             delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE,
@@ -629,78 +634,6 @@ def process_request(
             request = db.reload(request)
         finally:
             request_map.pop(request.id, None)
-
-    return request
-
-
-def admin_process_request(
-    new_request: Union[Request, RequestTemplate], wait_timeout: float = 0
-) -> Request:
-    """Validates and publishes a Request.
-
-    Args:
-        new_request: The Request
-        wait_timeout: Float describing amount of time to wait for request to complete
-            <0: Wait forever
-            0: Don't wait at all
-            >0: Wait this long
-
-    Returns:
-        The processed Request
-
-    """
-    if type(new_request) == Request:
-        request = new_request
-    elif type(new_request) == RequestTemplate:
-        request = Request.from_template(new_request)
-    else:
-        raise TypeError(
-            f"new_request type is {type(new_request)}, expected "
-            f"brewtils.models.Request or brewtils.models.RequestTemplate,"
-        )
-
-    # If the action is not EPHEMERAL, then we are expecting a result.
-    # Overruling input to reflect this
-    if wait_timeout == 0 and request.command_type != "EPHEMERAL":
-        wait_timeout = -1
-
-    # We only generate an in memory ID if the admin action requires response
-    if wait_timeout != 0:
-        request.id = str(uuid.uuid4().hex)
-        admin_request_map[request.id] = request
-        admin_request_event_map[request.id] = Event()
-
-    try:
-        logger.info(f"Publishing {request!r}")
-
-        queue.put(
-            request, is_admin=True,
-        )
-    except Exception as ex:
-        # An error publishing means this request will never complete, so remove it
-        if wait_timeout != 0:
-            admin_request_map.pop(request.id, None)
-            admin_request_event_map.pop(request.id, None)
-
-        raise RequestPublishException(
-            f"Error while publishing request to admin queue "
-            f"{request.system}[{request.system_version}]-{request.instance_name}"
-        ) from ex
-
-    # Wait for the request to complete, if not EPHEMERAL
-    if wait_timeout != 0:
-        if wait_timeout < 0:
-            wait_timeout = None
-
-        try:
-            completed = admin_request_event_map[request.id].wait(timeout=wait_timeout)
-            if not completed:
-                raise TimeoutError(f"Timeout exceeded for request {request.id}")
-
-            request = admin_request_map[request.id]
-        finally:
-            admin_request_map.pop(request.id, None)
-            admin_request_event_map.pop(request.id, None)
 
     return request
 
@@ -767,40 +700,6 @@ def complete_request(
 
     # Metrics
     request_completed(request)
-
-    return request
-
-
-def admin_complete_request(
-    request_id: str, status: str = None, output: str = None, error_class: str = None
-) -> Request:
-    """Mark a Request as completed
-
-        Args:
-            request_id: The Request ID to complete
-            status: The status to apply to the Request
-            output: The output to apply to the Request
-            error_class: The error class to apply to the Request
-
-        Returns:
-            The modified Request
-
-        Raises:
-            ModelValidationError: The Request is already completed
-
-        """
-
-    request = Request()
-    if str(request_id) in admin_request_map:
-        request = admin_request_map[str(request_id)]
-        request.status = status
-        request.output = output
-        request.error_class = error_class
-
-        admin_request_map[str(request_id)] = request
-
-    if str(request_id) in admin_request_event_map:
-        admin_request_event_map[str(request_id)].set()
 
     return request
 
