@@ -721,6 +721,16 @@ _ENTRY_SPEC = {
                 }
             },
         },
+        "stomp": {
+            "type": "dict",
+            "items": {
+                "enable": {
+                    "type": "bool",
+                    "default": True,
+                    "description": "Run an stomp server",
+                }
+            },
+        },
     },
 }
 
