@@ -35,7 +35,7 @@
             <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
               <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})">
                 <span class="icon-color" ng-class="getIcon(system.icon_name)"></span>
-                <span style="font-size: 18px;">{{system.version}}</span>
+                <span style="font-size: 18px;">{{system.namespace}}/{{system.version}}</span>
               </a>
             </div>
             <div class="btn-toolbar pull-right">
