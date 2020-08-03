@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from brewtils.errors import ModelValidationError
+from brewtils.errors import ModelValidationError, RequestProcessingError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
@@ -180,8 +180,14 @@ class InstanceAPI(BaseHandler):
                         operation_type="INSTANCE_LOGS",
                         args=[instance_id],
                         kwargs=op.value,
-                    )
+                    ),
+                    serialize_kwargs={"to_string": False},
                 )
+
+                if response["status"] == "ERROR":
+                    raise RequestProcessingError(response["output"])
+                else:
+                    response = response["output"]
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
