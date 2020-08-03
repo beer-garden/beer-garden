@@ -11,7 +11,7 @@ class AdminAPI(BaseHandler):
     async def patch(self):
         """
         ---
-        summary: Initiate a rescan of the plugin directory
+        summary: Initiate administrative actions
         description: |
           The body of the request needs to contain a set of instructions
           detailing the operations to perform.
@@ -31,7 +31,7 @@ class AdminAPI(BaseHandler):
           [
             {
               "operation": "reload",
-              "path": "plugin_logging_config_file"
+              "path": "/config/logging/plugin"
             }
           ]
           ```
@@ -59,7 +59,7 @@ class AdminAPI(BaseHandler):
                 check_permission(self.current_user, [Permissions.SYSTEM_CREATE])
                 await self.client(Operation(operation_type="SYSTEM_RESCAN"))
             elif op.operation == "reload":
-                if op.path == "plugin_logging_config_file":
+                if op.path == "/config/logging/plugin":
                     await self.client(Operation(operation_type="PLUGIN_LOG_RELOAD"))
                 else:
                     raise ModelValidationError(f"Unsupported path '{op.path}'")
