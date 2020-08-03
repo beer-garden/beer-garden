@@ -71,8 +71,9 @@ route_functions = {
     "GARDEN_UPDATE_STATUS": beer_garden.garden.update_garden_status,
     "GARDEN_UPDATE_CONFIG": beer_garden.garden.update_garden_config,
     "GARDEN_DELETE": beer_garden.garden.remove_garden,
-    "LOG_READ": beer_garden.log.get_plugin_log_config,
-    "LOG_RELOAD": beer_garden.log.reload_plugin_log_config,
+    "PLUGIN_LOG_READ": beer_garden.log.get_plugin_log_config,
+    "PLUGIN_LOG_READ_LEGACY": beer_garden.log.get_plugin_log_config_legacy,
+    "PLUGIN_LOG_RELOAD": beer_garden.log.load_plugin_log_config,
     "QUEUE_READ": beer_garden.queues.get_all_queue_info,
     "QUEUE_DELETE": beer_garden.queues.clear_queue,
     "QUEUE_DELETE_ALL": beer_garden.queues.clear_all_queues,
@@ -305,7 +306,8 @@ def _determine_target_garden(operation: Operation) -> str:
         "READ" in operation.operation_type
         or "GARDEN" in operation.operation_type
         or "JOB" in operation.operation_type
-        or operation.operation_type in ("LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
+        or operation.operation_type
+        in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
     ):
         return config.get("garden.name")
 

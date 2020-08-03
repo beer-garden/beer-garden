@@ -920,10 +920,11 @@ _PLUGIN_SPEC = {
                     "description": "Path to a logging configuration file for plugins",
                     "required": False,
                 },
-                "level": {
+                "fallback_level": {
                     "type": "str",
-                    "description": "Default log level for plugins (could be "
-                    "overwritten by plugin_log_config value)",
+                    "description": "Level that will be used with a default logging "
+                    "configuration if a config_file is not provided",
+                    "previous_names": ["plugin_logging_level"],
                     "default": "INFO",
                     "choices": [
                         "DEBUG",
@@ -975,13 +976,6 @@ _PLUGIN_SPEC = {
                     "required": False,
                     "previous_names": ["plugins_directory", "plugin_directory"],
                     "alt_env_names": ["PLUGINS_DIRECTORY", "BG_PLUGIN_DIRECTORY"],
-                },
-                "log_directory": {
-                    "type": "str",
-                    "description": "Directory where local plugin logs should go",
-                    "required": False,
-                    "previous_names": ["plugin_log_directory"],
-                    "alt_env_names": ["PLUGIN_LOG_DIRECTORY"],
                 },
                 "timeout": {
                     "type": "dict",
