@@ -24,25 +24,25 @@ def check_connection(connection_name: str):
     return clients[connection_name].is_alive()
 
 
-def create_clients(amq_config):
+def create_clients(mq_config):
     global clients
     clients = {
         "pika": TransientPikaClient(
-            host=amq_config.host,
-            port=amq_config.connections.message.port,
-            ssl=amq_config.connections.message.ssl,
-            user=amq_config.connections.admin.user,
-            password=amq_config.connections.admin.password,
-            virtual_host=amq_config.virtual_host,
-            connection_attempts=amq_config.connection_attempts,
-            blocked_connection_timeout=amq_config.blocked_connection_timeout,
-            exchange=amq_config.exchange,
+            host=mq_config.host,
+            port=mq_config.connections.message.port,
+            ssl=mq_config.connections.message.ssl,
+            user=mq_config.connections.admin.user,
+            password=mq_config.connections.admin.password,
+            virtual_host=mq_config.virtual_host,
+            connection_attempts=mq_config.connection_attempts,
+            blocked_connection_timeout=mq_config.blocked_connection_timeout,
+            exchange=mq_config.exchange,
         ),
         "pyrabbit": PyrabbitClient(
-            host=amq_config.host,
-            virtual_host=amq_config.virtual_host,
-            admin_expires=amq_config.admin_queue_expiry,
-            **amq_config.connections.admin,
+            host=mq_config.host,
+            virtual_host=mq_config.virtual_host,
+            admin_expires=mq_config.admin_queue_expiry,
+            **mq_config.connections.admin,
         ),
     }
 
@@ -84,14 +84,14 @@ def create(instance: Instance) -> dict:
     admin_queue_name = admin_keys[-1]
     clients["pika"].setup_queue(admin_queue_name, {"durable": True}, admin_keys)
 
-    amq_config = config.get("amq")
+    mq_config = config.get("mq")
     connection = {
         "host": config.get("publish_hostname"),
-        "port": amq_config.connections.message.port,
-        "user": amq_config.connections.message.user,
-        "password": amq_config.connections.message.password,
-        "virtual_host": amq_config.virtual_host,
-        "ssl": {"enabled": amq_config.connections.message.ssl.enabled},
+        "port": mq_config.connections.message.port,
+        "user": mq_config.connections.message.user,
+        "password": mq_config.connections.message.password,
+        "virtual_host": mq_config.virtual_host,
+        "ssl": {"enabled": mq_config.connections.message.ssl.enabled},
     }
 
     return {

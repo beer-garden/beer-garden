@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import angular from 'angular';
 import {formatJsonDisplay} from '../services/utility_service.js';
 
@@ -82,7 +81,13 @@ export default function commandViewController(
   };
 
   $scope.checkInstance = function() {
-    return _.find($scope.system.instances, {name: $scope.model.instance_name}).status != 'RUNNING';
+    let instance = _.find($scope.system.instances, {name: $scope.model.instance_name});
+
+    if (instance === undefined) {
+      return false;
+    }
+
+    return instance.status != 'RUNNING';
   };
 
   $scope.submitForm = function(form, model) {

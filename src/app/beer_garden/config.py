@@ -204,7 +204,7 @@ def assign(new_config: Box, force: bool = False) -> None:
     """
     global _CONFIG
     if _CONFIG is not None and not force:
-        ConfigurationError("")
+        raise ConfigurationError("Attempting to reset config without force flag")
 
     _CONFIG = new_config
 
@@ -327,7 +327,7 @@ _META_SPEC = {
     },
 }
 
-_AMQ_SSL_SPEC = {
+_MQ_SSL_SPEC = {
     "type": "dict",
     "items": {
         "enabled": {
@@ -354,13 +354,14 @@ _AMQ_SSL_SPEC = {
     },
 }
 
-_AMQ_SPEC = {
+_MQ_SPEC = {
     "type": "dict",
+    "previous_names": ["amq"],
     "items": {
         "host": {
             "type": "str",
             "default": "localhost",
-            "description": "Hostname of AMQ to use",
+            "description": "Hostname of MQ to use",
             "previous_names": ["amq_host"],
         },
         "admin_queue_expiry": {
@@ -371,7 +372,7 @@ _AMQ_SPEC = {
         "heartbeat_interval": {
             "type": "int",
             "default": 3600,
-            "description": "Heartbeat interval for AMQ",
+            "description": "Heartbeat interval for MQ",
             "previous_names": ["amq_heartbeat_interval"],
         },
         "blocked_connection_timeout": {
@@ -382,19 +383,19 @@ _AMQ_SPEC = {
         "connection_attempts": {
             "type": "int",
             "default": 3,
-            "description": "Number of retries to connect to AMQ",
+            "description": "Number of retries to connect to MQ",
             "previous_names": ["amq_connection_attempts"],
         },
         "exchange": {
             "type": "str",
             "default": "beer_garden",
-            "description": "Exchange name to use for AMQ",
+            "description": "Exchange name to use for MQ",
             "previous_names": ["amq_exchange"],
         },
         "virtual_host": {
             "type": "str",
             "default": "/",
-            "description": "Virtual host to use for AMQ",
+            "description": "Virtual host to use for MQ",
             "previous_names": ["amq_virtual_host"],
         },
         "connections": {
@@ -406,25 +407,25 @@ _AMQ_SPEC = {
                         "port": {
                             "type": "int",
                             "default": 15672,
-                            "description": "Port of the AMQ Admin host",
+                            "description": "Port of the MQ Admin host",
                             "previous_names": ["amq_admin_port"],
                             "alt_env_names": ["AMQ_ADMIN_PORT"],
                         },
                         "user": {
                             "type": "str",
                             "default": "guest",
-                            "description": "Username to login to the AMQ admin",
+                            "description": "Username to login to the MQ admin",
                             "previous_names": ["amq_admin_user"],
                             "alt_env_names": ["AMQ_ADMIN_USER"],
                         },
                         "password": {
                             "type": "str",
                             "default": "guest",
-                            "description": "Password to login to the AMQ admin",
+                            "description": "Password to login to the MQ admin",
                             "previous_names": ["amq_admin_password", "amq_admin_pw"],
                             "alt_env_names": ["AMQ_ADMIN_PASSWORD", "AMQ_ADMIN_PW"],
                         },
-                        "ssl": _AMQ_SSL_SPEC,
+                        "ssl": _MQ_SSL_SPEC,
                     },
                 },
                 "message": {
@@ -433,25 +434,25 @@ _AMQ_SPEC = {
                         "port": {
                             "type": "int",
                             "default": 5672,
-                            "description": "Port of the AMQ host",
+                            "description": "Port of the MQ host",
                             "previous_names": ["amq_port"],
                             "alt_env_names": ["AMQ_PORT"],
                         },
                         "password": {
                             "type": "str",
                             "default": "guest",
-                            "description": "Password to login to the AMQ host",
+                            "description": "Password to login to the MQ host",
                             "previous_names": ["amq_password"],
                             "alt_env_names": ["AMQ_PASSWORD"],
                         },
                         "user": {
                             "type": "str",
                             "default": "guest",
-                            "description": "Username to login to the AMQ host",
+                            "description": "Username to login to the MQ host",
                             "previous_names": ["amq_user"],
                             "alt_env_names": ["AMQ_USER"],
                         },
-                        "ssl": _AMQ_SSL_SPEC,
+                        "ssl": _MQ_SSL_SPEC,
                     },
                 },
             },
@@ -723,10 +724,96 @@ _ENTRY_SPEC = {
     },
 }
 
+_PARENT_SPEC = {
+    "type": "dict",
+    "items": {
+        "http": {
+            "type": "dict",
+            "items": {
+                "enable": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Publish events to parent garden over HTTP",
+                },
+                "ssl": {
+                    "type": "dict",
+                    "items": {
+                        "enabled": {
+                            "type": "bool",
+                            "default": False,
+                            "description": "Serve content using SSL",
+                        },
+                        "private_key": {
+                            "type": "str",
+                            "description": "Path to a private key",
+                            "required": False,
+                        },
+                        "public_key": {
+                            "type": "str",
+                            "description": "Path to a public key",
+                            "required": False,
+                        },
+                        "ca_cert": {
+                            "type": "str",
+                            "description": (
+                                "Path to CA certificate file to use for SSLContext"
+                            ),
+                            "required": False,
+                        },
+                        "ca_path": {
+                            "type": "str",
+                            "description": (
+                                "Path to CA certificate path to use for SSLContext"
+                            ),
+                            "required": False,
+                        },
+                        "client_cert_verify": {
+                            "type": "str",
+                            "description": (
+                                "Client certificate mode to use when handling requests"
+                            ),
+                            "choices": ["NONE", "OPTIONAL", "REQUIRED"],
+                            "default": "NONE",
+                        },
+                    },
+                },
+                "port": {
+                    "type": "int",
+                    "default": 2337,
+                    "description": "Serve content on this port",
+                },
+                "url_prefix": {
+                    "type": "str",
+                    "default": "/",
+                    "description": "URL path prefix",
+                    "required": False,
+                },
+                "host": {
+                    "type": "str",
+                    "default": "0.0.0.0",
+                    "description": "Host for the HTTP Server to bind to",
+                },
+                "public_fqdn": {
+                    "type": "str",
+                    "default": "localhost",
+                    "description": "Public fully-qualified domain name",
+                },
+                "skip_events": {
+                    "type": "list",
+                    "items": {"skip_event": {"type": "str"}},
+                    "default": ["DB_CREATE"],
+                    "required": False,
+                    "description": "Events to be skipped",
+                },
+            },
+        }
+    },
+}
+
 _EVENT_SPEC = {
     "type": "dict",
     "items": {
-        "amq": {
+        "mq": {
             "type": "dict",
             "items": {
                 "enable": {
@@ -737,14 +824,14 @@ _EVENT_SPEC = {
                 "exchange": {
                     "type": "str",
                     "required": False,
-                    "description": "Exchange to use for AMQ events",
+                    "description": "Exchange to use for MQ events",
                     "previous_names": ["event_amq_exchange"],
                 },
                 "virtual_host": {
                     "type": "str",
                     "default": "/",
                     "required": False,
-                    "description": "Virtual host to use for AMQ events",
+                    "description": "Virtual host to use for MQ events",
                     "previous_names": ["event_amq_virtual_host"],
                 },
             },
@@ -758,92 +845,6 @@ _EVENT_SPEC = {
                     "description": "Persist events to Mongo",
                     "previous_names": ["event_persist_mongo"],
                     "alt_env_names": ["EVENT_PERSIST_MONGO"],
-                }
-            },
-        },
-        "parent": {
-            "type": "dict",
-            "items": {
-                "http": {
-                    "type": "dict",
-                    "items": {
-                        "enable": {
-                            "type": "bool",
-                            "default": False,
-                            "description": "Publish events to parent garden over HTTP",
-                        },
-                        "ssl": {
-                            "type": "dict",
-                            "items": {
-                                "enabled": {
-                                    "type": "bool",
-                                    "default": False,
-                                    "description": "Serve content using SSL",
-                                    "cli_separator": "_",
-                                },
-                                "private_key": {
-                                    "type": "str",
-                                    "description": "Path to a private key",
-                                    "required": False,
-                                },
-                                "public_key": {
-                                    "type": "str",
-                                    "description": "Path to a public key",
-                                    "required": False,
-                                },
-                                "ca_cert": {
-                                    "type": "str",
-                                    "description": (
-                                        "Path to CA certificate file to use for SSLContext"
-                                    ),
-                                    "required": False,
-                                },
-                                "ca_path": {
-                                    "type": "str",
-                                    "description": (
-                                        "Path to CA certificate path to use for SSLContext"
-                                    ),
-                                    "required": False,
-                                },
-                                "client_cert_verify": {
-                                    "type": "str",
-                                    "description": (
-                                        "Client certificate mode to use when handling requests"
-                                    ),
-                                    "choices": ["NONE", "OPTIONAL", "REQUIRED"],
-                                    "default": "NONE",
-                                },
-                            },
-                        },
-                        "port": {
-                            "type": "int",
-                            "default": 2337,
-                            "description": "Serve content on this port",
-                        },
-                        "url_prefix": {
-                            "type": "str",
-                            "default": "/",
-                            "description": "URL path prefix",
-                            "required": False,
-                        },
-                        "host": {
-                            "type": "str",
-                            "default": "0.0.0.0",
-                            "description": "Host for the HTTP Server to bind to",
-                        },
-                        "public_fqdn": {
-                            "type": "str",
-                            "default": "localhost",
-                            "description": "Public fully-qualified domain name",
-                        },
-                        "skip_events": {
-                            "type": "list",
-                            "items": {"skip_event": {"type": "str"}},
-                            "default": ["DB_CREATE"],
-                            "required": False,
-                            "description": "Events to be skipped",
-                        },
-                    },
                 }
             },
         },
@@ -919,10 +920,11 @@ _PLUGIN_SPEC = {
                     "description": "Path to a logging configuration file for plugins",
                     "required": False,
                 },
-                "level": {
+                "fallback_level": {
                     "type": "str",
-                    "description": "Default log level for plugins (could be "
-                    "overwritten by plugin_log_config value)",
+                    "description": "Level that will be used with a default logging "
+                    "configuration if a config_file is not provided",
+                    "previous_names": ["plugin_logging_level"],
                     "default": "INFO",
                     "choices": [
                         "DEBUG",
@@ -974,13 +976,6 @@ _PLUGIN_SPEC = {
                     "required": False,
                     "previous_names": ["plugins_directory", "plugin_directory"],
                     "alt_env_names": ["PLUGINS_DIRECTORY", "BG_PLUGIN_DIRECTORY"],
-                },
-                "log_directory": {
-                    "type": "str",
-                    "description": "Directory where local plugin logs should go",
-                    "required": False,
-                    "previous_names": ["plugin_log_directory"],
-                    "alt_env_names": ["PLUGIN_LOG_DIRECTORY"],
                 },
                 "timeout": {
                     "type": "dict",
@@ -1102,13 +1097,14 @@ _SPECIFICATION = {
         "previous_names": ["amq_publish_host"],
         "alt_env_names": ["AMQ_PUBLISH_HOST"],
     },
-    "amq": _AMQ_SPEC,
+    "mq": _MQ_SPEC,
     "application": _APP_SPEC,
     "auth": _AUTH_SPEC,
     "configuration": _META_SPEC,
     "db": _DB_SPEC,
     "entry": _ENTRY_SPEC,
     "event": _EVENT_SPEC,
+    "parent": _PARENT_SPEC,
     "garden": _GARDEN_SPEC,
     "log": _LOG_SPEC,
     "metrics": _METRICS_SPEC,

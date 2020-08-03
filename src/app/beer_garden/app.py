@@ -154,7 +154,7 @@ class Application(StoppableThread):
             False: the app was stopped before a connection could be verified
         """
         self.logger.debug("Verifying message queue connection...")
-        queue.create_clients(config.get("amq"))
+        queue.create_clients(config.get("mq"))
 
         if not self._progressive_backoff(
             partial(queue.check_connection, "pika"),
@@ -253,14 +253,14 @@ class Application(StoppableThread):
         event_manager.register(QueueListener(action=garden_callbacks))
 
         # If necessary send all events to the parent garden
-        http_event = config.get("event.parent.http")
+        http_event = config.get("parent.http")
         if http_event.enable:
             easy_client = EasyClient(
                 bg_host=http_event.host,
                 bg_port=http_event.port,
                 ssl_enabled=http_event.ssl.enabled,
             )
-            skip_events = config.get("event.parent.skip_events")
+            skip_events = config.get("parent.skip_events")
             event_manager.register(
                 HttpEventProcessor(easy_client=easy_client, black_list=skip_events)
             )

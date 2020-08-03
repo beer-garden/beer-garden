@@ -36,6 +36,7 @@
     "moment": "^2.19.1",
     "moment-timezone": "^0.5.0",
     "object-assign": "^4.1.1",
+    "object-sizeof": "^1.6.1",
     "objectpath": "^2.0.0",
     "startbootstrap-sb-admin-2": "^3.3.7",
     "swagger-ui-dist": "^3.25.0",

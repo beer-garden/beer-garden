@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 import logging
+import sys
 
 import pytz
 import six
@@ -25,6 +26,7 @@ from mongoengine import (
     ListField,
     ReferenceField,
     StringField,
+    FileField,
     CASCADE,
     PULL,
 )
@@ -85,6 +87,9 @@ class MongoModel:
         return super().delete(*args, **kwargs)
 
     def clean_update(self):
+        pass
+
+    def pre_serialize(self):
         pass
 
 
@@ -283,6 +288,7 @@ class Request(MongoModel, Document):
     )
     children = DummyField(required=False)
     output = StringField()
+    output_gridfs = FileField()
     output_type = StringField(choices=BrewtilsCommand.OUTPUT_TYPES)
     status = StringField(choices=BrewtilsRequest.STATUS_LIST, default="CREATED")
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
@@ -301,6 +307,7 @@ class Request(MongoModel, Document):
             {"name": "command_type_index", "fields": ["command_type"]},
             {"name": "system_index", "fields": ["system"]},
             {"name": "instance_name_index", "fields": ["instance_name"]},
+            {"name": "namespace_index", "fields": ["namespace"]},
             {"name": "status_index", "fields": ["status"]},
             {"name": "created_at_index", "fields": ["created_at"]},
             {"name": "updated_at_index", "fields": ["updated_at"]},
@@ -359,8 +366,21 @@ class Request(MongoModel, Document):
 
     logger = logging.getLogger(__name__)
 
+    def pre_serialize(self):
+        """If string output was over 16MB it was spilled over to the GridFS storage solution"""
+        if self.output_gridfs:
+            self.output = self.output_gridfs.read().decode("utf-8")
+            self.output_gridfs = None
+
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.utcnow()
+
+        # If the output size is too large, we switch it over
+        # Max size for Mongo is 16MB, switching over at 15MB to be safe
+        if self.output and sys.getsizeof(self.output) > (1000000 * 15):
+            self.output_gridfs.put(self.output, encoding="utf-8")
+            self.output = None
+
         super(Request, self).save(*args, **kwargs)
 
     def clean(self):
@@ -702,6 +722,12 @@ class Garden(MongoModel, Document):
         "index_background": True,
         "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
     }
+
+    def deep_save(self):
+        for system in self.systems:
+            system.deep_save()
+
+        self.save()
 
 
 class SystemGardenMapping(MongoModel, Document):

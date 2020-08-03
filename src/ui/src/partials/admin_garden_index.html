@@ -12,6 +12,8 @@
     <div class="panel-heading">
       <h3>
         <span>{{garden.name}}</span>
+        <span ng-show="garden.id == null || garden.connection_type == 'LOCAL'">(LOCAL)</span>
+        <span ng-show="garden.id != null && garden.connection_type != 'LOCAL'">(REMOTE)</span>
       </h3>
     </div>
     <div class="panel-body" style="padding-bottom: 0;">

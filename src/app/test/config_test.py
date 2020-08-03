@@ -180,7 +180,7 @@ class TestConfigGet(object):
         "key,expected",
         [
             ("publish_hostname", "localhost"),
-            ("amq.host", "localhost"),
+            ("mq.host", "localhost"),
             ("validator.command", {"timeout": 10}),
             ("INVALID_KEY", None),
             ("", None),

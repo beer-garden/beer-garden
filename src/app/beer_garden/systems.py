@@ -118,13 +118,13 @@ def update_system(
         system = db.replace_commands(system, new_commands)
 
     if add_instances:
-        if len(system.instances) + len(add_instances) >= system.max_instances:
+        if len(system.instances) + len(add_instances) > system.max_instances:
             raise ModelValidationError(
                 f"Unable to add instance(s) to {system} - would exceed "
                 f"the system instance limit of {system.max_instances}"
             )
 
-        system.instances.append(add_instances)
+        system.instances += add_instances
 
     if metadata:
         system.metadata.update(metadata)

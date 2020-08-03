@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import sizeOf from 'object-sizeof';
 import {formatDate, formatJsonDisplay} from '../services/utility_service.js';
 
 requestViewController.$inject = [
@@ -38,9 +39,8 @@ export default function requestViewController(
   $scope.instanceStatus = undefined;
   $scope.timeoutRequest = undefined;
   $scope.children = [];
-  $scope.downloadHref = '';
   $scope.filename = '';
-  $scope.downloadVisible = true
+  $scope.downloadVisible = false;
   $scope.childrenDisplay = [];
   $scope.childrenCollapsed = false;
   $scope.rawOutput = undefined;
@@ -66,6 +66,8 @@ export default function requestViewController(
     'ERROR': 'The request encountered an error during processing and will ' +
              'not be reprocessed.',
   };
+
+  $scope.formatDate = formatDate;
 
   $scope.loadPreview = function(_editor) {
     formatJsonDisplay(_editor, true);
@@ -96,14 +98,14 @@ export default function requestViewController(
     $scope.showFormatted = false;
     $scope.formatErrorTitle = undefined;
     $scope.formatErrorMsg = undefined;
+
     let rawOutput = $scope.request.output;
-    let downloadHref = 'data:text/plain;charset=utf-8,' + encodeURIComponent($scope.request.output);
+
     try {
       if (rawOutput === undefined || rawOutput == null) {
         rawOutput = 'null';
-        $scope.downloadVisible = false;
-      } else if ($scope.request.output_type == 'HTML') {
-        $scope.filename = $scope.request.id+".html";
+      }
+      else if ($scope.request.output_type == 'HTML') {
         $scope.htmlOutput = rawOutput;
         $scope.formattedAvailable = true;
         $scope.showFormatted = true;
@@ -111,7 +113,6 @@ export default function requestViewController(
         try {
           let parsedOutput = JSON.parse(rawOutput);
           rawOutput = $scope.stringify(parsedOutput);
-          $scope.filename = $scope.request.id+".json";
           if ($scope.countNodes($scope.formattedOutput) < 1000) {
             $scope.jsonOutput = rawOutput;
             $scope.formattedAvailable = true;
@@ -120,7 +121,7 @@ export default function requestViewController(
             $scope.formatErrorTitle = 'Output is too large for collapsible view';
             $scope.formatErrorMsg = 'This output is valid JSON, but it\'s so big that ' +
                                       'displaying it in the collapsible viewer would crash the ' +
-                                      'page.';
+                                      'page. Downloading File might take a minute for UI to prepare.';
           }
         } catch (err) {
           $scope.formatErrorTitle = 'This JSON didn\'t parse correctly';
@@ -130,20 +131,17 @@ export default function requestViewController(
         }
       } else if ($scope.request.output_type == 'STRING') {
         try {
-          $scope.filename = $scope.request.id+".txt";
           rawOutput = $scope.stringify(JSON.parse(rawOutput));
         } catch (err) { }
       }
     } finally {
-      $scope.downloadHref = downloadHref;
       $scope.rawOutput = rawOutput;
     }
   };
 
-  $scope.formatDate = formatDate;
-
   $scope.successCallback = function(request) {
     $scope.request = request;
+    $scope.filename = $scope.request.id;
 
     $scope.setWindowTitle(
       $scope.request.command,
@@ -154,7 +152,26 @@ export default function requestViewController(
     );
 
     if (RequestService.isComplete($scope.request)) {
-      $scope.formatOutput();
+
+      if (sizeOf(request) > 5000000) {
+        $scope.formatErrorTitle = 'Output is too large';
+        $scope.formatErrorMsg = 'The output for this request is too large to display, please download instead';
+      } else {
+        $scope.formatOutput();
+      }
+
+      if ($scope.request.output) {
+        $scope.downloadVisible = true;
+
+        if ($scope.request.output_type == 'STRING') {
+          $scope.filename += ".txt";
+        } else if ($scope.request.output_type == 'HTML') {
+          $scope.filename += ".html";
+        } else if ($scope.request.output_type == 'JSON') {
+          $scope.filename += ".json";
+        }
+      }
+
       $scope.complete = true;
     }
 

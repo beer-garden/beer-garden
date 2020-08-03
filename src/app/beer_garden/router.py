@@ -20,7 +20,7 @@ import beer_garden.scheduler
 import beer_garden.systems
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 from beer_garden.garden import get_gardens
-from beer_garden.systems import get_systems
+from beer_garden.garden import local_garden
 
 logger = logging.getLogger(__name__)
 
@@ -72,8 +72,9 @@ route_functions = {
     "GARDEN_UPDATE_STATUS": beer_garden.garden.update_garden_status,
     "GARDEN_UPDATE_CONFIG": beer_garden.garden.update_garden_config,
     "GARDEN_DELETE": beer_garden.garden.remove_garden,
-    "LOG_READ": beer_garden.log.get_plugin_log_config,
-    "LOG_RELOAD": beer_garden.log.reload_plugin_log_config,
+    "PLUGIN_LOG_READ": beer_garden.log.get_plugin_log_config,
+    "PLUGIN_LOG_READ_LEGACY": beer_garden.log.get_plugin_log_config_legacy,
+    "PLUGIN_LOG_RELOAD": beer_garden.log.load_plugin_log_config,
     "QUEUE_READ": beer_garden.queues.get_all_queue_info,
     "QUEUE_DELETE": beer_garden.queues.clear_queue,
     "QUEUE_DELETE_ALL": beer_garden.queues.clear_all_queues,
@@ -216,21 +217,20 @@ def setup_routing():
                 logger.warning(f"Garden with invalid connection info: {garden!r}")
 
     # Now add the "local" garden
-    gardens[local_garden_name] = Garden(
-        name=local_garden_name,
-        connection_type="local",
-        systems=get_systems(filter_params={"local": True}),
-    )
-
+    gardens[local_garden_name] = local_garden()
     logger.debug("Routing setup complete")
 
 
 def handle_event(event):
     """Handle events"""
-    if event.name in (
-        Events.SYSTEM_CREATED.name,
-        Events.SYSTEM_UPDATED.name,
-        Events.SYSTEM_REMOVED.name,
+    if (
+        event.name
+        in (
+            Events.SYSTEM_CREATED.name,
+            Events.SYSTEM_UPDATED.name,
+            Events.SYSTEM_REMOVED.name,
+        )
+        and event.garden in gardens
     ):
         index = None
         for i, system in enumerate(gardens[event.garden].systems):
@@ -309,6 +309,7 @@ def _determine_target_garden(operation: Operation) -> str:
         or "JOB" in operation.operation_type
         or operation.operation_type
         in ("LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
+        in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
     ):
         return config.get("garden.name")
 

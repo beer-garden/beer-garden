@@ -3,6 +3,7 @@
 apispec < 0.39
 apscheduler < 4
 mongoengine < 0.19
+more-itertools < 9
 passlib < 1.8
 prometheus_client < 1
 pyrabbit2 < 2

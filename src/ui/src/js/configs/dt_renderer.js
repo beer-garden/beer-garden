@@ -11,7 +11,7 @@ export default function runDTRenderer(DTRendererService) {
   DTRendererService.registerPlugin({
     postRender: function(options, result) {
 
-      if (options.childContainer) {
+      if (options && options.childContainer) {
         let childContainer = $('<span>')
           .attr('id', 'childContainer')
           .css('margin-right', '20px')
@@ -31,7 +31,7 @@ export default function runDTRenderer(DTRendererService) {
         $('.dataTables_filter').prepend(childContainer);
       }
 
-      if (options.hiddenContainer) {
+      if (options && options.hiddenContainer) {
         let hiddenContainer = $('<ul>')
               .attr('id', 'hiddenList')
               .css('margin-right', '20px')
@@ -48,7 +48,7 @@ export default function runDTRenderer(DTRendererService) {
         list.insertBefore(node, list.childNodes[0]);
       }
 
-      if (options.refreshButton) {
+      if (options && options.refreshButton) {
         let refreshButton = $('<button>')
           .attr('id', 'refreshButton')
           .attr('type', 'button')
@@ -67,7 +67,7 @@ export default function runDTRenderer(DTRendererService) {
         $('.dataTables_length').append(refreshButton);
       }
 
-      if (options.newData) {
+      if (options && options.newData) {
         let newData = $('<span>')
           .attr('id', 'newData')
           .css('margin-left', '20px')

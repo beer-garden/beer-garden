@@ -71,6 +71,8 @@ export default function appRun(
     'slate': false,
   };
 
+  $rootScope.menu_page = "main"
+
   $rootScope.responseState = responseState;
 
   $rootScope.getIcon = UtilityService.getIcon;
@@ -150,6 +152,8 @@ export default function appRun(
     }
   };
 
+
+
   $rootScope.isUser = function(user) {
     return user && user.username !== 'anonymous';
   };
@@ -191,6 +195,14 @@ export default function appRun(
   $transitions.onSuccess({to: 'base'}, () => {
     $state.go('base.landing');
   });
+
+  $rootScope.setMenuPage = function(page){
+    $rootScope.menu_page = page
+  }
+
+  $rootScope.checkMenuPage = function(page) {
+    return $rootScope.menu_page == page
+  }
 
   function upsertSystem(system) {
     let index = _.findIndex($rootScope.systems, {id: system.id});
