@@ -224,7 +224,7 @@ export default function requestViewController(
         systemName: request.system,
         systemVersion: request.system_version,
         commandName: request.command,
-        namespace: request.namespace,
+        namespace: request.namespace || $scope.config.gardenName,  // Fix for v2 requests w/o a namespace
         request: newRequest,
       }
     );
