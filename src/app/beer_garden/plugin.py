@@ -170,7 +170,7 @@ def read_logs(
 
     system = db.query_unique(System, instances__contains=instance)
 
-    logger.info(f"Reading Logs from instance {system}[{instance}]")
+    logger.debug(f"Reading Logs from instance {system}[{instance}]")
 
     request = requests.process_request(
         Request.from_template(
