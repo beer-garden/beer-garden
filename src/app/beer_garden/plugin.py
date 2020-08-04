@@ -190,4 +190,4 @@ def read_logs(
         wait_timeout=wait_timeout,
     )
 
-    return request.output
+    return request

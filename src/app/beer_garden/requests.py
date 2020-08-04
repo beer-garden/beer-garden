@@ -5,7 +5,6 @@ import re
 from builtins import str
 from threading import Event
 from typing import List, Sequence, Union
-import uuid
 
 import pika.spec
 import six
