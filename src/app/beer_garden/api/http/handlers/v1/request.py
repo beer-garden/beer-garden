@@ -156,6 +156,7 @@ class RequestOutputAPI(BaseHandler):
 
         if response["output"]:
             content_types = {
+                "CSS": "text/css; charset=UTF-8",
                 "HTML": "text/html; charset=UTF-8",
                 "JS": "application/javascript; charset=UTF-8",
                 "JSON": "application/json; charset=UTF-8",
