@@ -13,7 +13,7 @@ x-definitions: &complex-env
     DB_PASS: supersecret
 
 x-definitions: &plugin
-    image: bgio/example-plugins
+    image: bgio/example-plugins:v3
     network_mode: host
     volumes:
         - ../data/certs/ca_certificate.pem:/certs/ca_certificate.pem
