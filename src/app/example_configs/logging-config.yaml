@@ -6,10 +6,9 @@ formatters:
     format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 handlers:
-  beer_garden:
+  stream:
     class: "logging.StreamHandler"
     formatter: "simple"
-    level: "INFO"
     stream: "ext://sys.stdout"
 
 loggers:
@@ -22,4 +21,5 @@ loggers:
 
 root:
   level: "INFO"
-  handlers: ["beer_garden"]
+  handlers:
+    - "stream"
