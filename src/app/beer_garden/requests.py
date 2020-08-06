@@ -589,8 +589,9 @@ def process_request(
     if not is_admin:
         request = RequestValidator.instance().validate_request(request)
 
-    # Once validated we need to save since validate can modify the request
-    request = create_request(request)
+    # Save after validation since validate can modify the request
+    if not request.command_type == "EPHEMERAL":
+        request = create_request(request)
 
     if wait_timeout != 0:
         request_map[request.id] = Event()
