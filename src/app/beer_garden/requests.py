@@ -11,7 +11,7 @@ import six
 import urllib3
 from brewtils.choices import parse
 from brewtils.errors import ConflictError, ModelValidationError, RequestPublishException
-from brewtils.models import Choices, Events, Request, RequestTemplate, System
+from brewtils.models import Choices, Events, Request, RequestTemplate, System, ModelCache
 from requests import Session
 
 import beer_garden.config as config
@@ -23,6 +23,8 @@ from beer_garden.metrics import request_completed, request_created, request_star
 logger = logging.getLogger(__name__)
 
 request_map = {}
+
+request_cache = ModelCache()
 
 
 class RequestValidator(object):
@@ -159,7 +161,7 @@ class RequestValidator(object):
         )
 
     def get_and_validate_parameters(
-        self, request, command=None, command_parameters=None, request_parameters=None
+            self, request, command=None, command_parameters=None, request_parameters=None
     ):
         """Validates all request parameters
 
@@ -212,10 +214,10 @@ class RequestValidator(object):
     def _validate_value_in_choices(self, request, value, command_parameter):
         """Validate that the value(s) are valid according to the choice constraints"""
         if (
-            value is not None
-            and not command_parameter.optional
-            and command_parameter.choices
-            and command_parameter.choices.strict
+                value is not None
+                and not command_parameter.optional
+                and command_parameter.choices
+                and command_parameter.choices.strict
         ):
 
             choices = command_parameter.choices
@@ -399,7 +401,7 @@ class RequestValidator(object):
                     )
 
     def _extract_parameter_value_from_request(
-        self, request, command_parameter, request_parameters, command
+            self, request, command_parameter, request_parameters, command
     ):
         """Extracts the expected value based on the parameter in the database,
         uses the default and validates the type of the request parameter"""
@@ -433,7 +435,7 @@ class RequestValidator(object):
         return value_to_return
 
     def _validate_required_parameter_is_included_in_request(
-        self, request, command_parameter, request_parameters
+            self, request, command_parameter, request_parameters
     ):
         """If the parameter is required but was not provided in the request_parameters
         and does not have a default, then raise a ValidationError"""
@@ -442,8 +444,8 @@ class RequestValidator(object):
         )
         if not command_parameter.optional:
             if (
-                command_parameter.key not in request_parameters
-                and command_parameter.default is None
+                    command_parameter.key not in request_parameters
+                    and command_parameter.default is None
             ):
                 raise ModelValidationError(
                     "Required key '%s' not provided in request. Parameters are: %s"
@@ -451,7 +453,7 @@ class RequestValidator(object):
                 )
 
     def _validate_no_extra_request_parameter_keys(
-        self, request_parameters, command_parameters
+            self, request_parameters, command_parameters
     ):
         """Validate that all the parameters passed in were valid keys. If there is a key
          specified that is not noted in the database, then a validation error is thrown"""
@@ -553,7 +555,7 @@ def get_requests(**kwargs) -> List[Request]:
 
 
 def process_request(
-    new_request: Union[Request, RequestTemplate], wait_timeout: float = -1
+        new_request: Union[Request, RequestTemplate], wait_timeout: float = -1, cache_ttl: float = -1
 ) -> Request:
     """Validates and publishes a Request.
 
@@ -563,6 +565,9 @@ def process_request(
             <0: Wait forever
             0: Don't wait at all
             >0: Wait this long
+        cache: Float describing amount of time for results to be cached
+            <=0: Don't Cache
+            >0: Cache this long
 
     Returns:
         The processed Request
@@ -582,6 +587,20 @@ def process_request(
     # This includes the validation of the request parameters,
     # systems are there, commands are there etc.
     request = RequestValidator.instance().validate_request(request)
+
+    # Check and see if the item has already been cached
+    # TODO
+    # Caching needs to be flushed out for child requests, so we are not going to allow
+    # that for now
+    if not request.has_parent and cache_ttl >= 0:
+        try:
+            cache_result = request_cache.get_cache(hash(request))
+            if cache_result and request.parameters == cache_result.parameters:
+                return cache_result
+        except:
+            # If we failed to grab the cached item, proceed as normal
+            pass
+        request.metadata['Cache_TTL'] = cache_ttl
 
     # Once validated we need to save since validate can modify the request
     request = create_request(request)
@@ -659,7 +678,7 @@ def start_request(request_id: str) -> Request:
 
 @publish_event(Events.REQUEST_COMPLETED)
 def complete_request(
-    request_id: str, status: str = None, output: str = None, error_class: str = None
+        request_id: str, status: str = None, output: str = None, error_class: str = None
 ) -> Request:
     """Mark a Request as completed
 
@@ -690,6 +709,9 @@ def complete_request(
 
     # Metrics
     request_completed(request)
+
+    if request.metadata and 'Cache_TTL' in request.metadata:
+        request_cache.add(value=request, ttl=request.metadata['Cache_TTL'])
 
     return request
 
@@ -748,3 +770,5 @@ def handle_event(event):
     if event.name == Events.REQUEST_COMPLETED.name:
         if str(event.payload.id) in request_map:
             request_map[str(event.payload.id)].set()
+        if event.payload.metadata and 'Cache_TTL' in event.payload.metadata:
+            request_cache.add(value=event.payload, ttl=event.payload.metadata['Cache_TTL'])

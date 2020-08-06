@@ -384,6 +384,12 @@ class RequestListAPI(BaseHandler):
             description: Max seconds to wait for request completion. (-1 = wait forever)
             type: float
             default: -1
+          - name: cache
+            in: query
+            required: false
+            description: Max seconds for request completion to be cached. (-1 = Never Use Cache, 0 = Use Cache, but don't cache results, 0 < Cache result for future requests)
+            type: int
+            default: -1
         consumes:
           - application/json
           - application/x-www-form-urlencoded
@@ -424,12 +430,13 @@ class RequestListAPI(BaseHandler):
             # Also don't publish latency measurements
             self.request.ignore_latency = True
 
+        cache_ttl = float(self.get_argument("cache", default="-1"))
         response = await self.client(
             Operation(
                 operation_type="REQUEST_CREATE",
                 model=request_model,
                 model_type="Request",
-                kwargs={"wait_timeout": wait_timeout},
+                kwargs={"wait_timeout": wait_timeout, "cache_ttl": cache_ttl},
             )
         )
 
