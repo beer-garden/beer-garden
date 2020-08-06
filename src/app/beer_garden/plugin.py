@@ -78,6 +78,7 @@ def start(instance_id: str) -> Instance:
             instance_name=instance.name,
         ),
         is_admin=True,
+        priority=1,
         wait_timeout=0,
     )
 
@@ -108,6 +109,7 @@ def stop(instance_id: str) -> Instance:
             instance_name=instance.name,
         ),
         is_admin=True,
+        priority=1,
         wait_timeout=0,
     )
 
