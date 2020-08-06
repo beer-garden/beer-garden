@@ -207,17 +207,28 @@ export default function adminSystemController(
           $scope.getLogsLines = function(){
             $scope.loadingLogs = true;
             $scope.displayLogs = undefined;
-            InstanceService.showInstanceLogLines(instance.id, $scope.wait_timeout, $scope.start_line, $scope.end_line).then($scope.successLogs, $scope.addErrorAlert);
+
+            InstanceService.getInstanceLogs(
+              instance.id, $scope.wait_timeout, $scope.start_line, $scope.end_line,
+            ).then($scope.successLogs, $scope.addErrorAlert);
           };
+
           $scope.getLogsTail = function(){
             $scope.loadingLogs = true;
             $scope.displayLogs = undefined;
-            InstanceService.showInstanceLogTail(instance.id, $scope.wait_timeout, $scope.tail_line).then($scope.successLogs, $scope.addErrorAlert);
+
+            InstanceService.getInstanceLogs(
+              instance.id, $scope.wait_timeout, $scope.tail_line * -1, null,
+            ).then($scope.successLogs, $scope.addErrorAlert);
           };
+
           $scope.getLogs = function(){
             $scope.loadingLogs = true;
             $scope.displayLogs = undefined;
-            InstanceService.showInstanceLog(instance.id, $scope.wait_timeout).then($scope.successLogs, $scope.addErrorAlert);
+
+            InstanceService.getInstanceLogs(
+              instance.id, $scope.wait_timeout, null, null
+            ).then($scope.successLogs, $scope.addErrorAlert);
           };
 
           $scope.closeDialog = function() {
