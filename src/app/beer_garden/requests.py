@@ -556,6 +556,7 @@ def process_request(
     new_request: Union[Request, RequestTemplate],
     wait_timeout: float = -1,
     is_admin: bool = False,
+    priority: int = 0,
 ) -> Request:
     """Validates and publishes a Request.
 
@@ -565,7 +566,8 @@ def process_request(
             <0: Wait forever
             0: Don't wait at all
             >0: Wait this long
-        is_admin: Reserved for administrative commands
+        is_admin: Flag indicating this request should be published on the admin queue
+        priority: Number between 0 and 1, inclusive. High numbers equal higher priority
 
     Returns:
         The processed Request
@@ -602,6 +604,7 @@ def process_request(
         queue.put(
             request,
             is_admin=is_admin,
+            priority=priority,
             confirm=True,
             mandatory=True,
             delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE,
