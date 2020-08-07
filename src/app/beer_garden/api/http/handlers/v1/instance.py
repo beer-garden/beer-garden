@@ -254,8 +254,7 @@ class InstanceLogAPI(BaseHandler):
         if response["status"] == "ERROR":
             raise RequestProcessingError(response["output"])
 
-        else:
-            response = response["output"].replace('["', '').replace('"]', '').replace('", "', '').replace('\\n', '\n')
-            self.set_header("Content-Type", "text/plain; charset=UTF-8")
+        self.set_header("request_id", response['id'])
+        self.set_header("Content-Type", "text/plain; charset=UTF-8")
 
-        self.write(response)
+        self.write(response["output"])

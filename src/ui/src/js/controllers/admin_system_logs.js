@@ -43,12 +43,13 @@ export default function adminSystemLogsController (
     $scope.loadingLogs = false
     $scope.logs = response.data;
     $scope.displayLogs = "";
+    $scope.requestId = response.headers('request_id')
 
     for (var i = 0; i < $scope.logs.length; i++ ){
         $scope.displayLogs = $scope.displayLogs.concat($scope.logs[i]);
     };
 
-    $scope.downloadHref = 'data:text/plain;charset=utf-8,' + encodeURIComponent($scope.displayLogs);
+    $scope.downloadHref = 'api/v1/requests/output/' + $scope.requestId;
 
   }
 
@@ -60,7 +61,6 @@ export default function adminSystemLogsController (
       instance.id, $scope.wait_timeout, $scope.start_line, $scope.end_line,
     ).then($scope.successLogs, $scope.addErrorAlert);
 
-    //$scope.downloadHref = 'api/v1/instances/' + $scope.instance.id + '/logs/?start_line=' + $scope.start_line + '&end_line=' + $scope.end_line;
   };
 
   $scope.getLogsTail = function(){
@@ -71,7 +71,6 @@ export default function adminSystemLogsController (
       instance.id, $scope.wait_timeout, $scope.tail_line * -1, null,
     ).then($scope.successLogs, $scope.addErrorAlert);
 
-    //$scope.downloadHref = 'api/v1/instances/' + $scope.instance.id + '/logs/?start_line=' + ($scope.tail_line  * -1);
   };
 
   $scope.getLogs = function(){

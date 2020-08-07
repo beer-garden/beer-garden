@@ -161,6 +161,7 @@ class RequestOutputAPI(BaseHandler):
                 "JS": "application/javascript; charset=UTF-8",
                 "JSON": "application/json; charset=UTF-8",
                 "STRING": "text/plain; charset=UTF-8",
+                None: "text/plain; charset=UTF-8",
             }
             self.set_header("Content-Type", content_types[response["output_type"]])
             self.write(response["output"])
