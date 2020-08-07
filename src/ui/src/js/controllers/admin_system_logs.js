@@ -24,11 +24,11 @@ export default function adminSystemLogsController (
   $scope.start_line = 0;
   $scope.end_line = 20;
   $scope.tail_line=20;
-  $scope.wait_timeout = 30
+  $scope.wait_timeout = 30;
   $scope.displayLogs = undefined;
   $scope.system = system;
   $scope.instance = instance;
-  $scope.loadingLogs = false
+  $scope.loadingLogs = false;
   $scope.alerts = [{
                       type: 'info',
                       msg: 'Plugin must be listening to the Admin Queue ' +
@@ -40,17 +40,16 @@ export default function adminSystemLogsController (
   $scope.filename = $scope.system.name+"["+$scope.system.version+"]-"+$scope.instance.name+".log";
 
   $scope.successLogs = function(response) {
-    $scope.loadingLogs = false
+    $scope.loadingLogs = false;
     $scope.logs = response.data;
     $scope.displayLogs = "";
-    $scope.requestId = response.headers('request_id')
+    $scope.requestId = response.headers('request_id');
 
     for (var i = 0; i < $scope.logs.length; i++ ){
         $scope.displayLogs = $scope.displayLogs.concat($scope.logs[i]);
     };
 
     $scope.downloadHref = 'api/v1/requests/output/' + $scope.requestId;
-
   }
 
   $scope.getLogsLines = function(){
@@ -70,7 +69,6 @@ export default function adminSystemLogsController (
     InstanceService.getInstanceLogs(
       instance.id, $scope.wait_timeout, $scope.tail_line * -1, null,
     ).then($scope.successLogs, $scope.addErrorAlert);
-
   };
 
   $scope.getLogs = function(){

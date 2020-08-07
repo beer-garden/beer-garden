@@ -183,7 +183,6 @@ class InstanceAPI(BaseHandler):
 
 
 class InstanceLogAPI(BaseHandler):
-
     @authenticated(permissions=[Permissions.INSTANCE_UPDATE])
     async def get(self, instance_id):
         """
@@ -223,30 +222,27 @@ class InstanceLogAPI(BaseHandler):
         tags:
           - Instances
         """
-
         start_line = self.get_query_argument("start_line", default=None)
-
-        if start_line == '':
+        if start_line == "":
             start_line = None
         elif start_line:
             start_line = int(start_line)
 
         end_line = self.get_query_argument("end_line", default=None)
-
-        if end_line == '':
+        if end_line == "":
             end_line = None
         elif end_line:
             end_line = int(end_line)
-
-        wait_timeout = float(self.get_query_argument("wait_timeout", default=-1))
 
         response = await self.client(
             Operation(
                 operation_type="INSTANCE_LOGS",
                 args=[instance_id],
-                kwargs={'start_line': start_line,
-                        'end_line': end_line,
-                        'wait_timeout': wait_timeout}
+                kwargs={
+                    "wait_timeout": float(self.get_argument("timeout", default="-1")),
+                    "start_line": start_line,
+                    "end_line": end_line,
+                },
             ),
             serialize_kwargs={"to_string": False},
         )
@@ -254,7 +250,7 @@ class InstanceLogAPI(BaseHandler):
         if response["status"] == "ERROR":
             raise RequestProcessingError(response["output"])
 
-        self.set_header("request_id", response['id'])
+        self.set_header("request_id", response["id"])
         self.set_header("Content-Type", "text/plain; charset=UTF-8")
 
         self.write(response["output"])
