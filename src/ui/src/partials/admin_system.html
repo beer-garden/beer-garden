@@ -76,6 +76,18 @@
                 <button type="button" class="btn btn-default fa fa-stop"
                         ng-click="stopInstance(instance)"
                         title="Stop Instance {{instance.name}}"></button>
+                  <button class="btn btn-default fa fa-bars"
+                          title="Admin Tools for {{instance.name}}"
+                          type="button"
+                          data-toggle="dropdown"></button>
+                  <ul class="dropdown-menu">
+                    <li>
+                      <a
+                          ng-click="showLogs(system, instance)"
+                          title="Open Log File: {{instance.name}}"><span>Show Logs</span>
+                      </a>
+                    </li>
+                  </ul>
               </span>
             </span>
           </div>

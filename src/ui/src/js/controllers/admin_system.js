@@ -1,8 +1,10 @@
 import _ from 'lodash';
+import readLogs from '../../templates/read_logs.html';
 
 adminSystemController.$inject = [
   '$scope',
   '$rootScope',
+  '$uibModal',
   'SystemService',
   'InstanceService',
   'UtilityService',
@@ -23,11 +25,13 @@ adminSystemController.$inject = [
 export default function adminSystemController(
     $scope,
     $rootScope,
+    $uibModal,
     SystemService,
     InstanceService,
     UtilityService,
     AdminService,
-    EventService) {
+    EventService,
+    ) {
   $scope.response = undefined;
   $scope.groupedSystems = [];
   $scope.alerts = [];
@@ -105,6 +109,18 @@ export default function adminSystemController(
   $scope.$on('$destroy', function() {
     EventService.removeCallback('admin_system');
   });
+
+  $scope.showLogs = function (system, instance) {
+       $uibModal.open({
+         template:readLogs,
+         resolve: {
+           system: system,
+           instance: instance,
+         },
+         controller: 'AdminSystemLogsController',
+         windowClass: 'app-modal-window',
+      });
+    };
 
   groupSystems();
 };

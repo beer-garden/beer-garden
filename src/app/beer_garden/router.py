@@ -52,6 +52,7 @@ route_functions = {
     "INSTANCE_INITIALIZE": beer_garden.plugin.initialize,
     "INSTANCE_START": beer_garden.plugin.start,
     "INSTANCE_STOP": beer_garden.plugin.stop,
+    "INSTANCE_LOGS": beer_garden.plugin.read_logs,
     "JOB_CREATE": beer_garden.scheduler.create_job,
     "JOB_READ": beer_garden.scheduler.get_job,
     "JOB_READ_ALL": beer_garden.scheduler.get_jobs,
@@ -307,6 +308,7 @@ def _determine_target_garden(operation: Operation) -> str:
         or "GARDEN" in operation.operation_type
         or "JOB" in operation.operation_type
         or operation.operation_type
+        in ("LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
         in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
     ):
         return config.get("garden.name")

@@ -180,6 +180,7 @@ def _setup_tornado_app():
         (rf"{prefix}api/v1/namespaces/?", v1.namespace.NamespaceListAPI),
         (rf"{prefix}api/v1/commands/(\w+)/?", v1.command.CommandAPI),
         (rf"{prefix}api/v1/instances/(\w+)/?", v1.instance.InstanceAPI),
+        (rf"{prefix}api/v1/instances/(\w+)/logs/?", v1.instance.InstanceLogAPI),
         (rf"{prefix}api/v1/requests/(\w+)/?", v1.request.RequestAPI),
         (rf"{prefix}api/v1/requests/output/(\w+)/?", v1.request.RequestOutputAPI),
         (rf"{prefix}api/v1/systems/(\w+)/?", v1.system.SystemAPI),

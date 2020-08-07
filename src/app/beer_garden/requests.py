@@ -553,7 +553,10 @@ def get_requests(**kwargs) -> List[Request]:
 
 
 def process_request(
-    new_request: Union[Request, RequestTemplate], wait_timeout: float = -1
+    new_request: Union[Request, RequestTemplate],
+    wait_timeout: float = -1,
+    is_admin: bool = False,
+    priority: int = 0,
 ) -> Request:
     """Validates and publishes a Request.
 
@@ -563,6 +566,8 @@ def process_request(
             <0: Wait forever
             0: Don't wait at all
             >0: Wait this long
+        is_admin: Flag indicating this request should be published on the admin queue
+        priority: Number between 0 and 1, inclusive. High numbers equal higher priority
 
     Returns:
         The processed Request
@@ -581,10 +586,14 @@ def process_request(
     # Validates the request based on what is in the database.
     # This includes the validation of the request parameters,
     # systems are there, commands are there etc.
-    request = RequestValidator.instance().validate_request(request)
+    # Validation is only required for non Admin commands because Admin commands
+    # are hard coded to map Plugin functions
+    if not is_admin:
+        request = RequestValidator.instance().validate_request(request)
 
-    # Once validated we need to save since validate can modify the request
-    request = create_request(request)
+    # Save after validation since validate can modify the request
+    if not request.command_type == "EPHEMERAL":
+        request = create_request(request)
 
     if wait_timeout != 0:
         request_map[request.id] = Event()
@@ -594,6 +603,8 @@ def process_request(
 
         queue.put(
             request,
+            is_admin=is_admin,
+            priority=priority,
             confirm=True,
             mandatory=True,
             delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE,
@@ -601,6 +612,9 @@ def process_request(
     except Exception as ex:
         # An error publishing means this request will never complete, so remove it
         db.delete(request)
+
+        if wait_timeout != 0:
+            request_map.pop(request.id, None)
 
         raise RequestPublishException(
             f"Error while publishing request {request.id} to queue "

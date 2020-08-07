@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from brewtils.errors import ModelValidationError
+from brewtils.errors import ModelValidationError, RequestProcessingError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
@@ -80,6 +80,7 @@ class InstanceAPI(BaseHandler):
           * start
           * stop
           * heartbeat
+          * replace
 
           ```JSON
           [
@@ -173,8 +174,83 @@ class InstanceAPI(BaseHandler):
                     )
                 else:
                     raise ModelValidationError(f"Unsupported path '{op.path}'")
+
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
+
+
+class InstanceLogAPI(BaseHandler):
+    @authenticated(permissions=[Permissions.INSTANCE_UPDATE])
+    async def get(self, instance_id):
+        """
+        ---
+        summary: Retrieve a specific Instance
+        parameters:
+          - name: instance_id
+            in: path
+            required: true
+            description: The ID of the Instance
+            type: string
+          - name: start_line
+            in: query
+            required: false
+            description: Start line of logs to read from instance
+            type: int
+          - name: end_line
+            in: query
+            required: false
+            description: End line of logs to read from instance
+            type: int
+          - name: timeout
+            in: query
+            required: false
+            description: Max seconds to wait for request completion. (-1 = wait forever)
+            type: float
+            default: -1
+        responses:
+          200:
+            description: Instance with the given ID
+            schema:
+              $ref: '#/definitions/Instance'
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Instances
+        """
+        start_line = self.get_query_argument("start_line", default=None)
+        if start_line == "":
+            start_line = None
+        elif start_line:
+            start_line = int(start_line)
+
+        end_line = self.get_query_argument("end_line", default=None)
+        if end_line == "":
+            end_line = None
+        elif end_line:
+            end_line = int(end_line)
+
+        response = await self.client(
+            Operation(
+                operation_type="INSTANCE_LOGS",
+                args=[instance_id],
+                kwargs={
+                    "wait_timeout": float(self.get_argument("timeout", default="-1")),
+                    "start_line": start_line,
+                    "end_line": end_line,
+                },
+            ),
+            serialize_kwargs={"to_string": False},
+        )
+
+        if response["status"] == "ERROR":
+            raise RequestProcessingError(response["output"])
+
+        self.set_header("request_id", response["id"])
+        self.set_header("Content-Type", "text/plain; charset=UTF-8")
+
+        self.write(response["output"])

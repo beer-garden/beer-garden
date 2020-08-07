@@ -82,7 +82,11 @@ def create(instance: Instance) -> dict:
 
     admin_keys = get_routing_keys(*routing_words, is_admin=True)
     admin_queue_name = admin_keys[-1]
-    clients["pika"].setup_queue(admin_queue_name, {"durable": True}, admin_keys)
+    clients["pika"].setup_queue(
+        admin_queue_name,
+        {"durable": True, "arguments": {"x-max-priority": 1}},
+        admin_keys,
+    )
 
     mq_config = config.get("mq")
     connection = {
