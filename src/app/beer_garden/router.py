@@ -308,7 +308,6 @@ def _determine_target_garden(operation: Operation) -> str:
         or "GARDEN" in operation.operation_type
         or "JOB" in operation.operation_type
         or operation.operation_type
-        in ("LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
         in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
     ):
         return config.get("garden.name")
