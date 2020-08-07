@@ -7,10 +7,10 @@ import sys
 from enum import Enum
 from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_file_location
-from pathlib import Path
+from pathlib import Path, PosixPath
 from random import choice
 from types import ModuleType
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from brewtils.models import Event, Events, System
 from brewtils.specification import _SYSTEM_SPEC
@@ -337,7 +337,13 @@ class PluginManager(StoppableThread):
 
         return process_args
 
-    def _environment(self, plugin_config, instance_name, plugin_path, runner_id):
+    def _environment(
+        self,
+        plugin_config: Dict[str, Any],
+        instance_name: str,
+        plugin_path: PosixPath,
+        runner_id: str,
+    ) -> Dict[str, str]:
         env = {}
 
         # System info comes from config file
@@ -368,13 +374,13 @@ class PluginManager(StoppableThread):
         if "LOG_LEVEL" in plugin_config:
             env["BG_LOG_LEVEL"] = plugin_config["LOG_LEVEL"]
 
-        # ENVIRONMENT from beer.conf
-        for key, value in plugin_config.get("ENVIRONMENT", {}).items():
-            env[key] = expand_string(str(value), env)
-
         # Ensure values are all strings
         for key, value in env.items():
             env[key] = json.dumps(value) if isinstance(value, dict) else str(value)
+
+        # ENVIRONMENT from beer.conf
+        for key, value in plugin_config.get("ENVIRONMENT", {}).items():
+            env[key] = expand_string(str(value), env)
 
         return env
 
