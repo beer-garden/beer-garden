@@ -152,8 +152,8 @@ def read_logs(
     start_line: int = None,
     end_line: int = None,
     wait_timeout: float = -1,
-) -> list:
-    """Starts an instance.
+) -> Request:
+    """Read lines from an Instance's log file.
 
     Args:
         instance_id: The Instance ID
@@ -162,10 +162,9 @@ def read_logs(
         wait_timeout: Wait timeout for response
 
     Returns:
-        List of log entries
+        Request object with logs as output
     """
     instance = db.query_unique(Instance, id=instance_id)
-
     system = db.query_unique(System, instances__contains=instance)
 
     logger.debug(f"Reading Logs from instance {system}[{instance}]")
@@ -177,7 +176,7 @@ def read_logs(
             system=system.name,
             system_version=system.version,
             instance_name=instance.name,
-            parameters={"start_line": start_line, "end_line": end_line,},
+            parameters={"start_line": start_line, "end_line": end_line},
         ),
         is_admin=True,
         wait_timeout=wait_timeout,
