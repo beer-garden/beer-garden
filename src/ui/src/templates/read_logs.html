@@ -4,7 +4,7 @@
 <div class="modal-body" id="modal-body">
 <div uib-alert
      ng-repeat="alert in alerts"
-     ng-class="\'alert-\ alert.type"
+     ng-class="'alert-{{alert.type}}'"
      close="closeAlert($index)">
   {{alert.msg}}
 </div>
@@ -25,7 +25,7 @@
     </form>
   </div>
 <div>
-    <a ng-href="api/v1/instances/{{instance.id}}/logs/" download="{{$scope.filename}}"><button>Get Full Logs</button></a>
+    <a ng-href="api/v1/instances/{{instance.id}}/logs/" download="{{filename}}"><button>Get Full Logs</button></a>
 </div>
 <div id="loading"
        class="col-md-12 text-center"
