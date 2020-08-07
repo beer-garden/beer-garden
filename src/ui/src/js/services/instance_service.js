@@ -18,9 +18,8 @@ export default function instanceService($http) {
         return $http.get('api/v1/instances/' + instanceId)
     },
     getInstanceLogs: (instanceId, wait_timeout, start_line, end_line) => {
-      return $http.patch('api/v1/instances/' + instanceId, {
-        operation: 'logs',
-        value: {
+      return $http.get('api/v1/instances/logs/' + instanceId, {
+        params: {
           "start_line":start_line,
           "end_line":end_line,
           "wait_timeout": wait_timeout

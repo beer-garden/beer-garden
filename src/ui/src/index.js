@@ -91,6 +91,7 @@ import gardenService from './js/services/garden_service.js';
 import aboutController from './js/controllers/about.js';
 import adminQueueController from './js/controllers/admin_queue.js';
 import adminSystemController from './js/controllers/admin_system.js';
+import adminSystemLogsController from './js/controllers/admin_system_logs.js';
 import {adminUserController, newUserController} from './js/controllers/admin_user.js';
 import {adminRoleController, newRoleController} from './js/controllers/admin_role.js';
 import adminGardenController from './js/controllers/admin_garden.js';
@@ -182,6 +183,7 @@ angular.module('bgApp',
 .controller('AboutController', aboutController)
 .controller('AdminQueueController', adminQueueController)
 .controller('AdminSystemController', adminSystemController)
+.controller('AdminSystemLogsController', adminSystemLogsController)
 .controller('AdminUserController', adminUserController)
 .controller('NewUserController', newUserController)
 .controller('AdminRoleController', adminRoleController)
