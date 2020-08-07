@@ -107,7 +107,7 @@ def route(operation: Operation):
     operation.target_garden_name = _determine_target_garden(operation)
 
     if not operation.target_garden_name:
-        raise UnknownGardenException(f"Unknown target garden for {operation}")
+        raise UnknownGardenException(f"Unknown target garden for {operation!r}")
 
     # If it's targeted at THIS garden, execute
     if operation.target_garden_name == config.get("garden.name"):
