@@ -77,12 +77,13 @@ export default function requestViewController(
     return RequestService.isComplete(request);
   };
   
-  $scope.Resize = function(resizeCell) {
-    $scope.isMaximized=!$scope.isMaximized;
-    if(resizeCell.includes("parameterCell")){
-        $scope.displayOutput = !$scope.displayOutput;
-    }else if("outputCell"){
-        $scope.displayParameter = !$scope.displayParameter;
+  $scope.resize = function(resizeCell) {
+    $scope.isMaximized = !$scope.isMaximized;
+
+    if (resizeCell == "parameterCell"){
+      $scope.displayOutput = !$scope.displayOutput;
+    }else if (resizeCell == "outputCell"){
+      $scope.displayParameter = !$scope.displayParameter;
     }
   };
 
