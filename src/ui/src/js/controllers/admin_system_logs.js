@@ -1,6 +1,6 @@
 adminSystemLogsController.$inject = [
   '$scope',
-  '$uibModal',
+  '$uibModalInstance',
   'InstanceService',
   'system',
   'instance',
@@ -15,7 +15,7 @@ adminSystemLogsController.$inject = [
  */
 export default function adminSystemLogsController (
     $scope,
-    $uibModal,
+    $uibModalInstance,
     InstanceService,
     system,
     instance,
@@ -48,6 +48,8 @@ export default function adminSystemLogsController (
         $scope.displayLogs = $scope.displayLogs.concat($scope.logs[i]);
     };
 
+    $scope.downloadHref = 'data:text/plain;charset=utf-8,' + encodeURIComponent($scope.displayLogs);
+
   }
 
   $scope.getLogsLines = function(){
@@ -58,7 +60,7 @@ export default function adminSystemLogsController (
       instance.id, $scope.wait_timeout, $scope.start_line, $scope.end_line,
     ).then($scope.successLogs, $scope.addErrorAlert);
 
-    $scope.downloadHref = 'api/v1/instances/logs/' + $scope.instance.id + '?start_line=' + $scope.start_line + '&end_line=' + $scope.end_line;
+    //$scope.downloadHref = 'api/v1/instances/' + $scope.instance.id + '/logs/?start_line=' + $scope.start_line + '&end_line=' + $scope.end_line;
   };
 
   $scope.getLogsTail = function(){
@@ -69,7 +71,7 @@ export default function adminSystemLogsController (
       instance.id, $scope.wait_timeout, $scope.tail_line * -1, null,
     ).then($scope.successLogs, $scope.addErrorAlert);
 
-    $scope.downloadHref = 'api/v1/instances/logs/' + $scope.instance.id + '?start_line=' + ($scope.tail_line  * -1);
+    //$scope.downloadHref = 'api/v1/instances/' + $scope.instance.id + '/logs/?start_line=' + ($scope.tail_line  * -1);
   };
 
   $scope.getLogs = function(){
