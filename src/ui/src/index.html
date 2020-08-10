@@ -128,51 +128,36 @@
                 <span>{{style}}</span>
               </div>
             </li>
-            <li ng-show="(hasPermission(user, 'bg-queue-read') || hasPermission(user, 'bg-role-read')) && checkMenuPage('main')" >
-                <form>
-                  <div style="padding: 3px 15px; cursor: pointer;"
-                       ng-click="setMenuPage('admin')">
-                    <span>Admin</span>
-                    <span class="fa fa-chevron-right"></span>
-                  </div>
-                </form>
+            <li ng-show="(hasPermission(user, 'bg-queue-read') || hasPermission(user, 'bg-role-read')) && checkMenuPage('main')"
+                role="separator"
+                class="divider"><li>
+            <li ng-show="(hasPermission(user, 'bg-queue-read') || hasPermission(user, 'bg-role-read')) && checkMenuPage('main')">
+              <b>Admin</b>
             <li>
-            <li ng-show="(hasPermission(user, 'bg-queue-read') || hasPermission(user, 'bg-role-read')) && checkMenuPage('admin')" >
-                <form>
-                  <div style="padding: 3px 15px; cursor: pointer;"
-                     ng-click="setMenuPage('main')">
-                    <span class="fa fa-chevron-left"></span>
-                    <span><b>Admin</b></span>
-                </div>
-                </form>
-            <li>
-            <li ng-show="checkMenuPage('admin')" role="separator" class="divider"><li>
-            <li ng-show="checkMenuPage('admin')">
+            <li ng-show="(hasPermission(user, 'bg-queue-read') || hasPermission(user, 'bg-role-read')) && checkMenuPage('main')">
               <a ui-sref="base.system_admin" ui-sref-active="active">
                 <span>Systems</span>
               </a>
             </li>
-            <li ng-show="hasPermission(user, 'bg-queue-read') && checkMenuPage('admin')">
+            <li ng-show="hasPermission(user, 'bg-queue-read') && checkMenuPage('main')">
               <a ui-sref="base.queues" ui-sref-active="active">
                 <span>Queues</span>
               </a>
             </li>
-            <li ng-show="hasPermission(user, 'bg-user-read') && checkMenuPage('admin')">
+            <li ng-show="hasPermission(user, 'bg-user-read') && checkMenuPage('main')">
               <a ui-sref="base.user_admin" ui-sref-active="active">
                 <span>Users</span>
               </a>
             </li>
-            <li ng-show="hasPermission(user, 'bg-role-read') && checkMenuPage('admin')">
+            <li ng-show="hasPermission(user, 'bg-role-read') && checkMenuPage('main')">
               <a ui-sref="base.role_admin" ui-sref-active="active">
                 <span>Roles</span>
               </a>
             </li>
-            <li ng-show="hasPermission(user, 'bg-role-read') && checkMenuPage('admin')">
+            <li ng-show="hasPermission(user, 'bg-role-read') && checkMenuPage('main')">
               <a ui-sref="base.garden_admin" ui-sref-active="active">
                 <span>Gardens</span>
               </a>
-            </li>
-
             </li>
           </ul>
         </li>
