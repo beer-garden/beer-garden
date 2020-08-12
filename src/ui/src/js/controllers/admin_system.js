@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import readLogs from '../../templates/read_logs.html';
+import adminQueue from '../../templates/admin_queue.html';
 
 adminSystemController.$inject = [
   '$scope',
@@ -10,6 +11,7 @@ adminSystemController.$inject = [
   'UtilityService',
   'AdminService',
   'EventService',
+  'QueueService',
 ];
 
 /**
@@ -31,6 +33,7 @@ export default function adminSystemController(
     UtilityService,
     AdminService,
     EventService,
+    QueueService,
     ) {
   $scope.response = undefined;
   $scope.groupedSystems = [];
@@ -58,6 +61,13 @@ export default function adminSystemController(
 
   $scope.deleteSystem = function(system) {
     SystemService.deleteSystem(system).then(_.noop, $scope.addErrorAlert);
+  };
+
+  $scope.clearAllQueues = function() {
+    QueueService.clearQueues().then(
+      $scope.addSuccessAlert,
+      $scope.addErrorAlert
+    );
   };
 
   $scope.hasRunningInstances = function(system) {
@@ -118,6 +128,18 @@ export default function adminSystemController(
            instance: instance,
          },
          controller: 'AdminSystemLogsController',
+         windowClass: 'app-modal-window',
+      });
+    };
+
+  $scope.manageQueue = function (system, instance) {
+       $uibModal.open({
+         template:adminQueue,
+         resolve: {
+           system: system,
+           instance: instance,
+         },
+         controller: 'AdminQueueController',
          windowClass: 'app-modal-window',
       });
     };

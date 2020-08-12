@@ -2,6 +2,12 @@
   <span>Systems Management</span>
   <span class="pull-right" ng-show="responseState(response) !== 'loading'">
     <button type="button"
+            class="btn btn-danger"
+            ng-click="clearAllQueues()"
+            confirm="Are you sure you want to delete all Queues?">
+      Clear All Queues
+    </button>
+    <button type="button"
             class="btn btn-primary"
             ng-show="hasPermission(user, 'bg-system-create')"
             ng-click="rescan()">Rescan System Directory</button>
@@ -85,6 +91,12 @@
                       <a
                           ng-click="showLogs(system, instance)"
                           title="Open Log File: {{instance.name}}"><span>Show Logs</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                          ng-click="manageQueue(system, instance)"
+                          title="Manage Queue: {{instance.name}}"><span>Manage Queue</span>
                       </a>
                     </li>
                   </ul>

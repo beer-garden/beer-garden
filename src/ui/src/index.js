@@ -109,7 +109,6 @@ import loginController from './js/controllers/login.js';
 
 // Partials
 import './partials/about.html';
-import './partials/admin_queue.html';
 import './partials/admin_system.html';
 import './partials/admin_user.html';
 import './partials/admin_role.html';
