@@ -33,9 +33,8 @@
             <input ng-model="searchText" title="Search System Names">
           </span>
 
-          <ul class="dropdown-menu">
-            <li><b>SYSTEMS</b></li>
-            <li ng-repeat="system in systems | filter:searchText" >
+          <ul class="dropdown-menu" ng-show="searchText != null && searchText != ''">
+            <li ng-repeat="system in systems | filter:searchText">
               <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
                 ui-sref-active="active">
                 <span title="{{system.description}}">
@@ -44,17 +43,16 @@
                   <span>{{system.version}}</span>
                 </span>
               </a>
+              <ul>
+                <li ng-repeat="command in system.commands | filter:searchText" >
+                  <a ui-sref="base.command({systemName: system.name, systemVersion: system.version, namespace: system.namespace, commandName: command.name})" ui-sref-active="active">
+                    <span title="{{command.description}}">
+                      <span>{{command.name}}</span>
+                    </span>
+                  </a>
+                </li>
+              </ul>
             </li>
-            <li><b>COMMANDS</b></li>
-            <div ng-repeat="system in systems | filter:searchText">
-              <li ng-repeat="command in system.commands | filter:searchText" >
-                <a ui-sref="base.command({systemName: data.name, systemVersion: data.version, namespace: data.namespace, commandName: command.name})">
-                  <span title="{{command.description}}">
-                    <span>{{command.name}}</span>
-                  </span>
-                </a>
-              </li>
-            </div>
           </ul>
         </li>
 
