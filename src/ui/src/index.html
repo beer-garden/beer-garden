@@ -34,7 +34,6 @@
           </span>
 
           <ul class="dropdown-menu">
-            <li><b>SYSTEMS</b></li>
             <li ng-repeat="system in systems | filter:searchText" >
               <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
                 ui-sref-active="active">
@@ -45,16 +44,6 @@
                 </span>
               </a>
             </li>
-            <li><b>COMMANDS</b></li>
-            <div ng-repeat="system in systems | filter:searchText">
-              <li ng-repeat="command in system.commands | filter:searchText" >
-                <a ui-sref="base.command({systemName: data.name, systemVersion: data.version, namespace: data.namespace, commandName: command.name})">
-                  <span title="{{command.description}}">
-                    <span>{{command.name}}</span>
-                  </span>
-                </a>
-              </li>
-            </div>
           </ul>
         </li>
 
