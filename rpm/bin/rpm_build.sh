@@ -161,14 +161,9 @@ create_rpm() {
     if [[ "$RELEASE" == "7" ]]; then
         args+=(-d "openssl-libs >= 1:1.0.2a-1")
 
-        service_files=("beer-garden.service")
-        for file in "${service_files[@]}"
-        do
-            cp "$SCRIPT_BASE/$file" "/lib/systemd/system/"
-            service_paths+=("/lib/systemd/system/$file")
-        done
+        cp "$RESOURCE_BASE/service/beer-garden.service" "/lib/systemd/system/"
+        service_paths+=("/lib/systemd/system/beer-garden.service")
     fi
-
 
     # Make sure we have a place to put the rpm
     mkdir -p /rpm/dist
