@@ -70,6 +70,7 @@ AFTER_INSTALL="after_install.sh"
 BEFORE_REMOVE="before_remove.sh"
 AFTER_REMOVE="after_remove.sh"
 
+RESOURCE_BASE="/rpm/centos${RELEASE}/resources"
 
 get_version() {
     echo $(cat "$SRC_PATH/$1/$2/__version__.py" | cut -s -d'"' -f2)
@@ -88,7 +89,13 @@ install_apps() {
                 "$SRC_PATH/brewtils/dist/brewtils-$brewtils_version.tar.gz" \
                 "$SRC_PATH/app/dist/beer-garden-$app_version.tar.gz"
 
-        cp -r "$SRC_PATH/ui/dist" "$UI_PATH"
+        mkdir -p "$UI_PATH"
+        cp -r "$SRC_PATH/ui/dist" "$UI_PATH/dist"
+
+        mkdir -p "$UI_PATH/conf/conf.d"
+        cp "$RESOURCE_BASE/nginx/upstream.conf" "$UI_PATH/conf/conf.d/"
+        mkdir -p "$UI_PATH/conf/default.d"
+        cp "$RESOURCE_BASE/nginx/bg.conf" "$UI_PATH/conf/default.d/"
     else
         # If this isn't a local install we don't have versions
         $PIP_BIN install --upgrade -q beer-garden
