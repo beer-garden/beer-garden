@@ -64,11 +64,12 @@ PIP_BIN="$APP_PATH/bin/pip"
 
 SRC_PATH="/src"
 
-SCRIPT_BASE="/rpm/centos${RELEASE}"
+SCRIPT_BASE="/rpm/centos${RELEASE}/scripts"
 BEFORE_INSTALL="before_install.sh"
 AFTER_INSTALL="after_install.sh"
 BEFORE_REMOVE="before_remove.sh"
 AFTER_REMOVE="after_remove.sh"
+
 
 get_version() {
     echo $(cat "$SRC_PATH/$1/$2/__version__.py" | cut -s -d'"' -f2)
