@@ -14,6 +14,7 @@
       style="width: 100%">
     <thead>
       <tr>
+        <th id="th_system_namespace">Namespace</th>
         <th id="th_system_name">System Name</th>
         <th id="th_system_version">System Version</th>
         <th id="th_selector">Select this System</th>
@@ -21,6 +22,7 @@
     </thead>
     <tbody>
       <tr ng-repeat="system in data | filter:query">
+        <td>{{system.namespace}}</td>
         <td>{{system.name}}</td>
         <td>{{system.version}}</td>
         <td>
