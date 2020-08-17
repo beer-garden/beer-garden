@@ -13,6 +13,14 @@ case "$1" in
         # This is an uninstallation
         # Remove the user
         /usr/sbin/userdel $APP_NAME
+
+        # Remove the UI config file symlinks
+        if [ -L "/etc/nginx/conf.d/upstream.conf" ]; then
+            unlink "/etc/nginx/conf.d/upstream.conf"
+        fi
+        if [ -L "/etc/nginx/default.d/bg.conf" ]; then
+            unlink "/etc/nginx/default.d/bg.conf"
+        fi
     ;;
     1)
         # This is an upgrade.
