@@ -231,6 +231,7 @@ def handle_event(event):
             Events.SYSTEM_REMOVED.name,
         )
         and event.garden in gardens
+        and not event.error
     ):
         index = None
         for i, system in enumerate(gardens[event.garden].systems):
