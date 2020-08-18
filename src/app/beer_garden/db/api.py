@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import beer_garden.db.mongo.api
 
+from_brewtils = beer_garden.db.mongo.api.from_brewtils
+to_brewtils = beer_garden.db.mongo.api.to_brewtils
+
 check_connection = beer_garden.db.mongo.api.check_connection
 create_connection = beer_garden.db.mongo.api.create_connection
 initial_setup = beer_garden.db.mongo.api.initial_setup
