@@ -106,16 +106,20 @@ def update_system(
     system = db.query_unique(System, id=system_id)
 
     if new_commands:
+        # Convert these to DB form and back to make sure all defaults are correct
+        mongo_commands = [db.from_brewtils(command) for command in new_commands]
+        brew_commands = db.to_brewtils(mongo_commands)
+
         if (
             system.commands
             and "dev" not in system.version
-            and system.has_different_commands(new_commands)
+            and system.has_different_commands(brew_commands)
         ):
             raise ModelValidationError(
                 f"System {system} already exists with different commands"
             )
 
-        system = db.replace_commands(system, new_commands)
+        system = db.replace_commands(system, brew_commands)
 
     if add_instances:
         if len(system.instances) + len(add_instances) > system.max_instances:
