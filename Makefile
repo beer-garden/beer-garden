@@ -42,7 +42,7 @@ help:
 
 
 # RPM
-rpm-build-local:  # build the rpm
+rpm-build-local:  ## build a local rpm
 	$(PYTHON) rpm/bin/build.py rpm --local $(VERSION)
 
 
