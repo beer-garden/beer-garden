@@ -51,6 +51,14 @@ case "$1" in
                 --plugin-local-log-directory "$PLUGIN_LOG_HOME"
         fi
 
+        # Add the UI config file symlinks
+        if [ -d "/etc/nginx/conf.d" ]; then
+            ln -s "$APP_HOME/ui/conf/conf.d/upstream.conf" "/etc/nginx/conf.d/upstream.conf"
+        fi
+        if [ -d "/etc/nginx/default.d" ]; then
+            ln -s "$APP_HOME/ui/conf/default.d/bg.conf" "/etc/nginx/default.d/bg.conf"
+        fi
+
         # Reload units
         systemctl daemon-reload
     ;;
