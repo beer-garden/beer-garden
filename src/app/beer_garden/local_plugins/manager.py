@@ -531,13 +531,13 @@ class ConfigLoader(object):
             ConfigLoader._individual_args(args)
 
         elif isinstance(args, dict):
-            instances = getattr(config_module, ConfigKeys.INSTANCES.name)
+            instances = getattr(config_module, ConfigKeys.INSTANCES.name, None)
 
             for instance_name, instance_args in args.items():
                 if instances is not None and instance_name not in instances:
                     raise PluginValidationError(
-                        f"{ConfigKeys.PLUGIN_ARGS.name} contains key '{instance_name}' but "
-                        f"that instance is not in {ConfigKeys.INSTANCES.name}"
+                        f"{ConfigKeys.PLUGIN_ARGS.name} contains key '{instance_name}' "
+                        f"but that instance is not in {ConfigKeys.INSTANCES.name}"
                     )
 
                 ConfigLoader._individual_args(instance_args)
@@ -546,8 +546,8 @@ class ConfigLoader(object):
                 for instance_name in instances:
                     if instance_name not in args.keys():
                         raise PluginValidationError(
-                            f"{ConfigKeys.INSTANCES.name} contains '{instance_name}' but "
-                            f"that instance is not in {ConfigKeys.PLUGIN_ARGS.name}"
+                            f"{ConfigKeys.INSTANCES.name} contains '{instance_name}' "
+                            f"but that instance is not in {ConfigKeys.PLUGIN_ARGS.name}"
                         )
 
         else:
