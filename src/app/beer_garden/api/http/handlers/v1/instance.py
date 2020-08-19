@@ -261,16 +261,16 @@ class InstanceQueuesAPI(BaseHandler):
     async def get(self, instance_id):
         """
         ---
-        summary: Retrieve all queue information
+        summary: Retrieve queue information for instance
         parameters:
-          - name: queue_name
+          - name: instance_id
             in: path
-            required: false
+            required: true
             description: The instance ID to pull queues for
             type: string
         responses:
           200:
-            description: List of all queue information objects
+            description: List of queue information objects for this instance
             schema:
               type: array
               items:

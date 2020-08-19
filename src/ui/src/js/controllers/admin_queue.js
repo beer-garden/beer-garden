@@ -48,7 +48,7 @@ export default function adminQueueController(
   $scope.addSuccessAlert = function(response) {
     $scope.alerts.push({
       type: 'success',
-      msg: 'Success! Please allow 30 seconds for the message counts to update.',
+      msg: 'Success! Please allow 10 seconds for the message counts to update.',
     });
   };
 
@@ -85,7 +85,7 @@ export default function adminQueueController(
   }
 
   let poller = $interval(function(){
-    loadQueues();}, 30000)
+    loadQueues();}, 10000)
 
   $scope.$on('$destroy', function(){
     if (angular.isDefined(poller)){
