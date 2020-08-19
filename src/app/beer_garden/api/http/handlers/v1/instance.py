@@ -254,3 +254,36 @@ class InstanceLogAPI(BaseHandler):
         self.set_header("Content-Type", "text/plain; charset=UTF-8")
 
         self.write(response["output"])
+
+
+class InstanceQueuesAPI(BaseHandler):
+    @authenticated(permissions=[Permissions.QUEUE_READ])
+    async def get(self, instance_id):
+        """
+        ---
+        summary: Retrieve queue information for instance
+        parameters:
+          - name: instance_id
+            in: path
+            required: true
+            description: The instance ID to pull queues for
+            type: string
+        responses:
+          200:
+            description: List of queue information objects for this instance
+            schema:
+              type: array
+              items:
+                $ref: '#/definitions/Queue'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Queues
+        """
+
+        response = await self.client(
+            Operation(operation_type="QUEUE_READ_INSTANCE", args=[instance_id])
+        )
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(response)

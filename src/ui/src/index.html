@@ -97,11 +97,6 @@
                 <span>Systems</span>
               </a>
             </li>
-            <li ng-show="hasPermission(user, 'bg-queue-read')">
-              <a ui-sref="base.queues" ui-sref-active="active">
-                <span>Queues</span>
-              </a>
-            </li>
             <li ng-show="hasPermission(user, 'bg-user-read')">
               <a ui-sref="base.user_admin" ui-sref-active="active">
                 <span>Users</span>

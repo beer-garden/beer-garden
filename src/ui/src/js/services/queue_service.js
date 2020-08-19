@@ -17,5 +17,8 @@ export default function queueService($http) {
     clearQueue: (name) => {
       return $http.delete('api/v1/queues/' + name);
     },
+    getInstanceQueues: (instance_id) => {
+      return $http.get('api/v1/instances/' + instance_id + '/queues');
+    },
   };
 };
