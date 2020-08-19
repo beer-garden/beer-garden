@@ -90,12 +90,14 @@
                     <li>
                       <a
                           ng-click="showLogs(system, instance)"
-                          title="Open Log File: {{instance.name}}"><span>Show Logs</span>
+                          role="button"
+                          title="Open Log File: {{instance.name}}"><span >Show Logs</span>
                       </a>
                     </li>
                     <li>
                       <a
                           ng-click="manageQueue(system, instance)"
+                          role="button"
                           title="Manage Queue: {{instance.name}}"><span>Manage Queue</span>
                       </a>
                     </li>
