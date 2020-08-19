@@ -91,8 +91,14 @@ export default function appRun(
         // coalescePermissions [0] is roles, [1] is permissions
         user.permissions = RoleService.coalescePermissions(user.roles)[1];
 
-        let theme = _.get(user, 'preferences.theme', 'default');
-        $rootScope.changeTheme(theme);
+        // If user is logged in, change to their default theme selection
+        let theme;
+        if (user.id) {
+          theme = _.get(user, 'preferences.theme', 'default');
+        } else {
+          theme = localStorageService.get('currentTheme') || 'default';
+        }
+        $rootScope.changeTheme(theme, false);
 
         $rootScope.user = user;
       }, (response) => {
@@ -123,6 +129,11 @@ export default function appRun(
 
     // Connect to the event socket
     EventService.connect(token);
+
+    // Load theme from local storage
+    // REMOVE THIS ONCE THE rootScope.loadUser CALL BELOW IS ENABLED
+    let theme = localStorageService.get('currentTheme') || 'default';
+    $rootScope.changeTheme(theme, false);
 
     // $rootScope.loadUser(token).catch(
     //   // This prevents the situation where the user needs to logout but the
