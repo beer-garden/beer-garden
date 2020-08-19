@@ -8,6 +8,7 @@ requestViewController.$inject = [
   '$stateParams',
   '$timeout',
   '$animate',
+  'localStorageService',
   'RequestService',
   'SystemService',
   'EventService',
@@ -20,6 +21,7 @@ requestViewController.$inject = [
  * @param  {$stateParams} $stateParams Angular's $stateParams object.
  * @param  {$timeout} $timeout         Angular's $timeout object.
  * @param  {$animate} $animate         Angular's $animate object.
+ * @param  {Object} localStorageService  Storage service
  * @param  {Object} RequestService     Beer-Garden Request Service.
  * @param  {Object} SystemService      Beer-Garden's System Service.
  * @param  {Object} EventService       Beer-Garden's Event Service.
@@ -30,6 +32,7 @@ export default function requestViewController(
     $stateParams,
     $timeout,
     $animate,
+    localStorageService,
     RequestService,
     SystemService,
     EventService) {
@@ -46,14 +49,24 @@ export default function requestViewController(
   $scope.rawOutput = undefined;
   $scope.htmlOutput = '';
   $scope.jsonOutput = '';
-  $scope.isMaximized = false;
-  $scope.displayOutput = true;
-  $scope.displayParameter = true;
   $scope.formattedParameters = '';
   $scope.formattedAvailable = false;
   $scope.formatErrorTitle = undefined;
   $scope.formatErrorMsg = undefined;
   $scope.showFormatted = false;
+
+  $scope.isMaximized = localStorageService.get('isMaximized');
+  if ($scope.isMaximized === null) {
+    $scope.isMaximized = false;
+  }
+  $scope.displayOutput = localStorageService.get('displayOutput');
+  if ($scope.displayOutput === null) {
+    $scope.displayOutput = true;
+  }
+  $scope.displayParameter = localStorageService.get('displayParameter');
+  if ($scope.displayParameter === null) {
+    $scope.displayParameter = true;
+  }
 
   $scope.statusDescriptions = {
     'CREATED': 'The request has been validated by beer-garden and is on the ' +
@@ -77,13 +90,18 @@ export default function requestViewController(
     return RequestService.isComplete(request);
   };
   
-  $scope.Resize = function(resizeCell) {
-    $scope.isMaximized=!$scope.isMaximized;
-    if(resizeCell.includes("parameterCell")){
-        $scope.displayOutput = !$scope.displayOutput;
-    }else if("outputCell"){
-        $scope.displayParameter = !$scope.displayParameter;
+  $scope.resize = function(resizeCell) {
+    $scope.isMaximized = !$scope.isMaximized;
+
+    if (resizeCell == "parameterCell"){
+      $scope.displayOutput = !$scope.displayOutput;
+    }else if (resizeCell == "outputCell"){
+      $scope.displayParameter = !$scope.displayParameter;
     }
+
+    localStorageService.set('isMaximized', $scope.isMaximized);
+    localStorageService.set('displayOutput', $scope.displayOutput);
+    localStorageService.set('displayParameter', $scope.displayParameter);
   };
 
   $scope.showInstanceStatus = function(request, instanceStatus) {
