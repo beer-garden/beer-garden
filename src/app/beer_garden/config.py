@@ -707,6 +707,62 @@ _HTTP_SPEC = {
     },
 }
 
+_STOMP_SPEC = {
+  "type": "dict",
+  "items": {
+      "enable": {
+          "type": "bool",
+          "default": False,
+          "description": "Run an stomp server",
+      },
+      "host": {
+          "type": "str",
+          "default": "localhost",
+          "description": "Connection hostname",
+      },
+      "port": {
+          "type": "int",
+          "default": 61613,
+          "description": "Connection port number",
+      },
+      "username": {
+          "type": "str",
+          "description": "Username to use for authentication",
+          "default": "beer_garden",
+      },
+      "password": {
+          "type": "str",
+          "description": "Password to use for authentication",
+          "default": "password",
+      },
+      "use_ssl": {
+          "type": "bool",
+          "description": "Use SSL for connection",
+          "default": True,
+      },
+      "key_store": {
+          "type": "str",
+          "description": "Path to client keystore",
+          "required": False,
+      },
+      "trust_store": {
+          "type": "str",
+          "description": "Path to trust store",
+          "required": False,
+      },
+      "verify_host": {
+          "type": "bool",
+          "description": "Verify the server's certificate was signed by a trusted CA'",
+          "default": True,
+      },
+      "verify_hostname": {
+          "type": "bool",
+          "description": "Verify the server's actual host name against the expected name'",
+          "default": True,
+      },
+    },
+}
+
 _ENTRY_SPEC = {
     "type": "dict",
     "items": {
@@ -721,16 +777,7 @@ _ENTRY_SPEC = {
                 }
             },
         },
-        "stomp": {
-            "type": "dict",
-            "items": {
-                "enable": {
-                    "type": "bool",
-                    "default": True,
-                    "description": "Run an stomp server",
-                }
-            },
-        },
+        "stomp": _STOMP_SPEC,
     },
 }
 

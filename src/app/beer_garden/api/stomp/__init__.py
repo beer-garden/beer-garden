@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Package containing the Stomp entry point"""
 import logging
+import time
 import types
 
 import beer_garden.config as config
@@ -16,30 +17,28 @@ from beer_garden.events.processors import QueueListener
 
 logger = None
 conn = None
-client = None
 
 io_loop = None
 
 
 def run(ep_conn):
-    global logger, conn, client, io_loop
+    global logger, conn, io_loop
+    stomp_config = config.get("entry.stomp")
     logger = logging.getLogger(__name__)
-    logger.info("Starting Stomp server")
-    hosts = [('localhost', 61613)]
-    conn = Connection(hosts=hosts)
-
+    logger.info("Starting Stomp entry point")
+    host_and_ports = [(stomp_config.host, stomp_config.port)]
+    conn = Connection(host_and_ports=host_and_ports, user_name=stomp_config.username, password=stomp_config.password)
+    conn.connect("connected")
     io_loop = IOLoop.current()
     _setup_operation_forwarding()
-
 
     logger.debug("Starting forward processor")
     beer_garden.router.forward_processor.start()
 
     _setup_event_handling(ep_conn)
+    logger.info("Stomp entry point started")
     io_loop.start()
     publish(Event(name=Events.ENTRY_STARTED.name))
-
-
 
 
 def signal_handler(_: int, __: types.FrameType):
@@ -66,8 +65,14 @@ def _setup_event_handling(ep_conn):
     # This will push all events generated in the entry point up to the master process
     global io_loop
     beer_garden.events.manager = EventManager(ep_conn)
-
     io_loop.add_handler(ep_conn, lambda c, _: _event_callback(c.recv()), IOLoop.READ)
+
+
+def reconnect():
+    global conn, logger
+    if not conn.is_connected():
+        logger.warning("Lost stomp connection")
+        conn.connect("reconnected")
 
 
 def _event_callback(event):
@@ -82,4 +87,5 @@ def _event_callback(event):
 
 def handle_event(event):
     global conn
-    conn.send(event)
+    reconnect()
+    conn.send_event(event)
