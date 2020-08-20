@@ -13,7 +13,8 @@ CONFIG_FILE="${CONFIG_HOME}/config.yaml"
 APP_LOG_CONFIG="${CONFIG_HOME}/logging.yaml"
 PLUGIN_LOG_CONFIG="${CONFIG_HOME}/plugin-logging.yaml"
 
-LOG_FILE="$LOG_HOME/beer-garden.log"
+APP_LOG_FILE="$LOG_HOME/beer-garden.log"
+PLUGIN_LOG_FILE="$PLUGIN_LOG_HOME/%(namespace)s/%(system_name)s-%(system_version)s/%(instance_name)s.log"
 
 case "$1" in
     1)
@@ -37,10 +38,18 @@ case "$1" in
 
         # Generate application logging config if it doesn't exist
         if [ ! -f "$APP_LOG_CONFIG" ]; then
-            "$APP_HOME/bin/generate_log_config" \
-                --log-config-file "$APP_LOG_CONFIG" \
-                --log-file "$LOG_FILE" \
-                --log-level "WARN"
+            "$APP_HOME/bin/generate_app_logging_config" \
+                --config-file "$APP_LOG_CONFIG" \
+                --filename "$APP_LOG_FILE"
+        fi
+
+        # Generate plugin logging config if it doesn't exist
+        if [ ! -f "$PLUGIN_LOG_CONFIG" ]; then
+            "$APP_HOME/bin/generate_plugin_logging_config" \
+                --config-file "$PLUGIN_LOG_CONFIG" \
+                --no-stdout \
+                --file \
+                --filename "$PLUGIN_LOG_FILE"
         fi
 
         # Generate or migrate application config
