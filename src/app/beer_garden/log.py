@@ -67,41 +67,31 @@ def load(config: dict, force=False) -> None:
     _APP_LOGGING = logging_config
 
 
-def default_app_config(level, filename=None):
-    if filename:
-        handler = {
-            "class": "logging.handlers.RotatingFileHandler",
-            "level": level,
-            "formatter": "simple",
-            "filename": filename,
-            "maxBytes": 10485760,
-            "backupCount": 20,
-            "encoding": "utf8",
-        }
-    else:
-        handler = {
-            "class": "logging.StreamHandler",
-            "formatter": "simple",
-            "level": level,
-            "stream": "ext://sys.stdout",
-        }
+def default_app_config(level=None, filename=None):
+    app_config = copy.deepcopy(_config_base)
 
-    return {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "simple": {"format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"}
-        },
-        "handlers": {"beer_garden": handler},
-        "loggers": {
-            "pika": {"level": "ERROR"},
-            "requests.packages.urllib3.connectionpool": {"level": "WARN"},
-            "tornado.access": {"level": "WARN"},
-            "tornado.application": {"level": "WARN"},
-            "tornado.general": {"level": "WARN"},
-        },
-        "root": {"level": level, "handlers": ["beer_garden"]},
+    if filename:
+        app_config["handlers"]["file"] = copy.deepcopy(_file_handler)
+        app_config["handlers"]["file"]["filename"] = filename
+        app_config["handlers"]["file"]["backupCount"] = 20
+
+        app_config["root"]["handlers"].append("file")
+    else:
+        app_config["handlers"]["stdout"] = copy.deepcopy(_stdout_handler)
+        app_config["root"]["handlers"].append("stdout")
+
+    app_config["loggers"] = {
+        "pika": {"level": "ERROR"},
+        "requests.packages.urllib3.connectionpool": {"level": "WARN"},
+        "tornado.access": {"level": "WARN"},
+        "tornado.application": {"level": "WARN"},
+        "tornado.general": {"level": "WARN"},
     }
+
+    if level:
+        app_config["root"]["level"] = level
+
+    return app_config
 
 
 def default_plugin_config(level=None, stdout=True, file=True, filename=None):

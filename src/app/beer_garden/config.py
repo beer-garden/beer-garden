@@ -15,7 +15,7 @@ from beer_garden.log import default_app_config, default_plugin_config
 
 __all__ = [
     "load",
-    "generate_logging",
+    "generate_app_logging",
     "generate_plugin_logging",
     "generate",
     "migrate",
@@ -137,29 +137,31 @@ def migrate(args: Sequence[str]):
         os.remove(config.configuration.file)
 
 
-def generate_logging(args: Sequence[str]):
+def generate_app_logging(args: Sequence[str]):
     """Generate and save application logging configuration file.
 
     Args:
         args: Command line arguments
-            --log-config-file: Configuration will be written to this file (will print to
+            --config-file: Configuration will be written to this file (will print to
                 stdout if missing)
-            --log-file: Logs will be written to this file (used in a RotatingFileHandler)
-            --log-level: Handlers will be configured with this logging level
+            --filename: Logs will be written to this file (if file logging is enabled)
+            --level: Log level to use
 
     Returns:
-        str: The logging configuration dictionary
+        Logging configuration in dict form
     """
-    spec, cli_vars = _parse_args(args)
-    filtered_args = spec.load_filtered_config(
-        cli_vars, include=["log.config_file", "log.file", "log.level"]
+    parser = ArgumentParser()
+    parser.add_argument("--config-file", type=str, default=None)
+    parser.add_argument("--level", type=str, default=None)
+    parser.add_argument("--filename", type=str, default=None)
+
+    parsed_args = vars(parser.parse_args(args))
+
+    logging_config = default_app_config(
+        parsed_args.get("level"), parsed_args.get("filename")
     )
 
-    log = filtered_args.get("log", {})
-    logging_config = default_app_config(log.get("level"), log.get("file"))
-    log_config_file = log.get("config_file")
-
-    dump_data(logging_config, filename=log_config_file, file_type="yaml")
+    dump_data(logging_config, filename=parsed_args.get("config_file"), file_type="yaml")
 
     return logging_config
 

@@ -153,7 +153,7 @@ class TestUpdateConfig(object):
 
 class TestGenerateLogging(object):
     def test_no_file(self, capsys):
-        logging_config = beer_garden.config.generate_logging([])
+        logging_config = beer_garden.config.generate_app_logging([])
         captured = capsys.readouterr()
 
         assert not captured.out == ""
@@ -161,7 +161,7 @@ class TestGenerateLogging(object):
 
     def test_with_file(self, tmpdir, capsys):
         logging_config_file = Path(tmpdir, "logging.yaml")
-        logging_config = beer_garden.config.generate_logging(
+        logging_config = beer_garden.config.generate_app_logging(
             ["--log-config-file", str(logging_config_file)]
         )
         captured = capsys.readouterr()
