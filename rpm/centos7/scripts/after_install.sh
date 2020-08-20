@@ -14,7 +14,7 @@ APP_LOG_CONFIG="${CONFIG_HOME}/logging.yaml"
 PLUGIN_LOG_CONFIG="${CONFIG_HOME}/plugin-logging.yaml"
 
 APP_LOG_FILE="$LOG_HOME/beer-garden.log"
-PLUGIN_LOG_FILE="$PLUGIN_LOG_HOME/%(namespace)s/%(system_name)s-%(system_version)s/%(instance_name)s.log"
+PLUGIN_LOG_FILE="${PLUGIN_LOG_HOME}/%%(namespace)s/%%(system_name)s-%%(system_version)s/%%(instance_name)s.log"
 
 case "$1" in
     1)
