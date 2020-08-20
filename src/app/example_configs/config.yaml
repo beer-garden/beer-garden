@@ -24,7 +24,7 @@ db:
     info: 15
 entry:
   http:
-    enable: true
+    enabled: true
     host: 0.0.0.0
     port: 2337
     public_fqdn: localhost
@@ -37,12 +37,12 @@ entry:
       public_key: null
     url_prefix: /
   thrift:
-    enable: false
+    enabled: false
 event:
   mongo:
-    enable: true
+    enabled: true
   mq:
-    enable: false
+    enabled: false
     exchange: null
     virtual_host: /
 garden:
@@ -86,7 +86,7 @@ mq:
   virtual_host: /
 parent:
   http:
-    enable: false
+    enabled: false
     host: 0.0.0.0
     port: 2337
     public_fqdn: localhost

@@ -223,7 +223,7 @@ class Manager:
 
     def create_all(self):
         for entry_name, entry_value in beer_garden.config.get("entry").items():
-            if entry_value.get("enable"):
+            if entry_value.get("enabled"):
                 self.entry_points.append(self.create(entry_name))
 
     def create(self, module_name: str) -> T:
