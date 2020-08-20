@@ -208,7 +208,9 @@ class Application(StoppableThread):
         self.logger.debug("Starting Plugin-logger Monitor")
         self.plugin_logger_observer = MonitorFile(
             config.get("plugin.logging.config_file"),
-            Event(name=Events.PLUGIN_LOGGER_FILE_CHANGE.name),
+            create_event=Event(name=Events.PLUGIN_LOGGER_FILE_CHANGE.name),
+            modified_event=Event(name=Events.PLUGIN_LOGGER_FILE_CHANGE.name),
+            moved_event=Event(name=Events.PLUGIN_LOGGER_FILE_CHANGE.name),
         )
 
         self.logger.info("All set! Let me know if you need anything else!")
