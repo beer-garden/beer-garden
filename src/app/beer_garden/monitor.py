@@ -74,9 +74,10 @@ class PluginStatusMonitor(StoppableThread):
 
 class MonitorFile:
     def __init__(self, path, publish_event):
-        self.observer = PollingObserver()
+
+        self.file = path
+
         if path:
-            self.file = path
             self.path = os.path.split(path)[0]
             self.publish_event = publish_event
 
@@ -89,9 +90,9 @@ class MonitorFile:
 
             # Using PollingObserver instead of Observer because Observer throws events at
             # each file transaction
-
+            self.observer = PollingObserver()
             self.observer.schedule(self.event_handler, self.path, recursive=False)
-        self.observer.start()
+            self.observer.start()
 
     def on_created(self, event):
         """ When a user VIM edits a file it DELETES, then CREATES the file, this captures that use case"""
@@ -102,5 +103,6 @@ class MonitorFile:
         publish(self.publish_event)
 
     def stop(self):
-        self.observer.stop()
-        self.observer.join()
+        if self.file:
+            self.observer.stop()
+            self.observer.join()
