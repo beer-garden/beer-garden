@@ -262,12 +262,3 @@ def handle_event(event: Event) -> None:
 
         elif event.name == Events.SYSTEM_REMOVED.name:
             db.delete(event.payload)
-
-    else:
-        if event.name == Events.PLUGIN_LOGGER_FILE_CHANGE.name:
-            local_systems = get_systems(filter_params={"local": True})
-
-            for system in local_systems:
-                for instance in system.instances:
-                    if instance.status == "RUNNING":
-                        initialize_logging(instance.id)
