@@ -11,9 +11,16 @@ from ruamel.yaml import YAML
 from yapconf import YapconfSpec, dump_data
 
 from beer_garden.errors import ConfigurationError
-from beer_garden.log import default_app_config
+from beer_garden.log import default_app_config, default_plugin_config
 
-__all__ = ["load", "generate_logging", "generate", "migrate", "get"]
+__all__ = [
+    "load",
+    "generate_logging",
+    "generate_plugin_logging",
+    "generate",
+    "migrate",
+    "get",
+]
 
 _CONFIG = None
 
@@ -131,7 +138,7 @@ def migrate(args: Sequence[str]):
 
 
 def generate_logging(args: Sequence[str]):
-    """Generate and save logging configuration file.
+    """Generate and save application logging configuration file.
 
     Args:
         args: Command line arguments
@@ -153,6 +160,48 @@ def generate_logging(args: Sequence[str]):
     log_config_file = log.get("config_file")
 
     dump_data(logging_config, filename=log_config_file, file_type="yaml")
+
+    return logging_config
+
+
+def generate_plugin_logging(args: Sequence[str]) -> dict:
+    """Generate and save plugin logging configuration file.
+
+    Args:
+        args: Command line arguments
+            --config-file: Configuration will be written to this file (will print to
+                stdout if missing)
+            --stdout: Explicitly enable logging to stdout
+            --no-stdout: Explicitly disable logging to stdout
+            --file: Explicitly enable logging to a file
+            --no-file: Explicitly disable logging to a file
+            --filename: Logs will be written to this file (if file logging is enabled)
+            --level: Log level to use
+
+    Returns:
+        Logging configuration in dict form
+    """
+    parser = ArgumentParser()
+    parser.add_argument("--config-file", type=str, default=None)
+    parser.add_argument("--level", type=str, default=None)
+    parser.add_argument("--filename", type=str, default=None)
+
+    parser.add_argument("--stdout", dest="stdout", action="store_true")
+    parser.add_argument("--no-stdout", dest="stdout", action="store_false")
+
+    parser.add_argument("--file", dest="file", action="store_true")
+    parser.add_argument("--no-file", dest="file", action="store_false")
+
+    parsed_args = vars(parser.parse_args(args))
+
+    logging_config = default_plugin_config(
+        level=parsed_args.get("level"),
+        stdout=parsed_args.get("stdout"),
+        file=parsed_args.get("file"),
+        filename=parsed_args.get("filename"),
+    )
+
+    dump_data(logging_config, filename=parsed_args.get("config_file"), file_type="yaml")
 
     return logging_config
 

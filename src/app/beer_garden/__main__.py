@@ -22,6 +22,10 @@ def migrate_config():
     beer_garden.config.migrate(sys.argv[1:])
 
 
+def generate_plugin_logging_config():
+    beer_garden.config.generate_plugin_logging(sys.argv[1:])
+
+
 def main():
     # Absolute first thing to do is load the config
     beer_garden.config.load(sys.argv[1:])

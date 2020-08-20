@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import copy
+from typing import Any, Dict
 
 import brewtils.log
 import logging
@@ -12,6 +13,30 @@ import beer_garden.config as config
 from brewtils.models import Events
 
 _APP_LOGGING = None
+
+_default_formatter = {"format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"}
+
+_stdout_handler = {
+    "class": "logging.StreamHandler",
+    "formatter": "default",
+    "stream": "ext://sys.stdout",
+}
+
+_file_handler = {
+    "class": "logging.handlers.RotatingFileHandler",
+    "backupCount": 5,
+    "encoding": "utf8",
+    "formatter": "default",
+    "maxBytes": 10485760,
+}
+
+_config_base: Dict[Any, Any] = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {"default": _default_formatter},
+    "handlers": {},
+    "root": {"level": "INFO", "formatter": "default", "handlers": []},
+}
 
 
 def load(config: dict, force=False) -> None:
@@ -77,6 +102,26 @@ def default_app_config(level, filename=None):
         },
         "root": {"level": level, "handlers": ["beer_garden"]},
     }
+
+
+def default_plugin_config(level=None, stdout=True, file=True, filename=None):
+    plugin_config = copy.deepcopy(_config_base)
+
+    if stdout:
+        plugin_config["handlers"]["stdout"] = copy.deepcopy(_stdout_handler)
+        plugin_config["root"]["handlers"].append("stdout")
+
+    if file:
+        plugin_config["handlers"]["file"] = copy.deepcopy(_file_handler)
+        plugin_config["handlers"]["file"]["filename"] = (
+            filename or "log/%(instance_name)s.log"
+        )
+        plugin_config["root"]["handlers"].append("file")
+
+    if level:
+        plugin_config["root"]["level"] = level
+
+    return plugin_config
 
 
 def process_record(record):

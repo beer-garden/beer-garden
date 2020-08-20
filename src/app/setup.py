@@ -56,6 +56,7 @@ setup(
             "generate_config=beer_garden.__main__:generate_config",
             "migrate_config=beer_garden.__main__:migrate_config",
             "generate_log_config=beer_garden.__main__:generate_logging_config",
+            "generate_plugin_logging_config=beer_garden.__main__:generate_plugin_logging_config",
             "beergarden=beer_garden.__main__:main",
         ]
     },
