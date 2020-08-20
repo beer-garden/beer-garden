@@ -27,6 +27,7 @@ def config_all():
         "ICON_NAME": None,
         "DISPLAY_NAME": None,
         "LOG_LEVEL": "INFO",
+        "MAX_INSTANCES": 1,
     }
 
 
@@ -46,6 +47,7 @@ def config_all_serialized():
             ICON_NAME=None
             DISPLAY_NAME=None
             LOG_LEVEL='INFO'
+            MAX_INSTANCES=1
         """
     )
 
@@ -303,6 +305,7 @@ class TestLoadConfig(object):
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
         assert loaded_config["INSTANCES"] == ["instance1", "instance2"]
         assert loaded_config["PLUGIN_ARGS"] == {"instance1": None, "instance2": None}
+        assert loaded_config["MAX_INSTANCES"] == 2
 
     def test_plugin_args_list_no_instances(self, tmp_path):
         write_file(
@@ -321,6 +324,7 @@ class TestLoadConfig(object):
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
         assert loaded_config["INSTANCES"] == ["default"]
         assert loaded_config["PLUGIN_ARGS"] == {"default": ["arg1"]}
+        assert loaded_config["MAX_INSTANCES"] == 1
 
     def test_plugin_args_dict_no_instances(self, tmp_path):
         write_file(
@@ -339,6 +343,7 @@ class TestLoadConfig(object):
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
         assert sorted(loaded_config["INSTANCES"]) == sorted(["foo", "bar"])
         assert loaded_config["PLUGIN_ARGS"] == {"foo": ["arg1"], "bar": ["arg2"]}
+        assert loaded_config["MAX_INSTANCES"] == 2
 
     def test_instance_and_args_list(self, tmp_path):
         write_file(
@@ -357,6 +362,25 @@ class TestLoadConfig(object):
         loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
         assert sorted(loaded_config["INSTANCES"]) == sorted(["foo", "bar"])
         assert loaded_config["PLUGIN_ARGS"] == {"foo": ["arg1"], "bar": ["arg1"]}
+        assert loaded_config["MAX_INSTANCES"] == 2
+
+    def test_explicit_max_instances(self, tmp_path):
+        write_file(
+            tmp_path,
+            textwrap.dedent(
+                """
+                NAME='foo'
+                VERSION='1.0'
+                PLUGIN_ENTRY='entry.py'
+                INSTANCES=["foo", "bar"]
+                MAX_INSTANCES=-1
+            """
+            ),
+        )
+
+        loaded_config = ConfigLoader.load(tmp_path / CONFIG_NAME)
+        assert sorted(loaded_config["INSTANCES"]) == sorted(["foo", "bar"])
+        assert loaded_config["MAX_INSTANCES"] == -1
 
     def test_invalid_args(self, tmp_path):
         write_file(
