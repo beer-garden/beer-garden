@@ -2,10 +2,10 @@ APP_NAME="beer-garden"
 APP_HOME="/opt/${APP_NAME}"
 
 CONFIG_HOME="$APP_HOME/conf"
-LOG_HOME="$APP_HOME/log"
-
 CONFIG_FILE="${CONFIG_HOME}/config.yaml"
-LOG_CONFIG="${CONFIG_HOME}/logging.yaml"
+APP_LOG_CONFIG="${CONFIG_HOME}/logging.yaml"
+
+LOG_HOME="$APP_HOME/log"
 LOG_FILE="$LOG_HOME/beer-garden.log"
 
 case "$1" in
@@ -25,9 +25,9 @@ case "$1" in
     1)
         # This is an upgrade.
         # Generate logging config if it doesn't exist
-        if [ ! -f "$LOG_CONFIG" ]; then
+        if [ ! -f "$APP_LOG_CONFIG" ]; then
             "$APP_HOME/bin/generate_log_config" \
-                --log-config-file "$LOG_CONFIG" \
+                --log-config-file "$APP_LOG_CONFIG" \
                 --log-file "$LOG_FILE" \
                 --log-level "WARN"
         fi

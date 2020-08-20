@@ -10,7 +10,9 @@ PLUGIN_LOG_HOME="$LOG_HOME/plugins"
 PLUGIN_HOME="$APP_HOME/plugins"
 
 CONFIG_FILE="${CONFIG_HOME}/config.yaml"
-LOG_CONFIG="${CONFIG_HOME}/logging.yaml"
+APP_LOG_CONFIG="${CONFIG_HOME}/logging.yaml"
+PLUGIN_LOG_CONFIG="${CONFIG_HOME}/plugin-logging.yaml"
+
 LOG_FILE="$LOG_HOME/beer-garden.log"
 
 case "$1" in
@@ -33,10 +35,10 @@ case "$1" in
             mkdir -p "$PLUGIN_HOME"
         fi
 
-        # Generate logging config if it doesn't exist
-        if [ ! -f "$LOG_CONFIG" ]; then
+        # Generate application logging config if it doesn't exist
+        if [ ! -f "$APP_LOG_CONFIG" ]; then
             "$APP_HOME/bin/generate_log_config" \
-                --log-config-file "$LOG_CONFIG" \
+                --log-config-file "$APP_LOG_CONFIG" \
                 --log-file "$LOG_FILE" \
                 --log-level "WARN"
         fi
@@ -46,9 +48,9 @@ case "$1" in
             "$APP_HOME/bin/migrate_config" -c "$CONFIG_FILE"
         else
             "$APP_HOME/bin/generate_config" \
-                -c "$CONFIG_FILE" -l "$LOG_CONFIG" \
+                -c "$CONFIG_FILE" -l "$APP_LOG_CONFIG" \
                 --plugin-local-directory "$PLUGIN_HOME" \
-                --plugin-local-log-directory "$PLUGIN_LOG_HOME"
+                --plugin-logging-config-file "$PLUGIN_LOG_CONFIG"
         fi
 
         # Add the UI config file symlinks
