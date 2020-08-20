@@ -255,6 +255,8 @@ table.dataTable{
 
 .dropdown-menu{
     min-width: 110px;
+    max-height: 200px;
+    overflow: auto;
 }
 
 #nav-extras hr {

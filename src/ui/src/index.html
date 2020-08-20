@@ -34,7 +34,7 @@
           </span>
 
           <ul class="dropdown-menu" ng-show="searchText != null && searchText != ''">
-            <li ng-repeat="system in systems | filter:searchText">
+            <li ng-repeat="system in filteredItems  = (systems | filter:searchText)">
               <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
                 ui-sref-active="active">
                 <span title="{{system.description}}">
@@ -53,6 +53,7 @@
                 </li>
               </ul>
             </li>
+          <li ng-hide="filteredItems.length">No results</li>
           </ul>
         </li>
 
