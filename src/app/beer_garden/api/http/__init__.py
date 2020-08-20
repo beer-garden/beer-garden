@@ -42,6 +42,7 @@ from beer_garden.api.http.authorization import anonymous_principal as load_anony
 from beer_garden.api.http.processors import EventManager, websocket_publish
 from beer_garden.events import publish
 from beer_garden.events.processors import QueueListener
+import beer_garden.log
 
 io_loop = None
 server = None
@@ -391,7 +392,7 @@ def _event_callback(event):
 
     # And also register handlers that the entry point needs to care about
     # As of now that's only the routing subsystem
-    for handler in [beer_garden.router.handle_event]:
+    for handler in [beer_garden.router.handle_event, beer_garden.log.handle_event]:
         try:
             handler(event)
         except Exception as ex:

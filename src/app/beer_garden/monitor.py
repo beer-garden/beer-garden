@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 import logging
 from datetime import datetime, timedelta
+import os
 
+from watchdog.events import PatternMatchingEventHandler
+from watchdog.observers.polling import PollingObserver
+
+from beer_garden.events import publish
 from brewtils.models import Instance, Request
 from brewtils.stoppable_thread import StoppableThread
 
@@ -65,3 +70,37 @@ class PluginStatusMonitor(StoppableThread):
                 ):
                     instance.status = "RUNNING"
                     db.update(instance)
+
+
+class MonitorFile:
+    def __init__(self, path, publish_event):
+        self.observer = PollingObserver()
+        if path:
+            self.file = path
+            self.path = os.path.split(path)[0]
+            self.publish_event = publish_event
+
+            self.event_handler = PatternMatchingEventHandler(
+                patterns=[self.file], ignore_patterns=[], ignore_directories=True
+            )
+
+            self.event_handler.on_created = self.on_created
+            self.event_handler.on_modified = self.on_modified
+
+            # Using PollingObserver instead of Observer because Observer throws events at
+            # each file transaction
+
+            self.observer.schedule(self.event_handler, self.path, recursive=False)
+        self.observer.start()
+
+    def on_created(self, event):
+        """ When a user VIM edits a file it DELETES, then CREATES the file, this captures that use case"""
+        publish(self.publish_event)
+
+    def on_modified(self, event):
+        """ This captures all other modification events that occur against the file"""
+        publish(self.publish_event)
+
+    def stop(self):
+        self.observer.stop()
+        self.observer.join()

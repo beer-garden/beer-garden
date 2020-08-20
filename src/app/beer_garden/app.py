@@ -30,7 +30,7 @@ from beer_garden.events.processors import (
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
-from beer_garden.monitor import PluginStatusMonitor
+from beer_garden.monitor import PluginStatusMonitor, MonitorFile
 
 
 class Application(StoppableThread):
@@ -46,6 +46,7 @@ class Application(StoppableThread):
     clients = None
     helper_threads = None
     entry_manager = None
+    plugin_logger_observer = None
 
     def __init__(self):
         super(Application, self).__init__(
@@ -204,6 +205,12 @@ class Application(StoppableThread):
         self.logger.debug("Publishing startup event")
         self._publish_update(Events.GARDEN_STARTED)
 
+        self.logger.debug("Starting Plugin-logger Monitor")
+        self.plugin_logger_observer = MonitorFile(
+            config.get("plugin.logging.config_file"),
+            Event(name=Events.PLUGIN_LOGGER_FILE_CHANGE.name),
+        )
+
         self.logger.info("All set! Let me know if you need anything else!")
 
     def _shutdown(self):
@@ -217,6 +224,9 @@ class Application(StoppableThread):
         if self.scheduler.running:
             self.logger.debug("Pausing scheduler - no more jobs will be run")
             self.scheduler.pause()
+
+        self.logger.debug("Stopping Plugin-logger Monitor")
+        self.plugin_logger_observer.stop()
 
         self.logger.debug("Stopping forwarding processor...")
         beer_garden.router.forward_processor.stop()

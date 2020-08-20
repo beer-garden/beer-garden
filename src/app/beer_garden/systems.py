@@ -11,7 +11,7 @@ import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 from beer_garden.events import publish_event
-from beer_garden.plugin import stop
+from beer_garden.plugin import stop, initialize_logging
 
 REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
@@ -262,3 +262,12 @@ def handle_event(event: Event) -> None:
 
         elif event.name == Events.SYSTEM_REMOVED.name:
             db.delete(event.payload)
+
+    else:
+        if event.name == Events.PLUGIN_LOGGER_FILE_CHANGE.name:
+            local_systems = get_systems(filter_params={"local": True})
+
+            for system in local_systems:
+                for instance in system.instances:
+                    if instance.status == "RUNNING":
+                        initialize_logging(instance.id)

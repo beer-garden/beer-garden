@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import copy
+import os
 
 import brewtils.log
 import logging
@@ -9,6 +10,7 @@ from ruamel import yaml
 from ruamel.yaml import YAML
 
 import beer_garden.config as config
+from brewtils.models import Events
 
 _APP_LOGGING = None
 
@@ -169,7 +171,7 @@ class PluginLoggingManager(object):
         Returns:
             None
         """
-        if filename:
+        if filename and os.path.exists(filename):
             with open(filename) as log_config_file:
                 cls._PLUGIN_LOGGING = yaml.safe_load(log_config_file)
         else:
@@ -195,3 +197,10 @@ class PluginLoggingManager(object):
         log_config["level"] = level
 
         return log_config
+
+
+def handle_event(event):
+    # Only care about local garden
+    if event.garden == config.get("garden.name"):
+        if event.name == Events.PLUGIN_LOGGER_FILE_CHANGE.name:
+            load_plugin_log_config()
