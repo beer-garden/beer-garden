@@ -49,8 +49,8 @@ garden:
   name: default
 log:
   config_file: example_configs/logging-config.yaml
-  file: null
-  level: INFO
+  fallback_file: null
+  fallback_level: INFO
 metrics:
   prometheus:
     enabled: false

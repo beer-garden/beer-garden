@@ -22,15 +22,17 @@ class TestLoad(object):
     def test_level(self, tmpdir):
         level = "DEBUG"
 
-        beer_garden.log.load({"level": level}, force=True)
+        beer_garden.log.load({"fallback_level": level}, force=True)
 
-        assert beer_garden.log._APP_LOGGING == default_app_config(level)
+        assert beer_garden.log._APP_LOGGING == default_app_config(level=level)
 
     def test_level_and_filename(self, tmpdir):
         level = "DEBUG"
         filename = str(Path(tmpdir, "logging-config.json"))
 
-        beer_garden.log.load({"level": level, "file": filename}, force=True)
+        beer_garden.log.load(
+            {"fallback_level": level, "fallback_file": filename}, force=True
+        )
 
         assert beer_garden.log._APP_LOGGING == default_app_config(
             level, filename=filename

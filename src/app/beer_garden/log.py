@@ -60,7 +60,9 @@ def load(config: dict, force=False) -> None:
         with open(logging_filename, "rt") as log_file:
             logging_config = YAML().load(log_file)
     else:
-        logging_config = default_app_config(config.get("level"), config.get("file"))
+        logging_config = default_app_config(
+            config.get("fallback_level"), config.get("fallback_file")
+        )
 
     logging.config.dictConfig(logging_config)
 

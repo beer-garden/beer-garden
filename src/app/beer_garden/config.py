@@ -919,15 +919,15 @@ _LOG_SPEC = {
             "previous_names": ["log_config"],
             "alt_env_names": ["LOG_CONFIG"],
         },
-        "file": {
+        "fallback_file": {
             "type": "str",
-            "description": "File you would like the application to log to",
+            "description": "File to log to if config_file is not specified",
             "required": False,
             "previous_names": ["log_file"],
         },
-        "level": {
+        "fallback_level": {
             "type": "str",
-            "description": "Log level for the application",
+            "description": "Log level to use if config_file is not specified",
             "default": "INFO",
             "choices": ["DEBUG", "INFO", "WARN", "WARNING", "ERROR", "CRITICAL"],
             "previous_names": ["log_level"],
@@ -980,7 +980,7 @@ _PLUGIN_SPEC = {
                 "fallback_level": {
                     "type": "str",
                     "description": "Level that will be used with a default logging "
-                    "configuration if a config_file is not provided",
+                    "configuration if config_file is not specified",
                     "previous_names": ["plugin_logging_level"],
                     "default": "INFO",
                     "choices": [
