@@ -27,23 +27,8 @@ case "$1" in
     ;;
     1)
         # This is an upgrade.
-        # Generate application logging config if it doesn't exist
-        if [ ! -f "$APP_LOG_CONFIG" ]; then
-            "$APP_HOME/bin/generate_app_logging_config" \
-                --config-file "$APP_LOG_CONFIG" \
-                --filename "$APP_LOG_FILE"
-        fi
-
-        # Generate plugin logging config if it doesn't exist
-        if [ ! -f "$PLUGIN_LOG_CONFIG" ]; then
-            "$APP_HOME/bin/generate_plugin_logging_config" \
-                --config-file "$PLUGIN_LOG_CONFIG" \
-                --no-stdout \
-                --file \
-                --filename "$PLUGIN_LOG_FILE"
-        fi
-
         # Migrate application config if it exists
+        # See https://github.com/beer-garden/beer-garden/issues/215
         if [ -f "$CONFIG_FILE" ]; then
             "$APP_HOME/bin/migrate_config" -c "$CONFIG_FILE"
         fi
