@@ -400,7 +400,7 @@ def _forward_http(operation: Operation, target_garden: Garden):
                     payload_type=operation.schema,
                     payload=operation,
                     error_message=f"Attempted to forward operation to garden "
-                    f"'{operation.target_garden_name}' but the connection returned an error code of"
+                    f"'{operation.target_garden_name}' but the connection returned an error code of "
                     f"{response.status_code}. Please talk to your system administrator.",
                 )
             )
