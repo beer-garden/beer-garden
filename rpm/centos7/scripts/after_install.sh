@@ -10,7 +10,7 @@ PLUGIN_LOG_HOME="$LOG_HOME/plugins"
 PLUGIN_HOME="$APP_HOME/plugins"
 
 CONFIG_FILE="${CONFIG_HOME}/config.yaml"
-APP_LOG_CONFIG="${CONFIG_HOME}/logging.yaml"
+APP_LOG_CONFIG="${CONFIG_HOME}/app-logging.yaml"
 PLUGIN_LOG_CONFIG="${CONFIG_HOME}/plugin-logging.yaml"
 
 APP_LOG_FILE="$LOG_HOME/beer-garden.log"

@@ -3,7 +3,7 @@ APP_HOME="/opt/${APP_NAME}"
 
 CONFIG_HOME="$APP_HOME/conf"
 CONFIG_FILE="${CONFIG_HOME}/config.yaml"
-APP_LOG_CONFIG="${CONFIG_HOME}/logging.yaml"
+APP_LOG_CONFIG="${CONFIG_HOME}/app-logging.yaml"
 PLUGIN_LOG_CONFIG="${CONFIG_HOME}/plugin-logging.yaml"
 
 LOG_HOME="$APP_HOME/log"

@@ -48,7 +48,7 @@ event:
 garden:
   name: default
 log:
-  config_file: example_configs/logging-config.yaml
+  config_file: example_configs/app-logging.yaml
   fallback_file: null
   fallback_level: INFO
 metrics:
