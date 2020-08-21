@@ -151,7 +151,7 @@ class TestUpdateConfig(object):
             beer_garden.config.migrate([])
 
 
-class TestGenerateLogging(object):
+class TestGenerateAppLogging(object):
     def test_no_file(self, capsys):
         logging_config = beer_garden.config.generate_app_logging([])
         captured = capsys.readouterr()
@@ -162,7 +162,7 @@ class TestGenerateLogging(object):
     def test_with_file(self, tmpdir, capsys):
         logging_config_file = Path(tmpdir, "logging.yaml")
         logging_config = beer_garden.config.generate_app_logging(
-            ["--log-config-file", str(logging_config_file)]
+            ["--config-file", str(logging_config_file)]
         )
         captured = capsys.readouterr()
 
