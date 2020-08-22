@@ -611,14 +611,14 @@ def process_request(
         )
     except Exception as ex:
         # An error publishing means this request will never complete, so remove it
-        db.delete(request)
+        if not request.command_type == "EPHEMERAL":
+            db.delete(request)
 
         if wait_timeout != 0:
             request_map.pop(request.id, None)
 
         raise RequestPublishException(
-            f"Error while publishing request {request.id} to queue "
-            f"{request.system}[{request.system_version}]-{request.instance_name}"
+            f"Error while publishing {request!r} to message broker"
         ) from ex
 
     # Metrics
