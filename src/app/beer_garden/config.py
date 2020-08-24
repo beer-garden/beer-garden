@@ -622,7 +622,7 @@ _HTTP_SPEC = {
             "type": "bool",
             "default": True,
             "description": "Run an HTTP server",
-            "previous_names": ["http_enable"],
+            "previous_names": ["entry_http_enable"],
         },
         "ssl": {
             "type": "dict",
