@@ -29,7 +29,8 @@ from mongoengine import (
     FileField,
     CASCADE,
     PULL,
-    CachedReferenceField)
+    CachedReferenceField,
+)
 from mongoengine.errors import DoesNotExist
 
 import brewtils.models
