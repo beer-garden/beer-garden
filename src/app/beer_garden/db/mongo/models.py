@@ -29,7 +29,6 @@ from mongoengine import (
     FileField,
     CASCADE,
     PULL,
-    CachedReferenceField,
 )
 from mongoengine.errors import DoesNotExist
 
