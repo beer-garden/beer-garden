@@ -622,7 +622,7 @@ _HTTP_SPEC = {
             "type": "bool",
             "default": True,
             "description": "Run an HTTP server",
-            "previous_names": ["enable"],
+            "previous_names": ["http_enable"],
         },
         "ssl": {
             "type": "dict",
@@ -719,7 +719,7 @@ _ENTRY_SPEC = {
                     "type": "bool",
                     "default": False,
                     "description": "Run an thrift server",
-                    "previous_names": ["enable"],
+                    "previous_names": ["entry_thrift_enable"],
                 }
             },
         },
@@ -822,7 +822,7 @@ _EVENT_SPEC = {
                     "type": "bool",
                     "default": False,
                     "description": "Publish events to RabbitMQ",
-                    "previous_names": ["enable"],
+                    "previous_names": ["event_persist_mq_enable"],
                 },
                 "exchange": {
                     "type": "str",
