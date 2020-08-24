@@ -846,7 +846,10 @@ _EVENT_SPEC = {
                     "type": "bool",
                     "default": True,
                     "description": "Persist events to Mongo",
-                    "previous_names": ["event_persist_mongo", "event_persist_mongo_enable"],
+                    "previous_names": [
+                        "event_persist_mongo",
+                        "event_persist_mongo_enable",
+                    ],
                     "alt_env_names": ["EVENT_PERSIST_MONGO"],
                 }
             },
