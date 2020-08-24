@@ -736,7 +736,6 @@ _PARENT_SPEC = {
                     "type": "bool",
                     "default": False,
                     "description": "Publish events to parent garden over HTTP",
-                    "previous_names": ["enable"],
                 },
                 "ssl": {
                     "type": "dict",
@@ -847,7 +846,7 @@ _EVENT_SPEC = {
                     "type": "bool",
                     "default": True,
                     "description": "Persist events to Mongo",
-                    "previous_names": ["event_persist_mongo", "enable"],
+                    "previous_names": ["event_persist_mongo", "event_persist_mongo_enable"],
                     "alt_env_names": ["EVENT_PERSIST_MONGO"],
                 }
             },
