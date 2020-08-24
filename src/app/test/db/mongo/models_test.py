@@ -18,41 +18,6 @@ from beer_garden.db.mongo.models import (
 )
 
 
-class TestCommand(object):
-    @pytest.fixture(autouse=True)
-    def drop(self, mongo_conn):
-        Command.drop_collection()
-
-    def test_str(self):
-        assert str(Command(name="foo", parameters=[])) == "foo"
-
-    def test_repr(self):
-        c = Command(name="foo", description="bar", parameters=[])
-        assert repr(c) == "<Command: foo>"
-
-    def test_clean(self):
-        Command(name="foo", parameters=[Parameter(key="foo", optional=False)]).clean()
-
-    @pytest.mark.parametrize(
-        "params",
-        [
-            {"name": ""},
-            {"name": "foo", "command_type": "BAD", "parameters": []},
-            {"name": "foo", "output_type": "BAD", "parameters": []},
-        ],
-    )
-    def test_clean_empty_name(self, params):
-        with pytest.raises(ModelValidationError):
-            Command(**params).clean()
-
-    def test_clean_fail_duplicate_parameter_keys(self):
-        parameter = Parameter(key="foo", optional=False)
-        command = Command(name="foo", parameters=[parameter, parameter])
-
-        with pytest.raises(ModelValidationError):
-            command.clean()
-
-
 class TestInstance(object):
     @pytest.fixture(autouse=True)
     def drop(self, mongo_conn):
