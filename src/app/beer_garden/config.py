@@ -618,10 +618,11 @@ _DB_SPEC = {
 _HTTP_SPEC = {
     "type": "dict",
     "items": {
-        "enable": {
+        "enabled": {
             "type": "bool",
             "default": True,
             "description": "Run an HTTP server",
+            "previous_names": ["entry_http_enable"],
         },
         "ssl": {
             "type": "dict",
@@ -714,10 +715,11 @@ _ENTRY_SPEC = {
         "thrift": {
             "type": "dict",
             "items": {
-                "enable": {
+                "enabled": {
                     "type": "bool",
                     "default": False,
                     "description": "Run an thrift server",
+                    "previous_names": ["entry_thrift_enable"],
                 }
             },
         },
@@ -730,7 +732,7 @@ _PARENT_SPEC = {
         "http": {
             "type": "dict",
             "items": {
-                "enable": {
+                "enabled": {
                     "type": "bool",
                     "default": False,
                     "description": "Publish events to parent garden over HTTP",
@@ -816,10 +818,11 @@ _EVENT_SPEC = {
         "mq": {
             "type": "dict",
             "items": {
-                "enable": {
+                "enabled": {
                     "type": "bool",
                     "default": False,
                     "description": "Publish events to RabbitMQ",
+                    "previous_names": ["event_persist_mq_enable"],
                 },
                 "exchange": {
                     "type": "str",
@@ -839,11 +842,14 @@ _EVENT_SPEC = {
         "mongo": {
             "type": "dict",
             "items": {
-                "enable": {
+                "enabled": {
                     "type": "bool",
                     "default": True,
                     "description": "Persist events to Mongo",
-                    "previous_names": ["event_persist_mongo"],
+                    "previous_names": [
+                        "event_persist_mongo",
+                        "event_persist_mongo_enable",
+                    ],
                     "alt_env_names": ["EVENT_PERSIST_MONGO"],
                 }
             },

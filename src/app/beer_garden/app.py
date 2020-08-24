@@ -266,7 +266,7 @@ class Application(StoppableThread):
 
         # If necessary send all events to the parent garden
         http_event = config.get("parent.http")
-        if http_event.enable:
+        if http_event.enabled:
             easy_client = EasyClient(
                 bg_host=http_event.host,
                 bg_port=http_event.port,
