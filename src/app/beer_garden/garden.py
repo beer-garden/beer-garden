@@ -61,6 +61,7 @@ def update_garden_config(garden: Garden):
     db_garden = db.query_unique(Garden, id=garden.id)
     db_garden.connection_params = garden.connection_params
     db_garden.connection_type = garden.connection_type
+    db_garden.status = "INITIALIZING"
 
     return update_garden(db_garden)
 
@@ -175,9 +176,36 @@ def handle_event(event):
                         system.local = False
 
                     update_garden(existing_garden)
-    elif event.name == Events.GARDEN_UNRESPONSIVE.name:
+    elif event.name == Events.GARDEN_UNREACHABLE.name:
         target_garden = get_garden(event.payload.target_garden_name)
 
-        # If the target garden has an error, mark it unresponsive until it is corrected
-        if target_garden.status not in ["UNRESPONSIVE", "STOPPED", "BLOCKED"]:
+        if target_garden.status not in [
+            "NOT_CONFIGURED",
+            "UNREACHABLE",
+            "STOPPED",
+            "BLOCKED",
+            "ERROR",
+        ]:
             update_garden_status(event.payload.target_garden_name, "UNRESPONSIVE")
+    elif event.name == Events.GARDEN_ERROR.name:
+        target_garden = get_garden(event.payload.target_garden_name)
+
+        if target_garden.status not in [
+            "NOT_CONFIGURED",
+            "UNREACHABLE",
+            "STOPPED",
+            "BLOCKED",
+            "ERROR",
+        ]:
+            update_garden_status(event.payload.target_garden_name, "ERROR")
+    elif event.name == Events.GARDEN_NOT_CONFIGURED.name:
+        target_garden = get_garden(event.payload.target_garden_name)
+
+        if target_garden.status not in [
+            "NOT_CONFIGURED",
+            "UNREACHABLE",
+            "STOPPED",
+            "BLOCKED",
+            "ERROR",
+        ]:
+            update_garden_status(event.payload.target_garden_name, "NOT_CONFIGURED")

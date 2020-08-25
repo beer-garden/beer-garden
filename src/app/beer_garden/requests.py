@@ -747,7 +747,12 @@ def handle_event(event):
     # If the local garden is trying to Request an event and it fails, mark the request
     # with an error message
     elif (
-        event.name == Events.GARDEN_UNRESPONSIVE.name
+        event.name
+        in (
+            Events.GARDEN_UNREACHABLE.name,
+            Events.GARDEN_ERROR.name,
+            Events.GARDEN_NOT_CONFIGURED.name,
+        )
         and event.payload.model_type == "Request"
     ):
         complete_request(

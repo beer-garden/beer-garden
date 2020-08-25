@@ -181,7 +181,7 @@ def forward(operation: Operation):
         if connection_type is None:
             publish(
                 Event(
-                    name=Events.GARDEN_UNRESPONSIVE.name,
+                    name=Events.GARDEN_NOT_CONFIGURED.name,
                     payload_type=operation.schema,
                     payload=operation,
                     error_message=f"Attempted to forward operation to garden "
@@ -396,7 +396,7 @@ def _forward_http(operation: Operation, target_garden: Garden):
         if response.status_code != 200:
             publish(
                 Event(
-                    name=Events.GARDEN_UNRESPONSIVE.name,
+                    name=Events.GARDEN_UNREACHABLE.name,
                     payload_type=operation.schema,
                     payload=operation,
                     error_message=f"Attempted to forward operation to garden "
@@ -404,7 +404,7 @@ def _forward_http(operation: Operation, target_garden: Garden):
                     f"{response.status_code}. Please talk to your system administrator.",
                 )
             )
-        elif target_garden.status == "UNRESPONSIVE":
+        elif target_garden.status != "RUNNING":
             beer_garden.garden.update_garden_status(target_garden.name, "RUNNING")
 
         return response
@@ -412,7 +412,7 @@ def _forward_http(operation: Operation, target_garden: Garden):
     except Exception as ex:
         publish(
             Event(
-                name=Events.GARDEN_UNRESPONSIVE.name,
+                name=Events.GARDEN_ERROR.name,
                 payload_type=operation.schema,
                 payload=operation,
                 error_message=f"Attempted to forward operation to garden "
