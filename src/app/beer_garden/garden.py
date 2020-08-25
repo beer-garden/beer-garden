@@ -180,18 +180,16 @@ def handle_event(event):
         target_garden = get_garden(event.payload.target_garden_name)
 
         if target_garden.status not in [
-            "NOT_CONFIGURED",
             "UNREACHABLE",
             "STOPPED",
             "BLOCKED",
             "ERROR",
         ]:
-            update_garden_status(event.payload.target_garden_name, "UNRESPONSIVE")
+            update_garden_status(event.payload.target_garden_name, "UNREACHABLE")
     elif event.name == Events.GARDEN_ERROR.name:
         target_garden = get_garden(event.payload.target_garden_name)
 
         if target_garden.status not in [
-            "NOT_CONFIGURED",
             "UNREACHABLE",
             "STOPPED",
             "BLOCKED",
@@ -201,11 +199,5 @@ def handle_event(event):
     elif event.name == Events.GARDEN_NOT_CONFIGURED.name:
         target_garden = get_garden(event.payload.target_garden_name)
 
-        if target_garden.status not in [
-            "NOT_CONFIGURED",
-            "UNREACHABLE",
-            "STOPPED",
-            "BLOCKED",
-            "ERROR",
-        ]:
+        if target_garden.status == "NOT_CONFIGURED":
             update_garden_status(event.payload.target_garden_name, "NOT_CONFIGURED")
