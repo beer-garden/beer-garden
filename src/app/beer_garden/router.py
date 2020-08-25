@@ -310,14 +310,14 @@ def _determine_target_garden(operation: Operation) -> str:
         or "GARDEN" in operation.operation_type
         or "JOB" in operation.operation_type
         or operation.operation_type
-        in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
+        in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN", "SYSTEM_UPDATE")
     ):
         return config.get("garden.name")
 
     # Otherwise, each operation needs to be "parsed"
     target_system = None
 
-    if operation.operation_type in ("SYSTEM_DELETE", "SYSTEM_RELOAD", "SYSTEM_UPDATE"):
+    if operation.operation_type in ("SYSTEM_DELETE", "SYSTEM_RELOAD"):
         target_system = db.query_unique(System, id=operation.args[0])
 
     elif "INSTANCE" in operation.operation_type:
@@ -382,6 +382,10 @@ def _forward_http(operation: Operation, conn_info: dict):
 
 
 def _garden_name_lookup(system: Union[str, System]) -> str:
+
+    if hasattr(system, "local") and system.local:
+        return config.get("garden.name")
+
     system_name = str(system)
 
     for garden in gardens.values():
