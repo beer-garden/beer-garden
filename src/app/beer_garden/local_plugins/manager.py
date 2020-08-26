@@ -399,10 +399,12 @@ class ConfigLoader(object):
             if hasattr(config_module, key.name):
                 config_dict[key.name] = getattr(config_module, key.name)
 
-        # Instances and arguments need some normalization
+        # Need to apply some normalization
         config_dict.update(
-            ConfigLoader._normalize_instance_args(
-                config_dict.get("INSTANCES"), config_dict.get("PLUGIN_ARGS")
+            ConfigLoader._normalize(
+                config_dict.get("INSTANCES"),
+                config_dict.get("PLUGIN_ARGS"),
+                config_dict.get("MAX_INSTANCES"),
             )
         )
 
@@ -421,9 +423,18 @@ class ConfigLoader(object):
         return config_module
 
     @staticmethod
-    def _normalize_instance_args(instances, args):
-        """Normalize the different ways instances and arguments can be specified"""
-        if instances is None and args is None:
+    def _normalize(instances, args, max_instances):
+        """Normalize the config
+
+        Will reconcile the different ways instances and arguments can be specified as
+        well as determine the correct MAX_INSTANCE value
+        """
+
+        if isinstance(instances, list) and isinstance(args, dict):
+            # Fully specified, nothing to translate
+            pass
+
+        elif instances is None and args is None:
             instances = ["default"]
             args = {"default": None}
 
@@ -450,13 +461,17 @@ class ConfigLoader(object):
 
             args = temp_args
 
-        elif isinstance(instances, list) and isinstance(args, dict):
-            pass
-
         else:
             raise PluginValidationError("Invalid INSTANCES and PLUGIN_ARGS combination")
 
-        return {"INSTANCES": instances, "PLUGIN_ARGS": args}
+        if max_instances is None:
+            max_instances = len(instances)
+
+        return {
+            "INSTANCES": instances,
+            "PLUGIN_ARGS": args,
+            "MAX_INSTANCES": max_instances,
+        }
 
     @staticmethod
     def _validate(config_module: ModuleType, path: Path) -> None:
