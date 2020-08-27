@@ -107,7 +107,8 @@ class MonitorFile:
             self.observer.start()
 
     def on_created(self, event):
-        """ When a user VIM edits a file it DELETES, then CREATES the file, this captures that use case"""
+        """ When a user VIM edits a file it DELETES, then CREATES the file, this
+        captures that use case"""
         if self.create_event:
             publish(self.create_event)
 
@@ -122,7 +123,8 @@ class MonitorFile:
             publish(self.moved_event)
 
     def on_deleted(self, event):
-        """ This captures if the file was deleted (Be warned that VIM does this by default during write actions)"""
+        """ This captures if the file was deleted (Be warned that VIM does this by
+        default during write actions)"""
         if self.deleted_event:
             publish(self.deleted_event)
 
