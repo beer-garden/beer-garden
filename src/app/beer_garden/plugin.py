@@ -16,9 +16,6 @@ logger = logging.getLogger(__name__)
 
 start_request = RequestTemplate(command="_start", command_type="EPHEMERAL")
 stop_request = RequestTemplate(command="_stop", command_type="EPHEMERAL")
-initialize_logging_request = RequestTemplate(
-    command="_initialize_logging", command_type="EPHEMERAL"
-)
 read_logs_request = RequestTemplate(command="_read_log", command_type="ADMIN")
 
 
@@ -106,36 +103,6 @@ def stop(instance_id: str) -> Instance:
     requests.process_request(
         Request.from_template(
             stop_request,
-            namespace=system.namespace,
-            system=system.name,
-            system_version=system.version,
-            instance_name=instance.name,
-        ),
-        is_admin=True,
-        priority=1,
-        wait_timeout=0,
-    )
-
-    return instance
-
-
-def initialize_logging(instance_id: str) -> Instance:
-    """Initialize logging of Instance.
-
-    Args:
-        instance_id: The Instance ID
-
-    Returns:
-        The Instance
-    """
-    instance = db.query_unique(Instance, id=instance_id)
-    system = db.query_unique(System, instances__contains=instance)
-
-    logger.debug(f"Initializing logging for instance {system}[{instance}]")
-
-    requests.process_request(
-        Request.from_template(
-            initialize_logging_request,
             namespace=system.namespace,
             system=system.name,
             system_version=system.version,
