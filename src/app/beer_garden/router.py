@@ -382,10 +382,6 @@ def _forward_http(operation: Operation, conn_info: dict):
 
 
 def _garden_name_lookup(system: Union[str, System]) -> str:
-
-    if hasattr(system, "local") and system.local:
-        return config.get("garden.name")
-
     system_name = str(system)
 
     for garden in gardens.values():
