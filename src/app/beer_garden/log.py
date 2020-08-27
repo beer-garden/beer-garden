@@ -171,7 +171,7 @@ class PluginLoggingManager(object):
         Returns:
             None
         """
-        if filename and os.path.exists(filename):
+        if filename:
             with open(filename) as log_config_file:
                 cls._PLUGIN_LOGGING = yaml.safe_load(log_config_file)
         else:
