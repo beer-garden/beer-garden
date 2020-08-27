@@ -454,7 +454,7 @@ class RequestValidator(object):
         self, request_parameters, command_parameters
     ):
         """Validate that all the parameters passed in were valid keys. If there is a key
-         specified that is not noted in the database, then a validation error is thrown"""
+        specified that is not noted in the database, then a validation error is thrown"""
         self.logger.debug("Validating Keys")
         valid_keys = [cp.key for cp in command_parameters]
         self.logger.debug("Valid Keys are : %s" % valid_keys)

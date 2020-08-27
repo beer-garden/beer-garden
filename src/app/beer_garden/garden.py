@@ -88,13 +88,13 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
 def remove_garden(garden_name: str) -> None:
     """Remove a garden
 
-        Args:
-            garden_name: The Garden name
+    Args:
+        garden_name: The Garden name
 
-        Returns:
-            None
+    Returns:
+        None
 
-        """
+    """
     garden = db.query_unique(Garden, name=garden_name)
     db.delete(garden)
     return garden
