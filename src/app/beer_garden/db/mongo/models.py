@@ -702,7 +702,3 @@ class Garden(MongoModel, Document):
 class SystemGardenMapping(MongoModel, Document):
     system = ReferenceField("System")
     garden = ReferenceField("Garden")
-
-
-# Update the Command field now that all models are defined
-System.register_delete_rule(Command, "system", CASCADE)
