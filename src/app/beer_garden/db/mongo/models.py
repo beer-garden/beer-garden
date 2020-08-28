@@ -460,7 +460,7 @@ class System(MongoModel, Document):
     def clean(self):
         """Validate before saving to the database"""
 
-        if len(self.instances) > self.max_instances:
+        if len(self.instances) > self.max_instances > -1:
             raise ModelValidationError(
                 "Can not save System %s: Number of instances (%s) "
                 "exceeds system limit (%s)"
