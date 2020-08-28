@@ -437,7 +437,7 @@ class System(MongoModel, Document):
     description = StringField()
     version = StringField(required=True)
     namespace = StringField(required=True)
-    max_instances = IntField(default=1)
+    max_instances = IntField(default=-1)
     instances = ListField(ReferenceField(Instance, reverse_delete_rule=PULL))
     commands = ListField(ReferenceField(Command, reverse_delete_rule=PULL))
     icon_name = StringField()

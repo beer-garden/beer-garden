@@ -465,7 +465,7 @@ class ConfigLoader(object):
             raise PluginValidationError("Invalid INSTANCES and PLUGIN_ARGS combination")
 
         if max_instances is None:
-            max_instances = len(instances)
+            max_instances = -1
 
         return {
             "INSTANCES": instances,
