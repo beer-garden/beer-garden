@@ -3,13 +3,16 @@ from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.models import Operation
 
+from beer_garden.errors import EndpointRemovedException
 
-class CommandAPI(BaseHandler):
+
+class CommandAPIOld(BaseHandler):
     @authenticated(permissions=[Permissions.COMMAND_READ])
     async def get(self, command_id):
         """
         ---
         summary: Retrieve a specific Command
+        deprecated: true
         parameters:
           - name: command_id
             in: path
@@ -26,14 +29,12 @@ class CommandAPI(BaseHandler):
           50x:
             $ref: '#/definitions/50xError'
         tags:
-          - Commands
+          - Deprecated
         """
-
-        response = await self.client(
-            Operation(operation_type="COMMAND_READ", args=[command_id])
+        raise EndpointRemovedException(
+            message="This endpoint has been removed as Commands no longer have IDs. "
+            "Please use /systems/<system_id>/commands/<command_name> instead."
         )
-        self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(response)
 
 
 class CommandListAPI(BaseHandler):
@@ -42,6 +43,7 @@ class CommandListAPI(BaseHandler):
         """
         ---
         summary: Retrieve all Commands
+        deprecated: true
         responses:
           200:
             description: All Commands
@@ -52,9 +54,8 @@ class CommandListAPI(BaseHandler):
           50x:
             $ref: '#/definitions/50xError'
         tags:
-          - Commands
+          - Deprecated
         """
-
         response = await self.client(Operation(operation_type="COMMAND_READ_ALL"))
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
