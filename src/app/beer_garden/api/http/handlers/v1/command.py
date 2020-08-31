@@ -6,6 +6,42 @@ from brewtils.models import Operation
 from beer_garden.errors import EndpointRemovedException
 
 
+class CommandAPI(BaseHandler):
+    @authenticated(permissions=[Permissions.COMMAND_READ])
+    async def get(self, system_id, command_name):
+        """
+        ---
+        summary: Retrieve a specific Command
+        parameters:
+          - name: system_id
+            in: path
+            required: true
+            description: The ID of the System
+            type: string
+          - name: command_name
+            in: path
+            required: true
+            description: The name of the Command
+            type: string
+        responses:
+          200:
+            description: Command with the given name
+            schema:
+              $ref: '#/definitions/Command'
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Commands
+        """
+        response = await self.client(
+            Operation(operation_type="COMMAND_READ", args=[system_id, command_name])
+        )
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(response)
+
+
 class CommandAPIOld(BaseHandler):
     @authenticated(permissions=[Permissions.COMMAND_READ])
     async def get(self, command_id):

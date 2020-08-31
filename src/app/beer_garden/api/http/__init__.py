@@ -183,6 +183,7 @@ def _setup_tornado_app():
         (rf"{prefix}api/v1/instances/(\w+)/queues/?", v1.instance.InstanceQueuesAPI),
         (rf"{prefix}api/v1/requests/(\w+)/?", v1.request.RequestAPI),
         (rf"{prefix}api/v1/requests/output/(\w+)/?", v1.request.RequestOutputAPI),
+        (rf"{prefix}api/v1/systems/(\w+)/commands/(\w+)/?", v1.command.CommandAPI),
         (rf"{prefix}api/v1/systems/(\w+)/?", v1.system.SystemAPI),
         (rf"{prefix}api/v1/queues/([\w\.-]+)/?", v1.queue.QueueAPI),
         (rf"{prefix}api/v1/users/(\w+)/?", v1.user.UserAPI),
