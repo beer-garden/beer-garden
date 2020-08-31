@@ -19,10 +19,6 @@ from beer_garden.db.mongo.models import (
 
 
 class TestCommand(object):
-    @pytest.fixture(autouse=True)
-    def drop(self, mongo_conn):
-        Command.drop_collection()
-
     def test_str(self):
         assert str(Command(name="foo", parameters=[])) == "foo"
 
