@@ -77,10 +77,6 @@
         <li ng-show="hasPermission(user, 'bg-system-read')">
           <a ui-sref="base.systems" ng-class="{active: ($state.current.name.startsWith('base.systems'))}">Systems</a>
         </li>
-        <li ng-show="hasPermission(user, 'bg-command-read')">
-          <a ui-sref="base.commands"
-             ng-class="{active: ($state.current.name.startsWith('base.command'))}">Commands</a>
-        </li>
         <li ng-show="hasPermission(user, 'bg-request-read')">
           <a ui-sref="base.requests"
              ng-class="{active: ($state.current.name.startsWith('request'))}">Requests</a>
