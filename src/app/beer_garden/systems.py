@@ -204,7 +204,12 @@ def purge_system(system_id: str) -> System:
 
     # Attempt to stop the plugins
     for instance in system.instances:
-        stop(instance.id)
+        try:
+            stop(instance.id)
+        except Exception as ex:
+            logger.warning(
+                f"Error while attempting to stop instance {instance.id}: {ex}"
+            )
 
     # TODO - This is not great
     sleep(5)
