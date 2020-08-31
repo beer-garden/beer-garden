@@ -12,7 +12,12 @@ import beer_garden.db.mongo.models
 from beer_garden.db.mongo.models import MongoModel
 from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.db.mongo.pruner import MongoPruner
-from beer_garden.db.mongo.util import check_indexes, ensure_roles, ensure_users
+from beer_garden.db.mongo.util import (
+    check_indexes,
+    ensure_embedded_command,
+    ensure_roles,
+    ensure_users,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +144,8 @@ def create_connection(connection_alias: str = "default", db_config: Box = None) 
 
 def initial_setup(guest_login_enabled):
     """Do everything necessary to ensure the database is in a 'good' state"""
+
+    ensure_embedded_command()
 
     for doc in (
         beer_garden.db.mongo.models.Job,
