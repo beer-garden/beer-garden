@@ -12,7 +12,12 @@ import beer_garden.db.mongo.models
 from beer_garden.db.mongo.models import MongoModel
 from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.db.mongo.pruner import MongoPruner
-from beer_garden.db.mongo.util import check_indexes, ensure_roles, ensure_users
+from beer_garden.db.mongo.util import (
+    check_indexes,
+    ensure_embedded_command,
+    ensure_roles,
+    ensure_users,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +144,8 @@ def create_connection(connection_alias: str = "default", db_config: Box = None) 
 
 def initial_setup(guest_login_enabled):
     """Do everything necessary to ensure the database is in a 'good' state"""
+
+    ensure_embedded_command()
 
     for doc in (
         beer_garden.db.mongo.models.Job,
@@ -376,51 +383,6 @@ def reload(obj: ModelItem) -> ModelItem:
     existing_obj = _model_map[type(obj)].objects.get(id=obj.id)
 
     return to_brewtils(existing_obj)
-
-
-def replace_commands(
-    system: brewtils.models.System, new_commands: List[brewtils.models.Command]
-) -> brewtils.models.System:
-    """Replaces a System's Commands
-
-    Assumes the commands passed in are more important than what currently exists in the
-    database. It will delete commands that are not part of `new_commands`.
-
-    This calls the Mongo object methods directly to avoid problems with translating the
-    Command.system field.
-
-    Args:
-        system: System to update
-        new_commands: List of new commands
-
-    Returns:
-        The updated Brewtils System
-    """
-    mongo_system = from_brewtils(system)
-    mongo_commands = [from_brewtils(command) for command in new_commands]
-
-    old_commands = beer_garden.db.mongo.models.Command.objects(system=mongo_system)
-    old_names = {command.name: command.id for command in old_commands}
-
-    new_names = [command.name for command in new_commands]
-
-    # If this command is already in the DB we want to preserve the ID
-    for command in mongo_commands:
-        if command.name in old_names:
-            command.id = old_names[command.name]
-
-        command.system = mongo_system
-        command.save()
-
-    # Clean up orphan commands
-    for command in old_commands:
-        if command.name not in new_names:
-            command.delete()
-
-    mongo_system.commands = mongo_commands
-    mongo_system.save()
-
-    return to_brewtils(mongo_system)
 
 
 def distinct(brewtils_clazz: ModelItem, field: str) -> List:

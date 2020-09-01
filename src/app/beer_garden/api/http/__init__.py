@@ -167,7 +167,6 @@ def _setup_tornado_app():
     # These get documented in our OpenAPI (fka Swagger) documentation
     published_url_specs = [
         # V1
-        (rf"{prefix}api/v1/commands/?", v1.command.CommandListAPI),
         (rf"{prefix}api/v1/requests/?", v1.request.RequestListAPI),
         (rf"{prefix}api/v1/systems/?", v1.system.SystemListAPI),
         (rf"{prefix}api/v1/queues/?", v1.queue.QueueListAPI),
@@ -179,12 +178,12 @@ def _setup_tornado_app():
         (rf"{prefix}api/v1/jobs/?", v1.job.JobListAPI),
         (rf"{prefix}api/v1/gardens/?", v1.garden.GardenListAPI),
         (rf"{prefix}api/v1/namespaces/?", v1.namespace.NamespaceListAPI),
-        (rf"{prefix}api/v1/commands/(\w+)/?", v1.command.CommandAPI),
         (rf"{prefix}api/v1/instances/(\w+)/?", v1.instance.InstanceAPI),
         (rf"{prefix}api/v1/instances/(\w+)/logs/?", v1.instance.InstanceLogAPI),
         (rf"{prefix}api/v1/instances/(\w+)/queues/?", v1.instance.InstanceQueuesAPI),
         (rf"{prefix}api/v1/requests/(\w+)/?", v1.request.RequestAPI),
         (rf"{prefix}api/v1/requests/output/(\w+)/?", v1.request.RequestOutputAPI),
+        (rf"{prefix}api/v1/systems/(\w+)/commands/(\w+)/?", v1.command.CommandAPI),
         (rf"{prefix}api/v1/systems/(\w+)/?", v1.system.SystemAPI),
         (rf"{prefix}api/v1/queues/([\w\.-]+)/?", v1.queue.QueueAPI),
         (rf"{prefix}api/v1/users/(\w+)/?", v1.user.UserAPI),
@@ -201,6 +200,8 @@ def _setup_tornado_app():
         (rf"{prefix}api/v2/tokens/?", v1.token.TokenListAPI),
         (rf"{prefix}api/v2/tokens/(\w+)/?", v1.token.TokenAPI),
         # Deprecated
+        (rf"{prefix}api/v1/commands/?", v1.command.CommandListAPI),
+        (rf"{prefix}api/v1/commands/(\w+)/?", v1.command.CommandAPIOld),
         (rf"{prefix}api/v1/config/logging/?", v1.logging.LoggingConfigAPI),
     ]
 

@@ -31,6 +31,13 @@ class LoggingLoadingError(Exception):
     pass
 
 
+class EndpointRemovedException(Exception):
+    """Requested endpoint is no longer valid"""
+
+    def __init__(self, message=None):
+        self.message = message
+
+
 # Routing
 class UnknownGardenException(Exception):
     """Route requested is not valid"""

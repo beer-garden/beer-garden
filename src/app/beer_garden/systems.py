@@ -119,7 +119,7 @@ def update_system(
                 f"System {system} already exists with different commands"
             )
 
-        system = db.replace_commands(system, brew_commands)
+        system.commands = brew_commands
 
     if add_instances:
         if len(system.instances) + len(add_instances) > system.max_instances:

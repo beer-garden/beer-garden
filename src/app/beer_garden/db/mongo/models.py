@@ -197,10 +197,10 @@ class Parameter(MongoModel, EmbeddedDocument):
             )
 
 
-class Command(MongoModel, Document):
+class Command(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.Command
 
-    name = StringField(required=True, unique_with="system")
+    name = StringField(required=True)
     description = StringField()
     parameters = ListField(EmbeddedDocumentField("Parameter"))
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES, default="ACTION")
@@ -210,18 +210,12 @@ class Command(MongoModel, Document):
     template = StringField()
     hidden = BooleanField()
     icon_name = StringField()
-    # reverse_delete_rule=CASCADE is set later, can't set until System is defined
-    system = ReferenceField("System")
 
     def clean(self):
         """Validate before saving to the database"""
 
         if not self.name:
-            raise ModelValidationError(
-                f"Can not save Command"
-                f"{' for system ' + self.system.name if self.system else ''}"
-                f": Missing name"
-            )
+            raise ModelValidationError("Can not save a Command with an empty name")
 
         if self.command_type not in BrewtilsCommand.COMMAND_TYPES:
             raise ModelValidationError(
@@ -439,7 +433,7 @@ class System(MongoModel, Document):
     namespace = StringField(required=True)
     max_instances = IntField(default=1)
     instances = ListField(ReferenceField(Instance, reverse_delete_rule=PULL))
-    commands = ListField(ReferenceField(Command, reverse_delete_rule=PULL))
+    commands = ListField(EmbeddedDocumentField("Command"))
     icon_name = StringField()
     display_name = StringField()
     metadata = DictField()
@@ -475,20 +469,12 @@ class System(MongoModel, Document):
             )
 
     def deep_save(self):
-        """Deep save. Saves Commands, Instances, and the System
-
-        Mongoengine cannot save bidirectional references in one shot because
-        'You can only reference documents once they have been saved to the database'
-        So we must mangle the System to have no Commands, save it, save the individual
-        Commands with the System reference, update the System with the Command list, and
-        then save the System again
-        """
+        """Deep save. Saves Instances and the System"""
 
         # Note if this system is already saved
         delete_on_error = self.id is None
 
         # Save these off here so we can 'revert' in case of an exception
-        temp_commands = self.commands
         temp_instances = self.instances
 
         try:
@@ -501,33 +487,22 @@ class System(MongoModel, Document):
             # so the Commands will validate against it correctly (the ability to undo
             # this is why we saved off delete_on_error earlier) The reference lists must
             # be empty or else we encounter the bidirectional reference issue
-            self.commands = []
             self.instances = []
             self.save()
 
-            # Make sure all commands have the correct System reference
-            for command in temp_commands:
-                command.system = self
-
             # Now validate
-            for command in temp_commands:
-                command.validate()
             for instance in temp_instances:
                 instance.validate()
 
             # All validated, now save everything
-            for command in temp_commands:
-                command.save(validate=False)
             for instance in temp_instances:
                 instance.save(validate=False)
-            self.commands = temp_commands
             self.instances = temp_instances
             self.save()
 
         # Since we don't have actual transactions we are not in a good position here,
         # so try our best to 'roll back'
         except Exception:
-            self.commands = temp_commands
             self.instances = temp_instances
             if delete_on_error and self.id:
                 self.delete()
@@ -535,14 +510,8 @@ class System(MongoModel, Document):
 
     def deep_delete(self):
         """Completely delete a system"""
-        self.delete_commands()
         self.delete_instances()
         return self.delete()
-
-    def delete_commands(self):
-        """Delete all commands associated with this system"""
-        for command in self.commands:
-            command.delete()
 
     def delete_instances(self):
         """Delete all instances associated with this system"""
@@ -733,7 +702,3 @@ class Garden(MongoModel, Document):
 class SystemGardenMapping(MongoModel, Document):
     system = ReferenceField("System")
     garden = ReferenceField("Garden")
-
-
-# Update the Command field now that all models are defined
-System.register_delete_rule(Command, "system", CASCADE)
