@@ -474,36 +474,20 @@ class System(MongoModel, Document):
         # Note if this system is already saved
         delete_on_error = self.id is None
 
-        # Save these off here so we can 'revert' in case of an exception
-        temp_instances = self.instances
-
         try:
-            # Before we start saving things try to make sure everything will validate
-            # correctly. This means multiple passes through the collections, but we want
-            # to minimize the chances of having to bail out after saving something since
-            # we don't have transactions
-
-            # However, we have to start by saving the System. We need it in the database
-            # so the Commands will validate against it correctly (the ability to undo
-            # this is why we saved off delete_on_error earlier) The reference lists must
-            # be empty or else we encounter the bidirectional reference issue
-            self.instances = []
-            self.save()
-
-            # Now validate
-            for instance in temp_instances:
+            # Validate all instances before saving any of them
+            for instance in self.instances:
                 instance.validate()
 
             # All validated, now save everything
-            for instance in temp_instances:
+            for instance in self.instances:
                 instance.save(validate=False)
-            self.instances = temp_instances
+
             self.save()
 
         # Since we don't have actual transactions we are not in a good position here,
         # so try our best to 'roll back'
         except Exception:
-            self.instances = temp_instances
             if delete_on_error and self.id:
                 self.delete()
             raise
