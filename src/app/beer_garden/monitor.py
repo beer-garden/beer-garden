@@ -107,22 +107,32 @@ class MonitorFile:
             self.observer.start()
 
     def on_created(self, event):
-        """ When a user VIM edits a file it DELETES, then CREATES the file, this captures that use case"""
+        """Callback invoked when the file is created
+
+        When a user VIM edits a file it DELETES, then CREATES the file, this
+        captures that use case"""
         if self.create_event:
             publish(self.create_event)
 
     def on_modified(self, event):
-        """ This captures all other modification events that occur against the file"""
+        """Callback invoked when the file is moved
+
+        This captures all other modification events that occur against the file"""
         if self.modified_event:
             publish(self.modified_event)
 
     def on_moved(self, event):
-        """ This captures if the file is moved into or from the directory"""
+        """Callback invoked when the file is moved
+
+        This captures if the file is moved into or from the directory"""
         if self.moved_event:
             publish(self.moved_event)
 
     def on_deleted(self, event):
-        """ This captures if the file was deleted (Be warned that VIM does this by default during write actions)"""
+        """Callback invoked when the file is deleted
+
+        This captures if the file was deleted (Be warned that VIM does this by
+        default during write actions)"""
         if self.deleted_event:
             publish(self.deleted_event)
 

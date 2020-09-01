@@ -50,7 +50,7 @@ def is_valid_name(string: str) -> bool:
 
 
 def var_name(string: str) -> str:
-    """ Strips out the Variable name from a string
+    """Strips out the Variable name from a string
     :param string: e.g. $MY_PATH:$YOUR_PATH
     :return string: e.g. MY_PATH
     """
