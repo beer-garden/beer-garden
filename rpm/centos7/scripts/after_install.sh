@@ -60,10 +60,10 @@ if [ ! -f "$PLUGIN_LOG_CONFIG" ]; then
 fi
 
 # Add the UI config file symlinks
-if [ -d "/etc/nginx/conf.d" && ! -f "/etc/nginx/conf.d/upstream.conf" ]; then
+if [ -d "/etc/nginx/conf.d" ] && [ ! -f "/etc/nginx/conf.d/upstream.conf" ]; then
     ln -s "$APP_HOME/ui/conf/conf.d/upstream.conf" "/etc/nginx/conf.d/upstream.conf"
 fi
-if [ -d "/etc/nginx/default.d" && ! -f "/etc/nginx/default.d/bg.conf" ]; then
+if [ -d "/etc/nginx/default.d" ] && [ ! -f "/etc/nginx/default.d/bg.conf" ]; then
     ln -s "$APP_HOME/ui/conf/default.d/bg.conf" "/etc/nginx/default.d/bg.conf"
 fi
 
