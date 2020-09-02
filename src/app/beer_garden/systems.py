@@ -55,28 +55,10 @@ def create_system(system: System) -> System:
         The created System
 
     """
-    # Assign a default 'main' instance if there aren't any instances and there can
-    # only be one
-
-    if not system.max_instances:
-        system.max_instances = -1
-
-    if not system.instances or len(system.instances) == 0:
-        if system.max_instances < 2:
-            system.instances = [Instance(name="default")]
-
-        else:
-            raise ModelValidationError(
-                f"Could not create {system}: Systems with max_instances > 1 "
-                f"must also define their instances"
-            )
-
     if system.namespace is None:
         system.namespace = config.get("garden.name")
 
-    system = db.create(system)
-
-    return system
+    return db.create(system)
 
 
 @publish_event(Events.SYSTEM_UPDATED)
