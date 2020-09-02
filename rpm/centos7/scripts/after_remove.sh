@@ -2,11 +2,14 @@ APP_NAME="beer-garden"
 APP_HOME="/opt/${APP_NAME}"
 
 CONFIG_HOME="$APP_HOME/conf"
-LOG_HOME="$APP_HOME/log"
-
 CONFIG_FILE="${CONFIG_HOME}/config.yaml"
-LOG_CONFIG="${CONFIG_HOME}/logging.yaml"
-LOG_FILE="$LOG_HOME/beer-garden.log"
+APP_LOG_CONFIG="${CONFIG_HOME}/app-logging.yaml"
+PLUGIN_LOG_CONFIG="${CONFIG_HOME}/plugin-logging.yaml"
+
+LOG_HOME="$APP_HOME/log"
+PLUGIN_LOG_HOME="$LOG_HOME/plugins"
+APP_LOG_FILE="$LOG_HOME/beer-garden.log"
+PLUGIN_LOG_FILE="${PLUGIN_LOG_HOME}/%%(namespace)s/%%(system_name)s-%%(system_version)s/%%(instance_name)s.log"
 
 case "$1" in
     0)
@@ -24,15 +27,8 @@ case "$1" in
     ;;
     1)
         # This is an upgrade.
-        # Generate logging config if it doesn't exist
-        if [ ! -f "$LOG_CONFIG" ]; then
-            "$APP_HOME/bin/generate_log_config" \
-                --log-config-file "$LOG_CONFIG" \
-                --log-file "$LOG_FILE" \
-                --log-level "WARN"
-        fi
-
         # Migrate application config if it exists
+        # See https://github.com/beer-garden/beer-garden/issues/215
         if [ -f "$CONFIG_FILE" ]; then
             "$APP_HOME/bin/migrate_config" -c "$CONFIG_FILE"
         fi

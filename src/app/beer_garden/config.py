@@ -11,9 +11,16 @@ from ruamel.yaml import YAML
 from yapconf import YapconfSpec, dump_data
 
 from beer_garden.errors import ConfigurationError
-from beer_garden.log import default_app_config
+from beer_garden.log import default_app_config, default_plugin_config
 
-__all__ = ["load", "generate_logging", "generate", "migrate", "get"]
+__all__ = [
+    "load",
+    "generate_app_logging",
+    "generate_plugin_logging",
+    "generate",
+    "migrate",
+    "get",
+]
 
 _CONFIG = None
 
@@ -130,29 +137,73 @@ def migrate(args: Sequence[str]):
         os.remove(config.configuration.file)
 
 
-def generate_logging(args: Sequence[str]):
-    """Generate and save logging configuration file.
+def generate_app_logging(args: Sequence[str]):
+    """Generate and save application logging configuration file.
 
     Args:
         args: Command line arguments
-            --log-config-file: Configuration will be written to this file (will print to
+            --config-file: Configuration will be written to this file (will print to
                 stdout if missing)
-            --log-file: Logs will be written to this file (used in a RotatingFileHandler)
-            --log-level: Handlers will be configured with this logging level
+            --filename: Logs will be written to this file (if file logging is enabled)
+            --level: Log level to use
 
     Returns:
-        str: The logging configuration dictionary
+        Logging configuration in dict form
     """
-    spec, cli_vars = _parse_args(args)
-    filtered_args = spec.load_filtered_config(
-        cli_vars, include=["log.config_file", "log.file", "log.level"]
+    parser = ArgumentParser()
+    parser.add_argument("--config-file", type=str, default=None)
+    parser.add_argument("--level", type=str, default=None)
+    parser.add_argument("--filename", type=str, default=None)
+
+    parsed_args = vars(parser.parse_args(args))
+
+    logging_config = default_app_config(
+        parsed_args.get("level"), parsed_args.get("filename")
     )
 
-    log = filtered_args.get("log", {})
-    logging_config = default_app_config(log.get("level"), log.get("file"))
-    log_config_file = log.get("config_file")
+    dump_data(logging_config, filename=parsed_args.get("config_file"), file_type="yaml")
 
-    dump_data(logging_config, filename=log_config_file, file_type="yaml")
+    return logging_config
+
+
+def generate_plugin_logging(args: Sequence[str]) -> dict:
+    """Generate and save plugin logging configuration file.
+
+    Args:
+        args: Command line arguments
+            --config-file: Configuration will be written to this file (will print to
+                stdout if missing)
+            --stdout: Explicitly enable logging to stdout
+            --no-stdout: Explicitly disable logging to stdout
+            --file: Explicitly enable logging to a file
+            --no-file: Explicitly disable logging to a file
+            --filename: Logs will be written to this file (if file logging is enabled)
+            --level: Log level to use
+
+    Returns:
+        Logging configuration in dict form
+    """
+    parser = ArgumentParser()
+    parser.add_argument("--config-file", type=str, default=None)
+    parser.add_argument("--level", type=str, default=None)
+    parser.add_argument("--filename", type=str, default=None)
+
+    parser.add_argument("--stdout", dest="stdout", action="store_true")
+    parser.add_argument("--no-stdout", dest="stdout", action="store_false")
+
+    parser.add_argument("--file", dest="file", action="store_true")
+    parser.add_argument("--no-file", dest="file", action="store_false")
+
+    parsed_args = vars(parser.parse_args(args))
+
+    logging_config = default_plugin_config(
+        level=parsed_args.get("level"),
+        stdout=parsed_args.get("stdout"),
+        file=parsed_args.get("file"),
+        filename=parsed_args.get("filename"),
+    )
+
+    dump_data(logging_config, filename=parsed_args.get("config_file"), file_type="yaml")
 
     return logging_config
 
@@ -868,15 +919,15 @@ _LOG_SPEC = {
             "previous_names": ["log_config"],
             "alt_env_names": ["LOG_CONFIG"],
         },
-        "file": {
+        "fallback_file": {
             "type": "str",
-            "description": "File you would like the application to log to",
+            "description": "File to log to if config_file is not specified",
             "required": False,
             "previous_names": ["log_file"],
         },
-        "level": {
+        "fallback_level": {
             "type": "str",
-            "description": "Log level for the application",
+            "description": "Log level to use if config_file is not specified",
             "default": "INFO",
             "choices": ["DEBUG", "INFO", "WARN", "WARNING", "ERROR", "CRITICAL"],
             "previous_names": ["log_level"],
@@ -929,7 +980,7 @@ _PLUGIN_SPEC = {
                 "fallback_level": {
                     "type": "str",
                     "description": "Level that will be used with a default logging "
-                    "configuration if a config_file is not provided",
+                    "configuration if config_file is not specified",
                     "previous_names": ["plugin_logging_level"],
                     "default": "INFO",
                     "choices": [

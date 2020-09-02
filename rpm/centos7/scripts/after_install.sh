@@ -10,63 +10,69 @@ PLUGIN_LOG_HOME="$LOG_HOME/plugins"
 PLUGIN_HOME="$APP_HOME/plugins"
 
 CONFIG_FILE="${CONFIG_HOME}/config.yaml"
-LOG_CONFIG="${CONFIG_HOME}/logging.yaml"
-LOG_FILE="$LOG_HOME/beer-garden.log"
+APP_LOG_CONFIG="${CONFIG_HOME}/app-logging.yaml"
+PLUGIN_LOG_CONFIG="${CONFIG_HOME}/plugin-logging.yaml"
 
-case "$1" in
-    1)
-        # This is an initial install
-        # Create the beer-garden group/user if they do not exist
-        /usr/bin/getent group $GROUP > /dev/null || /usr/sbin/groupadd -r $GROUP
-        /usr/bin/getent passwd $USER > /dev/null || /usr/sbin/useradd -r -d $APP_HOME -s /sbin/nologin -g $GROUP $USER
+APP_LOG_FILE="$LOG_HOME/beer-garden.log"
+PLUGIN_LOG_FILE="${PLUGIN_LOG_HOME}/%%(namespace)s/%%(system_name)s-%%(system_version)s/%%(instance_name)s.log"
 
-        if [ ! -d "$CONFIG_HOME" ]; then
-            mkdir -p "$CONFIG_HOME"
-        fi
-        if [ ! -d "$LOG_HOME" ]; then
-            mkdir -p "$LOG_HOME"
-        fi
-        if [ ! -d "$PLUGIN_LOG_HOME" ]; then
-            mkdir -p "$PLUGIN_LOG_HOME"
-        fi
-        if [ ! -d "$PLUGIN_HOME" ]; then
-            mkdir -p "$PLUGIN_HOME"
-        fi
 
-        # Generate logging config if it doesn't exist
-        if [ ! -f "$LOG_CONFIG" ]; then
-            "$APP_HOME/bin/generate_log_config" \
-                --log-config-file "$LOG_CONFIG" \
-                --log-file "$LOG_FILE" \
-                --log-level "WARN"
-        fi
+# Do this regardless of new install vs upgrade
+# Create the beer-garden group/user if they do not exist
+/usr/bin/getent group $GROUP > /dev/null || /usr/sbin/groupadd -r $GROUP
+/usr/bin/getent passwd $USER > /dev/null || /usr/sbin/useradd -r -d $APP_HOME -s /sbin/nologin -g $GROUP $USER
 
-        # Generate or migrate application config
-        if [ -f "$CONFIG_FILE" ]; then
-            "$APP_HOME/bin/migrate_config" -c "$CONFIG_FILE"
-        else
-            "$APP_HOME/bin/generate_config" \
-                -c "$CONFIG_FILE" -l "$LOG_CONFIG" \
-                --plugin-local-directory "$PLUGIN_HOME" \
-                --plugin-local-log-directory "$PLUGIN_LOG_HOME"
-        fi
+if [ ! -d "$CONFIG_HOME" ]; then
+    mkdir -p "$CONFIG_HOME"
+fi
+if [ ! -d "$LOG_HOME" ]; then
+    mkdir -p "$LOG_HOME"
+fi
+if [ ! -d "$PLUGIN_LOG_HOME" ]; then
+    mkdir -p "$PLUGIN_LOG_HOME"
+fi
+if [ ! -d "$PLUGIN_HOME" ]; then
+    mkdir -p "$PLUGIN_HOME"
+fi
 
-        # Add the UI config file symlinks
-        if [ -d "/etc/nginx/conf.d" ]; then
-            ln -s "$APP_HOME/ui/conf/conf.d/upstream.conf" "/etc/nginx/conf.d/upstream.conf"
-        fi
-        if [ -d "/etc/nginx/default.d" ]; then
-            ln -s "$APP_HOME/ui/conf/default.d/bg.conf" "/etc/nginx/default.d/bg.conf"
-        fi
+# Generate application config if it doesn't exist
+if [ ! -f "$CONFIG_FILE" ]; then
+    "$APP_HOME/bin/generate_config" \
+        -c "$CONFIG_FILE" -l "$APP_LOG_CONFIG" \
+        --plugin-local-directory "$PLUGIN_HOME" \
+        --plugin-logging-config-file "$PLUGIN_LOG_CONFIG"
+fi
 
-        # Reload units
-        systemctl daemon-reload
-    ;;
-    2)
-        # This is an upgrade, nothing to do
-        # Config migration will be done in after_remove
-        # See https://github.com/beer-garden/beer-garden/issues/215
-    ;;
-esac
+# Generate application logging config if it doesn't exist
+if [ ! -f "$APP_LOG_CONFIG" ]; then
+    "$APP_HOME/bin/generate_app_logging_config" \
+        --config-file "$APP_LOG_CONFIG" \
+        --filename "$APP_LOG_FILE"
+fi
 
+# Generate plugin logging config if it doesn't exist
+if [ ! -f "$PLUGIN_LOG_CONFIG" ]; then
+    "$APP_HOME/bin/generate_plugin_logging_config" \
+        --config-file "$PLUGIN_LOG_CONFIG" \
+        --no-stdout \
+        --file \
+        --filename "$PLUGIN_LOG_FILE"
+fi
+
+# Add the UI config file symlinks
+if [ -d "/etc/nginx/conf.d" ] && [ ! -f "/etc/nginx/conf.d/upstream.conf" ]; then
+    ln -s "$APP_HOME/ui/conf/conf.d/upstream.conf" "/etc/nginx/conf.d/upstream.conf"
+fi
+if [ -d "/etc/nginx/default.d" ] && [ ! -f "/etc/nginx/default.d/bg.conf" ]; then
+    ln -s "$APP_HOME/ui/conf/default.d/bg.conf" "/etc/nginx/default.d/bg.conf"
+fi
+
+# Ensure correct owner and group
 chown -hR ${USER}:${GROUP} $APP_HOME
+
+# Reload units
+systemctl daemon-reload
+
+
+# Config migration will be done in after_remove
+# See https://github.com/beer-garden/beer-garden/issues/215

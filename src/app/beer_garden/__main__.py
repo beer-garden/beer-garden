@@ -10,16 +10,20 @@ import beer_garden.log
 from beer_garden.app import Application
 
 
-def generate_logging_config():
-    beer_garden.config.generate_logging(sys.argv[1:])
-
-
 def generate_config():
     beer_garden.config.generate(sys.argv[1:])
 
 
 def migrate_config():
     beer_garden.config.migrate(sys.argv[1:])
+
+
+def generate_app_logging_config():
+    beer_garden.config.generate_app_logging(sys.argv[1:])
+
+
+def generate_plugin_logging_config():
+    beer_garden.config.generate_plugin_logging(sys.argv[1:])
 
 
 def main():

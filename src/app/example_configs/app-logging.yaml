@@ -10,6 +10,13 @@ handlers:
     class: "logging.StreamHandler"
     formatter: "simple"
     stream: "ext://sys.stdout"
+  file:
+    backupCount: 1
+    class: "logging.handlers.RotatingFileHandler"
+    encoding: utf8
+    formatter: simple
+    maxBytes: 10485760
+    filename: "beer-garden.log"
 
 loggers:
   pika:
@@ -23,3 +30,4 @@ root:
   level: "INFO"
   handlers:
     - "stream"
+    # - "file"
