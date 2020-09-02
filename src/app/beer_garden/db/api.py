@@ -21,4 +21,5 @@ distinct = beer_garden.db.mongo.api.distinct
 
 create = beer_garden.db.mongo.api.create
 update = beer_garden.db.mongo.api.update
+modify = beer_garden.db.mongo.api.modify
 delete = beer_garden.db.mongo.api.delete
