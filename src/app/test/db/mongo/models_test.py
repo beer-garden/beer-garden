@@ -267,6 +267,7 @@ class TestSystem(object):
         default_system.clean()
 
     def test_clean_fail_max_instances(self, default_system):
+        default_system.max_instances = 1
         default_system.instances.append(Instance(name="default2"))
         with pytest.raises(ModelValidationError):
             default_system.clean()

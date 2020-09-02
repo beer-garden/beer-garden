@@ -431,7 +431,7 @@ class System(MongoModel, Document):
     description = StringField()
     version = StringField(required=True)
     namespace = StringField(required=True)
-    max_instances = IntField(default=1)
+    max_instances = IntField(default=-1)
     instances = ListField(ReferenceField(Instance, reverse_delete_rule=PULL))
     commands = ListField(EmbeddedDocumentField("Command"))
     icon_name = StringField()
@@ -454,7 +454,7 @@ class System(MongoModel, Document):
     def clean(self):
         """Validate before saving to the database"""
 
-        if len(self.instances) > self.max_instances:
+        if len(self.instances) > self.max_instances > -1:
             raise ModelValidationError(
                 "Can not save System %s: Number of instances (%s) "
                 "exceeds system limit (%s)"
