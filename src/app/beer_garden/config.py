@@ -511,7 +511,7 @@ _MQ_SPEC = {
     },
 }
 
-_APP_SPEC = {
+_APPLICATION_SPEC = {
     "type": "dict",
     "items": {
         "cors_enabled": {
@@ -526,11 +526,24 @@ _APP_SPEC = {
             "description": "Run the application in debug mode",
             "previous_names": ["debug_mode"],
         },
-        "name": {
-            "type": "str",
-            "default": "Beer Garden",
-            "description": "The title to display on the GUI",
-            "previous_names": ["application_name"],
+        "execute_javascript": {
+            "type": "bool",
+            "default": False,
+            "description": "Execute plugin-provided javascript",
+            "long_description": "This is dangerous!! Setting this to true will instruct "
+            "the browser to execute javascript provided by plugins. This means you "
+            "MUST have control over all plugins running in the environment, otherwise "
+            "this is a problem waiting to happen.",
+            "previous_names": [
+                "application_allow_unsafe_templates",
+                "allow_unsanitized_templates",
+                "allow_unsafe_templates",
+            ],
+            "alt_env_names": [
+                "APPLICATION_ALLOW_UNSAFE_TEMPLATES",
+                "ALLOW_UNSANITIZED_TEMPLATES",
+                "BG_ALLOW_UNSAFE_TEMPLATES",
+            ],
         },
         "icon_default": {
             "type": "str",
@@ -539,15 +552,11 @@ _APP_SPEC = {
             "previous_names": ["icon_default"],
             "alt_env_names": ["ICON_DEFAULT"],
         },
-        "allow_unsafe_templates": {
-            "type": "bool",
-            "default": False,
-            "description": "Allow unsafe templates to be loaded by the application",
-            "previous_names": ["ALLOW_UNSANITIZED_TEMPLATES", "allow_unsafe_templates"],
-            "alt_env_names": [
-                "ALLOW_UNSANITIZED_TEMPLATES",
-                "BG_ALLOW_UNSAFE_TEMPLATES",
-            ],
+        "name": {
+            "type": "str",
+            "default": "Beer Garden",
+            "description": "The title to display on the GUI",
+            "previous_names": ["application_name"],
         },
     },
 }
@@ -1155,7 +1164,7 @@ _SPECIFICATION = {
         "alt_env_names": ["AMQ_PUBLISH_HOST"],
     },
     "mq": _MQ_SPEC,
-    "application": _APP_SPEC,
+    "application": _APPLICATION_SPEC,
     "auth": _AUTH_SPEC,
     "configuration": _META_SPEC,
     "db": _DB_SPEC,

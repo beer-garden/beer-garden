@@ -15,15 +15,15 @@ class ConfigHandler(BaseHandler):
         auth_config = config.get("auth")
 
         configs = {
-            "allow_unsafe_templates": app_config.allow_unsafe_templates,
             "application_name": app_config.name,
+            "auth_enabled": auth_config.enabled,
             "icon_default": app_config.icon_default,
             "debug_mode": app_config.debug_mode,
-            "auth_enabled": auth_config.enabled,
-            "guest_login_enabled": auth_config.guest_login_enabled,
-            "url_prefix": config.get("entry.http.url_prefix"),
-            "metrics_url": config.get("metrics.prometheus.url"),
+            "execute_javascript": app_config.execute_javascript,
             "garden_name": config.get("garden.name"),
+            "guest_login_enabled": auth_config.guest_login_enabled,
+            "metrics_url": config.get("metrics.prometheus.url"),
+            "url_prefix": config.get("entry.http.url_prefix"),
         }
 
         self.write(configs)

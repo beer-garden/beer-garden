@@ -131,7 +131,7 @@ export default function requestViewController(
         $scope.showFormatted = true;
 
         // This is necessary for things like scripts and forms
-        if ($scope.config.allowUnsafeTemplates) {
+        if ($scope.config.executeJavascript) {
           $scope.htmlOutput = $sce.trustAsHtml(rawOutput);
         } else {
           $scope.htmlOutput = rawOutput;

@@ -202,7 +202,7 @@ export default function commandViewController(
     // If this command has a custom template then we're done!
     if ($scope.command.template) {
       // This is necessary for things like scripts and forms
-      if ($scope.config.allowUnsafeTemplates) {
+      if ($scope.config.executeJavascript) {
         $scope.template = $sce.trustAsHtml($scope.command.template);
       } else {
         $scope.template = $scope.command.template;
