@@ -87,7 +87,7 @@ class MonitorFile:
         if path:
             self.path = os.path.split(path)[0]
             self.create_event = create_event
-            self.modified = modified_event
+            self.modified_event = modified_event
             self.moved_event = moved_event
             self.deleted_event = deleted_event
 
