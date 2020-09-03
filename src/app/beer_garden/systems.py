@@ -130,12 +130,8 @@ def update_system(
                 f"the system instance limit of {system.max_instances}"
             )
 
-        # TODO - I don't think we ever do this, but probably handle it better
-        if len(add_instances) > 1:
-            raise ModelValidationError("Can't add more than one instance at a time")
-
-        new_instance = db.create(add_instances[0])
-        updates["push__instances"] = db.from_brewtils(new_instance)
+        saved_instances = [db.create(i) for i in add_instances]
+        updates["push_all__instances"] = [db.from_brewtils(i) for i in saved_instances]
 
     return db.modify(system, **updates)
 
