@@ -12,10 +12,10 @@ apscheduler==3.6.3        # via -r requirements.in
 atomicwrites==1.3.0       # via pytest
 attrs==19.3.0             # via black, flake8-bugbear, pytest
 babel==2.8.0              # via sphinx
-black==19.10b0 ; python_version > "3.5"  # via -r requirements.in
+black==20.8b1 ; python_version > "3.5"  # via -r requirements.in
 certifi==2019.11.28       # via requests
 chardet==3.0.4            # via requests
-click==7.0                # via black
+click==7.1.2              # via black
 codecov==2.0.16           # via -r requirements.in
 coverage==5.0.3           # via -r requirements.in, codecov
 docutils==0.16            # via sphinx
@@ -35,6 +35,7 @@ mock==4.0.1               # via -r requirements.in
 mongoengine==0.20.0       # via -r requirements.in
 mongomock==3.19.0         # via -r requirements.in
 more-itertools==8.4.0     # via -r requirements.in
+mypy-extensions==0.4.3    # via black
 packaging==19.2           # via brewtils, sphinx
 passlib==1.7.2            # via -r requirements.in
 pathspec==0.7.0           # via black
@@ -68,9 +69,10 @@ snowballstemmer==2.0.0    # via sphinx
 sphinx-rtd-theme==0.4.3   # via -r requirements.in
 sphinx==1.8.5             # via -r requirements.in, sphinx-rtd-theme
 sphinxcontrib-websupport==1.2.0  # via sphinx
-toml==0.10.0              # via black
+toml==0.10.1              # via black
 tornado==6.0.4            # via -r requirements.in, pytest-tornado
 typed-ast==1.4.1          # via black
+typing-extensions==3.7.4.3  # via black
 tzlocal==2.0.0            # via apscheduler
 urllib3==1.25.8           # via requests
 watchdog==0.10.2          # via yapconf
