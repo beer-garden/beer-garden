@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import copy
 import logging
 from time import sleep
 from typing import List, Sequence
@@ -86,6 +87,7 @@ def update_system(
         The updated System
 
     """
+    updates = {}
     system = db.query_unique(System, id=system_id)
 
     if new_commands:
@@ -102,7 +104,24 @@ def update_system(
                 f"System {system} already exists with different commands"
             )
 
-        system.commands = brew_commands
+        updates["commands"] = mongo_commands
+
+    # If we set an attribute to None mongoengine marks that attribute for deletion
+    # That's why we explicitly test each of these
+    if description:
+        updates["description"] = description
+
+    if display_name:
+        updates["display_name"] = display_name
+
+    if icon_name:
+        updates["icon_name"] = icon_name
+
+    if metadata:
+        metadata_update = copy.deepcopy(system.metadata)
+        metadata_update.update(metadata)
+
+        updates["metadata"] = metadata_update
 
     if add_instances:
         if -1 < system.max_instances < len(system.instances) + len(add_instances):
@@ -111,23 +130,10 @@ def update_system(
                 f"the system instance limit of {system.max_instances}"
             )
 
-        system.instances += add_instances
+        saved_instances = [db.create(i) for i in add_instances]
+        updates["push_all__instances"] = [db.from_brewtils(i) for i in saved_instances]
 
-    if metadata:
-        system.metadata.update(metadata)
-
-    # If we set an attribute to None mongoengine marks that attribute for deletion
-    # That's why we explicitly test each of these
-    if description:
-        system.description = description
-
-    if display_name:
-        system.display_name = display_name
-
-    if icon_name:
-        system.icon_name = icon_name
-
-    return db.update(system)
+    return db.modify(system, **updates)
 
 
 @publish_event(Events.SYSTEM_RELOAD_REQUESTED)

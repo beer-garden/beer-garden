@@ -349,6 +349,24 @@ def update(obj: ModelItem) -> ModelItem:
     return to_brewtils(mongo_obj)
 
 
+def modify(obj: ModelItem, **kwargs) -> ModelItem:
+    """Modify an item in the database
+
+    Args:
+        obj: The Brewtils model to modify
+        kwargs: Modification parameters
+
+    Returns:
+        The modified Brewtils model
+
+    """
+    mongo_obj = from_brewtils(obj)
+
+    mongo_obj.modify(**kwargs)
+
+    return to_brewtils(mongo_obj)
+
+
 def delete(obj: ModelItem) -> None:
     """Delete an item from the database
 
