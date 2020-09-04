@@ -8,6 +8,7 @@ requestViewController.$inject = [
   '$stateParams',
   '$timeout',
   '$animate',
+  '$sce',
   'localStorageService',
   'RequestService',
   'SystemService',
@@ -21,6 +22,7 @@ requestViewController.$inject = [
  * @param  {$stateParams} $stateParams Angular's $stateParams object.
  * @param  {$timeout} $timeout         Angular's $timeout object.
  * @param  {$animate} $animate         Angular's $animate object.
+ * @param  {Object} $sce              Angular's $sce object.
  * @param  {Object} localStorageService  Storage service
  * @param  {Object} RequestService     Beer-Garden Request Service.
  * @param  {Object} SystemService      Beer-Garden's System Service.
@@ -32,6 +34,7 @@ export default function requestViewController(
     $stateParams,
     $timeout,
     $animate,
+    $sce,
     localStorageService,
     RequestService,
     SystemService,
@@ -124,9 +127,15 @@ export default function requestViewController(
         rawOutput = 'null';
       }
       else if ($scope.request.output_type == 'HTML') {
-        $scope.htmlOutput = rawOutput;
         $scope.formattedAvailable = true;
         $scope.showFormatted = true;
+
+        // This is necessary for things like scripts and forms
+        if ($scope.config.executeJavascript) {
+          $scope.htmlOutput = $sce.trustAsHtml(rawOutput);
+        } else {
+          $scope.htmlOutput = rawOutput;
+        }
       } else if ($scope.request.output_type == 'JSON') {
         try {
           let parsedOutput = JSON.parse(rawOutput);
