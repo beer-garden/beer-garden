@@ -19,7 +19,7 @@ from types import ModuleType
 from typing import Any, Dict, Iterable, List, Optional
 
 import beer_garden.config as config
-from beer_garden.errors import PluginValidationError
+from beer_garden.errors import ConfigurationError, PluginValidationError
 from beer_garden.local_plugins.env_help import expand_string
 from beer_garden.local_plugins.runner import ProcessRunner
 
@@ -251,6 +251,10 @@ class PluginManager(StoppableThread):
             try:
                 if path.is_dir() and path not in self.paths():
                     new_runners += self._create_runners(path)
+            except PluginValidationError as ex:
+                self.logger.error(f"Plugin at {path} failed validation: {ex}")
+            except ConfigurationError as ex:
+                self.logger.error(f"Plugin at {path} configuration error: {ex}")
             except Exception as ex:
                 self.logger.exception(f"Error loading plugin at {path}: {ex}")
 
@@ -314,22 +318,7 @@ class PluginManager(StoppableThread):
             Newly created runner dictionary
 
         """
-        config_file = plugin_path / CONFIG_NAME
-
-        if not plugin_path:
-            raise PluginValidationError(f"Plugin path {plugin_path} does not exist")
-        if not plugin_path.is_dir():
-            raise PluginValidationError(f"Plugin path {plugin_path} is not a directory")
-        if not config_file.exists():
-            raise PluginValidationError(f"Config file {config_file} does not exist")
-        if not config_file.is_file():
-            raise PluginValidationError(f"Config file {config_file} is not a file")
-
-        try:
-            plugin_config = ConfigLoader.load(config_file)
-        except PluginValidationError as ex:
-            self.logger.error(f"Error loading config for plugin at {plugin_path}: {ex}")
-            return []
+        plugin_config = ConfigLoader.load(plugin_path)
 
         new_runners = []
 
@@ -439,8 +428,19 @@ class PluginManager(StoppableThread):
 
 class ConfigLoader(object):
     @staticmethod
-    def load(config_file: Path) -> dict:
+    def load(plugin_path: Path) -> dict:
         """Loads a plugin config"""
+
+        config_file = plugin_path / CONFIG_NAME
+
+        if not plugin_path:
+            raise ConfigurationError(f"Plugin path {plugin_path} does not exist")
+        if not plugin_path.is_dir():
+            raise ConfigurationError(f"Plugin path {plugin_path} is not a directory")
+        if not config_file.exists():
+            raise ConfigurationError(f"Config file {config_file} does not exist")
+        if not config_file.is_file():
+            raise ConfigurationError(f"Config file {config_file} is not a file")
 
         config_module = ConfigLoader._config_from_beer_conf(config_file)
 
@@ -502,7 +502,7 @@ class ConfigLoader(object):
             elif isinstance(args, dict):
                 instances = list(args.keys())
             else:
-                raise ValueError(
+                raise PluginValidationError(
                     f"PLUGIN_ARGS must be list or dict, found {type(args)}"
                 )
 
