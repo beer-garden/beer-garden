@@ -715,6 +715,16 @@ _STOMP_SPEC = {
           "default": False,
           "description": "Run an stomp server",
       },
+      "event_destination": {
+          "type": "str",
+          "default": "Beer_Garden_Events",
+          "description": "Publish topic where events are sent",
+      },
+      "operation_destination": {
+          "type": "str",
+          "default": "Beer_Garden_Operations",
+          "description": "Subscription topic where operations are sent for beer garden to run",
+      },
       "host": {
           "type": "str",
           "default": "localhost",
@@ -738,16 +748,16 @@ _STOMP_SPEC = {
       "use_ssl": {
           "type": "bool",
           "description": "Use SSL for connection",
-          "default": True,
+          "default": False,
       },
-      "key_store": {
+      "private_key": {
           "type": "str",
-          "description": "Path to client keystore",
+          "description": "Path to private key",
           "required": False,
       },
-      "trust_store": {
+      "cert_file": {
           "type": "str",
-          "description": "Path to trust store",
+          "description": "Path to certificate file",
           "required": False,
       },
       "verify_host": {

@@ -23,11 +23,10 @@ io_loop = None
 
 def run(ep_conn):
     global logger, conn, io_loop
-    stomp_config = config.get("entry.stomp")
     logger = logging.getLogger(__name__)
-    logger.info("Starting Stomp entry point")
-    host_and_ports = [(stomp_config.host, stomp_config.port)]
-    conn = Connection(host_and_ports=host_and_ports, user_name=stomp_config.username, password=stomp_config.password)
+    stomp_config = config.get("entry.stomp")
+    logger.info("Starting Stomp entry point on host and port: "+[(stomp_config.host, stomp_config.port)].__str__())
+    conn = Connection()
     conn.connect("connected")
     io_loop = IOLoop.current()
     _setup_operation_forwarding()

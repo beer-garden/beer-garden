@@ -2,31 +2,33 @@ import sys
 import stomp
 import logging
 import time
+import beer_garden.config as config
 from brewtils.models import Event, Events, Request, Operation, System
 from brewtils.schema_parser import SchemaParser
 import beer_garden.events
 import beer_garden.router
 from beer_garden.api.stomp.processors import append_headers, process_send_message
 
+
 conn = None
 bg_active = False
-username = None
-passcode = None
 
 
-def send_response(result, headers):
+def send_message(message, headers={}):
     global conn
-    message, response_headers = process_send_message(result)
+    stomp_config = config.get("entry.stomp")
+    message, response_headers = process_send_message(message)
     response_headers = append_headers(response_headers=response_headers, request_headers=headers)
     if conn.is_connected():
         if 'reply-to' in headers:
             conn.send(body=message, headers=response_headers, destination=headers['reply-to'])
         else:
-            conn.send(body=message, headers=response_headers, destination='beergarden/events')
+            conn.send(body=message, headers=response_headers, destination=stomp_config.event_destination)
 
 
 def send_error_msg(error, headers):
     global conn
+    stomp_config = config.get("entry.stomp")
     error_headers = None
     error_headers = append_headers(error_headers, headers)
 
@@ -34,7 +36,7 @@ def send_error_msg(error, headers):
         if 'reply-to' in headers:
             conn.send(body=error.__str__(), headers=error_headers, destination=headers['reply-to'])
         else:
-            conn.send(body=error.__str__(), headers=error_headers, destination='beergarden/events')
+            conn.send(body=error.__str__(), headers=error_headers, destination=stomp_config.event_destination)
     pass
 
 
@@ -66,32 +68,33 @@ class OperationListener(stomp.ConnectionListener):
         if error is not None:
             send_error_msg(error, headers)
         if result is not None:
-            send_response(result, headers)
+            send_message(result, headers)
 
 
 class Connection:
 
     @staticmethod
-    def __init__(host_and_ports=None, user_name="beer_garden", password="password"):
-        if host_and_ports is None:
-            host_and_ports = [('localhost', 61613)]
-        global bg_active, conn, username, passcode
+    def __init__():
+        global bg_active, conn
+        stomp_config = config.get("entry.stomp")
+        host_and_ports = [(stomp_config.host, stomp_config.port)]
         bg_active = True
-        username = user_name
-        passcode = password
         conn = stomp.Connection(host_and_ports=host_and_ports, heartbeats=(10000, 0))
+        if stomp_config.use_ssl:
+            conn.set_ssl(for_hosts=host_and_ports, key_file=stomp_config.private_key, cert_file=stomp_config.cert_file)
         conn.set_listener('', OperationListener())
 
     @staticmethod
     def connect(connected_message=None):
-        global conn, username, passcode
+        global conn
+        stomp_config = config.get("entry.stomp")
         logger = logging.getLogger(__name__)
         wait_time = 0.1
         while not conn.is_connected():
             try:
-                conn.connect(username=username, passcode=passcode, wait=True,
-                             headers={'client-id': 'BeerGarden'})
-                conn.subscribe(destination='beergarden/operations', id='beer_garden', ack='auto',
+                conn.connect(username=stomp_config.username, passcode=stomp_config.password, wait=True,
+                             headers={'client-id': stomp_config.username})
+                conn.subscribe(destination=stomp_config.operation_destination, id=stomp_config.username, ack='auto',
                                headers={'subscription-type': 'MULTICAST',
                                         'durable-subscription-name': 'operations'})
                 if connected_message is not None and conn.is_connected():
@@ -117,14 +120,4 @@ class Connection:
 
     @staticmethod
     def send_event(event):
-        global conn, bg_active
-        message, response_headers = process_send_message(message=event)
-        response_headers = append_headers(response_headers=response_headers)
-
-        # response_headers["Others"] = Value
-        if message is not None and conn.is_connected():
-            conn.send(body=message, headers=response_headers, destination='beergarden/events')
-
-    @staticmethod
-    def send_response(result, headers):
-        send_response(result, headers)
+        send_message(event)
