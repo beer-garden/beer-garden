@@ -64,7 +64,8 @@ def create_system(system: System) -> System:
 
 @publish_event(Events.SYSTEM_UPDATED)
 def update_system(
-    system_id: str,
+    system_id: str = None,
+    system: System = None,
     new_commands: Sequence[Command] = None,
     add_instances: Sequence[Instance] = None,
     description: str = None,
@@ -76,6 +77,7 @@ def update_system(
 
     Args:
         system_id: The ID of the System to be updated
+        system: The System to be updated
         new_commands: List of commands to overwrite existing commands
         add_instances: List of new instances that will be added to the current list
         description: Replacement description
@@ -88,7 +90,7 @@ def update_system(
 
     """
     updates = {}
-    system = db.query_unique(System, id=system_id)
+    system = system or db.query_unique(System, id=system_id)
 
     if new_commands:
         # Convert these to DB form and back to make sure all defaults are correct
@@ -137,7 +139,7 @@ def update_system(
 
 
 @publish_event(Events.SYSTEM_RELOAD_REQUESTED)
-def reload_system(system_id: str) -> None:
+def reload_system(system_id: str = None, system: System = None) -> None:
     """Reload a system configuration
 
     NOTE: All we do here is grab the system from the database and return it. That's
@@ -147,34 +149,36 @@ def reload_system(system_id: str) -> None:
 
     Args:
         system_id: The System ID
+        system: The System
 
     Returns:
         None
     """
     # TODO - It'd be nice to have a check here to make sure system is managed
 
-    return db.query_unique(System, id=system_id)
+    return system or db.query_unique(System, id=system_id)
 
 
 @publish_event(Events.SYSTEM_REMOVED)
-def remove_system(system_id: str) -> System:
+def remove_system(system_id: str = None, system: System = None) -> System:
     """Remove a system
 
     Args:
         system_id: The System ID
+        system: The System
 
     Returns:
         The removed System
 
     """
-    system = db.query_unique(System, id=system_id)
+    system = system or db.query_unique(System, id=system_id)
 
     db.delete(system)
 
     return system
 
 
-def purge_system(system_id: str) -> System:
+def purge_system(system_id: str = None, system: System = None) -> System:
     """Convenience method for *completely* removing a system
 
     This will:
@@ -184,12 +188,13 @@ def purge_system(system_id: str) -> System:
 
     Args:
         system_id: The System ID
+        system: The System
 
     Returns:
         The purged system
 
     """
-    system = db.query_unique(System, id=system_id)
+    system = system or db.query_unique(System, id=system_id)
 
     # Attempt to stop the plugins
     for instance in system.instances:
