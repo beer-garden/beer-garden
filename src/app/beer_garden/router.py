@@ -337,6 +337,7 @@ def _determine_target_garden(operation: Operation) -> str:
 
     elif operation.operation_type.startswith("REQUEST"):
         request = db.query_unique(Request, id=operation.args[0])
+        operation.kwargs["request"] = request
 
         target_system = System(
             namespace=request.namespace,

@@ -523,17 +523,18 @@ class RequestValidator(object):
             )
 
 
-def get_request(request_id: str) -> Request:
+def get_request(request_id: str = None, request: Request = None) -> Request:
     """Retrieve an individual Request
 
     Args:
         request_id: The Request ID
+        request: The Request
 
     Returns:
         The Request
 
     """
-    request = db.query_unique(Request, id=request_id)
+    request = request or db.query_unique(Request, id=request_id)
     request.children = db.query(Request, filter_params={"parent": request})
 
     return request
@@ -647,11 +648,12 @@ def create_request(request: Request) -> Request:
 
 
 @publish_event(Events.REQUEST_STARTED)
-def start_request(request_id: str) -> Request:
+def start_request(request_id: str = None, request: Request = None) -> Request:
     """Mark a Request as IN PROGRESS
 
     Args:
         request_id: The Request ID to start
+        request: The Request to start
 
     Returns:
         The modified Request
@@ -660,7 +662,7 @@ def start_request(request_id: str) -> Request:
         ModelValidationError: The Request is already completed
 
     """
-    request = db.query_unique(Request, raise_missing=True, id=request_id)
+    request = request or db.query_unique(Request, raise_missing=True, id=request_id)
 
     request.status = "IN_PROGRESS"
     request = db.update(request)
@@ -673,12 +675,17 @@ def start_request(request_id: str) -> Request:
 
 @publish_event(Events.REQUEST_COMPLETED)
 def complete_request(
-    request_id: str, status: str = None, output: str = None, error_class: str = None
+    request_id: str = None,
+    request: Request = None,
+    status: str = None,
+    output: str = None,
+    error_class: str = None,
 ) -> Request:
     """Mark a Request as completed
 
     Args:
         request_id: The Request ID to complete
+        request: The Request to complete
         status: The status to apply to the Request
         output: The output to apply to the Request
         error_class: The error class to apply to the Request
@@ -690,7 +697,7 @@ def complete_request(
         ModelValidationError: The Request is already completed
 
     """
-    request = db.query_unique(Request, raise_missing=True, id=request_id)
+    request = request or db.query_unique(Request, raise_missing=True, id=request_id)
 
     request.status = status
     request.output = output
@@ -709,11 +716,12 @@ def complete_request(
 
 
 @publish_event(Events.REQUEST_CANCELED)
-def cancel_request(request_id: Request) -> Request:
+def cancel_request(request_id: str = None, request: Request = None) -> Request:
     """Mark a Request as CANCELED
 
     Args:
         request_id: The Request ID to cancel
+        request: The Request to cancel
 
     Returns:
         The modified Request
@@ -722,7 +730,7 @@ def cancel_request(request_id: Request) -> Request:
         ModelValidationError: The Request is already completed
 
     """
-    request = db.query_unique(Request, id=request_id)
+    request = request or db.query_unique(Request, raise_missing=True, id=request_id)
 
     request.status = "CANCELED"
     request = db.update(request)
