@@ -45,7 +45,7 @@ def initialize(
 
     logger.info(f"Initializing instance {system}[{instance}]")
 
-    queue_spec = queue.create(instance)
+    queue_spec = queue.create(instance, system)
 
     instance.status = "INITIALIZING"
     instance.status_info = {"heartbeat": datetime.utcnow()}
