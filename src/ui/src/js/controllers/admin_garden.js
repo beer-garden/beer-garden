@@ -38,7 +38,7 @@ export default function adminGardenController(
     );
   };
 
-  $scope.sync = function() {
+  $scope.syncGardens = function() {
     GardenService.syncGardens()
   }
 

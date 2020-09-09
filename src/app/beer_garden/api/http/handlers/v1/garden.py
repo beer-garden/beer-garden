@@ -136,6 +136,13 @@ class GardenAPI(BaseHandler):
                         args=[SchemaParser.parse_garden(op.value, from_string=False)],
                     )
                 )
+            elif operation == "sync":
+                response = await self.client(
+                    Operation(
+                        operation_type="GARDEN_SYNC",
+                        args=[garden_name],
+                    )
+                )
 
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
@@ -259,7 +266,7 @@ class GardenListAPI(BaseHandler):
             if operation == "sync":
                 response = await self.client(
                     Operation(
-                        operation_type="GARDEN_SYNC",
+                        operation_type="GARDENS_SYNC",
                     )
                 )
 

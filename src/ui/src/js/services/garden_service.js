@@ -30,6 +30,10 @@ export default function gardenService($http) {
     return $http.patch('api/v1/gardens', {operation: 'sync', path: '', value: ''})
   }
 
+  GardenService.syncGarden = function(name){
+    return $http.patch('api/v1/gardens/' + name, {operation: 'sync', path: '', value: ''})
+  }
+
   GardenService.deleteGarden = function(name){
     return $http.delete('api/v1/gardens/' + name);
   }

@@ -81,6 +81,10 @@ export default function adminGardenViewController(
      }
   };
 
+  $scope.syncGarden = function() {
+    GardenService.syncGarden($scope.data.name)
+  }
+
   EventService.addCallback('admin_garden_view', (event) => {
     switch (event.name) {
       case 'GARDEN_UPDATED':
@@ -90,6 +94,7 @@ export default function adminGardenViewController(
         break
     }
   });
+
 
   $scope.$on('$destroy', function() {
     EventService.removeCallback('admin_garden_view');
