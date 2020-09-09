@@ -140,8 +140,7 @@ def update_system(
                 f"the system instance limit of {system.max_instances}"
             )
 
-        saved_instances = [db.create(i) for i in add_instances]
-        updates["push_all__instances"] = [db.from_brewtils(i) for i in saved_instances]
+        updates["push_all__instances"] = [db.from_brewtils(i) for i in add_instances]
 
     system = db.modify(system, **updates)
 
