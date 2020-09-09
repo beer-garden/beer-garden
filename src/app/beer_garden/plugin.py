@@ -59,7 +59,7 @@ def initialize(
 
     instance = db.update(instance)
 
-    start(instance_id)
+    start(instance=instance, system=system)
 
     return instance
 

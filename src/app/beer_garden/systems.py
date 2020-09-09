@@ -199,7 +199,7 @@ def purge_system(system_id: str = None, system: System = None) -> System:
     # Attempt to stop the plugins
     for instance in system.instances:
         try:
-            stop(instance.id)
+            stop(instance=instance, system=system)
         except Exception as ex:
             logger.warning(
                 f"Error while attempting to stop instance {instance.id}: {ex}"
@@ -228,7 +228,7 @@ def purge_system(system_id: str = None, system: System = None) -> System:
             )
 
     # Finally, actually delete the system
-    return remove_system(system_id)
+    return remove_system(system)
 
 
 @publish_event(Events.SYSTEM_RESCAN_REQUESTED)
