@@ -328,6 +328,9 @@ def _determine_target_garden(operation: Operation) -> str:
         target_instance = db.query_unique(Instance, id=operation.args[0])
         target_system = db.query_unique(System, instances__contains=target_instance)
 
+        operation.kwargs["instance"] = target_instance
+        operation.kwargs["system"] = target_system
+
     elif operation.operation_type == "REQUEST_CREATE":
         target_system = System(
             namespace=operation.model.namespace,

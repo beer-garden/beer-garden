@@ -23,18 +23,25 @@ read_logs_request = RequestTemplate(command="_read_log", command_type="ADMIN")
 
 
 @publish_event(Events.INSTANCE_INITIALIZED)
-def initialize(instance_id: str, runner_id: str = None) -> Instance:
+def initialize(
+    instance_id: str = None,
+    instance: Instance = None,
+    system: System = None,
+    runner_id: str = None,
+) -> Instance:
     """Initializes an instance.
 
     Args:
         instance_id: The Instance ID
+        instance: The Instance
+        system: The System
         runner_id: The runner id to associate with this plugin, if any
 
     Returns:
         The updated Instance
     """
-    instance = db.query_unique(Instance, id=instance_id)
-    system = db.query_unique(System, instances__contains=instance)
+    instance = instance or db.query_unique(Instance, id=instance_id)
+    system = system or db.query_unique(System, instances__contains=instance)
 
     logger.info(f"Initializing instance {system}[{instance}]")
 
@@ -58,17 +65,23 @@ def initialize(instance_id: str, runner_id: str = None) -> Instance:
 
 
 @publish_event(Events.INSTANCE_STARTED)
-def start(instance_id: str) -> Instance:
+def start(
+    instance_id: str = None,
+    instance: Instance = None,
+    system: System = None,
+) -> Instance:
     """Starts an instance.
 
     Args:
         instance_id: The Instance ID
+        instance: The Instance
+        system: The System
 
     Returns:
         The updated Instance
     """
-    instance = db.query_unique(Instance, id=instance_id)
-    system = db.query_unique(System, instances__contains=instance)
+    instance = instance or db.query_unique(Instance, id=instance_id)
+    system = system or db.query_unique(System, instances__contains=instance)
 
     logger.info(f"Starting instance {system}[{instance}]")
 
@@ -89,17 +102,23 @@ def start(instance_id: str) -> Instance:
 
 
 @publish_event(Events.INSTANCE_STOPPED)
-def stop(instance_id: str) -> Instance:
+def stop(
+    instance_id: str = None,
+    instance: Instance = None,
+    system: System = None,
+) -> Instance:
     """Stops an Instance.
 
     Args:
         instance_id: The Instance ID
+        instance: The Instance
+        system: The System
 
     Returns:
         The updated Instance
     """
-    instance = db.query_unique(Instance, id=instance_id)
-    system = db.query_unique(System, instances__contains=instance)
+    instance = instance or db.query_unique(Instance, id=instance_id)
+    system = system or db.query_unique(System, instances__contains=instance)
 
     logger.info(f"Stopping instance {system}[{instance}]")
 
@@ -119,17 +138,23 @@ def stop(instance_id: str) -> Instance:
     return instance
 
 
-def initialize_logging(instance_id: str) -> Instance:
+def initialize_logging(
+    instance_id: str = None,
+    instance: Instance = None,
+    system: System = None,
+) -> Instance:
     """Initialize logging of Instance.
 
     Args:
         instance_id: The Instance ID
+        instance: The Instance
+        system: The System
 
     Returns:
         The Instance
     """
-    instance = db.query_unique(Instance, id=instance_id)
-    system = db.query_unique(System, instances__contains=instance)
+    instance = instance or db.query_unique(Instance, id=instance_id)
+    system = system or db.query_unique(System, instances__contains=instance)
 
     logger.debug(f"Initializing logging for instance {system}[{instance}]")
 
@@ -150,20 +175,29 @@ def initialize_logging(instance_id: str) -> Instance:
 
 
 @publish_event(Events.INSTANCE_UPDATED)
-def update(instance_id: str, new_status: str = None, metadata: dict = None) -> Instance:
+def update(
+    instance_id: str = None,
+    instance: Instance = None,
+    system: System = None,
+    new_status: str = None,
+    metadata: dict = None,
+) -> Instance:
     """Update an Instance status.
 
     Will also update the status_info heartbeat.
 
     Args:
         instance_id: The Instance ID
+        instance: The Instance
+        system: The System
         new_status: The new status
         metadata: New metadata
 
     Returns:
         The updated Instance
     """
-    instance = db.query_unique(Instance, id=instance_id)
+    instance = instance or db.query_unique(Instance, id=instance_id)
+    system = system or db.query_unique(System, instances__contains=instance)
 
     if new_status:
         instance.status = new_status
@@ -181,7 +215,9 @@ def update(instance_id: str, new_status: str = None, metadata: dict = None) -> I
 
 
 def read_logs(
-    instance_id: str,
+    instance_id: str = None,
+    instance: Instance = None,
+    system: System = None,
     start_line: int = None,
     end_line: int = None,
     wait_timeout: float = -1,
@@ -190,6 +226,8 @@ def read_logs(
 
     Args:
         instance_id: The Instance ID
+        instance: The Instance
+        system: The System
         start_line: Start reading log file at
         end_line: Stop reading log file at
         wait_timeout: Wait timeout for response
@@ -197,8 +235,8 @@ def read_logs(
     Returns:
         Request object with logs as output
     """
-    instance = db.query_unique(Instance, id=instance_id)
-    system = db.query_unique(System, instances__contains=instance)
+    instance = instance or db.query_unique(Instance, id=instance_id)
+    system = system or db.query_unique(System, instances__contains=instance)
 
     logger.debug(f"Reading Logs from instance {system}[{instance}]")
 
