@@ -30,7 +30,7 @@ routable_operations = [
     "INSTANCE_STOP",
     "REQUEST_CREATE",
     "SYSTEM_DELETE",
-    "GARDENS_SYNC"
+    "GARDENS_SYNC",
 ]
 
 # Processor that will be used for forwarding

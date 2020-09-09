@@ -66,7 +66,7 @@ def sync_garden(garden):
                 name=Events.GARDEN_UPDATED.name,
                 payload_type="Garden",
                 payload=Garden(
-                    name=config.get("garden.name"),
+                    name=garden,
                     status="RUNNING",
                     systems=get_systems(),
                     namespaces=get_namespaces(),
