@@ -1,5 +1,10 @@
 <h1 class='page-header'>
   <span>Garden Management</span>
+  <span class="pull-right" ng-show="responseState(response) !== 'loading'">
+    <button type="button"
+            class="btn btn-primary"
+            ng-click="sync()">Request Sync</button>
+  </span>
 </h1>
   
 <fetch-data response="response"></fetch-data>
@@ -34,9 +39,17 @@
     </div>
     <div class="panel-body" style="padding-bottom: 0;">
       <div>
+
         <button type="button" class="btn btn-primary btn-lg btn-block"
             ng-click="editGarden(garden)" style="...">
           Edit {{garden.name}} configurations
+        </button>
+        <button type="button" class="btn btn-danger btn-lg btn-block"
+            ng-click="deleteGarden(garden.name)" style="..."
+            ng-show="garden.id != null && garden.connection_type != 'LOCAL'"
+            confirm="Are you sure you want to delete {{garden.name}}?
+                    This will also delete all Systems assocaited with {{garden.name}}.">
+          Delete {{garden.name}}
         </button>
       </div>
     </div>

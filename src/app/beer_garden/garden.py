@@ -3,14 +3,15 @@ import logging
 from datetime import datetime
 from typing import List
 
+from beer_garden import router
 from brewtils.errors import PluginError
-from brewtils.models import Events, Garden, System
+from brewtils.models import Events, Garden, System, Operation, Event
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-from beer_garden.events import publish_event
+from beer_garden.events import publish_event, publish
 from beer_garden.namespace import get_namespaces
-from beer_garden.systems import get_systems
+from beer_garden.systems import get_systems, remove_system
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +58,28 @@ def local_garden() -> Garden:
     )
 
 
+def sync_gardens():
+    gardens = db.query(Garden)
+
+    for garden in gardens:
+        router.forward(
+            Operation(operation_type="GARDEN_SYNC", target_garden_name=garden.name)
+        )
+
+    publish(
+        Event(
+            name=Events.GARDEN_UPDATED,
+            payload_type="Garden",
+            payload=Garden(
+                name=config.get("garden.name"),
+                status="RUNNING",
+                systems=get_systems(),
+                namespaces=get_namespaces(),
+            ),
+        )
+    )
+
+
 def update_garden_config(garden: Garden):
     db_garden = db.query_unique(Garden, id=garden.id)
     db_garden.connection_params = garden.connection_params
@@ -96,6 +119,10 @@ def remove_garden(garden_name: str) -> None:
 
     """
     garden = db.query_unique(Garden, name=garden_name)
+
+    for system in garden.systems:
+        remove_system(system.id)
+
     db.delete(garden)
     return garden
 

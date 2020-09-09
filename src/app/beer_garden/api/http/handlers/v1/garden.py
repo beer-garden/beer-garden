@@ -207,3 +207,64 @@ class GardenListAPI(BaseHandler):
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
+
+    @authenticated(permissions=[Permissions.SYSTEM_UPDATE])
+    async def patch(self):
+        """
+        ---
+        summary: Partially update a Garden
+        description: |
+          The body of the request needs to contain a set of instructions detailing the
+          updates to apply. Currently the only operations are:
+
+          * sync
+
+          ```JSON
+          [
+            { "operation": "" }
+          ]
+          ```
+        parameters:
+          - name: garden_name
+            in: path
+            required: true
+            description: Garden to use
+            type: string
+          - name: patch
+            in: body
+            required: true
+            description: Instructions for how to update the Garden
+            schema:
+              $ref: '#/definitions/Patch'
+        responses:
+          200:
+            description: Execute Patch action against Gardens
+            schema:
+              $ref: '#/definitions/Garden'
+          400:
+            $ref: '#/definitions/400Error'
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Garden
+        """
+
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
+
+        for op in patch:
+            operation = op.operation.lower()
+
+            if operation == "sync":
+                response = await self.client(
+                    Operation(
+                        operation_type="GARDEN_SYNC",
+                    )
+                )
+
+            else:
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(response)

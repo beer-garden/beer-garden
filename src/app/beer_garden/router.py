@@ -19,7 +19,7 @@ import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
-from beer_garden.garden import get_gardens
+from beer_garden.garden import get_gardens, get_garden
 from beer_garden.garden import local_garden
 
 logger = logging.getLogger(__name__)
@@ -72,6 +72,7 @@ route_functions = {
     "GARDEN_UPDATE_STATUS": beer_garden.garden.update_garden_status,
     "GARDEN_UPDATE_CONFIG": beer_garden.garden.update_garden_config,
     "GARDEN_DELETE": beer_garden.garden.remove_garden,
+    "GARDEN_SYNC": beer_garden.garden.sync_gardens,
     "PLUGIN_LOG_READ": beer_garden.log.get_plugin_log_config,
     "PLUGIN_LOG_READ_LEGACY": beer_garden.log.get_plugin_log_config_legacy,
     "PLUGIN_LOG_RELOAD": beer_garden.log.load_plugin_log_config,
@@ -105,7 +106,8 @@ def route(operation: Operation):
         )
 
     # Determine which garden the operation is targeting
-    operation.target_garden_name = _determine_target_garden(operation)
+    if not operation.target_garden_name:
+        operation.target_garden_name = _determine_target_garden(operation)
 
     if not operation.target_garden_name:
         raise UnknownGardenException(f"Unknown target garden for {operation!r}")
@@ -170,6 +172,9 @@ def forward(operation: Operation):
         UnknownGardenException: The specified target garden is unknown
     """
     target_garden = gardens.get(operation.target_garden_name)
+
+    if not target_garden:
+        target_garden = get_garden(operation.target_garden_name)
 
     if not target_garden:
         raise UnknownGardenException(
@@ -255,7 +260,10 @@ def handle_event(event):
             gardens[event.payload.name] = event.payload
 
         elif event.name == Events.GARDEN_REMOVED.name:
-            del gardens[event.payload.name]
+            try:
+                del gardens[event.payload.name]
+            except KeyError:
+                pass
 
 
 def _pre_route(operation: Operation) -> Operation:
