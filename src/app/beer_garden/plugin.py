@@ -28,6 +28,7 @@ def initialize(
     instance: Instance = None,
     system: System = None,
     runner_id: str = None,
+    **_,
 ) -> Instance:
     """Initializes an instance.
 
@@ -183,6 +184,7 @@ def update(
     system: System = None,
     new_status: str = None,
     metadata: dict = None,
+    **_,
 ) -> Instance:
     """Update an Instance status.
 
