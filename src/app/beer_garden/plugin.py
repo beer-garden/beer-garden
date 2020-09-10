@@ -47,20 +47,23 @@ def initialize(
 
     queue_spec = queue.create(instance, system)
 
-    instance = db.modify(
-        instance,
+    system = db.modify(
+        system,
+        query={"instances__name": instance.name},
         **{
-            "set__status": "INITIALIZING",
-            "set__status_info__heartbeat": datetime.utcnow(),
-            "set__metadata__runner_id": runner_id,
-            "set__queue_type": queue_spec["queue_type"],
-            "set__queue_info": queue_spec["queue_info"],
+            "set__instances__S__status": "INITIALIZING",
+            "set__instances__S__status_info": {"heartbeat": datetime.utcnow()},
+            "set__instances__S__metadata__runner_id": runner_id,
+            "set__instances__S__queue_type": queue_spec["queue_type"],
+            "set__instances__S__queue_info": queue_spec["queue_info"],
         },
     )
 
     start(instance=instance, system=system)
 
-    return instance
+    for inst in system.instances:
+        if inst.name == instance.name:
+            return inst
 
 
 @publish_event(Events.INSTANCE_STARTED)
@@ -203,15 +206,19 @@ def update(
     updates = {}
 
     if new_status:
-        updates["set__status"] = new_status
-        updates["set__status_info__heartbeat"] = datetime.utcnow()
+        updates["set__instances__S__status"] = new_status
+        updates["set__instances__S__status_info__heartbeat"] = datetime.utcnow()
 
     if metadata:
         metadata_update = dict(instance.metadata)
         metadata_update.update(metadata)
-        updates["set__metadata"] = metadata_update
+        updates["set__instances__S__metadata"] = metadata_update
 
-    return db.modify(instance, **updates)
+    system = db.modify(system, query={"instances__name": instance.name}, **updates)
+
+    for inst in system.instances:
+        if inst.name == instance.name:
+            return inst
 
 
 def read_logs(
