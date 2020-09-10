@@ -222,30 +222,26 @@ def setup_routing():
     logger.debug("Routing setup complete")
 
 
+def update_routing(garden_name=None, existing_id=None, update_system=None):
+    """Update the gardens used for routing"""
+    # Default to local garden name
+    garden_name = garden_name or config.get("garden.name")
+
+    index = None
+    for i, system in enumerate(gardens[garden_name].systems):
+        if system.id == existing_id:
+            index = i
+            break
+
+    if index is not None:
+        gardens[garden_name].systems.pop(index)
+
+    if update_system:
+        gardens[garden_name].systems.append(update_system)
+
+
 def handle_event(event):
     """Handle events"""
-    if (
-        event.name
-        in (
-            Events.SYSTEM_CREATED.name,
-            Events.SYSTEM_UPDATED.name,
-            Events.SYSTEM_REMOVED.name,
-        )
-        and event.garden in gardens
-        and not event.error
-    ):
-        index = None
-        for i, system in enumerate(gardens[event.garden].systems):
-            if system.id == event.payload.id:
-                index = i
-                break
-
-        if index is not None:
-            gardens[event.garden].systems.pop(index)
-
-        if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
-            gardens[event.garden].systems.append(event.payload)
-
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.
     # It's *those* events we want to act on here, not the "raw" downstream ones.
