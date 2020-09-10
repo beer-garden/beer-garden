@@ -47,17 +47,16 @@ def initialize(
 
     queue_spec = queue.create(instance, system)
 
-    instance.status = "INITIALIZING"
-    instance.status_info = {"heartbeat": datetime.utcnow()}
-    instance.queue_type = queue_spec["queue_type"]
-    instance.queue_info = queue_spec["queue_info"]
-
-    # This is ridiculous - Mongoengine strikes again
-    metadata = dict(instance.metadata)
-    metadata.update({"runner_id": runner_id})
-    instance.metadata = metadata
-
-    instance = db.update(instance)
+    instance = db.modify(
+        instance,
+        **{
+            "set__status": "INITIALIZING",
+            "set__status_info__heartbeat": datetime.utcnow(),
+            "set__metadata__runner_id": runner_id,
+            "set__queue_type": queue_spec["queue_type"],
+            "set__queue_info": queue_spec["queue_info"],
+        },
+    )
 
     start(instance=instance, system=system)
 
@@ -199,19 +198,20 @@ def update(
     instance = instance or db.query_unique(Instance, id=instance_id)
     system = system or db.query_unique(System, instances__contains=instance)
 
+    logger.debug(f"Updating instance {system}[{instance}]")
+
+    updates = {}
+
     if new_status:
-        instance.status = new_status
-        instance.status_info["heartbeat"] = datetime.utcnow()
+        updates["set__status"] = new_status
+        updates["set__status_info__heartbeat"] = datetime.utcnow()
 
-    # This is ridiculous - Mongoengine strikes again
     if metadata:
-        existing_metadata = dict(instance.metadata)
-        existing_metadata.update(metadata)
-        instance.metadata = existing_metadata
+        metadata_update = dict(instance.metadata)
+        metadata_update.update(metadata)
+        updates["set__metadata"] = metadata_update
 
-    instance = db.update(instance)
-
-    return instance
+    return db.modify(instance, **updates)
 
 
 def read_logs(
