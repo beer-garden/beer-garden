@@ -228,7 +228,7 @@ def purge_system(system_id: str = None, system: System = None) -> System:
             )
 
     # Finally, actually delete the system
-    return remove_system(system)
+    return remove_system(system=system)
 
 
 @publish_event(Events.SYSTEM_RESCAN_REQUESTED)
