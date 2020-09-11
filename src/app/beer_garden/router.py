@@ -322,9 +322,14 @@ def _determine_target_garden(operation: Operation) -> str:
     if operation.operation_type in ("SYSTEM_DELETE", "SYSTEM_RELOAD", "SYSTEM_UPDATE"):
         target_system = db.query_unique(System, id=operation.args[0])
 
+        operation.kwargs["system"] = target_system
+
     elif "INSTANCE" in operation.operation_type:
         target_instance = db.query_unique(Instance, id=operation.args[0])
         target_system = db.query_unique(System, instances__contains=target_instance)
+
+        operation.kwargs["instance"] = target_instance
+        operation.kwargs["system"] = target_system
 
     elif operation.operation_type == "REQUEST_CREATE":
         target_system = System(
@@ -335,6 +340,7 @@ def _determine_target_garden(operation: Operation) -> str:
 
     elif operation.operation_type.startswith("REQUEST"):
         request = db.query_unique(Request, id=operation.args[0])
+        operation.kwargs["request"] = request
 
         target_system = System(
             namespace=request.namespace,

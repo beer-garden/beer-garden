@@ -12,7 +12,6 @@ from brewtils.pika import TransientPikaClient
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.config as config
-import beer_garden.db.api as db
 import beer_garden.requests
 
 logger = logging.getLogger(__name__)
@@ -58,17 +57,16 @@ def initial_setup():
     clients["pika"].declare_exchange()
 
 
-def create(instance: Instance) -> dict:
+def create(instance: Instance, system: System) -> dict:
     """Create request and admin queues for a given instance
 
     Args:
-        instance: The instance to create queues for
+        instance: The Instance to create queues for
+        system: The System the Instance belongs to
 
     Returns:
         Dictionary describing the created queues
     """
-    system = db.query_unique(System, instances__contains=instance)
-
     routing_words = [system.namespace, system.name, system.version, instance.name]
     request_queue_name = get_routing_key(*routing_words)
     clients["pika"].setup_queue(

@@ -9,29 +9,33 @@ import beer_garden.config as config
 logger = logging.getLogger(__name__)
 
 
-def get_instance(instance_id: str) -> Instance:
+def get_instance(instance_id: str = None, instance: Instance = None, **_) -> Instance:
     """Retrieve an individual Instance
 
     Args:
         instance_id: The Instance ID
+        instance: The Instance
 
     Returns:
         The Instance
 
     """
-    return db.query_unique(Instance, id=instance_id)
+    return instance or db.query_unique(Instance, id=instance_id)
 
 
-def remove_instance(instance_id: str) -> None:
+def remove_instance(instance_id: str = None, instance: Instance = None, **_) -> None:
     """Removes an Instance
 
     Args:
         instance_id: The Instance ID
+        instance: The Instance
 
     Returns:
         None
     """
-    db.delete(db.query_unique(Instance, id=instance_id))
+    instance = instance or db.query_unique(Instance, id=instance_id)
+
+    db.delete(instance)
 
 
 def handle_event(event):
