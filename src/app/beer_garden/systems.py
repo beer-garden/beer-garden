@@ -59,7 +59,15 @@ def create_system(system: System) -> System:
     if system.namespace is None:
         system.namespace = config.get("garden.name")
 
-    return db.create(system)
+    # Create in the database
+    system = db.create(system)
+
+    # Also need to let the routing module know
+    from beer_garden.router import update_routing
+
+    update_routing(update_system=system)
+
+    return system
 
 
 @publish_event(Events.SYSTEM_UPDATED)
@@ -135,7 +143,14 @@ def update_system(
         saved_instances = [db.create(i) for i in add_instances]
         updates["push_all__instances"] = [db.from_brewtils(i) for i in saved_instances]
 
-    return db.modify(system, **updates)
+    system = db.modify(system, **updates)
+
+    # Also need to let the routing module know
+    from beer_garden.router import update_routing
+
+    update_routing(existing_id=system.id, update_system=system)
+
+    return system
 
 
 @publish_event(Events.SYSTEM_RELOAD_REQUESTED)
@@ -174,6 +189,11 @@ def remove_system(system_id: str = None, system: System = None) -> System:
     system = system or db.query_unique(System, id=system_id)
 
     db.delete(system)
+
+    # Also need to let the routing module know
+    from beer_garden.router import update_routing
+
+    update_routing(existing_id=system.id)
 
     return system
 
