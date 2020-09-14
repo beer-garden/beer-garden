@@ -3,7 +3,7 @@ import logging
 import threading
 
 import requests
-from brewtils.models import Events, Garden, Instance, Operation, Request, System
+from brewtils.models import Events, Garden, Operation, Request, System
 from brewtils.schema_parser import SchemaParser
 from typing import Dict, Union
 
@@ -324,8 +324,14 @@ def _determine_target_garden(operation: Operation) -> str:
         operation.kwargs["system"] = target_system
 
     elif "INSTANCE" in operation.operation_type:
-        target_instance = db.query_unique(Instance, id=operation.args[0])
-        target_system = db.query_unique(System, instances__contains=target_instance)
+        if "system_id" in operation.kwargs and "instance_name" in operation.kwargs:
+            target_system = db.query_unique(System, id=operation.kwargs["system_id"])
+            target_instance = target_system.get_instance_by_name(
+                operation.kwargs["instance_name"]
+            )
+        else:
+            target_system = db.query_unique(System, instances__id=operation.args[0])
+            target_instance = target_system.get_instance_by_id(operation.args[0])
 
         operation.kwargs["instance"] = target_instance
         operation.kwargs["system"] = target_system
