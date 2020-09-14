@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
+import threading
+
 import requests
 from brewtils.models import Events, Garden, Instance, Operation, Request, System
 from brewtils.schema_parser import SchemaParser
@@ -19,8 +21,7 @@ import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
-from beer_garden.garden import get_gardens, get_garden
-from beer_garden.garden import local_garden
+from beer_garden.garden import get_gardens, get_garden, local_garden
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ forward_processor = None
 
 # Dict of garden_name -> garden
 gardens: Dict[str, Garden] = {}
+gardens_lock = threading.Lock()
 
 route_functions = {
     "REQUEST_CREATE": beer_garden.requests.process_request,
@@ -229,30 +231,27 @@ def setup_routing():
     logger.debug("Routing setup complete")
 
 
-def handle_event(event):
-    """Handle events"""
-    if (
-        event.name
-        in (
-            Events.SYSTEM_CREATED.name,
-            Events.SYSTEM_UPDATED.name,
-            Events.SYSTEM_REMOVED.name,
-        )
-        and event.garden in gardens
-        and not event.error
-    ):
+def update_routing(garden_name=None, existing_id=None, update_system=None):
+    """Update the gardens used for routing"""
+    # Default to local garden name
+    garden_name = garden_name or config.get("garden.name")
+
+    with gardens_lock:
         index = None
-        for i, system in enumerate(gardens[event.garden].systems):
-            if system.id == event.payload.id:
+        for i, system in enumerate(gardens[garden_name].systems):
+            if system.id == existing_id:
                 index = i
                 break
 
         if index is not None:
-            gardens[event.garden].systems.pop(index)
+            gardens[garden_name].systems.pop(index)
 
-        if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
-            gardens[event.garden].systems.append(event.payload)
+        if update_system:
+            gardens[garden_name].systems.append(update_system)
 
+
+def handle_event(event):
+    """Handle events"""
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.
     # It's *those* events we want to act on here, not the "raw" downstream ones.
@@ -332,9 +331,14 @@ def _determine_target_garden(operation: Operation) -> str:
     if operation.operation_type in ("SYSTEM_DELETE", "SYSTEM_RELOAD", "SYSTEM_UPDATE"):
         target_system = db.query_unique(System, id=operation.args[0])
 
+        operation.kwargs["system"] = target_system
+
     elif "INSTANCE" in operation.operation_type:
         target_instance = db.query_unique(Instance, id=operation.args[0])
         target_system = db.query_unique(System, instances__contains=target_instance)
+
+        operation.kwargs["instance"] = target_instance
+        operation.kwargs["system"] = target_system
 
     elif operation.operation_type == "REQUEST_CREATE":
         target_system = System(
@@ -345,6 +349,7 @@ def _determine_target_garden(operation: Operation) -> str:
 
     elif operation.operation_type.startswith("REQUEST"):
         request = db.query_unique(Request, id=operation.args[0])
+        operation.kwargs["request"] = request
 
         target_system = System(
             namespace=request.namespace,
@@ -396,7 +401,8 @@ def _forward_http(operation: Operation, conn_info: dict):
 def _garden_name_lookup(system: Union[str, System]) -> str:
     system_name = str(system)
 
-    for garden in gardens.values():
-        for system in garden.systems:
-            if str(system) == system_name:
-                return garden.name
+    with gardens_lock:
+        for garden in gardens.values():
+            for system in garden.systems:
+                if str(system) == system_name:
+                    return garden.name

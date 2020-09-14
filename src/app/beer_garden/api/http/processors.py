@@ -16,7 +16,7 @@ class EventManager:
         self._conn = conn
 
     def put(self, event):
-        self._conn.send(event)
+        beer_garden.api.http.io_loop.add_callback(self._conn.send, event)
 
 
 def websocket_publish(item):

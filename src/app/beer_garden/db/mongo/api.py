@@ -108,7 +108,7 @@ def check_connection(db_config: Box):
             db=db_config["name"],
             socketTimeoutMS=1000,
             serverSelectionTimeoutMS=1000,
-            **db_config["connection"]
+            **db_config["connection"],
         )
 
         # The 'connect' method won't actually fail
@@ -349,11 +349,12 @@ def update(obj: ModelItem) -> ModelItem:
     return to_brewtils(mongo_obj)
 
 
-def modify(obj: ModelItem, **kwargs) -> ModelItem:
+def modify(obj: ModelItem, query=None, **kwargs) -> ModelItem:
     """Modify an item in the database
 
     Args:
         obj: The Brewtils model to modify
+        query: query argument, passed to Model.modify
         kwargs: Modification parameters
 
     Returns:
@@ -362,7 +363,7 @@ def modify(obj: ModelItem, **kwargs) -> ModelItem:
     """
     mongo_obj = from_brewtils(obj)
 
-    mongo_obj.modify(**kwargs)
+    mongo_obj.modify(query=query, **kwargs)
 
     return to_brewtils(mongo_obj)
 
