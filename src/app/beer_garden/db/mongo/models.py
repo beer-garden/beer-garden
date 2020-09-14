@@ -22,6 +22,7 @@ from mongoengine import (
     DynamicField,
     EmbeddedDocument,
     EmbeddedDocumentField,
+    EmbeddedDocumentListField,
     GenericEmbeddedDocumentField,
     IntField,
     ListField,
@@ -173,7 +174,7 @@ class Parameter(MongoModel, EmbeddedDocument):
         required=False, choices=BrewtilsParameter.FORM_INPUT_TYPES
     )
     type_info = DictField(required=False)
-    parameters = ListField(EmbeddedDocumentField("Parameter"))
+    parameters = EmbeddedDocumentListField("Parameter")
 
     # If no display name was set, it will default it to the same thing as the key
     def __init__(self, *args, **kwargs):
@@ -204,7 +205,7 @@ class Command(MongoModel, EmbeddedDocument):
 
     name = StringField(required=True)
     description = StringField()
-    parameters = ListField(EmbeddedDocumentField("Parameter"))
+    parameters = EmbeddedDocumentListField("Parameter")
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES, default="ACTION")
     output_type = StringField(choices=BrewtilsCommand.OUTPUT_TYPES, default="STRING")
     schema = DictField()
@@ -435,8 +436,8 @@ class System(MongoModel, Document):
     version = StringField(required=True)
     namespace = StringField(required=True)
     max_instances = IntField(default=-1)
-    instances = ListField(EmbeddedDocumentField("Instance"))
-    commands = ListField(EmbeddedDocumentField("Command"))
+    instances = EmbeddedDocumentListField("Instance")
+    commands = EmbeddedDocumentListField("Command")
     icon_name = StringField()
     display_name = StringField()
     metadata = DictField()
