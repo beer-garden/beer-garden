@@ -192,19 +192,26 @@ def handle_event(event):
             if event.payload.name == event.garden:
                 existing_garden = get_garden(event.payload.name)
 
+                for system in event.payload.systems:
+                    system.local = False
+
                 if existing_garden is None:
                     event.payload.connection_type = None
                     event.payload.connection_params = {}
 
-                    for system in event.payload.systems:
-                        system.local = False
-
-                    create_garden(event.payload)
+                    garden = create_garden(event.payload)
                 else:
                     for attr in ("status", "status_info", "namespaces", "systems"):
                         setattr(existing_garden, attr, getattr(event.payload, attr))
 
-                    for system in existing_garden.systems:
-                        system.local = False
+                    garden = update_garden(existing_garden)
 
-                    update_garden(existing_garden)
+                # Publish update events for UI to dynamically load changes for Systems
+                for system in garden.systems:
+                    publish(
+                        Event(
+                            name=Events.SYSTEM_UPDATED.name,
+                            payload_type="System",
+                            payload=system,
+                        )
+                    )
