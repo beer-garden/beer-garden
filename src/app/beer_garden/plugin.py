@@ -53,7 +53,7 @@ def initialize(
         query={"instances__name": instance.name},
         **{
             "set__instances__S__status": "INITIALIZING",
-            "set__instances__S__status_info": {"heartbeat": datetime.utcnow()},
+            "set__instances__S__status_info__heartbeat": datetime.utcnow(),
             "set__instances__S__metadata__runner_id": runner_id,
             "set__instances__S__queue_type": queue_spec["queue_type"],
             "set__instances__S__queue_info": queue_spec["queue_info"],
@@ -62,9 +62,7 @@ def initialize(
 
     start(instance=instance, system=system)
 
-    for inst in system.instances:
-        if inst.name == instance.name:
-            return inst
+    return system.get_instance_by_name(instance.name)
 
 
 @publish_event(Events.INSTANCE_STARTED)
@@ -218,9 +216,7 @@ def update(
 
     system = db.modify(system, query={"instances__name": instance.name}, **updates)
 
-    for inst in system.instances:
-        if inst.name == instance.name:
-            return inst
+    return system.get_instance_by_name(instance.name)
 
 
 def read_logs(
