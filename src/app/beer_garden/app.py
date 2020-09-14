@@ -273,8 +273,16 @@ class Application(StoppableThread):
                 ssl_enabled=http_event.ssl.enabled,
             )
             skip_events = config.get("parent.skip_events")
+
+            def reconnect_action():
+                self._publish_update(Events.GARDEN_STARTED)
+
             event_manager.register(
-                HttpEventProcessor(easy_client=easy_client, black_list=skip_events)
+                HttpEventProcessor(
+                    easy_client=easy_client,
+                    black_list=skip_events,
+                    reconnect_action=reconnect_action,
+                )
             )
 
         return event_manager
