@@ -8,7 +8,7 @@ from beer_garden.api.http.base_handler import BaseHandler
 
 
 class InstanceAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.INSTANCE_READ])
+    @authenticated(permissions=[Permissions.READ])
     async def get(self, instance_id):
         """
         ---
@@ -39,7 +39,7 @@ class InstanceAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.INSTANCE_DELETE])
+    @authenticated(permissions=[Permissions.DELETE])
     async def delete(self, instance_id):
         """
         ---
@@ -67,7 +67,7 @@ class InstanceAPI(BaseHandler):
 
         self.set_status(204)
 
-    @authenticated(permissions=[Permissions.INSTANCE_UPDATE])
+    @authenticated(permissions=[Permissions.UPDATE])
     async def patch(self, instance_id):
         """
         ---
@@ -183,7 +183,7 @@ class InstanceAPI(BaseHandler):
 
 
 class InstanceLogAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.INSTANCE_UPDATE])
+    @authenticated(permissions=[Permissions.UPDATE])
     async def get(self, instance_id):
         """
         ---
@@ -257,7 +257,7 @@ class InstanceLogAPI(BaseHandler):
 
 
 class InstanceQueuesAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.QUEUE_READ])
+    @authenticated(permissions=[Permissions.READ])
     async def get(self, instance_id):
         """
         ---

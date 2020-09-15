@@ -7,7 +7,7 @@ from brewtils.schema_parser import SchemaParser
 
 
 class GardenAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.SYSTEM_READ])
+    @authenticated(permissions=[Permissions.READ])
     async def get(self, garden_name):
         """
         ---
@@ -38,7 +38,7 @@ class GardenAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.SYSTEM_DELETE])
+    @authenticated(permissions=[Permissions.SYSTEM_ADMIN])
     async def delete(self, garden_name):
         """
         ---
@@ -63,7 +63,7 @@ class GardenAPI(BaseHandler):
 
         self.set_status(204)
 
-    @authenticated(permissions=[Permissions.SYSTEM_UPDATE])
+    @authenticated(permissions=[Permissions.SYSTEM_ADMIN])
     async def patch(self, garden_name):
         """
         ---
@@ -145,7 +145,7 @@ class GardenAPI(BaseHandler):
 
 
 class GardenListAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.SYSTEM_READ])
+    @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
         ---
@@ -170,7 +170,7 @@ class GardenListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.SYSTEM_CREATE])
+    @authenticated(permissions=[Permissions.SYSTEM_ADMIN])
     async def post(self):
         """
         ---
