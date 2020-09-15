@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from typing import Tuple
 
 from brewtils.errors import BrewtilsException
 from brewtils.models import Events, Instance, System
@@ -88,3 +89,40 @@ def handle_event(event):
                 db.update(event.payload)
             else:
                 logger.error(f"{event.name} error: object does not exist ({event!r})")
+
+
+def from_kwargs(
+    system: System = None,
+    instance: Instance = None,
+    system_id: str = None,
+    instance_name: str = None,
+    instance_id: str = None,
+    **_,
+) -> Tuple[System, Instance]:
+
+    if system and instance:
+        return system, instance
+
+    if not system:
+        if system_id:
+            system = db.query_unique(System, raise_missing=True, id=system_id)
+        elif instance:
+            system = db.query_unique(
+                System, raise_missing=True, instances__contains=instance
+            )
+        elif instance_id:
+            system = db.query_unique(
+                System, raise_missing=True, instances__id=instance_id
+            )
+        else:
+            raise NotFoundException("Unable to find System")
+
+    if not instance:
+        if instance_name:
+            instance = system.get_instance_by_name(instance_name)
+        elif instance_id:
+            instance = system.get_instance_by_id(instance_id)
+        else:
+            raise NotFoundException("Unable to find Instance")
+
+    return system, instance

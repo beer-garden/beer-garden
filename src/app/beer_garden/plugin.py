@@ -9,8 +9,9 @@ from brewtils.models import Events, Instance, Request, RequestTemplate, System
 
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
-from beer_garden.events import publish_event
 import beer_garden.requests as requests
+from beer_garden.events import publish_event
+from beer_garden.instances import from_kwargs
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +42,9 @@ def initialize(
     Returns:
         The updated Instance
     """
-    instance = instance or db.query_unique(Instance, id=instance_id)
-    system = system or db.query_unique(System, instances__contains=instance)
+    system, instance = from_kwargs(
+        system=system, instance=instance, instance_id=instance_id
+    )
 
     logger.info(f"Initializing instance {system}[{instance}]")
 
@@ -81,8 +83,9 @@ def start(
     Returns:
         The updated Instance
     """
-    instance = instance or db.query_unique(Instance, id=instance_id)
-    system = system or db.query_unique(System, instances__contains=instance)
+    system, instance = from_kwargs(
+        system=system, instance=instance, instance_id=instance_id
+    )
 
     logger.info(f"Starting instance {system}[{instance}]")
 
@@ -118,8 +121,9 @@ def stop(
     Returns:
         The updated Instance
     """
-    instance = instance or db.query_unique(Instance, id=instance_id)
-    system = system or db.query_unique(System, instances__contains=instance)
+    system, instance = from_kwargs(
+        system=system, instance=instance, instance_id=instance_id
+    )
 
     logger.info(f"Stopping instance {system}[{instance}]")
 
@@ -154,8 +158,9 @@ def initialize_logging(
     Returns:
         The Instance
     """
-    instance = instance or db.query_unique(Instance, id=instance_id)
-    system = system or db.query_unique(System, instances__contains=instance)
+    system, instance = from_kwargs(
+        system=system, instance=instance, instance_id=instance_id
+    )
 
     logger.debug(f"Initializing logging for instance {system}[{instance}]")
 
@@ -198,8 +203,9 @@ def update(
     Returns:
         The updated Instance
     """
-    instance = instance or db.query_unique(Instance, id=instance_id)
-    system = system or db.query_unique(System, instances__contains=instance)
+    system, instance = from_kwargs(
+        system=system, instance=instance, instance_id=instance_id
+    )
 
     logger.debug(f"Updating instance {system}[{instance}]")
 
@@ -240,8 +246,9 @@ def read_logs(
     Returns:
         Request object with logs as output
     """
-    instance = instance or db.query_unique(Instance, id=instance_id)
-    system = system or db.query_unique(System, instances__contains=instance)
+    system, instance = from_kwargs(
+        system=system, instance=instance, instance_id=instance_id
+    )
 
     logger.debug(f"Reading Logs from instance {system}[{instance}]")
 
