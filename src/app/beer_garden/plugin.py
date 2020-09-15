@@ -11,7 +11,7 @@ import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 import beer_garden.requests as requests
 from beer_garden.events import publish_event
-from beer_garden.instances import from_kwargs
+from beer_garden.systems import from_kwargs
 
 logger = logging.getLogger(__name__)
 

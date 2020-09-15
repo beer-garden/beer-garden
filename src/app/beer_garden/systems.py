@@ -2,17 +2,17 @@
 import copy
 import logging
 from time import sleep
-from typing import List, Sequence
+from typing import List, Sequence, Tuple
 
-from brewtils.errors import ModelValidationError
+from brewtils.errors import BrewtilsException, ModelValidationError
 from brewtils.models import Command, Event, Events, Instance, System
 from brewtils.schemas import SystemSchema
 
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
+from beer_garden.errors import NotFoundException
 from beer_garden.events import publish_event
-from beer_garden.plugin import stop
 
 REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
@@ -218,6 +218,8 @@ def purge_system(system_id: str = None, system: System = None) -> System:
     # Attempt to stop the plugins
     for instance in system.instances:
         try:
+            from beer_garden.plugin import stop
+
             stop(instance=instance, system=system)
         except Exception as ex:
             logger.warning(
@@ -256,6 +258,105 @@ def rescan_system_directory() -> None:
     pass
 
 
+def get_instance(
+    instance_id: str = None,
+    system_id: str = None,
+    instance_name: str = None,
+    instance: Instance = None,
+    **_,
+) -> Instance:
+    """Retrieve an individual Instance
+
+    Args:
+        instance_id: The Instance ID
+        system_id: The System ID
+        instance_name: The Instance name
+        instance: The Instance
+
+    Returns:
+        The Instance
+
+    """
+    if instance:
+        return instance
+
+    if system_id and instance_name:
+        system = db.query_unique(System, raise_missing=True, id=system_id)
+
+        try:
+            return system.get_instance_by_name(instance_name, raise_missing=True)
+        except BrewtilsException:
+            raise NotFoundException(
+                f"System {system} does not have an instance with name '{instance_name}'"
+            ) from None
+
+    elif instance_id:
+        system = db.query_unique(System, raise_missing=True, instances__id=instance_id)
+
+        try:
+            return system.get_instance_by_id(instance_id, raise_missing=True)
+        except BrewtilsException:
+            raise NotFoundException(
+                f"System {system} does not have an instance with id '{instance_id}'"
+            ) from None
+
+    raise NotFoundException()
+
+
+def remove_instance(
+    *_, system: System = None, instance: Instance = None, **__
+) -> Instance:
+    """Removes an Instance
+
+    Args:
+        system: The System
+        instance: The Instance
+
+    Returns:
+        The deleted Instance
+    """
+    db.modify(system, pull__instances=instance)
+
+    return instance
+
+
+def from_kwargs(
+    system: System = None,
+    instance: Instance = None,
+    system_id: str = None,
+    instance_name: str = None,
+    instance_id: str = None,
+    **_,
+) -> Tuple[System, Instance]:
+
+    if system and instance:
+        return system, instance
+
+    if not system:
+        if system_id:
+            system = db.query_unique(System, raise_missing=True, id=system_id)
+        elif instance:
+            system = db.query_unique(
+                System, raise_missing=True, instances__contains=instance
+            )
+        elif instance_id:
+            system = db.query_unique(
+                System, raise_missing=True, instances__id=instance_id
+            )
+        else:
+            raise NotFoundException("Unable to find System")
+
+    if not instance:
+        if instance_name:
+            instance = system.get_instance_by_name(instance_name)
+        elif instance_id:
+            instance = system.get_instance_by_id(instance_id)
+        else:
+            raise NotFoundException("Unable to find Instance")
+
+    return system, instance
+
+
 def handle_event(event: Event) -> None:
     """Handle SYSTEM events
 
@@ -280,3 +381,15 @@ def handle_event(event: Event) -> None:
 
         elif event.name == Events.SYSTEM_REMOVED.name:
             db.delete(event.payload)
+
+        elif event.name == Events.INSTANCE_UPDATED.name:
+            if not event.payload_type:
+                logger.error(f"{event.name} error: no payload type ({event!r})")
+                return
+
+            record = db.query_unique(Instance, id=event.payload.id)
+
+            if record:
+                db.update(event.payload)
+            else:
+                logger.error(f"{event.name} error: object does not exist ({event!r})")

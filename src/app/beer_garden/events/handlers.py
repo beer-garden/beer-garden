@@ -5,7 +5,6 @@ from brewtils.models import Event
 
 import beer_garden.config
 import beer_garden.garden
-import beer_garden.instances
 import beer_garden.requests
 import beer_garden.router
 import beer_garden.systems
@@ -35,7 +34,6 @@ def garden_callbacks(event: Event) -> None:
     for handler in [
         beer_garden.application.handle_event,
         beer_garden.garden.handle_event,
-        beer_garden.instances.handle_event,
         beer_garden.requests.handle_event,
         beer_garden.router.handle_event,
         beer_garden.systems.handle_event,

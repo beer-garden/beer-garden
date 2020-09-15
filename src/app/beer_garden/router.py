@@ -12,7 +12,6 @@ import beer_garden.commands
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.garden
-import beer_garden.instances
 import beer_garden.log
 import beer_garden.namespace
 import beer_garden.plugin
@@ -48,8 +47,8 @@ route_functions = {
     "REQUEST_READ_ALL": beer_garden.requests.get_requests,
     "COMMAND_READ": beer_garden.commands.get_command,
     "COMMAND_READ_ALL": beer_garden.commands.get_commands,
-    "INSTANCE_READ": beer_garden.instances.get_instance,
-    "INSTANCE_DELETE": beer_garden.instances.remove_instance,
+    "INSTANCE_READ": beer_garden.systems.get_instance,
+    "INSTANCE_DELETE": beer_garden.systems.remove_instance,
     "INSTANCE_UPDATE": beer_garden.plugin.update,
     "INSTANCE_INITIALIZE": beer_garden.plugin.initialize,
     "INSTANCE_START": beer_garden.plugin.start,
