@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 import copy
 import logging
-from time import sleep
-from typing import List, Sequence, Tuple
+from typing import List, Sequence
 
 from brewtils.errors import BrewtilsException, ModelValidationError
 from brewtils.models import Command, Event, Events, Instance, System
 from brewtils.schemas import SystemSchema
+from time import sleep
 
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 from beer_garden.errors import NotFoundException
 from beer_garden.events import publish_event
+from beer_garden.plugin import stop
 
 REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
@@ -218,8 +219,6 @@ def purge_system(system_id: str = None, system: System = None) -> System:
     # Attempt to stop the plugins
     for instance in system.instances:
         try:
-            from beer_garden.plugin import stop
-
             stop(instance=instance, system=system)
         except Exception as ex:
             logger.warning(
@@ -318,43 +317,6 @@ def remove_instance(
     db.modify(system, pull__instances=instance)
 
     return instance
-
-
-def from_kwargs(
-    system: System = None,
-    instance: Instance = None,
-    system_id: str = None,
-    instance_name: str = None,
-    instance_id: str = None,
-    **_,
-) -> Tuple[System, Instance]:
-
-    if system and instance:
-        return system, instance
-
-    if not system:
-        if system_id:
-            system = db.query_unique(System, raise_missing=True, id=system_id)
-        elif instance:
-            system = db.query_unique(
-                System, raise_missing=True, instances__contains=instance
-            )
-        elif instance_id:
-            system = db.query_unique(
-                System, raise_missing=True, instances__id=instance_id
-            )
-        else:
-            raise NotFoundException("Unable to find System")
-
-    if not instance:
-        if instance_name:
-            instance = system.get_instance_by_name(instance_name)
-        elif instance_id:
-            instance = system.get_instance_by_id(instance_id)
-        else:
-            raise NotFoundException("Unable to find Instance")
-
-    return system, instance
 
 
 def handle_event(event: Event) -> None:

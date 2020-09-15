@@ -4,14 +4,15 @@
 
 import logging
 from datetime import datetime
+from typing import Tuple
 
 from brewtils.models import Events, Instance, Request, RequestTemplate, System
 
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 import beer_garden.requests as requests
+from beer_garden.errors import NotFoundException
 from beer_garden.events import publish_event
-from beer_garden.systems import from_kwargs
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ def initialize(
     Returns:
         The updated Instance
     """
-    system, instance = from_kwargs(
+    system, instance = _from_kwargs(
         system=system, instance=instance, instance_id=instance_id
     )
 
@@ -83,7 +84,7 @@ def start(
     Returns:
         The updated Instance
     """
-    system, instance = from_kwargs(
+    system, instance = _from_kwargs(
         system=system, instance=instance, instance_id=instance_id
     )
 
@@ -121,7 +122,7 @@ def stop(
     Returns:
         The updated Instance
     """
-    system, instance = from_kwargs(
+    system, instance = _from_kwargs(
         system=system, instance=instance, instance_id=instance_id
     )
 
@@ -158,7 +159,7 @@ def initialize_logging(
     Returns:
         The Instance
     """
-    system, instance = from_kwargs(
+    system, instance = _from_kwargs(
         system=system, instance=instance, instance_id=instance_id
     )
 
@@ -203,7 +204,7 @@ def update(
     Returns:
         The updated Instance
     """
-    system, instance = from_kwargs(
+    system, instance = _from_kwargs(
         system=system, instance=instance, instance_id=instance_id
     )
 
@@ -246,7 +247,7 @@ def read_logs(
     Returns:
         Request object with logs as output
     """
-    system, instance = from_kwargs(
+    system, instance = _from_kwargs(
         system=system, instance=instance, instance_id=instance_id
     )
 
@@ -266,3 +267,40 @@ def read_logs(
     )
 
     return request
+
+
+def _from_kwargs(
+    system: System = None,
+    instance: Instance = None,
+    system_id: str = None,
+    instance_name: str = None,
+    instance_id: str = None,
+    **_,
+) -> Tuple[System, Instance]:
+
+    if system and instance:
+        return system, instance
+
+    if not system:
+        if system_id:
+            system = db.query_unique(System, raise_missing=True, id=system_id)
+        elif instance:
+            system = db.query_unique(
+                System, raise_missing=True, instances__contains=instance
+            )
+        elif instance_id:
+            system = db.query_unique(
+                System, raise_missing=True, instances__id=instance_id
+            )
+        else:
+            raise NotFoundException("Unable to find System")
+
+    if not instance:
+        if instance_name:
+            instance = system.get_instance_by_name(instance_name)
+        elif instance_id:
+            instance = system.get_instance_by_id(instance_id)
+        else:
+            raise NotFoundException("Unable to find Instance")
+
+    return system, instance
