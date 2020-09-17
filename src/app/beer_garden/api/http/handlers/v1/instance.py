@@ -39,7 +39,7 @@ class InstanceAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.DELETE])
+    @authenticated(permissions=[Permissions.SYSTEM_ADMIN])
     async def delete(self, instance_id):
         """
         ---

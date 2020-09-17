@@ -55,7 +55,7 @@ class SystemAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.DELETE])
+    @authenticated(permissions=[Permissions.SYSTEM_ADMIN])
     async def delete(self, system_id):
         """
         Will give Bartender a chance to remove instances of this system from the
