@@ -128,7 +128,7 @@ services:
           - "61613:61613"
           - "8161:8161"
         volumes:
-            - ./activemq-config/etc-override-non-ssl:/var/lib/artemis/etc-override
+            - ./data/activemq-config/etc-override-non-ssl:/var/lib/artemis/etc-override
 
 networks:
     bg-network:
