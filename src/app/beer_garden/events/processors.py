@@ -3,12 +3,7 @@ import logging
 from multiprocessing import Queue
 from queue import Empty
 
-from brewtils.models import Event
 from brewtils.stoppable_thread import StoppableThread
-
-import beer_garden.config
-import beer_garden.events
-import beer_garden.systems
 
 logger = logging.getLogger(__name__)
 
