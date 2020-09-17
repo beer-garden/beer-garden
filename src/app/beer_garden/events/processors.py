@@ -36,7 +36,6 @@ class QueueListener(BaseProcessor):
 
         self._queue = queue or Queue()
 
-
     def put(self, item):
         """Put a new item on the queue to be processed
 
@@ -121,6 +120,3 @@ class FanoutProcessor(QueueListener):
 
         if manage:
             self._managed_processors.append(processor)
-
-
-
