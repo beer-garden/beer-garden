@@ -24,9 +24,9 @@ from beer_garden.events import publish
 from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.processors import (
     FanoutProcessor,
-    HttpEventProcessor,
     QueueListener,
 )
+from beer_garden.events.parent_procesors import HttpParentUpdater
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
@@ -278,7 +278,7 @@ class Application(StoppableThread):
                 self._publish_update(Events.GARDEN_STARTED)
 
             event_manager.register(
-                HttpEventProcessor(
+                HttpParentUpdater(
                     easy_client=easy_client,
                     black_list=skip_events,
                     reconnect_action=reconnect_action,

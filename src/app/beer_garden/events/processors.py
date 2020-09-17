@@ -20,12 +20,10 @@ class BaseProcessor(StoppableThread):
         super().__init__(**kwargs)
 
         self._action = action
-        self._processing = True
 
     def process(self, item):
         try:
-            if self._processing:
-                self._action(item)
+            self._action(item)
         except Exception as ex:
             logger.exception(f"Error processing: {ex}")
 
@@ -38,14 +36,14 @@ class QueueListener(BaseProcessor):
 
         self._queue = queue or Queue()
 
+
     def put(self, item):
         """Put a new item on the queue to be processed
 
         Args:
             item: New item
         """
-        if self._processing:
-            self._queue.put(item)
+        self._queue.put(item)
 
     def clear(self):
         """Empty the underlying queue without processing items"""
@@ -125,50 +123,4 @@ class FanoutProcessor(QueueListener):
             self._managed_processors.append(processor)
 
 
-class HttpEventProcessor(QueueListener):
-    """Publish events using an EasyClient"""
 
-    def __init__(
-        self, easy_client=None, black_list=None, reconnect_action=None, **kwargs
-    ):
-        super().__init__(**kwargs)
-
-        self._ez_client = easy_client
-        self._black_list = black_list or []
-        self._reconnect_action = reconnect_action
-
-    def process(self, event: Event):
-
-        try:
-            if event.name not in self._black_list:
-                event.garden = beer_garden.config.get("garden.name")
-                self._ez_client.publish_event(event)
-        except Exception as ex:
-            logger.exception(f"Error publishing EasyClient event: {ex}")
-
-            self.reconnect()
-
-    def reconnect(self):
-
-        # Mark not processing and stop accepting events
-        self._processing = False
-
-        # Purge the current Queue
-        while not self._queue.empty():
-            self._queue.get()
-
-        # Back-off connection from EZ Client
-        wait_time = 0.1
-        while not self.stopped() and not self._processing:
-            if self._ez_client.can_connect():
-                self._processing = True
-
-                if self._reconnect_action:
-                    self._reconnect_action()
-
-            else:
-                self.logger.warning(
-                    "Waiting %.1f seconds before next attempt", wait_time
-                )
-                self.wait(wait_time)
-                wait_time = min(wait_time * 2, 30)
