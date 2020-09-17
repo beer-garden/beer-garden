@@ -31,7 +31,7 @@ class HttpParentUpdater(QueueListener):
             if event.name not in self._black_list:
                 event.garden = beer_garden.config.get("garden.name")
                 self._ez_client.publish_event(event)
-        except Exception as ex:
+        except:
             self.reconnect()
 
     def reconnect(self):
