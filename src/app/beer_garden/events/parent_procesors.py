@@ -1,3 +1,5 @@
+import requests
+
 import beer_garden
 from beer_garden.events.processors import QueueListener
 from brewtils.models import Event
@@ -31,7 +33,7 @@ class HttpParentUpdater(QueueListener):
             if event.name not in self._black_list:
                 event.garden = beer_garden.config.get("garden.name")
                 self._ez_client.publish_event(event)
-        except:
+        except requests.exceptions.ConnectionError:
             self.reconnect()
 
     def reconnect(self):
