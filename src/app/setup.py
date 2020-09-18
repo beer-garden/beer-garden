@@ -33,6 +33,7 @@ setup(
         "brewtils>=3.0.0a1",
         "mongoengine<0.21",
         "more-itertools<9",
+        "motor<3",
         "passlib<1.8",
         "prometheus-client==0.7.1",
         "pyrabbit2==1.0.7",
