@@ -3,9 +3,11 @@ import logging
 import os
 import ssl
 import types
+from typing import Optional, Tuple
 
 from apispec import APISpec
 from brewtils.models import Event, Events
+from brewtils.models import Principal
 from brewtils.schemas import (
     CommandSchema,
     CronTriggerSchema,
@@ -37,23 +39,22 @@ import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.vbeta as vbeta
 import beer_garden.config as config
 import beer_garden.events
+import beer_garden.log
 import beer_garden.router
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
 from beer_garden.api.http.processors import EventManager, websocket_publish
 from beer_garden.events import publish
 from beer_garden.events.processors import QueueListener
-import beer_garden.log
 
-io_loop = None
-server = None
-tornado_app = None
-public_url = None
-logger = None
+io_loop: IOLoop
+server: HTTPServer
+tornado_app: Application
+public_url: str
+logger: logging.Logger
 event_publishers = None
-api_spec = None
-notification_meta = None
-anonymous_principal = None
-client_ssl = None
+api_spec: APISpec
+anonymous_principal: Principal
+client_ssl: ssl.SSLContext
 
 
 def run(ep_conn):
@@ -161,7 +162,7 @@ def _setup_application():
     server = HTTPServer(tornado_app, ssl_options=server_ssl)
 
 
-def _setup_tornado_app():
+def _setup_tornado_app() -> Application:
     prefix = config.get("entry.http.url_prefix")
 
     # These get documented in our OpenAPI (fka Swagger) documentation
@@ -233,7 +234,7 @@ def _setup_tornado_app():
     )
 
 
-def _setup_ssl_context():
+def _setup_ssl_context() -> Tuple[Optional[ssl.SSLContext], Optional[ssl.SSLContext]]:
     http_config = config.get("entry.http")
     if http_config.ssl.enabled:
         server_ssl = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
