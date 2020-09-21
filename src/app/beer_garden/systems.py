@@ -343,15 +343,3 @@ def handle_event(event: Event) -> None:
 
         elif event.name == Events.SYSTEM_REMOVED.name:
             db.delete(event.payload)
-
-        elif event.name == Events.INSTANCE_UPDATED.name:
-            if not event.payload_type:
-                logger.error(f"{event.name} error: no payload type ({event!r})")
-                return
-
-            record = db.query_unique(Instance, id=event.payload.id)
-
-            if record:
-                db.update(event.payload)
-            else:
-                logger.error(f"{event.name} error: object does not exist ({event!r})")

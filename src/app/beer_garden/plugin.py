@@ -6,8 +6,9 @@ import logging
 from datetime import datetime
 from typing import Tuple
 
-from brewtils.models import Events, Instance, Request, RequestTemplate, System
+from brewtils.models import Event, Events, Instance, Request, RequestTemplate, System
 
+import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 import beer_garden.requests as requests
@@ -304,3 +305,26 @@ def _from_kwargs(
             raise NotFoundException("Unable to find Instance")
 
     return system, instance
+
+
+def handle_event(event: Event) -> None:
+    """Handle INSTANCE events
+
+    Args:
+        event: The event to handle
+    """
+    if event.garden != config.get("garden.name"):
+
+        if event.name == Events.INSTANCE_UPDATED.name:
+            if not event.payload_type:
+                logger.error(f"{event.name} error: no payload type ({event!r})")
+                return
+
+            try:
+                update(
+                    instance_id=event.payload.id,
+                    new_status=event.payload.status,
+                    metadata=event.payload.metadata,
+                )
+            except Exception as ex:
+                logger.error(f"{event.name} error: {ex} ({event!r})")
