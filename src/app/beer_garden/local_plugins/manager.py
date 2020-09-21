@@ -3,6 +3,8 @@
 import json
 import logging
 import string
+from concurrent.futures import ThreadPoolExecutor, wait
+
 import sys
 from enum import Enum
 from importlib.machinery import SourceFileLoader
@@ -203,8 +205,16 @@ class PluginManager(StoppableThread):
 
     @classmethod
     def stop_all(cls):
+
+        shutdown_pool = ThreadPoolExecutor(10)
+        futures = []
+
         for runner in cls.runners:
-            cls.stop_one(runner_id=runner.runner_id)
+            futures.append(
+                shutdown_pool.submit(cls.stop_one, runner_id=runner.runner_id)
+            )
+
+        wait(futures)
 
     @classmethod
     def start_one(cls, runner: ProcessRunner) -> None:
