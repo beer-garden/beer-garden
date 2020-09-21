@@ -3,9 +3,8 @@ import logging
 from datetime import datetime
 from typing import List
 
-from beer_garden import router
 from brewtils.errors import PluginError
-from brewtils.models import Events, Garden, System, Operation, Event
+from brewtils.models import Events, Garden, System, Event
 
 import beer_garden.config as config
 import beer_garden.db.api as db
