@@ -140,7 +140,7 @@ class GardenAPI(BaseHandler):
                 response = await self.client(
                     Operation(
                         operation_type="GARDEN_SYNC",
-                        args=[garden_name],
+                        kwargs={"garden_name": garden_name},
                     )
                 )
 
@@ -266,7 +266,7 @@ class GardenListAPI(BaseHandler):
             if operation == "sync":
                 response = await self.client(
                     Operation(
-                        operation_type="GARDENS_SYNC",
+                        operation_type="GARDEN_SYNC",
                     )
                 )
 

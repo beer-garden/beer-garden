@@ -58,31 +58,20 @@ def local_garden() -> Garden:
     )
 
 
-def sync_garden(garden):
+def sync_garden():
 
-    if garden == config.get("garden.name"):
-        publish(
-            Event(
-                name=Events.GARDEN_UPDATED.name,
-                payload_type="Garden",
-                payload=Garden(
-                    name=garden,
-                    status="RUNNING",
-                    systems=get_systems(),
-                    namespaces=get_namespaces(),
-                ),
-            )
+    publish(
+        Event(
+            name=Events.GARDEN_UPDATED.name,
+            payload_type="Garden",
+            payload=Garden(
+                name=config.get("garden.name"),
+                status="RUNNING",
+                systems=get_systems(),
+                namespaces=get_namespaces(),
+            ),
         )
-    else:
-        router.forward(
-            Operation(operation_type="GARDENS_SYNC", target_garden_name=garden)
-        )
-
-
-def sync_gardens():
-
-    for garden in get_gardens():
-        sync_garden(garden.name)
+    )
 
 
 def update_garden_config(garden: Garden):

@@ -41,6 +41,31 @@ forward_processor = None
 gardens: Dict[str, Garden] = {}
 gardens_lock = threading.Lock()
 
+
+def route_garden_sync(garden_name: str = None):
+    # If a Garden Name is provided, determine where to route the request
+    if garden_name:
+        if garden_name == config.get("garden.name"):
+            beer_garden.garden.sync_garden()
+        else:
+            forward(
+                Operation(operation_type="GARDEN_SYNC", target_garden_name=garden_name)
+            )
+
+    else:
+        # Iterate over all gardens and forward the sync request
+        with gardens_lock:
+            for garden in gardens.values():
+                forward(
+                    Operation(
+                        operation_type="GARDEN_SYNC", target_garden_name=garden.name
+                    )
+                )
+
+        # Final sync runs just in case this doesn't have any children
+        beer_garden.garden.sync_garden()
+
+
 route_functions = {
     "REQUEST_CREATE": beer_garden.requests.process_request,
     "REQUEST_START": beer_garden.requests.start_request,
@@ -75,8 +100,7 @@ route_functions = {
     "GARDEN_UPDATE_STATUS": beer_garden.garden.update_garden_status,
     "GARDEN_UPDATE_CONFIG": beer_garden.garden.update_garden_config,
     "GARDEN_DELETE": beer_garden.garden.remove_garden,
-    "GARDEN_SYNC": beer_garden.garden.sync_garden,
-    "GARDENS_SYNC": beer_garden.garden.sync_gardens,
+    "GARDEN_SYNC": route_garden_sync,
     "PLUGIN_LOG_READ": beer_garden.log.get_plugin_log_config,
     "PLUGIN_LOG_READ_LEGACY": beer_garden.log.get_plugin_log_config_legacy,
     "PLUGIN_LOG_RELOAD": beer_garden.log.load_plugin_log_config,
