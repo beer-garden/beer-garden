@@ -56,11 +56,14 @@ def route_garden_sync(garden_name: str = None):
         # Iterate over all gardens and forward the sync request
         with gardens_lock:
             for garden in gardens.values():
-                forward(
-                    Operation(
-                        operation_type="GARDEN_SYNC", target_garden_name=garden.name
+                if garden.name == config.get("garden.name"):
+                    beer_garden.garden.sync_garden()
+                else:
+                    forward(
+                        Operation(
+                            operation_type="GARDEN_SYNC", target_garden_name=garden.name
+                        )
                     )
-                )
 
         # Final sync runs just in case this doesn't have any children
         beer_garden.garden.sync_garden()
