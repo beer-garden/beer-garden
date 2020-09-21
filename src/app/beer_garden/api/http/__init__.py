@@ -42,6 +42,7 @@ import beer_garden.events
 import beer_garden.log
 import beer_garden.router
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
+from beer_garden.api.http.client import SerializeHelper
 from beer_garden.api.http.processors import EventManager, websocket_publish
 from beer_garden.events import publish
 from beer_garden.events.processors import QueueListener
@@ -231,6 +232,7 @@ def _setup_tornado_app() -> Application:
         debug=app_config.debug_mode,
         cookie_secret=auth_config.token.secret,
         autoreload=False,
+        client=SerializeHelper(),
     )
 
 
