@@ -90,7 +90,7 @@ class Application(StoppableThread):
             )
 
         beer_garden.router.forward_processor = QueueListener(
-            action=beer_garden.router.forward
+            action=beer_garden.router.forward, name="forwarder"
         )
 
         self.entry_manager = beer_garden.api.entry_point.Manager()
@@ -256,13 +256,13 @@ class Application(StoppableThread):
         self.logger.info("Successfully shut down Beer-garden")
 
     def _setup_events_manager(self):
-        event_manager = FanoutProcessor()
+        event_manager = FanoutProcessor(name="event manager")
 
         # Forward all events down into the entry points
         event_manager.register(self.entry_manager, manage=False)
 
         # Register the callback processor
-        event_manager.register(QueueListener(action=garden_callbacks))
+        event_manager.register(QueueListener(action=garden_callbacks, name="callbacks"))
 
         # If necessary send all events to the parent garden
         http_event = config.get("parent.http")

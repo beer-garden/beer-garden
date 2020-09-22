@@ -72,7 +72,11 @@ class EntryPoint:
         self._logger = logging.getLogger(__name__)
         self._process = None
         self._ep_conn, self._mp_conn = Pipe()
-        self._event_listener = PipeListener(conn=self._mp_conn, action=event_callback)
+        self._event_listener = PipeListener(
+            conn=self._mp_conn,
+            action=event_callback,
+            name=f"{name} listener",
+        )
 
     def start(self) -> None:
         """Start the entry point process"""
