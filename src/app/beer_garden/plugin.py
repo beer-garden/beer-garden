@@ -3,6 +3,7 @@
 """This is the Plugin State Manager"""
 
 import logging
+import threading
 from datetime import datetime
 from typing import Tuple
 
@@ -101,7 +102,6 @@ def start(
         ),
         is_admin=True,
         priority=1,
-        wait_timeout=0,
     )
 
     return instance
@@ -139,7 +139,6 @@ def stop(
         ),
         is_admin=True,
         priority=1,
-        wait_timeout=0,
     )
 
     return instance
@@ -176,7 +175,6 @@ def initialize_logging(
         ),
         is_admin=True,
         priority=1,
-        wait_timeout=0,
     )
 
     return instance
@@ -233,7 +231,7 @@ def read_logs(
     system: System = None,
     start_line: int = None,
     end_line: int = None,
-    wait_timeout: float = -1,
+    wait_event: threading.Event = None,
 ) -> Request:
     """Read lines from an Instance's log file.
 
@@ -243,7 +241,7 @@ def read_logs(
         system: The System
         start_line: Start reading log file at
         end_line: Stop reading log file at
-        wait_timeout: Wait timeout for response
+        wait_event: Wait event for response
 
     Returns:
         Request object with logs as output
@@ -264,7 +262,7 @@ def read_logs(
             parameters={"start_line": start_line, "end_line": end_line},
         ),
         is_admin=True,
-        wait_timeout=wait_timeout,
+        wait_event=wait_event,
     )
 
     return request

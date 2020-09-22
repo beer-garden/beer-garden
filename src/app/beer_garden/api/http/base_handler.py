@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import datetime
 import re
 import socket
@@ -37,6 +38,15 @@ from beer_garden.errors import (
     RoutingRequestException,
     EndpointRemovedException,
 )
+
+
+async def event_wait(evt, timeout):
+    """Helper method to add a timeout to an asyncio wait"""
+    try:
+        await asyncio.wait_for(evt.wait(), timeout)
+    except asyncio.TimeoutError:
+        pass
+    return evt.is_set()
 
 
 class BaseHandler(AuthMixin, RequestHandler):

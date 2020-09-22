@@ -1,10 +1,17 @@
 # -*- coding: utf-8 -*-
-from brewtils.errors import ModelValidationError, RequestProcessingError
-from brewtils.models import Operation
+from asyncio import Event
+
+from brewtils.errors import (
+    ModelValidationError,
+    RequestProcessingError,
+    TimeoutExceededError,
+)
+from brewtils.models import Operation, Request
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.authorization import authenticated, Permissions
-from beer_garden.api.http.base_handler import BaseHandler
+import beer_garden.db.api as db
+from beer_garden.api.http.authorization import Permissions, authenticated
+from beer_garden.api.http.base_handler import BaseHandler, event_wait
 
 
 class InstanceAPI(BaseHandler):
@@ -234,12 +241,14 @@ class InstanceLogAPI(BaseHandler):
         elif end_line:
             end_line = int(end_line)
 
+        wait_event = Event()
+
         response = await self.client(
             Operation(
                 operation_type="INSTANCE_LOGS",
                 args=[instance_id],
                 kwargs={
-                    "wait_timeout": float(self.get_argument("timeout", default="-1")),
+                    "wait_event": wait_event,
                     "start_line": start_line,
                     "end_line": end_line,
                 },
@@ -247,13 +256,18 @@ class InstanceLogAPI(BaseHandler):
             serialize_kwargs={"to_string": False},
         )
 
-        if response["status"] == "ERROR":
-            raise RequestProcessingError(response["output"])
+        wait_timeout = float(self.get_argument("timeout", default="-1"))
+        if not await event_wait(wait_event, wait_timeout):
+            raise TimeoutExceededError("Timeout exceeded")
 
-        self.set_header("request_id", response["id"])
+        response = db.query_unique(Request, id=response["id"])
+
+        if response.status == "ERROR":
+            raise RequestProcessingError(response.output)
+
+        self.set_header("request_id", response.id)
         self.set_header("Content-Type", "text/plain; charset=UTF-8")
-
-        self.write(response["output"])
+        self.write(response.output)
 
 
 class InstanceQueuesAPI(BaseHandler):

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
 import threading
+from typing import Dict, Union
 
 import requests
 from brewtils.models import Events, Garden, Operation, Request, System
 from brewtils.schema_parser import SchemaParser
-from typing import Dict, Union
 
 import beer_garden
 import beer_garden.commands
@@ -290,6 +290,11 @@ def _pre_forward(operation: Operation) -> Operation:
         # unknown request
         operation.model.parent = None
         operation.model.has_parent = False
+
+        # Pull out and store the wait event, if it exists
+        wait_event = operation.kwargs.pop("wait_event", None)
+        if wait_event:
+            beer_garden.requests.request_map[operation.model.id] = wait_event
 
     return operation
 
