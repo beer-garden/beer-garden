@@ -206,7 +206,7 @@ class PluginManager(StoppableThread):
     @classmethod
     def stop_all(cls):
 
-        shutdown_pool = ThreadPoolExecutor(10)
+        shutdown_pool = ThreadPoolExecutor(1 if len(cls.runners) < 1 else len(cls.runners))
         futures = []
 
         for runner in cls.runners:
