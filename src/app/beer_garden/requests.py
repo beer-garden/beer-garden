@@ -534,7 +534,7 @@ def get_request(request_id: str = None, request: Request = None) -> Request:
         The Request
 
     """
-    request = request or db.query_unique(Request, id=request_id)
+    request = request or db.query_unique(Request, id=request_id, raise_missing=True)
     request.children = db.query(Request, filter_params={"parent": request})
 
     return request
