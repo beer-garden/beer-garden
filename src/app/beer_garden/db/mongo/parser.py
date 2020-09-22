@@ -32,8 +32,15 @@ class MongoParser(SchemaParser):
     )
 
     @classmethod
-    def _get_schema_name(cls, model):
-        if isinstance(model, beer_garden.db.mongo.models.MongoModel):
-            return model.brewtils_model.schema
-        else:
-            return super(MongoParser, cls)._get_schema_name(model)
+    def _get_schema_name(cls, obj):
+        if isinstance(obj, beer_garden.db.mongo.models.MongoModel):
+            return obj.brewtils_model.schema
+        return super(MongoParser, cls)._get_schema_name(obj)
+
+    @classmethod
+    def _single_item(cls, obj):
+        # Mongo documents are instances of Iterable, so the normal check from the
+        # SchemaParser will fail unless we tweak it
+        if isinstance(obj, beer_garden.db.mongo.models.MongoModel):
+            return True
+        return super(MongoParser, cls)._single_item(obj)
