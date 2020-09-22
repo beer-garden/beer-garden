@@ -111,7 +111,7 @@ def route(operation: Operation):
 
     if not operation.target_garden_name:
         raise UnknownGardenException(
-            f"Could not determine the garden for routing {operation!r}"
+            f"Could not determine the target garden for routing {operation!r}"
         )
 
     # If it's targeted at THIS garden, execute
