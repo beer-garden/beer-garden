@@ -363,6 +363,11 @@ def modify(obj: ModelItem, query=None, **kwargs) -> ModelItem:
     """
     mongo_obj = from_brewtils(obj)
 
+    # If any values are brewtils models those need to be converted
+    for key in kwargs:
+        if isinstance(kwargs[key], BaseModel):
+            kwargs[key] = from_brewtils(kwargs[key])
+
     mongo_obj.modify(query=query, **kwargs)
 
     return to_brewtils(mongo_obj)

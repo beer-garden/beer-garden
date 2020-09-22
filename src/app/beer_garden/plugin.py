@@ -4,13 +4,16 @@
 
 import logging
 from datetime import datetime
+from typing import Tuple
 
-from brewtils.models import Events, Instance, Request, RequestTemplate, System
+from brewtils.models import Event, Events, Instance, Request, RequestTemplate, System
 
+import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
-from beer_garden.events import publish_event
 import beer_garden.requests as requests
+from beer_garden.errors import NotFoundException
+from beer_garden.events import publish_event
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +31,7 @@ def initialize(
     instance: Instance = None,
     system: System = None,
     runner_id: str = None,
+    **_,
 ) -> Instance:
     """Initializes an instance.
 
@@ -40,27 +44,29 @@ def initialize(
     Returns:
         The updated Instance
     """
-    instance = instance or db.query_unique(Instance, id=instance_id)
-    system = system or db.query_unique(System, instances__contains=instance)
+    system, instance = _from_kwargs(
+        system=system, instance=instance, instance_id=instance_id
+    )
 
     logger.info(f"Initializing instance {system}[{instance}]")
 
     queue_spec = queue.create(instance, system)
 
-    instance = db.modify(
-        instance,
+    system = db.modify(
+        system,
+        query={"instances__name": instance.name},
         **{
-            "set__status": "INITIALIZING",
-            "set__status_info__heartbeat": datetime.utcnow(),
-            "set__metadata__runner_id": runner_id,
-            "set__queue_type": queue_spec["queue_type"],
-            "set__queue_info": queue_spec["queue_info"],
+            "set__instances__S__status": "INITIALIZING",
+            "set__instances__S__status_info__heartbeat": datetime.utcnow(),
+            "set__instances__S__metadata__runner_id": runner_id,
+            "set__instances__S__queue_type": queue_spec["queue_type"],
+            "set__instances__S__queue_info": queue_spec["queue_info"],
         },
     )
 
     start(instance=instance, system=system)
 
-    return instance
+    return system.get_instance_by_name(instance.name)
 
 
 @publish_event(Events.INSTANCE_STARTED)
@@ -79,8 +85,9 @@ def start(
     Returns:
         The updated Instance
     """
-    instance = instance or db.query_unique(Instance, id=instance_id)
-    system = system or db.query_unique(System, instances__contains=instance)
+    system, instance = _from_kwargs(
+        system=system, instance=instance, instance_id=instance_id
+    )
 
     logger.info(f"Starting instance {system}[{instance}]")
 
@@ -116,8 +123,9 @@ def stop(
     Returns:
         The updated Instance
     """
-    instance = instance or db.query_unique(Instance, id=instance_id)
-    system = system or db.query_unique(System, instances__contains=instance)
+    system, instance = _from_kwargs(
+        system=system, instance=instance, instance_id=instance_id
+    )
 
     logger.info(f"Stopping instance {system}[{instance}]")
 
@@ -152,8 +160,9 @@ def initialize_logging(
     Returns:
         The Instance
     """
-    instance = instance or db.query_unique(Instance, id=instance_id)
-    system = system or db.query_unique(System, instances__contains=instance)
+    system, instance = _from_kwargs(
+        system=system, instance=instance, instance_id=instance_id
+    )
 
     logger.debug(f"Initializing logging for instance {system}[{instance}]")
 
@@ -180,6 +189,7 @@ def update(
     system: System = None,
     new_status: str = None,
     metadata: dict = None,
+    **_,
 ) -> Instance:
     """Update an Instance status.
 
@@ -195,23 +205,26 @@ def update(
     Returns:
         The updated Instance
     """
-    instance = instance or db.query_unique(Instance, id=instance_id)
-    system = system or db.query_unique(System, instances__contains=instance)
+    system, instance = _from_kwargs(
+        system=system, instance=instance, instance_id=instance_id
+    )
 
     logger.debug(f"Updating instance {system}[{instance}]")
 
     updates = {}
 
     if new_status:
-        updates["set__status"] = new_status
-        updates["set__status_info__heartbeat"] = datetime.utcnow()
+        updates["set__instances__S__status"] = new_status
+        updates["set__instances__S__status_info__heartbeat"] = datetime.utcnow()
 
     if metadata:
         metadata_update = dict(instance.metadata)
         metadata_update.update(metadata)
-        updates["set__metadata"] = metadata_update
+        updates["set__instances__S__metadata"] = metadata_update
 
-    return db.modify(instance, **updates)
+    system = db.modify(system, query={"instances__name": instance.name}, **updates)
+
+    return system.get_instance_by_name(instance.name)
 
 
 def read_logs(
@@ -235,8 +248,9 @@ def read_logs(
     Returns:
         Request object with logs as output
     """
-    instance = instance or db.query_unique(Instance, id=instance_id)
-    system = system or db.query_unique(System, instances__contains=instance)
+    system, instance = _from_kwargs(
+        system=system, instance=instance, instance_id=instance_id
+    )
 
     logger.debug(f"Reading Logs from instance {system}[{instance}]")
 
@@ -254,3 +268,63 @@ def read_logs(
     )
 
     return request
+
+
+def _from_kwargs(
+    system: System = None,
+    instance: Instance = None,
+    system_id: str = None,
+    instance_name: str = None,
+    instance_id: str = None,
+    **_,
+) -> Tuple[System, Instance]:
+
+    if system and instance:
+        return system, instance
+
+    if not system:
+        if system_id:
+            system = db.query_unique(System, raise_missing=True, id=system_id)
+        elif instance:
+            system = db.query_unique(
+                System, raise_missing=True, instances__contains=instance
+            )
+        elif instance_id:
+            system = db.query_unique(
+                System, raise_missing=True, instances__id=instance_id
+            )
+        else:
+            raise NotFoundException("Unable to find System")
+
+    if not instance:
+        if instance_name:
+            instance = system.get_instance_by_name(instance_name)
+        elif instance_id:
+            instance = system.get_instance_by_id(instance_id)
+        else:
+            raise NotFoundException("Unable to find Instance")
+
+    return system, instance
+
+
+def handle_event(event: Event) -> None:
+    """Handle INSTANCE events
+
+    Args:
+        event: The event to handle
+    """
+    if event.garden != config.get("garden.name"):
+
+        if event.name == Events.INSTANCE_UPDATED.name:
+            if not event.payload_type:
+                logger.error(f"{event.name} error: no payload type ({event!r})")
+                return
+
+            try:
+                update(
+                    instance_id=event.payload.id,
+                    new_status=event.payload.status,
+                    metadata=event.payload.metadata,
+                )
+            except Exception as ex:
+                logger.error(f"{event.name} error: {ex} ({event!r})")
