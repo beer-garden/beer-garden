@@ -50,10 +50,6 @@ class TestCommand(object):
 
 
 class TestInstance(object):
-    @pytest.fixture(autouse=True)
-    def drop(self, mongo_conn):
-        Instance.drop_collection()
-
     def test_str(self):
         assert str(Instance(name="name")) == "name"
 

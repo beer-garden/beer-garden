@@ -7,7 +7,7 @@ from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers.polling import PollingObserver
 
 from beer_garden.events import publish
-from brewtils.models import Instance, Request
+from brewtils.models import Request, System
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.db.api as db
@@ -50,26 +50,27 @@ class PluginStatusMonitor(StoppableThread):
     def check_status(self):
         """Update instance status if necessary"""
 
-        for instance in db.query(Instance):
-            if self.stopped():
-                break
+        for system in db.query(System):
+            for instance in system.instances:
+                if self.stopped():
+                    break
 
-            last_heartbeat = instance.status_info["heartbeat"]
+                last_heartbeat = instance.status_info["heartbeat"]
 
-            if last_heartbeat:
-                if (
-                    instance.status == "RUNNING"
-                    and datetime.utcnow() - last_heartbeat >= self.timeout
-                ):
-                    instance.status = "UNRESPONSIVE"
-                    db.update(instance)
-                elif (
-                    instance.status
-                    in ["UNRESPONSIVE", "STARTING", "INITIALIZING", "UNKNOWN"]
-                    and datetime.utcnow() - last_heartbeat < self.timeout
-                ):
-                    instance.status = "RUNNING"
-                    db.update(instance)
+                if last_heartbeat:
+                    if (
+                        instance.status == "RUNNING"
+                        and datetime.utcnow() - last_heartbeat >= self.timeout
+                    ):
+                        instance.status = "UNRESPONSIVE"
+                        db.update(system)
+                    elif (
+                        instance.status
+                        in ["UNRESPONSIVE", "STARTING", "INITIALIZING", "UNKNOWN"]
+                        and datetime.utcnow() - last_heartbeat < self.timeout
+                    ):
+                        instance.status = "RUNNING"
+                        db.update(system)
 
 
 class MonitorFile:

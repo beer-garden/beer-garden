@@ -49,3 +49,10 @@ class RoutingRequestException(Exception):
     """Route requested is not valid"""
 
     pass
+
+
+# Database
+class NotFoundException(Exception):
+    """Something wasn't found"""
+
+    pass

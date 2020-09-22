@@ -32,7 +32,11 @@ from beer_garden.api.http.authorization import (
 )
 from beer_garden.api.http.client import ExecutorClient
 from beer_garden.api.http.metrics import http_api_latency_total
-from beer_garden.errors import RoutingRequestException, EndpointRemovedException
+from beer_garden.errors import (
+    NotFoundException,
+    RoutingRequestException,
+    EndpointRemovedException,
+)
 
 
 class BaseHandler(AuthMixin, RequestHandler):
@@ -55,6 +59,7 @@ class BaseHandler(AuthMixin, RequestHandler):
         RequestForbidden: {"status_code": 403},
         InvalidSignatureError: {"status_code": 403},
         DoesNotExist: {"status_code": 404, "message": "Resource does not exist"},
+        NotFoundException: {"status_code": 404},
         WaitExceededError: {"status_code": 408, "message": "Max wait time exceeded"},
         ConflictError: {"status_code": 409},
         NotUniqueError: {"status_code": 409, "message": "Resource already exists"},
