@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 import logging
+import threading
 from typing import Dict, List
 
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
-
-from beer_garden.events import publish_event
-from brewtils.models import Job, Events, Event
+from brewtils.models import Event, Events, Job
 
 import beer_garden
 import beer_garden.config as config
 import beer_garden.db.api as db
+from beer_garden.events import publish_event
 from beer_garden.requests import process_request
 
 logger = logging.getLogger(__name__)
@@ -35,8 +35,9 @@ def run_job(job_id, request_template):
     request_template.metadata["_bg_job_id"] = job_id
 
     # TODO - Possibly allow specifying blocking timeout on the job definition
-    # Want to wait for completion here
-    request = process_request(request_template, wait_timeout=-1)
+    wait_event = threading.Event()
+    request = process_request(request_template, wait_event=wait_event)
+    wait_event.wait()
 
     try:
         db_job = db.query_unique(Job, id=job_id)

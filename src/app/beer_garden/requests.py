@@ -2,9 +2,8 @@
 import json
 import logging
 import re
-from builtins import str
-from threading import Event
-from typing import List, Sequence, Union
+import threading
+from typing import Dict, List, Sequence, Union
 
 import pika.spec
 import six
@@ -12,6 +11,7 @@ import urllib3
 from brewtils.choices import parse
 from brewtils.errors import ConflictError, ModelValidationError, RequestPublishException
 from brewtils.models import Choices, Events, Request, RequestTemplate, System
+from builtins import str
 from requests import Session
 
 import beer_garden.config as config
@@ -22,7 +22,7 @@ from beer_garden.metrics import request_completed, request_created, request_star
 
 logger = logging.getLogger(__name__)
 
-request_map = {}
+request_map: Dict[str, threading.Event] = {}
 
 
 class RequestValidator(object):
@@ -555,7 +555,7 @@ def get_requests(**kwargs) -> List[Request]:
 
 def process_request(
     new_request: Union[Request, RequestTemplate],
-    wait_timeout: float = -1,
+    wait_event: threading.Event = None,
     is_admin: bool = False,
     priority: int = 0,
 ) -> Request:
@@ -563,10 +563,8 @@ def process_request(
 
     Args:
         new_request: The Request
-        wait_timeout: Float describing amount of time to wait for request to complete
-            <0: Wait forever
-            0: Don't wait at all
-            >0: Wait this long
+        wait_event: Event that will be added to the local event_map. Event will be set
+        when the request completes.
         is_admin: Flag indicating this request should be published on the admin queue
         priority: Number between 0 and 1, inclusive. High numbers equal higher priority
 
@@ -596,8 +594,8 @@ def process_request(
     if not request.command_type == "EPHEMERAL":
         request = create_request(request)
 
-    if wait_timeout != 0:
-        request_map[request.id] = Event()
+    if wait_event:
+        request_map[request.id] = wait_event
 
     try:
         logger.info(f"Publishing {request!r}")
@@ -615,7 +613,7 @@ def process_request(
         if not request.command_type == "EPHEMERAL":
             db.delete(request)
 
-        if wait_timeout != 0:
+        if wait_event:
             request_map.pop(request.id, None)
 
         raise RequestPublishException(
@@ -624,20 +622,6 @@ def process_request(
 
     # Metrics
     request_created(request)
-
-    # Wait for the request to complete, if requested
-    if wait_timeout != 0:
-        if wait_timeout < 0:
-            wait_timeout = None
-
-        try:
-            completed = request_map[request.id].wait(timeout=wait_timeout)
-            if not completed:
-                raise TimeoutError(f"Timeout exceeded for request {request.id}")
-
-            request = db.reload(request)
-        finally:
-            request_map.pop(request.id, None)
 
     return request
 
@@ -705,10 +689,6 @@ def complete_request(
 
     request = db.update(request)
 
-    # Required if the Entry Point spawns a wait Request
-    if str(request.id) in request_map:
-        request_map[str(request.id)].set()
-
     # Metrics
     request_completed(request)
 
@@ -741,6 +721,12 @@ def cancel_request(request_id: str = None, request: Request = None) -> Request:
 
 
 def handle_event(event):
+    # Whenever a request is completed check to see if this process is waiting for it
+    if event.name == Events.REQUEST_COMPLETED.name:
+        completion_event = request_map.pop(event.payload.id, None)
+        if completion_event:
+            completion_event.set()
+
     # Only care about local garden
     if event.garden == config.get("garden.name"):
 
@@ -768,8 +754,3 @@ def handle_event(event):
                 setattr(existing_request, field, getattr(event.payload, field))
 
             db.update(existing_request)
-
-    # Required if the main process spawns a wait Request
-    if event.name == Events.REQUEST_COMPLETED.name:
-        if str(event.payload.id) in request_map:
-            request_map[str(event.payload.id)].set()
