@@ -648,7 +648,7 @@ class Garden(MongoModel, Document):
 
     def deep_save(self):
         for system in self.systems:
-            system.deep_save()
+            system.save()
 
         self.save()
 
