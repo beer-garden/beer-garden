@@ -446,11 +446,11 @@ class RequestListAPI(BaseHandler):
                 raise TimeoutExceededError("Timeout exceeded")
 
             # Reload to get the completed request
-            created_request = db.query_unique(
-                Request, id=created_request["id"], raise_missing=True
+            response = await self.client(
+                Operation(operation_type="REQUEST_READ", args=[created_request["id"]])
             )
-
-        response = SchemaParser.serialize_request(created_request)
+        else:
+            response = SchemaParser.serialize_request(created_request)
 
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")

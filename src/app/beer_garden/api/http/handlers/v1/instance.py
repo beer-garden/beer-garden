@@ -6,10 +6,9 @@ from brewtils.errors import (
     RequestProcessingError,
     TimeoutExceededError,
 )
-from brewtils.models import Operation, Request
+from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
-import beer_garden.db.api as db
 from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler, event_wait
 
@@ -260,14 +259,17 @@ class InstanceLogAPI(BaseHandler):
         if not await event_wait(wait_event, wait_timeout):
             raise TimeoutExceededError("Timeout exceeded")
 
-        response = db.query_unique(Request, id=response["id"])
+        response = await self.client(
+            Operation(operation_type="REQUEST_READ", args=[response["id"]]),
+            serialize_kwargs={"to_string": False},
+        )
 
-        if response.status == "ERROR":
-            raise RequestProcessingError(response.output)
+        if response["status"] == "ERROR":
+            raise RequestProcessingError(response["output"])
 
-        self.set_header("request_id", response.id)
+        self.set_header("request_id", response["id"])
         self.set_header("Content-Type", "text/plain; charset=UTF-8")
-        self.write(response.output)
+        self.write(response["output"])
 
 
 class InstanceQueuesAPI(BaseHandler):
