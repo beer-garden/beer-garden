@@ -41,14 +41,16 @@ gardens: Dict[str, Garden] = {}
 gardens_lock = threading.Lock()
 
 
-def route_garden_sync(garden_name: str = None):
+def route_garden_sync(target_garden_name: str = None):
     # If a Garden Name is provided, determine where to route the request
-    if garden_name:
-        if garden_name == config.get("garden.name"):
+    if target_garden_name:
+        if target_garden_name == config.get("garden.name"):
             beer_garden.garden.sync_garden()
         else:
             forward(
-                Operation(operation_type="GARDEN_SYNC", target_garden_name=garden_name)
+                Operation(
+                    operation_type="GARDEN_SYNC", target_garden_name=target_garden_name
+                )
             )
 
     else:
@@ -63,9 +65,6 @@ def route_garden_sync(garden_name: str = None):
                             operation_type="GARDEN_SYNC", target_garden_name=garden.name
                         )
                     )
-
-        # Final sync runs just in case this doesn't have any children
-        beer_garden.garden.sync_garden()
 
 
 route_functions = {

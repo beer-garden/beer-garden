@@ -140,7 +140,7 @@ class GardenAPI(BaseHandler):
                 response = await self.client(
                     Operation(
                         operation_type="GARDEN_SYNC",
-                        kwargs={"garden_name": garden_name},
+                        kwargs={"target_garden_name": garden_name},
                     )
                 )
 

@@ -61,7 +61,7 @@ def sync_garden():
 
     publish(
         Event(
-            name=Events.GARDEN_UPDATED.name,
+            name=Events.GARDEN_SYNC.name,
             payload_type="Garden",
             payload=Garden(
                 name=config.get("garden.name"),
@@ -175,6 +175,7 @@ def handle_event(event):
             Events.GARDEN_STARTED.name,
             Events.GARDEN_UPDATED.name,
             Events.GARDEN_STOPPED.name,
+            Events.GARDEN_SYNC.name,
         ):
             # Only do stuff for direct children
             if event.payload.name == event.garden:
