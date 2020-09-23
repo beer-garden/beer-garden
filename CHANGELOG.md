@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+## 2.4.16
+9/23/20
+Brew-view 2.4.19, Bartender 2.4.7, BG-utils 2.4.10
+
+### Bug Fixes
+- Removed mongo model caching from Pruner. Releasing memory once the delete is completed (#604)
+
 ## 2.4.15
 2/20/20
 Brew-view 2.4.19, Bartender 2.4.6, BG-utils 2.4.10
