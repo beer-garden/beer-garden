@@ -27,16 +27,15 @@ import beer_garden.config as config
 import beer_garden.db.mongo.models
 from beer_garden.api.http.authorization import (
     AuthMixin,
-    coalesce_permissions,
-    bearer_auth,
     basic_auth,
+    bearer_auth,
+    coalesce_permissions,
 )
-from beer_garden.api.http.client import ExecutorClient
 from beer_garden.api.http.metrics import http_api_latency_total
 from beer_garden.errors import (
+    EndpointRemovedException,
     NotFoundException,
     RoutingRequestException,
-    EndpointRemovedException,
 )
 
 
@@ -131,8 +130,9 @@ class BaseHandler(AuthMixin, RequestHandler):
             to_return = to_return.replace(mongo_id, "<ID>")
         return to_return
 
-    def initialize(self):
-        self.client = ExecutorClient()
+    @property
+    def client(self):
+        return self.settings["client"]
 
     def prepare(self):
         """Called before each verb handler"""
