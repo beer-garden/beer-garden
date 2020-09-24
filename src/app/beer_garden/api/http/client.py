@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+from inspect import isawaitable
 
 import six
 from brewtils.models import BaseModel
@@ -12,6 +13,10 @@ import beer_garden.router
 class SerializeHelper(object):
     async def __call__(self, *args, serialize_kwargs=None, **kwargs):
         result = beer_garden.router.route(*args, **kwargs)
+
+        # Await any coroutines
+        if isawaitable(result):
+            result = await result
 
         # Handlers overwhelmingly just write the response so default to serializing
         serialize_kwargs = serialize_kwargs or {}
