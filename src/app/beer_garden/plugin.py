@@ -18,7 +18,7 @@ import beer_garden.db.mongo.motor as moto
 import beer_garden.queue.api as queue
 import beer_garden.requests as requests
 from beer_garden.errors import NotFoundException
-from beer_garden.events import publish_event
+from beer_garden.events import publish_event, publish_event_async
 
 logger = logging.getLogger(__name__)
 
@@ -305,6 +305,7 @@ def read_logs(
     return request
 
 
+@publish_event_async(Events.INSTANCE_UPDATED)
 async def update_async(
     instance_id: str = None,
     instance: Instance = None,
