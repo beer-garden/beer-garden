@@ -23,8 +23,8 @@ class SerializeHelper(object):
         if "to_string" not in serialize_kwargs:
             serialize_kwargs["to_string"] = True
 
-        # We're not going to ever double-serialize a string
-        if isinstance(result, six.string_types):
+        # Don't serialize if that's not desired
+        if serialize_kwargs.get("return_raw") or isinstance(result, six.string_types):
             return result
 
         if self.json_dump(result):
