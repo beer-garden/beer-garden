@@ -149,11 +149,7 @@ class InstanceAPI(BaseHandler):
 
             elif operation == "heartbeat":
                 response = await self.client(
-                    Operation(
-                        operation_type="INSTANCE_UPDATE",
-                        args=[instance_id],
-                        kwargs={"new_status": "RUNNING"},
-                    )
+                    Operation(operation_type="INSTANCE_HEARTBEAT", args=[instance_id])
                 )
 
             elif operation == "replace":

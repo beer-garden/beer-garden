@@ -189,6 +189,35 @@ def update(
     return system.get_instance_by_name(instance.name)
 
 
+def heartbeat(
+    instance_id: str = None,
+    instance: Instance = None,
+    system: System = None,
+    **_,
+) -> Instance:
+    """Instance heartbeat
+
+    Args:
+        instance_id: The Instance ID
+        instance: The Instance
+        system: The System
+
+    Returns:
+        The updated Instance
+    """
+    system, instance = _from_kwargs(
+        system=system, instance=instance, instance_id=instance_id
+    )
+
+    system = db.modify(
+        system,
+        query={"instances__name": instance.name},
+        set__instances__S__status_info__heartbeat=datetime.utcnow(),
+    )
+
+    return system.get_instance_by_name(instance.name)
+
+
 def initialize_logging(
     instance_id: str = None,
     instance: Instance = None,
