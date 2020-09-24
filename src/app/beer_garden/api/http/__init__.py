@@ -38,6 +38,7 @@ import beer_garden.api.http.handlers.misc as misc
 import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.vbeta as vbeta
 import beer_garden.config as config
+import beer_garden.db.mongo.motor as moto
 import beer_garden.events
 import beer_garden.log
 import beer_garden.requests
@@ -139,6 +140,9 @@ def _setup_application():
     global io_loop, tornado_app, public_url, server, client_ssl
 
     io_loop = IOLoop.current()
+
+    # Set up motor connection
+    moto.create_connection(db_config=beer_garden.config.get("db"))
 
     auth_config = config.get("auth")
     if not auth_config.token.secret:
