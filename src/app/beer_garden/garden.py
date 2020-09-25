@@ -31,14 +31,22 @@ def get_garden(garden_name: str) -> Garden:
     return db.query_unique(Garden, name=garden_name)
 
 
-def get_gardens() -> List[Garden]:
+def get_gardens(include_local: bool = True) -> List[Garden]:
     """Retrieve list of all Gardens
+
+    Args:
+        include_local: Also include the local garden
 
     Returns:
         All known gardens
 
     """
-    return [local_garden()] + db.query(Garden)
+    gardens = db.query(Garden)
+
+    if include_local:
+        gardens += [local_garden()]
+
+    return gardens
 
 
 def local_garden() -> Garden:
