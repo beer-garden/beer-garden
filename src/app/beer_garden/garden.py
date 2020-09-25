@@ -4,13 +4,13 @@ from datetime import datetime
 from typing import List
 
 from brewtils.errors import PluginError
-from brewtils.models import Events, Garden, System
+from brewtils.models import Events, Garden, System, Event
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-from beer_garden.events import publish_event
+from beer_garden.events import publish_event, publish
 from beer_garden.namespace import get_namespaces
-from beer_garden.systems import get_systems
+from beer_garden.systems import get_systems, remove_system
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +57,22 @@ def local_garden() -> Garden:
     )
 
 
+def sync_garden():
+
+    publish(
+        Event(
+            name=Events.GARDEN_SYNC.name,
+            payload_type="Garden",
+            payload=Garden(
+                name=config.get("garden.name"),
+                status="RUNNING",
+                systems=get_systems(),
+                namespaces=get_namespaces(),
+            ),
+        )
+    )
+
+
 def update_garden_config(garden: Garden):
     db_garden = db.query_unique(Garden, id=garden.id)
     db_garden.connection_params = garden.connection_params
@@ -96,6 +112,10 @@ def remove_garden(garden_name: str) -> None:
 
     """
     garden = db.query_unique(Garden, name=garden_name)
+
+    for system in garden.systems:
+        remove_system(system.id)
+
     db.delete(garden)
     return garden
 
@@ -150,28 +170,37 @@ def handle_event(event):
     This method should NOT update the routing module. Let its handler worry about that!
     """
     if event.garden != config.get("garden.name"):
+
         if event.name in (
             Events.GARDEN_STARTED.name,
             Events.GARDEN_UPDATED.name,
             Events.GARDEN_STOPPED.name,
+            Events.GARDEN_SYNC.name,
         ):
             # Only do stuff for direct children
             if event.payload.name == event.garden:
                 existing_garden = get_garden(event.payload.name)
 
+                for system in event.payload.systems:
+                    system.local = False
+
                 if existing_garden is None:
                     event.payload.connection_type = None
                     event.payload.connection_params = {}
 
-                    for system in event.payload.systems:
-                        system.local = False
-
-                    create_garden(event.payload)
+                    garden = create_garden(event.payload)
                 else:
                     for attr in ("status", "status_info", "namespaces", "systems"):
                         setattr(existing_garden, attr, getattr(event.payload, attr))
 
-                    for system in existing_garden.systems:
-                        system.local = False
+                    garden = update_garden(existing_garden)
 
-                    update_garden(existing_garden)
+                # Publish update events for UI to dynamically load changes for Systems
+                for system in garden.systems:
+                    publish(
+                        Event(
+                            name=Events.SYSTEM_UPDATED.name,
+                            payload_type="System",
+                            payload=system,
+                        )
+                    )

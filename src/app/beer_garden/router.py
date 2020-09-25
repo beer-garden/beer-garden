@@ -20,7 +20,7 @@ import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
-from beer_garden.garden import get_gardens, local_garden
+from beer_garden.garden import get_gardens, get_garden, local_garden
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +30,7 @@ routable_operations = [
     "INSTANCE_STOP",
     "REQUEST_CREATE",
     "SYSTEM_DELETE",
+    "GARDENS_SYNC",
 ]
 
 # Processor that will be used for forwarding
@@ -38,6 +39,33 @@ forward_processor = None
 # Dict of garden_name -> garden
 gardens: Dict[str, Garden] = {}
 gardens_lock = threading.Lock()
+
+
+def route_garden_sync(target_garden_name: str = None):
+    # If a Garden Name is provided, determine where to route the request
+    if target_garden_name:
+        if target_garden_name == config.get("garden.name"):
+            beer_garden.garden.sync_garden()
+        else:
+            forward(
+                Operation(
+                    operation_type="GARDEN_SYNC", target_garden_name=target_garden_name
+                )
+            )
+
+    else:
+        # Iterate over all gardens and forward the sync request
+        with gardens_lock:
+            for garden in gardens.values():
+                if garden.name == config.get("garden.name"):
+                    beer_garden.garden.sync_garden()
+                else:
+                    forward(
+                        Operation(
+                            operation_type="GARDEN_SYNC", target_garden_name=garden.name
+                        )
+                    )
+
 
 route_functions = {
     "REQUEST_CREATE": beer_garden.requests.process_request,
@@ -73,6 +101,7 @@ route_functions = {
     "GARDEN_UPDATE_STATUS": beer_garden.garden.update_garden_status,
     "GARDEN_UPDATE_CONFIG": beer_garden.garden.update_garden_config,
     "GARDEN_DELETE": beer_garden.garden.remove_garden,
+    "GARDEN_SYNC": route_garden_sync,
     "PLUGIN_LOG_READ": beer_garden.log.get_plugin_log_config,
     "PLUGIN_LOG_READ_LEGACY": beer_garden.log.get_plugin_log_config_legacy,
     "PLUGIN_LOG_RELOAD": beer_garden.log.load_plugin_log_config,
@@ -106,7 +135,8 @@ def route(operation: Operation):
         )
 
     # Determine which garden the operation is targeting
-    operation.target_garden_name = _determine_target_garden(operation)
+    if not operation.target_garden_name:
+        operation.target_garden_name = _determine_target_garden(operation)
 
     if not operation.target_garden_name:
         raise UnknownGardenException(
@@ -173,6 +203,9 @@ def forward(operation: Operation):
         UnknownGardenException: The specified target garden is unknown
     """
     target_garden = gardens.get(operation.target_garden_name)
+
+    if not target_garden:
+        target_garden = get_garden(operation.target_garden_name)
 
     if not target_garden:
         raise UnknownGardenException(
@@ -255,7 +288,10 @@ def handle_event(event):
             gardens[event.payload.name] = event.payload
 
         elif event.name == Events.GARDEN_REMOVED.name:
-            del gardens[event.payload.name]
+            try:
+                del gardens[event.payload.name]
+            except KeyError:
+                pass
 
 
 def _pre_route(operation: Operation) -> Operation:
