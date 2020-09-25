@@ -64,9 +64,9 @@ def create_system(system: System) -> System:
     system = db.create(system)
 
     # Also need to let the routing module know
-    from beer_garden.router import update_routing
+    from beer_garden.router import add_routing_system
 
-    update_routing(update_system=system)
+    add_routing_system(system=system)
 
     return system
 
@@ -146,9 +146,9 @@ def update_system(
     system = db.modify(system, **updates)
 
     # Also need to let the routing module know
-    from beer_garden.router import update_routing
+    from beer_garden.router import add_routing_system
 
-    update_routing(existing_id=system.id, update_system=system)
+    add_routing_system(system=system)
 
     return system
 
@@ -191,9 +191,9 @@ def remove_system(system_id: str = None, system: System = None) -> System:
     db.delete(system)
 
     # Also need to let the routing module know
-    from beer_garden.router import update_routing
+    from beer_garden.router import remove_routing_system
 
-    update_routing(existing_id=system.id)
+    remove_routing_system(system=system)
 
     return system
 

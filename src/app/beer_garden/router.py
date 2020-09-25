@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import threading
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 import requests
 from brewtils.models import Events, Garden, Operation, Request, System
@@ -20,7 +20,8 @@ import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
-from beer_garden.garden import get_gardens, get_garden, local_garden
+from beer_garden.events.processors import QueueListener
+from beer_garden.garden import get_garden, get_gardens
 
 logger = logging.getLogger(__name__)
 
@@ -34,11 +35,17 @@ routable_operations = [
 ]
 
 # Processor that will be used for forwarding
-forward_processor = None
+forward_processor: Optional[QueueListener] = None
 
-# Dict of garden_name -> garden
-gardens: Dict[str, Garden] = {}
-gardens_lock = threading.Lock()
+# Used for actually sending operations to other gardens
+garden_lock = threading.Lock()
+gardens: Dict[str, Garden] = {}  # garden_name -> garden
+
+# Used for determining WHERE to route an operation
+routing_lock = threading.Lock()
+system_name_routes: Dict[str, str] = {}
+system_id_routes: Dict[str, str] = {}
+instance_id_routes: Dict[str, str] = {}
 
 
 def route_garden_sync(target_garden_name: str = None):
@@ -55,7 +62,7 @@ def route_garden_sync(target_garden_name: str = None):
 
     else:
         # Iterate over all gardens and forward the sync request
-        with gardens_lock:
+        with garden_lock:
             for garden in gardens.values():
                 if garden.name == config.get("garden.name"):
                     beer_garden.garden.sync_garden()
@@ -240,46 +247,58 @@ def setup_routing():
     It will then query the database for all local systems and add those to the
     dictionaries as well.
     """
-    local_garden_name = config.get("garden.name")
+    for system in db.query(System, filter_params={"local": True}):
+        add_routing_system(system)
 
-    # We do NOT want to load local garden information from the database as the local
-    # name could have changed
-    for garden in get_gardens():
-        if garden.name != local_garden_name:
+    # Don't add the local garden
+    for garden in get_gardens(include_local=False):
+        if garden.name != config.get("garden.name"):
+            for system in garden.systems:
+                add_routing_system(system=system, garden_name=garden.name)
+
             if (
                 garden.connection_type is not None
                 and garden.connection_type.casefold() != "local"
             ):
-                gardens[garden.name] = garden
+                with garden_lock:
+                    gardens[garden.name] = garden
             else:
                 logger.warning(f"Garden with invalid connection info: {garden!r}")
 
-    # Now add the "local" garden
-    gardens[local_garden_name] = local_garden()
-    logger.debug("Routing setup complete")
 
-
-def update_routing(garden_name=None, existing_id=None, update_system=None):
+def add_routing_system(system=None, garden_name=None):
     """Update the gardens used for routing"""
     # Default to local garden name
     garden_name = garden_name or config.get("garden.name")
 
-    with gardens_lock:
-        index = None
-        for i, system in enumerate(gardens[garden_name].systems):
-            if system.id == existing_id:
-                index = i
-                break
+    with routing_lock:
+        system_name_routes[str(system)] = garden_name
+        system_id_routes[system.id] = garden_name
 
-        if index is not None:
-            gardens[garden_name].systems.pop(index)
+        for instance in system.instances:
+            instance_id_routes[instance.id] = garden_name
 
-        if update_system:
-            gardens[garden_name].systems.append(update_system)
+
+def remove_routing_system(system=None):
+    """Update the gardens used for routing"""
+    with routing_lock:
+        del system_name_routes[str(system)]
+        del system_id_routes[system.id]
+
+        for instance in system.instances:
+            del instance_id_routes[instance.id]
 
 
 def handle_event(event):
     """Handle events"""
+    # Event handling is not fast enough to deal with system changes arising from the
+    # local garden, so only handle child gardens
+    if event.garden != config.get("garden.name"):
+        if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
+            add_routing_system(system=event.payload, garden_name=event.garden)
+        elif event.name == Events.SYSTEM_REMOVED.name:
+            remove_routing_system(system=event.payload)
+
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.
     # It's *those* events we want to act on here, not the "raw" downstream ones.
@@ -359,25 +378,14 @@ def _determine_target_garden(operation: Operation) -> str:
         return config.get("garden.name")
 
     # Otherwise, each operation needs to be "parsed"
-    target_system = None
-
     if operation.operation_type in ("SYSTEM_DELETE", "SYSTEM_RELOAD", "SYSTEM_UPDATE"):
-        target_system = db.query_unique(System, id=operation.args[0])
-
-        operation.kwargs["system"] = target_system
+        return _system_id_lookup(operation.args[0])
 
     elif "INSTANCE" in operation.operation_type:
         if "system_id" in operation.kwargs and "instance_name" in operation.kwargs:
-            target_system = db.query_unique(System, id=operation.kwargs["system_id"])
-            target_instance = target_system.get_instance_by_name(
-                operation.kwargs["instance_name"]
-            )
+            return _system_id_lookup(operation.kwargs["system_id"])
         else:
-            target_system = db.query_unique(System, instances__id=operation.args[0])
-            target_instance = target_system.get_instance_by_id(operation.args[0])
-
-        operation.kwargs["instance"] = target_instance
-        operation.kwargs["system"] = target_system
+            return _instance_id_lookup(operation.args[0])
 
     elif operation.operation_type == "REQUEST_CREATE":
         target_system = System(
@@ -385,25 +393,24 @@ def _determine_target_garden(operation: Operation) -> str:
             name=operation.model.system,
             version=operation.model.system_version,
         )
+        return _system_name_lookup(target_system)
 
     elif operation.operation_type.startswith("REQUEST"):
         request = db.query_unique(Request, id=operation.args[0])
         operation.kwargs["request"] = request
 
-        target_system = System(
-            namespace=request.namespace,
-            name=request.system,
-            version=request.system_version,
-        )
+        return config.get("garden.name")
 
     elif operation.operation_type == "QUEUE_DELETE":
         # Need to deconstruct the queue name
         parts = operation.args[0].split(".")
         version = parts[2].replace("-", ".")
 
-        target_system = System(namespace=parts[0], name=parts[1], version=version)
+        return _system_name_lookup(
+            System(namespace=parts[0], name=parts[1], version=version)
+        )
 
-    return _garden_name_lookup(target_system)
+    raise Exception(f"Bad operation type {operation.operation_type}")
 
 
 def _forward_http(operation: Operation, conn_info: dict):
@@ -437,11 +444,18 @@ def _forward_http(operation: Operation, conn_info: dict):
         )
 
 
-def _garden_name_lookup(system: Union[str, System]) -> str:
+def _system_name_lookup(system: Union[str, System]) -> str:
     system_name = str(system)
 
-    with gardens_lock:
-        for garden in gardens.values():
-            for system in garden.systems:
-                if str(system) == system_name:
-                    return garden.name
+    with routing_lock:
+        return system_name_routes[system_name]
+
+
+def _system_id_lookup(system_id: str) -> str:
+    with routing_lock:
+        return system_id_routes[system_id]
+
+
+def _instance_id_lookup(instance_id: str) -> str:
+    with routing_lock:
+        return instance_id_routes[instance_id]

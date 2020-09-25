@@ -306,13 +306,13 @@ class Application(StoppableThread):
     def _publish_update(event: Events):
         # Want to have most current system list when publishing, so use the garden
         # dict from the routing module
-        system_lists = (g.systems for g in beer_garden.router.gardens.values())
+        # system_lists = (g.systems for g in beer_garden.router.gardens.values())
 
         garden = Garden(
             name=config.get("garden.name"),
             status="RUNNING" if event == Events.GARDEN_STARTED else "STOPPED",
             namespaces=beer_garden.namespace.get_namespaces(),
-            systems=list(flatten(system_lists)),
+            # systems=list(flatten(system_lists)),
         )
 
         publish(Event(name=event.name, payload_type="Garden", payload=garden))
