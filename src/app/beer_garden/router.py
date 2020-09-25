@@ -52,7 +52,7 @@ def route_garden_sync(target_garden_name: str = None):
     # If a Garden Name is provided, determine where to route the request
     if target_garden_name:
         if target_garden_name == config.get("garden.name"):
-            beer_garden.garden.sync_garden()
+            beer_garden.garden.publish_garden()
         else:
             forward(
                 Operation(
@@ -65,7 +65,7 @@ def route_garden_sync(target_garden_name: str = None):
         with garden_lock:
             for garden in gardens.values():
                 if garden.name == config.get("garden.name"):
-                    beer_garden.garden.sync_garden()
+                    beer_garden.garden.publish_garden()
                 else:
                     forward(
                         Operation(

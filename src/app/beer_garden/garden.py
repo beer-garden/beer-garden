@@ -65,15 +65,22 @@ def local_garden() -> Garden:
     )
 
 
-def sync_garden():
+def publish_garden(
+    event_name: str = Events.GARDEN_SYNC.name, status: str = "RUNNING"
+) -> None:
+    """Publish a Garden event
 
+    Args:
+        event_name: The event name to use
+        status: The garden status
+    """
     publish(
         Event(
-            name=Events.GARDEN_SYNC.name,
+            name=event_name,
             payload_type="Garden",
             payload=Garden(
                 name=config.get("garden.name"),
-                status="RUNNING",
+                status=status,
                 systems=get_systems(),
                 namespaces=get_namespaces(),
             ),

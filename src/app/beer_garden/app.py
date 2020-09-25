@@ -6,9 +6,8 @@ from functools import partial
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils import EasyClient
-from brewtils.models import Event, Events, Garden
+from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
-from more_itertools import flatten
 from pytz import utc
 
 import beer_garden.api
@@ -20,13 +19,12 @@ import beer_garden.garden
 import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
-from beer_garden.events import publish
 from beer_garden.events.handlers import garden_callbacks
+from beer_garden.events.parent_procesors import HttpParentUpdater
 from beer_garden.events.processors import (
     FanoutProcessor,
     QueueListener,
 )
-from beer_garden.events.parent_procesors import HttpParentUpdater
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
@@ -204,7 +202,9 @@ class Application(StoppableThread):
         self.scheduler.start()
 
         self.logger.debug("Publishing startup event")
-        self._publish_update(Events.GARDEN_STARTED)
+        beer_garden.garden.publish_garden(
+            event_name=Events.GARDEN_STARTED.name, status="RUNNING"
+        )
 
         self.logger.debug("Starting Plugin-logger Monitor")
         self.plugin_logger_observer = MonitorFile(
@@ -222,7 +222,9 @@ class Application(StoppableThread):
         )
 
         self.logger.debug("Publishing shutdown event")
-        self._publish_update(Events.GARDEN_STOPPED)
+        beer_garden.garden.publish_garden(
+            event_name=Events.GARDEN_STOPPED.name, status="STOPPED"
+        )
 
         if self.scheduler.running:
             self.logger.debug("Pausing scheduler - no more jobs will be run")
@@ -276,7 +278,9 @@ class Application(StoppableThread):
             skip_events = config.get("parent.skip_events")
 
             def reconnect_action():
-                self._publish_update(Events.GARDEN_STARTED)
+                beer_garden.garden.publish_garden(
+                    event_name=Events.GARDEN_STARTED.name, status="RUNNING"
+                )
 
             event_manager.register(
                 HttpParentUpdater(
@@ -301,21 +305,6 @@ class Application(StoppableThread):
             job_defaults=job_defaults,
             timezone=utc,
         )
-
-    @staticmethod
-    def _publish_update(event: Events):
-        # Want to have most current system list when publishing, so use the garden
-        # dict from the routing module
-        # system_lists = (g.systems for g in beer_garden.router.gardens.values())
-
-        garden = Garden(
-            name=config.get("garden.name"),
-            status="RUNNING" if event == Events.GARDEN_STARTED else "STOPPED",
-            namespaces=beer_garden.namespace.get_namespaces(),
-            # systems=list(flatten(system_lists)),
-        )
-
-        publish(Event(name=event.name, payload_type="Garden", payload=garden))
 
 
 class HelperThread(object):
