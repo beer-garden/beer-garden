@@ -152,6 +152,7 @@ def update(
     system: System = None,
     new_status: str = None,
     metadata: dict = None,
+    update_heartbeat: bool = True,
     **_,
 ) -> Instance:
     """Update an Instance status.
@@ -164,6 +165,7 @@ def update(
         system: The System
         new_status: The new status
         metadata: New metadata
+        update_heartbeat: Set the heartbeat to the current time
 
     Returns:
         The updated Instance
@@ -178,6 +180,8 @@ def update(
 
     if new_status:
         updates["set__instances__S__status"] = new_status
+
+    if update_heartbeat:
         updates["set__instances__S__status_info__heartbeat"] = datetime.utcnow()
 
     if metadata:
