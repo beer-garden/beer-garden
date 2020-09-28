@@ -412,12 +412,21 @@ class StatusMonitor(StoppableThread):
                         instance.status == "RUNNING"
                         and datetime.utcnow() - last_heartbeat >= self.timeout
                     ):
-                        instance.status = "UNRESPONSIVE"
-                        db.update(system)
+                        update(
+                            system=system,
+                            instance=instance,
+                            new_status="UNRESPONSIVE",
+                            update_heartbeat=False,
+                        )
+
                     elif (
                         instance.status
                         in ["UNRESPONSIVE", "STARTING", "INITIALIZING", "UNKNOWN"]
                         and datetime.utcnow() - last_heartbeat < self.timeout
                     ):
-                        instance.status = "RUNNING"
-                        db.update(system)
+                        update(
+                            system=system,
+                            instance=instance,
+                            new_status="RUNNING",
+                            update_heartbeat=False,
+                        )

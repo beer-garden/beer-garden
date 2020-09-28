@@ -81,14 +81,13 @@ class TestStatusMonitor(object):
         monkeypatch.setattr(monitor, "stopped", stopped_mock)
 
         update_mock = Mock()
-        monkeypatch.setattr(beer_garden.plugin.db, "update", update_mock)
+        monkeypatch.setattr(beer_garden.plugin, "update", update_mock)
 
         monkeypatch.setattr(
             beer_garden.plugin.db, "query", Mock(return_value=[bg_system])
         )
 
         monitor.check_status()
-        assert bg_instance.status == "UNRESPONSIVE"
         assert update_mock.called is True
 
     def test_mark_as_running(self, monkeypatch, monitor, bg_system, bg_instance, ts_dt):
@@ -96,7 +95,7 @@ class TestStatusMonitor(object):
         monkeypatch.setattr(monitor, "stopped", stopped_mock)
 
         update_mock = Mock()
-        monkeypatch.setattr(beer_garden.plugin.db, "update", update_mock)
+        monkeypatch.setattr(beer_garden.plugin, "update", update_mock)
 
         bg_instance.status = "UNRESPONSIVE"
         monkeypatch.setattr(
@@ -108,5 +107,4 @@ class TestStatusMonitor(object):
         )
 
         monitor.check_status()
-        assert bg_instance.status == "RUNNING"
         assert update_mock.called is True
