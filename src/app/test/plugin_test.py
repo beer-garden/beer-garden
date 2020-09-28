@@ -3,23 +3,23 @@ import pytest
 from mock import Mock, patch
 
 import beer_garden.monitor
-from beer_garden.monitor import PluginStatusMonitor
+from beer_garden.plugin import StatusMonitor
 
 
 @pytest.fixture
 def queue_mock(monkeypatch):
     queue = Mock()
-    monkeypatch.setattr(beer_garden.monitor, "queue", queue)
+    monkeypatch.setattr(beer_garden.plugin, "queue", queue)
     return queue
 
 
 @pytest.fixture
 def monitor():
-    return PluginStatusMonitor()
+    return StatusMonitor()
 
 
 @patch("time.sleep", Mock())
-class TestPluginStatusMonitor(object):
+class TestStatusMonitor(object):
     def test_run_stopped(self, monkeypatch, monitor):
         check_mock = Mock()
         request_mock = Mock()
@@ -70,7 +70,7 @@ class TestPluginStatusMonitor(object):
         monkeypatch.setattr(monitor, "stopped", stopped_mock)
 
         monkeypatch.setattr(
-            beer_garden.monitor.db, "query", Mock(return_value=[bg_system])
+            beer_garden.plugin.db, "query", Mock(return_value=[bg_system])
         )
 
         monitor.check_status()
@@ -81,10 +81,10 @@ class TestPluginStatusMonitor(object):
         monkeypatch.setattr(monitor, "stopped", stopped_mock)
 
         update_mock = Mock()
-        monkeypatch.setattr(beer_garden.monitor.db, "update", update_mock)
+        monkeypatch.setattr(beer_garden.plugin.db, "update", update_mock)
 
         monkeypatch.setattr(
-            beer_garden.monitor.db, "query", Mock(return_value=[bg_system])
+            beer_garden.plugin.db, "query", Mock(return_value=[bg_system])
         )
 
         monitor.check_status()
@@ -96,15 +96,15 @@ class TestPluginStatusMonitor(object):
         monkeypatch.setattr(monitor, "stopped", stopped_mock)
 
         update_mock = Mock()
-        monkeypatch.setattr(beer_garden.monitor.db, "update", update_mock)
+        monkeypatch.setattr(beer_garden.plugin.db, "update", update_mock)
 
         bg_instance.status = "UNRESPONSIVE"
         monkeypatch.setattr(
-            beer_garden.monitor.db, "query", Mock(return_value=[bg_system])
+            beer_garden.plugin.db, "query", Mock(return_value=[bg_system])
         )
 
         monkeypatch.setattr(
-            beer_garden.monitor, "datetime", Mock(utcnow=Mock(return_value=ts_dt))
+            beer_garden.plugin, "datetime", Mock(utcnow=Mock(return_value=ts_dt))
         )
 
         monitor.check_status()
