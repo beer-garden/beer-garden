@@ -398,7 +398,9 @@ class StatusMonitor(StoppableThread):
     def check_status(self):
         """Update instance status if necessary"""
 
-        for system in db.query(System):
+        for system in db.query(
+            System, filter_params={"local": True}, include_fields=["instances"]
+        ):
             for instance in system.instances:
                 if self.stopped():
                     break
