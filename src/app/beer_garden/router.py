@@ -78,6 +78,7 @@ route_functions = {
     "INSTANCE_READ": beer_garden.systems.get_instance,
     "INSTANCE_DELETE": beer_garden.systems.remove_instance,
     "INSTANCE_UPDATE": beer_garden.plugin.update,
+    "INSTANCE_HEARTBEAT": beer_garden.plugin.heartbeat,
     "INSTANCE_INITIALIZE": beer_garden.plugin.initialize,
     "INSTANCE_START": beer_garden.plugin.start,
     "INSTANCE_STOP": beer_garden.plugin.stop,

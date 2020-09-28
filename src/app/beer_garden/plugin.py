@@ -144,42 +144,6 @@ def stop(
     return instance
 
 
-def initialize_logging(
-    instance_id: str = None,
-    instance: Instance = None,
-    system: System = None,
-) -> Instance:
-    """Initialize logging of Instance.
-
-    Args:
-        instance_id: The Instance ID
-        instance: The Instance
-        system: The System
-
-    Returns:
-        The Instance
-    """
-    system, instance = _from_kwargs(
-        system=system, instance=instance, instance_id=instance_id
-    )
-
-    logger.debug(f"Initializing logging for instance {system}[{instance}]")
-
-    requests.process_request(
-        Request.from_template(
-            initialize_logging_request,
-            namespace=system.namespace,
-            system=system.name,
-            system_version=system.version,
-            instance_name=instance.name,
-        ),
-        is_admin=True,
-        priority=1,
-    )
-
-    return instance
-
-
 @publish_event(Events.INSTANCE_UPDATED)
 def update(
     instance_id: str = None,
@@ -223,6 +187,71 @@ def update(
     system = db.modify(system, query={"instances__name": instance.name}, **updates)
 
     return system.get_instance_by_name(instance.name)
+
+
+def heartbeat(
+    instance_id: str = None,
+    instance: Instance = None,
+    system: System = None,
+    **_,
+) -> Instance:
+    """Instance heartbeat
+
+    Args:
+        instance_id: The Instance ID
+        instance: The Instance
+        system: The System
+
+    Returns:
+        The updated Instance
+    """
+    system, instance = _from_kwargs(
+        system=system, instance=instance, instance_id=instance_id
+    )
+
+    system = db.modify(
+        system,
+        query={"instances__name": instance.name},
+        set__instances__S__status_info__heartbeat=datetime.utcnow(),
+    )
+
+    return system.get_instance_by_name(instance.name)
+
+
+def initialize_logging(
+    instance_id: str = None,
+    instance: Instance = None,
+    system: System = None,
+) -> Instance:
+    """Initialize logging of Instance.
+
+    Args:
+        instance_id: The Instance ID
+        instance: The Instance
+        system: The System
+
+    Returns:
+        The Instance
+    """
+    system, instance = _from_kwargs(
+        system=system, instance=instance, instance_id=instance_id
+    )
+
+    logger.debug(f"Initializing logging for instance {system}[{instance}]")
+
+    requests.process_request(
+        Request.from_template(
+            initialize_logging_request,
+            namespace=system.namespace,
+            system=system.name,
+            system_version=system.version,
+            instance_name=instance.name,
+        ),
+        is_admin=True,
+        priority=1,
+    )
+
+    return instance
 
 
 def read_logs(
