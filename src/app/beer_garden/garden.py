@@ -31,14 +31,22 @@ def get_garden(garden_name: str) -> Garden:
     return db.query_unique(Garden, name=garden_name)
 
 
-def get_gardens() -> List[Garden]:
+def get_gardens(include_local: bool = True) -> List[Garden]:
     """Retrieve list of all Gardens
+
+    Args:
+        include_local: Also include the local garden
 
     Returns:
         All known gardens
 
     """
-    return [local_garden()] + db.query(Garden)
+    gardens = db.query(Garden)
+
+    if include_local:
+        gardens += [local_garden()]
+
+    return gardens
 
 
 def local_garden() -> Garden:
@@ -57,15 +65,22 @@ def local_garden() -> Garden:
     )
 
 
-def sync_garden():
+def publish_garden(
+    event_name: str = Events.GARDEN_SYNC.name, status: str = "RUNNING"
+) -> None:
+    """Publish a Garden event
 
+    Args:
+        event_name: The event name to use
+        status: The garden status
+    """
     publish(
         Event(
-            name=Events.GARDEN_SYNC.name,
+            name=event_name,
             payload_type="Garden",
             payload=Garden(
                 name=config.get("garden.name"),
-                status="RUNNING",
+                status=status,
                 systems=get_systems(),
                 namespaces=get_namespaces(),
             ),

@@ -73,6 +73,7 @@ def get_local_garden_mock(monkeypatch):
     return mock
 
 
+@pytest.mark.skip
 class TestSetupRouting:
     def test_all(self, get_gardens_mock, get_local_garden_mock, p_garden, c_garden):
         get_gardens_mock.return_value = [c_garden]
