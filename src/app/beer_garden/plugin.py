@@ -4,10 +4,11 @@
 
 import logging
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Tuple
 
 from brewtils.models import Event, Events, Instance, Request, RequestTemplate, System
+from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -151,6 +152,7 @@ def update(
     system: System = None,
     new_status: str = None,
     metadata: dict = None,
+    update_heartbeat: bool = True,
     **_,
 ) -> Instance:
     """Update an Instance status.
@@ -163,6 +165,7 @@ def update(
         system: The System
         new_status: The new status
         metadata: New metadata
+        update_heartbeat: Set the heartbeat to the current time
 
     Returns:
         The updated Instance
@@ -177,6 +180,8 @@ def update(
 
     if new_status:
         updates["set__instances__S__status"] = new_status
+
+    if update_heartbeat:
         updates["set__instances__S__status_info__heartbeat"] = datetime.utcnow()
 
     if metadata:
@@ -355,3 +360,73 @@ def handle_event(event: Event) -> None:
                 )
             except Exception as ex:
                 logger.error(f"{event.name} error: {ex} ({event!r})")
+
+
+class StatusMonitor(StoppableThread):
+    """Monitor plugin heartbeats and update plugin status"""
+
+    def __init__(self, heartbeat_interval=10, timeout_seconds=30):
+        self.logger = logging.getLogger(__name__)
+        self.display_name = "Plugin Status Monitor"
+        self.heartbeat_interval = heartbeat_interval
+        self.timeout = timedelta(seconds=timeout_seconds)
+        self.status_request = Request(command="_status", command_type="EPHEMERAL")
+
+        super(StatusMonitor, self).__init__(
+            logger=self.logger, name="PluginStatusMonitor"
+        )
+
+    def run(self):
+        self.logger.info(self.display_name + " is started")
+
+        while not self.wait(self.heartbeat_interval):
+            self.request_status()
+            self.check_status()
+
+        self.logger.info(self.display_name + " is stopped")
+
+    def request_status(self):
+        try:
+            queue.put(
+                self.status_request,
+                routing_key="admin",
+                expiration=str(self.heartbeat_interval * 1000),
+            )
+        except Exception as ex:
+            self.logger.warning("Unable to publish status request: %s", str(ex))
+
+    def check_status(self):
+        """Update instance status if necessary"""
+
+        for system in db.query(
+            System, filter_params={"local": True}, include_fields=["instances"]
+        ):
+            for instance in system.instances:
+                if self.stopped():
+                    break
+
+                last_heartbeat = instance.status_info["heartbeat"]
+
+                if last_heartbeat:
+                    if (
+                        instance.status == "RUNNING"
+                        and datetime.utcnow() - last_heartbeat >= self.timeout
+                    ):
+                        update(
+                            system=system,
+                            instance=instance,
+                            new_status="UNRESPONSIVE",
+                            update_heartbeat=False,
+                        )
+
+                    elif (
+                        instance.status
+                        in ["UNRESPONSIVE", "STARTING", "INITIALIZING", "UNKNOWN"]
+                        and datetime.utcnow() - last_heartbeat < self.timeout
+                    ):
+                        update(
+                            system=system,
+                            instance=instance,
+                            new_status="RUNNING",
+                            update_heartbeat=False,
+                        )

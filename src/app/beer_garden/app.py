@@ -30,7 +30,8 @@ from beer_garden.events.parent_procesors import HttpParentUpdater
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
-from beer_garden.monitor import PluginStatusMonitor, MonitorFile
+from beer_garden.monitor import MonitorFile
+from beer_garden.plugin import StatusMonitor
 
 
 class Application(StoppableThread):
@@ -64,7 +65,7 @@ class Application(StoppableThread):
         plugin_config = config.get("plugin")
         self.helper_threads = [
             HelperThread(
-                PluginStatusMonitor,
+                StatusMonitor,
                 timeout_seconds=plugin_config.status_timeout,
                 heartbeat_interval=plugin_config.status_heartbeat,
             )
