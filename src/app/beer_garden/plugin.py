@@ -76,9 +76,7 @@ def initialize(
 
 @publish_event(Events.INSTANCE_STARTED)
 def start(
-    instance_id: str = None,
-    instance: Instance = None,
-    system: System = None,
+    instance_id: str = None, instance: Instance = None, system: System = None
 ) -> Instance:
     """Starts an instance.
 
@@ -113,9 +111,7 @@ def start(
 
 @publish_event(Events.INSTANCE_STOPPED)
 def stop(
-    instance_id: str = None,
-    instance: Instance = None,
-    system: System = None,
+    instance_id: str = None, instance: Instance = None, system: System = None
 ) -> Instance:
     """Stops an Instance.
 
@@ -227,9 +223,7 @@ def heartbeat(
 
 
 def initialize_logging(
-    instance_id: str = None,
-    instance: Instance = None,
-    system: System = None,
+    instance_id: str = None, instance: Instance = None, system: System = None
 ) -> Instance:
     """Initialize logging of Instance.
 

@@ -376,16 +376,8 @@ class TestSafeMigrate(object):
 
 
 def test_parse_args():
-    input_args = [
-        "--plugin-status-heartbeat",
-        "100",
-        "--plugin-status-timeout",
-        "500",
-    ]
+    input_args = ["--plugin-status-heartbeat", "100", "--plugin-status-timeout", "500"]
 
     _, cli_vars = beer_garden.config._parse_args(input_args)
 
-    assert cli_vars["plugin"] == {
-        "status_heartbeat": 100,
-        "status_timeout": 500,
-    }
+    assert cli_vars["plugin"] == {"status_heartbeat": 100, "status_timeout": 500}
