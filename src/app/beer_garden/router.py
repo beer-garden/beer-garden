@@ -11,6 +11,7 @@ import beer_garden
 import beer_garden.commands
 import beer_garden.config as config
 import beer_garden.db.api as db
+import beer_garden.db.mongo.motor as moto
 import beer_garden.garden
 import beer_garden.log
 import beer_garden.namespace
@@ -73,6 +74,11 @@ def route_garden_sync(target_garden_name: str = None):
                         )
                     )
 
+
+async_functions = {
+    "INSTANCE_UPDATE": beer_garden.plugin.update_async,
+    "INSTANCE_HEARTBEAT": beer_garden.plugin.heartbeat_async,
+}
 
 route_functions = {
     "REQUEST_CREATE": beer_garden.requests.process_request,
@@ -169,9 +175,12 @@ def execute_local(operation: Operation):
     """
     operation = _pre_execute(operation)
 
-    return route_functions[operation.operation_type](
-        *operation.args, **operation.kwargs
-    )
+    if moto.motor_db and operation.operation_type in async_functions:
+        lookup = async_functions
+    else:
+        lookup = route_functions
+
+    return lookup[operation.operation_type](*operation.args, **operation.kwargs)
 
 
 def initiate_forward(operation: Operation):

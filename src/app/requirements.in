@@ -4,6 +4,7 @@ apispec < 0.39
 apscheduler < 4
 mongoengine < 0.21
 more-itertools < 9
+motor < 3
 passlib < 1.8
 prometheus_client < 1
 pyrabbit2 < 2

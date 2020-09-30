@@ -8,14 +8,17 @@ from datetime import datetime, timedelta
 from typing import Tuple
 
 from brewtils.models import Event, Events, Instance, Request, RequestTemplate, System
+from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
+from bson import ObjectId
 
 import beer_garden.config as config
 import beer_garden.db.api as db
+import beer_garden.db.mongo.motor as moto
 import beer_garden.queue.api as queue
 import beer_garden.requests as requests
 from beer_garden.errors import NotFoundException
-from beer_garden.events import publish_event
+from beer_garden.events import publish_event, publish_event_async
 
 logger = logging.getLogger(__name__)
 
@@ -300,6 +303,74 @@ def read_logs(
     )
 
     return request
+
+
+@publish_event_async(Events.INSTANCE_UPDATED)
+async def update_async(
+    instance_id: str = None,
+    instance: Instance = None,
+    system: System = None,
+    new_status: str = None,
+    metadata: dict = None,
+    **_,
+) -> dict:
+    """Update an Instance status.
+
+    Will also update the status_info heartbeat.
+
+    Args:
+        instance_id: The Instance ID
+        instance: The Instance
+        system: The System
+        new_status: The new status
+        metadata: New metadata
+
+    Returns:
+        The updated Instance
+    """
+    query = {"instances._id": ObjectId(instance_id)}
+    projection = {"instances.$": 1, "_id": 0}
+    update = {}
+
+    if new_status:
+        update["instances.$.status"] = new_status
+        update["instances.$.status_info.heartbeat"] = datetime.utcnow()
+
+    if metadata:
+        for k, v in metadata.items():
+            update[f"instances.$.metadata.{k}"] = v
+
+    return await _update_instance_async(query, projection, {"$set": update})
+
+
+async def heartbeat_async(
+    instance_id: str = None, instance: Instance = None, system: System = None, **_
+) -> dict:
+    query = {"instances._id": ObjectId(instance_id)}
+    projection = {"instances.$": 1, "_id": 0}
+    update = {"$set": {"instances.$.status_info.heartbeat": datetime.utcnow()}}
+
+    return await _update_instance_async(query, projection, update)
+
+
+async def _get_instance_async(filter, projection) -> dict:
+    """Helper to get an instance async-style"""
+    result = await moto.query(collection="system", filter=filter, projection=projection)
+
+    # TODO - This is not the best
+    instance = result["instances"][0]
+    if "_id" in instance:
+        instance["id"] = str(instance["_id"])
+        del instance["_id"]
+
+    return SchemaParser.parse_instance(instance)
+
+
+async def _update_instance_async(filter, projection, update) -> dict:
+    """Helper to update an instance async-style"""
+    await moto.update_one(collection="system", filter=filter, update=update)
+
+    return await _get_instance_async(filter, projection)
 
 
 def _from_kwargs(
