@@ -771,7 +771,7 @@ _HTTP_SPEC = {
 _STOMP_SPEC = {
   "type": "dict",
   "items": {
-      "enable": {
+      "enabled": {
           "type": "bool",
           "default": False,
           "description": "Run an stomp server",
