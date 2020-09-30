@@ -1,10 +1,21 @@
 from brewtils.models import Event, Events, Request, Operation, System
 from brewtils.schema_parser import SchemaParser
+import beer_garden.api.stomp
 
 
 # Modify to inject custom headers
 def append_headers(response_headers, request_headers=None):
     return response_headers
+
+
+class EventManager:
+    """Will simply push events across the connection to the master process"""
+
+    def __init__(self, conn):
+        self._conn = conn
+
+    def put(self, event):
+        beer_garden.api.stomp.io_loop.add_callback(self._conn.send, event)
 
 
 # Processes response messages and event messages to send

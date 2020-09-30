@@ -52,8 +52,7 @@ class OperationListener(stomp.ConnectionListener):
         try:
             operation = SchemaParser.parse_operation(message, from_string=True)
             if hasattr(operation, 'kwargs'):
-                if 'wait_timeout' in operation.kwargs and operation.operation_type == "REQUEST_CREATE":
-                    operation.kwargs['wait_timeout'] = 0
+                operation.kwargs.pop('wait_timeout', None)
         except:
             error_msg = "Failed to parse message"
             error = sys.exc_info()

@@ -10,7 +10,7 @@ from brewtils.models import Event, Events, Request, Operation
 import beer_garden.events
 import beer_garden.router
 
-from beer_garden.api.http import EventManager
+from beer_garden.api.stomp.processors import EventManager
 from beer_garden.api.stomp.server import Connection
 from beer_garden.events import publish
 from beer_garden.events.processors import QueueListener
@@ -41,17 +41,21 @@ def run(ep_conn):
 
 
 def signal_handler(_: int, __: types.FrameType):
-    global conn, logger
+    io_loop.add_callback_from_signal(shutdown)
+
+
+def shutdown():
+    global conn, logger, io_loop
+    conn.disconnect()
     logger.debug("Stopping forward processing")
     beer_garden.router.forward_processor.stop()
-
     # This will almost definitely not be published because it would need to make it up
     # to the main process and back down into this process. We just publish this here in
     # case the main process is looking for it.
-    conn.disconnect()
+
     logger.debug("Stopping IO loop")
-    io_loop.add_callback(io_loop.stop)
     publish(Event(name=Events.ENTRY_STOPPED.name))
+    io_loop.add_callback(io_loop.stop)
 
 
 def _setup_operation_forwarding():
