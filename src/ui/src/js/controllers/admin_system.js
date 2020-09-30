@@ -1,13 +1,17 @@
 import _ from 'lodash';
+import readLogs from '../../templates/read_logs.html';
+import adminQueue from '../../templates/admin_queue.html';
 
 adminSystemController.$inject = [
   '$scope',
   '$rootScope',
+  '$uibModal',
   'SystemService',
   'InstanceService',
   'UtilityService',
   'AdminService',
   'EventService',
+  'QueueService',
 ];
 
 /**
@@ -23,11 +27,14 @@ adminSystemController.$inject = [
 export default function adminSystemController(
     $scope,
     $rootScope,
+    $uibModal,
     SystemService,
     InstanceService,
     UtilityService,
     AdminService,
-    EventService) {
+    EventService,
+    QueueService,
+    ) {
   $scope.response = undefined;
   $scope.groupedSystems = [];
   $scope.alerts = [];
@@ -54,6 +61,13 @@ export default function adminSystemController(
 
   $scope.deleteSystem = function(system) {
     SystemService.deleteSystem(system).then(_.noop, $scope.addErrorAlert);
+  };
+
+  $scope.clearAllQueues = function() {
+    QueueService.clearQueues().then(
+      $scope.addSuccessAlert,
+      $scope.addErrorAlert
+    );
   };
 
   $scope.hasRunningInstances = function(system) {
@@ -97,14 +111,31 @@ export default function adminSystemController(
     }
   }
 
-  EventService.addCallback('admin_system', (event) => {
-    if (event.name.startsWith('SYSTEM') || event.name.startsWith('INSTANCE')) {
-      $scope.$apply(groupSystems);
-    }
-  });
-  $scope.$on('$destroy', function() {
-    EventService.removeCallback('admin_system');
-  });
+  $rootScope.$watchCollection("systems", groupSystems);
+
+  $scope.showLogs = function (system, instance) {
+       $uibModal.open({
+         template:readLogs,
+         resolve: {
+           system: system,
+           instance: instance,
+         },
+         controller: 'AdminSystemLogsController',
+         windowClass: 'app-modal-window',
+      });
+    };
+
+  $scope.manageQueue = function (system, instance) {
+       $uibModal.open({
+         template:adminQueue,
+         resolve: {
+           system: system,
+           instance: instance,
+         },
+         controller: 'AdminQueueController',
+         windowClass: 'app-modal-window',
+      });
+    };
 
   groupSystems();
 };

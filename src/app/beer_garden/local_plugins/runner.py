@@ -119,17 +119,24 @@ class ProcessRunner(Thread):
 
             # Reading process IO is blocking so needs to be in separate threads
             stdout_thread = Thread(
-                target=self._read_stream, args=(self.process.stdout, logging.INFO),
+                target=self._read_stream,
+                args=(self.process.stdout, logging.INFO),
+                name=f"{self} STDOUT Reader",
             )
             stderr_thread = Thread(
-                target=self._read_stream, args=(self.process.stderr, logging.ERROR),
+                target=self._read_stream,
+                args=(self.process.stderr, logging.ERROR),
+                name=f"{self} STDERR Reader",
             )
             stdout_thread.start()
             stderr_thread.start()
 
             # Processing the logs also needs a thread
             log_reader = DelayListener(
-                event=self.logger_ready, queue=self.log_queue, action=self._process_logs
+                event=self.logger_ready,
+                queue=self.log_queue,
+                action=self._process_logs,
+                name=f"{self} Log Processor",
             )
             log_reader.start()
 

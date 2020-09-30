@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import threading
+
 import pytest
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -27,6 +29,9 @@ class TestRunJob(object):
     def test_run_job(self, monkeypatch, scheduler, bg_request_template):
         process_mock = Mock()
         monkeypatch.setattr(beer_garden.scheduler, "process_request", process_mock)
+
+        event_mock = Mock()
+        monkeypatch.setattr(threading, "Event", event_mock)
 
         app_mock = Mock(scheduler=scheduler)
         monkeypatch.setattr(beer_garden, "application", app_mock)

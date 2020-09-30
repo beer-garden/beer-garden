@@ -26,6 +26,14 @@ export default function gardenService($http) {
     return $http.patch('api/v1/gardens/' + garden.name, {operation: 'config', path: '', value: garden});
   }
 
+  GardenService.syncGardens = function(){
+    return $http.patch('api/v1/gardens', {operation: 'sync', path: '', value: ''})
+  }
+
+  GardenService.syncGarden = function(name){
+    return $http.patch('api/v1/gardens/' + name, {operation: 'sync', path: '', value: ''})
+  }
+
   GardenService.deleteGarden = function(name){
     return $http.delete('api/v1/gardens/' + name);
   }
@@ -34,7 +42,7 @@ export default function gardenService($http) {
 
     var values = {};
     values['connection_type'] = model['connection_type'];
-     if (model.hasOwnProperty('connection_params')) {
+     if (model.hasOwnProperty('connection_params') && model.connection_params != null) {
         for (var parameter of Object.keys(model['connection_params']) ) {
           values[parameter] = model['connection_params'][parameter];
         }

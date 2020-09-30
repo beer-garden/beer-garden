@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from brewtils.models import Events, Queue, System
+from brewtils.models import Events, Queue, System, Instance
 
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
@@ -19,6 +19,29 @@ def get_queue_message_count(queue_name):
     :raises Exception: If queue does not exist
     """
     return queue.count(queue_name)
+
+
+def get_instance_queues(instance_id):
+    instance = db.query_unique(Instance, id=instance_id)
+
+    if instance.queue_info:
+
+        request_queue = Queue(
+            name=instance.queue_info["request"]["name"], instance=instance.name, size=-1
+        )
+
+        try:
+            request_queue.size = get_queue_message_count(
+                instance.queue_info["request"]["name"]
+            )
+        except Exception:
+            logger.error(
+                f"Error getting queue size for {instance.queue_info['request']['name']}"
+            )
+
+        queues = [request_queue]
+
+    return queues
 
 
 def get_all_queue_info():

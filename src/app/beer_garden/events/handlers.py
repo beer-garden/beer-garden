@@ -5,11 +5,12 @@ from brewtils.models import Event
 
 import beer_garden.config
 import beer_garden.garden
-import beer_garden.instances
+import beer_garden.log
+import beer_garden.plugin
 import beer_garden.requests
 import beer_garden.router
-import beer_garden.systems
 import beer_garden.scheduler
+import beer_garden.systems
 from beer_garden.local_plugins.manager import PluginManager
 
 logger = logging.getLogger(__name__)
@@ -34,11 +35,12 @@ def garden_callbacks(event: Event) -> None:
     for handler in [
         beer_garden.application.handle_event,
         beer_garden.garden.handle_event,
-        beer_garden.instances.handle_event,
+        beer_garden.plugin.handle_event,
         beer_garden.requests.handle_event,
         beer_garden.router.handle_event,
         beer_garden.systems.handle_event,
         beer_garden.scheduler.handle_event,
+        beer_garden.log.handle_event,
         PluginManager.handle_event,
     ]:
         try:

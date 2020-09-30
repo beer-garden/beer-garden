@@ -102,21 +102,6 @@ export default function routeConfig(
       templateUrl: basePath + 'command_index.html',
       controller: ['$state', ($state) => {$state.go('base.system');}],
     })
-    .state('base.commandID', {
-      url: 'commands/:id/',
-      controller: ['$state', '$stateParams', 'CommandService', 'SystemService',
-          ($state, $stateParams, CommandService, SystemService) => {
-        let command = CommandService.findCommandByID($stateParams.id);
-        let system = SystemService.findSystemByID(command.system.id);
-
-        $state.go('base.command', {
-          namespace: system.namespace,
-          systemName: system.name,
-          systemVersion: system.version,
-          commandName: command.name,
-        });
-      }],
-    })
     // Don't ask me why this can't be nested as base.system.command
     // Think it's something to do with nested views... I think maybe because
     // base.system defines a template

@@ -71,7 +71,7 @@ services:
             - rabbitmq
 
     mongodb:
-        image: mongo:4.0
+        image: mongo:4.2
         networks:
             - bg-network
         volumes:

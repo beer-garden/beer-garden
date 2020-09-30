@@ -14,5 +14,17 @@ export default function instanceService($http) {
     stopInstance: (instance) => {
       return $http.patch('api/v1/instances/' + instance.id, {operation: 'stop'});
     },
+    getInstance: (instanceId) => {
+        return $http.get('api/v1/instances/' + instanceId)
+    },
+    getInstanceLogs: (instanceId, timeout, start_line, end_line) => {
+      return $http.get('api/v1/instances/' + instanceId + '/logs/', {
+        params: {
+          "start_line":start_line,
+          "end_line":end_line,
+          "timeout": timeout,
+        }
+      });
+    },
   };
 };

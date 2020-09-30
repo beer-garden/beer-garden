@@ -31,7 +31,7 @@ setup(
         "apispec==0.38.0",
         "apscheduler==3.6.0",
         "brewtils>=3.0.0a1",
-        "mongoengine<0.19",
+        "mongoengine<0.21",
         "more-itertools<9",
         "passlib<1.8",
         "prometheus-client==0.7.1",
@@ -55,7 +55,8 @@ setup(
         "console_scripts": [
             "generate_config=beer_garden.__main__:generate_config",
             "migrate_config=beer_garden.__main__:migrate_config",
-            "generate_log_config=beer_garden.__main__:generate_logging_config",
+            "generate_app_logging_config=beer_garden.__main__:generate_app_logging_config",
+            "generate_plugin_logging_config=beer_garden.__main__:generate_plugin_logging_config",
             "beergarden=beer_garden.__main__:main",
         ]
     },

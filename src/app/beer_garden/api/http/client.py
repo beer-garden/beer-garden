@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-import asyncio
 import json
-from concurrent.futures.thread import ThreadPoolExecutor
-from functools import partial
 
 import six
 from brewtils.models import BaseModel
@@ -12,14 +9,9 @@ import beer_garden.api
 import beer_garden.router
 
 
-class ExecutorClient(object):
-    parser = SchemaParser()
-    pool = ThreadPoolExecutor(50)
-
+class SerializeHelper(object):
     async def __call__(self, *args, serialize_kwargs=None, **kwargs):
-        result = await asyncio.get_event_loop().run_in_executor(
-            self.pool, partial(beer_garden.router.route, *args, **kwargs)
-        )
+        result = beer_garden.router.route(*args, **kwargs)
 
         # Handlers overwhelmingly just write the response so default to serializing
         serialize_kwargs = serialize_kwargs or {}

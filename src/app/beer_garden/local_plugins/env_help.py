@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+from typing import Dict
 
 
 def has_env_var(string: str) -> bool:
@@ -49,7 +50,7 @@ def is_valid_name(string: str) -> bool:
 
 
 def var_name(string: str) -> str:
-    """ Strips out the Variable name from a string
+    """Strips out the Variable name from a string
     :param string: e.g. $MY_PATH:$YOUR_PATH
     :return string: e.g. MY_PATH
     """
@@ -63,7 +64,7 @@ def var_name(string: str) -> str:
     return key
 
 
-def expand_string(string: str, env_copy: dict = None) -> str:
+def expand_string(string: str, env_copy: Dict[str, str] = None) -> str:
     """Expands a String with a $VAR style var in it."""
     parts = string.split("$")
     if env_copy is None:

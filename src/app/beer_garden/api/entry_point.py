@@ -72,7 +72,11 @@ class EntryPoint:
         self._logger = logging.getLogger(__name__)
         self._process = None
         self._ep_conn, self._mp_conn = Pipe()
-        self._event_listener = PipeListener(conn=self._mp_conn, action=event_callback)
+        self._event_listener = PipeListener(
+            conn=self._mp_conn,
+            action=event_callback,
+            name=f"{name} listener",
+        )
 
     def start(self) -> None:
         """Start the entry point process"""
@@ -223,7 +227,7 @@ class Manager:
 
     def create_all(self):
         for entry_name, entry_value in beer_garden.config.get("entry").items():
-            if entry_value.get("enable"):
+            if entry_value.get("enabled"):
                 self.entry_points.append(self.create(entry_name))
 
     def create(self, module_name: str) -> T:

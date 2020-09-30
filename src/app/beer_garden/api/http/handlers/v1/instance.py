@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
-from brewtils.errors import ModelValidationError
+from asyncio import Event
+
+from brewtils.errors import (
+    ModelValidationError,
+    RequestProcessingError,
+    TimeoutExceededError,
+)
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.authorization import authenticated, Permissions
-from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.api.http.authorization import Permissions, authenticated
+from beer_garden.api.http.base_handler import BaseHandler, event_wait
 
 
 class InstanceAPI(BaseHandler):
@@ -80,6 +86,7 @@ class InstanceAPI(BaseHandler):
           * start
           * stop
           * heartbeat
+          * replace
 
           ```JSON
           [
@@ -142,11 +149,7 @@ class InstanceAPI(BaseHandler):
 
             elif operation == "heartbeat":
                 response = await self.client(
-                    Operation(
-                        operation_type="INSTANCE_UPDATE",
-                        args=[instance_id],
-                        kwargs={"new_status": "RUNNING"},
-                    )
+                    Operation(operation_type="INSTANCE_HEARTBEAT", args=[instance_id])
                 )
 
             elif operation == "replace":
@@ -173,8 +176,126 @@ class InstanceAPI(BaseHandler):
                     )
                 else:
                     raise ModelValidationError(f"Unsupported path '{op.path}'")
+
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(response)
+
+
+class InstanceLogAPI(BaseHandler):
+    @authenticated(permissions=[Permissions.INSTANCE_UPDATE])
+    async def get(self, instance_id):
+        """
+        ---
+        summary: Retrieve a specific Instance
+        parameters:
+          - name: instance_id
+            in: path
+            required: true
+            description: The ID of the Instance
+            type: string
+          - name: start_line
+            in: query
+            required: false
+            description: Start line of logs to read from instance
+            type: int
+          - name: end_line
+            in: query
+            required: false
+            description: End line of logs to read from instance
+            type: int
+          - name: timeout
+            in: query
+            required: false
+            description: Max seconds to wait for request completion. (-1 = wait forever)
+            type: float
+            default: -1
+        responses:
+          200:
+            description: Instance with the given ID
+            schema:
+              $ref: '#/definitions/Instance'
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Instances
+        """
+        start_line = self.get_query_argument("start_line", default=None)
+        if start_line == "":
+            start_line = None
+        elif start_line:
+            start_line = int(start_line)
+
+        end_line = self.get_query_argument("end_line", default=None)
+        if end_line == "":
+            end_line = None
+        elif end_line:
+            end_line = int(end_line)
+
+        wait_event = Event()
+
+        response = await self.client(
+            Operation(
+                operation_type="INSTANCE_LOGS",
+                args=[instance_id],
+                kwargs={
+                    "wait_event": wait_event,
+                    "start_line": start_line,
+                    "end_line": end_line,
+                },
+            ),
+            serialize_kwargs={"to_string": False},
+        )
+
+        wait_timeout = float(self.get_argument("timeout", default="-1"))
+        if not await event_wait(wait_event, wait_timeout):
+            raise TimeoutExceededError("Timeout exceeded")
+
+        response = await self.client(
+            Operation(operation_type="REQUEST_READ", args=[response["id"]]),
+            serialize_kwargs={"to_string": False},
+        )
+
+        if response["status"] == "ERROR":
+            raise RequestProcessingError(response["output"])
+
+        self.set_header("request_id", response["id"])
+        self.set_header("Content-Type", "text/plain; charset=UTF-8")
+        self.write(response["output"])
+
+
+class InstanceQueuesAPI(BaseHandler):
+    @authenticated(permissions=[Permissions.QUEUE_READ])
+    async def get(self, instance_id):
+        """
+        ---
+        summary: Retrieve queue information for instance
+        parameters:
+          - name: instance_id
+            in: path
+            required: true
+            description: The instance ID to pull queues for
+            type: string
+        responses:
+          200:
+            description: List of queue information objects for this instance
+            schema:
+              type: array
+              items:
+                $ref: '#/definitions/Queue'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Queues
+        """
+
+        response = await self.client(
+            Operation(operation_type="QUEUE_READ_INSTANCE", args=[instance_id])
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

@@ -38,12 +38,20 @@ export default function adminGardenController(
     );
   };
 
+  $scope.syncGardens = function() {
+    GardenService.syncGardens()
+  }
+
   $scope.editGarden = function(garden) {
     $state.go('base.garden_view',
       {
         'name': garden.name,
       }
     );
+  };
+
+  $scope.deleteGarden = function(garden) {
+    GardenService.deleteGarden(garden)
   };
 
   let loadAll = function() {
@@ -53,13 +61,30 @@ export default function adminGardenController(
     loadGardens();
   };
 
-  EventService.addCallback('admin_system', (event) => {
+  EventService.addCallback('admin_garden', (event) => {
     switch (event.name) {
       case 'GARDEN_CREATED':
+        $scope.data.push(event.payload);
         break;
       case 'GARDEN_REMOVED':
+        for (var i = 0; i < $scope.data.length; i++) {
+            if ($scope.data[i].id == event.payload.id){
+                $scope.data.splice(i, 1)
+            }
+        }
+        break;
+      case 'GARDEN_UPDATED':
+        for (var i = 0; i < $scope.data.length; i++) {
+            if ($scope.data[i].id == event.payload.id){
+                $scope.data[i] = event.payload;
+            }
+        }
         break;
     }
+  });
+
+  $scope.$on('$destroy', function() {
+    EventService.removeCallback('admin_garden');
   });
 
   $scope.$on('userChange', function() {
