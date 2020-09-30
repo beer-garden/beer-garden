@@ -336,11 +336,9 @@ async def update_async(
         update["instances.$.status"] = new_status
         update["instances.$.status_info.heartbeat"] = datetime.utcnow()
 
-    # TODO
-    # if metadata:
-    #     metadata_update = dict(instance.metadata)
-    #     metadata_update.update(metadata)
-    #     updates["set__instances__S__metadata"] = metadata_update
+    if metadata:
+        for k, v in metadata.items():
+            update[f"instances.$.metadata.{k}"] = v
 
     return await _update_instance_async(query, projection, {"$set": update})
 
