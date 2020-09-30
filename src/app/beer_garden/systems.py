@@ -11,7 +11,7 @@ from time import sleep
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
-from beer_garden.errors import NotFoundException
+from beer_garden.errors import NotFoundException, NotUniqueException
 from beer_garden.events import publish_event
 from beer_garden.plugin import stop
 
@@ -151,6 +151,35 @@ def update_system(
     add_routing_system(system=system)
 
     return system
+
+
+def upsert(system: System) -> System:
+    """Helper to create or update a system
+
+    Args:
+        system: The system to create or update
+
+    Returns:
+        The created / updated system
+    """
+    try:
+        return create_system(system)
+    except NotUniqueException:
+        logger.warning(f"Not unique, updating {system.name}")
+
+        existing = db.query_unique(
+            System, namespace=system.namespace, name=system.name, version=system.version
+        )
+
+        return update_system(
+            system=existing,
+            new_commands=system.commands,
+            add_instances=system.instances,
+            description=system.description,
+            display_name=system.display_name,
+            icon_name=system.icon_name,
+            metadata=system.metadata,
+        )
 
 
 @publish_event(Events.SYSTEM_RELOAD_REQUESTED)

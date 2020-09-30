@@ -56,3 +56,9 @@ class NotFoundException(Exception):
     """Something wasn't found"""
 
     pass
+
+
+class NotUniqueException(Exception):
+    """Something wasn't unique"""
+
+    pass
