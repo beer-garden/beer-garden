@@ -5,6 +5,7 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Choices, Command, Parameter, Request
 from mock import Mock, call, patch
 
+import beer_garden.config
 import beer_garden.requests
 from beer_garden.requests import RequestValidator
 
@@ -23,17 +24,6 @@ def validator(monkeypatch, mongo_conn):
     )
 
     monkeypatch.setattr(beer_garden, "application", Mock(request_validator=val))
-
-    return val
-
-
-@pytest.fixture
-def config(
-    monkeypatch,
-):
-    val = {"garden": {"name": "defualt"}}
-
-    monkeypatch.setattr(beer_garden.config, "_CONFIG", val)
 
     return val
 
@@ -817,7 +807,7 @@ class TestValidateChoices(object):
         validator.get_and_validate_parameters(req, command)
         session_mock.get.assert_called_with("http://localhost", params={})
 
-    def test_validate_command_choices_dict_value(self, monkeypatch, validator, config):
+    def test_validate_command_choices_dict_value(self, monkeypatch, validator):
         process_mock = _process_mock(monkeypatch, return_value='["value"]')
 
         request = Request(
