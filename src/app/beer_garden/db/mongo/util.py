@@ -3,7 +3,12 @@ import logging
 import os
 
 from mongoengine.connection import get_db
-from mongoengine.errors import DoesNotExist, InvalidDocumentError, NotUniqueError
+from mongoengine.errors import (
+    DoesNotExist,
+    InvalidDocumentError,
+    NotUniqueError,
+    FieldDoesNotExist,
+)
 from passlib.apps import custom_app_context
 
 logger = logging.getLogger(__name__)
@@ -131,8 +136,18 @@ def ensure_users(guest_login_enabled):
             ).save()
 
 
-def ensure_embedded_command():
-    """Ensures that the Command model is an EmbeddedDocument
+def ensure_model_migration():
+    """Ensures that the Role model is an flatten and Command model is an
+    EmbeddedDocument
+
+    In Version 2 and earlier the Role model allowed for nested roles. This caused
+    recursive approach to determining Principal permissions. This is changed in
+    Version 3 to allow for Roles to add complexity of Namespace restrictions which
+    would not work properly with nesting.
+
+    Right now if the check fails this will just drop the Roles and Principle
+    collections. Since they'll be recreated anyway this isn't the worst, but
+    it would be better if we could seamlessly flatten existing permissions.
 
     In version 2 and earlier the Command model was a top-level collection. This
     causes organization and performance issues, so in version 3 it was changed to be an
@@ -143,19 +158,24 @@ def ensure_embedded_command():
     it would be better if we could seamlessly move the existing commands into existing
     Systems.
     """
-    from beer_garden.db.mongo.models import System
+    from .models import Role, System
 
     try:
+        if Role.objects.count() > 0:
+            _ = Role.objects()[0]
         if System.objects.count() > 0:
             _ = System.objects()[0]
-    except InvalidDocumentError:
+    except (FieldDoesNotExist, InvalidDocumentError):
         logger.warning(
-            "Encountered an error loading Systems. This is most likely because the "
-            "database is using the old (v2) style of storing Systems in the database. "
-            "To fix this the system, instance, and command collections will be dropped."
+            "Encountered an error loading Roles or Systems. This is most likely because "
+            "the database is using the old (v2) style of storing in the database. "
+            "To fix this the roles, principles, systems, instances, and commands "
+            "collections will be dropped."
         )
 
         db = get_db()
+        db.drop_collection("principal")
+        db.drop_collection("role")
         db.drop_collection("command")
         db.drop_collection("instance")
         db.drop_collection("system")

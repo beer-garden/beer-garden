@@ -14,7 +14,7 @@ from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.db.mongo.util import (
     check_indexes,
-    ensure_embedded_command,
+    ensure_model_migration,
     ensure_roles,
     ensure_users,
 )
@@ -145,7 +145,7 @@ def create_connection(connection_alias: str = "default", db_config: Box = None) 
 def initial_setup(guest_login_enabled):
     """Do everything necessary to ensure the database is in a 'good' state"""
 
-    ensure_embedded_command()
+    ensure_model_migration()
 
     for doc in (
         beer_garden.db.mongo.models.Job,
