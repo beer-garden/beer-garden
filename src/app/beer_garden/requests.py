@@ -276,6 +276,7 @@ class RequestValidator(object):
                         system=request.system,
                         system_version=request.system_version,
                         instance_name=request.instance_name,
+                        namespace=request.namespace,
                         command=parsed_value["name"],
                         parameters=map_param_values(parsed_value["args"]),
                     )
@@ -284,6 +285,9 @@ class RequestValidator(object):
                     choices_request = Request(
                         system=choices.value.get("system"),
                         system_version=choices.value.get("version"),
+                        namespace=choices.value.get(
+                            "namespace", config.get("garden.name")
+                        ),
                         instance_name=choices.value.get("instance_name", "default"),
                         command=parsed_value["name"],
                         parameters=map_param_values(parsed_value["args"]),

@@ -5,6 +5,7 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Choices, Command, Parameter, Request
 from mock import Mock, call, patch
 
+import beer_garden.config
 import beer_garden.requests
 from beer_garden.requests import RequestValidator
 
@@ -52,6 +53,7 @@ def make_request(**kwargs):
         "system": "s1",
         "system_version": "1",
         "instance_name": "i1",
+        "namespace": "default",
         "command": "c1",
         "parameters": {},
     }
@@ -631,6 +633,7 @@ class TestValidateChoices(object):
             choices_request = process_mock.call_args[0][0]
             assert choices_request.command == "c2"
             assert choices_request.system == "s1"
+            assert choices_request.namespace == "default"
             assert choices_request.system_version == "1"
             assert choices_request.instance_name == "i1"
             assert choices_request.parameters == {"p": "a"}
@@ -812,11 +815,13 @@ class TestValidateChoices(object):
             command="command1",
             parameters={"key1": "value"},
             system_version="0.0.1",
+            namespace="default",
             instance_name="instance_name",
         )
         choices_value = {
             "command": "command_name",
             "system": "foo",
+            "namespace": "default",
             "version": "0.0.1",
             "instance_name": "default",
         }
@@ -826,7 +831,11 @@ class TestValidateChoices(object):
                     key="key1",
                     type="String",
                     optional=False,
-                    choices=Choices(type="command", value=choices_value, strict=True),
+                    choices=Choices(
+                        type="command",
+                        value=choices_value,
+                        strict=True,
+                    ),
                 )
             ]
         )
@@ -836,6 +845,7 @@ class TestValidateChoices(object):
         choices_request = process_mock.call_args[0][0]
         assert choices_request.command == "command_name"
         assert choices_request.system == "foo"
+        assert choices_request.namespace == "default"
         assert choices_request.system_version == "0.0.1"
         assert choices_request.instance_name == "default"
 
@@ -855,7 +865,11 @@ class TestValidateChoices(object):
                     key="key1",
                     type="String",
                     optional=False,
-                    choices=Choices(type="command", value=1, strict=True),
+                    choices=Choices(
+                        type="command",
+                        value=1,
+                        strict=True,
+                    ),
                 )
             ]
         )
