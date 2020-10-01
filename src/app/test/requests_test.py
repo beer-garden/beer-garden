@@ -27,6 +27,17 @@ def validator(monkeypatch, mongo_conn):
     return val
 
 
+@pytest.fixture
+def config(
+    monkeypatch,
+):
+    val = {"garden": {"name": "defualt"}}
+
+    monkeypatch.setattr(beer_garden.config, "_CONFIG", val)
+
+    return val
+
+
 def make_param(**kwargs):
     defaults = {
         "type": "Any",
@@ -52,6 +63,7 @@ def make_request(**kwargs):
         "system": "s1",
         "system_version": "1",
         "instance_name": "i1",
+        "namespace": "default",
         "command": "c1",
         "parameters": {},
     }
@@ -631,6 +643,7 @@ class TestValidateChoices(object):
             choices_request = process_mock.call_args[0][0]
             assert choices_request.command == "c2"
             assert choices_request.system == "s1"
+            assert choices_request.namespace == "default"
             assert choices_request.system_version == "1"
             assert choices_request.instance_name == "i1"
             assert choices_request.parameters == {"p": "a"}
@@ -804,7 +817,7 @@ class TestValidateChoices(object):
         validator.get_and_validate_parameters(req, command)
         session_mock.get.assert_called_with("http://localhost", params={})
 
-    def test_validate_command_choices_dict_value(self, monkeypatch, validator):
+    def test_validate_command_choices_dict_value(self, monkeypatch, validator, config):
         process_mock = _process_mock(monkeypatch, return_value='["value"]')
 
         request = Request(
@@ -812,11 +825,13 @@ class TestValidateChoices(object):
             command="command1",
             parameters={"key1": "value"},
             system_version="0.0.1",
+            namespace="default",
             instance_name="instance_name",
         )
         choices_value = {
             "command": "command_name",
             "system": "foo",
+            "namespace": "default",
             "version": "0.0.1",
             "instance_name": "default",
         }
@@ -826,7 +841,11 @@ class TestValidateChoices(object):
                     key="key1",
                     type="String",
                     optional=False,
-                    choices=Choices(type="command", value=choices_value, strict=True),
+                    choices=Choices(
+                        type="command",
+                        value=choices_value,
+                        strict=True,
+                    ),
                 )
             ]
         )
@@ -836,6 +855,7 @@ class TestValidateChoices(object):
         choices_request = process_mock.call_args[0][0]
         assert choices_request.command == "command_name"
         assert choices_request.system == "foo"
+        assert choices_request.namespace == "default"
         assert choices_request.system_version == "0.0.1"
         assert choices_request.instance_name == "default"
 
@@ -855,7 +875,11 @@ class TestValidateChoices(object):
                     key="key1",
                     type="String",
                     optional=False,
-                    choices=Choices(type="command", value=1, strict=True),
+                    choices=Choices(
+                        type="command",
+                        value=1,
+                        strict=True,
+                    ),
                 )
             ]
         )
