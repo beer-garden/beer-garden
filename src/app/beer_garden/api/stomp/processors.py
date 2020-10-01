@@ -25,5 +25,5 @@ def process_send_message(message):
     if many:
         model_class = message[0].__class__.__name__
     message = SchemaParser.serialize(message, to_string=True, many=many)
-    response_headers = {'model_class': model_class, 'many': many}
+    response_headers = {"model_class": model_class, "many": many}
     return message, response_headers
