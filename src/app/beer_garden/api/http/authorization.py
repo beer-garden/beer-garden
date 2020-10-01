@@ -16,9 +16,9 @@ from beer_garden.db.mongo.models import Principal, Role
 
 
 class Permissions(Enum):
-    # Redesign of the permissions simplifies the grouping. Admin permissions are
-    # required to execute anything within the Admin drop-down in regards to Systems and
-    # Gardens. Local Admins can manage user roles and permissions.
+    """Admin permissions are required to execute anything within the Admin drop-down in
+    regards to Systems and Gardens. Local Admins can manage user roles  and permissions.
+    """
 
     # All of the permissions
     ALL = "bg-all"
