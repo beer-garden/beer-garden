@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 
+import argparse
 import logging
 import signal
+from pathlib import Path
+
 import sys
 
 import beer_garden
@@ -24,6 +27,17 @@ def generate_app_logging_config():
 
 def generate_plugin_logging_config():
     beer_garden.config.generate_plugin_logging(sys.argv[1:])
+
+
+def deprecate_config():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", dest="file")
+    parsed = vars(parser.parse_known_args()[0])
+
+    existing_path = Path(parsed["file"]).resolve()
+    if existing_path.exists():
+        new_path = Path(parsed["file"] + ".old").resolve()
+        existing_path.rename(new_path)
 
 
 def main():
