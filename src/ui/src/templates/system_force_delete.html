@@ -1,0 +1,30 @@
+<div class="modal-header">
+  <h3 class="modal-title" id="modal-title">Error Deleting {{system.name}}</h3>
+</div>
+
+<div class="modal-body" id="modal-body">
+  <div uib-alert
+      ng-repeat="alert in alerts"
+      ng-class="'alert-{{alert.type}}'"
+      close="closeAlert($index)">
+    {{alert.msg}}
+  </div>
+  <div>
+      <div>If you would like to Force Delete {{system.name}}, please check with your system administrator before running
+          this command. This only deletes the record from the database and will not shutdown {{system.name}} or remove
+          RabbitMQ queues.</div>
+      <div>Please review the original error message before proceeding.</div>
+      <div uib-alert ng-class="'alert-danger'">{{error}}</div>
+      <button type="button"
+                      class="btn btn-danger"
+                      ng-click="forceDeleteSystem(system)"
+                      confirm="Are you sure you want to force delete {{system.name}} from your local database?">
+                    Force Delete
+      </button>
+  </div>
+
+</div>
+
+<div class="modal-footer">
+  <button class="btn btn-primary" type="button" ng-click="closeDialog()">Close</button>
+</div>

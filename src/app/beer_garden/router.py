@@ -109,6 +109,7 @@ route_functions = {
     "SYSTEM_RELOAD": beer_garden.systems.reload_system,
     "SYSTEM_RESCAN": beer_garden.systems.rescan_system_directory,
     "SYSTEM_DELETE": beer_garden.systems.purge_system,
+    "SYSTEM_DELETE_FORCE": beer_garden.systems.remove_system,
     "GARDEN_CREATE": beer_garden.garden.create_garden,
     "GARDEN_READ": beer_garden.garden.get_garden,
     "GARDEN_READ_ALL": beer_garden.garden.get_gardens,
@@ -418,6 +419,8 @@ def _determine_target_garden(operation: Operation) -> str:
         return _system_name_lookup(
             System(namespace=parts[0], name=parts[1], version=version)
         )
+    elif operation.operation_type == "SYSTEM_DELETE_FORCE":
+        return config.get("garden.name")
 
     raise Exception(f"Bad operation type {operation.operation_type}")
 
