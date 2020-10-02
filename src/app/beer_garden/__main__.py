@@ -40,6 +40,10 @@ def deprecate_config():
         existing_path.rename(new_path)
 
 
+def noop():
+    pass
+
+
 def main():
     # Absolute first thing to do is load the config
     beer_garden.config.load(sys.argv[1:])
