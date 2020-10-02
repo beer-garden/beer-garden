@@ -35,6 +35,19 @@ if [ ! -d "$PLUGIN_HOME" ]; then
     mkdir -p "$PLUGIN_HOME"
 fi
 
+# Migrate old logging config files, if they exist
+# This is done for the old config files by after_remove
+# This just adds a ".old" extension to them
+BARTENDER_LOGGING="${CONFIG_HOME}/bartender-logging-config.json"
+if [ -f "$BARTENDER_LOGGING" ]; then
+    "$APP_HOME/bin/migrate_bartender_config" -c "$BARTENDER_LOGGING"
+fi
+
+BREW_VIEW_LOGGING="${CONFIG_HOME}/brew-view-logging-config.json"
+if [ -f "$BREW_VIEW_LOGGING" ]; then
+    "$APP_HOME/bin/migrate_brew_view_config" -c "$BREW_VIEW_LOGGING"
+fi
+
 # Generate application config if it doesn't exist
 if [ ! -f "$CONFIG_FILE" ]; then
     "$APP_HOME/bin/generate_config" \
