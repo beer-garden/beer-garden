@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import logging
 from datetime import datetime, timezone
+from functools import partial
 
 import wrapt
 from brewtils.models import Event, Events
@@ -79,3 +81,52 @@ def publish_event(event_type: Events):
                 logger.exception(f"Error publishing event: {ex}")
 
     return wrapper
+
+
+def publish_event_async(event_type: Events):
+    """Decorator that will result in an event being published
+
+    This will attempt to publish an event regardless of whether the underlying function
+    raised or completed normally.
+
+    If the wrapped function raises the exception will be re-raised.
+
+    The event publishing *itself* will not raise anything. Any exceptions generated
+    during publishing will be logged as such, but WILL NOT BE RAISED.
+
+    Args:
+        event_type: The Event type
+
+    Raises:
+        Any: If the underlying function raised an exception it will be re-raised
+
+    Returns:
+        Any: The wrapped function result
+    """
+
+    @wrapt.decorator
+    def wrapper(wrapped, _, args, kwargs):
+        task = asyncio.ensure_future(wrapped(*args, **kwargs))
+        task.add_done_callback(partial(_async_callback, event_type=event_type))
+
+        return task
+
+    return wrapper
+
+
+def _async_callback(task, event_type=None):
+    event = Event(name=event_type.name)
+
+    try:
+        result = task.result()
+
+        event.payload_type = result.__class__.__name__
+        event.payload = result
+    except Exception as ex:
+        event.error = True
+        event.error_message = str(ex)
+    finally:
+        try:
+            publish(event)
+        except Exception as ex:
+            logger.exception(f"Error publishing event: {ex}")

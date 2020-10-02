@@ -4,13 +4,13 @@ from datetime import datetime
 from typing import List
 
 from brewtils.errors import PluginError
-from brewtils.models import Events, Garden, System
+from brewtils.models import Events, Garden, System, Event
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-from beer_garden.events import publish_event
+from beer_garden.events import publish_event, publish
 from beer_garden.namespace import get_namespaces
-from beer_garden.systems import get_systems
+from beer_garden.systems import get_systems, remove_system
 
 logger = logging.getLogger(__name__)
 
@@ -31,14 +31,22 @@ def get_garden(garden_name: str) -> Garden:
     return db.query_unique(Garden, name=garden_name)
 
 
-def get_gardens() -> List[Garden]:
+def get_gardens(include_local: bool = True) -> List[Garden]:
     """Retrieve list of all Gardens
+
+    Args:
+        include_local: Also include the local garden
 
     Returns:
         All known gardens
 
     """
-    return [local_garden()] + db.query(Garden)
+    gardens = db.query(Garden)
+
+    if include_local:
+        gardens += [local_garden()]
+
+    return gardens
 
 
 def local_garden() -> Garden:
@@ -54,6 +62,29 @@ def local_garden() -> Garden:
         status="RUNNING",
         systems=get_systems(filter_params={"local": True}),
         namespaces=get_namespaces(),
+    )
+
+
+def publish_garden(
+    event_name: str = Events.GARDEN_SYNC.name, status: str = "RUNNING"
+) -> None:
+    """Publish a Garden event
+
+    Args:
+        event_name: The event name to use
+        status: The garden status
+    """
+    publish(
+        Event(
+            name=event_name,
+            payload_type="Garden",
+            payload=Garden(
+                name=config.get("garden.name"),
+                status=status,
+                systems=get_systems(),
+                namespaces=get_namespaces(),
+            ),
+        )
     )
 
 
@@ -96,6 +127,10 @@ def remove_garden(garden_name: str) -> None:
 
     """
     garden = db.query_unique(Garden, name=garden_name)
+
+    for system in garden.systems:
+        remove_system(system.id)
+
     db.delete(garden)
     return garden
 
@@ -150,28 +185,37 @@ def handle_event(event):
     This method should NOT update the routing module. Let its handler worry about that!
     """
     if event.garden != config.get("garden.name"):
+
         if event.name in (
             Events.GARDEN_STARTED.name,
             Events.GARDEN_UPDATED.name,
             Events.GARDEN_STOPPED.name,
+            Events.GARDEN_SYNC.name,
         ):
             # Only do stuff for direct children
             if event.payload.name == event.garden:
                 existing_garden = get_garden(event.payload.name)
 
+                for system in event.payload.systems:
+                    system.local = False
+
                 if existing_garden is None:
                     event.payload.connection_type = None
                     event.payload.connection_params = {}
 
-                    for system in event.payload.systems:
-                        system.local = False
-
-                    create_garden(event.payload)
+                    garden = create_garden(event.payload)
                 else:
                     for attr in ("status", "status_info", "namespaces", "systems"):
                         setattr(existing_garden, attr, getattr(event.payload, attr))
 
-                    for system in existing_garden.systems:
-                        system.local = False
+                    garden = update_garden(existing_garden)
 
-                    update_garden(existing_garden)
+                # Publish update events for UI to dynamically load changes for Systems
+                for system in garden.systems:
+                    publish(
+                        Event(
+                            name=Events.SYSTEM_UPDATED.name,
+                            payload_type="System",
+                            payload=system,
+                        )
+                    )

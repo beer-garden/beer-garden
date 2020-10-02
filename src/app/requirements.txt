@@ -35,6 +35,7 @@ mock==4.0.1               # via -r requirements.in
 mongoengine==0.20.0       # via -r requirements.in
 mongomock==3.19.0         # via -r requirements.in
 more-itertools==8.4.0     # via -r requirements.in
+motor==2.2.0
 mypy-extensions==0.4.3    # via black
 packaging==19.2           # via brewtils, sphinx
 passlib==1.7.2            # via -r requirements.in
@@ -48,7 +49,7 @@ pycodestyle==2.5.0        # via flake8
 pyflakes==2.1.1           # via flake8
 pygments==2.5.2           # via sphinx
 pyjwt==1.7.1              # via brewtils
-pymongo==3.11.0           # via mongoengine
+pymongo==3.11.0           # via mongoengine, motor
 pyparsing==2.4.6          # via packaging
 pyrabbit2==1.0.7          # via -r requirements.in
 pytest-lazy-fixture==0.6.3  # via -r requirements.in

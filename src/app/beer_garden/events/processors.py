@@ -3,12 +3,7 @@ import logging
 from multiprocessing import Queue
 from queue import Empty
 
-from brewtils.models import Event
 from brewtils.stoppable_thread import StoppableThread
-
-import beer_garden.config
-import beer_garden.events
-import beer_garden.systems
 
 logger = logging.getLogger(__name__)
 
@@ -120,21 +115,3 @@ class FanoutProcessor(QueueListener):
 
         if manage:
             self._managed_processors.append(processor)
-
-
-class HttpEventProcessor(QueueListener):
-    """Publish events using an EasyClient"""
-
-    def __init__(self, easy_client=None, black_list=None, **kwargs):
-        super().__init__(**kwargs)
-
-        self._ez_client = easy_client
-        self._black_list = black_list or []
-
-    def process(self, event: Event):
-        try:
-            if event.name not in self._black_list:
-                event.garden = beer_garden.config.get("garden.name")
-                self._ez_client.publish_event(event)
-        except Exception as ex:
-            logger.exception(f"Error publishing EasyClient event: {ex}")

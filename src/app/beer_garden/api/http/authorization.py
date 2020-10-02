@@ -97,7 +97,7 @@ def check_permission(principal, required_permissions):
             )
 
 
-def anonymous_principal():
+def anonymous_principal() -> BrewtilsPrincipal:
     """Load correct anonymous permissions
 
     This exists in a weird space. We need to set the roles attribute to a 'real'

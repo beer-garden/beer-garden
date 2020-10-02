@@ -111,14 +111,7 @@ export default function adminSystemController(
     }
   }
 
-  EventService.addCallback('admin_system', (event) => {
-    if (event.name.startsWith('SYSTEM') || event.name.startsWith('INSTANCE')) {
-      $scope.$apply(groupSystems);
-    }
-  });
-  $scope.$on('$destroy', function() {
-    EventService.removeCallback('admin_system');
-  });
+  $rootScope.$watchCollection("systems", groupSystems);
 
   $scope.showLogs = function (system, instance) {
        $uibModal.open({

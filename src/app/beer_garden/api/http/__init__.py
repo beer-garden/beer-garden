@@ -3,9 +3,11 @@ import logging
 import os
 import ssl
 import types
+from typing import Optional, Tuple
 
 from apispec import APISpec
 from brewtils.models import Event, Events
+from brewtils.models import Principal
 from brewtils.schemas import (
     CommandSchema,
     CronTriggerSchema,
@@ -36,24 +38,26 @@ import beer_garden.api.http.handlers.misc as misc
 import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.vbeta as vbeta
 import beer_garden.config as config
+import beer_garden.db.mongo.motor as moto
 import beer_garden.events
+import beer_garden.log
+import beer_garden.requests
 import beer_garden.router
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
+from beer_garden.api.http.client import SerializeHelper
 from beer_garden.api.http.processors import EventManager, websocket_publish
 from beer_garden.events import publish
 from beer_garden.events.processors import QueueListener
-import beer_garden.log
 
-io_loop = None
-server = None
-tornado_app = None
-public_url = None
-logger = None
+io_loop: IOLoop
+server: HTTPServer
+tornado_app: Application
+public_url: str
+logger: logging.Logger
 event_publishers = None
-api_spec = None
-notification_meta = None
-anonymous_principal = None
-client_ssl = None
+api_spec: APISpec
+anonymous_principal: Principal
+client_ssl: ssl.SSLContext
 
 
 def run(ep_conn):
@@ -137,6 +141,9 @@ def _setup_application():
 
     io_loop = IOLoop.current()
 
+    # Set up motor connection
+    moto.create_connection(db_config=beer_garden.config.get("db"))
+
     auth_config = config.get("auth")
     if not auth_config.token.secret:
         auth_config.token.secret = os.urandom(20)
@@ -161,7 +168,7 @@ def _setup_application():
     server = HTTPServer(tornado_app, ssl_options=server_ssl)
 
 
-def _setup_tornado_app():
+def _setup_tornado_app() -> Application:
     prefix = config.get("entry.http.url_prefix")
 
     # These get documented in our OpenAPI (fka Swagger) documentation
@@ -230,10 +237,11 @@ def _setup_tornado_app():
         debug=app_config.debug_mode,
         cookie_secret=auth_config.token.secret,
         autoreload=False,
+        client=SerializeHelper(),
     )
 
 
-def _setup_ssl_context():
+def _setup_ssl_context() -> Tuple[Optional[ssl.SSLContext], Optional[ssl.SSLContext]]:
     http_config = config.get("entry.http")
     if http_config.ssl.enabled:
         server_ssl = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
@@ -393,7 +401,11 @@ def _event_callback(event):
 
     # And also register handlers that the entry point needs to care about
     # As of now that's only the routing subsystem
-    for handler in [beer_garden.router.handle_event, beer_garden.log.handle_event]:
+    for handler in [
+        beer_garden.router.handle_event,
+        beer_garden.log.handle_event,
+        beer_garden.requests.handle_event,
+    ]:
         try:
             handler(event)
         except Exception as ex:

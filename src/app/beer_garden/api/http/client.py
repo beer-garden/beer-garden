@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-import asyncio
 import json
-from concurrent.futures.thread import ThreadPoolExecutor
-from functools import partial
+from inspect import isawaitable
 
 import six
 from brewtils.models import BaseModel
@@ -12,22 +10,21 @@ import beer_garden.api
 import beer_garden.router
 
 
-class ExecutorClient(object):
-    parser = SchemaParser()
-    pool = ThreadPoolExecutor(50)
-
+class SerializeHelper(object):
     async def __call__(self, *args, serialize_kwargs=None, **kwargs):
-        result = await asyncio.get_event_loop().run_in_executor(
-            self.pool, partial(beer_garden.router.route, *args, **kwargs)
-        )
+        result = beer_garden.router.route(*args, **kwargs)
+
+        # Await any coroutines
+        if isawaitable(result):
+            result = await result
 
         # Handlers overwhelmingly just write the response so default to serializing
         serialize_kwargs = serialize_kwargs or {}
         if "to_string" not in serialize_kwargs:
             serialize_kwargs["to_string"] = True
 
-        # We're not going to ever double-serialize a string
-        if isinstance(result, six.string_types):
+        # Don't serialize if that's not desired
+        if serialize_kwargs.get("return_raw") or isinstance(result, six.string_types):
             return result
 
         if self.json_dump(result):

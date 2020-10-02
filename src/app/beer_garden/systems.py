@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 import copy
 import logging
-from time import sleep
 from typing import List, Sequence
 
-from brewtils.errors import ModelValidationError
+from brewtils.errors import BrewtilsException, ModelValidationError
 from brewtils.models import Command, Event, Events, Instance, System
 from brewtils.schemas import SystemSchema
+from time import sleep
 
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
+from beer_garden.errors import NotFoundException, NotUniqueException
 from beer_garden.events import publish_event
 from beer_garden.plugin import stop
 
@@ -63,9 +64,9 @@ def create_system(system: System) -> System:
     system = db.create(system)
 
     # Also need to let the routing module know
-    from beer_garden.router import update_routing
+    from beer_garden.router import add_routing_system
 
-    update_routing(update_system=system)
+    add_routing_system(system=system)
 
     return system
 
@@ -140,17 +141,45 @@ def update_system(
                 f"the system instance limit of {system.max_instances}"
             )
 
-        saved_instances = [db.create(i) for i in add_instances]
-        updates["push_all__instances"] = [db.from_brewtils(i) for i in saved_instances]
+        updates["push_all__instances"] = [db.from_brewtils(i) for i in add_instances]
 
     system = db.modify(system, **updates)
 
     # Also need to let the routing module know
-    from beer_garden.router import update_routing
+    from beer_garden.router import add_routing_system
 
-    update_routing(existing_id=system.id, update_system=system)
+    add_routing_system(system=system)
 
     return system
+
+
+def upsert(system: System) -> System:
+    """Helper to create or update a system
+
+    Args:
+        system: The system to create or update
+
+    Returns:
+        The created / updated system
+    """
+    try:
+        return create_system(system)
+    except NotUniqueException:
+        logger.warning(f"Not unique, updating {system.name}")
+
+        existing = db.query_unique(
+            System, namespace=system.namespace, name=system.name, version=system.version
+        )
+
+        return update_system(
+            system=existing,
+            new_commands=system.commands,
+            add_instances=system.instances,
+            description=system.description,
+            display_name=system.display_name,
+            icon_name=system.icon_name,
+            metadata=system.metadata,
+        )
 
 
 @publish_event(Events.SYSTEM_RELOAD_REQUESTED)
@@ -191,9 +220,9 @@ def remove_system(system_id: str = None, system: System = None) -> System:
     db.delete(system)
 
     # Also need to let the routing module know
-    from beer_garden.router import update_routing
+    from beer_garden.router import remove_routing_system
 
-    update_routing(existing_id=system.id)
+    remove_routing_system(system=system)
 
     return system
 
@@ -255,6 +284,68 @@ def purge_system(system_id: str = None, system: System = None) -> System:
 def rescan_system_directory() -> None:
     """Scans plugin directory and starts any new Systems"""
     pass
+
+
+def get_instance(
+    instance_id: str = None,
+    system_id: str = None,
+    instance_name: str = None,
+    instance: Instance = None,
+    **_,
+) -> Instance:
+    """Retrieve an individual Instance
+
+    Args:
+        instance_id: The Instance ID
+        system_id: The System ID
+        instance_name: The Instance name
+        instance: The Instance
+
+    Returns:
+        The Instance
+
+    """
+    if instance:
+        return instance
+
+    if system_id and instance_name:
+        system = db.query_unique(System, raise_missing=True, id=system_id)
+
+        try:
+            return system.get_instance_by_name(instance_name, raise_missing=True)
+        except BrewtilsException:
+            raise NotFoundException(
+                f"System {system} does not have an instance with name '{instance_name}'"
+            ) from None
+
+    elif instance_id:
+        system = db.query_unique(System, raise_missing=True, instances__id=instance_id)
+
+        try:
+            return system.get_instance_by_id(instance_id, raise_missing=True)
+        except BrewtilsException:
+            raise NotFoundException(
+                f"System {system} does not have an instance with id '{instance_id}'"
+            ) from None
+
+    raise NotFoundException()
+
+
+def remove_instance(
+    *_, system: System = None, instance: Instance = None, **__
+) -> Instance:
+    """Removes an Instance
+
+    Args:
+        system: The System
+        instance: The Instance
+
+    Returns:
+        The deleted Instance
+    """
+    db.modify(system, pull__instances=instance)
+
+    return instance
 
 
 def handle_event(event: Event) -> None:

@@ -38,12 +38,20 @@ export default function adminGardenController(
     );
   };
 
+  $scope.syncGardens = function() {
+    GardenService.syncGardens()
+  }
+
   $scope.editGarden = function(garden) {
     $state.go('base.garden_view',
       {
         'name': garden.name,
       }
     );
+  };
+
+  $scope.deleteGarden = function(garden) {
+    GardenService.deleteGarden(garden)
   };
 
   let loadAll = function() {

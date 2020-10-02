@@ -4,7 +4,7 @@ import logging
 from box import Box
 from brewtils.models import BaseModel
 from brewtils.schema_parser import SchemaParser
-from mongoengine import connect, register_connection, DoesNotExist
+from mongoengine import NotUniqueError, connect, register_connection, DoesNotExist
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 from typing import List, Optional, Type, Union, Tuple
 
@@ -18,6 +18,7 @@ from beer_garden.db.mongo.util import (
     ensure_roles,
     ensure_users,
 )
+from beer_garden.errors import NotUniqueException
 
 logger = logging.getLogger(__name__)
 
@@ -316,10 +317,13 @@ def create(obj: ModelItem) -> ModelItem:
     """
     mongo_obj = from_brewtils(obj)
 
-    if hasattr(mongo_obj, "deep_save"):
-        mongo_obj.deep_save()
-    else:
-        mongo_obj.save(force_insert=True)
+    try:
+        if hasattr(mongo_obj, "deep_save"):
+            mongo_obj.deep_save()
+        else:
+            mongo_obj.save(force_insert=True)
+    except NotUniqueError as ex:
+        raise NotUniqueException from ex
 
     return to_brewtils(mongo_obj)
 
@@ -362,6 +366,11 @@ def modify(obj: ModelItem, query=None, **kwargs) -> ModelItem:
 
     """
     mongo_obj = from_brewtils(obj)
+
+    # If any values are brewtils models those need to be converted
+    for key in kwargs:
+        if isinstance(kwargs[key], BaseModel):
+            kwargs[key] = from_brewtils(kwargs[key])
 
     mongo_obj.modify(query=query, **kwargs)
 

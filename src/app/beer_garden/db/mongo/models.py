@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import datetime
 import logging
-import sys
 
 import pytz
 import six
+import sys
 
 try:
     from lark import ParseError
@@ -13,6 +13,7 @@ except ImportError:
     from lark.common import ParseError
 
     LarkError = ParseError
+from bson.objectid import ObjectId
 from mongoengine import (
     BooleanField,
     DateTimeField,
@@ -21,9 +22,11 @@ from mongoengine import (
     DynamicField,
     EmbeddedDocument,
     EmbeddedDocumentField,
+    EmbeddedDocumentListField,
     GenericEmbeddedDocumentField,
     IntField,
     ListField,
+    ObjectIdField,
     ReferenceField,
     StringField,
     FileField,
@@ -171,7 +174,7 @@ class Parameter(MongoModel, EmbeddedDocument):
         required=False, choices=BrewtilsParameter.FORM_INPUT_TYPES
     )
     type_info = DictField(required=False)
-    parameters = ListField(EmbeddedDocumentField("Parameter"))
+    parameters = EmbeddedDocumentListField("Parameter")
 
     # If no display name was set, it will default it to the same thing as the key
     def __init__(self, *args, **kwargs):
@@ -202,7 +205,7 @@ class Command(MongoModel, EmbeddedDocument):
 
     name = StringField(required=True)
     description = StringField()
-    parameters = ListField(EmbeddedDocumentField("Parameter"))
+    parameters = EmbeddedDocumentListField("Parameter")
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES, default="ACTION")
     output_type = StringField(choices=BrewtilsCommand.OUTPUT_TYPES, default="STRING")
     schema = DictField()
@@ -235,9 +238,10 @@ class Command(MongoModel, EmbeddedDocument):
             )
 
 
-class Instance(MongoModel, Document):
+class Instance(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.Instance
 
+    id = ObjectIdField(required=True, default=ObjectId, unique=True, primary_key=True)
     name = StringField(required=True, default="default")
     description = StringField()
     status = StringField(default="INITIALIZING")
@@ -432,8 +436,8 @@ class System(MongoModel, Document):
     version = StringField(required=True)
     namespace = StringField(required=True)
     max_instances = IntField(default=-1)
-    instances = ListField(ReferenceField(Instance, reverse_delete_rule=PULL))
-    commands = ListField(EmbeddedDocumentField("Command"))
+    instances = EmbeddedDocumentListField("Instance")
+    commands = EmbeddedDocumentListField("Command")
     icon_name = StringField()
     display_name = StringField()
     metadata = DictField()
@@ -467,40 +471,6 @@ class System(MongoModel, Document):
             raise ModelValidationError(
                 "Can not save System %s: Duplicate instance names" % str(self)
             )
-
-    def deep_save(self):
-        """Deep save. Saves Instances and the System"""
-
-        # Note if this system is already saved
-        delete_on_error = self.id is None
-
-        try:
-            # Validate all instances before saving any of them
-            for instance in self.instances:
-                instance.validate()
-
-            # All validated, now save everything
-            for instance in self.instances:
-                instance.save(validate=False)
-
-            self.save()
-
-        # Since we don't have actual transactions we are not in a good position here,
-        # so try our best to 'roll back'
-        except Exception:
-            if delete_on_error and self.id:
-                self.delete()
-            raise
-
-    def deep_delete(self):
-        """Completely delete a system"""
-        self.delete_instances()
-        return self.delete()
-
-    def delete_instances(self):
-        """Delete all instances associated with this system"""
-        for instance in self.instances:
-            instance.delete()
 
 
 class Event(MongoModel, Document):
@@ -677,7 +647,7 @@ class Garden(MongoModel, Document):
 
     def deep_save(self):
         for system in self.systems:
-            system.deep_save()
+            system.save()
 
         self.save()
 
