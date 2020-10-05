@@ -57,17 +57,20 @@ BIN_PATH="$APP_PATH/bin"
 INCLUDE_PATH="$APP_PATH/include"
 LIB_PATH="$APP_PATH/lib"
 SHARE_PATH="$APP_PATH/share"
+UI_PATH="$APP_PATH/ui"
 
 PYTHON_BIN="$APP_PATH/bin/python"
 PIP_BIN="$APP_PATH/bin/pip"
 
 SRC_PATH="/src"
 
-SCRIPT_BASE="/rpm/centos${RELEASE}"
+SCRIPT_BASE="/rpm/centos${RELEASE}/scripts"
 BEFORE_INSTALL="before_install.sh"
 AFTER_INSTALL="after_install.sh"
 BEFORE_REMOVE="before_remove.sh"
 AFTER_REMOVE="after_remove.sh"
+
+RESOURCE_BASE="/rpm/centos${RELEASE}/resources"
 
 get_version() {
     echo $(cat "$SRC_PATH/$1/$2/__version__.py" | cut -s -d'"' -f2)
@@ -85,6 +88,14 @@ install_apps() {
         $PIP_BIN install \
                 "$SRC_PATH/brewtils/dist/brewtils-$brewtils_version.tar.gz" \
                 "$SRC_PATH/app/dist/beer-garden-$app_version.tar.gz"
+
+        mkdir -p "$UI_PATH"
+        cp -r "$SRC_PATH/ui/dist" "$UI_PATH/dist"
+
+        mkdir -p "$UI_PATH/conf/conf.d"
+        cp "$RESOURCE_BASE/nginx/upstream.conf" "$UI_PATH/conf/conf.d/"
+        mkdir -p "$UI_PATH/conf/default.d"
+        cp "$RESOURCE_BASE/nginx/bg.conf" "$UI_PATH/conf/default.d/"
     else
         # If this isn't a local install we don't have versions
         $PIP_BIN install --upgrade -q beer-garden
@@ -134,6 +145,7 @@ create_rpm() {
         --directories $INCLUDE_PATH
         --directories $LIB_PATH
         --directories $SHARE_PATH
+        --directories $UI_PATH
         --before-install $SCRIPT_BASE/$BEFORE_INSTALL
         --after-install $SCRIPT_BASE/$AFTER_INSTALL
         --before-remove $SCRIPT_BASE/$BEFORE_REMOVE
@@ -149,14 +161,9 @@ create_rpm() {
     if [[ "$RELEASE" == "7" ]]; then
         args+=(-d "openssl-libs >= 1:1.0.2a-1")
 
-        service_files=("beer-garden.service")
-        for file in "${service_files[@]}"
-        do
-            cp "$SCRIPT_BASE/$file" "/lib/systemd/system/"
-            service_paths+=("/lib/systemd/system/$file")
-        done
+        cp "$RESOURCE_BASE/service/beer-garden.service" "/lib/systemd/system/"
+        service_paths+=("/lib/systemd/system/beer-garden.service")
     fi
-
 
     # Make sure we have a place to put the rpm
     mkdir -p /rpm/dist

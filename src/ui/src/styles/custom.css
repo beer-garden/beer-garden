@@ -156,6 +156,12 @@ html, body{
     max-width: 30%;
 }
 
+/* For presenting any modal pop ups */
+
+.app-modal-window .modal-dialog {
+  width: 70%;
+}
+
 /* Stuff to make Garden Admin page look like the Systems Page */
 
 #gardens-container {
@@ -249,6 +255,8 @@ table.dataTable{
 
 .dropdown-menu{
     min-width: 110px;
+    max-height: 200px;
+    overflow: auto;
 }
 
 #nav-extras hr {

@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
+import copy
 import logging
-from time import sleep
 from typing import List, Sequence
 
-from brewtils.errors import ModelValidationError
+from brewtils.errors import BrewtilsException, ModelValidationError
 from brewtils.models import Command, Event, Events, Instance, System
 from brewtils.schemas import SystemSchema
+from time import sleep
 
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
+from beer_garden.errors import NotFoundException, NotUniqueException
 from beer_garden.events import publish_event
 from beer_garden.plugin import stop
 
@@ -55,32 +57,24 @@ def create_system(system: System) -> System:
         The created System
 
     """
-    # Assign a default 'main' instance if there aren't any instances and there can
-    # only be one
-    if not system.instances or len(system.instances) == 0:
-        if system.max_instances is None or system.max_instances == 1:
-            system.instances = [Instance(name="default")]
-            system.max_instances = 1
-        else:
-            raise ModelValidationError(
-                f"Could not create {system}: Systems with max_instances > 1 "
-                f"must also define their instances"
-            )
-    else:
-        if not system.max_instances:
-            system.max_instances = len(system.instances)
-
     if system.namespace is None:
         system.namespace = config.get("garden.name")
 
+    # Create in the database
     system = db.create(system)
+
+    # Also need to let the routing module know
+    from beer_garden.router import add_routing_system
+
+    add_routing_system(system=system)
 
     return system
 
 
 @publish_event(Events.SYSTEM_UPDATED)
 def update_system(
-    system_id: str,
+    system_id: str = None,
+    system: System = None,
     new_commands: Sequence[Command] = None,
     add_instances: Sequence[Instance] = None,
     description: str = None,
@@ -92,6 +86,7 @@ def update_system(
 
     Args:
         system_id: The ID of the System to be updated
+        system: The System to be updated
         new_commands: List of commands to overwrite existing commands
         add_instances: List of new instances that will be added to the current list
         description: Replacement description
@@ -103,48 +98,102 @@ def update_system(
         The updated System
 
     """
-    system = db.query_unique(System, id=system_id)
+    updates = {}
+    system = system or db.query_unique(System, id=system_id)
 
     if new_commands:
+        # Convert these to DB form and back to make sure all defaults are correct
+        mongo_commands = [db.from_brewtils(command) for command in new_commands]
+        brew_commands = db.to_brewtils(mongo_commands)
+
         if (
             system.commands
             and "dev" not in system.version
-            and system.has_different_commands(new_commands)
+            and system.has_different_commands(brew_commands)
         ):
             raise ModelValidationError(
                 f"System {system} already exists with different commands"
             )
 
-        system = db.replace_commands(system, new_commands)
+        updates["commands"] = mongo_commands
+
+    # If we set an attribute to None mongoengine marks that attribute for deletion
+    # That's why we explicitly test each of these
+    if description:
+        updates["description"] = description
+
+    if display_name:
+        updates["display_name"] = display_name
+
+    if icon_name:
+        updates["icon_name"] = icon_name
+
+    if metadata:
+        metadata_update = copy.deepcopy(system.metadata)
+        metadata_update.update(metadata)
+
+        updates["metadata"] = metadata_update
 
     if add_instances:
-        if len(system.instances) + len(add_instances) > system.max_instances:
+        if -1 < system.max_instances < len(system.instances) + len(add_instances):
             raise ModelValidationError(
                 f"Unable to add instance(s) to {system} - would exceed "
                 f"the system instance limit of {system.max_instances}"
             )
 
-        system.instances += add_instances
+        updates["push_all__instances"] = []
+        instance_names = system.instance_names
 
-    if metadata:
-        system.metadata.update(metadata)
+        for instance in add_instances:
+            if instance.name in instance_names:
+                raise ModelValidationError(
+                    f"Unable to add Instance {instance} to System {system}: Duplicate "
+                    f"instance names"
+                )
 
-    # If we set an attribute to None mongoengine marks that attribute for deletion
-    # That's why we explicitly test each of these
-    if description:
-        system.description = description
+            updates["push_all__instances"].append(db.from_brewtils(instance))
 
-    if display_name:
-        system.display_name = display_name
+    system = db.modify(system, **updates)
 
-    if icon_name:
-        system.icon_name = icon_name
+    # Also need to let the routing module know
+    from beer_garden.router import add_routing_system
 
-    return db.update(system)
+    add_routing_system(system=system)
+
+    return system
+
+
+def upsert(system: System) -> System:
+    """Helper to create or update a system
+
+    Args:
+        system: The system to create or update
+
+    Returns:
+        The created / updated system
+    """
+    try:
+        return create_system(system)
+    except NotUniqueException:
+        logger.warning(f"Not unique, updating {system.name}")
+
+        existing = db.query_unique(
+            System, namespace=system.namespace, name=system.name, version=system.version
+        )
+
+        return update_system(
+            system=existing,
+            new_commands=system.commands,
+            add_instances=system.instances,
+            description=system.description,
+            display_name=system.display_name,
+            icon_name=system.icon_name,
+            metadata=system.metadata,
+        )
 
 
 @publish_event(Events.SYSTEM_RELOAD_REQUESTED)
-def reload_system(system_id: str) -> None:
+def reload_system(system_id: str = None, system: System = None) -> None:
     """Reload a system configuration
 
     NOTE: All we do here is grab the system from the database and return it. That's
@@ -154,34 +203,41 @@ def reload_system(system_id: str) -> None:
 
     Args:
         system_id: The System ID
+        system: The System
 
     Returns:
         None
     """
     # TODO - It'd be nice to have a check here to make sure system is managed
 
-    return db.query_unique(System, id=system_id)
+    return system or db.query_unique(System, id=system_id)
 
 
 @publish_event(Events.SYSTEM_REMOVED)
-def remove_system(system_id: str) -> System:
+def remove_system(system_id: str = None, system: System = None) -> System:
     """Remove a system
 
     Args:
         system_id: The System ID
+        system: The System
 
     Returns:
         The removed System
 
     """
-    system = db.query_unique(System, id=system_id)
+    system = system or db.query_unique(System, id=system_id)
 
     db.delete(system)
+
+    # Also need to let the routing module know
+    from beer_garden.router import remove_routing_system
+
+    remove_routing_system(system=system)
 
     return system
 
 
-def purge_system(system_id: str) -> System:
+def purge_system(system_id: str = None, system: System = None) -> System:
     """Convenience method for *completely* removing a system
 
     This will:
@@ -191,16 +247,22 @@ def purge_system(system_id: str) -> System:
 
     Args:
         system_id: The System ID
+        system: The System
 
     Returns:
         The purged system
 
     """
-    system = db.query_unique(System, id=system_id)
+    system = system or db.query_unique(System, id=system_id)
 
     # Attempt to stop the plugins
     for instance in system.instances:
-        stop(instance.id)
+        try:
+            stop(instance=instance, system=system)
+        except Exception as ex:
+            logger.warning(
+                f"Error while attempting to stop instance {instance.id}: {ex}"
+            )
 
     # TODO - This is not great
     sleep(5)
@@ -225,13 +287,75 @@ def purge_system(system_id: str) -> System:
             )
 
     # Finally, actually delete the system
-    return remove_system(system_id)
+    return remove_system(system=system)
 
 
 @publish_event(Events.SYSTEM_RESCAN_REQUESTED)
 def rescan_system_directory() -> None:
     """Scans plugin directory and starts any new Systems"""
     pass
+
+
+def get_instance(
+    instance_id: str = None,
+    system_id: str = None,
+    instance_name: str = None,
+    instance: Instance = None,
+    **_,
+) -> Instance:
+    """Retrieve an individual Instance
+
+    Args:
+        instance_id: The Instance ID
+        system_id: The System ID
+        instance_name: The Instance name
+        instance: The Instance
+
+    Returns:
+        The Instance
+
+    """
+    if instance:
+        return instance
+
+    if system_id and instance_name:
+        system = db.query_unique(System, raise_missing=True, id=system_id)
+
+        try:
+            return system.get_instance_by_name(instance_name, raise_missing=True)
+        except BrewtilsException:
+            raise NotFoundException(
+                f"System {system} does not have an instance with name '{instance_name}'"
+            ) from None
+
+    elif instance_id:
+        system = db.query_unique(System, raise_missing=True, instances__id=instance_id)
+
+        try:
+            return system.get_instance_by_id(instance_id, raise_missing=True)
+        except BrewtilsException:
+            raise NotFoundException(
+                f"System {system} does not have an instance with id '{instance_id}'"
+            ) from None
+
+    raise NotFoundException()
+
+
+def remove_instance(
+    *_, system: System = None, instance: Instance = None, **__
+) -> Instance:
+    """Removes an Instance
+
+    Args:
+        system: The System
+        instance: The Instance
+
+    Returns:
+        The deleted Instance
+    """
+    db.modify(system, pull__instances=instance)
+
+    return instance
 
 
 def handle_event(event: Event) -> None:

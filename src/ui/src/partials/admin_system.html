@@ -2,6 +2,12 @@
   <span>Systems Management</span>
   <span class="pull-right" ng-show="responseState(response) !== 'loading'">
     <button type="button"
+            class="btn btn-danger"
+            ng-click="clearAllQueues()"
+            confirm="Are you sure you want to delete all Queues?">
+      Clear All Queues
+    </button>
+    <button type="button"
             class="btn btn-primary"
             ng-show="hasPermission(user, 'bg-system-create')"
             ng-click="rescan()">Rescan System Directory</button>
@@ -29,13 +35,13 @@
     </div>
 
     <div class="panel-body" style="padding-bottom: 0px;">
-      <div ng-repeat="system in systems">
+      <div ng-repeat="system in systems | orderBy: 'version'">
         <div class="list-group">
           <div class="list-group-item clearfix" style="font-size: 18px;">
             <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
               <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})">
                 <span class="icon-color" ng-class="getIcon(system.icon_name)"></span>
-                <span style="font-size: 18px;">{{system.version}}</span>
+                <span style="font-size: 18px;">{{system.namespace}}/{{system.version}}</span>
               </a>
             </div>
             <div class="btn-toolbar pull-right">
@@ -64,7 +70,7 @@
               </div>
             </div>
           </div>
-          <div ng-repeat="instance in system.instances" class="list-group-item">
+          <div ng-repeat="instance in system.instances | orderBy: 'name'" class="list-group-item">
             <bg-status target='instance.status'></bg-status>
             <span style="padding: 0 10px">{{instance.name}}</span>
             <span class="btn-toolbar pull-right"
@@ -76,6 +82,26 @@
                 <button type="button" class="btn btn-default fa fa-stop"
                         ng-click="stopInstance(instance)"
                         title="Stop Instance {{instance.name}}"></button>
+                  <button class="btn btn-default fa fa-bars"
+                          title="Admin Tools for {{instance.name}}"
+                          type="button"
+                          data-toggle="dropdown"></button>
+                  <ul class="dropdown-menu">
+                    <li>
+                      <a
+                          ng-click="showLogs(system, instance)"
+                          role="button"
+                          title="Open Log File: {{instance.name}}"><span >Show Logs</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                          ng-click="manageQueue(system, instance)"
+                          role="button"
+                          title="Manage Queue: {{instance.name}}"><span>Manage Queue</span>
+                      </a>
+                    </li>
+                  </ul>
               </span>
             </span>
           </div>

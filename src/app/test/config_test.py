@@ -21,11 +21,11 @@ class TestLoadConfig(object):
     @pytest.mark.parametrize(
         "extension,contents",
         [
-            ("yaml", "log_level: DEBUG"),
-            ("yml", "log_level: DEBUG"),
-            ("json", '{"log_level": "DEBUG"}'),
-            ("", '{"log_level": "DEBUG"}'),
-            ("", "log_level: DEBUG"),
+            ("yaml", "log:\n  fallback_level: DEBUG"),
+            ("yml", "log:\n  fallback_level: DEBUG"),
+            ("", "log:\n  fallback_level: DEBUG"),
+            ("json", '{"log":{"fallback_level": "DEBUG"}}'),
+            ("", '{"log":{"fallback_level": "DEBUG"}}'),
         ],
     )
     def test_config_file(self, tmpdir, extension, contents):
@@ -35,7 +35,7 @@ class TestLoadConfig(object):
             f.write(contents)
 
         beer_garden.config.load(["-c", str(config_file)], force=True)
-        assert beer_garden.config.get("log.level") == "DEBUG"
+        assert beer_garden.config.get("log.fallback_level") == "DEBUG"
 
     # These are pretty much identical to the brewtils tests for normalize prefix
     @pytest.mark.parametrize(
@@ -70,8 +70,8 @@ class TestGenerateConfig(object):
         config = spec.load_config("config_file")
 
         # Defaults from spec
-        assert config.log.file is None
-        assert config.log.level == "INFO"
+        assert config.log.fallback_file is None
+        assert config.log.fallback_level == "INFO"
 
         # Value passed in
         assert config.log.config_file == logging_config_file
@@ -111,20 +111,22 @@ class TestUpdateConfig(object):
     def test_success(self, tmpdir, extension):
         config_file = os.path.join(str(tmpdir), "config." + extension)
 
-        beer_garden.config.generate(["-c", config_file, "--log-level", "DEBUG"])
+        beer_garden.config.generate(
+            ["-c", config_file, "--log-fallback-level", "DEBUG"]
+        )
 
         beer_garden.config.migrate(["-c", config_file])
         assert os.path.exists(config_file)
 
         beer_garden.config.load(["-c", config_file], force=True)
-        assert beer_garden.config.get("log.level") == "DEBUG"
+        assert beer_garden.config.get("log.fallback_level") == "DEBUG"
 
     def test_change_type(self, tmpdir):
         current_config = os.path.join(str(tmpdir), "config.json")
         new_config = os.path.join(str(tmpdir), "config.yaml")
 
         with open(current_config, "w") as f:
-            f.write('{"log_level": "DEBUG"}')
+            f.write('{"log":{"fallback_level": "DEBUG"}}')
 
         beer_garden.config.migrate(["-c", current_config])
 
@@ -132,7 +134,7 @@ class TestUpdateConfig(object):
         assert not os.path.exists(current_config)
 
         beer_garden.config.load(["-c", new_config], force=True)
-        assert beer_garden.config.get("log.level") == "DEBUG"
+        assert beer_garden.config.get("log.fallback_level") == "DEBUG"
 
     def test_change_type_error(self, monkeypatch, tmpdir):
         config_file = os.path.join(str(tmpdir), "config.json")
@@ -151,9 +153,9 @@ class TestUpdateConfig(object):
             beer_garden.config.migrate([])
 
 
-class TestGenerateLogging(object):
+class TestGenerateAppLogging(object):
     def test_no_file(self, capsys):
-        logging_config = beer_garden.config.generate_logging([])
+        logging_config = beer_garden.config.generate_app_logging([])
         captured = capsys.readouterr()
 
         assert not captured.out == ""
@@ -161,8 +163,8 @@ class TestGenerateLogging(object):
 
     def test_with_file(self, tmpdir, capsys):
         logging_config_file = Path(tmpdir, "logging.yaml")
-        logging_config = beer_garden.config.generate_logging(
-            ["--log-config-file", str(logging_config_file)]
+        logging_config = beer_garden.config.generate_app_logging(
+            ["--config-file", str(logging_config_file)]
         )
         captured = capsys.readouterr()
 
@@ -374,19 +376,8 @@ class TestSafeMigrate(object):
 
 
 def test_parse_args():
-    input_args = [
-        "--log-config-file",
-        "/path/to/log/config",
-        "--log-file",
-        "/path/to/log/file",
-        "--log-level",
-        "INFO",
-    ]
+    input_args = ["--plugin-status-heartbeat", "100", "--plugin-status-timeout", "500"]
 
     _, cli_vars = beer_garden.config._parse_args(input_args)
 
-    assert cli_vars["log"] == {
-        "config_file": "/path/to/log/config",
-        "file": "/path/to/log/file",
-        "level": "INFO",
-    }
+    assert cli_vars["plugin"] == {"status_heartbeat": 100, "status_timeout": 500}

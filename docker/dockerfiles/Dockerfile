@@ -2,10 +2,12 @@ FROM python:3.7-alpine
 ARG VERSION
 ENTRYPOINT ["beergarden"]
 
-ENV BG_PLUGIN_LOCAL_DIRECTORY=/plugins \
-    BG_LOG_CONFIG_FILE=/logging-config.yaml
+ENV BG_LOG_CONFIG_FILE=/conf/app-logging.yaml \
+    BG_PLUGIN_LOGGING_CONFIG_FILE=/conf/plugin-logging.yaml \
+    BG_PLUGIN_LOCAL_DIRECTORY=/plugins
 
-ADD example_configs/logging-config.yaml /logging-config.yaml
+ADD example_configs/app-logging.yaml /conf/
+ADD example_configs/plugin-logging.yaml /conf/
 
 RUN set -ex \
     && apk add --no-cache --virtual .build-deps \

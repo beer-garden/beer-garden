@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 import json
+from asyncio import Event
 from typing import Sequence
 
-from brewtils.errors import ModelValidationError
+from brewtils.errors import ModelValidationError, TimeoutExceededError
 from brewtils.models import Operation, Request
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.db.api as db
 from beer_garden.api.http.authorization import Permissions, authenticated
-from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.api.http.base_handler import BaseHandler, event_wait
 
 
 class RequestAPI(BaseHandler):
@@ -156,9 +157,12 @@ class RequestOutputAPI(BaseHandler):
 
         if response["output"]:
             content_types = {
+                "CSS": "text/css; charset=UTF-8",
                 "HTML": "text/html; charset=UTF-8",
+                "JS": "application/javascript; charset=UTF-8",
                 "JSON": "application/json; charset=UTF-8",
                 "STRING": "text/plain; charset=UTF-8",
+                None: "text/plain; charset=UTF-8",
             }
             self.set_header("Content-Type", content_types[response["output_type"]])
             self.write(response["output"])
@@ -415,21 +419,38 @@ class RequestListAPI(BaseHandler):
         if self.current_user:
             request_model.requester = self.current_user.username
 
-        wait_timeout = 0
+        wait_event = None
         if self.get_argument("blocking", default="").lower() == "true":
-            wait_timeout = float(self.get_argument("timeout", default="-1"))
+            wait_event = Event()
 
             # Also don't publish latency measurements
             self.request.ignore_latency = True
 
-        response = await self.client(
+        created_request = await self.client(
             Operation(
                 operation_type="REQUEST_CREATE",
                 model=request_model,
                 model_type="Request",
-                kwargs={"wait_timeout": wait_timeout},
-            )
+                kwargs={"wait_event": wait_event},
+            ),
+            serialize_kwargs={"to_string": False},
         )
+
+        # Wait for the request to complete, if requested
+        if wait_event:
+            wait_timeout = float(self.get_argument("timeout", default="-1"))
+            if wait_timeout < 0:
+                wait_timeout = None
+
+            if not await event_wait(wait_event, wait_timeout):
+                raise TimeoutExceededError("Timeout exceeded")
+
+            # Reload to get the completed request
+            response = await self.client(
+                Operation(operation_type="REQUEST_READ", args=[created_request["id"]])
+            )
+        else:
+            response = SchemaParser.serialize_request(created_request)
 
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")

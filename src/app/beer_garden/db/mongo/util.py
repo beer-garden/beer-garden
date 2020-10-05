@@ -2,7 +2,8 @@
 import logging
 import os
 
-from mongoengine.errors import DoesNotExist, NotUniqueError
+from mongoengine.connection import get_db
+from mongoengine.errors import DoesNotExist, InvalidDocumentError, NotUniqueError
 from passlib.apps import custom_app_context
 
 logger = logging.getLogger(__name__)
@@ -149,6 +150,36 @@ def ensure_users(guest_login_enabled):
             Principal(
                 username="anonymous", roles=[Role.objects.get(name="bg-anonymous")]
             ).save()
+
+
+def ensure_embedded_command():
+    """Ensures that the Command model is an EmbeddedDocument
+
+    In version 2 and earlier the Command model was a top-level collection. This
+    causes organization and performance issues, so in version 3 it was changed to be an
+    embedded document of the System model. This ensures that's the case.
+
+    Right now if the check fails this will just drop the Systems, Commands, and
+    Instances collections. Since they'll be recreated anyway this isn't the worst, but
+    it would be better if we could seamlessly move the existing commands into existing
+    Systems.
+    """
+    from beer_garden.db.mongo.models import System
+
+    try:
+        if System.objects.count() > 0:
+            _ = System.objects()[0]
+    except InvalidDocumentError:
+        logger.warning(
+            "Encountered an error loading Systems. This is most likely because the "
+            "database is using the old (v2) style of storing Systems in the database. "
+            "To fix this the system, instance, and command collections will be dropped."
+        )
+
+        db = get_db()
+        db.drop_collection("command")
+        db.drop_collection("instance")
+        db.drop_collection("system")
 
 
 def check_indexes(document_class):

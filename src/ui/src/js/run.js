@@ -1,7 +1,11 @@
+import $ from 'jquery';
 import _ from 'lodash';
-import {camelCaseKeys, responseState} from './services/utility_service.js';
+import {responseState} from './services/utility_service.js';
 
 import loginTemplate from '../templates/login.html';
+
+window.$ = $;
+window._ = _;
 
 appRun.$inject = [
   '$rootScope',

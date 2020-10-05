@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import datetime
 import re
 import socket
@@ -26,13 +27,25 @@ import beer_garden.config as config
 import beer_garden.db.mongo.models
 from beer_garden.api.http.authorization import (
     AuthMixin,
-    coalesce_permissions,
-    bearer_auth,
     basic_auth,
+    bearer_auth,
+    coalesce_permissions,
 )
-from beer_garden.api.http.client import ExecutorClient
 from beer_garden.api.http.metrics import http_api_latency_total
-from beer_garden.errors import RoutingRequestException
+from beer_garden.errors import (
+    EndpointRemovedException,
+    NotFoundException,
+    RoutingRequestException,
+)
+
+
+async def event_wait(evt, timeout):
+    """Helper method to add a timeout to an asyncio wait"""
+    try:
+        await asyncio.wait_for(evt.wait(), timeout)
+    except asyncio.TimeoutError:
+        pass
+    return evt.is_set()
 
 
 class BaseHandler(AuthMixin, RequestHandler):
@@ -55,9 +68,11 @@ class BaseHandler(AuthMixin, RequestHandler):
         RequestForbidden: {"status_code": 403},
         InvalidSignatureError: {"status_code": 403},
         DoesNotExist: {"status_code": 404, "message": "Resource does not exist"},
+        NotFoundException: {"status_code": 404},
         WaitExceededError: {"status_code": 408, "message": "Max wait time exceeded"},
         ConflictError: {"status_code": 409},
         NotUniqueError: {"status_code": 409, "message": "Resource already exists"},
+        EndpointRemovedException: {"status_code": 410, "message": "Endpoint removed"},
         DocumentTooLarge: {"status_code": 413, "message": "Resource too large"},
         RequestPublishException: {"status_code": 502},
         socket.timeout: {"status_code": 504, "message": "Backend request timed out"},
@@ -115,8 +130,9 @@ class BaseHandler(AuthMixin, RequestHandler):
             to_return = to_return.replace(mongo_id, "<ID>")
         return to_return
 
-    def initialize(self):
-        self.client = ExecutorClient()
+    @property
+    def client(self):
+        return self.settings["client"]
 
     def prepare(self):
         """Called before each verb handler"""

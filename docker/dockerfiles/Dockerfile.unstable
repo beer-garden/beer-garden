@@ -2,12 +2,12 @@ FROM python:3.7-alpine
 WORKDIR /src
 ENTRYPOINT ["beergarden"]
 
-ENV BG_PLUGIN_LOCAL_DIRECTORY=/plugins \
-    BG_PLUGIN_LOGGING_CONFIG_FILE=/src/example_configs/plugin-logging.yaml \
-    BG_LOG_CONFIG_FILE=/src/example_configs/logging-config.yaml
+ENV BG_LOG_CONFIG_FILE=/src/conf/app-logging.yaml \
+    BG_PLUGIN_LOGGING_CONFIG_FILE=/src/conf/plugin-logging.yaml \
+    BG_PLUGIN_LOCAL_DIRECTORY=/plugins
 
-ADD ./example_configs/logging-config.yaml /src/example_configs/
-ADD ./example_configs/plugin-logging.yaml /src/example_configs/
+ADD ./example_configs/app-logging.yaml conf/
+ADD ./example_configs/plugin-logging.yaml conf/
 ADD ./requirements.txt .
 ADD ./dist/*.whl ./
 

@@ -1,7 +1,7 @@
 application:
-  allow_unsafe_templates: false
   cors_enabled: true
   debug_mode: true
+  execute_javascript: false
   icon_default: fa-beer
   name: Beer Garden
 auth:
@@ -24,7 +24,7 @@ db:
     info: 15
 entry:
   http:
-    enable: true
+    enabled: true
     host: 0.0.0.0
     port: 2337
     public_fqdn: localhost
@@ -37,20 +37,20 @@ entry:
       public_key: null
     url_prefix: /
   thrift:
-    enable: false
+    enabled: false
 event:
   mongo:
-    enable: true
+    enabled: true
   mq:
-    enable: false
+    enabled: false
     exchange: null
     virtual_host: /
 garden:
   name: default
 log:
-  config_file: example_configs/logging-config.yaml
-  file: null
-  level: INFO
+  config_file: example_configs/app-logging.yaml
+  fallback_file: null
+  fallback_level: INFO
 metrics:
   prometheus:
     enabled: false
@@ -86,7 +86,7 @@ mq:
   virtual_host: /
 parent:
   http:
-    enable: false
+    enabled: false
     host: 0.0.0.0
     port: 2337
     public_fqdn: localhost
@@ -106,13 +106,12 @@ plugin:
       password: password
       username: admin
     directory: ./plugins
-    log_directory: null
     timeout:
       shutdown: 10
       startup: 2
   logging:
     config_file: example_configs/plugin-logging.yaml
-    level: INFO
+    fallback_level: INFO
   status_heartbeat: 5
   status_timeout: 30
 publish_hostname: localhost

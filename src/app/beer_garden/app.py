@@ -6,9 +6,8 @@ from functools import partial
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils import EasyClient
-from brewtils.models import Event, Events, Garden
+from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
-from more_itertools import flatten
 from pytz import utc
 
 import beer_garden.api
@@ -20,17 +19,17 @@ import beer_garden.garden
 import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
-from beer_garden.events import publish
 from beer_garden.events.handlers import garden_callbacks
+from beer_garden.events.parent_procesors import HttpParentUpdater
 from beer_garden.events.processors import (
     FanoutProcessor,
-    HttpEventProcessor,
     QueueListener,
 )
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
-from beer_garden.monitor import PluginStatusMonitor
+from beer_garden.monitor import MonitorFile
+from beer_garden.plugin import StatusMonitor
 
 
 class Application(StoppableThread):
@@ -46,6 +45,7 @@ class Application(StoppableThread):
     clients = None
     helper_threads = None
     entry_manager = None
+    plugin_logger_observer = None
 
     def __init__(self):
         super(Application, self).__init__(
@@ -63,7 +63,7 @@ class Application(StoppableThread):
         plugin_config = config.get("plugin")
         self.helper_threads = [
             HelperThread(
-                PluginStatusMonitor,
+                StatusMonitor,
                 timeout_seconds=plugin_config.status_timeout,
                 heartbeat_interval=plugin_config.status_heartbeat,
             )
@@ -89,7 +89,7 @@ class Application(StoppableThread):
             )
 
         beer_garden.router.forward_processor = QueueListener(
-            action=beer_garden.router.forward
+            action=beer_garden.router.forward, name="forwarder"
         )
 
         self.entry_manager = beer_garden.api.entry_point.Manager()
@@ -202,7 +202,17 @@ class Application(StoppableThread):
         self.scheduler.start()
 
         self.logger.debug("Publishing startup event")
-        self._publish_update(Events.GARDEN_STARTED)
+        beer_garden.garden.publish_garden(
+            event_name=Events.GARDEN_STARTED.name, status="RUNNING"
+        )
+
+        self.logger.debug("Starting Plugin-logger Monitor")
+        self.plugin_logger_observer = MonitorFile(
+            config.get("plugin.logging.config_file"),
+            create_event=Event(name=Events.PLUGIN_LOGGER_FILE_CHANGE.name),
+            modified_event=Event(name=Events.PLUGIN_LOGGER_FILE_CHANGE.name),
+            moved_event=Event(name=Events.PLUGIN_LOGGER_FILE_CHANGE.name),
+        )
 
         self.logger.info("All set! Let me know if you need anything else!")
 
@@ -212,11 +222,16 @@ class Application(StoppableThread):
         )
 
         self.logger.debug("Publishing shutdown event")
-        self._publish_update(Events.GARDEN_STOPPED)
+        beer_garden.garden.publish_garden(
+            event_name=Events.GARDEN_STOPPED.name, status="STOPPED"
+        )
 
         if self.scheduler.running:
             self.logger.debug("Pausing scheduler - no more jobs will be run")
             self.scheduler.pause()
+
+        self.logger.debug("Stopping Plugin-logger Monitor")
+        self.plugin_logger_observer.stop()
 
         self.logger.debug("Stopping forwarding processor...")
         beer_garden.router.forward_processor.stop()
@@ -244,25 +259,35 @@ class Application(StoppableThread):
         self.logger.info("Successfully shut down Beer-garden")
 
     def _setup_events_manager(self):
-        event_manager = FanoutProcessor()
+        event_manager = FanoutProcessor(name="event manager")
 
         # Forward all events down into the entry points
         event_manager.register(self.entry_manager, manage=False)
 
         # Register the callback processor
-        event_manager.register(QueueListener(action=garden_callbacks))
+        event_manager.register(QueueListener(action=garden_callbacks, name="callbacks"))
 
         # If necessary send all events to the parent garden
         http_event = config.get("parent.http")
-        if http_event.enable:
+        if http_event.enabled:
             easy_client = EasyClient(
                 bg_host=http_event.host,
                 bg_port=http_event.port,
                 ssl_enabled=http_event.ssl.enabled,
             )
             skip_events = config.get("parent.skip_events")
+
+            def reconnect_action():
+                beer_garden.garden.publish_garden(
+                    event_name=Events.GARDEN_STARTED.name, status="RUNNING"
+                )
+
             event_manager.register(
-                HttpEventProcessor(easy_client=easy_client, black_list=skip_events)
+                HttpParentUpdater(
+                    easy_client=easy_client,
+                    black_list=skip_events,
+                    reconnect_action=reconnect_action,
+                )
             )
 
         return event_manager
@@ -280,21 +305,6 @@ class Application(StoppableThread):
             job_defaults=job_defaults,
             timezone=utc,
         )
-
-    @staticmethod
-    def _publish_update(event: Events):
-        # Want to have most current system list when publishing, so use the garden
-        # dict from the routing module
-        system_lists = (g.systems for g in beer_garden.router.gardens.values())
-
-        garden = Garden(
-            name=config.get("garden.name"),
-            status="RUNNING" if event == Events.GARDEN_STARTED else "STOPPED",
-            namespaces=beer_garden.namespace.get_namespaces(),
-            systems=list(flatten(system_lists)),
-        )
-
-        publish(Event(name=event.name, payload_type="Garden", payload=garden))
 
 
 class HelperThread(object):

@@ -1,18 +1,22 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import logging
-import requests
+import threading
+from concurrent.futures.thread import ThreadPoolExecutor
+from functools import partial
+from typing import Dict, Optional, Union
 
+import requests
 from beer_garden.events import publish
 from brewtils.models import Events, Garden, Instance, Operation, Request, System, Event
 from brewtils.schema_parser import SchemaParser
-from typing import Dict, Union
 
 import beer_garden
 import beer_garden.commands
 import beer_garden.config as config
 import beer_garden.db.api as db
+import beer_garden.db.mongo.motor as moto
 import beer_garden.garden
-import beer_garden.instances
 import beer_garden.log
 import beer_garden.namespace
 import beer_garden.plugin
@@ -21,8 +25,8 @@ import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
-from beer_garden.garden import get_gardens
-from beer_garden.garden import local_garden
+from beer_garden.events.processors import QueueListener
+from beer_garden.garden import get_garden, get_gardens
 
 logger = logging.getLogger(__name__)
 
@@ -32,13 +36,61 @@ routable_operations = [
     "INSTANCE_STOP",
     "REQUEST_CREATE",
     "SYSTEM_DELETE",
+    "GARDENS_SYNC",
 ]
 
 # Processor that will be used for forwarding
-forward_processor = None
+forward_processor: Optional[QueueListener] = None
 
-# Dict of garden_name -> garden
-gardens: Dict[str, Garden] = {}
+# Executor used to run REQUEST_CREATE operations in an async context
+t_pool = ThreadPoolExecutor()
+
+# Used for actually sending operations to other gardens
+garden_lock = threading.Lock()
+gardens: Dict[str, Garden] = {}  # garden_name -> garden
+
+# Used for determining WHERE to route an operation
+routing_lock = threading.Lock()
+system_name_routes: Dict[str, str] = {}
+system_id_routes: Dict[str, str] = {}
+instance_id_routes: Dict[str, str] = {}
+
+
+def route_garden_sync(target_garden_name: str = None):
+    # If a Garden Name is provided, determine where to route the request
+    if target_garden_name:
+        if target_garden_name == config.get("garden.name"):
+            beer_garden.garden.publish_garden()
+        else:
+            forward(
+                Operation(
+                    operation_type="GARDEN_SYNC", target_garden_name=target_garden_name
+                )
+            )
+
+    else:
+        # Iterate over all gardens and forward the sync request
+        with garden_lock:
+            for garden in gardens.values():
+                if garden.name == config.get("garden.name"):
+                    beer_garden.garden.publish_garden()
+                else:
+                    forward(
+                        Operation(
+                            operation_type="GARDEN_SYNC", target_garden_name=garden.name
+                        )
+                    )
+
+
+async_functions = {
+    "INSTANCE_UPDATE": beer_garden.plugin.update_async,
+    "INSTANCE_HEARTBEAT": beer_garden.plugin.heartbeat_async,
+    # THIS IS NOT AN ASYNC FUNCTION
+    # This is gross, but we're punting on this for now and just running in an executor
+    # Validating a request with a command-based choices parameter is going to require
+    # a lot of effort to make async correctly
+    "REQUEST_CREATE": beer_garden.requests.process_request,
+}
 
 route_functions = {
     "REQUEST_CREATE": beer_garden.requests.process_request,
@@ -48,19 +100,21 @@ route_functions = {
     "REQUEST_READ_ALL": beer_garden.requests.get_requests,
     "COMMAND_READ": beer_garden.commands.get_command,
     "COMMAND_READ_ALL": beer_garden.commands.get_commands,
-    "INSTANCE_READ": beer_garden.instances.get_instance,
-    "INSTANCE_DELETE": beer_garden.instances.remove_instance,
+    "INSTANCE_READ": beer_garden.systems.get_instance,
+    "INSTANCE_DELETE": beer_garden.systems.remove_instance,
     "INSTANCE_UPDATE": beer_garden.plugin.update,
+    "INSTANCE_HEARTBEAT": beer_garden.plugin.heartbeat,
     "INSTANCE_INITIALIZE": beer_garden.plugin.initialize,
     "INSTANCE_START": beer_garden.plugin.start,
     "INSTANCE_STOP": beer_garden.plugin.stop,
+    "INSTANCE_LOGS": beer_garden.plugin.read_logs,
     "JOB_CREATE": beer_garden.scheduler.create_job,
     "JOB_READ": beer_garden.scheduler.get_job,
     "JOB_READ_ALL": beer_garden.scheduler.get_jobs,
     "JOB_PAUSE": beer_garden.scheduler.pause_job,
     "JOB_RESUME": beer_garden.scheduler.resume_job,
     "JOB_DELETE": beer_garden.scheduler.remove_job,
-    "SYSTEM_CREATE": beer_garden.systems.create_system,
+    "SYSTEM_CREATE": beer_garden.systems.upsert,
     "SYSTEM_READ": beer_garden.systems.get_system,
     "SYSTEM_READ_ALL": beer_garden.systems.get_systems,
     "SYSTEM_UPDATE": beer_garden.systems.update_system,
@@ -73,11 +127,14 @@ route_functions = {
     "GARDEN_UPDATE_STATUS": beer_garden.garden.update_garden_status,
     "GARDEN_UPDATE_CONFIG": beer_garden.garden.update_garden_config,
     "GARDEN_DELETE": beer_garden.garden.remove_garden,
-    "LOG_READ": beer_garden.log.get_plugin_log_config,
-    "LOG_RELOAD": beer_garden.log.reload_plugin_log_config,
+    "GARDEN_SYNC": route_garden_sync,
+    "PLUGIN_LOG_READ": beer_garden.log.get_plugin_log_config,
+    "PLUGIN_LOG_READ_LEGACY": beer_garden.log.get_plugin_log_config_legacy,
+    "PLUGIN_LOG_RELOAD": beer_garden.log.load_plugin_log_config,
     "QUEUE_READ": beer_garden.queues.get_all_queue_info,
     "QUEUE_DELETE": beer_garden.queues.clear_queue,
     "QUEUE_DELETE_ALL": beer_garden.queues.clear_all_queues,
+    "QUEUE_READ_INSTANCE": beer_garden.queues.get_instance_queues,
     "NAMESPACE_READ_ALL": beer_garden.namespace.get_namespaces,
 }
 
@@ -104,10 +161,13 @@ def route(operation: Operation):
         )
 
     # Determine which garden the operation is targeting
-    operation.target_garden_name = _determine_target_garden(operation)
+    if not operation.target_garden_name:
+        operation.target_garden_name = _determine_target_garden(operation)
 
     if not operation.target_garden_name:
-        raise UnknownGardenException(f"Unknown target garden for {operation}")
+        raise UnknownGardenException(
+            f"Could not determine the target garden for routing {operation!r}"
+        )
 
     # If it's targeted at THIS garden, execute
     if operation.target_garden_name == config.get("garden.name"):
@@ -127,9 +187,22 @@ def execute_local(operation: Operation):
     """
     operation = _pre_execute(operation)
 
-    return route_functions[operation.operation_type](
-        *operation.args, **operation.kwargs
-    )
+    if moto.motor_db and operation.operation_type in async_functions:
+        lookup = async_functions
+
+        if operation.operation_type == "REQUEST_CREATE":
+            return asyncio.get_event_loop().run_in_executor(
+                t_pool,
+                partial(
+                    lookup[operation.operation_type],
+                    *operation.args,
+                    **operation.kwargs,
+                ),
+            )
+    else:
+        lookup = route_functions
+
+    return lookup[operation.operation_type](*operation.args, **operation.kwargs)
 
 
 def initiate_forward(operation: Operation):
@@ -169,6 +242,9 @@ def forward(operation: Operation):
         UnknownGardenException: The specified target garden is unknown
     """
     target_garden = gardens.get(operation.target_garden_name)
+
+    if not target_garden:
+        target_garden = get_garden(operation.target_garden_name)
 
     if not target_garden:
         raise UnknownGardenException(
@@ -213,47 +289,57 @@ def setup_routing():
     It will then query the database for all local systems and add those to the
     dictionaries as well.
     """
-    local_garden_name = config.get("garden.name")
+    for system in db.query(System, filter_params={"local": True}):
+        add_routing_system(system)
 
-    # We do NOT want to load local garden information from the database as the local
-    # name could have changed
-    for garden in get_gardens():
-        if garden.name != local_garden_name:
+    # Don't add the local garden
+    for garden in get_gardens(include_local=False):
+        if garden.name != config.get("garden.name"):
+            for system in garden.systems:
+                add_routing_system(system=system, garden_name=garden.name)
+
             if (
                 garden.connection_type is not None
                 and garden.connection_type.casefold() != "local"
             ):
-                gardens[garden.name] = garden
+                with garden_lock:
+                    gardens[garden.name] = garden
             else:
                 logger.warning(f"Garden with invalid connection info: {garden!r}")
 
-    # Now add the "local" garden
-    gardens[local_garden_name] = local_garden()
-    logger.debug("Routing setup complete")
+
+def add_routing_system(system=None, garden_name=None):
+    """Update the gardens used for routing"""
+    # Default to local garden name
+    garden_name = garden_name or config.get("garden.name")
+
+    with routing_lock:
+        system_name_routes[str(system)] = garden_name
+        system_id_routes[system.id] = garden_name
+
+        for instance in system.instances:
+            instance_id_routes[instance.id] = garden_name
+
+
+def remove_routing_system(system=None):
+    """Update the gardens used for routing"""
+    with routing_lock:
+        del system_name_routes[str(system)]
+        del system_id_routes[system.id]
+
+        for instance in system.instances:
+            del instance_id_routes[instance.id]
 
 
 def handle_event(event):
     """Handle events"""
-    if (
-        event.name
-        in (
-            Events.SYSTEM_CREATED.name,
-            Events.SYSTEM_UPDATED.name,
-            Events.SYSTEM_REMOVED.name,
-        )
-        and event.garden in gardens
-    ):
-        index = None
-        for i, system in enumerate(gardens[event.garden].systems):
-            if system.id == event.payload.id:
-                index = i
-                break
-
-        if index is not None:
-            gardens[event.garden].systems.pop(index)
-
+    # Event handling is not fast enough to deal with system changes arising from the
+    # local garden, so only handle child gardens
+    if event.garden != config.get("garden.name"):
         if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
-            gardens[event.garden].systems.append(event.payload)
+            add_routing_system(system=event.payload, garden_name=event.garden)
+        elif event.name == Events.SYSTEM_REMOVED.name:
+            remove_routing_system(system=event.payload)
 
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.
@@ -264,7 +350,10 @@ def handle_event(event):
             gardens[event.payload.name] = event.payload
 
         elif event.name == Events.GARDEN_REMOVED.name:
-            del gardens[event.payload.name]
+            try:
+                del gardens[event.payload.name]
+            except KeyError:
+                pass
 
 
 def _pre_route(operation: Operation) -> Operation:
@@ -286,8 +375,10 @@ def _pre_forward(operation: Operation) -> Operation:
         )
 
     if operation.operation_type == "REQUEST_CREATE":
-        operation.model = beer_garden.requests.RequestValidator.instance().validate_request(
-            operation.model
+        operation.model = (
+            beer_garden.requests.RequestValidator.instance().validate_request(
+                operation.model
+            )
         )
 
         # Save the request so it'll have an ID and we'll have something to update
@@ -297,6 +388,11 @@ def _pre_forward(operation: Operation) -> Operation:
         # unknown request
         operation.model.parent = None
         operation.model.has_parent = False
+
+        # Pull out and store the wait event, if it exists
+        wait_event = operation.kwargs.pop("wait_event", None)
+        if wait_event:
+            beer_garden.requests.request_map[operation.model.id] = wait_event
 
     return operation
 
@@ -318,19 +414,20 @@ def _determine_target_garden(operation: Operation) -> str:
         "READ" in operation.operation_type
         or "GARDEN" in operation.operation_type
         or "JOB" in operation.operation_type
-        or operation.operation_type in ("LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
+        or operation.operation_type
+        in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
     ):
         return config.get("garden.name")
 
     # Otherwise, each operation needs to be "parsed"
-    target_system = None
-
     if operation.operation_type in ("SYSTEM_DELETE", "SYSTEM_RELOAD", "SYSTEM_UPDATE"):
-        target_system = db.query_unique(System, id=operation.args[0])
+        return _system_id_lookup(operation.args[0])
 
     elif "INSTANCE" in operation.operation_type:
-        target_instance = db.query_unique(Instance, id=operation.args[0])
-        target_system = db.query_unique(System, instances__contains=target_instance)
+        if "system_id" in operation.kwargs and "instance_name" in operation.kwargs:
+            return _system_id_lookup(operation.kwargs["system_id"])
+        else:
+            return _instance_id_lookup(operation.args[0])
 
     elif operation.operation_type == "REQUEST_CREATE":
         target_system = System(
@@ -338,24 +435,24 @@ def _determine_target_garden(operation: Operation) -> str:
             name=operation.model.system,
             version=operation.model.system_version,
         )
+        return _system_name_lookup(target_system)
 
     elif operation.operation_type.startswith("REQUEST"):
         request = db.query_unique(Request, id=operation.args[0])
+        operation.kwargs["request"] = request
 
-        target_system = System(
-            namespace=request.namespace,
-            name=request.system,
-            version=request.system_version,
-        )
+        return config.get("garden.name")
 
     elif operation.operation_type == "QUEUE_DELETE":
         # Need to deconstruct the queue name
         parts = operation.args[0].split(".")
         version = parts[2].replace("-", ".")
 
-        target_system = System(namespace=parts[0], name=parts[1], version=version)
+        return _system_name_lookup(
+            System(namespace=parts[0], name=parts[1], version=version)
+        )
 
-    return _garden_name_lookup(target_system)
+    raise Exception(f"Bad operation type {operation.operation_type}")
 
 
 def _forward_http(operation: Operation, target_garden: Garden):
@@ -423,10 +520,18 @@ def _forward_http(operation: Operation, target_garden: Garden):
         raise ex
 
 
-def _garden_name_lookup(system: Union[str, System]) -> str:
+def _system_name_lookup(system: Union[str, System]) -> str:
     system_name = str(system)
 
-    for garden in gardens.values():
-        for system in garden.systems:
-            if str(system) == system_name:
-                return garden.name
+    with routing_lock:
+        return system_name_routes[system_name]
+
+
+def _system_id_lookup(system_id: str) -> str:
+    with routing_lock:
+        return system_id_routes[system_id]
+
+
+def _instance_id_lookup(instance_id: str) -> str:
+    with routing_lock:
+        return instance_id_routes[instance_id]

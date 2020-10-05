@@ -5,7 +5,7 @@ Description=Beergarden Service
 
 [Service]
 Type=simple
-ExecStart=/opt/beer-garden/bin/beer-garden -c /opt/beer-garden/conf/config.yaml -l /opt/beer-garden/conf/logging.yaml
+ExecStart=/opt/beer-garden/bin/beergarden -c /opt/beer-garden/conf/config.yaml
 
 [Install]
 WantedBy=multi-user.target

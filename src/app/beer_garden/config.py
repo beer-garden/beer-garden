@@ -11,9 +11,16 @@ from ruamel.yaml import YAML
 from yapconf import YapconfSpec, dump_data
 
 from beer_garden.errors import ConfigurationError
-from beer_garden.log import default_app_config
+from beer_garden.log import default_app_config, default_plugin_config
 
-__all__ = ["load", "generate_logging", "generate", "migrate", "get"]
+__all__ = [
+    "load",
+    "generate_app_logging",
+    "generate_plugin_logging",
+    "generate",
+    "migrate",
+    "get",
+]
 
 _CONFIG = None
 
@@ -130,29 +137,73 @@ def migrate(args: Sequence[str]):
         os.remove(config.configuration.file)
 
 
-def generate_logging(args: Sequence[str]):
-    """Generate and save logging configuration file.
+def generate_app_logging(args: Sequence[str]):
+    """Generate and save application logging configuration file.
 
     Args:
         args: Command line arguments
-            --log-config-file: Configuration will be written to this file (will print to
+            --config-file: Configuration will be written to this file (will print to
                 stdout if missing)
-            --log-file: Logs will be written to this file (used in a RotatingFileHandler)
-            --log-level: Handlers will be configured with this logging level
+            --filename: Logs will be written to this file (if file logging is enabled)
+            --level: Log level to use
 
     Returns:
-        str: The logging configuration dictionary
+        Logging configuration in dict form
     """
-    spec, cli_vars = _parse_args(args)
-    filtered_args = spec.load_filtered_config(
-        cli_vars, include=["log.config_file", "log.file", "log.level"]
+    parser = ArgumentParser()
+    parser.add_argument("--config-file", type=str, default=None)
+    parser.add_argument("--level", type=str, default=None)
+    parser.add_argument("--filename", type=str, default=None)
+
+    parsed_args = vars(parser.parse_args(args))
+
+    logging_config = default_app_config(
+        parsed_args.get("level"), parsed_args.get("filename")
     )
 
-    log = filtered_args.get("log", {})
-    logging_config = default_app_config(log.get("level"), log.get("file"))
-    log_config_file = log.get("config_file")
+    dump_data(logging_config, filename=parsed_args.get("config_file"), file_type="yaml")
 
-    dump_data(logging_config, filename=log_config_file, file_type="yaml")
+    return logging_config
+
+
+def generate_plugin_logging(args: Sequence[str]) -> dict:
+    """Generate and save plugin logging configuration file.
+
+    Args:
+        args: Command line arguments
+            --config-file: Configuration will be written to this file (will print to
+                stdout if missing)
+            --stdout: Explicitly enable logging to stdout
+            --no-stdout: Explicitly disable logging to stdout
+            --file: Explicitly enable logging to a file
+            --no-file: Explicitly disable logging to a file
+            --filename: Logs will be written to this file (if file logging is enabled)
+            --level: Log level to use
+
+    Returns:
+        Logging configuration in dict form
+    """
+    parser = ArgumentParser()
+    parser.add_argument("--config-file", type=str, default=None)
+    parser.add_argument("--level", type=str, default=None)
+    parser.add_argument("--filename", type=str, default=None)
+
+    parser.add_argument("--stdout", dest="stdout", action="store_true")
+    parser.add_argument("--no-stdout", dest="stdout", action="store_false")
+
+    parser.add_argument("--file", dest="file", action="store_true")
+    parser.add_argument("--no-file", dest="file", action="store_false")
+
+    parsed_args = vars(parser.parse_args(args))
+
+    logging_config = default_plugin_config(
+        level=parsed_args.get("level"),
+        stdout=parsed_args.get("stdout"),
+        file=parsed_args.get("file"),
+        filename=parsed_args.get("filename"),
+    )
+
+    dump_data(logging_config, filename=parsed_args.get("config_file"), file_type="yaml")
 
     return logging_config
 
@@ -460,7 +511,7 @@ _MQ_SPEC = {
     },
 }
 
-_APP_SPEC = {
+_APPLICATION_SPEC = {
     "type": "dict",
     "items": {
         "cors_enabled": {
@@ -475,11 +526,24 @@ _APP_SPEC = {
             "description": "Run the application in debug mode",
             "previous_names": ["debug_mode"],
         },
-        "name": {
-            "type": "str",
-            "default": "Beer Garden",
-            "description": "The title to display on the GUI",
-            "previous_names": ["application_name"],
+        "execute_javascript": {
+            "type": "bool",
+            "default": False,
+            "description": "Execute plugin-provided javascript",
+            "long_description": "This is dangerous!! Setting this to true will instruct "
+            "the browser to execute javascript provided by plugins. This means you "
+            "MUST have control over all plugins running in the environment, otherwise "
+            "this is a problem waiting to happen.",
+            "previous_names": [
+                "application_allow_unsafe_templates",
+                "allow_unsanitized_templates",
+                "allow_unsafe_templates",
+            ],
+            "alt_env_names": [
+                "APPLICATION_ALLOW_UNSAFE_TEMPLATES",
+                "ALLOW_UNSANITIZED_TEMPLATES",
+                "BG_ALLOW_UNSAFE_TEMPLATES",
+            ],
         },
         "icon_default": {
             "type": "str",
@@ -488,15 +552,11 @@ _APP_SPEC = {
             "previous_names": ["icon_default"],
             "alt_env_names": ["ICON_DEFAULT"],
         },
-        "allow_unsafe_templates": {
-            "type": "bool",
-            "default": False,
-            "description": "Allow unsafe templates to be loaded by the application",
-            "previous_names": ["ALLOW_UNSANITIZED_TEMPLATES", "allow_unsafe_templates"],
-            "alt_env_names": [
-                "ALLOW_UNSANITIZED_TEMPLATES",
-                "BG_ALLOW_UNSAFE_TEMPLATES",
-            ],
+        "name": {
+            "type": "str",
+            "default": "Beer Garden",
+            "description": "The title to display on the GUI",
+            "previous_names": ["application_name"],
         },
     },
 }
@@ -618,10 +678,11 @@ _DB_SPEC = {
 _HTTP_SPEC = {
     "type": "dict",
     "items": {
-        "enable": {
+        "enabled": {
             "type": "bool",
             "default": True,
             "description": "Run an HTTP server",
+            "previous_names": ["entry_http_enable"],
         },
         "ssl": {
             "type": "dict",
@@ -714,10 +775,11 @@ _ENTRY_SPEC = {
         "thrift": {
             "type": "dict",
             "items": {
-                "enable": {
+                "enabled": {
                     "type": "bool",
                     "default": False,
                     "description": "Run an thrift server",
+                    "previous_names": ["entry_thrift_enable"],
                 }
             },
         },
@@ -730,7 +792,7 @@ _PARENT_SPEC = {
         "http": {
             "type": "dict",
             "items": {
-                "enable": {
+                "enabled": {
                     "type": "bool",
                     "default": False,
                     "description": "Publish events to parent garden over HTTP",
@@ -816,10 +878,11 @@ _EVENT_SPEC = {
         "mq": {
             "type": "dict",
             "items": {
-                "enable": {
+                "enabled": {
                     "type": "bool",
                     "default": False,
                     "description": "Publish events to RabbitMQ",
+                    "previous_names": ["event_persist_mq_enable"],
                 },
                 "exchange": {
                     "type": "str",
@@ -839,11 +902,14 @@ _EVENT_SPEC = {
         "mongo": {
             "type": "dict",
             "items": {
-                "enable": {
+                "enabled": {
                     "type": "bool",
                     "default": True,
                     "description": "Persist events to Mongo",
-                    "previous_names": ["event_persist_mongo"],
+                    "previous_names": [
+                        "event_persist_mongo",
+                        "event_persist_mongo_enable",
+                    ],
                     "alt_env_names": ["EVENT_PERSIST_MONGO"],
                 }
             },
@@ -862,15 +928,15 @@ _LOG_SPEC = {
             "previous_names": ["log_config"],
             "alt_env_names": ["LOG_CONFIG"],
         },
-        "file": {
+        "fallback_file": {
             "type": "str",
-            "description": "File you would like the application to log to",
+            "description": "File to log to if config_file is not specified",
             "required": False,
             "previous_names": ["log_file"],
         },
-        "level": {
+        "fallback_level": {
             "type": "str",
-            "description": "Log level for the application",
+            "description": "Log level to use if config_file is not specified",
             "default": "INFO",
             "choices": ["DEBUG", "INFO", "WARN", "WARNING", "ERROR", "CRITICAL"],
             "previous_names": ["log_level"],
@@ -920,10 +986,11 @@ _PLUGIN_SPEC = {
                     "description": "Path to a logging configuration file for plugins",
                     "required": False,
                 },
-                "level": {
+                "fallback_level": {
                     "type": "str",
-                    "description": "Default log level for plugins (could be "
-                    "overwritten by plugin_log_config value)",
+                    "description": "Level that will be used with a default logging "
+                    "configuration if config_file is not specified",
+                    "previous_names": ["plugin_logging_level"],
                     "default": "INFO",
                     "choices": [
                         "DEBUG",
@@ -975,13 +1042,6 @@ _PLUGIN_SPEC = {
                     "required": False,
                     "previous_names": ["plugins_directory", "plugin_directory"],
                     "alt_env_names": ["PLUGINS_DIRECTORY", "BG_PLUGIN_DIRECTORY"],
-                },
-                "log_directory": {
-                    "type": "str",
-                    "description": "Directory where local plugin logs should go",
-                    "required": False,
-                    "previous_names": ["plugin_log_directory"],
-                    "alt_env_names": ["PLUGIN_LOG_DIRECTORY"],
                 },
                 "timeout": {
                     "type": "dict",
@@ -1104,7 +1164,7 @@ _SPECIFICATION = {
         "alt_env_names": ["AMQ_PUBLISH_HOST"],
     },
     "mq": _MQ_SPEC,
-    "application": _APP_SPEC,
+    "application": _APPLICATION_SPEC,
     "auth": _AUTH_SPEC,
     "configuration": _META_SPEC,
     "db": _DB_SPEC,

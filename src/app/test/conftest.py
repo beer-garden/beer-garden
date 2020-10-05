@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import brewtils.test
 import pytest
+from box import Box
 from mongoengine import connect
 
 import beer_garden
+import beer_garden.config as config
 import beer_garden.events
 
 pytest_plugins = ["brewtils.test.fixtures"]
@@ -29,6 +31,11 @@ def noop_event_manager():
             pass
 
     beer_garden.events.manager = NoopManager()
+
+
+@pytest.fixture(autouse=True)
+def global_conf():
+    config.assign(Box(default_box=True), force=True)
 
 
 @pytest.fixture()

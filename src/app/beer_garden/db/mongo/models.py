@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import datetime
 import logging
-import sys
 
 import pytz
 import six
+import sys
 
 try:
     from lark import ParseError
@@ -13,6 +13,7 @@ except ImportError:
     from lark.common import ParseError
 
     LarkError = ParseError
+from bson.objectid import ObjectId
 from mongoengine import (
     BooleanField,
     DateTimeField,
@@ -21,9 +22,11 @@ from mongoengine import (
     DynamicField,
     EmbeddedDocument,
     EmbeddedDocumentField,
+    EmbeddedDocumentListField,
     GenericEmbeddedDocumentField,
     IntField,
     ListField,
+    ObjectIdField,
     ReferenceField,
     StringField,
     FileField,
@@ -171,7 +174,7 @@ class Parameter(MongoModel, EmbeddedDocument):
         required=False, choices=BrewtilsParameter.FORM_INPUT_TYPES
     )
     type_info = DictField(required=False)
-    parameters = ListField(EmbeddedDocumentField("Parameter"))
+    parameters = EmbeddedDocumentListField("Parameter")
 
     # If no display name was set, it will default it to the same thing as the key
     def __init__(self, *args, **kwargs):
@@ -197,12 +200,12 @@ class Parameter(MongoModel, EmbeddedDocument):
             )
 
 
-class Command(MongoModel, Document):
+class Command(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.Command
 
-    name = StringField(required=True, unique_with="system")
+    name = StringField(required=True)
     description = StringField()
-    parameters = ListField(EmbeddedDocumentField("Parameter"))
+    parameters = EmbeddedDocumentListField("Parameter")
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES, default="ACTION")
     output_type = StringField(choices=BrewtilsCommand.OUTPUT_TYPES, default="STRING")
     schema = DictField()
@@ -210,18 +213,12 @@ class Command(MongoModel, Document):
     template = StringField()
     hidden = BooleanField()
     icon_name = StringField()
-    # reverse_delete_rule=CASCADE is set later, can't set until System is defined
-    system = ReferenceField("System")
 
     def clean(self):
         """Validate before saving to the database"""
 
         if not self.name:
-            raise ModelValidationError(
-                f"Can not save Command"
-                f"{' for system ' + self.system.name if self.system else ''}"
-                f": Missing name"
-            )
+            raise ModelValidationError("Can not save a Command with an empty name")
 
         if self.command_type not in BrewtilsCommand.COMMAND_TYPES:
             raise ModelValidationError(
@@ -241,9 +238,10 @@ class Command(MongoModel, Document):
             )
 
 
-class Instance(MongoModel, Document):
+class Instance(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.Instance
 
+    id = ObjectIdField(required=True, default=ObjectId, unique=True, primary_key=True)
     name = StringField(required=True, default="default")
     description = StringField()
     status = StringField(default="INITIALIZING")
@@ -437,9 +435,9 @@ class System(MongoModel, Document):
     description = StringField()
     version = StringField(required=True)
     namespace = StringField(required=True)
-    max_instances = IntField(default=1)
-    instances = ListField(ReferenceField(Instance, reverse_delete_rule=PULL))
-    commands = ListField(ReferenceField(Command, reverse_delete_rule=PULL))
+    max_instances = IntField(default=-1)
+    instances = EmbeddedDocumentListField("Instance")
+    commands = EmbeddedDocumentListField("Command")
     icon_name = StringField()
     display_name = StringField()
     metadata = DictField()
@@ -460,7 +458,7 @@ class System(MongoModel, Document):
     def clean(self):
         """Validate before saving to the database"""
 
-        if len(self.instances) > self.max_instances:
+        if len(self.instances) > self.max_instances > -1:
             raise ModelValidationError(
                 "Can not save System %s: Number of instances (%s) "
                 "exceeds system limit (%s)"
@@ -473,81 +471,6 @@ class System(MongoModel, Document):
             raise ModelValidationError(
                 "Can not save System %s: Duplicate instance names" % str(self)
             )
-
-    def deep_save(self):
-        """Deep save. Saves Commands, Instances, and the System
-
-        Mongoengine cannot save bidirectional references in one shot because
-        'You can only reference documents once they have been saved to the database'
-        So we must mangle the System to have no Commands, save it, save the individual
-        Commands with the System reference, update the System with the Command list, and
-        then save the System again
-        """
-
-        # Note if this system is already saved
-        delete_on_error = self.id is None
-
-        # Save these off here so we can 'revert' in case of an exception
-        temp_commands = self.commands
-        temp_instances = self.instances
-
-        try:
-            # Before we start saving things try to make sure everything will validate
-            # correctly. This means multiple passes through the collections, but we want
-            # to minimize the chances of having to bail out after saving something since
-            # we don't have transactions
-
-            # However, we have to start by saving the System. We need it in the database
-            # so the Commands will validate against it correctly (the ability to undo
-            # this is why we saved off delete_on_error earlier) The reference lists must
-            # be empty or else we encounter the bidirectional reference issue
-            self.commands = []
-            self.instances = []
-            self.save()
-
-            # Make sure all commands have the correct System reference
-            for command in temp_commands:
-                command.system = self
-
-            # Now validate
-            for command in temp_commands:
-                command.validate()
-            for instance in temp_instances:
-                instance.validate()
-
-            # All validated, now save everything
-            for command in temp_commands:
-                command.save(validate=False)
-            for instance in temp_instances:
-                instance.save(validate=False)
-            self.commands = temp_commands
-            self.instances = temp_instances
-            self.save()
-
-        # Since we don't have actual transactions we are not in a good position here,
-        # so try our best to 'roll back'
-        except Exception:
-            self.commands = temp_commands
-            self.instances = temp_instances
-            if delete_on_error and self.id:
-                self.delete()
-            raise
-
-    def deep_delete(self):
-        """Completely delete a system"""
-        self.delete_commands()
-        self.delete_instances()
-        return self.delete()
-
-    def delete_commands(self):
-        """Delete all commands associated with this system"""
-        for command in self.commands:
-            command.delete()
-
-    def delete_instances(self):
-        """Delete all instances associated with this system"""
-        for instance in self.instances:
-            instance.delete()
 
 
 class Event(MongoModel, Document):
@@ -725,7 +648,7 @@ class Garden(MongoModel, Document):
 
     def deep_save(self):
         for system in self.systems:
-            system.deep_save()
+            system.save()
 
         self.save()
 
@@ -733,7 +656,3 @@ class Garden(MongoModel, Document):
 class SystemGardenMapping(MongoModel, Document):
     system = ReferenceField("System")
     garden = ReferenceField("Garden")
-
-
-# Update the Command field now that all models are defined
-System.register_delete_rule(Command, "system", CASCADE)

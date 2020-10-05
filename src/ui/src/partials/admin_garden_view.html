@@ -1,5 +1,10 @@
 <h1 class='page-header'>
   <span>Garden View</span>
+  <span class="pull-right" ng-show="responseState(response) !== 'loading'">
+    <button type="button"
+            class="btn btn-primary"
+            ng-click="syncGarden()">Sync</button>
+  </span>
 </h1>
 
 <fetch-data response="response"></fetch-data>

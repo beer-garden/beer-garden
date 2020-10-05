@@ -41,6 +41,11 @@ help:
 	@$(PYTHON) -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
 
+# RPM
+rpm-build-local:  ## build a local rpm
+	$(PYTHON) rpm/bin/build.py rpm --local $(VERSION)
+
+
 # Docker
 docker-login: ## log in to the docker registry
 	echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USER}" --password-stdin

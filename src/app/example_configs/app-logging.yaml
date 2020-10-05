@@ -6,11 +6,17 @@ formatters:
     format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 handlers:
-  beer_garden:
+  stream:
     class: "logging.StreamHandler"
     formatter: "simple"
-    level: "INFO"
     stream: "ext://sys.stdout"
+  file:
+    backupCount: 1
+    class: "logging.handlers.RotatingFileHandler"
+    encoding: utf8
+    formatter: simple
+    maxBytes: 10485760
+    filename: "beer-garden.log"
 
 loggers:
   pika:
@@ -22,4 +28,6 @@ loggers:
 
 root:
   level: "INFO"
-  handlers: ["beer_garden"]
+  handlers:
+    - "stream"
+    # - "file"

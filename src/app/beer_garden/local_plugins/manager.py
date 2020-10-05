@@ -3,14 +3,16 @@
 import json
 import logging
 import string
+from concurrent.futures import ThreadPoolExecutor, wait
+
 import sys
 from enum import Enum
 from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_file_location
-from pathlib import Path
+from pathlib import Path, PosixPath
 from random import choice
 from types import ModuleType
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from brewtils.models import Event, Events, System
 from brewtils.specification import _SYSTEM_SPEC
@@ -203,8 +205,18 @@ class PluginManager(StoppableThread):
 
     @classmethod
     def stop_all(cls):
+
+        shutdown_pool = ThreadPoolExecutor(
+            1 if len(cls.runners) < 1 else len(cls.runners)
+        )
+        futures = []
+
         for runner in cls.runners:
-            cls.stop_one(runner_id=runner.runner_id)
+            futures.append(
+                shutdown_pool.submit(cls.stop_one, runner_id=runner.runner_id)
+            )
+
+        wait(futures)
 
     @classmethod
     def start_one(cls, runner: ProcessRunner) -> None:
@@ -337,7 +349,13 @@ class PluginManager(StoppableThread):
 
         return process_args
 
-    def _environment(self, plugin_config, instance_name, plugin_path, runner_id):
+    def _environment(
+        self,
+        plugin_config: Dict[str, Any],
+        instance_name: str,
+        plugin_path: PosixPath,
+        runner_id: str,
+    ) -> Dict[str, str]:
         env = {}
 
         # System info comes from config file
@@ -368,13 +386,13 @@ class PluginManager(StoppableThread):
         if "LOG_LEVEL" in plugin_config:
             env["BG_LOG_LEVEL"] = plugin_config["LOG_LEVEL"]
 
-        # ENVIRONMENT from beer.conf
-        for key, value in plugin_config.get("ENVIRONMENT", {}).items():
-            env[key] = expand_string(str(value), env)
-
         # Ensure values are all strings
         for key, value in env.items():
             env[key] = json.dumps(value) if isinstance(value, dict) else str(value)
+
+        # ENVIRONMENT from beer.conf
+        for key, value in plugin_config.get("ENVIRONMENT", {}).items():
+            env[key] = expand_string(str(value), env)
 
         return env
 
@@ -393,10 +411,12 @@ class ConfigLoader(object):
             if hasattr(config_module, key.name):
                 config_dict[key.name] = getattr(config_module, key.name)
 
-        # Instances and arguments need some normalization
+        # Need to apply some normalization
         config_dict.update(
-            ConfigLoader._normalize_instance_args(
-                config_dict.get("INSTANCES"), config_dict.get("PLUGIN_ARGS")
+            ConfigLoader._normalize(
+                config_dict.get("INSTANCES"),
+                config_dict.get("PLUGIN_ARGS"),
+                config_dict.get("MAX_INSTANCES"),
             )
         )
 
@@ -415,9 +435,18 @@ class ConfigLoader(object):
         return config_module
 
     @staticmethod
-    def _normalize_instance_args(instances, args):
-        """Normalize the different ways instances and arguments can be specified"""
-        if instances is None and args is None:
+    def _normalize(instances, args, max_instances):
+        """Normalize the config
+
+        Will reconcile the different ways instances and arguments can be specified as
+        well as determine the correct MAX_INSTANCE value
+        """
+
+        if isinstance(instances, list) and isinstance(args, dict):
+            # Fully specified, nothing to translate
+            pass
+
+        elif instances is None and args is None:
             instances = ["default"]
             args = {"default": None}
 
@@ -444,13 +473,17 @@ class ConfigLoader(object):
 
             args = temp_args
 
-        elif isinstance(instances, list) and isinstance(args, dict):
-            pass
-
         else:
             raise PluginValidationError("Invalid INSTANCES and PLUGIN_ARGS combination")
 
-        return {"INSTANCES": instances, "PLUGIN_ARGS": args}
+        if max_instances is None:
+            max_instances = -1
+
+        return {
+            "INSTANCES": instances,
+            "PLUGIN_ARGS": args,
+            "MAX_INSTANCES": max_instances,
+        }
 
     @staticmethod
     def _validate(config_module: ModuleType, path: Path) -> None:
@@ -525,13 +558,13 @@ class ConfigLoader(object):
             ConfigLoader._individual_args(args)
 
         elif isinstance(args, dict):
-            instances = getattr(config_module, ConfigKeys.INSTANCES.name)
+            instances = getattr(config_module, ConfigKeys.INSTANCES.name, None)
 
             for instance_name, instance_args in args.items():
                 if instances is not None and instance_name not in instances:
                     raise PluginValidationError(
-                        f"{ConfigKeys.PLUGIN_ARGS.name} contains key '{instance_name}' but "
-                        f"that instance is not in {ConfigKeys.INSTANCES.name}"
+                        f"{ConfigKeys.PLUGIN_ARGS.name} contains key '{instance_name}' "
+                        f"but that instance is not in {ConfigKeys.INSTANCES.name}"
                     )
 
                 ConfigLoader._individual_args(instance_args)
@@ -540,8 +573,8 @@ class ConfigLoader(object):
                 for instance_name in instances:
                     if instance_name not in args.keys():
                         raise PluginValidationError(
-                            f"{ConfigKeys.INSTANCES.name} contains '{instance_name}' but "
-                            f"that instance is not in {ConfigKeys.PLUGIN_ARGS.name}"
+                            f"{ConfigKeys.INSTANCES.name} contains '{instance_name}' "
+                            f"but that instance is not in {ConfigKeys.PLUGIN_ARGS.name}"
                         )
 
         else:

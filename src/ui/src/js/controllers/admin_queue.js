@@ -1,15 +1,12 @@
 import angular from 'angular';
 
 adminQueueController.$inject = [
-  '$rootScope',
   '$scope',
-  '$q',
-  '$compile',
+  '$uibModalInstance',
   '$interval',
-  'DTOptionsBuilder',
-  'DTColumnBuilder',
-  'SystemService',
   'QueueService',
+  'system',
+  'instance',
 ];
 
 /**
@@ -25,93 +22,22 @@ adminQueueController.$inject = [
  * @param  {Object} QueueService      Beer-Garden's queue service object.
  */
 export default function adminQueueController(
-    $rootScope,
     $scope,
-    $q,
-    $compile,
+    $uibModalInstance,
     $interval,
-    DTOptionsBuilder,
-    DTColumnBuilder,
-    SystemService,
-    QueueService) {
-  $scope.setWindowTitle('queues');
+    QueueService,
+    system,
+    instance,) {
 
   $scope.alerts = [];
-  $scope.dtInstance = null;
-
-  $scope.dtOptions = DTOptionsBuilder
-    .fromFnPromise(
-      () => {
-        return QueueService.getQueues().then(
-          $scope.successCallback,
-          $scope.failureCallback
-        );
-        // return $q.all({
-        //   systems: SystemService.promise(),
-        //   queues: QueueService.getQueues(),
-        // }).then(
-        //   $scope.successCallback,
-        //   $scope.failureCallback
-        // );
-      }
-    )
-    .withBootstrap()
-    .withDisplayLength(50)
-    .withDataProp('data')
-    .withOption('order', [4, 'asc'])
-    .withOption('autoWidth', false)
-    .withOption('createdRow', function(row, data, dataIndex) {
-      $compile(angular.element(row).contents())($scope);
-    });
-
-  $scope.dtColumns = [
-    DTColumnBuilder
-      .newColumn('system')
-      .withTitle('System'),
-      // .renderWith(function(data, type, full) {
-      //   let version = SystemService.getVersionForUrl(SystemService.findSystemByID(full.system_id));
-      //   return '<a ui-sref=' +
-      //          '"base.namespace.system({systemName: \'' + full.system+ '\', systemVersion: \'' + version + '\'})">' +
-      //          (full.display || data) + '</a>';
-      // }),
-    DTColumnBuilder
-      .newColumn('version')
-      .withTitle('Version'),
-    DTColumnBuilder
-      .newColumn('instance')
-      .withTitle('Instance Name'),
-    DTColumnBuilder
-      .newColumn('name')
-      .withTitle('Queue Name'),
-    DTColumnBuilder
-      .newColumn('size')
-      .withTitle('Queued Messages'),
-    DTColumnBuilder
-      .newColumn(null)
-      .withTitle('Actions')
-      .withOption('width', '10%')
-      .notSortable()
-      .renderWith(function(data, type, full) {
-        return '<button class="btn btn-danger btn-block word-wrap-button" ' +
-            'ng-click="clearQueue(\'' + full.name + '\')">Clear Queue</button>';
-      }),
-  ];
-
-  $scope.instanceCreated = function(_instance) {
-    $scope.dtInstance = _instance;
-  };
+  $scope.system = system
+  $scope.instance = instance
+  $scope.queues = []
 
   $scope.clearQueue = function(queueName) {
     QueueService.clearQueue(queueName).then(
       $scope.addSuccessAlert,
-      $scope.addErrorAlert
-    );
-  };
-
-  $scope.clearAllQueues = function() {
-    QueueService.clearQueues().then(
-      $scope.addSuccessAlert,
-      $scope.addErrorAlert
+      $scope.failureCallback
     );
   };
 
@@ -122,7 +48,7 @@ export default function adminQueueController(
   $scope.addSuccessAlert = function(response) {
     $scope.alerts.push({
       type: 'success',
-      msg: 'Success! Please allow 5 seconds for the message counts to update.',
+      msg: 'Success! Please allow 10 seconds for the message counts to update.',
     });
   };
 
@@ -137,34 +63,45 @@ export default function adminQueueController(
     });
   };
 
-  let poller = $interval(function() {
-    $scope.dtInstance.reloadData(() => {}, false);
-  }, 5000);
-
-  $scope.$on('$destroy', function() {
-    if (angular.isDefined(poller)) {
-      $interval.cancel(poller);
-      poller = undefined;
-    }
-  });
-
   $scope.successCallback = function(response) {
-    // $scope.response = response.queues;
     $scope.response = response;
-    return $scope.response.data;
+    $scope.queues = response.data;
+    return response.data;
   };
 
   $scope.failureCallback = function(response) {
     $scope.response = response;
   };
 
-  // $scope.$on('userChange', () => {
-  //   $scope.response = undefined;
+  $scope.closeDialog = function() {
 
-  //   // Then give the datatable a kick
-  //   $scope.dtInstance.reloadData(() => {}, false);
-  // });
+    if (angular.isDefined(poller)){
+      $interval.cancel(poller);
+      poller = undefined;
+    }
 
-  // // Force reloading so switching namespaces works
-  // SystemService.loadSystems();
+    $uibModalInstance.close();
+
+  }
+
+  let poller = $interval(function(){
+    loadQueues();}, 10000)
+
+  $scope.$on('$destroy', function(){
+    if (angular.isDefined(poller)){
+      $inteval.cancel(poller);
+      poller = undefined;
+    }
+  })
+
+  function loadQueues() {
+    $scope.response = undefined;
+
+    $scope.queues = QueueService.getInstanceQueues($scope.instance.id).then(
+      $scope.successCallback,
+      $scope.addErrorAlert
+    );
+  }
+
+  loadQueues();
 };
