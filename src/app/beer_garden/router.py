@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import logging
 import threading
+from concurrent.futures.thread import ThreadPoolExecutor
+from functools import partial
 from typing import Dict, Optional, Union
 
 import requests
@@ -37,6 +40,9 @@ routable_operations = [
 
 # Processor that will be used for forwarding
 forward_processor: Optional[QueueListener] = None
+
+# Executor used to run REQUEST_CREATE operations in an async context
+t_pool = ThreadPoolExecutor()
 
 # Used for actually sending operations to other gardens
 garden_lock = threading.Lock()
@@ -78,6 +84,11 @@ def route_garden_sync(target_garden_name: str = None):
 async_functions = {
     "INSTANCE_UPDATE": beer_garden.plugin.update_async,
     "INSTANCE_HEARTBEAT": beer_garden.plugin.heartbeat_async,
+    # THIS IS NOT AN ASYNC FUNCTION
+    # This is gross, but we're punting on this for now and just running in an executor
+    # Validating a request with a command-based choices parameter is going to require
+    # a lot of effort to make async correctly
+    "REQUEST_CREATE": beer_garden.requests.process_request,
 }
 
 route_functions = {
@@ -177,6 +188,16 @@ def execute_local(operation: Operation):
 
     if moto.motor_db and operation.operation_type in async_functions:
         lookup = async_functions
+
+        if operation.operation_type == "REQUEST_CREATE":
+            return asyncio.get_event_loop().run_in_executor(
+                t_pool,
+                partial(
+                    lookup[operation.operation_type],
+                    *operation.args,
+                    **operation.kwargs,
+                ),
+            )
     else:
         lookup = route_functions
 

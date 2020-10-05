@@ -64,7 +64,7 @@ def make_request(**kwargs):
 def _process_mock(monkeypatch, return_value=""):
     process_mock = Mock()
     process_mock.return_value.output = return_value
-    monkeypatch.setattr(beer_garden.requests, "process_request", process_mock)
+    monkeypatch.setattr(beer_garden.requests, "process_wait", process_mock)
 
     return process_mock
 
