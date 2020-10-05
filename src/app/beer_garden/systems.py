@@ -173,10 +173,8 @@ def upsert(system: System) -> System:
         The created / updated system
     """
     try:
-        return create_system(system)
+        return create_system(system, _publish_error=False)
     except NotUniqueException:
-        logger.warning(f"Not unique, updating {system.name}")
-
         existing = db.query_unique(
             System, namespace=system.namespace, name=system.name, version=system.version
         )
