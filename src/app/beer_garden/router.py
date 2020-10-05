@@ -8,7 +8,7 @@ from typing import Dict, Optional, Union
 
 import requests
 from beer_garden.events import publish
-from brewtils.models import Events, Garden, Instance, Operation, Request, System, Event
+from brewtils.models import Events, Garden, Operation, Request, System, Event
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden
