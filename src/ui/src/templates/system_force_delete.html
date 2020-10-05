@@ -10,15 +10,22 @@
     {{alert.msg}}
   </div>
   <div>
-      <div>If you would like to Force Delete {{system.name}}, please check with your system administrator before running
-          this command. This only deletes the record from the database and will not shutdown {{system.name}} or remove
-          RabbitMQ queues.</div>
+      <div ng-if="system.local">If you would like to Force Delete
+          {{system.namespace}}/{{system.name}}-{{system.version}}, please check with your system administrator before
+          running this command. This will follow the standard shutdown process for
+          {{system.namespace}}/{{system.name}}-{{system.version}}. If an error occurs,
+          {{system.namespace}}/{{system.name}}-{{system.version}} will still be deleted from the database.</div>
+      <div ng-if="!system.local">
+          If you would like to Force Delete {{system.namespace}}/{{system.name}}-{{system.version}}, please check with
+          your system administrator before running this command. {{system.namespace}}/{{system.name}}-{{system.version}}
+          is managed by another Garden, this request will only be executed locally. This only deletes
+          {{system.namespace}}/{{system.name}}-{{system.version}} from the database and will not shutdown
+          {{system.namespace}}/{{system.name}}-{{system.version}} or remove RabbitMQ queues.</div>
       <div>Please review the original error message before proceeding.</div>
       <div uib-alert ng-class="'alert-danger'">{{error}}</div>
       <button type="button"
                       class="btn btn-danger"
-                      ng-click="forceDeleteSystem(system)"
-                      confirm="Are you sure you want to force delete {{system.name}} from your local database?">
+                      ng-click="forceDeleteSystem(system)">
                     Force Delete
       </button>
   </div>

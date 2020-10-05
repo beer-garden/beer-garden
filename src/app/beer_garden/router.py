@@ -109,7 +109,7 @@ route_functions = {
     "SYSTEM_RELOAD": beer_garden.systems.reload_system,
     "SYSTEM_RESCAN": beer_garden.systems.rescan_system_directory,
     "SYSTEM_DELETE": beer_garden.systems.purge_system,
-    "SYSTEM_DELETE_FORCE": beer_garden.systems.remove_system,
+    "SYSTEM_DELETE_FORCE": beer_garden.systems.purge_system,
     "GARDEN_CREATE": beer_garden.garden.create_garden,
     "GARDEN_READ": beer_garden.garden.get_garden,
     "GARDEN_READ_ALL": beer_garden.garden.get_gardens,

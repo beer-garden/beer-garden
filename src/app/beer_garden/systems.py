@@ -227,7 +227,9 @@ def remove_system(system_id: str = None, system: System = None) -> System:
     return system
 
 
-def purge_system(system_id: str = None, system: System = None) -> System:
+def purge_system(
+    system_id: str = None, system: System = None, force: bool = False
+) -> System:
     """Convenience method for *completely* removing a system
 
     This will:
@@ -244,6 +246,9 @@ def purge_system(system_id: str = None, system: System = None) -> System:
 
     """
     system = system or db.query_unique(System, id=system_id)
+
+    if force and not system.local:
+        return remove_system(system=system)
 
     # Attempt to stop the plugins
     for instance in system.instances:
@@ -262,19 +267,27 @@ def purge_system(system_id: str = None, system: System = None) -> System:
     # Now clean up the message queues. It's possible for the request or admin queue to
     # be none if we are stopping an instance that was not properly started.
     for instance in system.instances:
-        force_disconnect = instance.status != "STOPPED"
+        try:
+            force_disconnect = instance.status != "STOPPED"
 
-        request_queue = instance.queue_info.get("request", {}).get("name")
-        if request_queue:
-            queue.remove(
-                request_queue, force_disconnect=force_disconnect, clear_queue=True
-            )
+            request_queue = instance.queue_info.get("request", {}).get("name")
+            if request_queue:
+                queue.remove(
+                    request_queue, force_disconnect=force_disconnect, clear_queue=True
+                )
 
-        admin_queue = instance.queue_info.get("admin", {}).get("name")
-        if admin_queue:
-            queue.remove(
-                admin_queue, force_disconnect=force_disconnect, clear_queue=False
-            )
+            admin_queue = instance.queue_info.get("admin", {}).get("name")
+            if admin_queue:
+                queue.remove(
+                    admin_queue, force_disconnect=force_disconnect, clear_queue=False
+                )
+        except Exception as ex:
+            if force:
+                logger.warning(
+                    f"Error while attempting to stop instance {instance.id}: {ex}"
+                )
+            else:
+                raise ex
 
     # Finally, actually delete the system
     return remove_system(system=system)
