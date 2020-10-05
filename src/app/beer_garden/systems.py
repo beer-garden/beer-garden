@@ -141,7 +141,17 @@ def update_system(
                 f"the system instance limit of {system.max_instances}"
             )
 
-        updates["push_all__instances"] = [db.from_brewtils(i) for i in add_instances]
+        updates["push_all__instances"] = []
+        instance_names = system.instance_names
+
+        for instance in add_instances:
+            if instance.name in instance_names:
+                raise ModelValidationError(
+                    f"Unable to add Instance {instance} to System {system}: Duplicate "
+                    f"instance names"
+                )
+
+            updates["push_all__instances"].append(db.from_brewtils(instance))
 
     system = db.modify(system, **updates)
 

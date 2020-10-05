@@ -298,11 +298,10 @@ class RequestValidator(object):
                         " must be a string or dictionary " % command_parameter.key
                     )
 
-                response = process_request(
-                    choices_request, wait_timeout=self._command_timeout
-                )
+                response = process_wait(choices_request, self._command_timeout)
 
                 raw_allowed = json.loads(response.output)
+
                 if isinstance(raw_allowed, list):
                     if len(raw_allowed) < 1:
                         raise ModelValidationError(
@@ -722,6 +721,23 @@ def cancel_request(request_id: str = None, request: Request = None) -> Request:
     # TODO - Metrics here?
 
     return request
+
+
+def process_wait(request: Request, timeout: float) -> Request:
+    """Helper to process a request and wait for completion using a threading.Event
+
+    Args:
+        request: Request to create
+        timeout: Timeout used for wait
+
+    Returns:
+        The completed request
+    """
+    req_complete = threading.Event()
+    created_req = process_request(request, wait_event=req_complete)
+    req_complete.wait(timeout)
+
+    return db.query_unique(Request, id=created_req.id)
 
 
 def handle_event(event):
