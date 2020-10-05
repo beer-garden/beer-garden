@@ -33,7 +33,6 @@ module.exports = merge(common, {
 //    cert: fs.readFileSync('../../docker/docker-compose/data/certs/server_certificate.pem'),
 //    ca: fs.readFileSync('../../docker/docker-compose/data/certs/ca_certificate.pem'),
 
-
     proxy: [
 // Switch comment lines for target to enable SSL
       {
