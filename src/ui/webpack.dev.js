@@ -4,6 +4,7 @@ const common = require('./webpack.common.js');
 
 const proxyHost = 'localhost';
 const proxyPort = '2337';
+const fs = require('fs');
 
 module.exports = merge(common, {
   mode: 'development',
@@ -26,15 +27,29 @@ module.exports = merge(common, {
     // Control the verbosity
     stats: 'minimal',
 
+    // Uncomment below for SSL
+//    https: true,
+//    key: fs.readFileSync('../../docker/docker-compose/data/certs/server_key.pem'),
+//    cert: fs.readFileSync('../../docker/docker-compose/data/certs/server_certificate.pem'),
+//    ca: fs.readFileSync('../../docker/docker-compose/data/certs/ca_certificate.pem'),
+
+
     proxy: [
+// Switch comment lines for target to enable SSL
       {
         context: ['/api', '/config', '/login', '/logout', '/version'],
         target: `http://${proxyHost}:${proxyPort}/`,
+        // Uncomment below for SSL
+//        target: `https://${proxyHost}:${proxyPort}/`,
+//        secure: false
       },
       {
         context: ['/api/v1/socket/events'],
         target: `ws://${proxyHost}:${proxyPort}/`,
         ws: true,
+        // Uncomment below for SSL
+//        target: `wss://${proxyHost}:${proxyPort}/`,
+//        secure: false
       },
     ],
   },
