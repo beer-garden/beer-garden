@@ -54,11 +54,16 @@ setup(
     ],
     entry_points={
         "console_scripts": [
+            "beergarden=beer_garden.__main__:main",
             "generate_config=beer_garden.__main__:generate_config",
             "migrate_config=beer_garden.__main__:migrate_config",
             "generate_app_logging_config=beer_garden.__main__:generate_app_logging_config",
             "generate_plugin_logging_config=beer_garden.__main__:generate_plugin_logging_config",
-            "beergarden=beer_garden.__main__:main",
+            # For backwards compatibility
+            "migrate_bartender_config=beer_garden.__main__:deprecate_config",
+            "migrate_brew_view_config=beer_garden.__main__:deprecate_config",
+            "generate_bartender_log_config=beer_garden.__main__:noop",
+            "generate_brew_view_log_config=beer_garden.__main__:noop",
         ]
     },
 )
