@@ -258,7 +258,7 @@ def forward(operation: Operation):
             publish(
                 Event(
                     name=Events.GARDEN_NOT_CONFIGURED.name,
-                    payload_type=operation.schema,
+                    payload_type="Operation",
                     payload=operation,
                     error_message=f"Attempted to forward operation to garden "
                     f"'{operation.target_garden_name}' but the connection type was None. "

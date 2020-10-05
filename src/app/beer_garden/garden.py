@@ -220,8 +220,7 @@ def handle_event(event):
                             payload=system,
                         )
                     )
-                  
-                    
+
     elif event.name == Events.GARDEN_UNREACHABLE.name:
         target_garden = get_garden(event.payload.target_garden_name)
 
