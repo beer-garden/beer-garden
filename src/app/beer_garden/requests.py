@@ -757,23 +757,6 @@ def handle_event(event):
             for request_event in request_map:
                 request_map[request_event].set()
 
-        # If the local garden is trying to Request an event and it fails, mark the request
-        # with an error message
-        elif (
-            event.name
-            in (
-                Events.GARDEN_UNREACHABLE.name,
-                Events.GARDEN_ERROR.name,
-                Events.GARDEN_NOT_CONFIGURED.name,
-            )
-            and event.payload.model_type == "Request"
-        ):
-            complete_request(
-                event.payload.model.id,
-                status="ERROR",
-                error_class=event.error_message,
-            )
-
     # Only care about downstream garden
     elif event.garden != config.get("garden.name"):
 
