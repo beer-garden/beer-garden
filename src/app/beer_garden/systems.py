@@ -267,27 +267,41 @@ def purge_system(
     # Now clean up the message queues. It's possible for the request or admin queue to
     # be none if we are stopping an instance that was not properly started.
     for instance in system.instances:
-        try:
-            force_disconnect = instance.status != "STOPPED"
+        force_disconnect = instance.status != "STOPPED"
 
+        request_queue = ""
+        try:
             request_queue = instance.queue_info.get("request", {}).get("name")
             if request_queue:
                 queue.remove(
                     request_queue, force_disconnect=force_disconnect, clear_queue=True
                 )
+        except Exception as ex:
+            if not force:
+                raise
 
+            logger.warning(
+                f"Error while removing request queue '{request_queue}' for "
+                f"{system}[{instance.name}]. Force flag was specified so system delete "
+                f"will continue. Underlying exception was: {ex}"
+            )
+
+        admin_queue = ""
+        try:
             admin_queue = instance.queue_info.get("admin", {}).get("name")
             if admin_queue:
                 queue.remove(
                     admin_queue, force_disconnect=force_disconnect, clear_queue=False
                 )
         except Exception as ex:
-            if force:
-                logger.warning(
-                    f"Error while attempting to stop instance {instance.id}: {ex}"
-                )
-            else:
-                raise ex
+            if not force:
+                raise
+
+            logger.warning(
+                f"Error while removing admin queue '{admin_queue}' for "
+                f"{system}[{instance.name}]. Force flag was specified so system delete "
+                f"will continue. Underlying exception was: {ex}"
+            )
 
     # Finally, actually delete the system
     return remove_system(system=system)
