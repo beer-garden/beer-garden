@@ -109,7 +109,6 @@ route_functions = {
     "SYSTEM_RELOAD": beer_garden.systems.reload_system,
     "SYSTEM_RESCAN": beer_garden.systems.rescan_system_directory,
     "SYSTEM_DELETE": beer_garden.systems.purge_system,
-    "SYSTEM_DELETE_FORCE": beer_garden.systems.purge_system,
     "GARDEN_CREATE": beer_garden.garden.create_garden,
     "GARDEN_READ": beer_garden.garden.get_garden,
     "GARDEN_READ_ALL": beer_garden.garden.get_gardens,
@@ -388,7 +387,14 @@ def _determine_target_garden(operation: Operation) -> str:
         return config.get("garden.name")
 
     # Otherwise, each operation needs to be "parsed"
-    if operation.operation_type in ("SYSTEM_DELETE", "SYSTEM_RELOAD", "SYSTEM_UPDATE"):
+    if operation.operation_type in ("SYSTEM_RELOAD", "SYSTEM_UPDATE"):
+        return _system_id_lookup(operation.args[0])
+
+    elif operation.operation_type == "SYSTEM_DELETE":
+        # Force deletes get routed to local garden
+        if operation.kwargs.get("force"):
+            return config.get("garden.name")
+
         return _system_id_lookup(operation.args[0])
 
     elif "INSTANCE" in operation.operation_type:
@@ -419,8 +425,6 @@ def _determine_target_garden(operation: Operation) -> str:
         return _system_name_lookup(
             System(namespace=parts[0], name=parts[1], version=version)
         )
-    elif operation.operation_type == "SYSTEM_DELETE_FORCE":
-        return config.get("garden.name")
 
     raise Exception(f"Bad operation type {operation.operation_type}")
 

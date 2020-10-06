@@ -88,18 +88,15 @@ class SystemAPI(BaseHandler):
           - Systems
         """
 
-        if self.get_argument("force", default="").lower() == "true":
-            await self.client(
-                Operation(
-                    operation_type="SYSTEM_DELETE_FORCE",
-                    args=[system_id],
-                    kwargs={"force": True},
-                )
+        await self.client(
+            Operation(
+                operation_type="SYSTEM_DELETE",
+                args=[system_id],
+                kwargs={
+                    "force": self.get_argument("force", default="").lower() == "true"
+                },
             )
-        else:
-            await self.client(
-                Operation(operation_type="SYSTEM_DELETE", args=[system_id])
-            )
+        )
 
         self.set_status(204)
 
