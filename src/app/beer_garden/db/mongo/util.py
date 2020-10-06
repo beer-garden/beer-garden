@@ -137,7 +137,7 @@ def ensure_users(guest_login_enabled):
 
 
 def ensure_model_migration():
-    """Ensures that the Role model is an flatten and Command model is an
+    """Ensures that the Role model is flatten and Command model is an
     EmbeddedDocument
 
     In Version 2 and earlier the Role model allowed for nested roles. This caused
@@ -158,7 +158,7 @@ def ensure_model_migration():
     it would be better if we could seamlessly move the existing commands into existing
     Systems.
     """
-    from .models import Role, System
+    from beer_garden.db.mongo.models import Role, System
 
     try:
         if Role.objects.count() > 0:
