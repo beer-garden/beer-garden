@@ -29,7 +29,7 @@ setup(
     keywords="beer beer-garden beergarden",
     install_requires=[
         "apispec==0.38.0",
-        "apscheduler==3.6.0",
+        "apscheduler==3.6.3",
         "brewtils>=3.0.0a1",
         "mongoengine<0.21",
         "more-itertools<9",
@@ -39,7 +39,7 @@ setup(
         "pyrabbit2==1.0.7",
         "pytz<2021",
         "ruamel.yaml<0.17",
-        "tornado==6.0.3",
+        "tornado==6.0.4",
         "yapconf>=0.3.7",
     ],
     classifiers=[
