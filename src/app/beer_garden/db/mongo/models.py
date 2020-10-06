@@ -490,7 +490,6 @@ class Role(MongoModel, Document):
 
     name = StringField(required=True)
     description = StringField()
-    roles = ListField(field=ReferenceField("Role", reverse_delete_rule=PULL))
     permissions = ListField(field=StringField())
 
     meta = {

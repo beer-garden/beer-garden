@@ -32,7 +32,7 @@ class EventSocket(AuthMixin, WebSocketHandler):
 
         # We can't go though the 'normal' BaseHandler exception translation
         try:
-            check_permission(self.current_user, [Permissions.EVENT_READ])
+            check_permission(self.current_user, [Permissions.READ])
         except (HTTPError, RequestForbidden) as ex:
             self.close(reason=str(ex))
             return

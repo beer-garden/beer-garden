@@ -74,19 +74,19 @@
           </a>
         </li>
 
-        <li ng-show="hasPermission(user, 'bg-system-read')">
+        <li ng-show="hasPermission(user, 'bg-read')">
           <a ui-sref="base.systems" ng-class="{active: ($state.current.name.startsWith('base.systems'))}">Systems</a>
         </li>
-        <li ng-show="hasPermission(user, 'bg-request-read')">
+        <li ng-show="hasPermission(user, 'bg-read')">
           <a ui-sref="base.requests"
              ng-class="{active: ($state.current.name.startsWith('request'))}">Requests</a>
         </li>
-        <li ng-show="hasPermission(user, 'bg-job-read')">
+        <li ng-show="hasPermission(user, 'bg-read')">
           <a ui-sref="base.jobs"
              ng-class="{active: ($state.current.name.startsWith('job'))}">Scheduler</a>
         </li>
         <!-- Admin Drop Down Menu -->
-        <li ng-show="(hasPermission(user, 'bg-queue-read') || hasPermission(user, 'bg-role-read'))" class="dropdown">
+        <li ng-show="(hasPermission(user, 'bg-local-admin') || hasPermission(user, 'bg-system-admin'))" class="dropdown">
           <a href="" data-toggle="dropdown" title="Admin Drop Down" >Admin</a>
           <ul class="dropdown-menu">
             <li>
@@ -94,17 +94,17 @@
                 <span>Systems</span>
               </a>
             </li>
-            <li ng-show="hasPermission(user, 'bg-user-read')">
+            <li ng-show="hasPermission(user, 'bg-local-admin')">
               <a ui-sref="base.user_admin" ui-sref-active="active">
                 <span>Users</span>
               </a>
             </li>
-            <li ng-show="hasPermission(user, 'bg-role-read')">
+            <li ng-show="hasPermission(user, 'bg-local-admin')">
               <a ui-sref="base.role_admin" ui-sref-active="active">
                 <span>Roles</span>
               </a>
             </li>
-            <li ng-show="hasPermission(user, 'bg-role-read')">
+            <li>
               <a ui-sref="base.garden_admin" ui-sref-active="active">
                 <span>Gardens</span>
               </a>

@@ -16,43 +16,24 @@ from beer_garden.db.mongo.models import Principal, Role
 
 
 class Permissions(Enum):
+    """Admin permissions are required to execute anything within the Admin drop-down in
+    regards to Systems and Gardens. Local Admins can manage user roles  and permissions.
+    """
+
+    # All of the permissions
     ALL = "bg-all"
-    COMMAND_CREATE = "bg-command-create"
-    COMMAND_READ = "bg-command-read"
-    COMMAND_UPDATE = "bg-command-update"
-    COMMAND_DELETE = "bg-command-delete"
-    EVENT_CREATE = "bg-event-create"
-    EVENT_READ = "bg-event-read"
-    EVENT_UPDATE = "bg-event-update"
-    EVENT_DELETE = "bg-event-delete"
-    INSTANCE_CREATE = "bg-instance-create"
-    INSTANCE_READ = "bg-instance-read"
-    INSTANCE_UPDATE = "bg-instance-update"
-    INSTANCE_DELETE = "bg-instance-delete"
-    QUEUE_CREATE = "bg-queue-create"
-    QUEUE_READ = "bg-queue-read"
-    QUEUE_UPDATE = "bg-queue-update"
-    QUEUE_DELETE = "bg-queue-delete"
-    JOB_CREATE = "bg-job-create"
-    JOB_READ = "bg-job-read"
-    JOB_UPDATE = "bg-job-update"
-    JOB_DELETE = "bg-job-delete"
-    REQUEST_CREATE = "bg-request-create"
-    REQUEST_READ = "bg-request-read"
-    REQUEST_UPDATE = "bg-request-update"
-    REQUEST_DELETE = "bg-request-delete"
-    ROLE_CREATE = "bg-role-create"
-    ROLE_READ = "bg-role-read"
-    ROLE_UPDATE = "bg-role-update"
-    ROLE_DELETE = "bg-role-delete"
-    SYSTEM_CREATE = "bg-system-create"
-    SYSTEM_READ = "bg-system-read"
-    SYSTEM_UPDATE = "bg-system-update"
-    SYSTEM_DELETE = "bg-system-delete"
-    USER_CREATE = "bg-user-create"
-    USER_READ = "bg-user-read"
-    USER_UPDATE = "bg-user-update"
-    USER_DELETE = "bg-user-delete"
+    # Permission to create non Admin data
+    CREATE = "bg-create"
+    # Permission to retrieve non Admin data
+    READ = "bg-read"
+    # Permission to update non Admin data
+    UPDATE = "bg-update"
+    # Permission to Delete non Admin data
+    DELETE = "bg-delete"
+    # Admin actions outside of User Management
+    SYSTEM_ADMIN = "bg-system-admin"
+    # Permission to manage local users
+    LOCAL_ADMIN = "bg-local-admin"
 
 
 Permissions.values = {p.value for p in Permissions}
@@ -155,10 +136,6 @@ def coalesce_permissions(role_list):
     for role in role_list:
         aggregate_roles.add(role.name)
         aggregate_perms |= set(role.permissions)
-
-        nested_roles, nested_perms = coalesce_permissions(role.roles)
-        aggregate_roles |= nested_roles
-        aggregate_perms |= nested_perms
 
     return aggregate_roles, aggregate_perms
 

@@ -15,9 +15,6 @@
     <div class="col-md-2">
       <h3 style="text-align: center;">Roles</h3>
     </div>
-    <div class="col-md-2">
-      <h3 style="text-align: center;">Nested Roles</h3>
-    </div>
     <div class="col-md-8">
       <h3 style="text-align: center;">Permissions</h3>
     </div>
@@ -30,17 +27,6 @@
           ng-model="selectedRole"
           ng-options="role.name for role in roles">
         </select>
-      </div>
-      <div class="col-md-2">
-        <div ng-repeat="roleName in roleNames">
-          <input type="checkbox" id="{{roleName}}"
-            ng-model="selectedRole.roles[roleName]"
-            ng-change="roleChange(roleName)"
-            ng-disabled="isRoleDisabled(roleName)" />
-          <label for="{{roleName}}"
-            ng-style="color(selectedRole.id, 'roles.'+roleName)"
-            >{{roleName}}</label>
-        </div>
       </div>
       <div class="col-md-8">
         <div ng-repeat="permGroup in permissions" class="row">
@@ -61,14 +47,14 @@
         <div class="col-md-6">
           <input type="submit" class="btn btn-success w-100"
             ng-click="doCreate()"
-            ng-show="hasPermission(user, 'bg-role-create')"
+            ng-show="hasPermission(user, 'bg-local-admin')"
             value="Create Role" />
         </div>
         <div class="col-md-6">
           <input type="submit" class="btn btn-danger w-100"
             value="Remove Role"
             ng-click="doDelete(selectedRole.id)"
-            ng-show="hasPermission(user, 'bg-role-delete')"
+            ng-show="hasPermission(user, 'bg-local-admin')"
             ng-disabled="selectedRole.name == 'bg-admin' ||
                          selectedRole.name == 'bg-anonymous' ||
                          selectedRole.name == 'bg-plugin'"
@@ -84,7 +70,7 @@
       <div class="col-md-4">
         <input type="submit" class="btn btn-primary w-100"
           ng-click="doUpdate()"
-          ng-show="hasPermission(user, 'bg-role-update')"
+          ng-show="hasPermission(user, 'bg-local-admin')"
           value="Update Role" />
       </div>
     </div>

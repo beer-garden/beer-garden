@@ -7,7 +7,7 @@ from beer_garden.errors import EndpointRemovedException
 
 
 class CommandAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.COMMAND_READ])
+    @authenticated(permissions=[Permissions.READ])
     async def get(self, system_id, command_name):
         """
         ---
@@ -43,7 +43,7 @@ class CommandAPI(BaseHandler):
 
 
 class CommandAPIOld(BaseHandler):
-    @authenticated(permissions=[Permissions.COMMAND_READ])
+    @authenticated(permissions=[Permissions.READ])
     async def get(self, command_id):
         """
         ---
@@ -74,7 +74,7 @@ class CommandAPIOld(BaseHandler):
 
 
 class CommandListAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.COMMAND_READ])
+    @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
         ---
