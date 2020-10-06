@@ -27,6 +27,7 @@ import beer_garden.systems
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 from beer_garden.events.processors import QueueListener
 from beer_garden.garden import get_garden, get_gardens
+from beer_garden.requests import complete_request
 
 logger = logging.getLogger(__name__)
 
@@ -255,17 +256,15 @@ def forward(operation: Operation):
         connection_type = target_garden.connection_type
 
         if connection_type is None:
-            publish(
-                Event(
-                    name=Events.GARDEN_NOT_CONFIGURED.name,
-                    payload_type="Operation",
-                    payload=operation,
-                    error_message=f"Attempted to forward operation to garden "
-                    f"'{operation.target_garden_name}' but the connection type was None. "
-                    f"This probably means that the connection to the child garden has not "
-                    f"been configured, please talk to your system administrator.",
-                )
+            _publish_failed_forward(
+                operation=operation,
+                event_name=Events.GARDEN_NOT_CONFIGURED.name,
+                error_message=f"Attempted to forward operation to garden "
+                f"'{operation.target_garden_name}' but the connection type was None. "
+                f"This probably means that the connection to the child garden has not "
+                f"been configured, please talk to your system administrator.",
             )
+
             raise RoutingRequestException(
                 f"Attempted to forward operation to garden "
                 f"'{operation.target_garden_name}' but the connection type was None. "
@@ -491,33 +490,49 @@ def _forward_http(operation: Operation, target_garden: Garden):
             )
 
         if response.status_code != 200:
-            publish(
-                Event(
-                    name=Events.GARDEN_UNREACHABLE.name,
-                    payload_type=operation.schema,
-                    payload=operation,
-                    error_message=f"Attempted to forward operation to garden "
-                    f"'{operation.target_garden_name}' but the connection returned an error code of "
-                    f"{response.status_code}. Please talk to your system administrator.",
-                )
+            _publish_failed_forward(
+                operation=operation,
+                event_name=Events.GARDEN_UNREACHABLE.name,
+                error_message=f"Attempted to forward operation to garden "
+                f"'{operation.target_garden_name}' but the connection returned an error code of "
+                f"{response.status_code}. Please talk to your system administrator.",
             )
         elif target_garden.status != "RUNNING":
             beer_garden.garden.update_garden_status(target_garden.name, "RUNNING")
 
         return response
 
-    except Exception as ex:
-        publish(
-            Event(
-                name=Events.GARDEN_ERROR.name,
-                payload_type=operation.schema,
-                payload=operation,
-                error_message=f"Attempted to forward operation to garden "
-                f"'{operation.target_garden_name}' but an error occurred."
-                f"Please talk to your system administrator.",
-            )
+    except Exception:
+        _publish_failed_forward(
+            operation=operation,
+            event_name=Events.GARDEN_ERROR.name,
+            error_message=f"Attempted to forward operation to garden "
+            f"'{operation.target_garden_name}' but an error occurred."
+            f"Please talk to your system administrator.",
         )
-        raise ex
+        raise
+
+
+def _publish_failed_forward(
+    operation: Operation = None, error_message: str = None, event_name: str = None
+):
+
+    if operation.operation_type == "REQUEST_CREATE":
+        complete_request(
+            operation.model.id,
+            status="ERROR",
+            output=error_message,
+            error_class=event_name,
+        )
+
+    publish(
+        Event(
+            name=event_name,
+            payload_type="Operation",
+            payload=operation,
+            error_message=error_message,
+        )
+    )
 
 
 def _system_name_lookup(system: Union[str, System]) -> str:
