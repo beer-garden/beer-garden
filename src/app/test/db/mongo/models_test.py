@@ -160,16 +160,16 @@ class TestRequest(object):
         assert "CREATED" in repr(request)
 
     @pytest.mark.parametrize(
-        "request",
+        "req",
         [
             Request(system="foo", command="bar", status="bad"),
             Request(system="foo", command="bar", command_type="BAD"),
             Request(system="foo", command="bar", output_type="BAD"),
         ],
     )
-    def test_clean_fail(self, request):
+    def test_clean_fail(self, req):
         with pytest.raises(ModelValidationError):
-            request.clean()
+            req.clean()
 
     @pytest.mark.parametrize(
         "start,end",
