@@ -215,7 +215,7 @@ class GardenListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.SYSTEM_UPDATE])
+    @authenticated(permissions=[Permissions.SYSTEM_ADMIN])
     async def patch(self):
         """
         ---
