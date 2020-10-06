@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import readLogs from '../../templates/read_logs.html';
 import adminQueue from '../../templates/admin_queue.html';
+import forceDelete from '../../templates/system_force_delete.html';
 
 adminSystemController.$inject = [
   '$scope',
@@ -60,7 +61,20 @@ export default function adminSystemController(
   };
 
   $scope.deleteSystem = function(system) {
-    SystemService.deleteSystem(system).then(_.noop, $scope.addErrorAlert);
+
+    $scope.deletedSystem = system;
+    SystemService.deleteSystem(system).then(_.noop, (response) => {
+        $uibModal.open({
+         template:forceDelete,
+        resolve: {
+           system: $scope.deletedSystem,
+           response: response,
+         },
+         controller: 'AdminSystemForceDeleteController',
+         windowClass: 'app-modal-window',
+      });
+    });
+
   };
 
   $scope.clearAllQueues = function() {

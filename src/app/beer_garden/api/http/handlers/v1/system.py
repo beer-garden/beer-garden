@@ -71,6 +71,12 @@ class SystemAPI(BaseHandler):
             required: true
             description: The ID of the System
             type: string
+          - name: force
+            in: query
+            required: false
+            description: Flag indicating whether to force delete
+            type: boolean
+            default: false
         responses:
           204:
             description: System has been successfully deleted
@@ -82,7 +88,15 @@ class SystemAPI(BaseHandler):
           - Systems
         """
 
-        await self.client(Operation(operation_type="SYSTEM_DELETE", args=[system_id]))
+        await self.client(
+            Operation(
+                operation_type="SYSTEM_DELETE",
+                args=[system_id],
+                kwargs={
+                    "force": self.get_argument("force", default="").lower() == "true"
+                },
+            )
+        )
 
         self.set_status(204)
 

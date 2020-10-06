@@ -419,7 +419,14 @@ def _determine_target_garden(operation: Operation) -> str:
         return config.get("garden.name")
 
     # Otherwise, each operation needs to be "parsed"
-    if operation.operation_type in ("SYSTEM_DELETE", "SYSTEM_RELOAD", "SYSTEM_UPDATE"):
+    if operation.operation_type in ("SYSTEM_RELOAD", "SYSTEM_UPDATE"):
+        return _system_id_lookup(operation.args[0])
+
+    elif operation.operation_type == "SYSTEM_DELETE":
+        # Force deletes get routed to local garden
+        if operation.kwargs.get("force"):
+            return config.get("garden.name")
+
         return _system_id_lookup(operation.args[0])
 
     elif "INSTANCE" in operation.operation_type:
