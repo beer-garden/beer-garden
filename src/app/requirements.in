@@ -24,7 +24,7 @@ flake8
 flake8-bugbear
 mock
 mongomock
-pytest < 4
+pytest < 7
 pytest-mock
 pytest-lazy-fixture
 pytest-tornado
