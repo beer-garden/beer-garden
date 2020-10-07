@@ -74,7 +74,7 @@ docker-build: package ## build docker image
 	docker build -t $(DOCKER_NAME):$(VERSION) .
 
 docker-build-unstable: package ## build nightly docker image
-	docker build -t $(DOCKER_NAME):unstable -f Dockerfile.unstable .
+	docker build -t $(DOCKER_NAME):unstable .
 
 
 # Publishing
