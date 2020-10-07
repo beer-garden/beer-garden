@@ -126,7 +126,7 @@ export default function jobService($http, NamespaceService) {
     return serviceModel;
   };
 
-  JobService.TRIGGER_TYPES = ['cron', 'date', 'interval'];
+  JobService.TRIGGER_TYPES = ['cron', 'date', 'interval', 'file'];
   JobService.CRON_KEYS = [
     'minute',
     'hour',
@@ -153,6 +153,11 @@ export default function jobService($http, NamespaceService) {
   JobService.DATE_KEYS = [
     'run_date',
     'date_timezone',
+  ];
+  JobService.FILE_KEYS = [
+    'pattern',
+    'path',
+    'recursive',
   ];
 
   JobService.getRequiredKeys = function(triggerType) {
@@ -347,6 +352,11 @@ export default function jobService($http, NamespaceService) {
         'description': 'Advance or delay job execute by this many seconds at most.',
         'type': 'integer',
         'minimum': 0,
+      },
+      'interval_reschedule_on_finish': {
+        'title': 'Reschedule on Finish',
+        'description': 'Reset the interval timer when the job finishes.',
+        'type': 'boolean',
       },
       'interval_reschedule_on_finish': {
         'title': 'Reschedule on Finish',

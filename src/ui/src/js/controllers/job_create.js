@@ -163,6 +163,28 @@ export default function jobCreateController(
       }
     }
 
+//    if (triggerType === 'file') {
+//      if (
+//        (
+//          (
+//            angular.isDefined(model['cron_start_date']) &&
+//            model['cron_start_date'] !== null
+//          ) ||
+//          (
+//            angular.isDefined(model['cron_end_date']) &&
+//            model['cron_end_date'] !== null
+//          )
+//        ) &&
+//        (
+//          !angular.isDefined(model['cron_timezone']) ||
+//          model['cron_timezone'] === null
+//        )
+//      ) {
+//        $scope.jobAlerts.push('If a date is specified, you must specify the timezone.');
+//        valid = false;
+//      }
+//    }
+
     return valid;
   };
 

@@ -4,6 +4,15 @@ import threading
 from typing import Dict, List
 
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
+
+from watchdog.observers import Observer
+from watchdog.events import (PatternMatchingEventHandler, EVENT_TYPE_CREATED, EVENT_TYPE_DELETED,
+                             EVENT_TYPE_MOVED, EVENT_TYPE_MODIFIED)
+from watchdog.utils import (has_attribute, unicode_paths)
+from pathtools.patterns import match_any_paths
+
+from apscheduler.schedulers.background import BackgroundScheduler
+
 from brewtils.models import Event, Events, Job
 
 import beer_garden
@@ -13,6 +22,130 @@ from beer_garden.events import publish_event
 from beer_garden.requests import process_request
 
 logger = logging.getLogger(__name__)
+
+class PatternMatchingEventHandlerWithArgs(PatternMatchingEventHandler):
+    _args = []
+    _kwargs = {}
+
+    def __init__(self, args=[], kwargs={},  **thru):
+        self._args = args
+        self._kwargs = kwargs
+        # print("Event Handler found: ARGS- %s  KWARGS- %s" %(args, kwargs))
+        super().__init__(**thru)
+
+    # Copy the dispatch code, but include arguments if specified
+    def dispatch(self, event):
+        """Dispatches events to the appropriate methods.
+
+                :param event:
+                    The event object representing the file system event.
+                :type event:
+                    :class:`FileSystemEvent`
+                """
+        if self.ignore_directories and event.is_directory:
+            return
+
+        paths = []
+        if has_attribute(event, 'dest_path'):
+            paths.append(unicode_paths.decode(event.dest_path))
+        if event.src_path:
+            paths.append(unicode_paths.decode(event.src_path))
+
+        if match_any_paths(paths,
+                           included_patterns=self.patterns,
+                           excluded_patterns=self.ignore_patterns,
+                           case_sensitive=self.case_sensitive):
+            self.on_any_event(event, *self._args, **self._kwargs)
+            _method_map = {
+                EVENT_TYPE_MODIFIED: self.on_modified,
+                EVENT_TYPE_MOVED: self.on_moved,
+                EVENT_TYPE_CREATED: self.on_created,
+                EVENT_TYPE_DELETED: self.on_deleted,
+            }
+            event_type = event.event_type
+            # print("Event Handler Calling %s, %s" % (self._args, self._kwargs))
+            _method_map[event_type](event, *self._args, **self._kwargs)
+
+    def on_created(self, event, *args, **kwargs):
+        super().on_created(event)
+
+    def on_any_event(self, event, *args, **kwargs):
+        super().on_any_event(event)
+
+    def on_deleted(self, event, *args, **kwargs):
+        super().on_deleted(event)
+
+    def on_modified(self, event, *args, **kwargs):
+        super().on_modified(event)
+
+    def on_moved(self, event, *args, **kwargs):
+        super().on_moved(event)
+
+
+def passthrough(class_objs=[]):
+    """
+    Adds any non-implemented methods defined by the given object names to the class.
+    :param class_objs: List of class object names to expose directly.
+    :return:
+    """
+    def wrapper(my_class):
+        for obj in class_objs:
+            scheduler = getattr(my_class, obj, None)
+            if scheduler is not None:
+                method_list = [func for func in dir(scheduler) if callable(getattr(scheduler, func))]
+                # added = []
+                for name in method_list:
+                    # Don't expose methods that are intended to be private!
+                    if name[0] != '_' and not hasattr(my_class, name):
+                        # added.append(name)
+                        method = getattr(scheduler, name)
+                        setattr(my_class, name, method)
+                # print("%s object has methods : %s" % (obj, added))
+        return my_class
+    return wrapper
+
+
+@passthrough(class_objs=['_sync_scheduler', '_async_scheduler'])
+class MixedScheduler(object):
+    """
+    A wrapper that tracks a file-based scheduler and an interval-based scheduler.
+    """
+    _sync_scheduler = BackgroundScheduler()
+    _async_scheduler = Observer()
+    _async_jobs = {}
+
+    running = False
+
+    def __init__(self, interval_config=None, file_config=None):
+        # print(interval_config)
+        self._sync_scheduler.configure(**interval_config)
+        # self._sync_scheduler = BackgroundScheduler(**interval_config)
+
+    def start(self):
+        self._sync_scheduler.start()
+        self._async_scheduler.start()
+        self.running = True
+
+    def shutdown(self, **kwargs):
+        self.stop(**kwargs)
+
+    def stop(self, **kwargs):
+        self._sync_scheduler.shutdown(**kwargs)
+        self._async_scheduler.stop()
+        self.running = False
+
+    def add_job(self, func, trigger=None, **kwargs):
+        if trigger != 'file':
+            print('Recieved job request: %s, %s, %s' % (func.__name__, trigger, kwargs))
+            self._sync_scheduler.add_job(func, trigger=trigger, **kwargs)
+        else:
+            path = kwargs.pop('path', '.')
+            recursive = kwargs.pop('recursive', False)
+            event_handler = PatternMatchingEventHandlerWithArgs(**kwargs)
+            event_handler.on_any_event = func
+            if path is not None and event_handler is not None:
+                self._async_scheduler.schedule(event_handler, path, recursive=recursive)
+                # print('Scheduled a file watch!')
 
 
 class IntervalTrigger(APInterval):

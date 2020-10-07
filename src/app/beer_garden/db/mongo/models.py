@@ -63,6 +63,7 @@ __all__ = [
     "DateTrigger",
     "CronTrigger",
     "IntervalTrigger",
+    "FileTrigger",
     "Garden",
 ]
 
@@ -581,6 +582,14 @@ class CronTrigger(MongoModel, EmbeddedDocument):
     jitter = IntField(required=False)
 
 
+class FileTrigger(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.FileTrigger
+
+    pattern = StringField(required=True, default="test.txt")
+    path = StringField(required=True, default=".")
+    recursive = BooleanField(required=True, default=False)
+
+
 class Job(MongoModel, Document):
     brewtils_model = brewtils.models.Job
 
@@ -596,6 +605,7 @@ class Job(MongoModel, Document):
         "date": DateTrigger,
         "cron": CronTrigger,
         "interval": IntervalTrigger,
+        "file": FileTrigger,
     }
 
     name = StringField(required=True)
