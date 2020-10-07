@@ -6,6 +6,7 @@
   "dependencies": {
     "@beer-garden/addons": "^0.6.2",
     "@beer-garden/builder": "0.1.0-beta0",
+    "@fortawesome/fontawesome-free": "^5.15.1",
     "@uirouter/angularjs": "^1.0.25",
     "ace-builds": "^1.4.8",
     "angular": "^1.7.9",
@@ -28,7 +29,6 @@
     "datatables.net": "^1.10.20",
     "datatables.net-bs": "^1.10.20",
     "eonasdan-bootstrap-datetimepicker": "^4.17.47",
-    "font-awesome": "^4.7.0",
     "jquery": "^3.2.1",
     "jwt-decode": "^2.2.0",
     "lodash": "^4.17.10",
