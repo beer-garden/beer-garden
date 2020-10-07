@@ -1,7 +1,7 @@
 # Makefile for Beer-garden UI
 
 DOCKER_NAME    = bgio/ui
-DOCKERFILE_DIR = ../../docker/dockerfiles
+VERSION       ?= latest
 
 .PHONY: clean clean-build clean-test help test deps
 .DEFAULT_GOAL := help
@@ -70,10 +70,16 @@ package: clean ## builds distribution
 
 
 # Docker
+docker-build: package ## build docker image
+	docker build -t $(DOCKER_NAME):$(VERSION) .
+
 docker-build-unstable: package ## build nightly docker image
-	docker build -t $(DOCKER_NAME):unstable -f $(DOCKERFILE_DIR)/Dockerfile-UI.unstable .
+	docker build -t $(DOCKER_NAME):unstable .
 
 
 # Publishing
+publish-docker: docker-build ## push the docker image
+	docker push $(DOCKER_NAME):$(VERSION)
+
 publish-docker-unstable: docker-build-unstable ## push the unstable docker image
 	docker push $(DOCKER_NAME):unstable

@@ -4,8 +4,6 @@ PYTHON         = python
 MODULE_NAME    = beer_garden
 APP_DIR        = src/app
 UI_DIR         = src/ui
-DOCKER_NAME    = bgio/beer-garden
-DOCKERFILE_DIR = docker/dockerfiles
 
 VERSION        ?= 0.0.0
 
@@ -50,12 +48,20 @@ rpm-build-local:  ## build a local rpm
 docker-login: ## log in to the docker registry
 	echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USER}" --password-stdin
 
+docker-build: ## build docker images
+	$(MAKE) -C $(APP_DIR) docker-build
+	$(MAKE) -C $(UI_DIR) docker-build
+
 docker-build-unstable: ## build unstable docker images
 	$(MAKE) -C $(APP_DIR) docker-build-unstable
 	$(MAKE) -C $(UI_DIR) docker-build-unstable
 
 
 # Publishing
+publish-docker: ## push the docker image
+	$(MAKE) -C $(APP_DIR) publish-docker
+	$(MAKE) -C $(UI_DIR) deps publish-docker
+
 publish-docker-unstable: ## push the unstable docker image
 	$(MAKE) -C $(APP_DIR) publish-docker-unstable
 	$(MAKE) -C $(UI_DIR) deps publish-docker-unstable
