@@ -44,7 +44,7 @@ jobs:
     if: tag IS present
     install: pip install twine wheel
     before_script: cd src/app
-    script: make package
+    script: skip
     after_success: true
     deploy:
       provider: pypi
