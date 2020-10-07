@@ -58,8 +58,8 @@ jobs:
   - stage: docker deploy
     if: tag IS present
     install: skip
-    before_script: cd src/app
-    script: make docker-login publish-docker VERSION=$TRAVIS_TAG
+    before_script: make docker-login
+    script: make publish-docker VERSION=$TRAVIS_TAG
     after_success: skip
 
 
