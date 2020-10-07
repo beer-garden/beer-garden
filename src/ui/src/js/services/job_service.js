@@ -155,9 +155,9 @@ export default function jobService($http, NamespaceService) {
     'date_timezone',
   ];
   JobService.FILE_KEYS = [
-    'pattern',
-    'path',
-    'recursive',
+    'file_pattern',
+    'file_path',
+    'file_recursive',
   ];
 
   JobService.getRequiredKeys = function(triggerType) {
@@ -176,6 +176,8 @@ export default function jobService($http, NamespaceService) {
       return requiredKeys;
     } else if (triggerType === 'date') {
       return JobService.DATE_KEYS;
+    } else if (triggerType === 'file') {
+      return [];
     } else {
       let requiredKeys = [];
       for (let key of JobService.INTERVAL_KEYS) {
@@ -358,9 +360,19 @@ export default function jobService($http, NamespaceService) {
         'description': 'Reset the interval timer when the job finishes.',
         'type': 'boolean',
       },
-      'interval_reschedule_on_finish': {
-        'title': 'Reschedule on Finish',
-        'description': 'Reset the interval timer when the job finishes.',
+      'file_pattern': {
+        'title': 'Pattern',
+        'description': 'File name pattern to match.',
+        'type': 'string',
+      },
+      'file_path': {
+        'title': 'Path',
+        'description': 'Directory to watch.',
+        'type': 'string',
+      },
+      'file_recursive': {
+        'title': 'Recursive',
+        'description': 'Look more than one level deep in the directory.',
         'type': 'boolean',
       },
     },
@@ -456,6 +468,20 @@ export default function jobService($http, NamespaceService) {
                   'items': [
                     {'key': 'run_date', 'htmlClass': 'col-md-6'},
                     {'key': 'date_timezone', 'htmlClass': 'col-md-2'},
+                  ],
+                },
+              ],
+            },
+            {
+              'title': 'File Trigger',
+              'items': [
+                {
+                  'type': 'section',
+                  'htmlClass': 'row',
+                  'items': [
+                    {'key': 'file_pattern', 'htmlClass': 'col-md-2'},
+                    {'key': 'file_path', 'htmlClass': 'col-md-2'},
+                    {'key': 'file_recursive', 'htmlClass': 'col-md-2'},
                   ],
                 },
               ],

@@ -139,6 +139,7 @@ class MixedScheduler(object):
             print('Recieved job request: %s, %s, %s' % (func.__name__, trigger, kwargs))
             self._sync_scheduler.add_job(func, trigger=trigger, **kwargs)
         else:
+            print('Recieved job request: %s, %s, %s' % (func.__name__, trigger, kwargs))
             path = kwargs.pop('path', '.')
             recursive = kwargs.pop('recursive', False)
             event_handler = PatternMatchingEventHandlerWithArgs(**kwargs)
