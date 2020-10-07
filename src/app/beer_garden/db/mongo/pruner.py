@@ -47,7 +47,7 @@ class MongoPruner(StoppableThread):
                     "Removing %ss older than %s"
                     % (task["collection"].__name__, str(delete_older_than))
                 )
-                task["collection"].objects(query).delete()
+                task["collection"].objects(query).no_cache().delete()
 
         self.logger.info(self.display_name + " is stopped")
 
