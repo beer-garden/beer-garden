@@ -20,7 +20,7 @@ x-definitions: &env
 
 services:
     beer-garden:
-        image: bgio/beer-garden:unstable
+        image: bgio/beer-garden:3.0.0a1
         networks:
             - bg-network
         ports:
@@ -56,7 +56,7 @@ services:
             - rabbitmq
 
     ui:
-        image: bgio/ui:unstable
+        image: bgio/ui:3.0.0a1
         networks:
             - bg-network
         ports:
