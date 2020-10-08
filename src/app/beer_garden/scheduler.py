@@ -5,7 +5,7 @@ from typing import Dict, List
 
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
 
-from watchdog.observers import Observer
+from watchdog.observers.polling import PollingObserver as Observer
 from watchdog.events import (PatternMatchingEventHandler, EVENT_TYPE_CREATED, EVENT_TYPE_DELETED,
                              EVENT_TYPE_MOVED, EVENT_TYPE_MODIFIED)
 from watchdog.utils import (has_attribute, unicode_paths)
@@ -20,8 +20,13 @@ import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.events import publish_event
 from beer_garden.requests import process_request
+from brewtils.models import FileTrigger
 
 logger = logging.getLogger(__name__)
+
+
+
+
 
 class PatternMatchingEventHandlerWithArgs(PatternMatchingEventHandler):
     _args = []
@@ -55,7 +60,7 @@ class PatternMatchingEventHandlerWithArgs(PatternMatchingEventHandler):
                            included_patterns=self.patterns,
                            excluded_patterns=self.ignore_patterns,
                            case_sensitive=self.case_sensitive):
-            self.on_any_event(event, *self._args, **self._kwargs)
+            self.on_any_event(*self._args, file_trigger_event=event, **self._kwargs)
             _method_map = {
                 EVENT_TYPE_MODIFIED: self.on_modified,
                 EVENT_TYPE_MOVED: self.on_moved,
@@ -64,22 +69,22 @@ class PatternMatchingEventHandlerWithArgs(PatternMatchingEventHandler):
             }
             event_type = event.event_type
             # print("Event Handler Calling %s, %s" % (self._args, self._kwargs))
-            _method_map[event_type](event, *self._args, **self._kwargs)
+            _method_map[event_type](*self._args, file_trigger_event=event, **self._kwargs)
 
-    def on_created(self, event, *args, **kwargs):
-        super().on_created(event)
+    def on_created(self, *args, file_trigger_event=None, **kwargs):
+        super().on_created(file_trigger_event)
 
-    def on_any_event(self, event, *args, **kwargs):
-        super().on_any_event(event)
+    def on_any_event(self, *args, file_trigger_event=None, **kwargs):
+        super().on_any_event(file_trigger_event)
 
-    def on_deleted(self, event, *args, **kwargs):
-        super().on_deleted(event)
+    def on_deleted(self, *args, file_trigger_event=None, **kwargs):
+        super().on_deleted(file_trigger_event)
 
-    def on_modified(self, event, *args, **kwargs):
-        super().on_modified(event)
+    def on_modified(self, *args, file_trigger_event=None, **kwargs):
+        super().on_modified(file_trigger_event)
 
-    def on_moved(self, event, *args, **kwargs):
-        super().on_moved(event)
+    def on_moved(self, *args, file_trigger_event=None, **kwargs):
+        super().on_moved(file_trigger_event)
 
 
 def passthrough(class_objs=[]):
@@ -104,6 +109,10 @@ def passthrough(class_objs=[]):
         return my_class
     return wrapper
 
+def sanity_check(*args, **kwargs):
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ENTERED SANITY!!")
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~SANITY ARGS: %s, KWARGS: %s" % (args, kwargs))
+
 
 @passthrough(class_objs=['_sync_scheduler', '_async_scheduler'])
 class MixedScheduler(object):
@@ -112,7 +121,7 @@ class MixedScheduler(object):
     """
     _sync_scheduler = BackgroundScheduler()
     _async_scheduler = Observer()
-    _async_jobs = {}
+    _async_jobs = set()
 
     running = False
 
@@ -134,19 +143,38 @@ class MixedScheduler(object):
         self._async_scheduler.stop()
         self.running = False
 
-    def add_job(self, func, trigger=None, **kwargs):
-        if trigger != 'file':
-            print('Recieved job request: %s, %s, %s' % (func.__name__, trigger, kwargs))
-            self._sync_scheduler.add_job(func, trigger=trigger, **kwargs)
+    def get_job(self, job_id):
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~SCHEDULER GET JOB event captured!")
+        if job_id not in self._async_jobs:
+            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~NOT IN ASYNC_JOBS')
+            return self._sync_scheduler.get_job(job_id)
         else:
-            print('Recieved job request: %s, %s, %s' % (func.__name__, trigger, kwargs))
-            path = kwargs.pop('path', '.')
-            recursive = kwargs.pop('recursive', False)
-            event_handler = PatternMatchingEventHandlerWithArgs(**kwargs)
+            return db.query_unique(Job, id=job_id)
+
+
+    def add_job(self, func, trigger=None, **kwargs):
+        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~SCHEDULER_ADD_JOB event captured!")
+        if trigger is None:
+            return
+
+        if not isinstance(trigger, FileTrigger):
+            kwargs.pop('request_template')
+            # print('Recieved job request (SYNC): %s, %s, %s' % (func.__name__, trigger, kwargs))
+            self._sync_scheduler.add_job(func, trigger=None, **kwargs)
+        else:
+            # print('Recieved job request (ASYNC): %s, %s' % (func.__name__, trigger))
+            args = [kwargs.get('id'), kwargs.get('request_template')]
+            event_handler = PatternMatchingEventHandlerWithArgs(args=args, patterns=["*"+trigger.pattern])
             event_handler.on_any_event = func
-            if path is not None and event_handler is not None:
-                self._async_scheduler.schedule(event_handler, path, recursive=recursive)
-                # print('Scheduled a file watch!')
+            if trigger.path is not None and event_handler is not None:
+                self._async_jobs.add(kwargs.get('id'))
+                self._async_scheduler.schedule(event_handler, trigger.path, recursive=trigger.recursive)
+                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Scheduled a file watch! %s' % (trigger.path+"/"+trigger.pattern))
+                # import time
+                # time.sleep(1)
+                # with open(trigger.path+"/"+trigger.pattern, 'w') as fp:
+                #     fp.write("Crocodile")
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Wrote!")
 
 
 class IntervalTrigger(APInterval):
@@ -157,7 +185,7 @@ class IntervalTrigger(APInterval):
         super(IntervalTrigger, self).__init__(*args, **kwargs)
 
 
-def run_job(job_id, request_template):
+def run_job(job_id, request_template, **kwargs):
     """Spawned by the scheduler, this will kick off a new request.
 
     This method is meant to be run in a separate process.
@@ -170,8 +198,11 @@ def run_job(job_id, request_template):
 
     # TODO - Possibly allow specifying blocking timeout on the job definition
     wait_event = threading.Event()
+    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Sending request to be processed")
     request = process_request(request_template, wait_event=wait_event)
     wait_event.wait()
+
+    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Request completed")
 
     try:
         db_job = db.query_unique(Job, id=job_id)
@@ -289,9 +320,11 @@ def handle_event(event: Event) -> None:
 
         if event.name == Events.JOB_CREATED.name:
             try:
+                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~JOB_CREATED event captured!")
+                # print("Payload: %s" % event.payload.trigger)
                 beer_garden.application.scheduler.add_job(
                     run_job,
-                    None,
+                    trigger=event.payload.trigger,
                     kwargs={
                         "request_template": event.payload.request_template,
                         "job_id": str(event.payload.id),
@@ -303,6 +336,7 @@ def handle_event(event: Event) -> None:
                     jobstore="beer_garden",
                     replace_existing=False,
                     id=str(event.payload.id),
+                    request_template=event.payload.request_template,
                 )
             except Exception:
                 db.delete(event.payload)

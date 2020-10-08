@@ -25,7 +25,8 @@ def construct_trigger(trigger_type: str, bg_trigger) -> BaseTrigger:
     elif trigger_type == "cron":
         return CronTrigger(**bg_trigger.scheduler_kwargs)
     elif trigger_type == "file":
-        return FileTrigger(**bg_trigger.scheduler_kwargs)
+        # print("Attempted to create FileTrigger")
+        return None
     else:
         raise ValueError("Invalid trigger type %s" % trigger_type)
 

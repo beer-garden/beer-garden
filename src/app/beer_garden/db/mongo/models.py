@@ -631,7 +631,7 @@ class Job(MongoModel, Document):
             )
 
         trigger_class = self.TRIGGER_MODEL_MAPPING.get(self.trigger_type)
-        print("~~~~~~~~~~Comparing %s to %s, type = %s" % (self.trigger, trigger_class, type(self.trigger)))
+        # print("~~~~~~~~~~Comparing %s to %s, type = %s" % (self.trigger, trigger_class, type(self.trigger)))
         if not isinstance(self.trigger, trigger_class):
             raise ModelValidationError(
                 f"Cannot save job. Expected trigger type {self.trigger_type} but "
