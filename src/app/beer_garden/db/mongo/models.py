@@ -585,9 +585,10 @@ class CronTrigger(MongoModel, EmbeddedDocument):
 class FileTrigger(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.FileTrigger
 
-    pattern = StringField(default="test.txt")
+    pattern = ListField()
     path = StringField(default=".")
     recursive = BooleanField(default=False)
+    callbacks = DictField()
 
 
 class Job(MongoModel, Document):

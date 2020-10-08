@@ -144,37 +144,47 @@ class MixedScheduler(object):
         self.running = False
 
     def get_job(self, job_id):
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~SCHEDULER GET JOB event captured!")
-        if job_id not in self._async_jobs:
-            # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~NOT IN ASYNC_JOBS')
-            return self._sync_scheduler.get_job(job_id)
-        else:
+        if job_id in self._async_jobs:
             return db.query_unique(Job, id=job_id)
+        else:
+            return self._sync_scheduler.get_job(job_id)
 
+    def remove_job(self, job_id, **kwargs):
+        if job_id in self._async_jobs:
+            self._async_jobs.remove(job_id)
+            db.delete(db.query_unique(Job, id=job_id))
+        else:
+            self._sync_scheduler.remove_job(job_id, **kwargs)
+
+    def _add_triggers(self, handler, triggers, func):
+        for name in triggers.keys():
+            if hasattr(handler, name) and triggers.get(name):
+                print("Setting callback %s to %s" % (name, func.__name__))
+                setattr(handler, name, func)
+        return handler
 
     def add_job(self, func, trigger=None, **kwargs):
-        # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~SCHEDULER_ADD_JOB event captured!")
         if trigger is None:
             return
 
         if not isinstance(trigger, FileTrigger):
+            # Remove the unneeded/unwanted data
             kwargs.pop('request_template')
-            # print('Recieved job request (SYNC): %s, %s, %s' % (func.__name__, trigger, kwargs))
+            # The old code always set the trigger to None, not sure why
             self._sync_scheduler.add_job(func, trigger=None, **kwargs)
+
         else:
-            # print('Recieved job request (ASYNC): %s, %s' % (func.__name__, trigger))
+            # Pull out the arguments needed by the run_job function
             args = [kwargs.get('id'), kwargs.get('request_template')]
-            event_handler = PatternMatchingEventHandlerWithArgs(args=args, patterns=["*"+trigger.pattern])
-            event_handler.on_any_event = func
+
+            # Pass in those args to be relayed once the event occurs
+            event_handler = PatternMatchingEventHandlerWithArgs(args=args, patterns=trigger.pattern)
+            event_handler = self._add_triggers(event_handler, trigger.callbacks, func)
+
             if trigger.path is not None and event_handler is not None:
+                # Register the job id with the set and schedule it with watchdog
                 self._async_jobs.add(kwargs.get('id'))
                 self._async_scheduler.schedule(event_handler, trigger.path, recursive=trigger.recursive)
-                # print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Scheduled a file watch! %s' % (trigger.path+"/"+trigger.pattern))
-                # import time
-                # time.sleep(1)
-                # with open(trigger.path+"/"+trigger.pattern, 'w') as fp:
-                #     fp.write("Crocodile")
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Wrote!")
 
 
 class IntervalTrigger(APInterval):

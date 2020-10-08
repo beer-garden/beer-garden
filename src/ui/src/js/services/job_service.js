@@ -96,7 +96,15 @@ export default function jobService($http, NamespaceService) {
         'timezone': formModel['interval_timezone'],
         'reschedule_on_finish': formModel['interval_reschedule_on_finish'],
       };
-    } else {
+    } else if (triggerType === 'file') {
+      return {
+        'pattern': formModel['file_pattern'],
+        'path': formModel['file_path'],
+        'recursive': formModel['file_recursive'],
+        'callbacks': formModel['file_callbacks'],
+      };
+    }
+    else {
       return {
         'minute': formModel['minute'],
         'hour': formModel['hour'],
@@ -158,6 +166,7 @@ export default function jobService($http, NamespaceService) {
     'file_pattern',
     'file_path',
     'file_recursive',
+    'file_callbacks',
   ];
 
   JobService.getRequiredKeys = function(triggerType) {
@@ -362,18 +371,33 @@ export default function jobService($http, NamespaceService) {
       },
       'file_pattern': {
         'title': 'Pattern',
-        'description': 'File name pattern to match.',
-        'type': 'string',
+        'description': 'File name patterns to match.',
+        'type': 'array',
+        'items': {
+            'type': 'string'
+        }
       },
       'file_path': {
         'title': 'Path',
         'description': 'Directory to watch.',
-        'type': 'string',
+        'type': 'string'
       },
       'file_recursive': {
         'title': 'Recursive',
         'description': 'Look more than one level deep in the directory.',
         'type': 'boolean',
+      },
+      'file_callbacks': {
+        'title': 'Callbacks',
+        'description': 'What file events should trigger the plugins?',
+        'type': 'object',
+        'properties':
+        {
+            'on_created': {'type' : 'boolean'},
+            'on_modified': {'type' : 'boolean'},
+            'on_moved': {'type' : 'boolean'},
+            'on_deleted': {'type' : 'boolean'},
+        }
       },
     },
   };
@@ -479,9 +503,10 @@ export default function jobService($http, NamespaceService) {
                   'type': 'section',
                   'htmlClass': 'row',
                   'items': [
-                    {'key': 'file_pattern', 'htmlClass': 'col-md-2'},
+                    {'key': 'file_pattern', 'htmlClass': 'col-md-4'},
                     {'key': 'file_path', 'htmlClass': 'col-md-2'},
                     {'key': 'file_recursive', 'htmlClass': 'col-md-2'},
+                    {'key': 'file_callbacks', 'htmlClass': 'col-md-2'},
                   ],
                 },
               ],
