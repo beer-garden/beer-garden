@@ -95,16 +95,16 @@
       <div ng-style="(displayOutput && isMaximized) ? {'width': '100%'} : {'width': '50%'}" ng-show="displayOutput" class="col-md-6">
         <div style="margin-bottom: 10px;">
           <span class="h3">Output
-            <a class="fa fa-window-maximize pull-right"
-                 title="Maximize"
+            <a class="fa fa-expand pull-right"
+                 title="Expand"
                  ng-click="resize('outputCell')"
                  ng-hide="isMaximized"
-                 style="font-size: 0.8em; margin-top: 11px; color: black"></a>
-            <a class="fa fa-window-restore pull-right"
-                 title="Restore"
+                 style="font-size: 0.8em; margin-top: 11px; color: black; cursor: pointer;"></a>
+            <a class="fa fa-compress pull-right"
+                 title="Contract"
                  ng-click="resize('outputCell')"
                  ng-hide="!isMaximized"
-                 style="font-size: 0.8em; margin-top: 11px; color: black"></a>
+                 style="font-size: 0.8em; margin-top: 11px; color: black; cursor: pointer;"></a>
             <a class="fa fa-download pull-right" style="font-size: 0.8em; margin-top: 12px; color: black"
                  ng-href="api/v1/requests/output/{{request.id}}" download="{{filename}}" ng-show="downloadVisible"></a>
           </span>
@@ -139,16 +139,16 @@
       <div ng-style="(displayParameter && isMaximized) ? {'width': '100%'} : {'width': '50%'}" ng-show="displayParameter" class="col-md-6">
         <div style="margin-bottom: 10px;">
           <span class="h3">Parameters
-              <a class="fa fa-window-maximize pull-right"
-                   title="Maximize"
-                   ng-click="resize('parameterCell')"
-                   ng-hide="isMaximized"
-                   style="font-size: 0.8em; margin-top: 11px; color: black"></a>
-              <a class="fa fa-window-restore pull-right"
-                   title="Restore"
-                   ng-click="resize('parameterCell')"
-                   ng-hide="!isMaximized"
-                   style="font-size: 0.8em; margin-top: 11px; color: black"></a>
+              <a class="fa fa-expand pull-right"
+                 title="Expand"
+                 ng-click="resize('parameterCell')"
+                 ng-hide="isMaximized"
+                 style="font-size: 0.8em; margin-top: 11px; color: black; cursor: pointer;"></a>
+              <a class="fa fa-compress pull-right"
+                 title="Contract"
+                 ng-click="resize('parameterCell')"
+                 ng-hide="!isMaximized"
+                 style="font-size: 0.8em; margin-top: 11px; color: black; cursor: pointer;"></a>
           </span>
         </div>
         <div ui-ace="{ onLoad: loadPreview }" ng-model="formattedParameters" style="width: 100%;" title="Input Parameters"></div>
