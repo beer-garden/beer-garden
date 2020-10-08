@@ -215,6 +215,9 @@ class Application(StoppableThread):
             moved_event=Event(name=Events.PLUGIN_LOGGER_FILE_CHANGE.name),
         )
 
+        self.logger.info("Loading jobs from database")
+        self.scheduler.initialize_from_db()
+
         self.logger.info("All set! Let me know if you need anything else!")
 
     def _shutdown(self):

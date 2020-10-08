@@ -121,14 +121,22 @@ class MixedScheduler(object):
     """
     _sync_scheduler = BackgroundScheduler()
     _async_scheduler = Observer()
-    _async_jobs = set()
+    _async_jobs = {}
+    _async_paused_jobs = set()
 
     running = False
 
+    def _process_watches(self, jobs):
+        for job in jobs:
+            if isinstance(job.trigger, FileTrigger):
+                self.add_job(run_job, trigger=job.trigger, id=job.id, request_template=job.request_template)
+
     def __init__(self, interval_config=None, file_config=None):
-        # print(interval_config)
         self._sync_scheduler.configure(**interval_config)
-        # self._sync_scheduler = BackgroundScheduler(**interval_config)
+
+    def initialize_from_db(self):
+        all_jobs = db.query(Job)
+        self._process_watches(all_jobs)
 
     def start(self):
         self._sync_scheduler.start()
@@ -149,9 +157,31 @@ class MixedScheduler(object):
         else:
             return self._sync_scheduler.get_job(job_id)
 
+    def pause_job(self, job_id, **kwargs):
+        if job_id in self._async_jobs:
+            if job_id not in self._async_paused_jobs:
+                (event_handler, watch) = self._async_jobs.get(job_id)
+                self._async_scheduler.remove_handler_for_watch(event_handler, watch)
+                self._async_paused_jobs.add(job_id)
+        else:
+            self._sync_scheduler.pause_job(job_id, **kwargs)
+
+    def resume_job(self, job_id, **kwargs):
+        if job_id in self._async_jobs:
+            if job_id  in self._async_paused_jobs:
+                (event_handler, watch) = self._async_jobs.get(job_id)
+                self._async_scheduler.add_handler_for_watch(event_handler, watch)
+                self._async_paused_jobs.remove(job_id)
+        else:
+            self._sync_scheduler.resume_job(job_id, **kwargs)
+
     def remove_job(self, job_id, **kwargs):
         if job_id in self._async_jobs:
-            self._async_jobs.remove(job_id)
+            self._async_jobs.pop(job_id)
+            # Clean up the
+            if job_id in self._async_paused_jobs:
+                self._async_paused_jobs.remove(job_id)
+
             db.delete(db.query_unique(Job, id=job_id))
         else:
             self._sync_scheduler.remove_job(job_id, **kwargs)
@@ -183,8 +213,8 @@ class MixedScheduler(object):
 
             if trigger.path is not None and event_handler is not None:
                 # Register the job id with the set and schedule it with watchdog
-                self._async_jobs.add(kwargs.get('id'))
-                self._async_scheduler.schedule(event_handler, trigger.path, recursive=trigger.recursive)
+                watch = self._async_scheduler.schedule(event_handler, trigger.path, recursive=trigger.recursive)
+                self._async_jobs[kwargs.get('id')] = (event_handler, watch)
 
 
 class IntervalTrigger(APInterval):
@@ -208,11 +238,8 @@ def run_job(job_id, request_template, **kwargs):
 
     # TODO - Possibly allow specifying blocking timeout on the job definition
     wait_event = threading.Event()
-    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Sending request to be processed")
     request = process_request(request_template, wait_event=wait_event)
     wait_event.wait()
-
-    # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Request completed")
 
     try:
         db_job = db.query_unique(Job, id=job_id)
