@@ -20,7 +20,6 @@ from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden
 import beer_garden.config as config
-import beer_garden.db.api as db
 from beer_garden.errors import PluginValidationError
 from beer_garden.local_plugins.env_help import expand_string
 from beer_garden.local_plugins.runner import ProcessRunner
@@ -136,10 +135,9 @@ class PluginManager(StoppableThread):
 
         if runner_id:
             instance = event.payload
-            system = db.query_unique(System, instances__contains=instance)
 
             runner = cls.from_runner_id(runner_id)
-            runner.associate(system=system, instance=instance)
+            runner.associate(instance=instance)
             runner.restart = True
 
     @classmethod

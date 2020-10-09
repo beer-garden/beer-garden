@@ -89,7 +89,7 @@ class ProcessRunner(Thread):
     def __str__(self):
         return f"{self.runner_name}.{self.runner_id}"
 
-    def associate(self, system=None, instance=None):
+    def associate(self, instance=None):
         """Associate this runner with a specific instance ID"""
         self.instance_id = instance.id
 
