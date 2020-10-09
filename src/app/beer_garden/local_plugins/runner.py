@@ -4,12 +4,12 @@ import logging
 import subprocess
 from pathlib import Path
 from queue import Queue
-from threading import Event, Thread
+from threading import Lock, Thread
 from typing import Sequence
 
 from time import sleep
 
-from beer_garden.events.processors import DelayListener
+from beer_garden.events.processors import LockListener
 
 log_levels = [n for n in getattr(logging, "_nameToLevel").keys()]
 
@@ -54,6 +54,7 @@ class ProcessRunner(Thread):
         process_args: Sequence[str],
         process_cwd: Path,
         process_env: dict,
+        error_log_lock: Lock,
     ):
         self.process = None
         self.restart = False
@@ -69,7 +70,13 @@ class ProcessRunner(Thread):
         self.runner_name = process_cwd.name
 
         self.log_queue = Queue()
-        self.logger_ready = Event()
+        self.error_log_lock = error_log_lock
+        self.log_reader = LockListener(
+            lock=self.error_log_lock,
+            queue=self.log_queue,
+            action=self._process_logs,
+            name=f"{self} Log Processor",
+        )
 
         self.error_log = self.process_cwd / "plugin.err"
         self.error_handler = logging.FileHandler(self.error_log)
@@ -95,7 +102,7 @@ class ProcessRunner(Thread):
 
         # At this point we're satisfied that we won't need to write captured STDOUT /
         # STDERR to the error file so allow messages to be processed
-        self.logger_ready.set()
+        self.log_reader.start()
 
     def kill(self):
         """Kill the underlying plugin process with SIGKILL"""
@@ -137,15 +144,6 @@ class ProcessRunner(Thread):
             stdout_thread.start()
             stderr_thread.start()
 
-            # Processing the logs also needs a thread
-            log_reader = DelayListener(
-                event=self.logger_ready,
-                queue=self.log_queue,
-                action=self._process_logs,
-                name=f"{self} Log Processor",
-            )
-            log_reader.start()
-
             # Just spin here until until the process is no longer alive
             while self.process.poll() is None:
                 sleep(0.1)
@@ -156,23 +154,25 @@ class ProcessRunner(Thread):
 
             # Ensure logs are sent SOMEWHERE in the event they were never configured
             # TODO - This is broken: QueueListener doesn't exhaust queue before dying
-            if not self.logger_ready.is_set():
+            if not self.log_reader.is_alive():
                 self.logger.warning(
                     f"Plugin {self} terminated before successfully initializing. All "
                     f"captured messages will be written to {self.error_log} and the "
                     f"application logs."
                 )
+
+                # This is what enables logging to the error file
                 self.capture_logger.addHandler(self.error_handler)
 
-                self.logger_ready.set()
+                self.log_reader.start()
 
                 # Need to give the log_reader time to start, otherwise the stopped
                 # check will happen before we start processing
                 sleep(0.1)
 
             self.logger.debug("About to stop and join log processing thread")
-            log_reader.stop()
-            log_reader.join()
+            self.log_reader.stop()
+            self.log_reader.join()
 
             self.logger.info("Plugin is officially stopped")
 

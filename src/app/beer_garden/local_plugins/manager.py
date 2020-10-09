@@ -4,6 +4,7 @@ import json
 import logging
 import string
 from concurrent.futures import ThreadPoolExecutor, wait
+from threading import Lock
 
 import sys
 from enum import Enum
@@ -309,6 +310,8 @@ class PluginManager(StoppableThread):
             return []
 
         new_runners = []
+        error_log_lock = Lock()
+
         for instance_name in plugin_config["INSTANCES"]:
             runner_id = "".join([choice(string.ascii_letters) for _ in range(10)])
             process_args = self._process_args(plugin_config, instance_name)
@@ -322,6 +325,7 @@ class PluginManager(StoppableThread):
                     process_args=process_args,
                     process_cwd=plugin_path,
                     process_env=process_env,
+                    error_log_lock=error_log_lock,
                 )
             )
 
