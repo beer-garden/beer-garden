@@ -56,6 +56,7 @@ __all__ = [
     "Choices",
     "Event",
     "Principal",
+    "Permission",
     "Role",
     "RefreshToken",
     "Job",
@@ -127,7 +128,7 @@ class Choices(MongoModel, EmbeddedDocument):
                 f"not a string"
             )
         elif self.type == "command" and not isinstance(
-            self.value, (six.string_types, dict)
+                self.value, (six.string_types, dict)
         ):
             raise ModelValidationError(
                 f"Can not save choices '{self}': type is 'command' but the value is "
@@ -193,7 +194,7 @@ class Parameter(MongoModel, EmbeddedDocument):
             )
 
         if len(self.parameters) != len(
-            set(parameter.key for parameter in self.parameters)
+                set(parameter.key for parameter in self.parameters)
         ):
             raise ModelValidationError(
                 f"Can not save Parameter {self}: Contains Parameters with duplicate keys"
@@ -231,7 +232,7 @@ class Command(MongoModel, EmbeddedDocument):
             )
 
         if len(self.parameters) != len(
-            set(parameter.key for parameter in self.parameters)
+                set(parameter.key for parameter in self.parameters)
         ):
             raise ModelValidationError(
                 f"Can not save Command {self}: Contains Parameters with duplicate keys"
@@ -390,16 +391,16 @@ class Request(MongoModel, Document):
             )
 
         if (
-            self.command_type is not None
-            and self.command_type not in BrewtilsRequest.COMMAND_TYPES
+                self.command_type is not None
+                and self.command_type not in BrewtilsRequest.COMMAND_TYPES
         ):
             raise ModelValidationError(
                 f"Can not save Request {self}: Invalid command type '{self.command_type}'"
             )
 
         if (
-            self.output_type is not None
-            and self.output_type not in BrewtilsRequest.OUTPUT_TYPES
+                self.output_type is not None
+                and self.output_type not in BrewtilsRequest.OUTPUT_TYPES
         ):
             raise ModelValidationError(
                 f"Can not save Request {self}: Invalid output type '{self.output_type}'"
@@ -418,8 +419,8 @@ class Request(MongoModel, Document):
                 )
 
             if (
-                old_status == "IN_PROGRESS"
-                and self.status not in BrewtilsRequest.COMPLETED_STATUSES
+                    old_status == "IN_PROGRESS"
+                    and self.status not in BrewtilsRequest.COMPLETED_STATUSES
             ):
                 raise RequestStatusTransitionError(
                     f"Request status can only transition from IN_PROGRESS to a "
@@ -466,7 +467,7 @@ class System(MongoModel, Document):
             )
 
         if len(self.instances) != len(
-            set(instance.name for instance in self.instances)
+                set(instance.name for instance in self.instances)
         ):
             raise ModelValidationError(
                 "Can not save System %s: Duplicate instance names" % str(self)
@@ -485,12 +486,29 @@ class Event(MongoModel, Document):
     timestamp = DateTimeField()
 
 
+class Permission(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.Permission
+
+    id = ObjectIdField(required=True, default=ObjectId, unique=True, primary_key=True)
+    namespace = StringField(required=True)
+    access = StringField()
+    is_local = ListField(field=StringField())
+
+    def clean(self):
+        """Validate before saving to the database"""
+
+        if self.access not in brewtils.models.Permission.ACCESSES:
+            raise ModelValidationError(
+                f"Can not save Permission {self}: Invalid Access '{self.access}'"
+            )
+
+
 class Role(MongoModel, Document):
     brewtils_model = brewtils.models.Role
 
     name = StringField(required=True)
     description = StringField()
-    permissions = ListField(field=StringField())
+    permissions = EmbeddedDocumentListField("Permission")
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves

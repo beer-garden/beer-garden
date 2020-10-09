@@ -23,23 +23,21 @@ def ensure_roles():
     Then there are roles that MUST be present. These will always be created if
     they do not exist.
     """
-    from .models import Role
+    from .models import Role, Permission
 
     convenience_roles = [
         Role(
             name="bg-readonly",
             description="Allows only standard read actions",
             permissions=[
-                "bg-read",
+                Permission(is_local=True, access="READ")
             ],
         ),
         Role(
             name="bg-operator",
             description="Standard Beergarden user role",
             permissions=[
-                "bg-read",
-                "bg-create",
-                "bg-delete",
+                Permission(is_local=True, access="WRITE")
             ],
         ),
     ]
@@ -49,18 +47,15 @@ def ensure_roles():
             name="bg-anonymous",
             description="Special role used for non-authenticated users",
             permissions=[
-                "bg-read",
+                Permission(access="READ")
             ],
         ),
-        Role(name="bg-admin", description="Allows all actions", permissions=["bg-all"]),
+        Role(name="bg-admin", description="Allows all actions", permissions=[Permission(is_local=True, access="ADMIN")]),
         Role(
             name="bg-plugin",
             description="Allows actions necessary for plugins to function",
             permissions=[
-                "bg-update",
-                "bg-create",
-                "bg-delete",
-                "bg-read",
+                Permission(is_local=True, access="MAINTAINER")
             ],
         ),
     ]

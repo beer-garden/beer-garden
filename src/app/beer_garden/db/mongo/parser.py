@@ -20,6 +20,7 @@ class MongoParser(SchemaParser):
             "RequestTemplateSchema": beer_garden.db.mongo.models.RequestTemplate,
             "ChoicesSchema": beer_garden.db.mongo.models.Choices,
             "EventSchema": beer_garden.db.mongo.models.Event,
+            "PermissionSchema": beer_garden.db.mongo.models.Permission,
             "PrincipalSchema": beer_garden.db.mongo.models.Principal,
             "RoleSchema": beer_garden.db.mongo.models.Role,
             "RefreshTokenSchema": beer_garden.db.mongo.models.RefreshToken,
