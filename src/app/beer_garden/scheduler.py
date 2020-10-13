@@ -71,8 +71,8 @@ def inject_values(request, dictionary):
     elif isinstance(request, str):
         try:
             return request.format_map(dictionary)
-        except (AttributeError, KeyError) as e:
-            print("Could not inject %s with %s" % (request, dictionary))
+        except (AttributeError, KeyError, ValueError) as e:
+            # print("Could not inject %s with %s" % (request, dictionary))
             return request
 
     elif isinstance(request, list):
@@ -189,7 +189,7 @@ class MixedScheduler(object):
         """
         for job in jobs:
             if isinstance(job.trigger, FileTrigger):
-                self.add_job(run_job, trigger=job.trigger, id=job.id, request_template=job.request_template)
+                self.add_job(run_job, trigger=job.trigger, kwargs={'id': job.id, 'request_template': job.request_template})
 
     def __init__(self, interval_config=None):
         """Initializes the underlying scheduler(s)
@@ -333,7 +333,7 @@ class MixedScheduler(object):
 
         else:
             # Pull out the arguments needed by the run_job function
-            args = [kwargs.get('id'), kwargs.get('request_template')]
+            args = [kwargs.get('kwargs').get('id'), kwargs.get('kwargs').get('request_template')]
 
             # Pass in those args to be relayed once the event occurs
             event_handler = PatternMatchingEventHandlerWithArgs(args=args, patterns=trigger.pattern)
@@ -515,8 +515,6 @@ def handle_event(event: Event) -> None:
                     max_instances=event.payload.max_instances,
                     jobstore="beer_garden",
                     replace_existing=False,
-                    id=str(event.payload.id),
-                    request_template=event.payload.request_template,
                 )
             except Exception:
                 db.delete(event.payload)
