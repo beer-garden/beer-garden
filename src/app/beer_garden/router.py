@@ -361,6 +361,10 @@ def _pre_route(operation: Operation) -> Operation:
     if operation.source_garden_name is None:
         operation.source_garden_name = config.get("garden.name")
 
+    if operation.operation_type == "REQUEST_CREATE":
+        if operation.model.namespace is None:
+            operation.model.namespace = config.get("garden.name")
+
     return operation
 
 
