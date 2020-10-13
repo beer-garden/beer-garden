@@ -59,9 +59,9 @@ def run_job(job_id, request_template):
     # Be a little careful here as the job could have been removed or paused
     job = beer_garden.application.scheduler.get_job(job_id)
     if (
-            job
-            and job.next_run_time is not None
-            and getattr(job.trigger, "reschedule_on_finish", False)
+        job
+        and job.next_run_time is not None
+        and getattr(job.trigger, "reschedule_on_finish", False)
     ):
         # This essentially resets the timer on this job, which has the effect of
         # making the wait time start whenever the job finishes
