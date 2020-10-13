@@ -6,9 +6,14 @@ from typing import Dict, List
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
 
 from watchdog.observers.polling import PollingObserver as Observer
-from watchdog.events import (PatternMatchingEventHandler, EVENT_TYPE_CREATED, EVENT_TYPE_DELETED,
-                             EVENT_TYPE_MOVED, EVENT_TYPE_MODIFIED)
-from watchdog.utils import (has_attribute, unicode_paths)
+from watchdog.events import (
+    PatternMatchingEventHandler,
+    EVENT_TYPE_CREATED,
+    EVENT_TYPE_DELETED,
+    EVENT_TYPE_MOVED,
+    EVENT_TYPE_MODIFIED,
+)
+from watchdog.utils import has_attribute, unicode_paths
 from pathtools.patterns import match_any_paths
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -29,8 +34,9 @@ class InjectionDict(dict):
     """
     Dictionary object with overloaded __missing__ function to facilitate partial string.format operations
     """
+
     def __missing__(self, key):
-        return "{"+key+"}"
+        return "{" + key + "}"
 
 
 def build_injection_dict(dictionary, obj, prefix="", separator="/"):
@@ -46,7 +52,7 @@ def build_injection_dict(dictionary, obj, prefix="", separator="/"):
     for item in dir(obj):
         if not callable(getattr(obj, item)):
             if prefix != "":
-                dictionary[prefix+separator+item] = getattr(obj, item)
+                dictionary[prefix + separator + item] = getattr(obj, item)
             else:
                 dictionary[item] = getattr(obj, item)
 
@@ -61,7 +67,7 @@ def inject_values(request, dictionary):
         dictionary: A dict-like object to pass through to the format() call
     """
     if isinstance(request, dict):
-        for k,v in request.items():
+        for k, v in request.items():
             try:
                 request[k] = inject_values(v, dictionary)
             except (ReferenceError, IndexError) as e:
@@ -93,6 +99,7 @@ class PatternMatchingEventHandlerWithArgs(PatternMatchingEventHandler):
 
     Allows args/kwargs to be stored and passed through to the callback functions
     """
+
     _args = []
     _kwargs = {}
 
@@ -109,15 +116,17 @@ class PatternMatchingEventHandlerWithArgs(PatternMatchingEventHandler):
             return
 
         paths = []
-        if has_attribute(event, 'dest_path'):
+        if has_attribute(event, "dest_path"):
             paths.append(unicode_paths.decode(event.dest_path))
         if event.src_path:
             paths.append(unicode_paths.decode(event.src_path))
 
-        if match_any_paths(paths,
-                           included_patterns=self.patterns,
-                           excluded_patterns=self.ignore_patterns,
-                           case_sensitive=self.case_sensitive):
+        if match_any_paths(
+            paths,
+            included_patterns=self.patterns,
+            excluded_patterns=self.ignore_patterns,
+            case_sensitive=self.case_sensitive,
+        ):
             self.on_any_event(*self._args, event=event, **self._kwargs)
             _method_map = {
                 EVENT_TYPE_MODIFIED: self.on_modified,
@@ -155,11 +164,15 @@ def pass_through(class_objects=[]):
         for obj in class_objects:
             scheduler = getattr(my_class, obj, None)
             if scheduler is not None:
-                method_list = [func for func in dir(scheduler) if callable(getattr(scheduler, func))]
+                method_list = [
+                    func
+                    for func in dir(scheduler)
+                    if callable(getattr(scheduler, func))
+                ]
                 # added = []
                 for name in method_list:
                     # Don't expose methods that are intended to be private!
-                    if name[0] != '_' and not hasattr(my_class, name):
+                    if name[0] != "_" and not hasattr(my_class, name):
                         # added.append(name)
                         method = getattr(scheduler, name)
                         setattr(my_class, name, method)
@@ -169,11 +182,12 @@ def pass_through(class_objects=[]):
     return wrapper
 
 
-@pass_through(class_objects=['_sync_scheduler', '_async_scheduler'])
+@pass_through(class_objects=["_sync_scheduler", "_async_scheduler"])
 class MixedScheduler(object):
     """
     A wrapper that tracks a file-based scheduler and an interval-based scheduler.
     """
+
     _sync_scheduler = BackgroundScheduler()
     _async_scheduler = Observer()
     _async_jobs = {}
@@ -189,7 +203,11 @@ class MixedScheduler(object):
         """
         for job in jobs:
             if isinstance(job.trigger, FileTrigger):
-                self.add_job(run_job, trigger=job.trigger, kwargs={'id': job.id, 'request_template': job.request_template})
+                self.add_job(
+                    run_job,
+                    trigger=job.trigger,
+                    kwargs={"id": job.id, "request_template": job.request_template},
+                )
 
     def __init__(self, interval_config=None):
         """Initializes the underlying scheduler(s)
@@ -201,7 +219,7 @@ class MixedScheduler(object):
 
     def initialize_from_db(self):
         """Initializes the watchdog scheduler from jobs stored in the database"""
-        all_jobs = db.query(Job, filter_params={'trigger_type': 'file'})
+        all_jobs = db.query(Job, filter_params={"trigger_type": "file"})
         self._process_watches(all_jobs)
 
     def start(self):
@@ -237,7 +255,6 @@ class MixedScheduler(object):
         """
         if job_id not in self._async_jobs:
             self._sync_scheduler.reschedule_job(job_id, **kwargs)
-
 
     def get_job(self, job_id):
         """Looks up a job
@@ -297,7 +314,6 @@ class MixedScheduler(object):
         else:
             self._sync_scheduler.remove_job(job_id, **kwargs)
 
-
     def _add_triggers(self, handler, triggers, func):
         """Attaches the function to the handler callback
 
@@ -327,22 +343,30 @@ class MixedScheduler(object):
 
         if not isinstance(trigger, FileTrigger):
             # Remove the unneeded/unwanted data
-            kwargs.pop('request_template')
+            kwargs.pop("request_template")
             # The old code always set the trigger to None, not sure why
             self._sync_scheduler.add_job(func, trigger=None, **kwargs)
 
         else:
             # Pull out the arguments needed by the run_job function
-            args = [kwargs.get('kwargs').get('id'), kwargs.get('kwargs').get('request_template')]
+            args = [
+                kwargs.get("kwargs").get("id"),
+                kwargs.get("kwargs").get("request_template"),
+            ]
+            print("Add jobs : %s" % args)
 
             # Pass in those args to be relayed once the event occurs
-            event_handler = PatternMatchingEventHandlerWithArgs(args=args, patterns=trigger.pattern)
+            event_handler = PatternMatchingEventHandlerWithArgs(
+                args=args, patterns=trigger.pattern
+            )
             event_handler = self._add_triggers(event_handler, trigger.callbacks, func)
 
             if trigger.path is not None and event_handler is not None:
                 # Register the job id with the set and schedule it with watchdog
-                watch = self._async_scheduler.schedule(event_handler, trigger.path, recursive=trigger.recursive)
-                self._async_jobs[kwargs.get('id')] = (event_handler, watch)
+                watch = self._async_scheduler.schedule(
+                    event_handler, trigger.path, recursive=trigger.recursive
+                )
+                self._async_jobs[kwargs.get("id")] = (event_handler, watch)
 
 
 class IntervalTrigger(APInterval):
@@ -364,21 +388,26 @@ def run_job(job_id, request_template, **kwargs):
     """
     request_template.metadata["_bg_job_id"] = job_id
 
-    db_job = db.query_unique(Job, id=job_id)
-
     # Attempt to inject information into the request template
-    if 'event' in kwargs and kwargs['event'] is not None:
+    if "event" in kwargs and kwargs["event"] is not None:
         try:
             # This overloads the __missing__ function to allow partial injections
             injection_dict = InjectionDict()
-            build_injection_dict(injection_dict, kwargs['event'], prefix="event")
+            build_injection_dict(injection_dict, kwargs["event"], prefix="event")
 
-            if db_job:
-                build_injection_dict(injection_dict, db_job.trigger, prefix="trigger")
+            try:
+                db_job = db.query_unique(Job, id=job_id)
+                if db_job:
+                    build_injection_dict(
+                        injection_dict, db_job.trigger, prefix="trigger"
+                    )
+
+            except Exception as ex:
+                logger.exception(f"Could not fetch job for parameter injection: {ex}")
 
             inject_values(request_template.parameters, injection_dict)
         except Exception as ex:
-            logger.exception(f"Could not fetch job to inject parameters: {ex}")
+            logger.exception(f"Could not inject parameters: {ex}")
 
     # TODO - Possibly allow specifying blocking timeout on the job definition
     wait_event = threading.Event()
@@ -386,6 +415,7 @@ def run_job(job_id, request_template, **kwargs):
     wait_event.wait()
 
     try:
+        db_job = db.query_unique(Job, id=job_id)
         if db_job:
             if request.status == "ERROR":
                 db_job.error_count += 1
@@ -401,9 +431,9 @@ def run_job(job_id, request_template, **kwargs):
     # Be a little careful here as the job could have been removed or paused
     job = beer_garden.application.scheduler.get_job(job_id)
     if (
-            job
-            and job.next_run_time is not None
-            and getattr(job.trigger, "reschedule_on_finish", False)
+        job
+        and job.next_run_time is not None
+        and getattr(job.trigger, "reschedule_on_finish", False)
     ):
         # This essentially resets the timer on this job, which has the effect of
         # making the wait time start whenever the job finishes

@@ -606,7 +606,7 @@ class Job(MongoModel, Document):
         "date": DateTrigger,
         "cron": CronTrigger,
         "interval": IntervalTrigger,
-        "file": FileTrigger
+        "file": FileTrigger,
     }
 
     name = StringField(required=True)

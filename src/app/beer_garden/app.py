@@ -4,6 +4,7 @@ from datetime import timedelta
 from functools import partial
 
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
+
 # from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils import EasyClient
 from brewtils.models import Event, Events
@@ -303,7 +304,12 @@ class Application(StoppableThread):
         executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
         job_defaults = scheduler_config.job_defaults.to_dict()
 
-        ap_config = {'jobstores': job_stores, 'executors': executors, 'job_defaults': job_defaults, 'timezone': utc}
+        ap_config = {
+            "jobstores": job_stores,
+            "executors": executors,
+            "job_defaults": job_defaults,
+            "timezone": utc,
+        }
 
         # return BackgroundScheduler(
         #     jobstores=job_stores,
