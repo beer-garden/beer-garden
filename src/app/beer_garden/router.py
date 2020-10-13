@@ -501,8 +501,9 @@ def _forward_http(operation: Operation, target_garden: Garden):
                 operation=operation,
                 event_name=Events.GARDEN_UNREACHABLE.name,
                 error_message=f"Attempted to forward operation to garden "
-                f"'{operation.target_garden_name}' but the connection returned an error code of "
-                f"{response.status_code}. Please talk to your system administrator.",
+                f"'{operation.target_garden_name}' but the connection returned an "
+                f"error code of {response.status_code}. Please talk to your system "
+                f"administrator.",
             )
         elif target_garden.status != "RUNNING":
             beer_garden.garden.update_garden_status(target_garden.name, "RUNNING")
