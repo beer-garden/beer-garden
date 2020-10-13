@@ -197,7 +197,7 @@ export default function appRun(
   };
 
   $transitions.onSuccess({to: 'base'}, () => {
-    $state.go('base.landing');
+    $state.go('base.systems');
   });
 
   $rootScope.setMenuPage = function(page){
