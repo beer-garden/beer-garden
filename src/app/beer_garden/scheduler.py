@@ -156,8 +156,9 @@ class PatternMatchingEventHandlerWithArgs(PatternMatchingEventHandler):
 def pass_through(class_objects=[]):
     """
     Adds any non-implemented methods defined by the given object names to the class.
-    :param class_objects: List of class object names to expose directly.
-    :return:
+
+    Args:
+        class_objects: List of class object names to expose directly.
     """
 
     def wrapper(my_class):
