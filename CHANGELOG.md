@@ -1,5 +1,12 @@
 # Beer Garden Changelog
 
+## 2.4.17
+10/13/20
+Brew-view 2.4.19, Bartender 2.4.7, BG-utils 2.4.10
+
+### Bug Fixes
+- Fixed command invocation error when request has no parameters (#351)
+
 ## 2.4.16
 9/23/20
 Brew-view 2.4.19, Bartender 2.4.7, BG-utils 2.4.10
