@@ -490,9 +490,9 @@ class Permission(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.Permission
 
     id = ObjectIdField(required=True, default=ObjectId, unique=True, primary_key=True)
-    namespace = StringField(required=True)
+    namespace = StringField()
     access = StringField()
-    is_local = ListField(field=StringField())
+    is_local = BooleanField()
 
     def clean(self):
         """Validate before saving to the database"""
