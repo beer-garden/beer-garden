@@ -27,6 +27,7 @@ from beer_garden.events import publish_event
 from beer_garden.requests import process_request, get_request
 from brewtils.models import FileTrigger
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -419,6 +420,7 @@ def run_job(job_id, request_template, **kwargs):
                 db_job.error_count += 1
             elif request.status == "SUCCESS":
                 db_job.success_count += 1
+
             db.update(db_job)
         else:
             # If the job is not in the database, don't proceed to update scheduler

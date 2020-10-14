@@ -55,19 +55,18 @@ def build_rpms(version, cli_dist, cli_python, local, docker_envs):
         )
     )
 
-    if local:
-        js_cmd = (
-            ["docker", "run", "--rm", "-v", f"{BASE_PATH}/src:/src"]
-            + env_vars
-            + [NODE_IMAGE, "make", "-C", "/src/ui", "package"]
-        )
-        subprocess.call(js_cmd)
+    js_cmd = (
+        ["docker", "run", "--rm", "-v", f"{BASE_PATH}/src:/src"]
+        + env_vars
+        + [NODE_IMAGE, "make", "-C", "/src/ui", "package"]
+    )
+    subprocess.call(js_cmd)
 
     for dist in build_dists:
         tag = f"{dist}-python{build_python}"
         cmd = (
             [
-                "docker", "run", "--rm",
+                "docker", "run", "--rm", "--network", "host",
                 "-v", f"{BASE_PATH}/src:/src",
                 "-v", f"{BASE_PATH}/rpm:/rpm",
                 "-v", f"{SCRIPT_PATH}/rpm_build.sh:{RPM_BUILD_SCRIPT}",
