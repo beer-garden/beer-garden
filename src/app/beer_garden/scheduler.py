@@ -70,14 +70,14 @@ def inject_values(request, dictionary):
         for k, v in request.items():
             try:
                 request[k] = inject_values(v, dictionary)
-            except (ReferenceError, IndexError) as e:
+            except (ReferenceError, IndexError):
                 pass
         return request
 
     elif isinstance(request, str):
         try:
             return request.format_map(dictionary)
-        except (AttributeError, KeyError, ValueError) as e:
+        except (AttributeError, KeyError, ValueError):
             return request
 
     elif isinstance(request, list):
