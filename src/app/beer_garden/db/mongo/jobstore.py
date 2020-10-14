@@ -35,7 +35,6 @@ def construct_job(job: Job, scheduler, alias="beer_garden"):
     if job is None:
         return None
 
-
     trigger = construct_trigger(job.trigger_type, job.trigger)
     next_run_time = utc.localize(job.next_run_time) if job.next_run_time else None
 
