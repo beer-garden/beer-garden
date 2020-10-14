@@ -78,7 +78,6 @@ def inject_values(request, dictionary):
         try:
             return request.format_map(dictionary)
         except (AttributeError, KeyError, ValueError) as e:
-            # print("Could not inject %s with %s" % (request, dictionary))
             return request
 
     elif isinstance(request, list):
@@ -106,7 +105,6 @@ class PatternMatchingEventHandlerWithArgs(PatternMatchingEventHandler):
     def __init__(self, args=[], kwargs={}, **thru):
         self._args = args
         self._kwargs = kwargs
-        # print("Event Handler found: ARGS- %s  KWARGS- %s" %(args, kwargs))
         super().__init__(**thru)
 
     # Copy the dispatch code, but include arguments if specified
@@ -177,7 +175,6 @@ def pass_through(class_objects=[]):
                         # added.append(name)
                         method = getattr(scheduler, name)
                         setattr(my_class, name, method)
-                # print("%s object has methods : %s" % (obj, added))
         return my_class
 
     return wrapper
@@ -354,7 +351,6 @@ class MixedScheduler(object):
                 kwargs.get("kwargs").get("id"),
                 kwargs.get("kwargs").get("request_template"),
             ]
-            print("Add jobs : %s" % args)
 
             # Pass in those args to be relayed once the event occurs
             event_handler = PatternMatchingEventHandlerWithArgs(
@@ -531,8 +527,6 @@ def handle_event(event: Event) -> None:
 
         if event.name == Events.JOB_CREATED.name:
             try:
-                # print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~JOB_CREATED event captured!")
-                # print("Payload: %s" % event.payload.trigger)
                 beer_garden.application.scheduler.add_job(
                     run_job,
                     trigger=event.payload.trigger,

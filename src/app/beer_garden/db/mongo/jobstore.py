@@ -25,7 +25,6 @@ def construct_trigger(trigger_type: str, bg_trigger) -> BaseTrigger:
     elif trigger_type == "cron":
         return CronTrigger(**bg_trigger.scheduler_kwargs)
     elif trigger_type == "file":
-        # print("Attempted to create FileTrigger")
         return None
     else:
         raise ValueError("Invalid trigger type %s" % trigger_type)
@@ -36,7 +35,6 @@ def construct_job(job: Job, scheduler, alias="beer_garden"):
     if job is None:
         return None
 
-    # print("Trying to construct %s" % job)
 
     trigger = construct_trigger(job.trigger_type, job.trigger)
     next_run_time = utc.localize(job.next_run_time) if job.next_run_time else None

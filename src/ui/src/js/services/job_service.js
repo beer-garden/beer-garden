@@ -391,12 +391,11 @@ export default function jobService($http, NamespaceService) {
         'title': 'Callbacks',
         'description': 'What file events should trigger the plugins?',
         'type': 'object',
-        'properties':
-        {
-            'on_created': {'type' : 'boolean'},
-            'on_modified': {'type' : 'boolean'},
-            'on_moved': {'type' : 'boolean'},
-            'on_deleted': {'type' : 'boolean'},
+        'properties':{
+          'on_created': {'type' : 'boolean'},
+          'on_modified': {'type' : 'boolean'},
+          'on_moved': {'type' : 'boolean'},
+          'on_deleted': {'type' : 'boolean'},
         }
       },
     },
