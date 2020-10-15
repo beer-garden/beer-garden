@@ -7,6 +7,8 @@ from threading import Thread
 from time import sleep
 from typing import Sequence
 
+import beer_garden.config as config
+
 log_levels = [n for n in getattr(logging, "_nameToLevel").keys()]
 
 
@@ -64,18 +66,6 @@ class ProcessRunner(Thread):
         self.process_env = process_env
         self.runner_name = process_cwd.name
 
-        self.stdout_log = self.process_cwd / "plugin.out"
-        self.stdout_handler = logging.FileHandler(self.stdout_log)
-        self.stdout_handler.setFormatter(
-            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        )
-
-        self.stderr_log = self.process_cwd / "plugin.err"
-        self.stderr_handler = logging.FileHandler(self.stderr_log)
-        self.stderr_handler.setFormatter(
-            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        )
-
         # Logger that will be used by the actual ProcessRunner
         self.logger = logging.getLogger(f"{__name__}.{self}")
 
@@ -85,9 +75,16 @@ class ProcessRunner(Thread):
         self.stderr_logger = logging.getLogger(f"runner.{self}.stderr")
         self.stderr_logger.setLevel("DEBUG")
 
-        if True:
-            self.stdout_logger.addHandler(self.stdout_handler)
-            self.stderr_logger.addHandler(self.stderr_handler)
+        if config.get("plugin.local.logging.stream_files"):
+            format_string = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+            stdout_handler = logging.FileHandler(self.process_cwd / "plugin.out")
+            stdout_handler.setFormatter(logging.Formatter(format_string))
+            self.stdout_logger.addHandler(stdout_handler)
+
+            stderr_handler = logging.FileHandler(self.process_cwd / "plugin.err")
+            stderr_handler.setFormatter(logging.Formatter(format_string))
+            self.stderr_logger.addHandler(stderr_handler)
 
         Thread.__init__(self, name=self.runner_name)
 
