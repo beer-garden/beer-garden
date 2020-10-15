@@ -109,15 +109,15 @@ def anonymous_principal() -> BrewtilsPrincipal:
     without having to calculate effective permissions every time.
     """
 
-    auth_config = config.get("auth")
-    if auth_config.enabled and auth_config.guest_login_enabled:
-        roles = Principal.objects.get(username="anonymous").roles
-    elif auth_config.enabled:
-        # By default, if no guest login is available, there is no anonymous
-        # user, which means there are no roles.
-        roles = []
-    else:
-        roles = [Role(name="bg-admin", permissions=["bg-all"])]
+    # auth_config = config.get("auth")
+    # if auth_config.enabled and auth_config.guest_login_enabled:
+    #     roles = Principal.objects.get(username="anonymous").roles
+    # elif auth_config.enabled:
+    #     # By default, if no guest login is available, there is no anonymous
+    #     # user, which means there are no roles.
+    #     roles = []
+    # else:
+    roles = [Role(name="bg-admin", permissions=["bg-all"])]
 
     _, permissions = coalesce_permissions(roles)
 
@@ -235,10 +235,10 @@ class AuthMixin(object):
     def get_current_user(self):
         """Use registered handlers to determine current user"""
 
-        for provider in self.auth_providers:
-            principal = provider(self.request)
-
-            if principal is not None:
-                return principal
+        # for provider in self.auth_providers:
+        #     principal = provider(self.request)
+        #
+        #     if principal is not None:
+        #         return principal
 
         return beer_garden.api.http.anonymous_principal
