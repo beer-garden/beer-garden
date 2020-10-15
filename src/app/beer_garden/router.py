@@ -365,6 +365,10 @@ def _pre_route(operation: Operation) -> Operation:
         if operation.model.namespace is None:
             operation.model.namespace = config.get("garden.name")
 
+    elif operation.operation_type == "SYSTEM_READ_ALL":
+        if operation.kwargs.get("filter_params", {}).get("namespace") == "":
+            operation.kwargs["filter_params"]["namespace"] = config.get("garden.name")
+
     return operation
 
 
