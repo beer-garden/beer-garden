@@ -20,7 +20,6 @@ db:
   name: beer_garden_v3
   ttl:
     action: -1
-    event: 15
     info: 15
 entry:
   http:

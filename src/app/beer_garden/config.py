@@ -646,14 +646,6 @@ _DB_SPEC = {
         "ttl": {
             "type": "dict",
             "items": {
-                "event": {
-                    "type": "int",
-                    "default": 15,
-                    "description": "Number of minutes to wait before deleting "
-                    "events (negative number for never)",
-                    "previous_names": ["event_mongo_ttl"],
-                    "alt_env_names": ["EVENT_MONGO_TTL"],
-                },
                 "action": {
                     "type": "int",
                     "default": -1,
