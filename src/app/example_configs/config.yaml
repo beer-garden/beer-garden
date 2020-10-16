@@ -36,13 +36,6 @@ entry:
       private_key: null
       public_key: null
     url_prefix: /
-event:
-  mongo:
-    enabled: true
-  mq:
-    enabled: false
-    exchange: null
-    virtual_host: /
 garden:
   name: default
 log:
