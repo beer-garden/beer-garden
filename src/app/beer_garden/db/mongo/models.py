@@ -5,6 +5,7 @@ import logging
 import pytz
 import six
 import sys
+import json
 
 try:
     from lark import ParseError
@@ -295,6 +296,7 @@ class Request(MongoModel, Document):
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
     requester = StringField(required=False)
+    parameters_gridfs = FileField()
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
@@ -365,19 +367,38 @@ class Request(MongoModel, Document):
     logger = logging.getLogger(__name__)
 
     def pre_serialize(self):
+        encoding = "utf-8"
         """If string output was over 16MB it was spilled over to the GridFS storage solution"""
         if self.output_gridfs:
-            self.output = self.output_gridfs.read().decode("utf-8")
+            self.logger.info("~~~Retrieving output from gridfs")
+            self.output = self.output_gridfs.read().decode(encoding)
             self.output_gridfs = None
+
+        if self.parameters_gridfs:
+            self.logger.info("~~~Retrieving parameters from gridfs")
+            self.parameters = json.loads(self.parameters_gridfs.read().decode(encoding))
+            self.parameters_gridfs = None
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.utcnow()
+        max_size = 15 * 1_000_000
+        encoding = "utf-8"
+        parameter_size = sys.getsizeof(self.parameters)
 
-        # If the output size is too large, we switch it over
-        # Max size for Mongo is 16MB, switching over at 15MB to be safe
-        if self.output and sys.getsizeof(self.output) > (1000000 * 15):
-            self.output_gridfs.put(self.output, encoding="utf-8")
-            self.output = None
+        if self.output:
+            parameter_size = sys.getsizeof(self.parameters)
+            if parameter_size > max_size:
+                self.logger.info("~~~Parameter size too big, storing in gridfs")
+                self.parameters_gridfs.put(json.dumps(self.parameters), encoding=encoding)
+                self.parameters = None
+                parameter_size = 0
+
+            # If the output size is too large, we switch it over
+            # Max size for Mongo is 16MB, switching over at 15MB to be safe
+            if self.output and (sys.getsizeof(self.output) + parameter_size) > max_size:
+                self.logger.info("~~~Output size too big, storing in gridfs")
+                self.output_gridfs.put(self.output, encoding=encoding)
+                self.output = None
 
         super(Request, self).save(*args, **kwargs)
 

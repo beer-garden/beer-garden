@@ -516,7 +516,7 @@ class RequestValidator(object):
                     return tokens[1]
                 else:
                     # Maybe it's a different format?
-                    self.logger.debug("Base64 string with unexpected formatting found.")
+                    self.logger.warning("Base64 string with unexpected formatting found.")
                     return value
             else:
                 raise ModelValidationError(
