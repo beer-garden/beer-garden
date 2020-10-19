@@ -11,12 +11,6 @@ version: '3.5'
 # Change each of these values to the 'real' host name.
 
 x-definitions: &env
-#    BG_PUBLISH_HOSTNAME: localhost  # Replace
-#    BG_MQ_HOST: rabbitmq  # Replace
-#
-#    BG_DB_HOST: mongodb
-#    BG_DB_NAME: beer_garden_v3_docker_secure
-
     # IMPORTANT!!
     # Change this to whatever you want your garden name / namespace default to be
     BG_GARDEN_NAME: docker
@@ -41,20 +35,9 @@ services:
             - bg-network
         volumes:
             - ../data/certs:/certs
-            - ../data/default.conf:/etc/nginx/conf.d/default.conf
+            - ./default.conf:/etc/nginx/conf.d/default.conf
         ports:
-            - "80:80"
-            #- "443:443"
-        environment:
-            <<: *env
-            BG_BACKEND_HOST: beer-garden
-
-            # For ui web host is really interface to bind
-            BG_WEB_HOST: 0.0.0.0
-            BG_WEB_SSL_ENABLED: "true"
-            BG_WEB_CA_CERT: "/certs/ca_certificate.pem"
-            BG_WEB_SSL_PUBLIC_KEY: "/certs/combined_server.pem"
-            BG_WEB_SSL_PRIVATE_KEY: "/certs/combined_server.pem"
+            - "443:443"
         depends_on:
             - beer-garden
 
@@ -75,6 +58,11 @@ services:
             BG_DB_NAME: beer_garden_v3_docker_secure
 
             BG_NAMESPACES_LOCAL: docker_secure
+            BG_ENTRY_HTTP_SSL_CA_CERT: "/certs/ca_certificate.pem"
+            BG_ENTRY_HTTP_SSL_CLIENT_CERT_VERIFY: "NONE"
+            BG_ENTRY_HTTP_SSL_ENABLED: "true"
+            BG_ENTRY_HTTP_SSL_PRIVATE_KEY: "/certs/combined_server.pem"
+            BG_ENTRY_HTTP_SSL_PUBLIC_KEY: "/certs/combined_server.pem"
 
             BG_MQ_HOST: rabbitmq
             BG_MQ_CONNECTIONS_ADMIN_USER: beer_garden
@@ -82,12 +70,16 @@ services:
             BG_MQ_CONNECTIONS_ADMIN_PORT: "15671"
             BG_MQ_CONNECTIONS_ADMIN_SSL_ENABLED: "true"
             BG_MQ_CONNECTIONS_ADMIN_SSL_CA_CERT: "/certs/ca_certificate.pem"
+            BG_MQ_CONNECTIONS_ADMIN_SSL_CA_VERIFY: "false"
+            BG_MQ_CONNECTIONS_ADMIN_SSL_CLIENT_CERT: "/certs/combined_client.pem"
 
             BG_MQ_CONNECTIONS_MESSAGE_USER: beer_garden
             BG_MQ_CONNECTIONS_MESSAGE_PASSWORD: password
             BG_MQ_CONNECTIONS_MESSAGE_PORT: "5671"
             BG_MQ_CONNECTIONS_MESSAGE_SSL_ENABLED: "true"
             BG_MQ_CONNECTIONS_MESSAGE_SSL_CA_CERT: "/certs/ca_certificate.pem"
+            BG_MQ_CONNECTIONS_MESSAGE_SSL_CA_VERIFY: "false"
+            BG_MQ_CONNECTIONS_MESSAGE_SSL_CLIENT_CERT: "/certs/combined_client.pem"
         depends_on:
             - mongodb
             - rabbitmq
@@ -127,8 +119,6 @@ services:
             RABBITMQ_MANAGEMENT_SSL_KEYFILE: /certs/combined_server.pem
             RABBITMQ_MANAGEMENT_SSL_VERIFY: verify_peer
         ports:
-            - "5672:5672"
-            - "15672:15672"
             - "5671:5671"
             - "15671:15671"
         volumes:

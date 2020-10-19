@@ -39,6 +39,7 @@ module.exports = merge(common, {
         context: ['/api', '/config', '/login', '/logout', '/version'],
         target: `http://${proxyHost}:${proxyPort}/`,
         // Uncomment below for SSL
+        //Secure is set to false if using self signed certs
 //        target: `https://${proxyHost}:${proxyPort}/`,
 //        secure: false
       },
@@ -47,6 +48,7 @@ module.exports = merge(common, {
         target: `ws://${proxyHost}:${proxyPort}/`,
         ws: true,
         // Uncomment below for SSL
+        //Secure is set to false if using self signed certs
 //        target: `wss://${proxyHost}:${proxyPort}/`,
 //        secure: false
       },
