@@ -141,7 +141,17 @@ def update_system(
                 f"the system instance limit of {system.max_instances}"
             )
 
-        updates["push_all__instances"] = [db.from_brewtils(i) for i in add_instances]
+        updates["push_all__instances"] = []
+        instance_names = system.instance_names
+
+        for instance in add_instances:
+            if instance.name in instance_names:
+                raise ModelValidationError(
+                    f"Unable to add Instance {instance} to System {system}: Duplicate "
+                    f"instance names"
+                )
+
+            updates["push_all__instances"].append(db.from_brewtils(instance))
 
     system = db.modify(system, **updates)
 
@@ -163,10 +173,8 @@ def upsert(system: System) -> System:
         The created / updated system
     """
     try:
-        return create_system(system)
+        return create_system(system, _publish_error=False)
     except NotUniqueException:
-        logger.warning(f"Not unique, updating {system.name}")
-
         existing = db.query_unique(
             System, namespace=system.namespace, name=system.name, version=system.version
         )
@@ -227,7 +235,9 @@ def remove_system(system_id: str = None, system: System = None) -> System:
     return system
 
 
-def purge_system(system_id: str = None, system: System = None) -> System:
+def purge_system(
+    system_id: str = None, system: System = None, force: bool = False
+) -> System:
     """Convenience method for *completely* removing a system
 
     This will:
@@ -244,6 +254,9 @@ def purge_system(system_id: str = None, system: System = None) -> System:
 
     """
     system = system or db.query_unique(System, id=system_id)
+
+    if force and not system.local:
+        return remove_system(system=system)
 
     # Attempt to stop the plugins
     for instance in system.instances:
@@ -264,16 +277,38 @@ def purge_system(system_id: str = None, system: System = None) -> System:
     for instance in system.instances:
         force_disconnect = instance.status != "STOPPED"
 
-        request_queue = instance.queue_info.get("request", {}).get("name")
-        if request_queue:
-            queue.remove(
-                request_queue, force_disconnect=force_disconnect, clear_queue=True
+        request_queue = ""
+        try:
+            request_queue = instance.queue_info.get("request", {}).get("name")
+            if request_queue:
+                queue.remove(
+                    request_queue, force_disconnect=force_disconnect, clear_queue=True
+                )
+        except Exception as ex:
+            if not force:
+                raise
+
+            logger.warning(
+                f"Error while removing request queue '{request_queue}' for "
+                f"{system}[{instance.name}]. Force flag was specified so system delete "
+                f"will continue. Underlying exception was: {ex}"
             )
 
-        admin_queue = instance.queue_info.get("admin", {}).get("name")
-        if admin_queue:
-            queue.remove(
-                admin_queue, force_disconnect=force_disconnect, clear_queue=False
+        admin_queue = ""
+        try:
+            admin_queue = instance.queue_info.get("admin", {}).get("name")
+            if admin_queue:
+                queue.remove(
+                    admin_queue, force_disconnect=force_disconnect, clear_queue=False
+                )
+        except Exception as ex:
+            if not force:
+                raise
+
+            logger.warning(
+                f"Error while removing admin queue '{admin_queue}' for "
+                f"{system}[{instance.name}]. Force flag was specified so system delete "
+                f"will continue. Underlying exception was: {ex}"
             )
 
     # Finally, actually delete the system

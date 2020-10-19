@@ -60,9 +60,6 @@ export default function routeConfig(
         }],
       },
     })
-    .state('base.landing', {
-      templateUrl: basePath + 'landing.html',
-    })
     .state('base.about', {
       url: 'about',
       templateUrl: basePath + 'about.html',

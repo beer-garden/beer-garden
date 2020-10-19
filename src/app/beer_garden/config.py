@@ -772,17 +772,6 @@ _ENTRY_SPEC = {
     "type": "dict",
     "items": {
         "http": _HTTP_SPEC,
-        "thrift": {
-            "type": "dict",
-            "items": {
-                "enabled": {
-                    "type": "bool",
-                    "default": False,
-                    "description": "Run an thrift server",
-                    "previous_names": ["entry_thrift_enable"],
-                }
-            },
-        },
     },
 }
 

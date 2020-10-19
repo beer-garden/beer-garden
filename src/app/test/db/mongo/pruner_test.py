@@ -34,7 +34,7 @@ class TestMongoPruner(object):
         pruner._stop_event = Mock(wait=Mock(side_effect=[False, True]))
 
         pruner.run()
-        assert collection_mock.objects.return_value.delete.called
+        assert collection_mock.objects.return_value.no_cache.return_value.delete.called
 
 
 class TestDetermineTasks(object):

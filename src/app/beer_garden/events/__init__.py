@@ -60,6 +60,10 @@ def publish_event(event_type: Events):
 
     @wrapt.decorator
     def wrapper(wrapped, _, args, kwargs):
+        # Allows for conditionally disabling publishing
+        _publish_success = kwargs.pop("_publish_success", True)
+        _publish_error = kwargs.pop("_publish_error", True)
+
         event = Event(name=event_type.name)
 
         try:
@@ -76,7 +80,10 @@ def publish_event(event_type: Events):
             raise
         finally:
             try:
-                publish(event)
+                if (not event.error and _publish_success) or (
+                    event.error and _publish_error
+                ):
+                    publish(event)
             except Exception as ex:
                 logger.exception(f"Error publishing event: {ex}")
 

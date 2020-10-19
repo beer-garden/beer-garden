@@ -88,18 +88,18 @@ install_apps() {
         $PIP_BIN install \
                 "$SRC_PATH/brewtils/dist/brewtils-$brewtils_version.tar.gz" \
                 "$SRC_PATH/app/dist/beer-garden-$app_version.tar.gz"
-
-        mkdir -p "$UI_PATH"
-        cp -r "$SRC_PATH/ui/dist" "$UI_PATH/dist"
-
-        mkdir -p "$UI_PATH/conf/conf.d"
-        cp "$RESOURCE_BASE/nginx/upstream.conf" "$UI_PATH/conf/conf.d/"
-        mkdir -p "$UI_PATH/conf/default.d"
-        cp "$RESOURCE_BASE/nginx/bg.conf" "$UI_PATH/conf/default.d/"
     else
         # If this isn't a local install we don't have versions
         $PIP_BIN install --upgrade -q beer-garden
     fi
+
+    mkdir -p "$UI_PATH"
+    cp -r "$SRC_PATH/ui/dist" "$UI_PATH/dist"
+
+    mkdir -p "$UI_PATH/conf/conf.d"
+    cp "$RESOURCE_BASE/nginx/upstream.conf" "$UI_PATH/conf/conf.d/"
+    mkdir -p "$UI_PATH/conf/default.d"
+    cp "$RESOURCE_BASE/nginx/bg.conf" "$UI_PATH/conf/default.d/"
 }
 
 create_rpm() {

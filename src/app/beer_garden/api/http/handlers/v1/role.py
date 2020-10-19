@@ -14,7 +14,7 @@ from brewtils.errors import ModelValidationError
 
 
 class RoleAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.ROLE_READ])
+    @authenticated(permissions=[Permissions.LOCAL_ADMIN])
     def get(self, role_id):
         """
         ---
@@ -43,7 +43,7 @@ class RoleAPI(BaseHandler):
             )
         )
 
-    @authenticated(permissions=[Permissions.ROLE_DELETE])
+    @authenticated(permissions=[Permissions.LOCAL_ADMIN])
     def delete(self, role_id):
         """
         ---
@@ -72,7 +72,7 @@ class RoleAPI(BaseHandler):
 
         self.set_status(204)
 
-    @authenticated(permissions=[Permissions.ROLE_UPDATE])
+    @authenticated(permissions=[Permissions.LOCAL_ADMIN])
     def patch(self, role_id):
         """
         ---
@@ -178,7 +178,7 @@ class RoleAPI(BaseHandler):
 
 
 class RolesAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.ROLE_READ])
+    @authenticated(permissions=[Permissions.LOCAL_ADMIN])
     def get(self):
         """
         ---
@@ -200,7 +200,7 @@ class RolesAPI(BaseHandler):
             MongoParser.serialize_role(Role.objects.all(), many=True, to_string=True)
         )
 
-    @authenticated(permissions=[Permissions.ROLE_CREATE])
+    @authenticated(permissions=[Permissions.LOCAL_ADMIN])
     def post(self):
         """
         ---

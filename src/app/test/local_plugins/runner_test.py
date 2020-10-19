@@ -1,10 +1,11 @@
 import logging
 import string
 import subprocess
-import sys
 from random import choice
+from threading import Lock
 
 import pytest
+import sys
 from mock import Mock, call
 
 from beer_garden.local_plugins.runner import ProcessRunner
@@ -17,6 +18,7 @@ def runner(tmp_path):
         process_args=["python", "-m", "echo"],
         process_cwd=tmp_path,
         process_env={},
+        error_log_lock=Lock(),
     )
 
 

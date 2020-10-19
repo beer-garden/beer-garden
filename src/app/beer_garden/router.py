@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import logging
 import threading
+from concurrent.futures.thread import ThreadPoolExecutor
+from functools import partial
 from typing import Dict, Optional, Union
 
 import requests
-from brewtils.models import Events, Garden, Operation, Request, System
+from beer_garden.events import publish
+from brewtils.models import Events, Garden, Operation, Request, System, Event
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden
@@ -23,6 +27,7 @@ import beer_garden.systems
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 from beer_garden.events.processors import QueueListener
 from beer_garden.garden import get_garden, get_gardens
+from beer_garden.requests import complete_request
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +42,9 @@ routable_operations = [
 
 # Processor that will be used for forwarding
 forward_processor: Optional[QueueListener] = None
+
+# Executor used to run REQUEST_CREATE operations in an async context
+t_pool = ThreadPoolExecutor()
 
 # Used for actually sending operations to other gardens
 garden_lock = threading.Lock()
@@ -78,6 +86,11 @@ def route_garden_sync(target_garden_name: str = None):
 async_functions = {
     "INSTANCE_UPDATE": beer_garden.plugin.update_async,
     "INSTANCE_HEARTBEAT": beer_garden.plugin.heartbeat_async,
+    # THIS IS NOT AN ASYNC FUNCTION
+    # This is gross, but we're punting on this for now and just running in an executor
+    # Validating a request with a command-based choices parameter is going to require
+    # a lot of effort to make async correctly
+    "REQUEST_CREATE": beer_garden.requests.process_request,
 }
 
 route_functions = {
@@ -177,6 +190,16 @@ def execute_local(operation: Operation):
 
     if moto.motor_db and operation.operation_type in async_functions:
         lookup = async_functions
+
+        if operation.operation_type == "REQUEST_CREATE":
+            return asyncio.get_event_loop().run_in_executor(
+                t_pool,
+                partial(
+                    lookup[operation.operation_type],
+                    *operation.args,
+                    **operation.kwargs,
+                ),
+            )
     else:
         lookup = route_functions
 
@@ -233,6 +256,15 @@ def forward(operation: Operation):
         connection_type = target_garden.connection_type
 
         if connection_type is None:
+            _publish_failed_forward(
+                operation=operation,
+                event_name=Events.GARDEN_NOT_CONFIGURED.name,
+                error_message=f"Attempted to forward operation to garden "
+                f"'{operation.target_garden_name}' but the connection type was None. "
+                f"This probably means that the connection to the child garden has not "
+                f"been configured, please talk to your system administrator.",
+            )
+
             raise RoutingRequestException(
                 f"Attempted to forward operation to garden "
                 f"'{operation.target_garden_name}' but the connection type was None. "
@@ -240,7 +272,7 @@ def forward(operation: Operation):
                 f"been configured, please talk to your system administrator."
             )
         elif connection_type.casefold() == "http":
-            return _forward_http(operation, target_garden.connection_params)
+            return _forward_http(operation, target_garden)
         else:
             raise RoutingRequestException(f"Unknown connection type {connection_type}")
     except Exception as ex:
@@ -329,6 +361,10 @@ def _pre_route(operation: Operation) -> Operation:
     if operation.source_garden_name is None:
         operation.source_garden_name = config.get("garden.name")
 
+    if operation.operation_type == "REQUEST_CREATE":
+        if operation.model.namespace is None:
+            operation.model.namespace = config.get("garden.name")
+
     return operation
 
 
@@ -387,7 +423,14 @@ def _determine_target_garden(operation: Operation) -> str:
         return config.get("garden.name")
 
     # Otherwise, each operation needs to be "parsed"
-    if operation.operation_type in ("SYSTEM_DELETE", "SYSTEM_RELOAD", "SYSTEM_UPDATE"):
+    if operation.operation_type in ("SYSTEM_RELOAD", "SYSTEM_UPDATE"):
+        return _system_id_lookup(operation.args[0])
+
+    elif operation.operation_type == "SYSTEM_DELETE":
+        # Force deletes get routed to local garden
+        if operation.kwargs.get("force"):
+            return config.get("garden.name")
+
         return _system_id_lookup(operation.args[0])
 
     elif "INSTANCE" in operation.operation_type:
@@ -422,13 +465,15 @@ def _determine_target_garden(operation: Operation) -> str:
     raise Exception(f"Bad operation type {operation.operation_type}")
 
 
-def _forward_http(operation: Operation, conn_info: dict):
+def _forward_http(operation: Operation, target_garden: Garden):
     """Actually forward an operation using HTTP
 
     Args:
         operation: The operation to forward
         conn_info: Connection info
     """
+
+    conn_info = target_garden.connection_params
     endpoint = "{}://{}:{}{}api/v1/forward".format(
         "https" if conn_info.get("ssl") else "http",
         conn_info.get("host"),
@@ -436,21 +481,70 @@ def _forward_http(operation: Operation, conn_info: dict):
         conn_info.get("url_prefix", "/"),
     )
 
-    if conn_info.get("ssl"):
-        http_config = config.get("entry.http")
-        return requests.post(
-            endpoint,
-            data=SchemaParser.serialize_operation(operation),
-            cert=http_config.ssl.ca_cert,
-            verify=http_config.ssl.ca_path,
+    response = None
+
+    try:
+        if conn_info.get("ssl"):
+            http_config = config.get("entry.http")
+            response = requests.post(
+                endpoint,
+                data=SchemaParser.serialize_operation(operation),
+                cert=http_config.ssl.ca_cert,
+                verify=http_config.ssl.ca_path,
+            )
+
+        else:
+            response = requests.post(
+                endpoint,
+                data=SchemaParser.serialize_operation(operation),
+                headers={"Content-type": "application/json", "Accept": "text/plain"},
+            )
+
+        if response.status_code != 200:
+            _publish_failed_forward(
+                operation=operation,
+                event_name=Events.GARDEN_UNREACHABLE.name,
+                error_message=f"Attempted to forward operation to garden "
+                f"'{operation.target_garden_name}' but the connection returned an "
+                f"error code of {response.status_code}. Please talk to your system "
+                f"administrator.",
+            )
+        elif target_garden.status != "RUNNING":
+            beer_garden.garden.update_garden_status(target_garden.name, "RUNNING")
+
+        return response
+
+    except Exception:
+        _publish_failed_forward(
+            operation=operation,
+            event_name=Events.GARDEN_ERROR.name,
+            error_message=f"Attempted to forward operation to garden "
+            f"'{operation.target_garden_name}' but an error occurred."
+            f"Please talk to your system administrator.",
+        )
+        raise
+
+
+def _publish_failed_forward(
+    operation: Operation = None, error_message: str = None, event_name: str = None
+):
+
+    if operation.operation_type == "REQUEST_CREATE":
+        complete_request(
+            operation.model.id,
+            status="ERROR",
+            output=error_message,
+            error_class=event_name,
         )
 
-    else:
-        return requests.post(
-            endpoint,
-            data=SchemaParser.serialize_operation(operation),
-            headers={"Content-type": "application/json", "Accept": "text/plain"},
+    publish(
+        Event(
+            name=event_name,
+            payload_type="Operation",
+            payload=operation,
+            error_message=error_message,
         )
+    )
 
 
 def _system_name_lookup(system: Union[str, System]) -> str:

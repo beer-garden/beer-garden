@@ -9,7 +9,7 @@ from beer_garden.api.http.base_handler import BaseHandler
 
 
 class SystemAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.SYSTEM_READ])
+    @authenticated(permissions=[Permissions.READ])
     async def get(self, system_id):
         """
         ---
@@ -55,7 +55,7 @@ class SystemAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.SYSTEM_DELETE])
+    @authenticated(permissions=[Permissions.SYSTEM_ADMIN])
     async def delete(self, system_id):
         """
         Will give Bartender a chance to remove instances of this system from the
@@ -71,6 +71,12 @@ class SystemAPI(BaseHandler):
             required: true
             description: The ID of the System
             type: string
+          - name: force
+            in: query
+            required: false
+            description: Flag indicating whether to force delete
+            type: boolean
+            default: false
         responses:
           204:
             description: System has been successfully deleted
@@ -82,11 +88,19 @@ class SystemAPI(BaseHandler):
           - Systems
         """
 
-        await self.client(Operation(operation_type="SYSTEM_DELETE", args=[system_id]))
+        await self.client(
+            Operation(
+                operation_type="SYSTEM_DELETE",
+                args=[system_id],
+                kwargs={
+                    "force": self.get_argument("force", default="").lower() == "true"
+                },
+            )
+        )
 
         self.set_status(204)
 
-    @authenticated(permissions=[Permissions.SYSTEM_UPDATE])
+    @authenticated(permissions=[Permissions.UPDATE])
     async def patch(self, system_id):
         """
         ---
@@ -194,7 +208,7 @@ class SystemAPI(BaseHandler):
 class SystemListAPI(BaseHandler):
     REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
-    @authenticated(permissions=[Permissions.SYSTEM_READ])
+    @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
         ---
@@ -304,7 +318,7 @@ class SystemListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.SYSTEM_CREATE])
+    @authenticated(permissions=[Permissions.CREATE])
     async def post(self):
         """
         ---

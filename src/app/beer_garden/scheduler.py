@@ -10,7 +10,7 @@ import beer_garden
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.events import publish_event
-from beer_garden.requests import process_request
+from beer_garden.requests import process_request, get_request
 
 logger = logging.getLogger(__name__)
 
@@ -42,10 +42,13 @@ def run_job(job_id, request_template):
     try:
         db_job = db.query_unique(Job, id=job_id)
         if db_job:
+            request = get_request(request.id)
+
             if request.status == "ERROR":
                 db_job.error_count += 1
             elif request.status == "SUCCESS":
                 db_job.success_count += 1
+
             db.update(db_job)
         else:
             # If the job is not in the database, don't proceed to update scheduler
