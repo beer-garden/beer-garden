@@ -979,6 +979,17 @@ _PLUGIN_SPEC = {
                     "previous_names": ["plugins_directory", "plugin_directory"],
                     "alt_env_names": ["PLUGINS_DIRECTORY", "BG_PLUGIN_DIRECTORY"],
                 },
+                "logging": {
+                    "type": "dict",
+                    "items": {
+                        "stream_files": {
+                            "type": "bool",
+                            "description": "Write plugin STDOUT to plugin.out and "
+                            "plugin STDERR to plugin.err",
+                            "default": False,
+                        },
+                    },
+                },
                 "timeout": {
                     "type": "dict",
                     "items": {

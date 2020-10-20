@@ -96,6 +96,8 @@ plugin:
       password: password
       username: admin
     directory: ./plugins
+    logging:
+      stream_files: false
     timeout:
       shutdown: 10
       startup: 2

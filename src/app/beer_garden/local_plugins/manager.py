@@ -1,23 +1,21 @@
 # -*- coding: utf-8 -*-
 
-import json
-import logging
 import string
 from concurrent.futures import ThreadPoolExecutor, wait
-from threading import Lock
-
-import sys
 from enum import Enum
+
+import json
+import logging
+import sys
+from brewtils.models import Event, Events, System
+from brewtils.specification import _SYSTEM_SPEC
+from brewtils.stoppable_thread import StoppableThread
 from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path, PosixPath
 from random import choice
 from types import ModuleType
 from typing import Any, Dict, List, Optional
-
-from brewtils.models import Event, Events, System
-from brewtils.specification import _SYSTEM_SPEC
-from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden
 import beer_garden.config as config
@@ -310,7 +308,6 @@ class PluginManager(StoppableThread):
             return []
 
         new_runners = []
-        error_log_lock = Lock()
 
         for instance_name in plugin_config["INSTANCES"]:
             runner_id = "".join([choice(string.ascii_letters) for _ in range(10)])
@@ -325,7 +322,6 @@ class PluginManager(StoppableThread):
                     process_args=process_args,
                     process_cwd=plugin_path,
                     process_env=process_env,
-                    error_log_lock=error_log_lock,
                 )
             )
 
