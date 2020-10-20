@@ -40,12 +40,6 @@ export default function commandIndexController(
   $scope.hiddenComparator = function(hidden, checkbox){
     return checkbox || !hidden;
   };
-
-  $scope.nodeMove = function(location){
-    var node = document.getElementById("filterHidden");
-    var list = document.getElementById(location);
-    list.append(node, list.childNodes[0]);
-  };
   
   if (!($stateParams.namespace || $stateParams.systemName || $stateParams.systemVersion)) {
     $scope.dtOptions = $scope.dtOptions.withLightColumnFilter({

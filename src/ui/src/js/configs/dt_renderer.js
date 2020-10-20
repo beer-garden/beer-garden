@@ -37,15 +37,19 @@ export default function runDTRenderer(DTRendererService) {
               .css('margin-right', '20px')
               .attr('style', 'list-style-type:none;margin-right:20px; display:inline; padding-left:0px;')
               .append(
+                $('<input>')
+                  .attr('id', 'filterHidden')
+                  .attr('type', 'checkbox')
+                  .css('margin-top', '-4px')
+                  .change(() => { $('.dataTable').dataTable().fnUpdate(); })
+              )
+              .append(
                   $('<label>')
-                  .attr('for', 'childCheck')
+                  .attr('for', 'filterHidden')
                   .css('padding-left', '4px')
                   .text('Show Hidden')
-              )
+              );
         $('.dataTables_filter').prepend(hiddenContainer);
-        var node = document.getElementById("filterHidden");
-        var list = document.getElementById("hiddenList");
-        list.insertBefore(node, list.childNodes[0]);
       }
 
       if (options && options.refreshButton) {
