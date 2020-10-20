@@ -16,7 +16,7 @@ x-definitions: &env
     BG_GARDEN_NAME: docker
 
     # IMPORTANT!!
-    # Change this to support both local and remote plugins
+    # Change this to support both local and remote plugins and tls
     # Should be resolvable from inside and outside the docker network
     BG_PUBLISH_HOSTNAME: localhost
 
@@ -35,7 +35,10 @@ services:
             - bg-network
         volumes:
             - ../data/certs:/certs
-            - ./default.conf:/etc/nginx/conf.d/default.conf
+            - ./default.conf.template:/etc/nginx/templates/default.conf.template
+        environment:
+            BEERGARDEN_HOST: "beer-garden"
+            BEERGARDEN_PORT: "2337"
         ports:
             - "443:443"
         depends_on:
