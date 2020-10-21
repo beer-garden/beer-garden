@@ -27,7 +27,6 @@ from beer_garden.events import publish_event
 from beer_garden.requests import process_request, get_request
 from brewtils.models import FileTrigger
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -205,7 +204,7 @@ class MixedScheduler(object):
                 self.add_job(
                     run_job,
                     trigger=job.trigger,
-                    kwargs={"id": job.id, "request_template": job.request_template},
+                    kwargs={"job_id": job.id, "request_template": job.request_template},
                 )
 
     def __init__(self, interval_config=None):
@@ -338,7 +337,7 @@ class MixedScheduler(object):
             kwargs: Any other kwargs to be passed to the scheduler
         """
         if trigger is None:
-            return
+            raise ValueError("Scheduler called with None-type trigger.")
 
         if not isinstance(trigger, FileTrigger):
             # Remove the unneeded/unwanted data
@@ -349,7 +348,7 @@ class MixedScheduler(object):
         else:
             # Pull out the arguments needed by the run_job function
             args = [
-                kwargs.get("kwargs").get("id"),
+                kwargs.get("kwargs").get("job_id"),
                 kwargs.get("kwargs").get("request_template"),
             ]
 
@@ -364,7 +363,7 @@ class MixedScheduler(object):
                 watch = self._async_scheduler.schedule(
                     event_handler, trigger.path, recursive=trigger.recursive
                 )
-                self._async_jobs[kwargs.get("id")] = (event_handler, watch)
+                self._async_jobs[args[0]] = (event_handler, watch)
 
 
 class IntervalTrigger(APInterval):
@@ -411,11 +410,11 @@ def run_job(job_id, request_template, **kwargs):
     wait_event = threading.Event()
     request = process_request(request_template, wait_event=wait_event)
     wait_event.wait()
-
     try:
         db_job = db.query_unique(Job, id=job_id)
         if db_job:
             request = get_request(request.id)
+
             if request.status == "ERROR":
                 db_job.error_count += 1
             elif request.status == "SUCCESS":

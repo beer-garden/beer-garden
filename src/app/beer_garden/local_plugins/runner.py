@@ -3,13 +3,11 @@
 import logging
 import subprocess
 from pathlib import Path
-from queue import Queue
-from threading import Lock, Thread
+from threading import Thread
+from time import sleep
 from typing import Sequence
 
-from time import sleep
-
-from beer_garden.events.processors import LockListener
+import beer_garden.config as config
 
 log_levels = [n for n in getattr(logging, "_nameToLevel").keys()]
 
@@ -54,7 +52,6 @@ class ProcessRunner(Thread):
         process_args: Sequence[str],
         process_cwd: Path,
         process_env: dict,
-        error_log_lock: Lock,
     ):
         self.process = None
         self.restart = False
@@ -69,27 +66,25 @@ class ProcessRunner(Thread):
         self.process_env = process_env
         self.runner_name = process_cwd.name
 
-        self.log_queue = Queue()
-        self.error_log_lock = error_log_lock
-        self.log_reader = LockListener(
-            lock=self.error_log_lock,
-            queue=self.log_queue,
-            action=self._process_logs,
-            name=f"{self} Log Processor",
-        )
-
-        self.error_log = self.process_cwd / "plugin.err"
-        self.error_handler = logging.FileHandler(self.error_log)
-        self.error_handler.setFormatter(
-            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        )
-
         # Logger that will be used by the actual ProcessRunner
         self.logger = logging.getLogger(f"{__name__}.{self}")
 
-        # Logger that will be used for captured STDOUT / STDERR
-        self.capture_logger = logging.getLogger(f"runner.{self}")
-        self.capture_logger.setLevel("DEBUG")
+        # Loggers that will be used for captured STDOUT / STDERR
+        self.stdout_logger = logging.getLogger(f"runner.{self}.stdout")
+        self.stdout_logger.setLevel("DEBUG")
+        self.stderr_logger = logging.getLogger(f"runner.{self}.stderr")
+        self.stderr_logger.setLevel("DEBUG")
+
+        if config.get("plugin.local.logging.stream_files"):
+            format_string = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+            stdout_handler = logging.FileHandler(self.process_cwd / "plugin.out")
+            stdout_handler.setFormatter(logging.Formatter(format_string))
+            self.stdout_logger.addHandler(stdout_handler)
+
+            stderr_handler = logging.FileHandler(self.process_cwd / "plugin.err")
+            stderr_handler.setFormatter(logging.Formatter(format_string))
+            self.stderr_logger.addHandler(stderr_handler)
 
         Thread.__init__(self, name=self.runner_name)
 
@@ -99,10 +94,6 @@ class ProcessRunner(Thread):
     def associate(self, instance=None):
         """Associate this runner with a specific instance ID"""
         self.instance_id = instance.id
-
-        # At this point we're satisfied that we won't need to write captured STDOUT /
-        # STDERR to the error file so allow messages to be processed
-        self.log_reader.start()
 
     def kill(self):
         """Kill the underlying plugin process with SIGKILL"""
@@ -132,14 +123,14 @@ class ProcessRunner(Thread):
 
             # Reading process IO is blocking so needs to be in separate threads
             stdout_thread = Thread(
-                target=self._read_stream,
-                args=(self.process.stdout, logging.INFO),
                 name=f"{self} STDOUT Reader",
+                target=self._read_stream,
+                args=(self.process.stdout, logging.INFO, self.stdout_logger),
             )
             stderr_thread = Thread(
-                target=self._read_stream,
-                args=(self.process.stderr, logging.ERROR),
                 name=f"{self} STDERR Reader",
+                target=self._read_stream,
+                args=(self.process.stderr, logging.ERROR, self.stderr_logger),
             )
             stdout_thread.start()
             stderr_thread.start()
@@ -152,34 +143,17 @@ class ProcessRunner(Thread):
             stdout_thread.join()
             stderr_thread.join()
 
-            # Ensure logs are sent SOMEWHERE in the event they were never configured
-            # TODO - This is broken: QueueListener doesn't exhaust queue before dying
-            if not self.log_reader.is_alive():
+            if not self.instance_id:
                 self.logger.warning(
-                    f"Plugin {self} terminated before successfully initializing. All "
-                    f"captured messages will be written to {self.error_log} and the "
-                    f"application logs."
+                    f"Plugin {self} terminated before successfully initializing."
                 )
-
-                # This is what enables logging to the error file
-                self.capture_logger.addHandler(self.error_handler)
-
-                self.log_reader.start()
-
-                # Need to give the log_reader time to start, otherwise the stopped
-                # check will happen before we start processing
-                sleep(0.1)
-
-            self.logger.debug("About to stop and join log processing thread")
-            self.log_reader.stop()
-            self.log_reader.join()
 
             self.logger.info("Plugin is officially stopped")
 
         except Exception as ex:
             self.logger.exception(f"Plugin died: {ex}")
 
-    def _read_stream(self, stream, default_level):
+    def _read_stream(self, stream, default_level, logger):
         """Helper function thread target to read IO from the plugin's subprocess
 
         This will read line by line from STDOUT or STDERR. If the line includes one of
@@ -203,9 +177,4 @@ class ProcessRunner(Thread):
                         level_to_log = getattr(logging, level)
                         break
 
-                # TODO - timestamps are broken if we have to log everything at the end
-                self.log_queue.put((level_to_log, line))
-
-    def _process_logs(self, record):
-        """Read messages off the logging queue and deal with them"""
-        self.capture_logger.log(record[0], record[1])
+                logger.log(level_to_log, line)

@@ -271,51 +271,6 @@ def _setup_ssl_context() -> Tuple[Optional[ssl.SSLContext], Optional[ssl.SSLCont
     return server_ssl, client_ssl
 
 
-# def _setup_event_publishers(ssl_context):
-#     from brew_view.handlers.v1.event import EventSocket
-#
-#     # Create the collection of event publishers and add concrete publishers
-#     pubs = EventPublishers(
-#         {
-#             "request": RequestPublisher(ssl_context=ssl_context),
-#             "websocket": WebsocketPublisher(EventSocket),
-#         }
-#     )
-#
-#     if config.event.mongo.enable:
-#         try:
-#             pubs["mongo"] = MongoPublisher()
-#         except Exception as ex:
-#             logger.warning("Error starting Mongo event publisher: %s", ex)
-#
-#     if config.event.amq.enable:
-#         try:
-#             pika_params = {
-#                 "host": config.amq.host,
-#                 "port": config.amq.connections.message.port,
-#                 "ssl": config.amq.connections.message.ssl,
-#                 "user": config.amq.connections.admin.user,
-#                 "password": config.amq.connections.admin.password,
-#                 "exchange": config.event.amq.exchange,
-#                 "virtual_host": config.event.amq.virtual_host,
-#                 "connection_attempts": config.amq.connection_attempts,
-#             }
-#
-#             # Make sure the exchange exists
-#             TransientPikaClient(**pika_params).declare_exchange()
-#
-#             pubs["pika"] = TornadoPikaPublisher(
-#                 shutdown_timeout=config.shutdown_timeout, **pika_params
-#             )
-#         except Exception as ex:
-#             logger.exception("Error starting RabbitMQ event publisher: %s", ex)
-#
-#     # Metadata functions - additional metadata to be included with each event
-#     pubs.metadata_funcs["public_url"] = lambda: public_url
-#
-#     return pubs
-
-
 def _load_swagger(url_specs, title=None):
 
     global api_spec
