@@ -776,7 +776,7 @@ _STOMP_SPEC = {
         "operation_destination": {
             "type": "str",
             "default": "Beer_Garden_Operations",
-            "description": "Subscription topic where operations are sent for beer garden to run",
+            "description": "Subscription topic where Beer_Garden listens for operations",
         },
         "host": {
             "type": "str",

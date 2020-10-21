@@ -1,4 +1,3 @@
-from brewtils.models import Event, Events, Request, Operation, System
 from brewtils.schema_parser import SchemaParser
 import beer_garden.api.stomp
 

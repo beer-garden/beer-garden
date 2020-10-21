@@ -1,20 +1,19 @@
-import sys
 import stomp
 import logging
 import time
 import beer_garden.config as config
-from brewtils.models import Event, Events, Request, Operation, System
 from brewtils.schema_parser import SchemaParser
 import beer_garden.events
 import beer_garden.router
 from beer_garden.api.stomp.processors import append_headers, process_send_message
 
-
 conn = None
 bg_active = False
 
 
-def send_message(message, headers={}):
+def send_message(message, headers=None):
+    if headers is None:
+        headers = {}
     global conn
     stomp_config = config.get("entry.stomp")
     message, response_headers = process_send_message(message)
@@ -34,7 +33,7 @@ def send_message(message, headers={}):
             )
 
 
-def send_error_msg(error, headers):
+def send_error_msg(error_msg, headers):
     global conn
     stomp_config = config.get("entry.stomp")
     error_headers = None
@@ -43,13 +42,13 @@ def send_error_msg(error, headers):
     if conn.is_connected():
         if "reply-to" in headers:
             conn.send(
-                body=error.__str__(),
+                body=error_msg,
                 headers=error_headers,
                 destination=headers["reply-to"],
             )
         else:
             conn.send(
-                body=error.__str__(),
+                body=error_msg,
                 headers=error_headers,
                 destination=stomp_config.event_destination,
             )
@@ -58,31 +57,18 @@ def send_error_msg(error, headers):
 
 class OperationListener(stomp.ConnectionListener):
     def on_error(self, headers, message):
-        print("received an error:", headers)
+        logger = logging.getLogger(__name__)
+        logger.warning("received an error:", headers)
 
     def on_message(self, headers, message):
-        error = None
-        error_msg = None
-        operation = None
         try:
             operation = SchemaParser.parse_operation(message, from_string=True)
             if hasattr(operation, "kwargs"):
                 operation.kwargs.pop("wait_timeout", None)
-        except:
-            error_msg = "Failed to parse message"
-            error = sys.exc_info()
-
-        result = None
-        if error_msg is None:
-            try:
-                result = beer_garden.router.route(operation)
-            except:
-                error_msg = "Failed to route operation"
-                error = sys.exc_info()
-        if error is not None:
-            send_error_msg(error, headers)
-        if result is not None:
+            result = beer_garden.router.route(operation)
             send_message(result, headers)
+        except Exception as e:
+            send_error_msg(str(e), headers)
 
 
 class Connection:
@@ -127,8 +113,8 @@ class Connection:
                 if connected_message is not None and conn.is_connected():
                     logger.info("Stomp successfully " + connected_message)
 
-            except:
-                logger.warning("Failed to make stomp connection")
+            except Exception as e:
+                logger.warning(str(e))
                 logger.warning("Waiting %.1f seconds before next attempt", wait_time)
                 time.sleep(wait_time)
                 wait_time = min(wait_time * 2, 30)

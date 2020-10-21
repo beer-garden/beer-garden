@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """Package containing the Stomp entry point"""
 import logging
-import time
 import types
 
 import beer_garden.config as config
 from tornado.ioloop import IOLoop
-from brewtils.models import Event, Events, Request, Operation
+from brewtils.models import Event, Events
 import beer_garden.events
 import beer_garden.router
 
