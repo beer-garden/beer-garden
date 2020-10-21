@@ -204,7 +204,7 @@ class MixedScheduler(object):
                 self.add_job(
                     run_job,
                     trigger=job.trigger,
-                    kwargs={"id": job.id, "request_template": job.request_template},
+                    kwargs={"job_id": job.id, "request_template": job.request_template},
                 )
 
     def __init__(self, interval_config=None):
@@ -337,7 +337,7 @@ class MixedScheduler(object):
             kwargs: Any other kwargs to be passed to the scheduler
         """
         if trigger is None:
-            return
+            raise ValueError("Scheduler called with None-type trigger.")
 
         if not isinstance(trigger, FileTrigger):
             # Remove the unneeded/unwanted data
@@ -348,7 +348,7 @@ class MixedScheduler(object):
         else:
             # Pull out the arguments needed by the run_job function
             args = [
-                kwargs.get("kwargs").get("id"),
+                kwargs.get("kwargs").get("job_id"),
                 kwargs.get("kwargs").get("request_template"),
             ]
 
@@ -363,7 +363,7 @@ class MixedScheduler(object):
                 watch = self._async_scheduler.schedule(
                     event_handler, trigger.path, recursive=trigger.recursive
                 )
-                self._async_jobs[kwargs.get("id")] = (event_handler, watch)
+                self._async_jobs[args[0]] = (event_handler, watch)
 
 
 class IntervalTrigger(APInterval):
