@@ -92,6 +92,7 @@ parent:
     url_prefix: /
 plugin:
   local:
+    allowed_env_vars: []
     auth:
       password: password
       username: admin

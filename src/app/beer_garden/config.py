@@ -955,6 +955,13 @@ _PLUGIN_SPEC = {
         "local": {
             "type": "dict",
             "items": {
+                "allowed_env_vars": {
+                    "type": "list",
+                    "items": {"env_var": {"type": "str"}},
+                    "default": [],
+                    "description": "Host environement variables that can be used in a "
+                    "beer.conf",
+                },
                 "auth": {
                     "type": "dict",
                     "items": {

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-
+import os
 import string
 from concurrent.futures import ThreadPoolExecutor, wait
+from copy import copy
 from enum import Enum
 
 import json
@@ -389,8 +390,12 @@ class PluginManager(StoppableThread):
             env[key] = json.dumps(value) if isinstance(value, dict) else str(value)
 
         # ENVIRONMENT from beer.conf
+        source_env = copy(env)
+        for allowed in config.get("plugin.local.allowed_env_vars"):
+            source_env[allowed] = os.environ.get(allowed)
+
         for key, value in plugin_config.get("ENVIRONMENT", {}).items():
-            env[key] = expand_string(str(value), env)
+            env[key] = expand_string(str(value), source_env)
 
         return env
 
