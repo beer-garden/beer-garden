@@ -410,11 +410,11 @@ def run_job(job_id, request_template, **kwargs):
     wait_event = threading.Event()
     request = process_request(request_template, wait_event=wait_event)
     wait_event.wait()
-
     try:
         db_job = db.query_unique(Job, id=job_id)
         if db_job:
             request = get_request(request.id)
+
             if request.status == "ERROR":
                 db_job.error_count += 1
             elif request.status == "SUCCESS":
