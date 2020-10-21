@@ -646,14 +646,6 @@ _DB_SPEC = {
         "ttl": {
             "type": "dict",
             "items": {
-                "event": {
-                    "type": "int",
-                    "default": 15,
-                    "description": "Number of minutes to wait before deleting "
-                    "events (negative number for never)",
-                    "previous_names": ["event_mongo_ttl"],
-                    "alt_env_names": ["EVENT_MONGO_TTL"],
-                },
                 "action": {
                     "type": "int",
                     "default": -1,
@@ -861,51 +853,6 @@ _PARENT_SPEC = {
     },
 }
 
-_EVENT_SPEC = {
-    "type": "dict",
-    "items": {
-        "mq": {
-            "type": "dict",
-            "items": {
-                "enabled": {
-                    "type": "bool",
-                    "default": False,
-                    "description": "Publish events to RabbitMQ",
-                    "previous_names": ["event_persist_mq_enable"],
-                },
-                "exchange": {
-                    "type": "str",
-                    "required": False,
-                    "description": "Exchange to use for MQ events",
-                    "previous_names": ["event_amq_exchange"],
-                },
-                "virtual_host": {
-                    "type": "str",
-                    "default": "/",
-                    "required": False,
-                    "description": "Virtual host to use for MQ events",
-                    "previous_names": ["event_amq_virtual_host"],
-                },
-            },
-        },
-        "mongo": {
-            "type": "dict",
-            "items": {
-                "enabled": {
-                    "type": "bool",
-                    "default": True,
-                    "description": "Persist events to Mongo",
-                    "previous_names": [
-                        "event_persist_mongo",
-                        "event_persist_mongo_enable",
-                    ],
-                    "alt_env_names": ["EVENT_PERSIST_MONGO"],
-                }
-            },
-        },
-    },
-}
-
 _LOG_SPEC = {
     "type": "dict",
     "items": {
@@ -1031,6 +978,17 @@ _PLUGIN_SPEC = {
                     "required": False,
                     "previous_names": ["plugins_directory", "plugin_directory"],
                     "alt_env_names": ["PLUGINS_DIRECTORY", "BG_PLUGIN_DIRECTORY"],
+                },
+                "logging": {
+                    "type": "dict",
+                    "items": {
+                        "stream_files": {
+                            "type": "bool",
+                            "description": "Write plugin STDOUT to plugin.out and "
+                            "plugin STDERR to plugin.err",
+                            "default": False,
+                        },
+                    },
                 },
                 "timeout": {
                     "type": "dict",
@@ -1158,7 +1116,6 @@ _SPECIFICATION = {
     "configuration": _META_SPEC,
     "db": _DB_SPEC,
     "entry": _ENTRY_SPEC,
-    "event": _EVENT_SPEC,
     "parent": _PARENT_SPEC,
     "garden": _GARDEN_SPEC,
     "log": _LOG_SPEC,

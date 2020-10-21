@@ -53,24 +53,6 @@ class QueueListener(BaseProcessor):
                 pass
 
 
-class LockListener(QueueListener):
-    """Listens for items on a multiprocessing.Queue"""
-
-    def __init__(self, lock=None, **kwargs):
-        super().__init__(**kwargs)
-
-        self._lock = lock
-
-    def run(self):
-        """Process events as they are received"""
-        while not self.stopped():
-            with self._lock:
-                try:
-                    self.process(self._queue.get(timeout=0.1))
-                except Empty:
-                    pass
-
-
 class DelayListener(QueueListener):
     """Listener that waits for an Event before running"""
 
