@@ -830,6 +830,7 @@ _ENTRY_SPEC = {
     "type": "dict",
     "items": {
         "http": _HTTP_SPEC,
+        "stomp": _STOMP_SPEC,
     },
 }
 
