@@ -34,7 +34,8 @@
         </tr>
       </thead>
       <tbody>
-        <tr ng-repeat="command in data | filter:query | filter:{hidden:filterHidden}:hiddenComparator">
+        <!-- <tr ng-repeat="command in data | filter:query | filter:{hidden:filterHidden}:hiddenComparator"> -->
+        <tr ng-repeat="command in data | filter:query | filter:filterFunction">
           <td>{{command.namespace}}</td>
           <td>{{command.system}}</td>
           <td>{{command.version}}</td>

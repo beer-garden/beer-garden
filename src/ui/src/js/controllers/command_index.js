@@ -37,9 +37,14 @@ export default function commandIndexController(
     });
   };
 
-  $scope.hiddenComparator = function(hidden, checkbox){
-    return checkbox || !hidden;
+  $scope.filterFunction = function(elem, index, array) {
+    console.log($scope.hiddennn);
+    return !elem.hidden || $('#filterHidden').prop('checked');
   };
+
+  // $scope.hiddenComparator = function(hidden, checkbox){
+  //   return checkbox || !hidden;
+  // };
   
   if (!($stateParams.namespace || $stateParams.systemName || $stateParams.systemVersion)) {
     $scope.dtOptions = $scope.dtOptions.withLightColumnFilter({
