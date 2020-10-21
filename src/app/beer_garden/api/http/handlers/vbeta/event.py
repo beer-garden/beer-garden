@@ -9,7 +9,7 @@ class EventPublisherAPI(BaseHandler):
 
     parser = SchemaParser()
 
-    @authenticated(permissions=[Permissions.EVENT_CREATE])
+    @authenticated(permissions=[Permissions.CREATE])
     def post(self):
         """
         ---

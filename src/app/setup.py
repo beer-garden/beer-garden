@@ -29,16 +29,17 @@ setup(
     keywords="beer beer-garden beergarden",
     install_requires=[
         "apispec==0.38.0",
-        "apscheduler==3.6.0",
+        "apscheduler==3.6.3",
         "brewtils>=3.0.0a1",
         "mongoengine<0.21",
         "more-itertools<9",
+        "motor<3",
         "passlib<1.8",
         "prometheus-client==0.7.1",
         "pyrabbit2==1.0.7",
         "pytz<2021",
         "ruamel.yaml<0.17",
-        "tornado==6.0.3",
+        "tornado==6.0.4",
         "yapconf>=0.3.7",
     ],
     classifiers=[
@@ -47,17 +48,21 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
     entry_points={
         "console_scripts": [
+            "beergarden=beer_garden.__main__:main",
             "generate_config=beer_garden.__main__:generate_config",
             "migrate_config=beer_garden.__main__:migrate_config",
             "generate_app_logging_config=beer_garden.__main__:generate_app_logging_config",
             "generate_plugin_logging_config=beer_garden.__main__:generate_plugin_logging_config",
-            "beergarden=beer_garden.__main__:main",
+            # For backwards compatibility
+            "migrate_bartender_config=beer_garden.__main__:deprecate_config",
+            "migrate_brew_view_config=beer_garden.__main__:deprecate_config",
+            "generate_bartender_log_config=beer_garden.__main__:noop",
+            "generate_brew_view_log_config=beer_garden.__main__:noop",
         ]
     },
 )

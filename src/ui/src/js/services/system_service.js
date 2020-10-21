@@ -77,6 +77,10 @@ export default function systemService($rootScope, $http) {
     deleteSystem: (system) => {
       return $http.delete('api/v1/systems/' + system.id);
     },
+    forceDeleteSystem: (system) => {
+      return $http.delete('api/v1/systems/' + system.id,
+      {params: {force: true}});
+    },
     reloadSystem: (system) => {
       return $http.patch('api/v1/systems/' + system.id,
         {operation: 'reload', path: '', value: ''}

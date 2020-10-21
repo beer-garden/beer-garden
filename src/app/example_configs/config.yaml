@@ -20,7 +20,6 @@ db:
   name: beer_garden_v3
   ttl:
     action: -1
-    event: 15
     info: 15
 entry:
   http:
@@ -49,15 +48,6 @@ entry:
     username: beer_garden
     verify_host: true
     verify_hostname: true
-  thrift:
-    enabled: false
-event:
-  mongo:
-    enabled: true
-  mq:
-    enabled: false
-    exchange: null
-    virtual_host: /
 garden:
   name: default
 log:
@@ -119,6 +109,8 @@ plugin:
       password: password
       username: admin
     directory: ./plugins
+    logging:
+      stream_files: false
     timeout:
       shutdown: 10
       startup: 2

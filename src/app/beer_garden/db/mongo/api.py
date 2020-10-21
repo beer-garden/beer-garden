@@ -4,7 +4,7 @@ import logging
 from box import Box
 from brewtils.models import BaseModel
 from brewtils.schema_parser import SchemaParser
-from mongoengine import connect, register_connection, DoesNotExist
+from mongoengine import NotUniqueError, connect, register_connection, DoesNotExist
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 from typing import List, Optional, Type, Union, Tuple
 
@@ -14,10 +14,11 @@ from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.db.mongo.util import (
     check_indexes,
-    ensure_embedded_command,
+    ensure_model_migration,
     ensure_roles,
     ensure_users,
 )
+from beer_garden.errors import NotUniqueException
 
 logger = logging.getLogger(__name__)
 
@@ -145,7 +146,7 @@ def create_connection(connection_alias: str = "default", db_config: Box = None) 
 def initial_setup(guest_login_enabled):
     """Do everything necessary to ensure the database is in a 'good' state"""
 
-    ensure_embedded_command()
+    ensure_model_migration()
 
     for doc in (
         beer_garden.db.mongo.models.Job,
@@ -316,10 +317,13 @@ def create(obj: ModelItem) -> ModelItem:
     """
     mongo_obj = from_brewtils(obj)
 
-    if hasattr(mongo_obj, "deep_save"):
-        mongo_obj.deep_save()
-    else:
-        mongo_obj.save(force_insert=True)
+    try:
+        if hasattr(mongo_obj, "deep_save"):
+            mongo_obj.deep_save()
+        else:
+            mongo_obj.save(force_insert=True)
+    except NotUniqueError as ex:
+        raise NotUniqueException from ex
 
     return to_brewtils(mongo_obj)
 
