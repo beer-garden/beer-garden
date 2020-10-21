@@ -590,6 +590,18 @@ class FileTrigger(MongoModel, EmbeddedDocument):
     recursive = BooleanField(default=False)
     callbacks = DictField()
 
+    def clean(self):
+        """Validate before saving to the database"""
+        if not list(filter(lambda i: i != "", self.pattern)):
+            raise ModelValidationError(
+                f"Cannot save FileTrigger. Must have at least one non-empty pattern."
+            )
+
+        if True not in self.callbacks.values():
+            raise ModelValidationError(
+                f"Cannot save FileTrigger. Must have at least one callback selected."
+            )
+
 
 class Job(MongoModel, Document):
     brewtils_model = brewtils.models.Job

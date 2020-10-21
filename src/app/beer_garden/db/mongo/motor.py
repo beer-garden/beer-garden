@@ -58,3 +58,4 @@ async def update_one(
 
     """
     return await motor_db[collection].update_one(filter=filter, update=update)
+

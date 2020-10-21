@@ -27,7 +27,6 @@ from beer_garden.events import publish_event
 from beer_garden.requests import process_request, get_request
 from brewtils.models import FileTrigger
 
-
 logger = logging.getLogger(__name__)
 
 
