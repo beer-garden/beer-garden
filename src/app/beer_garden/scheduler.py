@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import threading
+from os.path import isdir
 from typing import Dict, List
 
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
@@ -340,7 +341,8 @@ class MixedScheduler(object):
             kwargs: Any other kwargs to be passed to the scheduler
         """
         if trigger is None:
-            raise ValueError("Scheduler called with None-type trigger.")
+            logger.exception("Scheduler called with None-type trigger.")
+            return
 
         if not isinstance(trigger, FileTrigger):
             # Remove the unneeded/unwanted data
@@ -349,6 +351,10 @@ class MixedScheduler(object):
             self._sync_scheduler.add_job(func, trigger=None, **kwargs)
 
         else:
+            if not isdir(trigger.path):
+                logger.exception(f"User passed an invalid trigger path {trigger.path}")
+                return
+
             # Pull out the arguments needed by the run_job function
             args = [
                 kwargs.get("kwargs").get("job_id"),
