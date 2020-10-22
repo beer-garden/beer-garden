@@ -73,6 +73,7 @@ mq:
   exchange: beer_garden
   heartbeat_interval: 3600
   host: localhost
+  internal_host: null
   virtual_host: /
 parent:
   http:
@@ -106,7 +107,6 @@ plugin:
     fallback_level: INFO
   status_heartbeat: 5
   status_timeout: 30
-publish_hostname: localhost
 scheduler:
   auth:
     password: null

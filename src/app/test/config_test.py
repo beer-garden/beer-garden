@@ -181,7 +181,6 @@ class TestConfigGet(object):
     @pytest.mark.parametrize(
         "key,expected",
         [
-            ("publish_hostname", "localhost"),
             ("mq.host", "localhost"),
             ("validator.command", {"timeout": 10}),
             ("INVALID_KEY", None),
