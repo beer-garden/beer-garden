@@ -8,9 +8,11 @@ from typing import Dict, List, Sequence, Union
 import pika.spec
 import six
 import urllib3
+
+
 from brewtils.choices import parse
 from brewtils.errors import ConflictError, ModelValidationError, RequestPublishException
-from brewtils.models import Choices, Events, Request, RequestTemplate, System
+from brewtils.models import Choices, Events, Request, RequestTemplate, System, Operation
 from builtins import str
 from requests import Session
 
@@ -733,11 +735,27 @@ def process_wait(request: Request, timeout: float) -> Request:
     Returns:
         The completed request
     """
+
+    # We need a better solution for this. Because the Request library is imported
+    # everywhere it causes issues when importing the router at the top because all of
+    # the functions are not initialized. So we either leave this as is, or move the
+    # requests import to the end of all of the files.
+    import beer_garden.router as router
+
     req_complete = threading.Event()
-    created_req = process_request(request, wait_event=req_complete)
+
+    # Send the request through the router to allow for commands to work across Gardens
+    created_request = router.route(
+        Operation(
+            operation_type="REQUEST_CREATE",
+            model=request,
+            model_type="Request",
+            kwargs={"wait_event": req_complete},
+        )
+    )
     req_complete.wait(timeout)
 
-    return db.query_unique(Request, id=created_req.id)
+    return db.query_unique(Request, id=created_request.id)
 
 
 def handle_event(event):
