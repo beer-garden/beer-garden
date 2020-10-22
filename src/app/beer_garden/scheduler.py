@@ -32,7 +32,8 @@ logger = logging.getLogger(__name__)
 
 class InjectionDict(dict):
     """
-    Dictionary object with overloaded __missing__ function to facilitate partial string.format operations
+    Dictionary object with overloaded __missing__ function to
+    facilitate partial string.format operations
     """
 
     def __missing__(self, key):
@@ -60,7 +61,8 @@ def build_injection_dict(dictionary, obj, prefix="", separator="/"):
 def inject_values(request, dictionary):
     """Inject values into a request
 
-    inject_values looks for string fields and attempts to format() them with the dictionary provided.
+    inject_values looks for string fields and attempts
+    to format() them with the dictionary provided.
 
     Args:
         request: An object that may hold string fields with valid str.format() syntax
@@ -102,9 +104,9 @@ class PatternMatchingEventHandlerWithArgs(PatternMatchingEventHandler):
     _args = []
     _kwargs = {}
 
-    def __init__(self, args=[], kwargs={}, **thru):
-        self._args = args
-        self._kwargs = kwargs
+    def __init__(self, args=None, kwargs=None, **thru):
+        self._args = args if args is not None else []
+        self._kwargs = kwargs if kwargs is not None else {}
         super().__init__(**thru)
 
     # Copy the dispatch code, but include arguments if specified
@@ -151,7 +153,7 @@ class PatternMatchingEventHandlerWithArgs(PatternMatchingEventHandler):
         super().on_moved(event)
 
 
-def pass_through(class_objects=[]):
+def pass_through(class_objects=None):
     """
     Adds any non-implemented methods defined by the given object names to the class.
 
@@ -317,7 +319,8 @@ class MixedScheduler(object):
 
         Args:
             handler: The event handler
-            triggers: A dictionary of triggers that maps callback method names to boolean values (e.g. on_moved -> True)
+            triggers: A dictionary of triggers that maps callback method
+                names to boolean values (e.g. on_moved -> True)
             func: The callback function
 
         Returns:
