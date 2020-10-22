@@ -371,7 +371,7 @@ export default function jobService($http, NamespaceService) {
       },
       'file_pattern': {
         'title': 'Pattern',
-        'description': 'File name patterns to match.',
+        'description': 'File name patterns to match, supports non-extended shell-style glob pattern matching',
         'type': 'array',
         'items': {
             'type': 'string'
