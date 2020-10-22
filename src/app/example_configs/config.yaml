@@ -97,6 +97,7 @@ plugin:
       username: admin
     directory: ./plugins
     logging:
+      config_file: null
       stream_files: false
     timeout:
       shutdown: 10
