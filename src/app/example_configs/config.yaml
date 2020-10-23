@@ -37,7 +37,7 @@ entry:
     url_prefix: /
   stomp:
     cert_file: null
-    enabled: false
+    enabled: true
     event_destination: Beer_Garden_Events
     host: localhost
     operation_destination: Beer_Garden_Operations

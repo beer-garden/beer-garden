@@ -9,12 +9,14 @@ from beer_garden.api.stomp.processors import append_headers, process_send_messag
 
 conn = None
 bg_active = False
+logger = logging.getLogger(__name__)
+stomp.logging.setLevel("WARN")
 
 
 def send_message(message, headers=None):
     if headers is None:
         headers = {}
-    global conn
+
     stomp_config = config.get("entry.stomp")
     message, response_headers = process_send_message(message)
     response_headers = append_headers(
@@ -34,7 +36,7 @@ def send_message(message, headers=None):
 
 
 def send_error_msg(error_msg, headers):
-    global conn
+
     stomp_config = config.get("entry.stomp")
     error_headers = None
     error_headers = append_headers(error_headers, headers)
@@ -57,7 +59,6 @@ def send_error_msg(error_msg, headers):
 
 class OperationListener(stomp.ConnectionListener):
     def on_error(self, headers, message):
-        logger = logging.getLogger(__name__)
         logger.warning("received an error:", headers)
 
     def on_message(self, headers, message):
@@ -69,6 +70,7 @@ class OperationListener(stomp.ConnectionListener):
             send_message(result, headers)
         except Exception as e:
             send_error_msg(str(e), headers)
+            logger.warning(str(e))
 
 
 class Connection:
@@ -89,9 +91,8 @@ class Connection:
 
     @staticmethod
     def connect(connected_message=None):
-        global conn
+
         stomp_config = config.get("entry.stomp")
-        logger = logging.getLogger(__name__)
         wait_time = 0.1
         while not conn.is_connected():
             try:
@@ -121,14 +122,14 @@ class Connection:
 
     @staticmethod
     def disconnect():
-        global bg_active, conn
+        global bg_active
         bg_active = False
         if conn.is_connected():
             conn.disconnect()
 
     @staticmethod
     def is_connected():
-        global conn
+
         return conn.is_connected()
 
     @staticmethod

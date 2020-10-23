@@ -14,15 +14,14 @@ from beer_garden.api.stomp.server import Connection
 from beer_garden.events import publish
 from beer_garden.events.processors import QueueListener
 
-logger = None
+logger = logging.getLogger(__name__)
 conn = None
 
 io_loop = None
 
 
 def run(ep_conn):
-    global logger, conn, io_loop
-    logger = logging.getLogger(__name__)
+    global conn, io_loop
     stomp_config = config.get("entry.stomp")
     logger.info(
         "Starting Stomp entry point on host and port: "
@@ -47,7 +46,6 @@ def signal_handler(_: int, __: types.FrameType):
 
 
 def shutdown():
-    global conn, logger, io_loop
     conn.disconnect()
     logger.debug("Stopping forward processing")
     beer_garden.router.forward_processor.stop()
@@ -57,7 +55,7 @@ def shutdown():
 
     logger.debug("Stopping IO loop")
     publish(Event(name=Events.ENTRY_STOPPED.name))
-    io_loop.add_callback(io_loop.stop)
+    io_loop.stop()
 
 
 def _setup_operation_forwarding():
@@ -68,13 +66,11 @@ def _setup_operation_forwarding():
 
 def _setup_event_handling(ep_conn):
     # This will push all events generated in the entry point up to the master process
-    global io_loop
     beer_garden.events.manager = EventManager(ep_conn)
     io_loop.add_handler(ep_conn, lambda c, _: _event_callback(c.recv()), IOLoop.READ)
 
 
 def reconnect():
-    global conn, logger
     if not conn.is_connected():
         logger.warning("Lost stomp connection")
         conn.connect("reconnected")
@@ -91,6 +87,5 @@ def _event_callback(event):
 
 
 def handle_event(event):
-    global conn
     reconnect()
     conn.send_event(event)
