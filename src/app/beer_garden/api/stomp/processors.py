@@ -1,5 +1,4 @@
 from brewtils.schema_parser import SchemaParser
-import beer_garden.api.stomp
 
 
 # Modify to inject custom headers
