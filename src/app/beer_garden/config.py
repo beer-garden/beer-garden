@@ -955,13 +955,6 @@ _PLUGIN_SPEC = {
         "local": {
             "type": "dict",
             "items": {
-                "allowed_env_vars": {
-                    "type": "list",
-                    "items": {"env_var": {"type": "str"}},
-                    "default": [],
-                    "description": "Host environement variables that can be used in a "
-                    "beer.conf",
-                },
                 "auth": {
                     "type": "dict",
                     "items": {
@@ -985,6 +978,13 @@ _PLUGIN_SPEC = {
                     "required": False,
                     "previous_names": ["plugins_directory", "plugin_directory"],
                     "alt_env_names": ["PLUGINS_DIRECTORY", "BG_PLUGIN_DIRECTORY"],
+                },
+                "host_env_vars": {
+                    "type": "list",
+                    "items": {"env_var": {"type": "str"}},
+                    "default": [],
+                    "description": "Host environment variables that will be propagated "
+                    "to local plugin processes",
                 },
                 "logging": {
                     "type": "dict",

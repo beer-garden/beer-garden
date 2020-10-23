@@ -391,14 +391,14 @@ class PluginManager(StoppableThread):
             env[key] = json.dumps(value) if isinstance(value, dict) else str(value)
 
         # Allowed host env vars
-        for allowed in config.get("plugin.local.allowed_env_vars"):
-            if allowed in env:
+        for env_var in config.get("plugin.local.host_env_vars"):
+            if env_var in env:
                 logger.warning(
-                    f"Skipping host environment variable {allowed} for runner at "
+                    f"Skipping host environment variable {env_var} for runner at "
                     f"{plugin_path} as it's already set in the process environment"
                 )
             else:
-                env[allowed] = os.environ.get(allowed, default="")
+                env[env_var] = os.environ.get(env_var, default="")
 
         # ENVIRONMENT from beer.conf
         for key, value in plugin_config.get("ENVIRONMENT", {}).items():
