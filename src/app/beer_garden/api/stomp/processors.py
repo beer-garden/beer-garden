@@ -14,7 +14,7 @@ class EventManager:
         self._conn = conn
 
     def put(self, event):
-        beer_garden.api.stomp.io_loop.add_callback(self._conn.send, event)
+        self._conn.send(event)
 
 
 # Processes response messages and event messages to send
