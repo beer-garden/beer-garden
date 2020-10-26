@@ -39,6 +39,7 @@ setup(
         "pyrabbit2==1.0.7",
         "pytz<2021",
         "ruamel.yaml<0.17",
+        "stomp.py < 6.0.0",
         "tornado==6.0.4",
         "yapconf>=0.3.7",
     ],

@@ -774,10 +774,77 @@ _HTTP_SPEC = {
     },
 }
 
+_STOMP_SPEC = {
+    "type": "dict",
+    "items": {
+        "enabled": {
+            "type": "bool",
+            "default": False,
+            "description": "Run an stomp server",
+        },
+        "event_destination": {
+            "type": "str",
+            "default": "Beer_Garden_Events",
+            "description": "Publish topic where events are sent",
+        },
+        "operation_destination": {
+            "type": "str",
+            "default": "Beer_Garden_Operations",
+            "description": "Subscription topic where Beer_Garden listens for operations",
+        },
+        "host": {
+            "type": "str",
+            "default": "localhost",
+            "description": "Connection hostname",
+        },
+        "port": {
+            "type": "int",
+            "default": 61613,
+            "description": "Connection port number",
+        },
+        "username": {
+            "type": "str",
+            "description": "Username to use for authentication",
+            "default": "beer_garden",
+        },
+        "password": {
+            "type": "str",
+            "description": "Password to use for authentication",
+            "default": "password",
+        },
+        "use_ssl": {
+            "type": "bool",
+            "description": "Use SSL for connection",
+            "default": False,
+        },
+        "private_key": {
+            "type": "str",
+            "description": "Path to private key",
+            "required": False,
+        },
+        "cert_file": {
+            "type": "str",
+            "description": "Path to certificate file",
+            "required": False,
+        },
+        "verify_host": {
+            "type": "bool",
+            "description": "Verify the server's certificate was signed by a trusted CA'",
+            "default": True,
+        },
+        "verify_hostname": {
+            "type": "bool",
+            "description": "Verify the server's actual host name against the expected name'",
+            "default": True,
+        },
+    },
+}
+
 _ENTRY_SPEC = {
     "type": "dict",
     "items": {
         "http": _HTTP_SPEC,
+        "stomp": _STOMP_SPEC,
     },
 }
 
