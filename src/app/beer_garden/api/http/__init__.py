@@ -226,6 +226,8 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}config/swagger/?", misc.SwaggerConfigHandler),
         # Not sure if this is really necessary
         (rf"{prefix[:-1]}", RedirectHandler, {"url": prefix}),
+        (rf"{prefix}api/v1/files/?", v1.file.FileAPI),
+        (rf"{prefix}api/v1/files/id/?", v1.file.FileNameAPI),
     ]
 
     app_config = config.get("application")

@@ -82,3 +82,6 @@ target/
 
 # node files
 node_modules
+
+# plugins
+plugins/
