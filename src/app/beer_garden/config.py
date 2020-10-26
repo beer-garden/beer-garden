@@ -982,6 +982,12 @@ _PLUGIN_SPEC = {
                 "logging": {
                     "type": "dict",
                     "items": {
+                        "config_file": {
+                            "type": "str",
+                            "description": "Path to a logging configuration file for "
+                            "local plugins",
+                            "required": False,
+                        },
                         "stream_files": {
                             "type": "bool",
                             "description": "Write plugin STDOUT to plugin.out and "
