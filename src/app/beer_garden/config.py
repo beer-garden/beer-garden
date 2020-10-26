@@ -412,8 +412,22 @@ _MQ_SPEC = {
         "host": {
             "type": "str",
             "default": "localhost",
-            "description": "Hostname of MQ to use",
-            "previous_names": ["amq_host"],
+            "description": "Globally resolvable host name of message broker",
+            "long_description": "This will be supplied to all plugins as part of their "
+            "initialization process as the broker to connect to. If 'internal_host "
+            "(below) is not supplied, this value will also be used as the location of "
+            "the message by the Beergarden application.",
+            "alt_env_names": ["BG_PUBLISH_HOSTNAME", "PUBLISH_HOSTNAME"],
+        },
+        "internal_host": {
+            "type": "str",
+            "description": "Hostname of message broker",
+            "long_description": "If given, this value will be used by the Beergarden "
+            "application as the location of the message broker. This is mainly "
+            "intended to support a container-based environment where the name used to "
+            "connect to the message broker may be different depending on whether the "
+            "application or a plugin is making the connection.",
+            "required": False,
         },
         "admin_queue_expiry": {
             "type": "int",
@@ -1102,20 +1116,7 @@ _VALIDATOR_SPEC = {
     },
 }
 
-# I have omitted the following from the spec
-#
-# * "backend" - there should be no need for this
-# * "thrift" - there should be no need for this
-#
-# Everything else has been copied wholesale into this specification.
 _SPECIFICATION = {
-    "publish_hostname": {
-        "type": "str",
-        "default": "localhost",
-        "description": "Publicly accessible hostname for plugins to connect to",
-        "previous_names": ["amq_publish_host"],
-        "alt_env_names": ["AMQ_PUBLISH_HOST"],
-    },
     "mq": _MQ_SPEC,
     "application": _APPLICATION_SPEC,
     "auth": _AUTH_SPEC,
