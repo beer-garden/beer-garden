@@ -28,6 +28,8 @@ class MongoParser(SchemaParser):
             "IntervalTriggerSchema": beer_garden.db.mongo.models.IntervalTrigger,
             "CronTriggerSchema": beer_garden.db.mongo.models.CronTrigger,
             "GardenSchema": beer_garden.db.mongo.models.Garden,
+            "FileSchema": beer_garden.db.mongo.models.File,
+            "FileChunkSchema": beer_garden.db.mongo.models.FileChunk,
         }
     )
 

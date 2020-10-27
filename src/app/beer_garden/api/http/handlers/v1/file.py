@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 import os
-from uuid import uuid4
-from mimetypes import guess_type
+from base64 import b64decode
 
 import tornado.web
-from tornado.iostream import PipeIOStream
 
 from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler, event_wait
+import beer_garden.db.api as db
 from brewtils.errors import ModelValidationError
+from brewtils.models import File, FileChunk
 
 BASEDIR_NAME = os.path.dirname(__file__)
 BASEDIR_PATH = os.path.abspath(BASEDIR_NAME)
@@ -20,31 +20,13 @@ print(f"~~~~~~~~~~~~~~~~~~~~~~~~~FILE ROOT PATH: {FILES_ROOT}")
 
 
 class FileAPI(BaseHandler):
-    # def initialize(self):
-    #     self.stream = None
-    #
-    # def prepare(self):
-    #     super().prepare()
-    #
-    #     if self.stream is None:
-    #         full_file_name = os.path.join(FILES_ROOT, str(uuid4()))
-    #         print(f"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Creating file name {full_file_name}")
-    #         fp = os.open(full_file_name, os.O_CREAT | os.O_WRONLY)
-    #         # This allows async behavior
-    #         self.stream = PipeIOStream(fp)
-    #     self.request.connection.set_max_body_size(MAX_STREAM_SIZE)
-    #
-    # async def data_received(self, chunk):
-    #     print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Received stream data!")
-    #     await self.stream.write(chunk)
-
     @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
         ---
         summary: Retrieve a specific file
         parameters:
-          - name: file_name
+          - name: file_id
             in: query
             required: true
             description: The ID of the file
@@ -61,14 +43,26 @@ class FileAPI(BaseHandler):
         tags:
           - Files
         """
-        file_name = self.get_query_argument("file_name", default=None)
-        file_location = os.path.join(FILES_ROOT, file_name)
-        if not os.path.isfile(file_location):
-            raise tornado.web.HTTPError(status_code=404)
-        content_type, _ = guess_type(file_location)
-        self.set_header('Content-Type', content_type)
-        with open(file_location) as source_file:
-            self.write(source_file.read())
+        file_id = self.get_query_argument("file_id", default=None)
+        if file_id is None:
+            raise ValueError("Cannot fetch a file without a file ID.")
+        self.write(self._fetch_file(file_id))
+
+    def _fetch_file(self, file_id):
+        res = db.query_unique(File, id=file_id)
+        if res is None:
+            raise ModelValidationError("Tried to fetch an unsaved file.")
+        # This is going to get big, try our best to be efficient
+        all_data = [db.query_unique(FileChunk, file_id=res.id, n=x).data
+                    for x in range(db.count(FileChunk, file_id=res.id))]
+        return "".join(all_data)
+
+    def _save_chunk(self, file_id, n, chunk_size, data):
+        file = db.query_unique(File, id=file_id)
+        if file is None:
+            raise ValueError(f"Chunk cannot be saved, file with id {file_id} cannot be found")
+        chunk = FileChunk(file_id=file.id, n=n, chunk_size=chunk_size, data=data)
+        return db.create(chunk)
 
     @authenticated(permissions=[Permissions.CREATE])
     async def post(self):
@@ -76,7 +70,7 @@ class FileAPI(BaseHandler):
         ---
         summary: Create a new Request
         parameters:
-          - name: file_name
+          - name: file_id
             in: query
             required: true
             description: The ID of the file
@@ -87,6 +81,9 @@ class FileAPI(BaseHandler):
           - name: offset
             in: body
             description: The current offset definition
+          - name: chunk_size
+            in: body
+            description: The size of chunks for the file
         responses:
           201:
             description: A new Request has been created
@@ -99,28 +96,41 @@ class FileAPI(BaseHandler):
         tags:
           - Requests
         """
-        print("~~~~~~~~~~~~~~~~~~~~RECEIVED POST")
-        file_name = self.get_query_argument("file_name", default=None)
-        data = self.get_body_argument("data", default=None)
-        offset = self.get_body_argument("offset", default=None)
+        file_id = self.get_query_argument("file_id", default=None)
+
+        args = tornado.escape.json_decode(self.request.body)
+        data = args.get('data', None)
+        offset = args.get('offset', None)
+        chunk_size = args.get('chunk_size', None)
 
         if data is None:
-            raise ModelValidationError(f"No data sent to write to file {file_name}")
+            raise ModelValidationError(f"No data sent to write to file {file_id}")
         if offset is None:
-            raise ModelValidationError(f"No offset sent with data to write to file {file_name}")
+            raise ModelValidationError(f"No offset sent with data to write to file {file_id}")
+        if chunk_size is None:
+            raise ModelValidationError(f"No chunk_size sent with data to write to file {file_id}")
 
-        full_file_name = os.path.join(FILES_ROOT, file_name+"_"+offset)
-        with open(full_file_name, 'w') as fp:
-            fp.write(data)
+        n = int(int(offset) / int(chunk_size))
+        self._save_chunk(file_id, n, chunk_size, b64decode(data).decode('utf-8'))
 
 
 class FileNameAPI(BaseHandler):
+    def _save_file(self, file_name):
+        f = File(file_name=file_name)
+        f = db.create(f)
+        return f.id
+
     @authenticated(permissions=[Permissions.READ])
     def get(self):
 
         """
         ---
         summary: Retrieve a specific file
+        parameters:
+          - name: file_name
+            in: query
+            required: true
+            description: The name of the file being sent
         responses:
           200:
             description: File name to post with
@@ -133,5 +143,5 @@ class FileNameAPI(BaseHandler):
         tags:
           - Files
         """
-
-        self.write(str(uuid4()))
+        file_name = self.get_query_argument('file_name', default="")
+        self.write(self._save_file(file_name))

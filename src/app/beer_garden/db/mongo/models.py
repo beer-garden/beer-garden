@@ -65,6 +65,8 @@ __all__ = [
     "CronTrigger",
     "IntervalTrigger",
     "Garden",
+    "File",
+    "FileChunk"
 ]
 
 
@@ -676,3 +678,19 @@ class Garden(MongoModel, Document):
 class SystemGardenMapping(MongoModel, Document):
     system = ReferenceField("System")
     garden = ReferenceField("Garden")
+
+
+class File(MongoModel, Document):
+    brewtils_model = brewtils.models.File
+
+    file_name = StringField(required=True)
+    chunks = ListField(required=False)
+
+
+class FileChunk(MongoModel, Document):
+    brewtils_model = brewtils.models.FileChunk
+
+    file_id = StringField(required=True)
+    n = IntField(required=True)
+    chunk_size = IntField(required=True)
+    data = StringField(required=True)
