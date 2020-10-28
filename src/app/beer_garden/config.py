@@ -812,30 +812,35 @@ _STOMP_SPEC = {
             "description": "Password to use for authentication",
             "default": "password",
         },
-        "use_ssl": {
-            "type": "bool",
-            "description": "Use SSL for connection",
-            "default": False,
-        },
-        "private_key": {
-            "type": "str",
-            "description": "Path to private key",
-            "required": False,
-        },
-        "cert_file": {
-            "type": "str",
-            "description": "Path to certificate file",
-            "required": False,
-        },
-        "verify_host": {
-            "type": "bool",
-            "description": "Verify the server's certificate was signed by a trusted CA'",
-            "default": True,
-        },
-        "verify_hostname": {
-            "type": "bool",
-            "description": "Verify the server's actual host name against the expected name'",
-            "default": True,
+        "ssl": {
+            "type": "dict",
+            "items": {
+                "use_ssl": {
+                    "type": "bool",
+                    "description": "Use SSL for connection",
+                    "default": False,
+                },
+                "private_key": {
+                    "type": "str",
+                    "description": "Path to private key",
+                    "required": False,
+                },
+                "cert_file": {
+                    "type": "str",
+                    "description": "Path to certificate file",
+                    "required": False,
+                },
+                "verify_host": {
+                    "type": "bool",
+                    "description": "Verify the server's certificate was signed by a trusted CA'",
+                    "default": True,
+                },
+                "verify_hostname": {
+                    "type": "bool",
+                    "description": "Verify the server's actual host name against the expected name'",
+                    "default": True,
+                },
+            },
         },
     },
 }

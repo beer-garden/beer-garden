@@ -36,18 +36,19 @@ entry:
       public_key: null
     url_prefix: /
   stomp:
-    cert_file: null
     enabled: false
     event_destination: Beer_Garden_Events
     host: localhost
     operation_destination: Beer_Garden_Operations
     password: password
     port: 61613
-    private_key: null
-    use_ssl: false
+    ssl:
+      cert_file: null
+      private_key: null
+      use_ssl: false
+      verify_host: true
+      verify_hostname: true
     username: beer_garden
-    verify_host: true
-    verify_hostname: true
 garden:
   name: default
 log:

@@ -22,11 +22,13 @@ stop_thread = False
 def run(ep_conn):
     global conn
     stomp_config = config.get("entry.stomp")
+    host_and_ports = [(stomp_config.host, stomp_config.port)]
     logger.info(
-        "Starting Stomp entry point on host and port: "
-        + [(stomp_config.host, stomp_config.port)].__str__()
+        "Starting Stomp entry point on host and port: " + host_and_ports.__str__()
     )
-    conn = Connection()
+    conn = Connection(host_and_ports=host_and_ports, send_destination=stomp_config.event_destination,
+                      subscribe_destination=stomp_config.operation_destination, ssl=stomp_config.ssl,
+                      username=stomp_config.username, password=stomp_config.password)
     conn.connect("connected")
     _setup_operation_forwarding()
 
@@ -72,6 +74,7 @@ def _setup_event_handling(ep_conn):
 
 def _event_thread(ep_conn):
     while True:
+        reconnect()
         if ep_conn.poll():
             handle_event(ep_conn.recv())
         if stop_thread:
@@ -85,5 +88,4 @@ def reconnect():
 
 
 def handle_event(event):
-    reconnect()
     conn.send_event(event)
