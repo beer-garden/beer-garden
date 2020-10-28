@@ -21,6 +21,7 @@ import beer_garden.queue.api as queue
 import beer_garden.router
 from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.parent_procesors import HttpParentUpdater
+from beer_garden.events.parent_procesors import StompParentUpdater
 from beer_garden.events.processors import (
     FanoutProcessor,
     QueueListener,
@@ -285,6 +286,21 @@ class Application(StoppableThread):
             event_manager.register(
                 HttpParentUpdater(
                     easy_client=easy_client,
+                    black_list=skip_events,
+                    reconnect_action=reconnect_action,
+                )
+            )
+        stomp_event = config.get("parent.stomp")
+        if stomp_event.enabled:
+            skip_events = config.get("parent.skip_events")
+
+            def reconnect_action():
+                beer_garden.garden.publish_garden(
+                    event_name=Events.GARDEN_STARTED.name, status="RUNNING"
+                )
+
+            event_manager.register(
+                StompParentUpdater(
                     black_list=skip_events,
                     reconnect_action=reconnect_action,
                 )

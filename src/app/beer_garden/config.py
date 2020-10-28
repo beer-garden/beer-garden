@@ -849,7 +849,46 @@ _PARENT_SPEC = {
                     "description": "Events to be skipped",
                 },
             },
-        }
+        },
+        "stomp": {
+            "type": "dict",
+            "items": {
+                "enabled": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Publish events to parent garden over HTTP",
+                },
+                "port": {
+                    "type": "int",
+                    "default": 61613,
+                    "description": "Serve content on this port",
+                },
+                "host": {
+                    "type": "str",
+                    "default": "0.0.0.0",
+                    "description": "Host for the HTTP Server to bind to",
+                },
+                "username": {
+                    "type": "str",
+                    "default": "beer_garden",
+                },
+                "password": {
+                    "type": "str",
+                    "default": "password",
+                },
+                "event_destination": {
+                    "type": "str",
+                    "default": "Beer_Garden_Events_Parent"
+                },
+                "skip_events": {
+                    "type": "list",
+                    "items": {"skip_event": {"type": "str"}},
+                    "default": ["DB_CREATE"],
+                    "required": False,
+                    "description": "Events to be skipped",
+                },
+            },
+        },
     },
 }
 

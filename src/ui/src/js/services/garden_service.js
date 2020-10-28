@@ -63,7 +63,7 @@ export default function gardenService($http) {
     return model;
   }
 
-  GardenService.CONNECTION_TYPES = ['HTTP','LOCAL'];
+  GardenService.CONNECTION_TYPES = ['HTTP','STOMP','LOCAL'];
 
   GardenService.SCHEMA = {
     'type': 'object',
@@ -119,7 +119,23 @@ export default function gardenService($http) {
         'description': 'Path to client certificate to use when communicating with Beer-garden',
         'type': 'string',
       },
-    }
+      'destination': {
+              'title': 'Destination',
+              'description': 'Destination queue where Stomp will send message.',
+              'type': 'string',
+      },
+      'username': {
+                    'title': 'Username',
+                    'description': 'Username for Stomp connection.',
+                    'type': 'string',
+      },
+      'password': {
+                    'title': 'Password',
+                    'description': 'password for Stomp connection.',
+                    'type': 'string',
+      },
+    },
+
   }
 
   GardenService.FORM = [
@@ -145,6 +161,16 @@ export default function gardenService($http) {
                 'ca_cert',
                 'ca_verify',
                 'client_cert'
+              ],
+            },
+            {
+              'title': 'STOMP',
+              'items': [
+                'host',
+                'port',
+                'destination',
+                'username',
+                'password'
               ],
             },
           ],
