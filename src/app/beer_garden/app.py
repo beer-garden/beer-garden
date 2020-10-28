@@ -45,6 +45,8 @@ class Application(StoppableThread):
     clients = None
     helper_threads = None
     entry_manager = None
+    plugin_log_config_observer: MonitorFile = None
+    plugin_local_log_config_observer: MonitorFile = None
 
     def __init__(self):
         super(Application, self).__init__(
@@ -94,6 +96,18 @@ class Application(StoppableThread):
         self.entry_manager = beer_garden.api.entry_point.Manager()
 
         beer_garden.events.manager = self._setup_events_manager()
+
+        file_event = Event(name=Events.PLUGIN_LOGGER_FILE_CHANGE.name)
+        self.plugin_log_config_observer = MonitorFile(
+            path=config.get("plugin.logging.config_file"),
+            create_event=file_event,
+            modify_event=file_event,
+        )
+        self.plugin_local_log_config_observer = MonitorFile(
+            path=config.get("plugin.local.logging.config_file"),
+            create_event=file_event,
+            modify_event=file_event,
+        )
 
     def run(self):
         if not self._verify_db_connection():
@@ -206,19 +220,10 @@ class Application(StoppableThread):
         )
 
         self.logger.debug("Starting plugin log config file monitors")
-        file_event = Event(name=Events.PLUGIN_LOGGER_FILE_CHANGE.name)
         if config.get("plugin.logging.config_file"):
-            self.plugin_log_config_observer = MonitorFile(
-                path=config.get("plugin.logging.config_file"),
-                create_event=file_event,
-                modify_event=file_event,
-            )
+            self.plugin_log_config_observer.start()
         if config.get("plugin.local.logging.config_file"):
-            self.plugin_local_log_config_observer = MonitorFile(
-                path=config.get("plugin.local.logging.config_file"),
-                create_event=file_event,
-                modify_event=file_event,
-            )
+            self.plugin_local_log_config_observer.start()
 
         self.logger.info("All set! Let me know if you need anything else!")
 
