@@ -67,21 +67,40 @@ class OperationListener(stomp.ConnectionListener):
             if hasattr(operation, "kwargs"):
                 operation.kwargs.pop("wait_timeout", None)
             result = beer_garden.router.route(operation)
-            send_message(message=result, headers=headers, conn=self.conn, send_destination=self.send_destination)
+            send_message(
+                message=result,
+                headers=headers,
+                conn=self.conn,
+                send_destination=self.send_destination,
+            )
         except Exception as e:
-            send_error_msg(error_msg=str(e), headers=headers, conn=self.conn, send_destination=self.send_destination)
+            send_error_msg(
+                error_msg=str(e),
+                headers=headers,
+                conn=self.conn,
+                send_destination=self.send_destination,
+            )
             logger.warning(str(e))
 
 
 class Connection:
-    def __init__(self, host_and_ports=None, send_destination=None, subscribe_destination=None, ssl=None,
-                 username=None, password=None):
+    def __init__(
+        self,
+        host_and_ports=None,
+        send_destination=None,
+        subscribe_destination=None,
+        ssl=None,
+        username=None,
+        password=None,
+    ):
         self.username = username
         self.password = password
         self.subscribe_destination = subscribe_destination
         self.send_destination = send_destination
         self.bg_active = True
-        self.conn = stomp.Connection(host_and_ports=host_and_ports, heartbeats=(10000, 0))
+        self.conn = stomp.Connection(
+            host_and_ports=host_and_ports, heartbeats=(10000, 0)
+        )
         if ssl:
             if ssl.use_ssl:
                 self.conn.set_ssl(
@@ -130,4 +149,6 @@ class Connection:
         return self.conn.is_connected()
 
     def send_event(self, event):
-        send_message(message=event, conn=self.conn, send_destination=self.send_destination)
+        send_message(
+            message=event, conn=self.conn, send_destination=self.send_destination
+        )

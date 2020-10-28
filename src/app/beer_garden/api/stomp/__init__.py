@@ -26,9 +26,14 @@ def run(ep_conn):
     logger.info(
         "Starting Stomp entry point on host and port: " + host_and_ports.__str__()
     )
-    conn = Connection(host_and_ports=host_and_ports, send_destination=stomp_config.event_destination,
-                      subscribe_destination=stomp_config.operation_destination, ssl=stomp_config.ssl,
-                      username=stomp_config.username, password=stomp_config.password)
+    conn = Connection(
+        host_and_ports=host_and_ports,
+        send_destination=stomp_config.event_destination,
+        subscribe_destination=stomp_config.operation_destination,
+        ssl=stomp_config.ssl,
+        username=stomp_config.username,
+        password=stomp_config.password,
+    )
     conn.connect("connected")
     _setup_operation_forwarding()
 

@@ -832,12 +832,14 @@ _STOMP_SPEC = {
                 },
                 "verify_host": {
                     "type": "bool",
-                    "description": "Verify the server's certificate was signed by a trusted CA'",
+                    "description": "Verify the server's certificate "
+                    "was signed by a trusted CA'",
                     "default": True,
                 },
                 "verify_hostname": {
                     "type": "bool",
-                    "description": "Verify the server's actual host name against the expected name'",
+                    "description": "Verify the server's actual "
+                    "host name against the expected name'",
                     "default": True,
                 },
             },
