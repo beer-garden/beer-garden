@@ -8,7 +8,7 @@ x-definitions: &env
     # IMPORTANT!!
     # Change this to support both local and remote plugins
     # Should be resolvable from inside and outside the docker network
-    BG_PUBLISH_HOSTNAME: localhost
+    BG_MQ_HOST: localhost
 
     # IMPORTANT!!
     # If you are connection to a Parent BG instance, toggle true
@@ -37,7 +37,7 @@ services:
             BG_DB_NAME: beer_garden_v3
 
             # Point at the correct message broker
-            BG_MQ_HOST: rabbitmq
+            BG_MQ_INTERNAL_HOST: rabbitmq
             BG_MQ_CONNECTIONS_ADMIN_USER: beer_garden
             BG_MQ_CONNECTIONS_ADMIN_PASSWORD: password
             BG_MQ_CONNECTIONS_MESSAGE_USER: beer_garden
@@ -116,6 +116,20 @@ services:
             - "15672:15672"
         volumes:
             - rabbitmq-home:/var/lib/rabbitmq
+
+    activemq:
+        image: vromero/activemq-artemis:latest
+        restart: always
+        environment:
+            - ARTEMIS_USERNAME=beer_garden
+            - ARTEMIS_PASSWORD=password
+        networks:
+            - bg-network
+        ports:
+          - "61613:61613"
+          - "8161:8161"
+        volumes:
+            - ./data/activemq-config/etc-override-non-ssl:/var/lib/artemis/etc-override
 
 networks:
     bg-network:

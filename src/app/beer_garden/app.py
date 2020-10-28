@@ -46,7 +46,6 @@ class Application(StoppableThread):
     clients = None
     helper_threads = None
     entry_manager = None
-    plugin_logger_observer = None
 
     def __init__(self):
         super(Application, self).__init__(
@@ -207,13 +206,20 @@ class Application(StoppableThread):
             event_name=Events.GARDEN_STARTED.name, status="RUNNING"
         )
 
-        self.logger.debug("Starting Plugin-logger Monitor")
-        self.plugin_logger_observer = MonitorFile(
-            config.get("plugin.logging.config_file"),
-            create_event=Event(name=Events.PLUGIN_LOGGER_FILE_CHANGE.name),
-            modified_event=Event(name=Events.PLUGIN_LOGGER_FILE_CHANGE.name),
-            moved_event=Event(name=Events.PLUGIN_LOGGER_FILE_CHANGE.name),
-        )
+        self.logger.debug("Starting plugin log config file monitors")
+        file_event = Event(name=Events.PLUGIN_LOGGER_FILE_CHANGE.name)
+        if config.get("plugin.logging.config_file"):
+            self.plugin_log_config_observer = MonitorFile(
+                path=config.get("plugin.logging.config_file"),
+                create_event=file_event,
+                modify_event=file_event,
+            )
+        if config.get("plugin.local.logging.config_file"):
+            self.plugin_local_log_config_observer = MonitorFile(
+                path=config.get("plugin.local.logging.config_file"),
+                create_event=file_event,
+                modify_event=file_event,
+            )
 
         self.logger.info("All set! Let me know if you need anything else!")
 
@@ -231,8 +237,9 @@ class Application(StoppableThread):
             self.logger.debug("Pausing scheduler - no more jobs will be run")
             self.scheduler.pause()
 
-        self.logger.debug("Stopping Plugin-logger Monitor")
-        self.plugin_logger_observer.stop()
+        self.logger.debug("Stopping plugin log config file monitors")
+        self.plugin_log_config_observer.stop()
+        self.plugin_local_log_config_observer.stop()
 
         self.logger.debug("Stopping forwarding processor...")
         beer_garden.router.forward_processor.stop()

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-
 import string
 from concurrent.futures import ThreadPoolExecutor, wait
 from enum import Enum
 
 import json
 import logging
+import os
 import sys
 from brewtils.models import Event, Events, System
 from brewtils.specification import _SYSTEM_SPEC
@@ -24,6 +24,8 @@ from beer_garden.local_plugins.env_help import expand_string
 from beer_garden.local_plugins.runner import ProcessRunner
 
 CONFIG_NAME = "beer.conf"
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigKeys(Enum):
@@ -387,6 +389,16 @@ class PluginManager(StoppableThread):
         # Ensure values are all strings
         for key, value in env.items():
             env[key] = json.dumps(value) if isinstance(value, dict) else str(value)
+
+        # Allowed host env vars
+        for env_var in config.get("plugin.local.host_env_vars"):
+            if env_var in env:
+                logger.warning(
+                    f"Skipping host environment variable {env_var} for runner at "
+                    f"{plugin_path} as it's already set in the process environment"
+                )
+            else:
+                env[env_var] = os.environ.get(env_var, default="")
 
         # ENVIRONMENT from beer.conf
         for key, value in plugin_config.get("ENVIRONMENT", {}).items():

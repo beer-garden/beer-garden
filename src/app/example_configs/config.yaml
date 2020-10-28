@@ -35,6 +35,19 @@ entry:
       private_key: null
       public_key: null
     url_prefix: /
+  stomp:
+    cert_file: null
+    enabled: false
+    event_destination: Beer_Garden_Events
+    host: localhost
+    operation_destination: Beer_Garden_Operations
+    password: password
+    port: 61613
+    private_key: null
+    use_ssl: false
+    username: beer_garden
+    verify_host: true
+    verify_hostname: true
 garden:
   name: default
 log:
@@ -73,6 +86,7 @@ mq:
   exchange: beer_garden
   heartbeat_interval: 3600
   host: localhost
+  internal_host: null
   virtual_host: /
 parent:
   http:
@@ -105,7 +119,9 @@ plugin:
       password: password
       username: admin
     directory: ./plugins
+    host_env_vars: []
     logging:
+      config_file: null
       stream_files: false
     timeout:
       shutdown: 10
@@ -115,7 +131,6 @@ plugin:
     fallback_level: INFO
   status_heartbeat: 5
   status_timeout: 30
-publish_hostname: localhost
 scheduler:
   auth:
     password: null

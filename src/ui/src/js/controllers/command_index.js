@@ -2,29 +2,40 @@ commandIndexController.$inject = [
   '$rootScope',
   '$scope',
   '$stateParams',
+  'localStorageService',
   'DTOptionsBuilder',
-  'DTColumnBuilder',
 ];
 
 /**
  * commandIndexController - Angular controller for all commands page.
- * @param  {$rootScope} $rootScope   Angular's $rootScope object.
- * @param  {$scope} $scope           Angular's $scope object.
+ * @param  {Object} $rootScope       Angular's $rootScope object.
+ * @param  {Object} $scope           Angular's $scope object.
+ * @param  {Object} localStorageService  Storage service
  * @param  {Object} DTOptionsBuilder Data-tables' builder for options.
  */
 export default function commandIndexController(
     $rootScope,
     $scope,
     $stateParams,
+    localStorageService,
     DTOptionsBuilder) {
   $scope.setWindowTitle('commands');
   $scope.filterHidden = false;
   $scope.dtInstance = {};
   $scope.dtOptions = DTOptionsBuilder.newOptions()
     .withOption('autoWidth', false)
+    .withOption('pageLength', localStorageService.get('_command_index_length') || 10)
     .withOption('hiddenContainer', true)
     .withOption('order', [[0, 'asc'], [1, 'asc'], [2, 'asc'], [3, 'asc']])
     .withBootstrap();
+
+  $scope.instanceCreated = function(_instance) {
+    $scope.dtInstance = _instance;
+
+    $('#commandIndexTable').on('length.dt', (event, settings, len) => {
+      localStorageService.set('_command_index_length', len);
+    });
+  };
 
   $scope.hiddenComparator = function(hidden, checkbox){
     return checkbox || !hidden;

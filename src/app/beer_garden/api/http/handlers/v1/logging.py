@@ -14,6 +14,13 @@ class LoggingAPI(BaseHandler):
         description: |
           Will return a Python logging configuration that can be used to configure
           plugin logging.
+        parameters:
+          - name: local
+            in: query
+            required: false
+            description: Whether to request the local plugin logging configuration
+            type: boolean
+            default: false
         responses:
           200:
             description: Logging Configuration for system
@@ -22,7 +29,15 @@ class LoggingAPI(BaseHandler):
         tags:
           - Logging
         """
-        response = await self.client(Operation(operation_type="PLUGIN_LOG_READ"))
+        local = self.get_query_argument("local", None)
+        if local is None:
+            local = False
+        else:
+            local = bool(local.lower() == "true")
+
+        response = await self.client(
+            Operation(operation_type="PLUGIN_LOG_READ", kwargs={"local": local})
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

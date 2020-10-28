@@ -412,8 +412,22 @@ _MQ_SPEC = {
         "host": {
             "type": "str",
             "default": "localhost",
-            "description": "Hostname of MQ to use",
-            "previous_names": ["amq_host"],
+            "description": "Globally resolvable host name of message broker",
+            "long_description": "This will be supplied to all plugins as part of their "
+            "initialization process as the broker to connect to. If 'internal_host "
+            "(below) is not supplied, this value will also be used as the location of "
+            "the message by the Beergarden application.",
+            "alt_env_names": ["BG_PUBLISH_HOSTNAME", "PUBLISH_HOSTNAME"],
+        },
+        "internal_host": {
+            "type": "str",
+            "description": "Hostname of message broker",
+            "long_description": "If given, this value will be used by the Beergarden "
+            "application as the location of the message broker. This is mainly "
+            "intended to support a container-based environment where the name used to "
+            "connect to the message broker may be different depending on whether the "
+            "application or a plugin is making the connection.",
+            "required": False,
         },
         "admin_queue_expiry": {
             "type": "int",
@@ -760,10 +774,77 @@ _HTTP_SPEC = {
     },
 }
 
+_STOMP_SPEC = {
+    "type": "dict",
+    "items": {
+        "enabled": {
+            "type": "bool",
+            "default": False,
+            "description": "Run an stomp server",
+        },
+        "event_destination": {
+            "type": "str",
+            "default": "Beer_Garden_Events",
+            "description": "Publish topic where events are sent",
+        },
+        "operation_destination": {
+            "type": "str",
+            "default": "Beer_Garden_Operations",
+            "description": "Subscription topic where Beer_Garden listens for operations",
+        },
+        "host": {
+            "type": "str",
+            "default": "localhost",
+            "description": "Connection hostname",
+        },
+        "port": {
+            "type": "int",
+            "default": 61613,
+            "description": "Connection port number",
+        },
+        "username": {
+            "type": "str",
+            "description": "Username to use for authentication",
+            "default": "beer_garden",
+        },
+        "password": {
+            "type": "str",
+            "description": "Password to use for authentication",
+            "default": "password",
+        },
+        "use_ssl": {
+            "type": "bool",
+            "description": "Use SSL for connection",
+            "default": False,
+        },
+        "private_key": {
+            "type": "str",
+            "description": "Path to private key",
+            "required": False,
+        },
+        "cert_file": {
+            "type": "str",
+            "description": "Path to certificate file",
+            "required": False,
+        },
+        "verify_host": {
+            "type": "bool",
+            "description": "Verify the server's certificate was signed by a trusted CA'",
+            "default": True,
+        },
+        "verify_hostname": {
+            "type": "bool",
+            "description": "Verify the server's actual host name against the expected name'",
+            "default": True,
+        },
+    },
+}
+
 _ENTRY_SPEC = {
     "type": "dict",
     "items": {
         "http": _HTTP_SPEC,
+        "stomp": _STOMP_SPEC,
     },
 }
 
@@ -1018,9 +1099,22 @@ _PLUGIN_SPEC = {
                     "previous_names": ["plugins_directory", "plugin_directory"],
                     "alt_env_names": ["PLUGINS_DIRECTORY", "BG_PLUGIN_DIRECTORY"],
                 },
+                "host_env_vars": {
+                    "type": "list",
+                    "items": {"env_var": {"type": "str"}},
+                    "default": [],
+                    "description": "Host environment variables that will be propagated "
+                    "to local plugin processes",
+                },
                 "logging": {
                     "type": "dict",
                     "items": {
+                        "config_file": {
+                            "type": "str",
+                            "description": "Path to a logging configuration file for "
+                            "local plugins",
+                            "required": False,
+                        },
                         "stream_files": {
                             "type": "bool",
                             "description": "Write plugin STDOUT to plugin.out and "
@@ -1135,20 +1229,7 @@ _VALIDATOR_SPEC = {
     },
 }
 
-# I have omitted the following from the spec
-#
-# * "backend" - there should be no need for this
-# * "thrift" - there should be no need for this
-#
-# Everything else has been copied wholesale into this specification.
 _SPECIFICATION = {
-    "publish_hostname": {
-        "type": "str",
-        "default": "localhost",
-        "description": "Publicly accessible hostname for plugins to connect to",
-        "previous_names": ["amq_publish_host"],
-        "alt_env_names": ["AMQ_PUBLISH_HOST"],
-    },
     "mq": _MQ_SPEC,
     "application": _APPLICATION_SPEC,
     "auth": _AUTH_SPEC,
