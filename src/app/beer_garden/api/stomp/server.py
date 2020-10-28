@@ -1,7 +1,6 @@
 import stomp
 import logging
 import time
-import beer_garden.config as config
 from brewtils.schema_parser import SchemaParser
 import beer_garden.events
 import beer_garden.router
@@ -83,14 +82,15 @@ class Connection:
         self.send_destination = send_destination
         self.bg_active = True
         self.conn = stomp.Connection(host_and_ports=host_and_ports, heartbeats=(10000, 0))
-        if ssl is not None:
+        if ssl:
             if ssl.use_ssl:
                 self.conn.set_ssl(
                     for_hosts=host_and_ports,
                     key_file=ssl.private_key,
                     cert_file=ssl.cert_file,
                 )
-        self.conn.set_listener("", OperationListener(self.conn, send_destination))
+        if send_destination:
+            self.conn.set_listener("", OperationListener(self.conn, send_destination))
 
     def connect(self, connected_message=None):
         wait_time = 0.1
