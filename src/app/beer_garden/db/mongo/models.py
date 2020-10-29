@@ -684,7 +684,9 @@ class File(MongoModel, Document):
     brewtils_model = brewtils.models.File
 
     file_name = StringField(required=True)
-    chunks = ListField(required=False)
+    file_size = IntField(required=True)
+    chunks = DictField(required=False)
+    chunk_size = IntField(required=True)
 
 
 class FileChunk(MongoModel, Document):
@@ -692,5 +694,4 @@ class FileChunk(MongoModel, Document):
 
     file_id = StringField(required=True)
     n = IntField(required=True)
-    chunk_size = IntField(required=True)
     data = StringField(required=True)

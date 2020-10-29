@@ -509,15 +509,7 @@ class RequestValidator(object):
             elif parameter.type.upper() == "DATETIME":
                 return int(value)
             elif parameter.type.upper() == "BASE64":
-                # Trim off the web header info
-                data_prefix = "data:text/plain;base64"
-                tokens = value.split(',')
-                if data_prefix in tokens[0]:
-                    return tokens[1]
-                else:
-                    # Maybe it's a different format?
-                    self.logger.warning("Base64 string with unexpected formatting found.")
-                    return value
+                return value
             else:
                 raise ModelValidationError(
                     "Unknown type for parameter. Please contact a system administrator."
