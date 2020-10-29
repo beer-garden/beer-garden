@@ -36,10 +36,10 @@ entry:
       public_key: null
     url_prefix: /
   stomp:
-    enabled: false
-    event_destination: Beer_Garden_Events
+    enabled: true
+    send_destination: Beer_Garden_Events
     host: localhost
-    operation_destination: Beer_Garden_Operations
+    subscribe_destination: Beer_Garden_Operations
     password: password
     port: 61613
     ssl:

@@ -5,14 +5,8 @@ import types
 
 import beer_garden.config as config
 from brewtils.models import Event, Events
-import beer_garden.events
-import beer_garden.router
-import threading
 from beer_garden.api.stomp.stomp_manager import StompManager, shutdown
-from beer_garden.api.stomp.processors import EventManager
-from beer_garden.api.stomp.server import Connection
 from beer_garden.events import publish
-from beer_garden.events.processors import QueueListener
 
 logger = logging.getLogger(__name__)
 

@@ -782,12 +782,12 @@ _STOMP_SPEC = {
             "default": False,
             "description": "Run an stomp server",
         },
-        "event_destination": {
+        "send_destination": {
             "type": "str",
             "default": "Beer_Garden_Events",
             "description": "Publish topic where events are sent",
         },
-        "operation_destination": {
+        "subscribe_destination": {
             "type": "str",
             "default": "Beer_Garden_Operations",
             "description": "Subscription topic where Beer_Garden listens for operations",

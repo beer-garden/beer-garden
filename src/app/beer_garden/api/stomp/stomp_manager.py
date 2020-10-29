@@ -1,7 +1,4 @@
 import logging
-import types
-
-import beer_garden.config as config
 from brewtils.models import Event, Events
 import beer_garden.events
 import beer_garden.router
@@ -26,8 +23,8 @@ class StompManager:
         host_and_ports = [(stomp_config.host, stomp_config.port)]
         self.conn = Connection(
             host_and_ports=host_and_ports,
-            send_destination=stomp_config.get("event_destination"),
-            subscribe_destination=stomp_config.get("operation_destination"),
+            send_destination=stomp_config.get("send_destination"),
+            subscribe_destination=stomp_config.get("subscribe_destination"),
             ssl=stomp_config.ssl,
             username=stomp_config.username,
             password=stomp_config.password,
@@ -52,9 +49,10 @@ class StompManager:
                 self.conn.disconnect()
                 logger.debug("Stopping forward processing")
                 beer_garden.router.forward_processor.stop()
-                # This will almost definitely not be published because it would need to make it up
-                # to the main process and back down into this process. We just publish this here in
-                # case the main process is looking for it.
+                # This will almost definitely not be published because
+                # it would need to make it up to the main process and
+                # back down into this process. We just publish this
+                # here in case the main process is looking for it.
                 publish(Event(name=Events.ENTRY_STOPPED.name))
                 break
 
@@ -72,5 +70,5 @@ class StompManager:
         )
 
     def _setup_event_handling(self):
-         # This will push all events generated in the entry point up to the master process
+        # This will push all events generated in the entry point up to the master process
         beer_garden.events.manager = EventManager(self.ep_conn)
