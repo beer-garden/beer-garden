@@ -9,20 +9,25 @@ from beer_garden.api.stomp.stomp_manager import StompManager
 from beer_garden.events import publish
 
 logger = logging.getLogger(__name__)
+st_manager_stack = []
 
 
 def run(ep_conn):
+    global st_manager_stack
     stomp_config = config.get("entry.stomp")
     host_and_ports = [(stomp_config.host, stomp_config.port)]
     logger.info(
         "Starting Stomp entry point on host and port: " + host_and_ports.__str__()
     )
     st_manager = StompManager(ep_conn=ep_conn, stomp_config=stomp_config)
+
     st_manager.start()
+    st_manager_stack.append(st_manager)
     logger.info("Stomp entry point started")
 
     publish(Event(name=Events.ENTRY_STARTED.name))
 
 
 def signal_handler(_: int, __: types.FrameType):
-    pass
+    global st_manager_stack
+    st_manager_stack.pop().stop()
