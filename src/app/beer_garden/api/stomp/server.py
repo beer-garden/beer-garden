@@ -7,7 +7,6 @@ import beer_garden.router
 from beer_garden.api.stomp.processors import append_headers, process_send_message
 
 logger = logging.getLogger(__name__)
-stomp.logging.setLevel("WARN")
 
 
 def send_message(message=None, headers=None, conn=None, send_destination=None):

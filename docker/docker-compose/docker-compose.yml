@@ -8,12 +8,12 @@ x-definitions: &env
     # IMPORTANT!!
     # Change this to support both local and remote plugins
     # Should be resolvable from inside and outside the docker network
-    BG_MQ_HOST: localhost
+    BG_MQ_HOST: rabbitmq
 
     # IMPORTANT!!
     # If you are connection to a Parent BG instance, toggle true
     BG_PARENT_HTTP_ENABLE: "false"
-
+    BG_ENTRY_STOMP_ENABLED: "true"
     # IMPORTANT !!
     # If you are connecting to a Parent BG instance, change this the resolvable DNS entry
     BG_PARENT_HTTP_HOST: localhost

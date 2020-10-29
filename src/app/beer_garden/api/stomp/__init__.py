@@ -5,7 +5,7 @@ import types
 
 import beer_garden.config as config
 from brewtils.models import Event, Events
-from beer_garden.api.stomp.stomp_manager import StompManager, shutdown
+from beer_garden.api.stomp.stomp_manager import StompManager
 from beer_garden.events import publish
 
 logger = logging.getLogger(__name__)
@@ -18,10 +18,11 @@ def run(ep_conn):
         "Starting Stomp entry point on host and port: " + host_and_ports.__str__()
     )
     st_manager = StompManager(ep_conn=ep_conn, stomp_config=stomp_config)
+    st_manager.start()
     logger.info("Stomp entry point started")
-    st_manager.start_thread()
+
     publish(Event(name=Events.ENTRY_STARTED.name))
 
 
 def signal_handler(_: int, __: types.FrameType):
-    shutdown()
+    pass

@@ -2,23 +2,19 @@ import logging
 from brewtils.models import Event, Events
 import beer_garden.events
 import beer_garden.router
-import threading
 from beer_garden.api.stomp.processors import EventManager
 from beer_garden.events import publish
 from beer_garden.events.processors import QueueListener
 from beer_garden.api.stomp.server import Connection
-
-logger = logging.getLogger(__name__)
-stop_thread = False
+from brewtils.stoppable_thread import StoppableThread
 
 
-def shutdown():
-    global stop_thread
-    stop_thread = True
+class StompManager(StoppableThread):
 
+    logger = logging.getLogger(__name__)
 
-class StompManager:
     def __init__(self, ep_conn, stomp_config):
+
         self.ep_conn = ep_conn
         host_and_ports = [(stomp_config.host, stomp_config.port)]
         self.conn = Connection(
@@ -33,38 +29,37 @@ class StompManager:
 
         self._setup_event_handling()
         self._setup_operation_forwarding()
-        logger.debug("Starting forward processor")
+        self.logger.debug("Starting forward processor")
         beer_garden.router.forward_processor.start()
-        self.stomp_thread = threading.Thread(self._event_thread())
+        super().__init__(logger=self.logger, name="StompManger")
 
-    def start_thread(self):
-        self.stomp_thread.start()
-
-    def _event_thread(self):
-        while True:
+    def run(self):
+        while not self.stopped():
             self.reconnect()
             if self.ep_conn.poll():
                 self.handle_event(self.ep_conn.recv())
-            if stop_thread:
-                self.conn.disconnect()
-                logger.debug("Stopping forward processing")
-                beer_garden.router.forward_processor.stop()
-                # This will almost definitely not be published because
-                # it would need to make it up to the main process and
-                # back down into this process. We just publish this
-                # here in case the main process is looking for it.
-                publish(Event(name=Events.ENTRY_STOPPED.name))
-                break
+        self.shutdown()
+
+    def shutdown(self):
+        self.conn.disconnect()
+        self.logger.debug("Stopping forward processing")
+        beer_garden.router.forward_processor.stop()
+        # This will almost definitely not be published because
+        # it would need to make it up to the main process and
+        # back down into this process. We just publish this
+        # here in case the main process is looking for it.
+        publish(Event(name=Events.ENTRY_STOPPED.name))
 
     def reconnect(self):
         if not self.conn.is_connected():
-            logger.warning("Lost stomp connection")
+            self.logger.warning("Lost stomp connection")
             self.conn.connect("reconnected")
 
     def handle_event(self, event):
         self.conn.send_event(event)
 
-    def _setup_operation_forwarding(self):
+    @staticmethod
+    def _setup_operation_forwarding():
         beer_garden.router.forward_processor = QueueListener(
             action=beer_garden.router.forward
         )
