@@ -23,6 +23,8 @@ from beer_garden.log import process_record
 
 T = TypeVar("T", bound="EntryPoint")
 
+logger = logging.getLogger(__name__)
+
 
 class EntryPoint:
     """A Beergarden API entry point
@@ -69,7 +71,6 @@ class EntryPoint:
         self._log_queue = log_queue
         self._signal_handler = signal_handler
 
-        self._logger = logging.getLogger(__name__)
         self._process = None
         self._ep_conn, self._mp_conn = Pipe()
         self._event_listener = PipeListener(
@@ -228,7 +229,10 @@ class Manager:
     def create_all(self):
         for entry_name, entry_value in beer_garden.config.get("entry").items():
             if entry_value.get("enabled"):
-                self.entry_points.append(self.create(entry_name))
+                try:
+                    self.entry_points.append(self.create(entry_name))
+                except Exception as ex:
+                    logger.exception(f"Error creating entry point {entry_name}: {ex}")
 
     def create(self, module_name: str) -> T:
         module = import_module(f"beer_garden.api.{module_name}")
