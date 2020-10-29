@@ -36,7 +36,7 @@ entry:
       public_key: null
     url_prefix: /
   stomp:
-    enabled: true
+    enabled: false
     send_destination: Beer_Garden_Events
     host: localhost
     subscribe_destination: Beer_Garden_Operations
