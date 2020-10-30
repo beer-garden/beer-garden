@@ -67,7 +67,8 @@ class OperationListener(stomp.ConnectionListener):
             if hasattr(operation, "kwargs"):
                 operation.kwargs.pop("wait_timeout", None)
             result = beer_garden.router.route(operation)
-            send_message(result, headers)
+            if result:
+                send_message(result, headers)
         except Exception as e:
             send_error_msg(str(e), headers)
             logger.warning(str(e))

@@ -94,6 +94,18 @@ export default function gardenService($http) {
         'type': 'integer',
         'minLength': 1,
       },
+      'stomp_host': {
+              'title': 'Host Name',
+              'description': 'Beer-garden hostname',
+              'type': 'string',
+              'minLength': 1,
+            },
+      'stomp_port': {
+              'title': 'Port',
+              'description': 'Beer-garden port',
+              'type': 'integer',
+              'minLength': 1,
+            },
       'url_prefix': {
         'title': 'URL Prefix',
         'description': 'URL path that will be used as a prefix when communicating with Beer-garden. Useful if Beer-garden is running on a URL other than \'/\'.',
@@ -119,11 +131,16 @@ export default function gardenService($http) {
         'description': 'Path to client certificate to use when communicating with Beer-garden',
         'type': 'string',
       },
-      'destination': {
+      'send_destination': {
               'title': 'Destination',
-              'description': 'Destination queue where Stomp will send message.',
+              'description': 'Destination queue where Stomp will send messages.',
               'type': 'string',
       },
+      'subscribe_destination': {
+                    'title': 'Destination',
+                    'description': 'Destination queue where Stomp will l.',
+                    'type': 'string',
+            },
       'username': {
                     'title': 'Username',
                     'description': 'Username for Stomp connection.',
@@ -166,9 +183,10 @@ export default function gardenService($http) {
             {
               'title': 'STOMP',
               'items': [
-                'host',
-                'port',
-                'destination',
+                'stomp_host',
+                'stomp_port',
+                'send_destination',
+                'subscribe_destination',
                 'username',
                 'password'
               ],

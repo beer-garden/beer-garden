@@ -4,7 +4,7 @@ from brewtils.schema_parser import SchemaParser
 import beer_garden.config as config
 import beer_garden
 from beer_garden.events.processors import QueueListener
-from brewtils.models import Event
+from brewtils.models import Event, Operation
 
 
 class HttpParentUpdater(QueueListener):
@@ -101,9 +101,13 @@ class StompParentUpdater(QueueListener):
 
     def send(self, event):
         stomp_config = config.get("parent.stomp")
-        headers = {"model_class": event.__class__.__name__}
-        message = SchemaParser.serialize(event, to_string=True,)
-        self.conn.send(destination=stomp_config.event_destination, body=message, headers=headers)
+        # headers = {"model_class": event.__class__.__name__}
+        operation = Operation(operation_type="PUBLISH_EVENT",
+                              model=event,
+                              model_type="Event"
+                              )
+        message = SchemaParser.serialize(operation, to_string=True,)
+        self.conn.send(destination=stomp_config.event_destination, body=message, headers={})
 
     def connect(self):
         self.conn = stomp.Connection(host_and_ports=self.host_and_ports, heartbeats=(10000, 0))

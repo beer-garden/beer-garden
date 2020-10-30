@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from beer_garden.api.stomp import run as stomp_parent_run
 from datetime import timedelta
 from functools import partial
 
@@ -305,7 +306,8 @@ class Application(StoppableThread):
                 beer_garden.garden.publish_garden(
                     event_name=Events.GARDEN_STARTED.name, status="RUNNING"
                 )
-
+            # TODO change to use entry point get child added to ui
+            # stomp_parent_run()
             event_manager.register(
                 StompParentUpdater(
                     black_list=skip_events,

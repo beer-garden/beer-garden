@@ -32,6 +32,7 @@ from beer_garden.garden import get_garden, get_gardens
 from beer_garden.requests import complete_request
 
 logger = logging.getLogger(__name__)
+stomp.logging.setLevel("WARN")
 
 # These are the operations that we will forward to child gardens
 routable_operations = [
@@ -140,6 +141,7 @@ route_functions = {
     "QUEUE_DELETE_ALL": beer_garden.queues.clear_all_queues,
     "QUEUE_READ_INSTANCE": beer_garden.queues.get_instance_queues,
     "NAMESPACE_READ_ALL": beer_garden.namespace.get_namespaces,
+    "PUBLISH_EVENT": beer_garden.events.publish,
 }
 
 
@@ -284,22 +286,8 @@ def forward(operation: Operation):
         logger.exception(f"Error forwarding operation:{ex}")
 
 
-class StompListener(stomp.ConnectionListener):
-    def __init__(self, conn, garden):
-        self.conn = conn
-        self.garden = garden
-
-    def on_error(self, headers, message):
-        logger.warning("received an error:", headers)
-
-    def on_message(self, headers, message):
-        pass
-
-    def on_disconnected(self):
-        connect_and_sub_stomp_garden(self.conn, self.garden)
-
-
-def connect_and_sub_stomp_garden(conn, garden):
+def connect(conn, garden):
+    # TODO add timeout
     wait_time = 0.1
     while not conn.is_connected():
         try:
@@ -348,11 +336,10 @@ def setup_routing():
             ):
                 with garden_lock:
                     gardens[garden.name] = garden
-                    if garden.connection_type is "stomp":
-                        host_and_ports = [(garden.connection_params["host"], garden.connection_params["host"])]
+                    if garden.connection_type.casefold() == "stomp":
+                        host_and_ports = [(garden.connection_params["host"], garden.connection_params["port"])]
                         conn = stomp.Connection(host_and_ports=host_and_ports)
-                        conn.set_listener(StompListener(conn, garden))
-                        connect_and_sub_stomp_garden(conn, garden)
+                        connect(conn, garden)
                         stomp_garden_connections[garden.name] = conn
             else:
                 logger.warning(f"Garden with invalid connection info: {garden!r}")
@@ -474,6 +461,7 @@ def _determine_target_garden(operation: Operation) -> str:
             or "JOB" in operation.operation_type
             or operation.operation_type
             in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
+            or "PUBLISH_EVENT" in operation.operation_type
     ):
         return config.get("garden.name")
 
@@ -527,6 +515,7 @@ def _forward_stomp(operation: Operation, target_garden: Garden):
         model_class = operation[0].__class__.__name__
     message = SchemaParser.serialize(operation, to_string=True, many=many)
     response_headers = {"model_class": model_class, "many": many}
+    # TODO add reconnection
     stomp_garden_connections[target_garden.name].send(body=message, headers=response_headers,
                                                       destination=target_garden.connection_params.get("destination"))
 

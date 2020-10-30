@@ -38,9 +38,9 @@ entry:
   stomp:
     cert_file: null
     enabled: false
-    event_destination: Beer_Garden_Events
+    event_destination: Beer_Garden_Events_Parent
     host: localhost
-    operation_destination: Beer_Garden_Operations
+    operation_destination: Beer_Garden_Operations_Parent
     password: password
     port: 61613
     private_key: null
@@ -105,7 +105,7 @@ parent:
       public_key: null
     url_prefix: /
   stomp:
-    enabled: true
+    enabled: false
     event_destination: Beer_Garden_Events
     host: localhost
     password: password
