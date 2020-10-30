@@ -7,21 +7,23 @@ import json
 import logging
 import os
 import sys
-from brewtils.models import Event, Events, System
+from brewtils.models import Event, System
 from brewtils.specification import _SYSTEM_SPEC
 from brewtils.stoppable_thread import StoppableThread
 from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_file_location
-from pathlib import Path, PosixPath
+from pathlib import Path
 from random import choice
 from types import ModuleType
 from typing import Any, Dict, List, Optional
 
-import beer_garden
 import beer_garden.config as config
 from beer_garden.errors import PluginValidationError
 from beer_garden.local_plugins.env_help import expand_string
 from beer_garden.local_plugins.runner import ProcessRunner
+
+# This is ... complicated. See the PluginManager docstring
+lpm_proxy = None
 
 CONFIG_NAME = "beer.conf"
 
@@ -47,12 +49,27 @@ class ConfigKeys(Enum):
 
 
 class PluginManager(StoppableThread):
-    """Manages creation and destruction of PluginRunners"""
+    """Manages creation and destruction of PluginRunners
 
-    logger = logging.getLogger(__name__)
-    _instance = None
+    The instance of this class is intended to be created with a
+    ``multiprocessing.managers.BaseManager``. This essentially means that it lives in
+    it's own process, and access to it is achieved using a proxy object. This proxy
+    object is the module-scoped ``lpm_proxy``.
 
-    runners: List[ProcessRunner] = []
+    We do this because we can use the proxy object in the main application process AND
+    we can pass it to the entry point processes. The entry point processes can this use
+    the proxy transparently.
+
+    There are some catches, of course. One is performance, but I don't think it's
+    significant enough to be a concern. The other is important enough to emphasize:
+
+      HEY: RETURN TYPES FOR ALL PUBLIC METHODS OF THIS CLASS **MUST** BE PICKLEABLE!
+
+    This proxy concept is pretty neat, but at some point the data does need to traverse
+    a process boundary. All public (non-underscore) methods are exposed (able to be
+    called by a client using the proxy). That means that anything returned from those
+    methods must be pickleable to work.
+    """
 
     def __init__(
         self,
@@ -62,7 +79,11 @@ class PluginManager(StoppableThread):
         username=None,
         password=None,
     ):
-        self.display_name = "Plugin Manager"
+        super().__init__(logger=logger, name="PluginManager")
+
+        self._display_name = "Plugin Manager"
+        self._logger = logging.getLogger(__name__)
+        self._runners: List[ProcessRunner] = []
 
         self._plugin_path = Path(plugin_dir) if plugin_dir else None
         self._log_dir = log_dir
@@ -70,23 +91,21 @@ class PluginManager(StoppableThread):
         self._username = username
         self._password = password
 
-        super().__init__(logger=self.logger, name="PluginManager")
-
     def run(self):
-        self.logger.info(self.display_name + " is started")
+        self.logger.info(self._display_name + " is started")
 
         while not self.wait(1):
             self.monitor()
 
-        self.logger.info(self.display_name + " is stopped")
+        self.logger.info(self._display_name + " is stopped")
 
     def monitor(self):
         """Ensure that processes are still alive
 
         Iterate through all runners, restarting any processes that have stopped.
         """
-        for runner in self.runners:
-            if self.stopped() or beer_garden.application.stopped():
+        for runner in self._runners:
+            if self.stopped():
                 break
 
             if runner.process and runner.process.poll() is not None:
@@ -97,76 +116,44 @@ class PluginManager(StoppableThread):
                     self.logger.warning(f"Runner {runner} is dead, not restarting")
                     runner.dead = True
 
-    @classmethod
-    def current_paths(cls):
-        return [runner.process_cwd for runner in cls.runners]
+    def current_paths(self):
+        return [runner.process_cwd for runner in self._runners]
 
-    @classmethod
-    def instance(cls):
-        if not cls._instance:
-            cls._instance = cls(
-                plugin_dir=config.get("plugin.local.directory"),
-                log_dir=config.get("plugin.local.log_directory"),
-                connection_info=config.get("entry.http"),
-                username=config.get("plugin.local.auth.username"),
-                password=config.get("plugin.local.auth.password"),
-            )
-        return cls._instance
-
-    @classmethod
-    def handle_event(cls, event):
-        # Only care about local garden
-        if event.garden == config.get("garden.name"):
-            if event.name == Events.INSTANCE_INITIALIZED.name:
-                cls.handle_associate(event)
-            elif event.name == Events.INSTANCE_STARTED.name:
-                cls.handle_start(event)
-            elif event.name == Events.INSTANCE_STOPPED.name:
-                cls.handle_stop(event)
-            elif event.name == Events.SYSTEM_REMOVED.name:
-                cls.remove_system(event.payload)
-            elif event.name == Events.SYSTEM_RELOAD_REQUESTED.name:
-                cls.instance().reload_system(event.payload)
-            elif event.name == Events.SYSTEM_RESCAN_REQUESTED.name:
-                cls.instance().scan_path()
-
-    @classmethod
-    def handle_associate(cls, event):
+    def handle_associate(self, event):
         runner_id = event.payload.metadata.get("runner_id")
 
         if runner_id:
             instance = event.payload
 
-            runner = cls.from_runner_id(runner_id)
+            runner = self._from_runner_id(runner_id)
             runner.associate(instance=instance)
             runner.restart = True
 
-    @classmethod
-    def handle_start(cls, event: Event):
-        runner_id = cls.from_instance_id(event.payload.id)
+    def handle_start(self, event: Event):
+        runner_id = self._from_instance_id(event.payload.id)
 
-        if runner_id in cls.runners:
-            cls.restart(runner_id)
+        if runner_id in self._runners:
+            self.restart(runner_id)
 
-    @classmethod
-    def handle_stop(cls, event: Event):
-        runner = cls.from_instance_id(event.payload.id)
+    def handle_stop(self, event: Event):
+        self.stop_one(instance_id=event.payload.id)
+
+        runner = self._from_instance_id(event.payload.id)
 
         if runner:
             runner.stopped = True
             runner.restart = False
             runner.dead = False
 
-    @classmethod
-    def remove_system(cls, system: System) -> List[ProcessRunner]:
+    def remove_system(self, system: System) -> List[ProcessRunner]:
         remove_runners = []
         for instance in system.instances:
-            for runner in cls.runners:
+            for runner in self._runners:
                 if instance.id == runner.instance_id:
                     remove_runners.append(runner)
 
         for runner in remove_runners:
-            cls.remove(runner)
+            self.remove(runner)
 
         return remove_runners
 
@@ -176,68 +163,63 @@ class PluginManager(StoppableThread):
         # All removed runners should have the same path, so just grab the first
         new_runners = self.create_runners(removed_runners[0].process_cwd)
 
-        self.runners += new_runners
-
         # We need to start these immediately, otherwise the instance IDs won't be
         # associated with runner IDs
         for runner in new_runners:
             self.start_one(runner)
 
-    @classmethod
-    def from_instance_id(cls, instance_id: str) -> Optional[ProcessRunner]:
-        for runner in cls.runners:
+    def _from_instance_id(self, instance_id: str) -> Optional[ProcessRunner]:
+        for runner in self._runners:
             if runner.instance_id == instance_id:
                 return runner
         return None
 
-    @classmethod
-    def from_runner_id(cls, runner_id: str) -> Optional[ProcessRunner]:
-        for runner in cls.runners:
+    def _from_runner_id(self, runner_id: str) -> Optional[ProcessRunner]:
+        for runner in self._runners:
             if runner.runner_id == runner_id:
                 return runner
         return None
 
-    @classmethod
-    def start_all(cls):
-        for runner in cls.runners:
+    def start_all(self):
+        for runner in self._runners:
             runner.start()
 
-    @classmethod
-    def stop_all(cls):
+    def stop_all(self):
 
         shutdown_pool = ThreadPoolExecutor(
-            1 if len(cls.runners) < 1 else len(cls.runners)
+            1 if len(self._runners) < 1 else len(self._runners)
         )
         futures = []
 
-        for runner in cls.runners:
+        for runner in self._runners:
             futures.append(
-                shutdown_pool.submit(cls.stop_one, runner_id=runner.runner_id)
+                shutdown_pool.submit(self.stop_one, runner_id=runner.runner_id)
             )
 
         wait(futures)
 
-    @classmethod
-    def start_one(cls, runner: ProcessRunner) -> None:
+    @staticmethod
+    def start_one(runner: ProcessRunner) -> None:
         runner.start()
 
-    @classmethod
-    def stop_one(cls, runner_id=None, instance_id=None):
-        runner = cls.from_runner_id(runner_id) or cls.from_instance_id(instance_id)
+    def stop_one(self, runner_id=None, instance_id=None):
+        runner = self._from_runner_id(runner_id) or self._from_instance_id(instance_id)
 
         # The process should already be exiting so just wait for it
         runner.join(config.get("plugin.local.timeout.shutdown"))
 
         if runner.is_alive():
-            cls.logger.warning(f"Runner {runner_id} still alive, about to SIGKILL")
+            self._logger.warning(f"Runner {runner_id} still alive, about to SIGKILL")
             runner.kill()
 
-    @classmethod
-    def remove(cls, runner: ProcessRunner):
-        cls.runners.remove(runner)
+        runner.stopped = True
+        runner.restart = False
+        runner.dead = False
 
-    @classmethod
-    def restart(cls, runner: ProcessRunner):
+    def remove(self, runner: ProcessRunner):
+        self._runners.remove(runner)
+
+    def restart(self, runner: ProcessRunner):
         new_runner = ProcessRunner(
             runner_id=runner.runner_id,
             process_args=runner.process_args,
@@ -245,12 +227,12 @@ class PluginManager(StoppableThread):
             process_env=runner.process_env,
         )
 
-        cls.runners.remove(runner)
-        cls.runners.append(new_runner)
+        self._runners.remove(runner)
+        self._runners.append(new_runner)
 
         new_runner.start()
 
-    def scan_path(self, path: str = None) -> List[ProcessRunner]:
+    def scan_path(self, path: str = None) -> None:
         """Create and start ProcessRunners for valid plugins in a given directory
 
         Note: This scan does not walk the directory tree - all plugins must be
@@ -261,7 +243,7 @@ class PluginManager(StoppableThread):
                 initialization.
 
         Returns:
-            Newly loaded and started runner dictionary
+            None
         """
         plugin_path = path or self._plugin_path
 
@@ -273,12 +255,10 @@ class PluginManager(StoppableThread):
             except Exception as ex:
                 self.logger.exception(f"Error loading plugin at {path}: {ex}")
 
-        self.runners += new_runners
+        self._runners += new_runners
 
         for runner in new_runners:
             self.start_one(runner)
-
-        return new_runners
 
     def create_runners(self, plugin_path: Path) -> List[ProcessRunner]:
         """Creates ProcessRunners for a particular directory
@@ -353,7 +333,7 @@ class PluginManager(StoppableThread):
         self,
         plugin_config: Dict[str, Any],
         instance_name: str,
-        plugin_path: PosixPath,
+        plugin_path: Path,
         runner_id: str,
     ) -> Dict[str, str]:
         env = {}

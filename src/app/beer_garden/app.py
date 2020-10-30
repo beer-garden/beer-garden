@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import logging
-from datetime import timedelta
-from functools import partial
-
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils import EasyClient
 from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
+from datetime import timedelta
+from functools import partial
+from multiprocessing.managers import BaseManager
 from pytz import utc
 
 import beer_garden.api
@@ -16,6 +16,7 @@ import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.events
 import beer_garden.garden
+import beer_garden.local_plugins.manager
 import beer_garden.namespace
 import beer_garden.queue.api as queue
 import beer_garden.router
@@ -57,6 +58,7 @@ class Application(StoppableThread):
 
     def initialize(self):
         """Actually construct all the various component pieces"""
+
         self.scheduler = self._setup_scheduler()
 
         load_plugin_log_config()
@@ -92,6 +94,22 @@ class Application(StoppableThread):
         beer_garden.router.forward_processor = QueueListener(
             action=beer_garden.router.forward, name="forwarder"
         )
+
+        BaseManager.register(
+            "PluginManager",
+            callable=partial(
+                PluginManager,
+                plugin_dir=config.get("plugin.local.directory"),
+                log_dir=config.get("plugin.local.log_directory"),
+                connection_info=config.get("entry.http"),
+                username=config.get("plugin.local.auth.username"),
+                password=config.get("plugin.local.auth.password"),
+            ),
+        )
+
+        data_manager = BaseManager()
+        data_manager.start()
+        beer_garden.local_plugins.manager.lpm_proxy = data_manager.PluginManager()
 
         self.entry_manager = beer_garden.api.entry_point.Manager()
 
@@ -133,7 +151,20 @@ class Application(StoppableThread):
         if event.garden == beer_garden.config.get("garden.name"):
             # Start local plugins after the entry point comes up
             if event.name == Events.ENTRY_STARTED.name:
-                PluginManager.instance().scan_path()
+                beer_garden.local_plugins.manager.lpm_proxy.scan_path()
+
+            elif event.name == Events.INSTANCE_INITIALIZED.name:
+                beer_garden.local_plugins.manager.lpm_proxy.handle_associate(event)
+            elif event.name == Events.INSTANCE_STARTED.name:
+                beer_garden.local_plugins.manager.lpm_proxy.handle_start(event)
+            elif event.name == Events.INSTANCE_STOPPED.name:
+                beer_garden.local_plugins.manager.lpm_proxy.handle_stop(event)
+            elif event.name == Events.SYSTEM_REMOVED.name:
+                beer_garden.local_plugins.manager.lpm_proxy.remove_system(event.payload)
+            elif event.name == Events.SYSTEM_RELOAD_REQUESTED.name:
+                beer_garden.local_plugins.manager.lpm_proxy.reload_system(event.payload)
+            elif event.name == Events.SYSTEM_RESCAN_REQUESTED.name:
+                beer_garden.local_plugins.manager.lpm_proxy.scan_path()
 
     def _progressive_backoff(self, func, failure_message):
         wait_time = 0.1
@@ -209,7 +240,7 @@ class Application(StoppableThread):
         self.entry_manager.start()
 
         self.logger.debug("Starting local plugin process monitoring...")
-        PluginManager.instance().start()
+        beer_garden.local_plugins.manager.lpm_proxy.start()
 
         self.logger.debug("Starting scheduler")
         self.scheduler.start()
@@ -257,10 +288,10 @@ class Application(StoppableThread):
             self.scheduler.shutdown(wait=False)
 
         self.logger.debug("Stopping local plugin process monitoring")
-        PluginManager.instance().stop()
+        beer_garden.local_plugins.manager.lpm_proxy.stop()
 
         self.logger.debug("Stopping local plugins")
-        PluginManager.instance().stop_all()
+        beer_garden.local_plugins.manager.lpm_proxy.stop_all()
 
         self.logger.debug("Stopping entry points")
         self.entry_manager.stop()
