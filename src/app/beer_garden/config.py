@@ -782,12 +782,12 @@ _STOMP_SPEC = {
             "default": False,
             "description": "Run an stomp server",
         },
-        "event_destination": {
+        "send_destination": {
             "type": "str",
             "default": "Beer_Garden_Events",
             "description": "Publish topic where events are sent",
         },
-        "operation_destination": {
+        "subscribe_destination": {
             "type": "str",
             "default": "Beer_Garden_Operations",
             "description": "Subscription topic where Beer_Garden listens for operations",
@@ -812,30 +812,37 @@ _STOMP_SPEC = {
             "description": "Password to use for authentication",
             "default": "password",
         },
-        "use_ssl": {
-            "type": "bool",
-            "description": "Use SSL for connection",
-            "default": False,
-        },
-        "private_key": {
-            "type": "str",
-            "description": "Path to private key",
-            "required": False,
-        },
-        "cert_file": {
-            "type": "str",
-            "description": "Path to certificate file",
-            "required": False,
-        },
-        "verify_host": {
-            "type": "bool",
-            "description": "Verify the server's certificate was signed by a trusted CA'",
-            "default": True,
-        },
-        "verify_hostname": {
-            "type": "bool",
-            "description": "Verify the server's actual host name against the expected name'",
-            "default": True,
+        "ssl": {
+            "type": "dict",
+            "items": {
+                "use_ssl": {
+                    "type": "bool",
+                    "description": "Use SSL for connection",
+                    "default": False,
+                },
+                "private_key": {
+                    "type": "str",
+                    "description": "Path to private key",
+                    "required": False,
+                },
+                "cert_file": {
+                    "type": "str",
+                    "description": "Path to certificate file",
+                    "required": False,
+                },
+                "verify_host": {
+                    "type": "bool",
+                    "description": "Verify the server's certificate "
+                    "was signed by a trusted CA'",
+                    "default": True,
+                },
+                "verify_hostname": {
+                    "type": "bool",
+                    "description": "Verify the server's actual "
+                    "host name against the expected name'",
+                    "default": True,
+                },
+            },
         },
     },
 }

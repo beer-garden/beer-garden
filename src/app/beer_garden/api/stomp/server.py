@@ -1,23 +1,17 @@
 import stomp
 import logging
 import time
-import beer_garden.config as config
 from brewtils.schema_parser import SchemaParser
 import beer_garden.events
 import beer_garden.router
 from beer_garden.api.stomp.processors import append_headers, process_send_message
 
-conn = None
-bg_active = False
 logger = logging.getLogger(__name__)
-stomp.logging.setLevel("WARN")
 
 
-def send_message(message, headers=None):
+def send_message(message=None, headers=None, conn=None, send_destination=None):
     if headers is None:
         headers = {}
-
-    stomp_config = config.get("entry.stomp")
     message, response_headers = process_send_message(message)
     response_headers = append_headers(
         response_headers=response_headers, request_headers=headers
@@ -31,13 +25,14 @@ def send_message(message, headers=None):
             conn.send(
                 body=message,
                 headers=response_headers,
-                destination=stomp_config.event_destination,
+                destination=send_destination,
             )
 
 
-def send_error_msg(error_msg, headers):
+def send_error_msg(error_msg=None, headers=None, conn=None, send_destination=None):
+    if headers is None:
+        headers = {}
 
-    stomp_config = config.get("entry.stomp")
     error_headers = None
     error_headers = append_headers(error_headers, headers)
 
@@ -52,14 +47,18 @@ def send_error_msg(error_msg, headers):
             conn.send(
                 body=error_msg,
                 headers=error_headers,
-                destination=stomp_config.event_destination,
+                destination=send_destination,
             )
     pass
 
 
 class OperationListener(stomp.ConnectionListener):
+    def __init__(self, conn=None, send_destination=None):
+        self.conn = conn
+        self.send_destination = send_destination
+
     def on_error(self, headers, message):
-        logger.warning("received an error:", headers)
+        logger.warning("received an error:" + str(headers))
 
     def on_message(self, headers, message):
         try:
@@ -67,51 +66,71 @@ class OperationListener(stomp.ConnectionListener):
             if hasattr(operation, "kwargs"):
                 operation.kwargs.pop("wait_timeout", None)
             result = beer_garden.router.route(operation)
-            send_message(result, headers)
+            send_message(
+                message=result,
+                headers=headers,
+                conn=self.conn,
+                send_destination=self.send_destination,
+            )
         except Exception as e:
-            send_error_msg(str(e), headers)
+            send_error_msg(
+                error_msg=str(e),
+                headers=headers,
+                conn=self.conn,
+                send_destination=self.send_destination,
+            )
             logger.warning(str(e))
 
 
 class Connection:
-    @staticmethod
-    def __init__():
-        global bg_active, conn
-        stomp_config = config.get("entry.stomp")
-        host_and_ports = [(stomp_config.host, stomp_config.port)]
-        bg_active = True
-        conn = stomp.Connection(host_and_ports=host_and_ports, heartbeats=(10000, 0))
-        if stomp_config.use_ssl:
-            conn.set_ssl(
-                for_hosts=host_and_ports,
-                key_file=stomp_config.private_key,
-                cert_file=stomp_config.cert_file,
-            )
-        conn.set_listener("", OperationListener())
+    def __init__(
+        self,
+        host_and_ports=None,
+        send_destination=None,
+        subscribe_destination=None,
+        ssl=None,
+        username=None,
+        password=None,
+    ):
+        self.username = username
+        self.password = password
+        self.subscribe_destination = subscribe_destination
+        self.send_destination = send_destination
+        self.bg_active = True
+        self.conn = stomp.Connection(
+            host_and_ports=host_and_ports, heartbeats=(10000, 0)
+        )
+        if ssl:
+            if ssl.use_ssl:
+                self.conn.set_ssl(
+                    for_hosts=host_and_ports,
+                    key_file=ssl.private_key,
+                    cert_file=ssl.cert_file,
+                )
+        if send_destination:
+            self.conn.set_listener("", OperationListener(self.conn, send_destination))
 
-    @staticmethod
-    def connect(connected_message=None):
-
-        stomp_config = config.get("entry.stomp")
+    def connect(self, connected_message=None):
         wait_time = 0.1
-        while not conn.is_connected():
+        while not self.conn.is_connected() and self.bg_active:
             try:
-                conn.connect(
-                    username=stomp_config.username,
-                    passcode=stomp_config.password,
+                self.conn.connect(
+                    username=self.username,
+                    passcode=self.password,
                     wait=True,
-                    headers={"client-id": stomp_config.username},
+                    headers={"client-id": self.username},
                 )
-                conn.subscribe(
-                    destination=stomp_config.operation_destination,
-                    id=stomp_config.username,
-                    ack="auto",
-                    headers={
-                        "subscription-type": "MULTICAST",
-                        "durable-subscription-name": "operations",
-                    },
-                )
-                if connected_message is not None and conn.is_connected():
+                if self.subscribe_destination:
+                    self.conn.subscribe(
+                        destination=self.subscribe_destination,
+                        id=self.username,
+                        ack="auto",
+                        headers={
+                            "subscription-type": "MULTICAST",
+                            "durable-subscription-name": "operations",
+                        },
+                    )
+                if connected_message is not None and self.conn.is_connected():
                     logger.info("Stomp successfully " + connected_message)
 
             except Exception as e:
@@ -120,18 +139,15 @@ class Connection:
                 time.sleep(wait_time)
                 wait_time = min(wait_time * 2, 30)
 
-    @staticmethod
-    def disconnect():
-        global bg_active
-        bg_active = False
-        if conn.is_connected():
-            conn.disconnect()
+    def disconnect(self):
+        self.bg_active = False
+        if self.conn.is_connected():
+            self.conn.disconnect()
 
-    @staticmethod
-    def is_connected():
+    def is_connected(self):
+        return self.conn.is_connected()
 
-        return conn.is_connected()
-
-    @staticmethod
-    def send_event(event):
-        send_message(event)
+    def send_event(self, event):
+        send_message(
+            message=event, conn=self.conn, send_destination=self.send_destination
+        )
