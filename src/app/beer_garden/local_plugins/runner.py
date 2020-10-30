@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-
 import logging
+import os
+import signal
 import subprocess
 from pathlib import Path
 from threading import Thread
@@ -95,10 +96,16 @@ class ProcessRunner(Thread):
         """Associate this runner with a specific instance ID"""
         self.instance_id = instance.id
 
+    def terminate(self):
+        """Kill the underlying plugin process with SIGTERM"""
+        if self.process and self.process.poll() is None:
+            self.logger.debug("About to send SIGINT")
+            os.kill(self.process.pid(), signal.SIGINT)
+
     def kill(self):
         """Kill the underlying plugin process with SIGKILL"""
         if self.process and self.process.poll() is None:
-            self.logger.warning("About to kill process")
+            self.logger.warning("About to send SIGKILL")
             self.process.kill()
 
     def run(self):

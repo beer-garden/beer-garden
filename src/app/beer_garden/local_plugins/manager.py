@@ -205,7 +205,7 @@ class PluginManager(StoppableThread):
     def stop_one(self, runner_id=None, instance_id=None):
         runner = self._from_runner_id(runner_id) or self._from_instance_id(instance_id)
 
-        # The process should already be exiting so just wait for it
+        runner.terminate()
         runner.join(config.get("plugin.local.timeout.shutdown"))
 
         if runner.is_alive():
