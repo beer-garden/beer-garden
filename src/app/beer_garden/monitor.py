@@ -10,7 +10,8 @@ from beer_garden.events import publish
 class MonitorFile(PatternMatchingEventHandler):
     """Monitor files and create Beergarden events
 
-    This is a wrapper around a watchdog PollingObserver.
+    This is a wrapper around a watchdog PollingObserver. PollingObserver is used instead
+    of Observer because Observer throws events on each file transaction.
 
     Note that the events generated are NOT watchdog events, they are whatever
     Beergarden events are specified during initialization.
@@ -27,21 +28,22 @@ class MonitorFile(PatternMatchingEventHandler):
     ):
         super().__init__(patterns=[path], ignore_directories=True)
 
+        self._path = path
+        self._observer = PollingObserver()
+
         self.create_event = create_event
         self.modify_event = modify_event
         self.moved_event = moved_event
         self.deleted_event = deleted_event
 
-        # Using PollingObserver instead of Observer because Observer throws events at
-        # each file transaction
-        self.observer = PollingObserver()
-        self.observer.schedule(self, Path(path).parent, recursive=False)
-        self.observer.start()
+    def start(self):
+        self._observer.schedule(self, Path(self._path).parent, recursive=False)
+        self._observer.start()
 
     def stop(self):
-        if self.observer.is_alive():
-            self.observer.stop()
-            self.observer.join()
+        if self._observer.is_alive():
+            self._observer.stop()
+            self._observer.join()
 
     def on_created(self, _):
         """Callback invoked when the file is created
