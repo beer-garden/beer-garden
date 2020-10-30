@@ -30,4 +30,5 @@ def run(ep_conn):
 
 def signal_handler(_: int, __: types.FrameType):
     global st_manager_stack
-    st_manager_stack.pop().stop()
+    while st_manager_stack:
+        st_manager_stack.pop().stop()
