@@ -57,22 +57,24 @@ class EntryPoint:
     """
 
     def __init__(
-        self,
-        name: str,
-        target: Callable,
-        context: SpawnContext,
-        log_queue: Queue,
-        signal_handler: Callable[[int, FrameType], None],
-        event_callback: Callable[[Event], None],
+            self,
+            name: str,
+            target: Callable,
+            context: SpawnContext,
+            log_queue: Queue,
+            signal_handler: Callable[[int, FrameType], None],
+            event_callback: Callable[[Event], None],
+            ep_config=None,
     ):
         self._name = name
         self._target = target
         self._context = context
         self._log_queue = log_queue
         self._signal_handler = signal_handler
-
+        self.ep_config = ep_config
         self._process = None
         self._ep_conn, self._mp_conn = Pipe()
+        self._ep_conn.ep_config = ep_config
         self._event_listener = PipeListener(
             conn=self._mp_conn,
             action=event_callback,
@@ -92,6 +94,7 @@ class EntryPoint:
                 self._target,
                 self._signal_handler,
                 self._ep_conn,
+                self.ep_config,
             ),
         )
         self._process.start()
@@ -138,11 +141,12 @@ class EntryPoint:
 
     @staticmethod
     def _target_wrapper(
-        config: Box,
-        log_queue: Queue,
-        target: Callable,
-        signal_handler: Callable[[int, FrameType], None],
-        ep_conn: Connection,
+            config: Box,
+            log_queue: Queue,
+            target: Callable,
+            signal_handler: Callable[[int, FrameType], None],
+            ep_conn: Connection,
+            ep_config=None,
     ) -> Any:
         """Helper method that sets up the process environment before calling `target`
 
@@ -195,6 +199,8 @@ class EntryPoint:
             raise Exception("Entry point initialization failed") from ex
 
         # Now invoke the actual process target, passing in the connection
+        if ep_config:
+            return target(ep_conn, ep_config=ep_config)
         return target(ep_conn)
 
 
@@ -234,9 +240,20 @@ class Manager:
                 except Exception as ex:
                     logger.exception(f"Error creating entry point {entry_name}: {ex}")
 
-    def create(self, module_name: str) -> T:
+    def create(self, module_name: str, ep_config=None) -> T:
         module = import_module(f"beer_garden.api.{module_name}")
-
+        if ep_config:
+            ep_point = EntryPoint(
+                name=module_name,
+                target=module.run,
+                context=self.context,
+                log_queue=self.log_queue,
+                signal_handler=module.signal_handler,
+                event_callback=beer_garden.events.publish,
+                ep_config=ep_config
+            )
+            self.entry_points.append(ep_point)
+            return ep_point
         return EntryPoint(
             name=module_name,
             target=module.run,

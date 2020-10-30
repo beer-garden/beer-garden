@@ -21,7 +21,7 @@ class StompManager(StoppableThread):
             host_and_ports=host_and_ports,
             send_destination=stomp_config.get("send_destination"),
             subscribe_destination=stomp_config.get("subscribe_destination"),
-            ssl=stomp_config.ssl,
+            ssl=stomp_config.get("ssl"),
             username=stomp_config.username,
             password=stomp_config.password,
         )

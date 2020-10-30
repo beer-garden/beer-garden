@@ -128,7 +128,7 @@ class Connection:
                         ack="auto",
                         headers={
                             "subscription-type": "MULTICAST",
-                            "durable-subscription-name": "operations",
+                            "durable-subscription-name": self.subscribe_destination,
                         },
                     )
                 if connected_message is not None and self.conn.is_connected():

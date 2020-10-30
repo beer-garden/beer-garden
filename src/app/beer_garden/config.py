@@ -964,9 +964,14 @@ _PARENT_SPEC = {
                     "type": "str",
                     "default": "password",
                 },
-                "event_destination": {
+                "send_destination": {
                     "type": "str",
                     "default": "Beer_Garden_Events_Parent"
+                },
+                "subscribe_destination": {
+                    "type": "str",
+                    "default": "Beer_Garden_Operations_Parent",
+                    "description": "Subscription topic where Beer_Garden listens for operations",
                 },
                 "skip_events": {
                     "type": "list",

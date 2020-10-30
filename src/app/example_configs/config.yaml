@@ -37,17 +37,17 @@ entry:
     url_prefix: /
   stomp:
     enabled: false
-    send_destination: Beer_Garden_Events
     host: localhost
-    subscribe_destination: Beer_Garden_Operations
     password: password
     port: 61613
+    send_destination: Beer_Garden_Events
     ssl:
       cert_file: null
       private_key: null
       use_ssl: false
       verify_host: true
       verify_hostname: true
+    subscribe_destination: Beer_Garden_Operations
     username: beer_garden
 garden:
   name: default
@@ -105,6 +105,16 @@ parent:
       private_key: null
       public_key: null
     url_prefix: /
+  stomp:
+    enabled: true
+    host: 0.0.0.0
+    password: password
+    port: 61613
+    send_destination: Beer_Garden_Events_Parent
+    skip_events:
+    - DB_CREATE
+    subscribe_destination: Beer_Garden_Operations_Parent
+    username: beer_garden
 plugin:
   local:
     auth:

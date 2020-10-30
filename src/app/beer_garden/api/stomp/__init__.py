@@ -12,9 +12,11 @@ logger = logging.getLogger(__name__)
 st_manager_stack = []
 
 
-def run(ep_conn):
+def run(ep_conn, ep_config=None):
     global st_manager_stack
-    stomp_config = config.get("entry.stomp")
+    stomp_config = ep_config
+    if not stomp_config:
+        stomp_config = config.get("entry.stomp")
     host_and_ports = [(stomp_config.host, stomp_config.port)]
     logger.info(
         "Starting Stomp entry point on host and port: " + host_and_ports.__str__()

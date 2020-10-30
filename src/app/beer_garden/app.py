@@ -312,13 +312,15 @@ class Application(StoppableThread):
                     event_name=Events.GARDEN_STARTED.name, status="RUNNING"
                 )
             # TODO change to use entry point get child added to ui
-            # stomp_parent_run()
-            event_manager.register(
-                StompParentUpdater(
-                    black_list=skip_events,
-                    reconnect_action=reconnect_action,
-                )
-            )
+            # stomp_parent_run(stomp_event)
+            self.entry_manager.create("stomp", ep_config=stomp_event)
+
+            # event_manager.register(
+            #     StompParentUpdater(
+            #         black_list=skip_events,
+            #         reconnect_action=reconnect_action,
+            #     )
+            # )
 
         return event_manager
 
