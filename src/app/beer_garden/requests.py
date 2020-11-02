@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+"""Request Service
+
+The request service is responsible for:
+
+* Validating requests
+* Request completion notification
+"""
+
 import json
 import logging
 import re

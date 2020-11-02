@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+"""Namespace Service
+
+The namespace service is responsible for
+* Providing the default namespace from config
+* Providing list of all known namespaces
+"""
+
 from typing import List
 
 from brewtils.models import Garden, Request, System

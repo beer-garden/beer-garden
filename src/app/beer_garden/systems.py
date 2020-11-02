@@ -1,4 +1,13 @@
 # -*- coding: utf-8 -*-
+"""System Service
+
+The system service is responible for:
+* CRUD operations of `System` records
+* Rescanning directory for Local Plugins
+* Reloading Local Plugins
+* Handling System Events
+"""
+
 import copy
 import logging
 from typing import List, Sequence

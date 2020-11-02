@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+"""Beer Garden Application
+
+This is the core library for Beer-Garden. Anything that is spawned by the Main Process
+in Beer-Garden will be initialized within this class.
+"""
+
 import logging
 from datetime import timedelta
 from functools import partial
@@ -110,6 +116,7 @@ class Application(StoppableThread):
         )
 
     def run(self):
+        """Before setting up Beer-Garden, ensures that required services are running"""
         if not self._verify_db_connection():
             return
 
@@ -136,6 +143,15 @@ class Application(StoppableThread):
                 PluginManager.instance().scan_path()
 
     def _progressive_backoff(self, func, failure_message):
+        """Increases the delay between function attempts until a max delay of 30 seconds
+
+        Args:
+            func: The function that is being executed
+            failure_message: Error message to throw if function returns returns None or False
+
+        Returns:
+
+        """
         wait_time = 0.1
         while not self.stopped() and not func():
             self.logger.warning(failure_message)
@@ -182,6 +198,7 @@ class Application(StoppableThread):
         )
 
     def _startup(self):
+        """Initializes core requirements for Application"""
         self.logger.debug("Starting Application...")
 
         self.logger.debug("Starting event manager...")
@@ -228,6 +245,7 @@ class Application(StoppableThread):
         self.logger.info("All set! Let me know if you need anything else!")
 
     def _shutdown(self):
+        """Shutdown core requirements for Application"""
         self.logger.info(
             "Closing time! You don't have to go home, but you can't stay here."
         )
@@ -271,6 +289,7 @@ class Application(StoppableThread):
         self.logger.info("Successfully shut down Beer-garden")
 
     def _setup_events_manager(self):
+        """Setups up events managers required by Main Processor"""
         event_manager = FanoutProcessor(name="event manager")
 
         # Forward all events down into the entry points
@@ -306,6 +325,7 @@ class Application(StoppableThread):
 
     @staticmethod
     def _setup_scheduler():
+        """Initializes scheduled jobs stored in the database"""
         job_stores = {"beer_garden": db.get_job_store()}
         scheduler_config = config.get("scheduler")
         executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
