@@ -66,7 +66,7 @@ __all__ = [
     "IntervalTrigger",
     "Garden",
     "File",
-    "FileChunk"
+    "FileChunk",
 ]
 
 
@@ -391,7 +391,9 @@ class Request(MongoModel, Document):
             parameter_size = sys.getsizeof(self.parameters)
             if parameter_size > max_size:
                 self.logger.info("~~~Parameter size too big, storing in gridfs")
-                self.parameters_gridfs.put(json.dumps(self.parameters), encoding=encoding)
+                self.parameters_gridfs.put(
+                    json.dumps(self.parameters), encoding=encoding
+                )
                 self.parameters = None
                 parameter_size = 0
 

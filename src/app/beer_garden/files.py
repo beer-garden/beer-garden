@@ -28,7 +28,9 @@ def check_file(file_id: str, upsert: bool = False):
     res = db.query_unique(File, id=file_id)
     if res is None:
         if upsert:
-            res = create_file("BG_placeholder", 0, 0, file_id)
+            print(f"~~~~~~~~~~~~~Creating a placeholder file for id {file_id}")
+            create_file("BG_placeholder", 0, 0, file_id)
+            return db.query_unique(File, id=file_id)
         else:
             raise ModelValidationError(f"Tried to fetch an unsaved file {file_id}.")
     return res
@@ -62,7 +64,9 @@ def check_chunks(file_id: str):
     """
     res = check_file(file_id)
     if res.chunks is None:
-        raise ModelValidationError(f"Tried to load a file {res.id} with no associated chunks.")
+        raise ModelValidationError(
+            f"Tried to load a file {res.id} with no associated chunks."
+        )
     return res
 
 
@@ -79,8 +83,9 @@ def _save_chunk(file_id: str, offset: int = None, upsert: bool = False, **kwargs
     file = check_file(file_id, upsert=upsert)
     chunk = FileChunk(file_id=file.id, offset=offset, **kwargs)
     c = db.create(chunk)
-    modify = {f'set__chunks__{offset}': c.id}
+    modify = {f"set__chunks__{offset}": c.id}
     db.modify(file, **modify)
+    return dumps({"id": c.id})
 
 
 def _verify_chunks(file_id: str):
@@ -100,9 +105,10 @@ def _verify_chunks(file_id: str):
     length_ok = num_chunks == len(file.chunks)
     size_ok = file.file_size <= computed_size <= file.file_size + file.chunk_size
 
-    missing = [x for x in range(len(file.chunks))
-               if file.chunks.get(str(x), None) is None]
-    return {'valid': (length_ok and missing == [] and size_ok), 'missing': missing}
+    missing = [
+        x for x in range(len(file.chunks)) if file.chunks.get(str(x), None) is None
+    ]
+    return {"valid": (length_ok and missing == [] and size_ok), "missing": missing}
 
 
 def _fetch_chunk(file_id: str, chunk_num: str):
@@ -136,8 +142,10 @@ def _fetch_file(file_id: str):
     """
     file = check_chunks(file_id)
     # This is going to get big, try our best to be efficient
-    all_data = [db.query_unique(FileChunk, id=file.chunks[str(x)]).data
-                for x in range(len(file.chunks))]
+    all_data = [
+        db.query_unique(FileChunk, id=file.chunks[str(x)]).data
+        for x in range(len(file.chunks))
+    ]
     return "".join(all_data)
 
 
@@ -158,9 +166,16 @@ def _delete_file(file_id: str):
             pass
     # Delete the parent file object
     db.delete(file)
+    return dumps({"done": True})
 
 
-def create_file(file_name: str, file_size: int, chunk_size: int, file_id: ObjectId = None, upsert: bool = False):
+def create_file(
+    file_name: str,
+    file_size: int,
+    chunk_size: int,
+    file_id: ObjectId = None,
+    upsert: bool = False,
+):
     """
     Deletes the requested file and its corresponding chunks.
 
@@ -169,36 +184,58 @@ def create_file(file_name: str, file_size: int, chunk_size: int, file_id: Object
         file_size: The size of the file to be uploaded (in bytes).
         chunk_size: The size of the chunks that the file is broken into (in bytes).
         file_id: (Optional) The original file id
+        upsert: (Optional) If a file ID is given, the function will
+                modify the file metadata if it already exists
 
     Returns:
         A dictionary with the id.
     """
     if chunk_size > MAX_CHUNK_SIZE:
-        raise ValueError(f"Cannot create a file with chunk size greater than {MAX_CHUNK_SIZE}.")
+        raise ValueError(
+            f"Cannot create a file with chunk size greater than {MAX_CHUNK_SIZE}."
+        )
 
     f = File(file_name=file_name, file_size=file_size, chunk_size=chunk_size)
+
     # Override the file id if passed in
     if file_id is not None:
         try:
             f.id = ObjectId(file_id)
         except (InvalidId, TypeError):
-            raise ModelValidationError(f"Cannot create a file id with the string {file_id}. "
-                                       "Requires 24-character hex string.")
+            raise ModelValidationError(
+                f"Cannot create a file id with the string {file_id}. "
+                "Requires 24-character hex string."
+            )
     # Normal creation process, checks for uniqueness
     if not upsert:
         try:
             f = db.create(f)
         except NotUniqueException:
-            raise NotUniqueException(f"Cannot create a file with id {file_id}; file with id already exists.")
-    # Safe creation process, handles out-of-order file uploads but may combine existing data with collision
+            raise NotUniqueException(
+                f"Cannot create a file with id {file_id}; "
+                "file with id already exists."
+            )
+
+    # Safe creation process, handles out-of-order file uploads but may
+    # combine existing data with collision
     else:
-        res = db.query_unique(File, id=file_id)
+        res = db.query_unique(File, id=f.id)
         if res is None:
             f = db.create(f)
         else:
-            db.modify(f, file_name=file_name, file_size=file_size, chunk_size=chunk_size)
+            db.modify(
+                f, file_name=file_name, file_size=file_size, chunk_size=chunk_size
+            )
+            f = db.query_unique(File, id=f.id)
 
-    return dumps({'id': f.id})
+    return dumps(
+        {
+            "id": f.id,
+            "name": f.file_name,
+            "size": f.file_size,
+            "chunk_size": f.chunk_size,
+        }
+    )
 
 
 def fetch_file(file_id: str, chunk: int = None, verify: bool = False):
@@ -230,7 +267,7 @@ def create_chunk(file_id: str, offset: int, data: str, upsert: bool = False):
         offset: The chunk's offset index.
         data: The chunk's data.
     """
-    _save_chunk(file_id, offset=offset, data=data, upsert=upsert)
+    return _save_chunk(file_id, offset=offset, data=data, upsert=upsert)
 
 
 def delete_file(file_id: str):
@@ -240,4 +277,4 @@ def delete_file(file_id: str):
     Parameters:
         file_id: The id of the file.
     """
-    _delete_file(file_id)
+    return _delete_file(file_id)

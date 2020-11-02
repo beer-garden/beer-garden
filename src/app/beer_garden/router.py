@@ -5,7 +5,6 @@ import threading
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
 from typing import Dict, Optional, Union
-from bson import ObjectId
 from json import dumps
 
 import requests
@@ -377,30 +376,39 @@ def _pre_route(operation: Operation) -> Operation:
 
 def _forward_file(operation: Operation):
     """ Called to send file data before forwarding a request with a file parameter. """
-    # This should (hopefully) make searching for existence a little faster than recursively searching
+    # This should (hopefully) make searching for existence a little
+    # faster than recursively searching
     params = dumps(operation.model.parameters)
     if beer_garden.files.UI_FILE_ID_PREFIX in params:
-        param_list = params.split(' ')
+        param_list = params.split(" ")
         # Get the next item in the list and then strip away the json syntax
         file_id = param_list[
             param_list.index('"' + beer_garden.files.UI_FILE_ID_PREFIX) + 1
         ].strip(',"')
         file = beer_garden.files.check_chunks(file_id)
         args = [file.file_name, file.file_size, file.chunk_size, file.id]
-        kwargs = {'upsert': True}
-        file_op = Operation(operation_type="FILE_CREATE", args=args, kwargs=kwargs,
-                            target_garden_name=operation.target_garden_name,
-                            source_garden_name=operation.source_garden_name)
+        kwargs = {"upsert": True}
+        file_op = Operation(
+            operation_type="FILE_CREATE",
+            args=args,
+            kwargs=kwargs,
+            target_garden_name=operation.target_garden_name,
+            source_garden_name=operation.source_garden_name,
+        )
         forward_processor.put(file_op)
 
         for chunk_id in file.chunks.values():
             chunk = beer_garden.files.check_chunk(chunk_id)
             c_args = [chunk.file_id, chunk.offset, chunk.data]
             # Will create a placeholder file object if chunk is received before file
-            c_kwargs = {'upsert': True}
-            chunk_op = Operation(operation_type="FILE_CHUNK", args=c_args, kwargs=c_kwargs,
-                                 target_garden_name=operation.target_garden_name,
-                                 source_garden_name=operation.source_garden_name)
+            c_kwargs = {"upsert": True}
+            chunk_op = Operation(
+                operation_type="FILE_CHUNK",
+                args=c_args,
+                kwargs=c_kwargs,
+                target_garden_name=operation.target_garden_name,
+                source_garden_name=operation.source_garden_name,
+            )
             forward_processor.put(chunk_op)
 
 

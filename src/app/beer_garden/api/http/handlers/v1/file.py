@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 from base64 import b64decode
-from bson import ObjectId
 
 import tornado.web
 
 from beer_garden.api.http.authorization import Permissions, authenticated
-from beer_garden.api.http.base_handler import BaseHandler, event_wait
+from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 
@@ -30,7 +29,8 @@ class FileAPI(BaseHandler):
           - name: verify
             in: query
             required: false
-            description: Flag that will cause verification information to be returned instead of the file data
+            description: Flag that will cause verification information to
+                         be returned instead of the file data
             type: bool
         responses:
           200:
@@ -52,7 +52,11 @@ class FileAPI(BaseHandler):
             raise ValueError("Cannot fetch a file or chunk without a file ID.")
 
         response = await self.client(
-            Operation(operation_type="FILE_FETCH", args=[file_id], kwargs={'chunk': chunk, 'verify': verify})
+            Operation(
+                operation_type="FILE_FETCH",
+                args=[file_id],
+                kwargs={"chunk": chunk, "verify": verify},
+            )
         )
         self.write(response)
 
@@ -88,20 +92,27 @@ class FileAPI(BaseHandler):
           - Files
         """
         file_id = self.get_query_argument("file_id", default=None)
+        upsert = self.get_query_argument("upsert", default=False)
 
         args = tornado.escape.json_decode(self.request.body)
-        data = args.get('data', None)
-        offset = args.get('offset', None)
+        data = args.get("data", None)
+        offset = args.get("offset", None)
 
         if file_id is None:
-            raise ModelValidationError(f"No file id provided.")
+            raise ModelValidationError("No file id provided.")
         if data is None:
             raise ModelValidationError(f"No data sent to write to file {file_id}")
         if offset is None:
-            raise ModelValidationError(f"No offset sent with data to write to file {file_id}")
+            raise ModelValidationError(
+                f"No offset sent with data to write to file {file_id}"
+            )
 
         response = await self.client(
-            Operation(operation_type="FILE_CHUNK", args=[file_id, offset, b64decode(data).decode('utf-8')])
+            Operation(
+                operation_type="FILE_CHUNK",
+                args=[file_id, offset, b64decode(data).decode("utf-8")],
+                kwargs={"upsert": upsert},
+            )
         )
         self.write(response)
 
@@ -168,10 +179,11 @@ class FileNameAPI(BaseHandler):
         tags:
           - Files
         """
-        file_name = self.get_query_argument('file_name', default="")
-        file_size = self.get_query_argument('file_size', default=None)
-        chunk_size = self.get_query_argument('chunk_size', default=None)
-        file_id = self.get_query_argument('file_id', default=None)
+        file_name = self.get_query_argument("file_name", default="")
+        file_size = self.get_query_argument("file_size", default=None)
+        chunk_size = self.get_query_argument("chunk_size", default=None)
+        file_id = self.get_query_argument("file_id", default=None)
+        upsert = self.get_query_argument("upsert", default=False)
 
         if chunk_size is None:
             raise ModelValidationError(f"No chunk_size sent with file {file_name}.")
@@ -180,11 +192,19 @@ class FileNameAPI(BaseHandler):
 
         if file_id is None:
             response = await self.client(
-                Operation(operation_type="FILE_CREATE", args=[file_name, int(file_size), int(chunk_size)])
+                Operation(
+                    operation_type="FILE_CREATE",
+                    args=[file_name, int(file_size), int(chunk_size)],
+                    kwargs={"upsert": upsert},
+                )
             )
         else:
 
             response = await self.client(
-                Operation(operation_type="FILE_CREATE", args=[file_name, int(file_size), int(chunk_size), file_id])
+                Operation(
+                    operation_type="FILE_CREATE",
+                    args=[file_name, int(file_size), int(chunk_size), file_id],
+                    kwargs={"upsert": upsert},
+                )
             )
         self.write(response)
