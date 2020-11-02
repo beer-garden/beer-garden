@@ -8,7 +8,7 @@ from typing import Dict, Optional, Union
 
 import requests
 import stomp
-
+from beer_garden.api.stomp.server import Connection as Stomp_Connection
 from beer_garden.events import publish
 from brewtils.models import Events, Garden, Operation, Request, System, Event
 from brewtils.schema_parser import SchemaParser
@@ -52,7 +52,7 @@ t_pool = ThreadPoolExecutor()
 # Used for actually sending operations to other gardens
 garden_lock = threading.Lock()
 gardens: Dict[str, Garden] = {}  # garden_name -> garden
-stomp_garden_connections: Dict[str, stomp.Connection] = {}
+stomp_garden_connections: Dict[str, Stomp_Connection] = {}
 
 # Used for determining WHERE to route an operation
 routing_lock = threading.Lock()
@@ -312,6 +312,15 @@ def connect(conn, garden):
             wait_time = min(wait_time * 2, 30)
 
 
+def setup_stomp(garden):
+    host_and_ports = [(garden.connection_params["stomp_host"], garden.connection_params["stomp_port"])]
+    return Stomp_Connection(host_and_ports=host_and_ports,
+                            send_destination=garden.connection_params.get("send_destination"),
+                            subscribe_destination=garden.connection_params.get("subscribe_destination"),
+                            username=garden.connection_params["username"],
+                            password=garden.connection_params["password"])
+
+
 def setup_routing():
     """Initialize the routing subsystem
 
@@ -337,10 +346,8 @@ def setup_routing():
                 with garden_lock:
                     gardens[garden.name] = garden
                     if garden.connection_type.casefold() == "stomp":
-                        host_and_ports = [(garden.connection_params["host"], garden.connection_params["port"])]
-                        conn = stomp.Connection(host_and_ports=host_and_ports)
-                        connect(conn, garden)
-                        stomp_garden_connections[garden.name] = conn
+                        stomp_garden_connections[garden.name] = setup_stomp(garden)
+                        stomp_garden_connections[garden.name].connect('connected to child')
             else:
                 logger.warning(f"Garden with invalid connection info: {garden!r}")
 
@@ -509,15 +516,16 @@ def _determine_target_garden(operation: Operation) -> str:
 
 
 def _forward_stomp(operation: Operation, target_garden: Garden):
-    many = isinstance(operation, list)
-    model_class = operation.__class__.__name__
-    if many:
-        model_class = operation[0].__class__.__name__
-    message = SchemaParser.serialize(operation, to_string=True, many=many)
-    response_headers = {"model_class": model_class, "many": many}
-    # TODO add reconnection
-    stomp_garden_connections[target_garden.name].send(body=message, headers=response_headers,
-                                                      destination=target_garden.connection_params.get("destination"))
+    # checks if connection is active or needs to update subscription
+    if (target_garden.connection_params.get("subscribe_destination") is not
+            stomp_garden_connections[target_garden.name].subscribe_destination):
+        if stomp_garden_connections[target_garden.name].is_connected():
+            stomp_garden_connections[target_garden.name].disconnect()
+        stomp_garden_connections[target_garden.name] = setup_stomp(target_garden)
+    if not stomp_garden_connections[target_garden.name].is_connected():
+        stomp_garden_connections[target_garden.name].connect('reconnected to child')
+
+    stomp_garden_connections[target_garden.name].send_event(operation)
 
 
 def _forward_http(operation: Operation, target_garden: Garden):
