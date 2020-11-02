@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import string
 from concurrent.futures import ThreadPoolExecutor, wait
+from concurrent.futures._base import Future
 from enum import Enum
 
 import json
@@ -15,7 +16,7 @@ from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from random import choice
 from types import ModuleType
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 import beer_garden.config as config
 from beer_garden.errors import PluginValidationError
@@ -127,7 +128,14 @@ class PluginManager(StoppableThread):
         """Get a representation of current runners"""
         return [runner.state() for runner in self._runners]
 
-    def handle_associate(self, event):
+    def has_instance_id(self, instance_id: str) -> bool:
+        return self._from_instance_id(instance_id=instance_id) is not None
+
+    def handle_initialize(self, event: Event) -> None:
+        """Called whenever an INSTANCE_INITIALIZED occurs
+
+        This associates the event instance with a specific runner.
+        """
         runner_id = event.payload.metadata.get("runner_id")
 
         if runner_id:
@@ -139,7 +147,12 @@ class PluginManager(StoppableThread):
             runner.associate(instance=instance)
             runner.restart = True
 
-    def handle_stopped(self, event: Event):
+    def handle_stopped(self, event: Event) -> None:
+        """Called whenever an INSTANCE_STOPPED occurs
+
+        If the event instance is associated with any runner that this PluginManager
+        knows about then that runner will be marked as stopped and no longer monitored.
+        """
         runner = self._from_instance_id(event.payload.id)
 
         if runner:
@@ -171,40 +184,25 @@ class PluginManager(StoppableThread):
         # All removed runners should have the same path, so just grab the first
         self._create_runners(removed_runners[0].process_cwd)
 
-    def has_instance_id(self, instance_id: str) -> bool:
-        return self._from_instance_id(instance_id=instance_id) is not None
-
-    def start_all(self) -> None:
-        """Start all currently known runners"""
-        for runner in self._runners:
-            runner.start()
-
-    def stop_all(self):
-
-        shutdown_pool = ThreadPoolExecutor(
-            1 if len(self._runners) < 1 else len(self._runners)
-        )
-        futures = []
-
-        for runner in self._runners:
-            futures.append(
-                shutdown_pool.submit(self.stop_one, runner_id=runner.runner_id)
-            )
-
-        wait(futures)
-
     def start_one(self, instance_id: str) -> None:
         runner = self._from_instance_id(instance_id)
 
         if runner:
             self.restart(runner)
 
+    def start_all(self) -> None:
+        """Start all currently known runners"""
+        for runner in self._runners:
+            runner.start()
+
     def stop_one(self, runner_id=None, instance_id=None):
         runner = self._from_runner_id(runner_id) or self._from_instance_id(instance_id)
 
-        runner.terminate()
+        # This needs to be called after sending a stop request, so the plugin should
+        # already be shutting down. So wait for it to stop...
         runner.join(config.get("plugin.local.timeout.shutdown"))
 
+        # ...and then kill it if necessary
         if runner.is_alive():
             self._logger.warning(f"Runner {runner_id} still alive, about to SIGKILL")
             runner.kill()
@@ -212,6 +210,34 @@ class PluginManager(StoppableThread):
         runner.stopped = True
         runner.restart = False
         runner.dead = False
+
+    def stop_system(self, system: System):
+        runners = [self._from_instance_id(i.id) for i in system.instances]
+        runners = [r for r in runners if r is not None]
+
+        return self.stop_all(runners=runners)
+
+    def stop_all(self, runners: Iterable[ProcessRunner] = None):
+        # If not specified, default to all runners
+        if runners is None:
+            runners = self._runners
+
+        # If empty, we're done
+        if len(runners) < 1:
+            return
+
+        shutdown_pool = ThreadPoolExecutor(len(runners))
+        stop_futures: List[Future] = []
+
+        for runner in runners:
+            stop_futures.append(
+                shutdown_pool.submit(self.stop_one, runner_id=runner.runner_id)
+            )
+
+        wait(stop_futures)
+
+        for runner in runners:
+            self._runners.remove(runner)
 
     def remove(self, runner: ProcessRunner) -> None:
         self._logger.debug(f"Removing runner {runner}")

@@ -30,7 +30,7 @@ from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import MonitorFile
-from beer_garden.plugin import StatusMonitor
+from beer_garden.plugin import StatusMonitor, stop
 
 
 class Application(StoppableThread):
@@ -154,11 +154,9 @@ class Application(StoppableThread):
                 beer_garden.local_plugins.manager.lpm_proxy.scan_path()
 
             elif event.name == Events.INSTANCE_INITIALIZED.name:
-                beer_garden.local_plugins.manager.lpm_proxy.handle_associate(event)
+                beer_garden.local_plugins.manager.lpm_proxy.handle_initialize(event)
             elif event.name == Events.INSTANCE_STOPPED.name:
                 beer_garden.local_plugins.manager.lpm_proxy.handle_stopped(event)
-            elif event.name == Events.SYSTEM_REMOVED.name:
-                beer_garden.local_plugins.manager.lpm_proxy.remove_system(event.payload)
 
     def _progressive_backoff(self, func, failure_message):
         wait_time = 0.1
@@ -285,6 +283,10 @@ class Application(StoppableThread):
         beer_garden.local_plugins.manager.lpm_proxy.stop()
 
         self.logger.debug("Stopping local plugins")
+        for state in beer_garden.local_plugins.manager.lpm_proxy.runner_state():
+            # Only send stop message to plugins that came up successfully
+            if state["instance_id"]:
+                stop(instance_id=state["instance_id"])
         beer_garden.local_plugins.manager.lpm_proxy.stop_all()
 
         self.logger.debug("Stopping entry points")
