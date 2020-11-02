@@ -143,17 +143,18 @@ def publish_start(system, instance):
     )
 
 
-def publish_stop(system, instance):
+def publish_stop(system, instance=None):
+    request_args = {
+        "namespace": system.namespace,
+        "system": system.name,
+        "system_version": system.version,
+    }
+
+    if instance:
+        request_args["instance_name"] = instance.name
+
     requests.process_request(
-        Request.from_template(
-            stop_request,
-            namespace=system.namespace,
-            system=system.name,
-            system_version=system.version,
-            instance_name=instance.name,
-        ),
-        is_admin=True,
-        priority=1,
+        Request.from_template(stop_request, **request_args), is_admin=True, priority=1
     )
 
 

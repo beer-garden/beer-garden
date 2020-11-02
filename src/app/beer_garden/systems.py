@@ -5,7 +5,6 @@ import logging
 from brewtils.errors import BrewtilsException, ModelValidationError
 from brewtils.models import Command, Event, Events, Instance, System
 from brewtils.schemas import SystemSchema
-from time import sleep
 from typing import List, Sequence
 
 import beer_garden.config as config
@@ -14,7 +13,7 @@ import beer_garden.local_plugins.manager as lpm
 import beer_garden.queue.api as queue
 from beer_garden.errors import NotFoundException, NotUniqueException
 from beer_garden.events import publish_event
-from beer_garden.plugin import stop
+from beer_garden.plugin import publish_stop
 
 REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
@@ -256,17 +255,11 @@ def purge_system(
     if force and not system.local:
         return remove_system(system=system)
 
-    # Attempt to stop the plugins
-    for instance in system.instances:
-        try:
-            stop(instance=instance, system=system)
-        except Exception as ex:
-            logger.warning(
-                f"Error while attempting to stop instance {instance.id}: {ex}"
-            )
+    # Publish stop message to all instances of this system
+    publish_stop(system)
 
-    # TODO - This is not great
-    sleep(5)
+    # If local, wait for the plugins to stop
+    lpm.lpm_proxy.stop_system(system=system)
 
     system = db.reload(system)
 
