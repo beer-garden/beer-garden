@@ -693,5 +693,5 @@ class FileChunk(MongoModel, Document):
     brewtils_model = brewtils.models.FileChunk
 
     file_id = StringField(required=True)
-    n = IntField(required=True)
+    offset = IntField(required=True)
     data = StringField(required=True)

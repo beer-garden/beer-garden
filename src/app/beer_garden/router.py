@@ -5,6 +5,8 @@ import threading
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
 from typing import Dict, Optional, Union
+from bson import ObjectId
+from json import dumps
 
 import requests
 from beer_garden.events import publish
@@ -24,6 +26,7 @@ import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
+import beer_garden.files
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 from beer_garden.events.processors import QueueListener
 from beer_garden.garden import get_garden, get_gardens
@@ -137,6 +140,10 @@ route_functions = {
     "QUEUE_DELETE_ALL": beer_garden.queues.clear_all_queues,
     "QUEUE_READ_INSTANCE": beer_garden.queues.get_instance_queues,
     "NAMESPACE_READ_ALL": beer_garden.namespace.get_namespaces,
+    "FILE_CREATE": beer_garden.files.create_file,
+    "FILE_CHUNK": beer_garden.files.create_chunk,
+    "FILE_FETCH": beer_garden.files.fetch_file,
+    "FILE_DELETE": beer_garden.files.delete_file,
 }
 
 
@@ -368,6 +375,36 @@ def _pre_route(operation: Operation) -> Operation:
     return operation
 
 
+def _forward_file(operation: Operation):
+    """ Called to send file data before forwarding a request with a file parameter. """
+    # This should (hopefully) make searching for existence a little faster than recursively searching
+    params = dumps(operation.model.parameters)
+    if beer_garden.files.UI_FILE_ID_PREFIX in params:
+        param_list = params.split(' ')
+        # Get the next item in the list and then strip away the json syntax
+        file_id = param_list[
+            param_list.index('"' + beer_garden.files.UI_FILE_ID_PREFIX) + 1
+        ].strip(',"')
+        file = beer_garden.files.check_chunks(file_id)
+        args = [file.file_name, file.file_size, file.chunk_size, file.id]
+        kwargs = {'upsert': True}
+        file_op = Operation(operation_type="FILE_CREATE", args=args, kwargs=kwargs,
+                            target_garden_name=operation.target_garden_name,
+                            source_garden_name=operation.source_garden_name)
+        forward_processor.put(file_op)
+
+        for chunk_id in file.chunks.values():
+            chunk = beer_garden.files.check_chunk(chunk_id)
+            c_args = [chunk.file_id, chunk.offset, chunk.data]
+            # Will create a placeholder file object if chunk is received before file
+            c_kwargs = {'upsert': True}
+            chunk_op = Operation(operation_type="FILE_CHUNK", args=c_args, kwargs=c_kwargs,
+                                 target_garden_name=operation.target_garden_name,
+                                 source_garden_name=operation.source_garden_name)
+            forward_processor.put(chunk_op)
+
+
+# TODO - After this is called, if one of the params is a file, ship it down range too.
 def _pre_forward(operation: Operation) -> Operation:
     """Called before forwarding an operation"""
 
@@ -397,6 +434,8 @@ def _pre_forward(operation: Operation) -> Operation:
         if wait_event:
             beer_garden.requests.request_map[operation.model.id] = wait_event
 
+        _forward_file(operation)
+
     return operation
 
 
@@ -417,6 +456,7 @@ def _determine_target_garden(operation: Operation) -> str:
         "READ" in operation.operation_type
         or "GARDEN" in operation.operation_type
         or "JOB" in operation.operation_type
+        or "FILE" in operation.operation_type
         or operation.operation_type
         in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
     ):

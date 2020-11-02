@@ -1,46 +1,18 @@
 # -*- coding: utf-8 -*-
-import os
 from base64 import b64decode
-from math import ceil
-from json import dumps
+from bson import ObjectId
 
 import tornado.web
 
 from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler, event_wait
-import beer_garden.db.api as db
 from brewtils.errors import ModelValidationError
-from brewtils.models import File, FileChunk
-
-# 10MB
-MAX_CHUNK_SIZE = 1024 * 1024 * 10
-
-
-def check_file(func):
-    def wrapper(*args, **kwargs):
-        file_id = args[1]
-        res = db.query_unique(File, id=file_id)
-        if res is None:
-            raise ModelValidationError(f"Tried to fetch an unsaved file {file_id}.")
-        new_args = list(args)
-        new_args[1] = res
-        return func(*new_args, **kwargs)
-    return wrapper
-
-
-def check_chunks(func):
-    @check_file
-    def wrapper(*args, **kwargs):
-        res = args[1]
-        if res.chunks is None:
-            raise ModelValidationError(f"Tried to load a file {res.id} with no associated chunks.")
-        return func(*args, **kwargs)
-    return wrapper
+from brewtils.models import Operation
 
 
 class FileAPI(BaseHandler):
     @authenticated(permissions=[Permissions.READ])
-    def get(self):
+    async def get(self):
         """
         ---
         summary: Retrieve a specific file
@@ -75,59 +47,17 @@ class FileAPI(BaseHandler):
         file_id = self.get_query_argument("file_id", default=None)
         chunk = self.get_query_argument("chunk", default=None)
         verify = bool(self.get_query_argument("verify", default=False))
+
         if file_id is None:
             raise ValueError("Cannot fetch a file or chunk without a file ID.")
 
-        if verify:
-            self.write(dumps(self._verify_chunks(file_id)))
-        if chunk is not None:
-            self.write(self._fetch_chunk(file_id, chunk))
-        else:
-            verification_dict = self._verify_chunks(file_id)
-            if verification_dict['valid']:
-                self.write(self._fetch_file(file_id))
-            else:
-                raise ModelValidationError(f"File {file_id} is incomplete {verification_dict}.")
-
-    @check_chunks
-    def _verify_chunks(self, file):
-        num_chunks = ceil(file.file_size / file.chunk_size)
-        computed_size = file.chunk_size * num_chunks
-
-        length_ok = num_chunks == len(file.chunks)
-        size_ok = file.file_size <= computed_size <= file.file_size + file.chunk_size
-
-        missing = [x for x in range(len(file.chunks))
-                   if file.chunks.get(str(x), None) is None]
-        return {'valid': (length_ok and missing == [] and size_ok), 'missing': missing}
-
-    @check_chunks
-    def _fetch_chunk(self, file, chunk_num):
-        if chunk_num in file.chunks:
-            chunk = db.query_unique(FileChunk, id=file.chunks[chunk_num])
-            if chunk is None:
-                raise FileNotFoundError(f"Chunk number {chunk_num} was "
-                                        f"indexed for file {file.id}, but could not be fetched")
-            return chunk.data
-        else:
-            raise ValueError(f"Chunk number {chunk_num} is invalid for file {file.id}")
-
-    @check_chunks
-    def _fetch_file(self, file):
-        # This is going to get big, try our best to be efficient
-        all_data = [db.query_unique(FileChunk, id=file.chunks[str(x)]).data
-                    for x in range(len(file.chunks))]
-        return "".join(all_data)
-
-    @check_file
-    def _save_chunk(self, file, n=None, **meta_data):
-        chunk = FileChunk(file_id=file.id, n=n, **meta_data)
-        c = db.create(chunk)
-        kwargs = {f'set__chunks__{n}': c.id}
-        db.modify(file, **kwargs)
+        response = await self.client(
+            Operation(operation_type="FILE_FETCH", args=[file_id], kwargs={'chunk': chunk, 'verify': verify})
+        )
+        self.write(response)
 
     @authenticated(permissions=[Permissions.CREATE])
-    def post(self):
+    async def post(self):
         """
         ---
         summary: Create a new Request
@@ -139,13 +69,12 @@ class FileAPI(BaseHandler):
             type: string
           - name: data
             in: body
+            required: true
             description: The Request definition
           - name: offset
             in: body
+            required: true
             description: The current offset definition
-          - name: chunk_size
-            in: body
-            description: The size of chunks for the file
         responses:
           201:
             description: A new Request has been created
@@ -171,19 +100,12 @@ class FileAPI(BaseHandler):
         if offset is None:
             raise ModelValidationError(f"No offset sent with data to write to file {file_id}")
 
-        self._save_chunk(file_id, n=offset, data=b64decode(data).decode('utf-8'))
+        response = await self.client(
+            Operation(operation_type="FILE_CHUNK", args=[file_id, offset, b64decode(data).decode('utf-8')])
+        )
+        self.write(response)
 
-    @check_chunks
-    def _delete_file(self, file):
-        # Get rid of all of the chunks first
-        for chunk_id in file.chunks.values():
-            chunk = db.query_unique(FileChunk, id=chunk_id)
-            if chunk is not None:
-                db.delete(chunk)
-        # Delete the parent file object
-        db.delete(file)
-
-    def delete(self):
+    async def delete(self):
         """
         ---
         summary: Create a new Request
@@ -209,17 +131,15 @@ class FileAPI(BaseHandler):
         if file_id is None:
             raise ValueError("Cannot delete a file without an id.")
 
-        self._delete_file(file_id)
+        response = await self.client(
+            Operation(operation_type="FILE_DELETE", args=[file_id])
+        )
+        self.write(response)
 
 
 class FileNameAPI(BaseHandler):
-    def _save_file(self, **meta_data):
-        f = File(**meta_data)
-        f = db.create(f)
-        return f.id
-
     @authenticated(permissions=[Permissions.READ])
-    def get(self):
+    async def get(self):
         """
         ---
         summary: Retrieve a specific file
@@ -249,19 +169,22 @@ class FileNameAPI(BaseHandler):
           - Files
         """
         file_name = self.get_query_argument('file_name', default="")
-        chunk_size = self.get_query_argument('chunk_size', default=None)
         file_size = self.get_query_argument('file_size', default=None)
+        chunk_size = self.get_query_argument('chunk_size', default=None)
+        file_id = self.get_query_argument('file_id', default=None)
 
         if chunk_size is None:
             raise ModelValidationError(f"No chunk_size sent with file {file_name}.")
         if file_size is None:
             raise ModelValidationError(f"No file_size sent with file {file_name}.")
 
-        try:
-            if int(chunk_size) > MAX_CHUNK_SIZE:
-                raise ModelValidationError(f"Cannot store file chunks larger than {MAX_CHUNK_SIZE} bytes.")
-            meta_data = {'file_name': file_name, 'chunk_size': int(chunk_size), 'file_size': int(file_size)}
-            self.write(self._save_file(**meta_data))
-        except ValueError:
-            raise ModelValidationError(f"Chunk size '{chunk_size}' or "
-                                       f"File size '{file_size}' could not be converted to and integer")
+        if file_id is None:
+            response = await self.client(
+                Operation(operation_type="FILE_CREATE", args=[file_name, int(file_size), int(chunk_size)])
+            )
+        else:
+
+            response = await self.client(
+                Operation(operation_type="FILE_CREATE", args=[file_name, int(file_size), int(chunk_size), file_id])
+            )
+        self.write(response)
