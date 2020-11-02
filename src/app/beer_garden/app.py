@@ -155,16 +155,10 @@ class Application(StoppableThread):
 
             elif event.name == Events.INSTANCE_INITIALIZED.name:
                 beer_garden.local_plugins.manager.lpm_proxy.handle_associate(event)
-            elif event.name == Events.INSTANCE_STARTED.name:
-                beer_garden.local_plugins.manager.lpm_proxy.handle_start(event)
             elif event.name == Events.INSTANCE_STOPPED.name:
-                beer_garden.local_plugins.manager.lpm_proxy.handle_stop(event)
+                beer_garden.local_plugins.manager.lpm_proxy.handle_stopped(event)
             elif event.name == Events.SYSTEM_REMOVED.name:
                 beer_garden.local_plugins.manager.lpm_proxy.remove_system(event.payload)
-            elif event.name == Events.SYSTEM_RELOAD_REQUESTED.name:
-                beer_garden.local_plugins.manager.lpm_proxy.reload_system(event.payload)
-            elif event.name == Events.SYSTEM_RESCAN_REQUESTED.name:
-                beer_garden.local_plugins.manager.lpm_proxy.scan_path()
 
     def _progressive_backoff(self, func, failure_message):
         wait_time = 0.1

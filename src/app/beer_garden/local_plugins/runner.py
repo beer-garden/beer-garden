@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 from threading import Thread
 from time import sleep
-from typing import Sequence
+from typing import Dict, Sequence
 
 import beer_garden.config as config
 
@@ -91,6 +91,18 @@ class ProcessRunner(Thread):
 
     def __str__(self):
         return f"{self.runner_name}.{self.runner_id}"
+
+    def state(self) -> Dict:
+        """Pickleable representation"""
+
+        return {
+            "runner_name": self.runner_name,
+            "runner_id": self.runner_id,
+            "instance_id": self.instance_id,
+            "restart": self.restart,
+            "stopped": self.stopped,
+            "dead": self.dead,
+        }
 
     def associate(self, instance=None):
         """Associate this runner with a specific instance ID"""

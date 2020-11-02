@@ -4,17 +4,17 @@
 
 import logging
 import threading
-from datetime import datetime, timedelta
-from typing import Tuple
-
 from brewtils.models import Event, Events, Instance, Request, RequestTemplate, System
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
 from bson import ObjectId
+from datetime import datetime, timedelta
+from typing import Tuple
 
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.db.mongo.motor as moto
+import beer_garden.local_plugins.manager as lpm
 import beer_garden.queue.api as queue
 import beer_garden.requests as requests
 from beer_garden.errors import NotFoundException
@@ -94,17 +94,11 @@ def start(
 
     logger.info(f"Starting instance {system}[{instance}]")
 
-    requests.process_request(
-        Request.from_template(
-            start_request,
-            namespace=system.namespace,
-            system=system.name,
-            system_version=system.version,
-            instance_name=instance.name,
-        ),
-        is_admin=True,
-        priority=1,
-    )
+    if lpm.lpm_proxy.has_instance_id(instance_id=instance.id):
+        lpm.lpm_proxy.start_one(instance_id=instance.id)
+
+    # Publish the start request
+    publish_start(system, instance)
 
     return instance
 
@@ -129,6 +123,27 @@ def stop(
 
     logger.info(f"Stopping instance {system}[{instance}]")
 
+    # Publish the stop request
+    publish_stop(system, instance)
+
+    return instance
+
+
+def publish_start(system, instance):
+    requests.process_request(
+        Request.from_template(
+            start_request,
+            namespace=system.namespace,
+            system=system.name,
+            system_version=system.version,
+            instance_name=instance.name,
+        ),
+        is_admin=True,
+        priority=1,
+    )
+
+
+def publish_stop(system, instance):
     requests.process_request(
         Request.from_template(
             stop_request,
@@ -140,8 +155,6 @@ def stop(
         is_admin=True,
         priority=1,
     )
-
-    return instance
 
 
 @publish_event(Events.INSTANCE_UPDATED)
