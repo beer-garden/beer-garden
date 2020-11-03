@@ -95,7 +95,7 @@ def start(
     logger.info(f"Starting instance {system}[{instance}]")
 
     if lpm.lpm_proxy.has_instance_id(instance_id=instance.id):
-        lpm.lpm_proxy.start_one(instance_id=instance.id)
+        lpm.lpm_proxy.restart(instance_id=instance.id)
 
     # Publish the start request
     publish_start(system, instance)
@@ -125,6 +125,9 @@ def stop(
 
     # Publish the stop request
     publish_stop(system, instance)
+
+    if lpm.lpm_proxy.has_instance_id(instance_id=instance.id):
+        lpm.lpm_proxy.stop_one(instance_id=instance.id)
 
     return instance
 
