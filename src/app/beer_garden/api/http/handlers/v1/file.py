@@ -44,9 +44,9 @@ class FileAPI(BaseHandler):
         tags:
           - Files
         """
-        file_id = self.get_query_argument("file_id", default=None)
-        chunk = self.get_query_argument("chunk", default=None)
-        verify = bool(self.get_query_argument("verify", default=False))
+        file_id = self.get_argument("file_id", default=None)
+        chunk = self.get_argument("chunk", default=None)
+        verify = bool(self.get_argument("verify", default=False))
 
         if file_id is None:
             raise ValueError("Cannot fetch a file or chunk without a file ID.")
@@ -91,8 +91,8 @@ class FileAPI(BaseHandler):
         tags:
           - Files
         """
-        file_id = self.get_query_argument("file_id", default=None)
-        upsert = self.get_query_argument("upsert", default=False)
+        file_id = self.get_argument("file_id", default=None)
+        upsert = self.get_argument("upsert", default=False)
 
         args = tornado.escape.json_decode(self.request.body)
         data = args.get("data", None)
@@ -138,7 +138,7 @@ class FileAPI(BaseHandler):
         tags:
           - Files
         """
-        file_id = self.get_query_argument("file_id", default=None)
+        file_id = self.get_argument("file_id", default=None)
         if file_id is None:
             raise ValueError("Cannot delete a file without an id.")
 
@@ -179,11 +179,11 @@ class FileNameAPI(BaseHandler):
         tags:
           - Files
         """
-        file_name = self.get_query_argument("file_name", default="")
-        file_size = self.get_query_argument("file_size", default=None)
-        chunk_size = self.get_query_argument("chunk_size", default=None)
-        file_id = self.get_query_argument("file_id", default=None)
-        upsert = self.get_query_argument("upsert", default=False)
+        file_name = self.get_argument("file_name", default="")
+        file_size = self.get_argument("file_size", default=None)
+        chunk_size = self.get_argument("chunk_size", default=None)
+        file_id = self.get_argument("file_id", default=None)
+        upsert = self.get_argument("upsert", default=False)
 
         if chunk_size is None:
             raise ModelValidationError(f"No chunk_size sent with file {file_name}.")
