@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-
 import logging
+import os
+import signal
 import subprocess
 from pathlib import Path
 from threading import Thread
 from time import sleep
-from typing import Sequence
+from typing import Dict, Sequence
 
 import beer_garden.config as config
 
@@ -91,14 +92,32 @@ class ProcessRunner(Thread):
     def __str__(self):
         return f"{self.runner_name}.{self.runner_id}"
 
+    def state(self) -> Dict:
+        """Pickleable representation"""
+
+        return {
+            "runner_name": self.runner_name,
+            "runner_id": self.runner_id,
+            "instance_id": self.instance_id,
+            "restart": self.restart,
+            "stopped": self.stopped,
+            "dead": self.dead,
+        }
+
     def associate(self, instance=None):
         """Associate this runner with a specific instance ID"""
         self.instance_id = instance.id
 
+    def terminate(self):
+        """Kill the underlying plugin process with SIGTERM"""
+        if self.process and self.process.poll() is None:
+            self.logger.debug("About to send SIGINT")
+            os.kill(self.process.pid(), signal.SIGINT)
+
     def kill(self):
         """Kill the underlying plugin process with SIGKILL"""
         if self.process and self.process.poll() is None:
-            self.logger.warning("About to kill process")
+            self.logger.warning("About to send SIGKILL")
             self.process.kill()
 
     def run(self):
