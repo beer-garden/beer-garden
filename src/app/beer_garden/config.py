@@ -289,11 +289,16 @@ def _safe_migrate(spec, filename):
             include_bootstrap=False,
         )
     except Exception:
-        sys.stderr.write(
+        import logging
+
+        # Logging isn't configured yet so this will use the last-chance logger, STDERR
+        logging.getLogger(__name__).warning(
             "Could not successfully migrate application configuration. "
-            "Will attempt to load the previous configuration."
+            "Will attempt to load the previous configuration.",
+            exc_info=True,
         )
         return
+
     if _is_new_config(filename, tmp_filename):
         _backup_previous_config(filename, tmp_filename)
     else:

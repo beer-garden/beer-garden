@@ -306,7 +306,7 @@ class TestSafeMigrate(object):
         assert len(os.listdir(tmpdir)) == 1
 
     def test_migration_failure(
-        self, monkeypatch, capsys, tmpdir, spec, config_file, old_config
+        self, monkeypatch, caplog, tmpdir, spec, config_file, old_config
     ):
         monkeypatch.setattr(
             beer_garden.config.YapconfSpec,
@@ -321,8 +321,8 @@ class TestSafeMigrate(object):
 
         beer_garden.config.load(["-c", str(config_file)], force=True)
 
-        # Make sure we printed something
-        assert capsys.readouterr().err
+        # Make sure we logged something
+        assert caplog.messages
 
         # If the migration fails, we should still have a single unchanged JSON file.
         assert len(os.listdir(tmpdir)) == 1
