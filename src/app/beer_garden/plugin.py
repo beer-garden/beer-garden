@@ -68,7 +68,7 @@ def initialize(
         system=system, instance=instance, instance_id=instance_id
     )
 
-    logger.info(f"Initializing instance {system}[{instance}]")
+    logger.debug(f"Initializing instance {system}[{instance}]")
 
     queue_spec = queue.create(instance, system)
 
@@ -107,7 +107,7 @@ def start(
         system=system, instance=instance, instance_id=instance_id
     )
 
-    logger.info(f"Starting instance {system}[{instance}]")
+    logger.debug(f"Starting instance {system}[{instance}]")
 
     if lpm.lpm_proxy.has_instance_id(instance_id=instance.id):
         lpm.lpm_proxy.restart(instance_id=instance.id)
@@ -136,7 +136,7 @@ def stop(
         system=system, instance=instance, instance_id=instance_id
     )
 
-    logger.info(f"Stopping instance {system}[{instance}]")
+    logger.debug(f"Stopping instance {system}[{instance}]")
 
     # Publish the stop request
     publish_stop(system, instance)
@@ -474,13 +474,13 @@ class StatusMonitor(StoppableThread):
         )
 
     def run(self):
-        self.logger.info(self.display_name + " is started")
+        self.logger.debug(self.display_name + " is started")
 
         while not self.wait(self.heartbeat_interval):
             self.request_status()
             self.check_status()
 
-        self.logger.info(self.display_name + " is stopped")
+        self.logger.debug(self.display_name + " is stopped")
 
     def request_status(self):
         try:

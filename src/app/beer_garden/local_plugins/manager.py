@@ -92,12 +92,12 @@ class PluginManager(StoppableThread):
         self._password = password
 
     def run(self):
-        self.logger.info(self._display_name + " is started")
+        self.logger.debug(self._display_name + " is started")
 
         while not self.wait(1):
             self.monitor()
 
-        self.logger.info(self._display_name + " is stopped")
+        self.logger.debug(self._display_name + " is stopped")
 
     def monitor(self):
         """Ensure that processes are still alive

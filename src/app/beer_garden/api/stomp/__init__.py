@@ -16,7 +16,7 @@ def run(ep_conn):
     global st_manager_stack
     stomp_config = config.get("entry.stomp")
     host_and_ports = [(stomp_config.host, stomp_config.port)]
-    logger.info(
+    logger.debug(
         "Starting Stomp entry point on host and port: " + host_and_ports.__str__()
     )
     st_manager = StompManager(ep_conn=ep_conn, stomp_config=stomp_config)
