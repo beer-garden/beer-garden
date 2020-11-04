@@ -126,7 +126,7 @@ class ProcessRunner(Thread):
         Run the plugin using the entry point specified with the generated environment in
         its own subprocess.
         """
-        self.logger.info(f"Starting process with args {self.process_args}")
+        self.logger.debug(f"Starting process with args {self.process_args}")
 
         try:
             self.process = subprocess.Popen(
@@ -167,7 +167,7 @@ class ProcessRunner(Thread):
                     f"Plugin {self} terminated before successfully initializing."
                 )
 
-            self.logger.info("Plugin is officially stopped")
+            self.logger.debug("Plugin is officially stopped")
 
         except Exception as ex:
             self.logger.exception(f"Plugin died: {ex}")

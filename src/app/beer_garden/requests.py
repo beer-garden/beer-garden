@@ -611,7 +611,11 @@ def process_request(
         request_map[request.id] = wait_event
 
     try:
-        logger.info(f"Publishing {request!r}")
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(f"Publishing {request!r}")
+        else:
+            if not request.command_type == "EPHEMERAL":
+                logger.info(f"Publishing {request!r}")
 
         queue.put(
             request,

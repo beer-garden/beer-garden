@@ -92,7 +92,7 @@ async def startup():
     anonymous_principal = load_anonymous()
 
     http_config = config.get("entry.http")
-    logger.info(f"Starting HTTP server on {http_config.host}:{http_config.port}")
+    logger.debug(f"Starting HTTP server on {http_config.host}:{http_config.port}")
     server.listen(http_config.port, http_config.host)
 
     logger.debug("Starting forward processor")
