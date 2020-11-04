@@ -1,4 +1,13 @@
 # -*- coding: utf-8 -*-
+"""Log Service
+
+The log service is responsible for:
+
+* Loading custom logger files
+* Generating default logging configurations
+* Manages logging configurations for Plugins and Beer Garden application
+"""
+
 import copy
 from typing import Any, Dict
 
@@ -251,7 +260,7 @@ class PluginLoggingManager(object):
 
 
 def handle_event(event):
-    # Only care about local garden
+    """Only care about local garden"""
     if event.garden == config.get("garden.name"):
         if event.name == Events.PLUGIN_LOGGER_FILE_CHANGE.name:
             load_plugin_log_config()

@@ -1,4 +1,19 @@
 # -*- coding: utf-8 -*-
+"""Router Service
+
+The router service is the core of all Entry Points. This provides a single standard that
+all entry points can follow in order to interact with Beer Garden Services. Allowing
+for the decouple of Entry Points to Services
+
+The router service is responsible for:
+* Mapping all Operation Types to Service functions
+* Validating the target Garden execution environment
+* Forwarding Operations to Downstream Gardens
+* Execute any pre-forwarding operations required
+* Managing Downstream Garden connections
+* Caching `Garden`/`System` information for quick routing decisions
+"""
+
 import asyncio
 import logging
 import threading

@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+"""Beer Garden Application
+
+This is the core library for Beer-Garden. Anything that is spawned by the Main Process
+in Beer-Garden will be initialized within this class.
+"""
+from typing import Callable
+
 import logging
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -128,6 +135,7 @@ class Application(StoppableThread):
         )
 
     def run(self):
+        """Before setting up Beer-Garden, ensures that required services are running"""
         if not self._verify_db_connection():
             return
 
@@ -158,7 +166,19 @@ class Application(StoppableThread):
             elif event.name == Events.INSTANCE_STOPPED.name:
                 beer_garden.local_plugins.manager.lpm_proxy.handle_stopped(event)
 
-    def _progressive_backoff(self, func, failure_message):
+    def _progressive_backoff(self, func: Callable, failure_message: str):
+        """Execute a function until it returns truthy, increasing wait time each attempt
+
+        Time between execution attempts starts at 0.1 seconds and doubles each attempt,
+        up to a maximum of 30 seconds.
+
+        Args:
+            func: The function that is being executed
+            failure_message: Warning message logged if func returns falsey
+
+        Returns:
+
+        """
         wait_time = 0.1
         while not self.stopped() and not func():
             self.logger.warning(failure_message)
@@ -205,6 +225,7 @@ class Application(StoppableThread):
         )
 
     def _startup(self):
+        """Initializes core requirements for Application"""
         self.logger.debug("Starting Application...")
 
         self.logger.debug("Starting event manager...")
@@ -251,6 +272,7 @@ class Application(StoppableThread):
         self.logger.info("All set! Let me know if you need anything else!")
 
     def _shutdown(self):
+        """Shutdown core requirements for Application"""
         self.logger.info(
             "Closing time! You don't have to go home, but you can't stay here."
         )
@@ -298,6 +320,7 @@ class Application(StoppableThread):
         self.logger.info("Successfully shut down Beer-garden")
 
     def _setup_events_manager(self):
+        """Set up the event manager for the Main Processor"""
         event_manager = FanoutProcessor(name="event manager")
 
         # Forward all events down into the entry points
@@ -333,6 +356,7 @@ class Application(StoppableThread):
 
     @staticmethod
     def _setup_scheduler():
+        """Initializes scheduled jobs stored in the database"""
         job_stores = {"beer_garden": db.get_job_store()}
         scheduler_config = config.get("scheduler")
         executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}

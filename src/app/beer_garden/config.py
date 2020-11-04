@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
+"""Config Service
+
+The configuration service is responsible for:
+
+* Loading configuration files
+* Migration configuration files between Beer Garden versions
+* Getting configuration values
+"""
 import os
 import sys
 from argparse import ArgumentParser
 from datetime import datetime
-from typing import Optional, Sequence, Tuple, Union
+from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
 from box import Box
 from brewtils.rest import normalize_url_prefix as normalize
@@ -260,7 +268,16 @@ def assign(new_config: Box, force: bool = False) -> None:
     _CONFIG = new_config
 
 
-def _setup_config_sources(spec, cli_vars):
+def _setup_config_sources(spec: YapconfSpec, cli_vars: Iterable[str]) -> List[str]:
+    """Sets the sources for configuration loading
+
+    Args:
+        spec: Yapconf specification
+        cli_vars: Command line arguments
+
+    Returns:
+        List of configuration sources
+    """
     spec.add_source("cli_args", "dict", data=cli_vars)
     spec.add_source("ENVIRONMENT", "environment")
 
@@ -278,7 +295,16 @@ def _setup_config_sources(spec, cli_vars):
     return config_sources
 
 
-def _safe_migrate(spec, filename):
+def _safe_migrate(spec: YapconfSpec, filename: str) -> None:
+    """Copy existing file to backup before migrating configuration
+
+    Args:
+        spec: Yapconf specification
+        filename: Config filename
+
+    Returns:
+        None
+    """
     tmp_filename = filename + ".tmp"
     try:
         spec.migrate_config_file(

@@ -1,6 +1,21 @@
 # -*- coding: utf-8 -*-
 
-"""This is the Plugin State Manager"""
+"""This is the Plugin State Manager
+
+* Plugin Registration
+* Plugin Monitoring
+* Plugin Removal
+
+Plugins in this case are the abstract concept of plugins. That is to say, the PSM doesn't
+know anything about the actual process that is running.  The only distinction the
+Plugin State Manager makes is about downstream vs upstream plugins.
+
+It is completely up to the PSM to change a plugin's state
+(i.e. is the plugin unresponsive? healthy? running? stopped? etc.)
+
+While the plugin state manager is responsible for initiating status messages, it will
+delegate requesting information from the plugin to the request service.
+"""
 
 import logging
 import threading
