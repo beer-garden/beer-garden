@@ -77,14 +77,24 @@ class ProcessRunner(Thread):
         self.stderr_logger.setLevel("DEBUG")
 
         if config.get("plugin.local.logging.stream_files"):
-            format_string = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            # This is kind of gross. We want to use the same formatting as the
+            # application logging but Python doesn't make this easy. Formatters don't
+            # have their own existence, they're just an attribute of a Handler. So
+            # if there are any file-type handlers configured use the formatter
+            # for that one, otherwise just use the first handler's formatter.
+            root_logger = logging.getLogger("")
+            handler = root_logger.handlers[0]
+            for h in root_logger.handlers:
+                if isinstance(h, logging.FileHandler):
+                    handler = h
+                    break
 
             stdout_handler = logging.FileHandler(self.process_cwd / "plugin.out")
-            stdout_handler.setFormatter(logging.Formatter(format_string))
+            stdout_handler.setFormatter(handler.formatter)
             self.stdout_logger.addHandler(stdout_handler)
 
             stderr_handler = logging.FileHandler(self.process_cwd / "plugin.err")
-            stderr_handler.setFormatter(logging.Formatter(format_string))
+            stdout_handler.setFormatter(handler.formatter)
             self.stderr_logger.addHandler(stderr_handler)
 
         Thread.__init__(self, name=self.runner_name)
