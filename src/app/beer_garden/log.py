@@ -260,7 +260,7 @@ class PluginLoggingManager(object):
 
 
 def handle_event(event):
-    """Only care about local garden where the Plugin Logger Config was updated"""
+    """Only care about local garden"""
     if event.garden == config.get("garden.name"):
         if event.name == Events.PLUGIN_LOGGER_FILE_CHANGE.name:
             load_plugin_log_config()

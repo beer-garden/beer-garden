@@ -4,6 +4,7 @@
 This is the core library for Beer-Garden. Anything that is spawned by the Main Process
 in Beer-Garden will be initialized within this class.
 """
+from typing import Callable
 
 import logging
 from datetime import timedelta
@@ -142,12 +143,15 @@ class Application(StoppableThread):
             if event.name == Events.ENTRY_STARTED.name:
                 PluginManager.instance().scan_path()
 
-    def _progressive_backoff(self, func, failure_message):
-        """Increases the delay between function attempts until a max delay of 30 seconds
+    def _progressive_backoff(self, func: Callable, failure_message: str):
+        """Execute a function until it returns truthy, increasing wait time each attempt
+
+        Time between execution attempts starts at 0.1 seconds and doubles each attempt,
+        up to a maximum of 30 seconds.
 
         Args:
             func: The function that is being executed
-            failure_message: Error message to throw if function returns returns None or False
+            failure_message: Warning message logged if func returns falsey
 
         Returns:
 
@@ -289,7 +293,7 @@ class Application(StoppableThread):
         self.logger.info("Successfully shut down Beer-garden")
 
     def _setup_events_manager(self):
-        """Setups up events managers required by Main Processor"""
+        """Set up the event manager for the Main Processor"""
         event_manager = FanoutProcessor(name="event manager")
 
         # Forward all events down into the entry points

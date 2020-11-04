@@ -98,13 +98,14 @@ def publish_garden(
     )
 
 
-def update_garden_config(garden: Garden):
-    """Update Garden Configuration parameters
+def update_garden_config(garden: Garden) -> Garden:
+    """Update Garden configuration parameters
 
     Args:
         garden: The Garden to Update
 
-    Returns: The Garden updated
+    Returns:
+        The Garden updated
 
     """
     db_garden = db.query_unique(Garden, id=garden.id)
@@ -170,14 +171,15 @@ def create_garden(garden: Garden) -> Garden:
     return db.create(garden)
 
 
-def garden_add_system(system: System, garden_name: str):
-    """Add `System` to `Garden` record
+def garden_add_system(system: System, garden_name: str) -> Garden:
+    """Add a System to a Garden
 
     Args:
         system: The system to add
         garden_name: The Garden Name to add it to
 
     Returns:
+        The updated Garden
 
     """
     garden = get_garden(garden_name)
@@ -197,13 +199,14 @@ def garden_add_system(system: System, garden_name: str):
 
 
 @publish_event(Events.GARDEN_UPDATED)
-def update_garden(garden: Garden):
-    """Update the `Garden` records
+def update_garden(garden: Garden) -> Garden:
+    """Update a Garden
 
     Args:
         garden: The Garden to update
 
-    Returns: The Garden
+    Returns:
+        The updated Garden
     """
     return db.update(garden)
 
