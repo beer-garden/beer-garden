@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from io import TextIOBase
+
 import logging
 import os
 import signal
@@ -10,31 +12,19 @@ from typing import Dict, Sequence
 log_levels = [n for n in getattr(logging, "_nameToLevel").keys()]
 
 
-def read_stream(process, stream, default_level, logger):
-    """Helper function thread target to read IO from the plugin's subprocess
+def read_stream(process: subprocess.Popen, stream: TextIOBase, logger: logging.Logger):
+    """Helper function thread target to read a subprocess IO stream
 
-    This will read line by line from STDOUT or STDERR. If the line includes one of
-    the log levels that the python logger knows about it will be logged at that
-    level, otherwise it will be logged at the default level for that stream. For
-    STDOUT this is INFO and for STDERR this is ERROR.
-
-    That way we guarantee messages are outputted (this is usually caused by a plugin
-     writing to STDOUT / STDERR directly or raising an exception with a stacktrace).
+    This will read line by line from STDOUT or STDERR and log each line at INFO level.
+    Loggers passed to this function should have handlers configured to log at that level
+    (or propagate to a logger than can), otherwise this function is pointless.
     """
     stream_reader = iter(stream.readline, "")
 
     # Sometimes the iter can finish before the process is really done
     while process.poll() is None:
         for raw_line in stream_reader:
-            line = raw_line.rstrip()
-
-            level_to_log = default_level
-            for level in log_levels:
-                if line.find(level) != -1:
-                    level_to_log = getattr(logging, level)
-                    break
-
-            logger.log(level_to_log, line)
+            logger.info(raw_line.rstrip())
 
 
 class StreamReader:
@@ -50,46 +40,40 @@ class StreamReader:
         self.stderr_thread = None
 
     def __enter__(self):
-        if self.capture_streams:
-            stdout_logger = logging.getLogger(f"runner.{self.runner}.stdout")
-            stdout_logger.setLevel("DEBUG")
-            stderr_logger = logging.getLogger(f"runner.{self.runner}.stderr")
-            stderr_logger.setLevel("DEBUG")
+        if not self.capture_streams:
+            return
 
-            # This is kind of gross. We want to use the same formatting as the
-            # application logging but Python doesn't make this easy. Formatters don't
-            # have their own existence, they're just an attribute of a Handler. So
-            # if there are any file-type handlers configured use the formatter
-            # for that one, otherwise just use the first handler's formatter.
-            root_logger = logging.getLogger("")
-            handler = root_logger.handlers[0]
-            for h in root_logger.handlers:
-                if isinstance(h, logging.FileHandler):
-                    handler = h
-                    break
+        format_str = "%(asctime)s %(name)s: %(message)s"
 
-            stdout_handler = logging.FileHandler(self.process_cwd / "plugin.out")
-            stdout_handler.setFormatter(handler.formatter)
-            stdout_logger.addHandler(stdout_handler)
+        stdout_handler = logging.FileHandler(self.process_cwd / "plugin.stdout")
+        stdout_handler.setFormatter(logging.Formatter(fmt=format_str))
 
-            stderr_handler = logging.FileHandler(self.process_cwd / "plugin.err")
-            stdout_handler.setFormatter(handler.formatter)
-            stderr_logger.addHandler(stderr_handler)
+        stderr_handler = logging.FileHandler(self.process_cwd / "plugin.stderr")
+        stderr_handler.setFormatter(logging.Formatter(fmt=format_str))
 
-            # Reading process IO is blocking so needs to be in separate threads
-            self.stdout_thread = Thread(
-                target=read_stream,
-                args=(self.process, self.process.stdout, logging.INFO, stdout_logger),
-                name=f"{self.runner} STDOUT Reader",
-            )
-            self.stderr_thread = Thread(
-                target=read_stream,
-                args=(self.process, self.process.stderr, logging.ERROR, stderr_logger),
-                name=f"{self.runner} STDERR Reader",
-            )
+        stdout_logger = logging.getLogger(f"{self.runner.runner_id}.stdout")
+        stdout_logger.addHandler(stdout_handler)
+        stdout_logger.propagate = False
+        stdout_logger.setLevel("DEBUG")
 
-            self.stdout_thread.start()
-            self.stderr_thread.start()
+        stderr_logger = logging.getLogger(f"{self.runner.runner_id}.stderr")
+        stderr_logger.addHandler(stderr_handler)
+        stderr_logger.propagate = False
+        stderr_logger.setLevel("DEBUG")
+
+        self.stdout_thread = Thread(
+            target=read_stream,
+            args=(self.process, self.process.stdout, stdout_logger),
+            name=f"{self.runner} STDOUT Reader",
+        )
+        self.stderr_thread = Thread(
+            target=read_stream,
+            args=(self.process, self.process.stderr, stderr_logger),
+            name=f"{self.runner} STDERR Reader",
+        )
+
+        self.stdout_thread.start()
+        self.stderr_thread.start()
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         if self.stdout_thread and self.stdout_thread.is_alive():
@@ -99,10 +83,10 @@ class StreamReader:
 
 
 class ProcessRunner(Thread):
-    """Thread that 'manages' a Plugin process.
+    """Thread that runs a Plugin process
 
-    A runner will take care of creating and starting a process that will run the
-    plugin entry point.
+    A runner will take care of creating and starting a process that will run the plugin
+    entry point.
 
     Logging here is a little interesting. We expect that plugins will be created as the
     first order of business in the plugin's ``main()``. Part of the Plugin initialize
@@ -113,22 +97,19 @@ class ProcessRunner(Thread):
     initializing the Plugin (even though it's not recommended), and the Plugin may fail
     to register at all for whatever reason.
 
-    Both of these cases are handled the same way. We read STDOUT and STDERR from the
-    process, and everything gets placed into a queue. The queue won't be processed until
-    one of two things happen:
-        - The ``associate`` method is called. This means that the plugin has
-        successfully registered
-        - The plugin process dies
+    This can be problematic depending on the way the Beer-garden application is run.
+    When running as a systemd service it's difficult to find the output for individual
+    plugin processes, which can make troubleshooting frustrating.
 
-    Once either of those happen we check to see if there are any items on the logging
-    queue. If so, we prepend a message saying what's about to happen, and then we log
-    all messages. Messages will be logged according to the normal application config
-    as well as a special error file in the plugin log directory. This error file will
-    be overwritten every time the plugin is run.
+    To make things less annoying the beer.conf file supports a CAPTURE_STREAMS flag. If
+    this is set to True the STDOUT and STDERR for the plugin process will be captured
+    and logged to files plugin.out and plugin.err, respectively. These files will be
+    located in the same directory as the plugin.
 
-    Two support this slightly odd setup this class has two loggers:
-    - logger is the normal python logger for this class
-    - capture_logger is the logger used to log records coming from the plugin process
+    The log statements will have the runner ID as part of the logger name. This is to
+    distinguish between output generated by the different processes that are created
+    when more than once instance of a plugin is run. Unfortunately, the instance name
+    itself can't be used here because it's not guaranteed to be accurate.
 
     """
 
