@@ -1114,7 +1114,7 @@ _PLUGIN_SPEC = {
                             "local plugins",
                             "required": False,
                         },
-                        "stream_files": {
+                        "capture_streams": {
                             "type": "bool",
                             "description": "Write plugin STDOUT to plugin.out and "
                             "plugin STDERR to plugin.err",

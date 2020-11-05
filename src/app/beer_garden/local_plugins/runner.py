@@ -8,8 +8,6 @@ from threading import Thread
 from time import sleep
 from typing import Dict, Sequence
 
-import beer_garden.config as config
-
 log_levels = [n for n in getattr(logging, "_nameToLevel").keys()]
 
 
@@ -53,6 +51,7 @@ class ProcessRunner(Thread):
         process_args: Sequence[str],
         process_cwd: Path,
         process_env: dict,
+        capture_streams: bool,
     ):
         self.process = None
         self.restart = False
@@ -66,36 +65,10 @@ class ProcessRunner(Thread):
         self.process_cwd = process_cwd
         self.process_env = process_env
         self.runner_name = process_cwd.name
+        self.capture_streams = capture_streams
 
         # Logger that will be used by the actual ProcessRunner
         self.logger = logging.getLogger(f"{__name__}.{self}")
-
-        # Loggers that will be used for captured STDOUT / STDERR
-        self.stdout_logger = logging.getLogger(f"runner.{self}.stdout")
-        self.stdout_logger.setLevel("DEBUG")
-        self.stderr_logger = logging.getLogger(f"runner.{self}.stderr")
-        self.stderr_logger.setLevel("DEBUG")
-
-        if config.get("plugin.local.logging.stream_files"):
-            # This is kind of gross. We want to use the same formatting as the
-            # application logging but Python doesn't make this easy. Formatters don't
-            # have their own existence, they're just an attribute of a Handler. So
-            # if there are any file-type handlers configured use the formatter
-            # for that one, otherwise just use the first handler's formatter.
-            root_logger = logging.getLogger("")
-            handler = root_logger.handlers[0]
-            for h in root_logger.handlers:
-                if isinstance(h, logging.FileHandler):
-                    handler = h
-                    break
-
-            stdout_handler = logging.FileHandler(self.process_cwd / "plugin.out")
-            stdout_handler.setFormatter(handler.formatter)
-            self.stdout_logger.addHandler(stdout_handler)
-
-            stderr_handler = logging.FileHandler(self.process_cwd / "plugin.err")
-            stdout_handler.setFormatter(handler.formatter)
-            self.stderr_logger.addHandler(stderr_handler)
 
         Thread.__init__(self, name=self.runner_name)
 
@@ -138,39 +111,72 @@ class ProcessRunner(Thread):
         """
         self.logger.debug(f"Starting process with args {self.process_args}")
 
-        try:
-            self.process = subprocess.Popen(
-                args=self.process_args,
-                env=self.process_env,
-                cwd=str(self.process_cwd.resolve()),
-                restore_signals=False,
-                close_fds=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
+        self.process = subprocess.Popen(
+            args=self.process_args,
+            env=self.process_env,
+            cwd=str(self.process_cwd.resolve()),
+            restore_signals=False,
+            close_fds=True,
+            text=True,
+            stdout=subprocess.PIPE if self.capture_streams else None,
+            stderr=subprocess.PIPE if self.capture_streams else None,
+        )
+
+        stdout_thread = Thread()
+        stderr_thread = Thread()
+
+        # Set up stream capture if necessary
+        if self.capture_streams:
+            stdout_logger = logging.getLogger(f"runner.{self}.stdout")
+            stdout_logger.setLevel("DEBUG")
+            stderr_logger = logging.getLogger(f"runner.{self}.stderr")
+            stderr_logger.setLevel("DEBUG")
+
+            # This is kind of gross. We want to use the same formatting as the
+            # application logging but Python doesn't make this easy. Formatters don't
+            # have their own existence, they're just an attribute of a Handler. So
+            # if there are any file-type handlers configured use the formatter
+            # for that one, otherwise just use the first handler's formatter.
+            root_logger = logging.getLogger("")
+            handler = root_logger.handlers[0]
+            for h in root_logger.handlers:
+                if isinstance(h, logging.FileHandler):
+                    handler = h
+                    break
+
+            stdout_handler = logging.FileHandler(self.process_cwd / "plugin.out")
+            stdout_handler.setFormatter(handler.formatter)
+            stdout_logger.addHandler(stdout_handler)
+
+            stderr_handler = logging.FileHandler(self.process_cwd / "plugin.err")
+            stdout_handler.setFormatter(handler.formatter)
+            stderr_logger.addHandler(stderr_handler)
 
             # Reading process IO is blocking so needs to be in separate threads
             stdout_thread = Thread(
                 name=f"{self} STDOUT Reader",
                 target=self._read_stream,
-                args=(self.process.stdout, logging.INFO, self.stdout_logger),
+                args=(self.process.stdout, logging.INFO, stdout_logger),
             )
             stderr_thread = Thread(
                 name=f"{self} STDERR Reader",
                 target=self._read_stream,
-                args=(self.process.stderr, logging.ERROR, self.stderr_logger),
+                args=(self.process.stderr, logging.ERROR, stderr_logger),
             )
-            stdout_thread.start()
-            stderr_thread.start()
+
+        try:
+            if self.capture_streams:
+                stdout_thread.start()
+                stderr_thread.start()
 
             # Just spin here until until the process is no longer alive
             while self.process.poll() is None:
                 sleep(0.1)
 
-            self.logger.debug("About to join stream reader threads")
-            stdout_thread.join()
-            stderr_thread.join()
+            if self.capture_streams:
+                self.logger.debug("About to join stream reader threads")
+                stdout_thread.join()
+                stderr_thread.join()
 
             if not self.instance_id:
                 self.logger.warning(

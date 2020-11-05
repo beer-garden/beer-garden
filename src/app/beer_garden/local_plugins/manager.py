@@ -333,6 +333,7 @@ class PluginManager(StoppableThread):
 
         for instance_name in plugin_config["INSTANCES"]:
             runner_id = "".join([choice(string.ascii_letters) for _ in range(10)])
+            capture_streams = config.get("plugin.local.logging.capture_streams")
             process_args = self._process_args(plugin_config, instance_name)
             process_env = self._environment(
                 plugin_config, instance_name, plugin_path, runner_id
@@ -344,6 +345,7 @@ class PluginManager(StoppableThread):
                     process_args=process_args,
                     process_cwd=plugin_path,
                     process_env=process_env,
+                    capture_streams=capture_streams,
                 )
             )
 

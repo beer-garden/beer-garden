@@ -114,7 +114,7 @@ plugin:
     host_env_vars: []
     logging:
       config_file: example_configs/plugin-logging-local.yaml
-      stream_files: false
+      capture_streams: false
     timeout:
       shutdown: 10
       startup: 2
