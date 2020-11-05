@@ -113,13 +113,13 @@ plugin:
     directory: ./plugins
     host_env_vars: []
     logging:
-      config_file: null
+      config_file: example_configs/plugin-logging-local.yaml
       stream_files: false
     timeout:
       shutdown: 10
       startup: 2
   logging:
-    config_file: example_configs/plugin-logging.yaml
+    config_file: example_configs/plugin-logging-default.yaml
     fallback_level: INFO
   status_heartbeat: 5
   status_timeout: 30
