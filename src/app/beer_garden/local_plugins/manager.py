@@ -271,6 +271,7 @@ class PluginManager(StoppableThread):
             process_args=runner.process_args,
             process_cwd=runner.process_cwd,
             process_env=runner.process_env,
+            capture_streams=runner.capture_streams,
         )
 
         self._runners.remove(runner)
