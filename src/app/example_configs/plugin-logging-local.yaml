@@ -4,7 +4,7 @@ disable_existing_loggers: False
 handlers:
   stdout:
     class: "logging.StreamHandler"
-    formatter: bare
+    formatter: default
     stream: "ext://sys.stdout"
 
 #  Uncomment this and the handler in the root->handlers section to enable file-based
