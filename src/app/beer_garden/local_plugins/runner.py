@@ -5,7 +5,6 @@ import signal
 import subprocess
 from pathlib import Path
 from threading import Thread
-from time import sleep
 from typing import Dict, Sequence
 
 log_levels = [n for n in getattr(logging, "_nameToLevel").keys()]
@@ -155,7 +154,6 @@ class ProcessRunner(Thread):
         self.runner_name = process_cwd.name
         self.capture_streams = capture_streams
 
-        # Logger that will be used by the actual ProcessRunner
         self.logger = logging.getLogger(f"{__name__}.{self}")
 
         Thread.__init__(self, name=self.runner_name)
@@ -212,9 +210,7 @@ class ProcessRunner(Thread):
             )
 
             with StreamReader(self.process, self.process_cwd, self.capture_streams):
-                # Just spin here until until the process is no longer alive
-                while self.process.poll() is None:
-                    sleep(0.1)
+                self.process.wait()
 
             if not self.instance_id:
                 self.logger.warning(
@@ -224,4 +220,4 @@ class ProcessRunner(Thread):
             self.logger.debug("Plugin is officially stopped")
 
         except Exception as ex:
-            self.logger.exception(f"Plugin died: {ex}")
+            self.logger.exception(f"Plugin {self} died: {ex}")
