@@ -40,20 +40,20 @@ def read_stream(process, stream, default_level, logger):
 class StreamReader:
     """Context manager responsible for managing stream reading threads"""
 
-    def __init__(self, process, process_cwd, capture_streams):
-        self.process = process
-        self.process_cwd = process_cwd
-        self.capture_streams = capture_streams
+    def __init__(self, runner):
+        self.runner = runner
+        self.process = runner.process
+        self.process_cwd = runner.process_cwd
+        self.capture_streams = runner.capture_streams
 
-        self._stdout_thread = None
-        self._stderr_thread = None
+        self.stdout_thread = None
+        self.stderr_thread = None
 
     def __enter__(self):
-        # Set up stream capture if necessary
         if self.capture_streams:
-            stdout_logger = logging.getLogger(f"runner.{self}.stdout")
+            stdout_logger = logging.getLogger(f"runner.{self.runner}.stdout")
             stdout_logger.setLevel("DEBUG")
-            stderr_logger = logging.getLogger(f"runner.{self}.stderr")
+            stderr_logger = logging.getLogger(f"runner.{self.runner}.stderr")
             stderr_logger.setLevel("DEBUG")
 
             # This is kind of gross. We want to use the same formatting as the
@@ -77,25 +77,25 @@ class StreamReader:
             stderr_logger.addHandler(stderr_handler)
 
             # Reading process IO is blocking so needs to be in separate threads
-            self._stdout_thread = Thread(
-                name=f"{self} STDOUT Reader",
+            self.stdout_thread = Thread(
                 target=read_stream,
                 args=(self.process, self.process.stdout, logging.INFO, stdout_logger),
+                name=f"{self.runner} STDOUT Reader",
             )
-            self._stderr_thread = Thread(
-                name=f"{self} STDERR Reader",
+            self.stderr_thread = Thread(
                 target=read_stream,
                 args=(self.process, self.process.stderr, logging.ERROR, stderr_logger),
+                name=f"{self.runner} STDERR Reader",
             )
 
-            if self.capture_streams:
-                self._stdout_thread.start()
-                self._stderr_thread.start()
+            self.stdout_thread.start()
+            self.stderr_thread.start()
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        if self.capture_streams:
-            self._stdout_thread.join()
-            self._stderr_thread.join()
+        if self.stdout_thread and self.stdout_thread.is_alive():
+            self.stdout_thread.join()
+        if self.stderr_thread and self.stderr_thread.is_alive():
+            self.stderr_thread.join()
 
 
 class ProcessRunner(Thread):
@@ -209,7 +209,7 @@ class ProcessRunner(Thread):
                 stderr=subprocess.PIPE if self.capture_streams else None,
             )
 
-            with StreamReader(self.process, self.process_cwd, self.capture_streams):
+            with StreamReader(self):
                 self.process.wait()
 
             if not self.instance_id:
