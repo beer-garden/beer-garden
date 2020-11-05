@@ -37,16 +37,17 @@ class ConfigKeys(Enum):
     PLUGIN_ARGS = 3
     ENVIRONMENT = 4
     LOG_LEVEL = 5
+    CAPTURE_STREAMS = 6
 
-    NAME = 6
-    VERSION = 7
-    DESCRIPTION = 8
-    MAX_INSTANCES = 9
-    ICON_NAME = 10
-    DISPLAY_NAME = 11
-    METADATA = 12
-    NAMESPACE = 13
-    INTERPRETER_PATH = 14
+    NAME = 7
+    VERSION = 8
+    DESCRIPTION = 9
+    MAX_INSTANCES = 10
+    ICON_NAME = 11
+    DISPLAY_NAME = 12
+    METADATA = 13
+    NAMESPACE = 14
+    INTERPRETER_PATH = 15
 
 
 class PluginManager(StoppableThread):
@@ -334,7 +335,7 @@ class PluginManager(StoppableThread):
 
         for instance_name in plugin_config["INSTANCES"]:
             runner_id = "".join([choice(string.ascii_letters) for _ in range(10)])
-            capture_streams = config.get("plugin.local.logging.capture_streams")
+            capture_streams = plugin_config.get("CAPTURE_STREAMS")
             process_args = self._process_args(plugin_config, instance_name)
             process_env = self._environment(
                 plugin_config, instance_name, plugin_path, runner_id

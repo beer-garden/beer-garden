@@ -114,7 +114,6 @@ plugin:
     host_env_vars: []
     logging:
       config_file: null
-      capture_streams: false
     timeout:
       shutdown: 10
       startup: 2
