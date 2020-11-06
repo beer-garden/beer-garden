@@ -53,7 +53,8 @@ if [ ! -f "$CONFIG_FILE" ]; then
     "$APP_HOME/bin/generate_config" \
         -c "$CONFIG_FILE" -l "$APP_LOG_CONFIG" \
         --plugin-local-directory "$PLUGIN_HOME" \
-        --plugin-logging-config-file "$PLUGIN_LOG_CONFIG"
+        --plugin-local-logging-config-file "$PLUGIN_LOG_CONFIG" \
+        --plugin-remote-logging-config-file "$PLUGIN_LOG_CONFIG"
 fi
 
 # Generate application logging config if it doesn't exist
