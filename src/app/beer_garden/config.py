@@ -883,6 +883,23 @@ _PARENT_SPEC = {
                     "default": False,
                     "description": "Publish events to parent garden over HTTP",
                 },
+                "host": {
+                    "type": "str",
+                    "description": "Host for the HTTP Server to bind to",
+                    "required": False,
+                },
+                "port": {
+                    "type": "int",
+                    "default": 2337,
+                    "description": "Serve content on this port",
+                },
+                "skip_events": {
+                    "type": "list",
+                    "items": {"skip_event": {"type": "str"}},
+                    "default": ["DB_CREATE"],
+                    "required": False,
+                    "description": "Events to be skipped",
+                },
                 "ssl": {
                     "type": "dict",
                     "items": {
@@ -925,33 +942,11 @@ _PARENT_SPEC = {
                         },
                     },
                 },
-                "port": {
-                    "type": "int",
-                    "default": 2337,
-                    "description": "Serve content on this port",
-                },
                 "url_prefix": {
                     "type": "str",
                     "default": "/",
                     "description": "URL path prefix",
                     "required": False,
-                },
-                "host": {
-                    "type": "str",
-                    "default": "0.0.0.0",
-                    "description": "Host for the HTTP Server to bind to",
-                },
-                "public_fqdn": {
-                    "type": "str",
-                    "default": "localhost",
-                    "description": "Public fully-qualified domain name",
-                },
-                "skip_events": {
-                    "type": "list",
-                    "items": {"skip_event": {"type": "str"}},
-                    "default": ["DB_CREATE"],
-                    "required": False,
-                    "description": "Events to be skipped",
                 },
             },
         }

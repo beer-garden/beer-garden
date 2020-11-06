@@ -85,9 +85,8 @@ mq:
 parent:
   http:
     enabled: false
-    host: 0.0.0.0
+    host: null
     port: 2337
-    public_fqdn: localhost
     skip_events:
     - DB_CREATE
     ssl:
