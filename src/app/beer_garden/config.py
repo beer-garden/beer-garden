@@ -443,22 +443,8 @@ _MQ_SPEC = {
         "host": {
             "type": "str",
             "default": "localhost",
-            "description": "Globally resolvable host name of message broker",
-            "long_description": "This will be supplied to all plugins as part of their "
-            "initialization process as the broker to connect to. If 'internal_host "
-            "(below) is not supplied, this value will also be used as the location of "
-            "the message by the Beergarden application.",
-            "alt_env_names": ["BG_PUBLISH_HOSTNAME", "PUBLISH_HOSTNAME"],
-        },
-        "internal_host": {
-            "type": "str",
-            "description": "Hostname of message broker",
-            "long_description": "If given, this value will be used by the Beergarden "
-            "application as the location of the message broker. This is mainly "
-            "intended to support a container-based environment where the name used to "
-            "connect to the message broker may be different depending on whether the "
-            "application or a plugin is making the connection.",
-            "required": False,
+            "description": "Will be used by the Beergarden application as the location "
+            "of the message broker.",
         },
         "admin_queue_expiry": {
             "type": "int",
@@ -1033,19 +1019,6 @@ _METRICS_SPEC = {
 _PLUGIN_SPEC = {
     "type": "dict",
     "items": {
-        "status_heartbeat": {
-            "type": "int",
-            "default": 10,
-            "description": "Amount of time between status messages",
-            "previous_names": ["plugin_status_heartbeat"],
-        },
-        "status_timeout": {
-            "type": "int",
-            "default": 30,
-            "description": "Amount of time to wait before marking a plugin as"
-            "unresponsive",
-            "previous_names": ["plugin_status_timeout "],
-        },
         "local": {
             "type": "dict",
             "items": {
@@ -1128,6 +1101,21 @@ _PLUGIN_SPEC = {
                 },
             },
         },
+        "mq": {
+            "type": "dict",
+            "items": {
+                "host": {
+                    "type": "str",
+                    "description": "Globally resolvable host name of message broker",
+                    "long_description": "This will be supplied to all plugins as the "
+                    "location of the message broker. In order to support both local "
+                    "and remote plugins it's important that this value be universally "
+                    "resolvable.",
+                    "default": "localhost",
+                    "alt_env_names": ["BG_PUBLISH_HOSTNAME", "PUBLISH_HOSTNAME"],
+                },
+            },
+        },
         "remote": {
             "type": "dict",
             "items": {
@@ -1157,6 +1145,19 @@ _PLUGIN_SPEC = {
                     },
                 },
             },
+        },
+        "status_heartbeat": {
+            "type": "int",
+            "default": 10,
+            "description": "Amount of time between status messages",
+            "previous_names": ["plugin_status_heartbeat"],
+        },
+        "status_timeout": {
+            "type": "int",
+            "default": 30,
+            "description": "Amount of time to wait before marking a plugin as"
+            "unresponsive",
+            "previous_names": ["plugin_status_timeout "],
         },
     },
 }

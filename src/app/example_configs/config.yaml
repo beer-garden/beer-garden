@@ -81,7 +81,6 @@ mq:
   exchange: beer_garden
   heartbeat_interval: 3600
   host: localhost
-  internal_host: null
   virtual_host: /
 parent:
   http:
@@ -112,6 +111,8 @@ plugin:
     timeout:
       shutdown: 10
       startup: 2
+  mq:
+    host: localhost
   remote:
     logging:
       config_file: example_configs/plugin-logging.yaml

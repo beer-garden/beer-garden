@@ -26,12 +26,9 @@ def check_connection(connection_name: str):
 def create_clients(mq_config):
     global clients
 
-    # Need to use internal host here if one is provided
-    host = mq_config.internal_host or mq_config.host
-
     clients = {
         "pika": TransientPikaClient(
-            host=host,
+            host=mq_config.host,
             port=mq_config.connections.message.port,
             ssl=mq_config.connections.message.ssl,
             user=mq_config.connections.admin.user,
@@ -42,7 +39,7 @@ def create_clients(mq_config):
             exchange=mq_config.exchange,
         ),
         "pyrabbit": PyrabbitClient(
-            host=host,
+            host=mq_config.host,
             virtual_host=mq_config.virtual_host,
             admin_expires=mq_config.admin_queue_expiry,
             **mq_config.connections.admin,
@@ -91,8 +88,9 @@ def create(instance: Instance, system: System) -> dict:
     )
 
     mq_config = config.get("mq")
+    plugin_config = config.get("plugin")
     connection = {
-        "host": mq_config.host,
+        "host": plugin_config.mq.host,
         "port": mq_config.connections.message.port,
         "user": mq_config.connections.message.user,
         "password": mq_config.connections.message.password,
