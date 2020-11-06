@@ -556,7 +556,7 @@ _MQ_SPEC = {
     },
 }
 
-_APPLICATION_SPEC = {
+_UI_SPEC = {
     "type": "dict",
     "items": {
         "cors_enabled": {
@@ -1223,17 +1223,17 @@ _VALIDATOR_SPEC = {
 }
 
 _SPECIFICATION = {
-    "mq": _MQ_SPEC,
-    "application": _APPLICATION_SPEC,
     "auth": _AUTH_SPEC,
     "configuration": _META_SPEC,
     "db": _DB_SPEC,
     "entry": _ENTRY_SPEC,
-    "parent": _PARENT_SPEC,
     "garden": _GARDEN_SPEC,
     "log": _LOG_SPEC,
     "metrics": _METRICS_SPEC,
+    "mq": _MQ_SPEC,
+    "parent": _PARENT_SPEC,
     "plugin": _PLUGIN_SPEC,
     "scheduler": _SCHEDULER_SPEC,
+    "ui": _UI_SPEC,
     "validator": _VALIDATOR_SPEC,
 }

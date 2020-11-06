@@ -228,13 +228,13 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix[:-1]}", RedirectHandler, {"url": prefix}),
     ]
 
-    app_config = config.get("application")
     auth_config = config.get("auth")
-    _load_swagger(published_url_specs, title=app_config.name)
+    ui_config = config.get("ui")
+    _load_swagger(published_url_specs, title=ui_config.name)
 
     return Application(
         published_url_specs + unpublished_url_specs,
-        debug=app_config.debug_mode,
+        debug=ui_config.debug_mode,
         cookie_secret=auth_config.token.secret,
         autoreload=False,
         client=SerializeHelper(),
@@ -351,7 +351,7 @@ def _setup_event_handling(ep_conn):
 
 
 def _event_callback(event):
-    # Everything needs to be published to the websockdet
+    # Everything needs to be published to the websocket
     websocket_publish(event)
 
     # And also register handlers that the entry point needs to care about

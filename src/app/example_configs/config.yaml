@@ -1,9 +1,3 @@
-application:
-  cors_enabled: true
-  debug_mode: true
-  execute_javascript: false
-  icon_default: fa-beer
-  name: Beer Garden
 auth:
   enabled: false
   guest_login_enabled: true
@@ -130,6 +124,12 @@ scheduler:
     coalesce: true
     max_instances: 3
   max_workers: 10
+ui:
+  cors_enabled: true
+  debug_mode: true
+  execute_javascript: false
+  icon_default: fa-beer
+  name: Beer Garden
 validator:
   command:
     timeout: 10
