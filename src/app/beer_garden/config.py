@@ -707,6 +707,17 @@ _HTTP_SPEC = {
             "description": "Run an HTTP server",
             "previous_names": ["entry_http_enable"],
         },
+        "host": {
+            "type": "str",
+            "default": "0.0.0.0",
+            "description": "Host for the HTTP Server to bind to",
+        },
+        "port": {
+            "type": "int",
+            "default": 2337,
+            "description": "Serve content on this port",
+            "previous_names": ["web_port"],
+        },
         "ssl": {
             "type": "dict",
             "items": {
@@ -762,12 +773,6 @@ _HTTP_SPEC = {
                 },
             },
         },
-        "port": {
-            "type": "int",
-            "default": 2337,
-            "description": "Serve content on this port",
-            "previous_names": ["web_port"],
-        },
         "url_prefix": {
             "type": "str",
             "default": "/",
@@ -775,18 +780,6 @@ _HTTP_SPEC = {
             "required": False,
             "previous_names": ["url_prefix"],
             "alt_env_names": ["URL_PREFIX"],
-        },
-        "host": {
-            "type": "str",
-            "default": "0.0.0.0",
-            "description": "Host for the HTTP Server to bind to",
-        },
-        "public_fqdn": {
-            "type": "str",
-            "default": "localhost",
-            "description": "Public fully-qualified domain name",
-            "previous_names": ["public_fqdn"],
-            "alt_env_names": ["PUBLIC_FQDN"],
         },
     },
 }

@@ -20,7 +20,6 @@ entry:
     enabled: true
     host: 0.0.0.0
     port: 2337
-    public_fqdn: localhost
     ssl:
       ca_cert: null
       ca_path: null
