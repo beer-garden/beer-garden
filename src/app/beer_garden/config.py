@@ -1172,33 +1172,40 @@ _SCHEDULER_SPEC = {
     },
 }
 
-_VALIDATOR_SPEC = {
+_REQUEST_VALIDATION_SPEC = {
     "type": "dict",
     "items": {
-        "command": {
+        "dynamic_choices": {
             "type": "dict",
             "items": {
-                "timeout": {
-                    "type": "int",
-                    "default": 10,
-                    "description": "Time to wait for a command-based choices validation",
-                    "required": False,
-                }
-            },
-        },
-        "url": {
-            "type": "dict",
-            "items": {
-                "ca_cert": {
-                    "type": "str",
-                    "description": "CA file for validating url-based choices",
-                    "required": False,
+                "command": {
+                    "type": "dict",
+                    "items": {
+                        "timeout": {
+                            "type": "int",
+                            "default": 10,
+                            "description": "Time to wait for a command-based choices "
+                            "validation",
+                            "required": False,
+                        }
+                    },
                 },
-                "ca_verify": {
-                    "type": "bool",
-                    "default": True,
-                    "description": "Verify external certificates for url-based choices",
-                    "required": False,
+                "url": {
+                    "type": "dict",
+                    "items": {
+                        "ca_cert": {
+                            "type": "str",
+                            "description": "CA file for validating url-based choices",
+                            "required": False,
+                        },
+                        "ca_verify": {
+                            "type": "bool",
+                            "default": True,
+                            "description": "Verify external certificates for url-based "
+                            "choices",
+                            "required": False,
+                        },
+                    },
                 },
             },
         },
@@ -1216,7 +1223,7 @@ _SPECIFICATION = {
     "mq": _MQ_SPEC,
     "parent": _PARENT_SPEC,
     "plugin": _PLUGIN_SPEC,
+    "request_validation": _REQUEST_VALIDATION_SPEC,
     "scheduler": _SCHEDULER_SPEC,
     "ui": _UI_SPEC,
-    "validator": _VALIDATOR_SPEC,
 }

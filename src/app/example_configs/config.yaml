@@ -116,6 +116,13 @@ plugin:
     fallback_level: INFO
   status_heartbeat: 5
   status_timeout: 30
+request_validation:
+  dynamic_choices:
+    command:
+      timeout: 10
+    url:
+      ca_cert: null
+      ca_verify: true
 scheduler:
   job_defaults:
     coalesce: true
@@ -127,9 +134,3 @@ ui:
   execute_javascript: false
   icon_default: fa-beer
   name: Beer Garden
-validator:
-  command:
-    timeout: 10
-  url:
-    ca_cert: null
-    ca_verify: true
