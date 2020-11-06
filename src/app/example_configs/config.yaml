@@ -117,9 +117,6 @@ plugin:
   status_heartbeat: 5
   status_timeout: 30
 scheduler:
-  auth:
-    password: null
-    username: null
   job_defaults:
     coalesce: true
     max_instances: 3
