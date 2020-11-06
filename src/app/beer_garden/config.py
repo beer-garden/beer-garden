@@ -896,7 +896,7 @@ _PARENT_SPEC = {
                 "skip_events": {
                     "type": "list",
                     "items": {"skip_event": {"type": "str"}},
-                    "default": ["DB_CREATE"],
+                    "default": [],
                     "required": False,
                     "description": "Events to be skipped",
                 },

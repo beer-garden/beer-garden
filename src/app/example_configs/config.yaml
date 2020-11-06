@@ -87,8 +87,7 @@ parent:
     enabled: false
     host: null
     port: 2337
-    skip_events:
-    - DB_CREATE
+    skip_events: []
     ssl:
       ca_cert: null
       ca_path: null
