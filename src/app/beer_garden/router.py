@@ -30,7 +30,6 @@ import beer_garden
 import beer_garden.commands
 import beer_garden.config as config
 import beer_garden.db.api as db
-import beer_garden.db.mongo.motor as moto
 import beer_garden.garden
 import beer_garden.log
 import beer_garden.namespace
@@ -211,20 +210,24 @@ def execute_local(operation: Operation):
     # Default to "normal"
     lookup = route_functions
 
-    if moto.motor_db:
-        if operation.operation_type in async_functions:
-            lookup = async_functions
-        elif operation.operation_type in executor_functions:
-            lookup = executor_functions
+    loop = None
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        pass
 
-            return asyncio.get_event_loop().run_in_executor(
-                t_pool,
-                partial(
-                    lookup[operation.operation_type],
-                    *operation.args,
-                    **operation.kwargs,
-                ),
-            )
+    if loop and operation.operation_type in async_functions:
+        lookup = async_functions
+
+    elif loop and operation.operation_type in executor_functions:
+        return asyncio.get_event_loop().run_in_executor(
+            t_pool,
+            partial(
+                executor_functions[operation.operation_type],
+                *operation.args,
+                **operation.kwargs,
+            ),
+        )
 
     return lookup[operation.operation_type](*operation.args, **operation.kwargs)
 
