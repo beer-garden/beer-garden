@@ -1033,31 +1033,6 @@ _METRICS_SPEC = {
 _PLUGIN_SPEC = {
     "type": "dict",
     "items": {
-        "logging": {
-            "type": "dict",
-            "items": {
-                "config_file": {
-                    "type": "str",
-                    "description": "Path to a logging configuration file for plugins",
-                    "required": False,
-                },
-                "fallback_level": {
-                    "type": "str",
-                    "description": "Level that will be used with a default logging "
-                    "configuration if config_file is not specified",
-                    "previous_names": ["plugin_logging_level"],
-                    "default": "INFO",
-                    "choices": [
-                        "DEBUG",
-                        "INFO",
-                        "WARN",
-                        "WARNING",
-                        "ERROR",
-                        "CRITICAL",
-                    ],
-                },
-            },
-        },
         "status_heartbeat": {
             "type": "int",
             "default": 10,
@@ -1114,6 +1089,21 @@ _PLUGIN_SPEC = {
                             "local plugins",
                             "required": False,
                         },
+                        "fallback_level": {
+                            "type": "str",
+                            "description": "Level that will be used with a default logging "
+                            "configuration if config_file is not specified",
+                            "previous_names": ["plugin_logging_level"],
+                            "default": "INFO",
+                            "choices": [
+                                "DEBUG",
+                                "INFO",
+                                "WARN",
+                                "WARNING",
+                                "ERROR",
+                                "CRITICAL",
+                            ],
+                        },
                     },
                 },
                 "timeout": {
@@ -1133,6 +1123,36 @@ _PLUGIN_SPEC = {
                             "description": "Seconds to wait for a plugin to start",
                             "previous_names": ["plugin_startup_timeout"],
                             "alt_env_names": ["PLUGIN_STARTUP_TIMEOUT"],
+                        },
+                    },
+                },
+            },
+        },
+        "remote": {
+            "type": "dict",
+            "items": {
+                "logging": {
+                    "type": "dict",
+                    "items": {
+                        "config_file": {
+                            "type": "str",
+                            "description": "Path to a logging configuration file for plugins",
+                            "required": False,
+                        },
+                        "fallback_level": {
+                            "type": "str",
+                            "description": "Level that will be used with a default logging "
+                            "configuration if config_file is not specified",
+                            "previous_names": ["plugin_logging_level"],
+                            "default": "INFO",
+                            "choices": [
+                                "DEBUG",
+                                "INFO",
+                                "WARN",
+                                "WARNING",
+                                "ERROR",
+                                "CRITICAL",
+                            ],
                         },
                     },
                 },
