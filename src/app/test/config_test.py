@@ -182,7 +182,7 @@ class TestConfigGet(object):
         "key,expected",
         [
             ("mq.host", "localhost"),
-            ("validator.command", {"timeout": 10}),
+            ("request_validation.dynamic_choices.command", {"timeout": 10}),
             ("INVALID_KEY", None),
             ("", None),
         ],
