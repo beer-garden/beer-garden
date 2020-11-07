@@ -116,7 +116,7 @@ export default function appRun(
 
   $rootScope.initialLoad = function() {
     // Very first thing is to load up a token if one exists
-    let token = localStorageService.get('token');
+    let token = localStorageService.get('token', 'sessionStorage');
     if (token) {
       TokenService.handleToken(token);
     }
