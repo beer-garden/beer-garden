@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+""" Metrics Service
+
+The metrics service manages:
+* Connectivity to the Prometheus Server
+* Creating default summary views in Prometheus
+* Publishing `Request` metrics
+"""
+
 import datetime
 import logging
 from http.server import ThreadingHTTPServer

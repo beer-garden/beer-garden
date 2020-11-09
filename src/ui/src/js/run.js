@@ -116,7 +116,7 @@ export default function appRun(
 
   $rootScope.initialLoad = function() {
     // Very first thing is to load up a token if one exists
-    let token = localStorageService.get('token');
+    let token = localStorageService.get('token', 'sessionStorage');
     if (token) {
       TokenService.handleToken(token);
     }
@@ -124,14 +124,14 @@ export default function appRun(
     // Connect to the event socket
     EventService.connect(token);
 
-    $rootScope.loadUser(token).catch(
-      // This prevents the situation where the user needs to logout but the
-      // logout button isn't displayed because there's no user loaded
-      // (happens if the server secret changes)
-      (response) => {
-        $rootScope.doLogout();
-      }
-    );
+    // $rootScope.loadUser(token).catch(
+    //   // This prevents the situation where the user needs to logout but the
+    //   // logout button isn't displayed because there's no user loaded
+    //   // (happens if the server secret changes)
+    //   (response) => {
+    //     $rootScope.doLogout();
+    //   }
+    // );
   };
 
   $rootScope.hasPermission = function(user, permissions) {

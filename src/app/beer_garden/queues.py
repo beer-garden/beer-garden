@@ -1,4 +1,17 @@
 # -*- coding: utf-8 -*-
+"""Queue Service
+
+The queue service is responsible for:
+
+* Queue CRUD operations
+* Publishing requests
+
+Much like the persistence layer, the queue service helps keep the rest of the subsystems
+from understanding anything about the queueing mechanism being used by a particular system.
+As such, it is responsible for providing an API which is consistent across each queue
+technology we use.
+"""
+
 import logging
 
 from brewtils.models import Events, Queue, System, Instance

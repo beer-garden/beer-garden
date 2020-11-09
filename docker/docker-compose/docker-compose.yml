@@ -8,11 +8,12 @@ x-definitions: &env
     # IMPORTANT!!
     # Change this to support both local and remote plugins
     # Should be resolvable from inside and outside the docker network
-    BG_PUBLISH_HOSTNAME: localhost
+    BG_PLUGIN_MQ_HOST: localhost
 
     # IMPORTANT!!
     # If you are connection to a Parent BG instance, toggle true
     BG_PARENT_HTTP_ENABLE: "false"
+    BG_ENTRY_STOMP_ENABLED: "true"
 
     # IMPORTANT !!
     # If you are connecting to a Parent BG instance, change this the resolvable DNS entry
@@ -116,6 +117,20 @@ services:
             - "15672:15672"
         volumes:
             - rabbitmq-home:/var/lib/rabbitmq
+
+    activemq:
+        image: vromero/activemq-artemis:latest
+        restart: always
+        environment:
+            - ARTEMIS_USERNAME=beer_garden
+            - ARTEMIS_PASSWORD=password
+        networks:
+            - bg-network
+        ports:
+          - "61613:61613"
+          - "8161:8161"
+        volumes:
+            - ./data/activemq-config/etc-override-non-ssl:/var/lib/artemis/etc-override
 
 networks:
     bg-network:

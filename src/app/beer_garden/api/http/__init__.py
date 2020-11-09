@@ -31,7 +31,6 @@ from brewtils.schemas import (
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 from tornado.web import Application, RedirectHandler
-from urllib3.util.url import Url
 
 import beer_garden
 import beer_garden.api.http.handlers.misc as misc
@@ -52,7 +51,6 @@ from beer_garden.events.processors import QueueListener
 io_loop: IOLoop
 server: HTTPServer
 tornado_app: Application
-public_url: str
 logger: logging.Logger
 event_publishers = None
 api_spec: APISpec
@@ -92,7 +90,7 @@ async def startup():
     anonymous_principal = load_anonymous()
 
     http_config = config.get("entry.http")
-    logger.info(f"Starting HTTP server on {http_config.host}:{http_config.port}")
+    logger.debug(f"Starting HTTP server on {http_config.host}:{http_config.port}")
     server.listen(http_config.port, http_config.host)
 
     logger.debug("Starting forward processor")
@@ -137,7 +135,7 @@ async def shutdown():
 
 def _setup_application():
     """Setup things that can be taken care of before io loop is started"""
-    global io_loop, tornado_app, public_url, server, client_ssl
+    global io_loop, tornado_app, server, client_ssl
 
     io_loop = IOLoop.current()
 
@@ -154,13 +152,18 @@ def _setup_application():
                 "restarts. To prevent this set the auth.token.secret config."
             )
 
-    http_config = config.get("entry.http")
-    public_url = Url(
-        scheme="https" if http_config.ssl.enabled else "http",
-        host=http_config.public_fqdn,
-        port=http_config.port,
-        path=http_config.url_prefix,
-    ).url
+    # This is only used for publishing events for external consumption (in v2 request
+    # events were published with a link to the request, for example).
+    # Commenting this out as it's not useful at the moment
+    # from urllib3.util.url import Url
+    #
+    # http_config = config.get("entry.http")
+    # public_url = Url(
+    #     scheme="https" if http_config.ssl.enabled else "http",
+    #     host=http_config.public_fqdn,
+    #     port=http_config.port,
+    #     path=http_config.url_prefix,
+    # ).url
 
     tornado_app = _setup_tornado_app()
     server_ssl, client_ssl = _setup_ssl_context()
@@ -230,13 +233,13 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/files/id/?", v1.file.FileNameAPI),
     ]
 
-    app_config = config.get("application")
     auth_config = config.get("auth")
-    _load_swagger(published_url_specs, title=app_config.name)
+    ui_config = config.get("ui")
+    _load_swagger(published_url_specs, title=ui_config.name)
 
     return Application(
         published_url_specs + unpublished_url_specs,
-        debug=app_config.debug_mode,
+        debug=ui_config.debug_mode,
         cookie_secret=auth_config.token.secret,
         autoreload=False,
         client=SerializeHelper(),
@@ -271,51 +274,6 @@ def _setup_ssl_context() -> Tuple[Optional[ssl.SSLContext], Optional[ssl.SSLCont
         client_ssl = None
 
     return server_ssl, client_ssl
-
-
-# def _setup_event_publishers(ssl_context):
-#     from brew_view.handlers.v1.event import EventSocket
-#
-#     # Create the collection of event publishers and add concrete publishers
-#     pubs = EventPublishers(
-#         {
-#             "request": RequestPublisher(ssl_context=ssl_context),
-#             "websocket": WebsocketPublisher(EventSocket),
-#         }
-#     )
-#
-#     if config.event.mongo.enable:
-#         try:
-#             pubs["mongo"] = MongoPublisher()
-#         except Exception as ex:
-#             logger.warning("Error starting Mongo event publisher: %s", ex)
-#
-#     if config.event.amq.enable:
-#         try:
-#             pika_params = {
-#                 "host": config.amq.host,
-#                 "port": config.amq.connections.message.port,
-#                 "ssl": config.amq.connections.message.ssl,
-#                 "user": config.amq.connections.admin.user,
-#                 "password": config.amq.connections.admin.password,
-#                 "exchange": config.event.amq.exchange,
-#                 "virtual_host": config.event.amq.virtual_host,
-#                 "connection_attempts": config.amq.connection_attempts,
-#             }
-#
-#             # Make sure the exchange exists
-#             TransientPikaClient(**pika_params).declare_exchange()
-#
-#             pubs["pika"] = TornadoPikaPublisher(
-#                 shutdown_timeout=config.shutdown_timeout, **pika_params
-#             )
-#         except Exception as ex:
-#             logger.exception("Error starting RabbitMQ event publisher: %s", ex)
-#
-#     # Metadata functions - additional metadata to be included with each event
-#     pubs.metadata_funcs["public_url"] = lambda: public_url
-#
-#     return pubs
 
 
 def _load_swagger(url_specs, title=None):
@@ -398,7 +356,7 @@ def _setup_event_handling(ep_conn):
 
 
 def _event_callback(event):
-    # Everything needs to be published to the websockdet
+    # Everything needs to be published to the websocket
     websocket_publish(event)
 
     # And also register handlers that the entry point needs to care about
