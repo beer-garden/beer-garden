@@ -155,7 +155,10 @@ class PatternMatchingEventHandlerWithArgs(PatternMatchingEventHandler):
                 _method_map[event_type](*self._args, event=event, **self._kwargs)
 
             elif event_tuple in self._src_path_timing:
-                if current_time - self._src_path_timing[event_tuple] > self._min_delta_time:
+                if (
+                    current_time - self._src_path_timing[event_tuple]
+                    > self._min_delta_time
+                ):
                     # Update the time
                     self._src_path_timing[event_tuple] = datetime.now()
 
@@ -393,7 +396,9 @@ class MixedScheduler(object):
 
             # Pass in those args to be relayed once the event occurs
             event_handler = PatternMatchingEventHandlerWithArgs(
-                args=args, coalesce=kwargs.get('coalesce', False), patterns=trigger.pattern
+                args=args,
+                coalesce=kwargs.get("coalesce", False),
+                patterns=trigger.pattern,
             )
             event_handler = self._add_triggers(event_handler, trigger.callbacks, func)
 
