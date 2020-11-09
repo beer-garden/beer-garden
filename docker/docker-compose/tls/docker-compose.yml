@@ -110,6 +110,22 @@ services:
             - rabbitmq-home:/var/lib/rabbitmq
             - ../data/certs:/certs
 
+    activemq:
+        image: vromero/activemq-artemis:latest
+        restart: always
+        environment:
+            - ARTEMIS_USERNAME=beer_garden
+            - ARTEMIS_PASSWORD=password
+        networks:
+            - bg-network
+        ports:
+            - "61613:61613"
+            - "8161:8161"
+        volumes:
+            - ../data/activemq-config/keystores:/var/lib/artemis/certs
+            - ../data/activemq-config/login.config:/var/lib/artemis/etc/login.config
+            - ../data/activemq-config/etc-override-ssl:/var/lib/artemis/etc-override
+
 networks:
     bg-network:
         driver: bridge

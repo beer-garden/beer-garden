@@ -25,6 +25,7 @@ def check_connection(connection_name: str):
 
 def create_clients(mq_config):
     global clients
+
     clients = {
         "pika": TransientPikaClient(
             host=mq_config.host,
@@ -87,8 +88,9 @@ def create(instance: Instance, system: System) -> dict:
     )
 
     mq_config = config.get("mq")
+    plugin_config = config.get("plugin")
     connection = {
-        "host": config.get("publish_hostname"),
+        "host": plugin_config.mq.host,
         "port": mq_config.connections.message.port,
         "user": mq_config.connections.message.user,
         "password": mq_config.connections.message.password,

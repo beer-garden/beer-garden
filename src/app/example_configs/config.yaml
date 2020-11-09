@@ -1,9 +1,3 @@
-application:
-  cors_enabled: true
-  debug_mode: true
-  execute_javascript: false
-  icon_default: fa-beer
-  name: Beer Garden
 auth:
   enabled: false
   guest_login_enabled: true
@@ -26,7 +20,6 @@ entry:
     enabled: true
     host: 0.0.0.0
     port: 2337
-    public_fqdn: localhost
     ssl:
       ca_cert: null
       ca_path: null
@@ -35,6 +28,20 @@ entry:
       private_key: null
       public_key: null
     url_prefix: /
+  stomp:
+    enabled: false
+    host: localhost
+    password: password
+    port: 61613
+    send_destination: Beer_Garden_Events
+    ssl:
+      cert_file: null
+      private_key: null
+      use_ssl: false
+      verify_host: true
+      verify_hostname: true
+    subscribe_destination: Beer_Garden_Operations
+    username: beer_garden
 garden:
   name: default
 log:
@@ -77,11 +84,9 @@ mq:
 parent:
   http:
     enabled: false
-    host: 0.0.0.0
+    host: null
     port: 2337
-    public_fqdn: localhost
-    skip_events:
-    - DB_CREATE
+    skip_events: []
     ssl:
       ca_cert: null
       ca_path: null
@@ -96,28 +101,36 @@ plugin:
       password: password
       username: admin
     directory: ./plugins
+    host_env_vars: []
     logging:
-      stream_files: false
+      config_file: example_configs/plugin-logging.yaml
+      fallback_level: INFO
     timeout:
       shutdown: 10
       startup: 2
-  logging:
-    config_file: example_configs/plugin-logging.yaml
-    fallback_level: INFO
+  mq:
+    host: localhost
+  remote:
+    logging:
+      config_file: example_configs/plugin-logging.yaml
+      fallback_level: INFO
   status_heartbeat: 5
   status_timeout: 30
-publish_hostname: localhost
+request_validation:
+  dynamic_choices:
+    command:
+      timeout: 10
+    url:
+      ca_cert: null
+      ca_verify: true
 scheduler:
-  auth:
-    password: null
-    username: null
   job_defaults:
     coalesce: true
     max_instances: 3
   max_workers: 10
-validator:
-  command:
-    timeout: 10
-  url:
-    ca_cert: null
-    ca_verify: true
+ui:
+  cors_enabled: true
+  debug_mode: true
+  execute_javascript: false
+  icon_default: fa-beer
+  name: Beer Garden

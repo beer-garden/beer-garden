@@ -30,7 +30,7 @@ class MongoPruner(StoppableThread):
         )
 
     def run(self):
-        self.logger.info(self.display_name + " is started")
+        self.logger.debug(self.display_name + " is started")
 
         while not self.wait(self._run_every):
             current_time = datetime.utcnow()
@@ -48,7 +48,7 @@ class MongoPruner(StoppableThread):
                 )
                 task["collection"].objects(query).no_cache().delete()
 
-        self.logger.info(self.display_name + " is stopped")
+        self.logger.debug(self.display_name + " is stopped")
 
     @staticmethod
     def determine_tasks(**kwargs) -> Tuple[List[dict], int]:

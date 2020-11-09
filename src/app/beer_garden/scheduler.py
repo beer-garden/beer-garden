@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+"""Scheduled Service
+
+The schedule service is responsible for:
+* CRUD operations of `Job` operations
+* Triggering `Job` based `Requests`
+"""
 import logging
 import threading
 from os.path import isdir

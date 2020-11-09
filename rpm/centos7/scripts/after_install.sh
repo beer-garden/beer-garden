@@ -14,7 +14,7 @@ APP_LOG_CONFIG="${CONFIG_HOME}/app-logging.yaml"
 PLUGIN_LOG_CONFIG="${CONFIG_HOME}/plugin-logging.yaml"
 
 APP_LOG_FILE="$LOG_HOME/beer-garden.log"
-PLUGIN_LOG_FILE="${PLUGIN_LOG_HOME}/%%(namespace)s/%%(system_name)s-%%(system_version)s/%%(instance_name)s.log"
+PLUGIN_LOG_FILE="${PLUGIN_LOG_HOME}/%%(namespace)s/%%(system_name)s/%%(system_version)s/%%(instance_name)s.log"
 
 
 # Do this regardless of new install vs upgrade
@@ -53,7 +53,8 @@ if [ ! -f "$CONFIG_FILE" ]; then
     "$APP_HOME/bin/generate_config" \
         -c "$CONFIG_FILE" -l "$APP_LOG_CONFIG" \
         --plugin-local-directory "$PLUGIN_HOME" \
-        --plugin-logging-config-file "$PLUGIN_LOG_CONFIG"
+        --plugin-local-logging-config-file "$PLUGIN_LOG_CONFIG" \
+        --plugin-remote-logging-config-file "$PLUGIN_LOG_CONFIG"
 fi
 
 # Generate application logging config if it doesn't exist

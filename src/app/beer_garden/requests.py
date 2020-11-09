@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+"""Request Service
+
+The request service is responsible for:
+
+* Validating requests
+* Request completion notification
+"""
+
 import json
 import logging
 import re
@@ -8,9 +16,11 @@ from typing import Dict, List, Sequence, Union
 import pika.spec
 import six
 import urllib3
+
+
 from brewtils.choices import parse
 from brewtils.errors import ConflictError, ModelValidationError, RequestPublishException
-from brewtils.models import Choices, Events, Request, RequestTemplate, System
+from brewtils.models import Choices, Events, Request, RequestTemplate, System, Operation
 from builtins import str
 from requests import Session
 
@@ -33,19 +43,19 @@ class RequestValidator(object):
     def __init__(self, validator_config):
         self.logger = logging.getLogger(__name__)
 
-        self._command_timeout = validator_config.command.timeout
+        self._command_timeout = validator_config.dynamic_choices.command.timeout
 
         self._session = Session()
-        if not validator_config.url.ca_verify:
+        if not validator_config.dynamic_choices.url.ca_verify:
             urllib3.disable_warnings()
             self._session.verify = False
-        elif validator_config.url.ca_cert:
-            self._session.verify = validator_config.url.ca_cert
+        elif validator_config.dynamic_choices.url.ca_cert:
+            self._session.verify = validator_config.dynamic_choices.url.ca_cert
 
     @classmethod
     def instance(cls):
         if not cls._instance:
-            cls._instance = cls(config.get("validator"))
+            cls._instance = cls(config.get("request_validation"))
         return cls._instance
 
     def validate_request(self, request):
@@ -601,7 +611,11 @@ def process_request(
         request_map[request.id] = wait_event
 
     try:
-        logger.info(f"Publishing {request!r}")
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(f"Publishing {request!r}")
+        else:
+            if not request.command_type == "EPHEMERAL":
+                logger.info(f"Publishing {request!r}")
 
         queue.put(
             request,
@@ -733,11 +747,27 @@ def process_wait(request: Request, timeout: float) -> Request:
     Returns:
         The completed request
     """
+
+    # We need a better solution for this. Because the Request library is imported
+    # everywhere it causes issues when importing the router at the top because all of
+    # the functions are not initialized. So we either leave this as is, or move the
+    # requests import to the end of all of the files.
+    import beer_garden.router as router
+
     req_complete = threading.Event()
-    created_req = process_request(request, wait_event=req_complete)
+
+    # Send the request through the router to allow for commands to work across Gardens
+    created_request = router.route(
+        Operation(
+            operation_type="REQUEST_CREATE",
+            model=request,
+            model_type="Request",
+            kwargs={"wait_event": req_complete},
+        )
+    )
     req_complete.wait(timeout)
 
-    return db.query_unique(Request, id=created_req.id)
+    return db.query_unique(Request, id=created_request.id)
 
 
 def handle_event(event):

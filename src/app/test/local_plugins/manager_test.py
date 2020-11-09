@@ -64,7 +64,7 @@ def plugin_1(tmp_path, config_all_serialized):
 
 @pytest.fixture
 def manager(tmp_path):
-    PluginManager.runners = {}
+    PluginManager._runners = {}
     return PluginManager(
         plugin_dir=tmp_path,
         log_dir="plugin_logs",
@@ -97,7 +97,7 @@ class TestLoadPlugins(object):
 class TestLoadNew(object):
     def test_empty_path(self, tmp_path, manager):
         manager.load_new(path=tmp_path)
-        assert manager.runners == {}
+        assert manager._runners == {}
 
     def test_single(self, tmp_path, manager):
         plugin_path = tmp_path / "tester"
@@ -107,7 +107,7 @@ class TestLoadNew(object):
         write_file(plugin_path, "PLUGIN_ENTRY='entry.py'")
 
         manager.load_new()
-        assert len(manager.runners) == 1
+        assert len(manager._runners) == 1
 
     def test_multiple(self, tmp_path, manager):
         plugin_path = tmp_path / "tester"
@@ -125,7 +125,7 @@ class TestLoadNew(object):
         )
 
         manager.load_new()
-        assert len(manager.runners) == 2
+        assert len(manager._runners) == 2
 
 
 @pytest.mark.skip
