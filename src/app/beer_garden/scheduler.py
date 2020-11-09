@@ -3,6 +3,7 @@ import logging
 import threading
 from os.path import isdir
 from typing import Dict, List
+from datetime import datetime, timedelta
 
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
 
@@ -104,15 +105,21 @@ class PatternMatchingEventHandlerWithArgs(PatternMatchingEventHandler):
 
     _args = []
     _kwargs = {}
+    _coalesce = False
+    _src_path_timing = {}
+    # This is used to avoid multiple triggers from the same event
+    _min_delta_time = timedelta(microseconds=500_000)
 
-    def __init__(self, args=None, kwargs=None, **thru):
+    def __init__(self, args=None, kwargs=None, coalesce=False, **thru):
         self._args = args if args is not None else []
         self._kwargs = kwargs if kwargs is not None else {}
+        self._coalesce = coalesce
         super().__init__(**thru)
 
     # Copy the dispatch code, but include arguments if specified
     def dispatch(self, event):
         """Dispatches events to the appropriate methods."""
+        current_time = datetime.now()
         if self.ignore_directories and event.is_directory:
             return
 
@@ -128,7 +135,6 @@ class PatternMatchingEventHandlerWithArgs(PatternMatchingEventHandler):
             excluded_patterns=self.ignore_patterns,
             case_sensitive=self.case_sensitive,
         ):
-            self.on_any_event(*self._args, event=event, **self._kwargs)
             _method_map = {
                 EVENT_TYPE_MODIFIED: self.on_modified,
                 EVENT_TYPE_MOVED: self.on_moved,
@@ -136,7 +142,24 @@ class PatternMatchingEventHandlerWithArgs(PatternMatchingEventHandler):
                 EVENT_TYPE_DELETED: self.on_deleted,
             }
             event_type = event.event_type
-            _method_map[event_type](*self._args, event=event, **self._kwargs)
+            event_tuple = (event.src_path, event_type)
+
+            if not self._coalesce:
+                self.on_any_event(*self._args, event=event, **self._kwargs)
+                _method_map[event_type](*self._args, event=event, **self._kwargs)
+
+            elif event_tuple in self._src_path_timing:
+                if current_time - self._src_path_timing[event_tuple] > self._min_delta_time:
+                    # Update the time
+                    self._src_path_timing[event_tuple] = datetime.now()
+
+                    self.on_any_event(*self._args, event=event, **self._kwargs)
+                    _method_map[event_type](*self._args, event=event, **self._kwargs)
+            else:
+                self._src_path_timing[event_tuple] = datetime.now()
+
+                self.on_any_event(*self._args, event=event, **self._kwargs)
+                _method_map[event_type](*self._args, event=event, **self._kwargs)
 
     def on_created(self, *args, event=None, **kwargs):
         super().on_created(event)
@@ -207,6 +230,7 @@ class MixedScheduler(object):
                 self.add_job(
                     run_job,
                     trigger=job.trigger,
+                    coalesce=job.coalesce,
                     kwargs={"job_id": job.id, "request_template": job.request_template},
                 )
 
@@ -363,7 +387,7 @@ class MixedScheduler(object):
 
             # Pass in those args to be relayed once the event occurs
             event_handler = PatternMatchingEventHandlerWithArgs(
-                args=args, patterns=trigger.pattern
+                args=args, coalesce=kwargs.get('coalesce', False), patterns=trigger.pattern
             )
             event_handler = self._add_triggers(event_handler, trigger.callbacks, func)
 
