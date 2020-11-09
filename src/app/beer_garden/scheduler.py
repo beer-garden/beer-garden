@@ -10,13 +10,15 @@ import threading
 from typing import Dict, List
 
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
-from brewtils.models import Event, Events, Job
+from brewtils.models import Event, Events, Job, Operation
 
 import beer_garden
+import beer_garden.router as router
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.events import publish_event
 from beer_garden.requests import process_request, get_request
+
 
 logger = logging.getLogger(__name__)
 
@@ -179,7 +181,8 @@ def handle_event(event: Event) -> None:
                     replace_existing=False,
                     id=str(event.payload.id),
                 )
-            except Exception:
+                router.set_owner_for_files(str(event.payload.id), "JOB", event.payload.request_template.parameters)
+            except Exception as ex:
                 db.delete(event.payload)
                 raise
 

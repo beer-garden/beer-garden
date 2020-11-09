@@ -25,6 +25,7 @@ from mongoengine import (
     EmbeddedDocumentField,
     EmbeddedDocumentListField,
     GenericEmbeddedDocumentField,
+    LazyReferenceField,
     IntField,
     ListField,
     ObjectIdField,
@@ -263,7 +264,12 @@ class Instance(MongoModel, EmbeddedDocument):
             )
 
 
-class Request(MongoModel, Document):
+class Owner(Document):
+    # Stub to use for a reference field.
+    meta = {'allow_inheritance': True}
+
+
+class Request(MongoModel, Owner):
     brewtils_model = brewtils.models.Request
 
     # These fields are duplicated for job types, changes to this field
@@ -606,7 +612,7 @@ class CronTrigger(MongoModel, EmbeddedDocument):
     jitter = IntField(required=False)
 
 
-class Job(MongoModel, Document):
+class Job(MongoModel, Owner):
     brewtils_model = brewtils.models.Job
 
     meta = {
@@ -685,6 +691,11 @@ class SystemGardenMapping(MongoModel, Document):
 class File(MongoModel, Document):
     brewtils_model = brewtils.models.File
 
+    owner_id = StringField(required=False)
+    owner_type = StringField(required=False)
+    # Delete Rule (2) = CASCADE; This causes this document to be deleted when the owner doc is.
+    owner = LazyReferenceField(Owner, required=False, reverse_delete_rule=2)
+    created_at = StringField(required=True)
     file_name = StringField(required=True)
     file_size = IntField(required=True)
     chunks = DictField(required=False)
@@ -697,3 +708,5 @@ class FileChunk(MongoModel, Document):
     file_id = StringField(required=True)
     offset = IntField(required=True)
     data = StringField(required=True)
+    # Delete Rule (2) = CASCADE; This causes this document to be deleted when the owner doc is.
+    owner = LazyReferenceField(Owner, required=False, reverse_delete_rule=2)

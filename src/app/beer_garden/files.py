@@ -3,16 +3,21 @@ from math import ceil
 from bson import ObjectId
 from bson.errors import InvalidId
 from json import dumps
+from datetime import datetime
 
 import beer_garden.db.api as db
 from beer_garden.errors import NotUniqueException
 from brewtils.errors import ModelValidationError
-from brewtils.models import File, FileChunk
+from brewtils.models import File, FileChunk, Request, Job
 
 
 # 10MB
 MAX_CHUNK_SIZE = 1024 * 1024 * 10
 UI_FILE_ID_PREFIX = "BGFileID:"
+FILE_OWNER_TYPE_MAP = {
+    'REQUEST': Request,
+    'JOB': Job,
+}
 
 
 def check_file(file_id: str, upsert: bool = False):
@@ -28,7 +33,6 @@ def check_file(file_id: str, upsert: bool = False):
     res = db.query_unique(File, id=file_id)
     if res is None:
         if upsert:
-            print(f"~~~~~~~~~~~~~Creating a placeholder file for id {file_id}")
             create_file("BG_placeholder", 0, 0, file_id)
             return db.query_unique(File, id=file_id)
         else:
@@ -80,6 +84,7 @@ def _save_chunk(file_id: str, offset: int = None, upsert: bool = False, **kwargs
         n: The offset index. (e.g. 0, 1, 2, ...)
         kwargs: The other parameters for FileChunk that we don't need to check)
     """
+    print(f"~~~~~~~~~~~~~~~~~Saving file {file_id} chunk {offset}")
     file = check_file(file_id, upsert=upsert)
     chunk = FileChunk(file_id=file.id, offset=offset, **kwargs)
     c = db.create(chunk)
@@ -157,13 +162,13 @@ def _delete_file(file_id: str):
         file_id: This should be a valid file id.
     """
     file = check_chunks(file_id)
-    # Get rid of all of the chunks first
-    for chunk_id in file.chunks.values():
-        try:
-            chunk = check_chunk(chunk_id)
-            db.delete(chunk)
-        except ModelValidationError:
-            pass
+    # # Get rid of all of the chunks first
+    # for chunk_id in file.chunks.values():
+    #     try:
+    #         chunk = check_chunk(chunk_id)
+    #         db.delete(chunk)
+    #     except ModelValidationError:
+    #         pass
     # Delete the parent file object
     db.delete(file)
     return dumps({"done": True})
@@ -195,7 +200,7 @@ def create_file(
             f"Cannot create a file with chunk size greater than {MAX_CHUNK_SIZE}."
         )
 
-    f = File(file_name=file_name, file_size=file_size, chunk_size=chunk_size)
+    f = File(file_name=file_name, file_size=file_size, chunk_size=chunk_size, created_at=datetime.utcnow())
 
     # Override the file id if passed in
     if file_id is not None:
@@ -278,3 +283,28 @@ def delete_file(file_id: str):
         file_id: The id of the file.
     """
     return _delete_file(file_id)
+
+
+def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
+
+    """
+    Sets the owner field of the file.  This is used for DB pruning.
+
+    Parameters:
+        file_id: The id of the file.
+        owner_id: The id of the owner.
+        owner_type: The type of the owner (job/request).
+    """
+    if (owner_id is not None) and (owner_type in FILE_OWNER_TYPE_MAP):
+        file = check_chunks(file_id)
+        # Job owners should override request owners (if one is already set)
+        if file.owner_id is None or owner_type == "JOB":
+            if owner_type == "REQUEST":
+                owner = db.query_unique(Request, id=owner_id)
+            else:
+                owner = db.query_unique(Job, id=owner_id)
+            db.modify(file, owner_id=owner_id, owner_type=owner_type, owner=owner)
+
+            for chunk_id in file.chunks.values():
+                chunk = db.query_unique(FileChunk, id=chunk_id)
+                db.modify(chunk, owner=owner)

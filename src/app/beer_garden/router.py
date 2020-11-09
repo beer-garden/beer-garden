@@ -162,6 +162,7 @@ route_functions = {
     "FILE_CHUNK": beer_garden.files.create_chunk,
     "FILE_FETCH": beer_garden.files.fetch_file,
     "FILE_DELETE": beer_garden.files.delete_file,
+    "FILE_OWNER": beer_garden.files.set_owner,
 }
 
 
@@ -385,6 +386,8 @@ def handle_event(event):
                 del gardens[event.payload.name]
             except KeyError:
                 pass
+    if event.name == Events.REQUEST_CREATED.name:
+        set_owner_for_files(event.payload.id, "REQUEST", event.payload.parameters)
 
 
 def _pre_route(operation: Operation) -> Operation:
@@ -394,7 +397,6 @@ def _pre_route(operation: Operation) -> Operation:
         operation.source_garden_name = config.get("garden.name")
 
     if operation.operation_type == "REQUEST_CREATE":
-        _forward_file(operation)
         if operation.model.namespace is None:
             operation.model.namespace = config.get("garden.name")
 
@@ -405,8 +407,17 @@ def _pre_route(operation: Operation) -> Operation:
     return operation
 
 
+def set_owner_for_files(owner_id, owner_type, parameters):
+    for id in _check_file_ids(parameters):
+        route(Operation(
+            operation_type="FILE_OWNER",
+            args=[id],
+            kwargs={"owner_id": owner_id, "owner_type": owner_type},
+        ))
+
+
 def _check_file_ids(parameter, ids=[]):
-    """ Used to scan operations for the FileID prex.
+    """ Used to scan operations for the FileID prefix.
     Parameters:
         parameter: The object to be scanned.
         ids: The current list of discovered file ids
