@@ -16,7 +16,7 @@ This is the Beer-garden application backend.
    :alt: PyPI
 
 .. |travis| image:: https://img.shields.io/travis/beer-garden/beer-garden.svg
-   :target: https://travis-ci.org/beer-garden/beer-garden?branch=v3
+   :target: https://travis-ci.com/beer-garden/beer-garden
    :alt: Build Status
 
 .. |codecov| image:: https://codecov.io/gh/beer-garden/garden/branch/v3/graph/badge.svg
