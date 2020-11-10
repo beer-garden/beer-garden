@@ -25,7 +25,10 @@ def ap_job(mongo_job, mongo_request_template):
         "trigger": APDateTrigger(),
         "executor": "default",
         "args": (),
-        "kwargs": {"request_template": mongo_request_template},
+        "kwargs": {
+            "request_template": mongo_request_template,
+            "job_id": str(mongo_job.id),
+        },
         "id": str(mongo_job.id),
         "misfire_grace_time": mongo_job.misfire_grace_time,
         "coalesce": mongo_job.coalesce,

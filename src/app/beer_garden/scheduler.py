@@ -382,9 +382,7 @@ class MixedScheduler(object):
             # The old code always set the trigger to None, not sure why
             self._sync_scheduler.add_job(
                 func,
-                trigger=construct_trigger(
-                    kwargs.pop("trigger_type"), trigger
-                ),
+                trigger=construct_trigger(kwargs.pop("trigger_type"), trigger),
                 **kwargs,
             )
 
