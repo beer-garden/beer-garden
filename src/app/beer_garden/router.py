@@ -286,32 +286,6 @@ def forward(operation: Operation):
         logger.exception(f"Error forwarding operation:{ex}")
 
 
-def connect(conn, garden):
-    # TODO add timeout
-    wait_time = 0.1
-    while not conn.is_connected():
-        try:
-            conn.connect(
-                username=garden.connection_params["username"],
-                passcode=garden.connection_params["password"],
-                wait=True,
-                headers={"client-id": garden.connection_params["username"]},
-            )
-            conn.subscribe(
-                destination=garden.connection_params["operation_destination"],
-                id=garden.connection_params["username"],
-                ack="auto",
-                headers={
-                    "subscription-type": "MULTICAST",
-                    "durable-subscription-name": "operations",
-                },
-            )
-        except Exception as e:
-            logger.warning(str(e))
-            logger.debug("Waiting %.1f seconds before next attempt", wait_time)
-            wait_time = min(wait_time * 2, 30)
-
-
 def setup_stomp(garden):
     host_and_ports = [(garden.connection_params["stomp_host"], garden.connection_params["stomp_port"])]
     return Stomp_Connection(host_and_ports=host_and_ports,
@@ -392,10 +366,13 @@ def handle_event(event):
     if event.garden == config.get("garden.name"):
         if event.name == Events.GARDEN_UPDATED.name:
             gardens[event.payload.name] = event.payload
+            stomp_garden_connections[event.payload.name] = setup_stomp(event.payload)
+            stomp_garden_connections[event.payload.name].connect("connected to child")
 
         elif event.name == Events.GARDEN_REMOVED.name:
             try:
                 del gardens[event.payload.name]
+                del stomp_garden_connections[event.payload.name]
             except KeyError:
                 pass
 
@@ -517,6 +494,8 @@ def _determine_target_garden(operation: Operation) -> str:
 
 def _forward_stomp(operation: Operation, target_garden: Garden):
     # checks if connection is active or needs to update subscription
+    # if target_garden.name not in stomp_garden_connections:
+    #     stomp_garden_connections[target_garden.name] = setup_stomp(target_garden)
     if (target_garden.connection_params.get("subscribe_destination") is not
             stomp_garden_connections[target_garden.name].subscribe_destination):
         if stomp_garden_connections[target_garden.name].is_connected():

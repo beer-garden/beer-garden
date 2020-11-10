@@ -34,7 +34,7 @@ def send_error_msg(error_msg=None, headers=None, conn=None, send_destination=Non
     if headers is None:
         headers = {}
 
-    error_headers = None
+    error_headers = {'model_class': "error_message"}
     error_headers = append_headers(error_headers, headers)
 
     if conn.is_connected():
@@ -62,6 +62,8 @@ class OperationListener(stomp.ConnectionListener):
         logger.warning("received an error:" + str(headers))
 
     def on_message(self, headers, message):
+        if headers.get("model_class") != "Operation":
+            return
         try:
             operation = SchemaParser.parse_operation(message, from_string=True)
             if hasattr(operation, "kwargs"):
@@ -75,12 +77,12 @@ class OperationListener(stomp.ConnectionListener):
                     send_destination=self.send_destination,
                 )
         except Exception as e:
-            # send_error_msg(
-            #     error_msg=str(e),
-            #     headers=headers,
-            #     conn=self.conn,
-            #     send_destination=self.send_destination,
-            # )
+            send_error_msg(
+                error_msg=str(e),
+                headers=headers,
+                conn=self.conn,
+                send_destination=self.send_destination,
+            )
             logger.warning(str(e))
 
 
@@ -109,7 +111,7 @@ class Connection:
                     key_file=ssl.private_key,
                     cert_file=ssl.cert_file,
                 )
-        if send_destination:
+        if subscribe_destination:
             self.conn.set_listener("", OperationListener(self.conn, send_destination))
 
     def connect(self, connected_message=None):

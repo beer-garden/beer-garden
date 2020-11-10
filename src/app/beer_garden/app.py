@@ -22,7 +22,6 @@ import beer_garden.queue.api as queue
 import beer_garden.router
 from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.parent_procesors import HttpParentUpdater
-from beer_garden.events.parent_procesors import StompParentUpdater
 from beer_garden.events.processors import (
     FanoutProcessor,
     QueueListener,
