@@ -87,14 +87,13 @@ def route_garden_sync(target_garden_name: str = None):
         # Iterate over all gardens and forward the sync request
         with garden_lock:
             for garden in gardens.values():
-                if garden.name == config.get("garden.name"):
-                    beer_garden.garden.publish_garden()
-                else:
+                if garden.name != config.get("garden.name"):
                     forward(
                         Operation(
                             operation_type="GARDEN_SYNC", target_garden_name=garden.name
                         )
                     )
+        beer_garden.garden.publish_garden()
 
 
 # "Real" async function (async def)
