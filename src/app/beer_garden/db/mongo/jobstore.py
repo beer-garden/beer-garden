@@ -33,7 +33,7 @@ def construct_trigger(trigger_type: str, bg_trigger) -> BaseTrigger:
     elif trigger_type == "cron":
         return CronTrigger(**bg_trigger.scheduler_kwargs)
     else:
-        raise ValueError("Invalid trigger type %s" % trigger_type)
+        raise ValueError("Trigger type %s not supported by APScheduler" % trigger_type)
 
 
 def construct_job(job: Job, scheduler, alias="beer_garden"):
@@ -109,7 +109,7 @@ class MongoJobStore(BaseJobStore):
         Args:
             job: The job from the scheduler
         """
-        db_job = query_unique(Job, id=job.id)
+        db_job = query_unique(Job, id=job.kwargs["job_id"])
         db_job.next_run_time = job.next_run_time
         update(db_job)
 

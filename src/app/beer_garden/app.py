@@ -7,7 +7,8 @@ in Beer-Garden will be initialized within this class.
 import logging
 import signal
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
-from apscheduler.schedulers.background import BackgroundScheduler
+
+# from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils import EasyClient
 from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
@@ -29,6 +30,7 @@ import beer_garden.queue.api as queue
 import beer_garden.router
 from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.parent_procesors import HttpParentUpdater
+from beer_garden.scheduler import MixedScheduler
 from beer_garden.events.processors import (
     FanoutProcessor,
     QueueListener,
@@ -258,6 +260,9 @@ class Application(StoppableThread):
         if config.get("plugin.local.logging.config_file"):
             self.plugin_local_log_config_observer.start()
 
+        self.logger.info("Loading jobs from database")
+        self.scheduler.initialize_from_db()
+
         self.logger.info("All set! Let me know if you need anything else!")
 
     def _shutdown(self):
@@ -351,12 +356,21 @@ class Application(StoppableThread):
         executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
         job_defaults = scheduler_config.job_defaults.to_dict()
 
-        return BackgroundScheduler(
-            jobstores=job_stores,
-            executors=executors,
-            job_defaults=job_defaults,
-            timezone=utc,
-        )
+        ap_config = {
+            "jobstores": job_stores,
+            "executors": executors,
+            "job_defaults": job_defaults,
+            "timezone": utc,
+        }
+
+        # return BackgroundScheduler(
+        #     jobstores=job_stores,
+        #     executors=executors,
+        #     job_defaults=job_defaults,
+        #     timezone=utc,
+        # )
+
+        return MixedScheduler(interval_config=ap_config)
 
     @staticmethod
     def _setup_multiprocessing_manager():
