@@ -9,7 +9,6 @@ import logging
 import threading
 from typing import Dict, List
 
-from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from brewtils.models import Event, Events, Job
 
 import beer_garden
@@ -17,16 +16,9 @@ import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.events import publish_event
 from beer_garden.requests import process_request, get_request
+from beer_garden.db.mongo.jobstore import construct_trigger
 
 logger = logging.getLogger(__name__)
-
-
-class IntervalTrigger(APInterval):
-    """Beergarden implementation of an apscheduler IntervalTrigger"""
-
-    def __init__(self, *args, **kwargs):
-        self.reschedule_on_finish = kwargs.pop("reschedule_on_finish", False)
-        super(IntervalTrigger, self).__init__(*args, **kwargs)
 
 
 def run_job(job_id, request_template):
@@ -164,9 +156,12 @@ def handle_event(event: Event) -> None:
 
         if event.name == Events.JOB_CREATED.name:
             try:
+
                 beer_garden.application.scheduler.add_job(
                     run_job,
-                    None,
+                    construct_trigger(
+                        event.payload.trigger_type, event.payload.trigger
+                    ),
                     kwargs={
                         "request_template": event.payload.request_template,
                         "job_id": str(event.payload.id),
