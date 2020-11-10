@@ -33,6 +33,7 @@ import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.events import publish_event
 from beer_garden.requests import process_request, get_request
+from beer_garden.db.mongo.jobstore import construct_trigger
 from brewtils.models import FileTrigger
 
 logger = logging.getLogger(__name__)
@@ -381,7 +382,13 @@ class MixedScheduler(object):
             # Remove the unneeded/unwanted data
             kwargs.pop("request_template")
             # The old code always set the trigger to None, not sure why
-            self._sync_scheduler.add_job(func, trigger=None, **kwargs)
+            self._sync_scheduler.add_job(
+                func,
+                trigger=construct_trigger(
+                    kwargs.pop("trigger_type"), kwargs.pop("trigger")
+                ),
+                **kwargs,
+            )
 
         else:
             if not isdir(trigger.path):
@@ -576,6 +583,7 @@ def handle_event(event: Event) -> None:
                 beer_garden.application.scheduler.add_job(
                     run_job,
                     trigger=event.payload.trigger,
+                    trigger_type=event.payload.trigger_type,
                     kwargs={
                         "request_template": event.payload.request_template,
                         "job_id": str(event.payload.id),
