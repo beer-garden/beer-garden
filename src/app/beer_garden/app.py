@@ -4,9 +4,8 @@
 This is the core library for Beer-Garden. Anything that is spawned by the Main Process
 in Beer-Garden will be initialized within this class.
 """
-from typing import Callable
-
 import logging
+import signal
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 
 # from apscheduler.schedulers.background import BackgroundScheduler
@@ -17,6 +16,7 @@ from datetime import timedelta
 from functools import partial
 from multiprocessing.managers import BaseManager
 from pytz import utc
+from typing import Callable
 
 import beer_garden.api
 import beer_garden.api.entry_point
@@ -55,6 +55,7 @@ class Application(StoppableThread):
     clients = None
     helper_threads = None
     entry_manager = None
+    mp_manager = None
     plugin_log_config_observer: MonitorFile = None
     plugin_local_log_config_observer: MonitorFile = None
 
@@ -104,21 +105,9 @@ class Application(StoppableThread):
             action=beer_garden.router.forward, name="forwarder"
         )
 
-        BaseManager.register(
-            "PluginManager",
-            callable=partial(
-                PluginManager,
-                plugin_dir=config.get("plugin.local.directory"),
-                log_dir=config.get("plugin.local.log_directory"),
-                connection_info=config.get("entry.http"),
-                username=config.get("plugin.local.auth.username"),
-                password=config.get("plugin.local.auth.password"),
-            ),
-        )
+        self.mp_manager = self._setup_multiprocessing_manager()
 
-        data_manager = BaseManager()
-        data_manager.start()
-        beer_garden.local_plugins.manager.lpm_proxy = data_manager.PluginManager()
+        beer_garden.local_plugins.manager.lpm_proxy = self.mp_manager.PluginManager()
 
         self.entry_manager = beer_garden.api.entry_point.Manager()
 
@@ -382,6 +371,28 @@ class Application(StoppableThread):
         # )
 
         return MixedScheduler(interval_config=ap_config)
+
+    @staticmethod
+    def _setup_multiprocessing_manager():
+        BaseManager.register(
+            "PluginManager",
+            callable=partial(
+                PluginManager,
+                plugin_dir=config.get("plugin.local.directory"),
+                log_dir=config.get("plugin.local.log_directory"),
+                connection_info=config.get("entry.http"),
+                username=config.get("plugin.local.auth.username"),
+                password=config.get("plugin.local.auth.password"),
+            ),
+        )
+
+        def initializer():
+            signal.signal(signal.SIGTERM, signal.SIG_IGN)
+
+        data_manager = BaseManager()
+        data_manager.start(initializer=initializer)
+
+        return data_manager
 
 
 class HelperThread(object):

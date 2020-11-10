@@ -11,9 +11,17 @@ from pytz import utc
 
 from beer_garden.db.mongo.api import delete, query, query_unique, update
 from beer_garden.db.mongo.models import Job as MongoJob
-from beer_garden.scheduler import IntervalTrigger
+from apscheduler.triggers.interval import IntervalTrigger as APInterval
 
 logger = logging.getLogger(__name__)
+
+
+class IntervalTrigger(APInterval):
+    """Beergarden implementation of an apscheduler IntervalTrigger"""
+
+    def __init__(self, *args, **kwargs):
+        self.reschedule_on_finish = kwargs.pop("reschedule_on_finish", False)
+        super(IntervalTrigger, self).__init__(*args, **kwargs)
 
 
 def construct_trigger(trigger_type: str, bg_trigger) -> BaseTrigger:

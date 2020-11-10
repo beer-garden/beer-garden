@@ -578,6 +578,7 @@ def handle_event(event: Event) -> None:
 
         if event.name == Events.JOB_CREATED.name:
             try:
+
                 beer_garden.application.scheduler.add_job(
                     run_job,
                     trigger=event.payload.trigger,
