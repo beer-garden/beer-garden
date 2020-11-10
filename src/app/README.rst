@@ -3,7 +3,7 @@
 Beer-Garden App
 ===========================
 
-Beer-Garden App is responsible for all none UI functionality. The UI is not required for a Beer-Garden to run operationally
+This is the Beer-garden application backend.
 
 |gitter| |pypi| |travis| |codecov|
 
