@@ -379,13 +379,11 @@ class MixedScheduler(object):
             return
 
         if not isinstance(trigger, FileTrigger):
-            # Remove the unneeded/unwanted data
-            kwargs.pop("request_template")
             # The old code always set the trigger to None, not sure why
             self._sync_scheduler.add_job(
                 func,
                 trigger=construct_trigger(
-                    kwargs.pop("trigger_type"), kwargs.pop("trigger")
+                    kwargs.pop("trigger_type"), trigger
                 ),
                 **kwargs,
             )

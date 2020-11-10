@@ -101,7 +101,7 @@ class MongoJobStore(BaseJobStore):
         Args:
             job: The job from the scheduler
         """
-        db_job = query_unique(Job, id=job.id)
+        db_job = query_unique(Job, id=job.kwargs['job_id'])
         db_job.next_run_time = job.next_run_time
         update(db_job)
 
