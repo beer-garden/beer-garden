@@ -2,19 +2,40 @@
 
 ## 3.0.0
 11/10/20
-Official release of Version 3.0.0
 
-- Brew-view & Bartender are merged
-- Major config changes (**Please read our migration guide**)
-- Redesign of UI, and UI improvements
-- Parent/Child Beer-Garden architecture supported
-- New internal routing engine for all transactions
-- Support new Entry Point: STOMP
-- Improved logging configurations for Local/Remote Systems
-- New System feature: Read Logs
-- Developer quality of life changes
+Note: This is a major release. Please check out the [site](https://beer-garden.io/) for
+more in-depth documentation.
 
-*Please checkout our website (beer-garden.io) for more in-depth docs on the release.*
+#### Added Features
+- Scheduler now supports triggering from file events (#647)
+- jquery and lodash objects are now available when creating custom templates (#589)
+- Table page length selections in UI are persisted in browser storage (#560)
+- Local plugins can now use an alternate python interpreter (#492)
+- Request output with a size greater than 16MB is now supported (#407)
+- Button added to Request View page for downloading output (#361)
+- Additional REST endpoint for Request output (#361)
+- Systems can now be grouped by namespace (#284)
+- Can now mark commands as hidden (#269)
+- The UI Output and Parameters displays can now be expanded (#170)
+- Separate gardens can now communicate via REST API
+- Actions can be initiated with STOMP messages in addition to the REST API
+- Plugin logs can now be retrieved and displayed on the UI System Admin page
+- All plugins automatically request a logging configuration from Beer-garden
+
+#### Other Changes
+- UI Queue Admin functionality has been moved into System Admin page (#533)
+- Drop official support for CentOS 6 (#225)
+- Logging config files are now yaml by default (#89)
+- Brew-view & Bartender have been merged into a single Beer-garden application (#87)
+- UI has been pulled out into a separate application
+- Default `max_instances` value for plugins is -1 (no maximum)
+- User interface has been streamlined
+- Python version bundled with rpm is now 3.7 instead of 3.6
+- Commands no longer have an ID field
+
+#### Removed
+- Publishing events to RabbitMQ and Mongo has been removed (#681)
+- Authentication / Authorization functionality: Users, Roles, Login, etc.
 
 ## 2.4.18
 10/27/20
