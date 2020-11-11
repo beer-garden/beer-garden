@@ -4,7 +4,7 @@
 #
 #    pip-compile requirements.in
 #
--e git+https://github.com/beer-garden/brewtils@v3#egg=brewtils  # via -r requirements.in
+-e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils  # via -r requirements.in
 alabaster==0.7.12         # via sphinx
 apispec==0.38.0           # via -r requirements.in
 appdirs==1.4.4            # via black, brewtils
