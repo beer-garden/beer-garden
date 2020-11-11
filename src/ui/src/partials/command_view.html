@@ -1,0 +1,111 @@
+
+<div ng-show="(responseState(response) === 'success') && template">
+  <div ng-bind-html="template"></div>
+</div>
+
+<div ng-show="!template">
+  <h1 class="page-header" ng-show="responseState(response) !== 'success'">Make Request</h1>
+
+  <div ng-show="(responseState(response) === 'success')">
+    <div ng-show="!manualOverride">
+      <h1 class="page-header" ng-show="!manualOverride">
+        <span>{{command.name}}<span>
+        <small>{{command.description}}</small>
+        <bg-status class="pull-right" target='system.status'></bg-status>
+      </h1>
+
+      <ol class="tagline breadcrumb">
+        <li><a ui-sref="base.system({namespace: breadCrumbs[0]})">{{breadCrumbs[0]}}</a></li
+        ><li><a ui-sref="base.system({namespace: breadCrumbs[0], systemName: breadCrumbs[1]})">{{breadCrumbs[1]}}</a></li
+        ><li><a ui-sref="base.system({namespace: breadCrumbs[0], systemName: breadCrumbs[1], systemVersion: breadCrumbs[2]})">{{breadCrumbs[2]}}</a></li
+        ><li class="active">{{breadCrumbs[3]}}</li>
+      </ol>
+    </div>
+
+    <div class="page-header" ng-show="manualOverride">
+      <h1>Manual Request Creation</h1>
+      <h4>
+        This page allows the user to manually create a request.
+        Just edit the preview below and "Make Request".
+      </h4>
+    </div>
+  </div>
+</div>
+
+<fetch-data response="response"></fetch-data>
+
+<div ng-show="(responseState(response) === 'success') && !template">
+
+  <fetch-data response="createResponse" hide="loading,empty" closeable="true"></fetch-data>
+
+  <div class="container-fluid" ng-show="!manualOverride">
+    <div class="row">
+      <div class="col-md-8">
+        <form name="ngform" sf-schema="schema" sf-form="form" sf-model="model" ng-submit="submitForm(ngform, model)"/>
+        <div uib-alert ng-repeat="alert in alerts" class="alert-danger" close="closeAlert($index)">
+          <strong>Uh-oh!</strong>
+          <span ng-bind=alert></span>
+          <a style="color: blue; cursor:pointer" class='pull-right' ng-click="toggleManualOverride()">Override</a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <h3 class="col-md-4" style="margin-top: 0px">Preview</h3>
+        <h4 class="pull-right">
+          <span uib-popover="Manual Request Creation" popover-trigger="'mouseenter'" popover-placement="left">
+            <i class="fa fa-edit" ng-click="toggleManualOverride()"></i
+          ></span
+          ><span uib-popover="Schedule Request" popover-trigger="'mouseenter'" popover-placement="left">
+            <i class="fa fa-history" ng-click="scheduleRequest()"></i
+          ></span>
+        </h4>
+        <div ui-ace="{ onLoad: loadPreview }" ng-model="jsonValues.model" style="width: 100%;" title="Request JSON Preview"></div>
+      </div>
+    </div>
+
+    <div ng-if="config.debugMode" class="row" style="padding-bottom: 35px;">
+      <div class="col-md-4">
+        <h3>Command</h3>
+        <div ui-ace="{ onLoad: loadPreview }"
+             ng-model="jsonValues.command"
+             style="width: 100%; height: 500px;"
+             title="Command JSON Preview"></div>
+      </div>
+      <div class="col-md-4">
+        <h3>Schema</h3>
+        <div ui-ace="{
+          onLoad: loadEditor,
+          theme: 'dawn',
+          mode: 'json'
+        }" ng-model="jsonValues.schema" ng-model-options="{ debounce: 1000 }" style="width: 100%; height: 500px;" title="Schema Editor"></div>
+      </div>
+      <div class="col-md-4">
+        <h3>Form</h3>
+        <div ui-ace="{
+          onLoad: loadEditor,
+          theme: 'dawn',
+          mode: 'json'
+        }" ng-model="jsonValues.form" ng-model-options="{ debounce: 1000 }" style="width: 100%; height: 500px;" title="Form Editor"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid" ng-show="manualOverride">
+
+    <div ui-ace="{ onLoad: loadEditor }" ng-model="manualModel"></div>
+
+    <br />
+
+    <div uib-alert class="alert alert-info alert-dismissable">
+      <a class="close" data-dismiss="alert">&times;</a>
+      <span>We do not suggest overriding schema-form for inexperienced users</span>
+    </div>
+
+    <button type="button" class="btn btn-warning" ng-click="toggleManualOverride()">Go back</button>
+    <button type="button" class="btn btn-primary" ng-click="createRequest(manualModel)">Make Request</button>
+
+    <div uib-alert ng-repeat="alert in alerts" class="alert-danger" close="closeAlert($index)">
+      <strong>Uh-oh!</strong>
+      <span ng-bind=alert></span>
+    </div>
+  </div>
+</div>

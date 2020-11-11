@@ -1,0 +1,136 @@
+auth:
+  enabled: false
+  guest_login_enabled: true
+  token:
+    algorithm: HS256
+    lifetime: 1200
+    secret: IAMSUPERSECRET
+db:
+  connection:
+    host: localhost
+    password: null
+    port: 27017
+    username: null
+  name: beer_garden_v3
+  ttl:
+    action: -1
+    info: 15
+entry:
+  http:
+    enabled: true
+    host: 0.0.0.0
+    port: 2337
+    ssl:
+      ca_cert: null
+      ca_path: null
+      client_cert_verify: NONE
+      enabled: false
+      private_key: null
+      public_key: null
+    url_prefix: /
+  stomp:
+    enabled: false
+    host: localhost
+    password: password
+    port: 61613
+    send_destination: Beer_Garden_Events
+    ssl:
+      cert_file: null
+      private_key: null
+      use_ssl: false
+      verify_host: true
+      verify_hostname: true
+    subscribe_destination: Beer_Garden_Operations
+    username: beer_garden
+garden:
+  name: default
+log:
+  config_file: example_configs/app-logging.yaml
+  fallback_file: null
+  fallback_level: INFO
+metrics:
+  prometheus:
+    enabled: false
+    host: 0.0.0.0
+    port: 2339
+    url: http://localhost:3000
+mq:
+  admin_queue_expiry: 3600000
+  blocked_connection_timeout: 5
+  connection_attempts: 3
+  connections:
+    admin:
+      password: password
+      port: 15672
+      ssl:
+        ca_cert: null
+        ca_verify: true
+        client_cert: null
+        enabled: false
+      user: beer_garden
+    message:
+      password: password
+      port: 5672
+      ssl:
+        ca_cert: null
+        ca_verify: true
+        client_cert: null
+        enabled: false
+      user: beer_garden
+  exchange: beer_garden
+  heartbeat_interval: 3600
+  host: localhost
+  virtual_host: /
+parent:
+  http:
+    enabled: false
+    host: null
+    port: 2337
+    skip_events: []
+    ssl:
+      ca_cert: null
+      ca_path: null
+      client_cert_verify: NONE
+      enabled: false
+      private_key: null
+      public_key: null
+    url_prefix: /
+plugin:
+  local:
+    auth:
+      password: password
+      username: admin
+    directory: ./plugins
+    host_env_vars: []
+    logging:
+      config_file: example_configs/plugin-logging.yaml
+      fallback_level: INFO
+    timeout:
+      shutdown: 10
+      startup: 2
+  mq:
+    host: localhost
+  remote:
+    logging:
+      config_file: example_configs/plugin-logging.yaml
+      fallback_level: INFO
+  status_heartbeat: 5
+  status_timeout: 30
+request_validation:
+  dynamic_choices:
+    command:
+      timeout: 10
+    url:
+      ca_cert: null
+      ca_verify: true
+scheduler:
+  job_defaults:
+    coalesce: true
+    max_instances: 3
+  max_workers: 10
+ui:
+  cors_enabled: true
+  debug_mode: true
+  execute_javascript: false
+  icon_default: fa-beer
+  name: Beer Garden

@@ -1,0 +1,65 @@
+<h1 class='page-header'>
+  <span>Request Scheduler</span>
+  <button type="button"
+          ng-if="responseState(response) === 'success'"
+          class="btn btn-primary pull-right"
+          ui-sref="base.jobsCreate()">
+    Schedule a Job
+  </button>
+</h1>
+
+<fetch-data response="response" hide="empty"></fetch-data>
+
+<div class="container-fluid animate-if"
+     ng-if="responseState(response) === 'empty'">
+  <br />
+  <div class="jumbotron">
+    <h1>Welcome to the Request Scheduler</h1>
+    <p>
+      The request scheduler is a way to take your favorite plugin's command
+      and schedule it to run at a later date. In Beer Garden, we call these
+      scheduled requests, "Jobs". Jobs can have many different triggers. This
+      page will help guide you through creating your very own job.
+    </p>
+    <br />
+    <p>
+      <a role="button"
+         class="btn btn-primary btn-block btn-lg"
+         ui-sref="base.jobsCreate()">Create Your First Job</a>
+    </p>
+  </div>
+</div>
+
+<div class="container-fluid animate-if"
+     ng-if="responseState(response) === 'success'">
+  <table
+      datatable="ng"
+      dt-options="dtOptions"
+      class="table table-striped table-bordered"
+      style="width: 100%">
+    <thead>
+      <tr>
+        <th id="th_job_name" scope="col">Job Name</th>
+        <th id="th_job_status" scope="col">Job Status</th>
+        <th id="th_system" scope="col">System</th>
+        <th id="th_instance" scope="col">Instance</th>
+        <th id="th_command" scope="col">Command</th>
+        <th id="th_next_run_time" scope="col">Next Run Time</th>
+        <th id="th_success_count" scope="col">Sucess Count</th>
+        <th id="th_error_count" scope="col">Error Count</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="job in data | filter:query">
+        <td><a ui-sref="base.job({id: job.id})">{{job.name}}</a></td>
+        <td>{{job.status}}</td>
+        <td>{{job.request_template.system}}</td>
+        <td>{{job.request_template.instance_name}}</td>
+        <td>{{job.request_template.command}}</td>
+        <td>{{formatDate(job.next_run_time)}}</td>
+        <td>{{job.success_count}}</td>
+        <td>{{job.error_count}}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

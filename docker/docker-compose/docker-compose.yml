@@ -2,53 +2,72 @@ version: '3.5'
 
 x-definitions: &env
     # IMPORTANT!!
+    # Change this to whatever you want your garden name / namespace default to be
+    BG_GARDEN_NAME: docker
+
+    # IMPORTANT!!
     # Change this to support both local and remote plugins
     # Should be resolvable from inside and outside the docker network
-    BG_PUBLISH_HOSTNAME: localhost
+    BG_PLUGIN_MQ_HOST: localhost
 
-    BG_AMQ_HOST: rabbitmq
-    BG_BACKEND_HOST: bartender
-    BG_DB_HOST: mongodb
-    BG_WEB_HOST: brew-view
+    # IMPORTANT!!
+    # If you are connection to a Parent BG instance, toggle true
+    BG_PARENT_HTTP_ENABLE: "false"
+    BG_ENTRY_STOMP_ENABLED: "true"
 
-    BG_AMQ_CONNECTIONS_ADMIN_USER: beer_garden
-    BG_AMQ_CONNECTIONS_ADMIN_PASSWORD: password
-    BG_AMQ_CONNECTIONS_MESSAGE_USER: beer_garden
-    BG_AMQ_CONNECTIONS_MESSAGE_PASSWORD: password
+    # IMPORTANT !!
+    # If you are connecting to a Parent BG instance, change this the resolvable DNS entry
+    BG_PARENT_HTTP_HOST: localhost
 
 services:
-    brew-view:
-        image: bgio/brew-view
+    beer-garden:
+        image: bgio/beer-garden:unstable
         networks:
             - bg-network
         ports:
             - "2337:2337"
             - "2338:2338"
+        volumes:
+            - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
+            - ./data/localplugins:/plugins
         environment:
             <<: *env
-            # For brew-view web host is really interface to bind
-            BG_WEB_HOST: 0.0.0.0
+
+            # Point at the correct database
+            BG_DB_HOST: mongodb
+            BG_DB_NAME: beer_garden_v3
+
+            # Point at the correct message broker
+            BG_MQ_HOST: rabbitmq
+            BG_MQ_CONNECTIONS_ADMIN_USER: beer_garden
+            BG_MQ_CONNECTIONS_ADMIN_PASSWORD: password
+            BG_MQ_CONNECTIONS_MESSAGE_USER: beer_garden
+            BG_MQ_CONNECTIONS_MESSAGE_PASSWORD: password
+
+            # Disable TLS
+            BG_AUTH_ENABLED: "false"
 
             # We expose grafana for you, but you can change this to an
             # external grafana URL if you would like. It just adds a
             # link in our About section if it is defined.
             BG_METRICS_URL: http://localhost:3000
+            BG_METRICS_PROMETHEUS_ENABLED: "false"
         depends_on:
             - mongodb
             - rabbitmq
 
-    bartender:
-        image: bgio/bartender
+    ui:
+        image: bgio/ui:unstable
         networks:
             - bg-network
-        volumes:
-            - ./data/localplugins:/plugins
+        ports:
+            - "80:80"
+              #- "443:443"
         environment:
-            <<: *env
+            BEERGARDEN_HOST: "beer-garden"
+            BEERGARDEN_PORT: "2337"
         depends_on:
-            - mongodb
-            - rabbitmq
-            - brew-view
+            - beer-garden
 
     grafana:
         image: grafana/grafana:5.2.3
@@ -63,15 +82,15 @@ services:
             - prometheus
 
     mongodb:
-        image: mongo:4.0
-        ports:
-            - "27017:27017"
+        image: mongo:4.2
+        restart: always
         networks:
             - bg-network
+        ports:
+          - "27017:27017"
         volumes:
             - mongo-data:/data/db
             - mongo-config:/data/configdb
-        restart: always
 
     prometheus:
         image: prom/prometheus:v2.3.2
@@ -86,6 +105,7 @@ services:
 
     rabbitmq:
         image: rabbitmq:management-alpine
+        restart: always
         hostname: rabbitmq
         networks:
             - bg-network
@@ -97,6 +117,20 @@ services:
             - "15672:15672"
         volumes:
             - rabbitmq-home:/var/lib/rabbitmq
+
+    activemq:
+        image: vromero/activemq-artemis:latest
+        restart: always
+        environment:
+            - ARTEMIS_USERNAME=beer_garden
+            - ARTEMIS_PASSWORD=password
+        networks:
+            - bg-network
+        ports:
+          - "61613:61613"
+          - "8161:8161"
+        volumes:
+            - ./data/activemq-config/etc-override-non-ssl:/var/lib/artemis/etc-override
 
 networks:
     bg-network:

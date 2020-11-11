@@ -1,36 +1,121 @@
-sudo: required
-
+os: linux
+dist: xenial
 language: python
 cache: pip
-python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
-  - "3.6"
-
-services:
-  - mongodb
-  - rabbitmq
 
 env:
   global:
-    - BG_HOST=localhost
-    - BG_PORT=2337
-    - BG_SSL_ENABLED=false
-    - BG_AMQ_ADMIN_USER=guest
-    - BG_AMQ_ADMIN_PASSWORD=guest
-    - BG_AMQ_USER=guest
-    - BG_AMQ_PASSWORD=guest
-    - BG_AMQ_PUBLISH_HOST=localhost
-    - BG_DB_HOST=localhost
-    - BG_PLUGIN_LOCAL_DIRECTORY=/home/travis/build/beer-garden/beer-garden/example-plugins
-    - BG_WEB_HOST=localhost
+  # DOCKER_USER
+  - secure: C/nW/1SYP5gafEkCvLIU9FdcWiurZL23AGtM3CxtWmL+E5s6MwxcMlD0ejMQsqW8X6r4+A4sD8VgRA93jslOzd1dxcJ43AOPpbWeTMZ796PIgDpFBOpKuyjg+6tgsY6seJBxiU1GjkRrzfexioSmp98cFBg/7TpYYG9MjjAZcss/6QdkW/eYPpX/7CXrgcepSiuweAis4SbyACjZwAD7j5zYBTI3eLLfwgRfK2tEf+IKojtxPNfqu3dy9MZw6lJgBCgzYOeQIdovTH0AGKHNYrqIV8/WS6esIQtJfE6ibJrFtFv4b9vBRWxAHJwsGntUIFrDciOln0n6M/577vc0PrzuCum3f8cT6LswgoKTvnoFvEZ4TY6LcRhO0sZBlUKyb8eKe3Os+QRjmmTMOWX9EjXyFdPsQ4s37GgTFOY7SYPh8KqvvwtTqhRAEJA8rwMz4fphYJqgNO06EAJKhuUBCHm7HP+rc0dlu8ZVVlcKHRcc0UxM/jVl5q1H0FOEnEETtp+eCiOxjLHUlrrL50J7ZOFKr7JbCKWjrBxkoo2EEtwdnRGvk8vIo84z/WI6Y11kPio/AT+cpXq/dhE3Smxj8bTdNL9Hnp3oPb3TyesmSOJJ83KR/HRcPunZBV3Ru6mpEA4kY+3imtT6Pb1SV7mJpQZCldUvARi8G2c+qdorjvc=
+  # DOCKER_PASSWORD
+  - secure: kzsX/dDikujemq+6Q6zI6Ziu3VdFFvMz94T024qjCnx70foOHJJnN3Ov87wdivZiUgi774b4KYN9DrPirxBL6Y15jBAT4uzEVaLPgX3bN+C40TWksqHZt5BZZO8VL4fFBsvO6m+vzjn42LE+YXkTV+hPi3uyccfsii8Y1IjPwMpTzCegfsWSxOKHMRF78khY0FJREMA12HmiYr+7ICz4pml6pKpIYtfh1o2bfB9qHW90rkriJPrbGxIbl3KHc8fDEJfyWYLHO/f5PPsL8tTO2Xxpja6lQ15XgPZheX8qCnFG2i7wCe8Ri0nMD19SMIHxEauH80WTQ7YvqZFdZQTClGjxKNYszSWJuBiWMBWp5lIfPGp1YmTW/UApiFVAU6eLQoKCPNTB8TuXufEFt9QAtQ78fVDs85AfOrX/TFdxTiecj82YflqRe0YZvkhFIoy5dXBnDTX4UK5CklfqzQCYAry4U8jcwpIlYYB+KlGWEmC6J4PBPAz5VHroGsinWyh/Ftht0GA1RT2G61MbTgikd+ZljITF2JyJ77EcTjOA5Ks8+lgRFeviZeFVpfQVRDKajCYBURFQO0J01dHGJ/5PMaWT6bXFIBIK6ucKn2XZTWVQlOnRK+EreAKLxsRD2/t9qcHuyGdBW4fNhsqiETItot+ZLWN77WHWTEkWNnpE0aM=
 
-before_install:
-  - sudo rabbitmq-plugins enable rabbitmq_management
+python:
+- '3.7'
 
-install:
-  - make -C test/integration deps
+stages:
+- lint
+- test
+- unstable docker deploy
+- npm deploy
+- pypi deploy
+- docker deploy
 
-script:
-  - (cd test/integration && ./travis_tests.sh)
+jobs:
+  include:
+  - stage: lint
+    before_install: cd src/app
+    install: pip install black flake8
+    script: make lint
+    after_success: skip
+
+  - stage: test
+    before_install: cd src/app
+    install: make deps-python
+    script: make coverage
+    after_success: codecov
+
+  - stage: unstable docker deploy
+    if: "(branch = v3) AND (type != pull_request)"
+    install: skip
+    before_script: make docker-login
+    script: make publish-docker-unstable
+    after_success: skip
+
+  - stage: npm deploy
+    if: tag IS present
+    before_install: cd src/ui
+    install: make deps
+    script: make package
+    deploy:
+      provider: npm
+      skip_cleanup: true
+      on:
+        all_branches: true
+      email: "beerbuildbot"
+      api_token:
+        secure: cQh8/DIDKoR+k2EtQer2A/GLKMxspgylFW9Kozz3FaX+AfCWjNEFvB4i47UutuhHwQ/AkGQCuyvGjmyNdIEdO583DZxAhWAjp25QZuvm5G1BgIsl1m1LeWccaLJVKEGLGAm7VT81bCgbNEn90O1CtcDTDyS7EOHu7QfFPxGzc2Yi0WoCxwJ8gQPxfftdyycEFSfnGppJiOg5dnA4RbDoPzqY4LGokkX+zfras9EFhPHbcBhpwoB1qEQKochxTip3MEU62PXibs2VZGuj9KBdC5+2AjBi7taSG3ej7VH4adIVe3R8aBfGa/12QpI5CPUWukwh9inGbS1LRdstg9xI3o+hRImWeHlPmeDnH3qA4cUr2wvbviPc8aUWCfHM2EAWLN1yj6Z/p77J1f3YoOS7pjoiuZuWsnfNzD6yeLjLg+eVv5cTTjuEb7x9Zg45uMs/rUA6daWXL2Myy5ZVeZNoNolE+ZGZeHRUCFpiISkodvj0ITNB0VvGyCsFnI0IPQoyyx9gqokGC5LTGyqGcvLdQPYE113ZNwFYLcblhYSCvW9cr8tkDd2Uz7HpxNM/6DjK6eL/rNIjdoF3uCR9q/kP8v5igSikK1mvdnaNPmTR5YVV0Zyh0FxvLpYAIpg/IW19tGc05fNeY90ObHhzR/W1iCaDoZdTYMUYwme6j8zP0Gw=
+
+  - stage: pypi deploy
+    if: tag IS present
+    install: pip install twine wheel
+    before_script: cd src/app
+    script: skip
+    after_success: true
+    deploy:
+      provider: pypi
+      distributions: sdist bdist_wheel
+      on:
+        tags: true
+      username: "__token__"
+      password:
+        secure: 65ya4K2VieQ5ha4WVGYB5ERi4Q8EWVSoIR/X1Ewxf7uv3lDS63UGBAsaKziNXSwHCl2bxTD/NKSUbMya3IVKFs/O+IwnhPqCObDxL+g+IXgF2f11qc/Lno9OZNkbAAazISKUvtXmqyhHGNNoi+087ZnZd4+0kjqNndmXQp1rLxGl3AFh5b0cQfMyK879iD8r2iin7qT1yXTsn21/c21QapDPzmStDilJI9Rbd66HyforjUMbwbglZ1yQyv0ryKNn9/IRrLqZjaCp6lrZkOtEuVaefwchLtvkpmOwnrn1biAB8BoceV/iWyEYf7t2Kj4Z+HS8K6SuJTXFzfj/S1uxYObb4wLXKXaytFBfuOVdjB8I8RDBfSUccXJjGf8tDBTsZvNEK89Hsask8xGzBMObAp8WRENRPpTd/A2ZkyyrCNnoUQvA4/ikcnG/XwsDIPxTIzUujOB6ITzev+Mw6efBpPR9kRtSHxMI3pw05AkI5VFxkYyLNjOLyBtHtMvyrhwz1aGdQjojJFqHaIA8FGmRBlvb97UfKb5wiE6vX+OcsIMb2A5AhRxISCUdEWaBnaKMNHoXg/BYv2J90NBXY/S8/NB8m+gmSmfXDvLRnKSiVvJVvQnyVfounChZchxWg1fv3J6KTpl2RacGLtWJjNQBH9QTMC1R2xY4pqw2tLDUSvI=
+
+  - stage: docker deploy
+    if: tag IS present
+    install: skip
+    before_script: make docker-login
+    script: make publish-docker VERSION=$TRAVIS_TAG
+    after_success: skip
+
+
+# Integration tests
+
+#language: python
+#cache: pip
+#sudo: required
+#dist: xenial
+#
+#python:
+#  - "2.7"
+#  - "3.4"
+#  - "3.5"
+#  - "3.6"
+#
+#services:
+#  - docker
+#  - mongodb
+#  - rabbitmq
+#
+#env:
+#  global:
+#    - bg_host=localhost
+#    - bg_port=2337
+#    - bg_ssl_enabled=false
+#    - bg_amq_admin_user=guest
+#    - bg_amq_admin_password=guest
+#    - BG_AMQ_USER=guest
+#    - BG_AMQ_PASSWORD=guest
+#    - BG_AMQ_PUBLISH_HOST=localhost
+#    - BG_DB_HOST=localhost
+#    - BG_PLUGIN_LOCAL_DIRECTORY=/home/travis/build/beer-garden/beer-garden/example-plugins
+#    - BG_WEB_HOST=localhost
+#
+#before_install:
+#  - sudo rabbitmq-plugins enable rabbitmq_management
+#
+#install:
+#  - make -C test/integration deps
+#
+#script:
+#  - (cd test/integration && ./travis_tests.sh)

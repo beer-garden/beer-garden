@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<configuration xmlns="urn:activemq" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:activemq /schema/artemis-configuration.xsd">
+   <!-- from 1.0.0 to 1.5.5 the following line should be : <core xmlns="urn:activemq:core"> -->
+   <core xmlns="urn:activemq:core" xsi:schemaLocation="urn:activemq:core ">
+      <acceptors>
+         <acceptor name="stomp">
+            tcp://0.0.0.0:61613?tcpSendBufferSize=1048576;tcpReceiveBufferSize=1048576;protocols=STOMP;useEpoll=true;connectionTtl=31540000000;sslEnabled=true;keyStorePath=/var/lib/artemis/certs/broker-keystore.jks;keyStorePassword=activemq;trustStorePath=/var/lib/artemis/certs/artemis-truststore.jks;trustStorePassword=activemq;enabledProtocols=TLSv1,TLSv1.1,TLSv1.2;
+         </acceptor>
+      </acceptors>
+
+      <addresses>
+      <address name="Beer_Garden_Operations">
+        <multicast>
+          <queue name="beer_garden.operations"/>
+        </multicast>
+      </address>
+      <address name="Beer_Garden_Events">
+        <multicast>
+          <queue name="beer_garden.events"/>
+        </multicast>
+      </address>
+      <address name="Beer_Garden_Response">
+        <multicast>
+          <queue name="beer_garden.response"/>
+        </multicast>
+      </address>
+      </addresses>
+
+   </core>
+</configuration>

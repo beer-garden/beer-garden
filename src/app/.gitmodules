@@ -1,0 +1,3 @@
+[submodule "plugins"]
+	path = plugins
+	url = ../example-plugins

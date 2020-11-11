@@ -1,8 +1,8 @@
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+*.confc
 
 # C extensions
 *.so
@@ -76,3 +76,9 @@ target/
 .idea/
 .editorconfig
 
+# virtualenv config
+.python-version
+.venv
+
+# node files
+node_modules
