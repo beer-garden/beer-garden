@@ -57,7 +57,6 @@ jobs:
 
   - stage: pypi deploy
     if: tag IS present
-    install: pip install twine wheel
     before_script: cd src/app
     script: skip
     after_success: true
