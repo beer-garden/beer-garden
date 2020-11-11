@@ -36,7 +36,7 @@ jobs:
     after_success: codecov
 
   - stage: unstable docker deploy
-    if: "(branch = v3) AND (type != pull_request)"
+    if: "(branch = develop) AND (type != pull_request)"
     install: skip
     before_script: make docker-login
     script: make publish-docker-unstable
