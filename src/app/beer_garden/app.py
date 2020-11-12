@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
+import signal
+
 from beer_garden.api.stomp import run as stomp_parent_run
 from datetime import timedelta
 from functools import partial
