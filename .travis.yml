@@ -57,6 +57,7 @@ jobs:
 
   - stage: pypi deploy
     if: tag IS present
+    install: pip install keyring==21.4.0
     before_script: cd src/app
     script: skip
     after_success: true
