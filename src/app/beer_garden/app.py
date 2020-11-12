@@ -387,6 +387,7 @@ class Application(StoppableThread):
         )
 
         def initializer():
+            signal.signal(signal.SIGINT, signal.SIG_IGN)
             signal.signal(signal.SIGTERM, signal.SIG_IGN)
 
         data_manager = BaseManager()
