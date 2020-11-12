@@ -13,7 +13,6 @@ x-definitions: &env
     # IMPORTANT!!
     # If you are connection to a Parent BG instance, toggle true
     BG_PARENT_HTTP_ENABLE: "false"
-    BG_ENTRY_STOMP_ENABLED: "true"
 
     # IMPORTANT !!
     # If you are connecting to a Parent BG instance, change this the resolvable DNS entry
@@ -21,7 +20,7 @@ x-definitions: &env
 
 services:
     beer-garden:
-        image: bgio/beer-garden:unstable
+        image: bgio/beer-garden:3
         networks:
             - bg-network
         ports:
@@ -37,15 +36,16 @@ services:
             BG_DB_HOST: mongodb
             BG_DB_NAME: beer_garden_v3
 
-            # Point at the correct message broker
+            # Point at the correct rabbit broker
             BG_MQ_HOST: rabbitmq
             BG_MQ_CONNECTIONS_ADMIN_USER: beer_garden
             BG_MQ_CONNECTIONS_ADMIN_PASSWORD: password
             BG_MQ_CONNECTIONS_MESSAGE_USER: beer_garden
             BG_MQ_CONNECTIONS_MESSAGE_PASSWORD: password
 
-            # Disable TLS
-            BG_AUTH_ENABLED: "false"
+            # Enable stomp and point at the correct broker
+            BG_ENTRY_STOMP_ENABLED: "true"
+            BG_ENTRY_STOMP_HOST: activemq
 
             # We expose grafana for you, but you can change this to an
             # external grafana URL if you would like. It just adds a
@@ -57,7 +57,7 @@ services:
             - rabbitmq
 
     ui:
-        image: bgio/ui:unstable
+        image: bgio/ui:3
         networks:
             - bg-network
         ports:
@@ -104,7 +104,7 @@ services:
             --config.file=/prometheus-data/prometheus.yml
 
     rabbitmq:
-        image: rabbitmq:management-alpine
+        image: rabbitmq:3.8-management-alpine
         restart: always
         hostname: rabbitmq
         networks:
@@ -119,7 +119,7 @@ services:
             - rabbitmq-home:/var/lib/rabbitmq
 
     activemq:
-        image: vromero/activemq-artemis:latest
+        image: vromero/activemq-artemis:2.15-alpine-latest
         restart: always
         environment:
             - ARTEMIS_USERNAME=beer_garden
