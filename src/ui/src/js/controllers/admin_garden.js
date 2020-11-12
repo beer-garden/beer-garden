@@ -19,13 +19,15 @@ export default function adminGardenController(
     GardenService,
     EventService) {
   $scope.setWindowTitle('gardens');
-
+  $scope.gardenCreateSchema = GardenService.CreateSCHEMA;
+   $scope.gardenCreateForm = GardenService.CreateFORM;
   $scope.successCallback = function(response) {
     $scope.response = response;
     $scope.data = response.data;
 
   };
-
+  $scope.garden_name = null;
+  $scope.createGardenFormHide = true;
   $scope.failureCallback = function(response) {
     $scope.response = response;
     $scope.data = [];
@@ -40,6 +42,19 @@ export default function adminGardenController(
 
   $scope.syncGardens = function() {
     GardenService.syncGardens()
+  }
+
+  $scope.createGarden = function() {
+      if ($scope.garden_name != "" & $scope.garden_name != null){
+        GardenService.createGarden({"name":$scope.garden_name, "status":"NOT_CONFIGURED"});
+        $state.go('base.garden_view',
+              {
+                'name': $scope.garden_name,
+              }
+            );
+      }
+      $scope.createGardenFormHide = true;
+
   }
 
   $scope.editGarden = function(garden) {

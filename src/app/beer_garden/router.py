@@ -321,7 +321,7 @@ def setup_routing():
                     gardens[garden.name] = garden
                     if garden.connection_type.casefold() == "stomp":
                         stomp_garden_connections[garden.name] = setup_stomp(garden)
-                        stomp_garden_connections[garden.name].connect('connected to child')
+                        stomp_garden_connections[garden.name].connect('connected to child: ' + garden.name)
             else:
                 logger.warning(f"Garden with invalid connection info: {garden!r}")
 
@@ -366,8 +366,11 @@ def handle_event(event):
     if event.garden == config.get("garden.name"):
         if event.name == Events.GARDEN_UPDATED.name:
             gardens[event.payload.name] = event.payload
+            if event.payload.name in stomp_garden_connections and \
+                    stomp_garden_connections[event.payload.name].is_connected():
+                stomp_garden_connections[event.payload.name].disconnect()
             stomp_garden_connections[event.payload.name] = setup_stomp(event.payload)
-            stomp_garden_connections[event.payload.name].connect("connected to child")
+            stomp_garden_connections[event.payload.name].connect("connected to child: " + event.payload.name)
 
         elif event.name == Events.GARDEN_REMOVED.name:
             try:
@@ -494,15 +497,8 @@ def _determine_target_garden(operation: Operation) -> str:
 
 def _forward_stomp(operation: Operation, target_garden: Garden):
     # checks if connection is active or needs to update subscription
-    # if target_garden.name not in stomp_garden_connections:
-    #     stomp_garden_connections[target_garden.name] = setup_stomp(target_garden)
-    if (target_garden.connection_params.get("subscribe_destination") is not
-            stomp_garden_connections[target_garden.name].subscribe_destination):
-        if stomp_garden_connections[target_garden.name].is_connected():
-            stomp_garden_connections[target_garden.name].disconnect()
-        stomp_garden_connections[target_garden.name] = setup_stomp(target_garden)
     if not stomp_garden_connections[target_garden.name].is_connected():
-        stomp_garden_connections[target_garden.name].connect('reconnected to child')
+        stomp_garden_connections[target_garden.name].connect('reconnected to child: ' + target_garden.name)
 
     stomp_garden_connections[target_garden.name].send_event(operation)
 

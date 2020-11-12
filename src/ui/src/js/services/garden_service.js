@@ -132,13 +132,13 @@ export default function gardenService($http) {
         'type': 'string',
       },
       'send_destination': {
-              'title': 'Destination',
+              'title': 'Send Destination',
               'description': 'Destination queue where Stomp will send messages.',
               'type': 'string',
       },
       'subscribe_destination': {
-                    'title': 'Destination',
-                    'description': 'Destination queue where Stomp will l.',
+                    'title': 'Subscribe Destination',
+                    'description': 'Destination queue where Stomp will listen for messages.',
                     'type': 'string',
             },
       'username': {
