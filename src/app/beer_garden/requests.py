@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+"""Request Service
+
+The request service is responsible for:
+
+* Validating requests
+* Request completion notification
+"""
+
 import json
 import logging
 import re
@@ -35,19 +43,19 @@ class RequestValidator(object):
     def __init__(self, validator_config):
         self.logger = logging.getLogger(__name__)
 
-        self._command_timeout = validator_config.command.timeout
+        self._command_timeout = validator_config.dynamic_choices.command.timeout
 
         self._session = Session()
-        if not validator_config.url.ca_verify:
+        if not validator_config.dynamic_choices.url.ca_verify:
             urllib3.disable_warnings()
             self._session.verify = False
-        elif validator_config.url.ca_cert:
-            self._session.verify = validator_config.url.ca_cert
+        elif validator_config.dynamic_choices.url.ca_cert:
+            self._session.verify = validator_config.dynamic_choices.url.ca_cert
 
     @classmethod
     def instance(cls):
         if not cls._instance:
-            cls._instance = cls(config.get("validator"))
+            cls._instance = cls(config.get("request_validation"))
         return cls._instance
 
     def validate_request(self, request):
@@ -603,7 +611,11 @@ def process_request(
         request_map[request.id] = wait_event
 
     try:
-        logger.info(f"Publishing {request!r}")
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(f"Publishing {request!r}")
+        else:
+            if not request.command_type == "EPHEMERAL":
+                logger.info(f"Publishing {request!r}")
 
         queue.put(
             request,

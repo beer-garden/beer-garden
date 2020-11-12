@@ -1,27 +1,26 @@
 # -*- coding: utf-8 -*-
+from importlib import import_module
+
 import logging
 import multiprocessing
 import signal
-from importlib import import_module
+from box import Box
+from brewtils.models import Event
 from multiprocessing.connection import Connection, Pipe
 from multiprocessing.context import SpawnContext
 from multiprocessing.queues import Queue
 from types import FrameType
-from typing import Any, Callable, TypeVar
-
-from box import Box
-from brewtils.models import Event
+from typing import Any, Callable
 
 import beer_garden
 import beer_garden.config
 import beer_garden.db.api as db
 import beer_garden.events
+import beer_garden.local_plugins.manager as lpm
 import beer_garden.queue.api as queue
 import beer_garden.router as router
 from beer_garden.events.processors import PipeListener, QueueListener
 from beer_garden.log import process_record
-
-T = TypeVar("T", bound="EntryPoint")
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +73,6 @@ class EntryPoint:
         self.ep_config = ep_config
         self._process = None
         self._ep_conn, self._mp_conn = Pipe()
-        self._ep_conn.ep_config = ep_config
         self._event_listener = PipeListener(
             conn=self._mp_conn,
             action=event_callback,
@@ -94,6 +92,7 @@ class EntryPoint:
                 self._target,
                 self._signal_handler,
                 self._ep_conn,
+                lpm.lpm_proxy,
                 self.ep_config,
             ),
         )
@@ -146,6 +145,7 @@ class EntryPoint:
             target: Callable,
             signal_handler: Callable[[int, FrameType], None],
             ep_conn: Connection,
+            lpm_proxy,
             ep_config=None,
     ) -> Any:
         """Helper method that sets up the process environment before calling `target`
@@ -165,6 +165,8 @@ class EntryPoint:
             target:
             signal_handler:
             ep_conn:
+            lpm_proxy:
+            ep_config:
 
         Returns:
             The result of the `target` function
@@ -182,6 +184,9 @@ class EntryPoint:
         try:
             # Also set up plugin logging
             beer_garden.log.load_plugin_log_config()
+
+            # Local plugin manager reference
+            lpm.lpm_proxy = lpm_proxy
 
             # Set up a database connection
             db.create_connection(db_config=beer_garden.config.get("db"))
@@ -240,7 +245,7 @@ class Manager:
                 except Exception as ex:
                     logger.exception(f"Error creating entry point {entry_name}: {ex}")
 
-    def create(self, module_name: str, ep_config=None) -> T:
+    def create(self, module_name: str, ep_config=None):
         module = import_module(f"beer_garden.api.{module_name}")
         if ep_config:
             ep_point = EntryPoint(

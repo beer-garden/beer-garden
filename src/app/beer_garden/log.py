@@ -1,4 +1,13 @@
 # -*- coding: utf-8 -*-
+"""Log Service
+
+The log service is responsible for:
+
+* Loading custom logger files
+* Generating default logging configurations
+* Manages logging configurations for Plugins and Beer Garden application
+"""
+
 import copy
 from typing import Any, Dict
 
@@ -168,12 +177,18 @@ def get_plugin_log_config_legacy() -> dict:
 
 
 def load_plugin_log_config():
+    local_default = brewtils.log.default_config(
+        level=config.get("plugin.local.logging.fallback_level")
+    )
+    remote_default = brewtils.log.default_config(
+        level=config.get("plugin.remote.logging.fallback_level")
+    )
+
     PluginLoggingManager.load(
-        default_config=brewtils.log.default_config(
-            level=config.get("plugin.logging.fallback_level")
-        ),
-        config_file=config.get("plugin.logging.config_file"),
+        local_default=local_default,
+        remote_default=remote_default,
         local_file=config.get("plugin.local.logging.config_file"),
+        remote_file=config.get("plugin.remote.logging.config_file"),
     )
 
 
@@ -191,47 +206,51 @@ class PluginLoggingManager(object):
     """
 
     # Actual logging configuration
-    _GENERAL_CONFIG: dict = None
+    _REMOTE_CONFIG: dict = None
     _LOCAL_CONFIG: dict = None
 
     @classmethod
     def get(cls, **kwargs) -> dict:
         """Get the logging config"""
-        if kwargs.get("local"):
-            return cls._LOCAL_CONFIG
-
-        return cls._GENERAL_CONFIG
+        return cls._LOCAL_CONFIG if kwargs.get("local") else cls._REMOTE_CONFIG
 
     @classmethod
-    def load(cls, default_config: dict, config_file: str, local_file: str) -> None:
+    def load(
+        cls,
+        local_default: dict,
+        remote_default: dict,
+        local_file: str,
+        remote_file: str,
+    ) -> None:
         """Load the logging configuration
 
         If no config_file is given, will fallback to the default config passed in.
 
         Args:
-            default_config: Fallback configuration
-            config_file: Filename of the general logging configuration to load
-            local_file: Filename of the logging configuration to load for local plugins
+            local_default: Fallback local configuration
+            remote_default: Fallback remote configuration
+            local_file: Logging configuration file to load for local plugins
+            remote_file: Logging configuration file to load for remote plugins
 
         Returns:
             None
         """
-        if config_file:
-            with open(config_file) as log_config_file:
-                cls._GENERAL_CONFIG = yaml.safe_load(log_config_file)
+        if remote_file:
+            with open(remote_file) as log_config_file:
+                cls._REMOTE_CONFIG = yaml.safe_load(log_config_file)
         else:
-            cls._GENERAL_CONFIG = default_config
+            cls._REMOTE_CONFIG = remote_default
 
         if local_file:
             with open(local_file) as log_config_file:
                 cls._LOCAL_CONFIG = yaml.safe_load(log_config_file)
         else:
-            cls._LOCAL_CONFIG = cls._GENERAL_CONFIG
+            cls._LOCAL_CONFIG = local_default
 
     @classmethod
     def get_legacy(cls):
         """Get configuration in the old LoggingConfig format"""
-        log_config = copy.deepcopy(cls._GENERAL_CONFIG)
+        log_config = copy.deepcopy(cls._REMOTE_CONFIG)
 
         if "version" in log_config:
             del log_config["version"]
@@ -251,7 +270,7 @@ class PluginLoggingManager(object):
 
 
 def handle_event(event):
-    # Only care about local garden
+    """Only care about local garden"""
     if event.garden == config.get("garden.name"):
         if event.name == Events.PLUGIN_LOGGER_FILE_CHANGE.name:
             load_plugin_log_config()

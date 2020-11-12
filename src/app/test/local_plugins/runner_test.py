@@ -17,6 +17,7 @@ def runner(tmp_path):
         process_args=["python", "-m", "echo"],
         process_cwd=tmp_path,
         process_env={},
+        capture_streams=False,
     )
 
 

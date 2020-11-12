@@ -150,9 +150,6 @@ angular.module('bgApp',
 .run(runDTRenderer)
 .config(routeConfig)
 .config(interceptorConfig)
-.config(['localStorageServiceProvider', function(localStorageServiceProvider) {
-  localStorageServiceProvider.setStorageType('sessionStorage');
-}])
 .service('APIInterceptor', interceptorService)
 .service('authInterceptorService', authInterceptorService)
 .animation('.slide', slideAnimation)

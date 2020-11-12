@@ -1,5 +1,124 @@
 # Beer Garden Changelog
 
+## 3.0.0
+11/10/20
+
+Note: This is a major release. Please check out the [site](https://beer-garden.io/) for
+more in-depth documentation.
+
+#### Added Features
+- Scheduler now supports triggering from file events (#647)
+- jquery and lodash objects are now available when creating custom templates (#589)
+- Table page length selections in UI are persisted in browser storage (#560)
+- Local plugins can now use an alternate python interpreter (#492)
+- Request output with a size greater than 16MB is now supported (#407)
+- Button added to Request View page for downloading output (#361)
+- Additional REST endpoint for Request output (#361)
+- Systems can now be grouped by namespace (#284)
+- Can now mark commands as hidden (#269)
+- The UI Output and Parameters displays can now be expanded (#170)
+- Separate gardens can now communicate via REST API
+- Actions can be initiated with STOMP messages in addition to the REST API
+- Plugin logs can now be retrieved and displayed on the UI System Admin page
+- All plugins automatically request a logging configuration from Beer-garden
+
+#### Other Changes
+- UI Queue Admin functionality has been moved into System Admin page (#533)
+- Drop official support for CentOS 6 (#225)
+- Logging config files are now yaml by default (#89)
+- Brew-view & Bartender have been merged into a single Beer-garden application (#87)
+- UI has been pulled out into a separate application
+- Default `max_instances` value for plugins is -1 (no maximum)
+- User interface has been streamlined
+- Python version bundled with rpm is now 3.7 instead of 3.6
+- Commands no longer have an ID field
+
+#### Removed
+- Publishing events to RabbitMQ and Mongo has been removed (#681)
+- Authentication / Authorization functionality: Users, Roles, Login, etc.
+
+## 2.4.18
+10/27/20
+Brew-view 2.4.19, Bartender 2.4.8, BG-utils 2.4.10
+
+#### Added Features
+- Can now inject specific host environment variables into local plugin processes (#686)
+
+## 2.4.17
+10/13/20
+Brew-view 2.4.19, Bartender 2.4.7, BG-utils 2.4.10
+
+#### Bug Fixes
+- Fixed command invocation error when request has no parameters (#351)
+
+## 2.4.16
+9/23/20
+Brew-view 2.4.19, Bartender 2.4.7, BG-utils 2.4.10
+
+#### Bug Fixes
+- Removed mongo model caching from Pruner. Releasing memory once the delete is completed (#604)
+
+## 2.4.15
+2/20/20
+Brew-view 2.4.19, Bartender 2.4.6, BG-utils 2.4.10
+
+#### Bug Fixes
+- Start and end dates are correctly applied to new interval jobs (#431)
+
+## 2.4.14
+1/30/20
+Brew-view 2.4.18, Bartender 2.4.6, BG-utils 2.4.9
+
+#### Bug Fixes
+- Returning 418 status code when a model is too large to save (#308)
+
+## 2.4.13
+1/14/20
+Brew-view 2.4.17, Bartender 2.4.6, BG-utils 2.4.9
+
+#### Bug Fixes
+- Fixed issue where scheduler would not work with self-signed cert (#391)
+
+## 2.4.12
+12/5/19
+Brew-view 2.4.16, Bartender 2.4.6, BG-utils 2.4.9
+
+#### Added Features
+- Added configuration flag to allow rendering unsanitized output (#360)
+
+## 2.4.11
+11/12/19
+Brew-view 2.4.15, Bartender 2.4.6, BG-utils 2.4.9
+
+#### Bug Fixes
+- Requests should now survive a broker restart (#352)
+- Fixed issue where admin role and user pages could fail to update (#345)
+
+#### Other Changes
+- Admin queues are now durable (#356)
+- Admin queues are no longer created with the auto-delete flag (#350)
+
+## 2.4.10
+9/27/19
+Brew-view 2.4.14, Bartender 2.4.5, BG-utils 2.4.8
+
+#### Bug Fixes
+- Static choices with alternate display text no longer fail validation (#325)
+
+#### Other Changes
+- Typeahead parameters now use a scrollable display (#318)
+- Better stacktrace logging for local plugins (#317)
+
+## 2.4.9
+9/5/19
+Brew-view 2.4.13, Bartender 2.4.4, BG-utils 2.4.8
+
+#### Bug Fixes
+- HTML output is now rendered correctly (#312)
+
+#### Other Changes
+- Now using npm instead of yarn
+
 ## 2.4.8
 6/27/19
 Brew-view 2.4.12, Bartender 2.4.4, BG-utils 2.4.8

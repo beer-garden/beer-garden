@@ -1,5 +1,5 @@
 # Dependencies
--e git+https://github.com/beer-garden/brewtils@v3#egg=brewtils
+-e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
 apispec < 0.39
 apscheduler < 4
 mongoengine < 0.21
@@ -10,7 +10,7 @@ prometheus_client < 1
 pyrabbit2 < 2
 pytz < 2021
 ruamel.yaml < 0.17
-stomp.py < 6.0.0
+stomp.py < 6.2.0
 tornado < 7
 
 # Documentation Dependencies

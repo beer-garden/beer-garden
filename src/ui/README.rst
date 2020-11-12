@@ -5,20 +5,6 @@ User Interface
 
 This is the Beer-garden application frontend. It's an AngularJS (1.x) application.
 
-|gitter| |pypi| |travis| |codecov| |docs| |pyup|
-
-.. |gitter| image:: https://img.shields.io/badge/gitter-Join%20Us!-ff69b4.svg
-   :target: https://gitter.im/beer-garden-io/Lobby
-   :alt: Gitter
-
-.. |travis| image:: https://img.shields.io/travis/beer-garden/brew-view.svg
-   :target: https://travis-ci.org/beer-garden/brew-view?branch=master
-   :alt: Build Status
-
-.. |codecov| image:: https://codecov.io/gh/beer-garden/brew-view/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/beer-garden/brew-view
-   :alt: Code Coverage
-
 
 Getting Started
 ===============

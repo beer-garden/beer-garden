@@ -1,4 +1,14 @@
 # -*- coding: utf-8 -*-
+"""Garden Service
+
+The garden service is responsible for:
+
+* Generating local `Garden` record
+* Getting `Garden` objects from the database
+* Updating `Garden` objects in the database
+* Responding to `Garden` sync requests and forwarding request to children
+* Handling `Garden` events
+"""
 import logging
 from datetime import datetime
 from typing import List
@@ -88,7 +98,16 @@ def publish_garden(
     )
 
 
-def update_garden_config(garden: Garden):
+def update_garden_config(garden: Garden) -> Garden:
+    """Update Garden configuration parameters
+
+    Args:
+        garden: The Garden to Update
+
+    Returns:
+        The Garden updated
+
+    """
     db_garden = db.query_unique(Garden, id=garden.id)
     db_garden.connection_params = garden.connection_params
     db_garden.connection_type = garden.connection_type
@@ -152,7 +171,17 @@ def create_garden(garden: Garden) -> Garden:
     return db.create(garden)
 
 
-def garden_add_system(system: System, garden_name: str):
+def garden_add_system(system: System, garden_name: str) -> Garden:
+    """Add a System to a Garden
+
+    Args:
+        system: The system to add
+        garden_name: The Garden Name to add it to
+
+    Returns:
+        The updated Garden
+
+    """
     garden = get_garden(garden_name)
 
     if garden is None:
@@ -170,7 +199,15 @@ def garden_add_system(system: System, garden_name: str):
 
 
 @publish_event(Events.GARDEN_UPDATED)
-def update_garden(garden: Garden):
+def update_garden(garden: Garden) -> Garden:
+    """Update a Garden
+
+    Args:
+        garden: The Garden to update
+
+    Returns:
+        The updated Garden
+    """
     return db.update(garden)
 
 
