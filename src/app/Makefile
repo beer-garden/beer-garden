@@ -5,7 +5,8 @@ MODULE_NAME    = beer_garden
 TEST_DIR       = test
 DOCKER_NAME    = bgio/beer-garden
 
-VERSION        ?= 0.0.0
+VERSION       ?= 0.0.0
+SHORT_VERSION  = $(shell echo $(VERSION) | head -c 1)
 
 .PHONY: clean clean-build clean-test clean-pyc help test
 
@@ -118,6 +119,7 @@ package: clean package-source package-wheel ## builds source and wheel package
 docker-build: ## build the docker images
 	docker build -t $(DOCKER_NAME):latest --build-arg VERSION=$(VERSION) .
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)
+	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)
 
 docker-build-unstable: package clean-python ## build nightly docker image
 	docker build -t $(DOCKER_NAME):unstable -f Dockerfile.unstable .
@@ -131,8 +133,9 @@ publish-package: package ## upload a package
 	twine upload dist/*
 
 publish-docker: docker-build ## push the docker images
-	docker push $(DOCKER_NAME):$(VERSION)
 	docker push $(DOCKER_NAME):latest
+	docker push $(DOCKER_NAME):$(VERSION)
+	docker push $(DOCKER_NAME):$(SHORT_VERSION)
 
 publish-docker-unstable: docker-build-unstable ## push the unstable docker image
 	docker push $(DOCKER_NAME):unstable
