@@ -11,9 +11,17 @@ from pytz import utc
 
 from beer_garden.db.mongo.api import delete, query, query_unique, update
 from beer_garden.db.mongo.models import Job as MongoJob
-from beer_garden.scheduler import IntervalTrigger
+from apscheduler.triggers.interval import IntervalTrigger as APInterval
 
 logger = logging.getLogger(__name__)
+
+
+class IntervalTrigger(APInterval):
+    """Beergarden implementation of an apscheduler IntervalTrigger"""
+
+    def __init__(self, *args, **kwargs):
+        self.reschedule_on_finish = kwargs.pop("reschedule_on_finish", False)
+        super(IntervalTrigger, self).__init__(*args, **kwargs)
 
 
 def construct_trigger(trigger_type: str, bg_trigger) -> BaseTrigger:
@@ -25,7 +33,7 @@ def construct_trigger(trigger_type: str, bg_trigger) -> BaseTrigger:
     elif trigger_type == "cron":
         return CronTrigger(**bg_trigger.scheduler_kwargs)
     else:
-        raise ValueError("Invalid trigger type %s" % trigger_type)
+        raise ValueError("Trigger type %s not supported by APScheduler" % trigger_type)
 
 
 def construct_job(job: Job, scheduler, alias="beer_garden"):
@@ -101,7 +109,7 @@ class MongoJobStore(BaseJobStore):
         Args:
             job: The job from the scheduler
         """
-        db_job = query_unique(Job, id=job.id)
+        db_job = query_unique(Job, id=job.kwargs["job_id"])
         db_job.next_run_time = job.next_run_time
         update(db_job)
 

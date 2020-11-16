@@ -4,11 +4,11 @@
 This is the core library for Beer-Garden. Anything that is spawned by the Main Process
 in Beer-Garden will be initialized within this class.
 """
-from typing import Callable
-
 import logging
+import signal
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
-from apscheduler.schedulers.background import BackgroundScheduler
+
+# from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils import EasyClient
 from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
@@ -16,6 +16,7 @@ from datetime import timedelta
 from functools import partial
 from multiprocessing.managers import BaseManager
 from pytz import utc
+from typing import Callable
 
 import beer_garden.api
 import beer_garden.api.entry_point
@@ -29,6 +30,7 @@ import beer_garden.queue.api as queue
 import beer_garden.router
 from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.parent_procesors import HttpParentUpdater
+from beer_garden.scheduler import MixedScheduler
 from beer_garden.events.processors import (
     FanoutProcessor,
     QueueListener,
@@ -53,6 +55,7 @@ class Application(StoppableThread):
     clients = None
     helper_threads = None
     entry_manager = None
+    mp_manager = None
     plugin_log_config_observer: MonitorFile = None
     plugin_local_log_config_observer: MonitorFile = None
 
@@ -102,21 +105,9 @@ class Application(StoppableThread):
             action=beer_garden.router.forward, name="forwarder"
         )
 
-        BaseManager.register(
-            "PluginManager",
-            callable=partial(
-                PluginManager,
-                plugin_dir=config.get("plugin.local.directory"),
-                log_dir=config.get("plugin.local.log_directory"),
-                connection_info=config.get("entry.http"),
-                username=config.get("plugin.local.auth.username"),
-                password=config.get("plugin.local.auth.password"),
-            ),
-        )
+        self.mp_manager = self._setup_multiprocessing_manager()
 
-        data_manager = BaseManager()
-        data_manager.start()
-        beer_garden.local_plugins.manager.lpm_proxy = data_manager.PluginManager()
+        beer_garden.local_plugins.manager.lpm_proxy = self.mp_manager.PluginManager()
 
         self.entry_manager = beer_garden.api.entry_point.Manager()
 
@@ -269,6 +260,9 @@ class Application(StoppableThread):
         if config.get("plugin.local.logging.config_file"):
             self.plugin_local_log_config_observer.start()
 
+        self.logger.info("Loading jobs from database")
+        self.scheduler.initialize_from_db()
+
         self.logger.info("All set! Let me know if you need anything else!")
 
     def _shutdown(self):
@@ -362,12 +356,44 @@ class Application(StoppableThread):
         executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}
         job_defaults = scheduler_config.job_defaults.to_dict()
 
-        return BackgroundScheduler(
-            jobstores=job_stores,
-            executors=executors,
-            job_defaults=job_defaults,
-            timezone=utc,
+        ap_config = {
+            "jobstores": job_stores,
+            "executors": executors,
+            "job_defaults": job_defaults,
+            "timezone": utc,
+        }
+
+        # return BackgroundScheduler(
+        #     jobstores=job_stores,
+        #     executors=executors,
+        #     job_defaults=job_defaults,
+        #     timezone=utc,
+        # )
+
+        return MixedScheduler(interval_config=ap_config)
+
+    @staticmethod
+    def _setup_multiprocessing_manager():
+        BaseManager.register(
+            "PluginManager",
+            callable=partial(
+                PluginManager,
+                plugin_dir=config.get("plugin.local.directory"),
+                log_dir=config.get("plugin.local.log_directory"),
+                connection_info=config.get("entry.http"),
+                username=config.get("plugin.local.auth.username"),
+                password=config.get("plugin.local.auth.password"),
+            ),
         )
+
+        def initializer():
+            signal.signal(signal.SIGINT, signal.SIG_IGN)
+            signal.signal(signal.SIGTERM, signal.SIG_IGN)
+
+        data_manager = BaseManager()
+        data_manager.start(initializer=initializer)
+
+        return data_manager
 
 
 class HelperThread(object):

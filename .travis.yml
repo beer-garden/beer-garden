@@ -17,7 +17,6 @@ stages:
 - lint
 - test
 - unstable docker deploy
-- npm deploy
 - pypi deploy
 - docker deploy
 
@@ -36,29 +35,29 @@ jobs:
     after_success: codecov
 
   - stage: unstable docker deploy
-    if: "(branch = v3) AND (type != pull_request)"
+    if: "(branch = develop) AND (type != pull_request)"
     install: skip
     before_script: make docker-login
     script: make publish-docker-unstable
     after_success: skip
 
-  - stage: npm deploy
-    if: tag IS present
-    before_install: cd src/ui
-    install: make deps
-    script: make package
-    deploy:
-      provider: npm
-      skip_cleanup: true
-      on:
-        all_branches: true
-      email: "beerbuildbot"
-      api_token:
-        secure: cQh8/DIDKoR+k2EtQer2A/GLKMxspgylFW9Kozz3FaX+AfCWjNEFvB4i47UutuhHwQ/AkGQCuyvGjmyNdIEdO583DZxAhWAjp25QZuvm5G1BgIsl1m1LeWccaLJVKEGLGAm7VT81bCgbNEn90O1CtcDTDyS7EOHu7QfFPxGzc2Yi0WoCxwJ8gQPxfftdyycEFSfnGppJiOg5dnA4RbDoPzqY4LGokkX+zfras9EFhPHbcBhpwoB1qEQKochxTip3MEU62PXibs2VZGuj9KBdC5+2AjBi7taSG3ej7VH4adIVe3R8aBfGa/12QpI5CPUWukwh9inGbS1LRdstg9xI3o+hRImWeHlPmeDnH3qA4cUr2wvbviPc8aUWCfHM2EAWLN1yj6Z/p77J1f3YoOS7pjoiuZuWsnfNzD6yeLjLg+eVv5cTTjuEb7x9Zg45uMs/rUA6daWXL2Myy5ZVeZNoNolE+ZGZeHRUCFpiISkodvj0ITNB0VvGyCsFnI0IPQoyyx9gqokGC5LTGyqGcvLdQPYE113ZNwFYLcblhYSCvW9cr8tkDd2Uz7HpxNM/6DjK6eL/rNIjdoF3uCR9q/kP8v5igSikK1mvdnaNPmTR5YVV0Zyh0FxvLpYAIpg/IW19tGc05fNeY90ObHhzR/W1iCaDoZdTYMUYwme6j8zP0Gw=
+    #  - stage: npm deploy
+    #    if: tag IS present
+    #    before_install: cd src/ui
+    #    install: make deps
+    #    script: make package
+    #    deploy:
+    #      provider: npm
+    #      skip_cleanup: true
+    #      on:
+    #        all_branches: true
+    #      email: "beerbuildbot"
+    #      api_token:
+    #        secure: cQh8/DIDKoR+k2EtQer2A/GLKMxspgylFW9Kozz3FaX+AfCWjNEFvB4i47UutuhHwQ/AkGQCuyvGjmyNdIEdO583DZxAhWAjp25QZuvm5G1BgIsl1m1LeWccaLJVKEGLGAm7VT81bCgbNEn90O1CtcDTDyS7EOHu7QfFPxGzc2Yi0WoCxwJ8gQPxfftdyycEFSfnGppJiOg5dnA4RbDoPzqY4LGokkX+zfras9EFhPHbcBhpwoB1qEQKochxTip3MEU62PXibs2VZGuj9KBdC5+2AjBi7taSG3ej7VH4adIVe3R8aBfGa/12QpI5CPUWukwh9inGbS1LRdstg9xI3o+hRImWeHlPmeDnH3qA4cUr2wvbviPc8aUWCfHM2EAWLN1yj6Z/p77J1f3YoOS7pjoiuZuWsnfNzD6yeLjLg+eVv5cTTjuEb7x9Zg45uMs/rUA6daWXL2Myy5ZVeZNoNolE+ZGZeHRUCFpiISkodvj0ITNB0VvGyCsFnI0IPQoyyx9gqokGC5LTGyqGcvLdQPYE113ZNwFYLcblhYSCvW9cr8tkDd2Uz7HpxNM/6DjK6eL/rNIjdoF3uCR9q/kP8v5igSikK1mvdnaNPmTR5YVV0Zyh0FxvLpYAIpg/IW19tGc05fNeY90ObHhzR/W1iCaDoZdTYMUYwme6j8zP0Gw=
 
   - stage: pypi deploy
     if: tag IS present
-    install: pip install twine wheel
+    install: pip install keyring==21.4.0
     before_script: cd src/app
     script: skip
     after_success: true
