@@ -1,35 +1,27 @@
 
-=========
-Bartender
-=========
+===========================
+Beer-Garden App
+===========================
 
-Bartender is the beer-garden backend. It's responsible for maintaining plugin health/status and running the actual plugins.
+This is the Beer-garden application backend.
 
-|gitter| |pypi| |travis| |codecov| |docs| |pyup|
+|gitter| |pypi| |travis| |codecov|
 
 .. |gitter| image:: https://img.shields.io/badge/gitter-Join%20Us!-ff69b4.svg
    :target: https://gitter.im/beer-garden-io/Lobby
    :alt: Gitter
 
-.. |pypi| image:: https://img.shields.io/pypi/v/bartender.svg
-   :target: https://pypi.python.org/pypi/bartender
+.. |pypi| image:: https://img.shields.io/pypi/v/beer-garden.svg
+   :target: https://pypi.python.org/pypi/beer-garden
    :alt: PyPI
 
-.. |travis| image:: https://img.shields.io/travis/beer-garden/bartender.svg
-   :target: https://travis-ci.org/beer-garden/bartender?branch=master
+.. |travis| image:: https://img.shields.io/travis/beer-garden/beer-garden.svg
+   :target: https://travis-ci.com/beer-garden/beer-garden
    :alt: Build Status
 
-.. |codecov| image:: https://codecov.io/gh/beer-garden/bartender/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/beer-garden/bartender
+.. |codecov| image:: https://codecov.io/gh/beer-garden/garden/branch/v3/graph/badge.svg
+   :target: https://codecov.io/gh/beer-garden/beer-garden
    :alt: Code Coverage
-
-.. |docs| image:: https://readthedocs.org/projects/bartender/badge/?version=latest
-   :target: https://bartender.readthedocs.io/en/latest/?badge=latest
-   :alt: Documentation Status
-
-.. |pyup| image:: https://pyup.io/repos/github/beer-garden/bartender/shield.svg
-   :target: https://pyup.io/repos/github/beer-garden/bartender/
-   :alt: Pyup Updates
 
 Getting Started
 ===============
@@ -37,7 +29,7 @@ Getting Started
 Pre-requisites
 --------------
 
-* Python >= 2.7, 3.4
+* Python >= 3.7
 * pip
 * Connectivity to MongoDB Server  - (Tested on 3.4)
 * Connectivity to Rabbitmq-Server - (Tested on 3.6)
@@ -50,19 +42,19 @@ When installed from pip you can simply:
 
 .. code-block:: console
 
-    $ bartender -c /path/to/config.json
+    $ beer-garden -c /path/to/config.json
 
 These are the minimum required steps once you have all the pre-requisites up and running.
 
 .. code-block:: console
 
-    $ git clone https://github.com/beer-garden/bartender.git
-    $ cd bartender
+    $ git clone https://github.com/beer-garden/beer-garden.git
+    $ cd src/app
     $ pip install -r requirements.txt
-    $ ./bin/app.sh # Requires brew-view to be running
+    $ ./bin/app.sh
 
 
-There are several plugins that are loaded by default. You can view them in the brew-view UI.
+There are several plugins that are loaded by default. You can view them in the UI.
 
 
 Testing

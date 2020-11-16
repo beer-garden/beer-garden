@@ -7,14 +7,12 @@ handlers:
     formatter: default
     stream: "ext://sys.stdout"
 
-#  Uncomment this and the handler in the root->handlers section to enable file-based
-#  plugin logging
+#  Uncomment this and the handler in root->handlers to enable file-based plugin logging
 #  file:
 #    backupCount: 5
 #    class: "logging.handlers.RotatingFileHandler"
 #    encoding: utf8
 #    formatter: default
-#    level: INFO
 #    maxBytes: 10485760
 #    filename: "logs/%(instance_name)s.log"
 

@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
+"""Config Service
+
+The configuration service is responsible for:
+
+* Loading configuration files
+* Migration configuration files between Beer Garden versions
+* Getting configuration values
+"""
 import os
 import sys
 from argparse import ArgumentParser
 from datetime import datetime
-from typing import Optional, Sequence, Tuple, Union
+from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
 from box import Box
 from brewtils.rest import normalize_url_prefix as normalize
@@ -260,7 +268,16 @@ def assign(new_config: Box, force: bool = False) -> None:
     _CONFIG = new_config
 
 
-def _setup_config_sources(spec, cli_vars):
+def _setup_config_sources(spec: YapconfSpec, cli_vars: Iterable[str]) -> List[str]:
+    """Sets the sources for configuration loading
+
+    Args:
+        spec: Yapconf specification
+        cli_vars: Command line arguments
+
+    Returns:
+        List of configuration sources
+    """
     spec.add_source("cli_args", "dict", data=cli_vars)
     spec.add_source("ENVIRONMENT", "environment")
 
@@ -278,7 +295,16 @@ def _setup_config_sources(spec, cli_vars):
     return config_sources
 
 
-def _safe_migrate(spec, filename):
+def _safe_migrate(spec: YapconfSpec, filename: str) -> None:
+    """Copy existing file to backup before migrating configuration
+
+    Args:
+        spec: Yapconf specification
+        filename: Config filename
+
+    Returns:
+        None
+    """
     tmp_filename = filename + ".tmp"
     try:
         spec.migrate_config_file(
@@ -289,11 +315,16 @@ def _safe_migrate(spec, filename):
             include_bootstrap=False,
         )
     except Exception:
-        sys.stderr.write(
+        import logging
+
+        # Logging isn't configured yet so this will use the last-chance logger, STDERR
+        logging.getLogger(__name__).warning(
             "Could not successfully migrate application configuration. "
-            "Will attempt to load the previous configuration."
+            "Will attempt to load the previous configuration.",
+            exc_info=True,
         )
         return
+
     if _is_new_config(filename, tmp_filename):
         _backup_previous_config(filename, tmp_filename)
     else:
@@ -412,8 +443,8 @@ _MQ_SPEC = {
         "host": {
             "type": "str",
             "default": "localhost",
-            "description": "Hostname of MQ to use",
-            "previous_names": ["amq_host"],
+            "description": "Will be used by the Beergarden application as the location "
+            "of the message broker.",
         },
         "admin_queue_expiry": {
             "type": "int",
@@ -511,7 +542,7 @@ _MQ_SPEC = {
     },
 }
 
-_APPLICATION_SPEC = {
+_UI_SPEC = {
     "type": "dict",
     "items": {
         "cors_enabled": {
@@ -646,14 +677,6 @@ _DB_SPEC = {
         "ttl": {
             "type": "dict",
             "items": {
-                "event": {
-                    "type": "int",
-                    "default": 15,
-                    "description": "Number of minutes to wait before deleting "
-                    "events (negative number for never)",
-                    "previous_names": ["event_mongo_ttl"],
-                    "alt_env_names": ["EVENT_MONGO_TTL"],
-                },
                 "action": {
                     "type": "int",
                     "default": -1,
@@ -683,6 +706,17 @@ _HTTP_SPEC = {
             "default": True,
             "description": "Run an HTTP server",
             "previous_names": ["entry_http_enable"],
+        },
+        "host": {
+            "type": "str",
+            "default": "0.0.0.0",
+            "description": "Host for the HTTP Server to bind to",
+        },
+        "port": {
+            "type": "int",
+            "default": 2337,
+            "description": "Serve content on this port",
+            "previous_names": ["web_port"],
         },
         "ssl": {
             "type": "dict",
@@ -739,12 +773,6 @@ _HTTP_SPEC = {
                 },
             },
         },
-        "port": {
-            "type": "int",
-            "default": 2337,
-            "description": "Serve content on this port",
-            "previous_names": ["web_port"],
-        },
         "url_prefix": {
             "type": "str",
             "default": "/",
@@ -753,17 +781,78 @@ _HTTP_SPEC = {
             "previous_names": ["url_prefix"],
             "alt_env_names": ["URL_PREFIX"],
         },
+    },
+}
+
+_STOMP_SPEC = {
+    "type": "dict",
+    "items": {
+        "enabled": {
+            "type": "bool",
+            "default": False,
+            "description": "Run an stomp server",
+        },
+        "send_destination": {
+            "type": "str",
+            "default": "Beer_Garden_Events",
+            "description": "Publish topic where events are sent",
+        },
+        "subscribe_destination": {
+            "type": "str",
+            "default": "Beer_Garden_Operations",
+            "description": "Subscription topic where Beer_Garden listens for operations",
+        },
         "host": {
             "type": "str",
-            "default": "0.0.0.0",
-            "description": "Host for the HTTP Server to bind to",
-        },
-        "public_fqdn": {
-            "type": "str",
             "default": "localhost",
-            "description": "Public fully-qualified domain name",
-            "previous_names": ["public_fqdn"],
-            "alt_env_names": ["PUBLIC_FQDN"],
+            "description": "Connection hostname",
+        },
+        "port": {
+            "type": "int",
+            "default": 61613,
+            "description": "Connection port number",
+        },
+        "username": {
+            "type": "str",
+            "description": "Username to use for authentication",
+            "default": "beer_garden",
+        },
+        "password": {
+            "type": "str",
+            "description": "Password to use for authentication",
+            "default": "password",
+        },
+        "ssl": {
+            "type": "dict",
+            "items": {
+                "use_ssl": {
+                    "type": "bool",
+                    "description": "Use SSL for connection",
+                    "default": False,
+                },
+                "private_key": {
+                    "type": "str",
+                    "description": "Path to private key",
+                    "required": False,
+                },
+                "cert_file": {
+                    "type": "str",
+                    "description": "Path to certificate file",
+                    "required": False,
+                },
+                "verify_host": {
+                    "type": "bool",
+                    "description": "Verify the server's certificate "
+                    "was signed by a trusted CA'",
+                    "default": True,
+                },
+                "verify_hostname": {
+                    "type": "bool",
+                    "description": "Verify the server's actual "
+                    "host name against the expected name'",
+                    "default": True,
+                },
+            },
         },
     },
 }
@@ -772,17 +861,7 @@ _ENTRY_SPEC = {
     "type": "dict",
     "items": {
         "http": _HTTP_SPEC,
-        "thrift": {
-            "type": "dict",
-            "items": {
-                "enabled": {
-                    "type": "bool",
-                    "default": False,
-                    "description": "Run an thrift server",
-                    "previous_names": ["entry_thrift_enable"],
-                }
-            },
-        },
+        "stomp": _STOMP_SPEC,
     },
 }
 
@@ -796,6 +875,23 @@ _PARENT_SPEC = {
                     "type": "bool",
                     "default": False,
                     "description": "Publish events to parent garden over HTTP",
+                },
+                "host": {
+                    "type": "str",
+                    "description": "Host for the HTTP Server to bind to",
+                    "required": False,
+                },
+                "port": {
+                    "type": "int",
+                    "default": 2337,
+                    "description": "Serve content on this port",
+                },
+                "skip_events": {
+                    "type": "list",
+                    "items": {"skip_event": {"type": "str"}},
+                    "default": [],
+                    "required": False,
+                    "description": "Events to be skipped",
                 },
                 "ssl": {
                     "type": "dict",
@@ -839,81 +935,14 @@ _PARENT_SPEC = {
                         },
                     },
                 },
-                "port": {
-                    "type": "int",
-                    "default": 2337,
-                    "description": "Serve content on this port",
-                },
                 "url_prefix": {
                     "type": "str",
                     "default": "/",
                     "description": "URL path prefix",
                     "required": False,
                 },
-                "host": {
-                    "type": "str",
-                    "default": "0.0.0.0",
-                    "description": "Host for the HTTP Server to bind to",
-                },
-                "public_fqdn": {
-                    "type": "str",
-                    "default": "localhost",
-                    "description": "Public fully-qualified domain name",
-                },
-                "skip_events": {
-                    "type": "list",
-                    "items": {"skip_event": {"type": "str"}},
-                    "default": ["DB_CREATE"],
-                    "required": False,
-                    "description": "Events to be skipped",
-                },
             },
         }
-    },
-}
-
-_EVENT_SPEC = {
-    "type": "dict",
-    "items": {
-        "mq": {
-            "type": "dict",
-            "items": {
-                "enabled": {
-                    "type": "bool",
-                    "default": False,
-                    "description": "Publish events to RabbitMQ",
-                    "previous_names": ["event_persist_mq_enable"],
-                },
-                "exchange": {
-                    "type": "str",
-                    "required": False,
-                    "description": "Exchange to use for MQ events",
-                    "previous_names": ["event_amq_exchange"],
-                },
-                "virtual_host": {
-                    "type": "str",
-                    "default": "/",
-                    "required": False,
-                    "description": "Virtual host to use for MQ events",
-                    "previous_names": ["event_amq_virtual_host"],
-                },
-            },
-        },
-        "mongo": {
-            "type": "dict",
-            "items": {
-                "enabled": {
-                    "type": "bool",
-                    "default": True,
-                    "description": "Persist events to Mongo",
-                    "previous_names": [
-                        "event_persist_mongo",
-                        "event_persist_mongo_enable",
-                    ],
-                    "alt_env_names": ["EVENT_PERSIST_MONGO"],
-                }
-            },
-        },
     },
 }
 
@@ -978,44 +1007,6 @@ _METRICS_SPEC = {
 _PLUGIN_SPEC = {
     "type": "dict",
     "items": {
-        "logging": {
-            "type": "dict",
-            "items": {
-                "config_file": {
-                    "type": "str",
-                    "description": "Path to a logging configuration file for plugins",
-                    "required": False,
-                },
-                "fallback_level": {
-                    "type": "str",
-                    "description": "Level that will be used with a default logging "
-                    "configuration if config_file is not specified",
-                    "previous_names": ["plugin_logging_level"],
-                    "default": "INFO",
-                    "choices": [
-                        "DEBUG",
-                        "INFO",
-                        "WARN",
-                        "WARNING",
-                        "ERROR",
-                        "CRITICAL",
-                    ],
-                },
-            },
-        },
-        "status_heartbeat": {
-            "type": "int",
-            "default": 10,
-            "description": "Amount of time between status messages",
-            "previous_names": ["plugin_status_heartbeat"],
-        },
-        "status_timeout": {
-            "type": "int",
-            "default": 30,
-            "description": "Amount of time to wait before marking a plugin as"
-            "unresponsive",
-            "previous_names": ["plugin_status_timeout "],
-        },
         "local": {
             "type": "dict",
             "items": {
@@ -1043,6 +1034,39 @@ _PLUGIN_SPEC = {
                     "previous_names": ["plugins_directory", "plugin_directory"],
                     "alt_env_names": ["PLUGINS_DIRECTORY", "BG_PLUGIN_DIRECTORY"],
                 },
+                "host_env_vars": {
+                    "type": "list",
+                    "items": {"env_var": {"type": "str"}},
+                    "default": [],
+                    "description": "Host environment variables that will be propagated "
+                    "to local plugin processes",
+                },
+                "logging": {
+                    "type": "dict",
+                    "items": {
+                        "config_file": {
+                            "type": "str",
+                            "description": "Path to a logging configuration file for "
+                            "local plugins",
+                            "required": False,
+                        },
+                        "fallback_level": {
+                            "type": "str",
+                            "description": "Level that will be used with a default logging "
+                            "configuration if config_file is not specified",
+                            "previous_names": ["plugin_logging_level"],
+                            "default": "INFO",
+                            "choices": [
+                                "DEBUG",
+                                "INFO",
+                                "WARN",
+                                "WARNING",
+                                "ERROR",
+                                "CRITICAL",
+                            ],
+                        },
+                    },
+                },
                 "timeout": {
                     "type": "dict",
                     "items": {
@@ -1065,29 +1089,70 @@ _PLUGIN_SPEC = {
                 },
             },
         },
+        "mq": {
+            "type": "dict",
+            "items": {
+                "host": {
+                    "type": "str",
+                    "description": "Globally resolvable host name of message broker",
+                    "long_description": "This will be supplied to all plugins as the "
+                    "location of the message broker. In order to support both local "
+                    "and remote plugins it's important that this value be universally "
+                    "resolvable.",
+                    "default": "localhost",
+                    "alt_env_names": ["BG_PUBLISH_HOSTNAME", "PUBLISH_HOSTNAME"],
+                },
+            },
+        },
+        "remote": {
+            "type": "dict",
+            "items": {
+                "logging": {
+                    "type": "dict",
+                    "items": {
+                        "config_file": {
+                            "type": "str",
+                            "description": "Path to a logging configuration file for plugins",
+                            "required": False,
+                        },
+                        "fallback_level": {
+                            "type": "str",
+                            "description": "Level that will be used with a default logging "
+                            "configuration if config_file is not specified",
+                            "previous_names": ["plugin_logging_level"],
+                            "default": "INFO",
+                            "choices": [
+                                "DEBUG",
+                                "INFO",
+                                "WARN",
+                                "WARNING",
+                                "ERROR",
+                                "CRITICAL",
+                            ],
+                        },
+                    },
+                },
+            },
+        },
+        "status_heartbeat": {
+            "type": "int",
+            "default": 10,
+            "description": "Amount of time between status messages",
+            "previous_names": ["plugin_status_heartbeat"],
+        },
+        "status_timeout": {
+            "type": "int",
+            "default": 30,
+            "description": "Amount of time to wait before marking a plugin as"
+            "unresponsive",
+            "previous_names": ["plugin_status_timeout "],
+        },
     },
 }
 
 _SCHEDULER_SPEC = {
     "type": "dict",
     "items": {
-        "auth": {
-            "type": "dict",
-            "items": {
-                "username": {
-                    "type": "str",
-                    "description": "Username that scheduler will use for "
-                    "authentication (needs bg-admin role)",
-                    "required": False,
-                },
-                "password": {
-                    "type": "str",
-                    "description": "Password that scheduler will use for "
-                    "authentication (needs bg-admin role)",
-                    "required": False,
-                },
-            },
-        },
         "max_workers": {
             "type": "int",
             "default": 10,
@@ -1116,65 +1181,58 @@ _SCHEDULER_SPEC = {
     },
 }
 
-_VALIDATOR_SPEC = {
+_REQUEST_VALIDATION_SPEC = {
     "type": "dict",
     "items": {
-        "command": {
+        "dynamic_choices": {
             "type": "dict",
             "items": {
-                "timeout": {
-                    "type": "int",
-                    "default": 10,
-                    "description": "Time to wait for a command-based choices validation",
-                    "required": False,
-                }
-            },
-        },
-        "url": {
-            "type": "dict",
-            "items": {
-                "ca_cert": {
-                    "type": "str",
-                    "description": "CA file for validating url-based choices",
-                    "required": False,
+                "command": {
+                    "type": "dict",
+                    "items": {
+                        "timeout": {
+                            "type": "int",
+                            "default": 10,
+                            "description": "Time to wait for a command-based choices "
+                            "validation",
+                            "required": False,
+                        }
+                    },
                 },
-                "ca_verify": {
-                    "type": "bool",
-                    "default": True,
-                    "description": "Verify external certificates for url-based choices",
-                    "required": False,
+                "url": {
+                    "type": "dict",
+                    "items": {
+                        "ca_cert": {
+                            "type": "str",
+                            "description": "CA file for validating url-based choices",
+                            "required": False,
+                        },
+                        "ca_verify": {
+                            "type": "bool",
+                            "default": True,
+                            "description": "Verify external certificates for url-based "
+                            "choices",
+                            "required": False,
+                        },
+                    },
                 },
             },
         },
     },
 }
 
-# I have omitted the following from the spec
-#
-# * "backend" - there should be no need for this
-# * "thrift" - there should be no need for this
-#
-# Everything else has been copied wholesale into this specification.
 _SPECIFICATION = {
-    "publish_hostname": {
-        "type": "str",
-        "default": "localhost",
-        "description": "Publicly accessible hostname for plugins to connect to",
-        "previous_names": ["amq_publish_host"],
-        "alt_env_names": ["AMQ_PUBLISH_HOST"],
-    },
-    "mq": _MQ_SPEC,
-    "application": _APPLICATION_SPEC,
     "auth": _AUTH_SPEC,
     "configuration": _META_SPEC,
     "db": _DB_SPEC,
     "entry": _ENTRY_SPEC,
-    "event": _EVENT_SPEC,
-    "parent": _PARENT_SPEC,
     "garden": _GARDEN_SPEC,
     "log": _LOG_SPEC,
     "metrics": _METRICS_SPEC,
+    "mq": _MQ_SPEC,
+    "parent": _PARENT_SPEC,
     "plugin": _PLUGIN_SPEC,
+    "request_validation": _REQUEST_VALIDATION_SPEC,
     "scheduler": _SCHEDULER_SPEC,
-    "validator": _VALIDATOR_SPEC,
+    "ui": _UI_SPEC,
 }

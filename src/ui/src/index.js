@@ -102,7 +102,6 @@ import commandViewController from './js/controllers/command_view.js';
 import requestIndexController from './js/controllers/request_index.js';
 import requestViewController, {slideAnimation} from './js/controllers/request_view.js';
 import systemIndexController from './js/controllers/system_index.js';
-import systemViewController from './js/controllers/system_view.js';
 import jobIndexController from './js/controllers/job_index.js';
 import jobViewController from './js/controllers/job_view.js';
 import jobCreateController from './js/controllers/job_create.js';
@@ -117,11 +116,9 @@ import './partials/admin_garden_index.html';
 import './partials/admin_garden_view.html';
 import './partials/command_index.html';
 import './partials/command_view.html';
-import './partials/landing.html';
 import './partials/request_index.html';
 import './partials/request_view.html';
 import './partials/system_index.html';
-import './partials/system_view.html';
 import './partials/job_index.html';
 import './partials/job_view.html';
 import './partials/job_create.html';
@@ -153,9 +150,6 @@ angular.module('bgApp',
 .run(runDTRenderer)
 .config(routeConfig)
 .config(interceptorConfig)
-.config(['localStorageServiceProvider', function(localStorageServiceProvider) {
-  localStorageServiceProvider.setStorageType('sessionStorage');
-}])
 .service('APIInterceptor', interceptorService)
 .service('authInterceptorService', authInterceptorService)
 .animation('.slide', slideAnimation)
@@ -196,7 +190,6 @@ angular.module('bgApp',
 .controller('RequestIndexController', requestIndexController)
 .controller('RequestViewController', requestViewController)
 .controller('SystemIndexController', systemIndexController)
-.controller('SystemViewController', systemViewController)
 .controller('JobIndexController', jobIndexController)
 .controller('JobViewController', jobViewController)
 .controller('JobCreateController', jobCreateController)

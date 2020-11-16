@@ -4,7 +4,7 @@
 #
 #    pip-compile requirements.in
 #
--e git+https://github.com/beer-garden/brewtils@v3#egg=brewtils  # via -r requirements.in
+-e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils  # via -r requirements.in
 alabaster==0.7.12         # via sphinx
 apispec==0.38.0           # via -r requirements.in
 appdirs==1.4.4            # via black, brewtils
@@ -70,6 +70,7 @@ sphinx-rtd-theme==0.5.0   # via -r requirements.in
 sphinx==1.8.5             # via -r requirements.in, sphinx-rtd-theme
 sphinxcontrib-serializinghtml==1.1.4  # via sphinxcontrib-websupport
 sphinxcontrib-websupport==1.2.4  # via sphinx
+stomp.py==6.1.0
 toml==0.10.1              # via black, pytest
 tornado==6.0.4            # via -r requirements.in, pytest-tornado
 typed-ast==1.4.1          # via black

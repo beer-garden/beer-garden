@@ -1,19 +1,28 @@
 # -*- coding: utf-8 -*-
-import copy
-import logging
-from typing import List, Sequence
+"""System Service
 
+The system service is responible for:
+* CRUD operations of `System` records
+* Rescanning directory for Local Plugins
+* Reloading Local Plugins
+* Handling System Events
+"""
+
+import copy
+
+import logging
 from brewtils.errors import BrewtilsException, ModelValidationError
 from brewtils.models import Command, Event, Events, Instance, System
 from brewtils.schemas import SystemSchema
-from time import sleep
+from typing import List, Sequence
 
 import beer_garden.config as config
 import beer_garden.db.api as db
+import beer_garden.local_plugins.manager as lpm
 import beer_garden.queue.api as queue
 from beer_garden.errors import NotFoundException, NotUniqueException
 from beer_garden.events import publish_event
-from beer_garden.plugin import stop
+from beer_garden.plugin import publish_stop
 
 REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
@@ -190,14 +199,8 @@ def upsert(system: System) -> System:
         )
 
 
-@publish_event(Events.SYSTEM_RELOAD_REQUESTED)
 def reload_system(system_id: str = None, system: System = None) -> None:
-    """Reload a system configuration
-
-    NOTE: All we do here is grab the system from the database and return it. That's
-    because all the work here needs to be done by the local PluginManager, and that
-    only exists in the main thread. So we publish an event requesting that the
-    appropriate action be taken.
+    """Reload a local plugin System
 
     Args:
         system_id: The System ID
@@ -207,8 +210,11 @@ def reload_system(system_id: str = None, system: System = None) -> None:
         None
     """
     # TODO - It'd be nice to have a check here to make sure system is managed
+    system = system or db.query_unique(System, id=system_id)
 
-    return system or db.query_unique(System, id=system_id)
+    lpm.lpm_proxy.reload_system(system)
+
+    return system
 
 
 @publish_event(Events.SYSTEM_REMOVED)
@@ -258,17 +264,11 @@ def purge_system(
     if force and not system.local:
         return remove_system(system=system)
 
-    # Attempt to stop the plugins
-    for instance in system.instances:
-        try:
-            stop(instance=instance, system=system)
-        except Exception as ex:
-            logger.warning(
-                f"Error while attempting to stop instance {instance.id}: {ex}"
-            )
+    # Publish stop message to all instances of this system
+    publish_stop(system)
 
-    # TODO - This is not great
-    sleep(5)
+    # If local, wait for the plugins to stop
+    lpm.lpm_proxy.stop_system(system=system)
 
     system = db.reload(system)
 
@@ -315,10 +315,9 @@ def purge_system(
     return remove_system(system=system)
 
 
-@publish_event(Events.SYSTEM_RESCAN_REQUESTED)
 def rescan_system_directory() -> None:
     """Scans plugin directory and starts any new Systems"""
-    pass
+    lpm.lpm_proxy.scan_path()
 
 
 def get_instance(

@@ -3,6 +3,7 @@ import {formatDate} from '../services/utility_service.js';
 requestIndexController.$inject = [
   '$scope',
   '$compile',
+  'localStorageService',
   'DTOptionsBuilder',
   'DTColumnBuilder',
   'RequestService',
@@ -13,6 +14,7 @@ requestIndexController.$inject = [
  * requestIndexController - Angular controller for viewing all requests.
  * @param  {Object} $scope            Angular's $scope object.
  * @param  {Object} $compile          Angular's $compile object.
+ * @param  {Object} localStorageService  Storage service
  * @param  {Object} DTOptionsBuilder  Data-tables' options builder object.
  * @param  {Object} DTColumnBuilder   Data-tables' column builder object.
  * @param  {Object} RequestService    Beer-Garden Request Service.
@@ -21,6 +23,7 @@ requestIndexController.$inject = [
 export default function requestIndexController(
     $scope,
     $compile,
+    localStorageService,
     DTOptionsBuilder,
     DTColumnBuilder,
     RequestService,
@@ -31,6 +34,7 @@ export default function requestIndexController(
 
   $scope.dtOptions = DTOptionsBuilder.newOptions()
     .withOption('autoWidth', false)
+    .withOption('pageLength', localStorageService.get('_request_index_length') || 10)
     .withOption('ajax', function(data, callback, settings) {
       // Need to also request ID for the href
       data.columns.push({'data': 'id'});
@@ -193,6 +197,10 @@ export default function requestIndexController(
 
   $scope.instanceCreated = function(_instance) {
     $scope.dtInstance = _instance;
+
+    $('#requestIndexTable').on('length.dt', (event, settings, len) => {
+      localStorageService.set('_request_index_length', len);
+    });
   };
 
   EventService.addCallback('request_index', (event) => {

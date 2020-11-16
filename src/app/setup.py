@@ -30,7 +30,7 @@ setup(
     install_requires=[
         "apispec==0.38.0",
         "apscheduler==3.6.3",
-        "brewtils>=3.0.0a1",
+        "brewtils>=3.0.0",
         "mongoengine<0.21",
         "more-itertools<9",
         "motor<3",
@@ -39,6 +39,7 @@ setup(
         "pyrabbit2==1.0.7",
         "pytz<2021",
         "ruamel.yaml<0.17",
+        "stomp.py<6.2.0",
         "tornado==6.0.4",
         "yapconf>=0.3.7",
     ],
@@ -48,9 +49,8 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
     entry_points={
         "console_scripts": [

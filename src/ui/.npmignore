@@ -1,0 +1,5 @@
+.dockerignore
+.travis.yml
+
+default.conf.template
+Dockerfile

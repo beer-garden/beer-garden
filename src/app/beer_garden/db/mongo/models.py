@@ -64,6 +64,7 @@ __all__ = [
     "DateTrigger",
     "CronTrigger",
     "IntervalTrigger",
+    "FileTrigger",
     "Garden",
 ]
 
@@ -599,6 +600,27 @@ class CronTrigger(MongoModel, EmbeddedDocument):
     jitter = IntField(required=False)
 
 
+class FileTrigger(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.FileTrigger
+
+    pattern = ListField()
+    path = StringField(default=".")
+    recursive = BooleanField(default=False)
+    callbacks = DictField()
+
+    def clean(self):
+        """Validate before saving to the database"""
+        if not list(filter(lambda i: i != "", self.pattern)):
+            raise ModelValidationError(
+                "Cannot save FileTrigger. Must have at least one non-empty pattern."
+            )
+
+        if True not in self.callbacks.values():
+            raise ModelValidationError(
+                "Cannot save FileTrigger. Must have at least one callback selected."
+            )
+
+
 class Job(MongoModel, Document):
     brewtils_model = brewtils.models.Job
 
@@ -614,6 +636,7 @@ class Job(MongoModel, Document):
         "date": DateTrigger,
         "cron": CronTrigger,
         "interval": IntervalTrigger,
+        "file": FileTrigger,
     }
 
     name = StringField(required=True)

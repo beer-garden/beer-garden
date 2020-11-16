@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
-from datetime import datetime, timedelta
-from typing import Tuple, List
-
 from brewtils.stoppable_thread import StoppableThread
+from datetime import datetime, timedelta
 from mongoengine import Q
+from typing import List, Tuple
 
-from beer_garden.db.mongo.models import Event, Request
+from beer_garden.db.mongo.models import Request
 
 
 class MongoPruner(StoppableThread):
@@ -31,7 +30,7 @@ class MongoPruner(StoppableThread):
         )
 
     def run(self):
-        self.logger.info(self.display_name + " is started")
+        self.logger.debug(self.display_name + " is started")
 
         while not self.wait(self._run_every):
             current_time = datetime.utcnow()
@@ -47,9 +46,9 @@ class MongoPruner(StoppableThread):
                     "Removing %ss older than %s"
                     % (task["collection"].__name__, str(delete_older_than))
                 )
-                task["collection"].objects(query).delete()
+                task["collection"].objects(query).no_cache().delete()
 
-        self.logger.info(self.display_name + " is stopped")
+        self.logger.debug(self.display_name + " is stopped")
 
     @staticmethod
     def determine_tasks(**kwargs) -> Tuple[List[dict], int]:
@@ -59,7 +58,6 @@ class MongoPruner(StoppableThread):
             kwargs: TTL values for the different task types. Valid kwarg keys are:
                 - info
                 - action
-                - event
 
         Returns:
             A tuple that contains:
@@ -69,7 +67,6 @@ class MongoPruner(StoppableThread):
         """
         info_ttl = kwargs.get("info", -1)
         action_ttl = kwargs.get("action", -1)
-        event_ttl = kwargs.get("event", -1)
 
         prune_tasks = []
         if info_ttl > 0:
@@ -97,15 +94,6 @@ class MongoPruner(StoppableThread):
                     )
                     & Q(has_parent=False)
                     & Q(command_type="ACTION"),
-                }
-            )
-
-        if event_ttl > 0:
-            prune_tasks.append(
-                {
-                    "collection": Event,
-                    "field": "timestamp",
-                    "delete_after": timedelta(minutes=event_ttl),
                 }
             )
 
