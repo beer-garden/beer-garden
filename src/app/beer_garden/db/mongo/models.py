@@ -36,7 +36,6 @@ from mongoengine import (
     PULL,
 )
 from mongoengine.errors import DoesNotExist
-import beer_garden.db.api as db
 
 import brewtils.models
 from .fields import DummyField, StatusInfo
@@ -48,7 +47,6 @@ from brewtils.models import (
     Parameter as BrewtilsParameter,
     Request as BrewtilsRequest,
     Job as BrewtilsJob,
-    FileChunk as BrewtilsFileChunk,
 )
 
 __all__ = [
@@ -725,13 +723,6 @@ class File(MongoModel, Document):
     file_size = IntField(required=True)
     chunks = DictField(required=False)
     chunk_size = IntField(required=True)
-
-    def delete(self, *args, **kwargs):
-        if self.chunks is not None:
-            for chunk_id in self.chunks.values():
-                chunk = db.query_unique(BrewtilsFileChunk, id=chunk_id)
-                db.delete(chunk)
-        return super().delete(*args, **kwargs)
 
 
 class FileChunk(MongoModel, Document):

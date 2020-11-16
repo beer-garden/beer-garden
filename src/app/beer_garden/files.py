@@ -7,13 +7,17 @@ from datetime import datetime
 
 import beer_garden.db.api as db
 from beer_garden.errors import NotUniqueException
-from brewtils.errors import ModelValidationError, NotFoundException
+from brewtils.errors import ModelValidationError, NotFoundError
 from brewtils.models import File, FileChunk, Request, Job
 from brewtils.resolvers.parameter import UI_FILE_ID_PREFIX
 
 
 # 15MB
 MAX_CHUNK_SIZE = 1024 * 1024 * 15
+OWNERSHIP_PRIORITY = {
+    "JOB": 1,
+    "REQUEST": 2,
+}
 
 
 def check_file(file_id: str, upsert: bool = False):
@@ -28,10 +32,19 @@ def check_file(file_id: str, upsert: bool = False):
         The file object.
 
     Raises:
-        NotFoundException: Raised when a file with the requested ID doesn't exist and is expected to.
+        NotFoundError: Raised when a file with the requested ID doesn't exist and is expected to.
+        ModelValidationError: Raised when an ID is provided, but is of the incorrect format.
     """
     if UI_FILE_ID_PREFIX in file_id:
         file_id = file_id.split(" ")[1]
+
+    try:
+        ObjectId(file_id)
+    except (InvalidId, TypeError):
+        raise ModelValidationError(
+            f"Cannot create a file id with the string {file_id}. "
+            "Requires 24-character hex string."
+        )
 
     res = db.query_unique(File, id=file_id)
     if res is None:
@@ -39,7 +52,7 @@ def check_file(file_id: str, upsert: bool = False):
             create_file("BG_placeholder", 0, 0, file_id)
             return db.query_unique(File, id=file_id)
         else:
-            raise NotFoundException(f"Tried to fetch an unsaved file {file_id}.")
+            raise NotFoundError(f"Tried to fetch an unsaved file {file_id}.")
     return res
 
 
@@ -54,11 +67,23 @@ def check_chunk(chunk_id: str):
         The file object.
 
     Raises:
-        NotFoundException: Raised when a chunk with the requested ID doesn't exist.
+        NotFoundError: Raised when a chunk with the requested ID doesn't exist.
+        ModelValidationError: Raised when an ID is provided, but is of the incorrect format.
     """
+    if UI_FILE_ID_PREFIX in chunk_id:
+        chunk_id = chunk_id.split(" ")[1]
+
+    try:
+        ObjectId(chunk_id)
+    except (InvalidId, TypeError):
+        raise ModelValidationError(
+            f"Cannot create a chunk id with the string {chunk_id}. "
+            "Requires 24-character hex string."
+        )
+
     res = db.query_unique(FileChunk, id=chunk_id)
     if res is None:
-        raise NotFoundException(f"Tried to fetch an unsaved chunk {chunk_id}.")
+        raise NotFoundError(f"Tried to fetch an unsaved chunk {chunk_id}.")
     return res
 
 
@@ -73,7 +98,7 @@ def check_chunks(file_id: str):
         The wrapped function.
 
     Raises:
-        NotFoundException: Raised when a file with the requested ID doesn't exist and is expected to.
+        NotFoundError: Raised when a file with the requested ID doesn't exist and is expected to.
         ModelValidationError: Raised when a file with the requested ID doesn't have any associate file chunks.
     """
     res = check_file(file_id)
@@ -95,7 +120,7 @@ def _save_chunk(file_id: str, offset: int = None, upsert: bool = False, **kwargs
         kwargs: The other parameters for FileChunk that we don't need to check)
 
     Raises:
-        NotFoundException: Raised when a file with the requested ID doesn't exist and is expected to.
+        NotFoundError: Raised when a file with the requested ID doesn't exist and is expected to.
     """
     file = check_file(file_id, upsert=upsert)
     chunk = FileChunk(file_id=file.id, offset=offset, **kwargs)
@@ -118,7 +143,7 @@ def _verify_chunks(file_id: str):
         A dictionary that describes the validity of the file.
 
     Raises:
-        NotFoundException: Raised when a file with the requested ID doesn't exist and is expected to.
+        NotFoundError: Raised when a file with the requested ID doesn't exist and is expected to.
         ModelValidationError: Raised when a file with the requested ID doesn't have any associate file chunks.
     """
     file = check_chunks(file_id)
@@ -144,7 +169,7 @@ def _verify_chunks(file_id: str):
     }
 
 
-def _fetch_chunk(file_id: str, chunk_num: str):
+def _fetch_chunk(file_id: str, chunk_num: int):
     """
     Fetches a single chunk of the requested file.
 
@@ -156,13 +181,13 @@ def _fetch_chunk(file_id: str, chunk_num: str):
         The chunk data.
 
     Raises:
-        NotFoundException: Raised when a file with the requested ID doesn't exist and is expected to.
+        NotFoundError: Raised when a file with the requested ID doesn't exist and is expected to.
         ModelValidationError: Raised when a file with the requested ID doesn't have any associate file chunks.
         ValueError: Raised when the chunk number requested is not associated with the given file.
     """
     file = check_chunks(file_id)
-    if chunk_num in file.chunks:
-        chunk = check_chunk(file.chunks[chunk_num])
+    if str(chunk_num) in file.chunks:
+        chunk = check_chunk(file.chunks[str(chunk_num)])
         return chunk.data
     else:
         raise ValueError(f"Chunk number {chunk_num} is invalid for file {file.id}")
@@ -179,7 +204,7 @@ def _fetch_file(file_id: str):
         The file data, if the file is valid; None otherwise.
 
     Raises:
-        NotFoundException: Raised when a file with the requested ID doesn't exist and is expected to.
+        NotFoundError: Raised when a file with the requested ID doesn't exist and is expected to.
         ModelValidationError: Raised when a file with the requested ID doesn't have any associate file chunks.
     """
     # This is going to get big, try our best to be efficient
@@ -203,7 +228,7 @@ def _delete_file(file_id: str):
         file_id: This should be a valid file id.
 
     Raises:
-        NotFoundException: Raised when a file with the requested ID doesn't exist and is expected to.
+        NotFoundError: Raised when a file with the requested ID doesn't exist and is expected to.
     """
     file = check_file(file_id)
     # This should delete the associated chunks as well.
@@ -310,19 +335,19 @@ def fetch_file(file_id: str, chunk: int = None, verify: bool = False):
     if verify:
         try:
             return dumps(_verify_chunks(file_id))
-        except (ModelValidationError, NotFoundException):
+        except (ModelValidationError, NotFoundError):
             return None
 
     if chunk is not None:
         try:
             return _fetch_chunk(file_id, chunk)
-        except (ModelValidationError, ValueError, NotFoundException):
+        except (ModelValidationError, ValueError, NotFoundError):
             return None
 
     else:
         try:
             return _fetch_file(file_id)
-        except (ModelValidationError, NotFoundException):
+        except (ModelValidationError, NotFoundError):
             return None
 
 
@@ -337,7 +362,7 @@ def create_chunk(file_id: str, offset: int, data: str, upsert: bool = False):
     """
     try:
         return _save_chunk(file_id, offset=offset, data=data, upsert=upsert)
-    except NotFoundException:
+    except (NotFoundError, ModelValidationError):
         return None
 
 
@@ -350,7 +375,7 @@ def delete_file(file_id: str):
     """
     try:
         return _delete_file(file_id)
-    except NotFoundException:
+    except (NotFoundError, ModelValidationError):
         return None
 
 
@@ -368,14 +393,18 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
         try:
             file = check_chunks(file_id)
             # Job owners should override request owners (if one is already set)
-            if file.owner_id is None or owner_type == "JOB":
+            if file.owner_type is None or OWNERSHIP_PRIORITY.get(
+                owner_type, 1_000_000
+            ) <= OWNERSHIP_PRIORITY.get(file.owner_type, 1_000_000):
                 if owner_type == "REQUEST":
                     owner = db.query_unique(Request, id=owner_id)
-                else:
+                elif owner_type == "JOB":
                     owner = db.query_unique(Job, id=owner_id)
+                else:
+                    owner = None
                 db.modify(file, owner_id=owner_id, owner_type=owner_type, owner=owner)
                 return dumps({"done": True})
 
             return None
-        except (ModelValidationError, NotFoundException):
+        except (ModelValidationError, NotFoundError):
             return None
