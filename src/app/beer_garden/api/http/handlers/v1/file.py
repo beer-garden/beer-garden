@@ -58,7 +58,11 @@ class FileAPI(BaseHandler):
                 kwargs={"chunk": chunk, "verify": verify},
             )
         )
-        self.write(response)
+
+        if response == "null":
+            self.set_status(404)
+        else:
+            self.write(response)
 
     @authenticated(permissions=[Permissions.CREATE])
     async def post(self):
@@ -184,27 +188,25 @@ class FileNameAPI(BaseHandler):
         chunk_size = self.get_argument("chunk_size", default=None)
         file_id = self.get_argument("file_id", default=None)
         upsert = self.get_argument("upsert", default=False)
+        owner_id = self.get_argument("owner_id", default=None)
+        owner_type = self.get_argument("owner_type", default=None)
 
         if chunk_size is None:
             raise ModelValidationError(f"No chunk_size sent with file {file_name}.")
         if file_size is None:
             raise ModelValidationError(f"No file_size sent with file {file_name}.")
 
-        if file_id is None:
-            response = await self.client(
-                Operation(
-                    operation_type="FILE_CREATE",
-                    args=[file_name, int(file_size), int(chunk_size)],
-                    kwargs={"upsert": upsert},
-                )
+        response = await self.client(
+            Operation(
+                operation_type="FILE_CREATE",
+                args=[file_name, int(file_size), int(chunk_size)]
+                if file_id is None
+                else [file_name, int(file_size), int(chunk_size), file_id],
+                kwargs={
+                    "upsert": upsert,
+                    "owner_id": owner_id,
+                    "owner_type": owner_type,
+                },
             )
-        else:
-
-            response = await self.client(
-                Operation(
-                    operation_type="FILE_CREATE",
-                    args=[file_name, int(file_size), int(chunk_size), file_id],
-                    kwargs={"upsert": upsert},
-                )
-            )
+        )
         self.write(response)

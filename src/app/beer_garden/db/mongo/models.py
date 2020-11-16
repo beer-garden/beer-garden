@@ -36,6 +36,7 @@ from mongoengine import (
     PULL,
 )
 from mongoengine.errors import DoesNotExist
+import beer_garden.db.api as db
 
 import brewtils.models
 from .fields import DummyField, StatusInfo
@@ -47,6 +48,7 @@ from brewtils.models import (
     Parameter as BrewtilsParameter,
     Request as BrewtilsRequest,
     Job as BrewtilsJob,
+    FileChunk as BrewtilsFileChunk,
 )
 
 __all__ = [
@@ -266,7 +268,7 @@ class Instance(MongoModel, EmbeddedDocument):
 
 class Owner(Document):
     # Stub to use for a reference field.
-    meta = {'allow_inheritance': True}
+    meta = {"allow_inheritance": True}
 
 
 class Request(MongoModel, Owner):
@@ -694,12 +696,19 @@ class File(MongoModel, Document):
     owner_id = StringField(required=False)
     owner_type = StringField(required=False)
     # Delete Rule (2) = CASCADE; This causes this document to be deleted when the owner doc is.
-    owner = LazyReferenceField(Owner, required=False, reverse_delete_rule=2)
+    owner = LazyReferenceField(Owner, required=False, reverse_delete_rule=CASCADE)
     created_at = StringField(required=True)
     file_name = StringField(required=True)
     file_size = IntField(required=True)
     chunks = DictField(required=False)
     chunk_size = IntField(required=True)
+
+    def delete(self, *args, **kwargs):
+        if self.chunks is not None:
+            for chunk_id in self.chunks.values():
+                chunk = db.query_unique(BrewtilsFileChunk, id=chunk_id)
+                db.delete(chunk)
+        return super().delete(*args, **kwargs)
 
 
 class FileChunk(MongoModel, Document):
@@ -709,4 +718,4 @@ class FileChunk(MongoModel, Document):
     offset = IntField(required=True)
     data = StringField(required=True)
     # Delete Rule (2) = CASCADE; This causes this document to be deleted when the owner doc is.
-    owner = LazyReferenceField(Owner, required=False, reverse_delete_rule=2)
+    owner = LazyReferenceField(File, required=False, reverse_delete_rule=CASCADE)

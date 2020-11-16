@@ -409,15 +409,17 @@ def _pre_route(operation: Operation) -> Operation:
 
 def set_owner_for_files(owner_id, owner_type, parameters):
     for id in _check_file_ids(parameters):
-        route(Operation(
-            operation_type="FILE_OWNER",
-            args=[id],
-            kwargs={"owner_id": owner_id, "owner_type": owner_type},
-        ))
+        route(
+            Operation(
+                operation_type="FILE_OWNER",
+                args=[id],
+                kwargs={"owner_id": owner_id, "owner_type": owner_type},
+            )
+        )
 
 
 def _check_file_ids(parameter, ids=[]):
-    """ Used to scan operations for the FileID prefix.
+    """Used to scan operations for the FileID prefix.
     Parameters:
         parameter: The object to be scanned.
         ids: The current list of discovered file ids
@@ -427,9 +429,9 @@ def _check_file_ids(parameter, ids=[]):
     if isinstance(parameter, six.string_types):
         if beer_garden.files.UI_FILE_ID_PREFIX in parameter:
             try:
-                tmp_list = parameter.split(' ')
+                tmp_list = parameter.split(" ")
                 prefix_idx = parameter.index(beer_garden.files.UI_FILE_ID_PREFIX)
-                ids.append(tmp_list[prefix_idx+1])
+                ids.append(tmp_list[prefix_idx + 1])
             except (IndexError, ValueError):
                 pass
 

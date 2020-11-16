@@ -181,7 +181,11 @@ def handle_event(event: Event) -> None:
                     replace_existing=False,
                     id=str(event.payload.id),
                 )
-                router.set_owner_for_files(str(event.payload.id), "JOB", event.payload.request_template.parameters)
+                router.set_owner_for_files(
+                    str(event.payload.id),
+                    "JOB",
+                    event.payload.request_template.parameters,
+                )
             except Exception as ex:
                 db.delete(event.payload)
                 raise
