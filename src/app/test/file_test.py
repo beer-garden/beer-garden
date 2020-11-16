@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import pytest
-from json import loads
 from mongoengine import disconnect
 
 import beer_garden
@@ -28,11 +27,6 @@ class TestFileOperations(object):
 
     @classmethod
     def teardown_class(cls):
-        # Make sure we cleanup the DB!
-        my_files = db.query(File)
-        for f in my_files:
-            db.delete(f)
-
         disconnect(alias="default")
 
     @pytest.fixture
@@ -73,9 +67,7 @@ class TestFileOperations(object):
     def test_file_create(self, simple_data):
         num_chunks = 5
         chunk_len = len(simple_data)
-        file_metadata = loads(
-            files.create_file("my_test_data.txt", num_chunks * chunk_len, chunk_len)
-        )
+        file_metadata = files.create_file("my_test_data.txt", num_chunks * chunk_len, chunk_len)
         file_id = file_metadata["id"]
         assert file_id is not None
 
@@ -94,17 +86,18 @@ class TestFileOperations(object):
 
         try:
             # Using the upsert flag should allow us to update some of the metadata
-            files.create_file(
+            meta = files.create_file(
                 "my_other_test_data.txt",
                 num_chunks * chunk_len,
                 chunk_len,
                 file_id=file_id,
                 upsert=True,
             )
+            files.delete_file(meta['id'])
         except NotUniqueException:
             assert False
 
-        #       # Test the id checking logic
+        # Test the id checking logic
         try:
             # The file ID passed should be required to be a ObjectId string
             files.create_file(
@@ -119,12 +112,13 @@ class TestFileOperations(object):
 
         try:
             # The file ID passed should be required to be a ObjectId string (24 character hex string)
-            files.create_file(
+            meta = files.create_file(
                 "my_other_test_data.txt",
                 num_chunks * chunk_len,
                 chunk_len,
                 file_id="123456789012345678901234",
             )
+            files.delete_file(meta['id'])
         except ModelValidationError:
             assert False
 
@@ -141,19 +135,20 @@ class TestFileOperations(object):
         except ValueError:
             pass
 
+        # Cleanup!
+        files.delete_file(file_id)
+
     def test_file_fetch(self, simple_data):
         num_chunks = 5
         chunk_len = len(simple_data)
-        file_metadata = loads(
-            files.create_file("my_test_data.txt", num_chunks * chunk_len, chunk_len)
-        )
+        file_metadata = files.create_file("my_test_data.txt", num_chunks * chunk_len, chunk_len)
         file_id = file_metadata["id"]
         assert file_id is not None
 
         # Upload some data
         chunk_ids = []
         for x in range(num_chunks):
-            chunk_meta = loads(files.create_chunk(file_id, x, simple_data))
+            chunk_meta = files.create_chunk(file_id, x, simple_data)
             assert "id" in chunk_meta
             chunk_ids.append(chunk_meta["id"])
         assert len(chunk_ids) == num_chunks
@@ -168,12 +163,13 @@ class TestFileOperations(object):
             my_data += files.fetch_file(file_id, chunk=x)
         assert my_data == simple_data * num_chunks
 
+        # Cleanup!
+        files.delete_file(file_id)
+
     def test_file_delete(self, simple_data):
         num_chunks = 5
         chunk_len = len(simple_data)
-        file_metadata = loads(
-            files.create_file("my_test_data.txt", num_chunks * chunk_len, chunk_len)
-        )
+        file_metadata = files.create_file("my_test_data.txt", num_chunks * chunk_len, chunk_len)
         file_id = file_metadata["id"]
         # We don't normally need to do this, but we're interacting directly with the DB
         file_id = file_id.split(" ")[1]
@@ -182,7 +178,7 @@ class TestFileOperations(object):
         # Upload some data
         chunk_ids = []
         for x in range(num_chunks):
-            chunk_meta = loads(files.create_chunk(file_id, x, simple_data))
+            chunk_meta = files.create_chunk(file_id, x, simple_data)
             assert "id" in chunk_meta
             chunk_ids.append(chunk_meta["id"])
         assert len(chunk_ids) == num_chunks
@@ -203,12 +199,13 @@ class TestFileOperations(object):
         for c_id in chunk_ids:
             assert db.query_unique(FileChunk, id=c_id) is None
 
+        # Cleanup!
+        files.delete_file(file_id)
+
     def test_file_owner(self, simple_data, simple_request, simple_job):
         num_chunks = 5
         chunk_len = len(simple_data)
-        file_metadata = loads(
-            files.create_file("my_test_data.txt", num_chunks * chunk_len, chunk_len)
-        )
+        file_metadata = files.create_file("my_test_data.txt", num_chunks * chunk_len, chunk_len)
         file_id = file_metadata["id"]
         assert file_id is not None
 
@@ -238,3 +235,8 @@ class TestFileOperations(object):
             )
             is None
         )
+
+        # Cleanup!
+        files.delete_file(file_id)
+        db.delete(req)
+        db.delete(job)

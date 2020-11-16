@@ -2,7 +2,6 @@
 from math import ceil
 from bson import ObjectId
 from bson.errors import InvalidId
-from json import dumps
 from datetime import datetime
 
 import beer_garden.db.api as db
@@ -129,7 +128,7 @@ def _save_chunk(file_id: str, offset: int = None, upsert: bool = False, **kwargs
     modify = {f"set__chunks__{offset}": c.id}
     db.modify(file, **modify)
     db.modify(c, owner=file.id)
-    return dumps({"id": c.id})
+    return {"id": c.id}
 
 
 def _verify_chunks(file_id: str):
@@ -233,7 +232,7 @@ def _delete_file(file_id: str):
     file = check_file(file_id)
     # This should delete the associated chunks as well.
     db.delete(file)
-    return dumps({"done": True})
+    return {"done": True}
 
 
 def create_file(
@@ -310,14 +309,12 @@ def create_file(
             )
             f = db.query_unique(File, id=f.id)
 
-    return dumps(
-        {
+    return {
             "id": f"{UI_FILE_ID_PREFIX} {f.id}",
             "name": f.file_name,
             "size": f.file_size,
             "chunk_size": f.chunk_size,
         }
-    )
 
 
 def fetch_file(file_id: str, chunk: int = None, verify: bool = False):
@@ -334,7 +331,7 @@ def fetch_file(file_id: str, chunk: int = None, verify: bool = False):
     """
     if verify:
         try:
-            return dumps(_verify_chunks(file_id))
+            return _verify_chunks(file_id)
         except (ModelValidationError, NotFoundError):
             return None
 
@@ -408,7 +405,7 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
                     )
                 else:
                     db.modify(file, owner_id=owner_id, owner_type=owner_type)
-                return dumps({"done": True})
+                return {"done": True}
 
             return None
         except (ModelValidationError, NotFoundError):
