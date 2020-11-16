@@ -50,26 +50,24 @@ class TestFileOperations(object):
             system_version="3.0.0",
             instance_name="my_bg",
             namespace="file_testing",
-            command="something_cool"
+            command="something_cool",
         )
 
     @pytest.fixture
     def simple_job(self):
         return Job(
-            trigger_type='file',
+            trigger_type="file",
             trigger=FileTrigger(
-                pattern="do_not_care",
-                path="./",
-                callbacks={'on_created': True}
+                pattern="do_not_care", path="./", callbacks={"on_created": True}
             ),
             request_template=RequestTemplate(
                 system="something_v3",
                 system_version="3.0.0",
                 instance_name="my_bg",
                 namespace="file_testing",
-                command="something_cool"
+                command="something_cool",
             ),
-            name="my_simple_job"
+            name="my_simple_job",
         )
 
     def test_file_create(self, simple_data):
@@ -215,11 +213,18 @@ class TestFileOperations(object):
         assert file_id is not None
 
         # Lowest ownership priority
-        assert files.set_owner(file_id, owner_type="MY_CUSTOM_TYPE", owner_id="MY_CUSTOM_ID") is not None
+        assert (
+            files.set_owner(
+                file_id, owner_type="MY_CUSTOM_TYPE", owner_id="MY_CUSTOM_ID"
+            )
+            is not None
+        )
 
         # Next lowest ownership priority
         req = db.create(simple_request)
-        assert files.set_owner(file_id, owner_type="REQUEST", owner_id=req.id) is not None
+        assert (
+            files.set_owner(file_id, owner_type="REQUEST", owner_id=req.id) is not None
+        )
 
         # Highest ownership priority
         job = db.create(simple_job)
@@ -227,4 +232,9 @@ class TestFileOperations(object):
 
         # Make sure lower priority owners can't overwrite the field
         assert files.set_owner(file_id, owner_type="REQUEST", owner_id=req.id) is None
-        assert files.set_owner(file_id, owner_type="MY_CUSTOM_TYPE", owner_id="MY_CUSTOM_ID") is None
+        assert (
+            files.set_owner(
+                file_id, owner_type="MY_CUSTOM_TYPE", owner_id="MY_CUSTOM_ID"
+            )
+            is None
+        )

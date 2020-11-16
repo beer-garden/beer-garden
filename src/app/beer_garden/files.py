@@ -403,7 +403,9 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
                 else:
                     owner = None
                 if owner is not None:
-                    db.modify(file, owner_id=owner_id, owner_type=owner_type, owner=owner.id)
+                    db.modify(
+                        file, owner_id=owner_id, owner_type=owner_type, owner=owner.id
+                    )
                 else:
                     db.modify(file, owner_id=owner_id, owner_type=owner_type)
                 return dumps({"done": True})

@@ -201,7 +201,7 @@ class FileNameAPI(BaseHandler):
                 operation_type="FILE_CREATE",
                 args=[file_name, int(file_size), int(chunk_size)],
                 kwargs={
-                    'file_id': file_id,
+                    "file_id": file_id,
                     "upsert": upsert,
                     "owner_id": owner_id,
                     "owner_type": owner_type,
