@@ -402,7 +402,10 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
                     owner = db.query_unique(Job, id=owner_id)
                 else:
                     owner = None
-                db.modify(file, owner_id=owner_id, owner_type=owner_type, owner=owner)
+                if owner is not None:
+                    db.modify(file, owner_id=owner_id, owner_type=owner_type, owner=owner.id)
+                else:
+                    db.modify(file, owner_id=owner_id, owner_type=owner_type)
                 return dumps({"done": True})
 
             return None

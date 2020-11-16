@@ -199,10 +199,9 @@ class FileNameAPI(BaseHandler):
         response = await self.client(
             Operation(
                 operation_type="FILE_CREATE",
-                args=[file_name, int(file_size), int(chunk_size)]
-                if file_id is None
-                else [file_name, int(file_size), int(chunk_size), file_id],
+                args=[file_name, int(file_size), int(chunk_size)],
                 kwargs={
+                    'file_id': file_id,
                     "upsert": upsert,
                     "owner_id": owner_id,
                     "owner_type": owner_type,

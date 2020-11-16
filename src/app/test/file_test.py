@@ -8,7 +8,7 @@ import beer_garden.files as files
 import beer_garden.db.api as db
 from beer_garden.errors import NotUniqueException
 from brewtils.errors import ModelValidationError, NotFoundError
-from brewtils.models import File, FileChunk
+from brewtils.models import File, FileChunk, Request, Job, FileTrigger, RequestTemplate
 
 
 class TestFileOperations(object):
@@ -42,6 +42,35 @@ class TestFileOperations(object):
     @pytest.fixture
     def storage_create_kwargs(self):
         return {"owner_id": "Doesn't matter", "owner_type": "Storage"}
+
+    @pytest.fixture
+    def simple_request(self):
+        return Request(
+            system="something_v3",
+            system_version="3.0.0",
+            instance_name="my_bg",
+            namespace="file_testing",
+            command="something_cool"
+        )
+
+    @pytest.fixture
+    def simple_job(self):
+        return Job(
+            trigger_type='file',
+            trigger=FileTrigger(
+                pattern="do_not_care",
+                path="./",
+                callbacks={'on_created': True}
+            ),
+            request_template=RequestTemplate(
+                system="something_v3",
+                system_version="3.0.0",
+                instance_name="my_bg",
+                namespace="file_testing",
+                command="something_cool"
+            ),
+            name="my_simple_job"
+        )
 
     def test_file_create(self, simple_data):
         num_chunks = 5
@@ -175,3 +204,27 @@ class TestFileOperations(object):
         assert files.delete_file(file_id) is not None
         for c_id in chunk_ids:
             assert db.query_unique(FileChunk, id=c_id) is None
+
+    def test_file_owner(self, simple_data, simple_request, simple_job):
+        num_chunks = 5
+        chunk_len = len(simple_data)
+        file_metadata = loads(
+            files.create_file("my_test_data.txt", num_chunks * chunk_len, chunk_len)
+        )
+        file_id = file_metadata["id"]
+        assert file_id is not None
+
+        # Lowest ownership priority
+        assert files.set_owner(file_id, owner_type="MY_CUSTOM_TYPE", owner_id="MY_CUSTOM_ID") is not None
+
+        # Next lowest ownership priority
+        req = db.create(simple_request)
+        assert files.set_owner(file_id, owner_type="REQUEST", owner_id=req.id) is not None
+
+        # Highest ownership priority
+        job = db.create(simple_job)
+        assert files.set_owner(file_id, owner_type="JOB", owner_id=job.id) is not None
+
+        # Make sure lower priority owners can't overwrite the field
+        assert files.set_owner(file_id, owner_type="REQUEST", owner_id=req.id) is None
+        assert files.set_owner(file_id, owner_type="MY_CUSTOM_TYPE", owner_id="MY_CUSTOM_ID") is None
