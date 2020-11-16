@@ -8,7 +8,7 @@
     "@beer-garden/builder": "0.1.0-beta0",
     "@uirouter/angularjs": "^1.0.25",
     "ace-builds": "^1.4.8",
-    "angular": "^1.7.9",
+    "angular": "^1.8.0",
     "angular-animate": "^1.7.9",
     "angular-bootstrap-switch": "^0.5.2",
     "angular-confirm": "^1.2.6",
