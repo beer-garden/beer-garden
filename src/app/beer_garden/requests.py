@@ -17,7 +17,7 @@ import pika.spec
 import six
 import urllib3
 
-
+from beer_garden.errors import NotUniqueException
 from brewtils.choices import parse
 from brewtils.errors import ConflictError, ModelValidationError, RequestPublishException
 from brewtils.models import Choices, Events, Request, RequestTemplate, System, Operation
@@ -790,11 +790,17 @@ def handle_event(event):
     # Only care about downstream garden
     elif event.garden != config.get("garden.name"):
 
-        if event.name == Events.REQUEST_CREATED.name:
-            if db.query_unique(Request, id=event.payload.id) is None:
-                db.create(event.payload)
+        if "REQUEST" in event.name:
+            # To ensure the record is in the database, attempt to create it. This will
+            # protect from missing CREATE events.
+            try:
+                if db.query_unique(Request, id=event.payload.id) is None:
+                    db.create(event.payload)
+            except NotUniqueException:
+                # Request exists in the database, so move forward to update the Request
+                logger.debug("Duplicate Request Creation from Events")
 
-        elif event.name in (Events.REQUEST_STARTED.name, Events.REQUEST_COMPLETED.name):
+        if event.name in (Events.REQUEST_STARTED.name, Events.REQUEST_COMPLETED.name):
             # When we send child requests to child gardens where the parent was on
             # the local garden we remove the parent before sending them. Only setting
             # the subset of fields that change "corrects" the parent
