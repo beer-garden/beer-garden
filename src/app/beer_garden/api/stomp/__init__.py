@@ -17,7 +17,7 @@ def run(ep_conn, ep_config=None):
     stomp_config = ep_config
     if not stomp_config:
         stomp_config = config.get("entry.stomp")
-    host_and_ports = [(stomp_config.host, stomp_config.port)]
+    host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
     logger.debug(
         "Starting Stomp entry point on host and port: " + host_and_ports.__str__()
     )

@@ -16,14 +16,14 @@ class StompManager(StoppableThread):
     def __init__(self, ep_conn, stomp_config):
 
         self.ep_conn = ep_conn
-        host_and_ports = [(stomp_config.host, stomp_config.port)]
+        host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
         self.conn = Connection(
             host_and_ports=host_and_ports,
             send_destination=stomp_config.get("send_destination"),
             subscribe_destination=stomp_config.get("subscribe_destination"),
             ssl=stomp_config.get("ssl"),
-            username=stomp_config.username,
-            password=stomp_config.password,
+            username=stomp_config.get("username"),
+            password=stomp_config.get("password"),
         )
         self.conn.connect("connected")
 

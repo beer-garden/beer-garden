@@ -304,7 +304,8 @@ def forward(operation: Operation):
         elif connection_type.casefold() == "http":
             return _forward_http(operation, target_garden)
         elif connection_type.casefold() == "stomp":
-            return _forward_stomp(operation, target_garden)
+            # return _forward_stomp(operation, target_garden)
+            return
         else:
             raise RoutingRequestException(f"Unknown connection type {connection_type}")
     except Exception as ex:
@@ -344,9 +345,11 @@ def setup_routing():
             ):
                 with garden_lock:
                     gardens[garden.name] = garden
-                    if garden.connection_type.casefold() == "stomp":
-                        stomp_garden_connections[garden.name] = setup_stomp(garden)
-                        stomp_garden_connections[garden.name].connect('connected to child: ' + garden.name)
+                    # if garden.connection_type.casefold() == "stomp":
+                    #     if garden.name not in stomp_garden_connections:
+                    #         stomp_garden_connections[garden.name] = setup_stomp(garden)
+                    #         stomp_garden_connections[garden.name].connect('connected to child: ' + garden.name)
+
             else:
                 logger.warning(f"Garden with invalid connection info: {garden!r}")
 
@@ -391,16 +394,18 @@ def handle_event(event):
     if event.garden == config.get("garden.name"):
         if event.name == Events.GARDEN_UPDATED.name:
             gardens[event.payload.name] = event.payload
-            if event.payload.name in stomp_garden_connections and \
-                    stomp_garden_connections[event.payload.name].is_connected():
-                stomp_garden_connections[event.payload.name].disconnect()
-            stomp_garden_connections[event.payload.name] = setup_stomp(event.payload)
-            stomp_garden_connections[event.payload.name].connect("connected to child: " + event.payload.name)
+            # if event.payload.connection_type.casefold() == "stomp":
+            #     if event.payload.name in stomp_garden_connections and \
+            #             stomp_garden_connections[event.payload.name].is_connected():
+            #         stomp_garden_connections[event.payload.name].disconnect()
+            #     stomp_garden_connections[event.payload.name] = setup_stomp(event.payload)
+            #     stomp_garden_connections[event.payload.name].connect("connected to child: " + event.payload.name)
 
         elif event.name == Events.GARDEN_REMOVED.name:
             try:
                 del gardens[event.payload.name]
-                del stomp_garden_connections[event.payload.name]
+                # stomp_garden_connections[event.payload.name].disconnect()
+                # del stomp_garden_connections[event.payload.name]
             except KeyError:
                 pass
 
@@ -520,12 +525,12 @@ def _determine_target_garden(operation: Operation) -> str:
     raise Exception(f"Bad operation type {operation.operation_type}")
 
 
-def _forward_stomp(operation: Operation, target_garden: Garden):
-    # checks if connection is active or needs to update subscription
-    if not stomp_garden_connections[target_garden.name].is_connected():
-        stomp_garden_connections[target_garden.name].connect('reconnected to child: ' + target_garden.name)
-
-    stomp_garden_connections[target_garden.name].send_event(operation)
+# def _forward_stomp(operation: Operation, target_garden: Garden):
+#     # checks if connection is active or needs to update subscription
+#     if not stomp_garden_connections[target_garden.name].is_connected():
+#         stomp_garden_connections[target_garden.name].connect('reconnected to child: ' + target_garden.name)
+#
+#     stomp_garden_connections[target_garden.name].send_event(operation)
 
 
 def _forward_http(operation: Operation, target_garden: Garden):

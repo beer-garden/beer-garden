@@ -229,7 +229,7 @@ class Manager:
     log_queue: Queue = None
 
     def __init__(self):
-        self.entry_points = []
+        self.entry_points = {}
         self.context = multiprocessing.get_context("spawn")
         self.log_queue = self.context.Queue()
 
@@ -241,11 +241,11 @@ class Manager:
         for entry_name, entry_value in beer_garden.config.get("entry").items():
             if entry_value.get("enabled"):
                 try:
-                    self.entry_points.append(self.create(entry_name))
+                    self.entry_points["beer_garden.api."+entry_name] = self.create(entry_name)
                 except Exception as ex:
                     logger.exception(f"Error creating entry point {entry_name}: {ex}")
 
-    def create(self, module_name: str, ep_config=None):
+    def create(self, module_name: str, ep_config=None, ep_key=None):
         module = import_module(f"beer_garden.api.{module_name}")
         if ep_config:
             ep_point = EntryPoint(
@@ -257,7 +257,7 @@ class Manager:
                 event_callback=beer_garden.events.publish,
                 ep_config=ep_config
             )
-            self.entry_points.append(ep_point)
+            self.entry_points[ep_key] = ep_point
             return ep_point
         return EntryPoint(
             name=module_name,
@@ -271,16 +271,21 @@ class Manager:
     def start(self):
         self.log_reader.start()
 
-        for entry_point in self.entry_points:
+        for entry_point in self.entry_points.values():
             entry_point.start()
+
+    # def stop_one(self, garden_name):
+    #     for entry_point in self.entry_points:
+    #         if entry_point.ep_config:
+    #             if garden_name
 
     def stop(self):
         self.log_reader.stop()
 
-        for entry_point in self.entry_points:
+        for entry_point in self.entry_points.values():
             entry_point.stop(timeout=10)
 
     def put(self, event: Event) -> None:
         """Publish an event to all entry points"""
-        for entry_point in self.entry_points:
+        for entry_point in self.entry_points.values():
             entry_point.send_event(event)
