@@ -269,7 +269,7 @@ class TestFileOperations(object):
             )
         ).operation_complete
 
-        # Cleanup!
-        files.delete_file(file_id)
         db.delete(req)
         db.delete(job)
+        # Cleanup!
+        files.delete_file(file_id)

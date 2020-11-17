@@ -15,6 +15,7 @@ db:
   ttl:
     action: -1
     info: 15
+    file: 15
 entry:
   http:
     enabled: true

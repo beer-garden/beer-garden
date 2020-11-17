@@ -718,7 +718,7 @@ class File(MongoModel, Document):
     owner_type = StringField(required=False)
     # Delete Rule (2) = CASCADE; This causes this document to be deleted when the owner doc is.
     owner = LazyReferenceField(Owner, required=False, reverse_delete_rule=CASCADE)
-    created_at = StringField(required=True)
+    created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     file_name = StringField(required=True)
     file_size = IntField(required=True)
     chunks = DictField(required=False)

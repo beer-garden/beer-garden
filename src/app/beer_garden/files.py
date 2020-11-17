@@ -3,8 +3,6 @@ import six
 from math import ceil
 from bson import ObjectId
 from bson.errors import InvalidId
-from datetime import datetime
-from enum import Enum
 
 import beer_garden.db.api as db
 import beer_garden.config as config
@@ -326,7 +324,6 @@ def create_file(
         file_name=file_name,
         file_size=file_size,
         chunk_size=chunk_size,
-        created_at=datetime.utcnow(),
         **kwargs,
     )
 
