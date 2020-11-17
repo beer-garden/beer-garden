@@ -385,8 +385,6 @@ def handle_event(event):
                 del gardens[event.payload.name]
             except KeyError:
                 pass
-    if event.name == Events.REQUEST_CREATED.name:
-        set_owner_for_files(event.payload.id, "REQUEST", event.payload.parameters)
 
 
 def _pre_route(operation: Operation) -> Operation:
@@ -406,53 +404,9 @@ def _pre_route(operation: Operation) -> Operation:
     return operation
 
 
-def set_owner_for_files(owner_id, owner_type, parameters):
-    for id in _check_file_ids(parameters):
-        route(
-            Operation(
-                operation_type="FILE_OWNER",
-                args=[id],
-                kwargs={"owner_id": owner_id, "owner_type": owner_type},
-            )
-        )
-
-
-def _check_file_ids(parameter, ids=[]):
-    """Used to scan operations for the FileID prefix.
-    Parameters:
-        parameter: The object to be scanned.
-        ids: The current list of discovered file ids
-    Returns:
-        A list of file ids (may be empty).
-    """
-    if isinstance(parameter, six.string_types):
-        if beer_garden.files.UI_FILE_ID_PREFIX in parameter:
-            try:
-                tmp_list = parameter.split(" ")
-                prefix_idx = parameter.index(beer_garden.files.UI_FILE_ID_PREFIX)
-                ids.append(tmp_list[prefix_idx + 1])
-            except (IndexError, ValueError):
-                pass
-
-    elif isinstance(parameter, dict):
-        for v in parameter.values():
-            try:
-                ids = _check_file_ids(v, ids)
-            except (ReferenceError, IndexError):
-                pass
-
-    elif isinstance(parameter, list):
-        for item in parameter:
-            try:
-                ids = _check_file_ids(item, ids)
-            except IndexError:
-                pass
-    return ids
-
-
 def _forward_file(operation: Operation):
     """ Called to send file data before forwarding a request with a file parameter. """
-    ids = _check_file_ids(operation.model.parameters)
+    ids = beer_garden.files._check_file_ids(operation.model.parameters)
     for id in ids:
         file = beer_garden.files.check_chunks(id)
         args = [file.file_name, file.file_size, file.chunk_size, file.id]

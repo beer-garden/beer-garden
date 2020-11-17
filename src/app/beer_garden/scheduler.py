@@ -577,7 +577,6 @@ def handle_event(event: Event) -> None:
 
         if event.name == Events.JOB_CREATED.name:
             try:
-
                 beer_garden.application.scheduler.add_job(
                     run_job,
                     trigger=event.payload.trigger,
@@ -592,11 +591,6 @@ def handle_event(event: Event) -> None:
                     max_instances=event.payload.max_instances,
                     jobstore="beer_garden",
                     replace_existing=False,
-                )
-                router.set_owner_for_files(
-                    str(event.payload.id),
-                    "JOB",
-                    event.payload.request_template.parameters,
                 )
             except Exception as ex:
                 db.delete(event.payload)

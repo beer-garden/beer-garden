@@ -58,11 +58,7 @@ class FileAPI(BaseHandler):
                 kwargs={"chunk": chunk, "verify": verify},
             )
         )
-
-        if response == "null":
-            self.set_status(404)
-        else:
-            self.write(response)
+        self.write(response)
 
     @authenticated(permissions=[Permissions.CREATE])
     async def post(self):

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+from random import choice
 from mongoengine import disconnect
 
 import beer_garden
@@ -31,7 +32,12 @@ class TestFileOperations(object):
 
     @pytest.fixture
     def simple_data(self):
-        return "MY TEST DATA, MY TEST DATA, MY TEST DATA"
+        return "".join(
+            [
+                choice("abcedfghijklmnopqrstuvwxyz1234567890,./;'[]`-=")
+                for x in range(256)
+            ]
+        )
 
     @pytest.fixture
     def storage_create_kwargs(self):
@@ -67,8 +73,10 @@ class TestFileOperations(object):
     def test_file_create(self, simple_data):
         num_chunks = 5
         chunk_len = len(simple_data)
-        file_metadata = files.create_file("my_test_data.txt", num_chunks * chunk_len, chunk_len)
-        file_id = file_metadata["id"]
+        file_status = files.create_file(
+            "my_test_data.txt", num_chunks * chunk_len, chunk_len
+        )
+        file_id = file_status.file_id
         assert file_id is not None
 
         # Exercising the upsert flag logic
@@ -93,7 +101,7 @@ class TestFileOperations(object):
                 file_id=file_id,
                 upsert=True,
             )
-            files.delete_file(meta['id'])
+            files.delete_file(meta.file_id)
         except NotUniqueException:
             assert False
 
@@ -118,7 +126,7 @@ class TestFileOperations(object):
                 chunk_len,
                 file_id="123456789012345678901234",
             )
-            files.delete_file(meta['id'])
+            files.delete_file(meta.file_id)
         except ModelValidationError:
             assert False
 
@@ -135,32 +143,49 @@ class TestFileOperations(object):
         except ValueError:
             pass
 
-        # Cleanup!
+        # Testing chunk creation with upsert
+        for x in range(num_chunks):
+            files.create_chunk(file_id, x, simple_data, upsert=True)
+
+        # Fill out the metadata now
+        assert (
+            files.create_file(
+                "my_other_test_data.txt",
+                num_chunks * chunk_len,
+                chunk_len,
+                file_id=file_id,
+                upsert=True,
+            )
+            is not None
+        )
+
+        # Cleanup! (again)
         files.delete_file(file_id)
 
     def test_file_fetch(self, simple_data):
         num_chunks = 5
         chunk_len = len(simple_data)
-        file_metadata = files.create_file("my_test_data.txt", num_chunks * chunk_len, chunk_len)
-        file_id = file_metadata["id"]
+        file_metadata = files.create_file(
+            "my_test_data.txt", num_chunks * chunk_len, chunk_len
+        )
+        file_id = file_metadata.file_id
         assert file_id is not None
 
         # Upload some data
         chunk_ids = []
         for x in range(num_chunks):
             chunk_meta = files.create_chunk(file_id, x, simple_data)
-            assert "id" in chunk_meta
-            chunk_ids.append(chunk_meta["id"])
+            chunk_ids.append(chunk_meta.chunk_id)
         assert len(chunk_ids) == num_chunks
 
         # Read the data in its entirety
-        my_data = files.fetch_file(file_id)
-        assert my_data == simple_data * num_chunks
+        meta = files.fetch_file(file_id)
+        assert meta.data == simple_data * num_chunks
 
         # Read the data chunk by chunk
         my_data = ""
         for x in range(num_chunks):
-            my_data += files.fetch_file(file_id, chunk=x)
+            my_data += (files.fetch_file(file_id, chunk=x)).data
         assert my_data == simple_data * num_chunks
 
         # Cleanup!
@@ -169,8 +194,10 @@ class TestFileOperations(object):
     def test_file_delete(self, simple_data):
         num_chunks = 5
         chunk_len = len(simple_data)
-        file_metadata = files.create_file("my_test_data.txt", num_chunks * chunk_len, chunk_len)
-        file_id = file_metadata["id"]
+        file_metadata = files.create_file(
+            "my_test_data.txt", num_chunks * chunk_len, chunk_len
+        )
+        file_id = file_metadata.file_id
         # We don't normally need to do this, but we're interacting directly with the DB
         file_id = file_id.split(" ")[1]
         assert file_id is not None
@@ -179,15 +206,20 @@ class TestFileOperations(object):
         chunk_ids = []
         for x in range(num_chunks):
             chunk_meta = files.create_chunk(file_id, x, simple_data)
-            assert "id" in chunk_meta
-            chunk_ids.append(chunk_meta["id"])
+            chunk_ids.append(chunk_meta.chunk_id)
         assert len(chunk_ids) == num_chunks
 
         # Checking id formatting
-        assert files.delete_file("my_invalid_id") is None
+        try:
+            files.delete_file("my_invalid_id")
+        except ModelValidationError:
+            pass
 
         # Checking id correctness
-        assert files.delete_file("ffffeeeeddddccccbbbbaaaa") is None
+        try:
+            files.delete_file("ffffeeeeddddccccbbbbaaaa")
+        except NotFoundError:
+            pass
 
         # Confirm our file is there
         assert db.query_unique(File, id=file_id) is not None
@@ -199,42 +231,43 @@ class TestFileOperations(object):
         for c_id in chunk_ids:
             assert db.query_unique(FileChunk, id=c_id) is None
 
-        # Cleanup!
-        files.delete_file(file_id)
-
     def test_file_owner(self, simple_data, simple_request, simple_job):
         num_chunks = 5
         chunk_len = len(simple_data)
-        file_metadata = files.create_file("my_test_data.txt", num_chunks * chunk_len, chunk_len)
-        file_id = file_metadata["id"]
+        file_metadata = files.create_file(
+            "my_test_data.txt", num_chunks * chunk_len, chunk_len
+        )
+        file_id = file_metadata.file_id
         assert file_id is not None
 
         # Lowest ownership priority
-        assert (
-            files.set_owner(
+        file_metadata = files.set_owner(
                 file_id, owner_type="MY_CUSTOM_TYPE", owner_id="MY_CUSTOM_ID"
             )
-            is not None
-        )
+        assert file_metadata.owner_type == "MY_CUSTOM_TYPE"
+        assert file_metadata.owner_id == "MY_CUSTOM_ID"
 
         # Next lowest ownership priority
         req = db.create(simple_request)
-        assert (
-            files.set_owner(file_id, owner_type="REQUEST", owner_id=req.id) is not None
-        )
+        file_metadata = files.set_owner(file_id, owner_type="REQUEST", owner_id=req.id)
+        assert file_metadata.owner_type == "REQUEST"
+        assert file_metadata.owner_id == req.id
 
         # Highest ownership priority
         job = db.create(simple_job)
-        assert files.set_owner(file_id, owner_type="JOB", owner_id=job.id) is not None
+        file_metadata = files.set_owner(file_id, owner_type="JOB", owner_id=job.id)
+        assert file_metadata.owner_type == "JOB"
+        assert file_metadata.owner_id == job.id
 
         # Make sure lower priority owners can't overwrite the field
-        assert files.set_owner(file_id, owner_type="REQUEST", owner_id=req.id) is None
-        assert (
+        assert not (
+            files.set_owner(file_id, owner_type="REQUEST", owner_id=req.id)
+        ).operation_complete
+        assert not (
             files.set_owner(
                 file_id, owner_type="MY_CUSTOM_TYPE", owner_id="MY_CUSTOM_ID"
             )
-            is None
-        )
+        ).operation_complete
 
         # Cleanup!
         files.delete_file(file_id)
