@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+## 3.0.1
+11/12/20
+
+#### Bug Fixes
+- Fix issue preventing clean shutdown on Python 3.7 (#738)
+
 ## 3.0.0
 11/10/20
 

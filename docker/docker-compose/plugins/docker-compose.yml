@@ -13,8 +13,9 @@ x-definitions: &complex-env
     DB_PASS: supersecret
 
 x-definitions: &plugin
-    image: bgio/example-plugins:v3
+    image: bgio/example-plugins
     network_mode: host
+    stop_signal: SIGINT
     volumes:
         - ../data/certs/ca_certificate.pem:/certs/ca_certificate.pem
     environment:
@@ -22,6 +23,10 @@ x-definitions: &plugin
 
 
 services:
+    child:
+        command: ["child"]
+        <<: *plugin
+
     complex-c1:
         command: ["complex", "c1", "c1-host", "c1-port"]
         environment:
@@ -32,10 +37,6 @@ services:
         command: ["complex", "c2", "c2-host", "c2-port"]
         environment:
             <<: [*common-env, *complex-env]
-        <<: *plugin
-
-    concurrent-sleeper:
-        command: ["concurrent_sleeper"]
         <<: *plugin
 
     custom-display:
@@ -68,6 +69,18 @@ services:
         command: ["error"]
         <<: *plugin
 
+    nested-calls:
+        command: ["nested_calls"]
+        <<: *plugin
+
+    parent:
+        command: ["parent"]
+        <<: *plugin
+
     sleeper:
         command: ["sleeper"]
+        <<: *plugin
+
+    sleeper-solo:
+        command: ["sleeper_solo"]
         <<: *plugin
