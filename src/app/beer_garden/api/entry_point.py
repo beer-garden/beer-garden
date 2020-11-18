@@ -79,6 +79,9 @@ class EntryPoint:
             name=f"{name} listener",
         )
 
+    def ep_config_diff(self, new_ep_config):
+        return self.ep_config and self.ep_config != new_ep_config
+
     def start(self) -> None:
         """Start the entry point process"""
         process_name = f"BGEntryPoint-{self._name}"
@@ -274,10 +277,17 @@ class Manager:
         for entry_point in self.entry_points.values():
             entry_point.start()
 
-    # def stop_one(self, garden_name):
-    #     for entry_point in self.entry_points:
-    #         if entry_point.ep_config:
-    #             if garden_name
+    def stop_one(self, ep_key):
+        self.entry_points[ep_key].stop()
+
+    def start_one(self, ep_key):
+        self.entry_points[ep_key].start()
+
+    def update_ep_config(self, ep_key=None, new_ep_config=None):
+        if self.entry_points[ep_key].ep_config_diff(new_ep_config):
+            self.entry_points[ep_key].stop()
+            self.entry_points[ep_key].ep_config = new_ep_config
+            self.entry_points[ep_key].start()
 
     def stop(self):
         self.log_reader.stop()

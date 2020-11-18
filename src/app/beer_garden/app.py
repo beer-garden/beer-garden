@@ -144,18 +144,18 @@ class Application(StoppableThread):
 
     # @staticmethod
     # def _setup_stomp_children():
-        # for garden in get_gardens(include_local=False):
-        #     if garden.name != config.get("garden.name"):
-        #         if (
-        #                 garden.connection_type is not None
-        #                 and garden.connection_type.casefold() != "local"
-        #         ):
-        #             if garden.connection_type.casefold() == "stomp":
-        #                     stomp_garden_connections[garden.name] = setup_stomp(garden)
-        #                     stomp_garden_connections[garden.name].connect('connected to child: ' + garden.name)
-        #
-        #         else:
-        #             logger.warning(f"Garden with invalid connection info: {garden!r}")
+    # for garden in get_gardens(include_local=False):
+    #     if garden.name != config.get("garden.name"):
+    #         if (
+    #                 garden.connection_type is not None
+    #                 and garden.connection_type.casefold() != "local"
+    #         ):
+    #             if garden.connection_type.casefold() == "stomp":
+    #                     stomp_garden_connections[garden.name] = setup_stomp(garden)
+    #                     stomp_garden_connections[garden.name].connect('connected to child: ' + garden.name)
+    #
+    #         else:
+    #             logger.warning(f"Garden with invalid connection info: {garden!r}")
 
     def handle_event(self, event):
         """Handle any events the application cares about"""
@@ -165,7 +165,26 @@ class Application(StoppableThread):
             if event.name == Events.ENTRY_STARTED.name:
                 beer_garden.local_plugins.manager.lpm_proxy.scan_path()
             elif event.name == Events.GARDEN_UPDATED.name:
-                pass
+                if event.payload.connection_type.casefold() == "stomp":
+                    connection_params = self.strip_connection_params("stomp_", event.payload.connection_params)
+                    connection_params['send_destination'] = None
+                    if event.payload.name in self.entry_manager.entry_points:
+                        self.entry_manager.update_ep_config(
+                            ep_key=event.payload.name,
+                            new_ep_config=self.strip_connection_params("stomp_", connection_params))
+                    elif "subscribe_destination" in connection_params:
+                        self.entry_manager.create(
+                            'stomp',
+                            ep_config=self.strip_connection_params("stomp_", connection_params),
+                            ep_key=event.payload.name
+                        )
+                        self.entry_manager.entry_points[event.payload.name].start()
+                else:
+                    if event.payload.name in self.entry_manager.entry_points:
+                        if (event.payload.connection_type.casefold() !=
+                                self.entry_manager.entry_points[event.payload.name].module_name):
+                            self.entry_manager.entry_points[event.payload.name].stop()
+
             elif event.name == Events.INSTANCE_INITIALIZED.name:
                 beer_garden.local_plugins.manager.lpm_proxy.handle_initialize(event)
             elif event.name == Events.INSTANCE_STOPPED.name:
@@ -218,8 +237,8 @@ class Application(StoppableThread):
         queue.create_clients(config.get("mq"))
 
         if not self._progressive_backoff(
-            partial(queue.check_connection, "pika"),
-            "Unable to connect to rabbitmq, is it started?",
+                partial(queue.check_connection, "pika"),
+                "Unable to connect to rabbitmq, is it started?",
         ):
             return False
 
@@ -255,11 +274,13 @@ class Application(StoppableThread):
         self.logger.debug("Creating and starting entry points...")
         self.entry_manager.create_all()
         for garden in get_gardens(include_local=False):
-            if garden.name != config.get("garden.name"):
+            if garden.name != config.get("garden.name") and garden.connection_type:
                 if garden.connection_type.casefold() == "stomp" \
                         and garden.name not in self.entry_manager.entry_points:
                     connection_params = self.strip_connection_params("stomp_", garden.connection_params)
-                    self.entry_manager.create('stomp', ep_config=connection_params, ep_key=garden.name)
+                    connection_params['send_destination'] = None
+                    if "subscribe_destination" in connection_params:
+                        self.entry_manager.create('stomp', ep_config=connection_params, ep_key=garden.name)
 
         self.entry_manager.start()
 
@@ -292,7 +313,6 @@ class Application(StoppableThread):
         for key in connection_params:
             new_connection_params[key.replace(term, "")] = connection_params[key]
         return new_connection_params
-
 
     def _shutdown(self):
         """Shutdown core requirements for Application"""
@@ -383,8 +403,9 @@ class Application(StoppableThread):
                 beer_garden.garden.publish_garden(
                     event_name=Events.GARDEN_STARTED.name, status="RUNNING"
                 )
+
             # TODO change fix reconnect_action
-            self.entry_manager.create("stomp", ep_config=stomp_event)
+            self.entry_manager.create("stomp", ep_config=stomp_event, ep_key="parent")
 
         return event_manager
 

@@ -16,7 +16,7 @@ def send_message(message=None, headers=None, conn=None, send_destination=None):
     response_headers = append_headers(
         response_headers=response_headers, request_headers=headers
     )
-    if conn.is_connected():
+    if conn.is_connected() and send_destination:
         if "reply-to" in headers:
             conn.send(
                 body=message, headers=response_headers, destination=headers["reply-to"]

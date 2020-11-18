@@ -971,11 +971,11 @@ _PARENT_SPEC = {
                 },
                 "send_destination": {
                     "type": "str",
-                    "default": "Beer_Garden_Events_Parent"
+                    "default": "Beer_Garden_Operations_Parent"
                 },
                 "subscribe_destination": {
                     "type": "str",
-                    "default": "Beer_Garden_Operations_Parent",
+                    "default": "Beer_Garden_Forward_Parent",
                     "description": "Subscription topic where Beer_Garden listens for operations",
                 },
                 "skip_events": {
