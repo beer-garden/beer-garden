@@ -424,7 +424,7 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
         owner_type: The type of the owner (job/request).
     """
     if (owner_id is not None) and (owner_type is not None):
-        file = check_chunks(file_id)
+        file = check_file(file_id)
         old_owner_priority = OWNERSHIP_PRIORITY.get(file.owner_type, 1_000_000)
         new_owner_priority = OWNERSHIP_PRIORITY.get(owner_type, 1_000_000)
         # Job owners should override request owners (if one is already set)

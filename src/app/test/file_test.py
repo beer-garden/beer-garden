@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import pytest
 from random import choice
-from mongoengine import disconnect
+from mock import Mock
+from bson import ObjectId
 
 import beer_garden
 import beer_garden.files as files
@@ -12,24 +13,6 @@ from brewtils.models import File, FileChunk, Request, Job, FileTrigger, RequestT
 
 
 class TestFileOperations(object):
-    @classmethod
-    def setup_class(cls):
-        conf = {
-            "name": "bg_file_test",
-            "connection": {
-                "host": "localhost",
-                "password": None,
-                "port": 27017,
-                "username": None,
-            },
-            "ttl": {"action": -1, "info": 15},
-        }
-        db.create_connection(connection_alias="default", db_config=conf)
-
-    @classmethod
-    def teardown_class(cls):
-        disconnect(alias="default")
-
     @pytest.fixture
     def simple_data(self):
         return "".join(
@@ -40,8 +23,176 @@ class TestFileOperations(object):
         )
 
     @pytest.fixture
+    def simple_file(self, simple_data):
+        return File(
+            file_name="my_test_data.txt",
+            file_size=len(simple_data)*4,
+            chunk_size=len(simple_data),
+            id=str(ObjectId()),
+            owner_type=None,
+            owner_id=None,
+            chunks={
+                '0': str(ObjectId()),
+                '1': str(ObjectId()),
+                '2': str(ObjectId()),
+                '3': str(ObjectId()),
+            }
+        )
+
+    @pytest.fixture
+    def simple_file_chunk(self, simple_file, simple_data):
+        return FileChunk(
+            id=str(ObjectId()),
+            file_id=simple_file.id,
+            data=simple_data
+        )
+
+    @pytest.fixture
     def storage_create_kwargs(self):
         return {"owner_id": "Doesn't matter", "owner_type": "Storage"}
+
+    @pytest.fixture
+    def modified_file(self, simple_file):
+        return File(
+            file_name="another_file_name.txt",
+            file_size=1024*1024,
+            chunk_size=1024,
+            id=simple_file.id,
+        )
+
+    def test_file_create(self, monkeypatch, simple_file, modified_file, simple_file_chunk):
+        query_mock = Mock()
+        monkeypatch.setattr(db, "query_unique", query_mock)
+        create_mock = Mock()
+        monkeypatch.setattr(db, "create", create_mock)
+        monkeypatch.setattr(db, "modify", Mock(return_value=None))
+
+        create_mock.side_effect = iter([
+            simple_file,
+        ])
+        file_status = files.create_file(
+            simple_file.file_name, simple_file.file_size, simple_file.chunk_size
+        )
+        assert simple_file.id in file_status.file_id
+
+        # Exercising the upsert flag logic
+        create_mock.side_effect = iter([
+            NotUniqueException(),
+        ])
+        try:
+            # Attempting to create a file with a reserved id and no upsert flag should always throw an error
+            files.create_file(
+                simple_file.file_name,
+                simple_file.file_size,
+                simple_file.chunk_size,
+                file_id=simple_file.id,
+            )
+            assert False
+        except NotUniqueException:
+            pass
+
+        # Using the upsert flag should allow us to update some of the metadata
+        query_mock.side_effect = iter([
+            simple_file,
+            modified_file
+        ])
+        try:
+            files.create_file(
+                modified_file.file_name,
+                modified_file.file_size,
+                modified_file.chunk_size,
+                file_id=simple_file.id,
+                upsert=True,
+            )
+        except NotUniqueException:
+            assert False
+
+        # Testing the max chunk size check
+        try:
+            # Making chunk sizes too big to fit in the DB should be blocked
+            files.create_file(
+                modified_file.file_name,
+                modified_file.file_size*1024*1024,
+                modified_file.chunk_size*1024*1024,
+                file_id=str(ObjectId()),
+            )
+            assert False
+        except ValueError:
+            pass
+
+        # Testing chunk creation with upsert
+        for x in range(len(simple_file.chunks)):
+            query_mock.side_effect = iter([
+                simple_file,
+                simple_file
+            ])
+            create_mock.side_effect = iter([
+                simple_file_chunk,
+            ])
+            files.create_chunk(simple_file.id, x, simple_file_chunk.data, upsert=True)
+
+        # Fill out the metadata now
+        query_mock.side_effect = iter([
+            simple_file,
+            modified_file
+        ])
+        create_mock.side_effect = iter([
+            simple_file_chunk,
+        ])
+        assert (
+            files.create_file(
+                modified_file.file_name,
+                modified_file.file_size,
+                modified_file.chunk_size,
+                modified_file.id,
+                upsert=True,
+            ).operation_complete
+        )
+
+    def test_file_fetch(self, monkeypatch, simple_file, simple_file_chunk):
+        query_mock = Mock()
+        monkeypatch.setattr(db, "query_unique", query_mock)
+
+        # Read the data in its entirety
+        query_mock.side_effect = iter([
+            simple_file,
+            simple_file,
+            simple_file_chunk,
+            simple_file_chunk,
+            simple_file_chunk,
+            simple_file_chunk,
+        ])
+        meta = files.fetch_file(simple_file.id)
+        assert meta.data == simple_file_chunk.data * len(simple_file.chunks)
+
+        # Read the data chunk by chunk
+        my_data = ""
+        for x in range(len(simple_file.chunks)):
+            query_mock.side_effect = iter([
+                simple_file,
+                simple_file_chunk,
+            ])
+            my_data += (files.fetch_file(simple_file.id, chunk=x)).data
+        assert my_data == simple_file_chunk.data * len(simple_file.chunks)
+
+    def test_file_query(self, monkeypatch, simple_data, simple_file):
+        query_mock = Mock()
+        monkeypatch.setattr(db, "query_unique", query_mock)
+
+        # Checking id formatting
+        try:
+            files.delete_file("my_invalid_id")
+        except ModelValidationError:
+            pass
+
+        # Checking id correctness
+        query_mock.side_effect = iter([
+            None
+        ])
+        try:
+            files.delete_file("ffffeeeeddddccccbbbbaaaa")
+        except NotFoundError:
+            pass
 
     @pytest.fixture
     def simple_request(self):
@@ -51,6 +202,7 @@ class TestFileOperations(object):
             instance_name="my_bg",
             namespace="file_testing",
             command="something_cool",
+            id=str(ObjectId()),
         )
 
     @pytest.fixture
@@ -68,170 +220,50 @@ class TestFileOperations(object):
                 command="something_cool",
             ),
             name="my_simple_job",
+            id=str(ObjectId()),
         )
 
-    def test_file_create(self, simple_data):
-        num_chunks = 5
-        chunk_len = len(simple_data)
-        file_status = files.create_file(
-            "my_test_data.txt", num_chunks * chunk_len, chunk_len
-        )
-        file_id = file_status.file_id
-        assert file_id is not None
-
-        # Exercising the upsert flag logic
-        try:
-            # Attempting to create a file with a reserved id and no upsert flag should always throw an error
-            files.create_file(
-                "my_other_test_data.txt",
-                num_chunks * chunk_len,
-                chunk_len,
-                file_id=file_id,
-            )
-            assert False
-        except NotUniqueException:
-            pass
-
-        try:
-            # Using the upsert flag should allow us to update some of the metadata
-            meta = files.create_file(
-                "my_other_test_data.txt",
-                num_chunks * chunk_len,
-                chunk_len,
-                file_id=file_id,
-                upsert=True,
-            )
-            files.delete_file(meta.file_id)
-        except NotUniqueException:
-            assert False
-
-        # Test the id checking logic
-        try:
-            # The file ID passed should be required to be a ObjectId string
-            files.create_file(
-                "my_other_test_data.txt",
-                num_chunks * chunk_len,
-                chunk_len,
-                file_id="my_invalid_id",
-            )
-            assert False
-        except ModelValidationError:
-            pass
-
-        try:
-            # The file ID passed should be required to be a ObjectId string (24 character hex string)
-            meta = files.create_file(
-                "my_other_test_data.txt",
-                num_chunks * chunk_len,
-                chunk_len,
-                file_id="123456789012345678901234",
-            )
-            files.delete_file(meta.file_id)
-        except ModelValidationError:
-            assert False
-
-        # Testing the max chunk size check
-        try:
-            # Making chunk sizes too big to fit in the DB should be blocked
-            files.create_file(
-                "my_other_test_data.txt",
-                1024 * 1024 * 1024,
-                1024 * 1024 * 1024,
-                file_id="123456789012345678901234",
-            )
-            assert False
-        except ValueError:
-            pass
-
-        # Testing chunk creation with upsert
-        for x in range(num_chunks):
-            files.create_chunk(file_id, x, simple_data, upsert=True)
-
-        # Fill out the metadata now
-        assert (
-            files.create_file(
-                "my_other_test_data.txt",
-                num_chunks * chunk_len,
-                chunk_len,
-                file_id=file_id,
-                upsert=True,
-            )
-            is not None
+    @pytest.fixture
+    def custom_owner(self, simple_file):
+        return File(
+            file_name=simple_file.file_name,
+            file_size=simple_file.file_size,
+            chunk_size=simple_file.chunk_size,
+            id=simple_file.id,
+            owner_type="MY_CUSTOM_TYPE",
+            owner_id="MY_CUSTOM_ID",
         )
 
-        # Cleanup! (again)
-        files.delete_file(file_id)
-
-    def test_file_fetch(self, simple_data):
-        num_chunks = 5
-        chunk_len = len(simple_data)
-        file_metadata = files.create_file(
-            "my_test_data.txt", num_chunks * chunk_len, chunk_len
+    @pytest.fixture
+    def req_owner(self, simple_file, simple_request):
+        return File(
+            file_name=simple_file.file_name,
+            file_size=simple_file.file_size,
+            chunk_size=simple_file.chunk_size,
+            id=simple_file.id,
+            owner_type="REQUEST",
+            owner_id=simple_request.id,
         )
-        file_id = file_metadata.file_id
-        assert file_id is not None
 
-        # Upload some data
-        chunk_ids = []
-        for x in range(num_chunks):
-            chunk_meta = files.create_chunk(file_id, x, simple_data)
-            chunk_ids.append(chunk_meta.chunk_id)
-        assert len(chunk_ids) == num_chunks
-
-        # Read the data in its entirety
-        meta = files.fetch_file(file_id)
-        assert meta.data == simple_data * num_chunks
-
-        # Read the data chunk by chunk
-        my_data = ""
-        for x in range(num_chunks):
-            my_data += (files.fetch_file(file_id, chunk=x)).data
-        assert my_data == simple_data * num_chunks
-
-        # Cleanup!
-        files.delete_file(file_id)
-
-    def test_file_delete(self, simple_data):
-        num_chunks = 5
-        chunk_len = len(simple_data)
-        file_metadata = files.create_file(
-            "my_test_data.txt", num_chunks * chunk_len, chunk_len
+    @pytest.fixture
+    def job_owner(self, simple_file, simple_job):
+        return File(
+            file_name=simple_file.file_name,
+            file_size=simple_file.file_size,
+            chunk_size=simple_file.chunk_size,
+            id=simple_file.id,
+            owner_type="JOB",
+            owner_id=simple_job.id,
         )
-        file_id = file_metadata.file_id
-        # We don't normally need to do this, but we're interacting directly with the DB
-        file_id = file_id.split(" ")[1]
-        assert file_id is not None
 
-        # Upload some data
-        chunk_ids = []
-        for x in range(num_chunks):
-            chunk_meta = files.create_chunk(file_id, x, simple_data)
-            chunk_ids.append(chunk_meta.chunk_id)
-        assert len(chunk_ids) == num_chunks
+    def test_file_owner(self, monkeypatch, simple_data, simple_file,
+                        custom_owner, req_owner, job_owner, simple_request, simple_job
+                        ):
+        monkeypatch.setattr(db, "modify", Mock(return_value=None))
+        monkeypatch.setattr(db, "create", Mock(return_value=simple_file))
+        query_mock = Mock()
+        monkeypatch.setattr(db, "query_unique", query_mock)
 
-        # Checking id formatting
-        try:
-            files.delete_file("my_invalid_id")
-        except ModelValidationError:
-            pass
-
-        # Checking id correctness
-        try:
-            files.delete_file("ffffeeeeddddccccbbbbaaaa")
-        except NotFoundError:
-            pass
-
-        # Confirm our file is there
-        assert db.query_unique(File, id=file_id) is not None
-        for c_id in chunk_ids:
-            assert db.query_unique(FileChunk, id=c_id) is not None
-
-        # Make sure everything is deleted (including the chunks)
-        assert files.delete_file(file_id) is not None
-        for c_id in chunk_ids:
-            assert db.query_unique(FileChunk, id=c_id) is None
-
-    def test_file_owner(self, simple_data, simple_request, simple_job):
         num_chunks = 5
         chunk_len = len(simple_data)
         file_metadata = files.create_file(
@@ -241,35 +273,48 @@ class TestFileOperations(object):
         assert file_id is not None
 
         # Lowest ownership priority
+        query_mock.side_effect = iter([
+            simple_file,
+            custom_owner,
+        ])
+        print(f"~~~~~~~~~~~~~~~~~~~~Trying to return {simple_file.__dict__}, {custom_owner.__dict__}")
         file_metadata = files.set_owner(
-                file_id, owner_type="MY_CUSTOM_TYPE", owner_id="MY_CUSTOM_ID"
+                file_id, owner_type=custom_owner.owner_type, owner_id=custom_owner.owner_id
             )
-        assert file_metadata.owner_type == "MY_CUSTOM_TYPE"
-        assert file_metadata.owner_id == "MY_CUSTOM_ID"
+        print(f"~~~~~~~{file_metadata}")
+        assert file_metadata.owner_type == custom_owner.owner_type
+        assert file_metadata.owner_id == custom_owner.owner_id
 
         # Next lowest ownership priority
-        req = db.create(simple_request)
-        file_metadata = files.set_owner(file_id, owner_type="REQUEST", owner_id=req.id)
+        query_mock.side_effect = iter([
+            custom_owner,
+            simple_request,
+            req_owner,
+        ])
+        file_metadata = files.set_owner(file_id, owner_type="REQUEST", owner_id=simple_request.id)
         assert file_metadata.owner_type == "REQUEST"
-        assert file_metadata.owner_id == req.id
+        assert file_metadata.owner_id == simple_request.id
 
         # Highest ownership priority
-        job = db.create(simple_job)
-        file_metadata = files.set_owner(file_id, owner_type="JOB", owner_id=job.id)
+        query_mock.side_effect = iter([
+            req_owner,
+            simple_job,
+            job_owner,
+        ])
+        file_metadata = files.set_owner(file_id, owner_type="JOB", owner_id=simple_job.id)
         assert file_metadata.owner_type == "JOB"
-        assert file_metadata.owner_id == job.id
+        assert file_metadata.owner_id == simple_job.id
 
         # Make sure lower priority owners can't overwrite the field
+        query_mock.side_effect = iter([
+            job_owner,
+            job_owner,
+        ])
         assert not (
-            files.set_owner(file_id, owner_type="REQUEST", owner_id=req.id)
+            files.set_owner(file_id, owner_type="REQUEST", owner_id=simple_request.id)
         ).operation_complete
         assert not (
             files.set_owner(
                 file_id, owner_type="MY_CUSTOM_TYPE", owner_id="MY_CUSTOM_ID"
             )
         ).operation_complete
-
-        db.delete(req)
-        db.delete(job)
-        # Cleanup!
-        files.delete_file(file_id)
