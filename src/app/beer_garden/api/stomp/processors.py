@@ -1,6 +1,7 @@
 from brewtils.schema_parser import SchemaParser
 from brewtils.models import Operation
 
+
 # Modify to inject custom headers
 def append_headers(response_headers, request_headers=None):
     return response_headers

@@ -2,8 +2,6 @@
 import logging
 import signal
 
-from beer_garden.api.stomp import run as stomp_parent_run
-
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 
 # from apscheduler.schedulers.background import BackgroundScheduler
@@ -15,7 +13,7 @@ from functools import partial
 from multiprocessing.managers import BaseManager
 from pytz import utc
 from typing import Callable
-from beer_garden.garden import get_garden, get_gardens
+from beer_garden.garden import get_gardens
 import beer_garden.api
 import beer_garden.api.entry_point
 import beer_garden.config as config

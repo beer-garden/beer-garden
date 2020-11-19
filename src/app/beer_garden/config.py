@@ -972,11 +972,13 @@ _PARENT_SPEC = {
                 "send_destination": {
                     "type": "str",
                     "default": "Beer_Garden_Operations_Parent",
+                    "description": "Send topic where Beer_Garden sends operations",
                 },
                 "subscribe_destination": {
                     "type": "str",
                     "default": "Beer_Garden_Forward_Parent",
-                    "description": "Subscription topic where Beer_Garden listens for operations",
+                    "description": "Subscription topic where Beer_Garden"
+                    " listens for operations",
                 },
                 "skip_events": {
                     "type": "list",
