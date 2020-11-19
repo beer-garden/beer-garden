@@ -1,10 +1,8 @@
 import requests
-import stomp
-from brewtils.schema_parser import SchemaParser
-import beer_garden.config as config
+
 import beer_garden
 from beer_garden.events.processors import QueueListener
-from brewtils.models import Event, Operation
+from brewtils.models import Event
 
 
 class HttpParentUpdater(QueueListener):

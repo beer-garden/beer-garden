@@ -56,14 +56,14 @@ class EntryPoint:
     """
 
     def __init__(
-            self,
-            name: str,
-            target: Callable,
-            context: SpawnContext,
-            log_queue: Queue,
-            signal_handler: Callable[[int, FrameType], None],
-            event_callback: Callable[[Event], None],
-            ep_config=None,
+        self,
+        name: str,
+        target: Callable,
+        context: SpawnContext,
+        log_queue: Queue,
+        signal_handler: Callable[[int, FrameType], None],
+        event_callback: Callable[[Event], None],
+        ep_config=None,
     ):
         self._name = name
         self._target = target
@@ -104,7 +104,7 @@ class EntryPoint:
         # And listen for events coming from it
         self._event_listener.start()
 
-    def stop(self, timeout: int = None) -> None:
+    def stop(self, timeout: int = None, closeCommunicationPipes=False) -> None:
         """Stop the process with a SIGTERM
 
         If a `timeout` is specified this method will wait that long for the process to
@@ -123,7 +123,9 @@ class EntryPoint:
         # Then ensure the process is terminated
         self._process.terminate()
         self._process.join(timeout=timeout)
-
+        if closeCommunicationPipes:
+            self._ep_conn.close()
+            self._mp_conn.close()
         if self._process.exitcode is None:
             self._logger.warning(
                 f"Process {self._process.name} is still running - sending SIGKILL"
@@ -143,13 +145,13 @@ class EntryPoint:
 
     @staticmethod
     def _target_wrapper(
-            config: Box,
-            log_queue: Queue,
-            target: Callable,
-            signal_handler: Callable[[int, FrameType], None],
-            ep_conn: Connection,
-            lpm_proxy,
-            ep_config=None,
+        config: Box,
+        log_queue: Queue,
+        target: Callable,
+        signal_handler: Callable[[int, FrameType], None],
+        ep_conn: Connection,
+        lpm_proxy,
+        ep_config=None,
     ) -> Any:
         """Helper method that sets up the process environment before calling `target`
 
@@ -244,7 +246,9 @@ class Manager:
         for entry_name, entry_value in beer_garden.config.get("entry").items():
             if entry_value.get("enabled"):
                 try:
-                    self.entry_points["beer_garden.api."+entry_name] = self.create(entry_name)
+                    self.entry_points["beer_garden.api." + entry_name] = self.create(
+                        entry_name
+                    )
                 except Exception as ex:
                     logger.exception(f"Error creating entry point {entry_name}: {ex}")
 
@@ -258,7 +262,7 @@ class Manager:
                 log_queue=self.log_queue,
                 signal_handler=module.signal_handler,
                 event_callback=beer_garden.events.publish,
-                ep_config=ep_config
+                ep_config=ep_config,
             )
             self.entry_points[ep_key] = ep_point
             return ep_point
@@ -278,15 +282,18 @@ class Manager:
             entry_point.start()
 
     def stop_one(self, ep_key):
-        self.entry_points[ep_key].stop()
+        self.entry_points[ep_key].stop(closeCommunicationPipes=True)
 
     def start_one(self, ep_key):
         self.entry_points[ep_key].start()
 
     def update_ep_config(self, ep_key=None, new_ep_config=None):
         if self.entry_points[ep_key].ep_config_diff(new_ep_config):
-            self.entry_points[ep_key].stop()
+            self.entry_points[ep_key].stop(closeCommunicationPipes=True)
             self.entry_points[ep_key].ep_config = new_ep_config
+            self.create(
+                self.entry_points[ep_key]._name, ep_config=new_ep_config, ep_key=ep_key
+            )
             self.entry_points[ep_key].start()
 
     def stop(self):

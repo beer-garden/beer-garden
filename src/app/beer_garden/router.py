@@ -24,8 +24,10 @@ from typing import Dict, Optional, Union
 import requests
 import stomp
 from stomp.exception import ConnectFailedException
-from beer_garden.api.stomp.processors import append_headers as stomp_append_headers, \
-    process_send_message as stomp_process_message
+from beer_garden.api.stomp.processors import (
+    append_headers as stomp_append_headers,
+    process_send_message as stomp_process_message,
+)
 from beer_garden.events import publish
 from brewtils.models import Events, Garden, Operation, Request, System, Event
 from brewtils.schema_parser import SchemaParser
@@ -48,7 +50,6 @@ from beer_garden.garden import get_garden, get_gardens
 from beer_garden.requests import complete_request
 
 logger = logging.getLogger(__name__)
-stomp.logging.setLevel("WARN")
 
 # These are the operations that we will forward to child gardens
 routable_operations = [
@@ -292,9 +293,9 @@ def forward(operation: Operation):
                 operation=operation,
                 event_name=Events.GARDEN_NOT_CONFIGURED.name,
                 error_message=f"Attempted to forward operation to garden "
-                              f"'{operation.target_garden_name}' but the connection type was None. "
-                              f"This probably means that the connection to the child garden has not "
-                              f"been configured, please talk to your system administrator.",
+                f"'{operation.target_garden_name}' but the connection type was None. "
+                f"This probably means that the connection to the child garden has not "
+                f"been configured, please talk to your system administrator.",
             )
 
             raise RoutingRequestException(
@@ -314,7 +315,9 @@ def forward(operation: Operation):
 
 
 def setup_stomp(garden):
-    host_and_ports = [(garden.connection_params["stomp_host"], garden.connection_params["stomp_port"])]
+    host_and_ports = [
+        (garden.connection_params["stomp_host"], garden.connection_params["stomp_port"])
+    ]
     return stomp.Connection(host_and_ports=host_and_ports)
 
 
@@ -337,8 +340,8 @@ def setup_routing():
                 add_routing_system(system=system, garden_name=garden.name)
 
             if (
-                    garden.connection_type is not None
-                    and garden.connection_type.casefold() != "local"
+                garden.connection_type is not None
+                and garden.connection_type.casefold() != "local"
             ):
                 with garden_lock:
                     gardens[garden.name] = garden
@@ -382,6 +385,9 @@ def handle_event(event):
             add_routing_system(system=event.payload, garden_name=event.garden)
         elif event.name == Events.SYSTEM_REMOVED.name:
             remove_routing_system(system=event.payload)
+        elif event.name == Events.GARDEN_SYNC.name:
+            for system in event.payload.systems:
+                add_routing_system(system=system, garden_name=event.payload.name)
 
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.
@@ -390,11 +396,16 @@ def handle_event(event):
     if event.garden == config.get("garden.name"):
         if event.name == Events.GARDEN_UPDATED.name:
             gardens[event.payload.name] = event.payload
+
             if event.payload.connection_type.casefold() == "stomp":
-                if event.payload.name in stomp_garden_connections and \
-                        stomp_garden_connections[event.payload.name].is_connected():
+                if (
+                    event.payload.name in stomp_garden_connections
+                    and stomp_garden_connections[event.payload.name].is_connected()
+                ):
                     stomp_garden_connections[event.payload.name].disconnect()
-                stomp_garden_connections[event.payload.name] = setup_stomp(event.payload)
+                stomp_garden_connections[event.payload.name] = setup_stomp(
+                    event.payload
+                )
 
         elif event.name == Events.GARDEN_REMOVED.name:
             try:
@@ -469,12 +480,12 @@ def _determine_target_garden(operation: Operation) -> str:
 
     # Certain operations are ASSUMED to be targeted at the local garden
     if (
-            "READ" in operation.operation_type
-            or "GARDEN" in operation.operation_type
-            or "JOB" in operation.operation_type
-            or operation.operation_type
-            in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
-            or "PUBLISH_EVENT" in operation.operation_type
+        "READ" in operation.operation_type
+        or "GARDEN" in operation.operation_type
+        or "JOB" in operation.operation_type
+        or operation.operation_type
+        in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
+        or "PUBLISH_EVENT" in operation.operation_type
     ):
         return config.get("garden.name")
 
@@ -525,29 +536,30 @@ def _forward_stomp(operation: Operation, target_garden: Garden):
     try:
         if not stomp_garden_connections[target_garden.name].is_connected():
             stomp_garden_connections[target_garden.name].connect(
-                username=target_garden.connection_params['username'],
-                passcode=target_garden.connection_params['password'],
+                username=target_garden.connection_params["stomp_username"],
+                passcode=target_garden.connection_params["stomp_password"],
                 wait=True,
-                headers={"client-id": target_garden.connection_params['username']},
+                headers={
+                    "client-id": target_garden.connection_params["stomp_username"]
+                },
             )
         message, response_headers = stomp_process_message(operation)
         response_headers = stomp_append_headers(response_headers=response_headers)
         stomp_garden_connections[target_garden.name].send(
             body=message,
             headers=response_headers,
-            destination=target_garden.connection_params['send_destination'],
+            destination=target_garden.connection_params["stomp_send_destination"],
         )
     except ConnectFailedException:
         _publish_failed_forward(
             operation=operation,
             event_name=Events.GARDEN_UNREACHABLE.name,
             error_message=f"Attempted to forward operation to garden "
-                          f"'{operation.target_garden_name}' via STOMP but "
-                          f"failed to connect to STOMP. Please talk to your system "
-                          f"administrator.",
+            f"'{operation.target_garden_name}' via STOMP but "
+            f"failed to connect to STOMP. Please talk to your system "
+            f"administrator.",
         )
         raise
-
 
 
 def _forward_http(operation: Operation, target_garden: Garden):
@@ -590,9 +602,9 @@ def _forward_http(operation: Operation, target_garden: Garden):
                 operation=operation,
                 event_name=Events.GARDEN_UNREACHABLE.name,
                 error_message=f"Attempted to forward operation to garden "
-                              f"'{operation.target_garden_name}' via REST but the connection returned an "
-                              f"error code of {response.status_code}. Please talk to your system "
-                              f"administrator.",
+                f"'{operation.target_garden_name}' via REST but the connection returned an "
+                f"error code of {response.status_code}. Please talk to your system "
+                f"administrator.",
             )
         elif target_garden.status != "RUNNING":
             beer_garden.garden.update_garden_status(target_garden.name, "RUNNING")
@@ -604,14 +616,14 @@ def _forward_http(operation: Operation, target_garden: Garden):
             operation=operation,
             event_name=Events.GARDEN_ERROR.name,
             error_message=f"Attempted to forward operation to garden "
-                          f"'{operation.target_garden_name}' but an error occurred."
-                          f"Please talk to your system administrator.",
+            f"'{operation.target_garden_name}' but an error occurred."
+            f"Please talk to your system administrator.",
         )
         raise
 
 
 def _publish_failed_forward(
-        operation: Operation = None, error_message: str = None, event_name: str = None
+    operation: Operation = None, error_message: str = None, event_name: str = None
 ):
     if operation.operation_type == "REQUEST_CREATE":
         complete_request(

@@ -21,7 +21,6 @@ def send_message(message=None, headers=None, conn=None, send_destination=None):
             conn.send(
                 body=message, headers=response_headers, destination=headers["reply-to"]
             )
-            pass
         else:
             conn.send(
                 body=message,
@@ -34,7 +33,7 @@ def send_error_msg(error_msg=None, headers=None, conn=None, send_destination=Non
     if headers is None:
         headers = {}
 
-    error_headers = {'model_class': "error_message"}
+    error_headers = {"model_class": "error_message"}
     error_headers = append_headers(error_headers, headers)
 
     if conn.is_connected():

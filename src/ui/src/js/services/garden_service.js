@@ -131,24 +131,24 @@ export default function gardenService($http) {
         'description': 'Path to client certificate to use when communicating with Beer-garden',
         'type': 'string',
       },
-      'send_destination': {
+      'stomp_send_destination': {
               'title': 'Send Destination',
               'description': 'Destination queue where Stomp will send messages.',
               'type': 'string',
       },
-      'subscribe_destination': {
+      'stomp_subscribe_destination': {
                     'title': 'Subscribe Destination',
                     'description': 'Destination queue where Stomp will listen for messages.',
                     'type': 'string',
             },
-      'username': {
+      'stomp_username': {
                     'title': 'Username',
                     'description': 'Username for Stomp connection.',
                     'type': 'string',
       },
-      'password': {
+      'stomp_password': {
                     'title': 'Password',
-                    'description': 'password for Stomp connection.',
+                    'description': 'Password for Stomp connection.',
                     'type': 'string',
       },
     },
@@ -185,10 +185,10 @@ export default function gardenService($http) {
               'items': [
                 'stomp_host',
                 'stomp_port',
-                'send_destination',
-                'subscribe_destination',
-                'username',
-                'password'
+                'stomp_send_destination',
+                'stomp_subscribe_destination',
+                'stomp_username',
+                'stomp_password'
               ],
             },
           ],

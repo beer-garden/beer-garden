@@ -19,11 +19,10 @@ class EventManager:
 # Processes response messages and event messages to send
 def process_send_message(message):
     many = isinstance(message, list)
-    if message.__class__.__name__ == 'Event':
-        message = Operation(operation_type="PUBLISH_EVENT",
-                            model=message,
-                            model_type="Event"
-                            )
+    if message.__class__.__name__ == "Event":
+        message = Operation(
+            operation_type="PUBLISH_EVENT", model=message, model_type="Event"
+        )
     model_class = message.__class__.__name__
     if many:
         model_class = message[0].__class__.__name__
