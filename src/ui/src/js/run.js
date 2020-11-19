@@ -92,10 +92,13 @@ export default function appRun(
         user.permissions = RoleService.coalescePermissions(user.roles)[1];
 
         // If user is logged in, change to their default theme selection
-        if (user.id != null){
-          let theme = _.get(user, 'preferences.theme', 'default');
-          $rootScope.changeTheme(theme);
+        let theme;
+        if (user.id) {
+          theme = _.get(user, 'preferences.theme', 'default');
+        } else {
+          theme = localStorageService.get('currentTheme') || 'default';
         }
+        $rootScope.changeTheme(theme, false);
 
         $rootScope.user = user;
       }, (response) => {
@@ -253,12 +256,6 @@ export default function appRun(
       updateInstance(event.payload);
     }
   });
-
-  // If a Theme is stored, switched to Theme in the session
-  let theme = localStorageService.get('currentTheme');
-  if (theme != null){
-    $rootScope.changeTheme(theme);
-  }
 
   $interval(function() {
     EventService.connect(TokenService.getToken());
