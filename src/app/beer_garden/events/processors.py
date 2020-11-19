@@ -44,6 +44,10 @@ class QueueListener(BaseProcessor):
         while not self._queue.empty():
             self._queue.get()
 
+    def stop(self):
+        super().stop()
+        self.clear()
+
     def run(self):
         """Process events as they are received"""
         while not self.stopped():
