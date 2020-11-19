@@ -130,6 +130,11 @@ export default function appRun(
     // Connect to the event socket
     EventService.connect(token);
 
+    // Load theme from local storage
+    // REMOVE THIS ONCE THE rootScope.loadUser CALL BELOW IS ENABLED
+    let theme = localStorageService.get('currentTheme') || 'default';
+    $rootScope.changeTheme(theme, false);
+
     // $rootScope.loadUser(token).catch(
     //   // This prevents the situation where the user needs to logout but the
     //   // logout button isn't displayed because there's no user loaded
