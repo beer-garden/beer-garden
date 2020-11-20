@@ -60,6 +60,14 @@ docker-build-unstable: ## build unstable docker images
 	$(MAKE) -C $(UI_DIR) docker-build-unstable
 
 
+# GitHub
+github-release: ## create a github release
+	http --session=github \
+	  https://api.github.com/repos/beer-garden/beer-garden/releases \
+	  tag_name=$(VERSION) \
+	  name=$(VERSION)
+
+
 # Publishing
 publish-docker: ## push the docker image
 	$(MAKE) -C $(APP_DIR) publish-docker
