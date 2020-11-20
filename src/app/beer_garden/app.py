@@ -13,7 +13,6 @@ from functools import partial
 from multiprocessing.managers import BaseManager
 from pytz import utc
 from typing import Callable
-from beer_garden.garden import get_gardens
 import beer_garden.api
 import beer_garden.api.entry_point
 import beer_garden.config as config
@@ -148,40 +147,13 @@ class Application(StoppableThread):
                 beer_garden.local_plugins.manager.lpm_proxy.scan_path()
             elif event.name == Events.GARDEN_REMOVED.name:
                 if event.payload.name in self.entry_manager.entry_points:
-                    self.entry_manager.stop_one(event.payload.name)
-                    del self.entry_manager.entry_points[event.payload.name]
+                    self.entry_manager.remove(event.payload.name)
             elif event.name == Events.GARDEN_UPDATED.name:
-                if event.payload.connection_type.casefold() == "stomp":
-                    connection_params = self.strip_connection_params(
-                        "stomp_", event.payload.connection_params
-                    )
-                    connection_params["send_destination"] = None
-                    if event.payload.name in self.entry_manager.entry_points:
-                        self.entry_manager.update_ep_config(
-                            ep_key=event.payload.name,
-                            new_ep_config=self.strip_connection_params(
-                                "stomp_", connection_params
-                            ),
-                        )
-                    elif "subscribe_destination" in connection_params:
-                        self.entry_manager.create(
-                            "stomp",
-                            ep_config=self.strip_connection_params(
-                                "stomp_", connection_params
-                            ),
-                            ep_key=event.payload.name,
-                        )
-                        self.entry_manager.entry_points[event.payload.name].start()
-                else:
-                    if event.payload.name in self.entry_manager.entry_points:
-                        if (
-                            event.payload.connection_type.casefold()
-                            != self.entry_manager.entry_points[
-                                event.payload.name
-                            ].module_name
-                        ):
-                            self.entry_manager.entry_points[event.payload.name].stop()
-
+                self.entry_manager.update_ep_config(
+                    ep_key=event.payload.name,
+                    new_ep_config=event.payload.connection_params,
+                    connection_type=event.payload.connection_type.casefold(),
+                )
             elif event.name == Events.INSTANCE_INITIALIZED.name:
                 beer_garden.local_plugins.manager.lpm_proxy.handle_initialize(event)
             elif event.name == Events.INSTANCE_STOPPED.name:
@@ -270,21 +242,6 @@ class Application(StoppableThread):
 
         self.logger.debug("Creating and starting entry points...")
         self.entry_manager.create_all()
-        for garden in get_gardens(include_local=False):
-            if garden.name != config.get("garden.name") and garden.connection_type:
-                if (
-                    garden.connection_type.casefold() == "stomp"
-                    and garden.name not in self.entry_manager.entry_points
-                ):
-                    connection_params = self.strip_connection_params(
-                        "stomp_", garden.connection_params
-                    )
-                    if "subscribe_destination" in connection_params:
-                        connection_params["send_destination"] = None
-                        self.entry_manager.create(
-                            "stomp", ep_config=connection_params, ep_key=garden.name
-                        )
-
         self.entry_manager.start()
 
         self.logger.debug("Starting local plugin process monitoring...")
@@ -308,14 +265,6 @@ class Application(StoppableThread):
         self.scheduler.initialize_from_db()
 
         self.logger.info("All set! Let me know if you need anything else!")
-
-    @staticmethod
-    def strip_connection_params(term, connection_params):
-        """Strips leading term from connection parameters"""
-        new_connection_params = {}
-        for key in connection_params:
-            new_connection_params[key.replace(term, "")] = connection_params[key]
-        return new_connection_params
 
     def _shutdown(self):
         """Shutdown core requirements for Application"""

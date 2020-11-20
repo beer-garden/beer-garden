@@ -12,6 +12,7 @@ from multiprocessing.queues import Queue
 from types import FrameType
 from typing import Any, Callable
 
+from beer_garden.garden import get_gardens
 import beer_garden
 import beer_garden.config
 import beer_garden.db.api as db
@@ -56,14 +57,14 @@ class EntryPoint:
     """
 
     def __init__(
-        self,
-        name: str,
-        target: Callable,
-        context: SpawnContext,
-        log_queue: Queue,
-        signal_handler: Callable[[int, FrameType], None],
-        event_callback: Callable[[Event], None],
-        ep_config=None,
+            self,
+            name: str,
+            target: Callable,
+            context: SpawnContext,
+            log_queue: Queue,
+            signal_handler: Callable[[int, FrameType], None],
+            event_callback: Callable[[Event], None],
+            ep_config=None,
     ):
         self._name = name
         self._target = target
@@ -145,13 +146,13 @@ class EntryPoint:
 
     @staticmethod
     def _target_wrapper(
-        config: Box,
-        log_queue: Queue,
-        target: Callable,
-        signal_handler: Callable[[int, FrameType], None],
-        ep_conn: Connection,
-        lpm_proxy,
-        ep_config=None,
+            config: Box,
+            log_queue: Queue,
+            target: Callable,
+            signal_handler: Callable[[int, FrameType], None],
+            ep_conn: Connection,
+            lpm_proxy,
+            ep_config=None,
     ) -> Any:
         """Helper method that sets up the process environment before calling `target`
 
@@ -251,6 +252,20 @@ class Manager:
                     )
                 except Exception as ex:
                     logger.exception(f"Error creating entry point {entry_name}: {ex}")
+        for garden in get_gardens(include_local=False):
+            if garden.name != beer_garden.config.get("garden.name") and garden.connection_type:
+                if (
+                        garden.connection_type.casefold() == "stomp"
+                        and garden.name not in self.entry_points
+                ):
+                    connection_params = self.strip_connection_params(
+                        "stomp_", garden.connection_params
+                    )
+                    if "subscribe_destination" in connection_params:
+                        connection_params["send_destination"] = None
+                        self.create(
+                            "stomp", ep_config=connection_params, ep_key=garden.name
+                        )
 
     def create(self, module_name: str, ep_config=None, ep_key=None):
         module = import_module(f"beer_garden.api.{module_name}")
@@ -275,6 +290,14 @@ class Manager:
             event_callback=beer_garden.events.publish,
         )
 
+    @staticmethod
+    def strip_connection_params(term, connection_params):
+        """Strips leading term from connection parameters"""
+        new_connection_params = {}
+        for key in connection_params:
+            new_connection_params[key.replace(term, "")] = connection_params[key]
+        return new_connection_params
+
     def start(self):
         self.log_reader.start()
 
@@ -287,14 +310,38 @@ class Manager:
     def start_one(self, ep_key):
         self.entry_points[ep_key].start()
 
-    def update_ep_config(self, ep_key=None, new_ep_config=None):
-        if self.entry_points[ep_key].ep_config_diff(new_ep_config):
-            self.entry_points[ep_key].stop(closeCommunicationPipes=True)
-            self.entry_points[ep_key].ep_config = new_ep_config
-            self.create(
-                self.entry_points[ep_key]._name, ep_config=new_ep_config, ep_key=ep_key
+    def remove(self, ep_key):
+        self.stop_one(ep_key)
+        del self.entry_points[ep_key]
+
+    def update_ep_config(self, ep_key=None, new_ep_config=None, connection_type=None):
+        if connection_type == "stomp":
+            new_ep_config = self.strip_connection_params(
+                "stomp_", new_ep_config
             )
-            self.entry_points[ep_key].start()
+            new_ep_config["send_destination"] = None
+            if ep_key in self.entry_points:
+                if self.entry_points[ep_key].ep_config_diff(new_ep_config):
+                    self.stop_one(ep_key)
+                    module_name = self.entry_points[ep_key]._name
+                    self.remove(ep_key)
+                    self.create(
+                        module_name, ep_config=new_ep_config, ep_key=ep_key
+                    )
+                    self.entry_points[ep_key].start()
+            elif "subscribe_destination" in new_ep_config:
+                self.create(
+                    "stomp",
+                    ep_config=self.strip_connection_params(
+                        "stomp_", new_ep_config
+                    ),
+                    ep_key=ep_key,
+                )
+                self.entry_points[ep_key].start()
+        else:
+            if ep_key in self.entry_points:
+                if connection_type != self.entry_points[ep_key]._name:
+                    self.remove(ep_key)
 
     def stop(self):
         self.log_reader.stop()
