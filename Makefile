@@ -76,3 +76,6 @@ publish-docker: ## push the docker image
 publish-docker-unstable: ## push the unstable docker image
 	$(MAKE) -C $(APP_DIR) publish-docker-unstable
 	$(MAKE) -C $(UI_DIR) deps publish-docker-unstable
+
+publish-rpm: ## publish the rpm
+	rpm/bin/upload.sh $(VERSION)
