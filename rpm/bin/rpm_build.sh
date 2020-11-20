@@ -89,8 +89,7 @@ install_apps() {
                 "$SRC_PATH/brewtils/dist/brewtils-$brewtils_version.tar.gz" \
                 "$SRC_PATH/app/dist/beer-garden-$app_version.tar.gz"
     else
-        # If this isn't a local install we don't have versions
-        $PIP_BIN install --upgrade -q beer-garden
+        $PIP_BIN install --upgrade --quiet beer-garden==${VERSION}
     fi
 
     mkdir -p "$UI_PATH"
