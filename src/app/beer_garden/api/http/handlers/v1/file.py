@@ -110,7 +110,7 @@ class FileAPI(BaseHandler):
         response = await self.client(
             Operation(
                 operation_type="FILE_CHUNK",
-                args=[file_id, offset, b64decode(data).decode("utf-8")],
+                args=[file_id, offset, data],
                 kwargs={"upsert": upsert},
             )
         )

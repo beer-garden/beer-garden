@@ -144,7 +144,7 @@ def check_chunks(file_id: str):
     return res
 
 
-def _save_chunk(file_id: str, offset: int = None, upsert: bool = False, **kwargs):
+def _save_chunk(file_id: str, offset: int = None, upsert: bool = False, data: str = None, **kwargs):
     """
     Saves the provided chunk data to the DB and updates
     the parent document with the chunk id.
@@ -157,8 +157,18 @@ def _save_chunk(file_id: str, offset: int = None, upsert: bool = False, **kwargs
     Raises:
         NotFoundError: Raised when a file with the requested ID doesn't exist and is expected to.
     """
+    if len(data) > MAX_CHUNK_SIZE:
+        return FileStatus(
+            operation_complete=False,
+            message=f"Chunk data length exceeds the maximum allowable length of {MAX_CHUNK_SIZE}.",
+            file_id=file_id,
+            offset=offset,
+            data=data,
+            **kwargs
+        )
+
     file = check_file(file_id, upsert=upsert)
-    chunk = FileChunk(file_id=file.id, offset=offset, **kwargs)
+    chunk = FileChunk(file_id=file.id, offset=offset, data=data, **kwargs)
     c = db.create(chunk)
     # This is starting to get DB-specific, but we want to be sure this is an atomic operation.
     modify = {f"set__chunks__{offset}": c.id}
