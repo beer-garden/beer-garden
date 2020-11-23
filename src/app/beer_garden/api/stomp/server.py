@@ -104,11 +104,11 @@ class Connection:
             host_and_ports=host_and_ports, heartbeats=(10000, 0)
         )
         if ssl:
-            if ssl.use_ssl:
+            if ssl.get('use_ssl'):
                 self.conn.set_ssl(
                     for_hosts=host_and_ports,
-                    key_file=ssl.private_key,
-                    cert_file=ssl.cert_file,
+                    key_file=ssl.get('private_key'),
+                    cert_file=ssl.get('cert_file'),
                 )
         if subscribe_destination:
             self.conn.set_listener("", OperationListener(self.conn, send_destination))

@@ -57,14 +57,14 @@ class EntryPoint:
     """
 
     def __init__(
-            self,
-            name: str,
-            target: Callable,
-            context: SpawnContext,
-            log_queue: Queue,
-            signal_handler: Callable[[int, FrameType], None],
-            event_callback: Callable[[Event], None],
-            ep_config=None,
+        self,
+        name: str,
+        target: Callable,
+        context: SpawnContext,
+        log_queue: Queue,
+        signal_handler: Callable[[int, FrameType], None],
+        event_callback: Callable[[Event], None],
+        ep_config=None,
     ):
         self._name = name
         self._target = target
@@ -146,13 +146,13 @@ class EntryPoint:
 
     @staticmethod
     def _target_wrapper(
-            config: Box,
-            log_queue: Queue,
-            target: Callable,
-            signal_handler: Callable[[int, FrameType], None],
-            ep_conn: Connection,
-            lpm_proxy,
-            ep_config=None,
+        config: Box,
+        log_queue: Queue,
+        target: Callable,
+        signal_handler: Callable[[int, FrameType], None],
+        ep_conn: Connection,
+        lpm_proxy,
+        ep_config=None,
     ) -> Any:
         """Helper method that sets up the process environment before calling `target`
 
@@ -253,10 +253,13 @@ class Manager:
                 except Exception as ex:
                     logger.exception(f"Error creating entry point {entry_name}: {ex}")
         for garden in get_gardens(include_local=False):
-            if garden.name != beer_garden.config.get("garden.name") and garden.connection_type:
+            if (
+                garden.name != beer_garden.config.get("garden.name")
+                and garden.connection_type
+            ):
                 if (
-                        garden.connection_type.casefold() == "stomp"
-                        and garden.name not in self.entry_points
+                    garden.connection_type.casefold() == "stomp"
+                    and garden.name not in self.entry_points
                 ):
                     connection_params = self.strip_connection_params(
                         "stomp_", garden.connection_params
@@ -293,9 +296,12 @@ class Manager:
     @staticmethod
     def strip_connection_params(term, connection_params):
         """Strips leading term from connection parameters"""
-        new_connection_params = {}
+        new_connection_params = {'ssl': {}}
         for key in connection_params:
-            new_connection_params[key.replace(term, "")] = connection_params[key]
+            if 'ssl' in key:
+                new_connection_params['ssl'][key.replace(term+'ssl_', "")] = connection_params[key]
+            else:
+                new_connection_params[key.replace(term, "")] = connection_params[key]
         return new_connection_params
 
     def start(self):
@@ -316,25 +322,19 @@ class Manager:
 
     def update_ep_config(self, ep_key=None, new_ep_config=None, connection_type=None):
         if connection_type == "stomp":
-            new_ep_config = self.strip_connection_params(
-                "stomp_", new_ep_config
-            )
+            new_ep_config = self.strip_connection_params("stomp_", new_ep_config)
             new_ep_config["send_destination"] = None
             if ep_key in self.entry_points:
                 if self.entry_points[ep_key].ep_config_diff(new_ep_config):
                     self.stop_one(ep_key)
                     module_name = self.entry_points[ep_key]._name
                     self.remove(ep_key)
-                    self.create(
-                        module_name, ep_config=new_ep_config, ep_key=ep_key
-                    )
+                    self.create(module_name, ep_config=new_ep_config, ep_key=ep_key)
                     self.entry_points[ep_key].start()
             elif "subscribe_destination" in new_ep_config:
                 self.create(
                     "stomp",
-                    ep_config=self.strip_connection_params(
-                        "stomp_", new_ep_config
-                    ),
+                    ep_config=self.strip_connection_params("stomp_", new_ep_config),
                     ep_key=ep_key,
                 )
                 self.entry_points[ep_key].start()

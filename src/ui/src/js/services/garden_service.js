@@ -140,7 +140,7 @@ export default function gardenService($http) {
                     'title': 'Subscribe Destination',
                     'description': 'Destination queue where Stomp will listen for messages.',
                     'type': 'string',
-            },
+      },
       'stomp_username': {
                     'title': 'Username',
                     'description': 'Username for Stomp connection.',
@@ -150,6 +150,31 @@ export default function gardenService($http) {
                     'title': 'Password',
                     'description': 'Password for Stomp connection.',
                     'type': 'string',
+      },
+      'stomp_ssl_use_ssl': {
+                    'title': 'SSL Enabled',
+                    'description': 'Whether to connect with provided certifications',
+                    'type': 'boolean',
+      },
+      'stomp_ssl_cert_file': {
+                    'title': 'Cert File Path',
+                    'description': 'Whether to connect with provided certifications',
+                    'type': 'string',
+      },
+      'stomp_ssl_private_key': {
+                    'title': 'Private key Path',
+                    'description': 'Whether to connect with provided certifications',
+                    'type': 'string',
+      },
+      'stomp_ssl_verify_host': {
+                    'title': 'Verify Host',
+                    'description': 'Whether to connect with provided certifications',
+                    'type': 'boolean',
+      },
+      'stomp_ssl_verify_hostname': {
+                    'title': 'Verify Hostname',
+                    'description': 'Whether to connect with provided certifications',
+                    'type': 'boolean',
       },
     },
 
@@ -188,7 +213,12 @@ export default function gardenService($http) {
                 'stomp_send_destination',
                 'stomp_subscribe_destination',
                 'stomp_username',
-                'stomp_password'
+                'stomp_password',
+                'stomp_ssl_use_ssl',
+                'stomp_ssl_cert_file',
+                'stomp_ssl_private_key',
+                'stomp_ssl_verify_host',
+                'stomp_ssl_verify_hostname',
               ],
             },
           ],
