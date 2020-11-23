@@ -318,7 +318,15 @@ def setup_stomp(garden):
     host_and_ports = [
         (garden.connection_params["stomp_host"], garden.connection_params["stomp_port"])
     ]
-    return stomp.Connection(host_and_ports=host_and_ports)
+    conn = stomp.Connection(host_and_ports=host_and_ports)
+    if garden.connection_params['stomp_ssl_use_ssl']:
+        conn.set_ssl(
+            for_hosts=host_and_ports,
+            key_file=garden.connection_params['stomp_ssl_private_key'],
+            cert_file=garden.connection_params['stomp_ssl_cert_file'],
+        )
+
+    return conn
 
 
 def setup_routing():
