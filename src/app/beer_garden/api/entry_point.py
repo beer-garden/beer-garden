@@ -296,10 +296,12 @@ class Manager:
     @staticmethod
     def strip_connection_params(term, connection_params):
         """Strips leading term from connection parameters"""
-        new_connection_params = {'ssl': {}}
+        new_connection_params = {"ssl": {}}
         for key in connection_params:
-            if 'ssl' in key:
-                new_connection_params['ssl'][key.replace(term+'ssl_', "")] = connection_params[key]
+            if "ssl" in key:
+                new_connection_params["ssl"][
+                    key.replace(term + "ssl_", "")
+                ] = connection_params[key]
             else:
                 new_connection_params[key.replace(term, "")] = connection_params[key]
         return new_connection_params

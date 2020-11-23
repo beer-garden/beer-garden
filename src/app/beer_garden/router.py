@@ -319,11 +319,11 @@ def setup_stomp(garden):
         (garden.connection_params["stomp_host"], garden.connection_params["stomp_port"])
     ]
     conn = stomp.Connection(host_and_ports=host_and_ports)
-    if garden.connection_params['stomp_ssl_use_ssl']:
+    if garden.connection_params["stomp_ssl_use_ssl"]:
         conn.set_ssl(
             for_hosts=host_and_ports,
-            key_file=garden.connection_params['stomp_ssl_private_key'],
-            cert_file=garden.connection_params['stomp_ssl_cert_file'],
+            key_file=garden.connection_params["stomp_ssl_private_key"],
+            cert_file=garden.connection_params["stomp_ssl_cert_file"],
         )
 
     return conn

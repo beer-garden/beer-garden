@@ -1008,13 +1008,13 @@ _PARENT_SPEC = {
                         "verify_host": {
                             "type": "bool",
                             "description": "Verify the server's certificate "
-                                           "was signed by a trusted CA'",
+                            "was signed by a trusted CA'",
                             "default": True,
                         },
                         "verify_hostname": {
                             "type": "bool",
                             "description": "Verify the server's actual "
-                                           "host name against the expected name'",
+                            "host name against the expected name'",
                             "default": True,
                         },
                     },
