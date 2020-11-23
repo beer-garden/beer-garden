@@ -414,7 +414,6 @@ def delete_file(file_id: str):
 
 
 def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
-
     """
     Sets the owner field of the file.  This is used for DB pruning.
 
@@ -453,6 +452,7 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
 
 
 def set_owner_for_files(owner_id, owner_type, parameters):
+    """ Scans the parameters for file ids, and sets ownership metadata."""
     for id in _check_file_ids(parameters):
         router.route(
             Operation(
@@ -494,6 +494,39 @@ def _check_file_ids(parameter, ids=[]):
             except IndexError:
                 pass
     return ids
+
+
+def forward_file(operation: Operation):
+    """ Send file data before forwarding an operation with a file parameter. """
+    ids = _check_file_ids(operation.model.parameters)
+    for id in ids:
+        file = check_chunks(id)
+        args = [file.file_name, file.file_size, file.chunk_size, file.id]
+        kwargs = {"upsert": True}
+        file_op = Operation(
+            operation_type="FILE_CREATE",
+            args=args,
+            kwargs=kwargs,
+            target_garden_name=operation.target_garden_name,
+            source_garden_name=operation.source_garden_name,
+        )
+        # This should put push the file operations before the current one
+        beer_garden.router.forward_processor.put(file_op)
+
+        for chunk_id in file.chunks.values():
+            chunk = check_chunk(chunk_id)
+            c_args = [chunk.file_id, chunk.offset, chunk.data]
+            # Will create a placeholder file object if chunk is received before file
+            c_kwargs = {"upsert": True}
+            chunk_op = Operation(
+                operation_type="FILE_CHUNK",
+                args=c_args,
+                kwargs=c_kwargs,
+                target_garden_name=operation.target_garden_name,
+                source_garden_name=operation.source_garden_name,
+            )
+            # This should put push the file operations before the current one
+            beer_garden.router.forward_processor.put(chunk_op)
 
 
 def handle_event(event):

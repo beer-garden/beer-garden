@@ -404,37 +404,6 @@ def _pre_route(operation: Operation) -> Operation:
     return operation
 
 
-def _forward_file(operation: Operation):
-    """ Called to send file data before forwarding a request with a file parameter. """
-    ids = beer_garden.files._check_file_ids(operation.model.parameters)
-    for id in ids:
-        file = beer_garden.files.check_chunks(id)
-        args = [file.file_name, file.file_size, file.chunk_size, file.id]
-        kwargs = {"upsert": True}
-        file_op = Operation(
-            operation_type="FILE_CREATE",
-            args=args,
-            kwargs=kwargs,
-            target_garden_name=operation.target_garden_name,
-            source_garden_name=operation.source_garden_name,
-        )
-        forward_processor.put(file_op)
-
-        for chunk_id in file.chunks.values():
-            chunk = beer_garden.files.check_chunk(chunk_id)
-            c_args = [chunk.file_id, chunk.offset, chunk.data]
-            # Will create a placeholder file object if chunk is received before file
-            c_kwargs = {"upsert": True}
-            chunk_op = Operation(
-                operation_type="FILE_CHUNK",
-                args=c_args,
-                kwargs=c_kwargs,
-                target_garden_name=operation.target_garden_name,
-                source_garden_name=operation.source_garden_name,
-            )
-            forward_processor.put(chunk_op)
-
-
 # TODO - After this is called, if one of the params is a file, ship it down range too.
 def _pre_forward(operation: Operation) -> Operation:
     """Called before forwarding an operation"""
@@ -465,7 +434,7 @@ def _pre_forward(operation: Operation) -> Operation:
         if wait_event:
             beer_garden.requests.request_map[operation.model.id] = wait_event
 
-        _forward_file(operation)
+        beer_garden.files.forward_file(operation)
 
     return operation
 

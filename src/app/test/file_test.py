@@ -277,11 +277,9 @@ class TestFileOperations(object):
             simple_file,
             custom_owner,
         ])
-        print(f"~~~~~~~~~~~~~~~~~~~~Trying to return {simple_file.__dict__}, {custom_owner.__dict__}")
         file_metadata = files.set_owner(
                 file_id, owner_type=custom_owner.owner_type, owner_id=custom_owner.owner_id
             )
-        print(f"~~~~~~~{file_metadata}")
         assert file_metadata.owner_type == custom_owner.owner_type
         assert file_metadata.owner_id == custom_owner.owner_id
 
