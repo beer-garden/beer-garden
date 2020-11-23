@@ -390,7 +390,7 @@ def fetch_file(file_id: str, chunk: int = None, verify: bool = False):
         return _fetch_file(file_id)
 
 
-def create_chunk(file_id: str, offset: int, data: str, upsert: bool = False):
+def create_chunk(file_id: str, offset: int, data: str, upsert: bool = False, **kwargs):
     """
     Creates a chunk associated with a file.
 
@@ -400,7 +400,7 @@ def create_chunk(file_id: str, offset: int, data: str, upsert: bool = False):
         data: The chunk's data.
         upsert: Flag to create a top-level file document if one doesn't exist.
     """
-    return _save_chunk(file_id, offset=offset, data=data, upsert=upsert)
+    return _save_chunk(file_id, offset=offset, data=data, upsert=upsert, **kwargs)
 
 
 def delete_file(file_id: str):
@@ -501,8 +501,12 @@ def forward_file(operation: Operation):
     ids = _check_file_ids(operation.model.parameters)
     for id in ids:
         file = check_chunks(id)
-        args = [file.file_name, file.file_size, file.chunk_size, file.id]
-        kwargs = {"upsert": True}
+        args = [file.file_name, file.file_size, file.chunk_size]
+        # Make sure we get all of the other data
+        kwargs = dict(
+            {"file_id": file.id, "upsert": True},
+            **_unroll_object(file, ignore=['file_name', 'file_size', 'chunk_size', 'id']),
+        )
         file_op = Operation(
             operation_type="FILE_CREATE",
             args=args,
@@ -516,8 +520,11 @@ def forward_file(operation: Operation):
         for chunk_id in file.chunks.values():
             chunk = check_chunk(chunk_id)
             c_args = [chunk.file_id, chunk.offset, chunk.data]
-            # Will create a placeholder file object if chunk is received before file
-            c_kwargs = {"upsert": True}
+            # Just in case there's more data other than the owner later on.
+            c_kwargs = dict(
+                {"id": chunk.id, "upsert": True},
+                **_unroll_object(chunk, ignore=['file_id', 'offset', 'data', 'id']),
+            )
             chunk_op = Operation(
                 operation_type="FILE_CHUNK",
                 args=c_args,
