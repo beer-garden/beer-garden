@@ -17,7 +17,6 @@ The router service is responsible for:
 import asyncio
 import logging
 import threading
-import six
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
 from typing import Dict, Optional, Union

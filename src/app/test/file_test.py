@@ -4,7 +4,6 @@ from random import choice
 from mock import Mock
 from bson import ObjectId
 
-import beer_garden
 import beer_garden.files as files
 import beer_garden.db.api as db
 from beer_garden.errors import NotUniqueException
@@ -26,26 +25,22 @@ class TestFileOperations(object):
     def simple_file(self, simple_data):
         return File(
             file_name="my_test_data.txt",
-            file_size=len(simple_data)*4,
+            file_size=len(simple_data) * 4,
             chunk_size=len(simple_data),
             id=str(ObjectId()),
             owner_type=None,
             owner_id=None,
             chunks={
-                '0': str(ObjectId()),
-                '1': str(ObjectId()),
-                '2': str(ObjectId()),
-                '3': str(ObjectId()),
-            }
+                "0": str(ObjectId()),
+                "1": str(ObjectId()),
+                "2": str(ObjectId()),
+                "3": str(ObjectId()),
+            },
         )
 
     @pytest.fixture
     def simple_file_chunk(self, simple_file, simple_data):
-        return FileChunk(
-            id=str(ObjectId()),
-            file_id=simple_file.id,
-            data=simple_data
-        )
+        return FileChunk(id=str(ObjectId()), file_id=simple_file.id, data=simple_data)
 
     @pytest.fixture
     def storage_create_kwargs(self):
@@ -55,47 +50,51 @@ class TestFileOperations(object):
     def modified_file(self, simple_file):
         return File(
             file_name="another_file_name.txt",
-            file_size=1024*1024,
+            file_size=1024 * 1024,
             chunk_size=1024,
             id=simple_file.id,
         )
 
-    def test_file_create(self, monkeypatch, simple_file, modified_file, simple_file_chunk):
+    def test_file_create(
+        self, monkeypatch, simple_file, modified_file, simple_file_chunk
+    ):
         query_mock = Mock()
         monkeypatch.setattr(db, "query_unique", query_mock)
         create_mock = Mock()
         monkeypatch.setattr(db, "create", create_mock)
         monkeypatch.setattr(db, "modify", Mock(return_value=None))
 
-        create_mock.side_effect = iter([
-            simple_file,
-        ])
+        create_mock.side_effect = iter(
+            [
+                simple_file,
+            ]
+        )
         file_status = files.create_file(
             simple_file.file_name, simple_file.file_size, simple_file.chunk_size
         )
         assert simple_file.id in file_status.file_id
 
         # Exercising the upsert flag logic
-        create_mock.side_effect = iter([
-            NotUniqueException(),
-        ])
+        create_mock.side_effect = iter(
+            [
+                NotUniqueException(),
+            ]
+        )
         try:
-            # Attempting to create a file with a reserved id and no upsert flag should always throw an error
+            # Attempting to create a file with a reserved id and
+            # no upsert flag should always throw an error
             files.create_file(
                 simple_file.file_name,
                 simple_file.file_size,
                 simple_file.chunk_size,
                 file_id=simple_file.id,
             )
-            assert False
+            raise AssertionError()
         except NotUniqueException:
             pass
 
         # Using the upsert flag should allow us to update some of the metadata
-        query_mock.side_effect = iter([
-            simple_file,
-            modified_file
-        ])
+        query_mock.side_effect = iter([simple_file, modified_file])
         try:
             files.create_file(
                 modified_file.file_name,
@@ -105,73 +104,73 @@ class TestFileOperations(object):
                 upsert=True,
             )
         except NotUniqueException:
-            assert False
+            raise AssertionError()
 
         # Testing the max chunk size check
         try:
             # Making chunk sizes too big to fit in the DB should be blocked
             files.create_file(
                 modified_file.file_name,
-                modified_file.file_size*1024*1024,
-                modified_file.chunk_size*1024*1024,
+                modified_file.file_size * 1024 * 1024,
+                modified_file.chunk_size * 1024 * 1024,
                 file_id=str(ObjectId()),
             )
-            assert False
+            raise AssertionError()
         except ValueError:
             pass
 
         # Testing chunk creation with upsert
         for x in range(len(simple_file.chunks)):
-            query_mock.side_effect = iter([
-                simple_file,
-                simple_file
-            ])
-            create_mock.side_effect = iter([
-                simple_file_chunk,
-            ])
+            query_mock.side_effect = iter([simple_file, simple_file])
+            create_mock.side_effect = iter(
+                [
+                    simple_file_chunk,
+                ]
+            )
             files.create_chunk(simple_file.id, x, simple_file_chunk.data, upsert=True)
 
         # Fill out the metadata now
-        query_mock.side_effect = iter([
-            simple_file,
-            modified_file
-        ])
-        create_mock.side_effect = iter([
-            simple_file_chunk,
-        ])
-        assert (
-            files.create_file(
-                modified_file.file_name,
-                modified_file.file_size,
-                modified_file.chunk_size,
-                modified_file.id,
-                upsert=True,
-            ).operation_complete
+        query_mock.side_effect = iter([simple_file, modified_file])
+        create_mock.side_effect = iter(
+            [
+                simple_file_chunk,
+            ]
         )
+        assert files.create_file(
+            modified_file.file_name,
+            modified_file.file_size,
+            modified_file.chunk_size,
+            modified_file.id,
+            upsert=True,
+        ).operation_complete
 
     def test_file_fetch(self, monkeypatch, simple_file, simple_file_chunk):
         query_mock = Mock()
         monkeypatch.setattr(db, "query_unique", query_mock)
 
         # Read the data in its entirety
-        query_mock.side_effect = iter([
-            simple_file,
-            simple_file,
-            simple_file_chunk,
-            simple_file_chunk,
-            simple_file_chunk,
-            simple_file_chunk,
-        ])
+        query_mock.side_effect = iter(
+            [
+                simple_file,
+                simple_file,
+                simple_file_chunk,
+                simple_file_chunk,
+                simple_file_chunk,
+                simple_file_chunk,
+            ]
+        )
         meta = files.fetch_file(simple_file.id)
         assert meta.data == simple_file_chunk.data * len(simple_file.chunks)
 
         # Read the data chunk by chunk
         my_data = ""
         for x in range(len(simple_file.chunks)):
-            query_mock.side_effect = iter([
-                simple_file,
-                simple_file_chunk,
-            ])
+            query_mock.side_effect = iter(
+                [
+                    simple_file,
+                    simple_file_chunk,
+                ]
+            )
             my_data += (files.fetch_file(simple_file.id, chunk=x)).data
         assert my_data == simple_file_chunk.data * len(simple_file.chunks)
 
@@ -186,9 +185,7 @@ class TestFileOperations(object):
             pass
 
         # Checking id correctness
-        query_mock.side_effect = iter([
-            None
-        ])
+        query_mock.side_effect = iter([None])
         try:
             files.delete_file("ffffeeeeddddccccbbbbaaaa")
         except NotFoundError:
@@ -256,9 +253,17 @@ class TestFileOperations(object):
             owner_id=simple_job.id,
         )
 
-    def test_file_owner(self, monkeypatch, simple_data, simple_file,
-                        custom_owner, req_owner, job_owner, simple_request, simple_job
-                        ):
+    def test_file_owner(
+        self,
+        monkeypatch,
+        simple_data,
+        simple_file,
+        custom_owner,
+        req_owner,
+        job_owner,
+        simple_request,
+        simple_job,
+    ):
         monkeypatch.setattr(db, "modify", Mock(return_value=None))
         monkeypatch.setattr(db, "create", Mock(return_value=simple_file))
         query_mock = Mock()
@@ -273,41 +278,53 @@ class TestFileOperations(object):
         assert file_id is not None
 
         # Lowest ownership priority
-        query_mock.side_effect = iter([
-            simple_file,
-            custom_owner,
-        ])
+        query_mock.side_effect = iter(
+            [
+                simple_file,
+                custom_owner,
+            ]
+        )
         file_metadata = files.set_owner(
-                file_id, owner_type=custom_owner.owner_type, owner_id=custom_owner.owner_id
-            )
+            file_id, owner_type=custom_owner.owner_type, owner_id=custom_owner.owner_id
+        )
         assert file_metadata.owner_type == custom_owner.owner_type
         assert file_metadata.owner_id == custom_owner.owner_id
 
         # Next lowest ownership priority
-        query_mock.side_effect = iter([
-            custom_owner,
-            simple_request,
-            req_owner,
-        ])
-        file_metadata = files.set_owner(file_id, owner_type="REQUEST", owner_id=simple_request.id)
+        query_mock.side_effect = iter(
+            [
+                custom_owner,
+                simple_request,
+                req_owner,
+            ]
+        )
+        file_metadata = files.set_owner(
+            file_id, owner_type="REQUEST", owner_id=simple_request.id
+        )
         assert file_metadata.owner_type == "REQUEST"
         assert file_metadata.owner_id == simple_request.id
 
         # Highest ownership priority
-        query_mock.side_effect = iter([
-            req_owner,
-            simple_job,
-            job_owner,
-        ])
-        file_metadata = files.set_owner(file_id, owner_type="JOB", owner_id=simple_job.id)
+        query_mock.side_effect = iter(
+            [
+                req_owner,
+                simple_job,
+                job_owner,
+            ]
+        )
+        file_metadata = files.set_owner(
+            file_id, owner_type="JOB", owner_id=simple_job.id
+        )
         assert file_metadata.owner_type == "JOB"
         assert file_metadata.owner_id == simple_job.id
 
         # Make sure lower priority owners can't overwrite the field
-        query_mock.side_effect = iter([
-            job_owner,
-            job_owner,
-        ])
+        query_mock.side_effect = iter(
+            [
+                job_owner,
+                job_owner,
+            ]
+        )
         assert not (
             files.set_owner(file_id, owner_type="REQUEST", owner_id=simple_request.id)
         ).operation_complete

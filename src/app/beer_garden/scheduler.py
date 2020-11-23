@@ -25,10 +25,9 @@ from watchdog.utils import has_attribute, unicode_paths
 from pathtools.patterns import match_any_paths
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from brewtils.models import Event, Events, Job, Operation
+from brewtils.models import Event, Events, Job
 
 import beer_garden
-import beer_garden.router as router
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.events import publish_event
@@ -592,7 +591,7 @@ def handle_event(event: Event) -> None:
                     jobstore="beer_garden",
                     replace_existing=False,
                 )
-            except Exception as ex:
+            except Exception:
                 db.delete(event.payload)
                 raise
 

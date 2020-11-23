@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from base64 import b64decode
 
 import tornado.web
 
