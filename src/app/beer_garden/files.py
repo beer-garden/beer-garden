@@ -505,7 +505,9 @@ def forward_file(operation: Operation):
         # Make sure we get all of the other data
         kwargs = dict(
             {"file_id": file.id, "upsert": True},
-            **_unroll_object(file, ignore=['file_name', 'file_size', 'chunk_size', 'id']),
+            # Created_at is a datetime field that can't be serialized, and owner
+            # is a LazyReference field that causes crashing when being pushed forward.
+            **_unroll_object(file, ignore=['file_name', 'file_size', 'chunk_size', 'id', 'created_at', 'owner']),
         )
         file_op = Operation(
             operation_type="FILE_CREATE",
@@ -515,15 +517,16 @@ def forward_file(operation: Operation):
             source_garden_name=operation.source_garden_name,
         )
         # This should put push the file operations before the current one
-        beer_garden.router.forward_processor.put(file_op)
+        router.forward_processor.put(file_op)
 
         for chunk_id in file.chunks.values():
             chunk = check_chunk(chunk_id)
             c_args = [chunk.file_id, chunk.offset, chunk.data]
-            # Just in case there's more data other than the owner later on.
+            # Just in case there's more data to include.
             c_kwargs = dict(
-                {"id": chunk.id, "upsert": True},
-                **_unroll_object(chunk, ignore=['file_id', 'offset', 'data', 'id']),
+                {"upsert": True},
+                # Owner is a LazyReference field that causes crashing when being pushed forward.
+                **_unroll_object(chunk, ignore=['file_id', 'offset', 'data', 'owner']),
             )
             chunk_op = Operation(
                 operation_type="FILE_CHUNK",
@@ -533,7 +536,7 @@ def forward_file(operation: Operation):
                 source_garden_name=operation.source_garden_name,
             )
             # This should put push the file operations before the current one
-            beer_garden.router.forward_processor.put(chunk_op)
+            router.forward_processor.put(chunk_op)
 
 
 def handle_event(event):
