@@ -158,22 +158,22 @@ export default function gardenService($http) {
       },
       'stomp_ssl_cert_file': {
                     'title': 'Cert File Path',
-                    'description': 'Whether to connect with provided certifications',
+                    'description': 'Path to client certificate to use when communicating with Beer-garden',
                     'type': 'string',
       },
       'stomp_ssl_private_key': {
                     'title': 'Private key Path',
-                    'description': 'Whether to connect with provided certifications',
+                    'description': 'Path to client key to use when communicating with Beer-garden',
                     'type': 'string',
       },
       'stomp_ssl_verify_host': {
                     'title': 'Verify Host',
-                    'description': 'Whether to connect with provided certifications',
+                    'description': 'Whether to verify Host',
                     'type': 'boolean',
       },
       'stomp_ssl_verify_hostname': {
                     'title': 'Verify Hostname',
-                    'description': 'Whether to connect with provided certifications',
+                    'description': 'Whether to verify Hostname',
                     'type': 'boolean',
       },
     },
