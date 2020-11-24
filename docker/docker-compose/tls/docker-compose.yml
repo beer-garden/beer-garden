@@ -21,7 +21,7 @@ x-definitions: &env
     BG_PUBLISH_HOSTNAME: localhost
 
     # IMPORTANT!!
-    # If you are connection to a Parent BG instance, toggle true
+    # If you are connecting to a Parent BG instance, toggle true
     BG_PARENT_HTTP_ENABLE: "false"
 
     # IMPORTANT !!
@@ -30,7 +30,7 @@ x-definitions: &env
 
 services:
     ui:
-        image: bgio/ui:unstable
+        image: bgio/ui:3
         networks:
             - bg-network
         volumes:
@@ -45,7 +45,7 @@ services:
             - beer-garden
 
     beer-garden:
-        image: bgio/beer-garden:unstable
+        image: bgio/beer-garden:3
         networks:
             - bg-network
         ports:
