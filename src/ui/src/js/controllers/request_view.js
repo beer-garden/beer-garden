@@ -13,6 +13,7 @@ requestViewController.$inject = [
   'RequestService',
   'SystemService',
   'EventService',
+  'NamespaceService',
 ];
 
 /**
@@ -38,7 +39,8 @@ export default function requestViewController(
     localStorageService,
     RequestService,
     SystemService,
-    EventService) {
+    EventService,
+    NamespaceService) {
 
   $scope.request = undefined;
   $scope.complete = false;
@@ -171,7 +173,11 @@ export default function requestViewController(
   $scope.successCallback = function(request) {
     $scope.request = request;
     $scope.filename = $scope.request.id;
-    let request_system = SystemService.findSystem($scope.request.namespace, $scope.request.system,
+    let namespace = $scope.request.namespace
+    if (namespace == null || namespace == undefined){
+        namespace = $scope.config.gardenName
+    }
+    let request_system = SystemService.findSystem(namespace, $scope.request.system,
                          $scope.request.system_version);
     if (request_system != undefined) {
         let commands = request_system.commands;
