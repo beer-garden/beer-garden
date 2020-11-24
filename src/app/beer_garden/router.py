@@ -1,4 +1,19 @@
 # -*- coding: utf-8 -*-
+"""Router Service
+
+The router service is the core of all Entry Points. This provides a single standard that
+all entry points can follow in order to interact with Beer Garden Services. Allowing
+for the decouple of Entry Points to Services
+
+The router service is responsible for:
+* Mapping all Operation Types to Service functions
+* Validating the target Garden execution environment
+* Forwarding Operations to Downstream Gardens
+* Execute any pre-forwarding operations required
+* Managing Downstream Garden connections
+* Caching `Garden`/`System` information for quick routing decisions
+"""
+
 import asyncio
 import logging
 import threading
@@ -15,7 +30,6 @@ import beer_garden
 import beer_garden.commands
 import beer_garden.config as config
 import beer_garden.db.api as db
-import beer_garden.db.mongo.motor as moto
 import beer_garden.garden
 import beer_garden.log
 import beer_garden.namespace
@@ -73,24 +87,28 @@ def route_garden_sync(target_garden_name: str = None):
         # Iterate over all gardens and forward the sync request
         with garden_lock:
             for garden in gardens.values():
-                if garden.name == config.get("garden.name"):
-                    beer_garden.garden.publish_garden()
-                else:
+                if garden.name != config.get("garden.name"):
                     forward(
                         Operation(
                             operation_type="GARDEN_SYNC", target_garden_name=garden.name
                         )
                     )
+        beer_garden.garden.publish_garden()
 
 
+# "Real" async function (async def)
 async_functions = {
     "INSTANCE_UPDATE": beer_garden.plugin.update_async,
     "INSTANCE_HEARTBEAT": beer_garden.plugin.heartbeat_async,
-    # THIS IS NOT AN ASYNC FUNCTION
-    # This is gross, but we're punting on this for now and just running in an executor
-    # Validating a request with a command-based choices parameter is going to require
-    # a lot of effort to make async correctly
+}
+
+# Fake async functions that need to be run in an executor when in an async context.
+# These are things that require another operation (and so would deadlock without special
+# handling) or that would block the event loop for too long.
+executor_functions = {
     "REQUEST_CREATE": beer_garden.requests.process_request,
+    "INSTANCE_STOP": beer_garden.plugin.stop,
+    "SYSTEM_DELETE": beer_garden.systems.purge_system,
 }
 
 route_functions = {
@@ -188,20 +206,27 @@ def execute_local(operation: Operation):
     """
     operation = _pre_execute(operation)
 
-    if moto.motor_db and operation.operation_type in async_functions:
+    # Default to "normal"
+    lookup = route_functions
+
+    loop = None
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        pass
+
+    if loop and operation.operation_type in async_functions:
         lookup = async_functions
 
-        if operation.operation_type == "REQUEST_CREATE":
-            return asyncio.get_event_loop().run_in_executor(
-                t_pool,
-                partial(
-                    lookup[operation.operation_type],
-                    *operation.args,
-                    **operation.kwargs,
-                ),
-            )
-    else:
-        lookup = route_functions
+    elif loop and operation.operation_type in executor_functions:
+        return asyncio.get_event_loop().run_in_executor(
+            t_pool,
+            partial(
+                executor_functions[operation.operation_type],
+                *operation.args,
+                **operation.kwargs,
+            ),
+        )
 
     return lookup[operation.operation_type](*operation.args, **operation.kwargs)
 
@@ -364,6 +389,10 @@ def _pre_route(operation: Operation) -> Operation:
     if operation.operation_type == "REQUEST_CREATE":
         if operation.model.namespace is None:
             operation.model.namespace = config.get("garden.name")
+
+    elif operation.operation_type == "SYSTEM_READ_ALL":
+        if operation.kwargs.get("filter_params", {}).get("namespace") == "":
+            operation.kwargs["filter_params"]["namespace"] = config.get("garden.name")
 
     return operation
 

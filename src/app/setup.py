@@ -30,7 +30,7 @@ setup(
     install_requires=[
         "apispec==0.38.0",
         "apscheduler==3.6.3",
-        "brewtils>=3.0.0a1",
+        "brewtils>=3.0.0",
         "mongoengine<0.21",
         "more-itertools<9",
         "motor<3",
@@ -39,6 +39,7 @@ setup(
         "pyrabbit2==1.0.7",
         "pytz<2021",
         "ruamel.yaml<0.17",
+        "stomp.py<6.2.0",
         "tornado==6.0.4",
         "yapconf>=0.3.7",
     ],

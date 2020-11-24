@@ -1,20 +1,35 @@
 # -*- coding: utf-8 -*-
 
-"""This is the Plugin State Manager"""
+"""This is the Plugin State Manager
+
+* Plugin Registration
+* Plugin Monitoring
+* Plugin Removal
+
+Plugins in this case are the abstract concept of plugins. That is to say, the PSM doesn't
+know anything about the actual process that is running.  The only distinction the
+Plugin State Manager makes is about downstream vs upstream plugins.
+
+It is completely up to the PSM to change a plugin's state
+(i.e. is the plugin unresponsive? healthy? running? stopped? etc.)
+
+While the plugin state manager is responsible for initiating status messages, it will
+delegate requesting information from the plugin to the request service.
+"""
 
 import logging
 import threading
-from datetime import datetime, timedelta
-from typing import Tuple
-
 from brewtils.models import Event, Events, Instance, Request, RequestTemplate, System
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
 from bson import ObjectId
+from datetime import datetime, timedelta
+from typing import Tuple
 
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.db.mongo.motor as moto
+import beer_garden.local_plugins.manager as lpm
 import beer_garden.queue.api as queue
 import beer_garden.requests as requests
 from beer_garden.errors import NotFoundException
@@ -53,7 +68,7 @@ def initialize(
         system=system, instance=instance, instance_id=instance_id
     )
 
-    logger.info(f"Initializing instance {system}[{instance}]")
+    logger.debug(f"Initializing instance {system}[{instance}]")
 
     queue_spec = queue.create(instance, system)
 
@@ -92,19 +107,13 @@ def start(
         system=system, instance=instance, instance_id=instance_id
     )
 
-    logger.info(f"Starting instance {system}[{instance}]")
+    logger.debug(f"Starting instance {system}[{instance}]")
 
-    requests.process_request(
-        Request.from_template(
-            start_request,
-            namespace=system.namespace,
-            system=system.name,
-            system_version=system.version,
-            instance_name=instance.name,
-        ),
-        is_admin=True,
-        priority=1,
-    )
+    if lpm.lpm_proxy.has_instance_id(instance_id=instance.id):
+        lpm.lpm_proxy.restart(instance_id=instance.id)
+
+    # Publish the start request
+    publish_start(system, instance)
 
     return instance
 
@@ -127,11 +136,21 @@ def stop(
         system=system, instance=instance, instance_id=instance_id
     )
 
-    logger.info(f"Stopping instance {system}[{instance}]")
+    logger.debug(f"Stopping instance {system}[{instance}]")
 
+    # Publish the stop request
+    publish_stop(system, instance)
+
+    if lpm.lpm_proxy.has_instance_id(instance_id=instance.id):
+        lpm.lpm_proxy.stop_one(instance_id=instance.id)
+
+    return instance
+
+
+def publish_start(system, instance):
     requests.process_request(
         Request.from_template(
-            stop_request,
+            start_request,
             namespace=system.namespace,
             system=system.name,
             system_version=system.version,
@@ -141,7 +160,20 @@ def stop(
         priority=1,
     )
 
-    return instance
+
+def publish_stop(system, instance=None):
+    request_args = {
+        "namespace": system.namespace,
+        "system": system.name,
+        "system_version": system.version,
+    }
+
+    if instance:
+        request_args["instance_name"] = instance.name
+
+    requests.process_request(
+        Request.from_template(stop_request, **request_args), is_admin=True, priority=1
+    )
 
 
 @publish_event(Events.INSTANCE_UPDATED)
@@ -442,13 +474,13 @@ class StatusMonitor(StoppableThread):
         )
 
     def run(self):
-        self.logger.info(self.display_name + " is started")
+        self.logger.debug(self.display_name + " is started")
 
         while not self.wait(self.heartbeat_interval):
             self.request_status()
             self.check_status()
 
-        self.logger.info(self.display_name + " is stopped")
+        self.logger.debug(self.display_name + " is stopped")
 
     def request_status(self):
         try:

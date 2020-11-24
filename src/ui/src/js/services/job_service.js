@@ -96,7 +96,15 @@ export default function jobService($http, NamespaceService) {
         'timezone': formModel['interval_timezone'],
         'reschedule_on_finish': formModel['interval_reschedule_on_finish'],
       };
-    } else {
+    } else if (triggerType === 'file') {
+      return {
+        'pattern': formModel['file_pattern'],
+        'path': formModel['file_path'],
+        'recursive': formModel['file_recursive'],
+        'callbacks': formModel['file_callbacks'],
+      };
+    }
+    else {
       return {
         'minute': formModel['minute'],
         'hour': formModel['hour'],
@@ -126,7 +134,7 @@ export default function jobService($http, NamespaceService) {
     return serviceModel;
   };
 
-  JobService.TRIGGER_TYPES = ['cron', 'date', 'interval'];
+  JobService.TRIGGER_TYPES = ['cron', 'date', 'interval', 'file'];
   JobService.CRON_KEYS = [
     'minute',
     'hour',
@@ -154,6 +162,12 @@ export default function jobService($http, NamespaceService) {
     'run_date',
     'date_timezone',
   ];
+  JobService.FILE_KEYS = [
+    'file_pattern',
+    'file_path',
+    'file_recursive',
+    'file_callbacks',
+  ];
 
   JobService.getRequiredKeys = function(triggerType) {
     if (triggerType === 'cron') {
@@ -171,6 +185,8 @@ export default function jobService($http, NamespaceService) {
       return requiredKeys;
     } else if (triggerType === 'date') {
       return JobService.DATE_KEYS;
+    } else if (triggerType === 'file') {
+      return [];
     } else {
       let requiredKeys = [];
       for (let key of JobService.INTERVAL_KEYS) {
@@ -353,6 +369,35 @@ export default function jobService($http, NamespaceService) {
         'description': 'Reset the interval timer when the job finishes.',
         'type': 'boolean',
       },
+      'file_pattern': {
+        'title': 'Pattern',
+        'description': 'File name patterns to match, supports non-extended shell-style glob pattern matching',
+        'type': 'array',
+        'items': {
+            'type': 'string'
+        }
+      },
+      'file_path': {
+        'title': 'Path',
+        'description': 'Directory to watch.',
+        'type': 'string'
+      },
+      'file_recursive': {
+        'title': 'Recursive',
+        'description': 'Look more than one level deep in the directory.',
+        'type': 'boolean',
+      },
+      'file_callbacks': {
+        'title': 'Callbacks',
+        'description': 'What file events should trigger the plugins?',
+        'type': 'object',
+        'properties':{
+          'on_created': {'type' : 'boolean'},
+          'on_modified': {'type' : 'boolean'},
+          'on_moved': {'type' : 'boolean'},
+          'on_deleted': {'type' : 'boolean'},
+        }
+      },
     },
   };
 
@@ -446,6 +491,21 @@ export default function jobService($http, NamespaceService) {
                   'items': [
                     {'key': 'run_date', 'htmlClass': 'col-md-6'},
                     {'key': 'date_timezone', 'htmlClass': 'col-md-2'},
+                  ],
+                },
+              ],
+            },
+            {
+              'title': 'File Trigger',
+              'items': [
+                {
+                  'type': 'section',
+                  'htmlClass': 'row',
+                  'items': [
+                    {'key': 'file_pattern', 'htmlClass': 'col-md-4'},
+                    {'key': 'file_path', 'htmlClass': 'col-md-2'},
+                    {'key': 'file_recursive', 'htmlClass': 'col-md-2'},
+                    {'key': 'file_callbacks', 'htmlClass': 'col-md-2'},
                   ],
                 },
               ],

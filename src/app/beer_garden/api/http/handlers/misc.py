@@ -11,15 +11,15 @@ logger = logging.getLogger(__name__)
 class ConfigHandler(BaseHandler):
     async def get(self):
         """Subset of configuration options that the frontend needs"""
-        app_config = config.get("application")
         auth_config = config.get("auth")
+        ui_config = config.get("ui")
 
         configs = {
-            "application_name": app_config.name,
+            "application_name": ui_config.name,
             "auth_enabled": auth_config.enabled,
-            "icon_default": app_config.icon_default,
-            "debug_mode": app_config.debug_mode,
-            "execute_javascript": app_config.execute_javascript,
+            "icon_default": ui_config.icon_default,
+            "debug_mode": ui_config.debug_mode,
+            "execute_javascript": ui_config.execute_javascript,
             "garden_name": config.get("garden.name"),
             "guest_login_enabled": auth_config.guest_login_enabled,
             "metrics_url": config.get("metrics.prometheus.url"),

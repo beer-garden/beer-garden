@@ -19,15 +19,18 @@ handlers:
     filename: "beer-garden.log"
 
 loggers:
+  apscheduler:
+    level: "WARNING"
   pika:
     level: "ERROR"
   tornado:
-    level: "WARN"
+    level: "WARNING"
   requests.packages.urllib3.connectionpool:
-    level: "WARN"
+    level: "WARNING"
+  stomp:
+    level: "WARNING"
 
 root:
   level: "INFO"
   handlers:
     - "stream"
-    # - "file"

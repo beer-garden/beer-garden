@@ -20,7 +20,14 @@ def system_find(monkeypatch):
 @pytest.fixture
 def validator(monkeypatch, mongo_conn):
     val = RequestValidator(
-        Box({"command": {"timeout": 10}, "url": {"ca_verify": False}})
+        Box(
+            {
+                "dynamic_choices": {
+                    "command": {"timeout": 10},
+                    "url": {"ca_verify": False},
+                }
+            }
+        )
     )
 
     monkeypatch.setattr(beer_garden, "application", Mock(request_validator=val))
@@ -74,8 +81,10 @@ class TestSessionConfig(object):
         cert_mock = Mock()
         config = Box(
             {
-                "command": {"timeout": 10},
-                "url": {"ca_verify": True, "ca_cert": cert_mock},
+                "dynamic_choices": {
+                    "command": {"timeout": 10},
+                    "url": {"ca_verify": True, "ca_cert": cert_mock},
+                }
             }
         )
 

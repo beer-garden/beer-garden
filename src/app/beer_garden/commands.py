@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+"""Commands Service
+
+The config service is responsible for:
+
+* Retrieving single `Command` objects
+* Generating list of all `System` `Commands`
+"""
+
 import itertools
 from typing import List
 

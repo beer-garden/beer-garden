@@ -2,7 +2,6 @@ import logging
 import string
 import subprocess
 from random import choice
-from threading import Lock
 
 import pytest
 import sys
@@ -18,7 +17,7 @@ def runner(tmp_path):
         process_args=["python", "-m", "echo"],
         process_cwd=tmp_path,
         process_env={},
-        error_log_lock=Lock(),
+        capture_streams=False,
     )
 
 
