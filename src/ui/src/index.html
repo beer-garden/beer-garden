@@ -56,24 +56,22 @@
           <li ng-hide="filteredItems.length">No results</li>
           </ul>
         </li>
+        <li ng-show=!isUser(user)>
+          <a href="" ng-click="doLogin()">
+            <i style="padding: 3px;" class="fa fa-user"></i>
+            <span>Login</span>
+          </a>
+        </li>
 
-<!--        Add back in when users are refactored-->
-<!--        <li ng-show=!isUser(user)>-->
-<!--          <a href="" ng-click="doLogin()">-->
-<!--            <i style="padding: 3px;" class="fa fa-user"></i>-->
-<!--            <span>Login</span>-->
-<!--          </a>-->
-<!--        </li>-->
-
-<!--        <li ng-show="isUser(user)">-->
-<!--          <a href="">Hello, {{user.username}}!</a>-->
-<!--        </li>-->
-<!--        <li ng-show="isUser(user)">-->
-<!--          <a ng-click="doLogout()" href="">-->
-<!--            <i style="padding: 3px;" class="fa fa-user"></i>-->
-<!--            <span>Logout</span>-->
-<!--          </a>-->
-<!--        </li>-->
+        <li ng-show="isUser(user)">
+          <a href="">Hello, {{user.username}}!</a>
+        </li>
+        <li ng-show="isUser(user)">
+          <a ng-click="doLogout()" href="">
+            <i style="padding: 3px;" class="fa fa-user"></i>
+            <span>Logout</span>
+          </a>
+        </li>
 
         <li ng-show="hasPermission(user, 'bg-read')">
           <a ui-sref="base.systems" ng-class="{active: ($state.current.name.startsWith('base.systems'))}">Systems</a>
@@ -95,17 +93,16 @@
                 <span>Systems</span>
               </a>
             </li>
-<!--            Add after users are refactored-->
-<!--            <li ng-show="hasPermission(user, 'bg-local-admin')">-->
-<!--              <a ui-sref="base.user_admin" ui-sref-active="active">-->
-<!--                <span>Users</span>-->
-<!--              </a>-->
-<!--            </li>-->
-<!--            <li ng-show="hasPermission(user, 'bg-local-admin')">-->
-<!--              <a ui-sref="base.role_admin" ui-sref-active="active">-->
-<!--                <span>Roles</span>-->
-<!--              </a>-->
-<!--            </li>-->
+            <li ng-show="hasPermission(user, 'bg-local-admin')">
+              <a ui-sref="base.user_admin" ui-sref-active="active">
+                <span>Users</span>
+              </a>
+            </li>
+            <li ng-show="hasPermission(user, 'bg-local-admin')">
+              <a ui-sref="base.role_admin" ui-sref-active="active">
+                <span>Roles</span>
+              </a>
+            </li>
             <li>
               <a ui-sref="base.garden_admin" ui-sref-active="active">
                 <span>Gardens</span>

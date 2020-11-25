@@ -29,17 +29,38 @@
         </select>
       </div>
       <div class="col-md-8">
-        <div ng-repeat="permGroup in permissions" class="row">
-          <span ng-repeat="permission in permGroup" class="col-sm-3">
-            <input type="checkbox" id="{{permission}}"
-              ng-model="selectedRole.permissions[permission]"
-              ng-change="permissionChange(permission)"
-              ng-disabled="isPermissionDisabled(permission)" />
-            <label for="{{permission}}"
-              ng-style="color(selectedRole.id, 'permissions.'+permission)"
-              >{{permission}}</label>
-          </span>
-        </div>
+        <table
+          id="commandIndexTable"
+          datatable="ng"
+          dt-options="dtOptions"
+          dt-instance="instanceCreated"
+          class="table table-striped table-bordered"
+          style="width: 100%">
+          <thead>
+            <tr>
+              <th style="width: 10%;" scope="col">Namespace</th>
+              <th style="width: 10%;" scope="col">Access</th>
+              <th style="width: 10%;" scope="col">Remove</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="selectedPermission in selectedRole.permissions ">
+              <td>{{selectedPermission.namespace || "LOCAL"}}</td>
+              <td>
+                <select name="access" ng-model="selectedPermission">
+                  <option value="NONE">NONE</option>
+                  <option value="READ">READ</option>
+                  <option value="CREATE">CREATE</option>
+                  <option value="MAINTAINER">MAINTAINER</option>
+                  <option value="ADMIN">ADMIN</option>
+                </select>
+              </td>
+              <td>
+                <a class="btn btn-primary center-block word-wrap-button">Remove Permission</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
     <div class="row form-group">

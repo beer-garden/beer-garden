@@ -134,15 +134,36 @@ export default function appRun(
     // );
   };
 
-  $rootScope.hasPermission = function(user, permissions) {
+  $rootScope.hasPermission = function(user, permissions, is_local = false) {
     if (!$rootScope.config.authEnabled) return true;
     if (_.isUndefined(user)) return false;
-    if (_.includes(user.permissions, 'bg-all')) return true;
+    for (var i = 0; i < user.permissions.length; i++){
 
-    // This makes it possible to pass an array or a single string
-    return _.intersection(
-      user.permissions, _.castArray(permissions)
-    ).length;
+        if (is_local && !user.permissions[i].is_local){
+            continue;
+        }
+        switch(permissions){
+            case 'READ':
+                if (['ADMIN', 'MAINTAINER', 'CREATE', 'READ'].includes(user.permissions[i].access)){
+                    return true;
+                }
+            case 'CREATE':
+                if (['ADMIN', 'MAINTAINER', 'CREATE'].includes(user.permissions[i].access)){
+                    return true;
+                }
+            case 'MAINTAINER':
+                if (['ADMIN', 'MAINTAINER'].includes(user.permissions[i].access)){
+                    return true;
+                }
+            case 'ADMIN':
+                if (['ADMIN'].includes(user.permissions[i].access)){
+                    return true;
+                }
+        }
+
+    }
+
+    return false;
   };
 
   $rootScope.changeTheme = function(theme, sendUpdate) {
