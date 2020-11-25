@@ -40,7 +40,7 @@ class JobAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.UPDATE])
+    @authenticated(permissions=[Permissions.CREATE])
     async def patch(self, job_id):
         """
         ---
@@ -112,7 +112,7 @@ class JobAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.DELETE])
+    @authenticated(permissions=[Permissions.CREATE])
     async def delete(self, job_id):
         """
         ---

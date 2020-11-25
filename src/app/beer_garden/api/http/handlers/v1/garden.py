@@ -38,7 +38,7 @@ class GardenAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.SYSTEM_ADMIN])
+    @authenticated(permissions=[Permissions.ADMIN])
     async def delete(self, garden_name):
         """
         ---
@@ -63,7 +63,7 @@ class GardenAPI(BaseHandler):
 
         self.set_status(204)
 
-    @authenticated(permissions=[Permissions.SYSTEM_ADMIN])
+    @authenticated(permissions=[Permissions.ADMIN])
     async def patch(self, garden_name):
         """
         ---
@@ -177,7 +177,7 @@ class GardenListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.SYSTEM_ADMIN])
+    @authenticated(permissions=[Permissions.ADMIN])
     async def post(self):
         """
         ---
@@ -215,7 +215,7 @@ class GardenListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.SYSTEM_ADMIN])
+    @authenticated(permissions=[Permissions.ADMIN])
     async def patch(self):
         """
         ---

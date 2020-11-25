@@ -5,6 +5,8 @@ from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timedelta
 
 import jwt
+
+from beer_garden.db.mongo.api import to_brewtils
 from beer_garden.db.mongo.parser import MongoParser
 from brewtils.errors import ModelValidationError
 from mongoengine.errors import DoesNotExist
@@ -14,7 +16,7 @@ from tornado.web import HTTPError
 
 import beer_garden.api.http
 import beer_garden.config as config
-from beer_garden.db.mongo.models import Principal, RefreshToken
+from beer_garden.db.mongo.models import RefreshToken, Principal
 from beer_garden.api.http.authorization import coalesce_permissions
 from beer_garden.api.http.base_handler import BaseHandler
 
@@ -226,6 +228,7 @@ class TokenListAPI(BaseHandler):
         parsed_body = json.loads(self.request.decoded_body)
 
         try:
+            # principal = db.query_unique(Principal, username=parsed_body["username"])
             principal = Principal.objects.get(username=parsed_body["username"])
             if (
                 config.get("auth.guest_login_enabled")
@@ -295,7 +298,7 @@ def generate_tokens(principal, expire_days):
         "sub": str(principal.id),
         "username": principal.username,
         "roles": list(roles),
-        "permissions": list(permissions),
+        "permissions": str(list(permissions)),
     }
 
     return {

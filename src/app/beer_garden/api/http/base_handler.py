@@ -37,6 +37,7 @@ from beer_garden.errors import (
     NotFoundException,
     RoutingRequestException,
 )
+from brewtils.models import BaseModel
 
 
 async def event_wait(evt, timeout):
@@ -58,6 +59,8 @@ class BaseHandler(AuthMixin, RequestHandler):
     REFRESH_COOKIE_EXP = 14
 
     charset_re = re.compile(r"charset=(.*)$")
+
+    required_permissions = None
 
     error_map = {
         MongoValidationError: {"status_code": 400},
@@ -111,6 +114,10 @@ class BaseHandler(AuthMixin, RequestHandler):
                 user = cookie_user
         return user
 
+    def get_required_permissions(self):
+        """Get the required permissions, if authentication is set"""
+        return self.required_permissions
+
     def set_default_headers(self):
         """Headers set here will be applied to all responses"""
         self.set_header("BG-Version", beer_garden.__version__)
@@ -132,7 +139,10 @@ class BaseHandler(AuthMixin, RequestHandler):
 
     @property
     def client(self):
-        return self.settings["client"]
+        return self.settings["client"].serialize_helper(
+            current_user=self.get_current_user(),
+            required_permissions=self.get_required_permissions(),
+        )
 
     def prepare(self):
         """Called before each verb handler"""

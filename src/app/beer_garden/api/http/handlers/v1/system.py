@@ -55,7 +55,7 @@ class SystemAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.SYSTEM_ADMIN])
+    @authenticated(permissions=[Permissions.MAINTAINER])
     async def delete(self, system_id):
         """
         Will give Bartender a chance to remove instances of this system from the
@@ -100,7 +100,7 @@ class SystemAPI(BaseHandler):
 
         self.set_status(204)
 
-    @authenticated(permissions=[Permissions.UPDATE])
+    @authenticated(permissions=[Permissions.MAINTAINER])
     async def patch(self, system_id):
         """
         ---
@@ -318,7 +318,7 @@ class SystemListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.CREATE])
+    @authenticated(permissions=[Permissions.MAINTAINER])
     async def post(self):
         """
         ---

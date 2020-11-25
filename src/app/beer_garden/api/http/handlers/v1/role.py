@@ -11,10 +11,11 @@ from beer_garden.api.http.authorization import (
 )
 from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
+from brewtils.models import Operation
 
 
 class RoleAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.LOCAL_ADMIN])
+    @authenticated(permissions=[Permissions.ADMIN])
     def get(self, role_id):
         """
         ---
@@ -43,7 +44,7 @@ class RoleAPI(BaseHandler):
             )
         )
 
-    @authenticated(permissions=[Permissions.LOCAL_ADMIN])
+    @authenticated(permissions=[Permissions.ADMIN])
     def delete(self, role_id):
         """
         ---
@@ -72,7 +73,7 @@ class RoleAPI(BaseHandler):
 
         self.set_status(204)
 
-    @authenticated(permissions=[Permissions.LOCAL_ADMIN])
+    @authenticated(permissions=[Permissions.ADMIN])
     def patch(self, role_id):
         """
         ---
@@ -178,8 +179,8 @@ class RoleAPI(BaseHandler):
 
 
 class RolesAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.LOCAL_ADMIN])
-    def get(self):
+    @authenticated(permissions=[Permissions.ADMIN])
+    async def get(self):
         """
         ---
         summary: Retrieve all Roles
@@ -195,12 +196,11 @@ class RolesAPI(BaseHandler):
         tags:
           - Roles
         """
+        response = await self.client(Operation(operation_type="ROLE_READ_ALL"))
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(
-            MongoParser.serialize_role(Role.objects.all(), many=True, to_string=True)
-        )
+        self.write(response)
 
-    @authenticated(permissions=[Permissions.LOCAL_ADMIN])
+    @authenticated(permissions=[Permissions.ADMIN])
     def post(self):
         """
         ---

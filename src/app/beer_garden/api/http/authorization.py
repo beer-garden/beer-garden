@@ -5,14 +5,18 @@ from enum import Enum
 import jwt
 import wrapt
 from brewtils.errors import RequestForbidden
-from brewtils.models import Principal as BrewtilsPrincipal, Role as BrewtilsRole
+from brewtils.models import (
+    Principal as BrewtilsPrincipal,
+    Role as BrewtilsRole,
+    Permission as BrewtilsPermission,
+)
 from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
 from tornado.web import HTTPError
 
 import beer_garden.api.http
 import beer_garden.config as config
-from beer_garden.db.mongo.models import Principal, Role
+from beer_garden.db.mongo.models import Principal
 
 
 class Permissions(Enum):
@@ -20,21 +24,22 @@ class Permissions(Enum):
     regards to Systems and Gardens. Local Admins can manage user roles  and permissions.
     """
 
-    # All of the permissions
-    ALL = "bg-all"
-    # Permission to create non Admin data
-    CREATE = "bg-create"
-    # Permission to retrieve non Admin data
-    READ = "bg-read"
-    # Permission to update non Admin data
-    UPDATE = "bg-update"
-    # Permission to Delete non Admin data
-    DELETE = "bg-delete"
-    # Admin actions outside of User Management
-    SYSTEM_ADMIN = "bg-system-admin"
-    # Permission to manage local users
-    LOCAL_ADMIN = "bg-local-admin"
+    # Permission to retrieve non-Admin data
+    READ = 1
+    # Permission to create non-Admin data
+    CREATE = 2
+    # Permission to update non-Admin data
+    MAINTAINER = 3
+    # Permission to update non-Admin and Admin data
+    ADMIN = 4
 
+
+PermissionRequiredAccess = {
+    Permissions.READ: ["ADMIN", "MAINTAINER", "CREATE", "READ"],
+    Permissions.CREATE: ["ADMIN", "MAINTAINER", "CREATE"],
+    Permissions.MAINTAINER: ["ADMIN", "MAINTAINER"],
+    Permissions.ADMIN: ["ADMIN"],
+}
 
 Permissions.values = {p.value for p in Permissions}
 
@@ -53,13 +58,12 @@ def authenticated(permissions=None):
 
     @wrapt.decorator
     def wrapper(wrapped, instance, args, kwargs):
-
         # The interplay between wrapt and gen.coroutine causes things to get
         # a little confused, so we have to be flexible
         handler = instance or args[0]
 
         check_permission(handler.current_user, permissions)
-
+        handler.required_permissions = permissions
         return wrapped(*args, **kwargs)
 
     return wrapper
@@ -80,21 +84,26 @@ def check_permission(principal, required_permissions):
         RequestForbidden(status_code=403): The current principal does not have
             permission to access the requested resource
     """
-    if Permissions.ALL.value in principal.permissions:
-        return True
 
-    # Convert to strings for easier comparison
-    permission_strings = set(p.value for p in required_permissions)
+    # Grab the accesses that grand access for Permission
+    permission_strings = set()
+    for required in required_permissions:
+        permission_strings |= set(PermissionRequiredAccess[required])
 
-    if not permission_strings.intersection(principal.permissions):
-        # Need to make a distinction between "you need to be authenticated
-        # to do this" and "you've been authenticated and denied"
-        if principal == beer_garden.api.http.anonymous_principal:
-            raise HTTPError(status_code=401)
-        else:
-            raise RequestForbidden(
-                "Action requires permissions %s" % permission_strings
-            )
+    # If no permissions required, grant access
+    if len(permission_strings) == 0:
+        return
+
+    # If user has access to that permission, grant access
+    for permission in principal.permissions:
+        if permission.access in permission_strings:
+            return
+
+    # Determine correct error code to throw
+    if principal == beer_garden.api.http.anonymous_principal:
+        raise HTTPError(status_code=401)
+    else:
+        raise RequestForbidden("Action requires permissions %s" % permission_strings)
 
 
 def anonymous_principal() -> BrewtilsPrincipal:
@@ -117,7 +126,12 @@ def anonymous_principal() -> BrewtilsPrincipal:
     #     # user, which means there are no roles.
     #     roles = []
     # else:
-    roles = [Role(name="bg-admin", permissions=["bg-all"])]
+    roles = [
+        BrewtilsRole(
+            name="bg-admin",
+            permissions=[BrewtilsPermission(is_local=True, access="ADMIN")],
+        )
+    ]
 
     _, permissions = coalesce_permissions(roles)
 
@@ -229,7 +243,6 @@ def _principal_from_token(token):
 
 
 class AuthMixin(object):
-
     auth_providers: frozenset = None
 
     def get_current_user(self):

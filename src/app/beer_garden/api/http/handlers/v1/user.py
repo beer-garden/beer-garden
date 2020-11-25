@@ -59,7 +59,7 @@ class UserAPI(BaseHandler):
 
         self.write(MongoParser.serialize_principal(principal, to_string=False))
 
-    @authenticated(permissions=[Permissions.LOCAL_ADMIN])
+    @authenticated(permissions=[Permissions.ADMIN])
     def delete(self, user_id):
         """
         ---
@@ -209,7 +209,7 @@ class UserAPI(BaseHandler):
 
 
 class UsersAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.LOCAL_ADMIN])
+    @authenticated(permissions=[Permissions.ADMIN])
     def get(self):
         """
         ---
@@ -236,7 +236,7 @@ class UsersAPI(BaseHandler):
             MongoParser.serialize_principal(principals, to_string=True, many=True)
         )
 
-    @authenticated(permissions=[Permissions.LOCAL_ADMIN])
+    @authenticated(permissions=[Permissions.ADMIN])
     def post(self):
         """
         ---

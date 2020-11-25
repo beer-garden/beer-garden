@@ -10,7 +10,7 @@ class PermissionsAPI(BaseHandler):
 
     logger = logging.getLogger(__name__)
 
-    @authenticated(permissions=[Permissions.LOCAL_ADMIN])
+    @authenticated(permissions=[Permissions.ADMIN])
     def get(self):
         """
         ---

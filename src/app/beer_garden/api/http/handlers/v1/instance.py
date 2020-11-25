@@ -45,7 +45,7 @@ class InstanceAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.SYSTEM_ADMIN])
+    @authenticated(permissions=[Permissions.MAINTAINER])
     async def delete(self, instance_id):
         """
         ---
@@ -73,7 +73,7 @@ class InstanceAPI(BaseHandler):
 
         self.set_status(204)
 
-    @authenticated(permissions=[Permissions.UPDATE])
+    @authenticated(permissions=[Permissions.MAINTAINER])
     async def patch(self, instance_id):
         """
         ---
@@ -185,7 +185,7 @@ class InstanceAPI(BaseHandler):
 
 
 class InstanceLogAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.UPDATE])
+    @authenticated(permissions=[Permissions.MAINTAINER])
     async def get(self, instance_id):
         """
         ---

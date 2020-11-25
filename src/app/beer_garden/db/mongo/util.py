@@ -11,6 +11,10 @@ from mongoengine.errors import (
 )
 from passlib.apps import custom_app_context
 
+from beer_garden.db import api
+
+from brewtils.models import (Role as BrewtilsRole, Permission as BrewtilsPermission)
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,42 +30,40 @@ def ensure_roles():
     from .models import Role, Permission
 
     convenience_roles = [
-        Role(
+        BrewtilsRole(
             name="bg-readonly",
             description="Allows only standard read actions",
-            permissions=[
-                Permission(is_local=True, access="READ")
-            ],
+            permissions=[BrewtilsPermission(is_local=True, access="READ")],
         ),
-        Role(
+        BrewtilsRole(
             name="bg-operator",
             description="Standard Beergarden user role",
-            permissions=[
-                Permission(is_local=True, access="WRITE")
-            ],
+            permissions=[BrewtilsPermission(is_local=True, access="CREATE")],
         ),
     ]
 
     mandatory_roles = [
-        Role(
+        BrewtilsRole(
             name="bg-anonymous",
             description="Special role used for non-authenticated users",
-            permissions=[
-                Permission(access="READ")
-            ],
+            permissions=[BrewtilsPermission(access="READ")],
         ),
-        Role(name="bg-admin", description="Allows all actions", permissions=[Permission(is_local=True, access="ADMIN")]),
-        Role(
+        BrewtilsRole(
+            name="bg-admin",
+            description="Allows all actions",
+            permissions=[BrewtilsPermission(is_local=True, access="ADMIN")],
+        ),
+        BrewtilsRole(
             name="bg-plugin",
             description="Allows actions necessary for plugins to function",
-            permissions=[
-                Permission(is_local=True, access="MAINTAINER")
-            ],
+            permissions=[BrewtilsPermission(is_local=True, access="MAINTAINER")],
         ),
     ]
 
     # Only create convenience roles if this is a fresh database
-    if Role.objects.count() == 0:
+
+    if api.count(BrewtilsRole) == 0:
+    #if Role.objects.count() == 0:
         logger.warning("No roles found: creating convenience roles")
 
         for role in convenience_roles:
@@ -296,13 +298,19 @@ def _update_request_has_parent_model():
 
 def _create_role(role):
     """Create a role if it doesn't already exist"""
-    from .models import Role
+    # from .models import Role
 
-    try:
-        Role.objects.get(name=role.name)
-    except DoesNotExist:
+    if api.count(BrewtilsRole, name=role.name) == 0:
         logger.warning("Role %s missing, about to create" % role.name)
-        role.save()
+        api.create(role)
+
+    #
+    # try:
+    #     Role.objects.get(name=role.name)
+    # except DoesNotExist:
+    #     logger.warning("Role %s missing, about to create" % role.name)
+    #     role.save()
+    #     logger.info("Added %s" % role.name)
 
 
 def _should_create_admin():

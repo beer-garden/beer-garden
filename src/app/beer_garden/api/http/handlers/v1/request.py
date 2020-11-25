@@ -42,9 +42,10 @@ class RequestAPI(BaseHandler):
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.filter_models(response)
         self.write(response)
 
-    @authenticated(permissions=[Permissions.UPDATE])
+    @authenticated(permissions=[Permissions.MAINTAINER])
     async def patch(self, request_id):
         """
         ---
@@ -121,7 +122,7 @@ class RequestAPI(BaseHandler):
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         response = await self.client(operation)
-
+        self.filter_models(response)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
@@ -155,6 +156,8 @@ class RequestOutputAPI(BaseHandler):
             serialize_kwargs={"to_string": False},
         )
 
+        self.filter_models(response)
+
         if response["output"]:
             content_types = {
                 "CSS": "text/css; charset=UTF-8",
@@ -166,6 +169,7 @@ class RequestOutputAPI(BaseHandler):
             }
             self.set_header("Content-Type", content_types[response["output_type"]])
             self.write(response["output"])
+
         else:
             self.set_status(204)
 
@@ -361,6 +365,7 @@ class RequestListAPI(BaseHandler):
             self.add_header("Access-Control-Expose-Headers", key)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
+        requests = self.filter_models(requests, raise_error=False)
         self.write(json.dumps(requests))
 
     @authenticated(permissions=[Permissions.CREATE])
@@ -415,6 +420,8 @@ class RequestListAPI(BaseHandler):
             request_model = self._parse_form_request()
         else:
             raise ModelValidationError("Unsupported or missing content-type header")
+
+        self.filter_models(request_model)
 
         if self.current_user:
             request_model.requester = self.current_user.username
