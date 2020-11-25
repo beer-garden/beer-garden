@@ -3,6 +3,7 @@ import six
 from math import ceil
 from bson import ObjectId
 from bson.errors import InvalidId
+from base64 import b64decode, b64encode
 
 import beer_garden.db.api as db
 import beer_garden.config as config
@@ -127,9 +128,7 @@ def check_chunk(chunk_id: str):
             "Requires 24-character hex string."
         )
 
-    res = db.query_unique(FileChunk, id=chunk_id)
-    if res is None:
-        raise NotFoundError(f"Tried to fetch an unsaved chunk {chunk_id}.")
+    res = db.query_unique(FileChunk, id=chunk_id, raise_missing=True)
     return res
 
 
@@ -189,10 +188,8 @@ def _save_chunk(
     c = db.create(chunk)
     # This is starting to get DB-specific, but we want to be sure this is an atomic operation.
     modify = {f"set__chunks__{offset}": c.id}
-    db.modify(file, **modify)
-    db.modify(c, owner=file.id)
-    # Refresh this data
-    file = check_file(file_id)
+    file = db.modify(file, **modify)
+    c = db.modify(c, owner=file.id)
     return FileStatus(
         operation_complete=True,
         # Splicing together the chunk and file metadata
@@ -299,27 +296,12 @@ def _fetch_file(file_id: str):
         return FileStatus(
             operation_complete=True,
             **_unroll_object(file, key_map={"id": _format_id}, ignore=["owner"]),
-            data="".join(all_data),
+            # Each chunk should be base64 encoded, and
+            # we can't just concat those strings.
+            data=b64encode(b"".join(map(b64decode, all_data))).decode('utf-8'),
         )
     else:
         return check
-
-
-def _delete_file(file_id: str):
-    """
-    Deletes the requested file and its corresponding chunks.
-
-    Parameters:
-        file_id: This should be a valid file id.
-
-    Raises:
-        NotFoundError: Raised when a file with the requested
-                       ID doesn't exist and is expected to.
-    """
-    file = check_file(file_id)
-    # This should delete the associated chunks as well.
-    db.delete(file)
-    return FileStatus(operation_complete=True, **_format_id({}, file_id))
 
 
 def create_file(
@@ -395,10 +377,9 @@ def create_file(
         if res is None:
             f = db.create(f)
         else:
-            db.modify(
+            f = db.modify(
                 f, file_name=file_name, file_size=file_size, chunk_size=chunk_size
             )
-            f = db.query_unique(File, id=f.id)
 
         return FileStatus(
             operation_complete=True,
@@ -449,7 +430,10 @@ def delete_file(file_id: str):
     Parameters:
         file_id: The id of the file.
     """
-    return _delete_file(file_id)
+    file = check_file(file_id)
+    # This should delete the associated chunks as well.
+    db.delete(file)
+    return FileStatus(operation_complete=True, **_format_id({}, file_id))
 
 
 def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
@@ -469,16 +453,14 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
         if file.owner_type is None or new_owner_priority <= old_owner_priority:
             if owner_type in OWNERSHIP_MAP:
                 owner = db.query_unique(OWNERSHIP_MAP[owner_type], id=owner_id)
-                db.modify(
+                file = db.modify(
                     file,
                     owner_id=owner_id,
                     owner_type=owner_type,
                     owner=owner.id if owner is not None else None,
                 )
             else:
-                db.modify(file, owner_id=owner_id, owner_type=owner_type)
-            # Refresh data
-            file = check_file(file.id)
+                file = db.modify(file, owner_id=owner_id, owner_type=owner_type)
             return FileStatus(
                 operation_complete=True,
                 **_unroll_object(file, key_map={"id": _format_id}, ignore=["owner"]),
@@ -492,18 +474,6 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
         message=f"Operation FILE_OWN requires an owner type "
         f"and id. Got {owner_type} and {owner_id}",
     )
-
-
-def set_owner_for_files(owner_id, owner_type, parameters):
-    """ Scans the parameters for file ids, and sets ownership metadata."""
-    for id in _check_file_ids(parameters):
-        router.route(
-            Operation(
-                operation_type="FILE_OWNER",
-                args=[id],
-                kwargs={"owner_id": owner_id, "owner_type": owner_type},
-            )
-        )
 
 
 def _check_file_ids(parameter, ids=None):
@@ -539,6 +509,12 @@ def _check_file_ids(parameter, ids=None):
             except IndexError:
                 pass
     return ids
+
+
+def set_owner_for_files(owner_id, owner_type, parameters):
+    """ Scans the parameters for file ids, and sets ownership metadata."""
+    for id in _check_file_ids(parameters):
+        set_owner(id, owner_id=owner_id, owner_type=owner_type)
 
 
 def forward_file(operation: Operation):
