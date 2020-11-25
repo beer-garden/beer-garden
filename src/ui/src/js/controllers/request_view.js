@@ -13,7 +13,6 @@ requestViewController.$inject = [
   'RequestService',
   'SystemService',
   'EventService',
-  'NamespaceService',
 ];
 
 /**
@@ -39,8 +38,7 @@ export default function requestViewController(
     localStorageService,
     RequestService,
     SystemService,
-    EventService,
-    NamespaceService) {
+    EventService,) {
 
   $scope.request = undefined;
   $scope.complete = false;
@@ -59,7 +57,7 @@ export default function requestViewController(
   $scope.formatErrorTitle = undefined;
   $scope.formatErrorMsg = undefined;
   $scope.showFormatted = false;
-  $scope.disabledPourItAgain = true;
+  $scope.disabledPourItAgain = false;
   $scope.msgPourItAgain = null
 
   $scope.isMaximized = localStorageService.get('isMaximized');
@@ -173,10 +171,7 @@ export default function requestViewController(
   $scope.successCallback = function(request) {
     $scope.request = request;
     $scope.filename = $scope.request.id;
-    let namespace = $scope.request.namespace
-    if (namespace == null || namespace == undefined){
-        namespace = $scope.config.gardenName
-    }
+    let namespace = $scope.request.namespace || $scope.config.gardenName
     let request_system = SystemService.findSystem(namespace, $scope.request.system,
                          $scope.request.system_version);
     if (request_system != undefined) {
@@ -188,7 +183,7 @@ export default function requestViewController(
                 break;
             }
             else {
-                $scope.disabledItPourAgain = true;
+                $scope.disabledPourItAgain = true;
                 $scope.msgPourItAgain = 'Unable to find command'
             }
         }
