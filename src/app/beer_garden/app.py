@@ -299,11 +299,7 @@ class Application(StoppableThread):
         beer_garden.local_plugins.manager.lpm_proxy.stop()
 
         self.logger.debug("Stopping local plugins")
-        for state in beer_garden.local_plugins.manager.lpm_proxy.runner_state():
-            # Only send stop message to plugins that came up successfully
-            if state["instance_id"]:
-                stop(instance_id=state["instance_id"])
-        beer_garden.local_plugins.manager.lpm_proxy.stop_all()
+        self._stop_local_plugins()
 
         self.logger.debug("Stopping entry points")
         self.entry_manager.stop()
@@ -394,6 +390,25 @@ class Application(StoppableThread):
         data_manager.start(initializer=initializer)
 
         return data_manager
+
+    def _stop_local_plugins(self):
+        """Tear down local plugins
+
+        We need to send the Stop messages here because the local plugin manager lives in
+        its own process without the ability to publish rabbit messages.
+        """
+        # Send Stop message to plugins that came up successfully
+        for state in beer_garden.local_plugins.manager.lpm_proxy.runner_state():
+            if state.get("instance_id"):
+                try:
+                    stop(instance_id=state["instance_id"])
+                except Exception as ex:
+                    self.logger.warning(
+                        f"Error sending Stop to plugin at {state['runner_name']}: {ex}"
+                    )
+
+        # Now wait for the shutdown timeout and forcibly terminate, if necessary
+        beer_garden.local_plugins.manager.lpm_proxy.stop_all()
 
 
 class HelperThread(object):
