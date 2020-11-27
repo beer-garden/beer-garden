@@ -246,13 +246,16 @@ class PluginManager(StoppableThread):
         """
         plugin_path = path or self._plugin_path
 
-        new_runners = []
-        for path in plugin_path.iterdir():
-            try:
-                if path.is_dir() and path not in self.paths():
-                    new_runners += self._create_runners(path)
-            except Exception as ex:
-                self.logger.exception(f"Error loading plugin at {path}: {ex}")
+        try:
+            for path in plugin_path.iterdir():
+                try:
+                    if path.is_dir() and path not in self.paths():
+                        self._create_runners(path)
+                except Exception as ex:
+                    self.logger.exception(f"Error loading plugin at {path}: {ex}")
+
+        except Exception as ex:
+            self.logger.exception(f"Error scanning plugin path: {ex}")
 
     def _from_instance_id(self, instance_id: str) -> Optional[ProcessRunner]:
         for runner in self._runners:
