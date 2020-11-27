@@ -25,7 +25,8 @@ x-definitions: &env
     BG_PARENT_HTTP_ENABLE: "false"
 
     # IMPORTANT !!
-    # If you are connecting to a Parent BG instance, change this the resolvable DNS entry
+    # If you are connecting to a Parent BG instance set this to the resolvable name
+    # or IP of the parent
     BG_PARENT_HTTP_HOST: localhost
 
 services:
