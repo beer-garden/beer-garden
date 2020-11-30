@@ -171,7 +171,7 @@ export default function requestViewController(
   $scope.successCallback = function(request) {
     $scope.request = request;
     $scope.filename = $scope.request.id;
-    let namespace = $scope.request.namespace || $scope.config.gardenName
+    let namespace = $scope.request.namespace || $scope.config.gardenName;
     let request_system = SystemService.findSystem(namespace, $scope.request.system,
                          $scope.request.system_version);
     if (request_system != undefined) {
@@ -179,17 +179,17 @@ export default function requestViewController(
         for (let i = 0; i < commands.length; i++) {
             if (commands[i].name == request.command){
                 $scope.disabledPourItAgain = false;
-                $scope.msgPourItAgain = null
+                $scope.msgPourItAgain = null;
                 break;
             }
             else {
                 $scope.disabledPourItAgain = true;
-                $scope.msgPourItAgain = 'Unable to find command'
+                $scope.msgPourItAgain = 'Unable to find command';
             }
         }
     } else {
-        $scope.disabledPourItAgain = true
-        $scope.msgPourItAgain = 'Unable to find system'
+        $scope.disabledPourItAgain = true;
+        $scope.msgPourItAgain = 'Unable to find system';
     }
     $scope.setWindowTitle(
       $scope.request.command,
