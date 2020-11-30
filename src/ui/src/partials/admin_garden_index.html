@@ -8,12 +8,28 @@
   </span>
 </h1>
 <div class="pull-right">
-  <div class="form-popup" id="myForm" ng-hide=createGardenFormHide>
-    <label><b>Garden Name</b></label>
-    <input type="text" placeholder="Enter Garden Name" name="garden_name" required ng-model="garden_name">
-
-    <button type="button" class="btn" ng-click="createGarden()">Create</button>
-    <button type="button" class="btn" ng-click="createGardenFormHide = true">Close</button>
+  <div class="form-popup" ng-hide=createGardenFormHide>
+    <form ng-submit="createGarden()" class="form-container">
+      <label><b>Garden Name</b></label>
+      <input type="text" placeholder="Enter Garden Name"
+             name="create_garden_name"
+             required ng-model="create_garden_name"
+             ng-change="checkForGardenDuplication()" ng-invalid="!is_unique_garden_name"
+             ng-focus="create_garden_name_focus = true"
+             ng-blur="create_garden_name_focus = false"
+      >
+      <button type="submit"
+              class="btn btn-primary"
+              ng-disabled="!is_unique_garden_name"
+              uib-popover="{{create_garden_popover_message}}"
+              popover-animation="true"
+              popover-is-open="!is_unique_garden_name && create_garden_name_focus"
+              popover-placement="bottom"
+              popover-trigger="'mouseenter'"
+      >Create
+      </button>
+      <button type="button" class="btn" ng-click="closeCreateGardenForm()" >Close</button>
+    </form>
   </div>
 </div>
 
