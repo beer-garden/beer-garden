@@ -949,7 +949,7 @@ _PARENT_SPEC = {
                 "enabled": {
                     "type": "bool",
                     "default": False,
-                    "description": "Publish events to parent garden over HTTP",
+                    "description": "Publish events to parent garden over STOMP",
                 },
                 "port": {
                     "type": "int",
