@@ -13,7 +13,7 @@ class FileAPI(BaseHandler):
     async def get(self):
         """
         ---
-        summary: Retrieve a specific file
+        summary: Retrieve a File or FileChunk
         parameters:
           - name: file_id
             in: query
@@ -33,9 +33,9 @@ class FileAPI(BaseHandler):
             type: bool
         responses:
           200:
-            description: File with the given ID
+            description: The requested File or FileChunk data
             schema:
-              $ref: '#/definitions/Request'
+              $ref: '#/definitions/FileStatus'
           404:
             $ref: '#/definitions/404Error'
           50x:
@@ -63,7 +63,7 @@ class FileAPI(BaseHandler):
     async def post(self):
         """
         ---
-        summary: Create a new Request
+        summary: Create a new FileChunk
         parameters:
           - name: file_id
             in: query
@@ -73,16 +73,16 @@ class FileAPI(BaseHandler):
           - name: data
             in: body
             required: true
-            description: The Request definition
+            description: The contents of the chunk, base64 encoded
           - name: offset
             in: body
             required: true
             description: The current offset definition
         responses:
           201:
-            description: A new Request has been created
+            description: A new FileChunk is created
             schema:
-              $ref: '#/definitions/Request'
+              $ref: '#/definitions/FileStatus'
           400:
             $ref: '#/definitions/400Error'
           50x:
@@ -118,7 +118,7 @@ class FileAPI(BaseHandler):
     async def delete(self):
         """
         ---
-        summary: Create a new Request
+        summary: Delete a file
         parameters:
           - name: file_id
             in: query
@@ -127,9 +127,9 @@ class FileAPI(BaseHandler):
             type: string
         responses:
           200:
-            description: A new Request has been created
+            description: The file and all of its contents have been removed.
             schema:
-              $ref: '#/definitions/Request'
+              $ref: '#/definitions/FileStatus'
           400:
             $ref: '#/definitions/400Error'
           50x:
@@ -152,7 +152,7 @@ class FileNameAPI(BaseHandler):
     async def get(self):
         """
         ---
-        summary: Retrieve a specific file
+        summary: Reserve a file ID for a new file.
         parameters:
           - name: file_name
             in: query
@@ -168,9 +168,9 @@ class FileNameAPI(BaseHandler):
             description: The total size of the file (in bytes)
         responses:
           200:
-            description: File name to post with
+            description: The File ID
             schema:
-              $ref: '#/definitions/Request'
+              $ref: '#/definitions/FileStatus'
           404:
             $ref: '#/definitions/404Error'
           50x:
