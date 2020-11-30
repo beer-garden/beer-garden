@@ -318,7 +318,7 @@ export default function requestViewController(
       if (event.payload.id == $stateParams.requestId) {
         $scope.successCallback(event.payload);
       }
-      else if (event.payload.parent.id == $stateParams.requestId) {
+      else if (_.get(event, 'payload.parent.id') == $stateParams.requestId) {
         if (event.name == 'REQUEST_CREATED') {
           $scope.children.push(event.payload);
         } else {
