@@ -954,12 +954,12 @@ _PARENT_SPEC = {
                 "port": {
                     "type": "int",
                     "default": 61613,
-                    "description": "Serve content on this port",
+                    "description": "Connection port number",
                 },
                 "host": {
                     "type": "str",
                     "default": "0.0.0.0",
-                    "description": "Host for the HTTP Server to bind to",
+                    "description": "Connection hostname",
                 },
                 "username": {
                     "type": "str",

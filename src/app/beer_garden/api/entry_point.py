@@ -105,7 +105,7 @@ class EntryPoint:
         # And listen for events coming from it
         self._event_listener.start()
 
-    def stop(self, timeout: int = None, closeCommunicationPipes=False) -> None:
+    def stop(self, timeout: int = None, close_communication_pipes=False) -> None:
         """Stop the process with a SIGTERM
 
         If a `timeout` is specified this method will wait that long for the process to
@@ -124,11 +124,11 @@ class EntryPoint:
         # Then ensure the process is terminated
         self._process.terminate()
         self._process.join(timeout=timeout)
-        if closeCommunicationPipes:
+        if close_communication_pipes:
             self._ep_conn.close()
             self._mp_conn.close()
         if self._process.exitcode is None:
-            self._logger.warning(
+            logger.warning(
                 f"Process {self._process.name} is still running - sending SIGKILL"
             )
             self._process.kill()
@@ -261,7 +261,7 @@ class Manager:
                     garden.connection_type.casefold() == "stomp"
                     and garden.name not in self.entry_points
                 ):
-                    connection_params = self.strip_connection_params(
+                    connection_params = self.format_connection_params(
                         "stomp_", garden.connection_params
                     )
                     if "subscribe_destination" in connection_params:
@@ -294,8 +294,9 @@ class Manager:
         )
 
     @staticmethod
-    def strip_connection_params(term, connection_params):
-        """Strips leading term from connection parameters"""
+    def format_connection_params(term, connection_params):
+        """Strips leading term from connection parameters and formats dictionary
+        to match corresponding entry point config for connection type"""
         new_connection_params = {"ssl": {}}
         for key in connection_params:
             if "ssl" in key:
@@ -313,7 +314,7 @@ class Manager:
             entry_point.start()
 
     def stop_one(self, ep_key):
-        self.entry_points[ep_key].stop(closeCommunicationPipes=True)
+        self.entry_points[ep_key].stop(close_communication_pipes=True)
 
     def start_one(self, ep_key):
         self.entry_points[ep_key].start()
@@ -324,7 +325,7 @@ class Manager:
 
     def update_ep_config(self, ep_key=None, new_ep_config=None, connection_type=None):
         if connection_type == "stomp":
-            new_ep_config = self.strip_connection_params("stomp_", new_ep_config)
+            new_ep_config = self.format_connection_params("stomp_", new_ep_config)
             new_ep_config["send_destination"] = None
             if ep_key in self.entry_points:
                 if self.entry_points[ep_key].ep_config_diff(new_ep_config):
@@ -336,7 +337,7 @@ class Manager:
             elif "subscribe_destination" in new_ep_config:
                 self.create(
                     "stomp",
-                    ep_config=self.strip_connection_params("stomp_", new_ep_config),
+                    ep_config=self.format_connection_params("stomp_", new_ep_config),
                     ep_key=ep_key,
                 )
                 self.entry_points[ep_key].start()
