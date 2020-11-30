@@ -33,6 +33,7 @@ from mongoengine import (
     StringField,
     FileField,
     CASCADE,
+    NULLIFY,
     PULL,
 )
 from mongoengine.errors import DoesNotExist
@@ -716,9 +717,8 @@ class File(MongoModel, Document):
 
     owner_id = StringField(required=False)
     owner_type = StringField(required=False)
-    # Delete Rule (2) = CASCADE; This causes this document to be deleted when the owner doc is.
-    owner = LazyReferenceField(Owner, required=False, reverse_delete_rule=CASCADE)
-    created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    owner = LazyReferenceField(Owner, required=False, reverse_delete_rule=NULLIFY)
+    updated_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     file_name = StringField(required=True)
     file_size = IntField(required=True)
     chunks = DictField(required=False)

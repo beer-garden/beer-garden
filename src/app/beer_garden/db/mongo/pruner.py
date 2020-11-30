@@ -102,9 +102,13 @@ class MongoPruner(StoppableThread):
             prune_tasks.append(
                 {
                     "collection": File,
-                    "field": "created_at",
+                    "field": "updated_at",
                     "delete_after": timedelta(minutes=file_ttl),
-                    "additional_query": Q(owner_type=None),
+                    "additional_query": Q(owner_type=None)
+                    | (
+                        (Q(owner_type__iexact="JOB") | Q(owner_type__iexact="REQUEST"))
+                        & Q(owner=None)
+                    ),
                 }
             )
 

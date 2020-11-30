@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import pytest
-from random import choice
 from mock import Mock
 from bson import ObjectId
+from base64 import b64encode, b64decode
 
 import beer_garden.files as files
 import beer_garden.db.api as db
@@ -14,22 +14,22 @@ from brewtils.models import File, FileChunk, Request, Job, FileTrigger, RequestT
 class TestFileOperations(object):
     @pytest.fixture
     def simple_data(self):
-        return "".join(
-            [
-                choice("abcedfghijklmnopqrstuvwxyz1234567890,./;'[]`-=")
-                for x in range(256)
-            ]
-        )
+        return "abcedfghijklmnopqrstuvwxyz1234567890,./;'[]`-="
 
     @pytest.fixture
-    def simple_file(self, simple_data):
+    def base64_data(self, simple_data):
+        return b64encode(bytes(simple_data, "utf-8"))
+
+    @pytest.fixture
+    def simple_file(self, base64_data):
         return File(
             file_name="my_test_data.txt",
-            file_size=len(simple_data) * 4,
-            chunk_size=len(simple_data),
+            file_size=len(base64_data) * 4,
+            chunk_size=len(base64_data),
             id=str(ObjectId()),
             owner_type=None,
             owner_id=None,
+            owner=ObjectId(),
             chunks={
                 "0": str(ObjectId()),
                 "1": str(ObjectId()),
@@ -39,8 +39,8 @@ class TestFileOperations(object):
         )
 
     @pytest.fixture
-    def simple_file_chunk(self, simple_file, simple_data):
-        return FileChunk(id=str(ObjectId()), file_id=simple_file.id, data=simple_data)
+    def simple_file_chunk(self, simple_file, base64_data):
+        return FileChunk(id=str(ObjectId()), file_id=simple_file.id, data=base64_data)
 
     @pytest.fixture
     def storage_create_kwargs(self):
@@ -62,7 +62,7 @@ class TestFileOperations(object):
         monkeypatch.setattr(db, "query_unique", query_mock)
         create_mock = Mock()
         monkeypatch.setattr(db, "create", create_mock)
-        monkeypatch.setattr(db, "modify", Mock(return_value=None))
+        monkeypatch.setattr(db, "modify", Mock(return_value=modified_file))
 
         create_mock.side_effect = iter(
             [
@@ -160,7 +160,9 @@ class TestFileOperations(object):
             ]
         )
         meta = files.fetch_file(simple_file.id)
-        assert meta.data == simple_file_chunk.data * len(simple_file.chunks)
+        assert b64decode(meta.data).decode("utf-8") == b64decode(
+            simple_file_chunk.data
+        ).decode("utf-8") * len(simple_file.chunks)
 
         # Read the data chunk by chunk
         my_data = ""
@@ -171,10 +173,14 @@ class TestFileOperations(object):
                     simple_file_chunk,
                 ]
             )
-            my_data += (files.fetch_file(simple_file.id, chunk=x)).data
-        assert my_data == simple_file_chunk.data * len(simple_file.chunks)
+            my_data += b64decode(
+                (files.fetch_file(simple_file.id, chunk=x)).data
+            ).decode("utf-8")
+        assert my_data == b64decode(simple_file_chunk.data).decode("utf-8") * len(
+            simple_file.chunks
+        )
 
-    def test_file_query(self, monkeypatch, simple_data, simple_file):
+    def test_file_query(self, monkeypatch, base64_data, simple_file):
         query_mock = Mock()
         monkeypatch.setattr(db, "query_unique", query_mock)
 
@@ -240,6 +246,7 @@ class TestFileOperations(object):
             id=simple_file.id,
             owner_type="REQUEST",
             owner_id=simple_request.id,
+            owner=ObjectId(),
         )
 
     @pytest.fixture
@@ -251,6 +258,7 @@ class TestFileOperations(object):
             id=simple_file.id,
             owner_type="JOB",
             owner_id=simple_job.id,
+            owner=ObjectId(),
         )
 
     def test_file_owner(
@@ -264,7 +272,8 @@ class TestFileOperations(object):
         simple_request,
         simple_job,
     ):
-        monkeypatch.setattr(db, "modify", Mock(return_value=None))
+        mod_mock = Mock()
+        monkeypatch.setattr(db, "modify", mod_mock)
         monkeypatch.setattr(db, "create", Mock(return_value=simple_file))
         query_mock = Mock()
         monkeypatch.setattr(db, "query_unique", query_mock)
@@ -280,7 +289,11 @@ class TestFileOperations(object):
         # Lowest ownership priority
         query_mock.side_effect = iter(
             [
-                simple_file,
+                custom_owner,
+            ]
+        )
+        mod_mock.side_effect = iter(
+            [
                 custom_owner,
             ]
         )
@@ -298,6 +311,11 @@ class TestFileOperations(object):
                 req_owner,
             ]
         )
+        mod_mock.side_effect = iter(
+            [
+                req_owner,
+            ]
+        )
         file_metadata = files.set_owner(
             file_id, owner_type="REQUEST", owner_id=simple_request.id
         )
@@ -309,6 +327,10 @@ class TestFileOperations(object):
             [
                 req_owner,
                 simple_job,
+            ]
+        )
+        mod_mock.side_effect = iter(
+            [
                 job_owner,
             ]
         )

@@ -4,6 +4,7 @@ from math import ceil
 from bson import ObjectId
 from bson.errors import InvalidId
 from base64 import b64decode, b64encode
+from datetime import datetime
 
 import beer_garden.db.api as db
 import beer_garden.config as config
@@ -95,9 +96,10 @@ def check_file(file_id: str, upsert: bool = False):
     if res is None:
         if upsert:
             create_file("BG_placeholder", 0, 0, file_id)
-            return db.query_unique(File, id=file_id)
+            res = db.query_unique(File, id=file_id)
         else:
             raise NotFoundError(f"Tried to fetch an unsaved file {file_id}.")
+        db.modify(res, updated_at=datetime.utcnow())
     return res
 
 
@@ -298,7 +300,7 @@ def _fetch_file(file_id: str):
             **_unroll_object(file, key_map={"id": _format_id}, ignore=["owner"]),
             # Each chunk should be base64 encoded, and
             # we can't just concat those strings.
-            data=b64encode(b"".join(map(b64decode, all_data))).decode('utf-8'),
+            data=b64encode(b"".join(map(b64decode, all_data))).decode("utf-8"),
         )
     else:
         return check
@@ -449,8 +451,11 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
         file = check_file(file_id)
         old_owner_priority = OWNERSHIP_PRIORITY.get(file.owner_type, 1_000_000)
         new_owner_priority = OWNERSHIP_PRIORITY.get(owner_type, 1_000_000)
-        # Job owners should override request owners (if one is already set)
-        if file.owner_type is None or new_owner_priority <= old_owner_priority:
+        # Case 1 : New owner has equal or higher priority
+        # Case 2 : The old owner is a higher priority than the new one, but it was deleted.
+        if new_owner_priority <= old_owner_priority or (
+            file.owner_type in OWNERSHIP_PRIORITY and file.owner is None
+        ):
             if owner_type in OWNERSHIP_MAP:
                 owner = db.query_unique(OWNERSHIP_MAP[owner_type], id=owner_id)
                 file = db.modify(
@@ -526,7 +531,7 @@ def forward_file(operation: Operation):
         # Make sure we get all of the other data
         kwargs = dict(
             {"file_id": file.id, "upsert": True},
-            # Created_at is a datetime field that can't be serialized, and owner
+            # updated_at is a datetime field that can't be serialized, and owner
             # is a LazyReference field that causes crashing when being pushed forward.
             **_unroll_object(
                 file,
@@ -535,7 +540,7 @@ def forward_file(operation: Operation):
                     "file_size",
                     "chunk_size",
                     "id",
-                    "created_at",
+                    "updated_at",
                     "owner",
                 ],
             ),
