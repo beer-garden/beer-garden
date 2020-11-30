@@ -1,5 +1,13 @@
 # Beer Garden Changelog
 
+## 2.4.19
+12/1/20
+Brew-view 2.4.20, Bartender 2.4.10, BG-utils 2.4.11
+
+#### Bug Fixes
+- Fixed regression where generating a new Bartender configuration would fail (#774)
+- Remote plugins using v3 brewtils will now work (mostly) with v2 Beer Garden (#767)
+
 ## 2.4.18
 10/27/20
 Brew-view 2.4.19, Bartender 2.4.8, BG-utils 2.4.10
