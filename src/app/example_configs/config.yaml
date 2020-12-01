@@ -14,8 +14,8 @@ db:
   name: beer_garden_v3
   ttl:
     action: -1
-    info: 15
     file: 15
+    info: 15
 entry:
   http:
     enabled: true
