@@ -380,7 +380,7 @@ def create_file(
             f = db.create(f)
         else:
             f = db.modify(
-                f, file_name=file_name, file_size=file_size, chunk_size=chunk_size
+                res, **_unroll_object(f, ignore=["id", "chunks", "owner", "updated_at"])
             )
 
         return FileStatus(

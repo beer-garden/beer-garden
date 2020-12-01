@@ -24,13 +24,13 @@ class FileAPI(BaseHandler):
             in: query
             required: false
             description: The chunk number requested
-            type: string
+            type: integer
           - name: verify
             in: query
             required: false
             description: Flag that will cause verification information to
                          be returned instead of the file data
-            type: bool
+            type: boolean
         responses:
           200:
             description: The requested File or FileChunk data
@@ -70,14 +70,21 @@ class FileAPI(BaseHandler):
             required: true
             description: The ID of the file
             type: string
-          - name: data
+          - name: upsert
+            in: query
+            required: false
+            description: Creates a top-level file if one doesn't exist
+            type: boolean
+          - name: body
             in: body
             required: true
-            description: The contents of the chunk, base64 encoded
-          - name: offset
-            in: body
-            required: true
-            description: The current offset definition
+            schema:
+              properties:
+                "data":
+                  type: string
+                  format: byte
+                "offset":
+                  type: integer
         responses:
           201:
             description: A new FileChunk is created
@@ -157,15 +164,38 @@ class FileNameAPI(BaseHandler):
           - name: file_name
             in: query
             required: true
-            description: The name of the file being sent
+            description: The name of the file being sent.
           - name: chunk_size
             in: query
             required: true
-            description: The size of chunks the file is being broken into (in bytes)
+            description: The size of chunks the file is being broken into (in bytes).
+            type: integer
           - name: file_size
             in: query
             required: true
-            description: The total size of the file (in bytes)
+            description: The total size of the file (in bytes).
+            type: integer
+          - name: file_id
+            in: query
+            required: false
+            description: Attempt to set the file's ID. Must be a 24-character hex string.
+            type: string
+          - name: upsert
+            in: query
+            required: false
+            description: Update an already-existing File, otherwise make a new one.
+            type: boolean
+          - name: owner_id
+            in: query
+            required: false
+            description: Used to set ownership of the file so it isn't deleted.
+            type: string
+          - name: owner_type
+            in: query
+            required: false
+            description: Describes the type of owner.
+                This may be any value, or a pre-set one (e.g. JOB, REQUEST, MyCustomOwnerType)
+            type: string
         responses:
           200:
             description: The File ID
