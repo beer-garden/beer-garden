@@ -380,12 +380,12 @@ class Request(MongoModel, Owner):
         encoding = "utf-8"
         """If string output was over 16MB it was spilled over to the GridFS storage solution"""
         if self.output_gridfs:
-            self.logger.info("~~~Retrieving output from gridfs")
+            self.logger.debug("~~~Retrieving output from gridfs")
             self.output = self.output_gridfs.read().decode(encoding)
             self.output_gridfs = None
 
         if self.parameters_gridfs:
-            self.logger.info("~~~Retrieving parameters from gridfs")
+            self.logger.debug("~~~Retrieving parameters from gridfs")
             self.parameters = json.loads(self.parameters_gridfs.read().decode(encoding))
             self.parameters_gridfs = None
 

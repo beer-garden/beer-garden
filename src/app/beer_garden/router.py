@@ -428,12 +428,12 @@ def _pre_forward(operation: Operation) -> Operation:
         operation.model.parent = None
         operation.model.has_parent = False
 
+        beer_garden.files.forward_file(operation)
+
         # Pull out and store the wait event, if it exists
         wait_event = operation.kwargs.pop("wait_event", None)
         if wait_event:
             beer_garden.requests.request_map[operation.model.id] = wait_event
-
-        beer_garden.files.forward_file(operation)
 
     return operation
 
