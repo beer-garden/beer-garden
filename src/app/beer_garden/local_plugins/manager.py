@@ -187,7 +187,6 @@ class PluginManager(StoppableThread):
 
         # ...and then kill it if necessary
         if runner.is_alive():
-            self.logger.warning(f"Runner {runner_id} still alive, about to SIGKILL")
             runner.kill()
 
         runner.stopped = True
