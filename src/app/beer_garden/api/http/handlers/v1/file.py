@@ -78,6 +78,7 @@ class FileAPI(BaseHandler):
           - name: body
             in: body
             required: true
+            description: Data - A Base64 string encoding your data; Offset - The chunk number (0, 1, ... N)
             schema:
               properties:
                 "data":
