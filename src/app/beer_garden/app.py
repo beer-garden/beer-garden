@@ -401,7 +401,8 @@ class Application(StoppableThread):
         for state in beer_garden.local_plugins.manager.lpm_proxy.runner_state():
             if state.get("instance_id"):
                 try:
-                    stop(instance_id=state["instance_id"])
+                    # Just send the Stop, don't wait for shutdown
+                    stop(instance_id=state["instance_id"], wait_local=False)
                 except Exception as ex:
                     self.logger.warning(
                         f"Error sending Stop to plugin at {state['runner_name']}: {ex}"
