@@ -67,7 +67,7 @@ export default function adminGardenController(
   }
 
   $scope.createGarden = function() {
-    if ($scope.unique_garden_name) {
+    if ($scope.is_unique_garden_name) {
         GardenService.createGarden({"name":$scope.create_garden_name, "status":"NOT_CONFIGURED"});
         $state.go('base.garden_view',
               {
