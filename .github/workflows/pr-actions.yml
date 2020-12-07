@@ -90,7 +90,7 @@ jobs:
         run: |
           pip install pytest
           pip install pytest-cov
-          pytest --cov=beer-garden --cov-report=xml:coverage.xml tests/
+          pytest --cov=beer-garden --cov-report=xml:coverage.xml ./test/
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
