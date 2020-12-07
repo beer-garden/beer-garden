@@ -5,9 +5,7 @@ on: pull_request
 jobs:
   Linting:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-direcotry: ./src/app
+
     strategy:
       matrix:
         python-version: ['3.8']
@@ -21,6 +19,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Run Linting
+        working-direcotry: ./src/app
         run: |
           pip install black flake8
           make lint
@@ -44,8 +43,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Make Deps
+        working-direcotry: ./src/app
         run: make deps
 
       - name: Run Tests
+        working-direcotry: ./src/app
         run: make test
 
