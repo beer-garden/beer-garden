@@ -42,6 +42,9 @@ export function adminRoleController(
   // Normal loader
   $scope.loader = {};
 
+  $scope.new_namespace = "";
+  $scope.new_access = "";
+
   $scope.doCreate = function() {
     let modalInstance = $uibModal.open({
       controller: 'NewRoleController',
@@ -62,49 +65,62 @@ export function adminRoleController(
     RoleService.deleteRole(roleId).then(loadAll);
   };
 
-  $scope.doReset = function(roleId) {
-    let original = _.find($scope.serverRoles, {'id': roleId});
-    let changed = _.find($scope.roles, {'id': roleId});
+  $scope.canEdit = function(){
+    return $scope.selectedRole.name == 'bg-admin' || $scope.selectedRole.name == 'bg-anonymous' || $scope.selectedRole.name == 'bg-plugin';
+  }
 
-    changed.roles = _.cloneDeep(original.roles);
-    changed.permissions = _.cloneDeep(original.permissions);
-  };
+  $scope.injectCurrentRole = function(response){
 
-  $scope.doUpdate = function() {
-    let roleId = $scope.selectedRole.id;
-    let original = _.find($scope.serverRoles, {'id': roleId});
-    let promises = [];
+    let role = response.data;
 
-    if ($scope.selectedRole.rolesChanged) {
-      let originalList = mapToArray(original.primaryRoles);
-      let changedList = mapToArray($scope.selectedRole.primaryRoles);
-
-      let additions = _.difference(changedList, originalList);
-      let removals = _.difference(originalList, changedList);
-
-      if (additions.length) {
-        promises.push(RoleService.addRoles(roleId, additions));
-      }
-      if (removals.length) {
-        promises.push(RoleService.removeRoles(roleId, removals));
-      }
-    } else if ($scope.selectedRole.permissionsChanged) {
-      let originalList = mapToArray(original.permissions);
-      let changedList = mapToArray($scope.selectedRole.permissions);
-
-      let additions = _.difference(changedList, originalList);
-      let removals = _.difference(originalList, changedList);
-
-      if (additions.length) {
-        promises.push(RoleService.addPermissions(roleId, additions));
-      }
-      if (removals.length) {
-        promises.push(RoleService.removePermissions(roleId, removals));
+    for (let i = 0; i < $scope.roles.length; i++){
+      if ($scope.roles[i].id == role.id){
+        $scope.roles[i] = role
+        $scope.selectedRole = role
+        break;
       }
     }
+  }
 
-    $q.all(promises).then(loadAll, $scope.addErrorAlert);
-  };
+  $scope.updatePermission = function(permission){
+
+    if (("id" in $scope.selectedRole) && permission.access != null){
+
+        RoleService.addPermission($scope.selectedRole.id, permission)
+               .then($scope.injectCurrentRole , $scope.addErrorAlert);
+
+    }
+  }
+
+  $scope.removePermission = function(permission){
+    RoleService.removePermission($scope.selectedRole.id, permission)
+               .then($scope.injectCurrentRole , $scope.addErrorAlert);
+  }
+
+  $scope.addPermission = function(){
+
+    if (!("id" in $scope.selectedRole)){
+        $scope.alerts.push({
+          type: 'danger',
+          msg: "Must select Role before adding Permission",
+        });
+    }
+    else if ($scope.new_access == "" || $scope.new_access == null){
+        $scope.alerts.push({
+          type: 'danger',
+          msg: "Must select Access before adding Permission",
+        });
+    }
+    else{
+    $scope.updatePermission({"namespace": $scope.new_namespace,
+                                 "access":$scope.new_access,
+                                 "is_local":($scope.new_namespace == "" || $scope.new_namespace == null)})
+    }
+
+  }
+
+
+
 
   $scope.addErrorAlert = function(response) {
     $scope.alerts.push({
@@ -118,35 +134,14 @@ export function adminRoleController(
     $scope.alerts.splice(index, 1);
   };
 
-
-
-  $scope.isRoleDisabled = function(nestedRoleName) {
-    // Roles need to be disabled if a permission is changed
-    // or the role is enabled as a result of a double-nested role
-    // or the role is the actual role being modified
-    return $scope.selectedRole.permissionsChanged ||
-      $scope.selectedRole.nestedRoles[nestedRoleName] ||
-      $scope.selectedRole.name === nestedRoleName;
-  };
-
-  $scope.isPermissionDisabled = function(nestedPermissionName) {
-    // Permissions need to be disabled if a role is changed
-    // or the permission is enabled as a result of a nested role
-    return $scope.selectedRole.rolesChanged ||
-      $scope.selectedRole.nestedPermissions[nestedPermissionName];
-  };
-
-  $scope.roleChange = function(roleName) {
-    let changed = $scope.selectedRole;
-    let original = _.find($scope.serverRoles, {'id': changed.id});
-
-  };
-
   /**
    * loadAll - load everything this controller needs
    */
   function loadAll() {
     $scope.alerts = [];
+    $scope.new_permission = null;
+    $scope.new_access = null;
+
 
     RoleService.getRoles().then(
         $scope.successCallback,
@@ -156,7 +151,18 @@ export function adminRoleController(
 
   $scope.successCallback = function(response) {
     $scope.response = response;
+
     $scope.roles = response.data;
+
+    let selectedId = $scope.selectedRole['id'];
+    let selectedRole = undefined;
+
+    if (selectedId) {
+      selectedRole = _.find($scope.roles, {'id': selectedId});
+    }
+
+    $scope.selectedRole = selectedRole || $scope.roles[0]
+
   };
 
   $scope.failureCallback = function(response) {

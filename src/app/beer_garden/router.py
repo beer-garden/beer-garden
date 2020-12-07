@@ -39,6 +39,7 @@ import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
 import beer_garden.roles
+import beer_garden.users
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 from beer_garden.events.processors import QueueListener
 from beer_garden.garden import get_garden, get_gardens
@@ -157,6 +158,19 @@ route_functions = {
     "QUEUE_READ_INSTANCE": beer_garden.queues.get_instance_queues,
     "NAMESPACE_READ_ALL": beer_garden.namespace.get_namespaces,
     "ROLE_READ_ALL": beer_garden.roles.get_roles,
+    "ROLE_READ": beer_garden.roles.get_role,
+    "ROLE_DELETE": beer_garden.roles.delete_role,
+    "ROLE_UPDATE_PERMISSION": beer_garden.roles.update_permission,
+    "ROLE_REMOVE_PERMISSION": beer_garden.roles.remove_permission,
+    "ROLE_UPDATE_DESCRIPTION": beer_garden.roles.update_description,
+    "ROLE_CREATE": beer_garden.roles.create_role,
+    "USER_READ_ALL": beer_garden.users.get_users,
+    "USER_READ": beer_garden.users.get_user,
+    "USER_DELETE": beer_garden.users.delete_user,
+    "USER_UPDATE_ROLE": beer_garden.users.update_roles,
+    "USER_REMOVE_ROLE": beer_garden.users.remove_role,
+    "USER_CREATE": beer_garden.users.create_user,
+    "USER_UPDATE": beer_garden.users.update_user,
 }
 
 
@@ -449,6 +463,7 @@ def _determine_target_garden(operation: Operation) -> str:
         or "GARDEN" in operation.operation_type
         or "JOB" in operation.operation_type
         or "ROLE" in operation.operation_type
+        or "USER" in operation.operation_type
         or operation.operation_type
         in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
     ):

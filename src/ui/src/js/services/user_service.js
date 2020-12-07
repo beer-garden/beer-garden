@@ -31,20 +31,11 @@ export default function userService($http) {
   };
 
   _.assign(service, {
-    addRoles: (userId, roles) => {
-      return service.updateUser(userId, _.map(roles, (value) => {
-        return {operation: 'add', path: '/roles', value: value};
-      }));
+    addRole: (userId, roleId) => {
+      return service.updateUser(userId, [{operation: 'add', path: '/roles', value: roleId}]);
     },
-    removeRoles: (userId, roles) => {
-      return service.updateUser(userId, _.map(roles, (value) => {
-        return {operation: 'remove', path: '/roles', value: value};
-      }));
-    },
-    setRoles: (userId, roles) => {
-      return service.updateUser(userId, [
-        {operation: 'set', path: '/roles', value: roles},
-      ]);
+    removeRole: (userId, roleId) => {
+      return service.updateUser(userId, [{operation: 'remove', path: '/roles', value: roleId}]);
     },
 
     loadUser: (token) => {

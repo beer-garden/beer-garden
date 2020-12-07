@@ -26,63 +26,58 @@ export default function roleService($http) {
     },
   };
 
-  /**
-   * coalescePermissions - Determine effective permissions
-   * @param  {Array} roleList Array of roles
-   * @return {Array}          Array [set(all roles), set(all permissions)]
-   */
-  function coalescePermissions(roleList) {
-    if (!roleList) {
-      return [[], []];
+   _.assign(service, {
+    addPermission: (roleId, permission) => {
+      return service.updateRole(roleId, [{operation: 'add', path: '/permissions', value: permission}]);
+    },
+    removePermission: (roleId, permission) => {
+      return service.updateRole(roleId, [{operation: 'remove', path: '/permissions', value: permission}]);
+    },
+    consolidatePermissions: (roles) => {
+
+        let permissions = [];
+
+        for (let i = 0; i < roles.length; i++){
+            for (let j = 0; j < roles[i].permissions.length; j++){
+
+                let permission = roles[i].permissions[j];
+                let unmatched = true;
+                for (let k = 0; k < permissions.length; k++){
+                    if (permission.namespace == permissions[k].namespace || (permission.is_local && permissions[k].is_local)){
+                        unmatched = false;
+                        switch (permission.access){
+                            case "ADMIN":
+                                if (["MAINTAINER", "CREATE", "READ"].indexOf(permissions[k].access) > -1){
+                                    permissions[k] = permission;
+                                }
+                                break;
+                            case "MAINTAINER":
+                                if (["CREATE", "READ"].indexOf(permissions[k].access) > -1){
+                                    permissions[k] = permission;
+                                }
+                                break;
+                            case "CREATE":
+                                if (["READ"].indexOf(permissions[k].access) > -1){
+                                    permissions[k] = permission;
+                                }
+                                break;
+                            case "READ":
+                                break;
+                        }
+
+                        break;
+                    }
+                }
+
+                if (unmatched){
+                    permissions.push(roles[i].permissions[j]);
+                }
+
+            }
+        }
+
+        return permissions;
     }
-
-    let aggregateRoles = [];
-    let aggregatePerms = [];
-
-    for (let role of roleList) {
-      aggregateRoles.push(role.name);
-      aggregatePerms = _.union(aggregatePerms, role.permissions);
-
-      let recursed = coalescePermissions(role.roles);
-      aggregateRoles = _.union(aggregateRoles, recursed[0]);
-      aggregatePerms = _.union(aggregatePerms, recursed[1]);
-    }
-
-    return [aggregateRoles, aggregatePerms];
-  }
-
-  _.assign(service, {
-    addPermissions: (roleId, permissions) => {
-      return service.updateRole(roleId, _.map(permissions, (value) => {
-        return {operation: 'add', path: '/permissions', value: value};
-      }));
-    },
-    removePermissions: (roleId, permissions) => {
-      return service.updateRole(roleId, _.map(permissions, (value) => {
-        return {operation: 'remove', path: '/permissions', value: value};
-      }));
-    },
-    setPermissions: (roleId, permissions) => {
-      return service.updateRole(roleId, [
-        {operation: 'set', path: '/permissions', value: permissions},
-      ]);
-    },
-    addRoles: (roleId, roles) => {
-      return service.updateRole(roleId, _.map(roles, (value) => {
-        return {operation: 'add', path: '/roles', value: value};
-      }));
-    },
-    removeRoles: (roleId, roles) => {
-      return service.updateRole(roleId, _.map(roles, (value) => {
-        return {operation: 'remove', path: '/roles', value: value};
-      }));
-    },
-    setRoles: (roleId, roles) => {
-      return service.updateRole(roleId, [
-        {operation: 'set', path: '/roles', value: roles},
-      ]);
-    },
-    coalescePermissions: coalescePermissions,
   });
 
   return service;

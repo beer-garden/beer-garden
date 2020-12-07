@@ -15,8 +15,11 @@
     <div class="col-md-2">
       <h3 style="text-align: center;">Roles</h3>
     </div>
-    <div class="col-md-8">
-      <h3 style="text-align: center;">Permissions</h3>
+    <div class="col-md-3">
+      <h3 style="text-align: center;">Add Permission to Role</h3>
+    </div>
+    <div class="col-md-6">
+      <h3 style="text-align: center;">Edit Permissions</h3>
     </div>
   </div>
   <form>
@@ -27,8 +30,48 @@
           ng-model="selectedRole"
           ng-options="role.name for role in roles">
         </select>
+        <br>
+        <br>
+          <input type="submit" class="btn btn-success"
+            ng-click="doCreate()"
+            ng-show="hasPermission(user, 'ADMIN', is_local=true)"
+            value="Create Role" />
+
+          <input type="submit" class="btn btn-danger"
+            value="Remove Role"
+            ng-click="doDelete(selectedRole.id)"
+            ng-show="hasPermission(user, 'ADMIN', is_local=true)"
+            ng-disabled="canEdit()"
+            confirm="Are you sure you want to remove this role?" />
+
       </div>
-      <div class="col-md-8">
+      <div class="col-md-3">
+        <div>
+          <label>Select/Enter Namespace: </label><br>
+          <select name="new_namespace" ng-model="new_namespace">
+            <option value="">LOCAL</option>
+            <option ng-repeat="namespace in namespaces" value="{{namespace}}">{{namespace}}</option>
+          </select>
+          <input ng-model="new_namespace" title="Enter Namespace">
+          <br>
+          <label>Select Access: </label><br>
+          <select name="new_access" ng-model="new_access">
+            <option value=""></option>
+            <option value="READ">READ</option>
+            <option value="CREATE">CREATE</option>
+            <option value="MAINTAINER">MAINTAINER</option>
+            <option value="ADMIN">ADMIN</option>
+          </select>
+          <br>
+          <br>
+          <input type="submit" class="btn btn-primary"
+            ng-click="addPermission()"
+            ng-disabled="canEdit()"
+            ng-show="hasPermission(user, 'ADMIN', is_local=true)"
+            value="Add Permission" />
+        </div>
+        </div>
+      <div class="col-md-6">
         <table
           id="commandIndexTable"
           datatable="ng"
@@ -47,8 +90,10 @@
             <tr ng-repeat="selectedPermission in selectedRole.permissions ">
               <td>{{selectedPermission.namespace || "LOCAL"}}</td>
               <td>
-                <select name="access" ng-model="selectedPermission">
-                  <option value="NONE">NONE</option>
+                <select name="access"
+                        ng-model="selectedPermission.access"
+                        ng-disabled="canEdit()"
+                        ng-change="updatePermission(selectedPermission)">
                   <option value="READ">READ</option>
                   <option value="CREATE">CREATE</option>
                   <option value="MAINTAINER">MAINTAINER</option>
@@ -56,43 +101,15 @@
                 </select>
               </td>
               <td>
-                <a class="btn btn-primary center-block word-wrap-button">Remove Permission</a>
+                <a class="btn btn-danger"
+                   ng-disabled="(canEdit() && hasPermission(user, 'ADMIN', is_local=true))"
+                   ng-click="removePermission(selectedPermission)"
+                >Remove Permission</a>
               </td>
             </tr>
           </tbody>
         </table>
-      </div>
-    </div>
-    <div class="row form-group">
-      <div class="row col-md-3">
-        <div class="col-md-6">
-          <input type="submit" class="btn btn-success w-100"
-            ng-click="doCreate()"
-            ng-show="hasPermission(user, 'bg-local-admin')"
-            value="Create Role" />
         </div>
-        <div class="col-md-6">
-          <input type="submit" class="btn btn-danger w-100"
-            value="Remove Role"
-            ng-click="doDelete(selectedRole.id)"
-            ng-show="hasPermission(user, 'bg-local-admin')"
-            ng-disabled="selectedRole.name == 'bg-admin' ||
-                         selectedRole.name == 'bg-anonymous' ||
-                         selectedRole.name == 'bg-plugin'"
-            confirm="Are you sure you want to remove this role?" />
-        </div>
-      </div>
-      <div class="col-md-3"></div>
-      <div class="col-md-2">
-        <input type="submit" class="btn btn-warning w-100"
-          ng-click="doReset(selectedRole.id)"
-          value="Reset" />
-      </div>
-      <div class="col-md-4">
-        <input type="submit" class="btn btn-primary w-100"
-          ng-click="doUpdate()"
-          ng-show="hasPermission(user, 'bg-local-admin')"
-          value="Update Role" />
       </div>
     </div>
   </form>

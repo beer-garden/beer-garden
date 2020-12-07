@@ -228,7 +228,7 @@ class TokenListAPI(BaseHandler):
         parsed_body = json.loads(self.request.decoded_body)
 
         try:
-            # principal = db.query_unique(Principal, username=parsed_body["username"])
+            #principal = db.query_unique(Principal, username=parsed_body["username"])
             principal = Principal.objects.get(username=parsed_body["username"])
             if (
                 config.get("auth.guest_login_enabled")
@@ -294,11 +294,15 @@ class TokenListAPI(BaseHandler):
 def generate_tokens(principal, expire_days):
     roles, permissions = coalesce_permissions(principal.roles)
 
+    serial_permissions = list()
+
+    for permission in permissions:
+        serial_permissions.append(MongoParser.serialize_permission(permission))
     payload = {
         "sub": str(principal.id),
         "username": principal.username,
         "roles": list(roles),
-        "permissions": str(list(permissions)),
+        "permissions": serial_permissions,
     }
 
     return {

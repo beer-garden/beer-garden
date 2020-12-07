@@ -15,10 +15,12 @@ from beer_garden.api.http.authorization import (
 )
 from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError, RequestForbidden
+from brewtils.models import Operation
+from brewtils.schema_parser import SchemaParser
 
 
 class UserAPI(BaseHandler):
-    def get(self, user_identifier):
+    async def get(self, user_identifier):
         """
         ---
         summary: Retrieve a specific User
@@ -41,7 +43,7 @@ class UserAPI(BaseHandler):
           - Users
         """
         if user_identifier == "anonymous":
-            principal = beer_garden.api.http.anonymous_principal
+            response = beer_garden.api.http.anonymous_principal
         else:
             # Need fine-grained access control here
             if user_identifier not in [
@@ -51,16 +53,28 @@ class UserAPI(BaseHandler):
                 check_permission(self.current_user, [Permissions.USER_READ])
 
             try:
-                principal = Principal.objects.get(id=str(user_identifier))
+                response = await self.client(
+                    Operation(
+                        operation_type="USER_READ",
+                        kwargs={
+                            "user_id": str(user_identifier)
+                        },
+                    )
+                )
             except (DoesNotExist, ValidationError):
-                principal = Principal.objects.get(username=str(user_identifier))
+                response = await self.client(
+                    Operation(
+                        operation_type="USER_READ",
+                        kwargs={
+                            "username": str(user_identifier)
+                        },
+                    )
+                )
 
-        principal.permissions = coalesce_permissions(principal.roles)[1]
-
-        self.write(MongoParser.serialize_principal(principal, to_string=False))
+        self.write(response)
 
     @authenticated(permissions=[Permissions.ADMIN])
-    def delete(self, user_id):
+    async def delete(self, user_id):
         """
         ---
         summary: Delete a specific User
@@ -80,12 +94,19 @@ class UserAPI(BaseHandler):
         tags:
           - Users
         """
-        principal = Principal.objects.get(id=str(user_id))
-        principal.delete()
+
+        await self.client(
+            Operation(
+                operation_type="USER_DELETE",
+                kwargs={
+                    "user_id": user_id,
+                },
+            )
+        )
 
         self.set_status(204)
 
-    def patch(self, user_id):
+    async def patch(self, user_id):
         """
         ---
         summary: Partially update a User
@@ -123,29 +144,42 @@ class UserAPI(BaseHandler):
         tags:
           - Users
         """
-        principal = Principal.objects.get(id=str(user_id))
-        operations = MongoParser.parse_patch(
-            self.request.decoded_body, many=True, from_string=True
-        )
 
         # Most things only need a permission check if updating a different user
         if user_id != str(self.current_user.id):
-            check_permission(self.current_user, [Permissions.USER_UPDATE])
+            check_permission(self.current_user, [Permissions.ADMIN], is_local=True)
 
-        for op in operations:
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
+
+        response = {}
+
+        for op in patch:
             if op.path == "/roles":
                 # Updating roles always requires USER_UPDATE
-                check_permission(self.current_user, [Permissions.USER_UPDATE])
+                check_permission(self.current_user, [Permissions.ADMIN], is_local=True)
 
                 try:
                     if op.operation == "add":
-                        principal.roles.append(Role.objects.get(name=op.value))
+                        response = await self.client(
+                            Operation(
+                                operation_type="USER_UPDATE_ROLE",
+                                kwargs={
+                                    "user_id": user_id,
+                                    "role_id": op.value,
+                                },
+                            )
+                        )
+
                     elif op.operation == "remove":
-                        principal.roles.remove(Role.objects.get(name=op.value))
-                    elif op.operation == "set":
-                        principal.roles = [
-                            Role.objects.get(name=name) for name in op.value
-                        ]
+                        response = await self.client(
+                            Operation(
+                                operation_type="USER_REMOVE_ROLE",
+                                kwargs={
+                                    "user_id": user_id,
+                                    "role_id": op.value,
+                                },
+                            )
+                        )
                     else:
                         raise ModelValidationError(
                             "Unsupported operation '%s'" % op.operation
@@ -156,7 +190,15 @@ class UserAPI(BaseHandler):
             elif op.path == "/username":
 
                 if op.operation == "update":
-                    principal.username = op.value
+                    response = await self.client(
+                        Operation(
+                            operation_type="USER_UPDATE",
+                            kwargs={
+                                "user_id": user_id,
+                                "updates": {"username": op.value},
+                            },
+                        )
+                    )
                 else:
                     raise ModelValidationError(
                         "Unsupported operation '%s'" % op.operation
@@ -183,17 +225,36 @@ class UserAPI(BaseHandler):
                         )
 
                     if not custom_app_context.verify(
-                        current_password, self.current_user.hash
+                            current_password, self.current_user.hash
                     ):
                         raise RequestForbidden("Invalid password")
 
-                principal.hash = custom_app_context.hash(new_password)
-                if "changed" in principal.metadata:
-                    principal.metadata["changed"] = True
+                # Query Database directly to get current Password Info
+                principal = Principal.objects.get(id=str(user_id))
+                hash = custom_app_context.hash(new_password)
+
+                if hash != principal.hash:
+                    response = await self.client(
+                        Operation(
+                            operation_type="USER_UPDATE",
+                            kwargs={
+                                "user_id": user_id,
+                                "updates": {"hash": hash},
+                            },
+                        ),
+                    )
 
             elif op.path == "/preferences/theme":
                 if op.operation == "set":
-                    principal.preferences["theme"] = op.value
+                    response = await self.client(
+                        Operation(
+                            operation_type="USER_UPDATE",
+                            kwargs={
+                                "user_id": user_id,
+                                "updates": {"preferences": {"theme": op.value}},
+                            },
+                        ),
+                    )
                 else:
                     raise ModelValidationError(
                         "Unsupported operation '%s'" % op.operation
@@ -202,15 +263,12 @@ class UserAPI(BaseHandler):
             else:
                 raise ModelValidationError("Unsupported path '%s'" % op.path)
 
-        principal.save()
-
-        principal.permissions = coalesce_permissions(principal.roles)[1]
-        self.write(MongoParser.serialize_principal(principal, to_string=False))
+        self.write(response)
 
 
 class UsersAPI(BaseHandler):
     @authenticated(permissions=[Permissions.ADMIN])
-    def get(self):
+    async def get(self):
         """
         ---
         summary: Retrieve all Users
@@ -226,15 +284,14 @@ class UsersAPI(BaseHandler):
         tags:
           - Users
         """
-        principals = Principal.objects.all().select_related(max_depth=1)
 
-        for principal in principals:
-            principal.permissions = coalesce_permissions(principal.roles)[1]
-
-        self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(
-            MongoParser.serialize_principal(principals, to_string=True, many=True)
+        principals = await self.client(
+            Operation(
+                operation_type="USER_READ_ALL"
+            )
         )
+
+        self.write(principals)
 
     @authenticated(permissions=[Permissions.ADMIN])
     def post(self):
@@ -271,6 +328,10 @@ class UsersAPI(BaseHandler):
         tags:
           - Users
         """
+
+        # We have to hit the database directly here because Brewtils doesn't have the
+        # password field
+
         parsed = json.loads(self.request.decoded_body)
 
         user = Principal(

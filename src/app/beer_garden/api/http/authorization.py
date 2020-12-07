@@ -4,6 +4,8 @@ from enum import Enum
 
 import jwt
 import wrapt
+
+from beer_garden.users import coalesce_permissions
 from brewtils.errors import RequestForbidden
 from brewtils.models import (
     Principal as BrewtilsPrincipal,
@@ -17,20 +19,16 @@ from tornado.web import HTTPError
 import beer_garden.api.http
 import beer_garden.config as config
 from beer_garden.db.mongo.models import Principal
+from brewtils.schema_parser import SchemaParser
 
 
 class Permissions(Enum):
     """Admin permissions are required to execute anything within the Admin drop-down in
     regards to Systems and Gardens. Local Admins can manage user roles  and permissions.
     """
-
-    # Permission to retrieve non-Admin data
     READ = 1
-    # Permission to create non-Admin data
     CREATE = 2
-    # Permission to update non-Admin data
     MAINTAINER = 3
-    # Permission to update non-Admin and Admin data
     ADMIN = 4
 
 
@@ -69,7 +67,7 @@ def authenticated(permissions=None):
     return wrapper
 
 
-def check_permission(principal, required_permissions):
+def check_permission(principal, required_permissions, is_local=False):
     """Determine if a principal has access to a resource
 
     Args:
@@ -97,13 +95,20 @@ def check_permission(principal, required_permissions):
     # If user has access to that permission, grant access
     for permission in principal.permissions:
         if permission.access in permission_strings:
-            return
+            if is_local:
+                if permission.is_local:
+                    return
+            else:
+                return
 
     # Determine correct error code to throw
     if principal == beer_garden.api.http.anonymous_principal:
         raise HTTPError(status_code=401)
     else:
-        raise RequestForbidden("Action requires permissions %s" % permission_strings)
+        if is_local:
+            raise RequestForbidden("Action requires local permissions %s" % permission_strings)
+        else:
+            raise RequestForbidden("Action requires permissions %s" % permission_strings)
 
 
 def anonymous_principal() -> BrewtilsPrincipal:
@@ -118,40 +123,24 @@ def anonymous_principal() -> BrewtilsPrincipal:
     without having to calculate effective permissions every time.
     """
 
-    # auth_config = config.get("auth")
-    # if auth_config.enabled and auth_config.guest_login_enabled:
-    #     roles = Principal.objects.get(username="anonymous").roles
-    # elif auth_config.enabled:
-    #     # By default, if no guest login is available, there is no anonymous
-    #     # user, which means there are no roles.
-    #     roles = []
-    # else:
-    roles = [
-        BrewtilsRole(
-            name="bg-admin",
-            permissions=[BrewtilsPermission(is_local=True, access="ADMIN")],
-        )
-    ]
+    auth_config = config.get("auth")
+    if auth_config.enabled and auth_config.guest_login_enabled:
+        roles = Principal.objects.get(username="anonymous").roles
+    elif auth_config.enabled:
+        # By default, if no guest login is available, there is no anonymous
+        # user, which means there are no roles.
+        roles = []
+    else:
+        roles = [
+            BrewtilsRole(
+                name="bg-admin",
+                permissions=[BrewtilsPermission(is_local=True, access="ADMIN")],
+            )
+        ]
 
     _, permissions = coalesce_permissions(roles)
 
     return BrewtilsPrincipal(username="anonymous", roles=roles, permissions=permissions)
-
-
-def coalesce_permissions(role_list):
-    """Determine permissions"""
-
-    if not role_list:
-        return set(), set()
-
-    aggregate_roles = set()
-    aggregate_perms = set()
-
-    for role in role_list:
-        aggregate_roles.add(role.name)
-        aggregate_perms |= set(role.permissions)
-
-    return aggregate_roles, aggregate_perms
 
 
 def basic_auth(request):
@@ -238,7 +227,7 @@ def _principal_from_token(token):
         id=decoded["sub"],
         username=decoded.get("username", ""),
         roles=[BrewtilsRole(name=role) for role in decoded.get("roles", [])],
-        permissions=decoded.get("permissions", []),
+        permissions=[SchemaParser.parse_permission(permission, from_string=True) for permission in decoded.get("permissions", [])],
     )
 
 
@@ -248,10 +237,10 @@ class AuthMixin(object):
     def get_current_user(self):
         """Use registered handlers to determine current user"""
 
-        # for provider in self.auth_providers:
-        #     principal = provider(self.request)
-        #
-        #     if principal is not None:
-        #         return principal
+        for provider in self.auth_providers:
+            principal = provider(self.request)
+
+            if principal is not None:
+                return principal
 
         return beer_garden.api.http.anonymous_principal

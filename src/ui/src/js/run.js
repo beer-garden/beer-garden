@@ -89,7 +89,7 @@ export default function appRun(
         let user = response.data;
 
         // coalescePermissions [0] is roles, [1] is permissions
-        user.permissions = RoleService.coalescePermissions(user.roles)[1];
+        user.permissions = RoleService.consolidatePermissions(user.roles);
 
         let theme = _.get(user, 'preferences.theme', 'default');
         $rootScope.changeTheme(theme);

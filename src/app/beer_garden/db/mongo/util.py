@@ -13,7 +13,7 @@ from passlib.apps import custom_app_context
 
 from beer_garden.db import api
 
-from brewtils.models import (Role as BrewtilsRole, Permission as BrewtilsPermission)
+from brewtils.models import Role as BrewtilsRole, Permission as BrewtilsPermission
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ def ensure_roles():
     # Only create convenience roles if this is a fresh database
 
     if api.count(BrewtilsRole) == 0:
-    #if Role.objects.count() == 0:
+        # if Role.objects.count() == 0:
         logger.warning("No roles found: creating convenience roles")
 
         for role in convenience_roles:

@@ -3,13 +3,14 @@
   <span class="pull-right" ng-show="responseState(response) !== 'loading'">
     <button type="button"
             class="btn btn-danger"
+            ng-show="hasPermission(user, 'ADMIN', is_local=true)"
             ng-click="clearAllQueues()"
             confirm="Are you sure you want to delete all Queues?">
       Clear All Queues
     </button>
     <button type="button"
             class="btn btn-primary"
-            ng-show="hasPermission(user, 'bg-system-admin')"
+            ng-show="hasPermission(user, 'ADMIN', is_local=true)"
             ng-click="rescan()">Rescan System Directory</button>
   </span>
 </h1>
@@ -47,20 +48,20 @@
             <div class="btn-toolbar pull-right">
               <div class="btn-group btn-group-sm">
                 <button type="button" class="btn btn-default fa fa-play"
-                        ng-show="hasPermission(user, 'bg-system-admin')"
+                        ng-show="hasPermission(user, 'ADMIN')"
                         ng-click="startSystem(system)"
                         title="Stop System {{system.name}}"></button>
                 <button type="button" class="btn btn-default fa fa-stop"
-                        ng-show="hasPermission(user, 'bg-system-admin')"
+                        ng-show="hasPermission(user, 'ADMIN')"
                         ng-click="stopSystem(system)"
                         title="Stop System {{system.name}}"></button>
                 <button type="button" class="btn btn-default fa fa-refresh"
-                        ng-show="hasPermission(user, 'bg-system-admin')"
+                        ng-show="hasPermission(user, 'ADMIN')"
                         ng-click="reloadSystem(system)"
                         title="Reload System {{system.name}}"></button>
               </div>
               <div class="btn-group btn-group-sm pull-right"
-                   ng-show="hasPermission(user, 'bg-system-admin')">
+                   ng-show="hasPermission(user, 'ADMIN')">
                 <button type="button" class="btn btn-default fa fa-trash-o"
                         ng-click="deleteSystem(system)"
                         confirm="Are you sure you want to delete a system with running instances?"
@@ -74,7 +75,7 @@
             <bg-status target='instance.status'></bg-status>
             <span style="padding: 0 10px">{{instance.name}}</span>
             <span class="btn-toolbar pull-right"
-                  ng-show="hasPermission(user, 'bg-system-admin')">
+                  ng-show="hasPermission(user, 'ADMIN')">
               <span class="btn-group btn-group-xs">
                 <button type="button" class="btn btn-default fa fa-play"
                         ng-click="startInstance(instance)"

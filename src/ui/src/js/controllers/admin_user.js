@@ -36,11 +36,17 @@ export function adminUserController(
   // This is the list that gets changed as the user interacts
   $scope.users = [];
 
+  $scope.roles = []
+
+  $scope.selectedPermissions = []
+
   // This is used for comparing changes
   $scope.serverUsers = [];
 
   // This is the user that's currently under selection
   $scope.selectedUser = {};
+
+  $scope.selectedRoles = {};
 
   // Normal loader
   $scope.loader = {};
@@ -75,26 +81,35 @@ export function adminUserController(
     changed.permissions = _.cloneDeep(original.permissions);
   };
 
-  $scope.doUpdate = function() {
-    let userId = $scope.selectedUser.id;
-    let original = _.find($scope.serverUsers, {'id': userId});
-    let promises = [];
+  $scope.updateRole = function(roleName){
+    let changed = $scope.selectedUser;
+    let roleStatus = $scope.selectedRoles[roleName]
 
-    let originalList = mapToArray(original.primaryRoles);
-    let changedList = mapToArray($scope.selectedUser.primaryRoles);
-
-    let additions = _.difference(changedList, originalList);
-    let removals = _.difference(originalList, changedList);
-
-    if (additions.length) {
-      promises.push(UserService.addRoles(userId, additions));
+    for(let i = 0; i < changed.roles.length; i++){
+        if (roleName == changed.roles[i].name){
+            if (roleStatus){
+                return;
+            }
+            else{
+                UserService.removeRole($scope.selectedUser.id, changed.roles[i].id);
+                loadUsers();
+                return;
+            }
+        }
     }
-    if (removals.length) {
-      promises.push(UserService.removeRoles(userId, removals));
-    }
 
-    $q.all(promises).then(loadUsers, $scope.addErrorAlert);
-  };
+    if (roleStatus){
+        for (let i = 0; i < $scope.raws.roles.length; i++){
+            if (roleName == $scope.raws.roles[i].name){
+                UserService.addRole($scope.selectedUser.id, $scope.raws.roles[i].id);
+                loadUsers();
+                return;
+            }
+        }
+    }
+    // Does Nothing
+  }
+
 
   $scope.addErrorAlert = function(response) {
     $scope.alerts.push({
@@ -108,63 +123,21 @@ export function adminUserController(
     $scope.alerts.splice(index, 1);
   };
 
-  $scope.color = function(userId, path) {
-    // Pull the correct users based on the current selected user's id
-    let originalSelectedUser = _.find($scope.serverUsers, {'id': userId});
-    let changedSelectedUser = _.find($scope.users, {'id': userId});
-
-    // Now pull the original and changed values out
-    let originalValue = _.get(originalSelectedUser, path);
-    let changedValue = _.get(changedSelectedUser, path);
-
-    if (changedValue && !originalValue) {
-      return {'color': 'green'};
-    } else if (!changedValue && originalValue) {
-      return {'color': 'red'};
-    }
-
-    return {};
-  };
-
-  $scope.isRoleDisabled = function(roleName) {
-    // Roles need to be disabled if it's enabled because it's nested
-    return $scope.selectedUser.roles[roleName] &&
-      $scope.selectedUser.nestedRoles[roleName];
-  };
-
-  $scope.roleChange = function(roleName) {
+  $scope.setRoles = function(){
     let changed = $scope.selectedUser;
 
-    // Since this is a result of a click, we need to update primary roles
-    changed.primaryRoles[roleName] = changed.roles[roleName];
+    $scope.selectedRoles = {}
 
-    // Then get the list of roles that are checked
-    let primaryRoleNames = mapToArray(changed.primaryRoles);
+    for (let i = 0; i < $scope.raws.roles; i++){
+        $scope.selectedRoles[$scope.raws.roles[i].name] = false;
+    }
 
-    // Now we need the actual role definitions for those roles...
-    let primaryRoleList = _.filter($scope.raws.roles, (value, key, collection) => {
-      return _.indexOf(primaryRoleNames, value.name) !== -1;
-    });
+    for (let i = 0; i < changed.roles.length; i++){
+        $scope.selectedRoles[changed.roles[i].name] = true;
+    }
 
-    // ...so that we can calculate nested permissions...
-    let coalesced = RoleService.coalescePermissions(primaryRoleList);
-    let permissionNames = coalesced[1];
-
-    // Finally, convert that list back into the map angular wants
-    let permissionMap = arrayToMap(permissionNames, $scope.raws.permissions);
-    changed.permissions = permissionMap;
-
-
-    // Now deal with roles too
-    let allRoleNames = coalesced[0];
-    let nestedRoleNames = _.difference(allRoleNames, primaryRoleNames);
-
-    let roleMap = arrayToMap(allRoleNames, $scope.roleNames);
-    changed.roles = roleMap;
-
-    let nestedRoleMap = arrayToMap(nestedRoleNames, $scope.roleNames);
-    changed.nestedRoles = nestedRoleMap;
-  };
+    $scope.selectedPermissions = RoleService.consolidatePermissions($scope.selectedUser.roles)
+  }
 
   /**
    * handleUsersResponse - Parse and translate users response
@@ -175,46 +148,20 @@ export function adminUserController(
 
     let thaUsers = [];
 
-    for (let user of $scope.raws.users) {
-      let primaryRoleNames = _.map(user.roles, 'name');
-
-      let coalesced = RoleService.coalescePermissions(user.roles);
-
-      let allRoleNames = coalesced[0];
-
-      let nestedRoleNames = _.difference(allRoleNames, primaryRoleNames);
-      let allPermissionNames = coalesced[1];
-
-      let roleMap = arrayToMap(allRoleNames, $scope.roleNames);
-      let permissionMap = arrayToMap(allPermissionNames, $scope.raws.permissions);
-
-      let primaryRoleMap = arrayToMap(primaryRoleNames, $scope.roleNames);
-      let nestedRoleMap = arrayToMap(nestedRoleNames, $scope.roleNames);
-
-      thaUsers.push({
-        id: user.id,
-        username: user.username,
-
-        roles: roleMap,
-        permissions: permissionMap,
-
-        primaryRoles: primaryRoleMap,
-        nestedRoles: nestedRoleMap,
-      });
-    }
-
     // This is super annoying, but I can't find a better way
     // Save off the current selection ID so we can keep it selected
     let selectedId = $scope.selectedUser['id'];
     let selectedUser = undefined;
 
-    $scope.serverUsers = _.cloneDeep(thaUsers);
-    $scope.users = _.cloneDeep(thaUsers);
+    $scope.serverUsers = _.cloneDeep($scope.raws.users);
+    $scope.users = _.cloneDeep($scope.raws.users);
 
     if (selectedId) {
       selectedUser = _.find($scope.users, {'id': selectedId});
     }
     $scope.selectedUser = selectedUser || $scope.users[0];
+
+    $scope.setRoles()
   }
 
   /**
@@ -231,7 +178,6 @@ export function adminUserController(
     $scope.alerts = [];
 
     $q.all({
-      permissions: PermissionService.getPermissions(),
       roles: RoleService.getRoles(),
       users: UserService.getUsers(),
     }).then(
@@ -241,15 +187,13 @@ export function adminUserController(
         $scope.response = responses.users;
 
         $scope.raws = {
-          permissions: responses.permissions.data,
           roles: responses.roles.data,
           users: responses.users.data,
         };
 
         $scope.roleNames = _.map($scope.raws.roles, 'name');
-        $scope.permissions = _.groupBy($scope.raws.permissions, (value) => {
-          return value.split('-').slice(0, 2).join('-');
-        });
+
+        $scope.roles = $scope.raws.roles
 
         handleUsersResponse(responses.users);
 

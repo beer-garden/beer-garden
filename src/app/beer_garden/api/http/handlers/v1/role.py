@@ -2,8 +2,6 @@
 from mongoengine.errors import DoesNotExist
 
 import beer_garden.api.http
-from beer_garden.db.mongo.models import Role
-from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.api.http.authorization import (
     anonymous_principal,
     authenticated,
@@ -12,11 +10,14 @@ from beer_garden.api.http.authorization import (
 from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
+from brewtils.schema_parser import SchemaParser
 
 
 class RoleAPI(BaseHandler):
+    parser = SchemaParser()
+
     @authenticated(permissions=[Permissions.ADMIN])
-    def get(self, role_id):
+    async def get(self, role_id):
         """
         ---
         summary: Retrieve all specific Role
@@ -38,14 +39,20 @@ class RoleAPI(BaseHandler):
         tags:
           - Roles
         """
-        self.write(
-            MongoParser.serialize_role(
-                Role.objects.get(id=str(role_id)), to_string=False
+
+        role = await self.client(
+            Operation(
+                operation_type="ROLE_READ",
+                kwargs={
+                    "role_id": role_id
+                },
             )
         )
 
+        self.write(role)
+
     @authenticated(permissions=[Permissions.ADMIN])
-    def delete(self, role_id):
+    async def delete(self, role_id):
         """
         ---
         summary: Delete a specific Role
@@ -65,16 +72,19 @@ class RoleAPI(BaseHandler):
         tags:
           - Roles
         """
-        role = Role.objects.get(id=str(role_id))
-        if role.name in ("bg-admin", "bg-anonymous", "bg-plugin"):
-            raise ModelValidationError("Unable to remove '%s' role" % role.name)
-
-        role.delete()
+        await self.client(
+            Operation(
+                operation_type="ROLE_DELETE",
+                kwargs={
+                    "role_id": role_id,
+                },
+            )
+        )
 
         self.set_status(204)
 
     @authenticated(permissions=[Permissions.ADMIN])
-    def patch(self, role_id):
+    async def patch(self, role_id):
         """
         ---
         summary: Partially update a Role
@@ -112,22 +122,35 @@ class RoleAPI(BaseHandler):
         tags:
           - Roles
         """
-        role = Role.objects.get(id=str(role_id))
-        operations = MongoParser.parse_patch(
-            self.request.decoded_body, many=True, from_string=True
-        )
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
-        for op in operations:
+        for op in patch:
             if op.path == "/permissions":
                 try:
                     if op.operation == "add":
-                        role.permissions.append(Permissions(op.value).value)
+                        role = await self.client(
+                            Operation(
+                                operation_type="ROLE_UPDATE_PERMISSION",
+                                kwargs={
+                                    "role_id": role_id,
+                                    "permission": self.parser.parse_permission(
+                                        op.value, from_string=False
+                                    ),
+                                },
+                            )
+                        )
                     elif op.operation == "remove":
-                        role.permissions.remove(Permissions(op.value).value)
-                    elif op.operation == "set":
-                        role.permissions = [
-                            Permissions(perm).value for perm in op.value
-                        ]
+                        role = await self.client(
+                            Operation(
+                                operation_type="ROLE_REMOVE_PERMISSION",
+                                kwargs={
+                                    "role_id": role_id,
+                                    "permission": self.parser.parse_permission(
+                                        op.value, from_string=False
+                                    ),
+                                },
+                            )
+                        )
                     else:
                         raise ModelValidationError(
                             "Unsupported operation '%s'" % op.operation
@@ -137,26 +160,6 @@ class RoleAPI(BaseHandler):
                         "Permission '%s' does not exist" % op.value
                     )
 
-            elif op.path == "/roles":
-                try:
-                    if op.operation == "add":
-                        new_nested = Role.objects.get(name=op.value)
-                        ensure_no_cycles(role, new_nested)
-                        role.roles.append(new_nested)
-                    elif op.operation == "remove":
-                        role.roles.remove(Role.objects.get(name=op.value))
-                    elif op.operation == "set":
-                        # Do this one at a time to be super sure about cycles
-                        role.roles = []
-
-                        for role_name in op.value:
-                            new_role = Role.objects.get(name=role_name)
-                            ensure_no_cycles(role, new_role)
-                            role.roles.append(new_role)
-                    else:
-                        raise ModelValidationError(
-                            "Unsupported operation '%s'" % op.operation
-                        )
                 except DoesNotExist:
                     raise ModelValidationError("Role '%s' does not exist" % op.value)
 
@@ -165,20 +168,29 @@ class RoleAPI(BaseHandler):
                     raise ModelValidationError(
                         "Unsupported operation '%s'" % op.operation
                     )
-                role.description = op.value
+
+                role = await self.client(
+                    Operation(
+                        operation_type="ROLE_UPDATE_DESCRIPTION",
+                        kwargs={
+                            "role_id": role_id,
+                            "description": op.value
+                        },
+                    )
+                )
 
             else:
                 raise ModelValidationError("Unsupported path '%s'" % op.path)
 
-        role.save()
-
         # Any modification to roles will possibly modify the anonymous user
         beer_garden.api.http.anonymous_principal = anonymous_principal()
 
-        self.write(MongoParser.serialize_role(role, to_string=False))
+        self.write(role)
 
 
 class RolesAPI(BaseHandler):
+    parser = SchemaParser()
+
     @authenticated(permissions=[Permissions.ADMIN])
     async def get(self):
         """
@@ -201,7 +213,7 @@ class RolesAPI(BaseHandler):
         self.write(response)
 
     @authenticated(permissions=[Permissions.ADMIN])
-    def post(self):
+    async def post(self):
         """
         ---
         summary: Create a new Role
@@ -225,54 +237,18 @@ class RolesAPI(BaseHandler):
         tags:
           - Roles
         """
-        role = MongoParser.parse_role(self.request.decoded_body, from_string=True)
 
-        # Make sure all new permissions are real
-        if not set(role.permissions).issubset(Permissions.values):
-            invalid = set(role.permissions).difference(Permissions.values)
-            raise ModelValidationError("Permissions %s do not exist" % invalid)
+        role = self.parser.parse_role(
+            self.request.decoded_body, from_string=True
+        )
 
-        # And the same for nested roles
-        nested_roles = []
-        for nested_role in role.roles:
-            try:
-                db_role = Role.objects.get(name=nested_role.name)
-
-                # There shouldn't be any way to construct a cycle with a new
-                # role, but check just to be sure
-                ensure_no_cycles(role, db_role)
-
-                nested_roles.append(db_role)
-            except DoesNotExist:
-                raise ModelValidationError(
-                    "Role '%s' does not exist" % nested_role.name
-                )
-        role.roles = nested_roles
-
-        role.save()
+        response = await self.client(
+            Operation(
+                operation_type="ROLE_CREATE",
+                args=[role],
+            )
+        )
 
         self.set_status(201)
-        self.write(MongoParser.serialize_role(role, to_string=False))
+        self.write(response)
 
-
-def ensure_no_cycles(base_role, new_role):
-    """Make sure there are no nested role cycles
-
-    Do this by looking through new_roles's nested roles and making sure
-    base_role doesn't appear
-
-    Args:
-        base_role: The role that is being modified
-        new_role: The new nested role
-
-    Returns:
-        None
-
-    Raises:
-        ModelValidationError: A cycle was detected
-    """
-    for role in new_role.roles:
-        if role == base_role:
-            raise ModelValidationError("Cycle Detected!")
-
-        ensure_no_cycles(base_role, role)
