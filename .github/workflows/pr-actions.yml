@@ -3,58 +3,58 @@ name: PR-Actions
 on: pull_request
 
 jobs:
-  Linting:
-    runs-on: ${{ matrix.os }}
-
-    defaults:
-      run:
-        working-directory: ./src/app
-
-    strategy:
-      matrix:
-        python-version: ['3.7']
-        os: ['ubuntu-latest']
-
-    name: Linting Python ${{ matrix.python-version }}
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Run Linting
-        run: |
-          pip install black flake8
-          make lint
-
-  PyTest:
-    runs-on: ${{ matrix.os }}
-
-    defaults:
-      run:
-        working-directory: ./src/app
-
-    strategy:
-      matrix:
-        python-version: ['3.7', '3.8']
-        os: ['ubuntu-latest']
-
-    name: PyTests Python ${{ matrix.python-version }}
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Make Deps
-        run: make deps
-
-      - name: Run Tests
-        run: make test
+#  Linting:
+#    runs-on: ${{ matrix.os }}
+#
+#    defaults:
+#      run:
+#        working-directory: ./src/app
+#
+#    strategy:
+#      matrix:
+#        python-version: ['3.7']
+#        os: ['ubuntu-latest']
+#
+#    name: Linting Python ${{ matrix.python-version }}
+#    steps:
+#      - uses: actions/checkout@v2
+#
+#      - name: Setup python
+#        uses: actions/setup-python@v2
+#        with:
+#          python-version: ${{ matrix.python-version }}
+#
+#      - name: Run Linting
+#        run: |
+#          pip install black flake8
+#          make lint
+#
+#  PyTest:
+#    runs-on: ${{ matrix.os }}
+#
+#    defaults:
+#      run:
+#        working-directory: ./src/app
+#
+#    strategy:
+#      matrix:
+#        python-version: ['3.7', '3.8']
+#        os: ['ubuntu-latest']
+#
+#    name: PyTests Python ${{ matrix.python-version }}
+#    steps:
+#      - uses: actions/checkout@v2
+#
+#      - name: Setup python
+#        uses: actions/setup-python@v2
+#        with:
+#          python-version: ${{ matrix.python-version }}
+#
+#      - name: Make Deps
+#        run: make deps
+#
+#      - name: Run Tests
+#        run: make test
 
   CodeCoverage:
 
@@ -83,14 +83,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Make Deps
-        run: make deps
+        run: |
+          make deps
+          pip install pytest
+          pip install pytest-cov
 
       - name: Generate coverage report
         continue-on-error: true
         run: |
-          pip install pytest
-          pip install pytest-cov
-          pytest --cov=beer-garden --cov-report=xml:coverage.xml ./test/
+          pytest --cov=beer-garden --cov-report=xml:./coverage.xml ./test/
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
