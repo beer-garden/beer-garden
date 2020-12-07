@@ -88,13 +88,13 @@ jobs:
           pip install pytest
           pip install pytest-cov
 
-      - name: Install Beer Garden Module
-        run: pip install -e ./beer-garden
-
       - name: Generate coverage report
         continue-on-error: true
         run: |
-          pytest --cov=beer-garden --cov-report=xml:./coverage.xml ./test/
+          coverage run --source beer_garden -m pytest test --tb=no
+          coverage report -m
+          coverage xml
+
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
