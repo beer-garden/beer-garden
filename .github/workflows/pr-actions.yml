@@ -93,7 +93,7 @@ jobs:
         run: |
           coverage run --source beer_garden -m pytest test --tb=no
           coverage report -m
-          coverage xml
+          coverage xml -o ./coverage.xml
 
 
       - name: Upload coverage to Codecov
