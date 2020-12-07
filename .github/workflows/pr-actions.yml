@@ -56,47 +56,47 @@ jobs:
       - name: Run Tests
         run: make test
 
-    CodeCoverage:
+  CodeCoverage:
 
-      runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
 
-      defaults:
-        run:
-          working-directory: ./src/app
+    defaults:
+      run:
+        working-directory: ./src/app
 
-      strategy:
-        matrix:
-          python-version: ['3.7']
-          os: ['ubuntu-latest']
+    strategy:
+      matrix:
+        python-version: ['3.7']
+        os: ['ubuntu-latest']
 
-      env:
-        OS: ${{ matrix.os }}
-        PYTHON: ${{ matrix.python-version }}
+    env:
+      OS: ${{ matrix.os }}
+      PYTHON: ${{ matrix.python-version }}
 
-      name: Code Coverage Python ${{ matrix.python-version }}
-      steps:
-        - uses: actions/checkout@v2
+    name: Code Coverage Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
 
-        - name: Setup python
-          uses: actions/setup-python@v2
-          with:
-            python-version: ${{ matrix.python-version }}
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
 
-        - name: Generate coverage report
-          run: |
-            pip install pytest
-            pip install pytest-cov
-            pytest --cov=./ --cov-report=xml
+      - name: Generate coverage report
+        run: |
+          pip install pytest
+          pip install pytest-cov
+          pytest --cov=./ --cov-report=xml
 
-        - name: Upload coverage to Codecov
-          uses: codecov/codecov-action@v1
-          with:
-            file: ./coverage.xml
-            files: ./coverage1.xml,./coverage2.xml
-            directory: ./coverage/reports/
-            flags: unittests
-            env_vars: OS,PYTHON
-            name: codecov-umbrella
-            fail_ci_if_error: true
-            path_to_write_report: ./coverage/codecov_report.txt
-            verbose: true
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage.xml
+          files: ./coverage1.xml,./coverage2.xml
+          directory: ./coverage/reports/
+          flags: unittests
+          env_vars: OS,PYTHON
+          name: codecov-umbrella
+          fail_ci_if_error: true
+          path_to_write_report: ./coverage/codecov_report.txt
+          verbose: true
