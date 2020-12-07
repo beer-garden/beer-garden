@@ -12,6 +12,7 @@ from brewtils.errors import (
     RequestForbidden,
     RequestPublishException,
     WaitExceededError,
+    NotFoundError,
 )
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
 from mongoengine.errors import (
@@ -36,6 +37,7 @@ from beer_garden.errors import (
     EndpointRemovedException,
     NotFoundException,
     RoutingRequestException,
+    NotUniqueException,
 )
 
 
@@ -63,14 +65,18 @@ class BaseHandler(AuthMixin, RequestHandler):
         MongoValidationError: {"status_code": 400},
         ModelError: {"status_code": 400},
         RoutingRequestException: {"status_code": 400},
+        ModelValidationError: {"status_code": 400},
+        ValueError: {"status_code": 400},
         ExpiredSignatureError: {"status_code": 401},
         AuthorizationRequired: {"status_code": 401},
         RequestForbidden: {"status_code": 403},
         InvalidSignatureError: {"status_code": 403},
         DoesNotExist: {"status_code": 404, "message": "Resource does not exist"},
+        NotFoundError: {"status_code": 404},
         NotFoundException: {"status_code": 404},
         WaitExceededError: {"status_code": 408, "message": "Max wait time exceeded"},
         ConflictError: {"status_code": 409},
+        NotUniqueException: {"status_code": 409},
         NotUniqueError: {"status_code": 409, "message": "Resource already exists"},
         EndpointRemovedException: {"status_code": 410, "message": "Endpoint removed"},
         DocumentTooLarge: {"status_code": 413, "message": "Resource too large"},

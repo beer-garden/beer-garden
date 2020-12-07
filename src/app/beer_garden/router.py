@@ -38,6 +38,7 @@ import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
+import beer_garden.files
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 from beer_garden.events.processors import QueueListener
 from beer_garden.garden import get_garden, get_gardens
@@ -155,6 +156,11 @@ route_functions = {
     "QUEUE_DELETE_ALL": beer_garden.queues.clear_all_queues,
     "QUEUE_READ_INSTANCE": beer_garden.queues.get_instance_queues,
     "NAMESPACE_READ_ALL": beer_garden.namespace.get_namespaces,
+    "FILE_CREATE": beer_garden.files.create_file,
+    "FILE_CHUNK": beer_garden.files.create_chunk,
+    "FILE_FETCH": beer_garden.files.fetch_file,
+    "FILE_DELETE": beer_garden.files.delete_file,
+    "FILE_OWNER": beer_garden.files.set_owner,
 }
 
 
@@ -397,6 +403,7 @@ def _pre_route(operation: Operation) -> Operation:
     return operation
 
 
+# TODO - After this is called, if one of the params is a file, ship it down range too.
 def _pre_forward(operation: Operation) -> Operation:
     """Called before forwarding an operation"""
 
@@ -420,6 +427,8 @@ def _pre_forward(operation: Operation) -> Operation:
         # unknown request
         operation.model.parent = None
         operation.model.has_parent = False
+
+        beer_garden.files.forward_file(operation)
 
         # Pull out and store the wait event, if it exists
         wait_event = operation.kwargs.pop("wait_event", None)
@@ -446,6 +455,7 @@ def _determine_target_garden(operation: Operation) -> str:
         "READ" in operation.operation_type
         or "GARDEN" in operation.operation_type
         or "JOB" in operation.operation_type
+        or "FILE" in operation.operation_type
         or operation.operation_type
         in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
     ):

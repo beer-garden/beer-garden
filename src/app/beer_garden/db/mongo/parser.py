@@ -29,6 +29,8 @@ class MongoParser(SchemaParser):
             "CronTriggerSchema": beer_garden.db.mongo.models.CronTrigger,
             "FileTriggerSchema": beer_garden.db.mongo.models.FileTrigger,
             "GardenSchema": beer_garden.db.mongo.models.Garden,
+            "FileSchema": beer_garden.db.mongo.models.File,
+            "FileChunkSchema": beer_garden.db.mongo.models.FileChunk,
         }
     )
 

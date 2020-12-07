@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from mongoengine import Q
 from typing import List, Tuple
 
-from beer_garden.db.mongo.models import Request
+from beer_garden.db.mongo.models import Request, File
 
 
 class MongoPruner(StoppableThread):
@@ -67,6 +67,7 @@ class MongoPruner(StoppableThread):
         """
         info_ttl = kwargs.get("info", -1)
         action_ttl = kwargs.get("action", -1)
+        file_ttl = kwargs.get("file", -1)
 
         prune_tasks = []
         if info_ttl > 0:
@@ -94,6 +95,20 @@ class MongoPruner(StoppableThread):
                     )
                     & Q(has_parent=False)
                     & Q(command_type="ACTION"),
+                }
+            )
+
+        if file_ttl > 0:
+            prune_tasks.append(
+                {
+                    "collection": File,
+                    "field": "updated_at",
+                    "delete_after": timedelta(minutes=file_ttl),
+                    "additional_query": Q(owner_type=None)
+                    | (
+                        (Q(owner_type__iexact="JOB") | Q(owner_type__iexact="REQUEST"))
+                        & Q(owner=None)
+                    ),
                 }
             )
 

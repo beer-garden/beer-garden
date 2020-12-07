@@ -10,6 +10,7 @@ import beer_garden.requests
 import beer_garden.router
 import beer_garden.scheduler
 import beer_garden.systems
+import beer_garden.files
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ def garden_callbacks(event: Event) -> None:
         beer_garden.systems.handle_event,
         beer_garden.scheduler.handle_event,
         beer_garden.log.handle_event,
+        beer_garden.files.handle_event,
     ]:
         try:
             handler(event)
