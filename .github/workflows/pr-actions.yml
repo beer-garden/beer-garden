@@ -15,7 +15,7 @@ jobs:
         python-version: ['3.7']
         os: ['ubuntu-latest']
 
-    name: Linting Python ${{ matrix.python-version }}
+    name: Linting OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
 
@@ -41,7 +41,7 @@ jobs:
         python-version: ['3.7', '3.8']
         os: ['ubuntu-latest']
 
-    name: PyTests Python ${{ matrix.python-version }}
+    name: PyTests OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
 
@@ -73,7 +73,7 @@ jobs:
       OS: ${{ matrix.os }}
       PYTHON: ${{ matrix.python-version }}
 
-    name: Code Coverage Python ${{ matrix.python-version }}
+    name: Code Coverage OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
 
