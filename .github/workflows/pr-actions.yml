@@ -82,6 +82,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Make Deps
+          run: make deps
+
       - name: Generate coverage report
         run: |
           pip install pytest
