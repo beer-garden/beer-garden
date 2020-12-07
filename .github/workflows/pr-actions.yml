@@ -86,6 +86,7 @@ jobs:
         run: make deps
 
       - name: Generate coverage report
+        continue-on-error: true
         run: |
           pip install pytest
           pip install pytest-cov
