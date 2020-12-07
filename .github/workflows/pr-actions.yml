@@ -87,7 +87,9 @@ jobs:
           make deps
           pip install pytest
           pip install pytest-cov
-          pip install -e beer-garden
+
+      - name: Install Beer Garden Module
+        run: pip install -e ./beer-garden
 
       - name: Generate coverage report
         continue-on-error: true
