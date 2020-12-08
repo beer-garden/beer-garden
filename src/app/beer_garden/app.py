@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
+"""Beer Garden Application
+
+This is the core library for Beer-Garden. Anything that is spawned by the Main Process
+in Beer-Garden will be initialized within this class.
+"""
 import logging
 import signal
-
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 
 # from apscheduler.schedulers.background import BackgroundScheduler
@@ -13,6 +17,7 @@ from functools import partial
 from multiprocessing.managers import BaseManager
 from pytz import utc
 from typing import Callable
+
 import beer_garden.api
 import beer_garden.api.entry_point
 import beer_garden.config as config
@@ -138,22 +143,15 @@ class Application(StoppableThread):
 
         self._shutdown()
 
-    def handle_event(self, event):
+    @staticmethod
+    def handle_event(event):
         """Handle any events the application cares about"""
         # Only care about local garden
         if event.garden == beer_garden.config.get("garden.name"):
             # Start local plugins after the entry point comes up
             if event.name == Events.ENTRY_STARTED.name:
                 beer_garden.local_plugins.manager.lpm_proxy.scan_path()
-            elif event.name == Events.GARDEN_REMOVED.name:
-                if event.payload.name in self.entry_manager.entry_points:
-                    self.entry_manager.remove(event.payload.name)
-            elif event.name == Events.GARDEN_UPDATED.name:
-                self.entry_manager.update_ep_config(
-                    ep_key=event.payload.name,
-                    new_ep_config=event.payload.connection_params,
-                    connection_type=event.payload.connection_type.casefold(),
-                )
+
             elif event.name == Events.INSTANCE_INITIALIZED.name:
                 beer_garden.local_plugins.manager.lpm_proxy.handle_initialize(event)
             elif event.name == Events.INSTANCE_STOPPED.name:
@@ -218,6 +216,7 @@ class Application(StoppableThread):
         )
 
     def _startup(self):
+        """Initializes core requirements for Application"""
         self.logger.debug("Starting Application...")
 
         self.logger.debug("Starting event manager...")
@@ -346,15 +345,12 @@ class Application(StoppableThread):
                     reconnect_action=reconnect_action,
                 )
             )
-        stomp_event = config.get("parent.stomp")
-        if stomp_event.enabled:
-            stomp_event["skip_events"] = config.get("parent.skip_events")
-            self.entry_manager.create("stomp", ep_config=stomp_event, ep_key="parent")
 
         return event_manager
 
     @staticmethod
     def _setup_scheduler():
+        """Initializes scheduled jobs stored in the database"""
         job_stores = {"beer_garden": db.get_job_store()}
         scheduler_config = config.get("scheduler")
         executors = {"default": APThreadPoolExecutor(scheduler_config.max_workers)}

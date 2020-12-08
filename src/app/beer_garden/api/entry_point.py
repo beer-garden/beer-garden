@@ -12,7 +12,6 @@ from multiprocessing.queues import Queue
 from types import FrameType
 from typing import Any, Callable
 
-from beer_garden.garden import get_gardens
 import beer_garden
 import beer_garden.config
 import beer_garden.db.api as db
@@ -64,14 +63,13 @@ class EntryPoint:
         log_queue: Queue,
         signal_handler: Callable[[int, FrameType], None],
         event_callback: Callable[[Event], None],
-        ep_config=None,
     ):
         self._name = name
         self._target = target
         self._context = context
         self._log_queue = log_queue
         self._signal_handler = signal_handler
-        self.ep_config = ep_config
+
         self._process = None
         self._ep_conn, self._mp_conn = Pipe()
         self._event_listener = PipeListener(
@@ -79,9 +77,6 @@ class EntryPoint:
             action=event_callback,
             name=f"{name} listener",
         )
-
-    def ep_config_diff(self, new_ep_config):
-        return self.ep_config and self.ep_config != new_ep_config
 
     def start(self) -> None:
         """Start the entry point process"""
@@ -97,7 +92,6 @@ class EntryPoint:
                 self._signal_handler,
                 self._ep_conn,
                 lpm.lpm_proxy,
-                self.ep_config,
             ),
         )
         self._process.start()
@@ -105,7 +99,7 @@ class EntryPoint:
         # And listen for events coming from it
         self._event_listener.start()
 
-    def stop(self, timeout: int = None, close_communication_pipes=False) -> None:
+    def stop(self, timeout: int = None) -> None:
         """Stop the process with a SIGTERM
 
         If a `timeout` is specified this method will wait that long for the process to
@@ -124,9 +118,7 @@ class EntryPoint:
         # Then ensure the process is terminated
         self._process.terminate()
         self._process.join(timeout=timeout)
-        if close_communication_pipes:
-            self._ep_conn.close()
-            self._mp_conn.close()
+
         if self._process.exitcode is None:
             logger.warning(
                 f"Process {self._process.name} is still running - sending SIGKILL"
@@ -152,7 +144,6 @@ class EntryPoint:
         signal_handler: Callable[[int, FrameType], None],
         ep_conn: Connection,
         lpm_proxy,
-        ep_config=None,
     ) -> Any:
         """Helper method that sets up the process environment before calling `target`
 
@@ -172,7 +163,6 @@ class EntryPoint:
             signal_handler:
             ep_conn:
             lpm_proxy:
-            ep_config:
 
         Returns:
             The result of the `target` function
@@ -210,8 +200,6 @@ class EntryPoint:
             raise Exception("Entry point initialization failed") from ex
 
         # Now invoke the actual process target, passing in the connection
-        if ep_config:
-            return target(ep_conn, ep_config=ep_config)
         return target(ep_conn)
 
 
@@ -235,7 +223,7 @@ class Manager:
     log_queue: Queue = None
 
     def __init__(self):
-        self.entry_points = {}
+        self.entry_points = []
         self.context = multiprocessing.get_context("spawn")
         self.log_queue = self.context.Queue()
 
@@ -245,45 +233,15 @@ class Manager:
 
     def create_all(self):
         for entry_name, entry_value in beer_garden.config.get("entry").items():
-            if entry_value.get("enabled"):
+            if entry_value.get("enabled") or entry_name == "stomp":
                 try:
-                    self.entry_points["beer_garden.api." + entry_name] = self.create(
-                        entry_name
-                    )
+                    self.entry_points.append(self.create(entry_name))
                 except Exception as ex:
                     logger.exception(f"Error creating entry point {entry_name}: {ex}")
-        for garden in get_gardens(include_local=False):
-            if (
-                garden.name != beer_garden.config.get("garden.name")
-                and garden.connection_type
-            ):
-                if (
-                    garden.connection_type.casefold() == "stomp"
-                    and garden.name not in self.entry_points
-                ):
-                    connection_params = self.format_connection_params(
-                        "stomp_", garden.connection_params
-                    )
-                    if "subscribe_destination" in connection_params:
-                        connection_params["send_destination"] = None
-                        self.create(
-                            "stomp", ep_config=connection_params, ep_key=garden.name
-                        )
 
-    def create(self, module_name: str, ep_config=None, ep_key=None):
+    def create(self, module_name: str):
         module = import_module(f"beer_garden.api.{module_name}")
-        if ep_config:
-            ep_point = EntryPoint(
-                name=module_name,
-                target=module.run,
-                context=self.context,
-                log_queue=self.log_queue,
-                signal_handler=module.signal_handler,
-                event_callback=beer_garden.events.publish,
-                ep_config=ep_config,
-            )
-            self.entry_points[ep_key] = ep_point
-            return ep_point
+
         return EntryPoint(
             name=module_name,
             target=module.run,
@@ -293,66 +251,19 @@ class Manager:
             event_callback=beer_garden.events.publish,
         )
 
-    @staticmethod
-    def format_connection_params(term, connection_params):
-        """Strips leading term from connection parameters and formats dictionary
-        to match corresponding entry point config for connection type"""
-        new_connection_params = {"ssl": {}}
-        for key in connection_params:
-            if "ssl" in key:
-                new_connection_params["ssl"][
-                    key.replace(term + "ssl_", "")
-                ] = connection_params[key]
-            else:
-                new_connection_params[key.replace(term, "")] = connection_params[key]
-        return new_connection_params
-
     def start(self):
         self.log_reader.start()
 
-        for entry_point in self.entry_points.values():
+        for entry_point in self.entry_points:
             entry_point.start()
-
-    def stop_one(self, ep_key):
-        self.entry_points[ep_key].stop(close_communication_pipes=True)
-
-    def start_one(self, ep_key):
-        self.entry_points[ep_key].start()
-
-    def remove(self, ep_key):
-        self.stop_one(ep_key)
-        del self.entry_points[ep_key]
-
-    def update_ep_config(self, ep_key=None, new_ep_config=None, connection_type=None):
-        if connection_type == "stomp":
-            new_ep_config = self.format_connection_params("stomp_", new_ep_config)
-            new_ep_config["send_destination"] = None
-            if ep_key in self.entry_points:
-                if self.entry_points[ep_key].ep_config_diff(new_ep_config):
-                    self.stop_one(ep_key)
-                    module_name = self.entry_points[ep_key]._name
-                    self.remove(ep_key)
-                    self.create(module_name, ep_config=new_ep_config, ep_key=ep_key)
-                    self.entry_points[ep_key].start()
-            elif "subscribe_destination" in new_ep_config:
-                self.create(
-                    "stomp",
-                    ep_config=self.format_connection_params("stomp_", new_ep_config),
-                    ep_key=ep_key,
-                )
-                self.entry_points[ep_key].start()
-        else:
-            if ep_key in self.entry_points:
-                if connection_type != self.entry_points[ep_key]._name:
-                    self.remove(ep_key)
 
     def stop(self):
         self.log_reader.stop()
 
-        for entry_point in self.entry_points.values():
+        for entry_point in self.entry_points:
             entry_point.stop(timeout=10)
 
     def put(self, event: Event) -> None:
         """Publish an event to all entry points"""
-        for entry_point in self.entry_points.values():
+        for entry_point in self.entry_points:
             entry_point.send_event(event)
