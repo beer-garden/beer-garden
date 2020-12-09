@@ -32,9 +32,11 @@ class StompManager(StoppableThread):
             host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
             subscribe_destination = stomp_config.get("subscribe_destination")
             ssl = stomp_config.get("ssl")
-            self.conn_dict[f"{host_and_ports}{subscribe_destination}{ssl.get('use_ssl')}"] = {
+            self.conn_dict[
+                f"{host_and_ports}{subscribe_destination}{ssl.get('use_ssl')}"
+            ] = {
                 "conn": self.connect(stomp_config),
-                "gardens": [{"name": name, "main": is_main}]
+                "gardens": [{"name": name, "main": is_main}],
             }
 
         self._setup_event_handling()
@@ -85,10 +87,16 @@ class StompManager(StoppableThread):
         elif event.name == Events.GARDEN_UPDATED.name:
             skip_key = None
             if event.payload.connection_type.casefold() == "stomp":
-                stomp_config = self.format_connection_params("stomp_", event.payload.connection_params)
+                stomp_config = self.format_connection_params(
+                    "stomp_", event.payload.connection_params
+                )
                 stomp_config["send_destination"] = None
-                skip_key = self.add_connection(stomp_config=stomp_config, name=event.payload.name)
-            self.remove_garden_from_list(garden_name=event.payload.name, skip_key=skip_key)
+                skip_key = self.add_connection(
+                    stomp_config=stomp_config, name=event.payload.name
+                )
+            self.remove_garden_from_list(
+                garden_name=event.payload.name, skip_key=skip_key
+            )
         for value in self.conn_dict.values():
             conn = value["conn"]
             if conn:
@@ -99,18 +107,19 @@ class StompManager(StoppableThread):
         host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
         subscribe_destination = stomp_config.get("subscribe_destination")
         ssl = stomp_config.get("ssl")
-        use_ssl = ssl.get('use_ssl') or False
+        use_ssl = ssl.get("use_ssl") or False
         conn_dict_key = f"{host_and_ports}{subscribe_destination}{use_ssl}"
         if conn_dict_key in self.conn_dict:
-            if ({"name": name, "main": is_main} not in
-                    self.conn_dict[conn_dict_key]["gardens"]):
+            if {"name": name, "main": is_main} not in self.conn_dict[conn_dict_key][
+                "gardens"
+            ]:
                 self.conn_dict[conn_dict_key]["gardens"].append(
                     {"name": name, "main": is_main}
                 )
         else:
             self.conn_dict[conn_dict_key] = {
                 "conn": self.connect(stomp_config),
-                "gardens": [{"name": name, "main": is_main}]
+                "gardens": [{"name": name, "main": is_main}],
             }
         return conn_dict_key
 

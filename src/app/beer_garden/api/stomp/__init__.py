@@ -18,24 +18,35 @@ def run(ep_conn):
     entry_config = config.get("entry.stomp")
     parent_config = config.get("parent.stomp")
     if entry_config.get("enabled"):
-        st_manager = StompManager(ep_conn=ep_conn, stomp_config=entry_config, name=f'{config.get("garden.name")}_entry')
+        st_manager = StompManager(
+            ep_conn=ep_conn,
+            stomp_config=entry_config,
+            name=f'{config.get("garden.name")}_entry',
+        )
         if parent_config.get("enabled"):
-            st_manager.add_connection(stomp_config=parent_config, name=f'{config.get("garden.name")}_parent', is_main=True)
+            st_manager.add_connection(
+                stomp_config=parent_config,
+                name=f'{config.get("garden.name")}_parent',
+                is_main=True,
+            )
     elif parent_config.get("enabled"):
-        st_manager = StompManager(ep_conn=ep_conn, stomp_config=parent_config, name=f'{config.get("garden.name")}_parent')
+        st_manager = StompManager(
+            ep_conn=ep_conn,
+            stomp_config=parent_config,
+            name=f'{config.get("garden.name")}_parent',
+        )
     else:
         st_manager = StompManager(ep_conn=ep_conn)
     for garden in get_gardens(include_local=False):
-        if (
-                garden.name != config.get("garden.name")
-                and garden.connection_type
-        ):
+        if garden.name != config.get("garden.name") and garden.connection_type:
             if garden.connection_type.casefold() == "stomp":
                 connection_params = StompManager.format_connection_params(
                     "stomp_", garden.connection_params
                 )
                 connection_params["send_destination"] = None
-                st_manager.add_connection(stomp_config=connection_params, name=garden.name)
+                st_manager.add_connection(
+                    stomp_config=connection_params, name=garden.name
+                )
 
     st_manager.start()
 
