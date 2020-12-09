@@ -16,21 +16,20 @@ The router service is responsible for:
 
 import asyncio
 import logging
+import requests
 import threading
+from brewtils.models import Event, Events, Garden, Operation, Request, System
+from brewtils.schema_parser import SchemaParser
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
 from typing import Dict, Optional, Union
-
-import requests
-from beer_garden.events import publish
-from brewtils.models import Events, Garden, Operation, Request, System, Event
-from brewtils.schema_parser import SchemaParser
 
 import beer_garden
 import beer_garden.commands
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.garden
+import beer_garden.local_plugins.manager
 import beer_garden.log
 import beer_garden.namespace
 import beer_garden.plugin
@@ -40,6 +39,7 @@ import beer_garden.scheduler
 import beer_garden.systems
 import beer_garden.files
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
+from beer_garden.events import publish
 from beer_garden.events.processors import QueueListener
 from beer_garden.garden import get_garden, get_gardens
 from beer_garden.requests import complete_request
@@ -161,6 +161,7 @@ route_functions = {
     "FILE_FETCH": beer_garden.files.fetch_file,
     "FILE_DELETE": beer_garden.files.delete_file,
     "FILE_OWNER": beer_garden.files.set_owner,
+    "RUNNER_STATE_READ": lambda: beer_garden.local_plugins.manager.lpm_proxy.runner_state(),
 }
 
 
@@ -456,6 +457,7 @@ def _determine_target_garden(operation: Operation) -> str:
         or "GARDEN" in operation.operation_type
         or "JOB" in operation.operation_type
         or "FILE" in operation.operation_type
+        or "RUNNER" in operation.operation_type
         or operation.operation_type
         in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
     ):
