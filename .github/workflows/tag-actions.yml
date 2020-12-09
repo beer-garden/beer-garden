@@ -1,0 +1,120 @@
+name: Tag-Actions
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  PyPI:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ['3.7']
+
+    name: Python ${{ matrix.python-version }} PyPi
+
+    defaults:
+      run:
+        working-directory: ./src/app
+
+    steps:
+
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Need to update if we support other OS's
+      - name: Cache PIP Install
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-${{ matrix.python-version }}-pip-build-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.python-version }}-pip-build
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel twine
+
+      - name: Build and publish
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          python setup.py sdist bdist_wheel
+          twine upload dist/*
+
+  Docker:
+    needs: PyPi
+    runs-on: ubuntu-latest
+    name: Docker Builder
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build image
+        run: docker build . --file Dockerfile --tag $IMAGE_NAME
+
+      - name: Log into registry
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login docker.pkg.github.com -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+      - name: Run Dep Docs
+        run: make deps-docs
+
+      - name: Build Images
+        run: make publish-docker VERSION=${GITHUB_REF/refs\/tags\//}
+
+  RPM:
+    runs-on: ubuntu-latest
+    name: Python ${{ matrix.python-version }} RPM Builder
+    strategy:
+      matrix:
+        python-version: ['3.7']
+    steps:
+      - uses: actions/checkout@v2
+
+      # Need to update if we support other OS's
+      - name: Cache PIP Install
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-${{ matrix.python-version }}-pip-install-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.python-version }}-pip-install-
+
+      - name: Make Deps
+        working-directory: ./src/app
+        run: make deps
+
+      - name: Log into registry
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login docker.pkg.github.com -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+      - name: Build RPM
+        run: make rpm-build VERSION=${GITHUB_REF/refs\/tags\//}
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./rpm/dist/beer-garden-${GITHUB_REF/refs\/tags\//}-1.el7.x86_64.rpm
+          asset_name: beer-garden-${GITHUB_REF/refs\/tags\//}-1.el7.x86_64.rpm
+          asset_content_type: application/octet-stream
