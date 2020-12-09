@@ -1,0 +1,127 @@
+name: PR-Actions
+
+on: pull_request
+
+jobs:
+  Linting:
+    runs-on: ${{ matrix.os }}
+
+    defaults:
+      run:
+        working-directory: ./src/app
+
+    strategy:
+      matrix:
+        python-version: ['3.7']
+        os: ['ubuntu-latest']
+
+    name: Linting OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Need to update if we support other OS's
+      - name: Cache PIP Install
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-${{ matrix.python-version }}-pip-lint-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.python-version }}-pip-lint
+
+      - name: Run Linting
+        run: |
+          pip install black flake8
+          make lint
+
+  PyTest:
+    runs-on: ${{ matrix.os }}
+
+    defaults:
+      run:
+        working-directory: ./src/app
+
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8']
+        os: ['ubuntu-latest']
+
+    name: PyTests OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Need to update if we support other OS's
+      - name: Cache PIP Install
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-${{ matrix.python-version }}-pip-install-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.python-version }}-pip-install-
+
+      - name: Make Deps
+        run: make deps
+
+      - name: Run Tests
+        run: make test
+
+  CodeCoverage:
+
+    runs-on: ${{ matrix.os }}
+
+    defaults:
+      run:
+        working-directory: ./src/app
+
+    strategy:
+      matrix:
+        python-version: ['3.7']
+        os: ['ubuntu-latest']
+
+    env:
+      OS: ${{ matrix.os }}
+      PYTHON: ${{ matrix.python-version }}
+
+    name: Code Coverage OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Need to update if we support other OS's
+      - name: Cache PIP Install
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-${{ matrix.python-version }}-pip-coverage-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.python-version }}-pip-coverage
+
+      - name: Make Deps
+        run: |
+          make deps
+          pip install pytest
+          pip install pytest-cov
+
+      - name: Generate coverage report
+        continue-on-error: true
+        run: |
+          coverage run --source beer_garden -m pytest test --tb=no
+          coverage report -m
+          coverage xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+
