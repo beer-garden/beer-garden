@@ -204,6 +204,20 @@ class PluginManager(StoppableThread):
         """Stop all known runners"""
         return self._stop_multiple(self._runners)
 
+    def remove(self, runner_id) -> None:
+        runner = self._from_runner_id(runner_id)
+
+        if runner:
+            runner.term()
+
+        runner.join(config.get("plugin.local.timeout.shutdown"))
+
+        # ...and then kill it if necessary
+        if runner.is_alive():
+            runner.kill()
+
+        self._runners.remove(runner)
+
     def reload_system(self, system: System) -> None:
         """Reload all runners for a given System
 
