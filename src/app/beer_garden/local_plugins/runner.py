@@ -146,6 +146,7 @@ class ProcessRunner(Thread):
         return {
             "runner_name": self.runner_name,
             "runner_id": self.runner_id,
+            "runner_path": str(self.process_cwd),
             "instance_id": self.instance_id,
             "restart": self.restart,
             "stopped": self.stopped,
