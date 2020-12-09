@@ -24,7 +24,7 @@ from beer_garden.local_plugins.env_help import expand_string
 from beer_garden.local_plugins.runner import ProcessRunner
 
 # This is ... complicated. See the PluginManager docstring
-lpm_proxy = None
+lpm_proxy = None  # type: Optional[PluginManager]
 
 CONFIG_NAME = "beer.conf"
 
@@ -451,6 +451,14 @@ class PluginManager(StoppableThread):
             env[key] = expand_string(str(value), env)
 
         return env
+
+
+def runner_state():
+    return lpm_proxy.runner_state()
+
+
+def remove(*args, **kwargs):
+    return lpm_proxy.remove(*args, **kwargs)
 
 
 class ConfigLoader(object):

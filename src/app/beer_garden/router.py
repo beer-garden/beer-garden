@@ -161,10 +161,8 @@ route_functions = {
     "FILE_FETCH": beer_garden.files.fetch_file,
     "FILE_DELETE": beer_garden.files.delete_file,
     "FILE_OWNER": beer_garden.files.set_owner,
-    "RUNNER_STATE_READ": lambda: beer_garden.local_plugins.manager.lpm_proxy.runner_state(),
-    "RUNNER_DELETE": lambda *args, **kwargs: beer_garden.local_plugins.manager.lpm_proxy.remove(
-        *args, **kwargs
-    ),
+    "RUNNER_STATE_READ": beer_garden.local_plugins.manager.runner_state,
+    "RUNNER_DELETE": beer_garden.local_plugins.manager.remove,
 }
 
 
