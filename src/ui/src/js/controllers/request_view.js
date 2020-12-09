@@ -38,7 +38,7 @@ export default function requestViewController(
     localStorageService,
     RequestService,
     SystemService,
-    EventService) {
+    EventService,) {
 
   $scope.request = undefined;
   $scope.complete = false;
@@ -57,6 +57,8 @@ export default function requestViewController(
   $scope.formatErrorTitle = undefined;
   $scope.formatErrorMsg = undefined;
   $scope.showFormatted = false;
+  $scope.disabledPourItAgain = false;
+  $scope.msgPourItAgain = null
 
   $scope.isMaximized = localStorageService.get('isMaximized');
   if ($scope.isMaximized === null) {
@@ -169,7 +171,26 @@ export default function requestViewController(
   $scope.successCallback = function(request) {
     $scope.request = request;
     $scope.filename = $scope.request.id;
-
+    let namespace = $scope.request.namespace || $scope.config.gardenName;
+    let request_system = SystemService.findSystem(namespace, $scope.request.system,
+                         $scope.request.system_version);
+    if (request_system != undefined) {
+        let commands = request_system.commands;
+        for (let i = 0; i < commands.length; i++) {
+            if (commands[i].name == request.command){
+                $scope.disabledPourItAgain = false;
+                $scope.msgPourItAgain = null;
+                break;
+            }
+            else {
+                $scope.disabledPourItAgain = true;
+                $scope.msgPourItAgain = 'Unable to find command';
+            }
+        }
+    } else {
+        $scope.disabledPourItAgain = true;
+        $scope.msgPourItAgain = 'Unable to find system';
+    }
     $scope.setWindowTitle(
       $scope.request.command,
       ($scope.request.metadata.system_display_name || $scope.request.system),
@@ -318,7 +339,7 @@ export default function requestViewController(
       if (event.payload.id == $stateParams.requestId) {
         $scope.successCallback(event.payload);
       }
-      else if (event.payload.parent.id == $stateParams.requestId) {
+      else if (_.get(event, 'payload.parent.id') == $stateParams.requestId) {
         if (event.name == 'REQUEST_CREATED') {
           $scope.children.push(event.payload);
         } else {

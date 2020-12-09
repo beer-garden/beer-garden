@@ -518,6 +518,8 @@ class RequestValidator(object):
                 return int(value)
             elif parameter.type.upper() == "DATETIME":
                 return int(value)
+            elif parameter.type.upper() == "BASE64":
+                return value
             else:
                 raise ModelValidationError(
                     "Unknown type for parameter. Please contact a system administrator."

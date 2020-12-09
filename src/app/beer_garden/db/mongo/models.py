@@ -5,6 +5,7 @@ import logging
 import pytz
 import six
 import sys
+import json
 
 try:
     from lark import ParseError
@@ -24,6 +25,7 @@ from mongoengine import (
     EmbeddedDocumentField,
     EmbeddedDocumentListField,
     GenericEmbeddedDocumentField,
+    LazyReferenceField,
     IntField,
     ListField,
     ObjectIdField,
@@ -31,6 +33,7 @@ from mongoengine import (
     StringField,
     FileField,
     CASCADE,
+    NULLIFY,
     PULL,
 )
 from mongoengine.errors import DoesNotExist
@@ -65,6 +68,8 @@ __all__ = [
     "IntervalTrigger",
     "FileTrigger",
     "Garden",
+    "File",
+    "FileChunk",
 ]
 
 
@@ -261,7 +266,12 @@ class Instance(MongoModel, EmbeddedDocument):
             )
 
 
-class Request(MongoModel, Document):
+class Owner(Document):
+    # Stub to use for a reference field.
+    meta = {"allow_inheritance": True}
+
+
+class Request(MongoModel, Owner):
     brewtils_model = brewtils.models.Request
 
     # These fields are duplicated for job types, changes to this field
@@ -296,6 +306,7 @@ class Request(MongoModel, Document):
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
     requester = StringField(required=False)
+    parameters_gridfs = FileField()
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
@@ -366,19 +377,40 @@ class Request(MongoModel, Document):
     logger = logging.getLogger(__name__)
 
     def pre_serialize(self):
+        encoding = "utf-8"
         """If string output was over 16MB it was spilled over to the GridFS storage solution"""
         if self.output_gridfs:
-            self.output = self.output_gridfs.read().decode("utf-8")
+            self.logger.debug("~~~Retrieving output from gridfs")
+            self.output = self.output_gridfs.read().decode(encoding)
             self.output_gridfs = None
+
+        if self.parameters_gridfs:
+            self.logger.debug("~~~Retrieving parameters from gridfs")
+            self.parameters = json.loads(self.parameters_gridfs.read().decode(encoding))
+            self.parameters_gridfs = None
 
     def save(self, *args, **kwargs):
         self.updated_at = datetime.datetime.utcnow()
+        max_size = 15 * 1_000_000
+        encoding = "utf-8"
+        parameter_size = sys.getsizeof(self.parameters)
 
-        # If the output size is too large, we switch it over
-        # Max size for Mongo is 16MB, switching over at 15MB to be safe
-        if self.output and sys.getsizeof(self.output) > (1000000 * 15):
-            self.output_gridfs.put(self.output, encoding="utf-8")
-            self.output = None
+        if self.output:
+            parameter_size = sys.getsizeof(self.parameters)
+            if parameter_size > max_size:
+                self.logger.info("~~~Parameter size too big, storing in gridfs")
+                self.parameters_gridfs.put(
+                    json.dumps(self.parameters), encoding=encoding
+                )
+                self.parameters = None
+                parameter_size = 0
+
+            # If the output size is too large, we switch it over
+            # Max size for Mongo is 16MB, switching over at 15MB to be safe
+            if self.output and (sys.getsizeof(self.output) + parameter_size) > max_size:
+                self.logger.info("~~~Output size too big, storing in gridfs")
+                self.output_gridfs.put(self.output, encoding=encoding)
+                self.output = None
 
         super(Request, self).save(*args, **kwargs)
 
@@ -678,3 +710,26 @@ class Garden(MongoModel, Document):
 class SystemGardenMapping(MongoModel, Document):
     system = ReferenceField("System")
     garden = ReferenceField("Garden")
+
+
+class File(MongoModel, Document):
+    brewtils_model = brewtils.models.File
+
+    owner_id = StringField(required=False)
+    owner_type = StringField(required=False)
+    owner = LazyReferenceField(Owner, required=False, reverse_delete_rule=NULLIFY)
+    updated_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    file_name = StringField(required=True)
+    file_size = IntField(required=True)
+    chunks = DictField(required=False)
+    chunk_size = IntField(required=True)
+
+
+class FileChunk(MongoModel, Document):
+    brewtils_model = brewtils.models.FileChunk
+
+    file_id = StringField(required=True)
+    offset = IntField(required=True)
+    data = StringField(required=True)
+    # Delete Rule (2) = CASCADE; This causes this document to be deleted when the owner doc is.
+    owner = LazyReferenceField(File, required=False, reverse_delete_rule=CASCADE)

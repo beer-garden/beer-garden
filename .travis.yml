@@ -77,6 +77,21 @@ jobs:
     script: make publish-docker VERSION=$TRAVIS_TAG
     after_success: skip
 
+  - stage: github release / rpm deploy
+    if: tag IS present
+    install: make -C src/ui deps
+    before_script: make docker-login
+    script: make rpm-build VERSION=$TRAVIS_TAG
+    deploy:
+      provider: releases
+      on:
+        tags: true
+      file: rpm/dist/beer-garden-$TRAVIS_TAG-1.el7.x86_64.rpm
+      skip_cleanup: true
+      api_key:
+        secure: Eg3oMUS7bBcFUffE5Mj89DiaLAxy3ls5BJ7NaAmAuZL7xzeuk/4BYgYneyWZUNYFYHKJ7tUk3GsLx2eQYciFmLNKsdp3rOy/4qKGMqWJU41TJmZC9A2mi6WenNCevRyuXwfT0uM0/qDE3G1D9zT4XWn+dRPZyBk2n/togm1nrsZ+U+rdU/lgvImBNB6QJJXWOzyPN8c6v1udI5O0w0N24291PDu7eIDDtpdQXuGTRueGrBLXbzZzGjzN7JXWVePUOe0+BrN8r/b7fQs45LIIqwzIH4yq30dXPaVWTsG7qhvncixC78MKd+IGY7do7ShEAweOU0dJ6MFAIhphRhj+tqxTJBVMRKu0sFVVLQOdmi/NWuXH1XJULSZXiK8dxBL3wS9X82JqGwbXxruoj/IojXb9z7T5kDNxVivw0738fXP4iBjqSkUKR+rSfoq57dBYuVF07p0ASzJSFDN+aUPJMR2GCGkxSjRY7U7aTfbLTMqPSJrGbsXQo1sBvwLSh0iRj4ZGaOSQv63kSgnNP1kTJ1JhGYjoeuotT6Cjg43BoIK3nHEPxhvFxUJjMXmHqLdw8suBuSA/hlRwnIhSvnruxXQQP/FZQ/akRZ/42zVH5G/93t2OsZNF9GtqUU2LRfWms4VaRC4ovudNxY7ZwbTgkCSWLKJLTC/FHNp9C+69fgw=
+
+
 
 # Integration tests
 

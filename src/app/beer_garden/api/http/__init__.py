@@ -27,6 +27,7 @@ from brewtils.schemas import (
     RequestSchema,
     RoleSchema,
     SystemSchema,
+    FileStatusSchema,
 )
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
@@ -202,6 +203,8 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/jobs/(\w+)/?", v1.job.JobAPI),
         (rf"{prefix}api/v1/logging/?", v1.logging.LoggingAPI),
         (rf"{prefix}api/v1/gardens/(\w+)/?", v1.garden.GardenAPI),
+        (rf"{prefix}api/v1/files/?", v1.file.FileAPI),
+        (rf"{prefix}api/v1/files/id/?", v1.file.FileNameAPI),
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
         # V2
@@ -295,6 +298,7 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("Role", schema=RoleSchema)
     api_spec.definition("Queue", schema=QueueSchema)
     api_spec.definition("Operation", schema=OperationSchema)
+    api_spec.definition("FileStatus", schema=FileStatusSchema)
 
     api_spec.definition("RefreshToken", schema=RefreshTokenSchema)
 

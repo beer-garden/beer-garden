@@ -120,7 +120,10 @@ def start(
 
 @publish_event(Events.INSTANCE_STOPPED)
 def stop(
-    instance_id: str = None, instance: Instance = None, system: System = None
+    instance_id: str = None,
+    instance: Instance = None,
+    system: System = None,
+    wait_local=True,
 ) -> Instance:
     """Stops an Instance.
 
@@ -128,6 +131,7 @@ def stop(
         instance_id: The Instance ID
         instance: The Instance
         system: The System
+        wait_local: If the Plugin is a local plugin, wait for timeout and force shutdown
 
     Returns:
         The updated Instance
@@ -141,7 +145,7 @@ def stop(
     # Publish the stop request
     publish_stop(system, instance)
 
-    if lpm.lpm_proxy.has_instance_id(instance_id=instance.id):
+    if wait_local and lpm.lpm_proxy.has_instance_id(instance_id=instance.id):
         lpm.lpm_proxy.stop_one(instance_id=instance.id)
 
     return instance

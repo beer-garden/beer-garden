@@ -693,6 +693,13 @@ _DB_SPEC = {
                     "previous_names": ["info_request_ttl"],
                     "alt_env_names": ["INFO_REQUEST_TTL"],
                 },
+                "file": {
+                    "type": "int",
+                    "default": 15,
+                    "description": "Number of minutes to wait before deleting "
+                    "FILE documents (negative number for never)",
+                    "alt_env_names": ["FILE_REQUEST_TTL"],
+                },
             },
         },
     },
