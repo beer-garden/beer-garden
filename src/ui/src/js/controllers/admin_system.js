@@ -136,6 +136,16 @@ export default function adminSystemController(
     }
   }
 
+  function groupRunners() {
+    if ($scope.runners) {
+      $scope.groupedRunners = _.groupBy($scope.runners, (value) => {
+        return value.runner_path;
+      });
+    } else {
+      $scope.groupedRunners = [];
+    }
+  }
+
   $rootScope.$watchCollection("systems", groupSystems);
 
   $scope.showLogs = function (system, instance) {
@@ -167,6 +177,8 @@ export default function adminSystemController(
   RunnerService.getRunners().then((response) => {
     $scope.runnerResponse = response;
     $scope.runners = response.data;
+
+    groupRunners();
   });
 
 };
