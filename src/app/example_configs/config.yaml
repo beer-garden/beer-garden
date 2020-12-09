@@ -29,7 +29,7 @@ entry:
       public_key: null
     url_prefix: /
   stomp:
-    enabled: true
+    enabled: false
     host: localhost
     password: password
     port: 61613
