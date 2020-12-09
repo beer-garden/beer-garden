@@ -70,6 +70,7 @@ jobs:
         run: make publish-docker VERSION=${GITHUB_REF/refs\/tags\//}
 
   RPM:
+    needs: Docker
     runs-on: ubuntu-latest
     name: Python ${{ matrix.python-version }} RPM Builder
     strategy:
