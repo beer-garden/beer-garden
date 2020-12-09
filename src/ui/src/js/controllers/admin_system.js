@@ -11,8 +11,8 @@ adminSystemController.$inject = [
   'InstanceService',
   'UtilityService',
   'AdminService',
-  'EventService',
   'QueueService',
+  'RunnerService',
 ];
 
 /**
@@ -23,7 +23,8 @@ adminSystemController.$inject = [
  * @param  {Object} InstanceService Beer-Garden's instance service object.
  * @param  {Object} UtilityService  Beer-Garden's utility service object.
  * @param  {Object} AdminService    Beer-Garden's admin service object.
- * @param  {Object} EventService    Beer-Garden's event service object.
+ * @param  {Object} QueueService    Beer-Garden's event service object.
+ * @param  {Object} RunnerService   Beer-Garden's runner service object.
  */
 export default function adminSystemController(
     $scope,
@@ -33,12 +34,14 @@ export default function adminSystemController(
     InstanceService,
     UtilityService,
     AdminService,
-    EventService,
     QueueService,
+    RunnerService,
     ) {
   $scope.response = undefined;
+  $scope.runnerResponse = undefined;
   $scope.groupedSystems = [];
   $scope.alerts = [];
+  $scope.runners = [];
 
   $scope.setWindowTitle('systems');
 
@@ -98,6 +101,14 @@ export default function adminSystemController(
     InstanceService.stopInstance(instance).catch($scope.addErrorAlert);
   };
 
+  $scope.deleteRunner = (runnerId) => {
+    RunnerService.removeRunner(runnerId).catch($scope.addErrorAlert);
+  };
+
+  $scope.unassociatedRunners = (value, index, array) => {
+    return !value.instance_id;
+  };
+
   $scope.addErrorAlert = function(response) {
     $scope.alerts.push({
       type: 'danger',
@@ -152,4 +163,10 @@ export default function adminSystemController(
     };
 
   groupSystems();
+
+  RunnerService.getRunners().then((response) => {
+    $scope.runnerResponse = response;
+    $scope.runners = response.data;
+  });
+
 };

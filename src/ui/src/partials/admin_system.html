@@ -23,6 +23,39 @@
   {{alert.msg}}
 </div>
 
+<h3>Unassociated Runners</h3>
+<div class="panel-container animate-if"
+     ng-if="responseState(response) === 'success'">
+
+  <div ng-repeat="runner in runners | filter:unassociatedRunners"
+      class="container-item panel panel-default"
+      style="display: block;">
+
+    <div class="panel-heading" style="font-size: 22px;">
+      <span>{{runner.runner_path}}</span>
+    </div>
+
+    <div class="panel-body" style="padding-bottom: 0px;">
+      <span>{{runner.runner_path}}</span>
+      <span>{{runner.runner_id}}</span>
+      <span>{{runner.instance_id}}</span>
+
+      <div class="btn-group btn-group-sm pull-right"
+            ng-show="hasPermission(user, 'bg-system-admin')">
+        <button type="button" class="btn btn-default fa fa-trash-o"
+                ng-click="deleteRunner(runner.runner_id)"
+                title="Delete Runner {{runner.runner_path}}">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- This is ugly but empty panels ensure the bottom row is left-aligned -->
+  <div class="container-item empty"></div>
+  <div class="container-item empty"></div>
+</div>
+
+<h3>Systems</h3>
 <div class="panel-container animate-if"
      ng-if="responseState(response) === 'success'">
 

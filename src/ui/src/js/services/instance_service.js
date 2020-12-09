@@ -15,7 +15,7 @@ export default function instanceService($http) {
       return $http.patch('api/v1/instances/' + instance.id, {operation: 'stop'});
     },
     getInstance: (instanceId) => {
-        return $http.get('api/v1/instances/' + instanceId)
+        return $http.get('api/v1/instances/' + instanceId);
     },
     getInstanceLogs: (instanceId, timeout, start_line, end_line) => {
       return $http.get('api/v1/instances/' + instanceId + '/logs/', {
