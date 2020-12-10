@@ -30,7 +30,7 @@ entry:
       public_key: null
     url_prefix: /
   stomp:
-    enabled: true
+    enabled: false
     headers: []
     host: localhost
     password: password
