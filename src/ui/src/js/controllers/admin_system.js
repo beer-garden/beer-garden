@@ -180,14 +180,15 @@ export default function adminSystemController(
 
   function eventCallback(event) {
     if (event.name.startsWith('RUNNER')) {
-      if (event.name == 'RUNNER_REMOVED') {
+      _.remove($scope.runners, (value) => {
+        return value.id == event.payload.id;
+      });
 
-        _.remove($scope.runners, (value) => {
-          return value.id == event.payload.id;
-        });
-
-        groupRunners();
+      if (event.name != 'RUNNER_REMOVED') {
+        $scope.runners.push(event.payload);
       }
+
+      groupRunners();
     }
   }
 
