@@ -20,7 +20,7 @@ from typing import Any, Dict, Iterable, List, Optional
 
 import beer_garden.config as config
 from beer_garden.errors import PluginValidationError
-from beer_garden.events import publish_event
+from beer_garden.events import publish, publish_event
 from beer_garden.local_plugins.env_help import expand_string
 from beer_garden.local_plugins.runner import ProcessRunner
 
@@ -41,10 +41,20 @@ def remove(*args, **kwargs):
     return lpm_proxy.remove(*args, **kwargs)
 
 
-@publish_event(Events.RUNNER_STARTED)
 def rescan() -> List[Runner]:
     """Scans plugin directory and starts any new Systems"""
-    return lpm_proxy.scan_path()[0]
+    new_runners = lpm_proxy.scan_path()
+
+    for runner in new_runners:
+        publish(
+            Event(
+                name=Events.RUNNER_STARTED.name,
+                payload_type=Runner.__name__,
+                payload=runner,
+            )
+        )
+
+    return new_runners
 
 
 class PluginManager(StoppableThread):
