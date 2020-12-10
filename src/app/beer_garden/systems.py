@@ -315,11 +315,6 @@ def purge_system(
     return remove_system(system=system)
 
 
-def rescan_system_directory() -> None:
-    """Scans plugin directory and starts any new Systems"""
-    lpm.lpm_proxy.scan_path()
-
-
 def get_instance(
     instance_id: str = None,
     system_id: str = None,

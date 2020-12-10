@@ -398,14 +398,14 @@ class Application(StoppableThread):
         its own process without the ability to publish rabbit messages.
         """
         # Send Stop message to plugins that came up successfully
-        for state in beer_garden.local_plugins.manager.lpm_proxy.runner_state():
-            if state.get("instance_id"):
+        for state in beer_garden.local_plugins.manager.runner_state():
+            if state.instance_id:
                 try:
                     # Just send the Stop, don't wait for shutdown
-                    stop(instance_id=state["instance_id"], wait_local=False)
+                    stop(instance_id=state.instance_id, wait_local=False)
                 except Exception as ex:
                     self.logger.warning(
-                        f"Error sending Stop to plugin at {state['runner_name']}: {ex}"
+                        f"Error sending Stop to plugin at {state.runner_name}: {ex}"
                     )
 
         # Now wait for the shutdown timeout and forcibly terminate, if necessary

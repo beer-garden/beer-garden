@@ -139,7 +139,6 @@ route_functions = {
     "SYSTEM_READ_ALL": beer_garden.systems.get_systems,
     "SYSTEM_UPDATE": beer_garden.systems.update_system,
     "SYSTEM_RELOAD": beer_garden.systems.reload_system,
-    "SYSTEM_RESCAN": beer_garden.systems.rescan_system_directory,
     "SYSTEM_DELETE": beer_garden.systems.purge_system,
     "GARDEN_CREATE": beer_garden.garden.create_garden,
     "GARDEN_READ": beer_garden.garden.get_garden,
@@ -163,6 +162,7 @@ route_functions = {
     "FILE_OWNER": beer_garden.files.set_owner,
     "RUNNER_STATE_READ": beer_garden.local_plugins.manager.runner_state,
     "RUNNER_DELETE": beer_garden.local_plugins.manager.remove,
+    "RUNNER_RESCAN": beer_garden.local_plugins.manager.rescan,
 }
 
 
@@ -459,8 +459,7 @@ def _determine_target_garden(operation: Operation) -> str:
         or "JOB" in operation.operation_type
         or "FILE" in operation.operation_type
         or "RUNNER" in operation.operation_type
-        or operation.operation_type
-        in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
+        or operation.operation_type in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE")
     ):
         return config.get("garden.name")
 
