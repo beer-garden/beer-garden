@@ -65,8 +65,9 @@
       <div class="panel-body" style="padding-bottom: 0px;">
         <div class="list-group">
           <div ng-repeat="runner in runners">
-            <div class="list-group-item">
-              <span>{{runner.id}}</span>
+            <div class="list-group-item container-fluid">
+              <span class="col-md-3">{{runner.id}}</span>
+              <span class="col-md-3">{{runner.instance ? runner.instance.name : "UNKNOWN"}}</span>
 
               <div class="btn-group btn-group-xs pull-right"
                     ng-show="hasPermission(user, 'bg-system-admin')">

@@ -199,11 +199,27 @@ export default function adminSystemController(
     EventService.removeCallback('admin_system');
   });
 
+  function instanceFromRunner(runner) {
+    for (let system of $rootScope.systems) {
+      for (let instance of system.instances) {
+        if (instance.metadata.runner_id == runner.id) {
+          return instance;
+        }
+      }
+    }
+
+    return undefined;
+  }
+
   groupSystems();
 
   RunnerService.getRunners().then((response) => {
     $scope.runnerResponse = response;
     $scope.runners = response.data;
+
+    for (let runner of $scope.runners) {
+      runner.instance = instanceFromRunner(runner);
+    }
 
     groupRunners();
   });
