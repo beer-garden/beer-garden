@@ -6,7 +6,7 @@ import logging
 import subprocess
 from pathlib import Path
 from threading import Thread
-from typing import Dict, Sequence
+from typing import Sequence
 
 log_levels = [n for n in getattr(logging, "_nameToLevel").keys()]
 
