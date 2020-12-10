@@ -7,6 +7,10 @@
             confirm="Are you sure you want to delete all Queues?">
       Clear All Queues
     </button>
+    <button type="button"
+            class="btn btn-primary"
+            ng-show="hasPermission(user, 'bg-system-admin')"
+            ng-click="rescan()">Rescan Plugin Directory</button>
   </span>
 </h1>
 
@@ -19,79 +23,75 @@
   {{alert.msg}}
 </div>
 
-<h3>
-  <span>Runners</span>
-  <span class="pull-right" ng-show="responseState(response) !== 'loading'">
-    <button type="button"
-            class="btn btn-primary"
-            ng-show="hasPermission(user, 'bg-system-admin')"
-            ng-click="rescan()">Rescan Plugin Directory</button>
-  </span>
-</h3>
+<div ng-show="runners.length>0">
+  <h3>
+    <span>Runners</span>
+  </h3>
 
-<div class="panel-container animate-if"
-     ng-if="responseState(response) === 'success'">
+  <div class="panel-container animate-if"
+      ng-if="responseState(response) === 'success'">
 
-  <div ng-repeat="runners in groupedRunners"
-      class="container-item panel panel-default"
-      style="display: block;">
+    <div ng-repeat="runners in groupedRunners"
+        class="container-item panel panel-default"
+        style="display: block;">
 
-    <div class="panel-heading" style="font-size: 22px;">
-      <span>{{runners[0].path}}</span>
+      <div class="panel-heading" style="font-size: 22px;">
+        <span>{{runners[0].path}}</span>
 
-      <div class="btn-toolbar pull-right">
-        <div class="btn-group btn-group-sm">
-          <button type="button" class="btn btn-default fa fa-play"
-                  ng-show="hasPermission(user, 'bg-system-admin')"
-                  ng-click="startSystem(system)"
-                  title="Start Runners in {{runners[0].path}}"></button>
-          <button type="button" class="btn btn-default fa fa-stop"
-                  ng-show="hasPermission(user, 'bg-system-admin')"
-                  ng-click="stopSystem(system)"
-                  title="Stop Runners in {{runners[0].path}}"></button>
-          <button type="button" class="btn btn-default fa fa-refresh"
-                  ng-show="hasPermission(user, 'bg-system-admin')"
-                  ng-click="reloadSystem(system)"
-                  title="Reload Runners in {{runners[0].path}}"></button>
-        </div>
-        <div class="btn-group btn-group-sm pull-right"
-             ng-show="hasPermission(user, 'bg-system-admin')">
-          <button type="button" class="btn btn-default fa fa-trash-o"
-                  ng-click="deleteSystem(system)"
-                  title="Delete Runners in {{runners[0].path}}"></button>
+        <div class="btn-toolbar pull-right">
+          <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-default fa fa-play"
+                    ng-show="hasPermission(user, 'bg-system-admin')"
+                    ng-click="startSystem(system)"
+                    title="Start Runners in {{runners[0].path}}"></button>
+            <button type="button" class="btn btn-default fa fa-stop"
+                    ng-show="hasPermission(user, 'bg-system-admin')"
+                    ng-click="stopSystem(system)"
+                    title="Stop Runners in {{runners[0].path}}"></button>
+            <button type="button" class="btn btn-default fa fa-refresh"
+                    ng-show="hasPermission(user, 'bg-system-admin')"
+                    ng-click="reloadSystem(system)"
+                    title="Reload Runners in {{runners[0].path}}"></button>
+          </div>
+          <div class="btn-group btn-group-sm pull-right"
+              ng-show="hasPermission(user, 'bg-system-admin')">
+            <button type="button" class="btn btn-default fa fa-trash-o"
+                    ng-click="deleteSystem(system)"
+                    title="Delete Runners in {{runners[0].path}}"></button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="panel-body" style="padding-bottom: 0px;">
-      <div class="list-group">
-        <div ng-repeat="runner in runners">
-          <div class="list-group-item">
-            <span>{{runner.id}}</span>
+      <div class="panel-body" style="padding-bottom: 0px;">
+        <div class="list-group">
+          <div ng-repeat="runner in runners">
+            <div class="list-group-item">
+              <span>{{runner.id}}</span>
 
-            <div class="btn-group btn-group-xs pull-right"
-                  ng-show="hasPermission(user, 'bg-system-admin')">
-              <button type="button" class="btn btn-default fa fa-play"
-                      ng-show="hasPermission(user, 'bg-system-admin')"
-                      ng-click="startSystem(system)"
-                      title="Start Runner {{runner.id}}"></button>
-              <button type="button" class="btn btn-default fa fa-stop"
-                      ng-show="hasPermission(user, 'bg-system-admin')"
-                      ng-click="stopSystem(system)"
-                      title="Stop Runner in {{runner.id}}"></button>
-              <button type="button" class="btn btn-default fa fa-trash-o"
-                      ng-click="deleteRunner(runner.id)"
-                      title="Delete Runner {{runner.id}}"></button>
+              <div class="btn-group btn-group-xs pull-right"
+                    ng-show="hasPermission(user, 'bg-system-admin')">
+                <button type="button" class="btn btn-default fa fa-play"
+                        ng-show="hasPermission(user, 'bg-system-admin')"
+                        ng-click="startSystem(system)"
+                        title="Start Runner {{runner.id}}"></button>
+                <button type="button" class="btn btn-default fa fa-stop"
+                        ng-show="hasPermission(user, 'bg-system-admin')"
+                        ng-click="stopSystem(system)"
+                        title="Stop Runner in {{runner.id}}"></button>
+                <button type="button" class="btn btn-default fa fa-trash-o"
+                        ng-click="deleteRunner(runner.id)"
+                        title="Delete Runner {{runner.id}}"></button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- This is ugly but empty panels ensure the bottom row is left-aligned -->
-  <div class="container-item empty"></div>
-  <div class="container-item empty"></div>
+    <!-- This is ugly but empty panels ensure the bottom row is left-aligned -->
+    <div class="container-item empty"></div>
+    <div class="container-item empty"></div>
+  </div>
 </div>
 
 <h3>Systems</h3>
