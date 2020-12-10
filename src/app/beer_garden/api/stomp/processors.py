@@ -3,7 +3,11 @@ from brewtils.models import Operation
 
 
 # combines headers to be sent with message
-def append_headers(response_headers=None, request_headers=None, garden_headers=None, ):
+def append_headers(
+    response_headers=None,
+    request_headers=None,
+    garden_headers=None,
+):
     headers = {}
     headers.update(request_headers or {})
     headers.update(garden_headers or {})

@@ -33,15 +33,14 @@ class StompManager(StoppableThread):
             subscribe_destination = stomp_config.get("subscribe_destination")
             ssl = stomp_config.get("ssl")
             headers = []
-            if stomp_config.get('headers'):
-                headers = [self.convert_header_to_dict(stomp_config.get('headers'))]
+            if stomp_config.get("headers"):
+                headers = [self.convert_header_to_dict(stomp_config.get("headers"))]
             self.conn_dict = {
-                f"{host_and_ports}{subscribe_destination}{ssl.get('use_ssl')}":
-                    {
-                        "conn": self.connect(stomp_config),
-                        "gardens": [{"name": name, "main": is_main}],
-                        "headers_list": headers
-                    }
+                f"{host_and_ports}{subscribe_destination}{ssl.get('use_ssl')}": {
+                    "conn": self.connect(stomp_config),
+                    "gardens": [{"name": name, "main": is_main}],
+                    "headers_list": headers,
+                }
             }
 
         self._setup_event_handling()
@@ -106,8 +105,8 @@ class StompManager(StoppableThread):
             conn = value["conn"]
             if conn:
                 self.reconnect(conn)
-                if value['headers_list']:
-                    for headers in value['headers_list']:
+                if value["headers_list"]:
+                    for headers in value["headers_list"]:
                         conn.send_event(event=event, headers=headers)
                 else:
                     conn.send_event(event=event)
@@ -137,12 +136,12 @@ class StompManager(StoppableThread):
                 "conn": self.connect(stomp_config),
                 "gardens": [{"name": name, "main": is_main}],
             }
-        if 'headers_list' not in self.conn_dict:
-            self.conn_dict[conn_dict_key]['headers_list'] = []
-        if stomp_config.get('headers') and is_main:
-            headers = self.convert_header_to_dict(stomp_config.get('headers'))
-            if headers not in self.conn_dict[conn_dict_key]['headers_list']:
-                self.conn_dict[conn_dict_key]['headers_list'].append(headers)
+        if "headers_list" not in self.conn_dict:
+            self.conn_dict[conn_dict_key]["headers_list"] = []
+        if stomp_config.get("headers") and is_main:
+            headers = self.convert_header_to_dict(stomp_config.get("headers"))
+            if headers not in self.conn_dict[conn_dict_key]["headers_list"]:
+                self.conn_dict[conn_dict_key]["headers_list"].append(headers)
         return conn_dict_key
 
     @staticmethod
