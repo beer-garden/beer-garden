@@ -829,6 +829,20 @@ _STOMP_SPEC = {
             "description": "Password to use for authentication",
             "default": "password",
         },
+        "headers": {
+            "type": "list",
+            "description": "Headers to be sent with messages",
+            "required": False,
+            "items": {
+                "headers": {
+                    "type": "dict", "items": {
+                        "key": {"type": "str"},
+                        "value": {"type": "str"},
+                    }
+                }
+            },
+            "default": [],
+        },
         "ssl": {
             "type": "dict",
             "items": {
@@ -993,6 +1007,21 @@ _PARENT_SPEC = {
                     "default": ["DB_CREATE"],
                     "required": False,
                     "description": "Events to be skipped",
+                },
+                "headers": {
+                    "type": "list",
+                    "description": "Headers to be sent with messages",
+                    "required": False,
+                    "items": {
+                        "headers":
+                            {
+                                "type": "dict", "items": {
+                                    "key": {"type": "str"},
+                                    "value": {"type": "str"},
+                                }
+                            }
+                    },
+                    "default": [],
                 },
                 "ssl": {
                     "type": "dict",

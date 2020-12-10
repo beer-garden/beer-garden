@@ -26,17 +26,22 @@ class StompManager(StoppableThread):
         return conn
 
     def __init__(self, ep_conn=None, stomp_config=None, name=None, is_main=True):
-        self.conn_dict = {}
         self.ep_conn = ep_conn
+        self.conn_dict = {}
         if stomp_config:
             host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
             subscribe_destination = stomp_config.get("subscribe_destination")
             ssl = stomp_config.get("ssl")
-            self.conn_dict[
-                f"{host_and_ports}{subscribe_destination}{ssl.get('use_ssl')}"
-            ] = {
-                "conn": self.connect(stomp_config),
-                "gardens": [{"name": name, "main": is_main}],
+            headers = []
+            if stomp_config.get('headers'):
+                headers = [self.convert_header_to_dict(stomp_config.get('headers'))]
+            self.conn_dict = {
+                f"{host_and_ports}{subscribe_destination}{ssl.get('use_ssl')}":
+                    {
+                        "conn": self.connect(stomp_config),
+                        "gardens": [{"name": name, "main": is_main}],
+                        "headers_list": headers
+                    }
             }
 
         self._setup_event_handling()
@@ -101,7 +106,18 @@ class StompManager(StoppableThread):
             conn = value["conn"]
             if conn:
                 self.reconnect(conn)
-                conn.send_event(event)
+                if value['headers_list']:
+                    for headers in value['headers_list']:
+                        conn.send_event(event=event, headers=headers)
+                else:
+                    conn.send_event(event=event)
+
+    @staticmethod
+    def convert_header_to_dict(headers):
+        tmp_headers = {}
+        for header in headers:
+            tmp_headers[header["key"]] = header["value"]
+        return tmp_headers
 
     def add_connection(self, stomp_config=None, name=None, is_main=False):
         host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
@@ -121,20 +137,20 @@ class StompManager(StoppableThread):
                 "conn": self.connect(stomp_config),
                 "gardens": [{"name": name, "main": is_main}],
             }
+        if 'headers_list' not in self.conn_dict:
+            self.conn_dict[conn_dict_key]['headers_list'] = []
+        if stomp_config.get('headers') and is_main:
+            headers = self.convert_header_to_dict(stomp_config.get('headers'))
+            if headers not in self.conn_dict[conn_dict_key]['headers_list']:
+                self.conn_dict[conn_dict_key]['headers_list'].append(headers)
         return conn_dict_key
 
     @staticmethod
     def format_connection_params(term, connection_params):
-        """Strips leading term from connection parameters and formats dictionary
-        to match corresponding entry point config for connection type"""
+        """Strips leading term from connection parameters"""
         new_connection_params = {"ssl": {}}
         for key in connection_params:
-            if "ssl" in key:
-                new_connection_params["ssl"][
-                    key.replace(term + "ssl_", "")
-                ] = connection_params[key]
-            else:
-                new_connection_params[key.replace(term, "")] = connection_params[key]
+            new_connection_params[key.replace(term, "")] = connection_params[key]
         return new_connection_params
 
     @staticmethod

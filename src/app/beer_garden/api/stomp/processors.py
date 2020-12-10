@@ -2,9 +2,13 @@ from brewtils.schema_parser import SchemaParser
 from brewtils.models import Operation
 
 
-# Modify to inject custom headers
-def append_headers(response_headers, request_headers=None):
-    return response_headers
+# combines headers to be sent with message
+def append_headers(response_headers=None, request_headers=None, garden_headers=None, ):
+    headers = {}
+    headers.update(request_headers or {})
+    headers.update(garden_headers or {})
+    headers.update(response_headers or {})
+    return headers
 
 
 class EventManager:

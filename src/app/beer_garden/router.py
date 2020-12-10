@@ -325,12 +325,13 @@ def setup_stomp(garden):
         (garden.connection_params["stomp_host"], garden.connection_params["stomp_port"])
     ]
     conn = stomp.Connection(host_and_ports=host_and_ports)
-    if garden.connection_params.get("stomp_ssl_use_ssl"):
-        conn.set_ssl(
-            for_hosts=host_and_ports,
-            key_file=garden.connection_params["stomp_ssl_private_key"],
-            cert_file=garden.connection_params["stomp_ssl_cert_file"],
-        )
+    if garden.connection_params.get("stomp_ssl"):
+        if garden.connection_params.get("stomp_ssl").get("use_ssl"):
+            conn.set_ssl(
+                for_hosts=host_and_ports,
+                key_file=garden.connection_params["stomp_ssl"].get("private_key"),
+                cert_file=garden.connection_params["stomp_ssl"].get("cert_file"),
+            )
 
     return conn
 
@@ -562,7 +563,8 @@ def _forward_stomp(operation: Operation, target_garden: Garden):
                 },
             )
         message, response_headers = stomp_process_message(operation)
-        response_headers = stomp_append_headers(response_headers=response_headers)
+        response_headers = stomp_append_headers(response_headers=response_headers,
+                                                garden_headers=target_garden.connection_params.get("stomp_headers"))
         stomp_garden_connections[target_garden.name].send(
             body=message,
             headers=response_headers,

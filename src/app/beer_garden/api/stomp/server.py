@@ -9,17 +9,17 @@ from beer_garden.api.stomp.processors import append_headers, process_send_messag
 logger = logging.getLogger(__name__)
 
 
-def send_message(message=None, headers=None, conn=None, send_destination=None):
-    if headers is None:
-        headers = {}
+def send_message(message=None, garden_headers=None, conn=None, send_destination=None, request_headers=None):
     message, response_headers = process_send_message(message)
     response_headers = append_headers(
-        response_headers=response_headers, request_headers=headers
+        response_headers=response_headers,
+        request_headers=request_headers,
+        garden_headers=garden_headers
     )
     if conn.is_connected() and send_destination:
-        if "reply-to" in headers:
+        if "reply-to" in (request_headers or {}):
             conn.send(
-                body=message, headers=response_headers, destination=headers["reply-to"]
+                body=message, headers=response_headers, destination=request_headers["reply-to"]
             )
         else:
             conn.send(
@@ -29,19 +29,19 @@ def send_message(message=None, headers=None, conn=None, send_destination=None):
             )
 
 
-def send_error_msg(error_msg=None, headers=None, conn=None, send_destination=None):
-    if headers is None:
-        headers = {}
-
+def send_error_msg(error_msg=None, request_headers=None, conn=None, send_destination=None, garden_headers=None):
     error_headers = {"model_class": "error_message"}
-    error_headers = append_headers(error_headers, headers)
+    error_headers = append_headers(
+        response_headers=error_headers,
+        request_headers=request_headers or {},
+        garden_headers=garden_headers or {})
 
     if conn.is_connected():
-        if "reply-to" in headers:
+        if "reply-to" in request_headers:
             conn.send(
                 body=error_msg,
                 headers=error_headers,
-                destination=headers["reply-to"],
+                destination=request_headers["reply-to"],
             )
         else:
             conn.send(
@@ -71,14 +71,14 @@ class OperationListener(stomp.ConnectionListener):
             if result:
                 send_message(
                     message=result,
-                    headers=headers,
+                    request_headers=headers,
                     conn=self.conn,
                     send_destination=self.send_destination,
                 )
         except Exception as e:
             send_error_msg(
                 error_msg=str(e),
-                headers=headers,
+                request_headers=headers,
                 conn=self.conn,
                 send_destination=self.send_destination,
             )
@@ -150,7 +150,9 @@ class Connection:
     def is_connected(self):
         return self.conn.is_connected()
 
-    def send_event(self, event):
+    def send_event(self, event=None, headers=None):
         send_message(
-            message=event, conn=self.conn, send_destination=self.send_destination
+            message=event, conn=self.conn,
+            send_destination=self.send_destination,
+            garden_headers=headers
         )
