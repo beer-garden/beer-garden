@@ -8,7 +8,7 @@ import json
 import logging
 import os
 import sys
-from brewtils.models import Event, System
+from brewtils.models import Event, Events, Runner, System
 from brewtils.specification import _SYSTEM_SPEC
 from brewtils.stoppable_thread import StoppableThread
 from importlib.machinery import SourceFileLoader
@@ -20,6 +20,7 @@ from typing import Any, Dict, Iterable, List, Optional
 
 import beer_garden.config as config
 from beer_garden.errors import PluginValidationError
+from beer_garden.events import publish_event
 from beer_garden.local_plugins.env_help import expand_string
 from beer_garden.local_plugins.runner import ProcessRunner
 
@@ -204,7 +205,7 @@ class PluginManager(StoppableThread):
         """Stop all known runners"""
         return self._stop_multiple(self._runners)
 
-    def remove(self, runner_id) -> None:
+    def remove(self, runner_id) -> Runner:
         runner = self._from_runner_id(runner_id)
 
         if runner:
@@ -217,6 +218,8 @@ class PluginManager(StoppableThread):
             runner.kill()
 
         self._runners.remove(runner)
+
+        return runner.state()
 
     def reload_system(self, system: System) -> None:
         """Reload all runners for a given System
@@ -457,6 +460,7 @@ def runner_state():
     return lpm_proxy.runner_state()
 
 
+@publish_event(Events.RUNNER_REMOVED)
 def remove(*args, **kwargs):
     return lpm_proxy.remove(*args, **kwargs)
 

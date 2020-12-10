@@ -37,28 +37,28 @@
       style="display: block;">
 
     <div class="panel-heading" style="font-size: 22px;">
-      <span>{{runners[0].runner_path}}</span>
+      <span>{{runners[0].path}}</span>
 
       <div class="btn-toolbar pull-right">
         <div class="btn-group btn-group-sm">
           <button type="button" class="btn btn-default fa fa-play"
                   ng-show="hasPermission(user, 'bg-system-admin')"
                   ng-click="startSystem(system)"
-                  title="Start Runners in {{runners[0].runner_path}}"></button>
+                  title="Start Runners in {{runners[0].path}}"></button>
           <button type="button" class="btn btn-default fa fa-stop"
                   ng-show="hasPermission(user, 'bg-system-admin')"
                   ng-click="stopSystem(system)"
-                  title="Stop Runners in {{runners[0].runner_path}}"></button>
+                  title="Stop Runners in {{runners[0].path}}"></button>
           <button type="button" class="btn btn-default fa fa-refresh"
                   ng-show="hasPermission(user, 'bg-system-admin')"
                   ng-click="reloadSystem(system)"
-                  title="Reload Runners in {{runners[0].runner_path}}"></button>
+                  title="Reload Runners in {{runners[0].path}}"></button>
         </div>
         <div class="btn-group btn-group-sm pull-right"
              ng-show="hasPermission(user, 'bg-system-admin')">
           <button type="button" class="btn btn-default fa fa-trash-o"
                   ng-click="deleteSystem(system)"
-                  title="Delete Runners in {{runners[0].runner_path}}"></button>
+                  title="Delete Runners in {{runners[0].path}}"></button>
         </div>
       </div>
     </div>
@@ -67,21 +67,21 @@
       <div class="list-group">
         <div ng-repeat="runner in runners">
           <div class="list-group-item">
-            <span>{{runner.runner_id}}</span>
+            <span>{{runner.id}}</span>
 
             <div class="btn-group btn-group-xs pull-right"
                   ng-show="hasPermission(user, 'bg-system-admin')">
               <button type="button" class="btn btn-default fa fa-play"
                       ng-show="hasPermission(user, 'bg-system-admin')"
                       ng-click="startSystem(system)"
-                      title="Start Runner {{runner.runner_id}}"></button>
+                      title="Start Runner {{runner.id}}"></button>
               <button type="button" class="btn btn-default fa fa-stop"
                       ng-show="hasPermission(user, 'bg-system-admin')"
                       ng-click="stopSystem(system)"
-                      title="Stop Runner in {{runner.runner_id}}"></button>
+                      title="Stop Runner in {{runner.id}}"></button>
               <button type="button" class="btn btn-default fa fa-trash-o"
-                      ng-click="deleteRunner(runner.runner_id)"
-                      title="Delete Runner {{runner.runner_id}}"></button>
+                      ng-click="deleteRunner(runner.id)"
+                      title="Delete Runner {{runner.id}}"></button>
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from brewtils.models import Runner
 from io import TextIOBase
 
 import logging
@@ -140,18 +141,18 @@ class ProcessRunner(Thread):
     def __str__(self):
         return f"{self.runner_name}.{self.runner_id}"
 
-    def state(self) -> Dict:
+    def state(self) -> Runner:
         """Pickleable representation"""
 
-        return {
-            "runner_name": self.runner_name,
-            "runner_id": self.runner_id,
-            "runner_path": self.process_cwd.name,
-            "instance_id": self.instance_id,
-            "restart": self.restart,
-            "stopped": self.stopped,
-            "dead": self.dead,
-        }
+        return Runner(
+            id=self.runner_id,
+            name=self.runner_name,
+            path=self.process_cwd.name,
+            instance_id=self.instance_id,
+            stopped=self.stopped,
+            dead=self.dead,
+            restart=self.restart,
+        )
 
     def associate(self, instance=None):
         """Associate this runner with a specific instance ID"""
