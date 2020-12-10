@@ -32,23 +32,19 @@ CONFIG_NAME = "beer.conf"
 logger = logging.getLogger(__name__)
 
 
-class ConfigKeys(Enum):
-    PLUGIN_ENTRY = 1
-    INSTANCES = 2
-    PLUGIN_ARGS = 3
-    ENVIRONMENT = 4
-    LOG_LEVEL = 5
-    CAPTURE_STREAMS = 6
+def runner_state():
+    return lpm_proxy.runner_state()
 
-    NAME = 7
-    VERSION = 8
-    DESCRIPTION = 9
-    MAX_INSTANCES = 10
-    ICON_NAME = 11
-    DISPLAY_NAME = 12
-    METADATA = 13
-    NAMESPACE = 14
-    INTERPRETER_PATH = 15
+
+@publish_event(Events.RUNNER_REMOVED)
+def remove(*args, **kwargs):
+    return lpm_proxy.remove(*args, **kwargs)
+
+
+@publish_event(Events.RUNNER_STARTED)
+def rescan() -> List[Runner]:
+    """Scans plugin directory and starts any new Systems"""
+    return lpm_proxy.scan_path()[0]
 
 
 class PluginManager(StoppableThread):
@@ -125,7 +121,7 @@ class PluginManager(StoppableThread):
         """All current runner paths"""
         return list({runner.process_cwd for runner in self._runners})
 
-    def runner_state(self) -> List[Dict]:
+    def runner_state(self) -> List[Runner]:
         """Get a representation of current runners"""
         return [runner.state() for runner in self._runners]
 
@@ -247,7 +243,7 @@ class PluginManager(StoppableThread):
         # Create and start new runners using the path
         self._create_runners(system_path)
 
-    def scan_path(self, path: str = None) -> None:
+    def scan_path(self, path: str = None) -> List[Runner]:
         """Scan a given directory for valid plugins
 
         Note: This scan does not walk the directory tree - all plugins must be
@@ -262,16 +258,20 @@ class PluginManager(StoppableThread):
         """
         plugin_path = path or self._plugin_path
 
+        new_runners = []
+
         try:
             for path in plugin_path.iterdir():
                 try:
                     if path.is_dir() and path not in self.paths():
-                        self._create_runners(path)
+                        new_runners += self._create_runners(path)
                 except Exception as ex:
                     self.logger.exception(f"Error loading plugin at {path}: {ex}")
 
         except Exception as ex:
             self.logger.exception(f"Error scanning plugin path: {ex}")
+
+        return [runner.state() for runner in new_runners]
 
     def _from_instance_id(self, instance_id: str) -> Optional[ProcessRunner]:
         for runner in self._runners:
@@ -456,13 +456,23 @@ class PluginManager(StoppableThread):
         return env
 
 
-def runner_state():
-    return lpm_proxy.runner_state()
+class ConfigKeys(Enum):
+    PLUGIN_ENTRY = 1
+    INSTANCES = 2
+    PLUGIN_ARGS = 3
+    ENVIRONMENT = 4
+    LOG_LEVEL = 5
+    CAPTURE_STREAMS = 6
 
-
-@publish_event(Events.RUNNER_REMOVED)
-def remove(*args, **kwargs):
-    return lpm_proxy.remove(*args, **kwargs)
+    NAME = 7
+    VERSION = 8
+    DESCRIPTION = 9
+    MAX_INSTANCES = 10
+    ICON_NAME = 11
+    DISPLAY_NAME = 12
+    METADATA = 13
+    NAMESPACE = 14
+    INTERPRETER_PATH = 15
 
 
 class ConfigLoader(object):
