@@ -13,6 +13,7 @@ adminSystemController.$inject = [
   'AdminService',
   'QueueService',
   'RunnerService',
+  'EventService',
 ];
 
 /**
@@ -25,6 +26,7 @@ adminSystemController.$inject = [
  * @param  {Object} AdminService    Beer-Garden's admin service object.
  * @param  {Object} QueueService    Beer-Garden's event service object.
  * @param  {Object} RunnerService   Beer-Garden's runner service object.
+ * @param  {Object} EventService    Beer-Garden's event service object.
  */
 export default function adminSystemController(
     $scope,
@@ -36,6 +38,7 @@ export default function adminSystemController(
     AdminService,
     QueueService,
     RunnerService,
+    EventService,
     ) {
   $scope.response = undefined;
   $scope.runnerResponse = undefined;
@@ -171,6 +174,26 @@ export default function adminSystemController(
          windowClass: 'app-modal-window',
       });
     };
+
+  function eventCallback(event) {
+    if (event.name.startsWith('RUNNER')) {
+      if (event.name == 'RUNNER_REMOVED') {
+
+        _.remove($scope.runners, (value) => {
+          return value.id == event.payload.id;
+        });
+
+        groupRunners();
+      }
+    }
+  }
+
+  EventService.addCallback('admin_system', (event) => {
+    $scope.$apply(() => {eventCallback(event);})
+  });
+  $scope.$on('$destroy', function() {
+    EventService.removeCallback('admin_system');
+  });
 
   groupSystems();
 
