@@ -141,8 +141,11 @@ export default function adminSystemController(
 
   function groupRunners() {
     if ($scope.runners) {
-      $scope.groupedRunners = _.groupBy($scope.runners, (value) => {
+      let grouped = _.groupBy($scope.runners, (value) => {
         return value.path;
+      });
+      $scope.groupedRunners = _.sortBy(grouped, (runnerList) => {
+        return runnerList[0].path;
       });
     } else {
       $scope.groupedRunners = [];
