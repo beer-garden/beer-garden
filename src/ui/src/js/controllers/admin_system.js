@@ -132,6 +132,10 @@ export default function adminSystemController(
     return !value.instance_id;
   };
 
+  $scope.runnerInstanceName = function(runner) {
+    return runner.instance ? runner.instance.name : "UNKNOWN";
+  };
+
   $scope.addErrorAlert = function(response) {
     $scope.alerts.push({
       type: 'danger',
