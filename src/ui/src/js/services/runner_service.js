@@ -23,5 +23,8 @@ export default function runnerService($http) {
     removeRunner: (runner) => {
       return $http.delete('api/vbeta/runners/' + runner.id);
     },
+    reloadRunners: (path) => {
+      return $http.patch('api/vbeta/runners/', {operation: 'reload', path: path});
+    },
   };
 };

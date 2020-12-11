@@ -59,9 +59,9 @@ def remove(*args, **kwargs):
     return lpm_proxy.stop_one(*args, **kwargs)
 
 
-def rescan() -> List[Runner]:
-    """Scans plugin directory and starts any new Systems"""
-    new_runners = lpm_proxy.scan_path()
+def rescan(*args, **kwargs) -> List[Runner]:
+    """Scans plugin directory and starts any new runners"""
+    new_runners = lpm_proxy.scan_path(*args, **kwargs)
 
     for runner in new_runners:
         publish(
@@ -73,6 +73,22 @@ def rescan() -> List[Runner]:
         )
 
     return new_runners
+
+
+def reload(path: str = None):
+    """Reload runners in a directory
+
+    Args:
+        path: The path to reload. It's expected this will be only the final part of the
+        full path, so it will be appended to the overall plugin path.
+
+    Will first remove any existing runners (stopping them if necessary) and then
+    initiate a rescan on the directory.
+    """
+    for r in [r for r in runners() if r.path == path]:
+        remove(runner_id=r.id, send_sigterm=True, remove=True)
+
+    return rescan(paths=[lpm_proxy.plugin_path() / path])
 
 
 class PluginManager(StoppableThread):
@@ -144,6 +160,9 @@ class PluginManager(StoppableThread):
                 elif not runner.stopped and not runner.dead:
                     self.logger.warning(f"Runner {runner} is dead, not restarting")
                     runner.dead = True
+
+    def plugin_path(self):
+        return self._plugin_path
 
     def paths(self) -> List[str]:
         """All current runner paths"""
@@ -295,25 +314,25 @@ class PluginManager(StoppableThread):
         # Create and start new runners using the path
         self._create_runners(system_path)
 
-    def scan_path(self, path: str = None) -> List[Runner]:
+    def scan_path(self, paths: Iterable[str] = None) -> List[Runner]:
         """Scan a given directory for valid plugins
 
         Note: This scan does not walk the directory tree - all plugins must be
         in the top level of the given path.
 
         Args:
-            path: The path to scan. If none will default to the plugin path specified at
-                initialization.
+            paths: The paths to scan. If None will be all subdirectories of the plugin
+            path specified at initialization
 
         Returns:
             None
         """
-        plugin_path = path or self._plugin_path
+        plugin_paths = paths or self._plugin_path.iterdir()
 
         new_runners = []
 
         try:
-            for path in plugin_path.iterdir():
+            for path in plugin_paths:
                 try:
                     if path.is_dir() and path not in self.paths():
                         new_runners += self._create_runners(path)

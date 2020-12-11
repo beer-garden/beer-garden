@@ -124,6 +124,10 @@ export default function adminSystemController(
     _.forEach(runnerList, $scope.stopRunner);
   };
 
+  $scope.reloadRunners = function(runnerList) {
+    RunnerService.reloadRunners(runnerList[0].path).catch($scope.addErrorAlert);
+  };
+
   $scope.deleteRunners = function(runnerList) {
     _.forEach(runnerList, $scope.deleteRunner);
   };

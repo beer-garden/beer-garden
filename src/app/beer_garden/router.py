@@ -112,6 +112,7 @@ executor_functions = {
     "SYSTEM_DELETE": beer_garden.systems.purge_system,
     "RUNNER_STOP": beer_garden.local_plugins.manager.stop,
     "RUNNER_DELETE": beer_garden.local_plugins.manager.remove,
+    "RUNNER_RELOAD": beer_garden.local_plugins.manager.reload,
 }
 
 route_functions = {
@@ -168,6 +169,7 @@ route_functions = {
     "RUNNER_START": beer_garden.local_plugins.manager.start,
     "RUNNER_STOP": beer_garden.local_plugins.manager.stop,
     "RUNNER_DELETE": beer_garden.local_plugins.manager.remove,
+    "RUNNER_RELOAD": beer_garden.local_plugins.manager.reload,
     "RUNNER_RESCAN": beer_garden.local_plugins.manager.rescan,
 }
 

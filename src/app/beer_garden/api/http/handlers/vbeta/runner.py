@@ -172,3 +172,56 @@ class RunnerListAPI(BaseHandler):
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
+
+    @authenticated(permissions=[Permissions.UPDATE])
+    async def patch(self):
+        """
+        ---
+        summary: Update runners
+        description: |
+          The body of the request needs to contain a set of instructions detailing the
+          updates to apply. Currently the only operations are:
+
+          * reload
+
+          ```JSON
+          [
+            { "operation": "reload", "path": "echo-3.0.0" }
+          ]
+          ```
+        parameters:
+          - name: patch
+            in: body
+            required: true
+            description: Instructions for how to update the Runner
+            schema:
+              $ref: '#/definitions/Patch'
+        responses:
+          200:
+            description: Reloaded Runners
+            schema:
+              $ref: '#/definitions/Runner'
+          400:
+            $ref: '#/definitions/400Error'
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Runners
+        """
+        patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
+
+        for op in patch:
+            operation = op.operation.lower()
+
+            if operation == "reload":
+                response = await self.client(
+                    Operation(operation_type="RUNNER_RELOAD", kwargs={"path": op.path})
+                )
+
+            else:
+                raise ModelValidationError(f"Unsupported operation '{op.operation}'")
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(response)
