@@ -149,6 +149,10 @@ export default function adminSystemController(
 
   function groupRunners() {
     if ($scope.runners) {
+      for (let runner of $scope.runners) {
+        runner.instance = instanceFromRunner(runner);
+      }
+
       let grouped = _.groupBy($scope.runners, (value) => {
         return value.path;
       });
@@ -198,6 +202,9 @@ export default function adminSystemController(
 
       groupRunners();
     }
+    else if (event.name.startsWith('INSTANCE')) {
+      groupRunners();
+    }
   }
 
   EventService.addCallback('admin_system', (event) => {
@@ -224,10 +231,6 @@ export default function adminSystemController(
   RunnerService.getRunners().then((response) => {
     $scope.runnerResponse = response;
     $scope.runners = response.data;
-
-    for (let runner of $scope.runners) {
-      runner.instance = instanceFromRunner(runner);
-    }
 
     groupRunners();
   });
