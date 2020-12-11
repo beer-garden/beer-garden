@@ -26,6 +26,7 @@ from brewtils.schemas import (
     RefreshTokenSchema,
     RequestSchema,
     RoleSchema,
+    RunnerSchema,
     SystemSchema,
     FileStatusSchema,
 )
@@ -305,6 +306,7 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("RefreshToken", schema=RefreshTokenSchema)
 
     api_spec.definition("Garden", schema=GardenSchema)
+    api_spec.definition("Runner", schema=RunnerSchema)
 
     api_spec.definition("_patch", schema=PatchSchema)
     api_spec.definition(

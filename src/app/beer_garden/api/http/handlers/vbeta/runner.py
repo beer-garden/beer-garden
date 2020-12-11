@@ -26,7 +26,7 @@ class RunnerAPI(BaseHandler):
           200:
             description: List of runner states
             schema:
-              $ref: '#/definitions/Job'
+              $ref: '#/definitions/Runner'
           404:
             $ref: '#/definitions/404Error'
           50x:
@@ -57,7 +57,7 @@ class RunnerAPI(BaseHandler):
           200:
             description: List of runner states
             schema:
-              $ref: '#/definitions/Job'
+              $ref: '#/definitions/Runner'
           404:
             $ref: '#/definitions/404Error'
           50x:
@@ -109,7 +109,7 @@ class RunnerAPI(BaseHandler):
           200:
             description: Runner with the given ID
             schema:
-              $ref: '#/definitions/Instance'
+              $ref: '#/definitions/Runner'
           400:
             $ref: '#/definitions/400Error'
           404:
@@ -159,7 +159,7 @@ class RunnerListAPI(BaseHandler):
           200:
             description: List of runner states
             schema:
-              $ref: '#/definitions/Job'
+              $ref: '#/definitions/Runner'
           404:
             $ref: '#/definitions/404Error'
           50x:
