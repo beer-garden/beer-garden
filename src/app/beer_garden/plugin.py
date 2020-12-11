@@ -212,7 +212,7 @@ def update(
         updates["set__instances__S__status"] = new_status
 
         if new_status == "STOPPED":
-            lpm.update(instance_id=instance_id, stopped=True)
+            lpm.update(instance_id=instance_id, restart=False, stopped=True)
 
     if update_heartbeat:
         updates["set__instances__S__status_info__heartbeat"] = datetime.utcnow()
@@ -365,7 +365,7 @@ async def update_async(
         update["instances.$.status_info.heartbeat"] = datetime.utcnow()
 
         if new_status == "STOPPED":
-            lpm.update(instance_id=instance_id, stopped=True)
+            lpm.update(instance_id=instance_id, restart=False, stopped=True)
 
     if metadata:
         for k, v in metadata.items():

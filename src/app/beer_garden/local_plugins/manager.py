@@ -220,12 +220,16 @@ class PluginManager(StoppableThread):
 
         return runner.state()
 
-    def update(self, runner_id=None, instance_id=None, stopped=None) -> Runner:
+    def update(
+        self, runner_id=None, instance_id=None, restart=None, stopped=None
+    ) -> Runner:
         """Update a runner state"""
         runner = self._from_runner_id(runner_id) or self._from_instance_id(instance_id)
 
         if stopped is not None:
             runner.stopped = stopped
+        if restart is not None:
+            runner.restart = restart
 
         return runner.state()
 
