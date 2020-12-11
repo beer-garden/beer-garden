@@ -188,12 +188,14 @@ class PluginManager(StoppableThread):
             runner.restart = False
             runner.dead = False
 
-    def restart(self, runner_id=None, instance_id=None) -> None:
+    def restart(self, runner_id=None, instance_id=None) -> Runner:
         """Restart the runner for a particular Instance ID"""
         runner = self._from_runner_id(runner_id) or self._from_instance_id(instance_id)
 
         if runner:
             self._restart(runner)
+
+        return runner.state()
 
     def stop_one(
         self, runner_id=None, instance_id=None, send_sigterm=False, remove=False
