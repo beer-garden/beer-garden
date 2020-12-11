@@ -42,11 +42,11 @@
           <div class="btn-group btn-group-sm">
             <button type="button" class="btn btn-default fa fa-play"
                     ng-show="hasPermission(user, 'bg-system-admin')"
-                    ng-click="startSystem(system)"
+                    ng-click="startRunners(runners)"
                     title="Start Runners in {{runners[0].path}}"></button>
             <button type="button" class="btn btn-default fa fa-stop"
                     ng-show="hasPermission(user, 'bg-system-admin')"
-                    ng-click="stopSystem(system)"
+                    ng-click="stopRunners(runners)"
                     title="Stop Runners in {{runners[0].path}}"></button>
             <button type="button" class="btn btn-default fa fa-refresh"
                     ng-show="hasPermission(user, 'bg-system-admin')"
@@ -56,7 +56,7 @@
           <div class="btn-group btn-group-sm pull-right"
               ng-show="hasPermission(user, 'bg-system-admin')">
             <button type="button" class="btn btn-default fa fa-trash-o"
-                    ng-click="deleteSystem(system)"
+                    ng-click="deleteRunners(runners)"
                     title="Delete Runners in {{runners[0].path}}"></button>
           </div>
         </div>
