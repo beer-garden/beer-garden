@@ -226,6 +226,9 @@ class PluginManager(StoppableThread):
         """Update a runner state"""
         runner = self._from_runner_id(runner_id) or self._from_instance_id(instance_id)
 
+        if not runner:
+            return
+
         if stopped is not None:
             runner.stopped = stopped
         if restart is not None:
