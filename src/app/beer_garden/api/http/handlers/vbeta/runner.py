@@ -69,7 +69,7 @@ class RunnerAPI(BaseHandler):
         response = await self.client(
             Operation(
                 operation_type="RUNNER_DELETE",
-                kwargs={"runner_id": runner_id, "remove": True},
+                kwargs={"runner_id": runner_id, "send_sigterm": True, "remove": True},
             )
         )
 
