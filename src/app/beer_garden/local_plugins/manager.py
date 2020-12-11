@@ -40,6 +40,10 @@ def runners(*args, **kwargs):
     return lpm_proxy.get_runners()
 
 
+def update(*args, **kwargs):
+    return lpm_proxy.update(*args, **kwargs)
+
+
 @publish_event(Events.RUNNER_STARTED)
 def start(*args, **kwargs):
     return lpm_proxy.restart(*args, **kwargs)
@@ -194,6 +198,15 @@ class PluginManager(StoppableThread):
 
         if runner:
             self._restart(runner)
+
+        return runner.state()
+
+    def update(self, runner_id=None, instance_id=None, stopped=None) -> Runner:
+        """Update a runner state"""
+        runner = self._from_runner_id(runner_id) or self._from_instance_id(instance_id)
+
+        if stopped is not None:
+            runner.stopped = stopped
 
         return runner.state()
 
