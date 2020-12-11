@@ -145,9 +145,6 @@ def stop(
     # Publish the stop request
     publish_stop(system, instance)
 
-    if wait_local and lpm.lpm_proxy.has_instance_id(instance_id=instance.id):
-        lpm.lpm_proxy.stop_one(instance_id=instance.id)
-
     return instance
 
 
@@ -215,6 +212,9 @@ def update(
 
     if new_status:
         updates["set__instances__S__status"] = new_status
+
+        if new_status == "STOPPED":
+            lpm.update(instance_id=instance_id, stopped=True)
 
     if update_heartbeat:
         updates["set__instances__S__status_info__heartbeat"] = datetime.utcnow()
@@ -365,6 +365,9 @@ async def update_async(
     if new_status:
         update["instances.$.status"] = new_status
         update["instances.$.status_info.heartbeat"] = datetime.utcnow()
+
+        if new_status == "STOPPED":
+            lpm.update(instance_id=instance_id, stopped=True)
 
     if metadata:
         for k, v in metadata.items():
