@@ -123,7 +123,6 @@ def stop(
     instance_id: str = None,
     instance: Instance = None,
     system: System = None,
-    wait_local=True,
 ) -> Instance:
     """Stops an Instance.
 
@@ -131,7 +130,6 @@ def stop(
         instance_id: The Instance ID
         instance: The Instance
         system: The System
-        wait_local: If the Plugin is a local plugin, wait for timeout and force shutdown
 
     Returns:
         The updated Instance

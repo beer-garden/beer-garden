@@ -365,7 +365,9 @@ class PluginManager(StoppableThread):
 
         for runner in runners:
             stop_futures.append(
-                shutdown_pool.submit(self.stop_one, runner_id=runner.runner_id)
+                shutdown_pool.submit(
+                    self.stop_one, runner_id=runner.runner_id, send_sigterm=True
+                )
             )
 
         wait(stop_futures)
