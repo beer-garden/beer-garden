@@ -110,6 +110,8 @@ executor_functions = {
     "REQUEST_CREATE": beer_garden.requests.process_request,
     "INSTANCE_STOP": beer_garden.plugin.stop,
     "SYSTEM_DELETE": beer_garden.systems.purge_system,
+    "RUNNER_STOP": beer_garden.local_plugins.manager.stop,
+    "RUNNER_DELETE": beer_garden.local_plugins.manager.remove,
 }
 
 route_functions = {
