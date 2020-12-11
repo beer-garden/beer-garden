@@ -398,7 +398,7 @@ class Application(StoppableThread):
         its own process without the ability to publish rabbit messages.
         """
         # Send Stop message to plugins that came up successfully
-        for state in beer_garden.local_plugins.manager.runner_state():
+        for state in beer_garden.local_plugins.manager.runners():
             if state.instance_id:
                 try:
                     # Just send the Stop, don't wait for shutdown

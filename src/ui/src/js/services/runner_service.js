@@ -14,8 +14,14 @@ export default function runnerService($http) {
     getRunners: () => {
       return $http.get('api/vbeta/runners/');
     },
-    removeRunner: (runnerId) => {
-      return $http.delete('api/vbeta/runners/' + runnerId);
+    startRunner: (runner) => {
+      return $http.patch('api/vbeta/runners/' + runner.id, {operation: 'start'});
+    },
+    stopRunner: (runner) => {
+      return $http.patch('api/vbeta/runners/' + runner.id, {operation: 'stop'});
+    },
+    removeRunner: (runner) => {
+      return $http.delete('api/vbeta/runners/' + runner.id);
     },
   };
 };

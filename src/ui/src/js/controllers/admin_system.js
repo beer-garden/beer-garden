@@ -104,8 +104,16 @@ export default function adminSystemController(
     InstanceService.stopInstance(instance).catch($scope.addErrorAlert);
   };
 
-  $scope.deleteRunner = (runnerId) => {
-    RunnerService.removeRunner(runnerId).catch($scope.addErrorAlert);
+  $scope.startRunner = function(runner) {
+    RunnerService.startRunner(runner).catch($scope.addErrorAlert);
+  };
+
+  $scope.stopRunner = function(runner) {
+    RunnerService.stopRunner(runner).catch($scope.addErrorAlert);
+  };
+
+  $scope.deleteRunner = (runner) => {
+    RunnerService.removeRunner(runner).catch($scope.addErrorAlert);
   };
 
   $scope.unassociatedRunners = (value, index, array) => {

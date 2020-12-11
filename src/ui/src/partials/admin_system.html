@@ -73,14 +73,14 @@
                     ng-show="hasPermission(user, 'bg-system-admin')">
                 <button type="button" class="btn btn-default fa fa-play"
                         ng-show="hasPermission(user, 'bg-system-admin')"
-                        ng-click="startSystem(system)"
+                        ng-click="startRunner(runner)"
                         title="Start Runner {{runner.id}}"></button>
                 <button type="button" class="btn btn-default fa fa-stop"
                         ng-show="hasPermission(user, 'bg-system-admin')"
-                        ng-click="stopSystem(system)"
+                        ng-click="stopRunner(runner)"
                         title="Stop Runner in {{runner.id}}"></button>
                 <button type="button" class="btn btn-default fa fa-trash-o"
-                        ng-click="deleteRunner(runner.id)"
+                        ng-click="deleteRunner(runner)"
                         title="Delete Runner {{runner.id}}"></button>
               </div>
             </div>

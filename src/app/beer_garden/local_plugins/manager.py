@@ -32,13 +32,27 @@ CONFIG_NAME = "beer.conf"
 logger = logging.getLogger(__name__)
 
 
-def runner_state():
-    return lpm_proxy.runner_state()
+def runner(*args, **kwargs):
+    return lpm_proxy.get_runner(*args, **kwargs)
+
+
+def runners(*args, **kwargs):
+    return lpm_proxy.get_runners()
+
+
+@publish_event(Events.RUNNER_STARTED)
+def start(*args, **kwargs):
+    return lpm_proxy.restart(*args, **kwargs)
+
+
+@publish_event(Events.RUNNER_STOPPED)
+def stop(*args, **kwargs):
+    return lpm_proxy.stop_one(*args, **kwargs)
 
 
 @publish_event(Events.RUNNER_REMOVED)
 def remove(*args, **kwargs):
-    return lpm_proxy.remove(*args, **kwargs)
+    return lpm_proxy.stop_one(*args, **kwargs)
 
 
 def rescan() -> List[Runner]:
@@ -131,7 +145,13 @@ class PluginManager(StoppableThread):
         """All current runner paths"""
         return list({runner.process_cwd for runner in self._runners})
 
-    def runner_state(self) -> List[Runner]:
+    def get_runner(self, runner_id=None) -> Optional[Runner]:
+        """Get a representation of current runners"""
+        process_runner = self._from_runner_id(runner_id)
+        if process_runner:
+            return process_runner.state()
+
+    def get_runners(self) -> List[Runner]:
         """Get a representation of current runners"""
         return [runner.state() for runner in self._runners]
 
@@ -168,37 +188,60 @@ class PluginManager(StoppableThread):
             runner.restart = False
             runner.dead = False
 
-    def restart(self, instance_id: str) -> None:
+    def restart(self, runner_id=None, instance_id=None) -> None:
         """Restart the runner for a particular Instance ID"""
-        runner = self._from_instance_id(instance_id)
+        runner = self._from_runner_id(runner_id) or self._from_instance_id(instance_id)
 
         if runner:
             self._restart(runner)
 
-    def stop_one(self, runner_id=None, instance_id=None) -> None:
+    def stop_one(
+        self, runner_id=None, instance_id=None, send_sigterm=False, remove=False
+    ) -> Runner:
         """Stop the runner for a given runner or Instance ID
 
         The PluginManager has no ability to places messages on the message queue, so
-        it is expected that a stop message will already have been sent to the plugin
-        that's being asked to stop.
+        it's possible that a stop message will already have been sent to the plugin
+        that's being asked to stop. If that's NOT the case then send_sigterm should be
+        set to True to attempt to stop the runner gracefully.
 
         This will wait for the runner to stop for plugin.local.timeout.shutdown seconds.
         If the runner is not stopped after that time its process will be killed with
         SIGKILL.
+
+        Args:
+            runner_id: The runner ID to stop
+            instance_id: The instance ID to stop
+            send_sigterm: If true, send SIGTERM before waiting
+            remove: Flag controlling if the runner should be removed from runner list
+
+        Returns:
+            The stopped runner
         """
         runner = self._from_runner_id(runner_id) or self._from_instance_id(instance_id)
 
-        # This needs to be called after sending a stop request, so the plugin should
-        # already be shutting down. So wait for it to stop...
+        if not runner:
+            raise Exception(
+                f"Could not determine runner using runner ID {runner_id} and "
+                f"instance ID {instance_id}"
+            )
+
+        if send_sigterm:
+            runner.term()
+
         runner.join(config.get("plugin.local.timeout.shutdown"))
 
-        # ...and then kill it if necessary
         if runner.is_alive():
             runner.kill()
 
         runner.stopped = True
         runner.restart = False
         runner.dead = False
+
+        if remove:
+            self._runners.remove(runner)
+
+        return runner.state()
 
     def stop_system(self, system: System) -> None:
         """Stop all runners associated with Instances of a given System"""
@@ -210,22 +253,6 @@ class PluginManager(StoppableThread):
     def stop_all(self) -> None:
         """Stop all known runners"""
         return self._stop_multiple(self._runners)
-
-    def remove(self, runner_id) -> Runner:
-        runner = self._from_runner_id(runner_id)
-
-        if runner:
-            runner.term()
-
-        runner.join(config.get("plugin.local.timeout.shutdown"))
-
-        # ...and then kill it if necessary
-        if runner.is_alive():
-            runner.kill()
-
-        self._runners.remove(runner)
-
-        return runner.state()
 
     def reload_system(self, system: System) -> None:
         """Reload all runners for a given System
