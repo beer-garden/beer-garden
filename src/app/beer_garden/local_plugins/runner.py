@@ -161,7 +161,7 @@ class ProcessRunner(Thread):
     def term(self):
         """Kill the underlying plugin process with SIGKILL"""
         if self.process and self.process.poll() is None:
-            self.logger.info("About to send SIGTERM")
+            self.logger.debug("About to send SIGTERM")
             self.process.terminate()
 
     def kill(self):
