@@ -268,7 +268,7 @@ def purge_system(
 
     # If local, wait for the runners to stop
     for inst in system.instances:
-        lpm.stop(instance_id=inst.id, remove=True)
+        lpm.remove(instance_id=inst.id)
 
     system = db.reload(system)
 

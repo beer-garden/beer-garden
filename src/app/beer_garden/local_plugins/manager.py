@@ -56,7 +56,8 @@ def stop(*args, **kwargs):
 
 @publish_event(Events.RUNNER_REMOVED)
 def remove(*args, **kwargs):
-    return lpm_proxy.stop_one(*args, **kwargs)
+    kwargs.pop("remove", None)
+    return stop(*args, remove=True, **kwargs)
 
 
 def rescan(*args, **kwargs) -> List[Runner]:
