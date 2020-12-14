@@ -75,17 +75,30 @@ def rescan(*args, **kwargs) -> List[Runner]:
     return new_runners
 
 
-def reload(path: str = None):
+def reload(path: str = None, system: System = None):
     """Reload runners in a directory
 
     Args:
         path: The path to reload. It's expected this will be only the final part of the
         full path, so it will be appended to the overall plugin path.
+        system: If path is not specified, will attempt to determine the correct path to
+        use based on the given system
 
     Will first remove any existing runners (stopping them if necessary) and then
     initiate a rescan on the directory.
     """
-    for r in [r for r in runners() if r.path == path]:
+    all_runners = runners()
+
+    if path is None:
+        for instance in system.instances:
+            for runner in all_runners:
+                if runner.instance_id == instance.id:
+                    path = runner.path
+                    break
+
+    logger.debug(f"Reloading runners in directory {path}")
+
+    for r in [r for r in all_runners if r.path == path]:
         remove(runner_id=r.id, send_sigterm=True, remove=True)
 
     return rescan(paths=[lpm_proxy.plugin_path() / path])
@@ -284,42 +297,9 @@ class PluginManager(StoppableThread):
 
         return runner.state()
 
-    def stop_system(self, system: System) -> None:
-        """Stop all runners associated with Instances of a given System"""
-        runners = [self._from_instance_id(i.id) for i in system.instances]
-        runners = [r for r in runners if r is not None]
-
-        return self._stop_multiple(runners=runners)
-
     def stop_all(self) -> None:
         """Stop all known runners"""
         return self._stop_multiple(self._runners)
-
-    def reload_system(self, system: System) -> None:
-        """Reload all runners for a given System
-
-        This method will invoke the normal stop operation on all runners associated with
-        Instances of the System. So this should only be called after sending a stop
-        request to those plugins, otherwise you're going to wait for the shutdown
-        timeout and then terminate the runners.
-        """
-        self.logger.debug(f"Reloading system {system}")
-
-        # Grab the directory where the system lives so we can create new runners later
-        system_path = None
-        for instance in system.instances:
-            if self.has_instance_id(instance.id):
-                system_path = self._from_instance_id(instance.id).process_cwd
-                break
-
-        if not system_path:
-            raise Exception(f"Error while reloading {system}: unable to determine path")
-
-        # Wait for all runners to stop and remove them from self._runners
-        self.stop_system(system)
-
-        # Create and start new runners using the path
-        self._create_runners(system_path)
 
     def scan_path(self, paths: Iterable[str] = None) -> List[Runner]:
         """Scan a given directory for valid plugins

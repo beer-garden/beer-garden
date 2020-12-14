@@ -209,10 +209,9 @@ def reload_system(system_id: str = None, system: System = None) -> None:
     Returns:
         None
     """
-    # TODO - It'd be nice to have a check here to make sure system is managed
     system = system or db.query_unique(System, id=system_id)
 
-    lpm.lpm_proxy.reload_system(system)
+    lpm.reload(system=system)
 
     return system
 
@@ -267,8 +266,9 @@ def purge_system(
     # Publish stop message to all instances of this system
     publish_stop(system)
 
-    # If local, wait for the plugins to stop
-    lpm.lpm_proxy.stop_system(system=system)
+    # If local, wait for the runners to stop
+    for inst in system.instances:
+        lpm.stop(instance_id=inst.id, send_sigterm=True, remove=True)
 
     system = db.reload(system)
 
