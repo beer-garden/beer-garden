@@ -134,8 +134,8 @@ export default function adminSystemController(
     _.forEach(runnerList, $scope.deleteRunner);
   };
 
-  $scope.unassociatedRunners = (value, index, array) => {
-    return !value.instance_id;
+  $scope.isRunnerUnassociated = function(runner) {
+    return !runner.instance_id || runner.instance_id == '';
   };
 
   $scope.runnerInstanceName = function(runner) {
