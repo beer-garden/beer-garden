@@ -64,9 +64,9 @@ export default function adminSystemController(
     _.forEach(system.instances, $scope.stopInstance);
   };
 
-  // $scope.reloadSystem = function(system) {
-  //   SystemService.reloadSystem(system).then(_.noop, $scope.addErrorAlert);
-  // };
+  $scope.reloadSystem = function(system) {
+    SystemService.reloadSystem(system).then(_.noop, $scope.addErrorAlert);
+  };
 
   $scope.deleteSystem = function(system) {
 
