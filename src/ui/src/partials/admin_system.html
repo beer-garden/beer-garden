@@ -2,14 +2,6 @@
   <span>Systems Management</span>
   <span class="pull-right" ng-show="responseState(response) !== 'loading'">
     <button type="button"
-            class="btn btn-primary"
-            ng-show="showAllRunners"
-            ng-click="showAllRunners = show">Hide Runners</button>
-    <button type="button"
-            class="btn btn-primary"
-            ng-show="!showAllRunners"
-            ng-click="showAllRunners = true">Show Runners</button>
-    <button type="button"
             class="btn btn-danger"
             ng-click="clearAllQueues()"
             confirm="Are you sure you want to delete all Queues?">
@@ -36,6 +28,70 @@
 <h3>Systems</h3>
 <div class="panel-container animate-if"
      ng-if="responseState(response) === 'success'">
+
+  <div ng-show="groupedRunners.length > 0"
+       class="container-item panel panel-default"
+       style="display: block;"
+       ng-show="showRunnersTile">
+    <div class="panel-heading panel-danger" style="font-size: 22px;">
+      <span>Unassociated Local Runners</span>
+    </div>
+      <div class="panel-body" style="padding-bottom: 0px;" ng-repeat="runners in groupedRunners" ng-show="showRunners(runners)">
+        <div class="list-group-item clearfix" style="font-size: 18px;" ng-show="runners.length > 0" >
+              <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
+                <div>
+                  <span class="icon-color" ng-class="getIcon(system.icon_name)"></span>
+                  <span style="font-size: 18px;">{{runners[0].path}}</span>
+                </div>
+              </div>
+              <div class="btn-toolbar pull-right">
+                <div class="btn-group btn-group-sm">
+                  <button type="button" class="btn btn-default fa fa-play"
+                          ng-show="hasPermission(user, 'bg-system-admin')"
+                          ng-click="startRunners(runners)"
+                          title="Start Runners in {{runners[0].name}}"></button>
+                  <button type="button" class="btn btn-default fa fa-stop"
+                          ng-show="hasPermission(user, 'bg-system-admin')"
+                          ng-click="stopRunners(runners)"
+                          title="Stop Runners in {{runners[0].name}}"></button>
+                  <button type="button" class="btn btn-default fa fa-refresh"
+                          ng-show="hasPermission(user, 'bg-system-admin')"
+                          ng-click="reloadRunners(runners)"
+                          title="Reload Runners in {{runners[0].name}}"></button>
+                </div>
+                <div class="btn-group btn-group-sm pull-right"
+                    ng-show="hasPermission(user, 'bg-system-admin')">
+                  <button type="button" class="btn btn-default fa fa-trash-o"
+                          ng-click="deleteRunners(runners)"
+                          title="Delete Runners in {{runners[0].name}}"></button>
+                </div>
+              </div>
+            </div>
+          <div ng-repeat="runner in runners">
+            <div class="list-group-item container-fluid">
+                <span class="col-md-3">{{runner.id}}</span>
+                <span class="col-md-3">{{runnerInstanceName(runner)}}</span>
+
+                <div class="btn-group btn-group-xs pull-right"
+                      ng-show="hasPermission(user, 'bg-system-admin')">
+                  <button type="button" class="btn btn-default fa fa-play"
+                          ng-show="hasPermission(user, 'bg-system-admin')"
+                          ng-click="startRunner(runner)"
+                          title="Start Runner {{runner.id}}"></button>
+                  <button type="button" class="btn btn-default fa fa-stop"
+                          ng-show="hasPermission(user, 'bg-system-admin')"
+                          ng-click="stopRunner(runner)"
+                          title="Stop Runner in {{runner.id}}"></button>
+                  <button type="button" class="btn btn-default fa fa-trash-o"
+                          ng-click="deleteRunner(runner)"
+                          title="Delete Runner {{runner.id}}"></button>
+                </div>
+              </div>
+
+          </div>
+          <div class="container-item empty"></div>
+      </div>
+  </div>
 
   <div ng-repeat="systems in groupedSystems"
        class="container-item panel panel-default"
@@ -116,125 +172,14 @@
             </div>
           </div>
         </div>
-        <div class="list-group-item clearfix" style="font-size: 18px;" ng-show="filterRunners(systems[0].name).length > 0" >
-              <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
-                <div>
-                  <span class="icon-color" ng-class="getIcon(system.icon_name)"></span>
-                  <span style="font-size: 18px;">Runners</span>
-                </div>
-              </div>
-              <div class="btn-toolbar pull-right">
-                <div class="btn-group btn-group-sm">
-                  <button type="button" class="btn btn-default fa fa-play"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-click="startRunners(filterRunners(systems[0].name))"
-                          title="Start Runners in {{systems[0].name}}"></button>
-                  <button type="button" class="btn btn-default fa fa-stop"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-click="stopRunners(filterRunners(systems[0].name))"
-                          title="Stop Runners in {{systems[0].name}}"></button>
-                  <button type="button" class="btn btn-default fa fa-refresh"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-click="reloadRunners(filterRunners(systems[0].name))"
-                          title="Reload Runners in {{systems[0].name}}"></button>
-                </div>
-                <div class="btn-group btn-group-sm pull-right"
-                    ng-show="hasPermission(user, 'bg-system-admin')">
-                  <button type="button" class="btn btn-default fa fa-trash-o"
-                          ng-click="deleteRunners(filterRunners(systems[0].name))"
-                          title="Delete Runners in {{systems[0].name}}"></button>
-                </div>
-              </div>
-            </div>
-          <div ng-repeat="runner in filterRunners(systems[0].name)">
-            <div class="list-group-item container-fluid">
-                <span class="col-md-3">{{runner.id}}</span>
-                <span class="col-md-3">{{runnerInstanceName(runner)}}</span>
 
-                <div class="btn-group btn-group-xs pull-right"
-                      ng-show="hasPermission(user, 'bg-system-admin')">
-                  <button type="button" class="btn btn-default fa fa-play"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-click="startRunner(runner)"
-                          title="Start Runner {{runner.id}}"></button>
-                  <button type="button" class="btn btn-default fa fa-stop"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-click="stopRunner(runner)"
-                          title="Stop Runner in {{runner.id}}"></button>
-                  <button type="button" class="btn btn-default fa fa-trash-o"
-                          ng-click="deleteRunner(runner)"
-                          title="Delete Runner {{runner.id}}"></button>
-                </div>
-              </div>
 
-          </div>
           <div class="container-item empty"></div>
       </div>
   </div>
 
 
-  <div ng-repeat="runners in groupedUnknownRunners"
-       class="container-item panel panel-default"
-       style="display: block;">
-    <div class="panel-heading" style="font-size: 22px;">
-      <span>{{runners[0].name}}</span>
-    </div>
-      <div class="panel-body" style="padding-bottom: 0px;">
-        <div class="list-group-item clearfix" style="font-size: 18px;" ng-show="runners.length > 0" >
-              <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
-                <div>
-                  <span class="icon-color" ng-class="getIcon(system.icon_name)"></span>
-                  <span style="font-size: 18px;">Runners</span>
-                </div>
-              </div>
-              <div class="btn-toolbar pull-right">
-                <div class="btn-group btn-group-sm">
-                  <button type="button" class="btn btn-default fa fa-play"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-click="startRunners(runners)"
-                          title="Start Runners in {{runners[0].name}}"></button>
-                  <button type="button" class="btn btn-default fa fa-stop"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-click="stopRunners(runners)"
-                          title="Stop Runners in {{runners[0].name}}"></button>
-                  <button type="button" class="btn btn-default fa fa-refresh"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-click="reloadRunners(runners)"
-                          title="Reload Runners in {{runners[0].name}}"></button>
-                </div>
-                <div class="btn-group btn-group-sm pull-right"
-                    ng-show="hasPermission(user, 'bg-system-admin')">
-                  <button type="button" class="btn btn-default fa fa-trash-o"
-                          ng-click="deleteRunners(runners)"
-                          title="Delete Runners in {{runners[0].name}}"></button>
-                </div>
-              </div>
-            </div>
-          <div ng-repeat="runner in runners">
-            <div class="list-group-item container-fluid">
-                <span class="col-md-3">{{runner.id}}</span>
-                <span class="col-md-3">{{runnerInstanceName(runner)}}</span>
 
-                <div class="btn-group btn-group-xs pull-right"
-                      ng-show="hasPermission(user, 'bg-system-admin')">
-                  <button type="button" class="btn btn-default fa fa-play"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-click="startRunner(runner)"
-                          title="Start Runner {{runner.id}}"></button>
-                  <button type="button" class="btn btn-default fa fa-stop"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-click="stopRunner(runner)"
-                          title="Stop Runner in {{runner.id}}"></button>
-                  <button type="button" class="btn btn-default fa fa-trash-o"
-                          ng-click="deleteRunner(runner)"
-                          title="Delete Runner {{runner.id}}"></button>
-                </div>
-              </div>
-
-          </div>
-          <div class="container-item empty"></div>
-      </div>
-  </div>
 
   <!-- This is ugly but empty panels ensure the bottom row is left-aligned -->
   <div class="container-item empty"></div>

@@ -45,8 +45,8 @@ export default function adminSystemController(
   $scope.groupedSystems = [];
   $scope.alerts = [];
   $scope.runners = [];
-  $scope.showAllRunners = false;
-  $scope.groupedUnknownRunners = [];
+  $scope.showRunnersTile = false;
+  $scope.groupedRunners = [];
 
   $scope.setWindowTitle('systems');
 
@@ -169,44 +169,35 @@ export default function adminSystemController(
     }
   }
 
-  function mapRunners() {
-    if ($scope.runners) {
-      for (let runner of $scope.runners) {
-        runner.instance = instanceFromRunner(runner);
-      }
-      groupRunners();
-    }
-  }
-
   function groupRunners() {
     if ($scope.runners) {
 
-      let unknown_runners = [];
       for (let runner of $scope.runners) {
-        if (runner.instance_id == ''){
-            let not_mapped = true;
-            for (let systems of $scope.groupedSystems){
-                if (systems[0].name == runner.name){
-                    not_mapped = false;
-                    break;
-                }
-            }
-            if (not_mapped){
-                unknown_runners.push(runner);
-            }
-        }
         runner.instance = instanceFromRunner(runner);
+
+        if (runner.instance_id == ''){
+            $scope.showRunnersTile = true;
+        }
       }
 
-      let grouped = _.groupBy(unknown_runners, (value) => {
+      let grouped = _.groupBy($scope.runners, (value) => {
         return value.path;
       });
-      $scope.groupedUnknownRunners = _.sortBy(grouped, (runnerList) => {
+      $scope.groupedRunners = _.sortBy(grouped, (runnerList) => {
         return runnerList[0].path;
       });
     } else {
-      $scope.groupedUnknownRunners = [];
+      $scope.groupedRunners = [];
     }
+  }
+
+  $scope.showRunners = function(runners){
+    for (let runner of runners){
+        if (runner.instance_id == ''){
+            return true;
+        }
+    }
+    return false;
   }
 
 
@@ -264,11 +255,11 @@ export default function adminSystemController(
       if (event.name != 'RUNNER_REMOVED') {
         $scope.runners.push(event.payload);
       }
-      mapRunners();
+      groupRunners();
 
     }
     else if (event.name.startsWith('INSTANCE')) {
-      mapRunners();
+      groupRunners();
     }
   }
 
@@ -297,7 +288,7 @@ export default function adminSystemController(
     $scope.runnerResponse = response;
     $scope.runners = response.data;
 
-    mapRunners();
+    groupRunners();
   });
 
 };
