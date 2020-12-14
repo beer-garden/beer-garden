@@ -135,7 +135,7 @@ export default function adminSystemController(
   };
 
   $scope.isRunnerUnassociated = function(runner) {
-    return !runner.instance_id || runner.instance_id == '';
+    return instanceFromRunner(runner) === undefined;
   };
 
   $scope.runnerInstanceName = function(runner) {
