@@ -192,34 +192,14 @@ export default function adminSystemController(
     }
   }
 
-  $scope.showRunners = function(runners){
-    for (let runner of runners){
-        if (runner.instance_id == ''){
-            return true;
-        }
+  $scope.unassociatedRunners = function(runners) {
+    for (let runner of runners) {
+      if (runner.instance_id == '') {
+        return true;
+      }
     }
     return false;
-  }
-
-
-
-  $scope.filterRunners = function (system){
-    let filteredRunners = [];
-
-    for (let runner of $scope.runners){
-        if (runner.name == system){
-            if ($scope.showAllRunners){
-                filteredRunners.push(runner);
-            }
-            else if (runner.instance_id == ''){
-                filteredRunners.push(runner);
-            }
-
-        }
-    }
-
-    return filteredRunners;
-  }
+  };
 
   $rootScope.$watchCollection("systems", groupSystems);
 

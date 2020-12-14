@@ -35,7 +35,7 @@
     <div class="panel-heading " style="font-size: 22px;">
       <span>Unassociated Local Runners</span>
     </div>
-      <div class="panel-body" style="padding-bottom: 0px;" ng-repeat="runners in groupedRunners" ng-show="showRunners(runners)">
+      <div class="panel-body" style="padding-bottom: 0px;" ng-repeat="runners in groupedRunners | filter:unassociatedRunners">
         <div class="list-group-item clearfix" style="font-size: 18px;" ng-show="runners.length > 0" >
               <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
                 <div>
