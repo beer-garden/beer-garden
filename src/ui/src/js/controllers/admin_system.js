@@ -107,14 +107,17 @@ export default function adminSystemController(
   };
 
   $scope.startRunner = function(runner) {
+    runner.waiting = true;
     RunnerService.startRunner(runner).catch($scope.addErrorAlert);
   };
 
   $scope.stopRunner = function(runner) {
+    runner.waiting = true;
     RunnerService.stopRunner(runner).catch($scope.addErrorAlert);
   };
 
   $scope.deleteRunner = (runner) => {
+    runner.waiting = true;
     RunnerService.removeRunner(runner).catch($scope.addErrorAlert);
   };
 

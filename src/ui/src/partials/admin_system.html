@@ -70,18 +70,22 @@
             <div class="list-group-item container-fluid">
                 <span class="col-md-3">{{runner.id}}</span>
                 <span class="col-md-3">{{runnerInstanceName(runner)}}</span>
+                <i class="fa fa-spinner fa-pulse" ng-show="runner.waiting"></i>
 
                 <div class="btn-group btn-group-xs pull-right"
                       ng-show="hasPermission(user, 'bg-system-admin')">
                   <button type="button" class="btn btn-default fa fa-play"
                           ng-show="hasPermission(user, 'bg-system-admin')"
+                          ng-disabled="runner.waiting"
                           ng-click="startRunner(runner)"
                           title="Start Runner {{runner.id}}"></button>
                   <button type="button" class="btn btn-default fa fa-stop"
                           ng-show="hasPermission(user, 'bg-system-admin')"
+                          ng-disabled="runner.waiting"
                           ng-click="stopRunner(runner)"
                           title="Stop Runner in {{runner.id}}"></button>
                   <button type="button" class="btn btn-default fa fa-trash-o"
+                          ng-disabled="runner.waiting"
                           ng-click="deleteRunner(runner)"
                           title="Delete Runner {{runner.id}}"></button>
                 </div>
