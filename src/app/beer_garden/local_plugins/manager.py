@@ -99,7 +99,7 @@ def reload(path: str = None, system: System = None):
     logger.debug(f"Reloading runners in directory {path}")
 
     for r in [r for r in all_runners if r.path == path]:
-        remove(runner_id=r.id, send_sigterm=True, remove=True)
+        remove(runner_id=r.id, remove=True)
 
     return rescan(paths=[lpm_proxy.plugin_path() / path])
 
@@ -250,7 +250,7 @@ class PluginManager(StoppableThread):
         return runner.state()
 
     def stop_one(
-        self, runner_id=None, instance_id=None, send_sigterm=False, remove=False
+        self, runner_id=None, instance_id=None, send_sigterm=True, remove=False
     ) -> Runner:
         """Stop the runner for a given runner or Instance ID
 
