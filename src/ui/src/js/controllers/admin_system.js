@@ -171,12 +171,13 @@ export default function adminSystemController(
 
   function groupRunners() {
     if ($scope.runners) {
+      $scope.showRunnersTile = false;
 
       for (let runner of $scope.runners) {
         runner.instance = instanceFromRunner(runner);
 
         if (runner.instance_id == ''){
-            $scope.showRunnersTile = true;
+          $scope.showRunnersTile = true;
         }
       }
 
