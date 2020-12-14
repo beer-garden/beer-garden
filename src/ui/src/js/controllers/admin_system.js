@@ -176,7 +176,7 @@ export default function adminSystemController(
       for (let runner of $scope.runners) {
         runner.instance = instanceFromRunner(runner);
 
-        if (runner.instance_id == ''){
+        if ($scope.isRunnerUnassociated(runner)){
           $scope.showRunnersTile = true;
         }
       }
@@ -192,9 +192,9 @@ export default function adminSystemController(
     }
   }
 
-  $scope.unassociatedRunners = function(runners) {
+  $scope.hasUnassociatedRunners = function(runners) {
     for (let runner of runners) {
-      if (runner.instance_id == '') {
+      if ($scope.isRunnerUnassociated(runner)) {
         return true;
       }
     }
