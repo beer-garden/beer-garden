@@ -68,8 +68,9 @@
             </div>
           <div ng-repeat="runner in runners | filter:isRunnerUnassociated">
             <div class="list-group-item container-fluid">
-                <span class="col-md-3">{{runner.id}}</span>
-                <span class="col-md-3">{{runnerInstanceName(runner)}}</span>
+                <bg-status target="runner.dead ? 'DEAD' : 'UNRESPONSIVE'"></bg-status>
+                <span style="padding: 0 10px">{{runner.id}}</span>
+
                 <i class="fa fa-spinner fa-pulse" ng-show="runner.waiting"></i>
 
                 <div class="btn-group btn-group-xs pull-right"
