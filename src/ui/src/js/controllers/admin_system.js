@@ -45,6 +45,7 @@ export default function adminSystemController(
   $scope.groupedSystems = [];
   $scope.alerts = [];
   $scope.runners = [];
+  $scope.showAllRunners = false;
 
   $scope.setWindowTitle('systems');
 
@@ -167,21 +168,30 @@ export default function adminSystemController(
     }
   }
 
-  function groupRunners() {
+  function mapRunners() {
     if ($scope.runners) {
       for (let runner of $scope.runners) {
         runner.instance = instanceFromRunner(runner);
       }
-
-      let grouped = _.groupBy($scope.runners, (value) => {
-        return value.path;
-      });
-      $scope.groupedRunners = _.sortBy(grouped, (runnerList) => {
-        return runnerList[0].path;
-      });
-    } else {
-      $scope.groupedRunners = [];
     }
+  }
+
+  $scope.filterRunners = function (system){
+    let filteredRunners = [];
+
+    for (let runner of $scope.runners){
+        if (runner.name == system){
+            if ($scope.showAllRunners){
+                filteredRunners.push(runner);
+            }
+            else if (runner.instance_id == ''){
+                filteredRunners.push(runner);
+            }
+
+        }
+    }
+
+    return filteredRunners;
   }
 
   $rootScope.$watchCollection("systems", groupSystems);
@@ -219,11 +229,11 @@ export default function adminSystemController(
       if (event.name != 'RUNNER_REMOVED') {
         $scope.runners.push(event.payload);
       }
+      mapRunners();
 
-      groupRunners();
     }
     else if (event.name.startsWith('INSTANCE')) {
-      groupRunners();
+      mapRunners();
     }
   }
 
@@ -252,7 +262,7 @@ export default function adminSystemController(
     $scope.runnerResponse = response;
     $scope.runners = response.data;
 
-    groupRunners();
+    mapRunners();
   });
 
 };
