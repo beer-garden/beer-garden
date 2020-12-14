@@ -46,6 +46,7 @@ export default function adminSystemController(
   $scope.alerts = [];
   $scope.runners = [];
   $scope.showAllRunners = false;
+  $scope.groupedUnknownRunners = [];
 
   $scope.setWindowTitle('systems');
 
@@ -173,8 +174,42 @@ export default function adminSystemController(
       for (let runner of $scope.runners) {
         runner.instance = instanceFromRunner(runner);
       }
+      groupRunners();
     }
   }
+
+  function groupRunners() {
+    if ($scope.runners) {
+
+      let unknown_runners = [];
+      for (let runner of $scope.runners) {
+        if (runner.instance_id == ''){
+            let not_mapped = true;
+            for (let systems of $scope.groupedSystems){
+                if (systems[0].name == runner.name){
+                    not_mapped = false;
+                    break;
+                }
+            }
+            if (not_mapped){
+                unknown_runners.push(runner);
+            }
+        }
+        runner.instance = instanceFromRunner(runner);
+      }
+
+      let grouped = _.groupBy(unknown_runners, (value) => {
+        return value.path;
+      });
+      $scope.groupedUnknownRunners = _.sortBy(grouped, (runnerList) => {
+        return runnerList[0].path;
+      });
+    } else {
+      $scope.groupedUnknownRunners = [];
+    }
+  }
+
+
 
   $scope.filterRunners = function (system){
     let filteredRunners = [];
