@@ -287,11 +287,11 @@ class PluginManager(StoppableThread):
         runner.join(config.get("plugin.local.timeout.shutdown"))
 
         if runner.is_alive():
+            runner.dead = True
             runner.kill()
 
         runner.stopped = True
         runner.restart = False
-        runner.dead = False
 
         if remove:
             self._runners.remove(runner)
