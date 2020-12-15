@@ -119,6 +119,9 @@ export function adminRoleController(
 
   }
 
+  $scope.updateSelectedUser = function(){
+    console.log("Check Here");
+  }
 
 
 
@@ -163,13 +166,13 @@ export function adminRoleController(
 
     $scope.selectedRole = selectedRole || $scope.roles[0]
 
+
   };
 
   $scope.failureCallback = function(response) {
     $scope.response = response;
     $scope.data = {};
   };
-
 
   $scope.$on('userChange', () => {
     $scope.response = undefined;
