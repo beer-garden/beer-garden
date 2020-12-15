@@ -150,12 +150,7 @@ class Application(StoppableThread):
         if event.garden == beer_garden.config.get("garden.name"):
             # Start local plugins after the entry point comes up
             if event.name == Events.ENTRY_STARTED.name:
-                beer_garden.local_plugins.manager.lpm_proxy.scan_path()
-
-            elif event.name == Events.INSTANCE_INITIALIZED.name:
-                beer_garden.local_plugins.manager.lpm_proxy.handle_initialize(event)
-            elif event.name == Events.INSTANCE_STOPPED.name:
-                beer_garden.local_plugins.manager.lpm_proxy.handle_stopped(event)
+                beer_garden.local_plugins.manager.rescan()
 
     def _progressive_backoff(self, func: Callable, failure_message: str):
         """Execute a function until it returns truthy, increasing wait time each attempt

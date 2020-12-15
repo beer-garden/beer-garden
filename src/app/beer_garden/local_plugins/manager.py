@@ -105,6 +105,15 @@ def reload(path: str = None, system: System = None):
     return rescan(paths=[lpm_proxy.plugin_path() / path])
 
 
+def handle_event(event):
+    # Only care about local garden
+    if event.garden == config.get("garden.name"):
+        if event.name == Events.INSTANCE_INITIALIZED.name:
+            lpm_proxy.handle_initialize(event)
+        elif event.name == Events.INSTANCE_STOPPED.name:
+            lpm_proxy.handle_stopped(event)
+
+
 class PluginManager(StoppableThread):
     """Manages creation and destruction of PluginRunners
 
