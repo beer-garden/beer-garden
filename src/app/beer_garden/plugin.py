@@ -109,8 +109,8 @@ def start(
 
     logger.debug(f"Starting instance {system}[{instance}]")
 
-    if lpm.lpm_proxy.has_instance_id(instance_id=instance.id):
-        lpm.lpm_proxy.restart(instance_id=instance.id)
+    # Only way this works is if this has a local runner, so just assume it does
+    lpm.start(instance_id=instance.id)
 
     # Publish the start request
     publish_start(system, instance)
