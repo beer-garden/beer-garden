@@ -230,7 +230,7 @@ class PluginManager(StoppableThread):
         runner = self._from_runner_id(runner_id) or self._from_instance_id(instance_id)
 
         if runner:
-            self._restart(runner)
+            runner = self._restart(runner)
 
         return runner.state()
 
@@ -344,7 +344,7 @@ class PluginManager(StoppableThread):
                 return runner
         return None
 
-    def _restart(self, runner: ProcessRunner) -> None:
+    def _restart(self, runner: ProcessRunner) -> ProcessRunner:
         new_runner = ProcessRunner(
             runner_id=runner.runner_id,
             process_args=runner.process_args,
@@ -357,6 +357,8 @@ class PluginManager(StoppableThread):
         self._runners.append(new_runner)
 
         new_runner.start()
+
+        return new_runner
 
     def _stop_multiple(self, runners: Iterable[ProcessRunner] = None) -> None:
         # If not specified, default to all runners
