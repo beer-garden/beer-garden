@@ -114,8 +114,16 @@ class StompManager(StoppableThread):
     @staticmethod
     def convert_header_to_dict(headers):
         tmp_headers = {}
+        key_to_key = None
+        key_to_value = None
         for header in headers:
-            tmp_headers[header["key"]] = header["value"]
+            header = eval(header)
+            for key in header.keys():
+                if "key" in key:
+                    key_to_key = key
+                elif "value" in key:
+                    key_to_value = key
+            tmp_headers[header[key_to_key]] = header[key_to_value]
         return tmp_headers
 
     def add_connection(self, stomp_config=None, name=None, is_main=False):

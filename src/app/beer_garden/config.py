@@ -834,13 +834,8 @@ _STOMP_SPEC = {
             "description": "Headers to be sent with messages",
             "required": False,
             "items": {
-                "headers": {
-                    "type": "dict",
-                    "items": {
-                        "key": {"type": "str"},
-                        "value": {"type": "str"},
-                    },
-                }
+                "key": {"type": "str"},
+                "value": {"type": "str"},
             },
             "default": [],
         },
@@ -1014,13 +1009,8 @@ _PARENT_SPEC = {
                     "description": "Headers to be sent with messages",
                     "required": False,
                     "items": {
-                        "headers": {
-                            "type": "dict",
-                            "items": {
-                                "key": {"type": "str"},
-                                "value": {"type": "str"},
-                            },
-                        }
+                        "key": {"type": "str"},
+                        "value": {"type": "str"},
                     },
                     "default": [],
                 },
