@@ -57,7 +57,7 @@ class AdminAPI(BaseHandler):
         for op in operations:
             if op.operation == "rescan":
                 check_permission(self.current_user, [Permissions.CREATE])
-                await self.client(Operation(operation_type="SYSTEM_RESCAN"))
+                await self.client(Operation(operation_type="RUNNER_RESCAN"))
             elif op.operation == "reload":
                 if op.path == "/config/logging/plugin":
                     await self.client(Operation(operation_type="PLUGIN_LOG_RELOAD"))

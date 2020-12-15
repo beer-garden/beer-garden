@@ -26,6 +26,7 @@ from brewtils.schemas import (
     RefreshTokenSchema,
     RequestSchema,
     RoleSchema,
+    RunnerSchema,
     SystemSchema,
     FileStatusSchema,
 )
@@ -207,6 +208,8 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/files/id/?", v1.file.FileNameAPI),
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
+        (rf"{prefix}api/vbeta/runners/?", vbeta.runner.RunnerListAPI),
+        (rf"{prefix}api/vbeta/runners/(\w+)/?", vbeta.runner.RunnerAPI),
         # V2
         (rf"{prefix}api/v2/users/?", v1.user.UsersAPI),
         (rf"{prefix}api/v2/users/(\w+)/?", v1.user.UserAPI),
@@ -303,6 +306,7 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("RefreshToken", schema=RefreshTokenSchema)
 
     api_spec.definition("Garden", schema=GardenSchema)
+    api_spec.definition("Runner", schema=RunnerSchema)
 
     api_spec.definition("_patch", schema=PatchSchema)
     api_spec.definition(
