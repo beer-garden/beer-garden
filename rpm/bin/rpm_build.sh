@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 usage() {
   echo "Usage: rpm_build.sh [OPTION]..."
   echo "Build an RPM distribution of beer-garden."

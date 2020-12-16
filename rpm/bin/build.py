@@ -60,7 +60,8 @@ def build_rpms(version, cli_dist, cli_python, local, docker_envs):
         + env_vars
         + [NODE_IMAGE, "make", "-C", "/src/ui", "package"]
     )
-    subprocess.run(js_cmd)
+
+    subprocess.run(js_cmd).check_returncode()
 
     for dist in build_dists:
         tag = f"{dist}-python{build_python}"
@@ -74,9 +75,11 @@ def build_rpms(version, cli_dist, cli_python, local, docker_envs):
             env_vars +
             [BUILD_IMAGE + ":" + tag, RPM_BUILD_SCRIPT, "-r", dist[-1], "-v", version]
         )
+
         if local:
             cmd.append("--local")
-        subprocess.run(cmd)
+
+        subprocess.run(cmd).check_returncode()
 
 
 def main():
