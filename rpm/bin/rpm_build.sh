@@ -7,9 +7,10 @@ usage() {
   echo "Build an RPM distribution of beer-garden."
   echo ""
   echo "Arguments are space separated and are as follows:"
-  echo "  -l, --local              Build local version of all applications"
-  echo "  -r, --release [RELEASE]  The fedora release to target. Must be 7."
-  echo "  -v, --version [VERSION]  Version for the rpm"
+  echo "  -l, --local                  Build local version of all applications"
+  echo "  -r, --release [RELEASE]      The fedora release to target. Must be 7."
+  echo "  -v, --version [VERSION]      Version for the rpm"
+  echo "  -i, --iteration [ITERATION]  Iteration for the rpm"
   echo ""
   exit 1
 }
@@ -32,6 +33,10 @@ while [[ "$#" -gt 0 ]]; do
     VERSION="$2"
     shift
     ;;
+    -i|--iteration)
+    ITERATION="$2"
+    shift
+    ;;
     *) echo "Unknown argument: $key"; usage;;
   esac
   shift
@@ -49,6 +54,11 @@ fi
 if [ -z "$VERSION" ]; then
   echo "VERSION not specified"
   exit 1
+fi
+
+if [ -z "$ITERATION" ]; then
+  echo "ITERATION not specified, using 1"
+  ITERATION="1"
 fi
 
 # Constants
@@ -115,7 +125,7 @@ create_rpm() {
     # -v $VERSION               RPM version
     # -a x86_64                 Specifies the Architecture
     # --rpm-dist "el$RELEASE"   The rpm distribution
-    # --iteration 1             The iteration number
+    # --iteration $ITERATION    The iteration number
     # -s dir                    Describes that the source we are using is a directory
     # -x ""                     Excludes paths matching the given pattern
     # --directories             Recursively mark a directory as 'owned' by the RPM
@@ -138,7 +148,7 @@ create_rpm() {
         -v $VERSION
         -a x86_64
         --rpm-dist "el${RELEASE}"
-        --iteration 1
+        --iteration $ITERATION
         -s dir
         -x "*.bak"
         -x "*.orig"

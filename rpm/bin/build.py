@@ -22,6 +22,7 @@ def parse_args(cli_args):
     parser = argparse.ArgumentParser(description="Build beer-garden artifacts.")
     parser.add_argument("type", choices=BUILD_TYPES)
     parser.add_argument("version")
+    parser.add_argument("--iteration", default="1")
     parser.add_argument("--distribution", choices=SUPPORTED_DISTRIBUTIONS)
     parser.add_argument("--python", choices=SUPPORTED_PYTHONS)
     parser.add_argument("--local", action="store_true", default=False)
@@ -29,7 +30,7 @@ def parse_args(cli_args):
     return parser.parse_args(cli_args)
 
 
-def build_rpms(version, cli_dist, cli_python, local, docker_envs):
+def build_rpms(version, iteration, cli_dist, cli_python, local, docker_envs):
 
     if cli_dist:
         if cli_dist not in SUPPORTED_DISTRIBUTIONS:
@@ -73,7 +74,13 @@ def build_rpms(version, cli_dist, cli_python, local, docker_envs):
                 "-v", f"{SCRIPT_PATH}/rpm_build.sh:{RPM_BUILD_SCRIPT}",
             ] +
             env_vars +
-            [BUILD_IMAGE + ":" + tag, RPM_BUILD_SCRIPT, "-r", dist[-1], "-v", version]
+            [
+                BUILD_IMAGE + ":" + tag,
+                RPM_BUILD_SCRIPT,
+                "-r", dist[-1],
+                "-v", version,
+                "-i", iteration,
+            ]
         )
 
         if local:
@@ -86,7 +93,12 @@ def main():
     args = parse_args(sys.argv[1:])
     if args.type == "rpm":
         build_rpms(
-            args.version, args.distribution, args.python, args.local, args.docker_envs
+            args.version,
+            args.iteration,
+            args.distribution,
+            args.python,
+            args.local,
+            args.docker_envs,
         )
 
 
