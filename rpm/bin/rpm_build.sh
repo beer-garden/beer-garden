@@ -78,6 +78,9 @@ get_version() {
 
 install_apps() {
 
+    # Fails with the older pip (19.x) that's on the build image
+    $PIP_BIN install -U pip
+
     if [[ "$LOCAL" == "true" ]]; then
         make -C $SRC_PATH/brewtils -e PYTHON=$PYTHON_BIN package-source
         make -C $SRC_PATH/app -e PYTHON=$PYTHON_BIN package-source
@@ -89,7 +92,7 @@ install_apps() {
                 "$SRC_PATH/brewtils/dist/brewtils-$brewtils_version.tar.gz" \
                 "$SRC_PATH/app/dist/beer-garden-$app_version.tar.gz"
     else
-        $PIP_BIN install --upgrade --quiet beer-garden==${VERSION}
+        $PIP_BIN install beer-garden==${VERSION}
     fi
 
     mkdir -p "$UI_PATH"
