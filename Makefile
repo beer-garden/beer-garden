@@ -79,4 +79,4 @@ publish-docker-unstable: ## push the unstable docker image
 	$(MAKE) -C $(UI_DIR) deps publish-docker-unstable
 
 publish-rpm: ## publish the rpm
-	rpm/bin/upload.sh $(VERSION)
+	rpm/bin/upload.sh $(VERSION) $(ITERATION)
