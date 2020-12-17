@@ -1,14 +1,40 @@
 <h1 class='page-header'>
   <span>Garden Management</span>
   <span class="pull-right" ng-show="responseState(response) !== 'loading'">
+    <button type="button" class="btn btn-primary" ng-click="createGardenFormHide = false">Create Garden</button>
     <button type="button"
             class="btn btn-primary"
             ng-click="syncGardens()">Sync All</button>
   </span>
 </h1>
-  
+<div class="pull-right">
+  <div class="form-popup" ng-hide=createGardenFormHide>
+    <form ng-submit="createGarden()" class="form-container">
+      <label><b>Garden Name</b></label>
+      <input type="text" placeholder="Enter Garden Name"
+             name="create_garden_name"
+             required ng-model="create_garden_name"
+             ng-change="checkForGardenDuplication()" ng-invalid="!is_unique_garden_name"
+             ng-focus="create_garden_name_focus = true"
+             ng-blur="create_garden_name_focus = false"
+      >
+      <button type="submit"
+              class="btn btn-primary"
+              ng-disabled="!is_unique_garden_name"
+              uib-popover="{{create_garden_popover_message}}"
+              popover-animation="true"
+              popover-is-open="!is_unique_garden_name && create_garden_name_focus"
+              popover-placement="bottom"
+              popover-trigger="'mouseenter'"
+      >Create
+      </button>
+      <button type="button" class="btn" ng-click="closeCreateGardenForm()" >Close</button>
+    </form>
+  </div>
+</div>
+
 <fetch-data response="response"></fetch-data>
-  
+
 <div id="gardens-container"
      class="animate-if"
      ng-if="responseState(response) === 'success'">
@@ -41,13 +67,13 @@
       <div>
 
         <button type="button" class="btn btn-primary btn-lg btn-block"
-            ng-click="editGarden(garden)" style="...">
+                ng-click="editGarden(garden)" style="...">
           Edit {{garden.name}} configurations
         </button>
         <button type="button" class="btn btn-danger btn-lg btn-block"
-            ng-click="deleteGarden(garden.name)" style="..."
-            ng-show="garden.id != null && garden.connection_type != 'LOCAL'"
-            confirm="Are you sure you want to delete {{garden.name}}?
+                ng-click="deleteGarden(garden.name)" style="..."
+                ng-show="garden.id != null && garden.connection_type != 'LOCAL'"
+                confirm="Are you sure you want to delete {{garden.name}}?
                     This will also delete all Systems assocaited with {{garden.name}}.">
           Delete {{garden.name}}
         </button>
