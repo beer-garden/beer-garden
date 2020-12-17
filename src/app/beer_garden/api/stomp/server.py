@@ -58,13 +58,12 @@ def send_error_msg(
                 headers=error_headers,
                 destination=request_headers["reply-to"],
             )
-        else:
+        elif send_destination:
             conn.send(
                 body=error_msg,
                 headers=error_headers,
                 destination=send_destination,
             )
-    pass
 
 
 class OperationListener(stomp.ConnectionListener):
@@ -76,8 +75,6 @@ class OperationListener(stomp.ConnectionListener):
         logger.warning("received an error:" + str(headers))
 
     def on_message(self, headers, message):
-        if headers.get("model_class") != "Operation":
-            return
         try:
             operation = SchemaParser.parse_operation(message, from_string=True)
             if hasattr(operation, "kwargs"):

@@ -17,6 +17,7 @@ def run(ep_conn):
     global st_manager_stack
     entry_config = config.get("entry.stomp")
     parent_config = config.get("parent.stomp")
+
     if entry_config.get("enabled"):
         st_manager = StompManager(
             ep_conn=ep_conn,
@@ -37,6 +38,7 @@ def run(ep_conn):
         )
     else:
         st_manager = StompManager(ep_conn=ep_conn)
+
     for garden in get_gardens(include_local=False):
         if garden.name != config.get("garden.name") and garden.connection_type:
             if garden.connection_type.casefold() == "stomp":
