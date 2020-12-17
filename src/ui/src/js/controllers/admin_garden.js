@@ -27,6 +27,8 @@ export default function adminGardenController(
     $scope.data = response.data;
 
   };
+  $scope.garden_name = null;
+  $scope.createGardenFormHide = true;
   $scope.create_garden_name = null;
   $scope.createGardenFormHide = true;
   $scope.failureCallback = function(response) {
