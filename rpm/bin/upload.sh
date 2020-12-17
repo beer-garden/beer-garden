@@ -7,6 +7,7 @@
 # and uploads.github.com that uses that token (https://httpie.io/docs#named-sessions)
 
 VERSION=$1
+ITERATION=$2
 DIST_DIR="$(dirname $0)/../dist"
 
 RAW_UPLOAD_URL=$(http -p b --session=github https://api.github.com/repos/beer-garden/beer-garden/releases/tags/${VERSION} | jq .upload_url)
@@ -17,5 +18,9 @@ UNQUOTED=$(echo ${RAW_UPLOAD_URL} | cut -d '"' -f 2)
 UPLOAD_URL=${UNQUOTED%\{*\}}
 
 # OK, upload the thing
-http --session=github "${UPLOAD_URL}" "name==beer-garden-${VERSION}-1.el7.x86_64.rpm" < "${DIST_DIR}/beer-garden-${VERSION}-1.el7.x86_64.rpm"
+http \
+	--session=github \
+	"${UPLOAD_URL}" \
+	"name==beer-garden-${VERSION}-${ITERATION}.el7.x86_64.rpm" \
+	< "${DIST_DIR}/beer-garden-${VERSION}-${ITERATION}.el7.x86_64.rpm"
 

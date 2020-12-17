@@ -28,13 +28,16 @@ def publish(event: Event) -> None:
     Returns:
         None
     """
-    # Do some formatting / tweaking
-    if not event.garden:
-        event.garden = config.get("garden.name")
-    if not event.timestamp:
-        event.timestamp = datetime.now(timezone.utc)
+    try:
+        # Do some formatting / tweaking
+        if not event.garden:
+            event.garden = config.get("garden.name")
+        if not event.timestamp:
+            event.timestamp = datetime.now(timezone.utc)
 
-    return manager.put(event)
+        return manager.put(event)
+    except Exception as ex:
+        logger.exception(f"Error publishing event: {ex}")
 
 
 def publish_event(event_type: Events):
@@ -79,13 +82,10 @@ def publish_event(event_type: Events):
 
             raise
         finally:
-            try:
-                if (not event.error and _publish_success) or (
-                    event.error and _publish_error
-                ):
-                    publish(event)
-            except Exception as ex:
-                logger.exception(f"Error publishing event: {ex}")
+            if (not event.error and _publish_success) or (
+                event.error and _publish_error
+            ):
+                publish(event)
 
     return wrapper
 
