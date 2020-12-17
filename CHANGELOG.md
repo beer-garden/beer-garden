@@ -1,5 +1,18 @@
 # Beer Garden Changelog
 
+## 3.0.2
+12/15/20
+
+#### Added Features
+- Unassociated runners are now shown on the System Admin page (#708)
+- Can now pass files as parameters (#368)
+
+#### Bug Fixes
+- Shutdown procedure is more robust when running under systemd (#770)
+- Corrected tooltip for System Admin page start button (#768)
+- Stopped certain events from generating UI console errors (#764)
+- Better error information when using Pour it Again on a removed command (#624)
+
 ## 3.0.1
 11/12/20
 

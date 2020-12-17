@@ -1,13 +1,16 @@
 #!/bin/bash
 
+set -e
+
 usage() {
   echo "Usage: rpm_build.sh [OPTION]..."
   echo "Build an RPM distribution of beer-garden."
   echo ""
   echo "Arguments are space separated and are as follows:"
-  echo "  -l, --local              Build local version of all applications"
-  echo "  -r, --release [RELEASE]  The fedora release to target. Must be 7."
-  echo "  -v, --version [VERSION]  Version for the rpm"
+  echo "  -l, --local                  Build local version of all applications"
+  echo "  -r, --release [RELEASE]      The fedora release to target. Must be 7."
+  echo "  -v, --version [VERSION]      Version for the rpm"
+  echo "  -i, --iteration [ITERATION]  Iteration for the rpm"
   echo ""
   exit 1
 }
@@ -30,6 +33,10 @@ while [[ "$#" -gt 0 ]]; do
     VERSION="$2"
     shift
     ;;
+    -i|--iteration)
+    ITERATION="$2"
+    shift
+    ;;
     *) echo "Unknown argument: $key"; usage;;
   esac
   shift
@@ -47,6 +54,11 @@ fi
 if [ -z "$VERSION" ]; then
   echo "VERSION not specified"
   exit 1
+fi
+
+if [ -z "$ITERATION" ]; then
+  echo "ITERATION not specified, using 1"
+  ITERATION="1"
 fi
 
 # Constants
@@ -78,6 +90,9 @@ get_version() {
 
 install_apps() {
 
+    # Fails with the older pip (19.x) that's on the build image
+    $PIP_BIN install -U pip
+
     if [[ "$LOCAL" == "true" ]]; then
         make -C $SRC_PATH/brewtils -e PYTHON=$PYTHON_BIN package-source
         make -C $SRC_PATH/app -e PYTHON=$PYTHON_BIN package-source
@@ -89,7 +104,7 @@ install_apps() {
                 "$SRC_PATH/brewtils/dist/brewtils-$brewtils_version.tar.gz" \
                 "$SRC_PATH/app/dist/beer-garden-$app_version.tar.gz"
     else
-        $PIP_BIN install --upgrade --quiet beer-garden==${VERSION}
+        $PIP_BIN install beer-garden==${VERSION}
     fi
 
     mkdir -p "$UI_PATH"
@@ -110,7 +125,7 @@ create_rpm() {
     # -v $VERSION               RPM version
     # -a x86_64                 Specifies the Architecture
     # --rpm-dist "el$RELEASE"   The rpm distribution
-    # --iteration 1             The iteration number
+    # --iteration $ITERATION    The iteration number
     # -s dir                    Describes that the source we are using is a directory
     # -x ""                     Excludes paths matching the given pattern
     # --directories             Recursively mark a directory as 'owned' by the RPM
@@ -133,7 +148,7 @@ create_rpm() {
         -v $VERSION
         -a x86_64
         --rpm-dist "el${RELEASE}"
-        --iteration 1
+        --iteration $ITERATION
         -s dir
         -x "*.bak"
         -x "*.orig"

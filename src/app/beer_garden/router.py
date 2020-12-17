@@ -16,7 +16,10 @@ The router service is responsible for:
 
 import asyncio
 import logging
+import requests
 import threading
+from brewtils.models import Event, Events, Garden, Operation, Request, System
+from brewtils.schema_parser import SchemaParser
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
 from typing import Dict, Optional, Union
@@ -37,6 +40,7 @@ import beer_garden.commands
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.garden
+import beer_garden.local_plugins.manager
 import beer_garden.log
 import beer_garden.namespace
 import beer_garden.plugin
@@ -46,6 +50,7 @@ import beer_garden.scheduler
 import beer_garden.systems
 import beer_garden.files
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
+from beer_garden.events import publish
 from beer_garden.events.processors import QueueListener
 from beer_garden.garden import get_garden, get_gardens
 from beer_garden.requests import complete_request
@@ -117,6 +122,9 @@ executor_functions = {
     "REQUEST_CREATE": beer_garden.requests.process_request,
     "INSTANCE_STOP": beer_garden.plugin.stop,
     "SYSTEM_DELETE": beer_garden.systems.purge_system,
+    "RUNNER_STOP": beer_garden.local_plugins.manager.stop,
+    "RUNNER_DELETE": beer_garden.local_plugins.manager.remove,
+    "RUNNER_RELOAD": beer_garden.local_plugins.manager.reload,
 }
 
 route_functions = {
@@ -146,7 +154,7 @@ route_functions = {
     "SYSTEM_READ_ALL": beer_garden.systems.get_systems,
     "SYSTEM_UPDATE": beer_garden.systems.update_system,
     "SYSTEM_RELOAD": beer_garden.systems.reload_system,
-    "SYSTEM_RESCAN": beer_garden.systems.rescan_system_directory,
+    "SYSTEM_RESCAN": beer_garden.local_plugins.manager.rescan,  # See RUNNER_RESCAN
     "SYSTEM_DELETE": beer_garden.systems.purge_system,
     "GARDEN_CREATE": beer_garden.garden.create_garden,
     "GARDEN_READ": beer_garden.garden.get_garden,
@@ -168,6 +176,13 @@ route_functions = {
     "FILE_FETCH": beer_garden.files.fetch_file,
     "FILE_DELETE": beer_garden.files.delete_file,
     "FILE_OWNER": beer_garden.files.set_owner,
+    "RUNNER_READ": beer_garden.local_plugins.manager.runner,
+    "RUNNER_READ_ALL": beer_garden.local_plugins.manager.runners,
+    "RUNNER_START": beer_garden.local_plugins.manager.start,
+    "RUNNER_STOP": beer_garden.local_plugins.manager.stop,
+    "RUNNER_DELETE": beer_garden.local_plugins.manager.remove,
+    "RUNNER_RELOAD": beer_garden.local_plugins.manager.reload,
+    "RUNNER_RESCAN": beer_garden.local_plugins.manager.rescan,
     "PUBLISH_EVENT": beer_garden.events.publish,
 }
 
@@ -505,6 +520,8 @@ def _determine_target_garden(operation: Operation) -> str:
         or operation.operation_type
         in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
         or "PUBLISH_EVENT" in operation.operation_type
+        or "RUNNER" in operation.operation_type
+        or operation.operation_type in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE")
     ):
         return config.get("garden.name")
 
