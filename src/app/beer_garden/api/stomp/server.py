@@ -9,25 +9,17 @@ from beer_garden.api.stomp.processors import append_headers, process_send_messag
 logger = logging.getLogger(__name__)
 
 
-def send_message(
-    message=None,
-    garden_headers=None,
-    conn=None,
-    send_destination=None,
-    request_headers=None,
-):
+def send_message(message=None, headers=None, conn=None, send_destination=None):
+    if headers is None:
+        headers = {}
     message, response_headers = process_send_message(message)
     response_headers = append_headers(
-        response_headers=response_headers,
-        request_headers=request_headers,
-        garden_headers=garden_headers,
+        response_headers=response_headers, request_headers=headers
     )
-    if conn.is_connected() and send_destination:
-        if "reply-to" in (request_headers or {}):
+    if conn.is_connected():
+        if "reply-to" in headers:
             conn.send(
-                body=message,
-                headers=response_headers,
-                destination=request_headers["reply-to"],
+                body=message, headers=response_headers, destination=headers["reply-to"]
             )
         else:
             conn.send(
@@ -37,33 +29,27 @@ def send_message(
             )
 
 
-def send_error_msg(
-    error_msg=None,
-    request_headers=None,
-    conn=None,
-    send_destination=None,
-    garden_headers=None,
-):
-    error_headers = {"model_class": "error_message"}
-    error_headers = append_headers(
-        response_headers=error_headers,
-        request_headers=request_headers or {},
-        garden_headers=garden_headers or {},
-    )
+def send_error_msg(error_msg=None, headers=None, conn=None, send_destination=None):
+    if headers is None:
+        headers = {}
+
+    error_headers = None
+    error_headers = append_headers(error_headers, headers)
 
     if conn.is_connected():
-        if "reply-to" in request_headers:
+        if "reply-to" in headers:
             conn.send(
                 body=error_msg,
                 headers=error_headers,
-                destination=request_headers["reply-to"],
+                destination=headers["reply-to"],
             )
-        elif send_destination:
+        else:
             conn.send(
                 body=error_msg,
                 headers=error_headers,
                 destination=send_destination,
             )
+    pass
 
 
 class OperationListener(stomp.ConnectionListener):
@@ -80,17 +66,16 @@ class OperationListener(stomp.ConnectionListener):
             if hasattr(operation, "kwargs"):
                 operation.kwargs.pop("wait_timeout", None)
             result = beer_garden.router.route(operation)
-            if result:
-                send_message(
-                    message=result,
-                    request_headers=headers,
-                    conn=self.conn,
-                    send_destination=self.send_destination,
-                )
+            send_message(
+                message=result,
+                headers=headers,
+                conn=self.conn,
+                send_destination=self.send_destination,
+            )
         except Exception as e:
             send_error_msg(
                 error_msg=str(e),
-                request_headers=headers,
+                headers=headers,
                 conn=self.conn,
                 send_destination=self.send_destination,
             )
@@ -116,13 +101,13 @@ class Connection:
             host_and_ports=host_and_ports, heartbeats=(10000, 0)
         )
         if ssl:
-            if ssl.get("use_ssl"):
+            if ssl.use_ssl:
                 self.conn.set_ssl(
                     for_hosts=host_and_ports,
-                    key_file=ssl.get("private_key"),
-                    cert_file=ssl.get("cert_file"),
+                    key_file=ssl.private_key,
+                    cert_file=ssl.cert_file,
                 )
-        if subscribe_destination:
+        if send_destination:
             self.conn.set_listener("", OperationListener(self.conn, send_destination))
 
     def connect(self, connected_message=None):
@@ -142,7 +127,7 @@ class Connection:
                         ack="auto",
                         headers={
                             "subscription-type": "MULTICAST",
-                            "durable-subscription-name": self.subscribe_destination,
+                            "durable-subscription-name": "operations",
                         },
                     )
                 if connected_message is not None and self.conn.is_connected():
@@ -162,10 +147,7 @@ class Connection:
     def is_connected(self):
         return self.conn.is_connected()
 
-    def send_event(self, event=None, headers=None):
+    def send_event(self, event):
         send_message(
-            message=event,
-            conn=self.conn,
-            send_destination=self.send_destination,
-            garden_headers=headers,
+            message=event, conn=self.conn, send_destination=self.send_destination
         )

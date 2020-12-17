@@ -244,7 +244,7 @@ class Manager:
 
     def create_all(self):
         for entry_name, entry_value in beer_garden.config.get("entry").items():
-            if entry_value.get("enabled") or entry_name == "stomp":
+            if entry_value.get("enabled"):
                 try:
                     self.entry_points.append(self.create(entry_name))
                 except Exception as ex:
