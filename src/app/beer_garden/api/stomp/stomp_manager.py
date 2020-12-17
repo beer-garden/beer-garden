@@ -90,17 +90,18 @@ class StompManager(StoppableThread):
 
         elif event.name == Events.GARDEN_UPDATED.name:
             skip_key = None
-            if event.payload.connection_type.casefold() == "stomp":
-                stomp_config = self.format_connection_params(
-                    "stomp_", event.payload.connection_params
+            if event.payload.connection_type:
+                if event.payload.connection_type.casefold() == "stomp":
+                    stomp_config = self.format_connection_params(
+                        "stomp_", event.payload.connection_params
+                    )
+                    stomp_config["send_destination"] = None
+                    skip_key = self.add_connection(
+                        stomp_config=stomp_config, name=event.payload.name
+                    )
+                self.remove_garden_from_list(
+                    garden_name=event.payload.name, skip_key=skip_key
                 )
-                stomp_config["send_destination"] = None
-                skip_key = self.add_connection(
-                    stomp_config=stomp_config, name=event.payload.name
-                )
-            self.remove_garden_from_list(
-                garden_name=event.payload.name, skip_key=skip_key
-            )
         for value in self.conn_dict.values():
             conn = value["conn"]
             if conn:
