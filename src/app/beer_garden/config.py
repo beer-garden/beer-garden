@@ -831,7 +831,10 @@ _STOMP_SPEC = {
         },
         "headers": {
             "type": "list",
-            "description": "Headers to be sent with messages",
+            "description": "Headers to be sent with messages. ex.\n"
+                           "headers:\n"
+                           "    - key: key1\n"
+                           "      value: value1",
             "required": False,
             "items": {
                 "key": {"type": "str"},
@@ -1006,7 +1009,10 @@ _PARENT_SPEC = {
                 },
                 "headers": {
                     "type": "list",
-                    "description": "Headers to be sent with messages",
+                    "description": "Headers to be sent with messages. ex.\n"
+                                   "headers:\n"
+                                   "    - key: key1\n"
+                                   "      value: value1",
                     "required": False,
                     "items": {
                         "key": {"type": "str"},
