@@ -16,10 +16,7 @@ The router service is responsible for:
 
 import asyncio
 import logging
-import requests
 import threading
-from brewtils.models import Event, Events, Garden, Operation, Request, System
-from brewtils.schema_parser import SchemaParser
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
 from typing import Dict, Optional, Union
@@ -31,7 +28,6 @@ from beer_garden.api.stomp.processors import (
     append_headers as stomp_append_headers,
     process_send_message as stomp_process_message,
 )
-from beer_garden.events import publish
 from brewtils.models import Events, Garden, Operation, Request, System, Event
 from brewtils.schema_parser import SchemaParser
 
