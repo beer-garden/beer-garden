@@ -831,10 +831,8 @@ _STOMP_SPEC = {
         },
         "headers": {
             "type": "list",
-            "description": "Headers to be sent with messages. ex.\n"
-                           "headers:\n"
-                           "    - key: key1\n"
-                           "      value: value1",
+            "description": "Headers to be sent with messages. Follows standard YAML formatting"
+                           " for lists with two variables 'key' and 'value'",
             "required": False,
             "items": {
                 "key": {"type": "str"},
@@ -1009,10 +1007,8 @@ _PARENT_SPEC = {
                 },
                 "headers": {
                     "type": "list",
-                    "description": "Headers to be sent with messages. ex.\n"
-                                   "headers:\n"
-                                   "    - key: key1\n"
-                                   "      value: value1",
+                    "description": "Headers to be sent with messages. Follows standard YAML formatting"
+                                   " for lists with two variables 'key' and 'value'",
                     "required": False,
                     "items": {
                         "key": {"type": "str"},
