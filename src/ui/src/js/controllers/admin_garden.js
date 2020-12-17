@@ -13,23 +13,29 @@ adminGardenController.$inject = [
  * @param  {Object} GardenService    Beer-Garden's garden service object.
  * @param  {Object} EventService    Beer-Garden's event service object.
  */
+
 export default function adminGardenController(
     $scope,
     $state,
     GardenService,
     EventService) {
   $scope.setWindowTitle('gardens');
-
+  $scope.gardenCreateSchema = GardenService.CreateSCHEMA;
+   $scope.gardenCreateForm = GardenService.CreateFORM;
   $scope.successCallback = function(response) {
     $scope.response = response;
     $scope.data = response.data;
 
   };
-
+  $scope.create_garden_name = null;
+  $scope.createGardenFormHide = true;
   $scope.failureCallback = function(response) {
     $scope.response = response;
     $scope.data = [];
   };
+  $scope.is_unique_garden_name = true;
+  $scope.create_garden_popover_message = null
+  $scope.create_garden_name_focus = false
 
   let loadGardens = function() {
     GardenService.getGardens().then(
@@ -40,6 +46,35 @@ export default function adminGardenController(
 
   $scope.syncGardens = function() {
     GardenService.syncGardens()
+  }
+
+  $scope.closeCreateGardenForm = function() {
+    $scope.createGardenFormHide = true;
+    $scope.create_garden_name = null;
+  }
+
+  $scope.checkForGardenDuplication = function() {
+    $scope.is_unique_garden_name = true;
+    $scope.create_garden_popover_message = null
+    $scope.create_garden_popover_active = false
+    for (let i = 0; i < $scope.data.length; i++) {
+        if ($scope.data[i].name == $scope.create_garden_name) {
+            $scope.is_unique_garden_name = false;
+            $scope.create_garden_popover_message = "Garden name is already in use."
+            break;
+        }
+    }
+  }
+
+  $scope.createGarden = function() {
+    if ($scope.is_unique_garden_name) {
+        GardenService.createGarden({"name":$scope.create_garden_name, "status":"NOT_CONFIGURED"});
+        $state.go('base.garden_view',
+              {
+                'name': $scope.create_garden_name,
+              }
+            );
+    }
   }
 
   $scope.editGarden = function(garden) {
