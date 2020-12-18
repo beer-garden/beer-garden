@@ -44,6 +44,10 @@ def update(*args, **kwargs):
     return lpm_proxy.update(*args, **kwargs)
 
 
+def has_instance_id(*args, **kwargs):
+    return lpm_proxy.has_instance_id(*args, **kwargs)
+
+
 @publish_event(Events.RUNNER_STARTED)
 def start(*args, **kwargs):
     return lpm_proxy.restart(*args, **kwargs)
