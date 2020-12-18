@@ -266,9 +266,10 @@ def purge_system(
     # Publish stop message to all instances of this system
     publish_stop(system)
 
-    # If local, wait for the runners to stop
+    # If lpm is managing the runner, wait for the runners to stop
     for inst in system.instances:
-        lpm.remove(instance_id=inst.id)
+        if lpm.has_instance_id(inst.id):
+            lpm.remove(instance_id=inst.id)
 
     system = db.reload(system)
 
