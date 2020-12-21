@@ -45,6 +45,8 @@ export function adminRoleController(
   $scope.new_namespace = "";
   $scope.new_access = "";
 
+  $scope.fixed_missing_permissions = false;
+
   $scope.doCreate = function() {
     let modalInstance = $uibModal.open({
       controller: 'NewRoleController',
@@ -119,11 +121,15 @@ export function adminRoleController(
 
   }
 
-  $scope.updateSelectedUser = function(){
-    console.log("Check Here");
+  // This is the worst/best solution I could come up with, reload the data.
+  // Have to do this, else the ng-repeat removes the Permissions on the first model selected
+  $scope.checkPermissionsBug = function(){
+    if (!$scope.fixed_missing_permissions){
+        $scope.fixed_missing_permissions = true;
+        loadAll();
+    }
+
   }
-
-
 
   $scope.addErrorAlert = function(response) {
     $scope.alerts.push({
@@ -158,14 +164,13 @@ export function adminRoleController(
     $scope.roles = response.data;
 
     let selectedId = $scope.selectedRole['id'];
-    let selectedRole = undefined;
+    let selectedRole = {};
 
     if (selectedId) {
       selectedRole = _.find($scope.roles, {'id': selectedId});
     }
 
-    $scope.selectedRole = selectedRole || $scope.roles[0]
-
+    $scope.selectedRole = selectedRole
 
   };
 

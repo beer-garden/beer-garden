@@ -29,6 +29,7 @@
           title="Select Role"
           ng-model="selectedRole"
           ng-options="role.name for role in roles"
+          ng-change="checkPermissionsBug()"
           >
         </select>
         <br>
