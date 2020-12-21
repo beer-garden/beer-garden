@@ -271,10 +271,18 @@ def initiate_forward(operation: Operation):
 
     # TODO - Check to ensure garden conn_info is not 'local' before forwarding?
 
-    forward_processor.put(operation)
+    try:
+        response = forward(operation)
+    except RoutingRequestException:
+        response = _post_forward_error(operation)
+        if response:
+            return response
+        raise
 
-    if operation.operation_type == "REQUEST_CREATE":
+    if response and operation.operation_type == "REQUEST_CREATE":
         return operation.model
+
+    return response
 
 
 def forward(operation: Operation):
@@ -329,6 +337,7 @@ def forward(operation: Operation):
             raise RoutingRequestException(f"Unknown connection type {connection_type}")
     except Exception as ex:
         logger.exception(f"Error forwarding operation:{ex}")
+        raise
 
 
 def setup_stomp(garden):
@@ -458,6 +467,13 @@ def _pre_route(operation: Operation) -> Operation:
             operation.kwargs["filter_params"]["namespace"] = config.get("garden.name")
 
     return operation
+
+
+def _post_forward_error(operation: Operation):
+    if operation.operation_type == "SYSTEM_DELETE" and operation.kwargs["force"]:
+        return execute_local(operation)
+
+    return None
 
 
 # TODO - After this is called, if one of the params is a file, ship it down range too.
@@ -646,7 +662,9 @@ def _forward_http(operation: Operation, target_garden: Garden):
 
         return response
 
-    except Exception:
+    except Exception as error:
+        logger.error(error)
+
         _publish_failed_forward(
             operation=operation,
             event_name=Events.GARDEN_ERROR.name,
@@ -654,13 +672,11 @@ def _forward_http(operation: Operation, target_garden: Garden):
             f"'{operation.target_garden_name}' but an error occurred."
             f"Please talk to your system administrator.",
         )
-        raise
 
 
 def _publish_failed_forward(
     operation: Operation = None, error_message: str = None, event_name: str = None
 ):
-
     if operation.operation_type == "REQUEST_CREATE":
         complete_request(
             operation.model.id,
@@ -677,6 +693,8 @@ def _publish_failed_forward(
             error_message=error_message,
         )
     )
+
+    raise RoutingRequestException(error_message)
 
 
 def _system_name_lookup(system: Union[str, System]) -> str:
