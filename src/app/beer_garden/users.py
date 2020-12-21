@@ -33,7 +33,9 @@ def delete_user(user_id: str = None, principal: Principal = None):
     return principal
 
 
-def update_user(user_id: str = None, principal: Principal = None, updates: dict = dict()):
+def update_user(
+    user_id: str = None, principal: Principal = None, updates: dict = dict()
+):
     principal = principal or db.query_unique(Principal, id=user_id)
 
     principal = db.modify(principal, **updates)
@@ -90,11 +92,20 @@ def coalesce_permissions(role_list):
             for index, agg_perm in enumerate(aggregate_perms):
                 if agg_perm.namespace == permission.namespace:
                     unmatched = False
-                    if agg_perm.access == "READ" and permission.access in ["ADMIN", "MAINTAINER", "CREATE"]:
+                    if agg_perm.access == "READ" and permission.access in [
+                        "ADMIN",
+                        "MAINTAINER",
+                        "CREATE",
+                    ]:
                         aggregate_perms[index] = permission
-                    elif agg_perm.access == "CREATE" and permission.access in ["ADMIN", "MAINTAINER"]:
+                    elif agg_perm.access == "CREATE" and permission.access in [
+                        "ADMIN",
+                        "MAINTAINER",
+                    ]:
                         aggregate_perms[index] = permission
-                    elif agg_perm.access == "MAINTAINER" and permission.access in ["ADMIN"]:
+                    elif agg_perm.access == "MAINTAINER" and permission.access in [
+                        "ADMIN"
+                    ]:
                         aggregate_perms[index] = permission
                     break
 

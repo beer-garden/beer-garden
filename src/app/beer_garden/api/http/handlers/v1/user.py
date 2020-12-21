@@ -56,18 +56,14 @@ class UserAPI(BaseHandler):
                 response = await self.client(
                     Operation(
                         operation_type="USER_READ",
-                        kwargs={
-                            "user_id": str(user_identifier)
-                        },
+                        kwargs={"user_id": str(user_identifier)},
                     )
                 )
             except (DoesNotExist, ValidationError):
                 response = await self.client(
                     Operation(
                         operation_type="USER_READ",
-                        kwargs={
-                            "username": str(user_identifier)
-                        },
+                        kwargs={"username": str(user_identifier)},
                     )
                 )
 
@@ -225,7 +221,7 @@ class UserAPI(BaseHandler):
                         )
 
                     if not custom_app_context.verify(
-                            current_password, self.current_user.hash
+                        current_password, self.current_user.hash
                     ):
                         raise RequestForbidden("Invalid password")
 
@@ -285,11 +281,7 @@ class UsersAPI(BaseHandler):
           - Users
         """
 
-        principals = await self.client(
-            Operation(
-                operation_type="USER_READ_ALL"
-            )
-        )
+        principals = await self.client(Operation(operation_type="USER_READ_ALL"))
 
         self.write(principals)
 

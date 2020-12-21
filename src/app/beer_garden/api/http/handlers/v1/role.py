@@ -43,9 +43,7 @@ class RoleAPI(BaseHandler):
         role = await self.client(
             Operation(
                 operation_type="ROLE_READ",
-                kwargs={
-                    "role_id": role_id
-                },
+                kwargs={"role_id": role_id},
             )
         )
 
@@ -172,10 +170,7 @@ class RoleAPI(BaseHandler):
                 role = await self.client(
                     Operation(
                         operation_type="ROLE_UPDATE_DESCRIPTION",
-                        kwargs={
-                            "role_id": role_id,
-                            "description": op.value
-                        },
+                        kwargs={"role_id": role_id, "description": op.value},
                     )
                 )
 
@@ -238,9 +233,7 @@ class RolesAPI(BaseHandler):
           - Roles
         """
 
-        role = self.parser.parse_role(
-            self.request.decoded_body, from_string=True
-        )
+        role = self.parser.parse_role(self.request.decoded_body, from_string=True)
 
         response = await self.client(
             Operation(
@@ -251,4 +244,3 @@ class RolesAPI(BaseHandler):
 
         self.set_status(201)
         self.write(response)
-

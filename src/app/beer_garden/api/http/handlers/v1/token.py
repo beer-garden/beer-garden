@@ -228,7 +228,7 @@ class TokenListAPI(BaseHandler):
         parsed_body = json.loads(self.request.decoded_body)
 
         try:
-            #principal = db.query_unique(Principal, username=parsed_body["username"])
+            # principal = db.query_unique(Principal, username=parsed_body["username"])
             principal = Principal.objects.get(username=parsed_body["username"])
             if (
                 config.get("auth.guest_login_enabled")

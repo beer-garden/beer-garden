@@ -26,6 +26,7 @@ class Permissions(Enum):
     """Admin permissions are required to execute anything within the Admin drop-down in
     regards to Systems and Gardens. Local Admins can manage user roles  and permissions.
     """
+
     READ = 1
     CREATE = 2
     MAINTAINER = 3
@@ -106,9 +107,13 @@ def check_permission(principal, required_permissions, is_local=False):
         raise HTTPError(status_code=401)
     else:
         if is_local:
-            raise RequestForbidden("Action requires local permissions %s" % permission_strings)
+            raise RequestForbidden(
+                "Action requires local permissions %s" % permission_strings
+            )
         else:
-            raise RequestForbidden("Action requires permissions %s" % permission_strings)
+            raise RequestForbidden(
+                "Action requires permissions %s" % permission_strings
+            )
 
 
 def anonymous_principal() -> BrewtilsPrincipal:
@@ -227,7 +232,10 @@ def _principal_from_token(token):
         id=decoded["sub"],
         username=decoded.get("username", ""),
         roles=[BrewtilsRole(name=role) for role in decoded.get("roles", [])],
-        permissions=[SchemaParser.parse_permission(permission, from_string=True) for permission in decoded.get("permissions", [])],
+        permissions=[
+            SchemaParser.parse_permission(permission, from_string=True)
+            for permission in decoded.get("permissions", [])
+        ],
     )
 
 
