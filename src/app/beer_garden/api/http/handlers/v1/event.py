@@ -4,6 +4,8 @@ import logging
 from brewtils.errors import RequestForbidden
 from tornado.web import HTTPError
 from tornado.websocket import WebSocketHandler
+from beer_garden.api.http.client import filter_models
+import beer_garden.config as config
 
 from beer_garden.api.http.authorization import (
     AuthMixin,
@@ -11,6 +13,7 @@ from beer_garden.api.http.authorization import (
     check_permission,
     query_token_auth,
 )
+from brewtils.schema_parser import SchemaParser
 
 logger = logging.getLogger(__name__)
 
@@ -51,8 +54,16 @@ class EventSocket(AuthMixin, WebSocketHandler):
         if not len(cls.listeners):
             return
 
+        run_filter = config.get("auth").enabled
+
         for listener in cls.listeners:
-            listener.write_message(message)
+            if run_filter and filter_models(
+                SchemaParser.parse_event(message, from_string=True),
+                current_user=listener.current_user,
+                required_permissions=[Permissions.READ],
+                raise_error=False,
+            ):
+                listener.write_message(message)
 
     @classmethod
     def shutdown(cls):

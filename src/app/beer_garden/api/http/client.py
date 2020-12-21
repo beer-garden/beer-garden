@@ -33,18 +33,33 @@ class SerializeHelper(object):
     def __init__(self, current_user=None, required_permissions=None, filter_calls=None):
         self.current_user = current_user
         self.required_permissions = required_permissions
-        self.filter_calls = filter_calls
+        self.filter = (
+            filter_calls
+            and self.required_permissions
+            and len(self.required_permissions) > 0
+        )
 
     async def __call__(self, operation, serialize_kwargs=None, **kwargs):
 
-        self.filter_models(operation)
+        if self.filter:
+            filter_models(
+                operation,
+                current_user=self.current_user,
+                required_permissions=self.required_permissions,
+            )
+
         result = beer_garden.router.route(operation, **kwargs)
 
         # Await any coroutines
         if isawaitable(result):
             result = await result
 
-        result = self.filter_models(result)
+        if self.filter:
+            result = filter_models(
+                result,
+                current_user=self.current_user,
+                required_permissions=self.required_permissions,
+            )
 
         # Handlers overwhelmingly just write the response so default to serializing
         serialize_kwargs = serialize_kwargs or {}
@@ -76,135 +91,160 @@ class SerializeHelper(object):
 
         return False
 
-    def filter_models(self, obj, raise_error=True):
 
-        if not self.filter_calls:
+def filter_models(
+    obj, raise_error=True, current_user=None, required_permissions=list()
+):
+    # If permissions are not set, then don't filter
+    if not required_permissions or len(required_permissions) == 0:
+        return obj
+
+    if not current_user:
+        raise RequestForbidden("Action requires the User to be logged in")
+
+    # Local Admins get everything by default
+    for permission in current_user.permissions:
+        if permission.is_local and permission.access == "ADMIN":
             return obj
-        # If permissions are not set, then don't filter
-        if not self.required_permissions or len(self.required_permissions) == 0:
+
+    if type(obj) == list:
+        new_obj = list()
+        for obj_item in obj:
+            # For list objects, we will not raise an error message
+            obj_item = filter_models(
+                obj_item,
+                raise_error=False,
+                current_user=current_user,
+                required_permissions=required_permissions,
+            )
+            if obj_item:
+                new_obj.append(obj_item)
+        return new_obj
+
+    obj_namespace = None
+    if not hasattr(obj, "schema"):
+        return obj
+    # if type(obj) != BaseModel:
+    #     # We don't know how to filter this
+    #     return obj
+    else:
+        if obj.schema in ["RequestSchema", "SystemSchema"]:
+            obj_namespace = obj.namespace
+        elif obj.schema == "JobSchema":
+            obj_namespace = obj.request_template.namespace
+        elif obj.schema == "InstanceSchema":
+            system, _ = _from_kwargs(instance=obj)
+            obj_namespace = system.namespace
+
+        elif obj.schema == "QueueSchema":
+            system = get_system(obj.system_id)
+            obj_namespace = system.namespace
+
+        elif obj.schema == "PrincipalSchema":
+            # Only local admins get this object and it was already checked for above
+            # So we want to invoke the failure use case
+            obj_namespace = None
+
+        # We won't know the System ID, so we have to assume we can't check this
+        elif obj.schema == "CommandSchema":
             return obj
 
-        # Local Admins get everything by default
-        for permission in self.current_user.permissions:
-            if permission.is_local and permission.access == "ADMIN":
-                return obj
+        elif obj.schema == "EventSchema":
+            if obj.payload:
+                filter_models(
+                    obj.payload,
+                    current_user=current_user,
+                    required_permissions=required_permissions,
+                    raise_error=raise_error,
+                )
 
-        if type(obj) == list:
-            new_obj = list()
-            for obj_item in obj:
-                # For list objects, we will not raise an error message
-                obj_item = self.filter_models(obj_item, raise_error=False)
-                if obj_item:
-                    new_obj.append(obj_item)
-            return new_obj
+        elif obj.schema == "OperationSchema":
+            if obj.model:
+                filter_models(
+                    obj.model,
+                    current_user=current_user,
+                    required_permissions=required_permissions,
+                    raise_error=raise_error,
+                )
+            elif "REQUEST_COUNT" == obj.operation_type:
+                if "namespace__nin" not in obj.kwargs:
+                    obj.kwargs["namespace__nin"] = list()
+                for permission in current_user.permissions:
+                    obj.kwargs["namespace__nin"].append(permission.namespace)
+            elif "READ" not in obj.operation_type:
+                if "REQUEST" in obj.operation_type:
+                    request_id = None
+                    if len(obj.arg) > 0:
+                        request_id = obj.args[0]
+                    elif "request_id" in obj.kwargs:
+                        request_id = obj.kwargs["request_id"]
+                    if request_id:
+                        request = get_request(request_id)
+                        obj.kwargs["request"] = request
+                        obj_namespace = request.namespace
+                elif "SYSTEM" in obj.operation_type:
+                    system_id = None
+                    if len(obj.arg) > 0:
+                        system_id = obj.args[0]
+                    elif "system_id" in obj.kwargs:
+                        system_id = obj.kwargs["system_id"]
+                    if system_id:
+                        system = get_system(system_id)
+                        obj.kwargs["system"] = system
+                        obj_namespace = system.namespace
 
-        obj_namespace = None
-        if not hasattr(obj, "schema"):
-            return obj
-        # if type(obj) != BaseModel:
-        #     # We don't know how to filter this
-        #     return obj
+                elif "INSTANCE" in obj.operation_type:
+                    instance_id = None
+                    if len(obj.arg) > 0:
+                        instance_id = obj.args[0]
+                    elif "instance_id" in obj.kwargs:
+                        instance_id = obj.kwargs["instance_id"]
+                    if instance_id:
+                        system, _ = _from_kwargs(instance_id=instance_id)
+                        obj.kwargs["system"] = system
+                        obj_namespace = system.namespace
+                elif "JOB" in obj.operation_type:
+                    job_id = None
+                    if len(obj.arg) > 0:
+                        job_id = obj.args[0]
+                    elif "job_id" in obj.kwargs:
+                        job_id = obj.kwargs["job_id"]
+                    if job_id:
+                        job = get_job(job_id)
+                        obj_namespace = job.request_template.namespace
+                elif "GARDEN" in obj.operation_type:
+                    # This requires local Admin access, should already be handled
+                    pass
+                elif "PLUGIN" in obj.operation_type:
+                    # This requires local Admin access, should already be handled
+                    pass
+                elif "QUEUE" == obj.operation_type:
+                    # This requires local Admin access, should already be handled
+                    pass
+
         else:
-            if obj.schema in ["RequestSchema", "SystemSchema"]:
-                obj_namespace = obj.namespace
-            elif obj.schema == "JobSchema":
-                obj_namespace = obj.request_template.namespace
-            elif obj.schema == "InstanceSchema":
-                system, _ = _from_kwargs(instance=obj)
-                obj_namespace = system.namespace
+            return obj
 
-            elif obj.schema == "QueueSchema":
-                system = get_system(obj.system_id)
-                obj_namespace = system.namespace
-
-            elif obj.schema == "PrincipalSchema":
-                # Only local admins get this object and it was already checked for above
-                # So we want to invoke the failure use case
-                obj_namespace = None
-
-            # We won't know the System ID, so we have to assume we can't check this
-            elif obj.schema == "CommandSchema":
+        if obj_namespace:
+            if namespace_check(
+                obj_namespace,
+                current_user=current_user,
+                required_permissions=required_permissions,
+            ):
                 return obj
+            if raise_error:
+                raise RequestForbidden("Action requires permissions %s" % obj_namespace)
+        else:
+            return obj
+        return None
 
-            elif obj.schema == "OperationSchema":
-                if obj.model:
-                    self.filter_models(obj.model)
-                elif "REQUEST_COUNT" == obj.operation_type:
-                    if "namespace__nin" not in obj.kwargs:
-                        obj.kwargs["namespace__nin"] = list()
-                    for permission in self.current_user.permissions:
-                        obj.kwargs["namespace__nin"].append(permission.namespace)
-                elif "READ" not in obj.operation_type:
-                    if "REQUEST" in obj.operation_type:
-                        request_id = None
-                        if len(obj.arg) > 0:
-                            request_id = obj.args[0]
-                        elif "request_id" in obj.kwargs:
-                            request_id = obj.kwargs["request_id"]
-                        if request_id:
-                            request = get_request(request_id)
-                            obj.kwargs["request"] = request
-                            obj_namespace = request.namespace
-                    elif "SYSTEM" in obj.operation_type:
-                        system_id = None
-                        if len(obj.arg) > 0:
-                            system_id = obj.args[0]
-                        elif "system_id" in obj.kwargs:
-                            system_id = obj.kwargs["system_id"]
-                        if system_id:
-                            system = get_system(system_id)
-                            obj.kwargs["system"] = system
-                            obj_namespace = system.namespace
 
-                    elif "INSTANCE" in obj.operation_type:
-                        instance_id = None
-                        if len(obj.arg) > 0:
-                            instance_id = obj.args[0]
-                        elif "instance_id" in obj.kwargs:
-                            instance_id = obj.kwargs["instance_id"]
-                        if instance_id:
-                            system, _ = _from_kwargs(instance_id=instance_id)
-                            obj.kwargs["system"] = system
-                            obj_namespace = system.namespace
-                    elif "JOB" in obj.operation_type:
-                        job_id = None
-                        if len(obj.arg) > 0:
-                            job_id = obj.args[0]
-                        elif "job_id" in obj.kwargs:
-                            job_id = obj.kwargs["job_id"]
-                        if job_id:
-                            job = get_job(job_id)
-                            obj_namespace = job.request_template.namespace
-                    elif "GARDEN" in obj.operation_type:
-                        # This requires local Admin access, should already be handled
-                        pass
-                    elif "PLUGIN" in obj.operation_type:
-                        # This requires local Admin access, should already be handled
-                        pass
-                    elif "QUEUE" == obj.operation_type:
-                        # This requires local Admin access, should already be handled
-                        pass
+def namespace_check(namespace, current_user=None, required_permissions=list()):
+    for permission in current_user.permissions:
+        for required in required_permissions:
+            if permission.access in PermissionRequiredAccess[required] and (
+                permission.namespace == namespace or permission.is_local
+            ):
+                return True
 
-            else:
-                return obj
-
-            if obj_namespace:
-                if self.namespace_check(obj_namespace):
-                    return obj
-                if raise_error:
-                    raise RequestForbidden(
-                        "Action requires permissions %s" % obj_namespace
-                    )
-            else:
-                return obj
-            return None
-
-    def namespace_check(self, namespace):
-        for permission in self.current_user.permissions:
-            for required in self.required_permissions:
-                if permission.access in PermissionRequiredAccess[required] and (
-                    permission.namespace == namespace or permission.is_local
-                ):
-                    return True
-
-        return False
+    return False
