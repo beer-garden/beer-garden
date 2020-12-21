@@ -260,9 +260,6 @@ def purge_system(
     """
     system = system or db.query_unique(System, id=system_id)
 
-    if force and not system.local:
-        return remove_system(system=system)
-
     # Publish stop message to all instances of this system
     publish_stop(system)
 

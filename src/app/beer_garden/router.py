@@ -274,9 +274,10 @@ def initiate_forward(operation: Operation):
     try:
         response = forward(operation)
     except RoutingRequestException:
-        response = _post_forward_error(operation)
-        if response:
-            return response
+        # TODO - Special case for dealing with removing downstream systems
+        if operation.operation_type == "SYSTEM_DELETE" and operation.kwargs["force"]:
+            return beer_garden.systems.remove_system(system=operation.payload)
+
         raise
 
     if response and operation.operation_type == "REQUEST_CREATE":
@@ -467,13 +468,6 @@ def _pre_route(operation: Operation) -> Operation:
             operation.kwargs["filter_params"]["namespace"] = config.get("garden.name")
 
     return operation
-
-
-def _post_forward_error(operation: Operation):
-    if operation.operation_type == "SYSTEM_DELETE" and operation.kwargs["force"]:
-        return execute_local(operation)
-
-    return None
 
 
 # TODO - After this is called, if one of the params is a file, ship it down range too.
