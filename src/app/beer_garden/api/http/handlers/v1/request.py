@@ -346,13 +346,25 @@ class RequestListAPI(BaseHandler):
             serialize_kwargs=serialize_kwargs,
         )
 
+        requests_filtered_count = await self.client(
+            Operation(
+                operation_type="REQUEST_COUNT", kwargs=query_args["filter_params"]
+            ),
+            serialize_kwargs={"return_raw": True},
+        )
+
+        requests_total_count = await self.client(
+            Operation(operation_type="REQUEST_COUNT"),
+            serialize_kwargs={"return_raw": True},
+        )
+
         response_headers = {
             # These are for information
             "start": query_args["start"],
             "length": len(requests),
             # And these are required by datatables
-            "recordsFiltered": db.count(Request, **query_args["filter_params"]),
-            "recordsTotal": db.count(Request),
+            "recordsFiltered": requests_filtered_count,
+            "recordsTotal": requests_total_count,
             "draw": self.get_argument("draw", ""),
         }
 

@@ -119,6 +119,7 @@ route_functions = {
     "REQUEST_COMPLETE": beer_garden.requests.complete_request,
     "REQUEST_READ": beer_garden.requests.get_request,
     "REQUEST_READ_ALL": beer_garden.requests.get_requests,
+    "REQUEST_COUNT": beer_garden.requests.count_requests,
     "COMMAND_READ": beer_garden.commands.get_command,
     "COMMAND_READ_ALL": beer_garden.commands.get_commands,
     "INSTANCE_READ": beer_garden.systems.get_instance,
@@ -493,6 +494,10 @@ def _determine_target_garden(operation: Operation) -> str:
             version=operation.model.system_version,
         )
         return _system_name_lookup(target_system)
+
+    elif operation.operation_type.startswith("REQUEST_COUNT"):
+
+        return config.get("garden.name")
 
     elif operation.operation_type.startswith("REQUEST"):
         request = db.query_unique(Request, id=operation.args[0])

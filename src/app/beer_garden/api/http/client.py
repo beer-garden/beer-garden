@@ -99,7 +99,7 @@ class SerializeHelper(object):
             return new_obj
 
         obj_namespace = None
-        if not hasattr(obj, 'schema'):
+        if not hasattr(obj, "schema"):
             return obj
         # if type(obj) != BaseModel:
         #     # We don't know how to filter this
@@ -129,6 +129,11 @@ class SerializeHelper(object):
             elif obj.schema == "OperationSchema":
                 if obj.model:
                     self.filter_models(obj.model)
+                elif "REQUEST_COUNT" == obj.operation_type:
+                    if "namespace__nin" not in obj.kwargs:
+                        obj.kwargs["namespace__nin"] = list()
+                    for permission in self.current_user.permissions:
+                        obj.kwargs["namespace__nin"].append(permission.namespace)
                 elif "READ" not in obj.operation_type:
                     if "REQUEST" in obj.operation_type:
                         request_id = None
@@ -187,7 +192,9 @@ class SerializeHelper(object):
                 if self.namespace_check(obj_namespace):
                     return obj
                 if raise_error:
-                    raise RequestForbidden("Action requires permissions %s" % obj_namespace)
+                    raise RequestForbidden(
+                        "Action requires permissions %s" % obj_namespace
+                    )
             else:
                 return obj
             return None
@@ -195,9 +202,9 @@ class SerializeHelper(object):
     def namespace_check(self, namespace):
         for permission in self.current_user.permissions:
             for required in self.required_permissions:
-                if permission.access in PermissionRequiredAccess[
-                    required
-                ] and (permission.namespace == namespace or permission.is_local):
+                if permission.access in PermissionRequiredAccess[required] and (
+                    permission.namespace == namespace or permission.is_local
+                ):
                     return True
 
         return False

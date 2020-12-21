@@ -17,7 +17,6 @@ import pika.spec
 import six
 import urllib3
 
-
 from brewtils.choices import parse
 from brewtils.errors import ConflictError, ModelValidationError, RequestPublishException
 from brewtils.models import Choices, Events, Request, RequestTemplate, System, Operation
@@ -551,6 +550,10 @@ def get_request(request_id: str = None, request: Request = None) -> Request:
     request.children = db.query(Request, filter_params={"parent": request})
 
     return request
+
+
+def count_requests(**kwargs) -> int:
+    return db.count(Request, **kwargs)
 
 
 def get_requests(**kwargs) -> List[Request]:
