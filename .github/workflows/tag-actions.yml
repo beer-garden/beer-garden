@@ -47,8 +47,27 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: make publish-package
 
-  Docker:
+  Verify-PyPi:
     needs: PyPi
+    runs-on: ubuntu-latest
+    name: Verify PyPi Install
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+
+      - name: Check PyPi
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 5
+          retry_on: error
+          retry_wait_seconds: 10
+          command: pip install beer-garden==${GITHUB_REF/refs\/tags\//}
+
+  Docker:
+    needs: Verify-PyPi
     runs-on: ubuntu-latest
     name: Docker Builder
     steps:
