@@ -311,34 +311,30 @@ def forward(operation: Operation):
             f"Unknown child garden {operation.target_garden_name}"
         )
 
-    try:
-        connection_type = target_garden.connection_type
+    connection_type = target_garden.connection_type
 
-        if connection_type is None:
-            _publish_failed_forward(
-                operation=operation,
-                event_name=Events.GARDEN_NOT_CONFIGURED.name,
-                error_message=f"Attempted to forward operation to garden "
-                f"'{operation.target_garden_name}' but the connection type was None. "
-                f"This probably means that the connection to the child garden has not "
-                f"been configured, please talk to your system administrator.",
-            )
+    if connection_type is None:
+        _publish_failed_forward(
+            operation=operation,
+            event_name=Events.GARDEN_NOT_CONFIGURED.name,
+            error_message=f"Attempted to forward operation to garden "
+            f"'{operation.target_garden_name}' but the connection type was None. "
+            f"This probably means that the connection to the child garden has not "
+            f"been configured, please talk to your system administrator.",
+        )
 
-            raise RoutingRequestException(
-                f"Attempted to forward operation to garden "
-                f"'{operation.target_garden_name}' but the connection type was None. "
-                f"This probably means that the connection to the child garden has not "
-                f"been configured, please talk to your system administrator."
-            )
-        elif connection_type.casefold() == "http":
-            return _forward_http(operation, target_garden)
-        elif connection_type.casefold() == "stomp":
-            return _forward_stomp(operation, target_garden)
-        else:
-            raise RoutingRequestException(f"Unknown connection type {connection_type}")
-    except Exception as ex:
-        logger.exception(f"Error forwarding operation:{ex}")
-        raise
+        raise RoutingRequestException(
+            f"Attempted to forward operation to garden "
+            f"'{operation.target_garden_name}' but the connection type was None. "
+            f"This probably means that the connection to the child garden has not "
+            f"been configured, please talk to your system administrator."
+        )
+    elif connection_type.casefold() == "http":
+        return _forward_http(operation, target_garden)
+    elif connection_type.casefold() == "stomp":
+        return _forward_stomp(operation, target_garden)
+    else:
+        raise RoutingRequestException(f"Unknown connection type {connection_type}")
 
 
 def setup_stomp(garden):
