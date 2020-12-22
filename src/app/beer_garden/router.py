@@ -423,15 +423,16 @@ def handle_event(event):
         if event.name == Events.GARDEN_UPDATED.name:
             gardens[event.payload.name] = event.payload
 
-            if event.payload.connection_type.casefold() == "stomp":
-                if (
-                    event.payload.name in stomp_garden_connections
-                    and stomp_garden_connections[event.payload.name].is_connected()
-                ):
-                    stomp_garden_connections[event.payload.name].disconnect()
-                stomp_garden_connections[event.payload.name] = setup_stomp(
-                    event.payload
-                )
+            if event.payload.connection_type:
+                if event.payload.connection_type.casefold() == "stomp":
+                    if (
+                        event.payload.name in stomp_garden_connections
+                        and stomp_garden_connections[event.payload.name].is_connected()
+                    ):
+                        stomp_garden_connections[event.payload.name].disconnect()
+                    stomp_garden_connections[event.payload.name] = setup_stomp(
+                        event.payload
+                    )
 
         elif event.name == Events.GARDEN_REMOVED.name:
             try:
