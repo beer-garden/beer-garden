@@ -1,5 +1,16 @@
 # Beer Garden Changelog
 
+## 3.0.3
+12/22/20
+
+#### Added Features
+- Parent and child gardens can now use Stomp-based communication (#761)
+- Can now create a child garden using the UI (#726)
+
+#### Bug Fixes
+- Fixed regression that made it impossible to removed remote plugins (#794)
+- Better error handling during system removal (#749, #771)
+
 ## 3.0.2
 12/15/20
 
