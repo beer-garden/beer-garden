@@ -127,7 +127,7 @@ async def shutdown():
     # need to make it up to the main process and back down into this process. We just
     # publish this here in case the main process is looking for it.
     publish(
-        Event(name=Events.ENTRY_STOPPED.name, metadata={"entry_point_type": "STOMP"})
+        Event(name=Events.ENTRY_STOPPED.name, metadata={"entry_point_type": "HTTP"})
     )
 
     # We need to do this before the scheduler shuts down completely in order to kick any
