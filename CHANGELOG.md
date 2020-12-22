@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+## 3.0.4
+12/22/20
+
+#### Bug Fixes
+- Fixed issue with entry point status event publishing
+
 ## 3.0.3
 12/22/20
 
