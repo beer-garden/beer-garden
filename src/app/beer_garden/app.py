@@ -148,8 +148,11 @@ class Application(StoppableThread):
         """Handle any events the application cares about"""
         # Only care about local garden
         if event.garden == beer_garden.config.get("garden.name"):
-            # Start local plugins after the entry point comes up
-            if event.name == Events.ENTRY_STARTED.name:
+            # Start local plugins after the HTTP entry point comes up
+            if (
+                event.name == Events.ENTRY_STARTED.name
+                and event.metadata["entry_point_type"] == "HTTP"
+            ):
                 beer_garden.local_plugins.manager.rescan()
 
     def _progressive_backoff(self, func: Callable, failure_message: str):
