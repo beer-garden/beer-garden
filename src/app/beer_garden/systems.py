@@ -267,7 +267,7 @@ def purge_system(
 
     if force and not system.local:
         return remove_system(system=system)
-    
+
     for instance in system.instances:
         if instance.status not in ("STOPPED", "DEAD"):
             if lpm.has_instance_id(instance.id):
