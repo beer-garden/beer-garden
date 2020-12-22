@@ -62,9 +62,6 @@ routable_operations = [
     "GARDENS_SYNC",
 ]
 
-# Processor that will be used for forwarding
-forward_processor: Optional[QueueListener] = None
-
 # Executor used to run REQUEST_CREATE operations in an async context
 t_pool = ThreadPoolExecutor()
 
@@ -280,7 +277,8 @@ def initiate_forward(operation: Operation):
 
         raise
 
-    if response and operation.operation_type == "REQUEST_CREATE":
+    # If None is returned and this is a Request Create, return locally created Request
+    if not response and operation.operation_type == "REQUEST_CREATE":
         return operation.model
 
     return response
