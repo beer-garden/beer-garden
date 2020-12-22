@@ -64,7 +64,7 @@ jobs:
           max_attempts: 5
           retry_on: error
           retry_wait_seconds: 10
-          command: pip install beer-garden==${GITHUB_REF/refs\/tags\//}
+          command: pip install beer-garden==${GITHUB_REF#refs/tags/}
 
   Docker:
     needs: Verify-PyPi
@@ -80,7 +80,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build Images
-        run: make publish-docker VERSION=${GITHUB_REF/refs\/tags\//}
+        run: make publish-docker VERSION=${GITHUB_REF#refs/tags/}
 
   RPM:
     needs: Docker
@@ -112,7 +112,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build RPM
-        run: make rpm-build VERSION=${GITHUB_REF/refs\/tags\//}
+        run: make rpm-build VERSION=${GITHUB_REF#refs/tags/}
 
       - name: Create Release
         id: create_release
@@ -132,6 +132,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./rpm/dist/beer-garden-${GITHUB_REF/refs\/tags\//}-1.el7.x86_64.rpm
-          asset_name: beer-garden-${GITHUB_REF/refs\/tags\//}-1.el7.x86_64.rpm
+          asset_path: ./rpm/dist/beer-garden-${GITHUB_REF#refs/tags/}-1.el7.x86_64.rpm
+          asset_name: beer-garden-${GITHUB_REF#refs/tags/}-1.el7.x86_64.rpm
           asset_content_type: application/octet-stream
