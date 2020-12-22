@@ -101,10 +101,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.python-version }}-pip-install-
 
-      - name: Make Deps
-        working-directory: ./src/app
-        run: make deps
-
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
