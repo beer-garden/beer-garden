@@ -19,7 +19,7 @@ import logging
 import threading
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
-from typing import Dict, Optional, Union
+from typing import Dict, Union
 
 import requests
 import stomp
@@ -47,7 +47,6 @@ import beer_garden.systems
 import beer_garden.files
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 from beer_garden.events import publish
-from beer_garden.events.processors import QueueListener
 from beer_garden.garden import get_garden, get_gardens
 from beer_garden.requests import complete_request
 
@@ -61,9 +60,6 @@ routable_operations = [
     "SYSTEM_DELETE",
     "GARDENS_SYNC",
 ]
-
-# Processor that will be used for forwarding
-forward_processor: Optional[QueueListener] = None
 
 # Executor used to run REQUEST_CREATE operations in an async context
 t_pool = ThreadPoolExecutor()
@@ -271,10 +267,20 @@ def initiate_forward(operation: Operation):
 
     # TODO - Check to ensure garden conn_info is not 'local' before forwarding?
 
-    forward_processor.put(operation)
+    try:
+        response = forward(operation)
+    except RoutingRequestException:
+        # TODO - Special case for dealing with removing downstream systems
+        if operation.operation_type == "SYSTEM_DELETE" and operation.kwargs["force"]:
+            return beer_garden.systems.remove_system(system=operation.payload)
 
-    if operation.operation_type == "REQUEST_CREATE":
+        raise
+
+    # If None is returned and this is a Request Create, return locally created Request
+    if not response and operation.operation_type == "REQUEST_CREATE":
         return operation.model
+
+    return response
 
 
 def forward(operation: Operation):
@@ -302,33 +308,30 @@ def forward(operation: Operation):
             f"Unknown child garden {operation.target_garden_name}"
         )
 
-    try:
-        connection_type = target_garden.connection_type
+    connection_type = target_garden.connection_type
 
-        if connection_type is None:
-            _publish_failed_forward(
-                operation=operation,
-                event_name=Events.GARDEN_NOT_CONFIGURED.name,
-                error_message=f"Attempted to forward operation to garden "
-                f"'{operation.target_garden_name}' but the connection type was None. "
-                f"This probably means that the connection to the child garden has not "
-                f"been configured, please talk to your system administrator.",
-            )
+    if connection_type is None:
+        _publish_failed_forward(
+            operation=operation,
+            event_name=Events.GARDEN_NOT_CONFIGURED.name,
+            error_message=f"Attempted to forward operation to garden "
+            f"'{operation.target_garden_name}' but the connection type was None. "
+            f"This probably means that the connection to the child garden has not "
+            f"been configured, please talk to your system administrator.",
+        )
 
-            raise RoutingRequestException(
-                f"Attempted to forward operation to garden "
-                f"'{operation.target_garden_name}' but the connection type was None. "
-                f"This probably means that the connection to the child garden has not "
-                f"been configured, please talk to your system administrator."
-            )
-        elif connection_type.casefold() == "http":
-            return _forward_http(operation, target_garden)
-        elif connection_type.casefold() == "stomp":
-            return _forward_stomp(operation, target_garden)
-        else:
-            raise RoutingRequestException(f"Unknown connection type {connection_type}")
-    except Exception as ex:
-        logger.exception(f"Error forwarding operation:{ex}")
+        raise RoutingRequestException(
+            f"Attempted to forward operation to garden "
+            f"'{operation.target_garden_name}' but the connection type was None. "
+            f"This probably means that the connection to the child garden has not "
+            f"been configured, please talk to your system administrator."
+        )
+    elif connection_type.casefold() == "http":
+        return _forward_http(operation, target_garden)
+    elif connection_type.casefold() == "stomp":
+        return _forward_stomp(operation, target_garden)
+    else:
+        raise RoutingRequestException(f"Unknown connection type {connection_type}")
 
 
 def setup_stomp(garden):
@@ -647,7 +650,9 @@ def _forward_http(operation: Operation, target_garden: Garden):
 
         return response
 
-    except Exception:
+    except Exception as error:
+        logger.error(error)
+
         _publish_failed_forward(
             operation=operation,
             event_name=Events.GARDEN_ERROR.name,
@@ -655,13 +660,11 @@ def _forward_http(operation: Operation, target_garden: Garden):
             f"'{operation.target_garden_name}' but an error occurred."
             f"Please talk to your system administrator.",
         )
-        raise
 
 
 def _publish_failed_forward(
     operation: Operation = None, error_message: str = None, event_name: str = None
 ):
-
     if operation.operation_type == "REQUEST_CREATE":
         complete_request(
             operation.model.id,
@@ -678,6 +681,8 @@ def _publish_failed_forward(
             error_message=error_message,
         )
     )
+
+    raise RoutingRequestException(error_message)
 
 
 def _system_name_lookup(system: Union[str, System]) -> str:
