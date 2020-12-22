@@ -19,7 +19,7 @@ import logging
 import threading
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
-from typing import Dict, Optional, Union
+from typing import Dict, Union
 
 import requests
 import stomp
@@ -47,7 +47,6 @@ import beer_garden.systems
 import beer_garden.files
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 from beer_garden.events import publish
-from beer_garden.events.processors import QueueListener
 from beer_garden.garden import get_garden, get_gardens
 from beer_garden.requests import complete_request
 
