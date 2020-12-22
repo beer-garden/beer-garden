@@ -55,8 +55,7 @@ def run(ep_conn):
     st_manager_stack.append(st_manager)
     logger.info("Stomp entry point started")
 
-    # Disabling - see https://github.com/beer-garden/beer-garden/issues/518
-    # publish(Event(name=Events.ENTRY_STARTED.name))
+    publish(Event(name=Events.ENTRY_STARTED.name, metadata={"entry_point_type": "STOMP"}))
 
 
 def signal_handler(_: int, __: types.FrameType):

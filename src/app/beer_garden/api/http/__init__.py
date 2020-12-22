@@ -100,7 +100,7 @@ async def startup():
 
     beer_garden.api.http.logger.info("Http entry point is started. Hello!")
 
-    publish(Event(name=Events.ENTRY_STARTED.name))
+    publish(Event(name=Events.ENTRY_STARTED.name, metadata={"entry_point_type": "HTTP"}))
 
 
 async def shutdown():
@@ -281,7 +281,6 @@ def _setup_ssl_context() -> Tuple[Optional[ssl.SSLContext], Optional[ssl.SSLCont
 
 
 def _load_swagger(url_specs, title=None):
-
     global api_spec
     api_spec = APISpec(
         title=title,
