@@ -100,7 +100,9 @@ async def startup():
 
     beer_garden.api.http.logger.info("Http entry point is started. Hello!")
 
-    publish(Event(name=Events.ENTRY_STARTED.name, metadata={"entry_point_type": "HTTP"}))
+    publish(
+        Event(name=Events.ENTRY_STARTED.name, metadata={"entry_point_type": "HTTP"})
+    )
 
 
 async def shutdown():
@@ -124,7 +126,9 @@ async def shutdown():
     # This will almost definitely not be published to the websocket, because it would
     # need to make it up to the main process and back down into this process. We just
     # publish this here in case the main process is looking for it.
-    publish(Event(name=Events.ENTRY_STOPPED.name, metadata={"entry_point_type": "STOMP"}))
+    publish(
+        Event(name=Events.ENTRY_STOPPED.name, metadata={"entry_point_type": "STOMP"})
+    )
 
     # We need to do this before the scheduler shuts down completely in order to kick any
     # currently waiting request creations
