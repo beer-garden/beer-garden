@@ -66,8 +66,7 @@ class StompManager(StoppableThread):
         # back down into this process. We just publish this
         # here in case the main process is looking for it.
         publish(
-            Event(name=Events.ENTRY_STOPPED.name),
-            metadata={"entry_point_type": "STOMP"},
+            Event(name=Events.ENTRY_STOPPED.name, metadata={"entry_point_type": "STOMP"},),
         )
 
     def reconnect(self, conn):
