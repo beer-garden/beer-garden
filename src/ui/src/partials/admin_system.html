@@ -24,7 +24,7 @@
 </div>
 
 <div class="panel-container animate-if"
-     ng-if="responseState(response) === 'success'">
+     ng-if="responseState(response) === 'success' || responseState(runnerResponse) === 'success'">
 
   <div class="container-item panel panel-danger"
        style="display: block;"
