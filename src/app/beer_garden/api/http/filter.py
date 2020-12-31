@@ -5,38 +5,104 @@ from beer_garden.plugin import _from_kwargs
 from beer_garden.requests import get_request
 from beer_garden.scheduler import get_job
 from beer_garden.systems import get_system
-
+from brewtils.models import (
+    Request,
+    RequestTemplate,
+    System,
+    Instance,
+    Queue,
+    Job,
+    Operation,
+    Principal,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def request_namespace(obj=None):
+def request_namespace(obj: Request = None) -> str:
+    """
+    Find the namespace for Request Model
+    Args:
+        obj: Request
+
+    Returns: Namespace
+
+    """
     return obj.namespace
 
 
-def request_template_namespace(obj=None):
-    return request_namespace(obj)
+def request_template_namespace(obj: RequestTemplate = None) -> str:
+    """
+    Finds the namespace for Request Template Model
+    Args:
+        obj: Request Template
 
+    Returns: Namespace
 
-def system_namespace(obj=None):
+    """
     return obj.namespace
 
 
-def instance_namespace(obj=None):
+def system_namespace(obj: System = None) -> str:
+    """
+    Finds the namespace for System Model
+    Args:
+        obj: System
+
+    Returns: Namespace
+
+    """
+    return obj.namespace
+
+
+def instance_namespace(obj: Instance = None) -> str:
+    """
+    Finds the System associated with the Instance to find the Namespace
+    Args:
+        obj: Instance
+
+    Returns: Namespace
+
+    """
     system, _ = _from_kwargs(instance=obj)
     return system_namespace(system)
 
 
-def queue_namespace(obj=None):
+def queue_namespace(obj: Queue = None) -> str:
+    """
+    Finds the System associated with the Queue to find the Namespace
+    Args:
+        obj:
+
+    Returns:
+
+    """
     system = get_system(obj.system_id)
     return system_namespace(system)
 
 
-def job_namespace(obj=None):
+def job_namespace(obj: Job = None) -> str:
+    """
+    Finds the Namespace associated with the Job's Request Template
+    Args:
+        obj: Job
+
+    Returns: Namespace
+
+    """
     return request_template_namespace(obj.request_template)
 
 
-def operation_namespace(obj=None):
+def operation_namespace(obj: Operation = None) -> str:
+    """
+    Finds the namespace associated with an Operation that is attempting to modify a
+    record, then includes that source object to the operation to reduce redundant calls
+    Args:
+        obj: Operation
+
+    Returns: Namespace
+
+    """
     if "READ" not in obj.operation_type:
         if "REQUEST" in obj.operation_type:
             request_id = None
@@ -83,8 +149,22 @@ def operation_namespace(obj=None):
 
 
 def operation_filtering(
-    obj=None, raise_error=True, current_user=None, required_permissions=list()
+    obj: Operation = None,
+    raise_error: bool = True,
+    current_user: Principal = None,
+    required_permissions: list = list(),
 ):
+    """
+    Filters the Operation Model based on Model field
+    Args:
+        obj: Operation to Filter
+        raise_error: If an Exception should be raised if not matching
+        current_user: Principal record associated with the Operation
+        required_permissions: Required permissions defined for API
+
+    Returns:
+
+    """
 
     if obj.model and filter_brewtils_model(
         obj=obj.model,
@@ -95,7 +175,17 @@ def operation_filtering(
         return obj
 
 
-def operation_db_filtering(obj=None, current_user=None):
+def operation_db_filtering(obj: Operation = None, current_user: Principal = None):
+    """
+    Injects custom filtering to reduce return from DB calls
+
+    Args:
+        obj: Operation model to be modified
+        current_user: Principal record associated with the Operation
+
+    Returns:
+
+    """
     if "REQUEST_COUNT" == obj.operation_type:
         if "namespace__in" not in obj.kwargs:
             obj.kwargs["namespace__in"] = list()
@@ -104,8 +194,22 @@ def operation_db_filtering(obj=None, current_user=None):
 
 
 def event_filtering(
-    obj=None, raise_error=True, current_user=None, required_permissions=list()
+    obj=None,
+    raise_error: bool = True,
+    current_user: Principal = None,
+    required_permissions: list = list(),
 ):
+    """
+    Filters the Event Model based on Payload field
+    Args:
+        obj: Event to Filter
+        raise_error: If an Exception should be raised if not matching
+        current_user: Principal record associated with the Operation
+        required_permissions: Required permissions defined for API
+
+    Returns:
+
+    """
     if obj.payload and filter_brewtils_model(
         obj=obj.payload,
         current_user=current_user,
@@ -115,6 +219,7 @@ def event_filtering(
         return obj
 
 
+# Mapping for the different models for easy management
 obj_namespace_mapping = {
     "InstanceSchema": instance_namespace,
     "JobSchema": job_namespace,
@@ -136,8 +241,22 @@ obj_db_filtering = {
 
 
 def filter_brewtils_model(
-    obj=None, raise_error=True, current_user=None, required_permissions=list()
+    obj=None,
+    raise_error: bool = True,
+    current_user: Principal = None,
+    required_permissions: list = list(),
 ):
+    """
+    Filters the Brewtils Model
+    Args:
+        obj: Brewtils model to Filter
+        raise_error: If an Exception should be raised if not matching
+        current_user: Principal record associated with the Operation
+        required_permissions: Required permissions defined for API
+
+    Returns:
+
+    """
 
     # Impossible to filter, so we return the object
     if not hasattr(obj, "schema"):
@@ -177,8 +296,22 @@ def filter_brewtils_model(
 
 
 def model_filter(
-    obj=None, raise_error=True, current_user=None, required_permissions=list()
+    obj=None,
+    raise_error: bool = True,
+    current_user: Principal = None,
+    required_permissions: list = list(),
 ):
+    """
+    Filters a Model
+    Args:
+        obj: Model to Filter
+        raise_error: If an Exception should be raised if not matching
+        current_user: Principal record associated with the Operation
+        required_permissions: Required permissions defined for API
+
+    Returns:
+
+    """
     if not required_permissions or len(required_permissions) == 0:
         return obj
 
@@ -212,7 +345,16 @@ def model_filter(
     )
 
 
-def model_db_filter(obj=None, current_user=None):
+def model_db_filter(obj=None, current_user: Principal = None):
+    """
+    Injects custom DB logic into model to improve filtering
+    Args:
+        obj: Model to filter
+        current_user: Principal record associated with the Model
+
+    Returns:
+
+    """
 
     # Impossible to filter, so we return the object
     if not hasattr(obj, "schema"):
@@ -222,7 +364,19 @@ def model_db_filter(obj=None, current_user=None):
         obj_db_filtering[obj.schema](obj=obj, current_user=current_user)
 
 
-def namespace_check(namespace, current_user=None, required_permissions=list()):
+def namespace_check(
+    namespace: str, current_user: Principal = None, required_permissions: list = list()
+):
+    """
+    Compares the namespace provided with the Principals permissions and required permissions
+    Args:
+        namespace: Namespace associated with Model
+        current_user: Principal record associated with the Model
+        required_permissions: Required permission level for the Model
+
+    Returns:
+
+    """
     for permission in current_user.permissions:
         for required in required_permissions:
             if permission.access in PermissionRequiredAccess[required] and (
