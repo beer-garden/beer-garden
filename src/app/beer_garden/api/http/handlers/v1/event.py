@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import logging
 
+from beer_garden.api.http.filter import model_filter
 from brewtils.errors import RequestForbidden
 from tornado.web import HTTPError
 from tornado.websocket import WebSocketHandler
-from beer_garden.api.http.client import filter_models
 import beer_garden.config as config
 
 from beer_garden.api.http.authorization import (
@@ -57,7 +57,7 @@ class EventSocket(AuthMixin, WebSocketHandler):
         run_filter = config.get("auth").enabled
 
         for listener in cls.listeners:
-            if run_filter and filter_models(
+            if run_filter and model_filter(
                 SchemaParser.parse_event(message, from_string=True),
                 current_user=listener.current_user,
                 required_permissions=[Permissions.READ],
