@@ -269,22 +269,22 @@ def purge_system(
         return remove_system(system=system)
 
     for instance in system.instances:
-        if instance.status not in ("STOPPED", "DEAD"):
-            if lpm.has_instance_id(instance.id):
-                try:
-                    lpm.remove(instance_id=instance.id)
-                except Exception as ex:
-                    if not force:
-                        raise PluginError(
-                            f"Error attempting to stop {system}[{instance.name}]"
-                        ) from ex
+        if lpm.has_instance_id(instance.id):
+            try:
+                lpm.remove(instance_id=instance.id)
+            except Exception as ex:
+                if not force:
+                    raise PluginError(
+                        f"Error attempting to stop {system}[{instance.name}]"
+                    ) from ex
 
-                    logger.warning(
-                        f"Error while stopping instance {system}[{instance.name}]. "
-                        f"Force flag was specified so system delete will continue. "
-                        f"Underlying exception was: {ex}"
-                    )
-            else:
+                logger.warning(
+                    f"Error while stopping instance {system}[{instance.name}]. "
+                    f"Force flag was specified so system delete will continue. "
+                    f"Underlying exception was: {ex}"
+                )
+        else:
+            if instance.status not in ("STOPPED", "DEAD"):
                 try:
                     # TODO - It would be nice to wait for the instance to stop
                     publish_stop(system, instance=instance)
