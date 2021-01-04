@@ -148,20 +148,11 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-
-      # Need to update if we support other OS's
-      - name: Cache PIP Install
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-${{ matrix.python-version }}-pip-coverage-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ matrix.python-version }}-pip-coverage
-
+          
       - name: Make Deps
         run: |
           pip install flake8
-          
+
       - uses: actions/checkout@v2
         with:
           path: new
@@ -173,13 +164,13 @@ jobs:
 
       - name: Scan current complexity
         continue-on-error: true
-        working-directory: ./new
+        working-directory: ./new/src/app
         run: |
           flake8 --max-complexity 1 > ~/current_complexity.txt
 
       - name: Scan old complexity
         continue-on-error: true
-        working-directory: ./old
+        working-directory: ./old/src/app
         run: |
           flake8 --max-complexity 1 > ~/old_complexity.txt
 
