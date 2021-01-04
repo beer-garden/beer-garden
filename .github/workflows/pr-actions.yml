@@ -159,6 +159,4 @@ jobs:
         working-directory: ./src/app
         run: |
           wily build
-          for changed_file in ${{ steps.files.outputs.all }}; do
-            wily diff -r  ${{ github.event.pull_request.base.ref }}
-          done
+          wily diff -r  ${{ github.event.pull_request.base.ref }} ${{ steps.files.outputs.all }}
