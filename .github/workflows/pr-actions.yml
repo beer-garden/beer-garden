@@ -168,4 +168,4 @@ jobs:
         continue-on-error: true
         run: |
           wily build src/app/beer_garden/
-          wily diff src/app/beer_garden/ -r HEAD^1
+          wily diff src/app/beer_garden/ -r ${{ github.base_ref }}
