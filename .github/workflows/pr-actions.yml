@@ -129,6 +129,10 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    defaults:
+      run:
+        working-directory: ./src/app
+
     strategy:
       matrix:
         python-version: ['3.7']
@@ -148,29 +152,11 @@ jobs:
       - name: Make Deps
         run: |
           python -m pip install --upgrade pip
-          pip install flake8
+          pip install wily
 
       - uses: actions/checkout@v2
-        with:
-          path: new
-
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.pull_request.base.ref }}
-          path: old
-
-      - name: Scan current complexity
-        continue-on-error: true
-        working-directory: ./new/src/app
-        run: |
-          flake8 --max-complexity 1 > ~/current_complexity.txt
-
-      - name: Scan old complexity
-        continue-on-error: true
-        working-directory: ./old/src/app
-        run: |
-          flake8 --max-complexity 1 > ~/old_complexity.txt
 
       - name: Compare complexities
         run: |
-          diff --ignore-all-space --strip-trailing-cr ~/current_complexity.txt ~/old_complexity.txt
+          wily build
+          wily diff -r  ${{ github.event.pull_request.base.ref }}
