@@ -144,20 +144,6 @@ jobs:
 
     name: Code Complexity Check OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v2
-        with:
-          path: new
-
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.pull_request.base.ref }} 
-          path: old
-
-      - name: Setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-
       # Need to update if we support other OS's
       - name: Cache PIP Install
         uses: actions/cache@v2
@@ -166,6 +152,20 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.python-version }}-pip-coverage-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.python-version }}-pip-coverage
+
+      - uses: actions/checkout@v2
+        with:
+          path: new
+
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          path: old
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: Make Deps
         run: |
