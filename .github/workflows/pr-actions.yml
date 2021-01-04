@@ -129,10 +129,6 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
-    defaults:
-      run:
-        working-directory: ./src/app
-
     strategy:
       matrix:
         python-version: ['3.7']
@@ -148,9 +144,10 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-          
+
       - name: Make Deps
         run: |
+          python -m pip install --upgrade pip
           pip install flake8
 
       - uses: actions/checkout@v2
