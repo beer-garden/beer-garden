@@ -156,7 +156,6 @@ jobs:
         uses: jitterbit/get-changed-files@v1
 
       - name: Compare complexities
-        working-directory: ./src/app
         run: |
-          wily build
+          wily build ./src/app/
           wily diff -r  ${{ github.event.pull_request.base.ref }} ${{ steps.files.outputs.all }}
