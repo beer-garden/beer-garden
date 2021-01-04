@@ -167,9 +167,17 @@ jobs:
       - name: Scan current complexity
         continue-on-error: true
         run: |
-          flake8 --max-complexity 10 > ~/current_complexity.txt
+          flake8 --max-complexity 1 > ~/current_complexity.txt
 
-      - name: Read current complexity
+      - uses: actions/checkout@v2
+        with:
+          ref: $GITHUB_BASE_REF
+
+      - name: Scan old complexity
         continue-on-error: true
         run: |
-          cat ~/current_complexity.txt
+          flake8 --max-complexity 1 > ~/old_complexity.txt
+
+      - name: Compare complexities
+        run: |
+          diff ~/current_complexity.txt ~/old_complexity.txt

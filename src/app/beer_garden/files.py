@@ -241,6 +241,17 @@ def _verify_chunks(file_id: str):
     )
 
 
+def _my_new_function(something, my_else):
+    if something is None:
+        if my_else:
+            print("Something else")
+        else:
+            print("Something")
+    else:
+        print("Nothing")
+    return True
+
+
 def _fetch_chunk(file_id: str, chunk_num: int):
     """
     Fetches a single chunk of the requested file.
