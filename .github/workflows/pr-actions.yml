@@ -133,7 +133,7 @@ jobs:
       matrix:
         python-version: ['3.7']
         os: ['ubuntu-latest']
-        complexity-threshold: ['10']
+        complexity-threshold: ['1']
 #       This strips the line and column from the output, but keeps the file name
         sed-filter: ['s"/([^:]+):([^:]+):([^:]+):*/\1:/"']
 
