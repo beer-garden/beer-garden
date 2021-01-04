@@ -145,6 +145,13 @@ jobs:
     name: Code Complexity Check OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          path: new
+
+      - uses: actions/checkout@v2
+        with:
+          ref: $GITHUB_BASE_REF
+          path: old
 
       - name: Setup python
         uses: actions/setup-python@v2
@@ -166,15 +173,13 @@ jobs:
 
       - name: Scan current complexity
         continue-on-error: true
+        working-directory: ./new
         run: |
           flake8 --max-complexity 1 > ~/current_complexity.txt
 
-      - uses: actions/checkout@v2
-        with:
-          ref: $GITHUB_BASE_REF
-
       - name: Scan old complexity
         continue-on-error: true
+          working-directory: ./old
         run: |
           flake8 --max-complexity 1 > ~/old_complexity.txt
 
