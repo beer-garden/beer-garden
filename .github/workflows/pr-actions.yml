@@ -151,6 +151,8 @@ jobs:
           pip install wily
 
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
 
       - id: files
         uses: jitterbit/get-changed-files@v1
