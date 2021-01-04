@@ -125,3 +125,47 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
 
+  ComplexityCheck:
+
+    runs-on: ${{ matrix.os }}
+
+    defaults:
+      run:
+        working-directory: ./src/app
+
+    strategy:
+      matrix:
+        python-version: ['3.7']
+        os: ['ubuntu-latest']
+
+    env:
+      OS: ${{ matrix.os }}
+      PYTHON: ${{ matrix.python-version }}
+
+    name: Code Complexity Check OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Need to update if we support other OS's
+      - name: Cache PIP Install
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-${{ matrix.python-version }}-pip-coverage-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.python-version }}-pip-coverage
+
+      - name: Make Deps
+        run: |
+          pip install wily
+
+      - name: Create a Complexity Report
+        continue-on-error: true
+        run: |
+          wily build src/app/beer_garden/
+          wily diff src/app/beer_garden/ -r HEAD^1
