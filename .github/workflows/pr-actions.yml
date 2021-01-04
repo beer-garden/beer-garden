@@ -137,7 +137,6 @@ jobs:
       matrix:
         python-version: ['3.7']
         os: ['ubuntu-latest']
-        max-cylclomatic-complexity: ['10']
 
     env:
       OS: ${{ matrix.os }}
@@ -168,9 +167,9 @@ jobs:
       - name: Scan current complexity
         continue-on-error: true
         run: |
-          flake8 --max-complexity ${{ matrix.max-cylclomatic-complexity }} > /github/home/current_complexity.txt
+          flake8 --max-complexity 10 > ~/current_complexity.txt
 
       -name: Echo output
        continue-on-error: true
        run: |
-         cat /github/home/current_complexity.txt
+         cat ~/current_complexity.txt
