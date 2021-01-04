@@ -133,6 +133,9 @@ jobs:
       matrix:
         python-version: ['3.7']
         os: ['ubuntu-latest']
+        complexity-threshold: ['10']
+#       This strips the line and column from the output, but keeps the file name
+        sed-filter: ['s"/([^:]+):([^:]+):([^:]+):*/\1:/"']
 
     env:
       OS: ${{ matrix.os }}
@@ -166,16 +169,14 @@ jobs:
       - name: Scan current complexity
         continue-on-error: true
         working-directory: ./new/src/app
-#       This strips the line and column from the output, but keeps the file name
         run: |
-          flake8 --max-complexity 1 | sed -E s"/([^:]+):([^:]+):([^:]+):*/\1:/" > ~/current_complexity.txt
+          flake8 --max-complexity ${{ matrix.complexity-threshold }} | sed -E ${{ matrix.sed-filter }} > ~/current_complexity.txt
 
       - name: Scan old complexity
         continue-on-error: true
         working-directory: ./old/src/app
-#       This strips the line and column from the output, but keeps the file name
         run: |
-          flake8 --max-complexity 1 | sed -E s"/([^:]+):([^:]+):([^:]+):*/\1:/" > ~/old_complexity.txt
+          flake8 --max-complexity ${{ matrix.complexity-threshold }} | sed -E ${{ matrix.sed-filter }} > ~/old_complexity.txt
 
       - name: Compare complexities
         run: |
