@@ -109,8 +109,8 @@ def start(
 
     logger.debug(f"Starting instance {system}[{instance}]")
 
-    if lpm.lpm_proxy.has_instance_id(instance_id=instance.id):
-        lpm.lpm_proxy.restart(instance_id=instance.id)
+    # Only way this works is if this has a local runner, so just assume it does
+    lpm.start(instance_id=instance.id)
 
     # Publish the start request
     publish_start(system, instance)
@@ -120,7 +120,9 @@ def start(
 
 @publish_event(Events.INSTANCE_STOPPED)
 def stop(
-    instance_id: str = None, instance: Instance = None, system: System = None
+    instance_id: str = None,
+    instance: Instance = None,
+    system: System = None,
 ) -> Instance:
     """Stops an Instance.
 
@@ -140,9 +142,6 @@ def stop(
 
     # Publish the stop request
     publish_stop(system, instance)
-
-    if lpm.lpm_proxy.has_instance_id(instance_id=instance.id):
-        lpm.lpm_proxy.stop_one(instance_id=instance.id)
 
     return instance
 
@@ -211,6 +210,9 @@ def update(
 
     if new_status:
         updates["set__instances__S__status"] = new_status
+
+        if new_status == "STOPPED":
+            lpm.update(instance_id=instance_id, restart=False, stopped=True)
 
     if update_heartbeat:
         updates["set__instances__S__status_info__heartbeat"] = datetime.utcnow()
@@ -361,6 +363,9 @@ async def update_async(
     if new_status:
         update["instances.$.status"] = new_status
         update["instances.$.status_info.heartbeat"] = datetime.utcnow()
+
+        if new_status == "STOPPED":
+            lpm.update(instance_id=instance_id, restart=False, stopped=True)
 
     if metadata:
         for k, v in metadata.items():

@@ -39,7 +39,7 @@ from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import MonitorFile
-from beer_garden.plugin import StatusMonitor, stop
+from beer_garden.plugin import StatusMonitor
 
 
 class Application(StoppableThread):
@@ -148,14 +148,12 @@ class Application(StoppableThread):
         """Handle any events the application cares about"""
         # Only care about local garden
         if event.garden == beer_garden.config.get("garden.name"):
-            # Start local plugins after the entry point comes up
-            if event.name == Events.ENTRY_STARTED.name:
-                beer_garden.local_plugins.manager.lpm_proxy.scan_path()
-
-            elif event.name == Events.INSTANCE_INITIALIZED.name:
-                beer_garden.local_plugins.manager.lpm_proxy.handle_initialize(event)
-            elif event.name == Events.INSTANCE_STOPPED.name:
-                beer_garden.local_plugins.manager.lpm_proxy.handle_stopped(event)
+            # Start local plugins after the HTTP entry point comes up
+            if (
+                event.name == Events.ENTRY_STARTED.name
+                and event.metadata["entry_point_type"] == "HTTP"
+            ):
+                beer_garden.local_plugins.manager.rescan()
 
     def _progressive_backoff(self, func: Callable, failure_message: str):
         """Execute a function until it returns truthy, increasing wait time each attempt
@@ -299,10 +297,6 @@ class Application(StoppableThread):
         beer_garden.local_plugins.manager.lpm_proxy.stop()
 
         self.logger.debug("Stopping local plugins")
-        for state in beer_garden.local_plugins.manager.lpm_proxy.runner_state():
-            # Only send stop message to plugins that came up successfully
-            if state["instance_id"]:
-                stop(instance_id=state["instance_id"])
         beer_garden.local_plugins.manager.lpm_proxy.stop_all()
 
         self.logger.debug("Stopping entry points")

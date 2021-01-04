@@ -693,6 +693,13 @@ _DB_SPEC = {
                     "previous_names": ["info_request_ttl"],
                     "alt_env_names": ["INFO_REQUEST_TTL"],
                 },
+                "file": {
+                    "type": "int",
+                    "default": 15,
+                    "description": "Number of minutes to wait before deleting "
+                    "FILE documents (negative number for never)",
+                    "alt_env_names": ["FILE_REQUEST_TTL"],
+                },
             },
         },
     },
@@ -821,6 +828,17 @@ _STOMP_SPEC = {
             "type": "str",
             "description": "Password to use for authentication",
             "default": "password",
+        },
+        "headers": {
+            "type": "list",
+            "description": "Headers to be sent with messages. Follows standard YAML formatting"
+            " for lists with two variables 'key' and 'value'",
+            "required": False,
+            "items": {
+                "key": {"type": "str"},
+                "value": {"type": "str"},
+            },
+            "default": [],
         },
         "ssl": {
             "type": "dict",
@@ -952,7 +970,97 @@ _PARENT_SPEC = {
                     "required": False,
                 },
             },
-        }
+        },
+        "stomp": {
+            "type": "dict",
+            "items": {
+                "enabled": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Publish events to parent garden over STOMP",
+                },
+                "port": {
+                    "type": "int",
+                    "default": 61613,
+                    "description": "Connection port number",
+                },
+                "host": {
+                    "type": "str",
+                    "default": "0.0.0.0",
+                    "description": "Connection hostname",
+                },
+                "username": {
+                    "type": "str",
+                    "default": "beer_garden",
+                },
+                "password": {
+                    "type": "str",
+                    "default": "password",
+                },
+                "send_destination": {
+                    "type": "str",
+                    "default": "Beer_Garden_Operations_Parent",
+                    "description": "Send topic where Beer_Garden sends operations",
+                },
+                "subscribe_destination": {
+                    "type": "str",
+                    "default": "Beer_Garden_Forward_Parent",
+                    "description": "Subscription topic where Beer_Garden"
+                    " listens for operations",
+                },
+                "skip_events": {
+                    "type": "list",
+                    "items": {"skip_event": {"type": "str"}},
+                    "default": ["DB_CREATE"],
+                    "required": False,
+                    "description": "Events to be skipped",
+                },
+                "headers": {
+                    "type": "list",
+                    "description": "Headers to be sent with messages. "
+                    "Follows standard YAML formatting for lists with "
+                    "two variables 'key' and 'value'",
+                    "required": False,
+                    "items": {
+                        "key": {"type": "str"},
+                        "value": {"type": "str"},
+                    },
+                    "default": [],
+                },
+                "ssl": {
+                    "type": "dict",
+                    "items": {
+                        "use_ssl": {
+                            "type": "bool",
+                            "description": "Use SSL for connection",
+                            "default": False,
+                        },
+                        "private_key": {
+                            "type": "str",
+                            "description": "Path to private key",
+                            "required": False,
+                        },
+                        "cert_file": {
+                            "type": "str",
+                            "description": "Path to certificate file",
+                            "required": False,
+                        },
+                        "verify_host": {
+                            "type": "bool",
+                            "description": "Verify the server's certificate "
+                            "was signed by a trusted CA'",
+                            "default": True,
+                        },
+                        "verify_hostname": {
+                            "type": "bool",
+                            "description": "Verify the server's actual "
+                            "host name against the expected name'",
+                            "default": True,
+                        },
+                    },
+                },
+            },
+        },
     },
 }
 

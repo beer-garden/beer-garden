@@ -8,7 +8,7 @@ import json
 import logging
 import os
 import sys
-from brewtils.models import Event, System
+from brewtils.models import Event, Events, Runner, System
 from brewtils.specification import _SYSTEM_SPEC
 from brewtils.stoppable_thread import StoppableThread
 from importlib.machinery import SourceFileLoader
@@ -20,34 +20,102 @@ from typing import Any, Dict, Iterable, List, Optional
 
 import beer_garden.config as config
 from beer_garden.errors import PluginValidationError
+from beer_garden.events import publish, publish_event
 from beer_garden.local_plugins.env_help import expand_string
 from beer_garden.local_plugins.runner import ProcessRunner
 
 # This is ... complicated. See the PluginManager docstring
-lpm_proxy = None
+lpm_proxy = None  # type: Optional[PluginManager]
 
 CONFIG_NAME = "beer.conf"
 
 logger = logging.getLogger(__name__)
 
 
-class ConfigKeys(Enum):
-    PLUGIN_ENTRY = 1
-    INSTANCES = 2
-    PLUGIN_ARGS = 3
-    ENVIRONMENT = 4
-    LOG_LEVEL = 5
-    CAPTURE_STREAMS = 6
+def runner(*args, **kwargs):
+    return lpm_proxy.get_runner(*args, **kwargs)
 
-    NAME = 7
-    VERSION = 8
-    DESCRIPTION = 9
-    MAX_INSTANCES = 10
-    ICON_NAME = 11
-    DISPLAY_NAME = 12
-    METADATA = 13
-    NAMESPACE = 14
-    INTERPRETER_PATH = 15
+
+def runners(*args, **kwargs):
+    return lpm_proxy.get_runners()
+
+
+def update(*args, **kwargs):
+    return lpm_proxy.update(*args, **kwargs)
+
+
+def has_instance_id(*args, **kwargs):
+    return lpm_proxy.has_instance_id(*args, **kwargs)
+
+
+@publish_event(Events.RUNNER_STARTED)
+def start(*args, **kwargs):
+    return lpm_proxy.restart(*args, **kwargs)
+
+
+@publish_event(Events.RUNNER_STOPPED)
+def stop(*args, **kwargs):
+    return lpm_proxy.stop_one(*args, **kwargs)
+
+
+@publish_event(Events.RUNNER_REMOVED)
+def remove(*args, **kwargs):
+    kwargs.pop("remove", None)
+    return stop(*args, remove=True, **kwargs)
+
+
+def rescan(*args, **kwargs) -> List[Runner]:
+    """Scans plugin directory and starts any new runners"""
+    new_runners = lpm_proxy.scan_path(*args, **kwargs)
+
+    for runner in new_runners:
+        publish(
+            Event(
+                name=Events.RUNNER_STARTED.name,
+                payload_type=Runner.__name__,
+                payload=runner,
+            )
+        )
+
+    return new_runners
+
+
+def reload(path: str = None, system: System = None):
+    """Reload runners in a directory
+
+    Args:
+        path: The path to reload. It's expected this will be only the final part of the
+        full path, so it will be appended to the overall plugin path.
+        system: If path is not specified, will attempt to determine the correct path to
+        use based on the given system
+
+    Will first remove any existing runners (stopping them if necessary) and then
+    initiate a rescan on the directory.
+    """
+    all_runners = runners()
+
+    if path is None:
+        for instance in system.instances:
+            for runner in all_runners:
+                if runner.instance_id == instance.id:
+                    path = runner.path
+                    break
+
+    logger.debug(f"Reloading runners in directory {path}")
+
+    for r in [r for r in all_runners if r.path == path]:
+        remove(runner_id=r.id, remove=True)
+
+    return rescan(paths=[lpm_proxy.plugin_path() / path])
+
+
+def handle_event(event):
+    # Only care about local garden
+    if event.garden == config.get("garden.name"):
+        if event.name == Events.INSTANCE_INITIALIZED.name:
+            lpm_proxy.handle_initialize(event)
+        elif event.name == Events.INSTANCE_STOPPED.name:
+            lpm_proxy.handle_stopped(event)
 
 
 class PluginManager(StoppableThread):
@@ -120,11 +188,20 @@ class PluginManager(StoppableThread):
                     self.logger.warning(f"Runner {runner} is dead, not restarting")
                     runner.dead = True
 
+    def plugin_path(self):
+        return self._plugin_path
+
     def paths(self) -> List[str]:
         """All current runner paths"""
         return list({runner.process_cwd for runner in self._runners})
 
-    def runner_state(self) -> List[Dict]:
+    def get_runner(self, runner_id=None) -> Optional[Runner]:
+        """Get a representation of current runners"""
+        process_runner = self._from_runner_id(runner_id)
+        if process_runner:
+            return process_runner.state()
+
+    def get_runners(self) -> List[Runner]:
         """Get a representation of current runners"""
         return [runner.state() for runner in self._runners]
 
@@ -161,98 +238,110 @@ class PluginManager(StoppableThread):
             runner.restart = False
             runner.dead = False
 
-    def restart(self, instance_id: str) -> None:
+    def restart(self, runner_id=None, instance_id=None) -> Optional[Runner]:
         """Restart the runner for a particular Instance ID"""
-        runner = self._from_instance_id(instance_id)
+        runner = self._from_runner_id(runner_id) or self._from_instance_id(instance_id)
 
         if runner:
-            self._restart(runner)
+            return self._restart(runner).state()
 
-    def stop_one(self, runner_id=None, instance_id=None) -> None:
+    def update(
+        self, runner_id=None, instance_id=None, restart=None, stopped=None
+    ) -> Runner:
+        """Update a runner state"""
+        runner = self._from_runner_id(runner_id) or self._from_instance_id(instance_id)
+
+        if not runner:
+            return
+
+        if stopped is not None:
+            runner.stopped = stopped
+        if restart is not None:
+            runner.restart = restart
+
+        return runner.state()
+
+    def stop_one(
+        self, runner_id=None, instance_id=None, send_sigterm=True, remove=False
+    ) -> Runner:
         """Stop the runner for a given runner or Instance ID
 
         The PluginManager has no ability to places messages on the message queue, so
-        it is expected that a stop message will already have been sent to the plugin
-        that's being asked to stop.
+        it's possible that a stop message will already have been sent to the plugin
+        that's being asked to stop. If that's NOT the case then send_sigterm should be
+        set to True to attempt to stop the runner gracefully.
 
         This will wait for the runner to stop for plugin.local.timeout.shutdown seconds.
         If the runner is not stopped after that time its process will be killed with
         SIGKILL.
+
+        Args:
+            runner_id: The runner ID to stop
+            instance_id: The instance ID to stop
+            send_sigterm: If true, send SIGTERM before waiting
+            remove: Flag controlling if the runner should be removed from runner list
+
+        Returns:
+            The stopped runner
         """
         runner = self._from_runner_id(runner_id) or self._from_instance_id(instance_id)
 
-        # This needs to be called after sending a stop request, so the plugin should
-        # already be shutting down. So wait for it to stop...
+        if not runner:
+            raise Exception(
+                f"Could not determine runner using runner ID {runner_id} and "
+                f"instance ID {instance_id}"
+            )
+
+        if send_sigterm:
+            runner.term()
+
         runner.join(config.get("plugin.local.timeout.shutdown"))
 
-        # ...and then kill it if necessary
         if runner.is_alive():
-            self.logger.warning(f"Runner {runner_id} still alive, about to SIGKILL")
+            runner.dead = True
             runner.kill()
 
         runner.stopped = True
         runner.restart = False
-        runner.dead = False
 
-    def stop_system(self, system: System) -> None:
-        """Stop all runners associated with Instances of a given System"""
-        runners = [self._from_instance_id(i.id) for i in system.instances]
-        runners = [r for r in runners if r is not None]
+        if remove:
+            self._runners.remove(runner)
 
-        return self._stop_multiple(runners=runners)
+        return runner.state()
 
     def stop_all(self) -> None:
         """Stop all known runners"""
         return self._stop_multiple(self._runners)
 
-    def reload_system(self, system: System) -> None:
-        """Reload all runners for a given System
-
-        This method will invoke the normal stop operation on all runners associated with
-        Instances of the System. So this should only be called after sending a stop
-        request to those plugins, otherwise you're going to wait for the shutdown
-        timeout and then terminate the runners.
-        """
-        self.logger.debug(f"Reloading system {system}")
-
-        # Grab the directory where the system lives so we can create new runners later
-        system_path = None
-        for instance in system.instances:
-            if self.has_instance_id(instance.id):
-                system_path = self._from_instance_id(instance.id).process_cwd
-                break
-
-        if not system_path:
-            raise Exception(f"Error while reloading {system}: unable to determine path")
-
-        # Wait for all runners to stop and remove them from self._runners
-        self.stop_system(system)
-
-        # Create and start new runners using the path
-        self._create_runners(system_path)
-
-    def scan_path(self, path: str = None) -> None:
+    def scan_path(self, paths: Iterable[str] = None) -> List[Runner]:
         """Scan a given directory for valid plugins
 
         Note: This scan does not walk the directory tree - all plugins must be
         in the top level of the given path.
 
         Args:
-            path: The path to scan. If none will default to the plugin path specified at
-                initialization.
+            paths: The paths to scan. If None will be all subdirectories of the plugin
+            path specified at initialization
 
         Returns:
             None
         """
-        plugin_path = path or self._plugin_path
+        plugin_paths = paths or self._plugin_path.iterdir()
 
         new_runners = []
-        for path in plugin_path.iterdir():
-            try:
-                if path.is_dir() and path not in self.paths():
-                    new_runners += self._create_runners(path)
-            except Exception as ex:
-                self.logger.exception(f"Error loading plugin at {path}: {ex}")
+
+        try:
+            for path in plugin_paths:
+                try:
+                    if path.is_dir() and path not in self.paths():
+                        new_runners += self._create_runners(path)
+                except Exception as ex:
+                    self.logger.exception(f"Error loading plugin at {path}: {ex}")
+
+        except Exception as ex:
+            self.logger.exception(f"Error scanning plugin path: {ex}")
+
+        return [runner.state() for runner in new_runners]
 
     def _from_instance_id(self, instance_id: str) -> Optional[ProcessRunner]:
         for runner in self._runners:
@@ -266,7 +355,7 @@ class PluginManager(StoppableThread):
                 return runner
         return None
 
-    def _restart(self, runner: ProcessRunner) -> None:
+    def _restart(self, runner: ProcessRunner) -> ProcessRunner:
         new_runner = ProcessRunner(
             runner_id=runner.runner_id,
             process_args=runner.process_args,
@@ -279,6 +368,8 @@ class PluginManager(StoppableThread):
         self._runners.append(new_runner)
 
         new_runner.start()
+
+        return new_runner
 
     def _stop_multiple(self, runners: Iterable[ProcessRunner] = None) -> None:
         # If not specified, default to all runners
@@ -294,7 +385,9 @@ class PluginManager(StoppableThread):
 
         for runner in runners:
             stop_futures.append(
-                shutdown_pool.submit(self.stop_one, runner_id=runner.runner_id)
+                shutdown_pool.submit(
+                    self.stop_one, runner_id=runner.runner_id, send_sigterm=True
+                )
             )
 
         wait(stop_futures)
@@ -435,6 +528,25 @@ class PluginManager(StoppableThread):
             env[key] = expand_string(str(value), env)
 
         return env
+
+
+class ConfigKeys(Enum):
+    PLUGIN_ENTRY = 1
+    INSTANCES = 2
+    PLUGIN_ARGS = 3
+    ENVIRONMENT = 4
+    LOG_LEVEL = 5
+    CAPTURE_STREAMS = 6
+
+    NAME = 7
+    VERSION = 8
+    DESCRIPTION = 9
+    MAX_INSTANCES = 10
+    ICON_NAME = 11
+    DISPLAY_NAME = 12
+    METADATA = 13
+    NAMESPACE = 14
+    INTERPRETER_PATH = 15
 
 
 class ConfigLoader(object):

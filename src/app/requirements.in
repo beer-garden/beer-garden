@@ -15,10 +15,10 @@ tornado < 7
 
 # Documentation Dependencies
 sphinx < 2
-sphinx_rtd_theme
+sphinx_rtd_theme < 1
 
 # Build / Test Dependencies
-black ; python_version > "3.5"
+black
 codecov
 coverage
 flake8

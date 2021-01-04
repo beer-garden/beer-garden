@@ -87,6 +87,7 @@ import errorService from './js/services/error_service.js';
 import eventService from './js/services/event_service.js';
 import namespaceService from './js/services/namespace_service.js';
 import gardenService from './js/services/garden_service.js';
+import runnerService from './js/services//runner_service.js';
 
 import aboutController from './js/controllers/about.js';
 import adminQueueController from './js/controllers/admin_queue.js';
@@ -173,6 +174,7 @@ angular.module('bgApp',
 .factory('EventService', eventService)
 .factory('NamespaceService', namespaceService)
 .factory('GardenService', gardenService)
+.factory('RunnerService', runnerService)
 
 .controller('AboutController', aboutController)
 .controller('AdminQueueController', adminQueueController)

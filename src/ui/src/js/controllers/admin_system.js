@@ -11,8 +11,9 @@ adminSystemController.$inject = [
   'InstanceService',
   'UtilityService',
   'AdminService',
-  'EventService',
   'QueueService',
+  'RunnerService',
+  'EventService',
 ];
 
 /**
@@ -23,6 +24,8 @@ adminSystemController.$inject = [
  * @param  {Object} InstanceService Beer-Garden's instance service object.
  * @param  {Object} UtilityService  Beer-Garden's utility service object.
  * @param  {Object} AdminService    Beer-Garden's admin service object.
+ * @param  {Object} QueueService    Beer-Garden's event service object.
+ * @param  {Object} RunnerService   Beer-Garden's runner service object.
  * @param  {Object} EventService    Beer-Garden's event service object.
  */
 export default function adminSystemController(
@@ -33,12 +36,17 @@ export default function adminSystemController(
     InstanceService,
     UtilityService,
     AdminService,
-    EventService,
     QueueService,
+    RunnerService,
+    EventService,
     ) {
   $scope.response = undefined;
+  $scope.runnerResponse = undefined;
   $scope.groupedSystems = [];
   $scope.alerts = [];
+  $scope.runners = [];
+  $scope.showRunnersTile = false;
+  $scope.groupedRunners = [];
 
   $scope.setWindowTitle('systems');
 
@@ -98,6 +106,45 @@ export default function adminSystemController(
     InstanceService.stopInstance(instance).catch($scope.addErrorAlert);
   };
 
+  $scope.startRunner = function(runner) {
+    runner.waiting = true;
+    RunnerService.startRunner(runner).catch($scope.addErrorAlert);
+  };
+
+  $scope.stopRunner = function(runner) {
+    runner.waiting = true;
+    RunnerService.stopRunner(runner).catch($scope.addErrorAlert);
+  };
+
+  $scope.deleteRunner = (runner) => {
+    runner.waiting = true;
+    RunnerService.removeRunner(runner).catch($scope.addErrorAlert);
+  };
+
+  $scope.startRunners = function(runnerList) {
+    _.forEach(runnerList, $scope.startRunner);
+  };
+
+  $scope.stopRunners = function(runnerList) {
+    _.forEach(runnerList, $scope.stopRunner);
+  };
+
+  $scope.reloadRunners = function(runnerList) {
+    RunnerService.reloadRunners(runnerList[0].path).catch($scope.addErrorAlert);
+  };
+
+  $scope.deleteRunners = function(runnerList) {
+    _.forEach(runnerList, $scope.deleteRunner);
+  };
+
+  $scope.isRunnerUnassociated = function(runner) {
+    return instanceFromRunner(runner) === undefined;
+  };
+
+  $scope.runnerInstanceName = function(runner) {
+    return runner.instance ? runner.instance.name : "UNKNOWN";
+  };
+
   $scope.addErrorAlert = function(response) {
     $scope.alerts.push({
       type: 'danger',
@@ -125,6 +172,38 @@ export default function adminSystemController(
     }
   }
 
+  function groupRunners() {
+    if ($scope.runners) {
+      $scope.showRunnersTile = false;
+
+      for (let runner of $scope.runners) {
+        runner.instance = instanceFromRunner(runner);
+
+        if ($scope.isRunnerUnassociated(runner)){
+          $scope.showRunnersTile = true;
+        }
+      }
+
+      let grouped = _.groupBy($scope.runners, (value) => {
+        return value.path;
+      });
+      $scope.groupedRunners = _.sortBy(grouped, (runnerList) => {
+        return runnerList[0].path;
+      });
+    } else {
+      $scope.groupedRunners = [];
+    }
+  }
+
+  $scope.hasUnassociatedRunners = function(runners) {
+    for (let runner of runners) {
+      if ($scope.isRunnerUnassociated(runner)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   $rootScope.$watchCollection("systems", groupSystems);
 
   $scope.showLogs = function (system, instance) {
@@ -151,5 +230,49 @@ export default function adminSystemController(
       });
     };
 
+  function eventCallback(event) {
+    if (event.name.startsWith('RUNNER')) {
+      _.remove($scope.runners, (value) => {
+        return value.id == event.payload.id;
+      });
+
+      if (event.name != 'RUNNER_REMOVED') {
+        $scope.runners.push(event.payload);
+      }
+      groupRunners();
+
+    }
+    else if (event.name.startsWith('INSTANCE')) {
+      groupRunners();
+    }
+  }
+
+  EventService.addCallback('admin_system', (event) => {
+    $scope.$apply(() => {eventCallback(event);})
+  });
+  $scope.$on('$destroy', function() {
+    EventService.removeCallback('admin_system');
+  });
+
+  function instanceFromRunner(runner) {
+    for (let system of $rootScope.systems) {
+      for (let instance of system.instances) {
+        if (instance.metadata.runner_id == runner.id) {
+          return instance;
+        }
+      }
+    }
+
+    return undefined;
+  }
+
   groupSystems();
+
+  RunnerService.getRunners().then((response) => {
+    $scope.runnerResponse = response;
+    $scope.runners = response.data;
+
+    groupRunners();
+  });
+
 };

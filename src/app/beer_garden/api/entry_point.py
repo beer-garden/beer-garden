@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 from importlib import import_module
 
 import logging
@@ -100,7 +101,11 @@ class EntryPoint:
         self._event_listener.start()
 
     def stop(self, timeout: int = None) -> None:
-        """Stop the process with a SIGTERM
+        """Stop the process
+
+        SIGUSR1 is used as the stop signal to prevent premature shutdown. Due to the way
+        signals get propagated to process groups it's better to use a "custom" signal
+        rather than rely on a a traditional one like SIGTERM.
 
         If a `timeout` is specified this method will wait that long for the process to
         stop gracefully. If the process has still not stopped after the timeout expires
@@ -115,8 +120,13 @@ class EntryPoint:
         # First stop listening for events
         self._event_listener.stop()
 
-        # Then ensure the process is terminated
-        self._process.terminate()
+        pid = self._process.pid
+        if not pid:
+            logger.warning(f"No pid for {self._name}, was the process started?")
+            return
+
+        os.kill(pid, signal.SIGUSR1)
+
         self._process.join(timeout=timeout)
 
         if self._process.exitcode is None:
@@ -167,9 +177,10 @@ class EntryPoint:
         Returns:
             The result of the `target` function
         """
-        # Set the process to ignore SIGINT and exit on SIGTERM
+        # Set the process to ignore SIGINT, SIGTERM and exit on SIGUSR1
         signal.signal(signal.SIGINT, signal.SIG_IGN)
-        signal.signal(signal.SIGTERM, signal_handler)
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        signal.signal(signal.SIGUSR1, signal_handler)
 
         # First thing to do is set the config
         beer_garden.config.assign(config)
@@ -233,7 +244,7 @@ class Manager:
 
     def create_all(self):
         for entry_name, entry_value in beer_garden.config.get("entry").items():
-            if entry_value.get("enabled"):
+            if entry_value.get("enabled") or entry_name == "stomp":
                 try:
                     self.entry_points.append(self.create(entry_name))
                 except Exception as ex:

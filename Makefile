@@ -6,6 +6,7 @@ APP_DIR        = src/app
 UI_DIR         = src/ui
 
 VERSION        ?= 0.0.0
+ITERATION      ?= 1
 
 .PHONY: clean clean-build clean-test clean-pyc help test
 
@@ -40,7 +41,10 @@ help:
 
 
 # RPM
-rpm-build-local:  ## build a local rpm
+rpm-build:  ## build rpm
+	$(PYTHON) rpm/bin/build.py rpm $(VERSION) --iteration $(ITERATION)
+
+rpm-build-local:  ## build local rpm
 	$(PYTHON) rpm/bin/build.py rpm --local $(VERSION)
 
 
@@ -57,6 +61,14 @@ docker-build-unstable: ## build unstable docker images
 	$(MAKE) -C $(UI_DIR) docker-build-unstable
 
 
+# GitHub
+github-release: ## create a github release
+	http --session=github \
+	  https://api.github.com/repos/beer-garden/beer-garden/releases \
+	  tag_name=$(VERSION) \
+	  name=$(VERSION)
+
+
 # Publishing
 publish-docker: ## push the docker image
 	$(MAKE) -C $(APP_DIR) publish-docker
@@ -65,3 +77,6 @@ publish-docker: ## push the docker image
 publish-docker-unstable: ## push the unstable docker image
 	$(MAKE) -C $(APP_DIR) publish-docker-unstable
 	$(MAKE) -C $(UI_DIR) deps publish-docker-unstable
+
+publish-rpm: ## publish the rpm
+	rpm/bin/upload.sh $(VERSION) $(ITERATION)

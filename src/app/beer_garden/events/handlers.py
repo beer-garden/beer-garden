@@ -3,7 +3,9 @@ import logging
 from brewtils.models import Event
 
 import beer_garden.config
+import beer_garden.files
 import beer_garden.garden
+import beer_garden.local_plugins.manager
 import beer_garden.log
 import beer_garden.plugin
 import beer_garden.requests
@@ -39,6 +41,8 @@ def garden_callbacks(event: Event) -> None:
         beer_garden.systems.handle_event,
         beer_garden.scheduler.handle_event,
         beer_garden.log.handle_event,
+        beer_garden.files.handle_event,
+        beer_garden.local_plugins.manager.handle_event,
     ]:
         try:
             handler(event)

@@ -11,7 +11,12 @@ The system service is responible for:
 import copy
 
 import logging
-from brewtils.errors import BrewtilsException, ModelValidationError
+from brewtils.errors import (
+    BrewtilsException,
+    ModelValidationError,
+    PluginError,
+    RequestPublishException,
+)
 from brewtils.models import Command, Event, Events, Instance, System
 from brewtils.schemas import SystemSchema
 from typing import List, Sequence
@@ -209,10 +214,9 @@ def reload_system(system_id: str = None, system: System = None) -> None:
     Returns:
         None
     """
-    # TODO - It'd be nice to have a check here to make sure system is managed
     system = system or db.query_unique(System, id=system_id)
 
-    lpm.lpm_proxy.reload_system(system)
+    lpm.reload(system=system)
 
     return system
 
@@ -264,29 +268,50 @@ def purge_system(
     if force and not system.local:
         return remove_system(system=system)
 
-    # Publish stop message to all instances of this system
-    publish_stop(system)
-
-    # If local, wait for the plugins to stop
-    lpm.lpm_proxy.stop_system(system=system)
-
-    system = db.reload(system)
-
-    # Now clean up the message queues. It's possible for the request or admin queue to
-    # be none if we are stopping an instance that was not properly started.
     for instance in system.instances:
-        force_disconnect = instance.status != "STOPPED"
+        if instance.status not in ("STOPPED", "DEAD"):
+            if lpm.has_instance_id(instance.id):
+                try:
+                    lpm.remove(instance_id=instance.id)
+                except Exception as ex:
+                    if not force:
+                        raise PluginError(
+                            f"Error attempting to stop {system}[{instance.name}]"
+                        ) from ex
+
+                    logger.warning(
+                        f"Error while stopping instance {system}[{instance.name}]. "
+                        f"Force flag was specified so system delete will continue. "
+                        f"Underlying exception was: {ex}"
+                    )
+            else:
+                try:
+                    # TODO - It would be nice to wait for the instance to stop
+                    publish_stop(system, instance=instance)
+                except Exception as ex:
+                    if not force:
+                        raise RequestPublishException(
+                            f"Error attempting to publish stop message for "
+                            f"{system}[{instance.name}"
+                        ) from ex
+
+                    logger.warning(
+                        f"Error while publishing stop message for "
+                        f"{system}[{instance.name}]. Force flag was specified so "
+                        f"system delete will continue. Underlying exception was: {ex}"
+                    )
 
         request_queue = ""
         try:
             request_queue = instance.queue_info.get("request", {}).get("name")
             if request_queue:
-                queue.remove(
-                    request_queue, force_disconnect=force_disconnect, clear_queue=True
-                )
+                queue.remove(request_queue, force_disconnect=force, clear_queue=True)
         except Exception as ex:
             if not force:
-                raise
+                raise PluginError(
+                    f"Error attempting to remove request queue '{request_queue}' for "
+                    f"{system}[{instance.name}]"
+                ) from ex
 
             logger.warning(
                 f"Error while removing request queue '{request_queue}' for "
@@ -298,12 +323,13 @@ def purge_system(
         try:
             admin_queue = instance.queue_info.get("admin", {}).get("name")
             if admin_queue:
-                queue.remove(
-                    admin_queue, force_disconnect=force_disconnect, clear_queue=False
-                )
+                queue.remove(admin_queue, force_disconnect=force, clear_queue=False)
         except Exception as ex:
             if not force:
-                raise
+                raise PluginError(
+                    f"Error attempting to remove admin queue '{admin_queue}' for "
+                    f"{system}[{instance.name}]"
+                ) from ex
 
             logger.warning(
                 f"Error while removing admin queue '{admin_queue}' for "
@@ -313,11 +339,6 @@ def purge_system(
 
     # Finally, actually delete the system
     return remove_system(system=system)
-
-
-def rescan_system_directory() -> None:
-    """Scans plugin directory and starts any new Systems"""
-    lpm.lpm_proxy.scan_path()
 
 
 def get_instance(

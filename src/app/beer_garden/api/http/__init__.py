@@ -26,7 +26,9 @@ from brewtils.schemas import (
     RefreshTokenSchema,
     RequestSchema,
     RoleSchema,
+    RunnerSchema,
     SystemSchema,
+    FileStatusSchema,
 )
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
@@ -98,7 +100,9 @@ async def startup():
 
     beer_garden.api.http.logger.info("Http entry point is started. Hello!")
 
-    publish(Event(name=Events.ENTRY_STARTED.name))
+    publish(
+        Event(name=Events.ENTRY_STARTED.name, metadata={"entry_point_type": "HTTP"})
+    )
 
 
 async def shutdown():
@@ -122,7 +126,9 @@ async def shutdown():
     # This will almost definitely not be published to the websocket, because it would
     # need to make it up to the main process and back down into this process. We just
     # publish this here in case the main process is looking for it.
-    publish(Event(name=Events.ENTRY_STOPPED.name))
+    publish(
+        Event(name=Events.ENTRY_STOPPED.name, metadata={"entry_point_type": "HTTP"})
+    )
 
     # We need to do this before the scheduler shuts down completely in order to kick any
     # currently waiting request creations
@@ -202,8 +208,12 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/jobs/(\w+)/?", v1.job.JobAPI),
         (rf"{prefix}api/v1/logging/?", v1.logging.LoggingAPI),
         (rf"{prefix}api/v1/gardens/(\w+)/?", v1.garden.GardenAPI),
+        (rf"{prefix}api/v1/files/?", v1.file.FileAPI),
+        (rf"{prefix}api/v1/files/id/?", v1.file.FileNameAPI),
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
+        (rf"{prefix}api/vbeta/runners/?", vbeta.runner.RunnerListAPI),
+        (rf"{prefix}api/vbeta/runners/(\w+)/?", vbeta.runner.RunnerAPI),
         # V2
         (rf"{prefix}api/v2/users/?", v1.user.UsersAPI),
         (rf"{prefix}api/v2/users/(\w+)/?", v1.user.UserAPI),
@@ -275,7 +285,6 @@ def _setup_ssl_context() -> Tuple[Optional[ssl.SSLContext], Optional[ssl.SSLCont
 
 
 def _load_swagger(url_specs, title=None):
-
     global api_spec
     api_spec = APISpec(
         title=title,
@@ -295,10 +304,12 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("Role", schema=RoleSchema)
     api_spec.definition("Queue", schema=QueueSchema)
     api_spec.definition("Operation", schema=OperationSchema)
+    api_spec.definition("FileStatus", schema=FileStatusSchema)
 
     api_spec.definition("RefreshToken", schema=RefreshTokenSchema)
 
     api_spec.definition("Garden", schema=GardenSchema)
+    api_spec.definition("Runner", schema=RunnerSchema)
 
     api_spec.definition("_patch", schema=PatchSchema)
     api_spec.definition(

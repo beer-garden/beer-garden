@@ -41,10 +41,20 @@ export default function gardenService($http) {
   GardenService.serverModelToForm = function(model){
 
     var values = {};
+    var stomp_headers = [];
     values['connection_type'] = model['connection_type'];
      if (model.hasOwnProperty('connection_params') && model.connection_params != null) {
         for (var parameter of Object.keys(model['connection_params']) ) {
-          values[parameter] = model['connection_params'][parameter];
+          if (parameter == 'stomp_headers') {
+            for (var key in model['connection_params'][parameter]) {
+                stomp_headers[stomp_headers.length] = {'key': key,
+                    'value': model['connection_params'][parameter][key]};
+            }
+            values[parameter] = stomp_headers;
+          }
+          else {
+            values[parameter] = model['connection_params'][parameter];
+          }
         }
     }
 
@@ -55,15 +65,27 @@ export default function gardenService($http) {
 
     model['connection_type'] = form['connection_type'];
     model['connection_params'] = {};
+    var stomp_headers = {};
     for (var field of Object.keys(form) ) {
-       if (field != 'connection_type'){
+       if (field == 'stomp_headers') {
+         for (var i in form[field]){
+            stomp_headers[form[field][i]['key']] = form[field][i]['value'];
+         }
+         model['connection_params'][field] = stomp_headers;
+       }
+       else if (field != 'connection_type'){
          model['connection_params'][field] = form[field];
        }
     }
+
     return model;
   }
 
-  GardenService.CONNECTION_TYPES = ['HTTP','LOCAL'];
+  GardenService.CONNECTION_TYPES = ['HTTP','STOMP','LOCAL'];
+
+//  GardenService.stomp_header_array_to_dict = function(key, value){
+//    GardenService.
+//  }
 
   GardenService.SCHEMA = {
     'type': 'object',
@@ -94,6 +116,18 @@ export default function gardenService($http) {
         'type': 'integer',
         'minLength': 1,
       },
+      'stomp_host': {
+              'title': 'Host Name',
+              'description': 'Beer-garden hostname',
+              'type': 'string',
+              'minLength': 1,
+            },
+      'stomp_port': {
+              'title': 'Port',
+              'description': 'Beer-garden port',
+              'type': 'integer',
+              'minLength': 1,
+            },
       'url_prefix': {
         'title': 'URL Prefix',
         'description': 'URL path that will be used as a prefix when communicating with Beer-garden. Useful if Beer-garden is running on a URL other than \'/\'.',
@@ -119,7 +153,80 @@ export default function gardenService($http) {
         'description': 'Path to client certificate to use when communicating with Beer-garden',
         'type': 'string',
       },
-    }
+      'stomp_send_destination': {
+              'title': 'Send Destination',
+              'description': 'Destination queue where Stomp will send messages.',
+              'type': 'string',
+      },
+      'stomp_subscribe_destination': {
+                    'title': 'Subscribe Destination',
+                    'description': 'Destination queue where Stomp will listen for messages.',
+                    'type': 'string',
+      },
+      'stomp_username': {
+                    'title': 'Username',
+                    'description': 'Username for Stomp connection.',
+                    'type': 'string',
+      },
+      'stomp_password': {
+                    'title': 'Password',
+                    'description': 'Password for Stomp connection.',
+                    'type': 'string',
+      },
+      'stomp_ssl': {
+                          'title': ' ',
+                                'type': 'object',
+                                'properties':{
+                                'use_ssl': {
+                                              'title': 'SSL Enabled',
+                                              'description': 'Whether to connect with provided certifications',
+                                              'type': 'boolean',
+                                },
+                                'cert_file': {
+                                              'title': 'Cert File Path',
+                                              'description': 'Path to client certificate to use when communicating with Beer-garden',
+                                              'type': 'string',
+                                },
+                                'private_key': {
+                                              'title': 'Private key Path',
+                                              'description': 'Path to client key to use when communicating with Beer-garden',
+                                              'type': 'string',
+                                },
+                                'verify_host': {
+                                              'title': 'Verify Host',
+                                              'description': 'Whether to verify Host',
+                                              'type': 'boolean',
+                                },
+                                'verify_hostname': {
+                                              'title': 'Verify Hostname',
+                                              'description': 'Whether to verify Hostname',
+                                              'type': 'boolean',
+                                },
+                          },
+      },
+      'stomp_headers': {
+                          'title': 'Headers',
+                          'description': 'Headers to be sent with message',
+                          'type': 'array',
+                          'items':{
+                              'title': ' ',
+                              'type': 'object',
+                              'properties': {
+                                  'key': {
+                                         'title': 'Key',
+                                         'description': '',
+                                         'type': 'string',
+                                  },
+                                  'value': {
+                                         'title': 'Value',
+                                         'description': '',
+                                         'type': 'string',
+                                  }
+                              },
+                          },
+            },
+    },
+
   }
 
   GardenService.FORM = [
@@ -145,6 +252,19 @@ export default function gardenService($http) {
                 'ca_cert',
                 'ca_verify',
                 'client_cert'
+              ],
+            },
+            {
+              'title': 'STOMP',
+              'items': [
+                'stomp_host',
+                'stomp_port',
+                'stomp_send_destination',
+                'stomp_subscribe_destination',
+                'stomp_username',
+                'stomp_password',
+                'stomp_ssl',
+                'stomp_headers',
               ],
             },
           ],

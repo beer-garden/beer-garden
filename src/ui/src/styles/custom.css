@@ -117,7 +117,7 @@ html, body{
     transform: rotate(90deg);
 }
 
-#systems-container {
+.panel-container {
     display: flex;
     flex-flow: row wrap;
     justify-content: space-around;
@@ -125,7 +125,7 @@ html, body{
     padding-bottom: 20px;
 }
 
-#systems-container .container-item {
+.panel-container .container-item {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -134,7 +134,7 @@ html, body{
     max-width: 30%;
 }
 
-#systems-container .container-item h3 {
+.panel-container .container-item h3 {
     margin-top: 10px;
     margin-bottom: 10px;
 }
@@ -150,7 +150,7 @@ html, body{
     padding-right: 8px;
 }
 
-#systems-container .container-item.empty {
+.panel-container .container-item.empty {
     height: 0;
     min-width: 30%;
     max-width: 30%;

@@ -5,7 +5,12 @@
     <button type="button"
             ng-if="complete"
             ng-click="redoRequest(request)"
-            class="btn btn-success pull-right">
+            ng-disabled="disabledPourItAgain"
+            class="btn btn-success pull-right"
+            uib-popover="{{msgPourItAgain}}"
+            popover-animation="true"
+            popover-placement="left"
+            popover-trigger="'mouseenter'">
       Pour it Again
     </button>
     <small class="pull-right" ng-if="showInstanceStatus(request, instanceStatus)">

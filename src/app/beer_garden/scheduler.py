@@ -25,7 +25,6 @@ from watchdog.utils import has_attribute, unicode_paths
 from pathtools.patterns import match_any_paths
 
 from apscheduler.schedulers.background import BackgroundScheduler
-
 from brewtils.models import Event, Events, Job
 
 import beer_garden
@@ -35,6 +34,7 @@ from beer_garden.events import publish_event
 from beer_garden.requests import process_request, get_request
 from beer_garden.db.mongo.jobstore import construct_trigger
 from brewtils.models import FileTrigger
+
 
 logger = logging.getLogger(__name__)
 
@@ -576,7 +576,6 @@ def handle_event(event: Event) -> None:
 
         if event.name == Events.JOB_CREATED.name:
             try:
-
                 beer_garden.application.scheduler.add_job(
                     run_job,
                     trigger=event.payload.trigger,
