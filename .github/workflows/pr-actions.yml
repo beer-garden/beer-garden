@@ -164,13 +164,11 @@ jobs:
           path: ./new
 
       - name: Scan current complexity
-        continue-on-error: true
         working-directory: ./new/src/app
         run: |
           flake8 --max-complexity ${{ matrix.complexity-threshold }} | sed -E ${{ matrix.sed-filter }} > ~/current_complexity.txt
 
       - name: Scan old complexity
-        continue-on-error: true
         working-directory: ./old/src/app
         run: |
           flake8 --max-complexity ${{ matrix.complexity-threshold }} | sed -E ${{ matrix.sed-filter }} > ~/old_complexity.txt
