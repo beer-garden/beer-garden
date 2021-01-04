@@ -325,7 +325,7 @@ class Application(StoppableThread):
                 bg_port=http_event.port,
                 ssl_enabled=http_event.ssl.enabled,
                 username=http_event.username,
-                password=http_event.password
+                password=http_event.password,
             )
             skip_events = config.get("parent.skip_events")
 
