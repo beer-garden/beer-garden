@@ -155,9 +155,12 @@ jobs:
       - id: files
         uses: jitterbit/get-changed-files@v1
 
-      - name: Compare complexities
+      - name: Build the checker
         run: |
           wily build ./src/app/
+
+      - name: Run the checker
+        run: |
           for changed_file in ${{ steps.files.outputs.all }}; do
             if ! [[ changed_file =~ ^\. ]]; then
               wily report -n 5 changed_file cc mi
