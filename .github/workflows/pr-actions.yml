@@ -179,7 +179,7 @@ jobs:
 
       - name: Scan old complexity
         continue-on-error: true
-          working-directory: ./old
+        working-directory: ./old
         run: |
           flake8 --max-complexity 1 > ~/old_complexity.txt
 
