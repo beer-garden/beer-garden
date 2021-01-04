@@ -167,5 +167,13 @@ jobs:
 
       - name: Scan current complexity
         continue-on-error: true
+        id: current_complexity
+        outputs:
+          results:
+            description: "The results from the compolexity checker"
         run: |
-          flake8 --max-complexity ${{ matrix.max-cylclomatic-complexity }}
+          echo "::set-output name=results::$(flake8 --max-complexity ${{ matrix.max-cylclomatic-complexity }})"
+
+      -name: Echo output
+       run: |
+         echo "${{ steps.current_complexity.outputs.results }}"
