@@ -158,4 +158,6 @@ jobs:
       - name: Compare complexities
         run: |
           wily build ./src/app/
-          wily diff -r  ${{ github.event.pull_request.base.ref }} ${{ steps.files.outputs.all }}
+          for changed_file in ${{ steps.files.outputs.all }}; do
+            wily report -n 5 ${{ steps.files.outputs.all }} cc mi
+          done
