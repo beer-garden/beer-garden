@@ -173,4 +173,4 @@ jobs:
 
       - name: Compare complexities
         run: |
-          diff ~/current_complexity.txt ~/old_complexity.txt
+          diff --ignore-all-space --strip-trailing-cr ~/current_complexity.txt ~/old_complexity.txt
