@@ -160,6 +160,6 @@ jobs:
           wily build ./src/app/
           for changed_file in ${{ steps.files.outputs.all }}; do
             if ! [[ changed_file =~ ^\. ]]; then
-              wily report -n 5 <( echo "${{ steps.files.outputs.all }}" | grep --invert-match '.*' ) cc mi
+              wily report -n 5 changed_file cc mi
             fi
           done
