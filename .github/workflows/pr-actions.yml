@@ -168,3 +168,8 @@ jobs:
         continue-on-error: true
         run: |
           flake8 --max-complexity 10 > ~/current_complexity.txt
+
+      - name: Read current complexity
+        continue-on-error: true
+        run: |
+          cat ~/current_complexity.txt
