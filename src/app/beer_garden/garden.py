@@ -109,6 +109,9 @@ def update_garden_config(garden: Garden) -> Garden:
 
     """
     db_garden = db.query_unique(Garden, id=garden.id)
+
+    garden = encode_garden_fields(garden, db_garden=db_garden)
+
     db_garden.connection_params = garden.connection_params
     db_garden.connection_type = garden.connection_type
     db_garden.status = "INITIALIZING"
@@ -209,6 +212,55 @@ def update_garden(garden: Garden) -> Garden:
         The updated Garden
     """
     return db.update(garden)
+
+
+def encode_garden_fields(garden: Garden, db_garden: Garden = None) -> Garden:
+    """
+    For any encoded fields in the connection parameters, we want to encode those values so
+    they are not passed around the "raw" value
+
+    Args:
+        db_garden:
+        garden:
+
+    Returns:
+
+    """
+
+    encoded_fields = ["password"]
+
+    for encoded_field in encoded_fields:
+
+        if encoded_field in garden.connection_params.keys():
+            if not db_garden:
+                db_garden = db.query_unique(Garden, id=garden.id)
+
+            if encoded_field in db_garden.connection_params.keys():
+
+                if (
+                    garden.connection_params[encoded_field]
+                    == db_garden.connection_params[encoded_field]
+                ):
+                    # Do Nothing, the password is encoded and matches the current encoded password
+                    pass
+                else:
+                    if garden.connection_params[encoded_field] == db.decode_value(
+                        db_garden.connection_params[encoded_field]
+                    ):
+                        garden.connection_params[
+                            encoded_field
+                        ] = db_garden.connection_params[encoded_field]
+                    else:
+                        garden.connection_params[encoded_field] = db.encode_value(
+                            garden.connection_params[encoded_field]
+                        )
+
+            else:
+                garden.connection_params[encoded_field] = db.encode_value(
+                    garden.connection_params[encoded_field]
+                )
+
+    return garden
 
 
 def handle_event(event):

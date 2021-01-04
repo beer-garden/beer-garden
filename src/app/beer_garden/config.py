@@ -702,6 +702,27 @@ _DB_SPEC = {
                 },
             },
         },
+        "encoder": {
+            "type": "dict",
+            "items": {
+                "algorithm": {
+                    "type": "str",
+                    "default": "HS256",
+                    "description": "Algorithm to use when signing tokens",
+                },
+                "lifetime": {
+                    "type": "int",
+                    "default": 1200,
+                    "description": "Time (seconds) before a token expires",
+                },
+                "secret": {
+                    "type": "str",
+                    "required": False,
+                    "description": "Secret to use when signing tokens",
+                    "default": "",
+                },
+            },
+        },
     },
 }
 

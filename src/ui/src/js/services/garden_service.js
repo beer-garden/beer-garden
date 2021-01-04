@@ -116,6 +116,18 @@ export default function gardenService($http) {
         'type': 'integer',
         'minLength': 1,
       },
+      'username': {
+        'title': 'Username',
+        'description': 'Beer-garden User Account Username for log in to Garden',
+        'type': 'string',
+
+      },
+      'password': {
+        'title': 'Password',
+        'description': 'Beer-garden User Account Password for log in to Garden',
+        'type': 'string',
+
+      },
       'stomp_host': {
               'title': 'Host Name',
               'description': 'Beer-garden hostname',
@@ -248,6 +260,8 @@ export default function gardenService($http) {
                 'host',
                 'port',
                 'url_prefix',
+                'username',
+                {'key':'password', 'type':'password'},
                 'ssl',
                 'ca_cert',
                 'ca_verify',

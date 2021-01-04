@@ -23,3 +23,6 @@ create = beer_garden.db.mongo.api.create
 update = beer_garden.db.mongo.api.update
 modify = beer_garden.db.mongo.api.modify
 delete = beer_garden.db.mongo.api.delete
+
+encode_value = beer_garden.db.mongo.api.encode_value
+decode_value = beer_garden.db.mongo.api.decode_value

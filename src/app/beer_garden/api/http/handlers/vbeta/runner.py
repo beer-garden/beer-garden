@@ -42,7 +42,7 @@ class RunnerAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.DELETE])
+    @authenticated(permissions=[Permissions.ADMIN])
     async def delete(self, runner_id):
         """
         ---
@@ -76,7 +76,7 @@ class RunnerAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.UPDATE])
+    @authenticated(permissions=[Permissions.ADMIN])
     async def patch(self, runner_id):
         """
         ---
@@ -173,7 +173,7 @@ class RunnerListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.UPDATE])
+    @authenticated(permissions=[Permissions.ADMIN])
     async def patch(self):
         """
         ---

@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
+import jwt
+
 import brewtils.models
 import logging
 from box import Box
+
+from beer_garden import config
 from brewtils.models import BaseModel
 from brewtils.schema_parser import SchemaParser
 from mongoengine import NotUniqueError, connect, register_connection, DoesNotExist
@@ -419,3 +423,21 @@ def reload(obj: ModelItem) -> ModelItem:
 
 def distinct(brewtils_clazz: ModelItem, field: str) -> List:
     return _model_map[brewtils_clazz].objects.distinct(field)
+
+
+def encode_value(value: str) -> str:
+    db_config = config.get("db")
+
+    return jwt.encode(
+        {"value": value},
+        key=db_config.encoder.secret,
+        algorithm=db_config.encoder.algorithm,
+    ).decode()
+
+
+def decode_value(value: str) -> str:
+    db_config = config.get("db")
+
+    return jwt.decode(
+        value, key=db_config.encoder.secret, algorithm=db_config.encoder.algorithm
+    )["value"]

@@ -28,6 +28,7 @@ from beer_garden.api.stomp.processors import (
     append_headers as stomp_append_headers,
     process_send_message as stomp_process_message,
 )
+from brewtils import EasyClient
 from brewtils.models import Events, Garden, Operation, Request, System, Event
 from brewtils.schema_parser import SchemaParser
 
@@ -633,31 +634,28 @@ def _forward_http(operation: Operation, target_garden: Garden):
     """
 
     conn_info = target_garden.connection_params
-    endpoint = "{}://{}:{}{}api/v1/forward".format(
-        "https" if conn_info.get("ssl") else "http",
-        conn_info.get("host"),
-        conn_info.get("port"),
-        conn_info.get("url_prefix", "/"),
+    # endpoint = "{}://{}:{}{}api/v1/forward".format(
+    #     "https" if conn_info.get("ssl") else "http",
+    #     conn_info.get("host"),
+    #     conn_info.get("port"),
+    #     conn_info.get("url_prefix", "/"),
+    # )
+
+    decoded_password = None
+    if conn_info.get("password", None):
+        decoded_password = db.decode_value(conn_info.get("password"))
+
+    easy_client = EasyClient(
+        bg_host=conn_info.get("host"),
+        bg_port=conn_info.get("port"),
+        ssl_enabled=conn_info.get("ssl"),
+        bg_url_prefix=conn_info.get("url_prefix", "/"),
+        username=conn_info.get("username", None),
+        password=decoded_password,
     )
 
-    response = None
-
     try:
-        if conn_info.get("ssl"):
-            http_config = config.get("entry.http")
-            response = requests.post(
-                endpoint,
-                data=SchemaParser.serialize_operation(operation),
-                cert=http_config.ssl.ca_cert,
-                verify=http_config.ssl.ca_path,
-            )
-
-        else:
-            response = requests.post(
-                endpoint,
-                data=SchemaParser.serialize_operation(operation),
-                headers={"Content-type": "application/json", "Accept": "text/plain"},
-            )
+        response = easy_client.post_forward(operation)
 
         if response.status_code != 200:
             _publish_failed_forward(
