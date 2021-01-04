@@ -172,7 +172,8 @@ jobs:
           results:
             description: "The results from the compolexity checker"
         run: |
-          echo "::set-output name=results::$(flake8 --max-complexity ${{ matrix.max-cylclomatic-complexity }})"
+          export data=$(flake8 --max-complexity ${{ matrix.max-cylclomatic-complexity }})
+          echo "::set-output name=results::"$data"
 
       -name: Echo output
        run: |
