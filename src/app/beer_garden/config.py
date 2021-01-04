@@ -886,6 +886,16 @@ _PARENT_SPEC = {
                     "default": 2337,
                     "description": "Serve content on this port",
                 },
+                "username": {
+                    "type": "str",
+                    "description": "Username to use for authentication",
+                    "required": False,
+                },
+                "password": {
+                    "type": "str",
+                    "description": "Password to use for authentication",
+                    "required": False,
+                },
                 "skip_events": {
                     "type": "list",
                     "items": {"skip_event": {"type": "str"}},

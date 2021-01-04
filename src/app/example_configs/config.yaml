@@ -87,6 +87,8 @@ parent:
     host: null
     port: 2337
     skip_events: []
+    username: null
+    password: null
     ssl:
       ca_cert: null
       ca_path: null
