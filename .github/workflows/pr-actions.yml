@@ -135,8 +135,9 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.7.9']
+        python-version: ['3.7']
         os: ['ubuntu-latest']
+        max-cylclomatic-complexity: ['10']
 
     env:
       OS: ${{ matrix.os }}
@@ -162,10 +163,18 @@ jobs:
 
       - name: Make Deps
         run: |
-          pip install wily
+          pip install flake8
 
-      - name: Create a Complexity Report
+      - name: Scan current complexity
         continue-on-error: true
+        working-directory: ./src/app/beer_garden/
+        id: current_complexity
+        outputs:
+          data:
+            description: "The results of the cyclomatic complexity check on the new code."
         run: |
-          wily build src/app/beer_garden/
-          wily diff src/app/beer_garden/ -r HEAD^1
+#          echo "::set-output name=data::$(flake8 --max-complexity ${{ matrix.max-cylclomatic-complexity }})"
+          flake8 --max-complexity ${{ matrix.max-cylclomatic-complexity }}
+
+#      - uses: actions/checkout@v2
+#        with:
