@@ -133,7 +133,7 @@ jobs:
       matrix:
         python-version: ['3.7']
         os: ['ubuntu-latest']
-        complexity-threshold: ['1']
+        complexity-threshold: ['10']
 #       This strips the line and column from the output, but keeps the file name
         sed-filter: ['s"/([^:]+):([^:]+):([^:]+):*/\1:/"']
 
@@ -162,9 +162,6 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           path: ./new
-
-      - id: files
-        uses: jitterbit/get-changed-files@v1
 
       - name: Scan current complexity
         continue-on-error: true
