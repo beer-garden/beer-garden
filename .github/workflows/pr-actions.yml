@@ -167,14 +167,5 @@ jobs:
 
       - name: Scan current complexity
         continue-on-error: true
-        working-directory: ./src/app/beer_garden/
-        id: current_complexity
-        outputs:
-          data:
-            description: "The results of the cyclomatic complexity check on the new code."
         run: |
-#          echo "::set-output name=data::$(flake8 --max-complexity ${{ matrix.max-cylclomatic-complexity }})"
           flake8 --max-complexity ${{ matrix.max-cylclomatic-complexity }}
-
-#      - uses: actions/checkout@v2
-#        with:
