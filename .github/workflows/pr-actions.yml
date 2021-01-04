@@ -213,6 +213,7 @@ jobs:
 
       - name: Scan old security
         working-directory: ./old/src/app
+        continue-on-error: true
         run: |
           bandit --format json -o ~/old_bandit.json -r beer_garden
 
