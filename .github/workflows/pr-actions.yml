@@ -144,6 +144,11 @@ jobs:
 
     name: Code Complexity Check OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
     steps:
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
       # Need to update if we support other OS's
       - name: Cache PIP Install
         uses: actions/cache@v2
@@ -153,6 +158,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.python-version }}-pip-coverage
 
+      - name: Make Deps
+        run: |
+          pip install flake8
+          
       - uses: actions/checkout@v2
         with:
           path: new
@@ -161,15 +170,6 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           path: old
-
-      - name: Setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Make Deps
-        run: |
-          pip install flake8
 
       - name: Scan current complexity
         continue-on-error: true
