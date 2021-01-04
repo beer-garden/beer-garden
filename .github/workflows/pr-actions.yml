@@ -152,19 +152,31 @@ jobs:
 
       - uses: actions/checkout@v2
         with:
+          ref: ${{ github.base_ref }}
+          path: ./old
+
+      - uses: actions/checkout@v2
+        with:
           ref: ${{ github.head_ref }}
+          path: ./new
 
       - id: files
         uses: jitterbit/get-changed-files@v1
 
-      - name: Build the checker
+      - name: Scan current complexity
+        continue-on-error: true
+        working-directory: ./new/src/app
+#       This strips the line and column from the output, but keeps the file name
         run: |
-          wily build ./src/app/
+          flake8 --max-complexity 1 | sed -E s"/([^:]+):([^:]+):([^:]+):*/\1:/" > ~/current_complexity.txt
 
-      - name: Run the checker
+      - name: Scan old complexity
+        continue-on-error: true
+        working-directory: ./old/src/app
+#       This strips the line and column from the output, but keeps the file name
         run: |
-          for changed_file in ${{ steps.files.outputs.all }}; do
-            if ! [[ changed_file =~ ^\. ]]; then
-              wily report -n 5 changed_file cc mi
-            fi
-          done
+          flake8 --max-complexity 1 | sed -E s"/([^:]+):([^:]+):([^:]+):*/\1:/" > ~/old_complexity.txt
+
+      - name: Compare complexities
+        run: |
+          diff --ignore-all-space --strip-trailing-cr ~/current_complexity.txt ~/old_complexity.txt
