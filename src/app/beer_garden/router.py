@@ -652,6 +652,9 @@ def _forward_http(operation: Operation, target_garden: Garden):
         bg_url_prefix=conn_info.get("url_prefix", "/"),
         username=conn_info.get("username", None),
         password=decoded_password,
+        ca_cert=conn_info.get("ca_cert"),
+        ca_verify=conn_info.get("ca_verify"),
+        client_cert=conn_info.get("client_cert"),
     )
 
     try:

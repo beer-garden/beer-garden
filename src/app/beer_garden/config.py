@@ -925,15 +925,20 @@ _PARENT_SPEC = {
                     "default": 2337,
                     "description": "Serve content on this port",
                 },
-                "username": {
-                    "type": "str",
-                    "description": "Username to use for authentication",
-                    "required": False,
-                },
-                "password": {
-                    "type": "str",
-                    "description": "Password to use for authentication",
-                    "required": False,
+                "auth": {
+                    "type": "dict",
+                    "items": {
+                        "username": {
+                            "type": "str",
+                            "description": "Username to use for authentication",
+                            "required": False,
+                        },
+                        "password": {
+                            "type": "str",
+                            "description": "Password to use for authentication",
+                            "required": False,
+                        },
+                    },
                 },
                 "skip_events": {
                     "type": "list",
@@ -950,16 +955,6 @@ _PARENT_SPEC = {
                             "default": False,
                             "description": "Serve content using SSL",
                         },
-                        "private_key": {
-                            "type": "str",
-                            "description": "Path to a private key",
-                            "required": False,
-                        },
-                        "public_key": {
-                            "type": "str",
-                            "description": "Path to a public key",
-                            "required": False,
-                        },
                         "ca_cert": {
                             "type": "str",
                             "description": (
@@ -967,20 +962,17 @@ _PARENT_SPEC = {
                             ),
                             "required": False,
                         },
-                        "ca_path": {
-                            "type": "str",
-                            "description": (
-                                "Path to CA certificate path to use for SSLContext"
-                            ),
+                        "ca_verify": {
+                            "type": "bool",
+                            "default": True,
+                            "description": "Verify external certificates for url-based "
+                            "choices",
                             "required": False,
                         },
-                        "client_cert_verify": {
+                        "client_cert": {
                             "type": "str",
-                            "description": (
-                                "Client certificate mode to use when handling requests"
-                            ),
-                            "choices": ["NONE", "OPTIONAL", "REQUIRED"],
-                            "default": "NONE",
+                            "description": "Path to client combined key / certificate",
+                            "required": False,
                         },
                     },
                 },

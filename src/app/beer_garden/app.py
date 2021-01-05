@@ -323,9 +323,12 @@ class Application(StoppableThread):
             easy_client = EasyClient(
                 bg_host=http_event.host,
                 bg_port=http_event.port,
+                username=http_event.auth.username,
+                password=http_event.auth.password,
                 ssl_enabled=http_event.ssl.enabled,
-                username=http_event.username,
-                password=http_event.password,
+                ca_cert=http_event.ssl.ca_cert,
+                ca_verify=http_event.ssl.ca_verify,
+                client_cert=http_event.ssl.client_cert,
             )
             skip_events = config.get("parent.skip_events")
 
