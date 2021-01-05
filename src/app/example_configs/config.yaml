@@ -16,6 +16,10 @@ db:
     action: -1
     file: 15
     info: 15
+  encoder:
+    algorithm: HS256
+    lifetime: 1200
+    secret: IAMSUPERSECRET
 entry:
   http:
     enabled: true
@@ -89,15 +93,14 @@ parent:
     host: null
     port: 2337
     skip_events: []
-    username: null
-    password: null
+    auth:
+      username: null
+      password: null
     ssl:
       ca_cert: null
-      ca_path: null
-      client_cert_verify: NONE
+      ca_verify: true
+      client_cert: null
       enabled: false
-      private_key: null
-      public_key: null
     url_prefix: /
   stomp:
     enabled: false
