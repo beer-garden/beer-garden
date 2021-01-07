@@ -135,6 +135,36 @@ export default function routeConfig(
         'command': null,
       },
     })
+    .state('base.jobscreatesystem', {
+      url: 'jobs/create/system/',
+      templateUrl: 'job/create_system.html',
+      controller: 'JobCreateSystemController',
+    })
+    .state('base.jobscreatecommand', {
+      url: 'jobs/create/command/',
+      templateUrl: 'job/create_command.html',
+      controller: 'JobCreateCommandController',
+      params: {
+        'system': null,
+      },
+    })
+    .state('base.jobscreaterequest', {
+      url: 'jobs/create/request/',
+      templateUrl: 'job/create_request.html',
+      controller: 'JobCreateRequestController',
+      params: {
+        'system': null,
+        'command': null,
+      },
+    })
+    .state('base.jobscreatetrigger', {
+      url: 'jobs/create/trigger/',
+      templateUrl: 'job/create_trigger.html',
+      controller: 'JobCreateTriggerController',
+      params: {
+        'request': null,
+      },
+    })
     .state('base.job', {
       'url': 'jobs/:id/',
       'templateUrl': 'job_view.html',
