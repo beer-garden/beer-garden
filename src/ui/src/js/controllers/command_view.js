@@ -176,13 +176,7 @@ export default function commandViewController(
   };
 
   $scope.scheduleRequest = function() {
-    $state.go('base.jobsCreate',
-      {
-        'request': $scope.model,
-        'system': $scope.system,
-        'command': $scope.command,
-      }
-    );
+    $state.go('base.jobscreatetrigger', {'request': $scope.model});
   };
 
   let generateSF = function() {
