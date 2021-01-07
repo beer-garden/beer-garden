@@ -125,16 +125,6 @@ export default function routeConfig(
       templateUrl: 'job_index.html',
       controller: 'JobIndexController',
     })
-    .state('base.jobsCreate', {
-      url: 'jobs/create/',
-      templateUrl: 'job_create.html',
-      controller: 'JobCreateController',
-      params: {
-        'request': null,
-        'system': null,
-        'command': null,
-      },
-    })
     .state('base.jobscreatesystem', {
       url: 'jobs/create/system/',
       templateUrl: 'job/create_system.html',
