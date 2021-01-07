@@ -52,7 +52,7 @@ module.exports = {
       },
       {
         test: /\.html$/,
-        use: ['ng-cache-loader?prefix=[dir]'],
+        use: ['ng-cache-loader?prefix=partials:**'],
       },
       {
         test: /\.css$/,
