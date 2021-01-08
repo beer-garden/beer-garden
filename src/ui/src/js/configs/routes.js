@@ -20,7 +20,6 @@ export default function routeConfig(
     $urlRouterProvider,
     $urlMatcherFactoryProvider,
     $locationProvider) {
-  const basePath = 'partials/';
 
   $urlRouterProvider.otherwise('/');
   $urlMatcherFactoryProvider.strictMode(false);
@@ -62,16 +61,16 @@ export default function routeConfig(
     })
     .state('base.about', {
       url: 'about',
-      templateUrl: basePath + 'about.html',
+      templateUrl: 'about.html',
       controller: 'AboutController',
     })
     .state('login', {
-      templateUrl: basePath + 'login.html',
+      templateUrl: 'login.html',
       controller: 'LoginController',
     })
     .state('base.systems', {
       url: 'systems/',
-      templateUrl: basePath + 'system_index.html',
+      templateUrl: 'system_index.html',
       controller: 'SystemIndexController',
     })
     .state('base.systemID', {
@@ -83,7 +82,7 @@ export default function routeConfig(
     })
     .state('base.system', {
       url: 'commands?namespace&systemName&systemVersion',
-      templateUrl: basePath + 'command_index.html',
+      templateUrl: 'command_index.html',
       controller: 'CommandIndexController',
       resolve: {
         system: ['$stateParams', 'SystemService', ($stateParams, SystemService) => {
@@ -96,7 +95,7 @@ export default function routeConfig(
     // This is just an alias for base.system with no query args at this point
     .state('base.commands', {
       url: 'commands/',
-      templateUrl: basePath + 'command_index.html',
+      templateUrl: 'command_index.html',
       controller: ['$state', ($state) => {$state.go('base.system');}],
     })
     // Don't ask me why this can't be nested as base.system.command
@@ -104,7 +103,7 @@ export default function routeConfig(
     // base.system defines a template
     .state('base.command', {
       url: 'systems/:namespace/:systemName/:systemVersion/commands/:commandName/',
-      templateUrl: basePath + 'command_view.html',
+      templateUrl: 'command_view.html',
       controller: 'CommandViewController',
       params: {
         request: null,
@@ -123,62 +122,82 @@ export default function routeConfig(
     })
     .state('base.jobs', {
       url: 'jobs/',
-      templateUrl: basePath + 'job_index.html',
+      templateUrl: 'job_index.html',
       controller: 'JobIndexController',
     })
-    .state('base.jobsCreate', {
-      url: 'jobs/create/',
-      templateUrl: basePath + 'job_create.html',
-      controller: 'JobCreateController',
+    .state('base.jobscreatesystem', {
+      url: 'jobs/create/system/',
+      templateUrl: 'job/create_system.html',
+      controller: 'JobCreateSystemController',
+    })
+    .state('base.jobscreatecommand', {
+      url: 'jobs/create/command/',
+      templateUrl: 'job/create_command.html',
+      controller: 'JobCreateCommandController',
       params: {
-        'request': null,
+        'system': null,
+      },
+    })
+    .state('base.jobscreaterequest', {
+      url: 'jobs/create/request/',
+      templateUrl: 'job/create_request.html',
+      controller: 'JobCreateRequestController',
+      params: {
         'system': null,
         'command': null,
       },
     })
+    .state('base.jobscreatetrigger', {
+      url: 'jobs/create/trigger/',
+      templateUrl: 'job/create_trigger.html',
+      controller: 'JobCreateTriggerController',
+      params: {
+        'request': null,
+      },
+    })
     .state('base.job', {
       'url': 'jobs/:id/',
-      'templateUrl': basePath + 'job_view.html',
+      'templateUrl': 'job_view.html',
       'controller': 'JobViewController',
     })
     .state('base.requests', {
       url: 'requests/',
-      templateUrl: basePath + 'request_index.html',
+      templateUrl: 'request_index.html',
       controller: 'RequestIndexController',
     })
     .state('base.request', {
       url: 'requests/:requestId/',
-      templateUrl: basePath + 'request_view.html',
+      templateUrl: 'request_view.html',
       controller: 'RequestViewController',
     })
     .state('base.queues', {
       url: 'admin/queues/',
-      templateUrl: basePath + 'admin_queue.html',
+      templateUrl: 'admin_queue.html',
       controller: 'AdminQueueController',
     })
     .state('base.system_admin', {
       url: 'admin/systems/',
-      templateUrl: basePath + 'admin_system.html',
+      templateUrl: 'admin_system.html',
       controller: 'AdminSystemController',
     })
     .state('base.garden_admin', {
       url: 'admin/gardens/',
-      templateUrl: basePath + 'admin_garden_index.html',
+      templateUrl: 'admin_garden_index.html',
       controller: 'AdminGardenController',
     })
     .state('base.garden_view', {
       url: 'admin/gardens/:name/',
-      templateUrl: basePath + 'admin_garden_view.html',
+      templateUrl: 'admin_garden_view.html',
       controller: 'AdminGardenViewController',
     })
     .state('base.user_admin', {
       url: 'admin/users/',
-      templateUrl: basePath + 'admin_user.html',
+      templateUrl: 'admin_user.html',
       controller: 'AdminUserController',
     })
     .state('base.role_admin', {
       url: 'admin/roles/',
-      templateUrl: basePath + 'admin_role.html',
+      templateUrl: 'admin_role.html',
       controller: 'AdminRoleController',
     });
 };
