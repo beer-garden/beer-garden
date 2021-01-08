@@ -15,7 +15,7 @@ technology we use.
 import logging
 
 from beer_garden.systems import get_instance
-from brewtils.models import Events, Queue, System, Instance
+from brewtils.models import Events, Queue, System
 
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
