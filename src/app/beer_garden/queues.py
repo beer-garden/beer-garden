@@ -14,7 +14,8 @@ technology we use.
 
 import logging
 
-from brewtils.models import Events, Queue, System, Instance
+from beer_garden.systems import get_instance
+from brewtils.models import Events, Queue, System
 
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
@@ -35,7 +36,8 @@ def get_queue_message_count(queue_name):
 
 
 def get_instance_queues(instance_id):
-    instance = db.query_unique(Instance, id=instance_id)
+
+    instance = get_instance(instance_id=instance_id)
 
     if instance.queue_info:
 
