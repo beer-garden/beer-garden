@@ -106,7 +106,7 @@ def operation_namespace(obj: Operation = None) -> str:
     if "READ" not in obj.operation_type:
         if "REQUEST" in obj.operation_type:
             request_id = None
-            if len(obj.arg) > 0:
+            if len(obj.args) > 0:
                 request_id = obj.args[0]
             elif "request_id" in obj.kwargs:
                 request_id = obj.kwargs["request_id"]
@@ -116,7 +116,7 @@ def operation_namespace(obj: Operation = None) -> str:
                 return request_namespace(request)
         elif "SYSTEM" in obj.operation_type:
             system_id = None
-            if len(obj.arg) > 0:
+            if len(obj.args) > 0:
                 system_id = obj.args[0]
             elif "system_id" in obj.kwargs:
                 system_id = obj.kwargs["system_id"]
@@ -127,7 +127,7 @@ def operation_namespace(obj: Operation = None) -> str:
 
         elif "INSTANCE" in obj.operation_type:
             instance_id = None
-            if len(obj.arg) > 0:
+            if len(obj.args) > 0:
                 instance_id = obj.args[0]
             elif "instance_id" in obj.kwargs:
                 instance_id = obj.kwargs["instance_id"]
@@ -137,7 +137,7 @@ def operation_namespace(obj: Operation = None) -> str:
                 return system_namespace(system)
         elif "JOB" in obj.operation_type:
             job_id = None
-            if len(obj.arg) > 0:
+            if len(obj.args) > 0:
                 job_id = obj.args[0]
             elif "job_id" in obj.kwargs:
                 job_id = obj.kwargs["job_id"]
@@ -258,9 +258,16 @@ def filter_brewtils_model(
 
     """
 
-    # Impossible to filter, so we return the object
+    # Last ditch effort to verify they at least have the required permissions
     if not hasattr(obj, "schema"):
-        return obj
+        if permission_check(
+            current_user=current_user, required_permissions=required_permissions
+        ):
+            return obj
+        if raise_error:
+            raise RequestForbidden("Action requires permissions")
+
+        return None
 
     # First we check if we have an easy mapping to the namespace
     obj_namespace = None
@@ -356,9 +363,14 @@ def model_db_filter(obj=None, current_user: Principal = None):
 
     """
 
-    # Impossible to filter, so we return the object
+    # Impossible to add filters, so we return the object
     if not hasattr(obj, "schema"):
-        return obj
+        return
+
+    # Local access gets them Read to everything, so no filtering
+    for permission in current_user.permissions:
+        if permission.is_local:
+            return
 
     if obj.schema in obj_db_filtering.keys():
         obj_db_filtering[obj.schema](obj=obj, current_user=current_user)
@@ -382,6 +394,27 @@ def namespace_check(
             if permission.access in PermissionRequiredAccess[required] and (
                 permission.namespace == namespace or permission.is_local
             ):
+                return True
+
+    return False
+
+
+def permission_check(
+    current_user: Principal = None, required_permissions: list = list()
+):
+    """
+    Compares the namespace provided with the Principals permissions and required permissions
+    Args:
+        namespace: Namespace associated with Model
+        current_user: Principal record associated with the Model
+        required_permissions: Required permission level for the Model
+
+    Returns:
+
+    """
+    for permission in current_user.permissions:
+        for required in required_permissions:
+            if permission.access in PermissionRequiredAccess[required]:
                 return True
 
     return False
