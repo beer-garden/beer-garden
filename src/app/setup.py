@@ -30,7 +30,7 @@ setup(
     install_requires=[
         "apispec==0.38.0",
         "apscheduler==3.6.3",
-        "brewtils>=3.0.0",
+        "brewtils>=3.0.2",
         "mongoengine<0.21",
         "more-itertools<9",
         "motor<3",
