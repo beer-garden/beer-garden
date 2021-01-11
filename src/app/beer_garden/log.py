@@ -9,18 +9,21 @@ The log service is responsible for:
 """
 
 import copy
-from typing import Any, Dict
-
-import brewtils.log
 import logging
 import logging.config
 import logging.handlers
+from typing import Any, Dict
+
+import brewtils.log
+from brewtils.models import Events
 from ruamel import yaml
 from ruamel.yaml import YAML
 
 import beer_garden.config as config
-from brewtils.models import Events
 
+logger = logging.getLogger(__name__)
+
+# Overall application logging configuration
 _APP_LOGGING = None
 
 _default_formatter = {"format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"}
@@ -273,4 +276,5 @@ def handle_event(event):
     """Only care about local garden"""
     if event.garden == config.get("garden.name"):
         if event.name == Events.PLUGIN_LOGGER_FILE_CHANGE.name:
+            logger.info("Detected change to plugin logging config file, reloading")
             load_plugin_log_config()
