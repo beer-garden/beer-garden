@@ -1,5 +1,26 @@
 # Beer Garden Changelog
 
+## 3.0.5
+1/11/21
+
+#### Bug Fixes
+- System Queue Management Not Working (Issue #823 / PR #824)
+- Scheduler Not Rendering Trigger Form (Issue #819 / PR #821)
+- Local plugin runner not removed during system purge (Issue #810 / PR #822)
+- Unassociated Runner not displayed when there are no systems (Issue #805 / PR #808)
+- Delete System of Down Garden (Issue #749 / PR #798)
+
+#### Added Features
+- Actually run systemd service as beer-garden user (Issue #816 / PR #818)
+- Empty command list results in no changes when registering (Issue #806 / PR #807)
+- Warn when beer.conf results in no instances (Issue #796 / PR #804)
+- Added entry point events (PR #800)
+- Fixed attribute error for Gardens (PR #801)
+- Moved metadata into event object (PR #802)
+- Adding Checkers for Code Complexity and Security to PR Actions (PR #812)
+- Self-closing non-void tags are not great in HTML5 (PR #814)
+- Adding log message when logging config file is changed (PR #826)
+
 ## 3.0.4
 12/22/20
 
