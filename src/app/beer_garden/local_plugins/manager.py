@@ -572,6 +572,15 @@ class ConfigLoader(object):
             )
         )
 
+        # Warn if the normalized beer.conf will result in 0 instances
+        if not len(config_dict["INSTANCES"]):
+            logger.warning(
+                f"Config file {config_file} resulted in an empty instance list, which "
+                f"means no plugins will be started. This is normally caused by "
+                f"INSTANCES=[] or PLUGIN_ARGS={{}} lines in beer.conf. If this is not "
+                f"what you want please remove those lines."
+            )
+
         return config_dict
 
     @staticmethod

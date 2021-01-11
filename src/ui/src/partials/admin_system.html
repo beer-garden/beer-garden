@@ -24,9 +24,8 @@
   {{alert.msg}}
 </div>
 
-<div id="systems-container"
-     class="animate-if"
-     ng-if="responseState(response) === 'success'">
+<div class="panel-container animate-if"
+     ng-if="responseState(response) === 'success' || responseState(runnerResponse) === 'success'">
 
   <div class="container-item panel panel-danger"
        style="display: block;"

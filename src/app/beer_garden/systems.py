@@ -115,7 +115,7 @@ def update_system(
     updates = {}
     system = system or db.query_unique(System, id=system_id)
 
-    if new_commands:
+    if new_commands is not None:
         # Convert these to DB form and back to make sure all defaults are correct
         mongo_commands = [db.from_brewtils(command) for command in new_commands]
         brew_commands = db.to_brewtils(mongo_commands)

@@ -5,6 +5,8 @@ MODULE_NAME    = beer_garden
 TEST_DIR       = test
 DOCKER_NAME    = bgio/beer-garden
 
+MAX_CYCLOMATIC_COMPLEXITY = 10
+
 VERSION       ?= 0.0.0
 SHORT_VERSION  = $(shell echo $(VERSION) | head -c 1)
 
@@ -89,6 +91,14 @@ format: ## Run black formatter in-line
 lint: ## check style with flake8
 	flake8 $(MODULE_NAME) $(TEST_DIR)
 	black --check $(MODULE_NAME) $(TEST_DIR)
+
+# Complexity checks
+complexity:
+	flake8 --max-complexity $(MAX_CYCLOMATIC_COMPLEXITY) $(MODULE_NAME)
+
+# Security linting
+security:
+	bandit -r $(MODULE_NAME)
 
 
 # Testing / Coverage
