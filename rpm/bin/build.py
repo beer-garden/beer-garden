@@ -59,7 +59,7 @@ def build_rpms(version, iteration, cli_dist, cli_python, local, docker_envs):
     js_cmd = (
         ["docker", "run", "--rm", "-v", f"{BASE_PATH}/src:/src"]
         + env_vars
-        + [NODE_IMAGE, "make", "-C", "/src/ui", "package"]
+        + [NODE_IMAGE, "make", "-C", "/src/ui", "deps", "package"]
     )
 
     subprocess.run(js_cmd).check_returncode()
