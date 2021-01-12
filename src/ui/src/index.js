@@ -105,7 +105,10 @@ import requestViewController, {slideAnimation} from './js/controllers/request_vi
 import systemIndexController from './js/controllers/system_index.js';
 import jobIndexController from './js/controllers/job_index.js';
 import jobViewController from './js/controllers/job_view.js';
-import jobCreateController from './js/controllers/job_create.js';
+import jobCreateSystemController from './js/controllers/job/create_system.js';
+import jobCreateCommandController from './js/controllers/job/create_command.js';
+import jobCreateRequestController from './js/controllers/job/create_request.js';
+import jobCreateTriggerController from './js/controllers/job/create_trigger.js';
 import loginController from './js/controllers/login.js';
 
 // Partials
@@ -122,7 +125,10 @@ import './partials/request_view.html';
 import './partials/system_index.html';
 import './partials/job_index.html';
 import './partials/job_view.html';
-import './partials/job_create.html';
+import './partials/job/create_system.html';
+import './partials/job/create_command.html';
+import './partials/job/create_request.html';
+import './partials/job/create_trigger.html';
 
 // Images
 import './image/fa-beer.png';
@@ -194,5 +200,8 @@ angular.module('bgApp',
 .controller('SystemIndexController', systemIndexController)
 .controller('JobIndexController', jobIndexController)
 .controller('JobViewController', jobViewController)
-.controller('JobCreateController', jobCreateController)
+.controller('JobCreateSystemController', jobCreateSystemController)
+.controller('JobCreateCommandController', jobCreateCommandController)
+.controller('JobCreateRequestController', jobCreateRequestController)
+.controller('JobCreateTriggerController', jobCreateTriggerController)
 .controller('LoginController', loginController);

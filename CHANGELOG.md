@@ -1,5 +1,43 @@
 # Beer Garden Changelog
 
+## 3.0.5
+1/11/21
+
+#### Bug Fixes
+- System Queue Management Not Working on Admin Page(Issue #823 / PR #824)
+- Scheduler Not Rendering Trigger Form (Issue #819 / PR #821)
+- Local plugin runner not removed during system purge (Issue #810 / PR #822)
+- Unassociated Runner not displayed when there are no systems (Issue #805 / PR #808)
+- Now able to delete System when Child Garden is down (Issue #749 / PR #798)
+- Regigersty empty command list on existing System resulted in no changes to commands list (Issue #806 / PR #807)
+- Fixed issue where Garden updates failed if no Configuration was provided (PR #801)
+- Moved metadata field into STOMP shutdown event properly (PR #802)
+
+#### Added Features
+- Run systemd service as beer-garden user (Issue #816 / PR #818)
+- Warn when beer.conf results in no instances (Issue #796 / PR #804)
+- Entry Points now emit Brewtils Event when started (PR #800)
+- Adding Checkers for Code Complexity and Security to PR Actions (PR #812)
+- Self-closing non-void tags are not great in HTML5 (PR #814)
+- Adding log message when logging config file is changed (PR #826)
+
+## 3.0.4
+12/22/20
+
+#### Bug Fixes
+- Fixed issue with entry point status event publishing
+
+## 3.0.3
+12/22/20
+
+#### Added Features
+- Parent and child gardens can now use Stomp-based communication (#761)
+- Can now create a child garden using the UI (#726)
+
+#### Bug Fixes
+- Fixed regression that made it impossible to removed remote plugins (#794)
+- Better error handling during system removal (#749, #771)
+
 ## 3.0.2
 12/15/20
 

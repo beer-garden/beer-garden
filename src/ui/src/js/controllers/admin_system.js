@@ -2,6 +2,7 @@ import _ from 'lodash';
 import readLogs from '../../templates/read_logs.html';
 import adminQueue from '../../templates/admin_queue.html';
 import forceDelete from '../../templates/system_force_delete.html';
+import {responseState} from '../services/utility_service.js';
 
 adminSystemController.$inject = [
   '$scope',
@@ -271,6 +272,11 @@ export default function adminSystemController(
   RunnerService.getRunners().then((response) => {
     $scope.runnerResponse = response;
     $scope.runners = response.data;
+
+    // This is kind of messy, but oh well
+    if (responseState($scope.response) === 'empty') {
+      $scope.response = response;
+    }
 
     groupRunners();
   });

@@ -42,13 +42,33 @@ jobs:
           pip install setuptools wheel twine
 
       - name: Build and publish
+        continue-on-error: true
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: make publish-package
 
-  Docker:
+  Verify-PyPi:
     needs: PyPi
+    runs-on: ubuntu-latest
+    name: Verify PyPi Install
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+
+      - name: Check PyPi
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 5
+          retry_on: error
+          retry_wait_seconds: 10
+          command: pip install beer-garden==${GITHUB_REF#refs/tags/}
+
+  Docker:
+    needs: Verify-PyPi
     runs-on: ubuntu-latest
     name: Docker Builder
     steps:
@@ -61,10 +81,10 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build Images
-        run: make publish-docker VERSION=${GITHUB_REF/refs\/tags\//}
+        run: make publish-docker VERSION=${GITHUB_REF#refs/tags/}
 
   RPM:
-    needs: Docker
+    needs: Verify-PyPi
     runs-on: ubuntu-latest
     name: Python ${{ matrix.python-version }} RPM Builder
     strategy:
@@ -82,10 +102,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.python-version }}-pip-install-
 
-      - name: Make Deps
-        working-directory: ./src/app
-        run: make deps
-
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
@@ -93,7 +109,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Build RPM
-        run: make rpm-build VERSION=${GITHUB_REF/refs\/tags\//}
+        run: make rpm-build VERSION=${GITHUB_REF#refs/tags/}
 
       - name: Create Release
         id: create_release
@@ -113,6 +129,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./rpm/dist/beer-garden-${GITHUB_REF/refs\/tags\//}-1.el7.x86_64.rpm
-          asset_name: beer-garden-${GITHUB_REF/refs\/tags\//}-1.el7.x86_64.rpm
+          asset_path: ./rpm/dist/beer-garden-${GITHUB_REF#refs/tags/}-1.el7.x86_64.rpm
+          asset_name: beer-garden-${GITHUB_REF#refs/tags/}-1.el7.x86_64.rpm
           asset_content_type: application/octet-stream

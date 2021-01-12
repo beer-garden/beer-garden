@@ -125,3 +125,99 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
 
+  ComplexityCheck:
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        python-version: ['3.7']
+        os: ['ubuntu-latest']
+        complexity-threshold: ['10']
+#       This strips the line and column from the output, but keeps the file name
+        sed-filter: ['s"/([^:]+):([^:]+):([^:]+):*/\1:/"']
+
+    env:
+      OS: ${{ matrix.os }}
+      PYTHON: ${{ matrix.python-version }}
+
+    name: Code Complexity Check OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
+    steps:
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Make Deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install wily
+
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.base_ref }}
+          path: ./old
+
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
+          path: ./new
+
+      - name: Scan current complexity
+        working-directory: ./new/src/app
+        run: |
+          flake8 --max-complexity ${{ matrix.complexity-threshold }} | sed -E ${{ matrix.sed-filter }} > ~/current_complexity.txt
+
+      - name: Scan old complexity
+        working-directory: ./old/src/app
+        run: |
+          flake8 --max-complexity ${{ matrix.complexity-threshold }} | sed -E ${{ matrix.sed-filter }} > ~/old_complexity.txt
+
+      - name: Compare complexities
+        run: |
+          diff --ignore-all-space --strip-trailing-cr ~/current_complexity.txt ~/old_complexity.txt
+
+  SecurityCheck:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        python-version: [ '3.7' ]
+        os: [ 'ubuntu-latest' ]
+
+    env:
+      OS: ${{ matrix.os }}
+      PYTHON: ${{ matrix.python-version }}
+
+    name: Code Security Check OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
+    steps:
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Make Deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit
+
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.base_ref }}
+          path: ./old
+
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
+          path: ./new
+
+      - name: Scan old security
+        working-directory: ./old/src/app
+        continue-on-error: true
+        run: |
+          bandit --format json -o ~/old_bandit.json -r beer_garden
+
+      - name: Scan new security
+        working-directory: ./new/src/app
+        run: |
+          bandit --baseline ~/old_bandit.json -r beer_garden

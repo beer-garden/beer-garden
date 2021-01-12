@@ -44,6 +44,10 @@ def update(*args, **kwargs):
     return lpm_proxy.update(*args, **kwargs)
 
 
+def has_instance_id(*args, **kwargs):
+    return lpm_proxy.has_instance_id(*args, **kwargs)
+
+
 @publish_event(Events.RUNNER_STARTED)
 def start(*args, **kwargs):
     return lpm_proxy.restart(*args, **kwargs)
@@ -567,6 +571,15 @@ class ConfigLoader(object):
                 config_dict.get("MAX_INSTANCES"),
             )
         )
+
+        # Warn if the normalized beer.conf will result in 0 instances
+        if not len(config_dict["INSTANCES"]):
+            logger.warning(
+                f"Config file {config_file} resulted in an empty instance list, which "
+                f"means no plugins will be started. This is normally caused by "
+                f"INSTANCES=[] or PLUGIN_ARGS={{}} lines in beer.conf. If this is not "
+                f"what you want please remove those lines."
+            )
 
         return config_dict
 
