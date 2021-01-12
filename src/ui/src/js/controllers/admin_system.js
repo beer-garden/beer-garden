@@ -52,7 +52,6 @@ export default function adminSystemController(
   $scope.systemHidden = [];
   $scope.versionHidden = [];
   $scope.namespaceHidden = [];
-  $scope.system_name_query = null;
 
   $scope.totalInstancesInSystem = function (groupedSystems){
     let count = 0;
