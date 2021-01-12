@@ -44,10 +44,230 @@ export default function adminSystemController(
   $scope.response = undefined;
   $scope.runnerResponse = undefined;
   $scope.groupedSystems = [];
+  $scope.groupedSystemsNamespaces = [];
   $scope.alerts = [];
   $scope.runners = [];
   $scope.showRunnersTile = false;
   $scope.groupedRunners = [];
+  $scope.systemHidden = [];
+  $scope.versionHidden = [];
+  $scope.namespaceHidden = [];
+  $scope.system_name_query = null;
+
+  $scope.totalInstancesInSystem = function (groupedSystems){
+    let count = 0;
+    let groupedNamespaces = [];
+    for (let i = 0; i < groupedSystems.length; i++){
+        groupedNamespaces = groupedSystems[i];
+        for (let j = 0; j < groupedNamespaces.length; j++) {
+            count += groupedNamespaces[j].instances.length;
+        }
+    }
+    return count;
+  };
+
+  $scope.totalVersionsInSystem = function (groupedSystems){
+      let count = 0;
+      let groupedNamespaces = [];
+      for (let i = 0; i < groupedSystems.length; i++){
+        count += groupedSystems[i].length;
+      }
+      return count;
+    };
+
+  $scope.systemNameFilter = function (system_name) {
+    return $scope.system_name_query == system_name || $scope.system_name_query == "";
+  };
+
+  $scope.totalRunningIdsInRunner = function (runners) {
+    let count = 0;
+    for (let i = 0; i < runners.length; i++) {
+        if (runners[i].instance != undefined) {
+            count++;
+        }
+    }
+    return count
+  };
+
+  $scope.totalRunningInSystem = function (groupedSystems){
+      let count = 0;
+      let system = {};
+      let systems = [];
+      let instance = {};
+      let groupedNamespaces = [];
+      for (let i = 0; i < groupedSystems.length; i++){
+        systems = groupedSystems[i];
+          for (let k = 0; k < systems.length; k++) {
+            system = systems[k];
+            for (let m = 0; m < system.instances.length; m++) {
+              instance = system.instances[m];
+              if (instance.status == "RUNNING") {
+                count++;
+              }
+            }
+          }
+      }
+      return count;
+    };
+
+  $scope.stopSystems = function(groupedSystems=[], systems=[], namespace="") {
+    let system = {};
+    if (groupedSystems[0] == undefined) {
+        groupedSystems[0] = systems;
+    }
+    for (let i = 0; i < groupedSystems.length; i++) {
+        systems = groupedSystems[i];
+        for (let j = 0; j < systems.length; j++) {
+            system = systems[j];
+            if (namespace == "" || namespace == system.namespace) {
+                $scope.stopSystem(system);
+            }
+        }
+    }
+    return;
+  };
+
+  $scope.deleteMessage = function(groupedSystems=[], systems=[], namespace="") {
+    let msg = "Are you sure you want to delete systems listed below?\nActive systems:{active}\nInactive Systems:{inactive}";
+    if (groupedSystems[0] == undefined) {
+        groupedSystems[0] = systems;
+    }
+    let system = {};
+    let msg_inactive = "";
+    let msg_active = "";
+    for (let i = 0; i < groupedSystems.length; i++) {
+        systems = groupedSystems[i];
+        for (let j = 0; j < systems.length; j++) {
+            system = systems[j];
+            if (namespace == "" || namespace == system.namespace) {
+                if ($scope.hasRunningInstances(system)) {
+                    msg_active = msg_active.concat("\n\u2022 {namespace}: {system_name}-{version} ");
+                    msg_active = msg_active.replace('{system_name}', system.name).replace('{namespace}', system.namespace).replace('{version}', system.version);
+                }
+                else {
+                    msg_inactive = msg_inactive.concat("\n\u2022 {namespace}: {system_name}-{version} ");
+                    msg_inactive = msg_inactive.replace('{system_name}', system.name).replace('{namespace}', system.namespace).replace('{version}', system.version);
+                }
+            }
+        }
+    }
+    return msg.replace('{active}', msg_active).replace('{inactive}', msg_inactive)
+  };
+
+  $scope.deleteSystems = function(groupedSystems=[], systems=[], namespace="") {
+       if (groupedSystems[0] == undefined) {
+            groupedSystems[0] = systems;
+       }
+       let system = {};
+      for (let i = 0; i < groupedSystems.length; i++) {
+          systems = groupedSystems[i];
+          for (let j = 0; j < systems.length; j++) {
+              system = systems[j];
+              if (namespace == "" || namespace == system.namespace) {
+                  $scope.deleteSystem(system);
+              }
+          }
+      }
+    };
+
+  $scope.expandAll = function (){
+    let key = undefined;
+    for (key in $scope.systemHidden) {
+        $scope.systemHidden[key] = false;
+    }
+    for (key in $scope.namespaceHidden) {
+            $scope.namespaceHidden[key] = false;
+    }
+    for (key in $scope.versionHidden) {
+            $scope.versionHidden[key] = false;
+    }
+  };
+
+  $scope.collapseAll = function (){
+      let key = undefined;
+      for (key in $scope.systemHidden) {
+          $scope.systemHidden[key] = true;
+      }
+      for (key in $scope.namespaceHidden) {
+              $scope.namespaceHidden[key] = true;
+      }
+      for (key in $scope.versionHidden) {
+              $scope.versionHidden[key] = true;
+      }
+  };
+
+  function expandNotRunning(groupedSystems) {
+    let system = {};
+    let systems = [];
+    let instance = {};
+    for (let k = 0; k < groupedSystems.length; k++) {
+        systems = groupedSystems[k];
+        $scope.systemHidden[systems[0].name] = true;
+        for (let i = 0; i < systems.length; i++) {
+            system = systems[i];
+            if ($scope.namespaceHidden[system.name.concat(system.namespace)] == undefined) {
+                $scope.namespaceHidden[system.name.concat(system.namespace)] = true;
+            }
+            $scope.versionHidden[system.name.concat(system.namespace).concat(system.version)] = true;
+            for (let j = 0; j < system.instances.length; j++) {
+                instance = system.instances[j];
+                if (instance.status != "RUNNING"){
+                    $scope.systemHidden[systems[0].name] = false;
+                    $scope.namespaceHidden[system.name.concat(system.namespace)] = false;
+                    $scope.versionHidden[system.name.concat(system.namespace).concat(system.version)] = false;
+                }
+            }
+        }
+    }
+  };
+
+   $scope.reloadSystems = function(groupedSystems=[], systems=[], namespace="") {
+         if (groupedSystems[0] == undefined) {
+              groupedSystems[0] = systems;
+         }
+         let system = {};
+        for (let i = 0; i < groupedSystems.length; i++) {
+            systems = groupedSystems[i];
+            for (let j = 0; j < systems.length; j++) {
+               system = systems[j];
+               if (namespace == "" || namespace == system.namespace) {
+                   $scope.reloadSystem(system)
+               }
+            }
+       }
+       return;
+     };
+
+   $scope.startSystems = function(groupedSystems=[], systems=[], namespace="") {
+        if (groupedSystems[0] == undefined) {
+             groupedSystems[0] = systems;
+        }
+        let system = {};
+       for (let i = 0; i < groupedSystems.length; i++) {
+           systems = groupedSystems[i];
+           for (let j = 0; j < systems.length; j++) {
+               system = systems[j];
+               if (namespace == "" || namespace == system.namespace) {
+                   $scope.startSystem(system);
+               }
+           }
+       }
+       return;
+     };
+
+  $scope.totalNamespacesInSystem = function (systems){
+        let count = 0;
+        let namespace_list = [];
+        for (let system in systems){
+            if (systems[system].namespace) {
+                if (!namespace_list.includes(systems[system].namespace)) {
+                  count++;
+                  namespace_list.push(systems[system].namespace)
+                }
+            }
+        }
+        return count;
+      };
 
   $scope.setWindowTitle('systems');
 
@@ -168,9 +388,37 @@ export default function adminSystemController(
       $scope.groupedSystems = _.sortBy(grouped, (sysList) => {
         return sysList[0].display_name || sysList[0].name;
       });
+      groupNamespaces()
     } else {
       $scope.groupedSystems = [];
     }
+  }
+
+  function groupNamespaces() {
+        let group = {};
+        let tmp_system = {};
+        let systems = [];
+        let system = {};
+        let count = 0;
+        for (let i = 0; i < $scope.groupedSystems.length; i++) {
+            systems = $scope.groupedSystems[i];
+            group = {};
+            for (let j = 0; j < systems.length; j++) {
+                system = systems[j];
+                if (group[system.namespace] == undefined) {
+                    group[system.namespace] = [];
+                }
+                group[system.namespace][group[system.namespace].length] = system;
+            }
+            let count = 0;
+            for (let key in group) {
+                if ($scope.groupedSystemsNamespaces[i] == undefined) {
+                    $scope.groupedSystemsNamespaces[i] = [];
+                }
+                $scope.groupedSystemsNamespaces[i][count] = group[key];
+                count++;
+            }
+        }
   }
 
   function groupRunners() {
@@ -268,6 +516,8 @@ export default function adminSystemController(
   }
 
   groupSystems();
+
+  expandNotRunning($scope.groupedSystems);
 
   RunnerService.getRunners().then((response) => {
     $scope.runnerResponse = response;

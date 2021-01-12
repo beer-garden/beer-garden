@@ -14,6 +14,12 @@
   </span>
 </h1>
 
+<style>
+  div.modal-body {
+    white-space: pre-line;
+    }
+</style>
+
 <fetch-data response="response"></fetch-data>
 
 <div uib-alert
@@ -23,7 +29,7 @@
   {{alert.msg}}
 </div>
 
-<div class="panel-container animate-if"
+<div class="animate-if"
      ng-if="responseState(response) === 'success' || responseState(runnerResponse) === 'success'">
 
   <div class="container-item panel panel-danger"
@@ -32,116 +38,257 @@
     <div class="panel-heading " style="font-size: 22px;">
       <span>Unassociated Local Runners</span>
     </div>
-      <div class="panel-body" style="padding-bottom: 0px;" ng-repeat="runners in groupedRunners | filter:hasUnassociatedRunners">
-        <div class="list-group-item clearfix" style="font-size: 18px;" ng-show="runners.length > 0" >
-              <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
-                <div>
-                  <span class="icon-color" ng-class="getIcon(system.icon_name)"></span>
-                  <span style="font-size: 18px;">{{runners[0].path}}</span>
-                </div>
-              </div>
-              <div class="btn-toolbar pull-right">
-                <div class="btn-group btn-group-sm">
-                  <button type="button" class="btn btn-default fa fa-play"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-click="startRunners(runners)"
-                          title="Start Runners in {{runners[0].name}}"></button>
-                  <button type="button" class="btn btn-default fa fa-stop"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-click="stopRunners(runners)"
-                          title="Stop Runners in {{runners[0].name}}"></button>
-                  <button type="button" class="btn btn-default fa fa-refresh"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-click="reloadRunners(runners)"
-                          title="Reload Runners in {{runners[0].name}}"></button>
-                </div>
-                <div class="btn-group btn-group-sm pull-right"
-                    ng-show="hasPermission(user, 'bg-system-admin')">
-                  <button type="button" class="btn btn-default fa fa-trash-o"
-                          ng-click="deleteRunners(runners)"
-                          title="Delete Runners in {{runners[0].name}}"></button>
-                </div>
-              </div>
+    <table class="table table-striped table-bordered w-100">
+      <thead>
+      <th>Path</th>
+      <th>Ids</th>
+      <th>Status</th>
+      <th>Actions</th>
+      </thead>
+      <tr ng-repeat-start="runners in groupedRunners | filter:hasUnassociatedRunners" style="border-top: 2px solid;">
+        <td ng-show="runners.length > 0" >
+          <span >{{runners[0].path}}</span>
+        </td>
+        <td>{{runners.length}}</td>
+        <td>{{totalRunningIdsInRunner(runners)}} of {{runners.length}} running</td>
+        <td>
+          <div class="btn-toolbar pull-left">
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-default fa fa-play"
+                      ng-show="hasPermission(user, 'bg-system-admin')"
+                      ng-click="startRunners(runners)"
+                      title="Start Runners in {{runners[0].name}}"></button>
+              <button type="button" class="btn btn-default fa fa-stop"
+                      ng-show="hasPermission(user, 'bg-system-admin')"
+                      ng-click="stopRunners(runners)"
+                      title="Stop Runners in {{runners[0].name}}"></button>
+              <button type="button" class="btn btn-default fa fa-refresh"
+                      ng-show="hasPermission(user, 'bg-system-admin')"
+                      ng-click="reloadRunners(runners)"
+                      title="Reload Runners in {{runners[0].name}}"></button>
             </div>
-          <div ng-repeat="runner in runners | filter:isRunnerUnassociated | orderBy:'id'">
-            <div class="list-group-item container-fluid">
-                <bg-status target="runner.dead ? 'DEAD' : 'UNRESPONSIVE'"></bg-status>
-                <span style="padding: 0 10px">{{runner.id}}</span>
-
-                <i class="fa fa-spinner fa-pulse" ng-show="runner.waiting"></i>
-
-                <div class="btn-group btn-group-xs pull-right"
-                      ng-show="hasPermission(user, 'bg-system-admin')">
-                  <button type="button" class="btn btn-default fa fa-play"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-disabled="runner.waiting"
-                          ng-click="startRunner(runner)"
-                          title="Start Runner {{runner.id}}"></button>
-                  <button type="button" class="btn btn-default fa fa-stop"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-disabled="runner.waiting"
-                          ng-click="stopRunner(runner)"
-                          title="Stop Runner in {{runner.id}}"></button>
-                  <button type="button" class="btn btn-default fa fa-trash-o"
-                          ng-disabled="runner.waiting"
-                          ng-click="deleteRunner(runner)"
-                          title="Delete Runner {{runner.id}}"></button>
-                </div>
-              </div>
-
+            <div class="btn-group btn-group-sm pull-right"
+                 ng-show="hasPermission(user, 'bg-system-admin')">
+              <button type="button" class="btn btn-default fa fa-trash-o"
+                      ng-click="deleteRunners(runners)"
+                      title="Delete Runners in {{runners[0].name}}"></button>
+            </div>
           </div>
-          <div class="container-item empty"></div>
-      </div>
+        </td>
+      <tr ng-repeat="runner in runners | filter:isRunnerUnassociated | orderBy:'id'">
+        <td style='border:none;'></td>
+        <td>
+          <span >{{runner.id}}</span>
+        </td>
+        <td>
+          <i class="fa fa-spinner fa-pulse" ng-show="runner.waiting"></i>
+          <bg-status target="runner.dead ? 'DEAD' : 'UNRESPONSIVE'"></bg-status>
+        </td>
+        <td>
+          <div class="btn-group btn-group-sm pull-left"
+               ng-show="hasPermission(user, 'bg-system-admin')">
+            <button type="button" class="btn btn-default fa fa-play"
+                    ng-show="hasPermission(user, 'bg-system-admin')"
+                    ng-disabled="runner.waiting"
+                    ng-click="startRunner(runner)"
+                    title="Start Runner {{runner.id}}"></button>
+            <button type="button" class="btn btn-default fa fa-stop"
+                    ng-show="hasPermission(user, 'bg-system-admin')"
+                    ng-disabled="runner.waiting"
+                    ng-click="stopRunner(runner)"
+                    title="Stop Runner in {{runner.id}}"></button>
+            <button type="button" class="btn btn-default fa fa-trash-o"
+                    ng-disabled="runner.waiting"
+                    ng-click="deleteRunner(runner)"
+                    title="Delete Runner {{runner.id}}"></button>
+          </div>
+        </td>
+      </tr>
+      <div class="container-item empty"></div>
+      </tr>
+      <tr ng-repeat-end></tr>
+    </table>
   </div>
 
-  <div ng-repeat="systems in groupedSystems"
-       class="container-item panel panel-default"
-       style="display: block;">
-    <div class="panel-heading" style="font-size: 22px;">
-      <span>{{systems[0].name}}</span>
-    </div>
-      <div class="panel-body" style="padding-bottom: 0px;">
-        <div ng-repeat="system in systems | orderBy: 'version'">
-          <div class="list-group">
-            <div class="list-group-item clearfix" style="font-size: 18px;">
-              <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
-                <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})">
-                  <span class="icon-color" ng-class="getIcon(system.icon_name)"></span>
-                  <span style="font-size: 18px;">{{system.namespace}}/{{system.version}}</span>
-                </a>
-              </div>
-              <div class="btn-toolbar pull-right">
-                <div class="btn-group btn-group-sm">
-                  <button type="button" class="btn btn-default fa fa-play"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-click="startSystem(system)"
-                          title="Start System {{system.name}}"></button>
-                  <button type="button" class="btn btn-default fa fa-stop"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-click="stopSystem(system)"
-                          title="Stop System {{system.name}}"></button>
-                  <button type="button" class="btn btn-default fa fa-refresh"
-                          ng-show="hasPermission(user, 'bg-system-admin')"
-                          ng-click="reloadSystem(system)"
-                          title="Reload System {{system.name}}"></button>
-                </div>
-                <div class="btn-group btn-group-sm pull-right"
-                     ng-show="hasPermission(user, 'bg-system-admin')">
-                  <button type="button" class="btn btn-default fa fa-trash-o"
-                          ng-click="deleteSystem(system)"
-                          confirm="Are you sure you want to delete a system with running instances?"
-                          confirm-if="hasRunningInstances(system)"
-                          title="Delete System {{system.name}}">
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div ng-repeat="instance in system.instances | orderBy: 'name'" class="list-group-item">
-              <bg-status target='instance.status'></bg-status>
-              <span style="padding: 0 10px">{{instance.name}}</span>
-              <span class="btn-toolbar pull-right"
-                    ng-show="hasPermission(user, 'bg-system-admin')">
-                <span class="btn-group btn-group-xs">
+  <div>
+    <button ng-click="expandAll()">Expand All Rows</button>
+    <button ng-click="collapseAll()" class="pull-left">Collapse All Rows</button>
+  </div>
+  <table class="table table-striped table-bordered w-100">
+    <thead>
+    <th>Systems</th>
+    <th>Namespaces</th>
+    <th>Versions</th>
+    <th>Instances</th>
+    <th>Status</th>
+    <th>Actions</th>
+    </thead>
+    <tbody>
+    <tr>
+    </tr>
+    <tr ng-repeat-start="groupSystems in groupedSystemsNamespaces" style="border-top: 2px solid;">
+      <td>
+        <a class="fa fa-fw fa-minus pull-left"
+           title="Expand"
+           ng-click="systemHidden[groupSystems[0][0].name]=true"
+           ng-hide="systemHidden[groupSystems[0][0].name]"
+           style="color: black; margin-top: 4px; cursor: pointer;"
+        ></a>
+        <a class="fa fa-fw fa-plus pull-left"
+           title="Expand"
+           ng-click="systemHidden[groupSystems[0][0].name]=false"
+           ng-hide="!systemHidden[groupSystems[0][0].name]"
+           style="color: black; margin-top: 4px; cursor: pointer;"></a>
+        {{groupSystems[0][0].name}}
+      </td>
+      <td>{{groupSystems.length}}</td>
+      <td>{{totalVersionsInSystem(groupSystems)}}</td>
+      <td>{{totalInstancesInSystem(groupSystems)}}</td>
+      <td>{{totalRunningInSystem(groupSystems)}} of {{totalInstancesInSystem(groupSystems)}} running</td>
+      <td>
+        <div class="btn-toolbar pull-left">
+          <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-default fa fa-play"
+                    ng-show="hasPermission(user, 'bg-system-admin')"
+                    ng-click="startSystems(groupSystems)"
+                    title="Start System {{groupSystems[0][0].name}}"></button>
+            <button type="button" class="btn btn-default fa fa-stop"
+                    ng-show="hasPermission(user, 'bg-system-admin')"
+                    ng-click="stopSystems(groupSystems)"
+                    title="Stop System {{groupSystems[0][0].name}}"></button>
+            <button type="button" class="btn btn-default fa fa-refresh"
+                    ng-show="hasPermission(user, 'bg-system-admin')"
+                    ng-click="reloadSystems(groupSystems)"
+                    title="Reload System {{groupSystems[0][0].name}}"></button>
+          </div>
+          <div class="btn-group btn-group-sm pull-right"
+               ng-show="hasPermission(user, 'bg-system-admin')">
+            <button type="button" class="btn btn-default fa fa-trash-o"
+                    ng-click="deleteSystems(groupSystems)"
+                    confirm="{{deleteMessage(groupedSystems=groupSystems)}}"
+                    title="Delete System {{groupSystems[0][0].name}}">
+            </button>
+          </div>
+        </div>
+      </td>
+    </tr>
+
+    <tr ng-repeat-start="systems in groupSystems | orderBy: 'systems[0].namespace'" ng-hide="systemHidden[groupSystems[0][0].name]">
+      <td style='border:none;'></td>
+      <td>
+        <a class="fa fa-fw fa-minus pull-left"
+           title="Expand"
+           ng-click="namespaceHidden[systems[0].name.concat(systems[0].namespace)]=true"
+           ng-hide="namespaceHidden[systems[0].name.concat(systems[0].namespace)]"
+           style="color: black; margin-top: 4px; cursor: pointer;"
+        ></a>
+        <a class="fa fa-fw fa-plus pull-left"
+           title="Expand"
+           ng-click="namespaceHidden[systems[0].name.concat(systems[0].namespace)]=false"
+           ng-hide="!namespaceHidden[systems[0].name.concat(systems[0].namespace)]"
+           style="color: black; margin-top: 4px; cursor: pointer;"></a>
+        <a ui-sref="base.system({namespace: systems[0].namespace, systemName: systems[0].name})">
+          <span>{{systems[0].namespace}}</span>
+        </a>
+      </td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>
+        <div class="btn-toolbar pull-left">
+          <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-default fa fa-play"
+                    ng-show="hasPermission(user, 'bg-system-admin')"
+                    ng-click="startSystems([], systems)"
+                    title="Start System {{systems[0].name}}"></button>
+            <button type="button" class="btn btn-default fa fa-stop"
+                    ng-show="hasPermission(user, 'bg-system-admin')"
+                    ng-click="stopSystems([], systems)"
+                    title="Stop System {{systems[0].name}}test"></button>
+            <button type="button" class="btn btn-default fa fa-refresh"
+                    ng-show="hasPermission(user, 'bg-system-admin')"
+                    ng-click="reloadSystems([], systems)"
+                    title="Reload System {{systems[0].name}}"></button>
+          </div>
+          <div class="btn-group btn-group-sm pull-right"
+               ng-show="hasPermission(user, 'bg-system-admin')">
+            <button type="button" class="btn btn-default fa fa-trash-o"
+                    ng-click="deleteSystems([], systems)"
+                    confirm="{{deleteMessage([], systems)}}"
+                    title="Delete System {{system.name}}">
+            </button>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr ng-repeat-start="system in systems | orderBy: 'version'" ng-hide="systemHidden[systems[0].name] || namespaceHidden[systems[0].name.concat(systems[0].namespace)]">
+      <td style='border:none;'></td>
+      <td style='border:none;'></td>
+      <td>
+        <a class="fa fa-fw fa-minus pull-left"
+           title="Expand"
+           ng-click="versionHidden[system.name.concat(system.namespace).concat(system.version)]=true"
+           ng-hide="versionHidden[system.name.concat(system.namespace).concat(system.version)]"
+           style="color: black; margin-top: 4px; cursor: pointer;"
+        ></a>
+        <a class="fa fa-fw fa-plus pull-left"
+           title="Expand"
+           ng-click="versionHidden[system.name.concat(system.namespace).concat(system.version)]=false"
+           ng-hide="!versionHidden[system.name.concat(system.namespace).concat(system.version)]"
+           style="color: black; margin-top: 4px; cursor: pointer;"></a>
+        <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})">
+          <span>{{system.version}}</span>
+        </a>
+      </td>
+      <td></td>
+      <td></td>
+      <td>
+        <div class="btn-toolbar pull-left">
+          <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-default fa fa-play"
+                    id="{{system.name.concat(system.namespace).concat(system.version).concat('start').split('.').join('')}}"
+                    ng-show="hasPermission(user, 'bg-system-admin')"
+                    ng-click="startSystem(system)"
+                    title="Start System {{system.name}}"></button>
+            <button type="button" class="btn btn-default fa fa-stop"
+                    id="{{system.name.concat(system.namespace).concat(system.version).concat('stop').split('.').join('')}}"
+                    ng-show="hasPermission(user, 'bg-system-admin')"
+                    ng-click="stopSystem(system)"
+                    title="Stop System {{system.name}}"></button>
+            <button type="button" class="btn btn-default fa fa-refresh"
+                    id="{{system.name.concat(system.namespace).concat(system.version).concat('reload').split('.').join('')}}"
+                    ng-show="hasPermission(user, 'bg-system-admin')"
+                    ng-click="reloadSystem(system)"
+                    title="Reload System {{system.name}}"></button>
+          </div>
+          <div class="btn-group btn-group-sm pull-right"
+               ng-show="hasPermission(user, 'bg-system-admin')">
+            <button type="button" class="btn btn-default fa fa-trash-o"
+                    id="{{system.name.concat(system.namespace).concat(system.version).concat('delete').split('.').join('')}}"
+                    ng-click="deleteSystem(system)"
+                    confirm="Are you sure you want to delete a system with running instances?"
+                    confirm-if="hasRunningInstances(system)"
+                    title="Delete System {{system.name}}">
+            </button>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr ng-repeat-end ng-repeat="instance in system.instances | orderBy: 'name'"
+        ng-hide="systemHidden[system.name] || namespaceHidden[system.name.concat(system.namespace)] || versionHidden[system.name.concat(system.namespace).concat(system.version)]">
+      <td style='border:none;'></td>
+      <td style='border:none;'></td>
+      <td style='border:none;'></td>
+      <td>
+        {{instance.name}}
+      </td>
+      <td>
+        <bg-status target='instance.status'></bg-status>
+      </td>
+      <td>
+          <span class="btn-toolbar pull-left"
+                ng-show="hasPermission(user, 'bg-system-admin')">
+                <span class="btn-group btn-group-sm">
                   <button type="button" class="btn btn-default fa fa-play"
                           ng-click="startInstance(instance)"
                           title="Start Instance {{instance.name}}"></button>
@@ -155,35 +302,26 @@
                     <ul class="dropdown-menu">
                       <li>
                         <a
-                            ng-click="showLogs(system, instance)"
-                            role="button"
-                            title="Open Log File: {{instance.name}}"><span >Show Logs</span>
+                                ng-click="showLogs(system, instance)"
+                                role="button"
+                                title="Open Log File: {{instance.name}}"><span >Show Logs</span>
                         </a>
                       </li>
                       <li>
                         <a
-                            ng-click="manageQueue(system, instance)"
-                            role="button"
-                            title="Manage Queue: {{instance.name}}"><span>Manage Queue</span>
+                                ng-click="manageQueue(system, instance)"
+                                role="button"
+                                title="Manage Queue: {{instance.name}}"><span>Manage Queue</span>
                         </a>
                       </li>
                     </ul>
                 </span>
               </span>
-            </div>
-          </div>
-        </div>
-
-
-          <div class="container-item empty"></div>
-      </div>
-  </div>
-
-
-
-
-  <!-- This is ugly but empty panels ensure the bottom row is left-aligned -->
-  <div class="container-item empty"></div>
-  <div class="container-item empty"></div>
+      </td>
+    </tr>
+    <tr ng-repeat-end></tr>
+    <tr ng-repeat-end></tr>
+    </tbody>
+  </table>
 
 </div>
