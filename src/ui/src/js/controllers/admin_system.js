@@ -75,10 +75,6 @@ export default function adminSystemController(
       return count;
     };
 
-  $scope.systemNameFilter = function (system_name) {
-    return $scope.system_name_query == system_name || $scope.system_name_query == "";
-  };
-
   $scope.totalRunningIdsInRunner = function (runners) {
     let count = 0;
     for (let i = 0; i < runners.length; i++) {
