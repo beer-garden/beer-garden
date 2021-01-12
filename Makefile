@@ -42,10 +42,10 @@ help:
 
 # RPM
 rpm-build:  ## build rpm
-	$(PYTHON) rpm/bin/build.py rpm $(VERSION) --iteration $(ITERATION)
+	rpm/bin/build.py rpm $(VERSION) --iteration $(ITERATION)
 
 rpm-build-local:  ## build local rpm
-	$(PYTHON) rpm/bin/build.py rpm --local $(VERSION)
+	rpm/bin/build.py rpm --local $(VERSION)
 
 
 # Docker
