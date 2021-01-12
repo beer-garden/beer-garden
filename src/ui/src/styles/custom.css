@@ -118,26 +118,23 @@ html, body{
 }
 
 .panel-container {
-    -webkit-column-count: 3;
-    -moz-column-count: 3;
-    column-count: 3;
-    height: auto;
-    page-break-inside: avoid;
-    padding: 5px;
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-around;
+    align-items: stretch;
+    padding-bottom: 20px;
 }
 
 .panel-container .container-item {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    page-break-inside: avoid;
     margin: 10px;
-    min-width: 100%;
-    max-width: 100%;
+    min-width: 30%;
+    max-width: 30%;
 }
 
 .panel-container .container-item h3 {
-    page-break-inside: avoid;
     margin-top: 10px;
     margin-bottom: 10px;
 }
