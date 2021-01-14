@@ -106,8 +106,10 @@ class MongoPruner(StoppableThread):
                     "delete_after": timedelta(minutes=file_ttl),
                     "additional_query": Q(owner_type=None)  # No one has claimed me
                     | (
-                        (Q(owner_type__iexact="JOB") & Q(job=None)) |  # A Job claimed me, but it's gone now
-                        (Q(owner_type__iexact="REQUEST") & Q(request=None))  # A request claimed me, but it's gone
+                        (Q(owner_type__iexact="JOB") & Q(job=None))
+                        | (  # A Job claimed me, but it's gone now
+                            Q(owner_type__iexact="REQUEST") & Q(request=None)
+                        )  # A request claimed me, but it's gone
                     ),
                 }
             )
