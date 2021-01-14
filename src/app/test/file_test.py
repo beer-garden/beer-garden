@@ -29,7 +29,7 @@ class TestFileOperations(object):
             id=str(ObjectId()),
             owner_type=None,
             owner_id=None,
-            owner=ObjectId(),
+            job=ObjectId(),
             chunks={
                 "0": str(ObjectId()),
                 "1": str(ObjectId()),
@@ -246,7 +246,7 @@ class TestFileOperations(object):
             id=simple_file.id,
             owner_type="REQUEST",
             owner_id=simple_request.id,
-            owner=ObjectId(),
+            request=ObjectId(),
         )
 
     @pytest.fixture
@@ -258,7 +258,7 @@ class TestFileOperations(object):
             id=simple_file.id,
             owner_type="JOB",
             owner_id=simple_job.id,
-            owner=ObjectId(),
+            job=ObjectId(),
         )
 
     def test_file_owner(

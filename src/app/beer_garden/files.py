@@ -182,11 +182,12 @@ def _save_chunk(
             file_id=file_id,
             offset=offset,
             data=data,
-            **kwargs,
         )
 
     file = check_file(file_id, upsert=upsert)
-    chunk = FileChunk(file_id=file.id, offset=offset, data=data, **kwargs)
+    chunk = FileChunk(file_id=file.id, offset=offset, data=data,
+                      owner=kwargs.get("owner", None)
+                      )
     c = db.create(chunk)
     # This is starting to get DB-specific, but we want to be sure this is an atomic operation.
     modify = {f"set__chunks__{offset}": c.id}
@@ -196,8 +197,8 @@ def _save_chunk(
         operation_complete=True,
         # Splicing together the chunk and file metadata
         **dict(
-            _unroll_object(c, key_map={"id": "chunk_id"}, ignore=["data", "owner"]),
-            **_unroll_object(file, key_map={"id": _format_id}, ignore=["owner"]),
+            _unroll_object(c, key_map={"id": "chunk_id"}, ignore=["data", "owner", "job", "request"]),
+            **_unroll_object(file, key_map={"id": _format_id}, ignore=["job", "request"]),
         ),
     )
 
@@ -230,7 +231,7 @@ def _verify_chunks(file_id: str):
     ]
     return FileStatus(
         operation_complete=True,
-        **_unroll_object(file, key_map={"id": _format_id}, ignore=["owner"]),
+        **_unroll_object(file, key_map={"id": _format_id}, ignore=["job", "request"]),
         valid=(length_ok and missing == [] and size_ok),
         missing_chunks=missing,
         expected_max_size=computed_size,
@@ -265,7 +266,7 @@ def _fetch_chunk(file_id: str, chunk_num: int):
         chunk = check_chunk(file.chunks[str(chunk_num)])
         return FileStatus(
             operation_complete=True,
-            **_unroll_object(chunk, key_map={"id": "chunk_id"}, ignore=["owner"]),
+            **_unroll_object(chunk, key_map={"id": "chunk_id"}, ignore=["owner", "job", "request"]),
         )
     else:
         raise ValueError(f"Chunk number {chunk_num} is invalid for file {file.id}")
@@ -297,7 +298,7 @@ def _fetch_file(file_id: str):
         ]
         return FileStatus(
             operation_complete=True,
-            **_unroll_object(file, key_map={"id": _format_id}, ignore=["owner"]),
+            **_unroll_object(file, key_map={"id": _format_id}, ignore=["job", "request"]),
             # Each chunk should be base64 encoded, and
             # we can't just concat those strings.
             data=b64encode(b"".join(map(b64decode, all_data))).decode("utf-8"),
@@ -369,7 +370,7 @@ def create_file(
             )
         return FileStatus(
             operation_complete=True,
-            **_unroll_object(f, key_map={"id": _format_id}, ignore=["owner"]),
+            **_unroll_object(f, key_map={"id": _format_id}, ignore=["job", "request"]),
         )
 
     # Safe creation process, handles out-of-order file uploads but may
@@ -380,12 +381,12 @@ def create_file(
             f = db.create(f)
         else:
             f = db.modify(
-                res, **_unroll_object(f, ignore=["id", "chunks", "owner", "updated_at"])
+                res, **_unroll_object(f, ignore=["id", "chunks", "job", "request", "updated_at"])
             )
 
         return FileStatus(
             operation_complete=True,
-            **_unroll_object(f, key_map={"id": _format_id}, ignore=["owner"]),
+            **_unroll_object(f, key_map={"id": _format_id}, ignore=["job", "request"]),
         )
 
 
@@ -454,7 +455,7 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
         # Case 1 : New owner has equal or higher priority
         # Case 2 : The old owner is a higher priority than the new one, but it was deleted.
         if new_owner_priority <= old_owner_priority or (
-            file.owner_type in OWNERSHIP_PRIORITY and file.owner is None
+            file.owner_type in OWNERSHIP_PRIORITY and (file.job is None and file.request is None)
         ):
             if owner_type in OWNERSHIP_MAP:
                 owner = db.query_unique(OWNERSHIP_MAP[owner_type], id=owner_id)
@@ -462,13 +463,14 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
                     file,
                     owner_id=owner_id,
                     owner_type=owner_type,
-                    owner=owner.id if owner is not None else None,
+                    job=owner.id if owner is not None and owner_type == "JOB" else None,
+                    request=owner.id if owner is not None and owner_type == "REQUEST" else None,
                 )
             else:
                 file = db.modify(file, owner_id=owner_id, owner_type=owner_type)
             return FileStatus(
                 operation_complete=True,
-                **_unroll_object(file, key_map={"id": _format_id}, ignore=["owner"]),
+                **_unroll_object(file, key_map={"id": _format_id}, ignore=["job", "request"]),
             )
         return FileStatus(
             operation_complete=False,
@@ -541,7 +543,8 @@ def forward_file(operation: Operation):
                     "chunk_size",
                     "id",
                     "updated_at",
-                    "owner",
+                    "job",
+                    "request",
                 ],
             ),
         )
@@ -562,7 +565,7 @@ def forward_file(operation: Operation):
             c_kwargs = dict(
                 {"upsert": True},
                 # Owner is a LazyReference field that causes crashing when being pushed forward.
-                **_unroll_object(chunk, ignore=["file_id", "offset", "data", "owner"]),
+                **_unroll_object(chunk, ignore=["file_id", "offset", "data", "owner", "job", "request"]),
             )
             chunk_op = Operation(
                 operation_type="FILE_CHUNK",
