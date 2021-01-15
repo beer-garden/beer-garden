@@ -144,15 +144,38 @@ def ensure_owner_collection_migration():
 
     db = get_db()
 
-    collection = db["owner"]
-    cursor = collection.find({})
-    for document in cursor:
+    owner_collection = db["owner"]
+    owner_cursor = owner_collection.find({})
+
+    file_collection = db["file"]
+
+    for document in owner_cursor:
         if document["_cls"] == "Owner.Request":
             model = MongoParser.parse_request(document)
             model.save()
+
+            file_cursor = file_collection.find({"owner_id": str(document["_id"])})
+            for file in file_cursor:
+                db_file = MongoParser.parse_file(file)
+                db_file.id = file['_id']
+                db_file.owner_id = str(model.id)
+                db_file.request = model
+                db_file.save()
+
         elif document["_cls"] == "Owner.Job":
             model = MongoParser.parse_job(document)
             model.save()
+
+            file_cursor = file_collection.find({"owner_id": str(document["_id"])})
+            for file in file_cursor:
+                db_file = MongoParser.parse_file(file)
+                db_file.id = file['_id']
+                db_file.owner_id = str(model.id)
+                db_file.job = model
+                db_file.save()
+
+    # Deletes the Owner Field in File Collection
+    file_collection.update_many({}, {"$unset": {"owner": 1}})
 
     db.drop_collection("owner")
 
