@@ -136,7 +136,28 @@ def ensure_users(guest_login_enabled):
             ).save()
 
 
-def ensure_model_migration():
+def ensure_owner_collection_migration():
+    """We ran into an issue with 3.0.5 where Requests and Jobs got migrated over to
+    the Owner collection. This is in place to resolve that."""
+
+    from beer_garden.db.mongo.parser import MongoParser
+
+    db = get_db()
+
+    collection = db["owner"]
+    cursor = collection.find({})
+    for document in cursor:
+        if document["_cls"] == "Owner.Request":
+            model = MongoParser.parse_request(document)
+            model.save()
+        elif document["_cls"] == "Owner.Job":
+            model = MongoParser.parse_job(document)
+            model.save()
+
+    db.drop_collection("owner")
+
+
+def ensure_v2_to_v3_model_migration():
     """Ensures that the Role model is flatten and Command model is an
     EmbeddedDocument
 
@@ -179,6 +200,14 @@ def ensure_model_migration():
         db.drop_collection("command")
         db.drop_collection("instance")
         db.drop_collection("system")
+
+
+def ensure_model_migration():
+    """Ensures that the database is properly migrated. All migrations ran from this
+    single function for easy management"""
+
+    ensure_v2_to_v3_model_migration()
+    ensure_owner_collection_migration()
 
 
 def check_indexes(document_class):
