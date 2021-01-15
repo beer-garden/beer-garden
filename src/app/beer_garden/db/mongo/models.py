@@ -266,12 +266,7 @@ class Instance(MongoModel, EmbeddedDocument):
             )
 
 
-class Owner(Document):
-    # Stub to use for a reference field.
-    meta = {"allow_inheritance": True}
-
-
-class Request(MongoModel, Owner):
+class Request(MongoModel, Document):
     brewtils_model = brewtils.models.Request
 
     # These fields are duplicated for job types, changes to this field
@@ -717,7 +712,8 @@ class File(MongoModel, Document):
 
     owner_id = StringField(required=False)
     owner_type = StringField(required=False)
-    owner = LazyReferenceField(Owner, required=False, reverse_delete_rule=NULLIFY)
+    request = LazyReferenceField(Request, required=False, reverse_delete_rule=NULLIFY)
+    job = LazyReferenceField(Job, required=False, reverse_delete_rule=NULLIFY)
     updated_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     file_name = StringField(required=True)
     file_size = IntField(required=True)
