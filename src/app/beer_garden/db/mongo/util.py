@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 import logging
 import os
-
+from bson import DBRef
+import beer_garden.db.api as db
 from mongoengine.connection import get_db
 from mongoengine.errors import (
     DoesNotExist,
+    FieldDoesNotExist,
     InvalidDocumentError,
     NotUniqueError,
-    FieldDoesNotExist,
 )
 from passlib.apps import custom_app_context
 
@@ -142,42 +143,56 @@ def ensure_owner_collection_migration():
 
     from beer_garden.db.mongo.parser import MongoParser
 
-    db = get_db()
+    database = get_db()
+    owner_collection = database["owner"]
+    file_collection = database["file"]
+    request_collection = database["request"]
+    job_collection = database["job"]
 
-    owner_collection = db["owner"]
-    owner_cursor = owner_collection.find({})
+    def _migrate_request(req_doc):
+        del req_doc["_cls"]
 
-    file_collection = db["file"]
+        if req_doc["has_parent"]:
+            req_doc["parent"] = DBRef("request", req_doc["parent"].id)
 
-    for document in owner_cursor:
-        if document["_cls"] == "Owner.Request":
-            model = MongoParser.parse_request(document)
-            model.save()
+        request_collection.insert_one(req_doc)
 
-            file_cursor = file_collection.find({"owner_id": str(document["_id"])})
-            for file in file_cursor:
-                db_file = MongoParser.parse_file(file)
-                db_file.id = file['_id']
-                db_file.owner_id = str(model.id)
-                db_file.request = model
-                db_file.save()
+        for file in file_collection.find({"owner_id": str(req_doc["_id"])}):
+            db_file = MongoParser.parse_file(file)
+            db_file.id = file["_id"]
+            # db_file.owner_id = str(req.id)
+            # db_file.request = req
+            db_file.save()
 
-        elif document["_cls"] == "Owner.Job":
-            model = MongoParser.parse_job(document)
-            model.save()
+    def _migrate_job(job_doc):
+        job_collection.insert_one(job_doc)
 
-            file_cursor = file_collection.find({"owner_id": str(document["_id"])})
-            for file in file_cursor:
-                db_file = MongoParser.parse_file(file)
-                db_file.id = file['_id']
-                db_file.owner_id = str(model.id)
-                db_file.job = model
-                db_file.save()
+        file_cursor = file_collection.find({"owner_id": str(job_doc["_id"])})
+        for file in file_cursor:
+            db_file = MongoParser.parse_file(file)
+            db_file.id = file["_id"]
+            # db_file.owner_id = str(job.id)
+            # db_file.job = job
+            db_file.save()
 
-    # Deletes the Owner Field in File Collection
-    file_collection.update_many({}, {"$unset": {"owner": 1}})
+    if owner_collection.count():
+        logger.warning(
+            "Found owner collection, migrating documents to appropirate collections. "
+            "This could take a while :)"
+        )
 
-    db.drop_collection("owner")
+        for document in owner_collection.find({"_cls": "Owner.Request"}):
+            if document["_cls"] == "Owner.Request":
+                _migrate_request(document)
+
+            elif document["_cls"] == "Owner.Job":
+                _migrate_job(document)
+
+        # Deletes the Owner Field in File Collection
+        file_collection.update_many({}, {"$unset": {"owner": 1}})
+
+        logger.info("Dropping owner collection (this is intended!)")
+        database.drop_collection("owner")
 
 
 def ensure_v2_to_v3_model_migration():
