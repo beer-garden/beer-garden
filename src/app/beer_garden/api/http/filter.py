@@ -64,7 +64,7 @@ def instance_namespace(obj: Instance = None) -> str:
     Returns: Namespace
 
     """
-    system, _ = _from_kwargs(instance=obj)
+    system, _ = _from_kwargs(instance_id=obj.id)
     return system_namespace(system)
 
 
