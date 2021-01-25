@@ -1,0 +1,30 @@
+<div>
+  <h3 class='page-header'>
+    <span>Fill out the request you would like to schedule</span>
+  </h3>
+
+  <div ng-show=command.description style="margin:-15px 3px 20px">
+    {{command.description}}
+  </div>
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-8">
+        <form
+          name="ngform"
+          sf-schema="schema"
+          sf-form="form"
+          sf-model="model"
+          ng-submit="submit(ngform, model)"></form>
+        <div uib-alert ng-repeat="alert in alerts" class="alert-danger" close="closeAlert($index)">
+          <strong>Uh-oh!</strong>
+          <span ng-bind=alert></span>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <h3 class="col-md-4" style="margin-top: 0px">Preview</h3>
+        <div ui-ace="{ onLoad: loadPreview }" ng-model="modelJson" style="width: 100%;"></div>
+      </div>
+    </div>
+  </div>
+</div>

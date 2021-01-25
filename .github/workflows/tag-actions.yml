@@ -42,6 +42,7 @@ jobs:
           pip install setuptools wheel twine
 
       - name: Build and publish
+        continue-on-error: true
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
@@ -83,7 +84,7 @@ jobs:
         run: make publish-docker VERSION=${GITHUB_REF#refs/tags/}
 
   RPM:
-    needs: Docker
+    needs: Verify-PyPi
     runs-on: ubuntu-latest
     name: Python ${{ matrix.python-version }} RPM Builder
     strategy:

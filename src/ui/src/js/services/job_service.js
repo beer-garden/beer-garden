@@ -520,7 +520,7 @@ export default function jobService($http, NamespaceService) {
       'items': [
         {
           'type': 'button', 'style': 'btn-warning w-100 ', 'title': 'Reset',
-          'onClick': 'resetJob(ngform, model, system, command.data)', 'htmlClass': 'col-md-2',
+          'onClick': 'reset(ngform, model, system, command.data)', 'htmlClass': 'col-md-2',
         },
         {
           'type': 'submit', 'style': 'btn-primary w-100',
