@@ -634,12 +634,6 @@ def _forward_http(operation: Operation, target_garden: Garden):
     """
 
     conn_info = target_garden.connection_params
-    # endpoint = "{}://{}:{}{}api/v1/forward".format(
-    #     "https" if conn_info.get("ssl") else "http",
-    #     conn_info.get("host"),
-    #     conn_info.get("port"),
-    #     conn_info.get("url_prefix", "/"),
-    # )
 
     decoded_password = None
     if conn_info.get("password", None):
@@ -672,7 +666,7 @@ def _forward_http(operation: Operation, target_garden: Garden):
         elif target_garden.status != "RUNNING":
             beer_garden.garden.update_garden_status(target_garden.name, "RUNNING")
 
-        return response
+        return response.json()
 
     except Exception as error:
         logger.error(error)
