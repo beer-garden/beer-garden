@@ -134,7 +134,7 @@ export default function appRun(
     );
   };
 
-  $rootScope.hasPermission = function(user, permissions, is_local = false, system = null) {
+  $rootScope.hasPermission = function(user, permissions, is_local = false, namespace = null) {
     if (!$rootScope.config.authEnabled) return true;
     if (_.isUndefined(user)) return false;
     for (var i = 0; i < user.permissions.length; i++){
@@ -145,14 +145,14 @@ export default function appRun(
         switch(permissions){
             case 'READ':
                 if (['ADMIN', 'MAINTAINER', 'CREATE', 'READ'].includes(user.permissions[i].access)){
-                    if (system == null){
+                    if (namespace == null){
                         return true;
                     }
                     else{
                         if (user.permissions[i].is_local){
                             return true;
                         }
-                        else if (user.permissions[i].namespace == system.namespace){
+                        else if (user.permissions[i].namespace == namespace){
                             return true;
                         }
                     }
@@ -160,42 +160,42 @@ export default function appRun(
                 }
             case 'CREATE':
                 if (['ADMIN', 'MAINTAINER', 'CREATE'].includes(user.permissions[i].access)){
-                    if (system == null){
+                    if (namespace == null){
                         return true;
                     }
                     else{
                         if (user.permissions[i].is_local){
                             return true;
                         }
-                        else if (user.permissions[i].namespace == system.namespace){
+                        else if (user.permissions[i].namespace == namespace){
                             return true;
                         }
                     }
                 }
             case 'MAINTAINER':
                 if (['ADMIN', 'MAINTAINER'].includes(user.permissions[i].access)){
-                    if (system == null){
+                    if (namespace == null){
                         return true;
                     }
                     else{
                         if (user.permissions[i].is_local){
                             return true;
                         }
-                        else if (user.permissions[i].namespace == system.namespace){
+                        else if (user.permissions[i].namespace == namespace){
                             return true;
                         }
                     }
                 }
             case 'ADMIN':
                 if (['ADMIN'].includes(user.permissions[i].access)){
-                    if (system == null){
+                    if (namespace == null){
                         return true;
                     }
                     else{
                         if (user.permissions[i].is_local){
                             return true;
                         }
-                        else if (user.permissions[i].namespace == system.namespace){
+                        else if (user.permissions[i].namespace == namespace){
                             return true;
                         }
                     }
