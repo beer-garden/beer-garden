@@ -337,7 +337,9 @@ def filter_brewtils_model(
         )
 
     # We have no way to filter, we will return the obj for now and log an error
-    logger.error(f"Unable to filter obj for schema type {obj.schema}")
+    # This should be removed long term, this is here to make sure we know a schema wasn't
+    # captured.
+    logger.debug(f"Unable to filter obj for schema type {obj.schema}")
 
     return obj
 
