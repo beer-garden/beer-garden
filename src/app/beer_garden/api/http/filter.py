@@ -19,6 +19,26 @@ from brewtils.models import (
 
 logger = logging.getLogger(__name__)
 
+"""
+Just some notes for future self:
+
+Long term we are going to want to add tag filtering. Projecting that these will be on 
+both commands and systems. So when returning a System, we will have to run through all
+commands and only return the ones approved. 
+
+We will also want to roll the tags upwards. So a System will have all the tags associated
+with it, and the commands. So if the System object doesn't have any of the proper tags
+then don't return it.
+
+We will also need to add the tags of the Command to the Request record, so we can filter
+on that as well. This will need to work for the Request Template as well. If the
+developer changes the tags on a command, historic commands should maintain their original 
+tags.
+
+Also, if a user is approved of the Namespace OR Tag, then the object is returned. We 
+want the least restrictive approach.
+"""
+
 
 def request_namespace(obj: Request = None) -> str:
     """
