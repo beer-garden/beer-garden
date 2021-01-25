@@ -43,7 +43,7 @@ class UserAPI(BaseHandler):
           - Users
         """
         if user_identifier == "anonymous":
-            response = beer_garden.api.http.anonymous_principal
+            response = SchemaParser.serialize(beer_garden.api.http.anonymous_principal)
         else:
             # Need fine-grained access control here
             if user_identifier not in [
@@ -67,7 +67,11 @@ class UserAPI(BaseHandler):
                     )
                 )
 
-        self.write(response)
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        try:
+            self.write(response)
+        except TypeError as e:
+            raise
 
     @authenticated(permissions=[Permissions.ADMIN])
     async def delete(self, user_id):
@@ -259,6 +263,7 @@ class UserAPI(BaseHandler):
             else:
                 raise ModelValidationError("Unsupported path '%s'" % op.path)
 
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
 
@@ -283,6 +288,7 @@ class UsersAPI(BaseHandler):
 
         principals = await self.client(Operation(operation_type="USER_READ_ALL"))
 
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(principals)
 
     @authenticated(permissions=[Permissions.ADMIN])
@@ -337,5 +343,6 @@ class UsersAPI(BaseHandler):
         user.save()
         user.permissions = coalesce_permissions(user.roles)[1]
 
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.set_status(201)
         self.write(MongoParser.serialize_principal(user, to_string=False))

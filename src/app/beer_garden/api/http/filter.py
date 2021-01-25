@@ -14,7 +14,7 @@ from brewtils.models import (
     Job,
     Operation,
     Principal,
-)
+    Runner)
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +93,24 @@ def job_namespace(obj: Job = None) -> str:
     return request_template_namespace(obj.request_template)
 
 
+def runner_namespace(obj: Runner = None) -> str:
+    """
+    Finds the Namespace associated with the Runner
+    Args:
+        obj: Runner
+
+    Returns: Namespace
+
+    """
+
+    if obj.instance_id:
+        system, _ = _from_kwargs(instance_id=obj.instance_id)
+        obj.kwargs["system"] = system
+        return system_namespace(system)
+
+    return None
+
+
 def operation_namespace(obj: Operation = None) -> str:
     """
     Finds the namespace associated with an Operation that is attempting to modify a
@@ -149,10 +167,10 @@ def operation_namespace(obj: Operation = None) -> str:
 
 
 def operation_filtering(
-    obj: Operation = None,
-    raise_error: bool = True,
-    current_user: Principal = None,
-    required_permissions: list = list(),
+        obj: Operation = None,
+        raise_error: bool = True,
+        current_user: Principal = None,
+        required_permissions: list = list(),
 ):
     """
     Filters the Operation Model based on Model field
@@ -167,10 +185,10 @@ def operation_filtering(
     """
 
     if obj.model and filter_brewtils_model(
-        obj=obj.model,
-        current_user=current_user,
-        required_permissions=required_permissions,
-        raise_error=raise_error,
+            obj=obj.model,
+            current_user=current_user,
+            required_permissions=required_permissions,
+            raise_error=raise_error,
     ):
         return obj
 
@@ -194,10 +212,10 @@ def operation_db_filtering(obj: Operation = None, current_user: Principal = None
 
 
 def event_filtering(
-    obj=None,
-    raise_error: bool = True,
-    current_user: Principal = None,
-    required_permissions: list = list(),
+        obj=None,
+        raise_error: bool = True,
+        current_user: Principal = None,
+        required_permissions: list = list(),
 ):
     """
     Filters the Event Model based on Payload field
@@ -211,10 +229,10 @@ def event_filtering(
 
     """
     if obj.payload and filter_brewtils_model(
-        obj=obj.payload,
-        current_user=current_user,
-        required_permissions=required_permissions,
-        raise_error=raise_error,
+            obj=obj.payload,
+            current_user=current_user,
+            required_permissions=required_permissions,
+            raise_error=raise_error,
     ):
         return obj
 
@@ -228,6 +246,7 @@ obj_namespace_mapping = {
     "RequestTemplateSchema": request_template_namespace,
     "SystemSchema": system_namespace,
     "OperationSchema": operation_namespace,
+    "RunnerSchema": runner_namespace,
 }
 
 obj_custom_filtering_mapping = {
@@ -241,10 +260,10 @@ obj_db_filtering = {
 
 
 def filter_brewtils_model(
-    obj=None,
-    raise_error: bool = True,
-    current_user: Principal = None,
-    required_permissions: list = list(),
+        obj=None,
+        raise_error: bool = True,
+        current_user: Principal = None,
+        required_permissions: list = list(),
 ):
     """
     Filters the Brewtils Model
@@ -261,7 +280,7 @@ def filter_brewtils_model(
     # Last ditch effort to verify they at least have the required permissions
     if not hasattr(obj, "schema"):
         if permission_check(
-            current_user=current_user, required_permissions=required_permissions
+                current_user=current_user, required_permissions=required_permissions
         ):
             return obj
         if raise_error:
@@ -277,9 +296,9 @@ def filter_brewtils_model(
     # If we find a namespace, we can run the filter at this point
     if obj_namespace:
         if namespace_check(
-            obj_namespace,
-            current_user=current_user,
-            required_permissions=required_permissions,
+                obj_namespace,
+                current_user=current_user,
+                required_permissions=required_permissions,
         ):
             return obj
         if raise_error:
@@ -303,10 +322,10 @@ def filter_brewtils_model(
 
 
 def model_filter(
-    obj=None,
-    raise_error: bool = True,
-    current_user: Principal = None,
-    required_permissions: list = list(),
+        obj=None,
+        raise_error: bool = True,
+        current_user: Principal = None,
+        required_permissions: list = list(),
 ):
     """
     Filters a Model
@@ -377,7 +396,7 @@ def model_db_filter(obj=None, current_user: Principal = None):
 
 
 def namespace_check(
-    namespace: str, current_user: Principal = None, required_permissions: list = list()
+        namespace: str, current_user: Principal = None, required_permissions: list = list()
 ):
     """
     Compares the namespace provided with the Principals permissions and required permissions
@@ -392,7 +411,7 @@ def namespace_check(
     for permission in current_user.permissions:
         for required in required_permissions:
             if permission.access in PermissionRequiredAccess[required] and (
-                permission.namespace == namespace or permission.is_local
+                    permission.namespace == namespace or permission.is_local
             ):
                 return True
 
@@ -400,7 +419,7 @@ def namespace_check(
 
 
 def permission_check(
-    current_user: Principal = None, required_permissions: list = list()
+        current_user: Principal = None, required_permissions: list = list()
 ):
     """
     Compares the namespace provided with the Principals permissions and required permissions
