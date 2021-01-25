@@ -27,7 +27,6 @@ def ensure_roles():
     Then there are roles that MUST be present. These will always be created if
     they do not exist.
     """
-    from .models import Role, Permission
 
     convenience_roles = [
         BrewtilsRole(

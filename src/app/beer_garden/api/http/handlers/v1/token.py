@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 
 import jwt
 
-from beer_garden.db.mongo.api import to_brewtils
 from beer_garden.db.mongo.parser import MongoParser
 from brewtils.errors import ModelValidationError
 from mongoengine.errors import DoesNotExist

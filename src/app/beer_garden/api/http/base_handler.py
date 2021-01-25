@@ -39,7 +39,6 @@ from beer_garden.errors import (
     RoutingRequestException,
     NotUniqueException,
 )
-from brewtils.models import BaseModel
 
 
 async def event_wait(evt, timeout):

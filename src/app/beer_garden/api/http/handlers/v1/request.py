@@ -7,7 +7,6 @@ from brewtils.errors import ModelValidationError, TimeoutExceededError
 from brewtils.models import Operation, Request
 from brewtils.schema_parser import SchemaParser
 
-import beer_garden.db.api as db
 from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler, event_wait
 

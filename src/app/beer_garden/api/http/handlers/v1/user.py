@@ -68,10 +68,7 @@ class UserAPI(BaseHandler):
                 )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        try:
-            self.write(response)
-        except TypeError as e:
-            raise
+        self.write(response)
 
     @authenticated(permissions=[Permissions.ADMIN])
     async def delete(self, user_id):

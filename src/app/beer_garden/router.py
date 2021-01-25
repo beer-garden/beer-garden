@@ -21,7 +21,6 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
 from typing import Dict, Union
 
-import requests
 import stomp
 from stomp.exception import ConnectFailedException
 from beer_garden.api.stomp.processors import (
@@ -30,7 +29,6 @@ from beer_garden.api.stomp.processors import (
 )
 from brewtils import EasyClient
 from brewtils.models import Events, Garden, Operation, Request, System, Event
-from brewtils.schema_parser import SchemaParser
 
 import beer_garden
 import beer_garden.commands
