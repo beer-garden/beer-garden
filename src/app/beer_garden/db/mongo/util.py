@@ -141,55 +141,40 @@ def ensure_owner_collection_migration():
     """We ran into an issue with 3.0.5 where Requests and Jobs got migrated over to
     the Owner collection. This is in place to resolve that."""
 
-    from beer_garden.db.mongo.parser import MongoParser
-
     database = get_db()
-    owner_collection = database["owner"]
-    file_collection = database["file"]
-    request_collection = database["request"]
-    job_collection = database["job"]
 
-    def _migrate_request(req_doc):
-        del req_doc["_cls"]
-
-        if req_doc["has_parent"]:
-            req_doc["parent"] = DBRef("request", req_doc["parent"].id)
-
-        request_collection.insert_one(req_doc)
-
-        for file in file_collection.find({"owner_id": str(req_doc["_id"])}):
-            db_file = MongoParser.parse_file(file)
-            db_file.id = file["_id"]
-            # db_file.owner_id = str(req.id)
-            # db_file.request = req
-            db_file.save()
-
-    def _migrate_job(job_doc):
-        job_collection.insert_one(job_doc)
-
-        file_cursor = file_collection.find({"owner_id": str(job_doc["_id"])})
-        for file in file_cursor:
-            db_file = MongoParser.parse_file(file)
-            db_file.id = file["_id"]
-            # db_file.owner_id = str(job.id)
-            # db_file.job = job
-            db_file.save()
-
-    if owner_collection.count():
+    if database["owner"].count():
         logger.warning(
-            "Found owner collection, migrating documents to appropirate collections. "
+            "Found owner collection, migrating documents to appropriate collections. "
             "This could take a while :)"
         )
 
-        for document in owner_collection.find({"_cls": "Owner.Request"}):
-            if document["_cls"] == "Owner.Request":
-                _migrate_request(document)
+        for doc in database["owner"].find({"_cls": "Owner.Request"}):
+            del doc["_cls"]
 
-            elif document["_cls"] == "Owner.Job":
-                _migrate_job(document)
+            if doc["has_parent"]:
+                doc["parent"] = DBRef("request", doc["parent"].id)
 
-        # Deletes the Owner Field in File Collection
-        file_collection.update_many({}, {"$unset": {"owner": 1}})
+            database["request"].insert_one(doc)
+
+        for doc in database["owner"].find({"_cls": "Owner.Job"}):
+            del doc["_cls"]
+
+            database["job"].insert_one(doc)
+
+        for doc in database["file"].find():
+            if doc["owner_type"] == "REQUEST":
+                doc["request"] = doc["owner"]
+            elif doc["owner_type"] == "JOB":
+                doc["job"] = doc["owner"]
+            else:
+                logger.warning(f"Unable to migrate file {doc['_id']}: bad owner type")
+                database["file"].delete_one({"_id": doc["_id"]})
+                continue
+
+            del doc["owner"]
+
+            database["file"].replace_one({"_id": doc["_id"]}, doc)
 
         logger.info("Dropping owner collection (this is intended!)")
         database.drop_collection("owner")
