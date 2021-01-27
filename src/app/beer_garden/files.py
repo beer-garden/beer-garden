@@ -203,7 +203,7 @@ def _save_chunk(
                 ignore=["data", "owner", "job", "request"],
             ),
             **_unroll_object(
-                file, key_map={"id": _format_id}, ignore=["job", "request"]
+                file, key_map={"id": _format_id}, ignore=["owner", "job", "request"]
             ),
         ),
     )
@@ -237,7 +237,9 @@ def _verify_chunks(file_id: str):
     ]
     return FileStatus(
         operation_complete=True,
-        **_unroll_object(file, key_map={"id": _format_id}, ignore=["job", "request"]),
+        **_unroll_object(
+            file, key_map={"id": _format_id}, ignore=["owner", "job", "request"]
+        ),
         valid=(length_ok and missing == [] and size_ok),
         missing_chunks=missing,
         expected_max_size=computed_size,
@@ -380,7 +382,9 @@ def create_file(
             )
         return FileStatus(
             operation_complete=True,
-            **_unroll_object(f, key_map={"id": _format_id}, ignore=["job", "request"]),
+            **_unroll_object(
+                f, key_map={"id": _format_id}, ignore=["owner", "job", "request"]
+            ),
         )
 
     # Safe creation process, handles out-of-order file uploads but may
@@ -487,7 +491,7 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
             return FileStatus(
                 operation_complete=True,
                 **_unroll_object(
-                    file, key_map={"id": _format_id}, ignore=["job", "request"]
+                    file, key_map={"id": _format_id}, ignore=["owner", "job", "request"]
                 ),
             )
         return FileStatus(
@@ -563,6 +567,7 @@ def forward_file(operation: Operation):
                     "updated_at",
                     "job",
                     "request",
+                    "owner",
                 ],
             ),
         )
