@@ -496,12 +496,14 @@ class RequestListAPI(BaseHandler):
         order_arg = self.get_query_argument("order", default="{}")
         search_arg = self.get_query_argument("search", default="{}")
         child_arg = self.get_query_argument("include_children", default="false")
+        hidden_arg = self.get_query_argument("include_hidden", default="false")
 
         # And parse them into usable forms
         columns = [json.loads(c) for c in columns_arg]
         order = json.loads(order_arg)
         search = json.loads(search_arg)
         include_children = bool(child_arg.lower() == "true")
+        include_hidden = bool(hidden_arg.lower() == "true")
 
         # Cool, now we can do stuff
         if search and search["value"]:
@@ -509,6 +511,9 @@ class RequestListAPI(BaseHandler):
 
         if not include_children:
             filter_params["has_parent"] = False
+
+        if not include_hidden:
+            filter_params["hidden"] = False
 
         for column in columns:
             query_columns.append(column)

@@ -282,6 +282,7 @@ class Request(MongoModel, Owner):
         "instance_name": {"field": StringField, "kwargs": {"required": True}},
         "namespace": {"field": StringField, "kwargs": {"required": True}},
         "command": {"field": StringField, "kwargs": {"required": True}},
+        "hidden": {"field": BooleanField, "kwargs": {"required": False}},
         "command_type": {"field": StringField, "kwargs": {}},
         "parameters": {"field": DictField, "kwargs": {}},
         "comment": {"field": StringField, "kwargs": {"required": False}},
@@ -305,6 +306,7 @@ class Request(MongoModel, Owner):
     updated_at = DateTimeField(default=None, required=True)
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
+    hidden = BooleanField()
     requester = StringField(required=False)
     parameters_gridfs = FileField()
 
