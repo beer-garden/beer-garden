@@ -720,6 +720,11 @@ class File(MongoModel, Document):
     chunks = DictField(required=False)
     chunk_size = IntField(required=True)
 
+    # This was originally used instead of request and job. See #833
+    # We could probably have kept using this if a GenericLazyReferenceField could have
+    # a reverse_delete_rule. Alas!
+    owner = DummyField()
+
 
 class FileChunk(MongoModel, Document):
     brewtils_model = brewtils.models.FileChunk

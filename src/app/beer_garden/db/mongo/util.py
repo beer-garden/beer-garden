@@ -172,7 +172,7 @@ def ensure_owner_collection_migration():
                 database["file"].delete_one({"_id": doc["_id"]})
                 continue
 
-            del doc["owner"]
+            doc["owner"] = None
 
             database["file"].replace_one({"_id": doc["_id"]}, doc)
 
