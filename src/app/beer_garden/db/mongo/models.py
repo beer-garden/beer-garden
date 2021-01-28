@@ -282,7 +282,6 @@ class Request(MongoModel, Owner):
         "instance_name": {"field": StringField, "kwargs": {"required": True}},
         "namespace": {"field": StringField, "kwargs": {"required": True}},
         "command": {"field": StringField, "kwargs": {"required": True}},
-        "hidden": {"field": BooleanField, "kwargs": {"required": False}},
         "command_type": {"field": StringField, "kwargs": {}},
         "parameters": {"field": DictField, "kwargs": {}},
         "comment": {"field": StringField, "kwargs": {"required": False}},

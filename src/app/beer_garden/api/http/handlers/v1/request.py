@@ -513,7 +513,7 @@ class RequestListAPI(BaseHandler):
             filter_params["has_parent"] = False
 
         if not include_hidden:
-            filter_params["hidden"] = False
+            filter_params["hidden__ne"] = True
 
         for column in columns:
             query_columns.append(column)
