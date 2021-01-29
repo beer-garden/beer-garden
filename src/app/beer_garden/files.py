@@ -309,7 +309,7 @@ def _fetch_file(file_id: str):
         return FileStatus(
             operation_complete=True,
             **_unroll_object(
-                file, key_map={"id": _format_id}, ignore=["job", "request"]
+                file, key_map={"id": _format_id}, ignore=["owner", "job", "request"]
             ),
             # Each chunk should be base64 encoded, and
             # we can't just concat those strings.
@@ -397,13 +397,15 @@ def create_file(
             f = db.modify(
                 res,
                 **_unroll_object(
-                    f, ignore=["id", "chunks", "job", "request", "updated_at"]
+                    f, ignore=["id", "chunks", "owner", "job", "request", "updated_at"]
                 ),
             )
 
         return FileStatus(
             operation_complete=True,
-            **_unroll_object(f, key_map={"id": _format_id}, ignore=["job", "request"]),
+            **_unroll_object(
+                f, key_map={"id": _format_id}, ignore=["owner", "job", "request"]
+            ),
         )
 
 
@@ -565,9 +567,9 @@ def forward_file(operation: Operation):
                     "chunk_size",
                     "id",
                     "updated_at",
+                    "owner",
                     "job",
                     "request",
-                    "owner",
                 ],
             ),
         )
