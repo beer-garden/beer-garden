@@ -2,7 +2,6 @@
 import logging
 import os
 from bson import DBRef
-import beer_garden.db.api as db
 from mongoengine.connection import get_db
 from mongoengine.errors import (
     DoesNotExist,
