@@ -8,7 +8,15 @@ import beer_garden.files as files
 import beer_garden.db.api as db
 from beer_garden.errors import NotUniqueException
 from brewtils.errors import ModelValidationError, NotFoundError
-from brewtils.models import File, FileChunk, Request, Job, FileTrigger, RequestTemplate
+from brewtils.models import (
+    File,
+    FileChunk,
+    Request,
+    Job,
+    FileTrigger,
+    RequestTemplate,
+    FileStatus,
+)
 
 
 class TestFileOperations(object):
@@ -29,6 +37,7 @@ class TestFileOperations(object):
             id=str(ObjectId()),
             owner_type=None,
             owner_id=None,
+            request=None,
             job=ObjectId(),
             chunks={
                 "0": str(ObjectId()),
@@ -355,3 +364,35 @@ class TestFileOperations(object):
                 file_id, owner_type="MY_CUSTOM_TYPE", owner_id="MY_CUSTOM_ID"
             )
         ).operation_complete
+
+    def test_safe_build(self, simple_file, simple_file_chunk):
+        status = files.safe_build_object(FileStatus, simple_file)
+        assert status.file_name == simple_file.file_name
+        assert status.file_size == simple_file.file_size
+        assert not hasattr(status, "job")
+        # Make sure that the ID field is set up correctly with the new name and format
+        assert not hasattr(status, "id") and simple_file.id in status.file_id
+
+        # Test the kwargs pass-through
+        status = files.safe_build_object(
+            FileStatus, simple_file, operation_complete=True, valid=False
+        )
+        assert status.operation_complete
+        assert not status.valid
+        assert status.chunk_size == simple_file.chunk_size
+
+        # Test the ignore function
+        status = files.safe_build_object(
+            FileStatus, simple_file, ignore=["file_name", "file_size"]
+        )
+        assert status.file_name is None
+        assert status.file_size is None
+        assert status.chunk_size == simple_file.chunk_size
+
+        # Test the multi-object function
+        status = files.safe_build_object(FileStatus, simple_file, simple_file_chunk)
+        assert (
+            simple_file.id in status.file_id and status.chunk_id == simple_file_chunk.id
+        )
+        assert status.data == simple_file_chunk.data
+        assert status.file_size == simple_file.file_size
