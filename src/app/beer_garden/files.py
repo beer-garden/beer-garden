@@ -62,7 +62,7 @@ def _unroll_object(obj, key_map=None, ignore=None):
     return ret
 
 
-def safe_build_object(cls, *objects, ignore=None, **manual_kwargs):
+def _safe_build_object(cls, *objects, ignore=None, **manual_kwargs):
     if ignore is None or type(ignore) is not list:
         ignore = []
 
@@ -223,7 +223,7 @@ def create_chunk(file_id: str, offset: int = None, data: str = None, **kwargs):
     file = db.modify(file, **modify)
     chunk = db.modify(chunk, owner=file.id)
 
-    return safe_build_object(FileStatus, file, chunk, operation_complete=True)
+    return _safe_build_object(FileStatus, file, chunk, operation_complete=True)
 
 
 def _verify_chunks(file_id: str):
@@ -252,7 +252,7 @@ def _verify_chunks(file_id: str):
     missing = [
         x for x in range(len(file.chunks)) if file.chunks.get(str(x), None) is None
     ]
-    return safe_build_object(
+    return _safe_build_object(
         FileStatus,
         file,
         operation_complete=True,
@@ -288,7 +288,7 @@ def _fetch_chunk(file_id: str, chunk_num: int):
     file = check_chunks(file_id)
     if str(chunk_num) in file.chunks:
         chunk = check_chunk(file.chunks[str(chunk_num)])
-        return safe_build_object(
+        return _safe_build_object(
             FileStatus,
             chunk,
             operation_complete=True,
@@ -321,7 +321,7 @@ def _fetch_file(file_id: str):
             db.query_unique(FileChunk, id=file.chunks[str(x)]).data
             for x in range(len(file.chunks))
         ]
-        return safe_build_object(
+        return _safe_build_object(
             FileStatus,
             file,
             operation_complete=True,
@@ -394,7 +394,7 @@ def create_file(
                 f"Cannot create a file with id {file_id}; "
                 "file with id already exists."
             )
-        return safe_build_object(FileStatus, file, operation_complete=True)
+        return _safe_build_object(FileStatus, file, operation_complete=True)
 
     # Safe creation process, handles out-of-order file uploads but may
     # combine existing data with collision
@@ -411,7 +411,7 @@ def create_file(
                 ),
             )
 
-        return safe_build_object(FileStatus, file, operation_complete=True)
+        return _safe_build_object(FileStatus, file, operation_complete=True)
 
 
 def fetch_file(file_id: str, chunk: int = None, verify: bool = False):
@@ -482,15 +482,15 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
                 )
             else:
                 file = db.modify(file, owner_id=owner_id, owner_type=owner_type)
-            return safe_build_object(FileStatus, file, operation_complete=True)
+            return _safe_build_object(FileStatus, file, operation_complete=True)
 
-        return safe_build_object(
+        return _safe_build_object(
             FileStatus,
             operation_complete=False,
             message=f"Owner type {owner_type} has lower priority than {file.owner_type}",
         )
 
-    return safe_build_object(
+    return _safe_build_object(
         FileStatus,
         operation_complete=False,
         message=f"Operation FILE_OWN requires an owner type "
@@ -535,7 +535,7 @@ def forward_file(operation: Operation):
         file = check_chunks(id)
         args = [file.file_name, file.file_size, file.chunk_size]
         # Make sure we get all of the other data
-        kwargs = safe_build_object(
+        kwargs = _safe_build_object(
             dict,
             file,
             ignore=[
@@ -559,7 +559,7 @@ def forward_file(operation: Operation):
         for chunk_id in file.chunks.values():
             chunk = check_chunk(chunk_id)
             c_args = [chunk.file_id, chunk.offset, chunk.data]
-            c_kwargs = safe_build_object(
+            c_kwargs = _safe_build_object(
                 dict, chunk, ignore=["file_id", "offset", "data"], upsert=True
             )
 

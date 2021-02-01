@@ -366,7 +366,7 @@ class TestFileOperations(object):
         ).operation_complete
 
     def test_safe_build(self, simple_file, simple_file_chunk):
-        status = files.safe_build_object(FileStatus, simple_file)
+        status = files._safe_build_object(FileStatus, simple_file)
         assert status.file_name == simple_file.file_name
         assert status.file_size == simple_file.file_size
         assert not hasattr(status, "job")
@@ -374,7 +374,7 @@ class TestFileOperations(object):
         assert not hasattr(status, "id") and simple_file.id in status.file_id
 
         # Test the kwargs pass-through
-        status = files.safe_build_object(
+        status = files._safe_build_object(
             FileStatus, simple_file, operation_complete=True, valid=False
         )
         assert status.operation_complete
@@ -382,7 +382,7 @@ class TestFileOperations(object):
         assert status.chunk_size == simple_file.chunk_size
 
         # Test the ignore function
-        status = files.safe_build_object(
+        status = files._safe_build_object(
             FileStatus, simple_file, ignore=["file_name", "file_size"]
         )
         assert status.file_name is None
@@ -390,7 +390,7 @@ class TestFileOperations(object):
         assert status.chunk_size == simple_file.chunk_size
 
         # Test the multi-object function
-        status = files.safe_build_object(FileStatus, simple_file, simple_file_chunk)
+        status = files._safe_build_object(FileStatus, simple_file, simple_file_chunk)
         assert (
             simple_file.id in status.file_id and status.chunk_id == simple_file_chunk.id
         )
@@ -398,6 +398,6 @@ class TestFileOperations(object):
         assert status.file_size == simple_file.file_size
 
         # Test building a dictionary
-        my_dict = files.safe_build_object(dict, simple_file)
+        my_dict = files._safe_build_object(dict, simple_file)
         assert simple_file.id in my_dict["file_id"]
         assert my_dict["file_size"] == simple_file.file_size
