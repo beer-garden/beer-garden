@@ -77,7 +77,7 @@ def safe_build_object(cls, *objects, ignore=None, **manual_kwargs):
                 )
             )
 
-        if type(obj) is FileChunk:
+        elif type(obj) is FileChunk:
             kwargs.update(
                 _unroll_object(
                     obj,
@@ -85,6 +85,10 @@ def safe_build_object(cls, *objects, ignore=None, **manual_kwargs):
                     ignore=["owner", "job", "request"] + ignore,
                 )
             )
+
+        else:
+            kwargs.update(_unroll_object(obj))
+
     kwargs.update(manual_kwargs)
     return cls(**kwargs)
 
