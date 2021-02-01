@@ -396,3 +396,8 @@ class TestFileOperations(object):
         )
         assert status.data == simple_file_chunk.data
         assert status.file_size == simple_file.file_size
+
+        # Test building a dictionary
+        my_dict = files.safe_build_object(dict, simple_file)
+        assert simple_file.id in my_dict["file_id"]
+        assert my_dict["file_size"] == simple_file.file_size
