@@ -29,9 +29,9 @@ module.exports = merge(common, {
 
     // Uncomment below for SSL
 //    https: true,
-//    key: fs.readFileSync('../../docker/docker-compose/data/certs/server_key.pem'),
-//    cert: fs.readFileSync('../../docker/docker-compose/data/certs/server_certificate.pem'),
-//    ca: fs.readFileSync('../../docker/docker-compose/data/certs/ca_certificate.pem'),
+//    key: fs.readFileSync('/home/gnburch/PycharmProjects/nginx-casport/localhost-key.pem'),
+//    cert: fs.readFileSync('/home/gnburch/PycharmProjects/nginx-casport/localhost-crt.pem'),
+//    ca: fs.readFileSync('/home/gnburch/PycharmProjects/nginx-casport/AllTrustedPartners.ca-bundle'),
 
     proxy: [
 // Switch comment lines for target to enable SSL
@@ -42,6 +42,11 @@ module.exports = merge(common, {
         //Secure is set to false if using self signed certs
 //        target: `https://${proxyHost}:${proxyPort}/`,
 //        secure: false
+        // Uncomment for simulated proxy headers
+//        headers: {
+//            'X-Username': 'admin',
+//            'X-Secret': 'IAMSUPERSECRET'
+//        },
       },
       {
         context: ['/api/v1/socket/events'],
@@ -51,6 +56,12 @@ module.exports = merge(common, {
         //Secure is set to false if using self signed certs
 //        target: `wss://${proxyHost}:${proxyPort}/`,
 //        secure: false
+
+        // Uncomment for simulated proxy headers
+//        headers: {
+//            'X-Username': 'admin',
+//            'X-Secret': 'IAMSUPERSECRET'
+//        },
       },
     ],
   },
