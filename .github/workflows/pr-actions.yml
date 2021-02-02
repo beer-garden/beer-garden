@@ -176,7 +176,7 @@ jobs:
       - name: Compare complexities
         working-directory: ./new/.github/scripts
         run: |
-          python parse_diff_complexity.py "$HOME/old_complexity.txt" "$HOME/current_complexity.txt"
+          python parse_diff_complexity.py "~/old_complexity.txt" "~/current_complexity.txt"
 
   SecurityCheck:
     runs-on: ${{ matrix.os }}
