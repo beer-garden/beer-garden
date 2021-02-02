@@ -1,9 +1,10 @@
 import sys
 
+
 def process_file(file_name, results):
     with open(file_name, "r") as file:
         for line in file:
-            if "(" in line and  ")" in line and "C901" in line:
+            if "(" in line and ")" in line and "C901" in line:
                 start = line.index("(") + 1
                 end = line.index(")")
                 try:
@@ -14,7 +15,8 @@ def process_file(file_name, results):
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Requires two file names of flake8 complexity output as parameters.\n python <script> <old> <new>")
+        print("Requires two file names of flake8 complexity output as "
+              "parameters.\n python <script> <old> <new>")
         exit(1)
 
     old = {}
