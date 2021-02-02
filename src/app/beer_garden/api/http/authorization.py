@@ -223,9 +223,17 @@ def proxy_auth(request):
         if raw_roles:
             roles = raw_roles.split(",").strip()
 
+    # No headers were set that can be processed
+    if username is None and roles is None:
+        return None
+
     # If the user name exists in the database, return that, else generate a new Principal Object
     try:
-        principal = Principal.objects.get(username=username)
+        if username:
+            principal = Principal.objects.get(username=username)
+        else:
+            # Roles were forwarded without a username
+            principal = BrewtilsPrincipal(username="PROXY-USER")
     except DoesNotExist:
         principal = BrewtilsPrincipal(username=username)
 
@@ -241,6 +249,10 @@ def proxy_auth(request):
         except DoesNotExist:
             # We won't add roles that don't exist in the database
             pass
+
+    # No valid user was generated through the headers
+    if username is None and len(principal.roles) == 0:
+        return None
 
     _, permissions = coalesce_permissions(principal.roles)
     principal.permissions = permissions
