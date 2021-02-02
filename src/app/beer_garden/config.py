@@ -627,6 +627,41 @@ _AUTH_SPEC = {
                 },
             },
         },
+        "proxy": {
+            "type": "dict",
+            "items": {
+                "enabled": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Only applicable if auth is enabled. If set to "
+                    "true, guests can login through proxy service",
+                },
+                "secret": {
+                    "type": "str",
+                    "required": False,
+                    "description": "Secret to use proxy sends headers",
+                    "default": None,
+                },
+                "secret_header": {
+                    "type": "str",
+                    "required": False,
+                    "description": "Header field to find shared secret",
+                    "default": None,
+                },
+                "username_header": {
+                    "type": "str",
+                    "required": False,
+                    "description": "Header field to find User Name",
+                    "default": None,
+                },
+                "roles_header": {
+                    "type": "str",
+                    "required": False,
+                    "description": "Header filed to find list of Roles",
+                    "default": None,
+                },
+            },
+        },
     },
 }
 

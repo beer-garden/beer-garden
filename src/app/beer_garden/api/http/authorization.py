@@ -53,7 +53,6 @@ def authenticated(permissions=None):
 
     @wrapt.decorator
     def wrapper(wrapped, instance, args, kwargs):
-
         # The interplay between wrapt and gen.coroutine causes things to get
         # a little confused, so we have to be flexible
         handler = instance or args[0]
@@ -187,6 +186,68 @@ def bearer_auth(request):
     return _principal_from_token(token)
 
 
+def proxy_auth(request):
+    """Determine a principle from custom proxy Authorization headers. Only enable if you
+    control the proxy and can ensure the fields are populated properly.
+    Args:
+        request: The request to authenticate
+    Returns:
+        Brewtils principal if proxy headers are valid, None otherwise
+    """
+
+    auth_config = config.get("auth")
+
+    if not auth_config.proxy.enabled:
+        return None
+
+    # If the secret set does not match what was provided, then do not accept. This could
+    # have been sent from a non-proxied source.
+    if (
+        auth_config.proxy_secret_header is not None
+        and auth_config.proxy_secret
+        != request.headers.get(auth_config.proxy_secret_header, None)
+    ):
+        return None
+
+    username = None
+    roles = None
+
+    # Username is exepected to a string object
+    if auth_config.proxy_username_header:
+        username = request.headers.get(auth_config.proxy_username_header, None)
+
+    # roles is expected to be in a list format (i.e. roles = "role1,role2,role3")
+    if auth_config.proxy_roles_header:
+        raw_roles = request.headers.get(auth_config.proxy_roles_header, None)
+
+        if raw_roles:
+            roles = raw_roles.split(",").strip()
+
+    # If the user name exists in the database, return that, else generate a new Principal Object
+    try:
+        principal = Principal.objects.get(username=username)
+    except DoesNotExist:
+        principal = BrewtilsPrincipal(username=username)
+
+    for role in roles:
+        try:
+            # If the role is already mapped, skip
+            for principal_role in principal.roles:
+                if principal_role.name == role:
+                    continue
+
+            # If the role maps to a known role, append
+            principal.roles.append(Role.objects.get(name=role))
+        except DoesNotExist:
+            # We won't add roles that don't exist in the database
+            pass
+
+    _, permissions = coalesce_permissions(principal.roles)
+    principal.permissions = permissions
+
+    return principal
+
+
 def query_token_auth(request):
     """Determine a principal from a JWT in query parameter 'token'
 
@@ -229,16 +290,15 @@ def _principal_from_token(token):
 
 
 class AuthMixin(object):
-
-    auth_providers: frozenset = None
+    auth_providers: frozenset = [proxy_auth, bearer_auth, basic_auth]
 
     def get_current_user(self):
         """Use registered handlers to determine current user"""
 
-        # for provider in self.auth_providers:
-        #     principal = provider(self.request)
-        #
-        #     if principal is not None:
-        #         return principal
+        for provider in self.auth_providers:
+            principal = provider(self.request)
+
+            if principal is not None:
+                return principal
 
         return beer_garden.api.http.anonymous_principal
