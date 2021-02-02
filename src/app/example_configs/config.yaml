@@ -5,6 +5,12 @@ auth:
     algorithm: HS256
     lifetime: 1200
     secret: IAMSUPERSECRET
+  proxy:
+    enabled: false
+    secret: IAMSUPERSECRET
+    secret_header: X-Secret
+    username_header: X-Username
+    roles_header: X-Roles
 db:
   connection:
     host: localhost
