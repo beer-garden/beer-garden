@@ -203,9 +203,9 @@ def proxy_auth(request):
     # If the secret set does not match what was provided, then do not accept. This could
     # have been sent from a non-proxied source.
     if (
-        auth_config.proxy_secret_header is not None
-        and auth_config.proxy_secret
-        != request.headers.get(auth_config.proxy_secret_header, None)
+        auth_config.proxy.secret_header is not None
+        and auth_config.proxy.secret
+        != request.headers.get(auth_config.proxy.secret_header, None)
     ):
         return None
 
@@ -213,15 +213,15 @@ def proxy_auth(request):
     roles = None
 
     # Username is exepected to a string object
-    if auth_config.proxy_username_header:
-        username = request.headers.get(auth_config.proxy_username_header, None)
+    if auth_config.proxy.username_header:
+        username = request.headers.get(auth_config.proxy.username_header, None)
 
     # roles is expected to be in a list format (i.e. roles = "role1,role2,role3")
-    if auth_config.proxy_roles_header:
-        raw_roles = request.headers.get(auth_config.proxy_roles_header, None)
+    if auth_config.proxy.roles_header:
+        raw_roles = request.headers.get(auth_config.proxy.roles_header, None)
 
         if raw_roles:
-            roles = raw_roles.split(",").strip()
+            roles = raw_roles.split(",")
 
     # No headers were set that can be processed
     if username is None and roles is None:
@@ -237,18 +237,19 @@ def proxy_auth(request):
     except DoesNotExist:
         principal = BrewtilsPrincipal(username=username)
 
-    for role in roles:
-        try:
-            # If the role is already mapped, skip
-            for principal_role in principal.roles:
-                if principal_role.name == role:
-                    continue
+    if roles:
+        for role in roles:
+            try:
+                # If the role is already mapped, skip
+                for principal_role in principal.roles:
+                    if principal_role.name == role.strip():
+                        continue
 
-            # If the role maps to a known role, append
-            principal.roles.append(Role.objects.get(name=role))
-        except DoesNotExist:
-            # We won't add roles that don't exist in the database
-            pass
+                # If the role maps to a known role, append
+                principal.roles.append(Role.objects.get(name=role.strip()))
+            except DoesNotExist:
+                # We won't add roles that don't exist in the database
+                pass
 
     # No valid user was generated through the headers
     if username is None and len(principal.roles) == 0:
