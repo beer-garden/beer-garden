@@ -174,10 +174,9 @@ jobs:
           flake8 --max-complexity ${{ matrix.complexity-threshold }} | sed -E ${{ matrix.sed-filter }} > ~/old_complexity.txt
 
       - name: Compare complexities
-        working-directory: ./new
         run: |
           echo "Trying to find $HOME/old_complexity.txt"
-          cat ./.github/scripts/parse_diff_complexity.py
+          cat $HOME/new/.github/scripts/parse_diff_complexity.py
           python ./.github/scripts/parse_diff_complexity.py "$HOME/old_complexity.txt" "$HOME/current_complexity.txt"
 
   SecurityCheck:
