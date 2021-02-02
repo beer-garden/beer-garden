@@ -226,17 +226,25 @@ class TokenListAPI(BaseHandler):
         parsed_body = json.loads(self.request.decoded_body)
 
         try:
-            principal = Principal.objects.get(username=parsed_body["username"])
-            if (
-                config.get("auth.guest_login_enabled")
-                and principal.username
-                == beer_garden.api.http.anonymous_principal.username
-            ):
-                verified = True
+            if "username" in parsed_body.keys() and parsed_body["username"] is not None:
+                principal = Principal.objects.get(username=parsed_body["username"])
+                if (
+                    config.get("auth.guest_login_enabled")
+                    and principal.username
+                    == beer_garden.api.http.anonymous_principal.username
+                ):
+                    verified = True
+                else:
+                    verified = yield self.executor.submit(
+                        verify, str(parsed_body["password"]), str(principal.hash)
+                    )
             else:
-                verified = yield self.executor.submit(
-                    verify, str(parsed_body["password"]), str(principal.hash)
-                )
+                principal = self.get_current_user()
+
+                if principal is None:
+                    raise DoesNotExist
+                else:
+                    verified = True
 
             if verified:
                 tokens = generate_tokens(principal, self.REFRESH_COOKIE_EXP)
