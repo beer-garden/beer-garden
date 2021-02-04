@@ -305,7 +305,7 @@ class Request(MongoModel, Owner):
     updated_at = DateTimeField(default=None, required=True)
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
-    hidden = BooleanField()
+    hidden = BooleanField(required=False)
     requester = StringField(required=False)
     parameters_gridfs = FileField()
 
