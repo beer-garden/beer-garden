@@ -360,6 +360,25 @@ class Request(MongoModel, Owner):
                 "name": "parent_created_at_status_index",
                 "fields": ["has_parent", "-created_at", "status"],
             },
+            # These are used for filtering hidden while sorting on created time
+            # I THINK this makes the set of indexes above superfluous, but I'm keeping
+            # both as a safety measure
+            {
+                "name": "hidden_parent_created_at_command_index",
+                "fields": ["hidden", "has_parent", "-created_at", "command"],
+            },
+            {
+                "name": "hidden_parent_created_at_system_index",
+                "fields": ["hidden", "has_parent", "-created_at", "system"],
+            },
+            {
+                "name": "hidden_parent_created_at_instance_name_index",
+                "fields": ["hidden", "has_parent", "-created_at", "instance_name"],
+            },
+            {
+                "name": "hidden_parent_created_at_status_index",
+                "fields": ["hidden", "has_parent", "-created_at", "status"],
+            },
             # This is used for text searching
             {
                 "name": "text_index",
