@@ -26,7 +26,7 @@ export default function runDTRenderer(DTRendererService) {
             $('<label>')
               .attr('for', 'childCheck')
               .css('padding-left', '4px')
-              .text('Include Children')
+              .text('Show Children')
           );
         $('.dataTables_filter').prepend(childContainer);
       }
@@ -46,7 +46,7 @@ export default function runDTRenderer(DTRendererService) {
               $('<label>')
                 .attr('for', 'hiddenRequestCheck')
                 .css('padding-left', '4px')
-                .text('Include Hidden')
+                .text('Show Hidden')
             );
           $('.dataTables_filter').prepend(hiddenRequestContainer);
         }
