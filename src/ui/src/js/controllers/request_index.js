@@ -44,6 +44,10 @@ export default function requestIndexController(
         data.include_children = true;
         data.columns.push({'data': 'parent'});
       }
+      if ($('#hiddenRequestCheck').is(":checked")) {
+          data.include_hidden = true;
+          data.columns.push({'data': 'hidden'});
+      }
 
       // Not urlencoding semicolons in the search values breaks the backend
       for (let column of data.columns) {
@@ -119,6 +123,7 @@ export default function requestIndexController(
     .withOption('serverSide', true)
     .withOption('refreshButton', true)
     .withOption('childContainer', true)
+    .withOption('hiddenRequestContainer', true)
     .withOption('newData', true)
     .withPaginationType('full_numbers')
     .withBootstrap()
