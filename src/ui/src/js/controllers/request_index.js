@@ -145,7 +145,7 @@ export default function requestIndexController(
               'popover-trigger="\'mouseenter\'"' +
               'popover-title="parent request"' +
               'popover-animation="true"' +
-              'popover-placement="left">' +
+              'popover-placement="top-left">' +
                 `<a ui-sref="base.request({requestId: '${full.parent.id}'})" ` +
                   'class="fa fa-level-up fa-fw">' +
                 '</a>' +
