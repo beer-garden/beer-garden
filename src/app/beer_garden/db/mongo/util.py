@@ -149,31 +149,41 @@ def ensure_owner_collection_migration():
         )
 
         for doc in database["owner"].find({"_cls": "Owner.Request"}):
-            del doc["_cls"]
+            try:
+                del doc["_cls"]
 
-            if doc["has_parent"]:
-                doc["parent"] = DBRef("request", doc["parent"].id)
+                if doc.get("has_parent"):
+                    doc["parent"] = DBRef("request", doc["parent"].id)
 
-            database["request"].insert_one(doc)
+                database["request"].insert_one(doc)
+            except Exception:
+                logger.error(f"Error migrating request {doc['_id']}")
 
         for doc in database["owner"].find({"_cls": "Owner.Job"}):
-            del doc["_cls"]
+            try:
+                del doc["_cls"]
 
-            database["job"].insert_one(doc)
+                database["job"].insert_one(doc)
+            except Exception:
+                logger.error(f"Error migrating job {doc['_id']}")
 
         for doc in database["file"].find():
-            if doc["owner_type"] == "REQUEST":
-                doc["request"] = doc["owner"]
-            elif doc["owner_type"] == "JOB":
-                doc["job"] = doc["owner"]
-            else:
-                logger.warning(f"Unable to migrate file {doc['_id']}: bad owner type")
+            try:
+                if doc["owner_type"] == "REQUEST":
+                    doc["request"] = doc["owner"]
+                elif doc["owner_type"] == "JOB":
+                    doc["job"] = doc["owner"]
+                else:
+                    logger.error(f"Unable to migrate file {doc['_id']}: bad owner type")
+                    database["file"].delete_one({"_id": doc["_id"]})
+                    continue
+
+                doc["owner"] = None
+
+                database["file"].replace_one({"_id": doc["_id"]}, doc)
+            except Exception:
+                logger.error(f"Error migrating file {doc['_id']}, removing")
                 database["file"].delete_one({"_id": doc["_id"]})
-                continue
-
-            doc["owner"] = None
-
-            database["file"].replace_one({"_id": doc["_id"]}, doc)
 
         logger.info("Dropping owner collection (this is intended!)")
         database.drop_collection("owner")
