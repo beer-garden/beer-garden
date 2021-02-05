@@ -32,36 +32,36 @@ export default function runDTRenderer(DTRendererService) {
       }
 
       if (options && options.hiddenRequestContainer) {
-          let hiddenRequestContainer = $('<span>')
-            .attr('id', 'hiddenRequestContainer')
-            .css('margin-right', '20px')
-            .append(
-              $('<input>')
-                .attr('id', 'hiddenRequestCheck')
-                .attr('type', 'checkbox')
-                .css('margin-top', '-4px')
-                .change(() => { $('.dataTable').dataTable().fnUpdate(); })
-            )
-            .append(
-              $('<label>')
-                .attr('for', 'hiddenRequestCheck')
-                .css('padding-left', '4px')
-                .text('Show Hidden')
-            );
-          $('.dataTables_filter').prepend(hiddenRequestContainer);
-        }
+        let hiddenRequestContainer = $('<span>')
+          .attr('id', 'hiddenRequestContainer')
+          .css('margin-right', '20px')
+          .append(
+            $('<input>')
+              .attr('id', 'hiddenRequestCheck')
+              .attr('type', 'checkbox')
+              .css('margin-top', '-4px')
+              .change(() => { $('.dataTable').dataTable().fnUpdate(); })
+          )
+          .append(
+            $('<label>')
+              .attr('for', 'hiddenRequestCheck')
+              .css('padding-left', '4px')
+              .text('Show Hidden')
+          );
+        $('.dataTables_filter').prepend(hiddenRequestContainer);
+      }
 
       if (options && options.hiddenContainer) {
         let hiddenContainer = $('<ul>')
-              .attr('id', 'hiddenList')
-              .css('margin-right', '20px')
-              .attr('style', 'list-style-type:none;margin-right:20px; display:inline; padding-left:0px;')
-              .append(
-                  $('<label>')
-                  .attr('for', 'childCheck')
-                  .css('padding-left', '4px')
-                  .text('Show Hidden')
-              )
+          .attr('id', 'hiddenList')
+          .css('margin-right', '20px')
+          .attr('style', 'list-style-type:none;margin-right:20px; display:inline; padding-left:0px;')
+          .append(
+            $('<label>')
+            .attr('for', 'childCheck')
+            .css('padding-left', '4px')
+            .text('Show Hidden')
+          )
         $('.dataTables_filter').prepend(hiddenContainer);
         var node = document.getElementById("filterHidden");
         var list = document.getElementById("hiddenList");
