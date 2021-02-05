@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+## 3.1.1
+2/5/21
+
+#### Bug Fixes
+- Database migration script no longer requires has_parent field (Issue #868 / PR #869)
+
 ## 3.1.0
 2/5/21
 
