@@ -116,11 +116,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Build RPM
-        run: make rpm-build VERSION=${GITHUB_REF#refs/tags/}
+      - name: Get Version
+        id: get_version
+        uses: battila7/get-version-action@v2
 
-      - name: List dist
-        run: ls ./rpm/dist
+      - name: Build RPM
+        run: make rpm-build VERSION=${{ steps.get_version.outputs.version }}
 
       - name: Upload Release Asset
         id: upload-release-asset
@@ -129,6 +130,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
           upload_url: ${{ needs.github-release.outputs.upload_url }}
-          asset_path: ./rpm/dist/beer-garden-${GITHUB_REF#refs/tags/}-1.el7.x86_64.rpm
-          asset_name: beer-garden-${GITHUB_REF#refs/tags/}-1.el7.x86_64.rpm
+          asset_path: ./rpm/dist/beer-garden-${{ steps.get_version.outputs.version }}-1.el7.x86_64.rpm
+          asset_name: beer-garden-${{ steps.get_version.outputs.version }}-1.el7.x86_64.rpm
           asset_content_type: application/octet-stream
