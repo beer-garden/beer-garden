@@ -152,7 +152,13 @@ export default function requestIndexController(
             '</span>';
         }
 
-        return display + `<a ui-sref="base.request({requestId: '${full.id}'})">` + data + '</a>';
+        display += `<a ui-sref="base.request({requestId: '${full.id}'})">` + data + '</a>';
+
+        if (full.hidden) {
+          display += '<span class="fa fa-user-secret pull-right" style="font-size: 20px;"></span>';
+        }
+
+        return display;
       }),
     DTColumnBuilder
       .newColumn('namespace')
