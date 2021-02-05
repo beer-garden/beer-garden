@@ -10,6 +10,9 @@ jobs:
     name: Github Release
     runs-on: ubuntu-latest
 
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+
     steps:
       - name: Create Release
         id: create_release
@@ -125,7 +128,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ needs.github-release.outputs.upload_url }}
           asset_path: ./rpm/dist/beer-garden-${GITHUB_REF#refs/tags/}-1.el7.x86_64.rpm
           asset_name: beer-garden-${GITHUB_REF#refs/tags/}-1.el7.x86_64.rpm
           asset_content_type: application/octet-stream
