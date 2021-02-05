@@ -58,7 +58,7 @@ export default function runDTRenderer(DTRendererService) {
           .attr('style', 'list-style-type:none;margin-right:20px; display:inline; padding-left:0px;')
           .append(
             $('<label>')
-            .attr('for', 'childCheck')
+            .attr('for', 'filterHidden')
             .css('padding-left', '4px')
             .text('Show Hidden')
           )
