@@ -1,5 +1,20 @@
 # Beer Garden Changelog
 
+## 3.1.0
+2/5/21
+
+#### Bug Fixes
+- Improved the position of the popover shown for a parent request (Issue #862 / PR #865)
+- Checkbox label on commands page now works correctly (Issue #860 / PR #866)
+- Fixing incorrect Request collection name (Issue #833 / PR #834)
+
+#### Added Features
+- Requests based on a hidden command will now be marked as hidden themselves (Issue #414 / PR #849)
+
+#### Other Changes
+- Request index page checkbox labels have been tweaked (Issue #861 / PR #864)
+- Beer-garden systemd process now runs with umask 0002 (Issue #816 / PR #844)
+
 ## 3.0.5
 1/11/21
 
