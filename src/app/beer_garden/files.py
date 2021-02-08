@@ -578,11 +578,9 @@ def handle_event(event):
     """Handle events"""
     if event.garden == config.get("garden.name"):
         if event.name == Events.JOB_CREATED.name:
-            print(event.payload.request_template.parameters)
             for id in _check_file_ids(event.payload.request_template.parameters):
                 set_owner(id, owner_id=event.payload.id, owner_type="JOB")
 
         if event.name == Events.REQUEST_CREATED.name:
-            print(event.payload.parameters)
             for id in _check_file_ids(event.payload.parameters):
                 set_owner(id, owner_id=event.payload.id, owner_type="REQUEST")
