@@ -558,6 +558,7 @@ class Principal(MongoModel, Document):
     username = StringField(required=True)
     hash = StringField()
     roles = ListField(field=ReferenceField("Role", reverse_delete_rule=PULL))
+    permissions = EmbeddedDocumentListField("Permission")
     preferences = DictField()
     metadata = DictField()
 
