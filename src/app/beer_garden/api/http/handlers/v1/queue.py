@@ -5,7 +5,7 @@ from brewtils.models import Operation
 
 
 class QueueAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.MAINTAINER])
+    @authenticated(permissions=[Permissions.OPERATOR])
     async def delete(self, queue_name):
         """
         ---
@@ -33,7 +33,7 @@ class QueueAPI(BaseHandler):
 
 
 class QueueListAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.MAINTAINER])
+    @authenticated(permissions=[Permissions.OPERATOR])
     async def get(self):
         """
         ---

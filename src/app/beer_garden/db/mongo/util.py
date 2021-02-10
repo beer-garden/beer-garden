@@ -37,7 +37,7 @@ def ensure_roles():
         BrewtilsRole(
             name="bg-operator",
             description="Standard Beergarden user role",
-            permissions=[BrewtilsPermission(is_local=True, access="CREATE")],
+            permissions=[BrewtilsPermission(is_local=True, access="OPERATOR")],
         ),
     ]
 
@@ -55,7 +55,7 @@ def ensure_roles():
         BrewtilsRole(
             name="bg-plugin",
             description="Allows actions necessary for plugins to function",
-            permissions=[BrewtilsPermission(is_local=True, access="MAINTAINER")],
+            permissions=[BrewtilsPermission(is_local=True, access="OPERATOR")],
         ),
     ]
 

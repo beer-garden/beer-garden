@@ -28,15 +28,13 @@ class Permissions(Enum):
     """
 
     READ = 1
-    CREATE = 2
-    MAINTAINER = 3
-    ADMIN = 4
+    OPERATOR = 2
+    ADMIN = 3
 
 
 PermissionRequiredAccess = {
-    Permissions.READ: ["ADMIN", "MAINTAINER", "CREATE", "READ"],
-    Permissions.CREATE: ["ADMIN", "MAINTAINER", "CREATE"],
-    Permissions.MAINTAINER: ["ADMIN", "MAINTAINER"],
+    Permissions.READ: ["ADMIN", "OPERATOR", "READ"],
+    Permissions.OPERATOR: ["ADMIN", "OPERATOR"],
     Permissions.ADMIN: ["ADMIN"],
 }
 

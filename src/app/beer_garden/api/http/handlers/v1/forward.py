@@ -8,7 +8,7 @@ from beer_garden.api.http.base_handler import BaseHandler
 class ForwardAPI(BaseHandler):
 
     # @Todo Create new Persmission
-    @authenticated(permissions=[Permissions.MAINTAINER])
+    @authenticated(permissions=[Permissions.OPERATOR])
     async def post(self):
         """
         ---

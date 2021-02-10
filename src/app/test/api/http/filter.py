@@ -118,21 +118,15 @@ def mock_principals(namespace, access_level):
             Principal(
                 roles=[Role(permissions=[Permission(access="ADMIN", is_local=True)])]
             ),
-            access_level in ["ADMIN", "MAINTAINER", "CREATE", "READ"],
+            access_level in ["ADMIN", "OPERATOR", "READ"],
         ),
         (
             Principal(
                 roles=[
-                    Role(permissions=[Permission(access="MAINTAINER", is_local=True)])
+                    Role(permissions=[Permission(access="OPERATOR", is_local=True)])
                 ]
             ),
-            access_level in ["MAINTAINER", "CREATE", "READ"],
-        ),
-        (
-            Principal(
-                roles=[Role(permissions=[Permission(access="CREATE", is_local=True)])]
-            ),
-            access_level in ["CREATE", "READ"],
+            access_level in ["OPERATOR", "READ"],
         ),
         (
             Principal(
@@ -145,22 +139,14 @@ def mock_principals(namespace, access_level):
             Principal(
                 roles=[Role(permissions=[Permission(access="ADMIN", namespace="p")])]
             ),
-            access_level in ["ADMIN", "MAINTAINER", "CREATE", "READ"]
+            access_level in ["ADMIN", "OPERATOR", "READ"]
             and namespace == "p",
         ),
         (
             Principal(
-                roles=[
-                    Role(permissions=[Permission(access="MAINTAINER", namespace="p")])
-                ]
+                roles=[Role(permissions=[Permission(access="OPERATOR", namespace="p")])]
             ),
-            access_level in ["MAINTAINER", "CREATE", "READ"] and namespace == "p",
-        ),
-        (
-            Principal(
-                roles=[Role(permissions=[Permission(access="CREATE", namespace="p")])]
-            ),
-            access_level in ["CREATE", "READ"] and namespace == "p",
+            access_level in ["OPERATOR", "READ"] and namespace == "p",
         ),
         (
             Principal(
@@ -173,22 +159,14 @@ def mock_principals(namespace, access_level):
             Principal(
                 roles=[Role(permissions=[Permission(access="ADMIN", namespace="c")])]
             ),
-            access_level in ["ADMIN", "MAINTAINER", "CREATE", "READ"]
+            access_level in ["ADMIN", "OPERATOR", "READ"]
             and namespace == "c",
         ),
         (
             Principal(
-                roles=[
-                    Role(permissions=[Permission(access="MAINTAINER", namespace="c")])
-                ]
+                roles=[Role(permissions=[Permission(access="OPERATOR", namespace="c")])]
             ),
-            access_level in ["MAINTAINER", "CREATE", "READ"] and namespace == "c",
-        ),
-        (
-            Principal(
-                roles=[Role(permissions=[Permission(access="CREATE", namespace="c")])]
-            ),
-            access_level in ["CREATE", "READ"] and namespace == "c",
+            access_level in ["OPERATOR", "READ"] and namespace == "c",
         ),
         (
             Principal(
@@ -205,7 +183,7 @@ def mock_principals(namespace, access_level):
                 ]
             ),
             (
-                access_level in ["ADMIN", "MAINTAINER", "CREATE", "READ"]
+                access_level in ["ADMIN", "OPERATOR", "READ"]
                 and namespace == "p"
             )
             or (access_level in ["READ"] and namespace == "c"),
@@ -218,7 +196,7 @@ def mock_principals(namespace, access_level):
                 ]
             ),
             (
-                access_level in ["ADMIN", "MAINTAINER", "CREATE", "READ"]
+                access_level in ["ADMIN", "OPERATOR", "READ"]
                 and namespace == "c"
             )
             or (access_level in ["READ"] and namespace == "p"),
@@ -240,7 +218,7 @@ def mock_functions(
 class TestModelFilter(object):
     @pytest.mark.parametrize(*mock_models("p"))
     def test_no_current_user(self, model):
-        for access_level in ["ADMIN", "MAINTAINER", "CREATE", "READ"]:
+        for access_level in ["ADMIN", "OPERATOR", "READ"]:
             with pytest.raises(RequestForbidden):
                 beer_garden.api.http.filter.model_filter(
                     obj=model, required_permissions=[Permissions[access_level]]
@@ -258,7 +236,7 @@ class TestModelFilter(object):
             roles=[Role(permissions=[Permission(access="ADMIN", is_local=True)])]
         )
 
-        for access_level in ["ADMIN", "MAINTAINER", "CREATE", "READ"]:
+        for access_level in ["ADMIN", "OPERATOR", "READ"]:
             beer_garden.api.http.filter.model_filter(
                 obj=model,
                 current_user=principal,
@@ -300,7 +278,7 @@ class TestFilterBrewtilsModel(object):
             get_from_kwargs_mock,
         )
 
-        for access_level in ["ADMIN", "MAINTAINER", "CREATE", "READ"]:
+        for access_level in ["ADMIN", "OPERATOR", "READ"]:
 
             for principal, valid_access in mock_principals(namespace, access_level):
 
@@ -346,7 +324,7 @@ class TestFilterBrewtilsModel(object):
             get_from_kwargs_mock,
         )
 
-        for access_level in ["ADMIN", "MAINTAINER", "CREATE", "READ"]:
+        for access_level in ["ADMIN", "OPERATOR", "READ"]:
 
             for principal, valid_access in mock_principals(namespace, access_level):
 
@@ -392,7 +370,7 @@ class TestFilterBrewtilsModel(object):
             get_from_kwargs_mock,
         )
 
-        for access_level in ["ADMIN", "MAINTAINER", "CREATE", "READ"]:
+        for access_level in ["ADMIN", "OPERATOR", "READ"]:
 
             for principal, valid_access in mock_principals(namespace, access_level):
 

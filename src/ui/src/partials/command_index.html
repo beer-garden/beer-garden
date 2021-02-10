@@ -48,7 +48,7 @@
           <td>{{command.description}}</td>
           <td>
             <a class="btn btn-primary center-block word-wrap-button"
-              ng-show="hasPermission(user, 'CREATE', is_local = false, namespace=command.namespace)"
+              ng-show="hasPermission(user, 'OPERATOR', is_local = false, namespace=command.namespace)"
               ui-sref="base.command({systemName: command.system, systemVersion: command.version, namespace: command.namespace, commandName: command.name})"
               title="Run {{command.name}}">Make it Happen!</a>
           </td>

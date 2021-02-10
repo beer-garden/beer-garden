@@ -59,7 +59,7 @@ class FileAPI(BaseHandler):
         )
         self.write(response)
 
-    @authenticated(permissions=[Permissions.CREATE])
+    @authenticated(permissions=[Permissions.OPERATOR])
     async def post(self):
         """
         ---

@@ -94,16 +94,10 @@ def coalesce_permissions(role_list):
                     unmatched = False
                     if agg_perm.access == "READ" and permission.access in [
                         "ADMIN",
-                        "MAINTAINER",
-                        "CREATE",
+                        "OPERATOR",
                     ]:
                         aggregate_perms[index] = permission
-                    elif agg_perm.access == "CREATE" and permission.access in [
-                        "ADMIN",
-                        "MAINTAINER",
-                    ]:
-                        aggregate_perms[index] = permission
-                    elif agg_perm.access == "MAINTAINER" and permission.access in [
+                    elif agg_perm.access == "OPERATOR" and permission.access in [
                         "ADMIN"
                     ]:
                         aggregate_perms[index] = permission

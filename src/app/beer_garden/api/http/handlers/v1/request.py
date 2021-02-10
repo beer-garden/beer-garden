@@ -43,7 +43,7 @@ class RequestAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.MAINTAINER])
+    @authenticated(permissions=[Permissions.OPERATOR])
     async def patch(self, request_id):
         """
         ---
@@ -374,7 +374,7 @@ class RequestListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(json.dumps(requests))
 
-    @authenticated(permissions=[Permissions.CREATE])
+    @authenticated(permissions=[Permissions.OPERATOR])
     async def post(self):
         """
         ---
