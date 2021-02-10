@@ -231,6 +231,14 @@ def operation_db_filtering(obj: Operation = None, current_user: Principal = None
         for permission in current_user.permissions:
             obj.kwargs["namespace__in"].append(permission.namespace)
 
+    elif "REQUEST_READ_ALL" == obj.operation_type:
+        if "filter_params" not in obj.kwargs:
+            obj.kwargs["filter_params"] = {}
+        if "namespace__in" not in obj.kwargs["filter_params"]:
+            obj.kwargs["filter_params"]["namespace__in"] = list()
+        for permission in current_user.permissions:
+            obj.kwargs["filter_params"]["namespace__in"].append(permission.namespace)
+
 
 def event_filtering(
     obj=None,
