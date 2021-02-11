@@ -7,12 +7,10 @@ from brewtils.errors import ModelValidationError, TimeoutExceededError
 from brewtils.models import Operation, Request
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler, event_wait
 
 
 class RequestAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.READ])
     async def get(self, request_id):
         """
         ---
@@ -43,7 +41,6 @@ class RequestAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.OPERATOR])
     async def patch(self, request_id):
         """
         ---
@@ -125,7 +122,6 @@ class RequestAPI(BaseHandler):
 
 
 class RequestOutputAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.READ])
     async def get(self, request_id):
         """
         ---
@@ -172,7 +168,6 @@ class RequestOutputAPI(BaseHandler):
 class RequestListAPI(BaseHandler):
     parser = SchemaParser()
 
-    @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
         ---
@@ -374,7 +369,6 @@ class RequestListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(json.dumps(requests))
 
-    @authenticated(permissions=[Permissions.OPERATOR])
     async def post(self):
         """
         ---

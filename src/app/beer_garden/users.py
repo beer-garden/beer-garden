@@ -4,8 +4,11 @@ import beer_garden.db.api as db
 from brewtils.models import Principal, Role
 
 
-def get_user(user_id: str = None):
-    return db.query_unique(Principal, id=user_id)
+def get_user(user_id: str = None, username: str = None):
+    if user_id:
+        return db.query_unique(Principal, id=user_id)
+    if username:
+        return db.query_unique(Principal, username=username)
 
 
 def get_users(**kwargs) -> List[Principal]:
@@ -21,8 +24,14 @@ def get_users(**kwargs) -> List[Principal]:
     return db.query(Principal, **kwargs)
 
 
-def create_user(principal: Principal):
-    return db.create(principal)
+def create_user(username: str = None, roles: list = None, password_hash: str = None):
+    new_roles = [db.query_unique(Role, name=name) for name in roles]
+
+    principal = Principal(username=username, roles=new_roles)
+
+    principal = db.create(principal)
+
+    return update_user(principal=principal, updates={"hash": password_hash})
 
 
 def delete_user(user_id: str = None, principal: Principal = None):

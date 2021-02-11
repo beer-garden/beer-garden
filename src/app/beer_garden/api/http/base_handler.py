@@ -61,8 +61,6 @@ class BaseHandler(AuthMixin, RequestHandler):
 
     charset_re = re.compile(r"charset=(.*)$")
 
-    required_permissions = None
-
     error_map = {
         MongoValidationError: {"status_code": 400},
         ModelError: {"status_code": 400},
@@ -119,9 +117,6 @@ class BaseHandler(AuthMixin, RequestHandler):
                 user = cookie_user
         return user
 
-    def get_required_permissions(self):
-        """Get the required permissions, if authentication is set"""
-        return self.required_permissions
 
     def set_default_headers(self):
         """Headers set here will be applied to all responses"""
@@ -145,8 +140,7 @@ class BaseHandler(AuthMixin, RequestHandler):
     @property
     def client(self):
         return self.settings["client"].serialize_helper(
-            current_user=self.get_current_user(),
-            required_permissions=self.get_required_permissions(),
+            current_user=self.get_current_user()
         )
 
     def prepare(self):

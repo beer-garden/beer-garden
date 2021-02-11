@@ -3,7 +3,6 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
 
 
@@ -11,7 +10,6 @@ class RunnerAPI(BaseHandler):
 
     parser = SchemaParser()
 
-    @authenticated(permissions=[Permissions.READ])
     async def get(self, runner_id):
         """
         ---
@@ -42,7 +40,6 @@ class RunnerAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.ADMIN])
     async def delete(self, runner_id):
         """
         ---
@@ -76,7 +73,6 @@ class RunnerAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.ADMIN])
     async def patch(self, runner_id):
         """
         ---
@@ -150,7 +146,6 @@ class RunnerListAPI(BaseHandler):
 
     parser = SchemaParser()
 
-    @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
         ---
@@ -173,7 +168,6 @@ class RunnerListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.ADMIN])
     async def patch(self):
         """
         ---

@@ -5,14 +5,15 @@ from mongoengine.errors import DoesNotExist, ValidationError
 from passlib.apps import custom_app_context
 
 import beer_garden.api.http
-from beer_garden.db.mongo.models import Principal, Role
-from beer_garden.db.mongo.parser import MongoParser
-from beer_garden.api.http.authorization import (
-    authenticated,
-    check_permission,
-    Permissions,
-    coalesce_permissions,
-)
+
+# from beer_garden.db.mongo.models import Principal, Role
+# from beer_garden.db.mongo.parser import MongoParser
+# from beer_garden.api.http.authorization import (
+#     authenticated,
+#     check_permission,
+#     Permissions,
+#     coalesce_permissions,
+# )
 from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError, RequestForbidden
 from brewtils.models import Operation
@@ -45,12 +46,6 @@ class UserAPI(BaseHandler):
         if user_identifier == "anonymous":
             response = SchemaParser.serialize(beer_garden.api.http.anonymous_principal)
         else:
-            # Need fine-grained access control here
-            if user_identifier not in [
-                str(self.current_user.id),
-                self.current_user.username,
-            ]:
-                check_permission(self.current_user, [Permissions.USER_READ])
 
             try:
                 response = await self.client(
@@ -70,7 +65,6 @@ class UserAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.ADMIN])
     async def delete(self, user_id):
         """
         ---
@@ -144,7 +138,13 @@ class UserAPI(BaseHandler):
 
         # Most things only need a permission check if updating a different user
         if user_id != str(self.current_user.id):
-            check_permission(self.current_user, [Permissions.ADMIN], is_local=True)
+            local_admin = False
+            for permission in self.current_user.permissions:
+                if permission.is_local and permission.access == "ADMIN":
+                    local_admin = True
+                    break
+            if not local_admin:
+                raise RequestForbidden("Invalid password")
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
@@ -152,8 +152,6 @@ class UserAPI(BaseHandler):
 
         for op in patch:
             if op.path == "/roles":
-                # Updating roles always requires USER_UPDATE
-                check_permission(self.current_user, [Permissions.ADMIN], is_local=True)
 
                 try:
                     if op.operation == "add":
@@ -226,20 +224,17 @@ class UserAPI(BaseHandler):
                     ):
                         raise RequestForbidden("Invalid password")
 
-                # Query Database directly to get current Password Info
-                principal = Principal.objects.get(id=str(user_id))
                 hash = custom_app_context.hash(new_password)
 
-                if hash != principal.hash:
-                    response = await self.client(
-                        Operation(
-                            operation_type="USER_UPDATE",
-                            kwargs={
-                                "user_id": user_id,
-                                "updates": {"hash": hash},
-                            },
-                        ),
-                    )
+                response = await self.client(
+                    Operation(
+                        operation_type="USER_UPDATE",
+                        kwargs={
+                            "user_id": user_id,
+                            "updates": {"hash": hash},
+                        },
+                    ),
+                )
 
             elif op.path == "/preferences/theme":
                 if op.operation == "set":
@@ -265,7 +260,6 @@ class UserAPI(BaseHandler):
 
 
 class UsersAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.ADMIN])
     async def get(self):
         """
         ---
@@ -288,8 +282,7 @@ class UsersAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(principals)
 
-    @authenticated(permissions=[Permissions.ADMIN])
-    def post(self):
+    async def post(self):
         """
         ---
         summary: Create a new User
@@ -324,22 +317,19 @@ class UsersAPI(BaseHandler):
           - Users
         """
 
-        # We have to hit the database directly here because Brewtils doesn't have the
-        # password field
-
         parsed = json.loads(self.request.decoded_body)
 
-        user = Principal(
-            username=parsed["username"],
-            hash=custom_app_context.hash(parsed["password"]),
+        response = await self.client(
+            Operation(
+                operation_type="USER_CREATE",
+                kwargs={
+                    "username": parsed["username"],
+                    "roles": parsed["roles"],
+                    "password_hash": custom_app_context.hash(parsed["password"]),
+                },
+            ),
         )
-
-        if "roles" in parsed:
-            user.roles = [Role.objects.get(name=name) for name in parsed["roles"]]
-
-        user.save()
-        user.permissions = coalesce_permissions(user.roles)[1]
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.set_status(201)
-        self.write(MongoParser.serialize_principal(user, to_string=False))
+        self.write(response)

@@ -22,96 +22,96 @@ from beer_garden.db.mongo.models import Principal
 from brewtils.schema_parser import SchemaParser
 
 
-class Permissions(Enum):
-    """Admin permissions are required to execute anything within the Admin drop-down in
-    regards to Systems and Gardens. Local Admins can manage user roles  and permissions.
-    """
-
-    READ = 1
-    OPERATOR = 2
-    ADMIN = 3
-
-
-PermissionRequiredAccess = {
-    Permissions.READ: ["ADMIN", "OPERATOR", "READ"],
-    Permissions.OPERATOR: ["ADMIN", "OPERATOR"],
-    Permissions.ADMIN: ["ADMIN"],
-}
-
-Permissions.values = {p.value for p in Permissions}
-
-
-def authenticated(permissions=None):
-    """Decorator used to require permissions for access to a resource.
-
-    Args:
-        permissions: Collection of Permissions enums. Note that if multiple
-            permissions are specified then a principal must have all of them
-            to access the resource.
-
-    Returns:
-        The wrapper function
-    """
-
-    @wrapt.decorator
-    def wrapper(wrapped, instance, args, kwargs):
-        # The interplay between wrapt and gen.coroutine causes things to get
-        # a little confused, so we have to be flexible
-        handler = instance or args[0]
-
-        check_permission(handler.current_user, permissions)
-        handler.required_permissions = permissions
-        return wrapped(*args, **kwargs)
-
-    return wrapper
+# class Permissions(Enum):
+#     """Admin permissions are required to execute anything within the Admin drop-down in
+#     regards to Systems and Gardens. Local Admins can manage user roles  and permissions.
+#     """
+#
+#     READ = 1
+#     OPERATOR = 2
+#     ADMIN = 3
+#
+#
+# PermissionRequiredAccess = {
+#     Permissions.READ: ["ADMIN", "OPERATOR", "READ"],
+#     Permissions.OPERATOR: ["ADMIN", "OPERATOR"],
+#     Permissions.ADMIN: ["ADMIN"],
+# }
+#
+# Permissions.values = {p.value for p in Permissions}
 
 
-def check_permission(principal, required_permissions, is_local=False):
-    """Determine if a principal has access to a resource
+# def authenticated(permissions=None):
+#     """Decorator used to require permissions for access to a resource.
+#
+#     Args:
+#         permissions: Collection of Permissions enums. Note that if multiple
+#             permissions are specified then a principal must have all of them
+#             to access the resource.
+#
+#     Returns:
+#         The wrapper function
+#     """
+#
+#     @wrapt.decorator
+#     def wrapper(wrapped, instance, args, kwargs):
+#         # The interplay between wrapt and gen.coroutine causes things to get
+#         # a little confused, so we have to be flexible
+#         handler = instance or args[0]
+#
+#         check_permission(handler.current_user, permissions)
+#         handler.required_permissions = permissions
+#         return wrapped(*args, **kwargs)
+#
+#     return wrapper
 
-    Args:
-        principal: the principal to test
-        required_permissions: collection of strings
 
-    Returns:
-        None
-
-    Raises:
-        HTTPError(status_code=401): The requested resource requires auth
-        RequestForbidden(status_code=403): The current principal does not have
-            permission to access the requested resource
-    """
-
-    # Grab the accesses that grand access for Permission
-    permission_strings = set()
-    for required in required_permissions:
-        permission_strings |= set(PermissionRequiredAccess[required])
-
-    # If no permissions required, grant access
-    if len(permission_strings) == 0:
-        return
-
-    # If user has access to that permission, grant access
-    for permission in principal.permissions:
-        if permission.access in permission_strings:
-            if is_local:
-                if permission.is_local:
-                    return
-            else:
-                return
-
-    # Determine correct error code to throw
-    if principal == beer_garden.api.http.anonymous_principal:
-        raise HTTPError(status_code=401)
-    else:
-        if is_local:
-            raise RequestForbidden(
-                "Action requires local permissions %s" % permission_strings
-            )
-        else:
-            raise RequestForbidden(
-                "Action requires permissions %s" % permission_strings
-            )
+# def check_permission(principal, required_permissions, is_local=False):
+#     """Determine if a principal has access to a resource
+#
+#     Args:
+#         principal: the principal to test
+#         required_permissions: collection of strings
+#
+#     Returns:
+#         None
+#
+#     Raises:
+#         HTTPError(status_code=401): The requested resource requires auth
+#         RequestForbidden(status_code=403): The current principal does not have
+#             permission to access the requested resource
+#     """
+#
+#     # Grab the accesses that grand access for Permission
+#     permission_strings = set()
+#     for required in required_permissions:
+#         permission_strings |= set(PermissionRequiredAccess[required])
+#
+#     # If no permissions required, grant access
+#     if len(permission_strings) == 0:
+#         return
+#
+#     # If user has access to that permission, grant access
+#     for permission in principal.permissions:
+#         if permission.access in permission_strings:
+#             if is_local:
+#                 if permission.is_local:
+#                     return
+#             else:
+#                 return
+#
+#     # Determine correct error code to throw
+#     if principal == beer_garden.api.http.anonymous_principal:
+#         raise HTTPError(status_code=401)
+#     else:
+#         if is_local:
+#             raise RequestForbidden(
+#                 "Action requires local permissions %s" % permission_strings
+#             )
+#         else:
+#             raise RequestForbidden(
+#                 "Action requires permissions %s" % permission_strings
+#             )
 
 
 def anonymous_principal() -> BrewtilsPrincipal:

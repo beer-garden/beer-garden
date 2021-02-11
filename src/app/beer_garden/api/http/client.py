@@ -4,7 +4,6 @@ from inspect import isawaitable
 
 import six
 
-from beer_garden.api.http.filter import model_filter, model_db_filter
 from brewtils.models import BaseModel
 from brewtils.schema_parser import SchemaParser
 
@@ -16,52 +15,25 @@ class Client(object):
     def __init__(self, filter_calls=None):
         self.filter_calls = filter_calls
 
-    def serialize_helper(self, current_user=None, required_permissions=None):
+    def serialize_helper(self, current_user=None):
         return SerializeHelper(
-            current_user=current_user,
-            required_permissions=required_permissions,
-            filter_calls=self.filter_calls,
+            current_user=current_user
         )
 
 
 class SerializeHelper(object):
-    def __init__(self, current_user=None, required_permissions=None, filter_calls=None):
+    def __init__(self, current_user=None):
         self.current_user = current_user
-        self.required_permissions = required_permissions
-        self.filter = (
-            filter_calls
-            and self.required_permissions
-            and len(self.required_permissions) > 0
-        )
 
     async def __call__(self, operation, serialize_kwargs=None, **kwargs):
 
-        if self.filter:
-
-            # Run filter to ensure they have the ability to modify the object
-            model_filter(
-                operation,
-                current_user=self.current_user,
-                required_permissions=self.required_permissions,
-            )
-
-            # Inject additional logic to support database filtering
-            model_db_filter(obj=operation, current_user=self.current_user)
+        operation.principal = self.current_user
 
         result = beer_garden.router.route(operation, **kwargs)
 
         # Await any coroutines
         if isawaitable(result):
             result = await result
-
-        if self.filter:
-
-            # Run filter to remove objects they don't have access to
-            result = model_filter(
-                result,
-                current_user=self.current_user,
-                required_permissions=self.required_permissions,
-            )
 
         # Handlers overwhelmingly just write the response so default to serializing
         serialize_kwargs = serialize_kwargs or {}

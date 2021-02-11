@@ -122,9 +122,7 @@ def mock_principals(namespace, access_level):
         ),
         (
             Principal(
-                roles=[
-                    Role(permissions=[Permission(access="OPERATOR", is_local=True)])
-                ]
+                roles=[Role(permissions=[Permission(access="OPERATOR", is_local=True)])]
             ),
             access_level in ["OPERATOR", "READ"],
         ),
@@ -139,8 +137,7 @@ def mock_principals(namespace, access_level):
             Principal(
                 roles=[Role(permissions=[Permission(access="ADMIN", namespace="p")])]
             ),
-            access_level in ["ADMIN", "OPERATOR", "READ"]
-            and namespace == "p",
+            access_level in ["ADMIN", "OPERATOR", "READ"] and namespace == "p",
         ),
         (
             Principal(
@@ -159,8 +156,7 @@ def mock_principals(namespace, access_level):
             Principal(
                 roles=[Role(permissions=[Permission(access="ADMIN", namespace="c")])]
             ),
-            access_level in ["ADMIN", "OPERATOR", "READ"]
-            and namespace == "c",
+            access_level in ["ADMIN", "OPERATOR", "READ"] and namespace == "c",
         ),
         (
             Principal(
@@ -182,10 +178,7 @@ def mock_principals(namespace, access_level):
                     Role(permissions=[Permission(access="READ", namespace="c")]),
                 ]
             ),
-            (
-                access_level in ["ADMIN", "OPERATOR", "READ"]
-                and namespace == "p"
-            )
+            (access_level in ["ADMIN", "OPERATOR", "READ"] and namespace == "p")
             or (access_level in ["READ"] and namespace == "c"),
         ),
         (
@@ -195,10 +188,7 @@ def mock_principals(namespace, access_level):
                     Role(permissions=[Permission(access="READ", namespace="p")]),
                 ]
             ),
-            (
-                access_level in ["ADMIN", "OPERATOR", "READ"]
-                and namespace == "c"
-            )
+            (access_level in ["ADMIN", "OPERATOR", "READ"] and namespace == "c")
             or (access_level in ["READ"] and namespace == "p"),
         ),
     ]

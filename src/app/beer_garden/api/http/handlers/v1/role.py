@@ -2,11 +2,7 @@
 from mongoengine.errors import DoesNotExist
 
 import beer_garden.api.http
-from beer_garden.api.http.authorization import (
-    anonymous_principal,
-    authenticated,
-    Permissions,
-)
+from beer_garden.api.http.authorization import anonymous_principal
 from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
@@ -16,7 +12,6 @@ from brewtils.schema_parser import SchemaParser
 class RoleAPI(BaseHandler):
     parser = SchemaParser()
 
-    @authenticated(permissions=[Permissions.ADMIN])
     async def get(self, role_id):
         """
         ---
@@ -49,7 +44,6 @@ class RoleAPI(BaseHandler):
 
         self.write(role)
 
-    @authenticated(permissions=[Permissions.ADMIN])
     async def delete(self, role_id):
         """
         ---
@@ -81,7 +75,6 @@ class RoleAPI(BaseHandler):
 
         self.set_status(204)
 
-    @authenticated(permissions=[Permissions.ADMIN])
     async def patch(self, role_id):
         """
         ---
@@ -186,7 +179,6 @@ class RoleAPI(BaseHandler):
 class RolesAPI(BaseHandler):
     parser = SchemaParser()
 
-    @authenticated(permissions=[Permissions.ADMIN])
     async def get(self):
         """
         ---
@@ -207,7 +199,6 @@ class RolesAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.ADMIN])
     async def post(self):
         """
         ---

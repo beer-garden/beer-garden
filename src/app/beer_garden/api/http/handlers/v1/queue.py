@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
-from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.models import Operation
 
 
 class QueueAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.OPERATOR])
     async def delete(self, queue_name):
         """
         ---
@@ -33,7 +31,6 @@ class QueueAPI(BaseHandler):
 
 
 class QueueListAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.OPERATOR])
     async def get(self):
         """
         ---
@@ -56,7 +53,6 @@ class QueueListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.ADMIN])
     async def delete(self):
         """
         ---

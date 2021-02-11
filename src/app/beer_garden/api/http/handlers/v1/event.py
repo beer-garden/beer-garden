@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from beer_garden.api.http.filter import model_filter
+from beer_garden.filters.permission_mapper import Permissions
+from beer_garden.filters.model_filter import permission_check, model_filter
 from brewtils.errors import RequestForbidden
 from tornado.web import HTTPError
 from tornado.websocket import WebSocketHandler
@@ -9,8 +10,6 @@ import beer_garden.config as config
 
 from beer_garden.api.http.authorization import (
     AuthMixin,
-    Permissions,
-    check_permission,
     query_token_auth,
 )
 from brewtils.schema_parser import SchemaParser
@@ -35,7 +34,9 @@ class EventSocket(AuthMixin, WebSocketHandler):
 
         # We can't go though the 'normal' BaseHandler exception translation
         try:
-            check_permission(self.current_user, [Permissions.READ])
+            permission_check(
+                current_user=self.current_user, required_permission=Permissions.READ
+            )
         except (HTTPError, RequestForbidden) as ex:
             self.close(reason=str(ex))
             return
@@ -60,7 +61,7 @@ class EventSocket(AuthMixin, WebSocketHandler):
             if run_filter and model_filter(
                 SchemaParser.parse_event(message, from_string=True),
                 current_user=listener.current_user,
-                required_permissions=[Permissions.READ],
+                required_permission=Permissions.READ,
                 raise_error=False,
             ):
                 listener.write_message(message)

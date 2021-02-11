@@ -27,6 +27,9 @@ from beer_garden.api.stomp.processors import (
     append_headers as stomp_append_headers,
     process_send_message as stomp_process_message,
 )
+from beer_garden.filters.permission_mapper import determine_permission
+from beer_garden.filters.db_filters import model_db_filter
+from beer_garden.filters.model_filter import model_filter
 from brewtils import EasyClient
 from brewtils.models import Events, Garden, Operation, Request, System, Event
 
@@ -216,6 +219,16 @@ def route(operation: Operation):
             f"Unknown operation type '{operation.operation_type}'"
         )
 
+    logger.debug(f"Principal Inbound Filter for {operation!r}")
+    model_filter(
+        obj=operation,
+        current_user=operation.principal,
+        required_permission=determine_permission(operation),
+    )
+
+    logger.debug(f"Adding Principal DB Filter for {operation!r}")
+    model_db_filter(obj=operation, current_user=operation.principal)
+
     # Determine which garden the operation is targeting
     if not operation.target_garden_name:
         operation.target_garden_name = _determine_target_garden(operation)
@@ -227,9 +240,16 @@ def route(operation: Operation):
 
     # If it's targeted at THIS garden, execute
     if operation.target_garden_name == config.get("garden.name"):
-        return execute_local(operation)
+        response = execute_local(operation)
     else:
-        return initiate_forward(operation)
+        response = initiate_forward(operation)
+
+    logger.debug(f"Principal Outbound Filter for {operation!r}")
+    return model_filter(
+        obj=response,
+        current_user=operation.principal,
+        required_permission=determine_permission(operation),
+    )
 
 
 def execute_local(operation: Operation):

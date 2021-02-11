@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
@@ -7,7 +6,6 @@ from brewtils.schema_parser import SchemaParser
 
 
 class GardenAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.READ])
     async def get(self, garden_name):
         """
         ---
@@ -38,7 +36,6 @@ class GardenAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.ADMIN])
     async def delete(self, garden_name):
         """
         ---
@@ -63,7 +60,6 @@ class GardenAPI(BaseHandler):
 
         self.set_status(204)
 
-    @authenticated(permissions=[Permissions.ADMIN])
     async def patch(self, garden_name):
         """
         ---
@@ -152,7 +148,6 @@ class GardenAPI(BaseHandler):
 
 
 class GardenListAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
         ---
@@ -177,7 +172,6 @@ class GardenListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.ADMIN])
     async def post(self):
         """
         ---
@@ -215,7 +209,6 @@ class GardenListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.ADMIN])
     async def patch(self):
         """
         ---

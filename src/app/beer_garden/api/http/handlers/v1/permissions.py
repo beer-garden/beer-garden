@@ -2,7 +2,6 @@
 import json
 import logging
 
-from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
 
 
@@ -10,7 +9,6 @@ class PermissionsAPI(BaseHandler):
 
     logger = logging.getLogger(__name__)
 
-    @authenticated(permissions=[Permissions.ADMIN])
     def get(self):
         """
         ---

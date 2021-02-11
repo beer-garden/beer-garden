@@ -3,7 +3,6 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.authorization import check_permission, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
 
 
@@ -56,7 +55,6 @@ class AdminAPI(BaseHandler):
 
         for op in operations:
             if op.operation == "rescan":
-                check_permission(self.current_user, [Permissions.OPERATOR])
                 await self.client(Operation(operation_type="RUNNER_RESCAN"))
             elif op.operation == "reload":
                 if op.path == "/config/logging/plugin":

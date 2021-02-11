@@ -2,14 +2,12 @@
 
 import tornado.web
 
-from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 
 
 class FileAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
         ---
@@ -59,7 +57,6 @@ class FileAPI(BaseHandler):
         )
         self.write(response)
 
-    @authenticated(permissions=[Permissions.OPERATOR])
     async def post(self):
         """
         ---
@@ -157,7 +154,6 @@ class FileAPI(BaseHandler):
 
 
 class FileNameAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
         ---

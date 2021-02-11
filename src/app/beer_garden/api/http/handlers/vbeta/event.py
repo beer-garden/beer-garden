@@ -1,16 +1,14 @@
+from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.events import publish
 
 
 class EventPublisherAPI(BaseHandler):
 
     parser = SchemaParser()
 
-    @authenticated(permissions=[Permissions.OPERATOR])
-    def post(self):
+    async def post(self):
         """
         ---
         summary: Publish a new event
@@ -35,6 +33,12 @@ class EventPublisherAPI(BaseHandler):
         tags:
           - Event
         """
-        publish(SchemaParser.parse_event(self.request.decoded_body, from_string=True))
+
+        event = SchemaParser.parse_event(self.request.decoded_body, from_string=True)
+
+        await self.client(
+            Operation(operation_type="PUBLISH_EVENT", model=event, model_type="Event"),
+            serialize_kwargs={"to_string": False},
+        )
 
         self.set_status(204)
