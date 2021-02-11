@@ -71,7 +71,9 @@ def filter_brewtils_model(
         ):
             return obj
         if raise_error:
-            raise AuthorizationRequired("Action requires permissions %s" % obj_namespace)
+            raise AuthorizationRequired(
+                "Action requires permissions %s" % obj_namespace
+            )
 
         return None
 
@@ -150,14 +152,11 @@ def permission_check(
 
     """
     for permission in current_user.permissions:
-        if (
-            required_permission == Permissions.LOCAL_ADMIN
-            and permission.is_local
-            and permission.access in PermissionRequiredAccess[required_permission]
-        ):
-            return True
+        if required_permission == Permissions.LOCAL_ADMIN:
+            if permission.is_local and permission.access == "ADMIN":
+                return True
 
-        if permission.access in PermissionRequiredAccess[required_permission] and (
+        elif permission.access in PermissionRequiredAccess[required_permission] and (
             namespace is None
             or permission.namespace == namespace
             or permission.is_local

@@ -16,9 +16,7 @@ class Client(object):
         self.filter_calls = filter_calls
 
     def serialize_helper(self, current_user=None):
-        return SerializeHelper(
-            current_user=current_user
-        )
+        return SerializeHelper(current_user=current_user)
 
 
 class SerializeHelper(object):

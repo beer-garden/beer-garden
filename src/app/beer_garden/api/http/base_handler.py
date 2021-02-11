@@ -117,7 +117,6 @@ class BaseHandler(AuthMixin, RequestHandler):
                 user = cookie_user
         return user
 
-
     def set_default_headers(self):
         """Headers set here will be applied to all responses"""
         self.set_header("BG-Version", beer_garden.__version__)
