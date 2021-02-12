@@ -174,8 +174,9 @@ jobs:
           flake8 --max-complexity ${{ matrix.complexity-threshold }} | sed -E ${{ matrix.sed-filter }} > ~/old_complexity.txt
 
       - name: Compare complexities
+        working-directory: ./new/.github/workflows/scripts
         run: |
-          diff --ignore-all-space --strip-trailing-cr ~/current_complexity.txt ~/old_complexity.txt
+          python parse_diff_complexity.py "$HOME/old_complexity.txt" "$HOME/current_complexity.txt"
 
   SecurityCheck:
     runs-on: ${{ matrix.os }}

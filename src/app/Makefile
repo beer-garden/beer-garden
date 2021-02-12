@@ -93,11 +93,11 @@ lint: ## check style with flake8
 	black --check $(MODULE_NAME) $(TEST_DIR)
 
 # Complexity checks
-complexity:
+complexity: ## check function complexity
 	flake8 --max-complexity $(MAX_CYCLOMATIC_COMPLEXITY) $(MODULE_NAME)
 
 # Security linting
-security:
+security: ## check code for insecure settings and functions
 	bandit -r $(MODULE_NAME)
 
 

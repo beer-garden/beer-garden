@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import logging
 import os
-
+from bson import DBRef
 from mongoengine.connection import get_db
 from mongoengine.errors import (
     DoesNotExist,
+    FieldDoesNotExist,
     InvalidDocumentError,
     NotUniqueError,
-    FieldDoesNotExist,
 )
 from passlib.apps import custom_app_context
 
@@ -136,7 +136,60 @@ def ensure_users(guest_login_enabled):
             ).save()
 
 
-def ensure_model_migration():
+def ensure_owner_collection_migration():
+    """We ran into an issue with 3.0.5 where Requests and Jobs got migrated over to
+    the Owner collection. This is in place to resolve that."""
+
+    database = get_db()
+
+    if database["owner"].count():
+        logger.warning(
+            "Found owner collection, migrating documents to appropriate collections. "
+            "This could take a while :)"
+        )
+
+        for doc in database["owner"].find({"_cls": "Owner.Request"}):
+            try:
+                del doc["_cls"]
+
+                if doc.get("has_parent"):
+                    doc["parent"] = DBRef("request", doc["parent"].id)
+
+                database["request"].insert_one(doc)
+            except Exception:
+                logger.error(f"Error migrating request {doc['_id']}")
+
+        for doc in database["owner"].find({"_cls": "Owner.Job"}):
+            try:
+                del doc["_cls"]
+
+                database["job"].insert_one(doc)
+            except Exception:
+                logger.error(f"Error migrating job {doc['_id']}")
+
+        for doc in database["file"].find():
+            try:
+                if doc["owner_type"] == "REQUEST":
+                    doc["request"] = doc["owner"]
+                elif doc["owner_type"] == "JOB":
+                    doc["job"] = doc["owner"]
+                else:
+                    logger.error(f"Unable to migrate file {doc['_id']}: bad owner type")
+                    database["file"].delete_one({"_id": doc["_id"]})
+                    continue
+
+                doc["owner"] = None
+
+                database["file"].replace_one({"_id": doc["_id"]}, doc)
+            except Exception:
+                logger.error(f"Error migrating file {doc['_id']}, removing")
+                database["file"].delete_one({"_id": doc["_id"]})
+
+        logger.info("Dropping owner collection (this is intended!)")
+        database.drop_collection("owner")
+
+
+def ensure_v2_to_v3_model_migration():
     """Ensures that the Role model is flatten and Command model is an
     EmbeddedDocument
 
@@ -179,6 +232,14 @@ def ensure_model_migration():
         db.drop_collection("command")
         db.drop_collection("instance")
         db.drop_collection("system")
+
+
+def ensure_model_migration():
+    """Ensures that the database is properly migrated. All migrations ran from this
+    single function for easy management"""
+
+    ensure_v2_to_v3_model_migration()
+    ensure_owner_collection_migration()
 
 
 def check_indexes(document_class):

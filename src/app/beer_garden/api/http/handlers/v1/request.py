@@ -499,12 +499,14 @@ class RequestListAPI(BaseHandler):
         order_arg = self.get_query_argument("order", default="{}")
         search_arg = self.get_query_argument("search", default="{}")
         child_arg = self.get_query_argument("include_children", default="false")
+        hidden_arg = self.get_query_argument("include_hidden", default="false")
 
         # And parse them into usable forms
         columns = [json.loads(c) for c in columns_arg]
         order = json.loads(order_arg)
         search = json.loads(search_arg)
         include_children = bool(child_arg.lower() == "true")
+        include_hidden = bool(hidden_arg.lower() == "true")
 
         # Cool, now we can do stuff
         if search and search["value"]:
@@ -512,6 +514,9 @@ class RequestListAPI(BaseHandler):
 
         if not include_children:
             filter_params["has_parent"] = False
+
+        if not include_hidden:
+            filter_params["hidden__ne"] = True
 
         for column in columns:
             query_columns.append(column)
@@ -562,11 +567,13 @@ class RequestListAPI(BaseHandler):
             "include_fields": include_fields,
             "text_search": text_search,
             "order_by": order_by,
-            "hint": self._determine_hint(hint_helper, include_children),
+            "hint": self._determine_hint(hint_helper, include_children, include_hidden),
         }
 
     @staticmethod
-    def _determine_hint(hint_helper: Sequence[str], include_children: bool) -> str:
+    def _determine_hint(
+        hint_helper: Sequence[str], include_children: bool, include_hidden: bool
+    ) -> str:
         """Function that will figure out correct index to use
 
         This is necessary since it seems that the ['parent', '<sort field>'] index is
@@ -575,12 +582,16 @@ class RequestListAPI(BaseHandler):
         Args:
             hint_helper: List of relevant hint information
             include_children: Whether child requests are to be included
+            include_hidden: Whether hidden requests are to be included
 
         Returns:
             The correct hint to use
 
         """
         real_hint = []
+
+        if not include_hidden:
+            real_hint.append("hidden")
         if not include_children:
             real_hint.append("parent")
 

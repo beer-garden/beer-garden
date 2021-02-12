@@ -266,12 +266,7 @@ class Instance(MongoModel, EmbeddedDocument):
             )
 
 
-class Owner(Document):
-    # Stub to use for a reference field.
-    meta = {"allow_inheritance": True}
-
-
-class Request(MongoModel, Owner):
+class Request(MongoModel, Document):
     brewtils_model = brewtils.models.Request
 
     # These fields are duplicated for job types, changes to this field
@@ -307,6 +302,7 @@ class Request(MongoModel, Owner):
     expiration_date = DateTimeField(default=None, required=False)
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
+    hidden = BooleanField(required=False)
     requester = StringField(required=False)
     parameters_gridfs = FileField()
 
@@ -360,6 +356,25 @@ class Request(MongoModel, Owner):
             {
                 "name": "parent_created_at_status_index",
                 "fields": ["has_parent", "-created_at", "status"],
+            },
+            # These are used for filtering hidden while sorting on created time
+            # I THINK this makes the set of indexes above superfluous, but I'm keeping
+            # both as a safety measure
+            {
+                "name": "hidden_parent_created_at_command_index",
+                "fields": ["hidden", "has_parent", "-created_at", "command"],
+            },
+            {
+                "name": "hidden_parent_created_at_system_index",
+                "fields": ["hidden", "has_parent", "-created_at", "system"],
+            },
+            {
+                "name": "hidden_parent_created_at_instance_name_index",
+                "fields": ["hidden", "has_parent", "-created_at", "instance_name"],
+            },
+            {
+                "name": "hidden_parent_created_at_status_index",
+                "fields": ["hidden", "has_parent", "-created_at", "status"],
             },
             # This is used for text searching
             {
@@ -719,12 +734,18 @@ class File(MongoModel, Document):
 
     owner_id = StringField(required=False)
     owner_type = StringField(required=False)
-    owner = LazyReferenceField(Owner, required=False, reverse_delete_rule=NULLIFY)
+    request = LazyReferenceField(Request, required=False, reverse_delete_rule=NULLIFY)
+    job = LazyReferenceField(Job, required=False, reverse_delete_rule=NULLIFY)
     updated_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     file_name = StringField(required=True)
     file_size = IntField(required=True)
     chunks = DictField(required=False)
     chunk_size = IntField(required=True)
+
+    # This was originally used instead of request and job. See #833
+    # We could probably have kept using this if a GenericLazyReferenceField could have
+    # a reverse_delete_rule. Alas!
+    owner = DummyField()
 
 
 class FileChunk(MongoModel, Document):

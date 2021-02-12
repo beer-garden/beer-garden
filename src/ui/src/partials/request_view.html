@@ -6,12 +6,6 @@
 </div>
 
 <h1 class="page-header">
-
-
-<!--  <progressbar type="{{a.type}}" ng-repeat="a in alerts" class='bar' value="a.counter"-->
-<!--               max='30'>-->
-<!--  </progressbar>-->
-
   <span>Request View</span>
   <span ng-if="responseState(response) === 'success'">
     <small>{{request.id}}</small>
@@ -33,6 +27,7 @@
 </h1>
 
 <fetch-data response="response"></fetch-data>
+
 <div ng-if="responseState(response) === 'success'">
   <ol class="tagline breadcrumb" ng-show="request_tree.length > 1">
     <li ng-repeat="request in request_tree = getParentTree(request)" ng-class="{active: $last}"
@@ -64,7 +59,10 @@
                   ng-show="childrenExist(children)"
                   class="fa fa-chevron-right"
                   ng-class="{'chevron-rotate': !childrenCollapsed}">
-            </span>{{request.command}}</td>
+            </span>
+            {{request.command}}
+            <span ng-show="request.hidden" class="fa fa-user-secret pull-right" style="font-size: 20px;"></span>
+          </td>
           <td ng-click="toggleChildren()">{{request.metadata.system_display_name || request.system}}</td>
           <td ng-click="toggleChildren()">
             <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
@@ -108,6 +106,7 @@
             <div>
               <span class="fa fa-chevron-right" style="visibility: hidden"></span>
               <a class="child-link" ui-sref="base.request({requestId: child.id})">{{child.command}}</a>
+              <span ng-show="child.hidden" class="fa fa-user-secret pull-right" style="font-size: 20px;"></span>
             </div>
           </td>
           <td><div>{{child.metadata.system_display_name || child.system}}</div></td>

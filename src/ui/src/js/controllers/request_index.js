@@ -44,6 +44,10 @@ export default function requestIndexController(
         data.include_children = true;
         data.columns.push({'data': 'parent'});
       }
+      if ($('#hiddenRequestCheck').is(":checked")) {
+          data.include_hidden = true;
+          data.columns.push({'data': 'hidden'});
+      }
 
       // Not urlencoding semicolons in the search values breaks the backend
       for (let column of data.columns) {
@@ -119,6 +123,7 @@ export default function requestIndexController(
     .withOption('serverSide', true)
     .withOption('refreshButton', true)
     .withOption('childContainer', true)
+    .withOption('hiddenRequestContainer', true)
     .withOption('newData', true)
     .withPaginationType('full_numbers')
     .withBootstrap()
@@ -140,14 +145,20 @@ export default function requestIndexController(
               'popover-trigger="\'mouseenter\'"' +
               'popover-title="parent request"' +
               'popover-animation="true"' +
-              'popover-placement="left">' +
+              'popover-placement="top-left">' +
                 `<a ui-sref="base.request({requestId: '${full.parent.id}'})" ` +
                   'class="fa fa-level-up fa-fw">' +
                 '</a>' +
             '</span>';
         }
 
-        return display + `<a ui-sref="base.request({requestId: '${full.id}'})">` + data + '</a>';
+        display += `<a ui-sref="base.request({requestId: '${full.id}'})">` + data + '</a>';
+
+        if (full.hidden) {
+          display += '<span class="fa fa-user-secret pull-right" style="font-size: 20px;"></span>';
+        }
+
+        return display;
       }),
     DTColumnBuilder
       .newColumn('namespace')
