@@ -122,6 +122,7 @@ executor_functions = {
 route_functions = {
     "REQUEST_CREATE": beer_garden.requests.process_request,
     "REQUEST_START": beer_garden.requests.start_request,
+    "REQUEST_UPDATE": beer_garden.requests.update_request,
     "REQUEST_COMPLETE": beer_garden.requests.complete_request,
     "REQUEST_READ": beer_garden.requests.get_request,
     "REQUEST_READ_ALL": beer_garden.requests.get_requests,

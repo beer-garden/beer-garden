@@ -52,13 +52,46 @@ export default function requestViewController(
   $scope.rawOutput = undefined;
   $scope.htmlOutput = '';
   $scope.jsonOutput = '';
+  $scope.expiration_date = '';
+  $scope.showDateModal = false;
+  $scope.newExpirationDate = null;
   $scope.formattedParameters = '';
   $scope.formattedAvailable = false;
   $scope.formatErrorTitle = undefined;
   $scope.formatErrorMsg = undefined;
   $scope.showFormatted = false;
   $scope.disabledPourItAgain = false;
-  $scope.msgPourItAgain = null
+  $scope.msgPourItAgain = null;
+  $scope.schema = {
+                      'type': 'object',
+                      'properties': {
+                      'expiration_date': {
+                              'title': ' ',
+                              'type': ['integer', 'null'],
+                              'format': 'datetime',
+                            },
+                      },
+                  };
+  $scope.form = [
+                    {
+                      'type': 'section',
+                      'htmlClass': 'row',
+                      'items': [
+                        {'key': 'expiration_date'},
+                      ],
+                    },
+                    {
+                      'type': 'section',
+                      'htmlClass': 'row',
+                      'items': [
+                        {
+                          'type': 'submit', 'style': 'btn-primary w-100',
+                          'title': 'Update Expiration',
+                        },
+                      ],
+                    },
+                ];
+  $scope.model = {};
 
   $scope.isMaximized = localStorageService.get('isMaximized');
   if ($scope.isMaximized === null) {
@@ -90,6 +123,18 @@ export default function requestViewController(
   $scope.loadPreview = function(_editor) {
     formatJsonDisplay(_editor, true);
   };
+
+  $scope.updateExpirationDate = function(form, model){
+    RequestService.updateRequest($scope.request, model.expiration_date);
+  }
+
+  $scope.showAlert = function() {
+    let expired = ($scope.request.expiration_date <= ((new Date()).getTime())) && $scope.request.expiration_date;
+    if (expired){
+        $scope.expiration_date = 'Expired';
+    }
+    return expired
+  }
 
   $scope.canRepeat = function(request) {
     return RequestService.isComplete(request);
@@ -170,6 +215,8 @@ export default function requestViewController(
 
   $scope.successCallback = function(request) {
     $scope.request = request;
+    $scope.expiration_date = formatDate($scope.request.expiration_date)
+    $scope.model = {"expiration_date": $scope.request.expiration_date}
     $scope.filename = $scope.request.id;
     let namespace = $scope.request.namespace || $scope.config.gardenName;
     let request_system = SystemService.findSystem(namespace, $scope.request.system,

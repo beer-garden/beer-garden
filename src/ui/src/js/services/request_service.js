@@ -13,6 +13,11 @@ export default function requestService($q, $http, $timeout) {
   const completeStatuses = ['SUCCESS', 'ERROR', 'CANCELED'];
 
   let service = {
+    updateRequest: (request, expiration_date) => {
+        return $http.patch(
+            'api/v1/requests/' + request.id, {operation: 'replace', path: '/expiration_date', value: expiration_date}
+        )
+    },
     getRequests: (data) => {
       return $http.get(
         'api/v1/requests', {params: data}

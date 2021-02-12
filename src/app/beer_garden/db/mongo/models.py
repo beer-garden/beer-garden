@@ -287,6 +287,7 @@ class Request(MongoModel, Owner):
         "comment": {"field": StringField, "kwargs": {"required": False}},
         "metadata": {"field": DictField, "kwargs": {}},
         "output_type": {"field": StringField, "kwargs": {}},
+        "expiration_date": {"field": DateTimeField, "kwargs": {"required": False}},
     }
 
     for field_name, field_info in TEMPLATE_FIELDS.items():
@@ -303,6 +304,7 @@ class Request(MongoModel, Owner):
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
     created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     updated_at = DateTimeField(default=None, required=True)
+    expiration_date = DateTimeField(default=None, required=False)
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
     requester = StringField(required=False)

@@ -65,38 +65,17 @@ class MongoPruner(StoppableThread):
                 - The suggested interval between runs
 
         """
-        info_ttl = kwargs.get("info", -1)
-        action_ttl = kwargs.get("action", -1)
         file_ttl = kwargs.get("file", -1)
 
-        prune_tasks = []
-        if info_ttl > 0:
-            prune_tasks.append(
-                {
-                    "collection": Request,
-                    "field": "created_at",
-                    "delete_after": timedelta(minutes=info_ttl),
-                    "additional_query": (
-                        Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
-                    )
-                    & Q(has_parent=False)
-                    & Q(command_type="INFO"),
-                }
-            )
-
-        if action_ttl > 0:
-            prune_tasks.append(
-                {
-                    "collection": Request,
-                    "field": "created_at",
-                    "delete_after": timedelta(minutes=action_ttl),
-                    "additional_query": (
-                        Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
-                    )
-                    & Q(has_parent=False)
-                    & Q(command_type="ACTION"),
-                }
-            )
+        prune_tasks = [{
+            "collection": Request,
+            "field": "expiration_date",
+            "delete_after": timedelta(minutes=0),
+            "additional_query": (
+                                        Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
+                                )
+                                & Q(has_parent=False),
+        }]
 
         if file_ttl > 0:
             prune_tasks.append(

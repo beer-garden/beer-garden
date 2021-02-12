@@ -1,4 +1,17 @@
+<div>
+  <div class="alert alert-warning m-b-0"
+         ng-show="showAlert()">
+    The request is past expiration date and may have been deleted.
+  </div>
+</div>
+
 <h1 class="page-header">
+
+
+<!--  <progressbar type="{{a.type}}" ng-repeat="a in alerts" class='bar' value="a.counter"-->
+<!--               max='30'>-->
+<!--  </progressbar>-->
+
   <span>Request View</span>
   <span ng-if="responseState(response) === 'success'">
     <small>{{request.id}}</small>
@@ -20,7 +33,6 @@
 </h1>
 
 <fetch-data response="response"></fetch-data>
-
 <div ng-if="responseState(response) === 'success'">
   <ol class="tagline breadcrumb" ng-show="request_tree.length > 1">
     <li ng-repeat="request in request_tree = getParentTree(request)" ng-class="{active: $last}"
@@ -41,27 +53,28 @@
           <th scope="col" ng-show="showErrorColumn(request, children)">Error Type</th>
           <th scope="col">Created</th>
           <th scope="col">Updated</th>
+          <th scope="col">Expiration Date</th>
           <th scope="col">Comment</th>
         </tr>
       </thead>
       <tbody>
-        <tr ng-click="toggleChildren()">
-          <td>
+        <tr>
+          <td ng-click="toggleChildren()">
             <span id="chevron"
                   ng-show="childrenExist(children)"
                   class="fa fa-chevron-right"
                   ng-class="{'chevron-rotate': !childrenCollapsed}">
             </span>{{request.command}}</td>
-          <td>{{request.metadata.system_display_name || request.system}}</td>
-          <td>
+          <td ng-click="toggleChildren()">{{request.metadata.system_display_name || request.system}}</td>
+          <td ng-click="toggleChildren()">
             <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
               <a ui-sref="base.system({namespace: request.namespace, systemName: request.system, systemVersion: request.system_version})">
                 <span>{{request.system_version}}</span>
               </a>
             </div>
           </td>
-          <td>{{request.instance_name}}</td>
-          <td>{{request.status}}
+          <td ng-click="toggleChildren()">{{request.instance_name}}</td>
+          <td ng-click="toggleChildren()">{{request.status}}
             <span uib-popover="{{statusDescriptions[request.status]}}"
                   popover-animation="true"
                   popover-placement="right"
@@ -71,10 +84,23 @@
               <span class="glyphicon glyphicon-info-sign"></span>
             </span>
           </td>
-          <td ng-show="showErrorColumn(request, children)">{{request.error_class}}</td>
-          <td>{{formatDate(request.created_at)}}</td>
-          <td>{{formatDate(request.updated_at)}}</td>
-          <td>{{request.comment}}</td>
+          <td ng-click="toggleChildren()" ng-show="showErrorColumn(request, children)">{{request.error_class}}</td>
+          <td ng-click="toggleChildren()">{{formatDate(request.created_at)}}</td>
+          <td ng-click="toggleChildren()">{{formatDate(request.updated_at)}}</td>
+          <td>
+            {{(expiration_date || "N/A")}}
+            <button ng-click="showDateModal=!showDateModal" class="btn btn-primary fa fa-pencil-square-o"></button>
+            <modal ng-show="showDateModal">
+              <form
+                      name="dateform"
+                      sf-schema="schema"
+                      sf-form="form"
+                      sf-model="model"
+                      ng-submit="updateExpirationDate(dateform, model)"></form>
+
+            </modal>
+          </td>
+          <td ng-click="toggleChildren()">{{request.comment}}</td>
         </tr>
 
         <tr class="child-row slide" ng-repeat="child in childrenDisplay">
@@ -91,6 +117,7 @@
           <td ng-show="showErrorColumn(request, children)"><div>{{child.error_class}}</div></td>
           <td><div>{{formatDate(child.created_at)}}</div></td>
           <td><div>{{formatDate(child.updated_at)}}</div></td>
+          <td><div>{{(expiration_date || "N/A")}}</div></td>
           <td><div>{{child.comment}}</div></td>
         </tr>
       </tbody>

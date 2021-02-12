@@ -108,6 +108,9 @@ class RequestAPI(BaseHandler):
                         raise ModelValidationError(
                             f"Unsupported status value '{op.value}'"
                         )
+                elif op.path == "/expiration_date":
+                    operation.operation_type = "REQUEST_UPDATE"
+                    operation.kwargs["expiration_date"] = op.value
 
                 elif op.path == "/output":
                     operation.kwargs["output"] = op.value
