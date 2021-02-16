@@ -170,7 +170,7 @@ class RequestValidator(object):
         )
 
     def get_and_validate_parameters(
-            self, request, command=None, command_parameters=None, request_parameters=None
+        self, request, command=None, command_parameters=None, request_parameters=None
     ):
         """Validates all request parameters
 
@@ -223,10 +223,10 @@ class RequestValidator(object):
     def _validate_value_in_choices(self, request, value, command_parameter):
         """Validate that the value(s) are valid according to the choice constraints"""
         if (
-                value is not None
-                and not command_parameter.optional
-                and command_parameter.choices
-                and command_parameter.choices.strict
+            value is not None
+            and not command_parameter.optional
+            and command_parameter.choices
+            and command_parameter.choices.strict
         ):
 
             choices = command_parameter.choices
@@ -413,7 +413,7 @@ class RequestValidator(object):
                     )
 
     def _extract_parameter_value_from_request(
-            self, request, command_parameter, request_parameters, command
+        self, request, command_parameter, request_parameters, command
     ):
         """Extracts the expected value based on the parameter in the database,
         uses the default and validates the type of the request parameter"""
@@ -447,7 +447,7 @@ class RequestValidator(object):
         return value_to_return
 
     def _validate_required_parameter_is_included_in_request(
-            self, request, command_parameter, request_parameters
+        self, request, command_parameter, request_parameters
     ):
         """If the parameter is required but was not provided in the request_parameters
         and does not have a default, then raise a ValidationError"""
@@ -456,8 +456,8 @@ class RequestValidator(object):
         )
         if not command_parameter.optional:
             if (
-                    command_parameter.key not in request_parameters
-                    and command_parameter.default is None
+                command_parameter.key not in request_parameters
+                and command_parameter.default is None
             ):
                 raise ModelValidationError(
                     "Required key '%s' not provided in request. Parameters are: %s"
@@ -465,7 +465,7 @@ class RequestValidator(object):
                 )
 
     def _validate_no_extra_request_parameter_keys(
-            self, request_parameters, command_parameters
+        self, request_parameters, command_parameters
     ):
         """Validate that all the parameters passed in were valid keys. If there is a key
         specified that is not noted in the database, then a validation error is thrown"""
@@ -570,10 +570,10 @@ def get_requests(**kwargs) -> List[Request]:
 
 
 def process_request(
-        new_request: Union[Request, RequestTemplate],
-        wait_event: threading.Event = None,
-        is_admin: bool = False,
-        priority: int = 0,
+    new_request: Union[Request, RequestTemplate],
+    wait_event: threading.Event = None,
+    is_admin: bool = False,
+    priority: int = 0,
 ) -> Request:
     """Validates and publishes a Request.
 
@@ -679,9 +679,9 @@ def start_request(request_id: str = None, request: Request = None) -> Request:
 
 @publish_event(Events.REQUEST_UPDATED)
 def update_request(
-        request_id: str = None,
-        request: Request = None,
-        expiration_date=None,
+    request_id: str = None,
+    request: Request = None,
+    expiration_date=None,
 ) -> Request:
     request = request or db.query_unique(Request, raise_missing=True, id=request_id)
     parent = find_parent(request)
@@ -697,8 +697,7 @@ def find_parent(request):
     return parent or request
 
 
-def set_expiration_date(request=None, expiration_date=None
-                        ):
+def set_expiration_date(request=None, expiration_date=None):
     children = db.query(Request, filter_params={"parent": request})
     if children:
         for child in children:
@@ -710,11 +709,11 @@ def set_expiration_date(request=None, expiration_date=None
 
 @publish_event(Events.REQUEST_COMPLETED)
 def complete_request(
-        request_id: str = None,
-        request: Request = None,
-        status: str = None,
-        output: str = None,
-        error_class: str = None,
+    request_id: str = None,
+    request: Request = None,
+    status: str = None,
+    output: str = None,
+    error_class: str = None,
 ) -> Request:
     """Mark a Request as completed
 

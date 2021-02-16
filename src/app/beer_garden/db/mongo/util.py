@@ -277,6 +277,14 @@ def check_indexes(document_class):
         if document_class == Request and "parent_instance_index" in existing:
             raise OperationFailure("Old Request index found, rebuilding")
 
+        if document_class == Request and "expiration_date" not in existing:
+            logger.warning(
+                "Found missing %s index, about to build them. This could "
+                "take a while :)",
+                document_class.__name__,
+            )
+            _update_request_expiration_date_model()
+
         if len(spec) < len(existing):
             raise OperationFailure("Extra index found, rebuilding")
 
@@ -369,6 +377,30 @@ def _create_role(role):
     except DoesNotExist:
         logger.warning("Role %s missing, about to create" % role.name)
         role.save()
+
+
+def _update_request_expiration_date_model():
+    from .models import Request
+    import beer_garden.config as config
+    import datetime
+
+    raw_collection = Request._get_collection()
+    minutes = config.get("db.ttl.action")
+    minutes_added = datetime.timedelta(minutes=minutes)
+    action_expiration_date = datetime.datetime.utcnow() + minutes_added
+
+    minutes = config.get("db.ttl.info")
+    minutes_added = datetime.timedelta(minutes=minutes)
+    info_expiration_date = datetime.datetime.utcnow() + minutes_added
+
+    raw_collection.update_many(
+        {"command_type": "ACTION", "status": {"$in": ["CANCELED", "SUCCESS", "ERROR"]}},
+        {"$set": {"expiration_date": action_expiration_date}},
+    )
+    raw_collection.update_many(
+        {"command_type": "INFO", "status": {"$in": ["CANCELED", "SUCCESS", "ERROR"]}},
+        {"$set": {"expiration_date": info_expiration_date}},
+    )
 
 
 def _should_create_admin():

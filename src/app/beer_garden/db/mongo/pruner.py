@@ -67,15 +67,17 @@ class MongoPruner(StoppableThread):
         """
         file_ttl = kwargs.get("file", -1)
 
-        prune_tasks = [{
-            "collection": Request,
-            "field": "expiration_date",
-            "delete_after": timedelta(minutes=0),
-            "additional_query": (
-                                        Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
-                                )
-                                & Q(has_parent=False),
-        }]
+        prune_tasks = [
+            {
+                "collection": Request,
+                "field": "expiration_date",
+                "delete_after": timedelta(minutes=0),
+                "additional_query": (
+                    Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
+                )
+                & Q(has_parent=False),
+            }
+        ]
 
         if file_ttl > 0:
             prune_tasks.append(

@@ -87,7 +87,7 @@
           <td ng-click="toggleChildren()">{{formatDate(request.updated_at)}}</td>
           <td>
             {{(expiration_date || "N/A")}}
-            <button ng-click="showDateModal=!showDateModal" class="btn btn-primary fa fa-pencil-square-o"></button>
+            <button ng-click="showDateModal=!showDateModal" ng-hide="!complete" class="btn btn-primary fa fa-pencil-square-o"></button>
             <modal ng-show="showDateModal">
               <form
                       name="dateform"
