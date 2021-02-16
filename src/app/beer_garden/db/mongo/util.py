@@ -284,7 +284,6 @@ def check_indexes(document_class):
                 document_class.__name__,
             )
             _update_request_expiration_date_model()
-            existing = document_class._get_collection().index_information()
 
         if len(spec) < len(existing):
             raise OperationFailure("Extra index found, rebuilding")
