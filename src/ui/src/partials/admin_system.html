@@ -103,7 +103,7 @@
       <div class="panel-body" style="padding-bottom: 0px;">
         <div ng-repeat="system in systems | orderBy: 'version'">
           <div class="list-group">
-            <div class="list-group-item clearfix" style="font-size: 18px;">
+            <div class="list-group-item clearfix">
               <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
                 <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})">
                   <span class="icon-color" ng-class="getIcon(system.icon_name)"></span>
@@ -135,6 +135,7 @@
                   </button>
                 </div>
               </div>
+              <div>{{system.description}}</div>
             </div>
             <div ng-repeat="instance in system.instances | orderBy: 'name'" class="list-group-item">
               <bg-status target='instance.status'></bg-status>
