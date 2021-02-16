@@ -282,7 +282,6 @@ class Request(MongoModel, Document):
         "comment": {"field": StringField, "kwargs": {"required": False}},
         "metadata": {"field": DictField, "kwargs": {}},
         "output_type": {"field": StringField, "kwargs": {}},
-        "expiration_date": {"field": DateTimeField, "kwargs": {"required": False}},
     }
 
     for field_name, field_info in TEMPLATE_FIELDS.items():
@@ -314,6 +313,7 @@ class Request(MongoModel, Document):
             {"name": "command_index", "fields": ["command"]},
             {"name": "command_type_index", "fields": ["command_type"]},
             {"name": "system_index", "fields": ["system"]},
+            {"name": "expiration_date_index", "fields": ["expiration_date"]},
             {"name": "instance_name_index", "fields": ["instance_name"]},
             {"name": "namespace_index", "fields": ["namespace"]},
             {"name": "status_index", "fields": ["status"]},

@@ -737,8 +737,12 @@ def complete_request(
     request.output = output
     request.error_class = error_class
     minutes = config.get(f"db.ttl.{request.command_type.casefold()}")
-    minutes_added = datetime.timedelta(minutes=minutes)
-    expiration_date = datetime.datetime.utcnow() + minutes_added
+    if minutes < 0:
+        expiration_date = None
+    else:
+        minutes_added = datetime.timedelta(minutes=minutes)
+        expiration_date = datetime.datetime.utcnow() + minutes_added
+
     if not request.has_parent:
         request = set_expiration_date(request=request, expiration_date=expiration_date)
     else:

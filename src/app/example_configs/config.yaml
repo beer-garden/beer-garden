@@ -13,7 +13,7 @@ db:
     username: null
   name: beer_garden
   ttl:
-    action: 3600
+    action: -1
     file: 15
     info: 15
 entry:

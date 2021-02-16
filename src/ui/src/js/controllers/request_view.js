@@ -54,7 +54,6 @@ export default function requestViewController(
   $scope.jsonOutput = '';
   $scope.expiration_date = '';
   $scope.showDateModal = false;
-  $scope.newExpirationDate = null;
   $scope.formattedParameters = '';
   $scope.formattedAvailable = false;
   $scope.formatErrorTitle = undefined;
@@ -62,7 +61,7 @@ export default function requestViewController(
   $scope.showFormatted = false;
   $scope.disabledPourItAgain = false;
   $scope.msgPourItAgain = null;
-  $scope.schema = {
+  $scope.dateSchema = {
                       'type': 'object',
                       'properties': {
                       'expiration_date': {
@@ -72,7 +71,7 @@ export default function requestViewController(
                             },
                       },
                   };
-  $scope.form = [
+  $scope.dateForm = [
                     {
                       'type': 'section',
                       'htmlClass': 'row',
@@ -91,7 +90,7 @@ export default function requestViewController(
                       ],
                     },
                 ];
-  $scope.model = {};
+  $scope.dateModel = {};
 
   $scope.isMaximized = localStorageService.get('isMaximized');
   if ($scope.isMaximized === null) {
@@ -216,7 +215,7 @@ export default function requestViewController(
   $scope.successCallback = function(request) {
     $scope.request = request;
     $scope.expiration_date = formatDate($scope.request.expiration_date)
-    $scope.model = {"expiration_date": $scope.request.expiration_date}
+    $scope.dateModel = {"expiration_date": $scope.request.expiration_date}
     $scope.filename = $scope.request.id;
     let namespace = $scope.request.namespace || $scope.config.gardenName;
     let request_system = SystemService.findSystem(namespace, $scope.request.system,
