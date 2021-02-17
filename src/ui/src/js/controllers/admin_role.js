@@ -8,7 +8,6 @@ adminRoleController.$inject = [
   '$q',
   '$uibModal',
   'RoleService',
-  'PermissionService',
 ];
 
 /**
@@ -17,14 +16,12 @@ adminRoleController.$inject = [
  * @param  {Object} $q                Angular's $q object.
  * @param  {Object} $uibModal         Angular UI's $uibModal object.
  * @param  {Object} RoleService       Beer-Garden's role service object.
- * @param  {Object} PermissionService Beer-Garden's permission service object.
  */
 export function adminRoleController(
     $scope,
     $q,
     $uibModal,
-    RoleService,
-    PermissionService) {
+    RoleService) {
   $scope.setWindowTitle('roles');
 
   // This holds the raw responses from the backend

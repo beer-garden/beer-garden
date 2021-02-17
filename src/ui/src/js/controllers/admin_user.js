@@ -9,7 +9,6 @@ adminUserController.$inject = [
   '$uibModal',
   'RoleService',
   'UserService',
-  'PermissionService',
 ];
 
 /**
@@ -19,15 +18,13 @@ adminUserController.$inject = [
  * @param  {$scope} $uibModal         Angular UI's $uibModal object.
  * @param  {Object} RoleService       Beer-Garden's role service object.
  * @param  {Object} UserService       Beer-Garden's user service object.
- * @param  {Object} PermissionService Beer-Garden's permission service object.
  */
 export function adminUserController(
     $scope,
     $q,
     $uibModal,
     RoleService,
-    UserService,
-    PermissionService) {
+    UserService) {
   $scope.setWindowTitle('users');
 
   // This holds the raw responses from the backend
