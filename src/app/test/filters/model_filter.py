@@ -108,9 +108,9 @@ def mock_principals(namespace, access_level):
                 ]
             ),
             (
-                    access_level
-                    in [Permissions.ADMIN, Permissions.OPERATOR, Permissions.READ]
-                    and namespace == "p"
+                access_level
+                in [Permissions.ADMIN, Permissions.OPERATOR, Permissions.READ]
+                and namespace == "p"
             )
             or (access_level in [Permissions.READ] and namespace == "c"),
         ),
@@ -122,9 +122,9 @@ def mock_principals(namespace, access_level):
                 ]
             ),
             (
-                    access_level
-                    in [Permissions.ADMIN, Permissions.OPERATOR, Permissions.READ]
-                    and namespace == "c"
+                access_level
+                in [Permissions.ADMIN, Permissions.OPERATOR, Permissions.READ]
+                and namespace == "c"
             )
             or (access_level in [Permissions.READ] and namespace == "p"),
         ),
