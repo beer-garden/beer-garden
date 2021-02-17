@@ -199,7 +199,7 @@ class TestModelFilter(object):
                                          ), obj={}) is not None
 
     def test_single_obj_returned(self, monkeypatch):
-        mock = _filter_brewtils_model_mock(monkeypatch=monkeypatch, return_value={})
+        _filter_brewtils_model_mock(monkeypatch=monkeypatch, return_value={})
 
         assert model_filter.model_filter(required_permission=Permissions.READ,
                                          current_user=Principal(
@@ -208,7 +208,7 @@ class TestModelFilter(object):
                                          ), obj={}) == {}
 
     def test_list_obj_returned(self, monkeypatch):
-        mock = _filter_brewtils_model_mock(monkeypatch=monkeypatch,
+        _filter_brewtils_model_mock(monkeypatch=monkeypatch,
                                            return_value={'a': 'b'})
 
         assert model_filter.model_filter(required_permission=Permissions.READ,

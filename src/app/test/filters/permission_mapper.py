@@ -16,7 +16,7 @@ class TestPermissionMapper(object):
             == beer_garden.filters.permission_mapper.Permissions.READ
         )
 
-    def test_permission_mapping(self, bg_operation):
+    def test_permission_mapping_fail(self, bg_operation):
         bg_operation.operation_type = "REQUEST_READ_BAD"
 
         assert (

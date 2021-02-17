@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 import base64
-from enum import Enum
 
 import jwt
-import wrapt
 
 from beer_garden.users import coalesce_permissions
-from brewtils.errors import RequestForbidden
 from brewtils.models import (
     Principal as BrewtilsPrincipal,
     Role as BrewtilsRole,
