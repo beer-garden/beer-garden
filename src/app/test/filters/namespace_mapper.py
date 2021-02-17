@@ -11,10 +11,7 @@ from brewtils.models import (
     Queue,
     Job,
     Operation,
-    Principal,
-    Role,
     Event,
-    Permission,
 )
 
 

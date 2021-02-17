@@ -1,6 +1,3 @@
-import pytest
-from mock import Mock
-
 import beer_garden.filters.permission_mapper
 import beer_garden.router
 
