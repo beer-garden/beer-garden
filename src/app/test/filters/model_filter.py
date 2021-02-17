@@ -108,9 +108,9 @@ def mock_principals(namespace, access_level):
                 ]
             ),
             (
-                access_level
-                in [Permissions.ADMIN, Permissions.OPERATOR, Permissions.READ]
-                and namespace == "p"
+                    access_level
+                    in [Permissions.ADMIN, Permissions.OPERATOR, Permissions.READ]
+                    and namespace == "p"
             )
             or (access_level in [Permissions.READ] and namespace == "c"),
         ),
@@ -122,9 +122,9 @@ def mock_principals(namespace, access_level):
                 ]
             ),
             (
-                access_level
-                in [Permissions.ADMIN, Permissions.OPERATOR, Permissions.READ]
-                and namespace == "c"
+                    access_level
+                    in [Permissions.ADMIN, Permissions.OPERATOR, Permissions.READ]
+                    and namespace == "c"
             )
             or (access_level in [Permissions.READ] and namespace == "p"),
         ),
@@ -209,7 +209,7 @@ class TestModelFilter(object):
 
     def test_list_obj_returned(self, monkeypatch):
         _filter_brewtils_model_mock(monkeypatch=monkeypatch,
-                                           return_value={'a': 'b'})
+                                    return_value={'a': 'b'})
 
         assert model_filter.model_filter(required_permission=Permissions.READ,
                                          current_user=Principal(
