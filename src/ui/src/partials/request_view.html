@@ -51,7 +51,10 @@
                   ng-show="childrenExist(children)"
                   class="fa fa-chevron-right"
                   ng-class="{'chevron-rotate': !childrenCollapsed}">
-            </span>{{request.command}}</td>
+            </span>
+            {{request.command}}
+            <span ng-show="request.hidden" class="fa fa-user-secret pull-right" style="font-size: 20px;"></span>
+          </td>
           <td>{{request.metadata.system_display_name || request.system}}</td>
           <td>
             <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
@@ -82,6 +85,7 @@
             <div>
               <span class="fa fa-chevron-right" style="visibility: hidden"></span>
               <a class="child-link" ui-sref="base.request({requestId: child.id})">{{child.command}}</a>
+              <span ng-show="child.hidden" class="fa fa-user-secret pull-right" style="font-size: 20px;"></span>
             </div>
           </td>
           <td><div>{{child.metadata.system_display_name || child.system}}</div></td>

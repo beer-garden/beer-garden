@@ -11,7 +11,7 @@ db:
     password: null
     port: 27017
     username: null
-  name: beer_garden_v3
+  name: beer_garden
   ttl:
     action: -1
     file: 15

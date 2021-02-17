@@ -157,6 +157,7 @@ class RequestValidator(object):
                         "Output Type for Request was %s but the command specified "
                         "the type as %s" % (request.output_type, command.output_type)
                     )
+                request.hidden = command.hidden
 
                 return command
 

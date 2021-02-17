@@ -7,6 +7,7 @@ Description=Beergarden Service
 Type=simple
 User=beer-garden
 Group=beer-garden
+UMask=0002
 ExecStart=/opt/beer-garden/bin/beergarden -c /opt/beer-garden/conf/config.yaml
 
 [Install]

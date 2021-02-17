@@ -44,7 +44,10 @@
           <td>{{command.namespace}}</td>
           <td>{{command.system}}</td>
           <td>{{command.version}}</td>
-          <td>{{command.name}}</td>
+          <td>
+            {{command.name}}
+            <span ng-show="command.hidden" class="fa fa-user-secret pull-right" style="font-size: 20px;"></span>
+          </td>
           <td>{{command.description}}</td>
           <td>
             <a class="btn btn-primary center-block word-wrap-button"
