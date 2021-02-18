@@ -31,6 +31,7 @@
               />
           </ul>
         <tr>
+          <th style="width: 10%;" scope="col">Garden</th>
           <th style="width: 10%;" scope="col">Namespace</th>
           <th style="width: 10%;" scope="col">System</th>
           <th style="width: 10%;" scope="col">Version</th>
@@ -41,6 +42,7 @@
       </thead>
       <tbody>
         <tr ng-repeat="command in data | filter:query | filter:{hidden:filterHidden}:hiddenComparator">
+          <td>{{command.garden}}</td>
           <td>{{command.namespace}}</td>
           <td>{{command.system}}</td>
           <td>{{command.version}}</td>
@@ -51,8 +53,8 @@
           <td>{{command.description}}</td>
           <td>
             <a class="btn btn-primary center-block word-wrap-button"
-              ng-show="hasPermission(user, 'OPERATOR', is_local = false, namespace=command.namespace)"
-              ui-sref="base.command({systemName: command.system, systemVersion: command.version, namespace: command.namespace, commandName: command.name})"
+              ng-show="hasPermission(user, 'OPERATOR', is_local = false, namespace=command.namespace, garden=command.garden)"
+              ui-sref="base.command({systemName: command.system, systemVersion: command.version, namespace: command.namespace, garden:command.garden, commandName: command.name})"
               title="Run {{command.name}}">Make it Happen!</a>
           </td>
         </tr>

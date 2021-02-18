@@ -77,11 +77,12 @@ export default function requestIndexController(
     })
     .withLightColumnFilter({
       0: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Command Filter'}},
-      1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Namespace Filter'}},
-      2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'System Filter'}},
-      3: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Version Filter'}},
-      4: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Instance Filter'}},
-      5: {
+      1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Garden Filter'}},
+      2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Namespace Filter'}},
+      3: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'System Filter'}},
+      4: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Version Filter'}},
+      5: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Instance Filter'}},
+      6: {
         html: 'select',
         type: 'text',
         cssClass: 'form-inline form-control',
@@ -95,7 +96,7 @@ export default function requestIndexController(
           {value: 'ERROR', label: 'ERROR'},
         ],
       },
-      6: {
+      7: {
         html: 'range',
         type: 'text',
         attr: {
@@ -116,7 +117,7 @@ export default function requestIndexController(
           useCurrent: false,
         },
       },
-      7: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Comment Filter'}},
+      8: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Comment Filter'}},
     })
     .withDataProp('data')
     .withOption('order', [6, 'desc'])
@@ -160,6 +161,9 @@ export default function requestIndexController(
 
         return display;
       }),
+    DTColumnBuilder
+      .newColumn('garden')
+      .withTitle('Garden'),
     DTColumnBuilder
       .newColumn('namespace')
       .withTitle('Namespace'),

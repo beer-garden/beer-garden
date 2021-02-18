@@ -129,7 +129,7 @@ export default function systemService($rootScope, $http) {
    * @param {string} version - The version you want to find (or latest)
    * @return {Object} The latest system or undefined if it is not found.
    */
-  service['findSystem'] = (namespace, name, version) => {
+  service['findSystem'] = (garden, namespace, name, version) => {
     let notFound = {
       data: {message: 'No matching system'},
       errorGroup: 'system',
@@ -138,11 +138,11 @@ export default function systemService($rootScope, $http) {
 
     if (version !== 'latest') {
       return _.find(
-        $rootScope.systems, {namespace: namespace, name: name, version: version}
+        $rootScope.systems, {garden: garden, namespace: namespace, name: name, version: version}
       );
     }
 
-    let filteredSystems = _.filter($rootScope.systems, {namespace: namespace, name: name});
+    let filteredSystems = _.filter($rootScope.systems, {garden: garden, namespace: namespace, name: name});
     if (_.isEmpty(filteredSystems)) {
       return undefined;
     }

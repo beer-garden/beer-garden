@@ -171,8 +171,9 @@ export default function requestViewController(
   $scope.successCallback = function(request) {
     $scope.request = request;
     $scope.filename = $scope.request.id;
+    let garden = $scope.request.garden || $scope.config.gardenName;
     let namespace = $scope.request.namespace || $scope.config.gardenName;
-    let request_system = SystemService.findSystem(namespace, $scope.request.system,
+    let request_system = SystemService.findSystem(garden, namespace, $scope.request.system,
                          $scope.request.system_version);
     if (request_system != undefined) {
         let commands = request_system.commands;

@@ -57,6 +57,7 @@ export default function commandViewController(
   $scope.createRequestWrapper = function(requestPrototype, ...args) {
     let request = {
       command: requestPrototype['command'],
+      garden: requestPrototype['garden'] || $scope.system.garden,
       namespace: requestPrototype['namespace'] || $scope.system.namespace,
       system: requestPrototype['system'] || $scope.system.name,
       system_version: requestPrototype['system_version'] || $scope.system.version,
@@ -208,6 +209,7 @@ export default function commandViewController(
     }
 
     $scope.breadCrumbs = [
+      $scope.system.garden,
       $scope.system.namespace,
       $scope.system.display_name || $scope.system.name,
       $scope.system.version,

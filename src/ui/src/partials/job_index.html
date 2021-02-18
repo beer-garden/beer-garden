@@ -41,6 +41,8 @@
       <tr>
         <th id="th_job_name" scope="col">Job Name</th>
         <th id="th_job_status" scope="col">Job Status</th>
+        <th id="th_garden" scope="col">Garden</th>
+        <th id="th_namespace" scope="col">Namespace</th>
         <th id="th_system" scope="col">System</th>
         <th id="th_instance" scope="col">Instance</th>
         <th id="th_command" scope="col">Command</th>
@@ -53,6 +55,8 @@
       <tr ng-repeat="job in data | filter:query">
         <td><a ui-sref="base.job({id: job.id})">{{job.name}}</a></td>
         <td>{{job.status}}</td>
+        <td>{{job.request_template.garden}}</td>
+        <td>{{job.request_template.namespace}}</td>
         <td>{{job.request_template.system}}</td>
         <td>{{job.request_template.instance_name}}</td>
         <td>{{job.request_template.command}}</td>

@@ -276,6 +276,7 @@ class Request(MongoModel, Document):
         "system": {"field": StringField, "kwargs": {"required": True}},
         "system_version": {"field": StringField, "kwargs": {"required": True}},
         "instance_name": {"field": StringField, "kwargs": {"required": True}},
+        "garden": {"field": StringField, "kwargs": {"required": True}},
         "namespace": {"field": StringField, "kwargs": {"required": True}},
         "command": {"field": StringField, "kwargs": {"required": True}},
         "command_type": {"field": StringField, "kwargs": {}},
@@ -484,6 +485,7 @@ class System(MongoModel, Document):
     description = StringField()
     version = StringField(required=True)
     namespace = StringField(required=True)
+    garden = StringField(required=True)
     max_instances = IntField(default=-1)
     instances = EmbeddedDocumentListField("Instance")
     commands = EmbeddedDocumentListField("Command")
@@ -539,7 +541,7 @@ class Permission(MongoModel, EmbeddedDocument):
 
     namespace = StringField()
     access = StringField()
-    is_local = BooleanField()
+    garden = StringField()
 
     def clean(self):
         """Validate before saving to the database"""

@@ -134,57 +134,90 @@ export default function appRun(
     );
   };
 
-  $rootScope.hasPermission = function(user, permissions, is_local = false, namespace = null) {
+  $rootScope.hasPermission = function(user, permissions, is_local = false, namespace = null, garden = null) {
     if (!$rootScope.config.authEnabled) return true;
     if (_.isUndefined(user)) return false;
+
+    if (is_local){
+        garden = $rootScope.config.garden
+    }
     for (var i = 0; i < user.permissions.length; i++){
 
-        if (is_local && !user.permissions[i].is_local){
-            continue;
-        }
         switch(permissions){
             case 'READ':
                 if (['ADMIN', 'OPERATOR', 'READ'].includes(user.permissions[i].access)){
-                    if (namespace == null){
+                    if (namespace == null && garden == null){
                         return true;
                     }
                     else{
-                        if (user.permissions[i].is_local){
+                        if (user.permissions[i].namespace != null &&
+                            user.permissions[i].namespace == namespace &&
+                            user.permissions[i].garden != null &&
+                            user.permissions[i].garden == garden){
                             return true;
                         }
-                        else if (user.permissions[i].namespace == namespace){
+                        else if (user.permissions[i].namespace != null &&
+                                 user.permissions[i].namespace == namespace &&
+                                 user.permissions[i].garden == null){
+                            return true;
+                        }
+                        else if (user.permissions[i].garden != null &&
+                                 user.permissions[i].garden == garden &&
+                                 user.permissions[i].namespace == null){
                             return true;
                         }
                     }
 
                 }
             case 'OPERATOR':
-                if (['ADMIN', 'OPERATOR', ].includes(user.permissions[i].access)){
-                    if (namespace == null){
+                if (['ADMIN', 'OPERATOR', 'READ'].includes(user.permissions[i].access)){
+                    if (namespace == null && garden == null){
                         return true;
                     }
                     else{
-                        if (user.permissions[i].is_local){
+                        if (user.permissions[i].namespace != null &&
+                            user.permissions[i].namespace == namespace &&
+                            user.permissions[i].garden != null &&
+                            user.permissions[i].garden == garden){
                             return true;
                         }
-                        else if (user.permissions[i].namespace == namespace){
+                        else if (user.permissions[i].namespace != null &&
+                                 user.permissions[i].namespace == namespace &&
+                                 user.permissions[i].garden == null){
+                            return true;
+                        }
+                        else if (user.permissions[i].garden != null &&
+                                 user.permissions[i].garden == garden &&
+                                 user.permissions[i].namespace == null){
                             return true;
                         }
                     }
+
                 }
             case 'ADMIN':
-                if (['ADMIN'].includes(user.permissions[i].access)){
-                    if (namespace == null){
+                if (['ADMIN', 'OPERATOR', 'READ'].includes(user.permissions[i].access)){
+                    if (namespace == null && garden == null){
                         return true;
                     }
                     else{
-                        if (user.permissions[i].is_local){
+                        if (user.permissions[i].namespace != null &&
+                            user.permissions[i].namespace == namespace &&
+                            user.permissions[i].garden != null &&
+                            user.permissions[i].garden == garden){
                             return true;
                         }
-                        else if (user.permissions[i].namespace == namespace){
+                        else if (user.permissions[i].namespace != null &&
+                                 user.permissions[i].namespace == namespace &&
+                                 user.permissions[i].garden == null){
+                            return true;
+                        }
+                        else if (user.permissions[i].garden != null &&
+                                 user.permissions[i].garden == garden &&
+                                 user.permissions[i].namespace == null){
                             return true;
                         }
                     }
+
                 }
         }
 

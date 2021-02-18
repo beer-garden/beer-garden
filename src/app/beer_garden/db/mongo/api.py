@@ -195,11 +195,17 @@ def count(model_class: ModelType, **kwargs) -> int:
         The number of items
 
     """
+
     for k, v in kwargs.items():
         if isinstance(v, BaseModel):
             kwargs[k] = from_brewtils(v)
 
-    query_set = _model_map[model_class].objects(**kwargs)
+    args = kwargs.pop("filter_args", None)
+
+    if args:
+        query_set = _model_map[model_class].objects(*args, **kwargs)
+    else:
+        query_set = _model_map[model_class].objects(**kwargs)
     return query_set.count()
 
 
@@ -256,6 +262,7 @@ def query(model_class: ModelType, **kwargs) -> List[ModelItem]:
         model_class: The Brewtils model class to query for
         **kwargs: Arguments to control the query. Valid options are:
             filter_params: Dict of filtering parameters
+            filter_args: Args of filtering parameters
             order_by: Field that will be used to order the result list
             include_fields: Model fields to include
             exclude_fields: Model fields to exclude
@@ -271,6 +278,9 @@ def query(model_class: ModelType, **kwargs) -> List[ModelItem]:
     """
     query_set = _model_map[model_class].objects
 
+    if kwargs.get("filter_args"):
+        query_set = query_set.filter(*(kwargs.get("filter_args")))
+
     if kwargs.get("filter_params"):
         filter_params = kwargs["filter_params"]
 
@@ -280,6 +290,7 @@ def query(model_class: ModelType, **kwargs) -> List[ModelItem]:
                 filter_params[key] = from_brewtils(filter_params[key])
 
         query_set = query_set.filter(**(kwargs.get("filter_params", {})))
+
 
     # Bad things happen if you try to use a hint with a text search.
     if kwargs.get("text_search"):

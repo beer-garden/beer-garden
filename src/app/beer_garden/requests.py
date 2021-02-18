@@ -95,6 +95,7 @@ class RequestValidator(object):
         """
         system = db.query_unique(
             System,
+            garden=request.gaden,
             namespace=request.namespace,
             name=request.system,
             version=request.system_version,
@@ -164,8 +165,8 @@ class RequestValidator(object):
             command_names.append(command.name)
 
         raise ModelValidationError(
-            "No Command with name: %s could be found. Valid Commands for %s are: %s"
-            % (request.command, system.name, command_names)
+            "No Command with name: %s could be found. Valid Commands for %s-%s are: %s"
+            % (request.command, system.garden, system.name, command_names)
         )
 
     def get_and_validate_parameters(
@@ -283,6 +284,7 @@ class RequestValidator(object):
                     parsed_value = parse(choices.value, parse_as="func")
 
                     choices_request = Request(
+                        garden=request.garden,
                         system=request.system,
                         system_version=request.system_version,
                         instance_name=request.instance_name,
@@ -297,6 +299,9 @@ class RequestValidator(object):
                         system_version=choices.value.get("version"),
                         namespace=choices.value.get(
                             "namespace", config.get("garden.name")
+                        ),
+                        garden=choices.value.get(
+                            "garden", request.garden
                         ),
                         instance_name=choices.value.get("instance_name", "default"),
                         command=parsed_value["name"],
@@ -600,6 +605,9 @@ def process_request(
             f"new_request type is {type(new_request)}, expected "
             f"brewtils.models.Request or brewtils.models.RequestTemplate,"
         )
+
+    if request.garden is None:
+        request.garden = config.get("garden.name")
 
     # Validates the request based on what is in the database.
     # This includes the validation of the request parameters,

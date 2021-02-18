@@ -2,7 +2,7 @@ import pytest
 from mock import Mock
 
 from beer_garden.filters import model_filter
-import beer_garden.filters.namespace_mapper
+import beer_garden.filters.garden_namespace_mapper
 from beer_garden.filters.permission_mapper import Permissions
 from brewtils.errors import AuthorizationRequired
 
@@ -108,9 +108,9 @@ def mock_principals(namespace, access_level):
                 ]
             ),
             (
-                access_level
-                in [Permissions.ADMIN, Permissions.OPERATOR, Permissions.READ]
-                and namespace == "p"
+                    access_level
+                    in [Permissions.ADMIN, Permissions.OPERATOR, Permissions.READ]
+                    and namespace == "p"
             )
             or (access_level in [Permissions.READ] and namespace == "c"),
         ),
@@ -122,9 +122,9 @@ def mock_principals(namespace, access_level):
                 ]
             ),
             (
-                access_level
-                in [Permissions.ADMIN, Permissions.OPERATOR, Permissions.READ]
-                and namespace == "c"
+                    access_level
+                    in [Permissions.ADMIN, Permissions.OPERATOR, Permissions.READ]
+                    and namespace == "c"
             )
             or (access_level in [Permissions.READ] and namespace == "p"),
         ),
@@ -192,11 +192,12 @@ class TestModelFilter(object):
         assert not filter_brewtils_model_mock.called
 
     def test_local_admin(self):
-        assert model_filter.model_filter(required_permission=Permissions.READ,
-                                         current_user=Principal(
-                                             roles=[Role(permissions=[
-                                                 Permission(access="ADMIN", is_local=True)])]
-                                         ), obj={}) is not None
+        assert (
+                model_filter.model_filter(required_permission=Permissions.READ,
+                                          current_user=Principal(
+                                              roles=[Role(permissions=[
+                                                  Permission(access="ADMIN", is_local=True)])]
+                                          ), obj={}) is not None)
 
     def test_single_obj_returned(self, monkeypatch):
         _filter_brewtils_model_mock(monkeypatch=monkeypatch, return_value={})
@@ -266,7 +267,7 @@ class TestFilterBrewtilsModel(object):
     )
     def test_namespace_foo_pass(self, monkeypatch, mock_obj):
         monkeypatch.setattr(
-            beer_garden.filters.namespace_mapper, "find_obj_namespace", Mock(return_value="foo")
+            beer_garden.filters.garden_namespace_mapper, "find_obj_namespace", Mock(return_value="foo")
         )
 
         assert model_filter.filter_brewtils_model(required_permission=Permissions.READ,

@@ -74,6 +74,9 @@ def create_system(system: System) -> System:
     if system.namespace is None:
         system.namespace = config.get("garden.name")
 
+    if system.garden is None:
+        system.garden = config.get("garden.name")
+
     # Create in the database
     system = db.create(system)
 

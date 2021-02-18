@@ -49,11 +49,12 @@ export default function commandIndexController(
   
   if (!($stateParams.namespace || $stateParams.systemName || $stateParams.systemVersion)) {
     $scope.dtOptions = $scope.dtOptions.withLightColumnFilter({
-      0: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Namespace Filter'}},
-      1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'System Filter'}},
-      2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Version Filter'}},
-      3: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Command Filter'}},
-      4: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Description Filter'}},
+      0: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Garden Filter'}},
+      1: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Namespace Filter'}},
+      2: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'System Filter'}},
+      3: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Version Filter'}},
+      4: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Command Filter'}},
+      5: {html: 'input', type: 'text', attr: {class: 'form-inline form-control', title: 'Description Filter'}},
     })
   }
 
@@ -67,6 +68,7 @@ export default function commandIndexController(
         commands.push({
           id: command.id,
           hidden: command.hidden,
+          garden: system.garden,
           namespace: system.namespace,
           name: command.name,
           system: system.display_name || system.name,
@@ -76,17 +78,22 @@ export default function commandIndexController(
       });
     });
 
-    if ($stateParams.namespace){
-      commands = _.filter(commands, {namespace: $stateParams.namespace});
-      breadCrumbs.push($stateParams.namespace);
+    if ($stateParams.garden){
+      commands = _.filter(commands, {garden: $stateParams.garden});
+      breadCrumbs.push($stateParams.garden);
 
-      if ($stateParams.systemName){
-        commands = _.filter(commands, {system: $stateParams.systemName});
-        breadCrumbs.push($stateParams.systemName);
+      if ($stateParams.namespace){
+        commands = _.filter(commands, {namespace: $stateParams.namespace});
+        breadCrumbs.push($stateParams.namespace);
 
-        if ($stateParams.systemVersion){
-          commands = _.filter(commands, {version: $stateParams.systemVersion});
-          breadCrumbs.push($stateParams.systemVersion);
+        if ($stateParams.systemName){
+          commands = _.filter(commands, {system: $stateParams.systemName});
+          breadCrumbs.push($stateParams.systemName);
+
+          if ($stateParams.systemVersion){
+            commands = _.filter(commands, {version: $stateParams.systemVersion});
+            breadCrumbs.push($stateParams.systemVersion);
+          }
         }
       }
     }

@@ -15,10 +15,11 @@
       </h1>
 
       <ol class="tagline breadcrumb">
-        <li><a ui-sref="base.system({namespace: breadCrumbs[0]})">{{breadCrumbs[0]}}</a></li
-        ><li><a ui-sref="base.system({namespace: breadCrumbs[0], systemName: breadCrumbs[1]})">{{breadCrumbs[1]}}</a></li
-        ><li><a ui-sref="base.system({namespace: breadCrumbs[0], systemName: breadCrumbs[1], systemVersion: breadCrumbs[2]})">{{breadCrumbs[2]}}</a></li
-        ><li class="active">{{breadCrumbs[3]}}</li>
+        <li><a ui-sref="base.system({garden: breadCrumbs[0]})">{{breadCrumbs[0]}}</a></li>
+        <li><a ui-sref="base.system({garden: breadCrumbs[0], namespace: breadCrumbs[1]})">{{breadCrumbs[1]}}</a></li>
+        <li><a ui-sref="base.system({garden: breadCrumbs[0], namespace: breadCrumbs[1], systemName: breadCrumbs[2]})">{{breadCrumbs[2]}}</a></li>
+        <li><a ui-sref="base.system({garden: breadCrumbs[0], namespace: breadCrumbs[1], systemName: breadCrumbs[2], systemVersion: breadCrumbs[3]})">{{breadCrumbs[3]}}</a></li>
+        <li class="active">{{breadCrumbs[4]}}</li>
       </ol>
     </div>
 

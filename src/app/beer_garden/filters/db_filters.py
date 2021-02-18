@@ -1,5 +1,38 @@
 from brewtils.models import Principal, Operation
 
+from mongoengine.queryset.visitor import Q
+
+
+def create_mongo_query(current_user: Principal = None):
+    """
+        Creates custom query logic for MongoDB
+        Args:
+            current_user: Principal record associated with the Operation
+
+        Returns: Q query arg
+
+        """
+
+    mongo_query = None
+    for permission in current_user.permissions:
+        if permission.garden is not None and permission.namespace is None:
+            if mongo_query:
+                mongo_query = mongo_query | Q(garden=permission.garden)
+            else:
+                mongo_query = Q(garden=permission.garden)
+        elif permission.garden is None and permission.namespace is not None:
+            if mongo_query:
+                mongo_query = mongo_query | Q(garden=permission.namespace)
+            else:
+                mongo_query = Q(garden=permission.namespace)
+        elif permission.garden is not None and permission.namespace is not None:
+            if mongo_query:
+                mongo_query = mongo_query | (Q(garden=permission.namespace) & Q(garden=permission.garden))
+            else:
+                mongo_query = (Q(garden=permission.namespace) & Q(garden=permission.garden))
+
+    return mongo_query
+
 
 def operation_db_filtering(obj: Operation = None, current_user: Principal = None):
     """
@@ -13,18 +46,15 @@ def operation_db_filtering(obj: Operation = None, current_user: Principal = None
 
     """
     if "REQUEST_COUNT" == obj.operation_type:
-        if "namespace__in" not in obj.kwargs:
-            obj.kwargs["namespace__in"] = list()
-        for permission in current_user.permissions:
-            obj.kwargs["namespace__in"].append(permission.namespace)
+        if "filter_args" not in obj.kwargs:
+            obj.kwargs["filter_args"] = list()
+
+        obj.kwargs["filter_args"].append(create_mongo_query(current_user=current_user))
 
     elif "REQUEST_READ_ALL" == obj.operation_type:
-        if "filter_params" not in obj.kwargs:
-            obj.kwargs["filter_params"] = {}
-        if "namespace__in" not in obj.kwargs["filter_params"]:
-            obj.kwargs["filter_params"]["namespace__in"] = list()
-        for permission in current_user.permissions:
-            obj.kwargs["filter_params"]["namespace__in"].append(permission.namespace)
+        if "filter_args" not in obj.kwargs:
+            obj.kwargs["filter_args"] = list()
+        obj.kwargs["filter_args"].append(create_mongo_query(current_user=current_user))
 
 
 obj_db_filtering = {
@@ -47,10 +77,10 @@ def model_db_filter(obj=None, current_user: Principal = None):
     if not hasattr(obj, "schema"):
         return
 
-    # Local access gets them Read to everything, so no filtering
-    for permission in current_user.permissions:
-        if permission.is_local:
-            return
+    # Garden access gets them Read to everything, so no filtering
+    # for permission in current_user.permissions:
+    #     if permission.garden == config.get("garden.name") and permission.namespace is None:
+    #         return
 
     if obj.schema in obj_db_filtering.keys():
         obj_db_filtering[obj.schema](obj=obj, current_user=current_user)

@@ -1,7 +1,7 @@
 import pytest
 from mock import Mock
 
-import beer_garden.filters.namespace_mapper
+import beer_garden.filters.garden_namespace_mapper
 
 from brewtils.models import (
     Request,
@@ -18,28 +18,28 @@ from brewtils.models import (
 @pytest.fixture
 def get_request_mock(monkeypatch):
     mock = Mock(return_value=None)
-    monkeypatch.setattr(beer_garden.filters.namespace_mapper, "get_request", mock)
+    monkeypatch.setattr(beer_garden.filters.garden_namespace_mapper, "get_request", mock)
     return mock
 
 
 @pytest.fixture
 def get_job_mock(monkeypatch):
     mock = Mock(return_value=None)
-    monkeypatch.setattr(beer_garden.filters.namespace_mapper, "get_job", mock)
+    monkeypatch.setattr(beer_garden.filters.garden_namespace_mapper, "get_job", mock)
     return mock
 
 
 @pytest.fixture
 def get_system_mock(monkeypatch):
     mock = Mock(return_value=None)
-    monkeypatch.setattr(beer_garden.filters.namespace_mapper, "get_system", mock)
+    monkeypatch.setattr(beer_garden.filters.garden_namespace_mapper, "get_system", mock)
     return mock
 
 
 @pytest.fixture
 def get_from_kwargs_mock(monkeypatch):
     mock = Mock(return_value=(None, None))
-    monkeypatch.setattr(beer_garden.filters.namespace_mapper, "_from_kwargs", mock)
+    monkeypatch.setattr(beer_garden.filters.garden_namespace_mapper, "_from_kwargs", mock)
     return mock
 
 
@@ -124,5 +124,5 @@ class TestFindNamespace(object):
         )
 
         assert (
-            beer_garden.filters.namespace_mapper.find_obj_namespace(model) == namespace
+                beer_garden.filters.garden_namespace_mapper.find_obj_garden_namespace(model) == namespace
         )

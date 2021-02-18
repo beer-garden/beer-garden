@@ -12,6 +12,7 @@ from mongoengine.errors import (
 from passlib.apps import custom_app_context
 
 from beer_garden.db import api
+import beer_garden.config as config
 
 from brewtils.models import Role as BrewtilsRole, Permission as BrewtilsPermission
 
@@ -32,12 +33,12 @@ def ensure_roles():
         BrewtilsRole(
             name="bg-readonly",
             description="Allows only standard read actions",
-            permissions=[BrewtilsPermission(is_local=True, access="READ")],
+            permissions=[BrewtilsPermission(garden=config.get("garden.name"), access="READ")],
         ),
         BrewtilsRole(
             name="bg-operator",
             description="Standard Beergarden user role",
-            permissions=[BrewtilsPermission(is_local=True, access="OPERATOR")],
+            permissions=[BrewtilsPermission(garden=config.get("garden.name"), access="OPERATOR")],
         ),
     ]
 
@@ -50,12 +51,12 @@ def ensure_roles():
         BrewtilsRole(
             name="bg-admin",
             description="Allows all actions",
-            permissions=[BrewtilsPermission(is_local=True, access="ADMIN")],
+            permissions=[BrewtilsPermission(garden=config.get("garden.name"), access="ADMIN")],
         ),
         BrewtilsRole(
             name="bg-plugin",
             description="Allows actions necessary for plugins to function",
-            permissions=[BrewtilsPermission(is_local=True, access="OPERATOR")],
+            permissions=[BrewtilsPermission(garden=config.get("garden.name"), access="OPERATOR")],
         ),
     ]
 
@@ -257,7 +258,7 @@ def check_indexes(document_class):
     """
     from pymongo.errors import OperationFailure
     from mongoengine.connection import get_db
-    from .models import Request
+    from .models import Request, System
 
     try:
         # Building the indexes could take a while so it'd be nice to give some
@@ -322,7 +323,19 @@ def check_indexes(document_class):
             # bg-utils 2.4.6 -> 2.4.7 change parent to ReferenceField
             _update_request_parent_field_type()
 
+            # BG 3.1 -> 3.2 Add Garden field
+            _update_request_garden_field()
+
             logger.warning("Request definition check/update complete.")
+
+        if document_class == System:
+            logger.warning(
+                "System definition is potentially out of date. About to check and "
+                "update if necessary - this could take several minutes."
+            )
+
+            # BG 3.1 -> 3.2 Add Garden field
+            _update_system_garden_field()
 
         try:
             document_class.ensure_indexes()
@@ -354,6 +367,22 @@ def _update_request_has_parent_model():
     raw_collection.update_many(
         {"parent": {"$not": {"$eq": None}}}, {"$set": {"has_parent": True}}
     )
+
+
+def _update_request_garden_field():
+    """Addes Garden to existing Request object"""
+    from .models import Request
+
+    raw_collection = Request._get_collection()
+    raw_collection.update_many({"garden": None}, {"$set": {"garden": config.get('garden.name')}})
+
+
+def _update_system_garden_field():
+    """Addes Garden to existing Request object"""
+    from .models import System
+
+    raw_collection = System._get_collection()
+    raw_collection.update_many({"garden": None}, {"$set": {"garden": config.get('garden.name')}})
 
 
 def _create_role(role):

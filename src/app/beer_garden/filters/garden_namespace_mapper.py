@@ -18,7 +18,7 @@ from brewtils.models import (
 logger = logging.getLogger(__name__)
 
 
-def request_namespace(obj: Request = None) -> str:
+def request_garden_namespace(obj: Request = None) -> str:
     """
     Find the namespace for Request Model
     Args:
@@ -27,10 +27,10 @@ def request_namespace(obj: Request = None) -> str:
     Returns: Namespace
 
     """
-    return obj.namespace
+    return obj.garden, obj.namespace
 
 
-def request_template_namespace(obj: RequestTemplate = None) -> str:
+def request_template_garden_namespace(obj: RequestTemplate = None) -> str:
     """
     Finds the namespace for Request Template Model
     Args:
@@ -39,10 +39,10 @@ def request_template_namespace(obj: RequestTemplate = None) -> str:
     Returns: Namespace
 
     """
-    return obj.namespace
+    return obj.garden, obj.namespace
 
 
-def system_namespace(obj: System = None) -> str:
+def system_garden_namespace(obj: System = None) -> str:
     """
     Finds the namespace for System Model
     Args:
@@ -51,10 +51,10 @@ def system_namespace(obj: System = None) -> str:
     Returns: Namespace
 
     """
-    return obj.namespace
+    return obj.garden, obj.namespace
 
 
-def instance_namespace(obj: Instance = None) -> str:
+def instance_garden_namespace(obj: Instance = None) -> str:
     """
     Finds the System associated with the Instance to find the Namespace
     Args:
@@ -64,10 +64,10 @@ def instance_namespace(obj: Instance = None) -> str:
 
     """
     system, _ = _from_kwargs(instance_id=obj.id)
-    return system_namespace(system)
+    return system_garden_namespace(system)
 
 
-def queue_namespace(obj: Queue = None) -> str:
+def queue_garden_namespace(obj: Queue = None) -> str:
     """
     Finds the System associated with the Queue to find the Namespace
     Args:
@@ -77,10 +77,10 @@ def queue_namespace(obj: Queue = None) -> str:
 
     """
     system = get_system(obj.system_id)
-    return system_namespace(system)
+    return system_garden_namespace(system)
 
 
-def job_namespace(obj: Job = None) -> str:
+def job_garden_namespace(obj: Job = None) -> str:
     """
     Finds the Namespace associated with the Job's Request Template
     Args:
@@ -89,10 +89,10 @@ def job_namespace(obj: Job = None) -> str:
     Returns: Namespace
 
     """
-    return request_template_namespace(obj.request_template)
+    return request_template_garden_namespace(obj.request_template)
 
 
-def runner_namespace(obj: Runner = None) -> str:
+def runner_garden_namespace(obj: Runner = None) -> str:
     """
     Finds the Namespace associated with the Runner
     Args:
@@ -105,12 +105,12 @@ def runner_namespace(obj: Runner = None) -> str:
     if obj.instance_id:
         system, _ = _from_kwargs(instance_id=obj.instance_id)
         obj.kwargs["system"] = system
-        return system_namespace(system)
+        return system_garden_namespace(system)
 
-    return None
+    return None, None
 
 
-def operation_namespace(obj: Operation = None) -> str:
+def operation_garden_namespace(obj: Operation = None) -> str:
     """
     Finds the namespace associated with an Operation that is attempting to modify a
     record, then includes that source object to the operation to reduce redundant calls
@@ -132,17 +132,22 @@ def operation_namespace(obj: Operation = None) -> str:
             if request_id:
                 request = get_request(request_id)
                 obj.kwargs["request"] = request
-                return request_namespace(request)
+                return request_garden_namespace(request)
         elif "SYSTEM" in obj.operation_type:
             system_id = None
             if len(obj.args) > 0:
-                system_id = obj.args[0]
+                arg = obj.args[0]
+
+                if type(arg) == str:
+                    system_id = arg
+                elif type(arg) == System:
+                    return system_garden_namespace(arg)
             elif "system_id" in obj.kwargs:
                 system_id = obj.kwargs["system_id"]
             if system_id:
                 system = get_system(system_id)
                 obj.kwargs["system"] = system
-                return system_namespace(system)
+                return system_garden_namespace(system)
 
         elif "INSTANCE" in obj.operation_type:
             instance_id = None
@@ -153,7 +158,7 @@ def operation_namespace(obj: Operation = None) -> str:
             if instance_id:
                 system, _ = _from_kwargs(instance_id=instance_id)
                 obj.kwargs["system"] = system
-                return system_namespace(system)
+                return system_garden_namespace(system)
         elif "JOB" in obj.operation_type:
             job_id = None
             if len(obj.args) > 0:
@@ -162,16 +167,16 @@ def operation_namespace(obj: Operation = None) -> str:
                 job_id = obj.kwargs["job_id"]
             if job_id:
                 job = get_job(job_id)
-                return job_namespace(job)
+                return job_garden_namespace(job)
 
     # Attempt to derive namespace from Model field
     if obj.model:
-        return find_obj_namespace(obj.model)
+        return find_obj_garden_namespace(obj.model)
 
-    return None
+    return None, None
 
 
-def event_namespace(obj: Event = None) -> str:
+def event_garden_namespace(obj: Event = None) -> str:
     """
     Finds the namespace associated with an event
     Args:
@@ -182,26 +187,26 @@ def event_namespace(obj: Event = None) -> str:
     """
 
     if obj.payload:
-        return find_obj_namespace(obj.payload)
-    return None
+        return find_obj_garden_namespace(obj.payload)
+    return None, None
 
 
 # Mapping for the different models for easy management
 obj_namespace_mapping = {
-    "InstanceSchema": instance_namespace,
-    "JobSchema": job_namespace,
-    "QueueSchema": queue_namespace,
-    "RequestSchema": request_namespace,
-    "RequestTemplateSchema": request_template_namespace,
-    "SystemSchema": system_namespace,
-    "OperationSchema": operation_namespace,
-    "RunnerSchema": runner_namespace,
-    "EventSchema": event_namespace,
+    "InstanceSchema": instance_garden_namespace,
+    "JobSchema": job_garden_namespace,
+    "QueueSchema": queue_garden_namespace,
+    "RequestSchema": request_garden_namespace,
+    "RequestTemplateSchema": request_template_garden_namespace,
+    "SystemSchema": system_garden_namespace,
+    "OperationSchema": operation_garden_namespace,
+    "RunnerSchema": runner_garden_namespace,
+    "EventSchema": event_garden_namespace,
 }
 
 
-def find_obj_namespace(obj):
+def find_obj_garden_namespace(obj):
     if hasattr(obj, "schema") and obj.schema in obj_namespace_mapping.keys():
         return obj_namespace_mapping[obj.schema](obj)
 
-    return None
+    return None, None

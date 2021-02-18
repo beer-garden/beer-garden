@@ -14,7 +14,7 @@ export default function jobCreateSystemController( $scope, $rootScope) {
   $scope.data = [];
 
   for (let system of $rootScope.systems) {
-        if ($rootScope.hasPermission($rootScope.user, 'OPERATOR', false, system.namespace)){
+        if ($rootScope.hasPermission($rootScope.user, 'OPERATOR', is_local = false, namespace = system.namespace, garden = system.garden)){
           $scope.data.push(system)
         }
       }

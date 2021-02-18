@@ -77,17 +77,17 @@ export default function routeConfig(
       url: 'systems/:id/',
       controller: ['$state', '$stateParams', 'SystemService', ($state, $stateParams, SystemService) => {
         let sys = SystemService.findSystemByID($stateParams.id);
-        $state.go('base.system', {namespace: sys.namespace, systemName: sys.name, systemVersion: sys.version});
+        $state.go('base.system', {garden: sys.garden, namespace: sys.namespace, systemName: sys.name, systemVersion: sys.version});
       }],
     })
     .state('base.system', {
-      url: 'commands?namespace&systemName&systemVersion',
+      url: 'commands?garden&namespace&systemName&systemVersion',
       templateUrl: 'command_index.html',
       controller: 'CommandIndexController',
       resolve: {
         system: ['$stateParams', 'SystemService', ($stateParams, SystemService) => {
           return SystemService.findSystem(
-            $stateParams.namespace, $stateParams.systemName, $stateParams.systemVersion
+            $stateParams.garden, $stateParams.namespace, $stateParams.systemName, $stateParams.systemVersion
           ) || {};
         }],
       },
@@ -102,7 +102,7 @@ export default function routeConfig(
     // Think it's something to do with nested views... I think maybe because
     // base.system defines a template
     .state('base.command', {
-      url: 'systems/:namespace/:systemName/:systemVersion/commands/:commandName/',
+      url: 'systems/:garden/:namespace/:systemName/:systemVersion/commands/:commandName/',
       templateUrl: 'command_view.html',
       controller: 'CommandViewController',
       params: {
@@ -112,7 +112,7 @@ export default function routeConfig(
       resolve: {
         system: ['$stateParams', 'SystemService', ($stateParams, SystemService) => {
           return SystemService.findSystem(
-            $stateParams.namespace, $stateParams.systemName, $stateParams.systemVersion
+            $stateParams.garden, $stateParams.namespace, $stateParams.systemName, $stateParams.systemVersion
           );
         }],
         command: ['$stateParams', 'system', ($stateParams, system) => {

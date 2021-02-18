@@ -34,6 +34,8 @@
       <thead>
         <tr>
           <th scope="col">Command</th>
+          <th scope="col">Garden</th>
+          <th scope="col">Namespace</th>
           <th scope="col">System</th>
           <th scope="col">System Version</th>
           <th scope="col">Instance Name</th>
@@ -55,6 +57,8 @@
             {{request.command}}
             <span ng-show="request.hidden" class="fa fa-user-secret pull-right" style="font-size: 20px;"></span>
           </td>
+          <td>{{request.garden}}</td>
+          <td>{{request.namespace}}</td>
           <td>{{request.metadata.system_display_name || request.system}}</td>
           <td>
             <div style="display: inline-block; padding-top: 3px; padding-right: 16px;">
@@ -88,6 +92,8 @@
               <span ng-show="child.hidden" class="fa fa-user-secret pull-right" style="font-size: 20px;"></span>
             </div>
           </td>
+          <td><div>{{child.garden}}</div></td>
+          <td><div>{{child.namespace}}</div></td>
           <td><div>{{child.metadata.system_display_name || child.system}}</div></td>
           <td><div>{{child.system_version}}</div></td>
           <td><div>{{child.instance_name}}</div></td>

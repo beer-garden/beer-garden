@@ -14,6 +14,7 @@
         style="width: 100%">
       <thead>
         <tr>
+          <th scope="col">Garden</th>
           <th scope="col">Namespace</th>
           <th scope="col">System</th>
           <th scope="col">Version</th>
@@ -27,6 +28,7 @@
       <tbody>
 
         <tr ng-repeat="system in data | filter:query" >
+          <td>{{system.garden}}</td>
           <td>{{system.namespace}}</td>
           <td>{{system.name}}</td>
           <td>{{system.version}}</td>
@@ -34,7 +36,7 @@
           <td>{{system.commands.length}}</td>
           <td>{{system.instances.length}}</td>
           <td>
-            <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
+            <a ui-sref="base.system({garden: system.garden, namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
                class="btn btn-primary center-block">Explore</a>
           </td>
         </tr>
