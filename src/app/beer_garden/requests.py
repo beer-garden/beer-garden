@@ -95,7 +95,7 @@ class RequestValidator(object):
         """
         system = db.query_unique(
             System,
-            garden=request.gaden,
+            garden=request.garden,
             namespace=request.namespace,
             name=request.system,
             version=request.system_version,

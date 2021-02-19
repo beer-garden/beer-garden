@@ -134,7 +134,7 @@ def anonymous_principal() -> BrewtilsPrincipal:
         roles = [
             BrewtilsRole(
                 name="bg-admin",
-                permissions=[BrewtilsPermission(is_local=True, access="ADMIN")],
+                permissions=[BrewtilsPermission(garden=config.get('garden.name'), access="ADMIN")],
             )
         ]
 

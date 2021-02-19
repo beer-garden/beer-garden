@@ -1,6 +1,8 @@
 import stomp
 import logging
 import time
+
+from beer_garden.api.stomp.authorization import AuthMixin, bearer_auth, basic_auth
 from brewtils.schema_parser import SchemaParser
 import beer_garden.events
 import beer_garden.router
@@ -66,7 +68,10 @@ def send_error_msg(
             )
 
 
-class OperationListener(stomp.ConnectionListener):
+class OperationListener(stomp.ConnectionListener, AuthMixin):
+
+    auth_providers = frozenset([bearer_auth, basic_auth])
+
     def __init__(self, conn=None, send_destination=None):
         self.conn = conn
         self.send_destination = send_destination
@@ -77,6 +82,9 @@ class OperationListener(stomp.ConnectionListener):
     def on_message(self, headers, message):
         try:
             operation = SchemaParser.parse_operation(message, from_string=True)
+
+            operation.principal = self.get_current_user(headers)
+
             if hasattr(operation, "kwargs"):
                 operation.kwargs.pop("wait_timeout", None)
             result = beer_garden.router.route(operation)
