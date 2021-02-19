@@ -43,7 +43,7 @@ export default function roleService($http) {
                 let permission = roles[i].permissions[j];
                 let unmatched = true;
                 for (let k = 0; k < permissions.length; k++){
-                    if (permission.namespace == permissions[k].namespace || (permission.is_local && permissions[k].is_local)){
+                    if (permission.namespace == permissions[k].namespace || (permission.garden && permissions[k].garden)){
                         unmatched = false;
                         switch (permission.access){
                             case "ADMIN":

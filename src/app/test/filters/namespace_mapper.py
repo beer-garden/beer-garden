@@ -18,7 +18,9 @@ from brewtils.models import (
 @pytest.fixture
 def get_request_mock(monkeypatch):
     mock = Mock(return_value=None)
-    monkeypatch.setattr(beer_garden.filters.garden_namespace_mapper, "get_request", mock)
+    monkeypatch.setattr(
+        beer_garden.filters.garden_namespace_mapper, "get_request", mock
+    )
     return mock
 
 
@@ -39,7 +41,9 @@ def get_system_mock(monkeypatch):
 @pytest.fixture
 def get_from_kwargs_mock(monkeypatch):
     mock = Mock(return_value=(None, None))
-    monkeypatch.setattr(beer_garden.filters.garden_namespace_mapper, "_from_kwargs", mock)
+    monkeypatch.setattr(
+        beer_garden.filters.garden_namespace_mapper, "_from_kwargs", mock
+    )
     return mock
 
 
@@ -124,5 +128,6 @@ class TestFindNamespace(object):
         )
 
         assert (
-                beer_garden.filters.garden_namespace_mapper.find_obj_garden_namespace(model) == namespace
+            beer_garden.filters.garden_namespace_mapper.find_obj_garden_namespace(model)
+            == namespace
         )

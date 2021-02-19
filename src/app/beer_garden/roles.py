@@ -49,7 +49,10 @@ def update_permission(role_id: str = None, permission: Permission = None):
     updates["permissions"] = list()
 
     for original_permission in role.permissions:
-        if original_permission.namespace != permission.namespace:
+        if (
+            original_permission.namespace != permission.namespace
+            or original_permission.garden != permission.garden
+        ):
             updates["permissions"].append(db.from_brewtils(original_permission))
 
     updates["permissions"].append(db.from_brewtils(permission))
@@ -68,7 +71,10 @@ def remove_permission(role_id: str = None, permission: Permission = None):
     updates["permissions"] = list()
 
     for original_permission in role.permissions:
-        if original_permission.namespace != permission.namespace:
+        if (
+            original_permission.namespace != permission.namespace
+            or original_permission.garden != permission.garden
+        ):
             updates["permissions"].append(db.from_brewtils(original_permission))
 
     role = db.modify(role, **updates)

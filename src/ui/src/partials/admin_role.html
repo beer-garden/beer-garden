@@ -49,9 +49,14 @@
       </div>
       <div class="col-md-3">
         <div>
+          <label>Select/Enter Garden: </label><br>
+          <select name="new_garden" ng-model="new_garden">
+            <option ng-repeat="garden in gardens" value="{{garden.name}}">{{garden.name}}</option>
+          </select>
+          <input ng-model="new_garden" title="Enter Garden">
+          <br>
           <label>Select/Enter Namespace: </label><br>
           <select name="new_namespace" ng-model="new_namespace">
-            <option value="">GARDEN</option>
             <option ng-repeat="namespace in namespaces" value="{{namespace}}">{{namespace}}</option>
           </select>
           <input ng-model="new_namespace" title="Enter Namespace">
@@ -82,6 +87,7 @@
           style="width: 100%">
           <thead>
             <tr>
+              <th style="width: 10%;" scope="col">Garden</th>
               <th style="width: 10%;" scope="col">Namespace</th>
               <th style="width: 10%;" scope="col">Access</th>
               <th style="width: 10%;" scope="col">Remove</th>
@@ -89,7 +95,8 @@
           </thead>
           <tbody>
             <tr ng-repeat="selectedPermission in selectedRole.permissions ">
-              <td>{{selectedPermission.namespace || "GARDEN"}}</td>
+              <td>{{selectedPermission.garden}}</td>
+              <td>{{selectedPermission.namespace}}</td>
               <td>
                 <select name="access"
                         ng-model="selectedPermission.access"

@@ -14,6 +14,7 @@ import beer_garden.api.http
 #     Permissions,
 #     coalesce_permissions,
 # )
+from beer_garden import config
 from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError, RequestForbidden
 from brewtils.models import Operation
@@ -140,7 +141,13 @@ class UserAPI(BaseHandler):
         if user_id != str(self.current_user.id):
             local_admin = False
             for permission in self.current_user.permissions:
-                if permission.is_local and permission.access == "ADMIN":
+                # TODO Decide is Garden + Namespace Admin gets User Editing rights
+                if (
+                    permission.namespace is None
+                    and permission.garden
+                    and permission.garden == config.get("garden.name")
+                    and permission.access == "ADMIN"
+                ):
                     local_admin = True
                     break
             if not local_admin:

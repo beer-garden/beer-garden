@@ -56,13 +56,15 @@
           style="width: 100%">
           <thead>
             <tr>
+              <th style="width: 10%;" scope="col">Garden</th>
               <th style="width: 10%;" scope="col">Namespace</th>
               <th style="width: 10%;" scope="col">Access</th>
             </tr>
           </thead>
           <tbody>
             <tr ng-repeat="permission in selectedPermissions">
-              <td>{{permission.namespace || "GARDEN"}}</td>
+              <td>{{permission.garden}}</td>
+              <td>{{permission.namespace}}</td>
               <td>{{permission.access}}</td>
             </tr>
           </tbody>

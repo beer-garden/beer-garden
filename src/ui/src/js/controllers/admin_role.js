@@ -8,6 +8,7 @@ adminRoleController.$inject = [
   '$q',
   '$uibModal',
   'RoleService',
+  'GardenService'
 ];
 
 /**
@@ -21,7 +22,8 @@ export function adminRoleController(
     $scope,
     $q,
     $uibModal,
-    RoleService) {
+    RoleService,
+    GardenService) {
   $scope.setWindowTitle('roles');
 
   // This holds the raw responses from the backend
@@ -36,9 +38,13 @@ export function adminRoleController(
   // This is the role that's currently under selection
   $scope.selectedRole = {};
 
+  // This is the list of known gardens a role can be assigned to
+  $scope.gardens = [];
+
   // Normal loader
   $scope.loader = {};
 
+  $scope.new_garden = "";
   $scope.new_namespace = "";
   $scope.new_access = "";
 
@@ -111,9 +117,9 @@ export function adminRoleController(
         });
     }
     else{
-    $scope.updatePermission({"namespace": $scope.new_namespace,
-                                 "access":$scope.new_access,
-                                 "is_local":($scope.new_namespace == "" || $scope.new_namespace == null)})
+    $scope.updatePermission({"garden": $scope.new_garden,
+                             "namespace": $scope.new_namespace,
+                             "access":$scope.new_access})
     }
 
   }
@@ -148,10 +154,18 @@ export function adminRoleController(
     $scope.new_permission = null;
     $scope.new_access = null;
 
+    GardenService.getGardens().then(
+      function(response){
+        $scope.gardens = response.data;
+      },
+      function(response){
+        $scope.gardens = []
+      }
+    );
 
     RoleService.getRoles().then(
         $scope.successCallback,
-        $scope.failureCallback)
+        $scope.failureCallback);
 
   };
 

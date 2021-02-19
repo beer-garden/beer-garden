@@ -33,12 +33,16 @@ def ensure_roles():
         BrewtilsRole(
             name="bg-readonly",
             description="Allows only standard read actions",
-            permissions=[BrewtilsPermission(garden=config.get("garden.name"), access="READ")],
+            permissions=[
+                BrewtilsPermission(garden=config.get("garden.name"), access="READ")
+            ],
         ),
         BrewtilsRole(
             name="bg-operator",
             description="Standard Beergarden user role",
-            permissions=[BrewtilsPermission(garden=config.get("garden.name"), access="OPERATOR")],
+            permissions=[
+                BrewtilsPermission(garden=config.get("garden.name"), access="OPERATOR")
+            ],
         ),
     ]
 
@@ -51,12 +55,16 @@ def ensure_roles():
         BrewtilsRole(
             name="bg-admin",
             description="Allows all actions",
-            permissions=[BrewtilsPermission(garden=config.get("garden.name"), access="ADMIN")],
+            permissions=[
+                BrewtilsPermission(garden=config.get("garden.name"), access="ADMIN")
+            ],
         ),
         BrewtilsRole(
             name="bg-plugin",
             description="Allows actions necessary for plugins to function",
-            permissions=[BrewtilsPermission(garden=config.get("garden.name"), access="OPERATOR")],
+            permissions=[
+                BrewtilsPermission(garden=config.get("garden.name"), access="OPERATOR")
+            ],
         ),
     ]
 
@@ -374,7 +382,9 @@ def _update_request_garden_field():
     from .models import Request
 
     raw_collection = Request._get_collection()
-    raw_collection.update_many({"garden": None}, {"$set": {"garden": config.get('garden.name')}})
+    raw_collection.update_many(
+        {"garden": None}, {"$set": {"garden": config.get("garden.name")}}
+    )
 
 
 def _update_system_garden_field():
@@ -382,7 +392,9 @@ def _update_system_garden_field():
     from .models import System
 
     raw_collection = System._get_collection()
-    raw_collection.update_many({"garden": None}, {"$set": {"garden": config.get('garden.name')}})
+    raw_collection.update_many(
+        {"garden": None}, {"$set": {"garden": config.get("garden.name")}}
+    )
 
 
 def _create_role(role):

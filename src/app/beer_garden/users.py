@@ -99,7 +99,10 @@ def coalesce_permissions(role_list):
             unmatched = True
 
             for index, agg_perm in enumerate(aggregate_perms):
-                if agg_perm.namespace == permission.namespace and agg_perm.garden == permission.garden:
+                if (
+                    agg_perm.namespace == permission.namespace
+                    and agg_perm.garden == permission.garden
+                ):
                     unmatched = False
                     if agg_perm.access == "READ" and permission.access in [
                         "ADMIN",

@@ -291,7 +291,6 @@ def query(model_class: ModelType, **kwargs) -> List[ModelItem]:
 
         query_set = query_set.filter(**(kwargs.get("filter_params", {})))
 
-
     # Bad things happen if you try to use a hint with a text search.
     if kwargs.get("text_search"):
         query_set = query_set.search_text(kwargs.get("text_search"))

@@ -5,13 +5,13 @@ from mongoengine.queryset.visitor import Q
 
 def create_mongo_query(current_user: Principal = None):
     """
-        Creates custom query logic for MongoDB
-        Args:
-            current_user: Principal record associated with the Operation
+    Creates custom query logic for MongoDB
+    Args:
+        current_user: Principal record associated with the Operation
 
-        Returns: Q query arg
+    Returns: Q query arg
 
-        """
+    """
 
     mongo_query = None
     for permission in current_user.permissions:
@@ -27,9 +27,13 @@ def create_mongo_query(current_user: Principal = None):
                 mongo_query = Q(garden=permission.namespace)
         elif permission.garden is not None and permission.namespace is not None:
             if mongo_query:
-                mongo_query = mongo_query | (Q(garden=permission.namespace) & Q(garden=permission.garden))
+                mongo_query = mongo_query | (
+                    Q(garden=permission.namespace) & Q(garden=permission.garden)
+                )
             else:
-                mongo_query = (Q(garden=permission.namespace) & Q(garden=permission.garden))
+                mongo_query = Q(garden=permission.namespace) & Q(
+                    garden=permission.garden
+                )
 
     return mongo_query
 

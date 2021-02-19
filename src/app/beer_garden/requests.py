@@ -300,9 +300,7 @@ class RequestValidator(object):
                         namespace=choices.value.get(
                             "namespace", config.get("garden.name")
                         ),
-                        garden=choices.value.get(
-                            "garden", request.garden
-                        ),
+                        garden=choices.value.get("garden", request.garden),
                         instance_name=choices.value.get("instance_name", "default"),
                         command=parsed_value["name"],
                         parameters=map_param_values(parsed_value["args"]),
