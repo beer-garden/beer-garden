@@ -1,8 +1,8 @@
-import requests
-
-import beer_garden
-from beer_garden.events.processors import QueueListener
 from brewtils.models import Event
+from requests import RequestException
+
+import beer_garden.config as conf
+from beer_garden.events.processors import QueueListener
 
 
 class HttpParentUpdater(QueueListener):
@@ -30,13 +30,15 @@ class HttpParentUpdater(QueueListener):
             self._queue.put(item)
 
     def process(self, event: Event):
+        # TODO - This shouldn't be set here
+        event.garden = conf.get("garden.name")
 
-        try:
-            if event.name not in self._black_list:
-                event.garden = beer_garden.config.get("garden.name")
+        if event.name not in self._black_list:
+            try:
                 self._ez_client.publish_event(event)
-        except requests.exceptions.ConnectionError:
-            self.reconnect()
+            except RequestException as ex:
+                self.logger.error(f"Error while publishing event to parent: {ex}")
+                self.reconnect()
 
     def reconnect(self):
 
