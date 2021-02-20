@@ -11,12 +11,14 @@ class HttpParentUpdater(QueueListener):
     def __init__(
         self, easy_client=None, black_list=None, reconnect_action=None, **kwargs
     ):
-        super().__init__(**kwargs)
-
         self._ez_client = easy_client
         self._black_list = black_list or []
         self._reconnect_action = reconnect_action
         self._processing = True
+
+        super().__init__(
+            logger_name=self.__module__ + "." + self.__class__.__name__, **kwargs
+        )
 
     def put(self, item):
         """Put a new item on the queue to be processed
