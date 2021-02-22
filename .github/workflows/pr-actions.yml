@@ -62,6 +62,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      # Custom tag extractor to find Brewtils Branch
       - name: Find Brewtils Branch
         uses: TheBurchLog/body-env-tag-action@3.0
         with:
@@ -70,6 +71,7 @@ jobs:
           default-value: 'develop'
           tag-position: -1
 
+      # Used the hashtag here instead of slash allow for branches to have slashes in them
       - name: Update Brewtils Branch
         run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements.txt
 
