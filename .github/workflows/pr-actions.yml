@@ -63,7 +63,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Find Brewtils Branch
-        uses: TheBurchLog/body-env-tag-action@2.0
+        uses: TheBurchLog/body-env-tag-action@V2.0
         with:
           tag: 'brewtils:'
           env-variable: 'brewtils'
