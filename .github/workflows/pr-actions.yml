@@ -71,7 +71,7 @@ jobs:
           tag-position: -1
 
       - name: Update Brewtils Branch
-        run: sed -i 's/brewtils@develop/brewtils@${{env.brewtils}}/' requirements.txt
+        run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements.txt
 
       # Need to update if we support other OS's
       - name: Cache PIP Install
