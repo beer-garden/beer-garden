@@ -64,7 +64,7 @@ jobs:
 
       # Custom tag extractor to find Brewtils Branch
       - name: Find Brewtils Branch
-        uses: TheBurchLog/body-env-tag-action@3.0
+        uses: TheBurchLog/body-env-tag-action@4.0
         with:
           tag: 'brewtils:'
           env-variable: 'brewtils'
