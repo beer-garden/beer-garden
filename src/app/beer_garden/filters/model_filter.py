@@ -32,10 +32,10 @@ want the least restrictive approach.
 
 
 def filter_brewtils_model(
-    obj=None,
-    raise_error: bool = True,
-    current_user: Principal = None,
-    required_permission: Permissions = None,
+        obj=None,
+        raise_error: bool = True,
+        current_user: Principal = None,
+        required_permission: Permissions = None,
 ):
     """
     Filters the Brewtils Model
@@ -52,7 +52,7 @@ def filter_brewtils_model(
     # Last ditch effort to verify they at least have the required permissions
     if not hasattr(obj, "schema"):
         if permission_check(
-            current_user=current_user, required_permission=required_permission
+                current_user=current_user, required_permission=required_permission
         ):
             return obj
         if raise_error:
@@ -66,10 +66,10 @@ def filter_brewtils_model(
     # If we find a namespace, we can run the filter at this point
     if obj_namespace:
         if permission_check(
-            garden=obj_garden,
-            namespace=obj_namespace,
-            current_user=current_user,
-            required_permission=required_permission,
+                garden=obj_garden,
+                namespace=obj_namespace,
+                current_user=current_user,
+                required_permission=required_permission,
         ):
             return obj
         if raise_error:
@@ -89,10 +89,10 @@ def filter_brewtils_model(
 
 
 def model_filter(
-    obj=None,
-    raise_error: bool = True,
-    current_user: Principal = None,
-    required_permission: Permissions = None,
+        obj=None,
+        raise_error: bool = True,
+        current_user: Principal = None,
+        required_permission: Permissions = None,
 ):
     """
     Filters a Model
@@ -140,10 +140,10 @@ def model_filter(
 
 
 def permission_check(
-    namespace: str = None,
-    garden: str = None,
-    current_user: Principal = None,
-    required_permission: Permissions = None,
+        namespace: str = None,
+        garden: str = None,
+        current_user: Principal = None,
+        required_permission: Permissions = None,
 ):
     """
     Compares the namespace provided with the Principals permissions and required permissions
@@ -161,71 +161,74 @@ def permission_check(
         # Scope = Local Admins must have Admin over just the Garden
         # TODO: Should this allow Garden + Namespace Admins to run?
         if (
-            required_permission == Permissions.LOCAL_ADMIN
-            and permission.garden == config.get("garden.name")
-            and permission.namespace is None
+                required_permission == Permissions.LOCAL_ADMIN
+                and permission.garden == config.get("garden.name")
+                and permission.namespace is None
         ):
             return True
+
+        elif required_permission == Permissions.LOCAL_ADMIN:
+            return False
 
         # Scope = Has Access to everything within the Garden
         # Must have arg Garden to compare against
         elif (
-            permission.namespace is None
-            and garden is not None
-            and permission.garden == garden
-            and permission.access in PermissionRequiredAccess[required_permission]
+                permission.namespace is None
+                and garden is not None
+                and permission.garden == garden
+                and permission.access in PermissionRequiredAccess[required_permission]
         ):
             return True
 
         # Scope = Has access to everything within the Namespace
         # Must have arg Namespace to compare against
         elif (
-            permission.garden is None
-            and namespace is not None
-            and permission.namespace == namespace
-            and permission.access in PermissionRequiredAccess[required_permission]
+                permission.garden is None
+                and namespace is not None
+                and permission.namespace == namespace
+                and permission.access in PermissionRequiredAccess[required_permission]
         ):
             return True
 
         # Scope = Has access to everything within the intersect of Garden and Namespace
         # Must have args Garden and Namespace to compare against
         elif (
-            garden is not None
-            and namespace is not None
-            and permission.garden == garden
-            and permission.namespace == namespace
-            and permission.access in PermissionRequiredAccess[required_permission]
+                garden is not None
+                and namespace is not None
+                and permission.garden == garden
+                and permission.namespace == namespace
+                and permission.access in PermissionRequiredAccess[required_permission]
         ):
             return True
 
         # Scope = Has access to everything within the intersect of Garden and Namespace, but only half is provided
         # If arg Garden is None but Permission Garden is set
         elif (
-            garden is None
-            and namespace is not None
-            and permission.garden is not None
-            and permission.namespace == namespace
-            and permission.access in PermissionRequiredAccess[required_permission]
+                garden is None
+                and namespace is not None
+                and permission.garden is not None
+                and permission.namespace == namespace
+                and permission.access in PermissionRequiredAccess[required_permission]
         ):
             return True
 
         # Scope = Has access to everything within the intersect of Garden and Namespace, but only half is provided
         # If arg Namespace is None but Permission Namespace is set
         elif (
-            garden is not None
-            and namespace is None
-            and permission.garden == garden
-            and permission.namespace is not None
-            and permission.access in PermissionRequiredAccess[required_permission]
+                garden is not None
+                and namespace is None
+                and permission.garden == garden
+                and permission.namespace is not None
+                and permission.access in PermissionRequiredAccess[required_permission]
         ):
             return True
 
         # Scope = Unknown Target Garden/Namespace, but has level of access in Host Garden
         elif (
-            garden is None
-            and namespace is None
-            and permission.garden == config.get("garden.name")
-            and permission.access in PermissionRequiredAccess[required_permission]
+                garden is None
+                and namespace is None
+                and permission.garden == config.get("garden.name")
+                and permission.access in PermissionRequiredAccess[required_permission]
         ):
             return True
 
@@ -233,11 +236,11 @@ def permission_check(
         # If there is a namespace without a Garden, this has a high probability of a
         # entity creating a new Namespace, so they must have access to the Local Garden
         elif (
-            garden is None
-            and namespace is not None
-            and permission.namespace is None
-            and permission.garden == config.get("garden.name")
-            and permission.access in PermissionRequiredAccess[required_permission]
+                garden is None
+                and namespace is not None
+                and permission.namespace is None
+                and permission.garden == config.get("garden.name")
+                and permission.access in PermissionRequiredAccess[required_permission]
         ):
             return True
 
