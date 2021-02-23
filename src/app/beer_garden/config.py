@@ -904,23 +904,50 @@ _PARENT_SPEC = {
                     "default": 2337,
                     "description": "Serve content on this port",
                 },
+                "api_version": {
+                    "type": "int",
+                    "description": "Beergarden API version",
+                    "default": 1,
+                    "choices": [1],
+                },
+                "client_timeout": {
+                    "type": "float",
+                    "description": "Max time RestClient will wait for server response",
+                    "long_description": "This setting controls how long the HTTP(s) "
+                    "client will wait when opening a connection to Beergarden before "
+                    "aborting. This prevents some strange Beergarden server state from "
+                    "causing plugins to hang indefinitely. "
+                    "Set to -1 to disable (this is a bad idea in production code, see "
+                    "the Requests documentation).",
+                    "default": -1,
+                },
+                "username": {
+                    "type": "str",
+                    "description": "Username for authentication",
+                    "required": False,
+                },
+                "password": {
+                    "type": "str",
+                    "description": "Password for authentication",
+                    "required": False,
+                },
+                "access_token": {
+                    "type": "str",
+                    "description": "Access token for authentication",
+                    "required": False,
+                },
+                "refresh_token": {
+                    "type": "str",
+                    "description": "Refresh token for authentication",
+                    "required": False,
+                },
                 "ssl": {
                     "type": "dict",
                     "items": {
                         "enabled": {
                             "type": "bool",
                             "default": False,
-                            "description": "Serve content using SSL",
-                        },
-                        "private_key": {
-                            "type": "str",
-                            "description": "Path to a private key",
-                            "required": False,
-                        },
-                        "public_key": {
-                            "type": "str",
-                            "description": "Path to a public key",
-                            "required": False,
+                            "description": "Use SSL when connecting",
                         },
                         "ca_cert": {
                             "type": "str",
@@ -929,20 +956,20 @@ _PARENT_SPEC = {
                             ),
                             "required": False,
                         },
-                        "ca_path": {
+                        "ca_verify": {
+                            "type": "bool",
+                            "description": "Verify server certificate when using SSL",
+                            "default": True,
+                        },
+                        "client_cert": {
                             "type": "str",
-                            "description": (
-                                "Path to CA certificate path to use for SSLContext"
-                            ),
+                            "description": "Client certificate to use",
                             "required": False,
                         },
-                        "client_cert_verify": {
+                        "client_key": {
                             "type": "str",
-                            "description": (
-                                "Client certificate mode to use when handling requests"
-                            ),
-                            "choices": ["NONE", "OPTIONAL", "REQUIRED"],
-                            "default": "NONE",
+                            "description": "Client key to use",
+                            "required": False,
                         },
                     },
                 },

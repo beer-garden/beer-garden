@@ -85,17 +85,22 @@ mq:
   virtual_host: /
 parent:
   http:
+    access_token: null
+    api_version: 1
+    client_timeout: -1
     enabled: false
     host: null
+    password: null
     port: 2337
+    refresh_token: null
     ssl:
       ca_cert: null
-      ca_path: null
-      client_cert_verify: NONE
+      ca_verify: true
+      client_cert: null
+      client_key: null
       enabled: false
-      private_key: null
-      public_key: null
     url_prefix: /
+    username: null
   skip_events: []
   stomp:
     enabled: false
