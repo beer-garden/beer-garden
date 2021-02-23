@@ -30,7 +30,6 @@ import beer_garden.queue.api as queue
 import beer_garden.router
 from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.parent_procesors import HttpParentUpdater
-from beer_garden.scheduler import MixedScheduler
 from beer_garden.events.processors import (
     FanoutProcessor,
     QueueListener,
@@ -40,6 +39,7 @@ from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer
 from beer_garden.monitor import MonitorFile
 from beer_garden.plugin import StatusMonitor
+from beer_garden.scheduler import MixedScheduler
 
 
 class Application(StoppableThread):
@@ -317,25 +317,36 @@ class Application(StoppableThread):
         # Register the callback processor
         event_manager.register(QueueListener(action=garden_callbacks, name="callbacks"))
 
-        # If necessary send all events to the parent garden
-        http_event = config.get("parent.http")
-        if http_event.enabled:
-            easy_client = EasyClient(
-                bg_host=http_event.host,
-                bg_port=http_event.port,
-                ssl_enabled=http_event.ssl.enabled,
-            )
-            skip_events = config.get("parent.skip_events")
+        # Set up parent connection
+        cfg = config.get("parent.http")
+        if cfg.enabled:
 
             def reconnect_action():
                 beer_garden.garden.publish_garden(
                     event_name=Events.GARDEN_STARTED.name, status="RUNNING"
                 )
 
+            easy_client = EasyClient(
+                bg_host=cfg.host,
+                bg_port=cfg.port,
+                bg_url_prefix=cfg.url_prefix,
+                access_token=cfg.access_token,
+                api_version=cfg.api_version,
+                client_timeout=cfg.client_timeout,
+                password=cfg.password,
+                refresh_token=cfg.password,
+                username=cfg.username,
+                ssl_enabled=cfg.ssl.enabled,
+                ca_cert=cfg.ssl.ca_cert,
+                ca_verify=cfg.ssl.ca_verify,
+                client_cert=cfg.ssl.client_cert,
+                client_key=cfg.ssl.client_key,
+            )
+
             event_manager.register(
                 HttpParentUpdater(
                     easy_client=easy_client,
-                    black_list=skip_events,
+                    black_list=config.get("parent.skip_events"),
                     reconnect_action=reconnect_action,
                 )
             )
