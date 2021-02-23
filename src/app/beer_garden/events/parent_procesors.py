@@ -6,7 +6,15 @@ from beer_garden.events.processors import QueueListener
 
 
 class HttpParentUpdater(QueueListener):
-    """Publish events using an EasyClient"""
+    """Publish events using an EasyClient
+
+    This will use the provided EasyClient to push events.
+
+    In the event of a connection failure all events currently on the queue will be
+    purged (!) and no new events will be accepted. Periodic attempts will be made to
+    reestablish the connection, and normal behavior will resume if successful.
+
+    """
 
     def __init__(
         self, easy_client=None, black_list=None, reconnect_action=None, **kwargs
