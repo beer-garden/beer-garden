@@ -88,7 +88,6 @@ parent:
     enabled: false
     host: null
     port: 2337
-    skip_events: []
     ssl:
       ca_cert: null
       ca_path: null
@@ -97,6 +96,7 @@ parent:
       private_key: null
       public_key: null
     url_prefix: /
+  skip_events: []
   stomp:
     enabled: false
     headers: []
@@ -104,8 +104,6 @@ parent:
     password: password
     port: 61613
     send_destination: Beer_Garden_Operations_Parent
-    skip_events:
-    - DB_CREATE
     ssl:
       cert_file: null
       private_key: null

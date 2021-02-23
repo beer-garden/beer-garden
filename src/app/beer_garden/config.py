@@ -904,13 +904,6 @@ _PARENT_SPEC = {
                     "default": 2337,
                     "description": "Serve content on this port",
                 },
-                "skip_events": {
-                    "type": "list",
-                    "items": {"skip_event": {"type": "str"}},
-                    "default": [],
-                    "required": False,
-                    "description": "Events to be skipped",
-                },
                 "ssl": {
                     "type": "dict",
                     "items": {
@@ -961,6 +954,13 @@ _PARENT_SPEC = {
                 },
             },
         },
+        "skip_events": {
+            "type": "list",
+            "items": {"skip_event": {"type": "str"}},
+            "default": [],
+            "required": False,
+            "description": "Events to be skipped",
+        },
         "stomp": {
             "type": "dict",
             "items": {
@@ -997,13 +997,6 @@ _PARENT_SPEC = {
                     "default": "Beer_Garden_Forward_Parent",
                     "description": "Subscription topic where Beer_Garden"
                     " listens for operations",
-                },
-                "skip_events": {
-                    "type": "list",
-                    "items": {"skip_event": {"type": "str"}},
-                    "default": ["DB_CREATE"],
-                    "required": False,
-                    "description": "Events to be skipped",
                 },
                 "headers": {
                     "type": "list",
