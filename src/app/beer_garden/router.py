@@ -582,7 +582,6 @@ def _determine_target_garden(operation: Operation) -> str:
 
     elif operation.operation_type == "REQUEST_CREATE":
         target_system = System(
-            garden=operation.model.garden,
             namespace=operation.model.namespace,
             name=operation.model.system,
             version=operation.model.system_version,
