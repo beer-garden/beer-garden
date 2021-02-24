@@ -48,7 +48,7 @@
           <th scope="col" ng-show="showErrorColumn(request, children)">Error Type</th>
           <th scope="col">Created</th>
           <th scope="col">Updated</th>
-          <th scope="col">Expiration Date</th>
+          <th scope="col">Parent Expiration Date</th>
           <th scope="col">Comment</th>
         </tr>
       </thead>
@@ -116,7 +116,7 @@
           <td ng-show="showErrorColumn(request, children)"><div>{{child.error_class}}</div></td>
           <td><div>{{formatDate(child.created_at)}}</div></td>
           <td><div>{{formatDate(child.updated_at)}}</div></td>
-          <td><div>{{(expiration_date || "N/A")}}</div></td>
+          <td></td>
           <td><div>{{child.comment}}</div></td>
         </tr>
       </tbody>

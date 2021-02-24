@@ -685,7 +685,7 @@ def update_request(
 ) -> Request:
     request = request or db.query_unique(Request, raise_missing=True, id=request_id)
     parent = find_parent(request)
-    set_expiration_date(request=parent, expiration_date=expiration_date)
+    update_expiration_date(request=parent, expiration_date=expiration_date)
     request = db.query_unique(Request, raise_missing=True, id=request.id)
     return request
 
@@ -697,12 +697,7 @@ def find_parent(request):
     return parent or request
 
 
-def set_expiration_date(request=None, expiration_date=None):
-    children = db.query(Request, filter_params={"parent": request})
-    if children:
-        for child in children:
-            set_expiration_date(request=child, expiration_date=expiration_date)
-
+def update_expiration_date(request=None, expiration_date=None):
     request.expiration_date = expiration_date
     return db.update(request)
 
@@ -744,7 +739,7 @@ def complete_request(
         expiration_date = datetime.datetime.utcnow() + minutes_added
 
     if not request.has_parent:
-        request = set_expiration_date(request=request, expiration_date=expiration_date)
+        request = update_expiration_date(request=request, expiration_date=expiration_date)
     else:
         request = db.update(request)
 

@@ -85,7 +85,7 @@ export default function requestViewController(
                       'items': [
                         {
                           'type': 'submit', 'style': 'btn-primary w-100',
-                          'title': 'Update Expiration',
+                          'title': 'Update Parent Expiration',
                         },
                       ],
                     },
@@ -212,10 +212,18 @@ export default function requestViewController(
     }
   };
 
+  $scope.setExpirationDate = function(request) {
+    while(request.has_parent){
+        request=request.parent;
+    }
+    $scope.expiration_date = formatDate(request.expiration_date);
+    $scope.dateModel = {"expiration_date": request.expiration_date};
+    return
+  };
+
   $scope.successCallback = function(request) {
     $scope.request = request;
-    $scope.expiration_date = formatDate($scope.request.expiration_date)
-    $scope.dateModel = {"expiration_date": $scope.request.expiration_date}
+    $scope.setExpirationDate(request);
     $scope.filename = $scope.request.id;
     let namespace = $scope.request.namespace || $scope.config.gardenName;
     let request_system = SystemService.findSystem(namespace, $scope.request.system,
