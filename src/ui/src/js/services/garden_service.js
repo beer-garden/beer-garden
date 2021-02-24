@@ -11,16 +11,8 @@ export default function gardenService($rootScope, $http) {
 
   let GardenService = {};
 
-  GardenService.getGardens = function(options = {}, headers={}){
-    return $http.get('api/v1/gardens/', {
-        params: {
-          dereference_nested: options.dereferenceNested,
-          include_fields: options.includeFields,
-          exclude_fields: options.excludeFields,
-          namespace: options.namespace,
-        },
-        headers: headers,
-      });
+  GardenService.getGardens = function(){
+    return $http.get('api/v1/gardens/');
   }
 
   GardenService.getGarden = function(name){
