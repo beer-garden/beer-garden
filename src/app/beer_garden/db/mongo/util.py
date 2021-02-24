@@ -385,14 +385,14 @@ def _update_request_expiration_date_model():
     import datetime
 
     raw_collection = Request._get_collection()
-    minutes = config.get("db.ttl.action")
+    minutes = config.get("db.ttl.action") or -1
     if minutes < 0:
         action_expiration_date = None
     else:
         minutes_added = datetime.timedelta(minutes=minutes)
         action_expiration_date = datetime.datetime.utcnow() + minutes_added
 
-    minutes = config.get("db.ttl.info")
+    minutes = config.get("db.ttl.info") or -1
     if minutes < 0:
         info_expiration_date = None
     else:

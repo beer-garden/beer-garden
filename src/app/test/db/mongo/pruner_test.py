@@ -42,25 +42,16 @@ class TestDetermineTasks(object):
 
         prune_tasks, run_every = MongoPruner.determine_tasks(**config)
 
-        assert len(prune_tasks) == 2
+        assert len(prune_tasks) == 1
         assert run_every == 2.5
 
-        info_task = prune_tasks[0]
-        action_task = prune_tasks[1]
+        expiration_task = prune_tasks[0]
 
-        assert info_task["collection"] == Request
-        assert action_task["collection"] == Request
+        assert expiration_task["collection"] == Request
 
-        assert info_task["field"] == "created_at"
-        assert action_task["field"] == "created_at"
+        assert expiration_task["field"] == "expiration_date"
 
-        assert info_task["delete_after"] == timedelta(minutes=5)
-        assert action_task["delete_after"] == timedelta(minutes=10)
-
-    def test_setup_pruning_tasks_empty(self):
-        prune_tasks, run_every = MongoPruner.determine_tasks()
-        assert prune_tasks == []
-        assert run_every is None
+        assert expiration_task["delete_after"] == timedelta(minutes=0)
 
     def test_setup_pruning_tasks_one(self):
         config = {"info": -1, "action": 1}
@@ -76,10 +67,10 @@ class TestDetermineTasks(object):
         assert len(prune_tasks) == 1
         assert run_every == 2.5
 
-        info_task = prune_tasks[0]
+        expiration_task = prune_tasks[0]
 
-        assert info_task["collection"] == Request
+        assert expiration_task["collection"] == Request
 
-        assert info_task["field"] == "created_at"
+        assert expiration_task["field"] == "expiration_date"
 
-        assert info_task["delete_after"] == timedelta(minutes=5)
+        assert expiration_task["delete_after"] == timedelta(minutes=0)
