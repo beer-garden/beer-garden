@@ -3,7 +3,11 @@ from brewtils.models import Principal, Operation
 from mongoengine.queryset.visitor import Q
 
 
-def create_mongo_query(current_user: Principal = None):
+def create_mongo_query(
+    current_user: Principal = None,
+    filter_garden: bool = True,
+    filter_namespace: bool = True,
+):
     """
     Creates custom query logic for MongoDB
     Args:
@@ -15,17 +19,30 @@ def create_mongo_query(current_user: Principal = None):
 
     mongo_query = None
     for permission in current_user.permissions:
-        if permission.garden is not None and permission.namespace is None:
+        if (
+            permission.garden is not None
+            and (permission.namespace is None or not filter_namespace)
+            and filter_garden
+        ):
             if mongo_query:
                 mongo_query = mongo_query | Q(garden=permission.garden)
             else:
                 mongo_query = Q(garden=permission.garden)
-        elif permission.garden is None and permission.namespace is not None:
+        elif (
+            (permission.garden is None or not filter_garden)
+            and permission.namespace is not None
+            and filter_namespace
+        ):
             if mongo_query:
                 mongo_query = mongo_query | Q(garden=permission.namespace)
             else:
                 mongo_query = Q(garden=permission.namespace)
-        elif permission.garden is not None and permission.namespace is not None:
+        elif (
+            permission.garden is not None
+            and permission.namespace is not None
+            and filter_garden
+            and filter_namespace
+        ):
             if mongo_query:
                 mongo_query = mongo_query | (
                     Q(garden=permission.namespace) & Q(garden=permission.garden)
@@ -49,15 +66,10 @@ def operation_db_filtering(obj: Operation = None, current_user: Principal = None
     Returns:
 
     """
-    if "REQUEST_COUNT" == obj.operation_type:
+    if obj.operation_type in ["REQUEST_COUNT", "REQUEST_READ_ALL"]:
         if "filter_args" not in obj.kwargs:
             obj.kwargs["filter_args"] = list()
 
-        obj.kwargs["filter_args"].append(create_mongo_query(current_user=current_user))
-
-    elif "REQUEST_READ_ALL" == obj.operation_type:
-        if "filter_args" not in obj.kwargs:
-            obj.kwargs["filter_args"] = list()
         obj.kwargs["filter_args"].append(create_mongo_query(current_user=current_user))
 
 
