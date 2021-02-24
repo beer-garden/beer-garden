@@ -739,7 +739,9 @@ def complete_request(
         expiration_date = datetime.datetime.utcnow() + minutes_added
 
     if not request.has_parent:
-        request = update_expiration_date(request=request, expiration_date=expiration_date)
+        request = update_expiration_date(
+            request=request, expiration_date=expiration_date
+        )
     else:
         request = db.update(request)
 
