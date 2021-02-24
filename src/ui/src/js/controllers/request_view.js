@@ -228,7 +228,7 @@ export default function requestViewController(
 
     // Grab the status of the instance this request targets to display if necessary
     let system = SystemService.findSystem(
-      $scope.request.namespace, $scope.request.system, $scope.request.system_version,
+      $scope.request.garden, $scope.request.namespace, $scope.request.system, $scope.request.system_version,
     );
     $scope.instanceStatus = _.find(system.instances, {name: $scope.request.instance_name}).status;
 
@@ -274,6 +274,7 @@ export default function requestViewController(
         systemVersion: request.system_version,
         commandName: request.command,
         namespace: request.namespace || $scope.config.gardenName,  // Fix for v2 requests w/o a namespace
+        garden: request.garden || $scope.config.gardenName,  // Fix for v3.1 requests w/o a namespace
         request: newRequest,
       }
     );

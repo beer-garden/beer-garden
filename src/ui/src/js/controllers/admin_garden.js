@@ -5,11 +5,13 @@ adminGardenController.$inject = [
   '$state',
   'GardenService',
   'EventService',
+  'SystemService',
 ];
 
 /**
  * adminGardenController - Garden management controller.
  * @param  {Object} $scope          Angular's $scope object.
+ * @param  {Object} $rootScope     Angular's $rootScope object.
  * @param  {Object} GardenService    Beer-Garden's garden service object.
  * @param  {Object} EventService    Beer-Garden's event service object.
  */
@@ -18,13 +20,15 @@ export default function adminGardenController(
     $scope,
     $state,
     GardenService,
-    EventService) {
+    EventService,
+    SystemService) {
   $scope.setWindowTitle('gardens');
   $scope.gardenCreateSchema = GardenService.CreateSCHEMA;
    $scope.gardenCreateForm = GardenService.CreateFORM;
   $scope.successCallback = function(response) {
     $scope.response = response;
     $scope.data = response.data;
+    GardenService.mapSystemsToGardens($scope.data)
 
   };
   $scope.garden_name = null;
@@ -40,7 +44,7 @@ export default function adminGardenController(
   $scope.create_garden_name_focus = false
 
   let loadGardens = function() {
-    GardenService.getGardens().then(
+    GardenService.getGardens({"excludeFields":"namespaces,systems"}).then(
       $scope.successCallback,
       $scope.failureCallback
     );

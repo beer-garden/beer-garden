@@ -3,6 +3,7 @@
   <span class="pull-right" ng-show="responseState(response) !== 'loading'">
     <button type="button"
             class="btn btn-primary"
+            ng-hide="data.connection_type == 'NESTED'"
             ng-click="syncGarden()">Sync</button>
   </span>
 </h1>
@@ -47,6 +48,7 @@
         style="width: 100%">
       <thead>
         <tr>
+          <th id="th_job_name">Garden</th>
           <th id="th_job_name">Namespace</th>
           <th id="th_job_status">System</th>
           <th id="th_system">Version</th>
@@ -54,6 +56,7 @@
       </thead>
       <tbody>
         <tr ng-repeat="system in data.systems">
+          <td>{{system.garden}}</td>
           <td><a ui-sref="base.systems({namespace: system.namespace})">{{system.namespace}}</a></span></td>
           <td>{{system.name}}</td>
           <td><a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})">{{system.version}}</a></span></td>

@@ -41,13 +41,32 @@ export default function adminGardenViewController(
     $scope.response = response;
     $scope.data = response.data;
 
-    if ($scope.data.id == null || $scope.data.connection_type == 'LOCAL'){
+    if ($scope.data == null){
+
+      response.data = {
+        "name":$stateParams.name,
+
+        "connection_type": "NESTED",
+        "id": null
+      };
+      $scope.data = response.data;
+
+      $scope.isLocal = true;
+      $scope.alerts.push({
+        type: 'info',
+        msg: "Since this is the nested Garden it's not possible to modify connection information"
+      });
+    }
+
+    else if ($scope.data.id == null || $scope.data.connection_type == 'LOCAL'){
       $scope.isLocal = true;
       $scope.alerts.push({
         type: 'info',
         msg: "Since this is the local Garden it's not possible to modify connection information"
       });
     }
+
+    GardenService.mapSystemsToGarden($scope.data)
 
     generateGardenSF();
   };

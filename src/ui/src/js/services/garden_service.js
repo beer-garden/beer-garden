@@ -1,17 +1,26 @@
 
-gardenService.$inject = ['$http'];
+gardenService.$inject = ['$rootScope', '$http'];
 
 /**
  * gardenService - Service for interacting with the garden API.
+ * @param  {$rootScope} $rootScope    Angular's $rootScope object.
  * @param  {$http} $http Angular's $http object.
  * @return {Object}      Service for interacting with the garden API.
  */
-export default function gardenService($http) {
+export default function gardenService($rootScope, $http) {
 
   let GardenService = {};
 
-  GardenService.getGardens = function(){
-    return $http.get('api/v1/gardens/');
+  GardenService.getGardens = function(options = {}, headers={}){
+    return $http.get('api/v1/gardens/', {
+        params: {
+          dereference_nested: options.dereferenceNested,
+          include_fields: options.includeFields,
+          exclude_fields: options.excludeFields,
+          namespace: options.namespace,
+        },
+        headers: headers,
+      });
   }
 
   GardenService.getGarden = function(name){
@@ -36,6 +45,70 @@ export default function gardenService($http) {
 
   GardenService.deleteGarden = function(name){
     return $http.delete('api/v1/gardens/' + name);
+  }
+
+  GardenService.mapSystemsToGardens = function(gardens){
+    for (let i = 0; i < $rootScope.systems.length; i++) {
+        // Look to see if associated Garden is already known, if not, add it to the list
+      let known = false;
+      for (let x = 0; x < gardens.length; x++){
+        if ($rootScope.systems[i].garden == gardens[x].name){
+          known = true;
+          break;
+        }
+      }
+
+      if (!known){
+        gardens.push({"name":$rootScope.systems[i].garden,
+                      "namespaces":[$rootScope.systems[i].namespace],
+                      "systems":[$rootScope.systems[i]],
+                      "connection_type": "NESTED"});
+        }
+    }
+
+    for (let x = 0; x < gardens.length; x++){
+      GardenService.mapSystemsToGarden(gardens[x]);
+    }
+  }
+
+  GardenService.mapSystemsToGarden = function(garden){
+    for (let i = 0; i < $rootScope.systems.length; i++) {
+      if ($rootScope.systems[i].garden == garden.name){
+      if (!garden.hasOwnProperty('systems')){
+          garden['systems'] = [];
+      }
+
+      let system_found = false;
+      for (let s = 0; s < garden.systems.length; s++){
+        if (garden.systems[s].id == $rootScope.systems[i].id){
+          system_found = true;
+          break;
+        }
+      }
+
+      if (!system_found){
+        garden.systems.push($rootScope.systems[i]);
+      }
+
+      // Loop through namespaces to make sure it is there
+      if (!garden.hasOwnProperty('namespaces')){
+        garden['namespaces'] = [];
+      }
+      let namespace_found = false;
+      for (let ns = 0; ns < garden.namespaces.length; ns++){
+        if (garden.namespaces[ns] == $rootScope.systems[i].namespace){
+          namespace_found = true;
+          break;
+        }
+      }
+
+      if (!namespace_found){
+        garden.namespaces.push($rootScope.systems[i].namespace);
+      }
+      }
+    }
+
+    return garden
   }
 
   GardenService.serverModelToForm = function(model){

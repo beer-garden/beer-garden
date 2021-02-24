@@ -43,7 +43,8 @@
     <div class="panel-heading">
       <h3>
         <span>{{garden.name}}</span>
-        <span ng-show="garden.id == null || garden.connection_type == 'LOCAL'">(LOCAL)</span>
+        <span ng-show="(garden.id == null || garden.connection_type == 'LOCAL') && garden.connection_type != 'NESTED' ">(LOCAL)</span>
+        <span ng-show="(garden.id == null || garden.connection_type == 'NESTED') && garden.connection_type != 'LOCAL' ">(NESTED)</span>
         <span ng-show="garden.id != null && garden.connection_type != 'LOCAL'">(REMOTE)</span>
       </h3>
     </div>
@@ -67,8 +68,14 @@
       <div>
 
         <button type="button" class="btn btn-primary btn-lg btn-block"
+                ng-show="garden.id != null && garden.connection_type != 'LOCAL'"
                 ng-click="editGarden(garden)" style="...">
           Edit {{garden.name}} configurations
+        </button>
+        <button type="button" class="btn btn-primary btn-lg btn-block"
+                ng-show="garden.id == null"
+                ng-click="editGarden(garden)" style="...">
+          View {{garden.name}}
         </button>
         <button type="button" class="btn btn-danger btn-lg btn-block"
                 ng-click="deleteGarden(garden.name)" style="..."
