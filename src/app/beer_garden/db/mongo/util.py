@@ -386,19 +386,9 @@ def _update_request_expiration_date_model():
 
     raw_collection = Request._get_collection()
     minutes = config.get("db.ttl.action") or -1
-    if minutes < 0:
-        action_expiration_date = None
-    else:
+    if minutes >= 0:
         minutes_added = datetime.timedelta(minutes=minutes)
         action_expiration_date = datetime.datetime.utcnow() + minutes_added
-
-    minutes = config.get("db.ttl.info") or -1
-    if minutes < 0:
-        info_expiration_date = None
-    else:
-        minutes_added = datetime.timedelta(minutes=minutes)
-        info_expiration_date = datetime.datetime.utcnow() + minutes_added
-    if action_expiration_date:
         raw_collection.update_many(
             {
                 "command_type": "ACTION",
@@ -406,7 +396,11 @@ def _update_request_expiration_date_model():
             },
             {"$set": {"expiration_date": action_expiration_date}},
         )
-    if info_expiration_date:
+
+    minutes = config.get("db.ttl.info") or -1
+    if minutes >= 0:
+        minutes_added = datetime.timedelta(minutes=minutes)
+        info_expiration_date = datetime.datetime.utcnow() + minutes_added
         raw_collection.update_many(
             {
                 "command_type": "INFO",
@@ -414,6 +408,7 @@ def _update_request_expiration_date_model():
             },
             {"$set": {"expiration_date": info_expiration_date}},
         )
+
 
 
 def _should_create_admin():
