@@ -312,8 +312,8 @@ def initiate_forward(operation: Operation):
 
         raise
 
-    # If None is returned and this is a Request Create, return locally created Request
-    if not response and operation.operation_type == "REQUEST_CREATE":
+    # If this is a request create return locally created Request
+    if operation.operation_type == "REQUEST_CREATE":
         return operation.model
 
     return response

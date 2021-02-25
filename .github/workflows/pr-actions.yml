@@ -78,6 +78,7 @@ jobs:
       # Need to update if we support other OS's
       - name: Cache PIP Install
         uses: actions/cache@v2
+        if: env.brewtils == 'develop'
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-${{ matrix.python-version }}-pip-install-${{ hashFiles('**/setup.py') }}-${{ hashFiles('**/requirements.txt') }}
