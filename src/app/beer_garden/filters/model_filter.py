@@ -162,6 +162,7 @@ def permission_check(
         # TODO: Should this allow Garden + Namespace Admins to run?
         if (
             required_permission == Permissions.LOCAL_ADMIN
+            and permission.access in PermissionRequiredAccess[required_permission]
             and permission.garden == config.get("garden.name")
             and permission.namespace is None
         ):
