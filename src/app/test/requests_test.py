@@ -61,6 +61,7 @@ def make_request(**kwargs):
         "system_version": "1",
         "instance_name": "i1",
         "namespace": "default",
+        "garden": "default",
         "command": "c1",
         "parameters": {},
     }
@@ -643,6 +644,7 @@ class TestValidateChoices(object):
             assert choices_request.command == "c2"
             assert choices_request.system == "s1"
             assert choices_request.namespace == "default"
+            assert choices_request.garden == "default"
             assert choices_request.system_version == "1"
             assert choices_request.instance_name == "i1"
             assert choices_request.parameters == {"p": "a"}
@@ -681,6 +683,8 @@ class TestValidateChoices(object):
             assert choices_request.command == "c2"
             assert choices_request.system == "s1"
             assert choices_request.system_version == "1"
+            assert choices_request.namespace == "default"
+            assert choices_request.garden == "default"
             assert choices_request.instance_name == req.instance_name
             assert choices_request.parameters == {"p": req.instance_name}
 
