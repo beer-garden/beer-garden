@@ -89,19 +89,23 @@ mq:
   virtual_host: /
 parent:
   http:
+    access_token: null
+    api_version: 1
+    client_timeout: -1
     enabled: false
     host: null
+    password: null
     port: 2337
-    skip_events: []
-    auth:
-      username: null
-      password: null
+    refresh_token: null
     ssl:
       ca_cert: null
       ca_verify: true
       client_cert: null
+      client_key: null
       enabled: false
     url_prefix: /
+    username: null
+  skip_events: []
   stomp:
     enabled: false
     headers: []
@@ -109,8 +113,6 @@ parent:
     password: password
     port: 61613
     send_destination: Beer_Garden_Operations_Parent
-    skip_events:
-    - DB_CREATE
     ssl:
       cert_file: null
       private_key: null

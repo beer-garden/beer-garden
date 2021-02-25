@@ -702,27 +702,6 @@ _DB_SPEC = {
                 },
             },
         },
-        "encoder": {
-            "type": "dict",
-            "items": {
-                "algorithm": {
-                    "type": "str",
-                    "default": "HS256",
-                    "description": "Algorithm to use when signing tokens",
-                },
-                "lifetime": {
-                    "type": "int",
-                    "default": 1200,
-                    "description": "Time (seconds) before a token expires",
-                },
-                "secret": {
-                    "type": "str",
-                    "required": False,
-                    "description": "Secret to use when signing tokens",
-                    "default": "",
-                },
-            },
-        },
     },
 }
 
@@ -925,27 +904,42 @@ _PARENT_SPEC = {
                     "default": 2337,
                     "description": "Serve content on this port",
                 },
-                "auth": {
-                    "type": "dict",
-                    "items": {
-                        "username": {
-                            "type": "str",
-                            "description": "Username to use for authentication",
-                            "required": False,
-                        },
-                        "password": {
-                            "type": "str",
-                            "description": "Password to use for authentication",
-                            "required": False,
-                        },
-                    },
+                "api_version": {
+                    "type": "int",
+                    "description": "Beergarden API version",
+                    "default": 1,
+                    "choices": [1],
                 },
-                "skip_events": {
-                    "type": "list",
-                    "items": {"skip_event": {"type": "str"}},
-                    "default": [],
+                "client_timeout": {
+                    "type": "float",
+                    "description": "Max time RestClient will wait for server response",
+                    "long_description": "This setting controls how long the HTTP(s) "
+                    "client will wait when opening a connection to Beergarden before "
+                    "aborting. This prevents some strange Beergarden server state from "
+                    "causing plugins to hang indefinitely. "
+                    "Set to -1 to disable (this is a bad idea in production code, see "
+                    "the Requests documentation).",
+                    "default": -1,
+                },
+                "username": {
+                    "type": "str",
+                    "description": "Username for authentication",
                     "required": False,
-                    "description": "Events to be skipped",
+                },
+                "password": {
+                    "type": "str",
+                    "description": "Password for authentication",
+                    "required": False,
+                },
+                "access_token": {
+                    "type": "str",
+                    "description": "Access token for authentication",
+                    "required": False,
+                },
+                "refresh_token": {
+                    "type": "str",
+                    "description": "Refresh token for authentication",
+                    "required": False,
                 },
                 "ssl": {
                     "type": "dict",
@@ -953,7 +947,7 @@ _PARENT_SPEC = {
                         "enabled": {
                             "type": "bool",
                             "default": False,
-                            "description": "Serve content using SSL",
+                            "description": "Use SSL when connecting",
                         },
                         "ca_cert": {
                             "type": "str",
@@ -964,14 +958,17 @@ _PARENT_SPEC = {
                         },
                         "ca_verify": {
                             "type": "bool",
+                            "description": "Verify server certificate when using SSL",
                             "default": True,
-                            "description": "Verify external certificates for url-based "
-                            "choices",
-                            "required": False,
                         },
                         "client_cert": {
                             "type": "str",
-                            "description": "Path to client combined key / certificate",
+                            "description": "Client certificate to use",
+                            "required": False,
+                        },
+                        "client_key": {
+                            "type": "str",
+                            "description": "Client key to use",
                             "required": False,
                         },
                     },
@@ -983,6 +980,13 @@ _PARENT_SPEC = {
                     "required": False,
                 },
             },
+        },
+        "skip_events": {
+            "type": "list",
+            "items": {"skip_event": {"type": "str"}},
+            "default": [],
+            "required": False,
+            "description": "Events to be skipped",
         },
         "stomp": {
             "type": "dict",
@@ -1020,13 +1024,6 @@ _PARENT_SPEC = {
                     "default": "Beer_Garden_Forward_Parent",
                     "description": "Subscription topic where Beer_Garden"
                     " listens for operations",
-                },
-                "skip_events": {
-                    "type": "list",
-                    "items": {"skip_event": {"type": "str"}},
-                    "default": ["DB_CREATE"],
-                    "required": False,
-                    "description": "Events to be skipped",
                 },
                 "headers": {
                     "type": "list",
