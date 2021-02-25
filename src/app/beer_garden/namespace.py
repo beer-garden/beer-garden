@@ -37,4 +37,7 @@ def get_namespaces() -> List[str]:
     for garden in db.query(Garden, include_fields=["namespaces"]):
         namespaces |= set(garden.namespaces)
 
+    # Filter out None, empty string
+    namespaces = filter(lambda x: x, namespaces)
+
     return list(namespaces)
