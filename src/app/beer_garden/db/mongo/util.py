@@ -11,10 +11,7 @@ from mongoengine.errors import (
 )
 from passlib.apps import custom_app_context
 
-from beer_garden.db import api
 import beer_garden.config as config
-
-from brewtils.models import Role as BrewtilsRole, Permission as BrewtilsPermission
 
 logger = logging.getLogger(__name__)
 
@@ -29,48 +26,51 @@ def ensure_roles():
     they do not exist.
     """
 
+    from .models import Role, Permission
+
+
     convenience_roles = [
-        BrewtilsRole(
+        Role(
             name="bg-readonly",
             description="Allows only standard read actions",
             permissions=[
-                BrewtilsPermission(garden=config.get("garden.name"), access="READ")
+                Permission(garden=config.get("garden.name"), access="READ")
             ],
         ),
-        BrewtilsRole(
+        Role(
             name="bg-operator",
             description="Standard Beergarden user role",
             permissions=[
-                BrewtilsPermission(garden=config.get("garden.name"), access="OPERATOR")
+                Permission(garden=config.get("garden.name"), access="OPERATOR")
             ],
         ),
     ]
 
     mandatory_roles = [
-        BrewtilsRole(
+        Role(
             name="bg-anonymous",
             description="Special role used for non-authenticated users",
-            permissions=[BrewtilsPermission(access="READ")],
+            permissions=[Permission(access="READ")],
         ),
-        BrewtilsRole(
+        Role(
             name="bg-admin",
             description="Allows all actions",
             permissions=[
-                BrewtilsPermission(garden=config.get("garden.name"), access="ADMIN")
+                Permission(garden=config.get("garden.name"), access="ADMIN")
             ],
         ),
-        BrewtilsRole(
+        Role(
             name="bg-plugin",
             description="Allows actions necessary for plugins to function",
             permissions=[
-                BrewtilsPermission(garden=config.get("garden.name"), access="OPERATOR")
+                Permission(garden=config.get("garden.name"), access="OPERATOR")
             ],
         ),
     ]
 
     # Only create convenience roles if this is a fresh database
 
-    if api.count(BrewtilsRole) == 0:
+    if Role.objects.count() == 0:
         # if Role.objects.count() == 0:
         logger.warning("No roles found: creating convenience roles")
 
@@ -399,19 +399,15 @@ def _update_system_garden_field():
 
 def _create_role(role):
     """Create a role if it doesn't already exist"""
-    # from .models import Role
 
-    if api.count(BrewtilsRole, name=role.name) == 0:
+    from .models import Role
+
+    try:
+        Role.objects.get(name=role.name)
+    except DoesNotExist:
         logger.warning("Role %s missing, about to create" % role.name)
-        api.create(role)
-
-    #
-    # try:
-    #     Role.objects.get(name=role.name)
-    # except DoesNotExist:
-    #     logger.warning("Role %s missing, about to create" % role.name)
-    #     role.save()
-    #     logger.info("Added %s" % role.name)
+        role.save()
+        logger.info("Added %s" % role.name)
 
 
 def _should_create_admin():
