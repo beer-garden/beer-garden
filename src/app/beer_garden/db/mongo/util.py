@@ -28,14 +28,11 @@ def ensure_roles():
 
     from .models import Role, Permission
 
-
     convenience_roles = [
         Role(
             name="bg-readonly",
             description="Allows only standard read actions",
-            permissions=[
-                Permission(garden=config.get("garden.name"), access="READ")
-            ],
+            permissions=[Permission(garden=config.get("garden.name"), access="READ")],
         ),
         Role(
             name="bg-operator",
@@ -55,9 +52,7 @@ def ensure_roles():
         Role(
             name="bg-admin",
             description="Allows all actions",
-            permissions=[
-                Permission(garden=config.get("garden.name"), access="ADMIN")
-            ],
+            permissions=[Permission(garden=config.get("garden.name"), access="ADMIN")],
         ),
         Role(
             name="bg-plugin",
