@@ -262,8 +262,8 @@ def proxy_auth(request):
                             description="Generated from Headers",
                             permissions=[
                                 Permission(
-                                    garden=split_role[0],
-                                    namespace=split_role[1],
+                                    garden=split_role[0] if split_role[0] != "" else None,
+                                    namespace=split_role[1] if split_role[1] != "" else None,
                                     access=split_role[2].upper(),
                                 )
                             ],
