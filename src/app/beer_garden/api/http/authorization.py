@@ -5,7 +5,11 @@ from enum import Enum
 import jwt
 import wrapt
 from brewtils.errors import RequestForbidden
-from brewtils.models import Principal as BrewtilsPrincipal, Role as BrewtilsRole
+from brewtils.models import (
+    Principal as BrewtilsPrincipal,
+    Role as BrewtilsRole,
+    Permission,
+)
 from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
 from tornado.web import HTTPError
@@ -249,6 +253,22 @@ def proxy_auth(request):
                 principal.roles.append(Role.objects.get(name=role.strip()))
             except DoesNotExist:
                 # We won't add roles that don't exist in the database
+                split_role = role.split(config.get("auth_config.proxy.roles_delimiter"))
+
+                if len(split_role) == 3:
+                    principal.roles.append(
+                        Role(
+                            name=role,
+                            description="Generated from Headers",
+                            permissions=[
+                                Permission(
+                                    garden=split_role[0],
+                                    namespace=split_role[1],
+                                    access=split_role[2].upper(),
+                                )
+                            ],
+                        )
+                    )
                 pass
 
     # No valid user was generated through the headers

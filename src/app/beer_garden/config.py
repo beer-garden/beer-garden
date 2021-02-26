@@ -660,6 +660,12 @@ _AUTH_SPEC = {
                     "description": "Header filed to find list of Roles",
                     "default": None,
                 },
+                "roles_delimiter": {
+                    "type": "str",
+                    "required": False,
+                    "description": "Delimiter to use for generate Role based off headers",
+                    "default": "_",
+                },
             },
         },
     },

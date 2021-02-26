@@ -11,6 +11,7 @@ auth:
     secret_header: X-Secret
     username_header: X-Username
     roles_header: X-Roles
+    roles_delimiter: _
 db:
   connection:
     host: localhost
