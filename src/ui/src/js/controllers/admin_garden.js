@@ -44,7 +44,7 @@ export default function adminGardenController(
   $scope.create_garden_name_focus = false
 
   let loadGardens = function() {
-    GardenService.getGardens.then(
+    GardenService.getGardens().then(
       $scope.successCallback,
       $scope.failureCallback
     );
