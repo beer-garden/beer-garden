@@ -63,6 +63,26 @@ export default function gardenService($rootScope, $http) {
     }
   }
 
+  GardenService.extractGardensFromSystems = function(garden){
+    let gardenNames = new Set()
+
+    for (let i = 0; i < garden.systems.length; i++){
+        gardenNames.add(garden.systems[i].garden);
+    }
+
+    let gardens = [];
+    for (let gardenName of gardenNames.values()){
+    //for (let i = 0; i < gardenNames.size; i++){
+        if (gardenName != garden.name){
+            let nestedGarden = {"name":gardenName}
+            GardenService.mapSystemsToGarden(nestedGarden)
+            gardens.push(nestedGarden)
+        }
+    }
+
+    return gardens
+  }
+
   GardenService.mapSystemsToGarden = function(garden){
     for (let i = 0; i < $rootScope.systems.length; i++) {
       if ($rootScope.systems[i].garden == garden.name){

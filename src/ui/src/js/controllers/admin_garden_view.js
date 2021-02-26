@@ -25,6 +25,8 @@ export default function adminGardenViewController(
   $scope.gardenForm = null;
   $scope.gardenModel = {};
 
+  $scope.connectedGardens = [];
+
   $scope.closeAlert = function(index) {
     $scope.alerts.splice(index, 1);
   };
@@ -45,7 +47,8 @@ export default function adminGardenViewController(
 
       response.data = {
         "name":$stateParams.name,
-
+        "systems": [],
+        "namespaces": [],
         "connection_type": "NESTED",
         "id": null
       };
@@ -65,6 +68,11 @@ export default function adminGardenViewController(
         msg: "Since this is the local Garden it's not possible to modify connection information"
       });
     }
+
+    $scope.connectedGardens = GardenService.extractGardensFromSystems($scope.data)
+
+    $scope.data.systems = []
+    $scope.data.namespaces = []
 
     GardenService.mapSystemsToGarden($scope.data)
 

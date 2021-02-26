@@ -16,10 +16,6 @@ db:
     action: -1
     file: 15
     info: 15
-  encoder:
-    algorithm: HS256
-    lifetime: 1200
-    secret: IAMSUPERSECRET
 entry:
   http:
     enabled: true
