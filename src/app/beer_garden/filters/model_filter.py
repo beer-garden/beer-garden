@@ -119,10 +119,14 @@ def model_filter(
     if not current_user:
         raise AuthorizationRequired("Action requires the User to be logged in")
 
-    # Garden Admins get everything by default
-    # for permission in current_user.permissions:
-    #     if permission.garden == config.get('garden.name') and permission.access == "ADMIN":
-    #         return obj
+    # Local Garden Admins get everything by default
+    for permission in current_user.permissions:
+        if (
+            permission.garden == config.get("garden.name")
+            and permission.access == "ADMIN"
+            and permission.namespace is None
+        ):
+            return obj
 
     if type(obj) == list:
         new_obj = list()
