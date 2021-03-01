@@ -618,21 +618,20 @@ def _forward_http(operation: Operation, target_garden: Garden):
     )
 
     try:
-        response = None
-
         if conn_info.get("ssl"):
             response = requests.post(
                 endpoint,
+                headers={"Content-type": "application/json", "Accept": "text/plain"},
                 data=SchemaParser.serialize_operation(operation),
-                cert=conn_info.client_cert,
-                verify=conn_info.ca_cert if conn_info.ca_verify else None,
+                cert=conn_info.get("client_cert"),
+                verify=conn_info.get("ca_cert"),
             )
 
         else:
             response = requests.post(
                 endpoint,
-                data=SchemaParser.serialize_operation(operation),
                 headers={"Content-type": "application/json", "Accept": "text/plain"},
+                data=SchemaParser.serialize_operation(operation),
             )
 
         if response.status_code != 200:
