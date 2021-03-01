@@ -85,7 +85,7 @@
              ng-class="{active: ($state.current.name.startsWith('job'))}">Scheduler</a>
         </li>
         <!-- Admin Drop Down Menu -->
-        <li class="dropdown">
+        <li ng-show="(hasPermission(user, 'READ'))" class="dropdown">
           <a href="" data-toggle="dropdown" title="Admin Drop Down" >Admin</a>
           <ul class="dropdown-menu">
             <li>
