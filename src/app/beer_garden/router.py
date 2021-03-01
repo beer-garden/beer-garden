@@ -617,16 +617,15 @@ def _forward_http(operation: Operation, target_garden: Garden):
         conn_info.get("url_prefix", "/"),
     )
 
-    response = None
-
     try:
+        response = None
+
         if conn_info.get("ssl"):
-            http_config = config.get("entry.http")
             response = requests.post(
                 endpoint,
                 data=SchemaParser.serialize_operation(operation),
-                cert=http_config.ssl.ca_cert,
-                verify=http_config.ssl.ca_path,
+                cert=conn_info.client_cert,
+                verify=conn_info.ca_cert if conn_info.ca_verify else None,
             )
 
         else:
@@ -637,6 +636,7 @@ def _forward_http(operation: Operation, target_garden: Garden):
             )
 
         if response.status_code != 200:
+
             _publish_failed_forward(
                 operation=operation,
                 event_name=Events.GARDEN_UNREACHABLE.name,
