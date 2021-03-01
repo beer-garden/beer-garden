@@ -624,8 +624,8 @@ def _forward_http(operation: Operation, target_garden: Garden):
             response = requests.post(
                 endpoint,
                 data=SchemaParser.serialize_operation(operation),
-                cert=conn_info.ca_cert,
-                verify=conn_info.ca_path if conn_info.ca_verify else None,
+                cert=conn_info.client_cert,
+                verify=conn_info.ca_cert if conn_info.ca_verify else None,
             )
 
         else:
