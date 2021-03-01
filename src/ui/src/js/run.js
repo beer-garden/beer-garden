@@ -139,7 +139,7 @@ export default function appRun(
     if (_.isUndefined(user)) return false;
 
     if (is_local){
-        garden = $rootScope.config.garden
+        garden = $rootScope.config.gardenName
     }
     for (var i = 0; i < user.permissions.length; i++){
 
@@ -170,7 +170,7 @@ export default function appRun(
 
                 }
             case 'OPERATOR':
-                if (['ADMIN', 'OPERATOR', 'READ'].includes(user.permissions[i].access)){
+                if (['ADMIN', 'OPERATOR'].includes(user.permissions[i].access)){
                     if (namespace == null && garden == null){
                         return true;
                     }
@@ -195,7 +195,7 @@ export default function appRun(
 
                 }
             case 'ADMIN':
-                if (['ADMIN', 'OPERATOR', 'READ'].includes(user.permissions[i].access)){
+                if (['ADMIN'].includes(user.permissions[i].access)){
                     if (namespace == null && garden == null){
                         return true;
                     }

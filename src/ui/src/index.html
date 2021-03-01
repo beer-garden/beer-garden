@@ -85,7 +85,7 @@
              ng-class="{active: ($state.current.name.startsWith('job'))}">Scheduler</a>
         </li>
         <!-- Admin Drop Down Menu -->
-        <li ng-show="(hasPermission(user, 'ADMIN'))" class="dropdown">
+        <li class="dropdown">
           <a href="" data-toggle="dropdown" title="Admin Drop Down" >Admin</a>
           <ul class="dropdown-menu">
             <li>
@@ -103,7 +103,7 @@
                 <span>Roles</span>
               </a>
             </li>
-            <li ng-show="hasPermission(user, 'ADMIN', is_local=true)">
+            <li ng-show="hasPermission(user, 'ADMIN')">
               <a ui-sref="base.garden_admin" ui-sref-active="active">
                 <span>Gardens</span>
               </a>

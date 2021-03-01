@@ -330,9 +330,9 @@ class UsersAPI(BaseHandler):
             Operation(
                 operation_type="USER_CREATE",
                 kwargs={
-                    "username": parsed["username"],
-                    "roles": parsed["roles"],
-                    "password_hash": custom_app_context.hash(parsed["password"]),
+                    "username": parsed.get("username"),
+                    "roles": parsed.get("roles", []),
+                    "password_hash": custom_app_context.hash(parsed.get("password")),
                 },
             ),
         )

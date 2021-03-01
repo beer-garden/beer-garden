@@ -92,12 +92,13 @@ route_accesses = {
     "ROLE_UPDATE_DESCRIPTION": Permissions.LOCAL_ADMIN,
     "ROLE_CREATE": Permissions.LOCAL_ADMIN,
     "USER_READ_ALL": Permissions.LOCAL_ADMIN,
-    "USER_READ": Permissions.ADMIN,
     "USER_DELETE": Permissions.LOCAL_ADMIN,
     "USER_UPDATE_ROLE": Permissions.LOCAL_ADMIN,
     "USER_REMOVE_ROLE": Permissions.LOCAL_ADMIN,
     "USER_CREATE": Permissions.LOCAL_ADMIN,
-    "USER_UPDATE": Permissions.LOCAL_ADMIN,
+    # These must be handled at the API level
+    "USER_READ": None,
+    "USER_UPDATE": None,
 }
 
 

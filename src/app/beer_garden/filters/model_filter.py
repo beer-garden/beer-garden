@@ -2,7 +2,10 @@ import logging
 
 from beer_garden import config
 from beer_garden.filters.permission_mapper import Permissions, PermissionRequiredAccess
-from beer_garden.filters.garden_namespace_mapper import find_obj_garden_namespace
+from beer_garden.filters.garden_namespace_mapper import (
+    find_obj_garden_namespace,
+    obj_namespace_mapping,
+)
 from brewtils.errors import AuthorizationRequired
 from brewtils.models import (
     Principal,
@@ -43,34 +46,38 @@ def filter_brewtils_model(
         obj: Brewtils model to Filter
         raise_error: If an Exception should be raised if not matching
         current_user: Principal record associated with the Operation
-        required_permissions: Required permissions defined for API
+        required_permission: Required permission defined for API
 
     Returns:
 
     """
 
-    # Last ditch effort to verify they at least have the required permissions
-    if not hasattr(obj, "schema"):
-        if permission_check(
-            current_user=current_user, required_permission=required_permission
-        ):
-            return obj
-        if raise_error:
-            raise AuthorizationRequired("Action requires permissions")
-
-        return None
-
     # First we check if we have an easy mapping to the namespace
     obj_garden, obj_namespace = find_obj_garden_namespace(obj)
 
-    # If we find a namespace, we can run the filter at this point
-    if obj_namespace:
+    # If we find a namespace or garden, we can run the filter at this point
+    if obj_namespace or obj_garden:
         if permission_check(
             garden=obj_garden,
             namespace=obj_namespace,
             current_user=current_user,
             required_permission=required_permission,
         ):
+            # Now loop through to determine if any of the nested objects need to be filtered
+            # This will also help future proof us for more complex objects
+            for key in obj.__dict__.keys():
+
+                # Run filter if we think we can actually filter the value
+                if (
+                    type(obj.__dict__[key]) == list
+                    or type(obj.__dict__[key]) in obj_namespace_mapping.keys()
+                ):
+                    obj.__dict__[key] = model_filter(
+                        obj=obj.__dict__[key],
+                        raise_error=False,
+                        current_user=current_user,
+                        required_permission=required_permission,
+                    )
             return obj
         if raise_error:
             raise AuthorizationRequired(
@@ -121,7 +128,7 @@ def model_filter(
         new_obj = list()
         for obj_item in obj:
             # For list objects, we will not raise an error message
-            obj_item = filter_brewtils_model(
+            obj_item = model_filter(
                 obj=obj_item,
                 raise_error=False,
                 current_user=current_user,
@@ -130,6 +137,17 @@ def model_filter(
             if obj_item:
                 new_obj.append(obj_item)
         return new_obj
+
+    # Last ditch effort to verify they at least have the required permissions
+    if type(obj) not in obj_namespace_mapping.keys():
+        if permission_check(
+            current_user=current_user, required_permission=required_permission
+        ):
+            return obj
+        if raise_error:
+            raise AuthorizationRequired("Action requires permissions")
+
+        return None
 
     return filter_brewtils_model(
         obj=obj,
@@ -224,11 +242,10 @@ def permission_check(
         ):
             return True
 
-        # Scope = Unknown Target Garden/Namespace, but has level of access in Host Garden
+        # Scope = Unknown Target Garden/Namespace, but has level of access required
         elif (
             garden is None
             and namespace is None
-            and permission.garden == config.get("garden.name")
             and permission.access in PermissionRequiredAccess[required_permission]
         ):
             return True

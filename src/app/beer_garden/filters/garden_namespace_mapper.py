@@ -13,6 +13,7 @@ from brewtils.models import (
     Operation,
     Runner,
     Event,
+    Garden,
 )
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ def request_garden_namespace(obj: Request = None) -> str:
     Args:
         obj: Request
 
-    Returns: Namespace
+    Returns: (Garden, Namespace)
 
     """
     return obj.garden, obj.namespace
@@ -36,7 +37,7 @@ def request_template_garden_namespace(obj: RequestTemplate = None) -> str:
     Args:
         obj: Request Template
 
-    Returns: Namespace
+    Returns: (Garden, Namespace)
 
     """
     return obj.garden, obj.namespace
@@ -48,7 +49,7 @@ def system_garden_namespace(obj: System = None) -> str:
     Args:
         obj: System
 
-    Returns: Namespace
+    Returns: (Garden, Namespace)
 
     """
     return obj.garden, obj.namespace
@@ -60,7 +61,7 @@ def instance_garden_namespace(obj: Instance = None) -> str:
     Args:
         obj: Instance
 
-    Returns: Namespace
+    Returns: (Garden, Namespace)
 
     """
     system, _ = _from_kwargs(instance_id=obj.id)
@@ -86,7 +87,7 @@ def job_garden_namespace(obj: Job = None) -> str:
     Args:
         obj: Job
 
-    Returns: Namespace
+    Returns: (Garden, Namespace)
 
     """
     return request_template_garden_namespace(obj.request_template)
@@ -98,13 +99,12 @@ def runner_garden_namespace(obj: Runner = None) -> str:
     Args:
         obj: Runner
 
-    Returns: Namespace
+    Returns: (Garden, Namespace)
 
     """
 
     if obj.instance_id:
         system, _ = _from_kwargs(instance_id=obj.instance_id)
-        obj.kwargs["system"] = system
         return system_garden_namespace(system)
 
     return None, None
@@ -117,7 +117,7 @@ def operation_garden_namespace(obj: Operation = None) -> str:
     Args:
         obj: Operation
 
-    Returns: Namespace
+    Returns: (Garden, Namespace)
 
     """
 
@@ -182,7 +182,7 @@ def event_garden_namespace(obj: Event = None) -> str:
     Args:
         obj: Event
 
-    Returns: Namespace
+    Returns: (Garden, Namespace)
 
     """
 
@@ -191,22 +191,36 @@ def event_garden_namespace(obj: Event = None) -> str:
     return None, None
 
 
+def garden_garden_namespace(obj: Garden = None) -> str:
+    """
+    Finds the namespace associated with an garden
+    Args:
+        obj: Event
+
+    Returns: (Garden, Namespace)
+
+    """
+
+    return obj.name, None
+
+
 # Mapping for the different models for easy management
 obj_namespace_mapping = {
-    "InstanceSchema": instance_garden_namespace,
-    "JobSchema": job_garden_namespace,
-    "QueueSchema": queue_garden_namespace,
-    "RequestSchema": request_garden_namespace,
-    "RequestTemplateSchema": request_template_garden_namespace,
-    "SystemSchema": system_garden_namespace,
-    "OperationSchema": operation_garden_namespace,
-    "RunnerSchema": runner_garden_namespace,
-    "EventSchema": event_garden_namespace,
+    Instance: instance_garden_namespace,
+    Job: job_garden_namespace,
+    Queue: queue_garden_namespace,
+    Request: request_garden_namespace,
+    RequestTemplate: request_template_garden_namespace,
+    System: system_garden_namespace,
+    Operation: operation_garden_namespace,
+    Runner: runner_garden_namespace,
+    Event: event_garden_namespace,
+    Garden: garden_garden_namespace,
 }
 
 
 def find_obj_garden_namespace(obj):
-    if hasattr(obj, "schema") and obj.schema in obj_namespace_mapping.keys():
-        return obj_namespace_mapping[obj.schema](obj)
+    if type(obj) in obj_namespace_mapping.keys():
+        return obj_namespace_mapping[type(obj)](obj)
 
     return None, None
