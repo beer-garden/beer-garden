@@ -673,6 +673,7 @@ def _forward_http(operation: Operation, target_garden: Garden):
         response = easy_client.post_forward(operation)
 
         if response.status_code != 200:
+
             _publish_failed_forward(
                 operation=operation,
                 event_name=Events.GARDEN_UNREACHABLE.name,
