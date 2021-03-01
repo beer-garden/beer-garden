@@ -1,18 +1,21 @@
 # -*- coding: utf-8 -*-
 import json
+import logging
 from inspect import isawaitable
 
 import six
-from brewtils.models import BaseModel
+from brewtils.models import BaseModel, Operation
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.api
 import beer_garden.router
 
+logger = logging.getLogger(__name__)
+
 
 class SerializeHelper(object):
-    async def __call__(self, *args, serialize_kwargs=None, **kwargs):
-        result = beer_garden.router.route(*args, **kwargs)
+    async def __call__(self, operation: Operation, serialize_kwargs=None, **kwargs):
+        result = beer_garden.router.route(operation, **kwargs)
 
         # Await any coroutines
         if isawaitable(result):

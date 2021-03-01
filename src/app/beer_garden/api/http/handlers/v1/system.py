@@ -310,14 +310,14 @@ class SystemListAPI(BaseHandler):
             Operation(
                 operation_type="SYSTEM_READ_ALL",
                 kwargs={
-                    "serialize_kwargs": serialize_kwargs,
                     "filter_params": filter_params,
                     "order_by": order_by,
                     "include_fields": include_fields,
                     "exclude_fields": exclude_fields,
                     "dereference_nested": dereference_nested,
                 },
-            )
+            ),
+            serialize_kwargs=serialize_kwargs,
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
