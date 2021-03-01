@@ -72,7 +72,7 @@ def main():
     if beer_garden.application.is_alive():
         beer_garden.application.join()
 
-    logger.info("OK, we're all shut down. Have a good night!")
+    logger.info("OK, we're all shut down. Have a good night!\n")
 
 
 if __name__ == "__main__":
