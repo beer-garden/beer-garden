@@ -97,6 +97,6 @@ class MongoPruner(StoppableThread):
 
         # Look at the various TTLs to determine how often to run
         real_ttls = [x for x in kwargs.values() if x > 0]
-        run_every = min(real_ttls) / 2 if real_ttls else None
+        run_every = min(real_ttls) / 2 if real_ttls else 15
 
         return prune_tasks, run_every
