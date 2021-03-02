@@ -681,11 +681,14 @@ def start_request(request_id: str = None, request: Request = None) -> Request:
 def update_request(
     request_id: str = None,
     request: Request = None,
-    expiration_date=None,
+    attribute=None,
+    new_value=None,
 ) -> Request:
     request = request or db.query_unique(Request, raise_missing=True, id=request_id)
-    parent = find_parent(request)
-    update_expiration_date(request=parent, expiration_date=expiration_date)
+    if attribute == "expiration_date":
+        request = find_parent(request)
+    setattr(request, attribute, new_value)
+    db.update(request)
     request = db.query_unique(Request, raise_missing=True, id=request.id)
     return request
 
@@ -695,11 +698,6 @@ def find_parent(request):
     if request.has_parent:
         parent = find_parent(request.parent)
     return parent or request
-
-
-def update_expiration_date(request=None, expiration_date=None):
-    request.expiration_date = expiration_date
-    return db.update(request)
 
 
 @publish_event(Events.REQUEST_COMPLETED)
@@ -739,11 +737,8 @@ def complete_request(
         expiration_date = datetime.datetime.utcnow() + minutes_added
 
     if not request.has_parent:
-        request = update_expiration_date(
-            request=request, expiration_date=expiration_date
-        )
-    else:
-        request = db.update(request)
+        request.expiration_date = expiration_date
+    request = db.update(request)
 
     # Metrics
     request_completed(request)

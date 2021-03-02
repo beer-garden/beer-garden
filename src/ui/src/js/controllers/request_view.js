@@ -123,8 +123,8 @@ export default function requestViewController(
     formatJsonDisplay(_editor, true);
   };
 
-  $scope.updateExpirationDate = function(form, model){
-    RequestService.updateRequest($scope.request, model.expiration_date);
+  $scope.updateRequest = function(form, model, attribute){
+    RequestService.updateRequest($scope.request, attribute, model.expiration_date);
   }
 
   $scope.showAlert = function() {
