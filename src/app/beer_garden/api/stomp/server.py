@@ -125,7 +125,7 @@ class Connection:
         if subscribe_destination:
             self.conn.set_listener("", OperationListener(self.conn, send_destination))
 
-    def connect(self, connected_message=None):
+    def connect(self, connected_message=None, gardens=None):
         wait_time = 0.1
         while not self.conn.is_connected() and self.bg_active:
             try:
@@ -150,6 +150,7 @@ class Connection:
 
             except Exception as e:
                 logger.warning(str(e))
+                logger.warning(f"Affected gardens are {[garden.get('name') for garden in gardens]}")
                 logger.warning("Waiting %.1f seconds before next attempt", wait_time)
                 time.sleep(wait_time)
                 wait_time = min(wait_time * 2, 30)
