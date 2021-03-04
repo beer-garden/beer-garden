@@ -681,15 +681,20 @@ def start_request(request_id: str = None, request: Request = None) -> Request:
 def update_request(
     request_id: str = None,
     request: Request = None,
-    attribute=None,
-    new_value=None,
+    new_values=None,
 ) -> Request:
+    if new_values is None:
+        new_values = {}
     request = request or db.query_unique(Request, raise_missing=True, id=request_id)
-    if attribute == "expiration_date":
-        request = find_parent(request)
-    setattr(request, attribute, new_value)
-    db.update(request)
-    request = db.query_unique(Request, raise_missing=True, id=request.id)
+    expiration_date = new_values.pop("expiration_date", None)
+    if expiration_date:
+        parent = find_parent(request)
+        setattr(parent, "expiration_date", expiration_date)
+        db.update(parent)
+    for key in new_values.keys():
+        setattr(request, key, new_values[key])
+        db.update(request)
+    request = db.query_unique(Request, raise_missing=True, id=request_id)
     return request
 
 

@@ -110,8 +110,7 @@ class RequestAPI(BaseHandler):
                         )
                 elif op.path == "/update_request":
                     operation.operation_type = "REQUEST_UPDATE"
-                    operation.kwargs["attribute"] = op.value["attribute"]
-                    operation.kwargs["new_value"] = op.value["new_value"]
+                    operation.kwargs["new_values"] = op.value
 
                 elif op.path == "/output":
                     operation.kwargs["output"] = op.value
