@@ -150,7 +150,9 @@ class Connection:
 
             except Exception as e:
                 logger.warning(str(e))
-                logger.warning(f"Affected gardens are {[garden.get('name') for garden in gardens]}")
+                logger.warning(
+                    f"Affected gardens are {[garden.get('name') for garden in gardens]}"
+                )
                 logger.warning("Waiting %.1f seconds before next attempt", wait_time)
                 time.sleep(wait_time)
                 wait_time = min(wait_time * 2, 30)

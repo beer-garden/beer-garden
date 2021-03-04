@@ -37,7 +37,9 @@ class StompManager(StoppableThread):
                 headers = [self.convert_header_to_dict(stomp_config.get("headers"))]
             self.conn_dict = {
                 f"{host_and_ports}{subscribe_destination}{ssl.get('use_ssl')}": {
-                    "conn": self.connect(stomp_config, [{"name": name, "main": is_main}]),
+                    "conn": self.connect(
+                        stomp_config, [{"name": name, "main": is_main}]
+                    ),
                     "gardens": [{"name": name, "main": is_main}],
                     "headers_list": headers,
                 }
