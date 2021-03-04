@@ -6,6 +6,10 @@ from beer_garden.filters.garden_namespace_mapper import (
     find_obj_garden_namespace,
     obj_namespace_mapping,
 )
+from beer_garden.filters.principal_filters import (
+    obj_principal_filtering,
+    model_principal_filter,
+)
 from brewtils.errors import AuthorizationRequired
 from brewtils.models import (
     Principal,
@@ -33,6 +37,10 @@ Also, if a user is approved of the Namespace OR Tag, then the object is returned
 want the least restrictive approach.
 """
 
+filtered_models = set(
+    list(obj_principal_filtering.keys()) + list(obj_namespace_mapping.keys())
+)
+
 
 def filter_brewtils_model(
     obj=None,
@@ -52,7 +60,18 @@ def filter_brewtils_model(
 
     """
 
-    # First we check if we have an easy mapping to the namespace
+    # Phase 1, need to run any model specific filtering
+
+    obj = model_principal_filter(
+        obj=obj, raise_error=raise_error, current_user=current_user
+    )
+
+    if obj is None:
+        return obj
+
+    # Phase 2, Run filtering based on Namespace and Garden access
+
+    # We check if we have an easy mapping to the namespace
     obj_garden, obj_namespace = find_obj_garden_namespace(obj)
 
     # If we find a namespace or garden, we can run the filter at this point
@@ -86,11 +105,6 @@ def filter_brewtils_model(
             )
 
         return None
-
-    # We have no way to filter, we will return the obj for now and log an error
-    # This should be removed long term, this is here to make sure we know a schema wasn't
-    # captured.
-    logger.debug(f"Unable to filter obj for schema type {obj.schema}")
 
     return obj
 
@@ -143,7 +157,7 @@ def model_filter(
         return new_obj
 
     # Last ditch effort to verify they at least have the required permissions
-    if type(obj) not in obj_namespace_mapping.keys():
+    if type(obj) not in filtered_models:
         if permission_check(
             current_user=current_user, required_permission=required_permission
         ):
