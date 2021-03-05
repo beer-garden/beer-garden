@@ -402,7 +402,6 @@ def _create_role(role):
     except DoesNotExist:
         logger.warning("Role %s missing, about to create" % role.name)
         role.save()
-        logger.info("Added %s" % role.name)
 
 
 def _should_create_admin():
