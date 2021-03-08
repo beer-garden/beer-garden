@@ -225,6 +225,42 @@ export default function gardenService($http) {
                               },
                           },
             },
+      'user_mapping': {
+                  'title': 'User Mapping',
+                  'description': 'When forwarding/receiving requests, the owner of the Request will be mapped.',
+                  'type': 'array',
+                  'items':{
+                      'title': ' ',
+                      'type': 'object',
+                      'properties': {
+                          'key': {
+                                 'title': 'Local Account',
+                                 'description': '',
+                                 'type': 'string',
+                          },
+                          'value': {
+                                 'title': 'Remote Account',
+                                 'description': '',
+                                 'type': 'string',
+                          }
+                      },
+                  },
+            },
+      'user_enable_mapping': {
+              'title': 'Enable User Mapping',
+              'description': 'Whether to map users for Requests',
+              'type': 'boolean',
+        },
+      'user_default_local': {
+              'title': 'Default Local User Mapping',
+              'description': 'Default user mapping, if empty the default value will be Null',
+              'type': 'string',
+        },
+      'user_default_remote': {
+              'title': 'Default Remote User Mapping',
+              'description': 'Default user mapping, if empty the default value will be Null',
+              'type': 'string',
+        },
     },
 
   }
@@ -265,6 +301,15 @@ export default function gardenService($http) {
                 'stomp_password',
                 'stomp_ssl',
                 'stomp_headers',
+              ],
+            },
+            {
+              'title': 'User Mapping',
+              'items': [
+                'user_enable_mapping',
+                'user_default_local',
+                'user_default_remote',
+                'user_mapping',
               ],
             },
           ],
