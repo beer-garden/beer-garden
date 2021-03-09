@@ -83,5 +83,6 @@ target/
 # node files
 node_modules
 
-# plugins
+# extra stuff
 plugins/
+brewtils/

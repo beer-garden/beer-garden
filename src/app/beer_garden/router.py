@@ -277,8 +277,8 @@ def initiate_forward(operation: Operation):
 
         raise
 
-    # If None is returned and this is a Request Create, return locally created Request
-    if not response and operation.operation_type == "REQUEST_CREATE":
+    # If this is a request create return locally created Request
+    if operation.operation_type == "REQUEST_CREATE":
         return operation.model
 
     return response
@@ -618,26 +618,25 @@ def _forward_http(operation: Operation, target_garden: Garden):
         conn_info.get("url_prefix", "/"),
     )
 
-    response = None
-
     try:
         if conn_info.get("ssl"):
-            http_config = config.get("entry.http")
             response = requests.post(
                 endpoint,
+                headers={"Content-type": "application/json", "Accept": "text/plain"},
                 data=SchemaParser.serialize_operation(operation),
-                cert=http_config.ssl.ca_cert,
-                verify=http_config.ssl.ca_path,
+                cert=conn_info.get("client_cert"),
+                verify=conn_info.get("ca_cert"),
             )
 
         else:
             response = requests.post(
                 endpoint,
-                data=SchemaParser.serialize_operation(operation),
                 headers={"Content-type": "application/json", "Accept": "text/plain"},
+                data=SchemaParser.serialize_operation(operation),
             )
 
         if response.status_code != 200:
+
             _publish_failed_forward(
                 operation=operation,
                 event_name=Events.GARDEN_UNREACHABLE.name,
