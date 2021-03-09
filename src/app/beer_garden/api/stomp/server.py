@@ -107,6 +107,7 @@ class Connection:
         username=None,
         password=None,
     ):
+        self.host_and_port = host_and_ports
         self.username = username
         self.password = password
         self.subscribe_destination = subscribe_destination
@@ -127,35 +128,36 @@ class Connection:
 
     def connect(self, connected_message=None, gardens=None):
         wait_time = 0.1
-        while not self.conn.is_connected() and self.bg_active:
-            try:
-                self.conn.connect(
-                    username=self.username,
-                    passcode=self.password,
-                    wait=True,
-                    headers={"client-id": self.username},
-                )
-                if self.subscribe_destination:
-                    self.conn.subscribe(
-                        destination=self.subscribe_destination,
-                        id=self.username,
-                        ack="auto",
-                        headers={
-                            "subscription-type": "MULTICAST",
-                            "durable-subscription-name": self.subscribe_destination,
-                        },
+        if self.host_and_port[0][0] and self.host_and_port[0][1] and self.subscribe_destination:
+            while not self.conn.is_connected() and self.bg_active:
+                try:
+                    self.conn.connect(
+                        username=self.username,
+                        passcode=self.password,
+                        wait=True,
+                        headers={"client-id": self.username},
                     )
-                if connected_message is not None and self.conn.is_connected():
-                    logger.info("Stomp successfully " + connected_message)
+                    if self.subscribe_destination:
+                        self.conn.subscribe(
+                            destination=self.subscribe_destination,
+                            id=self.username,
+                            ack="auto",
+                            headers={
+                                "subscription-type": "MULTICAST",
+                                "durable-subscription-name": self.subscribe_destination,
+                            },
+                        )
+                    if connected_message is not None and self.conn.is_connected():
+                        logger.info("Stomp successfully " + connected_message)
 
-            except Exception as e:
-                logger.warning(str(e))
-                logger.warning(
-                    f"Affected gardens are {[garden.get('name') for garden in gardens]}"
-                )
-                logger.warning("Waiting %.1f seconds before next attempt", wait_time)
-                time.sleep(wait_time)
-                wait_time = min(wait_time * 2, 30)
+                except Exception as e:
+                    logger.warning(str(e))
+                    logger.warning(
+                        f"Affected gardens are {[garden.get('name') for garden in gardens]}"
+                    )
+                    logger.warning("Waiting %.1f seconds before next attempt", wait_time)
+                    time.sleep(wait_time)
+                    wait_time = min(wait_time * 2, 30)
 
     def disconnect(self):
         self.bg_active = False
