@@ -690,7 +690,7 @@ def update_request(
     expiration_date = new_values.pop("expiration_date", None)
     if expiration_date:
         parent = find_parent(request)
-        setattr(parent, "expiration_date", expiration_date)
+        parent.expiration_date = expiration_date
         db.update(parent)
     for key in new_values.keys():
         setattr(request, key, new_values[key])
