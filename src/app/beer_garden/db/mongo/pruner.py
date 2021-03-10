@@ -72,10 +72,6 @@ class MongoPruner(StoppableThread):
                 "collection": Request,
                 "field": "expiration_date",
                 "delete_after": timedelta(minutes=0),
-                "additional_query": (
-                    Q(status="SUCCESS") | Q(status="CANCELED") | Q(status="ERROR")
-                )
-                & Q(has_parent=False),
             }
         ]
 

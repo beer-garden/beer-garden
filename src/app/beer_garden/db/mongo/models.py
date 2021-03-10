@@ -323,10 +323,6 @@ class Request(MongoModel, Document):
             {"name": "parent_ref_index", "fields": ["parent"]},
             {"name": "parent_index", "fields": ["has_parent"]},
             # These are for sorting parent requests
-            {
-                "name": "parent_status_expiration_date_index",
-                "fields": ["expiration_date", "status", "has_parent"],
-            },
             {"name": "parent_command_index", "fields": ["has_parent", "command"]},
             {"name": "parent_system_index", "fields": ["has_parent", "system"]},
             {

@@ -216,6 +216,7 @@ export default function requestViewController(
     while(request.has_parent){
         request=request.parent;
     }
+    $scope.parent_complete = RequestService.isComplete(request);
     $scope.expiration_date = formatDate(request.expiration_date);
     $scope.dateModel = {"expiration_date": request.expiration_date};
     return

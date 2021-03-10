@@ -687,15 +687,17 @@ def update_request(
     if new_values is None:
         new_values = {}
     request = request or db.query_unique(Request, raise_missing=True, id=request_id)
-    expiration_date = new_values.pop("expiration_date", None)
-    if expiration_date:
+    if "expiration_date" in new_values:
+        expiration_date = new_values.pop("expiration_date", None)
         parent = find_parent(request)
         parent.expiration_date = expiration_date
-        db.update(parent)
+        parent = db.update(parent)
+        if parent.id == request_id:
+            request = parent
     for key in new_values.keys():
         setattr(request, key, new_values[key])
-        db.update(request)
-    request = db.query_unique(Request, raise_missing=True, id=request_id)
+    if new_values:
+        request = db.update(request)
     return request
 
 

@@ -87,14 +87,14 @@
           <td ng-click="toggleChildren()">{{formatDate(request.updated_at)}}</td>
           <td>
             {{(expiration_date || "N/A")}}
-            <button ng-click="showDateModal=!showDateModal" ng-hide="!complete" class="btn btn-primary fa fa-pencil-square-o"></button>
+            <button ng-click="showDateModal=!showDateModal" ng-hide="!parent_complete" class="btn btn-primary fa fa-pencil-square-o"></button>
             <modal ng-show="showDateModal">
               <form
                       name="dateform"
                       sf-schema="dateSchema"
                       sf-form="dateForm"
                       sf-model="dateModel"
-                      ng-submit="updateRequest(dateform, dateModel, 'expiration_date')"></form>
+                      ng-submit="updateRequest(dateform, dateModel)"></form>
 
             </modal>
           </td>
