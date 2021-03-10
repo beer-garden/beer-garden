@@ -1,7 +1,12 @@
 from beer_garden import config
 from beer_garden.filters.permission_mapper import PermissionRequiredAccess, Permissions
 from brewtils.errors import AuthorizationRequired
-from brewtils.models import Principal, Operation
+from brewtils.models import Principal, Operation, Garden
+
+"""
+Any custom filters must be sure to not impact the Namespace/Garden filtering. If a field is filtered our at this level,
+it will impact further checks. So be conscious on what you remove here.
+"""
 
 
 def principal_filtering(
@@ -37,9 +42,6 @@ def principal_filtering(
         )
 
     return None
-
-
-# Must be the Local Admin to run this
 
 
 def operation_filtering(
@@ -81,19 +83,68 @@ def operation_filtering(
     return None
 
 
-obj_principal_filtering = {
+def garden_filtering(
+    obj: Garden = None, raise_error: bool = True, current_user: Principal = None
+):
+    """
+    Garden admins can return connection information.
+    Garden Read access can return non Garden connection information.
+
+    Args:
+        obj: Garden model to be modified
+        raise_error: If an Exception should be raised if not matching
+        current_user: Principal record associated with the Operation
+
+    Returns:
+
+    """
+
+    read_access = False
+
+    # Loop through all permission to determine if the user has Admin permissions
+    for permission in current_user.permissions:
+        if (
+            permission.access in PermissionRequiredAccess[Permissions.ADMIN]
+            and permission.garden == obj.name
+        ):
+            return obj
+        elif (
+            permission.access in PermissionRequiredAccess[Permissions.LOCAL_ADMIN]
+            and permission.garden == config.get("garden.name")
+            and permission.namespace is None
+        ):
+            return obj
+        elif (
+            permission.access in PermissionRequiredAccess[Permissions.READ]
+            and permission.garden == obj.name
+        ):
+            read_access = True
+
+    # If Read Access was found, then remove the Connection Parameters
+    if read_access:
+        obj.connection_params = None
+        return obj
+
+    if raise_error:
+        raise AuthorizationRequired("Action requires Garden permissions")
+
+    return None
+
+
+obj_custom_filtering = {
     Operation: operation_filtering,
     Principal: principal_filtering,
+    Garden: garden_filtering,
 }
 
 
-def model_principal_filter(
+def model_custom_filter(
     obj=None,
     raise_error: bool = True,
     current_user: Principal = None,
 ):
     """
-    Filters the Brewtils Model based on Principal specific rules
+    Filters the Brewtils Model based on specific rules
     Args:
         obj: Brewtils model to Filter
         raise_error: If an Exception should be raised if not matching
@@ -107,8 +158,8 @@ def model_principal_filter(
     if not hasattr(obj, "schema"):
         return obj
 
-    if type(obj) in obj_principal_filtering.keys():
-        return obj_principal_filtering[type(obj)](
+    if type(obj) in obj_custom_filtering.keys():
+        return obj_custom_filtering[type(obj)](
             obj=obj, raise_error=raise_error, current_user=current_user
         )
 

@@ -6,9 +6,9 @@ from beer_garden.filters.garden_namespace_mapper import (
     find_obj_garden_namespace,
     obj_namespace_mapping,
 )
-from beer_garden.filters.principal_filters import (
-    obj_principal_filtering,
-    model_principal_filter,
+from beer_garden.filters.custom_filters import (
+    obj_custom_filtering,
+    model_custom_filter,
 )
 from brewtils.errors import AuthorizationRequired
 from brewtils.models import (
@@ -38,7 +38,7 @@ want the least restrictive approach.
 """
 
 filtered_models = set(
-    list(obj_principal_filtering.keys()) + list(obj_namespace_mapping.keys())
+    list(obj_custom_filtering.keys()) + list(obj_namespace_mapping.keys())
 )
 
 
@@ -62,7 +62,7 @@ def filter_brewtils_model(
 
     # Phase 1, need to run any model specific filtering
 
-    obj = model_principal_filter(
+    obj = model_custom_filter(
         obj=obj, raise_error=raise_error, current_user=current_user
     )
 
