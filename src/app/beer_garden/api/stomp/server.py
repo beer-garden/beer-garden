@@ -1,6 +1,5 @@
 import stomp
 import logging
-import time
 from brewtils.schema_parser import SchemaParser
 import beer_garden.events
 import beer_garden.router
@@ -125,34 +124,30 @@ class Connection:
         if subscribe_destination:
             self.conn.set_listener("", OperationListener(self.conn, send_destination))
 
-    def connect(self, connected_message=None):
-        wait_time = 0.1
-        while not self.conn.is_connected() and self.bg_active:
-            try:
-                self.conn.connect(
-                    username=self.username,
-                    passcode=self.password,
-                    wait=True,
-                    headers={"client-id": self.username},
+    def connect(self, connected_message=None, wait_time=None):
+        try:
+            self.conn.connect(
+                username=self.username,
+                passcode=self.password,
+                wait=True,
+                headers={"client-id": self.username},
+            )
+            if self.subscribe_destination:
+                self.conn.subscribe(
+                    destination=self.subscribe_destination,
+                    id=self.username,
+                    ack="auto",
+                    headers={
+                        "subscription-type": "MULTICAST",
+                        "durable-subscription-name": self.subscribe_destination,
+                    },
                 )
-                if self.subscribe_destination:
-                    self.conn.subscribe(
-                        destination=self.subscribe_destination,
-                        id=self.username,
-                        ack="auto",
-                        headers={
-                            "subscription-type": "MULTICAST",
-                            "durable-subscription-name": self.subscribe_destination,
-                        },
-                    )
-                if connected_message is not None and self.conn.is_connected():
-                    logger.info("Stomp successfully " + connected_message)
+            if connected_message is not None and self.conn.is_connected():
+                logger.info("Stomp successfully " + connected_message)
 
-            except Exception as e:
-                logger.warning(str(e))
-                logger.warning("Waiting %.1f seconds before next attempt", wait_time)
-                time.sleep(wait_time)
-                wait_time = min(wait_time * 2, 30)
+        except Exception as e:
+            logger.warning(str(e))
+            logger.warning("Waiting %.1f seconds before next attempt", wait_time)
 
     def disconnect(self):
         self.bg_active = False

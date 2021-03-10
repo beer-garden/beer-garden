@@ -1,3 +1,4 @@
+import datetime
 import logging
 from brewtils.models import Event, Events
 import beer_garden.events
@@ -22,7 +23,7 @@ class StompManager(StoppableThread):
             username=stomp_config.get("username"),
             password=stomp_config.get("password"),
         )
-        conn.connect("connected")
+        conn.connect(connected_message="connected", wait_time=0.1)
         return conn
 
     def __init__(self, ep_conn=None, stomp_config=None, name=None, is_main=True):
@@ -53,6 +54,7 @@ class StompManager(StoppableThread):
         while not self.stopped():
             if self.ep_conn.poll():
                 self.handle_event(self.ep_conn.recv())
+
         self.shutdown()
 
     def shutdown(self):
@@ -72,10 +74,8 @@ class StompManager(StoppableThread):
             ),
         )
 
-    def reconnect(self, conn):
-        if not conn.is_connected():
-            self.logger.warning("Lost stomp connection")
-            conn.connect("reconnected")
+    def reconnect(self, conn=None, wait_time=None):
+        conn.connect(connected_message="reconnected", wait_time=wait_time)
 
     def remove_garden_from_list(self, garden_name=None, skip_key=None):
         """removes garden name from dict list of gardens for stomp subscriptions"""
@@ -104,18 +104,30 @@ class StompManager(StoppableThread):
                     skip_key = self.add_connection(
                         stomp_config=stomp_config, name=event.payload.name
                     )
-                self.remove_garden_from_list(
-                    garden_name=event.payload.name, skip_key=skip_key
-                )
+            self.remove_garden_from_list(
+                garden_name=event.payload.name, skip_key=skip_key
+            )
         for value in self.conn_dict.values():
             conn = value["conn"]
             if conn:
-                self.reconnect(conn)
-                if value["headers_list"]:
-                    for headers in value["headers_list"]:
-                        conn.send_event(event=event, headers=headers)
-                else:
-                    conn.send_event(event=event)
+                if not conn.is_connected() and conn.bg_active:
+                    wait_time = value.get("wait_time") or 0.1
+                    wait_date = value.get("wait_date")
+                    if wait_date:
+                        wait_check = datetime.datetime.utcnow() >= wait_date
+                    else:
+                        wait_check = True
+                    if wait_check:
+                        self.reconnect(conn, wait_time)
+                        value["wait_time"] = min(wait_time * 2, 30)
+                        seconds_added = datetime.timedelta(seconds=wait_time)
+                        value["wait_date"] = datetime.datetime.utcnow() + seconds_added
+                elif conn.bg_active:
+                    if value["headers_list"]:
+                        for headers in value["headers_list"]:
+                            conn.send_event(event=event, headers=headers)
+                    else:
+                        conn.send_event(event=event)
 
     @staticmethod
     def convert_header_to_dict(headers):
