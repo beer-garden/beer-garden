@@ -128,7 +128,11 @@ class Connection:
 
     def connect(self, connected_message=None, gardens=None):
         wait_time = 0.1
-        if self.host_and_port[0][0] and self.host_and_port[0][1] and self.subscribe_destination:
+        if (
+            self.host_and_port[0][0]
+            and self.host_and_port[0][1]
+            and self.subscribe_destination
+        ):
             while not self.conn.is_connected() and self.bg_active:
                 try:
                     self.conn.connect(
@@ -155,7 +159,9 @@ class Connection:
                     logger.warning(
                         f"Affected gardens are {[garden.get('name') for garden in gardens]}"
                     )
-                    logger.warning("Waiting %.1f seconds before next attempt", wait_time)
+                    logger.warning(
+                        "Waiting %.1f seconds before next attempt", wait_time
+                    )
                     time.sleep(wait_time)
                     wait_time = min(wait_time * 2, 30)
 
