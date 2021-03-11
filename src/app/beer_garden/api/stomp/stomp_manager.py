@@ -122,6 +122,9 @@ class StompManager(StoppableThread):
                         value["wait_time"] = min(wait_time * 2, 30)
                         seconds_added = datetime.timedelta(seconds=wait_time)
                         value["wait_date"] = datetime.datetime.utcnow() + seconds_added
+                        if conn.is_connected():
+                            value.pop("wait_time")
+                            value.pop("wait_date")
                 elif conn.bg_active:
                     if value["headers_list"]:
                         for headers in value["headers_list"]:
