@@ -797,7 +797,7 @@ def handle_event(event):
         if event.name == Events.REQUEST_CREATED.name:
             # Attempt to create the request, if it already exists then continue on
             try:
-                map_remote_requestor(event)
+                map_remote_requester(event)
                 db.create(event.payload)
             except NotUniqueException:
                 pass
@@ -814,7 +814,7 @@ def handle_event(event):
 
                 db.update(existing_request)
             else:
-                map_remote_requestor(event)
+                map_remote_requester(event)
                 db.create(event.payload)
 
     # Required if the main process spawns a wait Request
@@ -823,7 +823,7 @@ def handle_event(event):
             request_map[str(event.payload.id)].set()
 
 
-def map_remote_requestor(event):
+def map_remote_requester(event):
     # When a child request is received, we have to map over the requester
     # filed based on the source Garden
 
