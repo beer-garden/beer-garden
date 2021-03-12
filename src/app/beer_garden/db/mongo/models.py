@@ -67,6 +67,7 @@ __all__ = [
     "CronTrigger",
     "IntervalTrigger",
     "FileTrigger",
+    "PrincipalMapping",
     "Garden",
     "File",
     "FileChunk",
@@ -698,6 +699,15 @@ class Job(MongoModel, Document):
             )
 
 
+class PrincipalMapping(MongoModel, EmbeddedDocument):
+    brewtils_model = brewtils.models.PrincipalMapping
+
+    enabled = BooleanField(required=True, default=False)
+    default_local_principal = StringField()
+    default_remote_principal = StringField()
+    principal_mappers = DictField()
+
+
 class Garden(MongoModel, Document):
     brewtils_model = brewtils.models.Garden
 
@@ -707,6 +717,7 @@ class Garden(MongoModel, Document):
     namespaces = ListField()
     connection_type = StringField()
     connection_params = DictField()
+    principal_mapping = EmbeddedDocumentField("PrincipalMapping")
     systems = ListField(ReferenceField(System, reverse_delete_rule=PULL))
 
     meta = {

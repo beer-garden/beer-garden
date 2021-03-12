@@ -43,7 +43,7 @@ export default function gardenService($http) {
     var values = {};
     var stomp_headers = [];
     values['connection_type'] = model['connection_type'];
-     if (model.hasOwnProperty('connection_params') && model.connection_params != null) {
+    if (model.hasOwnProperty('connection_params') && model.connection_params != null) {
         for (var parameter of Object.keys(model['connection_params']) ) {
           if (parameter == 'stomp_headers') {
             for (var key in model['connection_params'][parameter]) {
@@ -57,6 +57,19 @@ export default function gardenService($http) {
           }
         }
     }
+    if (model.hasOwnProperty('principal_mapping') && model.principal_mapping != null){
+        var principal_mappers = [];
+        for (var key in model.principal_mapping['principal_mappers']) {
+                principal_mappers[principal_mappers.length] = {'local': key,
+                    'remote': model.principal_mapping['principal_mappers'][key]};
+            }
+        values['principal_mapper'] = principal_mappers;
+
+        values['principal_enable_mapping'] = model.principal_mapping['enabled'];
+        values['principal_default_local'] = model.principal_mapping['default_local_principal'];
+        values['principal_default_remote'] = model.principal_mapping['default_remote_principal'];
+
+    }
 
     return values;
   }
@@ -65,6 +78,7 @@ export default function gardenService($http) {
 
     model['connection_type'] = form['connection_type'];
     model['connection_params'] = {};
+    model['principal_mapping'] = {};
     var stomp_headers = {};
     for (var field of Object.keys(form) ) {
        if (field == 'stomp_headers') {
@@ -72,6 +86,22 @@ export default function gardenService($http) {
             stomp_headers[form[field][i]['key']] = form[field][i]['value'];
          }
          model['connection_params'][field] = stomp_headers;
+       }
+       else if (field == 'principal_mapper'){
+         var user_mapping = {};
+         for (var i in form[field]){
+            user_mapping[form[field][i]['local']] = form[field][i]['remote'];
+         }
+         model['principal_mapping']['principal_mappers'] = user_mapping
+       }
+       else if (field == 'principal_enable_mapping'){
+         model['principal_mapping']['enabled']  = form[field];
+       }
+       else if (field == 'principal_default_local'){
+         model['principal_mapping']['default_local_principal']  = form[field];
+       }
+       else if (field == 'principal_default_remote'){
+         model['principal_mapping']['default_remote_principal']  = form[field];
        }
        else if (field != 'connection_type'){
          model['connection_params'][field] = form[field];
@@ -225,20 +255,20 @@ export default function gardenService($http) {
                               },
                           },
             },
-      'user_mapping': {
+      'principal_mapper': {
                   'title': 'User Mapping',
-                  'description': 'When forwarding/receiving requests, the owner of the Request will be mapped.',
+                  'description': 'Specific user mapping, if not matched the defaults will be utilized',
                   'type': 'array',
                   'items':{
                       'title': ' ',
                       'type': 'object',
                       'properties': {
-                          'key': {
+                          'local': {
                                  'title': 'Local Account',
                                  'description': '',
                                  'type': 'string',
                           },
-                          'value': {
+                          'remote': {
                                  'title': 'Remote Account',
                                  'description': '',
                                  'type': 'string',
@@ -246,17 +276,17 @@ export default function gardenService($http) {
                       },
                   },
             },
-      'user_enable_mapping': {
+      'principal_enable_mapping': {
               'title': 'Enable User Mapping',
-              'description': 'Whether to map users for Requests',
+              'description': 'Whether to map Requester when forwarding Requests to Garden (Does not change Requester in local database)',
               'type': 'boolean',
         },
-      'user_default_local': {
+      'principal_default_local': {
               'title': 'Default Local User Mapping',
               'description': 'Default user mapping, if empty the default value will be Null',
               'type': 'string',
         },
-      'user_default_remote': {
+      'principal_default_remote': {
               'title': 'Default Remote User Mapping',
               'description': 'Default user mapping, if empty the default value will be Null',
               'type': 'string',
@@ -306,10 +336,10 @@ export default function gardenService($http) {
             {
               'title': 'User Mapping',
               'items': [
-                'user_enable_mapping',
-                'user_default_local',
-                'user_default_remote',
-                'user_mapping',
+                'principal_enable_mapping',
+                'principal_default_local',
+                'principal_default_remote',
+                'principal_mapper',
               ],
             },
           ],

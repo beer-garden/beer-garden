@@ -17,7 +17,7 @@ import pika.spec
 import six
 import urllib3
 
-
+from beer_garden.garden import get_garden
 from brewtils.choices import parse
 from brewtils.errors import ConflictError, ModelValidationError, RequestPublishException
 from brewtils.models import Choices, Events, Request, RequestTemplate, System, Operation
@@ -795,6 +795,9 @@ def handle_event(event):
 
         if event.name == Events.REQUEST_CREATED.name:
             if db.query_unique(Request, id=event.payload.id) is None:
+
+                map_remote_requestor(event)
+
                 db.create(event.payload)
 
         elif event.name in (Events.REQUEST_STARTED.name, Events.REQUEST_COMPLETED.name):
@@ -803,12 +806,42 @@ def handle_event(event):
             # the subset of fields that change "corrects" the parent
             existing_request = db.query_unique(Request, id=event.payload.id)
 
-            for field in ("status", "output", "error_class"):
-                setattr(existing_request, field, getattr(event.payload, field))
+            if existing_request:
+                for field in ("status", "output", "error_class"):
+                    setattr(existing_request, field, getattr(event.payload, field))
 
-            db.update(existing_request)
+                db.update(existing_request)
+            else:
+                map_remote_requestor(event)
+                db.create(event.payload)
 
     # Required if the main process spawns a wait Request
     if event.name == Events.REQUEST_COMPLETED.name:
         if str(event.payload.id) in request_map:
             request_map[str(event.payload.id)].set()
+
+
+def map_remote_requestor(event):
+    # When a child request is received, we have to map over the requester
+    # filed based on the source Garden
+
+    source_garden = get_garden(event.garden)
+
+    if (
+        source_garden
+        and source_garden.principal_mapping
+        and source_garden.principal_mapping.enabled
+    ):
+        if (
+            event.payload.requester
+            in source_garden.principal_mapping.principal_mappers.values()
+        ):
+            for (
+                local,
+                remote,
+            ) in source_garden.principal_mapping.principal_mappers.items():
+                if remote == event.payload.requester:
+                    event.payload.requester = local
+                    break
+        else:
+            event.payload.requester = source_garden.default_local_principal

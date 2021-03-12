@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import List
 
 from brewtils.errors import PluginError
-from brewtils.models import Events, Garden, System, Event
+from brewtils.models import Events, Garden, System, Event, PrincipalMapping
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -72,6 +72,7 @@ def local_garden() -> Garden:
         status="RUNNING",
         systems=get_systems(filter_params={"local": True}),
         namespaces=get_namespaces(),
+        principal_mapping=PrincipalMapping(),
     )
 
 
@@ -111,6 +112,7 @@ def update_garden_config(garden: Garden) -> Garden:
     db_garden = db.query_unique(Garden, id=garden.id)
     db_garden.connection_params = garden.connection_params
     db_garden.connection_type = garden.connection_type
+    db_garden.principal_mapping = garden.principal_mapping
     db_garden.status = "INITIALIZING"
 
     return update_garden(db_garden)

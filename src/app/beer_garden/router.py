@@ -489,6 +489,28 @@ def _pre_forward(operation: Operation) -> Operation:
         operation.model.parent = None
         operation.model.has_parent = False
 
+        # If the Garden has owner mapping enabled, change the owner properly
+        # and hasattr(gardens[operation.target_garden_name].principal_mapping, "enabled")
+        if (
+            gardens[operation.target_garden_name].principal_mapping
+            and gardens[operation.target_garden_name].principal_mapping.enabled
+        ):
+            # If the owner field exists, update it
+            if (
+                operation.model.requester
+                and operation.model.requester
+                in gardens[
+                    operation.target_garden_name
+                ].principal_mapping.principal_mappers.keys()
+            ):
+                operation.model.requester = gardens[
+                    operation.target_garden_name
+                ].principal_mapping.principal_mappers[operation.model.requester]
+            else:
+                operation.model.requester = gardens[
+                    operation.target_garden_name
+                ].principal_mapping.default_remote_principal
+
         beer_garden.files.forward_file(operation)
 
         # Pull out and store the wait event, if it exists
