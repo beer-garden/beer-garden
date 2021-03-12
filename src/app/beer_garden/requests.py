@@ -838,7 +838,10 @@ def map_remote_requestor(event):
             event.payload.requester
             in source_garden.principal_mapping.principal_mappers.values()
         ):
-            for (local, remote) in source_garden.principal_mapping.principal_mappers.items():
+            for (
+                local,
+                remote,
+            ) in source_garden.principal_mapping.principal_mappers.items():
                 if remote == event.payload.requester:
                     event.payload.requester = local
                     break
