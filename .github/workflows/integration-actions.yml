@@ -3,12 +3,8 @@ name: Integration-Actions
 on: pull_request
 
 jobs:
-  Plugin-Testing:
+  Plugin-Local-Testing:
     runs-on: ${{ matrix.os }}
-
-    defaults:
-      run:
-        working-directory: ./src/app
 
     strategy:
       matrix:
@@ -16,9 +12,14 @@ jobs:
         os: ['ubuntu-latest']
         plugin-brewtils: ['3.1.0']
 
-    name: Linting OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
+    name: Plugin Local Test - OS ${{ matrix.os }} - Python ${{ matrix.python-version }} - Brewtils ${{plugin-brewtils}}
     steps:
       - uses: actions/checkout@v2
+
+      - name: Setup python
+          uses: actions/setup-python@v2
+          with:
+            python-version: ${{ matrix.python-version }}
 
       - name: Run Docker Mongo
         run: docker-compose up -d mongodb
@@ -33,16 +34,14 @@ jobs:
         working-directory: ./src/app
 
       - name: Run Docker Beer Garden
-        run: docker-compose up -d rabbitmq
+        run: docker-compose up -d beer-garden
         working-directory: ./docker/docker-compose
 
-      - name: Setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
+      - name: Uninstall Brewtils
+        run: pip uninstall brewtils
 
-      - name: Install Brewtils
-        run: pip install brewtils==${{matrix.brewtils-verison}}
+      - name: Install Test Version of Brewtils
+        run: pip install brewtils==${{matrix.plugin-brewtils}}
 
       - name: Install Python Deps
         run: pip install -r requirements.txt
