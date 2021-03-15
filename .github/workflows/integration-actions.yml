@@ -49,6 +49,12 @@ jobs:
       - name: Check Docker Containers
         run: docker ps
 
+      - name: Wait for images to come up
+        run: sleep 10
+
+      - name: Grab logs from Beer-Garden
+        run: docker logs --tail 100 beer-garden
+
       - name: Uninstall Brewtils
         run: pip uninstall brewtils
 
