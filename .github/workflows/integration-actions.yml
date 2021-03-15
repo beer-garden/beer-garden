@@ -49,7 +49,7 @@ jobs:
         run: ls ./docker/docker-compose/data/localplugins
 
       - name: Run Docker Beer Garden
-        run: docker-compose up -d beer-garden -e TZ=UTC
+        run: docker-compose up -d -e TZ=UTC beer-garden
         working-directory: ./docker/docker-compose
 
       - name: Check Docker Containers
