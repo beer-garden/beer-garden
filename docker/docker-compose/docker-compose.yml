@@ -18,6 +18,9 @@ x-definitions: &env
     # If you are connecting to a Parent BG instance, change this the resolvable DNS entry
     BG_PARENT_HTTP_HOST: localhost
 
+    # Set this if you are running into TimeZone not set errors
+    TZ: UTC
+
 services:
     beer-garden:
         image: bgio/beer-garden:3
