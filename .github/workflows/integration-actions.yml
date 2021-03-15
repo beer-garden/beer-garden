@@ -29,9 +29,9 @@ jobs:
         run: docker-compose up -d rabbitmq
         working-directory: ./docker/docker-compose
 
-      - name: Build Local Beer Garden Docker
-        run: make docker-build VERSION=3
-        working-directory: ./src/app
+#      - name: Build Local Beer Garden Docker
+#        run: make docker-build VERSION=3
+#        working-directory: ./src/app
 
       - name: Run Docker Beer Garden
         run: docker-compose up -d beer-garden
