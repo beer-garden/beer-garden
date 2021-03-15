@@ -16,11 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: actions/set-timezone-action@v1.1
-        with:
-          timezoneLinux: "UTC"
-          timezoneMacos: "UTC"
-          timezoneWindows: "UTC"
+      - name: set Timezone
+        run: timedatectl set-timezone America/New_York
 
       - name: Setup python
         uses: actions/setup-python@v2
@@ -61,11 +58,11 @@ jobs:
       - name: Check Docker Containers
         run: docker ps
 
-#      - name: Wait for images to come up
-#        run: sleep 10
+      - name: Wait for images to come up
+        run: sleep 10
 
       - name: Grab logs from Beer-Garden
-        run: docker-compose logs -f beer-garden
+        run: docker-compose logs --tail 100 beer-garden
         working-directory: ./docker/docker-compose
 
 #      - name: Uninstall Brewtils
