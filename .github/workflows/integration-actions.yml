@@ -1,0 +1,53 @@
+name: Integration-Actions
+
+on: pull_request
+
+jobs:
+  Plugin-Testing:
+    runs-on: ${{ matrix.os }}
+
+    defaults:
+      run:
+        working-directory: ./src/app
+
+    strategy:
+      matrix:
+        python-version: ['3.7']
+        os: ['ubuntu-latest']
+        plugin-brewtils: ['3.1.0']
+
+    name: Linting OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run Docker Mongo
+        run: docker-compose up -d mongodb
+        working-directory: ./docker/docker-compose
+
+      - name: Run Docker Rabbit
+        run: docker-compose up -d rabbitmq
+        working-directory: ./docker/docker-compose
+
+      - name: Build Local Beer Garden Docker
+        run: make docker-build VERSION=3
+        working-directory: ./src/app
+
+      - name: Run Docker Beer Garden
+        run: docker-compose up -d rabbitmq
+        working-directory: ./docker/docker-compose
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Brewtils
+        run: pip install brewtils==${{matrix.brewtils-verison}}
+
+      - name: Install Python Deps
+        run: pip install -r requirements.txt
+        working-directory: ./test/integration
+
+      - name: Test Rest
+        run: make test-rest
+        working-directory: ./test/integration
