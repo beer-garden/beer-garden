@@ -13,9 +13,6 @@ from mock import Mock, call, patch
 @pytest.mark.usefixtures('easy_client')
 class TestSystemRegistration(object):
 
-    def _patch_signal_exceptions(self, monkeypatch):
-        mock = Mock(return_value=None)
-        monkeypatch.setattr(brewtils.Plugin, "_set_signal_handlers", mock)
 
     @pytest.fixture(autouse=True)
     def delete_test_plugin(self):
@@ -24,8 +21,7 @@ class TestSystemRegistration(object):
         yield
         delete_plugins(self.easy_client, "test")
 
-    def test_system_register_successful(self, monkeypatch):
-        self._patch_signal_exceptions(monkeypatch)
+    def test_system_register_successful(self):
         plugin = create_plugin("test", "1.0.0", TestPluginV1)
         start_plugin(plugin, self.easy_client)
         assert_system_running(self.easy_client, "test", "1.0.0")
