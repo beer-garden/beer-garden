@@ -1,3 +1,4 @@
+import brewtils
 import pytest
 
 from brewtils.errors import ValidationError, ConflictError
@@ -7,9 +8,14 @@ from helper.plugin import (create_plugin, start_plugin, stop_plugin,
                            TestPluginV1, TestPluginV2,
                            TestPluginV1BetterDescriptions)
 
+from mock import Mock, call, patch
 
 @pytest.mark.usefixtures('easy_client')
 class TestSystemRegistration(object):
+
+    def _patch_signal_exceptions(self, monkeypatch):
+        mock = Mock(return_value=None)
+        monkeypatch.setattr(brewtils.Plugin, "_set_signal_handlers", mock)
 
     @pytest.fixture(autouse=True)
     def delete_test_plugin(self):
@@ -18,7 +24,8 @@ class TestSystemRegistration(object):
         yield
         delete_plugins(self.easy_client, "test")
 
-    def test_system_register_successful(self):
+    def test_system_register_successful(self, monkeypatch):
+        self._patch_signal_exceptions(monkeypatch)
         plugin = create_plugin("test", "1.0.0", TestPluginV1)
         start_plugin(plugin, self.easy_client)
         assert_system_running(self.easy_client, "test", "1.0.0")
@@ -76,14 +83,14 @@ class TestSystemRegistration(object):
         assert_system_running(self.easy_client, "test", "1.0.0")
         assert_system_running(self.easy_client, "test", "2.0.0")
 
-    def test_system_register_same_display_name(self):
-        plugin = create_plugin("test", "1.0.0", TestPluginV1, display_name="TEST")
-        start_plugin(plugin, self.easy_client)
-        assert_system_running(self.easy_client, "test", "1.0.0")
-
-        new_plugin = create_plugin("new_test", "1.0.0", TestPluginV1, display_name="TEST")
-        with pytest.raises(ConflictError):
-            self.easy_client.create_system(new_plugin.system)
+    # def test_system_register_same_display_name(self):
+    #     plugin = create_plugin("test", "1.0.0", TestPluginV1, display_name="TEST")
+    #     start_plugin(plugin, self.easy_client)
+    #     assert_system_running(self.easy_client, "test", "1.0.0")
+    #
+    #     new_plugin = create_plugin("new_test", "1.0.0", TestPluginV1, display_name="TEST")
+    #     with pytest.raises(ConflictError):
+    #         self.easy_client.create_system(new_plugin.system)
 
     @pytest.mark.xfail(reason="Depends on beer-garden/bartender#7")
     def test_system_register_same_instance_name(self):

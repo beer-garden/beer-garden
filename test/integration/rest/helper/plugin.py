@@ -2,8 +2,7 @@ import time
 from threading import Thread
 
 import helper
-from brewtils.plugin import Plugin
-from brewtils.decorators import system, parameter
+from brewtils import system, parameter, Plugin
 
 thread_map = {}
 
@@ -21,12 +20,13 @@ def start_plugin(plugin, client):
     wait_for_status(client, plugin.instance.id)
 
 
-def wait_for_status(client, instance_id, timeout=5, max_delay=1):
+def wait_for_status(client, instance_id, timeout=30, max_delay=60):
     instance = helper.get_instance(client, instance_id)
     delay_time = 0.01
     total_wait_time = 0
     while instance.status not in ['RUNNING', 'STOPPED', 'DEAD']:
 
+        time.sleep(delay_time)
         if timeout and total_wait_time > timeout:
             raise Exception("Timed out waiting for instance to start")
 
@@ -43,17 +43,22 @@ def stop_plugin(plugin):
     if plugin.unique_name in thread_map:
         p = thread_map[plugin.unique_name]['plugin']
         t = thread_map[plugin.unique_name]['thread']
-        p._stop('request')
+        p._stop()
         t.join(2)
         if t.is_alive():
             raise Exception("Could not stop plugin: %s" % plugin.unique_name)
 
+class Thread_Plugin(Plugin):
+
+    @staticmethod
+    def _set_signal_handlers():
+        pass
 
 def create_plugin(name, version, clazz, **kwargs):
     config = helper.get_config()
-    return Plugin(client=clazz(), name=name, version=version,
-                        bg_host=config.bg_host, bg_port=config.bg_port,
-                        ssl_enabled=config.ssl_enabled, **kwargs)
+    return Thread_Plugin(client=clazz(), name=name, version=version,
+                  bg_host=config.bg_host, bg_port=config.bg_port,
+                  ssl_enabled=config.ssl_enabled, **kwargs)
 
 
 @system
