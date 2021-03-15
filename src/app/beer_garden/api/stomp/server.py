@@ -107,7 +107,7 @@ class Connection:
         username=None,
         password=None,
     ):
-        self.host_and_port = host_and_ports
+        self.host_and_ports = host_and_ports
         self.username = username
         self.password = password
         self.subscribe_destination = subscribe_destination
@@ -129,8 +129,8 @@ class Connection:
     def connect(self, connected_message=None, gardens=None):
         wait_time = 0.1
         if (
-            self.host_and_port[0][0]
-            and self.host_and_port[0][1]
+            self.host_and_ports[0][0]
+            and self.host_and_ports[0][1]
             and self.subscribe_destination
         ):
             while not self.conn.is_connected() and self.bg_active:
