@@ -40,19 +40,19 @@ jobs:
       - name: Check Docker Containers
         run: docker ps
 
-#      - name: Uninstall Brewtils
-#        run: pip uninstall brewtils
-#
-#      - name: Install Test Version of Brewtils
-#        run: pip install brewtils==${{matrix.plugin-brewtils}}
-#
-#      - name: Install Python Deps
-#        run: pip install -r requirements.txt
-#        working-directory: ./test/integration
-#
-#      - name: Test Rest
-#        run: make test-rest
-#        working-directory: ./test/integration
+      - name: Uninstall Brewtils
+        run: pip uninstall brewtils
+
+      - name: Install Test Version of Brewtils
+        run: pip install brewtils==${{matrix.plugin-brewtils}}
+
+      - name: Install Python Deps
+        run: pip install -r requirements.txt
+        working-directory: ./test/integration
+
+      - name: Test Rest
+        run: make test-rest
+        working-directory: ./test/integration
 
       - name: Shutdown Docker Containers
         run: docker-compose stop
