@@ -1,4 +1,4 @@
-from brewtils.models import Event
+from brewtils.models import Event, Operation
 from requests import RequestException
 
 import beer_garden.config as conf
@@ -45,7 +45,10 @@ class HttpParentUpdater(QueueListener):
 
         if event.name not in self._black_list:
             try:
-                self._ez_client.publish_event(event)
+                operation = Operation(
+                    operation_type="PUBLISH_EVENT", model=event, model_type="Event"
+                )
+                self._ez_client.post_forward(operation)
             except RequestException as ex:
                 self.logger.error(f"Error while publishing event to parent: {ex}")
 
