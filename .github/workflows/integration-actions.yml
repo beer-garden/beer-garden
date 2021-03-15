@@ -12,6 +12,9 @@ jobs:
         os: ['ubuntu-latest']
         plugin-brewtils: ['3.1.0']
 
+    env:
+      TZ: "UTC"
+
     name: Plugin Local Test - OS ${{ matrix.os }} - Python ${{ matrix.python-version }} - Brewtils ${{matrix.plugin-brewtils}}
     steps:
       - uses: actions/checkout@v2
@@ -20,6 +23,14 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Cache Docker
+        uses: actions/cache@v2
+        with:
+          path: /var/lib/docker/
+          key: ${{ runner.os }}-docker-${{ hashFiles('./docker/docker-compose') }}
+          restore-keys: |
+            ${{ runner.os }}-docker
 
       - name: Run Docker Mongo
         run: docker-compose up -d mongodb
