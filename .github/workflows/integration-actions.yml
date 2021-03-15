@@ -32,10 +32,15 @@ jobs:
 #      - name: Build Local Beer Garden Docker
 #        run: make docker-build VERSION=3
 #        working-directory: ./src/app
-      - uses: actions/checkout@v2
+
+      - name: Checkout Local Plugins
+        uses: actions/checkout@v2
         with:
           repository: beer-garden/example-plugins
           path: ./docker/docker-compose/data/localplugins
+
+      - name: Verify Local Plugins
+        run: ls ./docker/docker-compose/data/localplugins
 
       - name: Run Docker Beer Garden
         run: docker-compose up -d beer-garden

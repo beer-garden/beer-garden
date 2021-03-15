@@ -13,7 +13,7 @@ class TestRequestListApi(object):
     def echo_generator():
         return RequestGenerator(
             system='echo',
-            system_version='1.0.0.dev0',
+            system_version='3.0.0.dev0',
             instance_name='default',
             command='say',
         )
@@ -42,7 +42,7 @@ class TestEasyClient(object):
     def sleeper_generator():
         return RequestGenerator(
             system='sleeper',
-            system_version='1.0.0.dev0',
+            system_version='3.0.0.dev0',
             instance_name='default',
             command='sleep',
         )
