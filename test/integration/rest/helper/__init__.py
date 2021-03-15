@@ -150,7 +150,9 @@ def get_config():
     global CONFIG
 
     if CONFIG is None:
-
+        import os
+        cwd = os.getcwd()
+        raise Exception("Path = " + cwd)
         try:
             with open('config.json') as config_file:
                 file_config = json.load(config_file)
