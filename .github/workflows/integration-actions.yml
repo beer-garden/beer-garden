@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: set Timezone
-        run: timedatectl set-timezone America/New_York
+        run: sudo timedatectl set-timezone America/New_York
 
       - name: Setup python
         uses: actions/setup-python@v2
