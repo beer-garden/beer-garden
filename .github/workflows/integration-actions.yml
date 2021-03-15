@@ -53,7 +53,8 @@ jobs:
         run: sleep 10
 
       - name: Grab logs from Beer-Garden
-        run: docker logs --tail 100 beer-garden
+        run: docker-compose logs --tail 100 beer-garden
+        working-directory: ./docker/docker-compose
 
       - name: Uninstall Brewtils
         run: pip uninstall brewtils
@@ -65,9 +66,9 @@ jobs:
         run: pip install -r requirements.txt
         working-directory: ./test/integration
 
-      - name: Test Rest
-        run: make test-rest
-        working-directory: ./test/integration
+#      - name: Test Rest
+#        run: make test-rest
+#        working-directory: ./test/integration
 
       - name: Shutdown Docker Containers
         run: docker-compose stop
