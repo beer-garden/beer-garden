@@ -12,12 +12,15 @@ jobs:
         os: ['ubuntu-latest']
         plugin-brewtils: ['3.1.0']
 
-    env:
-      TZ: "UTC"
-
     name: Plugin Local Test - OS ${{ matrix.os }} - Python ${{ matrix.python-version }} - Brewtils ${{matrix.plugin-brewtils}}
     steps:
       - uses: actions/checkout@v2
+
+      - uses: actions/set-timezone-action@v1.1
+        with:
+          timezoneLinux: "UTC"
+          timezoneMacos: "UTC"
+          timezoneWindows: "UTC"
 
       - name: Setup python
         uses: actions/setup-python@v2
