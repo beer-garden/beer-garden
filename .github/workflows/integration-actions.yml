@@ -55,11 +55,11 @@ jobs:
       - name: Check Docker Containers
         run: docker ps
 
-      - name: Wait for images to come up
-        run: sleep 10
+#      - name: Wait for images to come up
+#        run: sleep 10
 
       - name: Grab logs from Beer-Garden
-        run: docker-compose logs --tail 100 beer-garden
+        run: docker-compose logs -f beer-garden
         working-directory: ./docker/docker-compose
 
 #      - name: Uninstall Brewtils
