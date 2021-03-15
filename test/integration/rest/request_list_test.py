@@ -41,7 +41,7 @@ class TestEasyClient(object):
     @pytest.fixture
     def sleeper_generator():
         return RequestGenerator(
-            system='concurrent-sleeper',
+            system='sleeper',
             system_version='1.0.0.dev0',
             instance_name='default',
             command='sleep',
@@ -69,7 +69,7 @@ class TestSystemClient(object):
 
     def test_blocking(self):
         sys_client = setup_system_client(
-            system_name='concurrent-sleeper', timeout=1)
+            system_name='sleeper', timeout=1)
 
         req = sys_client.sleep(amount=0)
         assert req.status == 'SUCCESS'
@@ -79,7 +79,7 @@ class TestSystemClient(object):
 
     def test_non_blocking(self):
         sys_client = setup_system_client(
-            system_name='concurrent-sleeper', blocking=False, timeout=1)
+            system_name='sleeper', blocking=False, timeout=1)
 
         future = sys_client.sleep(amount=0)
         assert future.result().status == 'SUCCESS'
