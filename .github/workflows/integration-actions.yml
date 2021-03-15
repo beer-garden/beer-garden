@@ -21,11 +21,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Cache Docker
-        uses: actions/cache@v2
-        with:
-          path: /var/lib/docker/
-          key: ${{ runner.os }}-docker-cache-${{ hashFiles('./docker/docker-compose') }}
+#      - name: Cache Docker
+#        uses: actions/cache@v2
+#        with:
+#          path: /var/lib/docker/
+#          key: ${{ runner.os }}-docker-cache-${{ hashFiles('./docker/docker-compose') }}
 
       - name: Run Docker Mongo
         run: docker-compose up -d mongodb
@@ -35,9 +35,9 @@ jobs:
         run: docker-compose up -d rabbitmq
         working-directory: ./docker/docker-compose
 
-#      - name: Build Local Beer Garden Docker
-#        run: make docker-build VERSION=3
-#        working-directory: ./src/app
+      - name: Build Local Beer Garden Docker
+        run: make docker-build VERSION=3
+        working-directory: ./src/app
 
       - name: Checkout Local Plugins
         uses: actions/checkout@v2
@@ -55,9 +55,6 @@ jobs:
       - name: Check Docker Containers
         run: docker ps
 
-      - name: Wait for images to come up
-        run: sleep 20
-
       - name: Grab logs from Beer-Garden
         run: docker-compose logs --tail 100 beer-garden
         working-directory: ./docker/docker-compose
@@ -71,6 +68,9 @@ jobs:
       - name: Install Python Deps
         run: pip install -r requirements.txt
         working-directory: ./test/integration
+
+      - name: Wait for Beer Garden to intialize
+        run: sleep 20
 
       - name: Test Rest
         run: make test-rest
