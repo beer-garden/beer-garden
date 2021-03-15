@@ -35,6 +35,8 @@ jobs:
         run: docker-compose up -d rabbitmq
         working-directory: ./docker/docker-compose
 
+      # Add Brewtils Tag
+
       - name: Build Local Beer Garden Docker
         run: make docker-build VERSION=3
         working-directory: ./src/app
@@ -55,6 +57,9 @@ jobs:
       - name: Check Docker Containers
         run: docker ps
 
+      - name: Wait for Beer Garden to intialize
+        run: sleep 20
+
       - name: Grab logs from Beer-Garden
         run: docker-compose logs --tail 100 beer-garden
         working-directory: ./docker/docker-compose
@@ -68,9 +73,6 @@ jobs:
       - name: Install Python Deps
         run: pip install -r requirements.txt
         working-directory: ./test/integration
-
-      - name: Wait for Beer Garden to intialize
-        run: sleep 20
 
       - name: Test Rest
         run: make test-rest
