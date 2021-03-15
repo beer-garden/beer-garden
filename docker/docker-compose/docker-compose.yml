@@ -18,8 +18,6 @@ x-definitions: &env
     # If you are connecting to a Parent BG instance, change this the resolvable DNS entry
     BG_PARENT_HTTP_HOST: localhost
 
-    # Set this if you are running into TimeZone not set errors
-    TZ: UTC
 
 services:
     beer-garden:
@@ -34,6 +32,9 @@ services:
             - ./data/localplugins:/plugins
         environment:
             <<: *env
+
+            # Set this if you are running into TimeZone not set errors
+            TZ: UTC
 
             # Point at the correct database
             BG_DB_HOST: mongodb
