@@ -8,7 +8,7 @@ x-definitions: &env
     # IMPORTANT!!
     # Change this to support both local and remote plugins
     # Should be resolvable from inside and outside the docker network
-    BG_PLUGIN_MQ_HOST: localhost
+    BG_PLUGIN_MQ_HOST: rabbitmq
 
     # IMPORTANT!!
     # If you are connection to a Parent BG instance, toggle true
