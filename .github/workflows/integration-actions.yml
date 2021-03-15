@@ -53,3 +53,7 @@ jobs:
 #      - name: Test Rest
 #        run: make test-rest
 #        working-directory: ./test/integration
+
+      - name: Shutdown Docker Containers
+        run: docker-compose stop
+        working-directory: ./docker/docker-compose

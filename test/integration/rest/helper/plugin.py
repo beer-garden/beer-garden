@@ -2,7 +2,7 @@ import time
 from threading import Thread
 
 import helper
-from brewtils.plugin import RemotePlugin
+from brewtils.plugin import Plugin
 from brewtils.decorators import system, parameter
 
 thread_map = {}
@@ -51,7 +51,7 @@ def stop_plugin(plugin):
 
 def create_plugin(name, version, clazz, **kwargs):
     config = helper.get_config()
-    return RemotePlugin(client=clazz(), name=name, version=version,
+    return Plugin(client=clazz(), name=name, version=version,
                         bg_host=config.bg_host, bg_port=config.bg_port,
                         ssl_enabled=config.ssl_enabled, **kwargs)
 
