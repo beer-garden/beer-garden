@@ -37,16 +37,19 @@ jobs:
         run: docker-compose up -d beer-garden
         working-directory: ./docker/docker-compose
 
-      - name: Uninstall Brewtils
-        run: pip uninstall brewtils
+      - name: Check Docker Containers
+        run: docker ps
 
-      - name: Install Test Version of Brewtils
-        run: pip install brewtils==${{matrix.plugin-brewtils}}
-
-      - name: Install Python Deps
-        run: pip install -r requirements.txt
-        working-directory: ./test/integration
-
-      - name: Test Rest
-        run: make test-rest
-        working-directory: ./test/integration
+#      - name: Uninstall Brewtils
+#        run: pip uninstall brewtils
+#
+#      - name: Install Test Version of Brewtils
+#        run: pip install brewtils==${{matrix.plugin-brewtils}}
+#
+#      - name: Install Python Deps
+#        run: pip install -r requirements.txt
+#        working-directory: ./test/integration
+#
+#      - name: Test Rest
+#        run: make test-rest
+#        working-directory: ./test/integration
