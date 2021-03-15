@@ -6,7 +6,7 @@ from helper.assertion import assert_successful_request, assert_errored_request
 
 @pytest.fixture(scope="class")
 def system_spec():
-    return {'system': 'echo-sleeper', 'system_version': '1.0.0.dev0', 'instance_name': 'default'}
+    return {'system': 'echo-sleeper', 'system_version': '3.0.0.dev0', 'instance_name': 'default'}
 
 
 @pytest.mark.usefixtures('easy_client', 'request_generator')

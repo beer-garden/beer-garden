@@ -6,7 +6,7 @@ from helper import wait_for_in_progress, COMPLETED_STATUSES
 
 @pytest.fixture(scope="class")
 def system_spec():
-    return {'system': 'sleeper', 'system_version': '1.0.0.dev0', 'instance_name': 'default',
+    return {'system': 'sleeper', 'system_version': '3.0.0.dev0', 'instance_name': 'default',
             'command': 'sleep'}
 
 

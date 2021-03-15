@@ -5,6 +5,7 @@ import re
 from brewtils import get_easy_client, load_config, SystemClient
 from brewtils.errors import ValidationError, SaveError
 from brewtils.models import PatchOperation
+import os
 from urllib3.exceptions import TimeoutError
 
 
@@ -149,11 +150,19 @@ def get_config():
     global CONFIG
 
     if CONFIG is None:
-        # import os
-        # cwd = os.getcwd()
-        # raise Exception("Path = " + cwd)
+        # Required for handling the different starting points for the unit tests
+        cwd = os.getcwd()
+        path = ""
+
+        if cwd.endswith("/helper") or cwd.endswith("/plugins"):
+            path = "../"
+        elif cwd.endswith("/rest"):
+            path = ""
+        elif cwd.endswith("/integration"):
+            path = "rest/"
+
         try:
-            with open('rest/config.json') as config_file:
+            with open(path + 'config.json') as config_file:
                 file_config = json.load(config_file)
         except Exception:
             file_config = {}

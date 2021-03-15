@@ -6,7 +6,7 @@ from helper.assertion import assert_successful_request, assert_validation_error
 
 @pytest.fixture(scope="class")
 def system_spec():
-    return {'system': 'echo', 'system_version': '1.0.0.dev0', 'instance_name': 'default',
+    return {'system': 'echo', 'system_version': '3.0.0.dev0', 'instance_name': 'default',
             'command': 'say'}
 
 

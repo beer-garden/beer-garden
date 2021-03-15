@@ -1,7 +1,7 @@
 import json
 import pytest
 
-from brewtils.errors import ValidationError
+from brewtils.errors import ValidationError, SaveError
 
 
 def assert_system_running(client, system_name, system_version, **kwargs):
@@ -23,6 +23,9 @@ def assert_instance_running(instance, **kwargs):
 def assert_validation_error(testcase, client, request, **kwargs):
     assert_error_creating_request(testcase, client, request, ValidationError, **kwargs)
 
+
+def assert_save_error(testcase, client, request, **kwargs):
+    assert_error_creating_request(testcase, client, request, SaveError, **kwargs)
 
 def assert_error_creating_request(testcase, client, request, exc_class, regex=None, **kwargs):
     if regex is None:
