@@ -775,11 +775,6 @@ def process_wait(request: Request, timeout: float) -> Request:
 
 
 def handle_event(event):
-    # Whenever a request is completed check to see if this process is waiting for it
-    if event.name == Events.REQUEST_COMPLETED.name:
-        completion_event = request_map.pop(event.payload.id, None)
-        if completion_event:
-            completion_event.set()
 
     # Only care about local garden
     if event.garden == config.get("garden.name"):
@@ -817,10 +812,11 @@ def handle_event(event):
                 map_remote_requester(event)
                 db.create(event.payload)
 
-    # Required if the main process spawns a wait Request
+    # Whenever a request is completed check to see if this process is waiting for it
     if event.name == Events.REQUEST_COMPLETED.name:
-        if str(event.payload.id) in request_map:
-            request_map[str(event.payload.id)].set()
+        completion_event = request_map.pop(event.payload.id, None)
+        if completion_event:
+            completion_event.set()
 
 
 def map_remote_requester(event):
@@ -835,7 +831,8 @@ def map_remote_requester(event):
         and source_garden.principal_mapping.enabled
     ):
         if (
-            event.payload.requester
+            source_garden.principal_mapping.principal_mappers
+            and event.payload.requester
             in source_garden.principal_mapping.principal_mappers.values()
         ):
             for (
@@ -846,4 +843,6 @@ def map_remote_requester(event):
                     event.payload.requester = local
                     break
         else:
-            event.payload.requester = source_garden.default_local_principal
+            event.payload.requester = (
+                source_garden.principal_mapping.default_local_principal
+            )

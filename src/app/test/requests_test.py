@@ -1,8 +1,19 @@
 # -*- coding: utf-8 -*-
+import threading
+
 import pytest
 from box import Box
 from brewtils.errors import ModelValidationError
-from brewtils.models import Choices, Command, Parameter, Request
+from brewtils.models import (
+    Choices,
+    Command,
+    Parameter,
+    Request,
+    Event,
+    Events,
+    Garden,
+    PrincipalMapping,
+)
 from mock import Mock, call, patch
 
 import beer_garden.config
@@ -74,6 +85,74 @@ def _process_mock(monkeypatch, return_value=""):
     monkeypatch.setattr(beer_garden.requests, "process_wait", process_mock)
 
     return process_mock
+
+
+def _request_event(name=Events.REQUEST_CREATED.name, garden="default", requester="username"):
+    event = Event(
+        name=name,
+        payload=Request(id="1", requester=requester),
+        garden=garden,
+    )
+    return event
+
+
+def config_get_side_effect(value):
+    if value == "garden.name":
+        return "default"
+
+
+def _config_get(monkeypatch):
+    mock = Mock(side_effect=config_get_side_effect)
+    monkeypatch.setattr(beer_garden.config, "get", mock)
+
+    return mock
+
+
+def query_unique_side_effect_found(Model, **kwargs):
+    return Model(**kwargs)
+
+
+def side_effect_missing(*args, **kwargs):
+    return None
+
+
+def _query_unique(monkeypatch, found=True):
+    if found:
+        mock = Mock(side_effect=query_unique_side_effect_found)
+    else:
+        mock = Mock(side_effect=side_effect_missing)
+    monkeypatch.setattr(beer_garden.db.api, "query_unique", mock)
+
+    return mock
+
+
+def _get_garden(monkeypatch, garden=None):
+    mock = Mock(return_value=garden)
+    monkeypatch.setattr(beer_garden.requests, "get_garden", mock)
+
+
+def _update(monkeypatch):
+    mock = Mock(side_effect=side_effect_missing)
+    monkeypatch.setattr(beer_garden.db.api, "update", mock)
+
+
+def _create(monkeypatch):
+    mock = Mock(side_effect=side_effect_missing)
+    monkeypatch.setattr(beer_garden.db.api, "create", mock)
+
+
+@pytest.fixture
+def mock_create(monkeypatch):
+    mock = Mock(side_effect=side_effect_missing)
+    monkeypatch.setattr(beer_garden.db.api, "create", mock)
+    return mock
+
+
+@pytest.fixture
+def mock_update(monkeypatch):
+    mock = Mock(side_effect=side_effect_missing)
+    monkeypatch.setattr(beer_garden.db.api, "update", mock)
+    return mock
 
 
 class TestSessionConfig(object):
@@ -1019,3 +1098,146 @@ class TestValidateChoices(object):
 
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(request, command)
+
+
+class TestHandleEvents(object):
+    def test_local_complete_request(self, monkeypatch):
+        _config_get(monkeypatch)
+        event = _request_event(name=Events.REQUEST_COMPLETED.name)
+
+        beer_garden.requests.request_map = {"1": threading.Event()}
+        beer_garden.requests.handle_event(event)
+
+        assert len(beer_garden.requests.request_map.keys()) == 0
+
+    def test_remote_complete_request(self, monkeypatch, mock_update):
+        _config_get(monkeypatch)
+        _query_unique(monkeypatch)
+
+        event = _request_event(name=Events.REQUEST_COMPLETED.name, garden="child")
+
+        beer_garden.requests.request_map = {"1": threading.Event()}
+        beer_garden.requests.handle_event(event)
+
+        assert mock_update.called
+        assert len(beer_garden.requests.request_map.keys()) == 0
+
+    def test_remote_complete_request_new(self, monkeypatch, mock_create):
+        _query_unique(monkeypatch, found=False)
+        event = _request_event(name=Events.REQUEST_COMPLETED.name, garden="child")
+
+        beer_garden.requests.handle_event(event)
+
+        assert mock_create.called
+
+    def test_shutdown(self, monkeypatch):
+        _config_get(monkeypatch)
+        event = _request_event(name=Events.GARDEN_STOPPED.name)
+
+        beer_garden.requests.request_map = {"1": threading.Event()}
+        beer_garden.requests.handle_event(event)
+
+        assert beer_garden.requests.request_map["1"].is_set()
+
+    def test_remote_create_request(self, monkeypatch, mock_create):
+        _query_unique(monkeypatch, found=False)
+        event = _request_event(name=Events.REQUEST_CREATED.name, garden="child")
+
+        beer_garden.requests.handle_event(event)
+
+        assert mock_create.called
+
+    def test_remote_start_request(self, monkeypatch, mock_update):
+        _query_unique(monkeypatch)
+        event = _request_event(name=Events.REQUEST_STARTED.name, garden="child")
+
+        beer_garden.requests.handle_event(event)
+
+        assert mock_update.called
+
+    def test_remote_start_request_new(self, monkeypatch, mock_create):
+        _query_unique(monkeypatch, found=False)
+        event = _request_event(name=Events.REQUEST_STARTED.name, garden="child")
+
+        beer_garden.requests.handle_event(event)
+
+        assert mock_create.called
+
+
+class TestMapRemoteRequester(object):
+    def test_disbaled(self, monkeypatch):
+        _get_garden(
+            monkeypatch,
+            garden=Garden(principal_mapping=PrincipalMapping(enabled=False)),
+        )
+
+        event = _request_event()
+
+        beer_garden.requests.map_remote_requester(event)
+
+        assert event.payload.requester == "username"
+
+    def test_no_match(self, monkeypatch):
+        _get_garden(monkeypatch)
+
+        event = _request_event()
+
+        beer_garden.requests.map_remote_requester(event)
+
+        assert event.payload.requester == "username"
+
+    def test_default_mapping(self, monkeypatch):
+        _get_garden(
+            monkeypatch,
+            garden=Garden(
+                principal_mapping=PrincipalMapping(
+                    enabled=True, default_local_principal="local_username"
+                )
+            ),
+        )
+
+        event = _request_event()
+
+        beer_garden.requests.map_remote_requester(event)
+
+        assert event.payload.requester == "local_username"
+
+    def test_user_mapping(self, monkeypatch):
+        _get_garden(
+            monkeypatch,
+            garden=Garden(
+                principal_mapping=PrincipalMapping(
+                    enabled=True, principal_mappers={"local_username": "username"}
+                )
+            ),
+        )
+
+        event = _request_event()
+
+        beer_garden.requests.map_remote_requester(event)
+
+        assert event.payload.requester == "local_username"
+
+    def test_default_and_user_mapping(self, monkeypatch):
+        _get_garden(
+            monkeypatch,
+            garden=Garden(
+                principal_mapping=PrincipalMapping(
+                    enabled=True,
+                    default_local_principal="default_username",
+                    principal_mappers={"local_username": "username1"}
+                )
+            ),
+        )
+
+        event = _request_event()
+
+        beer_garden.requests.map_remote_requester(event)
+
+        assert event.payload.requester == "default_username"
+
+        event = _request_event(requester="username1")
+
+        beer_garden.requests.map_remote_requester(event)
+
+        assert event.payload.requester == "local_username"

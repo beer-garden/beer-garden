@@ -489,13 +489,13 @@ def _pre_forward(operation: Operation) -> Operation:
         operation.model.parent = None
         operation.model.has_parent = False
 
-        # If the Garden has owner mapping enabled, change the owner properly
+        # If the Garden has requester mapping enabled, change the owner properly
         # and hasattr(gardens[operation.target_garden_name].principal_mapping, "enabled")
         if (
             gardens[operation.target_garden_name].principal_mapping
             and gardens[operation.target_garden_name].principal_mapping.enabled
         ):
-            # If the owner field exists, update it
+            # If the requester field exists, update it
             if (
                 operation.model.requester
                 and operation.model.requester
