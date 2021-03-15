@@ -49,18 +49,18 @@ jobs:
         run: ls ./docker/docker-compose/data/localplugins
 
       - name: Run Docker Beer Garden
-        run: docker-compose up beer-garden
+        run: docker-compose up -d beer-garden
         working-directory: ./docker/docker-compose
 
       - name: Check Docker Containers
         run: docker ps
 
-#      - name: Wait for images to come up
-#        run: sleep 10
+      - name: Wait for images to come up
+        run: sleep 10
 
-#      - name: Grab logs from Beer-Garden
-#        run: docker-compose logs -f beer-garden
-#        working-directory: ./docker/docker-compose
+      - name: Grab logs from Beer-Garden
+        run: docker-compose logs --tail 100 beer-garden
+        working-directory: ./docker/docker-compose
 
 #      - name: Uninstall Brewtils
 #        run: pip uninstall brewtils
