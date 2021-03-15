@@ -16,9 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: set Timezone
-        run: sudo timedatectl set-timezone America/New_York
-
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -28,7 +25,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: /var/lib/docker/
-          key: ${{ runner.os }}-docker-${{ hashFiles('./docker/docker-compose') }}
+          key: ${{ runner.os }}-docker-cache-${{ hashFiles('./docker/docker-compose') }}
 
       - name: Run Docker Mongo
         run: docker-compose up -d mongodb
@@ -52,7 +49,7 @@ jobs:
         run: ls ./docker/docker-compose/data/localplugins
 
       - name: Run Docker Beer Garden
-        run: docker-compose up -d beer-garden
+        run: docker-compose up -d beer-garden -e TZ=UTC
         working-directory: ./docker/docker-compose
 
       - name: Check Docker Containers
