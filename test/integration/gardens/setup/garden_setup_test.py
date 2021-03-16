@@ -2,8 +2,7 @@ import pytest
 from brewtils.schema_parser import SchemaParser
 
 
-@pytest.mark.usefixtures('easy_client')
-@pytest.mark.usefixtures('parser')
+@pytest.mark.usefixtures('easy_client', 'parser')
 class TestGardenSetup(object):
 
     def test_system_register_successful(self):
