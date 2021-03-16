@@ -154,12 +154,12 @@ def get_config():
         cwd = os.getcwd()
         path = ""
 
-        if cwd.endswith("/helper") or cwd.endswith("/plugins"):
+        if cwd.endswith("/helper") or cwd.endswith("/local_plugins") or cwd.endswith("/remote_plugins"):
             path = "../"
-        elif cwd.endswith("/rest"):
+        elif cwd.endswith("/plugins"):
             path = ""
         elif cwd.endswith("/integration"):
-            path = "rest/"
+            path = "plugins/"
 
         try:
             with open(path + 'config.json') as config_file:
