@@ -16,4 +16,16 @@ class TestGardenSetup(object):
 
     def test_child_systems_register_successful(self):
 
-        assert_system_running(self.easy_client, "echo", "3.0.0", garden="child")
+        systems = self.easy_client.find_systems()
+
+        namespaces = dict()
+
+        for system in systems:
+            if system.namespace not in namespaces.keys():
+                namespaces[system.namespace] = 1
+            else:
+                namespaces[system.namespace] += 1
+
+        print(namespaces)
+        assert namespaces["child"] > 1
+
