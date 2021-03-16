@@ -10,7 +10,8 @@ jobs:
       matrix:
         python-version: ['3.7']
         os: ['ubuntu-latest']
-        plugin-brewtils: ['3.0.0','3.0.1','3.0.2','3.1.0']
+        plugin-brewtils: ['3.1.0']
+#        plugin-brewtils: ['3.0.0','3.0.1','3.0.2','3.1.0']
       fail-fast: false
 
     name: Plugin Local Test - OS ${{ matrix.os }} - Python ${{ matrix.python-version }} - Brewtils ${{matrix.plugin-brewtils}}
@@ -53,15 +54,15 @@ jobs:
         run: docker-compose up -d beer-garden
         working-directory: ./docker/docker-compose
 
-      - name: Check Docker Containers
-        run: docker ps
+#      - name: Check Docker Containers
+#        run: docker ps
 
       - name: Wait for Beer Garden to intialize
         run: sleep 30
 
-      - name: Grab logs from Beer-Garden
-        run: docker-compose logs --tail 100 beer-garden
-        working-directory: ./docker/docker-compose
+#      - name: Grab logs from Beer-Garden
+#        run: docker-compose logs --tail 100 beer-garden
+#        working-directory: ./docker/docker-compose
 
       - name: Uninstall Brewtils
         run: pip uninstall brewtils
@@ -73,8 +74,8 @@ jobs:
         run: pip install -r requirements.txt
         working-directory: ./test/integration
 
-      - name: Test Rest
-        run: make test-rest
+      - name: Test Plugins
+        run: make test-plugins
         working-directory: ./test/integration
 
       - name: Shutdown Docker Containers
