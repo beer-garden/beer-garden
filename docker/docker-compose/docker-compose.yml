@@ -43,6 +43,7 @@ services:
 
             # Point at the correct rabbit broker
             BG_MQ_HOST: rabbitmq
+            BG_MQ_EXCHANGE: beer_garden
             BG_MQ_CONNECTIONS_ADMIN_USER: beer_garden
             BG_MQ_CONNECTIONS_ADMIN_PASSWORD: password
             BG_MQ_CONNECTIONS_MESSAGE_USER: beer_garden
