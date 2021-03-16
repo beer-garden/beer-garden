@@ -20,9 +20,8 @@ x-definitions: &env
 
 
 services:
-    beer-garden:
+    beer-garden-child:
         image: bgio/beer-garden:$RELEASE
-        container_name: child
         networks:
             - bg-network
         ports:
