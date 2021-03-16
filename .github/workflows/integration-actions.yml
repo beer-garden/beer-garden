@@ -26,7 +26,6 @@ jobs:
 
       - name: Update Docker Compose
         run: cp ./test/conf/docker-componse.yml ./docker/docker-compose/docker-compose.yml
-        working-directory: ./docker/docker-compose
 
       - name: Run Docker Mongo
         run: docker-compose up -d mongodb
@@ -99,11 +98,9 @@ jobs:
 
         - name: Update Docker Compose
           run: cp ./test/conf/docker-componse.yml ./docker/docker-compose/docker-compose.yml
-          working-directory: ./docker/docker-compose
 
-        - name: Update Docker Compose
+        - name: Update Child Docker Compose
           run: cp ./test/conf/child-docker-componse.yml ./docker/docker-compose/
-          working-directory: ./docker/docker-compose
 
         - name: Run Docker Mongo
           run: docker-compose up -d mongodb
