@@ -126,6 +126,9 @@ jobs:
           run: docker-compose up -d beer-garden
           working-directory: ./docker/docker-compose
 
+        - name: Wait for Parent Beer Garden to intialize
+          run: sleep 30
+
         - name: Run Docker Beer Garden Child
           run: RELEASE=${{matrix.child-garden}} docker-compose -f child-docker-compose.yml up -d beer-garden-child
           working-directory: ./docker/docker-compose
@@ -133,7 +136,7 @@ jobs:
         - name: Check Docker Containers
           run: docker ps
 
-        - name: Wait for Beer Gardens to intialize
+        - name: Wait for Child Beer Garden to intialize
           run: sleep 30
 
         - name: Grab logs from Child Beer-Garden
