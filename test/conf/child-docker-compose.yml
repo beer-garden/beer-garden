@@ -12,7 +12,7 @@ x-definitions: &env
 
     # IMPORTANT!!
     # If you are connection to a Parent BG instance, toggle true
-    BG_PARENT_HTTP_ENABLE: "true"
+    BG_PARENT_HTTP_ENABLE: true
 
     # IMPORTANT !!
     # If you are connecting to a Parent BG instance, change this the resolvable DNS entry
