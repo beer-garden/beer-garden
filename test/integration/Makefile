@@ -31,5 +31,5 @@ test-config: ## run configuration integration tests
 test-lifecycle: ## run lifecycle integration tests
 	pytest lifecycle/
 
-test-rest: ## run rest integration tests
-	pytest rest/
+test-plugins: ## run rest integration tests
+	pytest plugins/
