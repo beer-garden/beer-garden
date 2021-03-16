@@ -56,7 +56,7 @@ class TestGardenSetup(object):
         patch = PatchOperation(operation="config", path='', value=child_garden)
 
         payload = self.parser.serialize_patch(patch)
-        response = self.easy_client.client.session.post(
+        response = self.easy_client.client.session.patch(
             self.easy_client.client.base_url + "api/v1/gardens/" + self.child_garden_name, data=payload,
             headers=self.easy_client.client.JSON_HEADERS
         )
@@ -68,7 +68,7 @@ class TestGardenSetup(object):
         patch = PatchOperation(operation="sync", path='', value=None)
         payload = self.parser.serialize_patch(patch)
 
-        response = self.easy_client.client.session.post(
+        response = self.easy_client.client.session.patch(
             self.easy_client.client.base_url + "api/v1/gardens/"+self.child_garden_name, data=payload,
             headers=self.easy_client.client.JSON_HEADERS
         )
