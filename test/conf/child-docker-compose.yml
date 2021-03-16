@@ -3,7 +3,7 @@ version: '3.5'
 x-definitions: &env
     # IMPORTANT!!
     # Change this to whatever you want your garden name / namespace default to be
-    BG_GARDEN_NAME: child
+    BG_GARDEN_NAME: child-docker
 
     # IMPORTANT!!
     # Change this to support both local and remote plugins
@@ -16,7 +16,7 @@ x-definitions: &env
 
     # IMPORTANT !!
     # If you are connecting to a Parent BG instance, change this the resolvable DNS entry
-    BG_PARENT_HTTP_HOST: localhost
+    BG_PARENT_HTTP_HOST: beer-garden
 
 
 services:
