@@ -24,6 +24,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Update Docker Compose
+        run: cp ./test/conf/docker-componse.yml ./docker/docker-compose/docker-compose.yml
+        working-directory: ./docker/docker-compose
+
       - name: Run Docker Mongo
         run: docker-compose up -d mongodb
         working-directory: ./docker/docker-compose
@@ -40,14 +44,6 @@ jobs:
 
       - name: Verify Local Plugins
         run: ls ./docker/docker-compose/data/localplugins
-
-      - name: Set Timezone
-        run: sed -i 's/#TZ:/TZ:/g' docker-compose.yml
-        working-directory: ./docker/docker-compose
-
-      - name: Set RabbitMQ Host
-        run: sed -i 's/BG_PLUGIN_MQ_HOST: localhost/BG_PLUGIN_MQ_HOST: rabbitmq/g' docker-compose.yml
-        working-directory: ./docker/docker-compose
 
       - name: Run Docker Beer Garden
         run: docker-compose up -d beer-garden
@@ -101,6 +97,14 @@ jobs:
           with:
             python-version: ${{ matrix.python-version }}
 
+        - name: Update Docker Compose
+          run: cp ./test/conf/docker-componse.yml ./docker/docker-compose/docker-compose.yml
+          working-directory: ./docker/docker-compose
+
+        - name: Update Docker Compose
+          run: cp ./test/conf/child-docker-componse.yml ./docker/docker-compose/
+          working-directory: ./docker/docker-compose
+
         - name: Run Docker Mongo
           run: docker-compose up -d mongodb
           working-directory: ./docker/docker-compose
@@ -118,53 +122,51 @@ jobs:
         - name: Verify Local Plugins
           run: ls ./docker/docker-compose/data/localplugins
 
-        - name: Set Timezone
-          run: sed -i 's/#TZ:/TZ:/g' docker-compose.yml
-          working-directory: ./docker/docker-compose
+#        - name: Set Timezone
+#          run: sed -i 's/#TZ:/TZ:/g' docker-compose.yml
+#          working-directory: ./docker/docker-compose
 
 
-        - name: Set RabbitMQ Host
-          run: sed -i 's/BG_PLUGIN_MQ_HOST: localhost/BG_PLUGIN_MQ_HOST: rabbitmq/g' docker-compose.yml
-          working-directory: ./docker/docker-compose
+
 
         - name: Run Docker Beer Garden
           run: docker-compose up -d beer-garden
           working-directory: ./docker/docker-compose
 
-        - name: Clone Docker-Compose
-          run: cp docker-compose.yml child-docker-compose.yml
-          working-directory: ./docker/docker-compose
-
-        - name: Set Child Docker Image
-          run: sed -i 's/bgio/beer-garden:3/bgio/beer-garden:${{ matrix.child-garden }}/g' child-docker-compose.yml
-          working-directory: ./docker/docker-compose
-
-        - name: Set Child Garden Name
-          run: sed -i 's/BG_GARDEN_NAME: docker/BG_GARDEN_NAME: child/g' child-docker-compose.yml
-          working-directory: ./docker/docker-compose
-
-        - name: Set Child Parent Enabled
-          run: sed -i 's/BG_PARENT_HTTP_ENABLE: "false"/BG_PARENT_HTTP_ENABLE: "true"/g' child-docker-compose.yml
-          working-directory: ./docker/docker-compose
-
-        - name: Set Child HTTP Ports
-          run: sed -i 's/2337:2337/2347:2337/g' child-docker-compose.yml
-          working-directory: ./docker/docker-compose
-
-        - name: Set Child HTTP Ports
-          run: sed -i 's/2338:2338/2348:2338/g' child-docker-compose.yml
-          working-directory: ./docker/docker-compose
-
-        - name: Set Child Mongo Space
-          run: sed -i 's/BG_DB_NAME: beer_garden_v3/BG_DB_NAME: beer_garden_v3_child/g' child-docker-compose.yml
-          working-directory: ./docker/docker-compose
-
-        - name: Set Child RabbitMQ Exchange
-          run: sed -i 's/BG_MQ_EXCHANGE: beer_garden/BG_MQ_EXCHANGE: beer_garden_child/g' child-docker-compose.yml
-          working-directory: ./docker/docker-compose
+#        - name: Clone Docker-Compose
+#          run: cp docker-compose.yml child-docker-compose.yml
+#          working-directory: ./docker/docker-compose
+#
+#        - name: Set Child Docker Image
+#          run: sed -i 's/bgio/beer-garden:3/bgio/beer-garden:${{ matrix.child-garden }}/g' child-docker-compose.yml
+#          working-directory: ./docker/docker-compose
+#
+#        - name: Set Child Garden Name
+#          run: sed -i 's/BG_GARDEN_NAME: docker/BG_GARDEN_NAME: child/g' child-docker-compose.yml
+#          working-directory: ./docker/docker-compose
+#
+#        - name: Set Child Parent Enabled
+#          run: sed -i 's/BG_PARENT_HTTP_ENABLE: "false"/BG_PARENT_HTTP_ENABLE: "true"/g' child-docker-compose.yml
+#          working-directory: ./docker/docker-compose
+#
+#        - name: Set Child HTTP Ports
+#          run: sed -i 's/2337:2337/2347:2337/g' child-docker-compose.yml
+#          working-directory: ./docker/docker-compose
+#
+#        - name: Set Child HTTP Ports
+#          run: sed -i 's/2338:2338/2348:2338/g' child-docker-compose.yml
+#          working-directory: ./docker/docker-compose
+#
+#        - name: Set Child Mongo Space
+#          run: sed -i 's/BG_DB_NAME: beer_garden_v3/BG_DB_NAME: beer_garden_v3_child/g' child-docker-compose.yml
+#          working-directory: ./docker/docker-compose
+#
+#        - name: Set Child RabbitMQ Exchange
+#          run: sed -i 's/BG_MQ_EXCHANGE: beer_garden/BG_MQ_EXCHANGE: beer_garden_child/g' child-docker-compose.yml
+#          working-directory: ./docker/docker-compose
 
         - name: Run Docker Beer Garden Child
-          run: docker-compose -f child-docker-compose.yml up -d beer-garden
+          run: RELEASE=${{matrix.child-garden}} docker-compose -f child-docker-compose.yml up -d beer-garden
           working-directory: ./docker/docker-compose
 
         - name: Grab logs from Beer-Garden

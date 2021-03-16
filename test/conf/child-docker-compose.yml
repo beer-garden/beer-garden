@@ -8,11 +8,11 @@ x-definitions: &env
     # IMPORTANT!!
     # Change this to support both local and remote plugins
     # Should be resolvable from inside and outside the docker network
-    BG_PLUGIN_MQ_HOST: localhost
+    BG_PLUGIN_MQ_HOST: rabbitmq
 
     # IMPORTANT!!
     # If you are connection to a Parent BG instance, toggle true
-    BG_PARENT_HTTP_ENABLE: "false"
+    BG_PARENT_HTTP_ENABLE: "true"
 
     # IMPORTANT !!
     # If you are connecting to a Parent BG instance, change this the resolvable DNS entry
@@ -21,12 +21,12 @@ x-definitions: &env
 
 services:
     beer-garden:
-        image: bgio/beer-garden:3
+        image: bgio/beer-garden:$RELEASE
         networks:
             - bg-network
         ports:
-            - "2337:2337"
-            - "2338:2338"
+            - "2347:2337"
+            - "2348:2338"
         volumes:
             - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
             - ./data/localplugins:/plugins
@@ -39,10 +39,11 @@ services:
 
             # Point at the correct database
             BG_DB_HOST: mongodb
-            BG_DB_NAME: beer_garden_v3
+            BG_DB_NAME: beer_garden_v3_child
 
             # Point at the correct rabbit broker
             BG_MQ_HOST: rabbitmq
+            BG_MQ_EXCHANGE: beer_garden_child
             BG_MQ_CONNECTIONS_ADMIN_USER: beer_garden
             BG_MQ_CONNECTIONS_ADMIN_PASSWORD: password
             BG_MQ_CONNECTIONS_MESSAGE_USER: beer_garden
@@ -57,9 +58,6 @@ services:
             # link in our About section if it is defined.
             BG_METRICS_URL: http://localhost:3000
             BG_METRICS_PROMETHEUS_ENABLED: "false"
-        depends_on:
-            - mongodb
-            - rabbitmq
 
     ui:
         image: bgio/ui:3
@@ -73,69 +71,6 @@ services:
             BEERGARDEN_PORT: "2337"
         depends_on:
             - beer-garden
-
-    grafana:
-        image: grafana/grafana:5.2.3
-        ports:
-            - "3000:3000"
-        volumes:
-            - ./data/grafana/provisioning:/etc/grafana/provisioning
-            - ./data/grafana/dashboards:/var/lib/grafana/dashboards
-        networks:
-            - bg-network
-        depends_on:
-            - prometheus
-
-    mongodb:
-        image: mongo:4.2
-        restart: always
-        networks:
-            - bg-network
-        ports:
-          - "27017:27017"
-        volumes:
-            - mongo-data:/data/db
-            - mongo-config:/data/configdb
-
-    prometheus:
-        image: prom/prometheus:v2.3.2
-        ports:
-          - "9091:9090"
-        networks:
-            - bg-network
-        volumes:
-            - ./data/prometheus:/prometheus-data
-        command:
-            --config.file=/prometheus-data/prometheus.yml
-
-    rabbitmq:
-        image: rabbitmq:3.8-management-alpine
-        restart: always
-        hostname: rabbitmq
-        networks:
-            - bg-network
-        environment:
-            - RABBITMQ_DEFAULT_USER=beer_garden
-            - RABBITMQ_DEFAULT_PASS=password
-        ports:
-            - "5672:5672"
-            - "15672:15672"
-        volumes:
-            - rabbitmq-home:/var/lib/rabbitmq
-
-    activemq:
-        image: vromero/activemq-artemis:2.15-alpine-latest
-        restart: always
-        environment:
-            - ARTEMIS_USERNAME=beer_garden
-            - ARTEMIS_PASSWORD=password
-        networks:
-            - bg-network
-        ports:
-          - "61613:61613"
-          - "8161:8161"
-        volumes:
-            - ./data/activemq-config/etc-override-non-ssl:/var/lib/artemis/etc-override
 
 networks:
     bg-network:

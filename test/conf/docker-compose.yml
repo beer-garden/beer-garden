@@ -8,7 +8,7 @@ x-definitions: &env
     # IMPORTANT!!
     # Change this to support both local and remote plugins
     # Should be resolvable from inside and outside the docker network
-    BG_PLUGIN_MQ_HOST: localhost
+    BG_PLUGIN_MQ_HOST: rabbitmq
 
     # IMPORTANT!!
     # If you are connection to a Parent BG instance, toggle true
@@ -35,7 +35,7 @@ services:
 
             # If you are running in Ubuntu, then you need to set the Timezone
             # We are actively investigating why this is
-            #TZ: UTC
+            TZ: UTC
 
             # Point at the correct database
             BG_DB_HOST: mongodb
@@ -43,6 +43,7 @@ services:
 
             # Point at the correct rabbit broker
             BG_MQ_HOST: rabbitmq
+            BG_MQ_EXCHANGE: beer_garden
             BG_MQ_CONNECTIONS_ADMIN_USER: beer_garden
             BG_MQ_CONNECTIONS_ADMIN_PASSWORD: password
             BG_MQ_CONNECTIONS_MESSAGE_USER: beer_garden
