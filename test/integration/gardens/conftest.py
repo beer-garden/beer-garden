@@ -16,5 +16,6 @@ def easy_client(request):
 
 
 @pytest.fixture(scope="class")
-def parser():
-    return SchemaParser()
+def parser(request):
+    request.cls.parser = SchemaParser()
+    return request.cls.parser

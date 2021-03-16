@@ -4,8 +4,8 @@ import pytest
 from brewtils.errors import ValidationError, SaveError
 
 
-def assert_system_running(client, system_name, system_version, **kwargs):
-    system = client.find_unique_system(name=system_name, version=system_version)
+def assert_system_running(client, system_name, system_version, garden=None, **kwargs):
+    system = client.find_unique_system(name=system_name, version=system_version. garden=garden)
     system_attrs = kwargs.pop('system', {})
     for key, value in system_attrs.items():
         actual = getattr(system, key)
