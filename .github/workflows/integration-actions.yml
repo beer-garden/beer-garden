@@ -24,8 +24,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-
-
       - name: Update Docker Compose
         run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
         working-directory: ./
@@ -149,6 +147,9 @@ jobs:
         - name: Install Python Deps
           run: pip install -r requirements.txt
           working-directory: ./test/integration
+
+        - name: Install Latest Version of Brewtils
+          run: pip install brewtils
 
         - name: Test Gardens
           run: make test-gardens
