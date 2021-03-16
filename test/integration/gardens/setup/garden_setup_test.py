@@ -2,7 +2,7 @@ import pytest
 from brewtils.schema_parser import SchemaParser
 from helper.assertion import assert_system_running
 
-@pytest.mark.usefixtures('easy_client', 'parser')
+@pytest.mark.usefixtures('easy_client', 'parser', 'child_easy_client')
 class TestGardenSetup(object):
 
     def test_garden_register_successful(self):
@@ -16,7 +16,7 @@ class TestGardenSetup(object):
 
     def test_child_systems_register_successful(self):
 
-        systems = self.easy_client.find_systems()
+        systems = self.child_easy_client.find_systems()
 
         namespaces = dict()
 
