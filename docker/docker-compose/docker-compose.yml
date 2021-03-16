@@ -33,8 +33,9 @@ services:
         environment:
             <<: *env
 
-            # Set this if you are running into TimeZone not set errors
-            TZ: UTC
+            # If you are running in Ubuntu, then you need to set the Timezone
+            # We are actively investigating why this is
+            #TZ: UTC
 
             # Point at the correct database
             BG_DB_HOST: mongodb
