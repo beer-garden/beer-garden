@@ -22,6 +22,7 @@ x-definitions: &env
 services:
     beer-garden:
         image: bgio/beer-garden:$RELEASE
+        container_name: child
         networks:
             - bg-network
         ports:
@@ -35,7 +36,7 @@ services:
 
             # If you are running in Ubuntu, then you need to set the Timezone
             # We are actively investigating why this is
-            #TZ: UTC
+            TZ: UTC
 
             # Point at the correct database
             BG_DB_HOST: mongodb
