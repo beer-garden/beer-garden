@@ -33,3 +33,6 @@ test-lifecycle: ## run lifecycle integration tests
 
 test-plugins: ## run rest integration tests
 	pytest plugins/
+
+test-gardens: ## run rest integration tests
+	pytest gardens/

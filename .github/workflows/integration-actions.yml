@@ -15,7 +15,7 @@ jobs:
 #        plugin-brewtils: ['3.0.0','3.0.1','3.0.2','3.1.0']
       fail-fast: false
 
-    name: Plugin Testing - OS ${{ matrix.os }} - Python ${{ matrix.python-version }} - Brewtils ${{matrix.plugin-brewtils}}
+    name: Plugins - Brewtils ${{matrix.plugin-brewtils}} - Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
 
@@ -90,7 +90,7 @@ jobs:
 #        child-garden: ['3.0.0','3.0.1','3.0.2','3.1.0']
       fail-fast: false
 
-    name: Garden Testing - OS ${{ matrix.os }} - Python ${{ matrix.python-version }} - Child Garden ${{matrix.child-garden}}
+    name: Garden - Child ${{matrix.child-garden}} - Python ${{ matrix.python-version }}
     steps:
         - uses: actions/checkout@v2
 
@@ -124,48 +124,9 @@ jobs:
         - name: Verify Local Plugins
           run: ls ./docker/docker-compose/data/localplugins
 
-#        - name: Set Timezone
-#          run: sed -i 's/#TZ:/TZ:/g' docker-compose.yml
-#          working-directory: ./docker/docker-compose
-
-
-
-
         - name: Run Docker Beer Garden
           run: docker-compose up -d beer-garden
           working-directory: ./docker/docker-compose
-
-#        - name: Clone Docker-Compose
-#          run: cp docker-compose.yml child-docker-compose.yml
-#          working-directory: ./docker/docker-compose
-#
-#        - name: Set Child Docker Image
-#          run: sed -i 's/bgio/beer-garden:3/bgio/beer-garden:${{ matrix.child-garden }}/g' child-docker-compose.yml
-#          working-directory: ./docker/docker-compose
-#
-#        - name: Set Child Garden Name
-#          run: sed -i 's/BG_GARDEN_NAME: docker/BG_GARDEN_NAME: child/g' child-docker-compose.yml
-#          working-directory: ./docker/docker-compose
-#
-#        - name: Set Child Parent Enabled
-#          run: sed -i 's/BG_PARENT_HTTP_ENABLE: "false"/BG_PARENT_HTTP_ENABLE: "true"/g' child-docker-compose.yml
-#          working-directory: ./docker/docker-compose
-#
-#        - name: Set Child HTTP Ports
-#          run: sed -i 's/2337:2337/2347:2337/g' child-docker-compose.yml
-#          working-directory: ./docker/docker-compose
-#
-#        - name: Set Child HTTP Ports
-#          run: sed -i 's/2338:2338/2348:2338/g' child-docker-compose.yml
-#          working-directory: ./docker/docker-compose
-#
-#        - name: Set Child Mongo Space
-#          run: sed -i 's/BG_DB_NAME: beer_garden_v3/BG_DB_NAME: beer_garden_v3_child/g' child-docker-compose.yml
-#          working-directory: ./docker/docker-compose
-#
-#        - name: Set Child RabbitMQ Exchange
-#          run: sed -i 's/BG_MQ_EXCHANGE: beer_garden/BG_MQ_EXCHANGE: beer_garden_child/g' child-docker-compose.yml
-#          working-directory: ./docker/docker-compose
 
         - name: Run Docker Beer Garden Child
           run: RELEASE=${{matrix.child-garden}} docker-compose -f child-docker-compose.yml up -d beer-garden-child
@@ -174,6 +135,29 @@ jobs:
         - name: Check Docker Containers
           run: docker ps
 
-        - name: Grab logs from Beer-Garden
+        - name: Wait for Beer Gardens to intialize
+          run: sleep 30
+
+        - name: Grab logs from Child Beer-Garden
           run: docker-compose -f child-docker-compose.yml logs --tail 100 beer-garden-child
+          working-directory: ./docker/docker-compose
+
+        - name: Grab logs from Beer-Garden
+          run: docker-compose logs --tail 100 beer-garden
+          working-directory: ./docker/docker-compose
+
+        - name: Install Python Deps
+          run: pip install -r requirements.txt
+          working-directory: ./test/integration
+
+        - name: Test Plugins
+          run: make test-gardens
+          working-directory: ./test/integration
+
+        - name: Shutdown Docker Child Containers
+          run: docker-compose -f child-docker-compose.yml stop
+          working-directory: ./docker/docker-compose
+
+        - name: Shutdown Docker Containers
+          run: docker-compose stop
           working-directory: ./docker/docker-compose
