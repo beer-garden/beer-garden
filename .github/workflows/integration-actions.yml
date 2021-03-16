@@ -84,7 +84,7 @@ jobs:
       matrix:
         os: ['ubuntu-18.04']
         python-version: ['3.7']
-        child-garden: ['3.1.0']
+        child-garden: ['3']
 #        child-garden: ['3.0.0','3.0.1','3.0.2','3.1.0']
       fail-fast: false
 
