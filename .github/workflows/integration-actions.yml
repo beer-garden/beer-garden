@@ -166,3 +166,7 @@ jobs:
         - name: Run Docker Beer Garden Child
           run: docker-compose -f child-docker-compose.yml up -d beer-garden
           working-directory: ./docker/docker-compose
+
+        - name: Grab logs from Beer-Garden
+          run: docker-compose -f child-docker-compose.yml logs --tail 100 beer-garden
+          working-directory: ./docker/docker-compose
