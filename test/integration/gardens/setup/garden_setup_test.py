@@ -8,6 +8,8 @@ class TestGardenSetup(object):
     def test_system_register_successful(self):
 
         parser = SchemaParser()
-        gardens = parser.parse_garden(self.easy_client.client.session.get(self.easy_client.client.base_url + "api/v1/gardens/"))
+        response = self.easy_client.client.session.get(self.easy_client.client.base_url + "api/v1/gardens/")
+
+        gardens = parser.parse_garden(response.json(), many=True)
 
         assert len(gardens) == 1
