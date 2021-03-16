@@ -59,7 +59,7 @@ services:
             BG_METRICS_URL: http://localhost:3000
             BG_METRICS_PROMETHEUS_ENABLED: "false"
 
-    ui:
+    ui-child:
         image: bgio/ui:3
         networks:
             - bg-network
@@ -70,7 +70,7 @@ services:
             BEERGARDEN_HOST: "beer-garden"
             BEERGARDEN_PORT: "2337"
         depends_on:
-            - beer-garden
+            - beer-garden-child
 
 networks:
     bg-network:
