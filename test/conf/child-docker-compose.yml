@@ -64,11 +64,11 @@ services:
         networks:
             - bg-network
         ports:
-            - "80:80"
+            - "8080:80"
               #- "443:443"
         environment:
-            BEERGARDEN_HOST: "beer-garden"
-            BEERGARDEN_PORT: "2337"
+            BEERGARDEN_HOST: "beer-garden-child"
+            BEERGARDEN_PORT: "2347"
         depends_on:
             - beer-garden-child
 

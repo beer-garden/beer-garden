@@ -7,7 +7,6 @@ class TestGardenSetup(object):
 
     def test_garden_auto_register_successful(self):
 
-        #parser = SchemaParser()
         response = self.easy_client.client.session.get(self.easy_client.client.base_url + "api/v1/gardens/")
 
         gardens = self.parser.parse_garden(response.json(), many=True)
@@ -28,7 +27,7 @@ class TestGardenSetup(object):
                 namespaces[system.namespace] += 1
 
         print(namespaces)
-        assert namespaces["child-docker"] > 0
+        assert "child-docker" in namespaces.keys() and namespaces["child-docker"] > 0
 
     def test_child_systems_register_successful(self):
 
@@ -43,5 +42,5 @@ class TestGardenSetup(object):
                 namespaces[system.namespace] += 1
 
         print(namespaces)
-        assert namespaces["child-docker"] > 0
+        assert "child-docker" in namespaces.keys() and namespaces["child-docker"] > 0
 
