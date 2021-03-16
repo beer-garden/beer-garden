@@ -24,8 +24,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+
+
       - name: Update Docker Compose
-        run: cp test/conf/docker-componse.yml docker/docker-compose/docker-compose.yml
+        run: |
+          ls
+          ls test
+          ls test/conf
+          cp test/conf/docker-componse.yml docker/docker-compose/docker-compose.yml
         working-directory: ./
 
       - name: Run Docker Mongo
