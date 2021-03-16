@@ -150,7 +150,7 @@ jobs:
           run: pip install -r requirements.txt
           working-directory: ./test/integration
 
-        - name: Test Plugins
+        - name: Test Gardens
           run: make test-gardens
           working-directory: ./test/integration
 
