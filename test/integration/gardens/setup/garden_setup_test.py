@@ -9,6 +9,8 @@ from helper.assertion import assert_system_running
 @pytest.mark.usefixtures('easy_client', 'parser', 'child_easy_client')
 class TestGardenSetup(object):
 
+    child_garden_name = "childdocker"
+
     def test_garden_auto_register_successful(self):
 
         response = self.easy_client.client.session.get(self.easy_client.client.base_url + "api/v1/gardens/")
@@ -44,7 +46,7 @@ class TestGardenSetup(object):
 
         child_garden = None;
         for garden in gardens:
-            if garden.name == 'docker-child':
+            if garden.name == self.child_garden_name:
                 child_garden = garden
                 break
 
@@ -55,7 +57,7 @@ class TestGardenSetup(object):
 
         payload = self.parser.serialize_patch(patch)
         response = self.easy_client.client.session.post(
-            self.easy_client.client.base_url + "api/v1/gardens/" + child_garden.name, data=payload,
+            self.easy_client.client.base_url + "api/v1/gardens/" + self.child_garden_name, data=payload,
             headers=self.easy_client.client.JSON_HEADERS
         )
 
@@ -67,7 +69,7 @@ class TestGardenSetup(object):
         payload = self.parser.serialize_patch(patch)
 
         response = self.easy_client.client.session.post(
-            self.easy_client.client.base_url + "api/v1/gardens/docker-child", data=payload,
+            self.easy_client.client.base_url + "api/v1/gardens/"+self.child_garden_name, data=payload,
             headers=self.easy_client.client.JSON_HEADERS
         )
 
@@ -89,7 +91,7 @@ class TestGardenSetup(object):
                 namespaces[system.namespace] += 1
 
         print(namespaces)
-        assert "child-docker" in namespaces.keys() and namespaces["child-docker"] > 0
+        assert self.child_garden_name in namespaces.keys() and namespaces[self.child_garden_name] > 0
 
     def test_child_systems_register_successful(self):
 
@@ -104,4 +106,4 @@ class TestGardenSetup(object):
                 namespaces[system.namespace] += 1
 
         print(namespaces)
-        assert "child-docker" in namespaces.keys() and namespaces["child-docker"] > 0
+        assert self.child_garden_name in namespaces.keys() and namespaces[self.child_garden_name] > 0

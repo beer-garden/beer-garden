@@ -3,7 +3,7 @@ version: '3.5'
 x-definitions: &env
     # IMPORTANT!!
     # Change this to whatever you want your garden name / namespace default to be
-    BG_GARDEN_NAME: child-docker
+    BG_GARDEN_NAME: childdocker
 
     # IMPORTANT!!
     # Change this to support both local and remote plugins
