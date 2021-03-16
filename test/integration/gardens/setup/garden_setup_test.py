@@ -12,6 +12,7 @@ class TestGardenSetup(object):
 
         gardens = self.parser.parse_garden(response.json(), many=True)
 
+        print(gardens)
         assert len(gardens) == 1
 
     def test_child_systems_register_successful(self):
