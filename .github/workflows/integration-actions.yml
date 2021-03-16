@@ -25,7 +25,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Update Docker Compose
-        run: cp ./test/conf/docker-componse.yml ./docker/docker-compose/docker-compose.yml
+        run: cp test/conf/docker-componse.yml docker/docker-compose/docker-compose.yml
+        working-directory: ./
 
       - name: Run Docker Mongo
         run: docker-compose up -d mongodb
@@ -97,10 +98,12 @@ jobs:
             python-version: ${{ matrix.python-version }}
 
         - name: Update Docker Compose
-          run: cp ./test/conf/docker-componse.yml ./docker/docker-compose/docker-compose.yml
+          run: cp test/conf/docker-componse.yml docker/docker-compose/docker-compose.yml
+          working-directory: ./
 
         - name: Update Child Docker Compose
-          run: cp ./test/conf/child-docker-componse.yml ./docker/docker-compose/
+          run: cp test/conf/child-docker-componse.yml docker/docker-compose/
+          working-directory: ./
 
         - name: Run Docker Mongo
           run: docker-compose up -d mongodb
