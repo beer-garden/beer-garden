@@ -49,6 +49,7 @@ jobs:
           cp -r ./tmp/dynamic ./docker/docker-compose/data/localplugins
           cp -r ./tmp/sleeper ./docker/docker-compose/data/localplugins
           cp -r ./tmp/echo-sleeper ./docker/docker-compose/data/localplugins
+          cp -r ./tmp/error ./docker/docker-compose/data/localplugins
 
       - name: Verify Local Plugins
         run: ls ./docker/docker-compose/data/localplugins
@@ -138,6 +139,7 @@ jobs:
             cp -r ./tmp/dynamic ./docker/docker-compose/data/localplugins
             cp -r ./tmp/sleeper ./docker/docker-compose/data/localplugins
             cp -r ./tmp/echo-sleeper ./docker/docker-compose/data/localplugins
+            cp -r ./tmp/error ./docker/docker-compose/data/localplugins
 
         - name: Verify Local Plugins
           run: ls ./docker/docker-compose/data/localplugins
