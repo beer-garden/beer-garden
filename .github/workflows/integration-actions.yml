@@ -50,8 +50,8 @@ jobs:
           cp -r ./tmp/sleeper ./docker/docker-compose/data/localplugins
           cp -r ./tmp/echo-sleeper ./docker/docker-compose/data/localplugins
 
-#      - name: Verify Local Plugins
-#        run: ls ./docker/docker-compose/data/localplugins
+      - name: Verify Local Plugins
+        run: ls ./docker/docker-compose/data/localplugins
 
       - name: Run Docker Beer Garden
         run: docker-compose up -d beer-garden
@@ -63,9 +63,9 @@ jobs:
       - name: Wait for Beer Garden to intialize
         run: sleep 45
 
-#      - name: Grab logs from Beer-Garden
-#        run: docker-compose logs --tail 100 beer-garden
-#        working-directory: ./docker/docker-compose
+      - name: Grab logs from Beer-Garden
+        run: docker-compose logs --tail 100 beer-garden
+        working-directory: ./docker/docker-compose
 
       - name: Uninstall Brewtils
         run: pip uninstall brewtils
