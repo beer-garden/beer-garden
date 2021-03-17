@@ -195,7 +195,7 @@ def wait_for_connection(client, timeout=30, max_delay=5):
             delay_time = min(delay_time * 2, max_delay)
 
 
-def wait_for_plugins(client, garden="docker", timeout=30, max_delay=5):
+def wait_for_plugins(client, namespace="docker", timeout=30, max_delay=5):
     for plugin_name, plugin_info in PLUGIN_MAP.items():
         if not plugin_info['running']:
             delay_time = 0.1
@@ -203,7 +203,7 @@ def wait_for_plugins(client, garden="docker", timeout=30, max_delay=5):
 
             while not plugin_info['running']:
                 system = client.find_unique_system(name=plugin_name,
-                                                   garden=garden,
+                                                   namespace=namespace,
                                                    version=plugin_info.get("version"))
 
                 is_running = True
