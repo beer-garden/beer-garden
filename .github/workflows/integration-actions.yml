@@ -77,6 +77,10 @@ jobs:
         run: pip install -r requirements.txt
         working-directory: ./test/integration
 
+      - name: Copy Helper Classes
+        run: cp -r helper plugins/
+        working-directory: ./test/integration
+
       - name: Test Plugins
         run: make test-plugins
         working-directory: ./test/integration
