@@ -61,7 +61,7 @@ class TestGardenSetup(object):
             headers=self.easy_client.client.JSON_HEADERS
         )
 
-        assert response.status == 200
+        assert response.ok
 
     # def test_force_sync(self):
     #
