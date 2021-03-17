@@ -28,25 +28,6 @@ class TestGardenSetup(object):
         print(gardens)
         assert len(gardens) == 2
 
-    # def test_garden_register(self):
-    #
-    #     child_garden = Garden(name="child-docker", connection_type="HTTP",
-    #                           connection_params={"host": "beer-garden-child", "port": 2347, "ssl": False})
-    #
-    #     payload = self.parser.serialize_garden(child_garden)
-    #     response = self.easy_client.client.session.post(
-    #         self.easy_client.client.base_url + "api/v1/gardens/", data=payload, headers=self.easy_client.client.JSON_HEADERS
-    #     )
-    #
-    #     assert response.ok
-    #
-    #     response = self.easy_client.client.session.get(self.easy_client.client.base_url + "api/v1/gardens/")
-    #
-    #     gardens = self.parser.parse_garden(response.json(), many=True)
-    #
-    #     print(gardens)
-    #     assert len(gardens) == 2
-
     def test_update_garden_connection_info(self):
 
         response = self.easy_client.client.session.get(self.easy_client.client.base_url + "api/v1/gardens/")
@@ -73,21 +54,6 @@ class TestGardenSetup(object):
         )
 
         assert response.ok
-
-    # def test_force_sync(self):
-    #
-    #     patch = PatchOperation(operation="sync", path='', value=None)
-    #     payload = self.parser.serialize_patch(patch)
-    #
-    #     response = self.easy_client.client.session.patch(
-    #         self.easy_client.client.base_url + "api/v1/gardens/"+self.child_garden_name, data=payload,
-    #         headers=self.easy_client.client.JSON_HEADERS
-    #     )
-    #
-    #     assert response.ok
-    #
-    #     # Wait for the child to sync before proceeding
-    #     time.sleep(30)
 
     def test_child_systems_register_successful(self):
 
@@ -128,3 +94,8 @@ class TestGardenSetup(object):
         request = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
         response = wait_for_response(self.child_easy_client, request)
         assert_successful_request(response, output="test_string!!!!!!!!!")
+
+    def test_verify_requests(self):
+        requests = self.easy_client.find_requests()
+
+        assert len(requests) == 2
