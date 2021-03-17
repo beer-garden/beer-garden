@@ -3,7 +3,10 @@ import time
 import pytest
 from brewtils.schema_parser import SchemaParser
 from brewtils.models import Garden, PatchOperation
-from helper.assertion import assert_system_running
+try:
+    from helper.assertion import assert_system_running
+except:
+    from ...helper.assertion import assert_system_running
 
 
 @pytest.mark.usefixtures('easy_client', 'parser', 'child_easy_client')
