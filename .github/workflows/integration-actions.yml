@@ -28,36 +28,44 @@ jobs:
         run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
         working-directory: ./
 
-      - name: Run Docker Mongo
-        run: docker-compose up -d mongodb
-        working-directory: ./docker/docker-compose
-
-      - name: Run Docker Rabbit
-        run: docker-compose up -d rabbitmq
-        working-directory: ./docker/docker-compose
+#      - name: Run Docker Mongo
+#        run: docker-compose up -d mongodb
+#        working-directory: ./docker/docker-compose
+#
+#      - name: Run Docker Rabbit
+#        run: docker-compose up -d rabbitmq
+#        working-directory: ./docker/docker-compose
 
       - name: Checkout Local Plugins
         uses: actions/checkout@v2
         with:
           repository: beer-garden/example-plugins
-          path: ./docker/docker-compose/data/localplugins
+          path: ./tmp
 
-      - name: Verify Local Plugins
-        run: ls ./docker/docker-compose/data/localplugins
+      - name: Move Test Plugins
+        run: |
+          cp -r ./tmp/echo ./docker/docker-compose/data/localplugins
+          cp -r ./tmp/complex ./docker/docker-compose/data/localplugins
+          cp -r ./tmp/dynamic ./docker/docker-compose/data/localplugins
+          cp -r ./tmp/sleeper ./docker/docker-compose/data/localplugins
+          cp -r ./tmp/echo-sleeper ./docker/docker-compose/data/localplugins
+
+#      - name: Verify Local Plugins
+#        run: ls ./docker/docker-compose/data/localplugins
 
       - name: Run Docker Beer Garden
         run: docker-compose up -d beer-garden
         working-directory: ./docker/docker-compose
 
-      - name: Check Docker Containers
-        run: docker ps
+#      - name: Check Docker Containers
+#        run: docker ps
 
       - name: Wait for Beer Garden to intialize
-        run: sleep 30
+        run: sleep 45
 
-      - name: Grab logs from Beer-Garden
-        run: docker-compose logs --tail 100 beer-garden
-        working-directory: ./docker/docker-compose
+#      - name: Grab logs from Beer-Garden
+#        run: docker-compose logs --tail 100 beer-garden
+#        working-directory: ./docker/docker-compose
 
       - name: Uninstall Brewtils
         run: pip uninstall brewtils
@@ -161,6 +169,10 @@ jobs:
 
         - name: Install Latest Version of Brewtils
           run: pip install brewtils
+
+        - name: Copy Helper Classes
+          run: cp -r helper gardens/
+          working-directory: ./test/integration
 
         - name: Test Gardens
           continue-on-error: true
