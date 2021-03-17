@@ -2,7 +2,7 @@ import pytest
 from brewtils import get_easy_client
 from brewtils.schema_parser import SchemaParser
 
-from ../helper import setup_easy_client, RequestGenerator
+from .helper import setup_easy_client, RequestGenerator
 
 
 @pytest.fixture(scope="class")
