@@ -146,8 +146,13 @@ def get_instance(client, instance_id):
     return client.get_instance(instance_id)
 
 
-def get_config():
+def get_config(is_child=False):
     global CONFIG
+
+    if is_child:
+        config_file = 'child-config.json'
+    else:
+        config_file = 'config.json'
 
     if CONFIG is None:
         # Required for handling the different starting points for the unit tests
@@ -162,7 +167,7 @@ def get_config():
             path = "plugins/"
 
         try:
-            with open(path + 'config.json') as config_file:
+            with open(path + config_file) as config_file:
                 file_config = json.load(config_file)
         except Exception:
             file_config = {}
@@ -190,7 +195,7 @@ def wait_for_connection(client, timeout=30, max_delay=5):
             delay_time = min(delay_time * 2, max_delay)
 
 
-def wait_for_plugins(client, timeout=30, max_delay=5):
+def wait_for_plugins(client, garden="docker", timeout=30, max_delay=5):
     for plugin_name, plugin_info in PLUGIN_MAP.items():
         if not plugin_info['running']:
             delay_time = 0.1
@@ -198,6 +203,7 @@ def wait_for_plugins(client, timeout=30, max_delay=5):
 
             while not plugin_info['running']:
                 system = client.find_unique_system(name=plugin_name,
+                                                   garden=garden,
                                                    version=plugin_info.get("version"))
 
                 is_running = True
