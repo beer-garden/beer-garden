@@ -101,9 +101,9 @@ jobs:
           run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
           working-directory: ./
 
-        - name: Update Child Docker Compose
-          run: cp test/conf/child-docker-compose.yml docker/docker-compose/
-          working-directory: ./
+#        - name: Update Child Docker Compose
+#          run: cp test/conf/child-docker-compose.yml docker/docker-compose/
+#          working-directory: ./
 
         - name: Run Docker Mongo
           run: docker-compose up -d mongodb
@@ -130,7 +130,7 @@ jobs:
           run: sleep 30
 
         - name: Run Docker Beer Garden Child
-          run: RELEASE=${{matrix.child-garden}} docker-compose -f child-docker-compose.yml up -d beer-garden-child
+          run: RELEASE=${{matrix.child-garden}} docker-compose up -d beer-garden-child
           working-directory: ./docker/docker-compose
 
         - name: Check Docker Containers
@@ -140,7 +140,7 @@ jobs:
           run: sleep 30
 
         - name: Grab logs from Child Beer-Garden
-          run: docker-compose -f child-docker-compose.yml logs --tail 100 beer-garden-child
+          run: docker-compose --tail 100 beer-garden-child
           working-directory: ./docker/docker-compose
 
         - name: Grab logs from Beer-Garden
@@ -160,16 +160,16 @@ jobs:
           working-directory: ./test/integration
 
         - name: Grab logs from Child Beer-Garden
-          run: docker-compose -f child-docker-compose.yml logs --tail 100 beer-garden-child
+          run: docker-compose --tail 100 beer-garden-child
           working-directory: ./docker/docker-compose
 
         - name: Grab logs from Beer-Garden
           run: docker-compose logs --tail 100 beer-garden
           working-directory: ./docker/docker-compose
 
-        - name: Shutdown Docker Child Containers
-          run: docker-compose -f child-docker-compose.yml stop
-          working-directory: ./docker/docker-compose
+#        - name: Shutdown Docker Child Containers
+#          run: docker-compose -f child-docker-compose.yml stop
+#          working-directory: ./docker/docker-compose
 
         - name: Shutdown Docker Containers
           run: docker-compose stop

@@ -33,6 +33,8 @@ services:
         environment:
             <<: *env
 
+            BG_GARDEN_NAME: childdocker
+
             # If you are running in Ubuntu, then you need to set the Timezone
             # We are actively investigating why this is
             TZ: UTC
