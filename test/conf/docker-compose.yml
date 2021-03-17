@@ -197,7 +197,7 @@ services:
             #- "443:443"
         environment:
             BEERGARDEN_HOST: "beer-garden-child"
-            BEERGARDEN_PORT: "2347"
+            BEERGARDEN_PORT: "2337"
         depends_on:
             - beer-garden-child
 networks:

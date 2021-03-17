@@ -105,13 +105,13 @@ jobs:
 #          run: cp test/conf/child-docker-compose.yml docker/docker-compose/
 #          working-directory: ./
 
-        - name: Run Docker Mongo
-          run: docker-compose up -d mongodb
-          working-directory: ./docker/docker-compose
-
-        - name: Run Docker Rabbit
-          run: docker-compose up -d rabbitmq
-          working-directory: ./docker/docker-compose
+#        - name: Run Docker Mongo
+#          run: docker-compose up -d mongodb
+#          working-directory: ./docker/docker-compose
+#
+#        - name: Run Docker Rabbit
+#          run: docker-compose up -d rabbitmq
+#          working-directory: ./docker/docker-compose
 
         - name: Checkout Local Plugins
           uses: actions/checkout@v2
@@ -130,22 +130,22 @@ jobs:
         - name: Verify Local Plugins
           run: ls ./docker/docker-compose/data/localplugins
 
-        - name: Run Docker Beer Garden
-          run: docker-compose up -d beer-garden
-          working-directory: ./docker/docker-compose
-
-        - name: Wait for Parent Beer Garden to intialize
-          run: sleep 30
+#        - name: Run Docker Beer Garden
+#          run: docker-compose up -d beer-garden
+#          working-directory: ./docker/docker-compose
+#
+#        - name: Wait for Parent Beer Garden to intialize
+#          run: sleep 30
 
         - name: Run Docker Beer Garden Child
           run: RELEASE=${{matrix.child-garden}} docker-compose up -d beer-garden-child
           working-directory: ./docker/docker-compose
 
+        - name: Wait for everything to intialize
+          run: sleep 45
+
         - name: Check Docker Containers
           run: docker ps
-
-        - name: Wait for Child Beer Garden to intialize
-          run: sleep 30
 
         - name: Grab logs from Child Beer-Garden
           run: RELEASE=${{matrix.child-garden}} docker-compose logs --tail 100 beer-garden-child
