@@ -59,6 +59,8 @@ class TestGardenSetup(object):
         patch = PatchOperation(operation="config", path='', value=self.parser.serialize_garden(child_garden))
 
         payload = self.parser.serialize_patch(patch)
+
+        print(payload)
         response = self.easy_client.client.session.patch(
             self.easy_client.client.base_url + "api/v1/gardens/" + self.child_garden_name, data=payload,
             headers=self.easy_client.client.JSON_HEADERS
