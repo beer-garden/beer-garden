@@ -90,7 +90,6 @@ services:
         depends_on:
             - prometheus
 
-
     mongodb:
         image: mongo:4.2
         restart: always
