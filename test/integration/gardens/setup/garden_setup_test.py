@@ -56,7 +56,7 @@ class TestGardenSetup(object):
         child_garden.connection_type = "HTTP"
         child_garden.connection_params = {"host": "beer-garden-child", "port": 2337, "ssl": False}
 
-        patch = PatchOperation(operation="config", path='', value=self.parser.serialize_garden(child_garden))
+        patch = PatchOperation(operation="config", path='', value=self.parser.serialize_garden(child_garden, to_string=False))
 
         payload = self.parser.serialize_patch(patch)
 
