@@ -140,7 +140,7 @@ jobs:
           run: sleep 30
 
         - name: Grab logs from Child Beer-Garden
-          run: docker-compose --tail 100 beer-garden-child
+          run: RELEASE=${{matrix.child-garden}} docker-compose logs --tail 100 beer-garden-child
           working-directory: ./docker/docker-compose
 
         - name: Grab logs from Beer-Garden
@@ -160,7 +160,7 @@ jobs:
           working-directory: ./test/integration
 
         - name: Grab logs from Child Beer-Garden
-          run: docker-compose logs --tail 100 beer-garden-child
+          run: RELEASE=${{matrix.child-garden}} docker-compose logs --tail 100 beer-garden-child
           working-directory: ./docker/docker-compose
 
         - name: Grab logs from Beer-Garden
