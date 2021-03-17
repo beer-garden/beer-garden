@@ -225,10 +225,10 @@ def wait_for_plugins(client, namespace="docker", timeout=30, max_delay=5):
                     delay_time = min(delay_time * 2, max_delay)
 
 
-def setup_easy_client():
-    client = get_easy_client(**get_config())
+def setup_easy_client(is_child=False, namespace='docker'):
+    client = get_easy_client(**get_config(is_child=is_child))
     wait_for_connection(client)
-    wait_for_plugins(client)
+    wait_for_plugins(client, namespace=namespace)
 
     return client
 
@@ -238,7 +238,9 @@ def setup_system_client(**kwargs):
     client_args.update(get_config())
     client = SystemClient(**client_args)
 
+    namespace = kwargs.get('namespace', 'docker')
+
     wait_for_connection(client._easy_client)
-    wait_for_plugins(client._easy_client)
+    wait_for_plugins(client._easy_client, namespace=namespace)
 
     return client
