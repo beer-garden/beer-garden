@@ -8,11 +8,12 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.7']
-#        python-version: [ '2.7', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9']
+        python-version: [ '2.7', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9']
+        plugin-brewtils: ['3.0.0','3.0.1','3.0.2','3.1.0']
         os: ['ubuntu-18.04']
-        plugin-brewtils: ['3.1.0']
-#        plugin-brewtils: ['3.0.0','3.0.1','3.0.2','3.1.0']
+#        For Debugging
+#        python-version: ['3.7']
+#        plugin-brewtils: ['3.1.0']
       fail-fast: false
 
     name: Plugins - Brewtils ${{matrix.plugin-brewtils}} - Python ${{ matrix.python-version }}
@@ -27,14 +28,6 @@ jobs:
       - name: Update Docker Compose
         run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
         working-directory: ./
-
-#      - name: Run Docker Mongo
-#        run: docker-compose up -d mongodb
-#        working-directory: ./docker/docker-compose
-#
-#      - name: Run Docker Rabbit
-#        run: docker-compose up -d rabbitmq
-#        working-directory: ./docker/docker-compose
 
       - name: Checkout Local Plugins
         uses: actions/checkout@v2
@@ -57,9 +50,6 @@ jobs:
       - name: Run Docker Beer Garden
         run: docker-compose up -d beer-garden
         working-directory: ./docker/docker-compose
-
-#      - name: Check Docker Containers
-#        run: docker ps
 
       - name: Wait for Beer Garden to intialize
         run: sleep 45
@@ -97,11 +87,12 @@ jobs:
       matrix:
         os: ['ubuntu-18.04']
         python-version: ['3.7']
-        child-garden: ['3']
-#        child-garden: ['3.0.0','3.0.1','3.0.2','3.1.0']
+        child-garden: ['3.0.0','3.0.1','3.0.2','3.1.0','3','latest']
+#        For Debugging
+#        child-garden: ['3']
       fail-fast: false
 
-    name: Garden - Child ${{matrix.child-garden}} - Python ${{ matrix.python-version }}
+    name: Garden - Child ${{matrix.child-garden}}
     steps:
         - uses: actions/checkout@v2
 
@@ -113,18 +104,6 @@ jobs:
         - name: Update Docker Compose
           run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
           working-directory: ./
-
-#        - name: Update Child Docker Compose
-#          run: cp test/conf/child-docker-compose.yml docker/docker-compose/
-#          working-directory: ./
-
-#        - name: Run Docker Mongo
-#          run: docker-compose up -d mongodb
-#          working-directory: ./docker/docker-compose
-#
-#        - name: Run Docker Rabbit
-#          run: docker-compose up -d rabbitmq
-#          working-directory: ./docker/docker-compose
 
         - name: Checkout Local Plugins
           uses: actions/checkout@v2
@@ -143,13 +122,6 @@ jobs:
 
         - name: Verify Local Plugins
           run: ls ./docker/docker-compose/data/localplugins
-
-#        - name: Run Docker Beer Garden
-#          run: docker-compose up -d beer-garden
-#          working-directory: ./docker/docker-compose
-#
-#        - name: Wait for Parent Beer Garden to intialize
-#          run: sleep 30
 
         - name: Run Docker Beer Garden Child
           run: RELEASE=${{matrix.child-garden}} docker-compose up -d beer-garden-child
@@ -181,21 +153,8 @@ jobs:
           working-directory: ./test/integration
 
         - name: Test Gardens
-          continue-on-error: true
           run: make test-gardens
           working-directory: ./test/integration
-
-#        - name: Grab logs from Child Beer-Garden
-#          run: RELEASE=${{matrix.child-garden}} docker-compose logs --tail 100 beer-garden-child
-#          working-directory: ./docker/docker-compose
-#
-#        - name: Grab logs from Beer-Garden
-#          run: docker-compose logs --tail 100 beer-garden
-#          working-directory: ./docker/docker-compose
-
-#        - name: Shutdown Docker Child Containers
-#          run: docker-compose -f child-docker-compose.yml stop
-#          working-directory: ./docker/docker-compose
 
         - name: Shutdown Docker Containers
           run: docker-compose stop
