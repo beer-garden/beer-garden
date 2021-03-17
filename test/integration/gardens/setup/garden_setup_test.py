@@ -18,26 +18,26 @@ class TestGardenSetup(object):
         gardens = self.parser.parse_garden(response.json(), many=True)
 
         print(gardens)
-        assert len(gardens) == 1
-
-    def test_garden_register(self):
-
-        child_garden = Garden(name="child-docker", connection_type="HTTP",
-                              connection_params={"host": "beer-garden-child", "port": 2347, "ssl": False})
-
-        payload = self.parser.serialize_garden(child_garden)
-        response = self.easy_client.client.session.post(
-            self.easy_client.client.base_url + "api/v1/gardens/", data=payload, headers=self.easy_client.client.JSON_HEADERS
-        )
-
-        assert response.ok
-
-        response = self.easy_client.client.session.get(self.easy_client.client.base_url + "api/v1/gardens/")
-
-        gardens = self.parser.parse_garden(response.json(), many=True)
-
-        print(gardens)
         assert len(gardens) == 2
+
+    # def test_garden_register(self):
+    #
+    #     child_garden = Garden(name="child-docker", connection_type="HTTP",
+    #                           connection_params={"host": "beer-garden-child", "port": 2347, "ssl": False})
+    #
+    #     payload = self.parser.serialize_garden(child_garden)
+    #     response = self.easy_client.client.session.post(
+    #         self.easy_client.client.base_url + "api/v1/gardens/", data=payload, headers=self.easy_client.client.JSON_HEADERS
+    #     )
+    #
+    #     assert response.ok
+    #
+    #     response = self.easy_client.client.session.get(self.easy_client.client.base_url + "api/v1/gardens/")
+    #
+    #     gardens = self.parser.parse_garden(response.json(), many=True)
+    #
+    #     print(gardens)
+    #     assert len(gardens) == 2
 
     def test_update_garden_connection_info(self):
 
@@ -51,7 +51,7 @@ class TestGardenSetup(object):
                 break
 
         child_garden.connection_type = "HTTP"
-        child_garden.connection_params = {"host": "beer-garden-child", "port": 2347, "ssl": False}
+        child_garden.connection_params = {"host": "beer-garden-child", "port": 2337, "ssl": False}
 
         patch = PatchOperation(operation="config", path='', value=child_garden)
 
