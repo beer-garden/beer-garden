@@ -61,22 +61,22 @@ class TestGardenSetup(object):
             headers=self.easy_client.client.JSON_HEADERS
         )
 
-        assert response.ok
+        assert response.status == 200
 
-    def test_force_sync(self):
-
-        patch = PatchOperation(operation="sync", path='', value=None)
-        payload = self.parser.serialize_patch(patch)
-
-        response = self.easy_client.client.session.patch(
-            self.easy_client.client.base_url + "api/v1/gardens/"+self.child_garden_name, data=payload,
-            headers=self.easy_client.client.JSON_HEADERS
-        )
-
-        assert response.ok
-
-        # Wait for the child to sync before proceeding
-        time.sleep(30)
+    # def test_force_sync(self):
+    #
+    #     patch = PatchOperation(operation="sync", path='', value=None)
+    #     payload = self.parser.serialize_patch(patch)
+    #
+    #     response = self.easy_client.client.session.patch(
+    #         self.easy_client.client.base_url + "api/v1/gardens/"+self.child_garden_name, data=payload,
+    #         headers=self.easy_client.client.JSON_HEADERS
+    #     )
+    #
+    #     assert response.ok
+    #
+    #     # Wait for the child to sync before proceeding
+    #     time.sleep(30)
 
     def test_child_systems_register_successful(self):
 
