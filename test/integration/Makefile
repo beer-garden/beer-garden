@@ -25,14 +25,17 @@ deps:
 lint: ## check style with flake8
 	flake8
 
-test-config: ## run configuration integration tests
-	pytest config/
-
-test-lifecycle: ## run lifecycle integration tests
-	pytest lifecycle/
-
-test-plugins: ## run rest integration tests
-	pytest plugins/
+#test-config: ## run configuration integration tests
+#	pytest config/
+#
+#test-lifecycle: ## run lifecycle integration tests
+#	pytest lifecycle/
 
 test-gardens: ## run rest integration tests
 	pytest gardens/
+
+test-remote-plugins: ## run rest integration tests
+	pytest remote_plugins/
+
+test-local-plugins: ## run rest integration tests
+	pytest local_plugins/
