@@ -156,7 +156,7 @@ class Connection:
                             logger.info("Stomp successfully " + connected_message)
 
                     except Exception as e:
-                        logger.warning(
+                        logger.debug(
                             f"Error connecting: {type(e).__name__}. "
                             f"Affected gardens are {[garden.get('name') for garden in gardens]}"
                         )
