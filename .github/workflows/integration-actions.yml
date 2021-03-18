@@ -25,6 +25,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Beer Garden Python Dependecies
+        run: make deps-python
+        working-directory: ./src/app
+
       - name: Build Local Beer Garden Docker
         run: make docker-build-unstable
         working-directory: ./src/app
@@ -83,6 +87,10 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Beer Garden Python Dependecies
+        run: make deps-python
+        working-directory: ./src/app
 
       - name: Build Local Beer Garden Docker
         run: make docker-build-unstable
@@ -160,6 +168,10 @@ jobs:
           uses: actions/setup-python@v2
           with:
             python-version: ${{ matrix.python-version }}
+
+        - name: Beer Garden Python Dependecies
+          run: make deps-python
+          working-directory: ./src/app
 
         - name: Build Local Beer Garden Docker
           run: make docker-build-unstable
