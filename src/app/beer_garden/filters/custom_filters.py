@@ -64,6 +64,16 @@ def operation_filtering(
         if current_user.id == obj.kwargs["user_id"]:
             return obj
 
+        for permission in current_user.permissions:
+
+            # Scope = Local Admins must have Admin over just the Garden
+            if (
+                permission.access in PermissionRequiredAccess[Permissions.LOCAL_ADMIN]
+                and permission.garden == config.get("garden.name")
+                and permission.namespace is None
+            ):
+                return obj
+
         if raise_error:
             raise AuthorizationRequired(
                 "Action Local Garden Admin permissions or be the user being modified in the request"
@@ -71,7 +81,7 @@ def operation_filtering(
 
         return None
 
-    elif obj.operation_type in ["USER_UPDATE_ROLE", "USER_REMOVE_ROLE", "USER_UPDATE"]:
+    elif obj.operation_type in ["USER_UPDATE_ROLE", "USER_REMOVE_ROLE"]:
         for permission in current_user.permissions:
 
             # Scope = Local Admins must have Admin over just the Garden
