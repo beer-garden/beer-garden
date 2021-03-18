@@ -1,10 +1,3 @@
-<div>
-  <div class="alert alert-warning m-b-0"
-         ng-show="showAlert()">
-    The request is past expiration date and may have been deleted.
-  </div>
-</div>
-
 <h1 class="page-header">
   <span>Request View</span>
   <span ng-if="responseState(response) === 'success'">
@@ -86,17 +79,20 @@
           <td ng-click="toggleChildren()">{{formatDate(request.created_at)}}</td>
           <td ng-click="toggleChildren()">{{formatDate(request.updated_at)}}</td>
           <td>
-            {{(expiration_date || "N/A")}}
-            <button ng-click="showDateModal=!showDateModal" ng-hide="!parent_complete" class="btn btn-primary fa fa-pencil-square-o"></button>
-            <modal ng-show="showDateModal">
-              <form
-                      name="dateform"
-                      sf-schema="dateSchema"
-                      sf-form="dateForm"
-                      sf-model="dateModel"
-                      ng-submit="updateRequest(dateform, dateModel)"></form>
-
-            </modal>
+            <span ng-hide="isExpired()">{{(formatDate(expiration_date) || "N/A")}}</span>
+            <span ng-show="isExpired()" class="alert alert-danger m-b-0" style="line-height:0px; padding:0px 10px;">
+              {{(formatDate(expiration_date) || "N/A")}}
+              <span uib-popover="Request has expired and will be removed on next pruner run"
+                    popover-animation="true"
+                    popover-placement="right"
+                    popover-trigger="'mouseenter'"
+                    popover-title="Request Expired"
+                    style="color: gray; padding-top: 5px">
+              <span class="glyphicon glyphicon-info-sign"></span>
+            </span>
+            </span>
+            <i ng-click="doCreate()" style="font-size: 1.5em;" ng-hide="!parent_complete" class="btn fa fa-pencil-square-o">
+            </i>
           </td>
           <td ng-click="toggleChildren()">{{request.comment}}</td>
         </tr>

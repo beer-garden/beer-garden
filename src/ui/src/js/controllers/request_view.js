@@ -1,12 +1,14 @@
 import _ from 'lodash';
 import sizeOf from 'object-sizeof';
 import {formatDate, formatJsonDisplay} from '../services/utility_service.js';
+import template from '../../templates/update_request_expiration.html';
 
 requestViewController.$inject = [
   '$scope',
   '$state',
   '$stateParams',
   '$timeout',
+  '$uibModal',
   '$animate',
   '$sce',
   'localStorageService',
@@ -33,6 +35,7 @@ export default function requestViewController(
     $state,
     $stateParams,
     $timeout,
+    $uibModal,
     $animate,
     $sce,
     localStorageService,
@@ -61,36 +64,6 @@ export default function requestViewController(
   $scope.showFormatted = false;
   $scope.disabledPourItAgain = false;
   $scope.msgPourItAgain = null;
-  $scope.dateSchema = {
-                      'type': 'object',
-                      'properties': {
-                      'expiration_date': {
-                              'title': ' ',
-                              'type': ['integer', 'null'],
-                              'format': 'datetime',
-                            },
-                      },
-                  };
-  $scope.dateForm = [
-                    {
-                      'type': 'section',
-                      'htmlClass': 'row',
-                      'items': [
-                        {'key': 'expiration_date'},
-                      ],
-                    },
-                    {
-                      'type': 'section',
-                      'htmlClass': 'row',
-                      'items': [
-                        {
-                          'type': 'submit', 'style': 'btn-primary w-100',
-                          'title': 'Update Parent Expiration',
-                        },
-                      ],
-                    },
-                ];
-  $scope.dateModel = {};
 
   $scope.isMaximized = localStorageService.get('isMaximized');
   if ($scope.isMaximized === null) {
@@ -123,17 +96,26 @@ export default function requestViewController(
     formatJsonDisplay(_editor, true);
   };
 
-  $scope.updateRequest = function(form, model){
-    RequestService.updateRequest($scope.request, model);
-  }
+  $scope.doCreate = function() {
+        var modalInstance = $uibModal.open({
+          template: template,
+          resolve: {
+            model: $scope.dateModel,
+            request: $scope.request,
+          },
+          controller: 'UpdateRequestExpirationController',
+          size: 'bg',
+        });
 
-  $scope.showAlert = function() {
-    let expired = ($scope.request.expiration_date <= ((new Date()).getTime())) && $scope.request.expiration_date;
-    if (expired){
-        $scope.expiration_date = 'Expired';
-    }
-    return expired
-  }
+        modalInstance.result.then((request) => {
+          $scope.setExpirationDate(request);
+        },
+        () => {});
+    };
+
+     $scope.isExpired = function() {
+        return ($scope.expiration_date <= ((new Date()).getTime())) && $scope.expiration_date;
+      }
 
   $scope.canRepeat = function(request) {
     return RequestService.isComplete(request);
@@ -217,7 +199,7 @@ export default function requestViewController(
         request=request.parent;
     }
     $scope.parent_complete = RequestService.isComplete(request);
-    $scope.expiration_date = formatDate(request.expiration_date);
+    $scope.expiration_date = request.expiration_date;
     $scope.dateModel = {"expiration_date": request.expiration_date};
     return
   };

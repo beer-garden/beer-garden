@@ -678,33 +678,43 @@ def start_request(request_id: str = None, request: Request = None) -> Request:
     return request
 
 
+def update_request_expiration(
+    request_id: str = None, request: Request = None, expiration_date=None
+):
+    return update_request(
+        request_id=request_id,
+        request=request,
+        updates={"expiration_date": expiration_date},
+    )
+
+
 @publish_event(Events.REQUEST_UPDATED)
 def update_request(
     request_id: str = None,
     request: Request = None,
-    new_values=None,
+    updates=None,
 ) -> Request:
-    if new_values is None:
-        new_values = {}
+    if updates is None:
+        updates = {}
     request = request or db.query_unique(Request, raise_missing=True, id=request_id)
-    if "expiration_date" in new_values:
-        expiration_date = new_values.pop("expiration_date", None)
-        parent = find_parent(request)
+    if "expiration_date" in updates:
+        expiration_date = updates.pop("expiration_date", None)
+        parent = find_root_parent_request(request)
         parent.expiration_date = expiration_date
         parent = db.update(parent)
-        if parent.id == request_id:
+        if parent.id == request.id:
             request = parent
-    for key in new_values.keys():
-        setattr(request, key, new_values[key])
-    if new_values:
+    for key in updates.keys():
+        setattr(request, key, updates[key])
+    if updates:
         request = db.update(request)
     return request
 
 
-def find_parent(request):
+def find_root_parent_request(request):
     parent = None
     if request.has_parent:
-        parent = find_parent(request.parent)
+        parent = find_root_parent_request(request.parent)
     return parent or request
 
 

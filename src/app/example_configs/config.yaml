@@ -16,6 +16,7 @@ db:
     action: -1
     file: 15
     info: 15
+    run_every: 15
 entry:
   http:
     enabled: true

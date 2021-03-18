@@ -677,6 +677,12 @@ _DB_SPEC = {
         "ttl": {
             "type": "dict",
             "items": {
+                "run_every": {
+                    "type": "int",
+                    "default": 15,
+                    "description": "Number of minutes between pruner run times "
+                    "(negative number for every 15 minutes)",
+                },
                 "action": {
                     "type": "int",
                     "default": -1,

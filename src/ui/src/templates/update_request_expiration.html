@@ -1,0 +1,30 @@
+<div class="modal-header">
+  <h3 class="modal-title" id="modal-title">Update Request Expiration</h3>
+</div>
+<div class="modal-body" id="modal-body">
+<form ng-show="requestCheck"
+      name="expirationForm"
+      sf-schema="schema"
+      sf-form="form"
+      sf-model="model"
+      ng-submit="ok(form, model)">
+</form>
+</div>
+
+  <div class="modal-footer">
+    <div class="alert alert-danger alert-dismissible m-b-0"
+         ng-show="showAlert">
+      <i class="btn fa fa-times pull-right" ng-click="showAlert=false;"></i>
+        <div style="text-align: left">
+          {{errorMsg}}
+        </div>
+    </div>
+    <div>
+      <input type="button"
+             class="btn btn-danger"
+             value="Close"
+             ng-click="close()" />
+    </div>
+
+  </div>
+

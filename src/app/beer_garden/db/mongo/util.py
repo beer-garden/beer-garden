@@ -278,11 +278,6 @@ def check_indexes(document_class):
             raise OperationFailure("Old Request index found, rebuilding")
 
         if document_class == Request and "expiration_date_index" not in existing:
-            logger.warning(
-                "Found missing %s expiration date index, about to build it. This could "
-                "take a while :)",
-                document_class.__name__,
-            )
             _update_request_expiration_date_model()
 
         if len(spec) < len(existing):
@@ -391,6 +386,7 @@ def _update_request_expiration_date_model():
         action_expiration_date = datetime.datetime.utcnow() + minutes_added
         raw_collection.update_many(
             {
+                "has_parent": False,
                 "command_type": "ACTION",
                 "status": {"$in": ["CANCELED", "SUCCESS", "ERROR"]},
             },
@@ -403,6 +399,7 @@ def _update_request_expiration_date_model():
         info_expiration_date = datetime.datetime.utcnow() + minutes_added
         raw_collection.update_many(
             {
+                "has_parent": False,
                 "command_type": "INFO",
                 "status": {"$in": ["CANCELED", "SUCCESS", "ERROR"]},
             },
