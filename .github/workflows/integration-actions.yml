@@ -25,6 +25,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Build Local Beer Garden Docker
+        run: make docker-build VERSION=LOCAL
+        working-directory: ./src/app
+
       - name: Update Docker Compose
         run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
         working-directory: ./
@@ -71,7 +75,7 @@ jobs:
         os: ['ubuntu-18.04']
       fail-fast: false
 
-    name: Local Plugins - Brewtils ${{matrix.plugin-brewtils}} - Python ${{ matrix.python-version }}
+    name: Local Plugins - Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
 
@@ -79,6 +83,10 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Build Local Beer Garden Docker
+        run: make docker-build VERSION=LOCAL
+        working-directory: ./src/app
 
       - name: Update Docker Compose
         run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
@@ -152,6 +160,10 @@ jobs:
           uses: actions/setup-python@v2
           with:
             python-version: ${{ matrix.python-version }}
+
+        - name: Build Local Beer Garden Docker
+          run: make docker-build VERSION=LOCAL
+          working-directory: ./src/app
 
         - name: Update Docker Compose
           run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml

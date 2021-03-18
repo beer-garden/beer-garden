@@ -24,7 +24,7 @@ x-definitions: &env
 
 services:
     beer-garden:
-        image: bgio/beer-garden:3
+        image: bgio/beer-garden:LOCAL
         networks:
             - bg-network
         ports:
