@@ -10,7 +10,7 @@ it will impact further checks. So be conscious on what you remove here.
 
 
 def principal_filtering(
-    obj: Principal = None, raise_error: bool = True, current_user: Principal = None
+        obj: Principal = None, raise_error: bool = True, current_user: Principal = None
 ):
     """
     Local Admins can edit any User account
@@ -30,9 +30,9 @@ def principal_filtering(
 
     for permission in current_user.permissions:
         if (
-            permission.access in PermissionRequiredAccess[Permissions.LOCAL_ADMIN]
-            and permission.garden == config.get("garden.name")
-            and permission.namespace is None
+                permission.access in PermissionRequiredAccess[Permissions.LOCAL_ADMIN]
+                and permission.garden == config.get("garden.name")
+                and permission.namespace is None
         ):
             return obj
 
@@ -45,7 +45,7 @@ def principal_filtering(
 
 
 def operation_filtering(
-    obj: Operation = None, raise_error: bool = True, current_user: Principal = None
+        obj: Operation = None, raise_error: bool = True, current_user: Principal = None
 ):
     """
     Local Admins can edit any User account
@@ -64,27 +64,36 @@ def operation_filtering(
         if current_user.id == obj.kwargs["user_id"]:
             return obj
 
-    if obj.operation_type in ["USER_UPDATE_ROLE", "USER_REMOVE_ROLE", "USER_UPDATE"]:
+        if raise_error:
+            raise AuthorizationRequired(
+                "Action Local Garden Admin permissions or be the user being modified in the request"
+            )
+
+        return None
+
+    elif obj.operation_type in ["USER_UPDATE_ROLE", "USER_REMOVE_ROLE", "USER_UPDATE"]:
         for permission in current_user.permissions:
 
             # Scope = Local Admins must have Admin over just the Garden
             if (
-                permission.access in PermissionRequiredAccess[Permissions.LOCAL_ADMIN]
-                and permission.garden == config.get("garden.name")
-                and permission.namespace is None
+                    permission.access in PermissionRequiredAccess[Permissions.LOCAL_ADMIN]
+                    and permission.garden == config.get("garden.name")
+                    and permission.namespace is None
             ):
                 return obj
 
-    if raise_error:
-        raise AuthorizationRequired(
-            "Action Local Garden Admin permissions or be the user being modified in the request"
-        )
+        if raise_error:
+            raise AuthorizationRequired(
+                "Action Local Garden Admin permissions or be the user being modified in the request"
+            )
 
-    return None
+        return None
+
+    return obj
 
 
 def garden_filtering(
-    obj: Garden = None, raise_error: bool = True, current_user: Principal = None
+        obj: Garden = None, raise_error: bool = True, current_user: Principal = None
 ):
     """
     Garden admins can return connection information.
@@ -104,19 +113,19 @@ def garden_filtering(
     # Loop through all permission to determine if the user has Admin permissions
     for permission in current_user.permissions:
         if (
-            permission.access in PermissionRequiredAccess[Permissions.ADMIN]
-            and permission.garden == obj.name
+                permission.access in PermissionRequiredAccess[Permissions.ADMIN]
+                and permission.garden == obj.name
         ):
             return obj
         elif (
-            permission.access in PermissionRequiredAccess[Permissions.LOCAL_ADMIN]
-            and permission.garden == config.get("garden.name")
-            and permission.namespace is None
+                permission.access in PermissionRequiredAccess[Permissions.LOCAL_ADMIN]
+                and permission.garden == config.get("garden.name")
+                and permission.namespace is None
         ):
             return obj
         elif (
-            permission.access in PermissionRequiredAccess[Permissions.READ]
-            and permission.garden == obj.name
+                permission.access in PermissionRequiredAccess[Permissions.READ]
+                and permission.garden == obj.name
         ):
             read_access = True
 
@@ -139,9 +148,9 @@ obj_custom_filtering = {
 
 
 def model_custom_filter(
-    obj=None,
-    raise_error: bool = True,
-    current_user: Principal = None,
+        obj=None,
+        raise_error: bool = True,
+        current_user: Principal = None,
 ):
     """
     Filters the Brewtils Model based on specific rules

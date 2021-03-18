@@ -47,7 +47,7 @@ def ensure_roles():
         Role(
             name="bg-anonymous",
             description="Special role used for non-authenticated users",
-            permissions=[Permission(access="READ")],
+            permissions=[Permission(garden=config.get("garden.name"), access="READ")],
         ),
         Role(
             name="bg-admin",
