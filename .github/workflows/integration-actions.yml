@@ -50,21 +50,25 @@ jobs:
         working-directory: ./docker/docker-compose
 
       - name: Uninstall Brewtils
-        run: pip uninstall brewtils
+        run: pip${{ matrix.python-version }} uninstall brewtils
 
       - name: Install Test Version of Brewtils
-        run: pip install brewtils==${{matrix.plugin-brewtils}}
+        run: pip${{ matrix.python-version }} install brewtils==${{matrix.plugin-brewtils}}
 
       - name: Install Python Deps
-        run: pip install -r requirements.txt
+        run: pip${{ matrix.python-version }} install -r requirements.txt
         working-directory: ./test/integration
 
       - name: Copy Helper Classes
         run: cp -r helper remote_plugins/
         working-directory: ./test/integration
 
+#      - name: Test Plugins
+#        run: make test-remote-plugins
+#        working-directory: ./test/integration
+
       - name: Test Plugins
-        run: make test-remote-plugins
+        run: python${{ matrix.python-version }} -m pytest remote_plugins/
         working-directory: ./test/integration
 
       - name: Shutdown Docker Containers
