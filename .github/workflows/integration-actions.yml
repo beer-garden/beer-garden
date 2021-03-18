@@ -3,7 +3,7 @@ name: Integration-Actions
 on: pull_request
 
 jobs:
-  Plugin-Testing:
+  Remote-Plugin-Testing:
     runs-on: ${{ matrix.os }}
 
     strategy:
