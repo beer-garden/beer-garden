@@ -159,12 +159,12 @@ def get_config(is_child=False):
         cwd = os.getcwd()
         path = ""
 
-        if cwd.endswith("/helper") or cwd.endswith("/local_plugins") or cwd.endswith("/remote_plugins"):
-            path = "../"
-        elif cwd.endswith("/plugins"):
-            path = ""
+        if cwd.endswith("/helper") or cwd.endswith("/plugins") or cwd.endswith("/plugins"):
+            path = "../../configs/"
+        elif cwd.endswith("/remote_plugins") or cwd.endswith("/local_plugins"):
+            path = "../configs/"
         elif cwd.endswith("/integration"):
-            path = "plugins/"
+            path = "configs/"
 
         try:
             with open(path + config_file) as config_file:
