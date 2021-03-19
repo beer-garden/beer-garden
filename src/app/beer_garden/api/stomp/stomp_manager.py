@@ -78,7 +78,9 @@ class StompManager(StoppableThread):
     def reconnect(self, conn=None, gardens=None, wait_time=None):
         if not conn.is_connected():
             self.logger.warning("Lost stomp connection")
-            conn.connect(connected_message="reconnected", wait_time=wait_time, gardens=gardens)
+            conn.connect(
+                connected_message="reconnected", wait_time=wait_time, gardens=gardens
+            )
 
     def remove_garden_from_list(self, garden_name=None, skip_key=None):
         """removes garden name from dict list of gardens for stomp subscriptions"""
@@ -122,7 +124,7 @@ class StompManager(StoppableThread):
                     else:
                         wait_check = True
                     if wait_check:
-                        self.reconnect(conn, wait_time, gardens)
+                        self.reconnect(conn=conn, wait_time=wait_time, gardens=gardens)
                         value["wait_time"] = min(wait_time * 2, 30)
                         seconds_added = datetime.timedelta(seconds=wait_time)
                         value["wait_date"] = datetime.datetime.utcnow() + seconds_added

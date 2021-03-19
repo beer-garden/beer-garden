@@ -111,6 +111,7 @@ class Connection:
         self.subscribe_destination = subscribe_destination
         self.send_destination = send_destination
         self.bg_active = True
+        self.host_and_ports = self.host_and_ports
         self.conn = stomp.Connection(
             host_and_ports=host_and_ports, heartbeats=(10000, 0)
         )
@@ -127,9 +128,9 @@ class Connection:
     def connect(self, connected_message=None, wait_time=None, gardens=None):
         if self.host_and_ports:
             if (
-                    self.host_and_ports[0][0]
-                    and self.host_and_ports[0][1]
-                    and self.subscribe_destination
+                self.host_and_ports[0][0]
+                and self.host_and_ports[0][1]
+                and self.subscribe_destination
             ):
                 try:
                     self.conn.connect(
