@@ -90,7 +90,6 @@ import gardenService from './js/services/garden_service.js';
 import runnerService from './js/services//runner_service.js';
 
 import aboutController from './js/controllers/about.js';
-import updateRequestExpirationController from './js/controllers/update_request_expiration.js';
 import adminQueueController from './js/controllers/admin_queue.js';
 import adminSystemController from './js/controllers/admin_system.js';
 import adminSystemLogsController from './js/controllers/admin_system_logs.js';
@@ -206,4 +205,3 @@ angular.module('bgApp',
 .controller('JobCreateRequestController', jobCreateRequestController)
 .controller('JobCreateTriggerController', jobCreateTriggerController)
 .controller('LoginController', loginController)
-.controller('UpdateRequestExpirationController', updateRequestExpirationController)
