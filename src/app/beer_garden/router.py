@@ -336,7 +336,10 @@ def forward(operation: Operation):
 
 def setup_stomp(garden):
     host_and_ports = [
-        (garden.connection_params["stomp_host"], garden.connection_params["stomp_port"])
+        (
+            garden.connection_params.get("stomp_host"),
+            garden.connection_params.get("stomp_port"),
+        )
     ]
     conn = stomp.Connection(host_and_ports=host_and_ports)
     if garden.connection_params.get("stomp_ssl"):
