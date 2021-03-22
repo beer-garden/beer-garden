@@ -6,5 +6,6 @@ __all__ = ["__version__", "application"]
 # COMPONENTS #
 application = None
 
+
 def signal_handler(_signal_number, _stack_frame):
     application.stop()
