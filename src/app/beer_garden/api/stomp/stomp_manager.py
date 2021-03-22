@@ -54,6 +54,29 @@ class StompManager(StoppableThread):
 
     def run(self):
         while not self.stopped():
+            for value in self.conn_dict.values():
+                conn = value["conn"]
+                gardens = value["gardens"]
+                if conn:
+                    if not conn.is_connected() and conn.bg_active:
+                        wait_time = value.get("wait_time") or 0.1
+                        wait_date = value.get("wait_date")
+                        if wait_date:
+                            wait_check = datetime.datetime.utcnow() >= wait_date
+                        else:
+                            wait_check = True
+                        if wait_check:
+                            self.reconnect(
+                                conn=conn, wait_time=wait_time, gardens=gardens
+                            )
+                            value["wait_time"] = min(wait_time * 2, 30)
+                            seconds_added = datetime.timedelta(seconds=wait_time)
+                            value["wait_date"] = (
+                                datetime.datetime.utcnow() + seconds_added
+                            )
+                            if conn.is_connected():
+                                value.pop("wait_time")
+                                value.pop("wait_date")
             if self.ep_conn.poll():
                 self.handle_event(self.ep_conn.recv())
         self.shutdown()
@@ -114,24 +137,8 @@ class StompManager(StoppableThread):
             )
         for value in self.conn_dict.values():
             conn = value["conn"]
-            gardens = value["gardens"]
             if conn:
-                if not conn.is_connected() and conn.bg_active:
-                    wait_time = value.get("wait_time") or 0.1
-                    wait_date = value.get("wait_date")
-                    if wait_date:
-                        wait_check = datetime.datetime.utcnow() >= wait_date
-                    else:
-                        wait_check = True
-                    if wait_check:
-                        self.reconnect(conn=conn, wait_time=wait_time, gardens=gardens)
-                        value["wait_time"] = min(wait_time * 2, 30)
-                        seconds_added = datetime.timedelta(seconds=wait_time)
-                        value["wait_date"] = datetime.datetime.utcnow() + seconds_added
-                        if conn.is_connected():
-                            value.pop("wait_time")
-                            value.pop("wait_date")
-                elif conn.bg_active:
+                if conn.is_connected() and conn.bg_active:
                     if value["headers_list"]:
                         for headers in value["headers_list"]:
                             conn.send_event(event=event, headers=headers)

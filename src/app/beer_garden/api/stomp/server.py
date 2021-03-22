@@ -106,12 +106,12 @@ class Connection:
         username=None,
         password=None,
     ):
+        self.host_and_ports = host_and_ports
         self.username = username
         self.password = password
         self.subscribe_destination = subscribe_destination
         self.send_destination = send_destination
         self.bg_active = True
-        self.host_and_ports = self.host_and_ports
         self.conn = stomp.Connection(
             host_and_ports=host_and_ports, heartbeats=(10000, 0)
         )
