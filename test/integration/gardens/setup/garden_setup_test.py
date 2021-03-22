@@ -1,8 +1,12 @@
 import pytest
 from brewtils.models import PatchOperation
 
-from ...helper.assertion import assert_system_running, assert_successful_request, assert_validation_error
-from ...helper import wait_for_response
+try:
+    from helper.assertion import assert_successful_request
+    from helper import wait_for_response
+except:
+    from ...helper.assertion import assert_successful_request
+    from ...helper import wait_for_response
 
 
 @pytest.fixture(scope="class")

@@ -1,11 +1,18 @@
 import pytest
 
 from brewtils.errors import ValidationError
-from ...helper import delete_plugins
-from ...helper.assertion import assert_system_running
-from ...helper.plugin import (create_plugin, start_plugin, stop_plugin,
-                           TestPluginV1, TestPluginV2,
+try:
+    from helper import delete_plugins
+    from helper.assertion import assert_system_running
+    from helper.plugin import (create_plugin, start_plugin, stop_plugin,
+                               TestPluginV1, TestPluginV2,
                            TestPluginV1BetterDescriptions)
+except:
+    from ...helper import delete_plugins
+    from ...helper.assertion import assert_system_running
+    from ...helper.plugin import (create_plugin, start_plugin, stop_plugin,
+                                  TestPluginV1, TestPluginV2,
+                                  TestPluginV1BetterDescriptions)
 
 
 @pytest.mark.usefixtures('easy_client')

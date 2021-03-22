@@ -1,7 +1,10 @@
 import pytest
 import time
 
-from ...helper import wait_for_in_progress, COMPLETED_STATUSES
+try:
+    from helper import wait_for_in_progress, COMPLETED_STATUSES
+except:
+    from ...helper import wait_for_in_progress, COMPLETED_STATUSES
 
 @pytest.fixture(scope="class")
 def system_spec():
