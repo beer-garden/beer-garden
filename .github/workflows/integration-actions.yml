@@ -16,12 +16,12 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [ '2.7', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9']
-        plugin-brewtils: ['3.0.0','3.0.1','3.0.2','3.1.0']
+#        python-version: [ '2.7', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9']
+#        plugin-brewtils: ['3.0.0','3.0.1','3.0.2','3.1.0']
         os: ['ubuntu-18.04']
 #        For Debugging
-#        python-version: ['3.7']
-#        plugin-brewtils: ['3.1.0']
+        python-version: ['3.7']
+        plugin-brewtils: ['3.1.0']
       fail-fast: false
 
     name: Remote Plugins - Brewtils ${{matrix.plugin-brewtils}} - Python ${{ matrix.python-version }}
@@ -218,7 +218,7 @@ jobs:
           working-directory: ./docker/docker-compose
 
         - name: Wait for everything to intialize
-          run: sleep 45
+          run: sleep 60
 
         - name: Check Docker Containers
           run: docker ps
