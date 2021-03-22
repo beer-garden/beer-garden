@@ -78,18 +78,6 @@ services:
         depends_on:
             - beer-garden
 
-    grafana:
-        image: grafana/grafana:5.2.3
-        ports:
-            - "3000:3000"
-        volumes:
-            - ./data/grafana/provisioning:/etc/grafana/provisioning
-            - ./data/grafana/dashboards:/var/lib/grafana/dashboards
-        networks:
-            - bg-network
-        depends_on:
-            - prometheus
-
     mongodb:
         image: mongo:4.2
         restart: always
@@ -100,17 +88,6 @@ services:
         volumes:
             - mongo-data:/data/db
             - mongo-config:/data/configdb
-
-    prometheus:
-        image: prom/prometheus:v2.3.2
-        ports:
-          - "9091:9090"
-        networks:
-            - bg-network
-        volumes:
-            - ./data/prometheus:/prometheus-data
-        command:
-            --config.file=/prometheus-data/prometheus.yml
 
     rabbitmq:
         image: rabbitmq:3.8-management-alpine
