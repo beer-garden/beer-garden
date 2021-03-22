@@ -84,15 +84,6 @@ class TestSystemRegistration(object):
         assert_system_running(self.easy_client, "test", "1.0.0")
         assert_system_running(self.easy_client, "test", "2.0.0")
 
-    # def test_system_register_same_display_name(self):
-    #     plugin = create_plugin("test", "1.0.0", TestPluginV1, display_name="TEST")
-    #     start_plugin(plugin, self.easy_client)
-    #     assert_system_running(self.easy_client, "test", "1.0.0")
-    #
-    #     new_plugin = create_plugin("new_test", "1.0.0", TestPluginV1, display_name="TEST")
-    #     with pytest.raises(ConflictError):
-    #         self.easy_client.create_system(new_plugin.system)
-
     @pytest.mark.xfail(reason="Depends on beer-garden/bartender#7")
     def test_system_register_same_instance_name(self):
         plugin = create_plugin("test", "1.0.0", TestPluginV1)
