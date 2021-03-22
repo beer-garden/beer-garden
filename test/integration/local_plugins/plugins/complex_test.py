@@ -1,12 +1,9 @@
 import json
 import pytest
 
-try:
-    from helper import wait_for_response
-    from helper.assertion import assert_successful_request, assert_validation_error, assert_save_error
-except:
-    from ...helper import wait_for_response
-    from ...helper.assertion import assert_successful_request, assert_validation_error, assert_save_error
+
+from ...helper import wait_for_response
+from ...helper.assertion import assert_successful_request, assert_validation_error, assert_save_error
 
 
 @pytest.fixture(scope="class")

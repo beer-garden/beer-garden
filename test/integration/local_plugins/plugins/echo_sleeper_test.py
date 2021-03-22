@@ -1,11 +1,7 @@
 import pytest
 
-try:
-    from helper import wait_for_response
-    from helper.assertion import assert_successful_request, assert_errored_request
-except:
-    from ...helper import wait_for_response
-    from ...helper.assertion import assert_successful_request, assert_errored_request
+from ...helper import wait_for_response
+from ...helper.assertion import assert_successful_request, assert_errored_request
 
 
 @pytest.fixture(scope="class")
