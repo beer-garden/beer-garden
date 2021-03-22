@@ -6,8 +6,8 @@ name: Integration-Actions
 on:
   schedule:
     - cron: '0 0 * * *' # Every Day at Midnight
-  tags:
-    - '*'
+#  tags:
+#    - '*'
 
 
 jobs:
