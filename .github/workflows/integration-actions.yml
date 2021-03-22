@@ -198,17 +198,17 @@ jobs:
           uses: actions/checkout@v2
           with:
             repository: beer-garden/example-plugins
-#            path: ./tmp
-            path: ./docker/docker-compose/data/localplugins
+            path: ./tmp
+#            path: ./docker/docker-compose/data/localplugins
 
-#        - name: Move Test Plugins
-#          run: |
-#            cp -r ./tmp/echo ./docker/docker-compose/data/localplugins
-#            cp -r ./tmp/complex ./docker/docker-compose/data/localplugins
-#            cp -r ./tmp/dynamic ./docker/docker-compose/data/localplugins
-#            cp -r ./tmp/sleeper ./docker/docker-compose/data/localplugins
-#            cp -r ./tmp/echo-sleeper ./docker/docker-compose/data/localplugins
-#            cp -r ./tmp/error ./docker/docker-compose/data/localplugins
+        - name: Move Test Plugins
+          run: |
+            cp -r ./tmp/echo ./docker/docker-compose/data/localplugins
+            cp -r ./tmp/complex ./docker/docker-compose/data/localplugins
+            cp -r ./tmp/dynamic ./docker/docker-compose/data/localplugins
+            cp -r ./tmp/sleeper ./docker/docker-compose/data/localplugins
+            cp -r ./tmp/echo-sleeper ./docker/docker-compose/data/localplugins
+            cp -r ./tmp/error ./docker/docker-compose/data/localplugins
 
         - name: Verify Local Plugins
           run: ls ./docker/docker-compose/data/localplugins
