@@ -5,6 +5,7 @@ import re
 from brewtils import get_easy_client, load_config, SystemClient
 from brewtils.errors import ValidationError, SaveError
 from brewtils.models import PatchOperation
+import os
 from urllib3.exceptions import TimeoutError
 
 
@@ -15,7 +16,6 @@ PLUGIN_MAP = {
     'dynamic': {'running': False},
     'echo': {'running': False},
     'error': {'running': False},
-    'concurrent-sleeper': {'running': False},
     'sleeper': {'running': False}
 }
 
@@ -114,7 +114,7 @@ def delete_plugins(client, name_regex="test"):
 
 
 def delete_system(client, system_id):
-    client.remove_system(id=system_id)
+    client._remove_system_by_id(system_id)
 
 
 def stop_system(client, system, timeout=1, max_delay=1):
@@ -122,16 +122,9 @@ def stop_system(client, system, timeout=1, max_delay=1):
         stop_instance(client, instance, timeout, max_delay)
 
 
-def stop_instance(client, instance, timeout=1, max_delay=1):
-    response = client.client.patch_instance(instance.id, client.parser.serialize_patch(PatchOperation('stop')))
-    if 400 <= response.status_code < 500:
-        raise ValidationError(response.json())
-    elif response.status_code >= 500:
-        raise SaveError(response.json())
-    else:
-        instance = client.parser.parse_instance(response.json())
+def stop_instance(client, instance, timeout=15, max_delay=1):
+    instance = client.update_instance_status(instance.id, 'STOPPED')
 
-    instance = get_instance(client, instance.id)
     delay_time = 0.01
     total_wait_time = 0
     while instance.status not in ['DEAD', 'STOPPED', 'UNRESPONSIVE']:
@@ -149,18 +142,32 @@ def stop_instance(client, instance, timeout=1, max_delay=1):
 
 
 def get_instance(client, instance_id):
-    parser = client.parser
-    session = client.client.session
-    url = client.client.instance_url + instance_id
-    return parser.parse_instance(session.get(url).json())
+
+    return client.get_instance(instance_id)
 
 
-def get_config():
+def get_config(is_child=False):
     global CONFIG
 
+    if is_child:
+        config_file = 'child-config.json'
+    else:
+        config_file = 'config.json'
+
     if CONFIG is None:
+        # Required for handling the different starting points for the unit tests
+        cwd = os.getcwd()
+        path = ""
+
+        if cwd.endswith("/helper") or cwd.endswith("/plugins") or cwd.endswith("/plugins"):
+            path = "../../configs/"
+        elif cwd.endswith("/remote_plugins") or cwd.endswith("/local_plugins"):
+            path = "../configs/"
+        elif cwd.endswith("/integration"):
+            path = "configs/"
+
         try:
-            with open('config.json') as config_file:
+            with open(path + config_file) as config_file:
                 file_config = json.load(config_file)
         except Exception:
             file_config = {}
@@ -188,7 +195,7 @@ def wait_for_connection(client, timeout=30, max_delay=5):
             delay_time = min(delay_time * 2, max_delay)
 
 
-def wait_for_plugins(client, timeout=30, max_delay=5):
+def wait_for_plugins(client, namespace="docker", timeout=30, max_delay=5):
     for plugin_name, plugin_info in PLUGIN_MAP.items():
         if not plugin_info['running']:
             delay_time = 0.1
@@ -196,12 +203,15 @@ def wait_for_plugins(client, timeout=30, max_delay=5):
 
             while not plugin_info['running']:
                 system = client.find_unique_system(name=plugin_name,
+                                                   namespace=namespace,
                                                    version=plugin_info.get("version"))
+
                 is_running = True
-                for instance in system.instances:
-                    if instance.status != 'RUNNING':
-                        is_running = False
-                        break
+                if system and system.instances:
+                    for instance in system.instances:
+                        if instance.status != 'RUNNING':
+                            is_running = False
+                            break
                 PLUGIN_MAP[plugin_name]['running'] = is_running
 
                 if is_running:
@@ -215,10 +225,10 @@ def wait_for_plugins(client, timeout=30, max_delay=5):
                     delay_time = min(delay_time * 2, max_delay)
 
 
-def setup_easy_client():
-    client = get_easy_client(**get_config())
+def setup_easy_client(is_child=False, namespace='docker'):
+    client = get_easy_client(**get_config(is_child=is_child))
     wait_for_connection(client)
-    wait_for_plugins(client)
+    wait_for_plugins(client, namespace=namespace)
 
     return client
 
@@ -228,7 +238,9 @@ def setup_system_client(**kwargs):
     client_args.update(get_config())
     client = SystemClient(**client_args)
 
+    namespace = kwargs.get('namespace', 'docker')
+
     wait_for_connection(client._easy_client)
-    wait_for_plugins(client._easy_client)
+    wait_for_plugins(client._easy_client, namespace=namespace)
 
     return client

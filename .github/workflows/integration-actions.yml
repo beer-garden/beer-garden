@@ -1,0 +1,224 @@
+name: Integration-Actions
+
+#on: pull_request # Used only for testing
+
+# This will only run on the Default/Base Branch OR when a Tag is created
+on:
+  schedule:
+    - cron: '0 0 * * *' # Every Day at Midnight
+
+jobs:
+  Remote-Plugin-Testing:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        python-version: [ '2.7', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9']
+        plugin-brewtils: ['3.0.0','3.0.1','3.0.2','3.1.0']
+        os: ['ubuntu-18.04']
+#        For Debugging
+#        python-version: ['3.7']
+#        plugin-brewtils: ['3.1.0']
+      fail-fast: false
+
+    name: Remote Plugins - Brewtils ${{matrix.plugin-brewtils}} - Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.4
+
+      - name: Build Local Beer Garden Docker
+        run: make docker-build-unstable
+        working-directory: ./src/app
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Update Docker Compose
+        run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
+        working-directory: ./
+
+      - name: Run Docker Beer Garden
+        run: docker-compose up -d beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Wait for Beer Garden to intialize
+        run: sleep 45
+
+      - name: Grab logs from Beer-Garden
+        run: docker-compose logs --tail 100 beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Uninstall Brewtils
+        run: pip${{ matrix.python-version }} uninstall brewtils
+
+      - name: Install Test Version of Brewtils
+        run: pip${{ matrix.python-version }} install brewtils==${{matrix.plugin-brewtils}}
+
+      - name: Install Python Deps
+        run: pip${{ matrix.python-version }} install -r requirements.txt
+        working-directory: ./test/integration
+
+      - name: Test Plugins
+        run: python${{ matrix.python-version }} -m pytest remote_plugins/
+        working-directory: ./test/integration
+
+      - name: Shutdown Docker Containers
+        run: docker-compose stop
+        working-directory: ./docker/docker-compose
+
+  Local-Plugin-Testing:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        python-version: ['3.7']
+        os: ['ubuntu-18.04']
+      fail-fast: false
+
+    name: Local Plugins - Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.4
+
+      - name: Build Local Beer Garden Docker
+        run: make docker-build-unstable
+        working-directory: ./src/app
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Update Docker Compose
+        run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
+        working-directory: ./
+
+      - name: Checkout Local Plugins
+        uses: actions/checkout@v2
+        with:
+          repository: beer-garden/example-plugins
+          path: ./docker/docker-compose/data/localplugins
+
+      - name: Verify Local Plugins
+        run: ls ./docker/docker-compose/data/localplugins
+
+      - name: Run Docker Beer Garden
+        run: docker-compose up -d beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Wait for Beer Garden to intialize
+        run: sleep 45
+
+      - name: Grab logs from Beer-Garden
+        run: docker-compose logs --tail 100 beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Install Test Version of Brewtils
+        run: pip${{ matrix.python-version }} install brewtils
+
+      - name: Install Python Deps
+        run: pip${{ matrix.python-version }} install -r requirements.txt
+        working-directory: ./test/integration
+
+      - name: Test Plugins
+        run: python${{ matrix.python-version }} -m pytest local_plugins
+        working-directory: ./test/integration
+
+      - name: Shutdown Docker Containers
+        run: docker-compose stop
+        working-directory: ./docker/docker-compose
+
+  Garden-Testing:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: ['ubuntu-18.04']
+        python-version: ['3.7']
+        child-garden: ['3.0.0','3.0.1','3.0.2','3.1.0','3','latest']
+#        For Debugging
+#        child-garden: ['3']
+      fail-fast: false
+
+    name: Garden - Child ${{matrix.child-garden}}
+    steps:
+        - uses: actions/checkout@v2
+
+        - name: Setup python
+          uses: actions/setup-python@v2
+          with:
+            python-version: 3.4
+
+        - name: Build Local Beer Garden Docker
+          run: make docker-build-unstable
+          working-directory: ./src/app
+
+        - name: Setup python
+          uses: actions/setup-python@v2
+          with:
+            python-version: ${{ matrix.python-version }}
+
+        - name: Update Docker Compose
+          run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
+          working-directory: ./
+
+        - name: Checkout Local Plugins
+          uses: actions/checkout@v2
+          with:
+            repository: beer-garden/example-plugins
+            path: ./tmp
+
+        - name: Move Subset of Test Plugins
+          run: |
+            cp -r ./tmp/echo ./docker/docker-compose/data/localplugins
+            cp -r ./tmp/complex ./docker/docker-compose/data/localplugins
+            cp -r ./tmp/dynamic ./docker/docker-compose/data/localplugins
+            cp -r ./tmp/sleeper ./docker/docker-compose/data/localplugins
+            cp -r ./tmp/echo-sleeper ./docker/docker-compose/data/localplugins
+            cp -r ./tmp/error ./docker/docker-compose/data/localplugins
+
+        - name: Verify Local Plugins
+          run: ls ./docker/docker-compose/data/localplugins
+
+        - name: Run Docker Beer Garden Child
+          run: RELEASE=${{matrix.child-garden}} docker-compose up -d beer-garden-child
+          working-directory: ./docker/docker-compose
+
+        - name: Wait for everything to intialize
+          run: sleep 60
+
+        - name: Check Docker Containers
+          run: docker ps
+
+        - name: Grab logs from Child Beer-Garden
+          run: RELEASE=${{matrix.child-garden}} docker-compose logs --tail 100 beer-garden-child
+          working-directory: ./docker/docker-compose
+
+        - name: Grab logs from Beer-Garden
+          run: docker-compose logs --tail 100 beer-garden
+          working-directory: ./docker/docker-compose
+
+        - name: Install Python Deps
+          run: pip${{ matrix.python-version }} install -r requirements.txt
+          working-directory: ./test/integration
+
+        - name: Install Latest Version of Brewtils
+          run: pip${{ matrix.python-version }} install brewtils
+
+        - name: Test Gardens
+          run: python${{ matrix.python-version }} -m pytest gardens/
+          working-directory: ./test/integration
+
+        - name: Shutdown Docker Containers
+          run: docker-compose stop
+          working-directory: ./docker/docker-compose

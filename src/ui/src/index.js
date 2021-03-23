@@ -206,4 +206,5 @@ angular.module('bgApp',
 .controller('JobCreateRequestController', jobCreateRequestController)
 .controller('JobCreateTriggerController', jobCreateTriggerController)
 .controller('LoginController', loginController)
+.controller('LoginController', loginController)
 .controller('UpdateRequestExpirationController', updateRequestExpirationController)
