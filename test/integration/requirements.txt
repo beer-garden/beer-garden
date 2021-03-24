@@ -1,12 +1,3 @@
-
-# Install our local copies
--e ../../bg-utils
--e ../../brew-view
--e ../../bartender
-
-# And also brewtils
-brewtils
-
 flake8
 mock
 pytest>=3.5.0

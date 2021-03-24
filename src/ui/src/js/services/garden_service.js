@@ -166,7 +166,7 @@ export default function gardenService($rootScope, $http) {
     return model;
   }
 
-  GardenService.CONNECTION_TYPES = ['HTTP','STOMP','LOCAL'];
+  GardenService.CONNECTION_TYPES = ['HTTP','STOMP'];
 
 //  GardenService.stomp_header_array_to_dict = function(key, value){
 //    GardenService.

@@ -13,7 +13,7 @@ class StompManager(StoppableThread):
     logger = logging.getLogger(__name__)
 
     @staticmethod
-    def connect(stomp_config):
+    def connect(stomp_config, gardens):
         conn = Connection(
             host_and_ports=[(stomp_config.get("host"), stomp_config.get("port"))],
             send_destination=stomp_config.get("send_destination"),
@@ -22,7 +22,7 @@ class StompManager(StoppableThread):
             username=stomp_config.get("username"),
             password=stomp_config.get("password"),
         )
-        conn.connect("connected")
+        conn.connect(connected_message="connected", gardens=gardens)
         return conn
 
     def __init__(self, ep_conn=None, stomp_config=None, name=None, is_main=True):
@@ -37,7 +37,9 @@ class StompManager(StoppableThread):
                 headers = [self.convert_header_to_dict(stomp_config.get("headers"))]
             self.conn_dict = {
                 f"{host_and_ports}{subscribe_destination}{ssl.get('use_ssl')}": {
-                    "conn": self.connect(stomp_config),
+                    "conn": self.connect(
+                        stomp_config, [{"name": name, "main": is_main}]
+                    ),
                     "gardens": [{"name": name, "main": is_main}],
                     "headers_list": headers,
                 }
@@ -72,10 +74,10 @@ class StompManager(StoppableThread):
             ),
         )
 
-    def reconnect(self, conn):
+    def reconnect(self, conn, gardens):
         if not conn.is_connected():
             self.logger.warning("Lost stomp connection")
-            conn.connect("reconnected")
+            conn.connect(connected_message="reconnected", gardens=gardens)
 
     def remove_garden_from_list(self, garden_name=None, skip_key=None):
         """removes garden name from dict list of gardens for stomp subscriptions"""
@@ -109,8 +111,9 @@ class StompManager(StoppableThread):
                 )
         for value in self.conn_dict.values():
             conn = value["conn"]
+            gardens = value["gardens"]
             if conn:
-                self.reconnect(conn)
+                self.reconnect(conn, gardens)
                 if value["headers_list"]:
                     for headers in value["headers_list"]:
                         conn.send_event(event=event, headers=headers)
@@ -147,7 +150,7 @@ class StompManager(StoppableThread):
                 )
         else:
             self.conn_dict[conn_dict_key] = {
-                "conn": self.connect(stomp_config),
+                "conn": self.connect(stomp_config, [{"name": name, "main": is_main}]),
                 "gardens": [{"name": name, "main": is_main}],
             }
         if "headers_list" not in self.conn_dict:

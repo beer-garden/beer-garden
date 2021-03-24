@@ -1,12 +1,15 @@
 import pytest
 
-from helper import wait_for_response
-from helper.assertion import assert_successful_request, assert_validation_error
-
+try:
+    from helper import wait_for_response
+    from helper.assertion import assert_successful_request, assert_validation_error
+except:
+    from ...helper import wait_for_response
+    from ...helper.assertion import assert_successful_request, assert_validation_error
 
 @pytest.fixture(scope="class")
 def system_spec():
-    return {'system': 'dynamic', 'system_version': '1.0.0.dev0', 'instance_name': 'd1'}
+    return {'system': 'dynamic', 'system_version': '3.0.0.dev0', 'instance_name': 'd1'}
 
 
 @pytest.mark.usefixtures('easy_client', 'request_generator')

@@ -17,6 +17,7 @@ import pika.spec
 import six
 import urllib3
 
+from beer_garden.errors import NotUniqueException
 from brewtils.choices import parse
 from brewtils.errors import ConflictError, ModelValidationError, RequestPublishException
 from brewtils.models import Choices, Events, Request, RequestTemplate, System, Operation
@@ -803,8 +804,11 @@ def handle_event(event):
     elif event.garden != config.get("garden.name"):
 
         if event.name == Events.REQUEST_CREATED.name:
-            if db.query_unique(Request, id=event.payload.id) is None:
+            # Attempt to create the request, if it already exists then continue on
+            try:
                 db.create(event.payload)
+            except NotUniqueException:
+                pass
 
         elif event.name in (Events.REQUEST_STARTED.name, Events.REQUEST_COMPLETED.name):
             # When we send child requests to child gardens where the parent was on

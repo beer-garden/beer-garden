@@ -50,10 +50,10 @@ from beer_garden.api.http.processors import EventManager, websocket_publish
 from beer_garden.events import publish
 from beer_garden.events.processors import QueueListener
 
-io_loop: IOLoop
+io_loop: IOLoop = None
 server: HTTPServer
 tornado_app: Application
-logger: logging.Logger
+logger: logging.Logger = None
 event_publishers = None
 api_spec: APISpec
 anonymous_principal: Principal

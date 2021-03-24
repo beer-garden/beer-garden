@@ -98,13 +98,28 @@ export default function adminGardenViewController(
     loadGarden();
   };
 
+  $scope.addErrorAlert = function(response) {
+    $scope.alerts.push({
+      type: 'danger',
+      msg: 'Something went wrong on the backend: ' +
+        _.get(response, 'data.message', 'Please check the server logs'),
+    });
+  };
+
+
   $scope.submitGardenForm = function(form, model) {
     $scope.$broadcast('schemaFormValidate');
 
     if (form.$valid){
        let updated_garden = GardenService.formToServerModel($scope.data, model);
 
-       GardenService.updateGardenConfig(updated_garden);
+       GardenService.updateGardenConfig(updated_garden).then(
+         _.noop,
+         $scope.addErrorAlert
+       );
+     }
+     else {
+      $scope.alerts.push('Looks like there was an error validating the Garden.');
      }
   };
 

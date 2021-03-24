@@ -1,15 +1,23 @@
 import pytest
 
-from brewtils.errors import ValidationError, ConflictError
-from helper import delete_plugins
-from helper.assertion import assert_system_running
-from helper.plugin import (create_plugin, start_plugin, stop_plugin,
-                           TestPluginV1, TestPluginV2,
+from brewtils.errors import ValidationError
+try:
+    from helper import delete_plugins
+    from helper.assertion import assert_system_running
+    from helper.plugin import (create_plugin, start_plugin, stop_plugin,
+                               TestPluginV1, TestPluginV2,
                            TestPluginV1BetterDescriptions)
+except:
+    from ...helper import delete_plugins
+    from ...helper.assertion import assert_system_running
+    from ...helper.plugin import (create_plugin, start_plugin, stop_plugin,
+                                  TestPluginV1, TestPluginV2,
+                                  TestPluginV1BetterDescriptions)
 
 
 @pytest.mark.usefixtures('easy_client')
 class TestSystemRegistration(object):
+
 
     @pytest.fixture(autouse=True)
     def delete_test_plugin(self):
@@ -75,15 +83,6 @@ class TestSystemRegistration(object):
         start_plugin(plugin, self.easy_client)
         assert_system_running(self.easy_client, "test", "1.0.0")
         assert_system_running(self.easy_client, "test", "2.0.0")
-
-    def test_system_register_same_display_name(self):
-        plugin = create_plugin("test", "1.0.0", TestPluginV1, display_name="TEST")
-        start_plugin(plugin, self.easy_client)
-        assert_system_running(self.easy_client, "test", "1.0.0")
-
-        new_plugin = create_plugin("new_test", "1.0.0", TestPluginV1, display_name="TEST")
-        with pytest.raises(ConflictError):
-            self.easy_client.create_system(new_plugin.system)
 
     @pytest.mark.xfail(reason="Depends on beer-garden/bartender#7")
     def test_system_register_same_instance_name(self):
