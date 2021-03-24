@@ -113,19 +113,24 @@ class StompManager(StoppableThread):
                             value["wait_date"] = (
                                 datetime.datetime.utcnow() + seconds_added
                             )
+
                             if conn.is_connected():
                                 value.pop("wait_time")
                                 value.pop("wait_date")
+
             if self.ep_conn.poll():
                 self.handle_event(self.ep_conn.recv())
+
         self.shutdown()
 
     def shutdown(self):
+        self.logger.debug("Disconnecting connections")
         for value in self.conn_dict.values():
-            conn = value["conn"]
-            conn.disconnect()
+            value["conn"].disconnect()
+
         self.logger.debug("Stopping forward processing")
         beer_garden.router.forward_processor.stop()
+
         # This will almost definitely not be published because
         # it would need to make it up to the main process and
         # back down into this process. We just publish this

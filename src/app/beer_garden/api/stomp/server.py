@@ -24,18 +24,11 @@ def send_message(
     )
 
     if conn.is_connected() and send_destination:
-        if "reply-to" in (request_headers or {}):
-            conn.send(
-                body=message,
-                headers=response_headers,
-                destination=request_headers["reply-to"],
-            )
-        else:
-            conn.send(
-                body=message,
-                headers=response_headers,
-                destination=send_destination,
-            )
+        destination = send_destination
+        if request_headers and "reply-to" in request_headers:
+            destination = request_headers["reply-to"]
+
+        conn.send(body=message, headers=response_headers, destination=destination)
 
 
 def send_error_msg(
@@ -130,13 +123,14 @@ class Connection:
         self.conn = stomp.Connection(
             host_and_ports=host_and_ports, heartbeats=(10000, 0)
         )
-        if ssl:
-            if ssl.get("use_ssl"):
-                self.conn.set_ssl(
-                    for_hosts=host_and_ports,
-                    key_file=ssl.get("private_key"),
-                    cert_file=ssl.get("cert_file"),
-                )
+
+        if ssl and ssl.get("use_ssl"):
+            self.conn.set_ssl(
+                for_hosts=host_and_ports,
+                key_file=ssl.get("private_key"),
+                cert_file=ssl.get("cert_file"),
+            )
+
         if subscribe_destination:
             self.conn.set_listener("", OperationListener(self.conn, send_destination))
 

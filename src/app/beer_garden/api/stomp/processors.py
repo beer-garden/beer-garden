@@ -56,9 +56,9 @@ def process_send_message(message) -> Tuple[str, dict]:
         message = Operation(
             operation_type="PUBLISH_EVENT", model=message, model_type="Event"
         )
-    model_class = message.__class__.__name__
-    if many:
-        model_class = message[0].__class__.__name__
+
+    model_class = (message[0] if many else message).__class__.__name__
+
     message = SchemaParser.serialize(message, to_string=True, many=many)
     response_headers = {"model_class": model_class, "many": many}
 
