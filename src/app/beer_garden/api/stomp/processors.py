@@ -3,26 +3,20 @@ from brewtils.schema_parser import SchemaParser
 from typing import Tuple
 
 
-def append_headers(
-    response_headers: dict = None,
-    request_headers: dict = None,
-    garden_headers: dict = None,
-) -> dict:
-    """Combines headers to be sent with message
+def consolidate_headers(*args) -> dict:
+    """Consolidates header dictionaries into one dict
 
     Args:
-        response_headers:
-        request_headers:
-        garden_headers:
+        The iterable of header dictionaries to combine
 
     Returns:
 
     """
     headers = {}
 
-    headers.update(request_headers or {})
-    headers.update(garden_headers or {})
-    headers.update(response_headers or {})
+    for header_dict in args:
+        if header_dict:
+            headers.update(header_dict)
 
     return headers
 

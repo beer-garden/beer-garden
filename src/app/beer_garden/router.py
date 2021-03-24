@@ -24,10 +24,7 @@ from typing import Dict, Union
 import requests
 import stomp
 from stomp.exception import ConnectFailedException
-from beer_garden.api.stomp.processors import (
-    append_headers as stomp_append_headers,
-    process_send_message as stomp_process_message,
-)
+from beer_garden.api.stomp.processors import consolidate_headers, process_send_message
 from brewtils.models import Events, Garden, Operation, Request, System, Event
 from brewtils.schema_parser import SchemaParser
 
@@ -582,10 +579,9 @@ def _forward_stomp(operation: Operation, target_garden: Garden):
                     "client-id": target_garden.connection_params["stomp_username"]
                 },
             )
-        message, response_headers = stomp_process_message(operation)
-        response_headers = stomp_append_headers(
-            response_headers=response_headers,
-            garden_headers=target_garden.connection_params.get("stomp_headers"),
+        message, response_headers = process_send_message(operation)
+        response_headers = consolidate_headers(
+            response_headers, target_garden.connection_params.get("stomp_headers")
         )
         stomp_garden_connections[target_garden.name].send(
             body=message,

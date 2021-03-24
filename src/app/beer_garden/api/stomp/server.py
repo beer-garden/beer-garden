@@ -1,15 +1,16 @@
-import stomp
 import logging
+import stomp
 from brewtils.schema_parser import SchemaParser
+
 import beer_garden.events
 import beer_garden.router
-from beer_garden.api.stomp.processors import append_headers, process_send_message
+from beer_garden.api.stomp.processors import consolidate_headers, process_send_message
 
 logger = logging.getLogger(__name__)
 
 
 def send_message(
-    message=None,
+    message=None,  # TODO - This is not a string? What is it?
     garden_headers: dict = None,
     conn: stomp.Connection = None,
     send_destination: str = None,
@@ -17,10 +18,8 @@ def send_message(
 ):
     message, response_headers = process_send_message(message)
 
-    response_headers = append_headers(
-        response_headers=response_headers,
-        request_headers=request_headers,
-        garden_headers=garden_headers,
+    headers = consolidate_headers(
+        response_headers, request_headers, garden_headers
     )
 
     if conn.is_connected() and send_destination:
@@ -28,37 +27,26 @@ def send_message(
         if request_headers and "reply-to" in request_headers:
             destination = request_headers["reply-to"]
 
-        conn.send(body=message, headers=response_headers, destination=destination)
+        conn.send(body=message, headers=headers, destination=destination)
 
 
 def send_error_msg(
-    error_msg=None,
-    request_headers=None,
-    conn=None,
-    send_destination=None,
-    garden_headers=None,
+    error_msg: str = None,
+    request_headers: dict = None,
+    conn: stomp.Connection = None,
+    send_destination: str = None,
+    garden_headers: dict = None,
 ):
-    error_headers = {"model_class": "error_message"}
-
-    error_headers = append_headers(
-        response_headers=error_headers,
-        request_headers=request_headers or {},
-        garden_headers=garden_headers or {},
+    headers = consolidate_headers(
+        request_headers, garden_headers, {"model_class": "error_message"}
     )
 
     if conn.is_connected():
-        if "reply-to" in request_headers:
-            conn.send(
-                body=error_msg,
-                headers=error_headers,
-                destination=request_headers["reply-to"],
-            )
-        elif send_destination:
-            conn.send(
-                body=error_msg,
-                headers=error_headers,
-                destination=send_destination,
-            )
+        destination = send_destination
+        if request_headers and "reply-to" in request_headers:
+            destination = request_headers["reply-to"]
+
+        conn.send(body=error_msg, headers=headers, destination=destination)
 
 
 class OperationListener(stomp.ConnectionListener):
@@ -67,14 +55,32 @@ class OperationListener(stomp.ConnectionListener):
         self.send_destination = send_destination
 
     def on_error(self, headers, message):
+        # TODO - Should probably log the message?
         logger.warning("received an error:" + str(headers))
 
-    def on_message(self, headers, message):
+    def on_message(self, headers: dict, message: str):
+        """Handle an incoming message
+
+        Will parse the message as an Operation and attempt to route it. If the result of
+        the routing is truthy will send a response with the result.
+
+        If routing raised an exception an error response will be sent.
+
+        Args:
+            headers: Message header dict
+            message: The message body
+
+        Returns:
+            None
+        """
         try:
             operation = SchemaParser.parse_operation(message, from_string=True)
+
             if hasattr(operation, "kwargs"):
                 operation.kwargs.pop("wait_timeout", None)
+
             result = beer_garden.router.route(operation)
+
             if result:
                 send_message(
                     message=result,
