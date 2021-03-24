@@ -10,17 +10,19 @@ logger = logging.getLogger(__name__)
 
 def send_message(
     message=None,
-    garden_headers=None,
-    conn=None,
-    send_destination=None,
-    request_headers=None,
+    garden_headers: dict = None,
+    conn: stomp.Connection = None,
+    send_destination: str = None,
+    request_headers: dict = None,
 ):
     message, response_headers = process_send_message(message)
+
     response_headers = append_headers(
         response_headers=response_headers,
         request_headers=request_headers,
         garden_headers=garden_headers,
     )
+
     if conn.is_connected() and send_destination:
         if "reply-to" in (request_headers or {}):
             conn.send(
@@ -44,6 +46,7 @@ def send_error_msg(
     garden_headers=None,
 ):
     error_headers = {"model_class": "error_message"}
+
     error_headers = append_headers(
         response_headers=error_headers,
         request_headers=request_headers or {},
@@ -97,6 +100,18 @@ class OperationListener(stomp.ConnectionListener):
 
 
 class Connection:
+    """Stomp connection wrapper
+
+    Args:
+        host_and_ports:
+        send_destination:
+        subscribe_destination:
+        ssl:
+        username:
+        password:
+
+    """
+
     def __init__(
         self,
         host_and_ports=None,
@@ -166,7 +181,7 @@ class Connection:
         if self.conn.is_connected():
             self.conn.disconnect()
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         return self.conn.is_connected()
 
     def send_event(self, event=None, headers=None):

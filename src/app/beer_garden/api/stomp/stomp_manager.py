@@ -1,20 +1,35 @@
+import multiprocessing
+
+from typing import Iterable
+
 import datetime
 import logging
-from brewtils.models import Event, Events
+from box import Box
+from brewtils.models import Event, Events, Garden
+from brewtils.stoppable_thread import StoppableThread
+
 import beer_garden.events
 import beer_garden.router
 from beer_garden.api.stomp.processors import EventManager
+from beer_garden.api.stomp.server import Connection
 from beer_garden.events import publish
 from beer_garden.events.processors import QueueListener
-from beer_garden.api.stomp.server import Connection
-from brewtils.stoppable_thread import StoppableThread
 
 
 class StompManager(StoppableThread):
     logger = logging.getLogger(__name__)
 
     @staticmethod
-    def connect(stomp_config, gardens):
+    def connect(stomp_config: Box, gardens: Iterable[Garden]) -> Connection:
+        """Create and return a stomp connection
+
+        Args:
+            stomp_config:
+            gardens:
+
+        Returns:
+
+        """
         conn = Connection(
             host_and_ports=[(stomp_config.get("host"), stomp_config.get("port"))],
             send_destination=stomp_config.get("send_destination"),
@@ -23,19 +38,38 @@ class StompManager(StoppableThread):
             username=stomp_config.get("username"),
             password=stomp_config.get("password"),
         )
+
         conn.connect(connected_message="connected", wait_time=0.1, gardens=gardens)
+
         return conn
 
-    def __init__(self, ep_conn=None, stomp_config=None, name=None, is_main=True):
+    def __init__(
+        self,
+        ep_conn: multiprocessing.Pipe = None,
+        stomp_config: Box = None,
+        name=None,
+        is_main=True,
+    ):
+        """
+
+        Args:
+            ep_conn:
+            stomp_config:
+            name:
+            is_main:
+        """
         self.ep_conn = ep_conn
         self.conn_dict = {}
+
         if stomp_config:
             host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
             subscribe_destination = stomp_config.get("subscribe_destination")
             ssl = stomp_config.get("ssl")
+
             headers = []
             if stomp_config.get("headers"):
                 headers = [self.convert_header_to_dict(stomp_config.get("headers"))]
+
             self.conn_dict = {
                 f"{host_and_ports}{subscribe_destination}{ssl.get('use_ssl')}": {
                     "conn": self.connect(
@@ -48,8 +82,10 @@ class StompManager(StoppableThread):
 
         self._setup_event_handling()
         self._setup_operation_forwarding()
+
         self.logger.debug("Starting forward processor")
         beer_garden.router.forward_processor.start()
+
         super().__init__(logger=self.logger, name="StompManager")
 
     def run(self):
@@ -57,14 +93,17 @@ class StompManager(StoppableThread):
             for value in self.conn_dict.values():
                 conn = value["conn"]
                 gardens = value["gardens"]
+
                 if conn:
                     if not conn.is_connected() and conn.bg_active:
                         wait_time = value.get("wait_time") or 0.1
                         wait_date = value.get("wait_date")
+
                         if wait_date:
                             wait_check = datetime.datetime.utcnow() >= wait_date
                         else:
                             wait_check = True
+
                         if wait_check:
                             self.reconnect(
                                 conn=conn, wait_time=wait_time, gardens=gardens
