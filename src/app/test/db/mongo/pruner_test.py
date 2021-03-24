@@ -38,12 +38,12 @@ class TestMongoPruner(object):
 
 class TestDetermineTasks(object):
     def test_determine_tasks(self):
-        config = {"info": 5, "action": 10}
+        config = {"run_every": 10, "info": 5, "action": 10}
 
         prune_tasks, run_every = MongoPruner.determine_tasks(**config)
 
         assert len(prune_tasks) == 1
-        assert run_every == 2.5
+        assert run_every == 10
 
         expiration_task = prune_tasks[0]
 
@@ -54,18 +54,18 @@ class TestDetermineTasks(object):
         assert expiration_task["delete_after"] == timedelta(minutes=0)
 
     def test_setup_pruning_tasks_one(self):
-        config = {"info": -1, "action": 1}
+        config = {"run_every": -1, "info": -1, "action": 1}
 
         prune_tasks, run_every = MongoPruner.determine_tasks(**config)
         assert len(prune_tasks) == 1
-        assert run_every == 0.5
+        assert run_every == 15
 
     def test_setup_pruning_tasks_mixed(self):
         config = {"info": 5, "action": -1}
 
         prune_tasks, run_every = MongoPruner.determine_tasks(**config)
         assert len(prune_tasks) == 1
-        assert run_every == 2.5
+        assert run_every == 15
 
         expiration_task = prune_tasks[0]
 
