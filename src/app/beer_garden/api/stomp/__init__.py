@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Package containing the Stomp entry point"""
+from typing import Optional
+
 import logging
 import types
 
@@ -9,35 +11,36 @@ from beer_garden.api.stomp.manager import StompManager
 from beer_garden.events import publish
 from beer_garden.garden import get_gardens
 
-logger = logging.getLogger(__name__)
-st_manager_stack = []
+logger: logging.Logger = logging.getLogger(__name__)
+conn_manager: Optional[StompManager] = None
 
 
 def run(ep_conn):
-    global st_manager_stack
+    global conn_manager
+
     entry_config = config.get("entry.stomp")
     parent_config = config.get("parent.stomp")
 
     if entry_config.get("enabled"):
-        st_manager = StompManager(
+        conn_manager = StompManager(
             ep_conn=ep_conn,
             stomp_config=entry_config,
             name=f'{config.get("garden.name")}_entry',
         )
         if parent_config.get("enabled"):
-            st_manager.add_connection(
+            conn_manager.add_connection(
                 stomp_config=parent_config,
                 name=f'{config.get("garden.name")}_parent',
                 is_main=True,
             )
     elif parent_config.get("enabled"):
-        st_manager = StompManager(
+        conn_manager = StompManager(
             ep_conn=ep_conn,
             stomp_config=parent_config,
             name=f'{config.get("garden.name")}_parent',
         )
     else:
-        st_manager = StompManager(ep_conn=ep_conn)
+        conn_manager = StompManager(ep_conn=ep_conn)
 
     for garden in get_gardens(include_local=False):
         if garden.name != config.get("garden.name") and garden.connection_type:
@@ -46,13 +49,12 @@ def run(ep_conn):
                     "stomp_", garden.connection_params
                 )
                 connection_params["send_destination"] = None
-                st_manager.add_connection(
+                conn_manager.add_connection(
                     stomp_config=connection_params, name=garden.name
                 )
 
-    st_manager.start()
+    conn_manager.start()
 
-    st_manager_stack.append(st_manager)
     logger.info("Stomp entry point started")
 
     publish(
@@ -61,6 +63,5 @@ def run(ep_conn):
 
 
 def signal_handler(_: int, __: types.FrameType):
-    global st_manager_stack
-    while st_manager_stack:
-        st_manager_stack.pop().stop()
+    if conn_manager:
+        conn_manager.stop()
