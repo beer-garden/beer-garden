@@ -11,7 +11,7 @@ from brewtils.stoppable_thread import StoppableThread
 import beer_garden.events
 import beer_garden.router
 from beer_garden.api.stomp.processors import EventManager
-from beer_garden.api.stomp.server import Connection
+from beer_garden.api.stomp.transport import Connection
 from beer_garden.events import publish
 from beer_garden.events.processors import QueueListener
 
