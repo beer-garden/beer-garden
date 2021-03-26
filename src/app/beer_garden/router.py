@@ -40,7 +40,7 @@ import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
-from beer_garden.api.stomp.transport import consolidate_headers, process_message
+from beer_garden.api.stomp.transport import consolidate_headers, process
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 from beer_garden.events import publish
 from beer_garden.garden import get_garden, get_gardens
@@ -578,7 +578,7 @@ def _forward_stomp(operation: Operation, target_garden: Garden):
                     "client-id": target_garden.connection_params["stomp_username"]
                 },
             )
-        message, response_headers = process_message(operation)
+        message, response_headers = process(operation)
         response_headers = consolidate_headers(
             response_headers, target_garden.connection_params.get("stomp_headers")
         )

@@ -2,7 +2,7 @@ import logging
 import stomp
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
-from typing import Tuple
+from typing import Tuple, Any
 
 import beer_garden.events
 import beer_garden.router
@@ -28,44 +28,42 @@ def consolidate_headers(*args) -> dict:
     return headers
 
 
-def process_message(message) -> Tuple[str, dict]:
-    """Processes response messages and event messages to send
+def process(body) -> Tuple[str, dict]:
+    """Processes a message body prior to sending
 
-    We always want to send Operations? So if the given message is an Event we'll wrap
+    We always want to send Operations. So if the given message is an Event we'll wrap
     it in an Operation.
 
     Args:
-        message:
+        body: the message body to process
 
     Returns:
         Tuple of the serialized message and response headers dict
 
     """
-    many = isinstance(message, list)
+    many = isinstance(body, list)
 
-    if message.__class__.__name__ == "Event":
-        message = Operation(
-            operation_type="PUBLISH_EVENT", model=message, model_type="Event"
-        )
+    if body.__class__.__name__ == "Event":
+        body = Operation(operation_type="PUBLISH_EVENT", model=body, model_type="Event")
 
-    model_class = (message[0] if many else message).__class__.__name__
+    model_class = (body[0] if many else body).__class__.__name__
 
-    message = SchemaParser.serialize(message, to_string=True, many=many)
-    response_headers = {"model_class": model_class, "many": many}
+    if not isinstance(body, str):
+        body = SchemaParser.serialize(body, to_string=True, many=many)
 
-    return message, response_headers
+    return body, {"model_class": model_class, "many": many}
 
 
-def send_message(
-    message=None,  # TODO - This is not a string? What is it?
+def send(
+    body: Any,
     garden_headers: dict = None,
     conn: stomp.Connection = None,
     send_destination: str = None,
     request_headers: dict = None,
 ):
-    message, response_headers = process_message(message)
+    message, model_headers = process(body)
 
-    headers = consolidate_headers(response_headers, request_headers, garden_headers)
+    headers = consolidate_headers(model_headers, request_headers, garden_headers)
 
     if conn.is_connected() and send_destination:
         destination = send_destination
@@ -73,25 +71,6 @@ def send_message(
             destination = request_headers["reply-to"]
 
         conn.send(body=message, headers=headers, destination=destination)
-
-
-def send_error_msg(
-    error_msg: str = None,
-    request_headers: dict = None,
-    conn: stomp.Connection = None,
-    send_destination: str = None,
-    garden_headers: dict = None,
-):
-    headers = consolidate_headers(
-        request_headers, garden_headers, {"model_class": "error_message"}
-    )
-
-    if conn.is_connected():
-        destination = send_destination
-        if request_headers and "reply-to" in request_headers:
-            destination = request_headers["reply-to"]
-
-        conn.send(body=error_msg, headers=headers, destination=destination)
 
 
 class OperationListener(stomp.ConnectionListener):
@@ -127,15 +106,15 @@ class OperationListener(stomp.ConnectionListener):
             result = beer_garden.router.route(operation)
 
             if result:
-                send_message(
-                    message=result,
+                send(
+                    result,
                     request_headers=headers,
                     conn=self.conn,
                     send_destination=self.send_destination,
                 )
         except Exception as e:
-            send_error_msg(
-                error_msg=str(e),
+            send(
+                str(e),
                 request_headers=headers,
                 conn=self.conn,
                 send_destination=self.send_destination,
@@ -230,8 +209,8 @@ class Connection:
         return self.conn.is_connected()
 
     def send_event(self, event=None, headers=None):
-        send_message(
-            message=event,
+        send(
+            event,
             conn=self.conn,
             send_destination=self.send_destination,
             garden_headers=headers,
