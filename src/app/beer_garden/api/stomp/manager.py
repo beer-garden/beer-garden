@@ -69,26 +69,6 @@ class StompManager(StoppableThread):
 
         super().__init__(logger=self.logger, name="StompManager")
 
-    def set_config(self, stomp_config: Box, name: str = None, is_main: bool = True):
-        """No clue. Used to be in the init. Perhaps setting the primary conn info?"""
-        host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
-        subscribe_destination = stomp_config.get("subscribe_destination")
-        ssl = stomp_config.get("ssl")
-
-        headers = []
-        if stomp_config.get("headers"):
-            headers = [self.convert_header_to_dict(stomp_config.get("headers"))]
-
-        self.conn_dict = {
-            f"{host_and_ports}{subscribe_destination}{ssl.get('use_ssl')}": {
-                "conn": self.connect(
-                    stomp_config, [{"name": name, "main": is_main}]
-                ),
-                "gardens": [{"name": name, "main": is_main}],
-                "headers_list": headers,
-            }
-        }
-
     def add_connection(self, stomp_config=None, name=None, is_main=False):
         host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
         subscribe_destination = stomp_config.get("subscribe_destination")

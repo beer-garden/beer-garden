@@ -25,14 +25,14 @@ def run(ep_conn):
     conn_manager = StompManager(ep_conn=ep_conn)
 
     if entry_config.get("enabled"):
-        conn_manager.set_config(entry_config, name=f"{garden_name}_entry")
+        conn_manager.add_connection(
+            stomp_config=entry_config, name=f"{garden_name}_entry", is_main=True
+        )
 
-        if parent_config.get("enabled"):
-            conn_manager.add_connection(
-                stomp_config=parent_config, name=f"{garden_name}_parent", is_main=True
-            )
-    elif parent_config.get("enabled"):
-        conn_manager.set_config(parent_config, name=f"{garden_name}_parent")
+    if parent_config.get("enabled"):
+        conn_manager.add_connection(
+            stomp_config=parent_config, name=f"{garden_name}_parent", is_main=True
+        )
 
     for garden in get_gardens(include_local=False):
         if garden.name != garden_name and garden.connection_type:
