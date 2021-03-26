@@ -48,7 +48,7 @@ class HttpParentUpdater(QueueListener):
                 operation = Operation(
                     operation_type="PUBLISH_EVENT", model=event, model_type="Event"
                 )
-                self._ez_client.post_forward(operation)
+                self._ez_client.forward(operation)
             except RequestException as ex:
                 self.logger.error(f"Error while publishing event to parent: {ex}")
 
