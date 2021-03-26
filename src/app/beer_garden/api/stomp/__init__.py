@@ -5,7 +5,7 @@ import types
 
 import beer_garden.config as config
 from brewtils.models import Event, Events
-from beer_garden.api.stomp.stomp_manager import StompManager
+from beer_garden.api.stomp.manager import StompManager
 from beer_garden.events import publish
 from beer_garden.garden import get_gardens
 
