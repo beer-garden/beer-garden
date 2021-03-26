@@ -24,6 +24,8 @@ class EventManager:
 
 
 class StompManager(StoppableThread):
+    """What is the purpose of this class??"""
+
     logger = logging.getLogger(__name__)
 
     @staticmethod
@@ -50,42 +52,14 @@ class StompManager(StoppableThread):
 
         return conn
 
-    def __init__(
-        self,
-        ep_conn: multiprocessing.Pipe = None,
-        stomp_config: Box = None,
-        name=None,
-        is_main=True,
-    ):
+    def __init__(self, ep_conn: multiprocessing.Pipe = None):
         """
 
         Args:
             ep_conn:
-            stomp_config:
-            name:
-            is_main:
         """
         self.ep_conn = ep_conn
         self.conn_dict = {}
-
-        if stomp_config:
-            host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
-            subscribe_destination = stomp_config.get("subscribe_destination")
-            ssl = stomp_config.get("ssl")
-
-            headers = []
-            if stomp_config.get("headers"):
-                headers = [self.convert_header_to_dict(stomp_config.get("headers"))]
-
-            self.conn_dict = {
-                f"{host_and_ports}{subscribe_destination}{ssl.get('use_ssl')}": {
-                    "conn": self.connect(
-                        stomp_config, [{"name": name, "main": is_main}]
-                    ),
-                    "gardens": [{"name": name, "main": is_main}],
-                    "headers_list": headers,
-                }
-            }
 
         self._setup_event_handling()
         self._setup_operation_forwarding()
@@ -94,6 +68,58 @@ class StompManager(StoppableThread):
         beer_garden.router.forward_processor.start()
 
         super().__init__(logger=self.logger, name="StompManager")
+
+    def set_config(self, stomp_config: Box, name: str = None, is_main: bool = True):
+        """No clue. Used to be in the init. Perhaps setting the primary conn info?"""
+        host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
+        subscribe_destination = stomp_config.get("subscribe_destination")
+        ssl = stomp_config.get("ssl")
+
+        headers = []
+        if stomp_config.get("headers"):
+            headers = [self.convert_header_to_dict(stomp_config.get("headers"))]
+
+        self.conn_dict = {
+            f"{host_and_ports}{subscribe_destination}{ssl.get('use_ssl')}": {
+                "conn": self.connect(
+                    stomp_config, [{"name": name, "main": is_main}]
+                ),
+                "gardens": [{"name": name, "main": is_main}],
+                "headers_list": headers,
+            }
+        }
+
+    def add_connection(self, stomp_config=None, name=None, is_main=False):
+        host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
+        subscribe_destination = stomp_config.get("subscribe_destination")
+        ssl = stomp_config.get("ssl")
+
+        use_ssl = ssl.get("use_ssl") or False
+        conn_dict_key = f"{host_and_ports}{subscribe_destination}{use_ssl}"
+
+        if conn_dict_key in self.conn_dict:
+            if {"name": name, "main": is_main} not in self.conn_dict[conn_dict_key][
+                "gardens"
+            ]:
+                self.conn_dict[conn_dict_key]["gardens"].append(
+                    {"name": name, "main": is_main}
+                )
+        else:
+            self.conn_dict[conn_dict_key] = {
+                "conn": self.connect(stomp_config, [{"name": name, "main": is_main}]),
+                "gardens": [{"name": name, "main": is_main}],
+            }
+
+        if "headers_list" not in self.conn_dict:
+            self.conn_dict[conn_dict_key]["headers_list"] = []
+
+        if stomp_config.get("headers") and is_main:
+            headers = self.convert_header_to_dict(stomp_config.get("headers"))
+
+            if headers not in self.conn_dict[conn_dict_key]["headers_list"]:
+                self.conn_dict[conn_dict_key]["headers_list"].append(headers)
+
+        return conn_dict_key
 
     def run(self):
         while not self.stopped():
@@ -219,37 +245,6 @@ class StompManager(StoppableThread):
             tmp_headers[header[key_to_key]] = header[key_to_value]
 
         return tmp_headers
-
-    def add_connection(self, stomp_config=None, name=None, is_main=False):
-        host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
-        subscribe_destination = stomp_config.get("subscribe_destination")
-        ssl = stomp_config.get("ssl")
-        use_ssl = ssl.get("use_ssl") or False
-        conn_dict_key = f"{host_and_ports}{subscribe_destination}{use_ssl}"
-
-        if conn_dict_key in self.conn_dict:
-            if {"name": name, "main": is_main} not in self.conn_dict[conn_dict_key][
-                "gardens"
-            ]:
-                self.conn_dict[conn_dict_key]["gardens"].append(
-                    {"name": name, "main": is_main}
-                )
-        else:
-            self.conn_dict[conn_dict_key] = {
-                "conn": self.connect(stomp_config, [{"name": name, "main": is_main}]),
-                "gardens": [{"name": name, "main": is_main}],
-            }
-
-        if "headers_list" not in self.conn_dict:
-            self.conn_dict[conn_dict_key]["headers_list"] = []
-
-        if stomp_config.get("headers") and is_main:
-            headers = self.convert_header_to_dict(stomp_config.get("headers"))
-
-            if headers not in self.conn_dict[conn_dict_key]["headers_list"]:
-                self.conn_dict[conn_dict_key]["headers_list"].append(headers)
-
-        return conn_dict_key
 
     @staticmethod
     def format_connection_params(term, connection_params):
