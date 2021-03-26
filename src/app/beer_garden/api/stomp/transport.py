@@ -1,12 +1,59 @@
 import logging
 import stomp
+from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
+from typing import Tuple
 
 import beer_garden.events
 import beer_garden.router
-from beer_garden.api.stomp.processors import consolidate_headers, process_send_message
 
 logger = logging.getLogger(__name__)
+
+
+def consolidate_headers(*args) -> dict:
+    """Consolidates header dictionaries into one dict
+
+    Args:
+        The iterable of header dictionaries to combine
+
+    Returns:
+
+    """
+    headers = {}
+
+    for header_dict in args:
+        if header_dict:
+            headers.update(header_dict)
+
+    return headers
+
+
+def process_message(message) -> Tuple[str, dict]:
+    """Processes response messages and event messages to send
+
+    We always want to send Operations? So if the given message is an Event we'll wrap
+    it in an Operation.
+
+    Args:
+        message:
+
+    Returns:
+        Tuple of the serialized message and response headers dict
+
+    """
+    many = isinstance(message, list)
+
+    if message.__class__.__name__ == "Event":
+        message = Operation(
+            operation_type="PUBLISH_EVENT", model=message, model_type="Event"
+        )
+
+    model_class = (message[0] if many else message).__class__.__name__
+
+    message = SchemaParser.serialize(message, to_string=True, many=many)
+    response_headers = {"model_class": model_class, "many": many}
+
+    return message, response_headers
 
 
 def send_message(
@@ -16,11 +63,9 @@ def send_message(
     send_destination: str = None,
     request_headers: dict = None,
 ):
-    message, response_headers = process_send_message(message)
+    message, response_headers = process_message(message)
 
-    headers = consolidate_headers(
-        response_headers, request_headers, garden_headers
-    )
+    headers = consolidate_headers(response_headers, request_headers, garden_headers)
 
     if conn.is_connected() and send_destination:
         destination = send_destination

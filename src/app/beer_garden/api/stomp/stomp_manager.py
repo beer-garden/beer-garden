@@ -1,19 +1,26 @@
-import multiprocessing
-
-from typing import Iterable
-
 import datetime
 import logging
+import multiprocessing
 from box import Box
 from brewtils.models import Event, Events, Garden
 from brewtils.stoppable_thread import StoppableThread
+from typing import Iterable
 
 import beer_garden.events
 import beer_garden.router
-from beer_garden.api.stomp.processors import EventManager
 from beer_garden.api.stomp.transport import Connection
 from beer_garden.events import publish
 from beer_garden.events.processors import QueueListener
+
+
+class EventManager:
+    """Will simply push events across the connection to the master process"""
+
+    def __init__(self, conn):
+        self._conn = conn
+
+    def put(self, event):
+        self._conn.send(event)
 
 
 class StompManager(StoppableThread):
