@@ -203,9 +203,9 @@ class StompManager(StoppableThread):
                 if conn.is_connected() and conn.bg_active:
                     if value["headers_list"]:
                         for headers in value["headers_list"]:
-                            conn.send_event(event=event, headers=headers)
+                            conn.send(event, headers=headers)
                     else:
-                        conn.send_event(event=event)
+                        conn.send(event)
 
     @staticmethod
     def convert_header_to_dict(headers):

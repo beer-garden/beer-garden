@@ -208,9 +208,9 @@ class Connection:
     def is_connected(self) -> bool:
         return self.conn.is_connected()
 
-    def send_event(self, event=None, headers=None):
+    def send(self, body, headers=None):
         send(
-            event,
+            body,
             conn=self.conn,
             send_destination=self.send_destination,
             garden_headers=headers,
