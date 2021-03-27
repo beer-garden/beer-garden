@@ -1,6 +1,5 @@
 import datetime
 import logging
-import multiprocessing
 from box import Box
 from brewtils.models import Event, Events, Garden
 from brewtils.stoppable_thread import StoppableThread
@@ -10,14 +9,11 @@ import beer_garden.events
 import beer_garden.router
 from beer_garden.api.stomp.transport import Connection
 from beer_garden.events import publish
-from beer_garden.events.processors import QueueListener
+from beer_garden.events.processors import QueueListener, PipeListener
 
 
-class EventManager:
+class EventManager(PipeListener):
     """Will simply push events across the connection to the master process"""
-
-    def __init__(self, conn):
-        self._conn = conn
 
     def put(self, event):
         self._conn.send(event)
@@ -53,16 +49,9 @@ class StompManager(StoppableThread):
 
         return conn
 
-    def __init__(self, ep_conn: multiprocessing.Pipe = None):
-        """
-
-        Args:
-            ep_conn:
-        """
-        self.ep_conn = ep_conn
+    def __init__(self):
         self.conn_dict = {}
 
-        self._setup_event_handling()
         self._setup_operation_forwarding()
 
         self.logger.debug("Starting forward processor")
@@ -131,9 +120,6 @@ class StompManager(StoppableThread):
                             if conn.is_connected():
                                 value.pop("wait_time")
                                 value.pop("wait_date")
-
-            if self.ep_conn.poll():
-                self.handle_event(self.ep_conn.recv())
 
         self.shutdown()
 
@@ -240,7 +226,3 @@ class StompManager(StoppableThread):
         beer_garden.router.forward_processor = QueueListener(
             action=beer_garden.router.forward
         )
-
-    def _setup_event_handling(self):
-        # This will push all events generated in the entry point up to the master process
-        beer_garden.events.manager = EventManager(self.ep_conn)

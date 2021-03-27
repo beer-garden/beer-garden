@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """Package containing the Stomp entry point"""
-from typing import Optional
-
 import logging
 import types
+from brewtils.models import Event, Events
+from typing import Optional
 
 import beer_garden.config as config
-from brewtils.models import Event, Events
-from beer_garden.api.stomp.manager import StompManager
+import beer_garden.events
+from beer_garden.api.stomp.manager import StompManager, EventManager
 from beer_garden.events import publish
 from beer_garden.garden import get_gardens
 
@@ -18,11 +18,13 @@ conn_manager: Optional[StompManager] = None
 def run(ep_conn):
     global conn_manager
 
+    conn_manager = StompManager()
+
+    _setup_event_handling(StompManager, ep_conn)
+
     entry_config = config.get("entry.stomp")
     parent_config = config.get("parent.stomp")
     garden_name = config.get("garden.name")
-
-    conn_manager = StompManager(ep_conn=ep_conn)
 
     if entry_config.get("enabled"):
         conn_manager.add_connection(
@@ -54,6 +56,14 @@ def run(ep_conn):
     )
 
 
+def _setup_event_handling(stomp_manager, ep_conn):
+    beer_garden.events.manager = EventManager(
+        action=stomp_manager.handle_event, conn=ep_conn
+    )
+
+
 def signal_handler(_: int, __: types.FrameType):
     if conn_manager:
         conn_manager.stop()
+
+    beer_garden.events.manager.stop()
