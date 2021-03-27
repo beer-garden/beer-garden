@@ -79,8 +79,7 @@ class OperationListener(stomp.ConnectionListener):
         self.send_destination = send_destination
 
     def on_error(self, headers, message):
-        # TODO - Should probably log the message?
-        logger.warning("received an error:" + str(headers))
+        logger.warning(f"Error:\n\tMessage: {message}\n\tHeaders: {headers}")
 
     def on_message(self, headers: dict, message: str):
         """Handle an incoming message
