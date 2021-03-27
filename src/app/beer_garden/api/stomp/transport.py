@@ -126,7 +126,8 @@ class Connection:
     """Stomp connection wrapper
 
     Args:
-        host_and_ports:
+        host:
+        port:
         send_destination:
         subscribe_destination:
         ssl:
@@ -137,26 +138,28 @@ class Connection:
 
     def __init__(
         self,
-        host_and_ports=None,
-        send_destination=None,
-        subscribe_destination=None,
+        host: str,
+        port: int,
+        send_destination: str = None,
+        subscribe_destination: str = None,
         ssl=None,
-        username=None,
-        password=None,
+        username: str = None,
+        password: str = None,
     ):
-        self.host_and_ports = host_and_ports
+        self.host = host
+        self.port = port
         self.username = username
         self.password = password
         self.subscribe_destination = subscribe_destination
         self.send_destination = send_destination
         self.bg_active = True
         self.conn = stomp.Connection(
-            host_and_ports=host_and_ports, heartbeats=(10000, 0)
+            host_and_ports=[(self.host, self.port)], heartbeats=(10000, 0)
         )
 
         if ssl and ssl.get("use_ssl"):
             self.conn.set_ssl(
-                for_hosts=host_and_ports,
+                for_hosts=[(self.host, self.port)],
                 key_file=ssl.get("private_key"),
                 cert_file=ssl.get("cert_file"),
             )
@@ -165,40 +168,36 @@ class Connection:
             self.conn.set_listener("", OperationListener(self.conn, send_destination))
 
     def connect(self, connected_message=None, wait_time=None, gardens=None):
-        if self.host_and_ports:
-            if (
-                self.host_and_ports[0][0]
-                and self.host_and_ports[0][1]
-                and self.subscribe_destination
-            ):
-                try:
-                    self.conn.connect(
-                        username=self.username,
-                        passcode=self.password,
-                        wait=True,
-                        headers={"client-id": self.username},
-                    )
-                    if self.subscribe_destination:
-                        self.conn.subscribe(
-                            destination=self.subscribe_destination,
-                            id=self.username,
-                            ack="auto",
-                            headers={
-                                "subscription-type": "MULTICAST",
-                                "durable-subscription-name": self.subscribe_destination,
-                            },
-                        )
-                    if connected_message is not None and self.conn.is_connected():
-                        logger.info("Stomp successfully " + connected_message)
+        if self.subscribe_destination:
+            try:
+                self.conn.connect(
+                    username=self.username,
+                    passcode=self.password,
+                    wait=True,
+                    headers={"client-id": self.username},
+                )
 
-                except Exception as e:
-                    logger.debug(
-                        f"Error connecting: {type(e).__name__}. "
-                        f"Affected gardens are {[garden.get('name') for garden in gardens]}"
+                if self.subscribe_destination:
+                    self.conn.subscribe(
+                        destination=self.subscribe_destination,
+                        id=self.username,
+                        ack="auto",
+                        headers={
+                            "subscription-type": "MULTICAST",
+                            "durable-subscription-name": self.subscribe_destination,
+                        },
                     )
-                    logger.warning(
-                        "Waiting %.1f seconds before next attempt", wait_time
-                    )
+                if connected_message is not None and self.conn.is_connected():
+                    logger.info("Stomp successfully " + connected_message)
+
+            except Exception as e:
+                logger.debug(
+                    f"Error connecting: {type(e).__name__}. "
+                    f"Affected gardens are {[garden.get('name') for garden in gardens]}"
+                )
+                logger.warning(
+                    "Waiting %.1f seconds before next attempt", wait_time
+                )
 
     def disconnect(self):
         self.bg_active = False

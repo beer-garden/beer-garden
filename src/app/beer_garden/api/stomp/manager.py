@@ -40,7 +40,8 @@ class StompManager(StoppableThread):
 
         """
         conn = Connection(
-            host_and_ports=[(stomp_config.get("host"), stomp_config.get("port"))],
+            host=stomp_config.get("host"),
+            port=stomp_config.get("port"),
             send_destination=stomp_config.get("send_destination"),
             subscribe_destination=stomp_config.get("subscribe_destination"),
             ssl=stomp_config.get("ssl"),
