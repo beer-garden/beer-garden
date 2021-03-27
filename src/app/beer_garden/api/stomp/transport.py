@@ -163,9 +163,6 @@ class Connection:
                 cert_file=ssl.get("cert_file"),
             )
 
-        if subscribe_destination:
-            self.conn.set_listener("", OperationListener(self.conn, send_destination))
-
     def connect(self, connected_message=None, wait_time=None, gardens=None):
         try:
             self.conn.connect(
@@ -176,6 +173,10 @@ class Connection:
             )
 
             if self.subscribe_destination:
+                self.conn.set_listener(
+                    "", OperationListener(self.conn, self.send_destination)
+                )
+
                 self.conn.subscribe(
                     destination=self.subscribe_destination,
                     id=self.username,
@@ -194,9 +195,7 @@ class Connection:
                 f"Error connecting: {type(e).__name__}. "
                 f"Affected gardens are {[garden.get('name') for garden in gardens]}"
             )
-            logger.warning(
-                "Waiting %.1f seconds before next attempt", wait_time
-            )
+            logger.warning("Waiting %.1f seconds before next attempt", wait_time)
 
     def disconnect(self):
         self.bg_active = False
