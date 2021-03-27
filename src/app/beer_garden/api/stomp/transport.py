@@ -168,36 +168,36 @@ class Connection:
             self.conn.set_listener("", OperationListener(self.conn, send_destination))
 
     def connect(self, connected_message=None, wait_time=None, gardens=None):
-        if self.subscribe_destination:
-            try:
-                self.conn.connect(
-                    username=self.username,
-                    passcode=self.password,
-                    wait=True,
-                    headers={"client-id": self.username},
+        try:
+            self.conn.connect(
+                username=self.username,
+                passcode=self.password,
+                wait=True,
+                headers={"client-id": self.username},
+            )
+
+            if self.subscribe_destination:
+                self.conn.subscribe(
+                    destination=self.subscribe_destination,
+                    id=self.username,
+                    ack="auto",
+                    headers={
+                        "subscription-type": "MULTICAST",
+                        "durable-subscription-name": self.subscribe_destination,
+                    },
                 )
 
-                if self.subscribe_destination:
-                    self.conn.subscribe(
-                        destination=self.subscribe_destination,
-                        id=self.username,
-                        ack="auto",
-                        headers={
-                            "subscription-type": "MULTICAST",
-                            "durable-subscription-name": self.subscribe_destination,
-                        },
-                    )
-                if connected_message is not None and self.conn.is_connected():
-                    logger.info("Stomp successfully " + connected_message)
+            if connected_message is not None and self.conn.is_connected():
+                logger.info("Stomp successfully " + connected_message)
 
-            except Exception as e:
-                logger.debug(
-                    f"Error connecting: {type(e).__name__}. "
-                    f"Affected gardens are {[garden.get('name') for garden in gardens]}"
-                )
-                logger.warning(
-                    "Waiting %.1f seconds before next attempt", wait_time
-                )
+        except Exception as e:
+            logger.debug(
+                f"Error connecting: {type(e).__name__}. "
+                f"Affected gardens are {[garden.get('name') for garden in gardens]}"
+            )
+            logger.warning(
+                "Waiting %.1f seconds before next attempt", wait_time
+            )
 
     def disconnect(self):
         self.bg_active = False
