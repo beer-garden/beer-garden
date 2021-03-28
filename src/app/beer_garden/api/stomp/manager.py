@@ -1,7 +1,6 @@
 import logging
 from box import Box
-from brewtils.models import Event, Events, Garden
-from typing import Iterable
+from brewtils.models import Event, Events
 
 from beer_garden.api.stomp.transport import Connection
 from beer_garden.events import publish
@@ -22,16 +21,9 @@ class StompManager(BaseProcessor):
     """
 
     @staticmethod
-    def connect(stomp_config: Box, gardens: Iterable[Garden]) -> Connection:
-        """Create and return a stomp connection
+    def connect(stomp_config: Box) -> Connection:
+        """Create and return a stomp connection """
 
-        Args:
-            stomp_config:
-            gardens:
-
-        Returns:
-
-        """
         conn = Connection(
             host=stomp_config.get("host"),
             port=stomp_config.get("port"),
@@ -76,7 +68,7 @@ class StompManager(BaseProcessor):
                 )
         else:
             self.conn_dict[conn_dict_key] = {
-                "conn": self.connect(stomp_config, [{"name": name, "main": is_main}]),
+                "conn": self.connect(stomp_config),
                 "gardens": [{"name": name, "main": is_main}],
             }
 
