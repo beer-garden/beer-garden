@@ -45,7 +45,10 @@ class StompManager(StoppableThread):
             password=stomp_config.get("password"),
         )
 
-        conn.connect(connected_message="connected", wait_time=0.1, gardens=gardens)
+        if conn.connect():
+            StompManager.logger.info("Successfully connected")
+        else:
+            StompManager.logger.info("Failed to connect")
 
         return conn
 
@@ -145,9 +148,13 @@ class StompManager(StoppableThread):
     def reconnect(self, conn=None, gardens=None, wait_time=None):
         if not conn.is_connected():
             self.logger.warning("Lost stomp connection")
-            conn.connect(
-                connected_message="reconnected", wait_time=wait_time, gardens=gardens
-            )
+
+            if conn.connect():
+                self.logger.info("Successfully reconnected")
+            else:
+                self.logger.warning(
+                    f"Waiting {wait_time:.1f} seconds before next attempt"
+                )
 
     def remove_garden_from_list(self, garden_name=None, skip_key=None):
         """removes garden name from dict list of gardens for stomp subscriptions"""

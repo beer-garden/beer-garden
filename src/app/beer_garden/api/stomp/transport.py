@@ -163,7 +163,7 @@ class Connection:
                 cert_file=ssl.get("cert_file"),
             )
 
-    def connect(self, connected_message=None, wait_time=None, gardens=None):
+    def connect(self) -> True:
         try:
             self.conn.connect(
                 username=self.username,
@@ -187,15 +187,13 @@ class Connection:
                     },
                 )
 
-            if connected_message is not None and self.conn.is_connected():
-                logger.info("Stomp successfully " + connected_message)
+            # This is probably always True at this point, but just to be safe
+            return self.conn.is_connected()
 
-        except Exception as e:
-            logger.debug(
-                f"Error connecting: {type(e).__name__}. "
-                f"Affected gardens are {[garden.get('name') for garden in gardens]}"
-            )
-            logger.warning("Waiting %.1f seconds before next attempt", wait_time)
+        except Exception as ex:
+            logger.warning(f"Connection error: {ex}")
+
+            return False
 
     def disconnect(self):
         self.bg_active = False
