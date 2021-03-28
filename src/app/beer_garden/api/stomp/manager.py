@@ -11,8 +11,11 @@ from beer_garden.events.processors import PipeListener
 logger = logging.getLogger(__name__)
 
 
-class EventManager(PipeListener):
+class EventManager:
     """Will simply push events across the connection to the master process"""
+
+    def __init__(self, conn):
+        self._conn = conn
 
     def put(self, event):
         self._conn.send(event)
@@ -49,10 +52,11 @@ class StompManager(StoppableThread):
 
         return conn
 
-    def __init__(self):
+    def __init__(self, ep_conn):
         super().__init__(name="StompManager", logger_name="StompManager")
 
         self.conn_dict = {}
+        self.ep_conn = ep_conn
 
     def add_connection(self, stomp_config=None, name=None, is_main=False):
         host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
@@ -87,7 +91,8 @@ class StompManager(StoppableThread):
         return conn_dict_key
 
     def run(self):
-        self.wait()
+        if self.ep_conn.poll():
+            self.handle_event(self.ep_conn.recv())
 
     def shutdown(self):
         self.logger.debug("Disconnecting connections")

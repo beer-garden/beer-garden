@@ -22,9 +22,9 @@ def signal_handler(_: int, __: types.FrameType):
 
 
 def run(ep_conn):
-    conn_manager = StompManager()
+    conn_manager = StompManager(ep_conn)
 
-    _setup_event_handling(StompManager, ep_conn)
+    _setup_event_handling(ep_conn)
     _setup_operation_forwarding()
 
     logger.debug("Starting forward processor")
@@ -84,13 +84,9 @@ def run(ep_conn):
     logger.debug("Stopping forward processing")
     beer_garden.router.forward_processor.stop()
 
-    beer_garden.events.manager.stop()
 
-
-def _setup_event_handling(stomp_manager, ep_conn):
-    beer_garden.events.manager = EventManager(
-        action=stomp_manager.handle_event, conn=ep_conn
-    )
+def _setup_event_handling(ep_conn):
+    beer_garden.events.manager = EventManager(conn=ep_conn)
 
 
 def _setup_operation_forwarding():
