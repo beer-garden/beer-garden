@@ -84,8 +84,9 @@ class StompManager(BaseProcessor):
         return conn_dict_key
 
     def run(self):
-        if self.ep_conn.poll():
-            self.handle_event(self.ep_conn.recv())
+        while not self.stopped():
+            if self.ep_conn.poll(0.1):
+                self.handle_event(self.ep_conn.recv())
 
     def shutdown(self):
         self.logger.debug("Disconnecting connections")
