@@ -95,36 +95,7 @@ class StompManager(StoppableThread):
         return conn_dict_key
 
     def run(self):
-        while not self.stopped():
-            for value in self.conn_dict.values():
-                conn = value["conn"]
-                gardens = value["gardens"]
-
-                if conn:
-                    if not conn.is_connected() and conn.bg_active:
-                        wait_time = value.get("wait_time") or 0.1
-                        wait_date = value.get("wait_date")
-
-                        if wait_date:
-                            wait_check = datetime.datetime.utcnow() >= wait_date
-                        else:
-                            wait_check = True
-
-                        if wait_check:
-                            self.reconnect(
-                                conn=conn, wait_time=wait_time, gardens=gardens
-                            )
-                            value["wait_time"] = min(wait_time * 2, 30)
-                            seconds_added = datetime.timedelta(seconds=wait_time)
-                            value["wait_date"] = (
-                                datetime.datetime.utcnow() + seconds_added
-                            )
-
-                            if conn.is_connected():
-                                value.pop("wait_time")
-                                value.pop("wait_date")
-
-        self.shutdown()
+        self.wait()
 
     def shutdown(self):
         self.logger.debug("Disconnecting connections")
@@ -144,17 +115,6 @@ class StompManager(StoppableThread):
                 metadata={"entry_point_type": "STOMP"},
             ),
         )
-
-    def reconnect(self, conn=None, gardens=None, wait_time=None):
-        if not conn.is_connected():
-            self.logger.warning("Lost stomp connection")
-
-            if conn.connect():
-                self.logger.info("Successfully reconnected")
-            else:
-                self.logger.warning(
-                    f"Waiting {wait_time:.1f} seconds before next attempt"
-                )
 
     def remove_garden_from_list(self, garden_name=None, skip_key=None):
         """removes garden name from dict list of gardens for stomp subscriptions"""
