@@ -1,28 +1,25 @@
 import logging
 from box import Box
 from brewtils.models import Event, Events, Garden
-from brewtils.stoppable_thread import StoppableThread
 from typing import Iterable
 
 from beer_garden.api.stomp.transport import Connection
 from beer_garden.events import publish
-from beer_garden.events.processors import PipeListener
+from beer_garden.events.processors import BaseProcessor
 
 logger = logging.getLogger(__name__)
 
 
-class EventManager:
-    """Will simply push events across the connection to the master process"""
+class StompManager(BaseProcessor):
+    """Manages Stomp connections and events for the Stomp entry point
 
-    def __init__(self, conn):
-        self._conn = conn
+    Will poll the multiprocessing.Connection for incoming events, and will invoke the
+    handle_event method for any received.
 
-    def put(self, event):
-        self._conn.send(event)
+    Also functions as the entry point's Event Manager. It simply sends any generated
+    events across the multiprocessing.Connection.
 
-
-class StompManager(StoppableThread):
-    """What is the purpose of this class??"""
+    """
 
     @staticmethod
     def connect(stomp_config: Box, gardens: Iterable[Garden]) -> Connection:
@@ -53,7 +50,11 @@ class StompManager(StoppableThread):
         return conn
 
     def __init__(self, ep_conn):
-        super().__init__(name="StompManager", logger_name="StompManager")
+        super().__init__(
+            action=lambda item: self.ep_conn.send(item),
+            name="StompManager",
+            logger_name=".".join([self.__module__, self.__class__.__name__]),
+        )
 
         self.conn_dict = {}
         self.ep_conn = ep_conn
