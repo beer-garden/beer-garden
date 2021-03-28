@@ -1,15 +1,14 @@
-import datetime
 import logging
 from box import Box
 from brewtils.models import Event, Events, Garden
 from brewtils.stoppable_thread import StoppableThread
 from typing import Iterable
 
-import beer_garden.events
-import beer_garden.router
 from beer_garden.api.stomp.transport import Connection
 from beer_garden.events import publish
-from beer_garden.events.processors import QueueListener, PipeListener
+from beer_garden.events.processors import PipeListener
+
+logger = logging.getLogger(__name__)
 
 
 class EventManager(PipeListener):
@@ -21,8 +20,6 @@ class EventManager(PipeListener):
 
 class StompManager(StoppableThread):
     """What is the purpose of this class??"""
-
-    logger = logging.getLogger(__name__)
 
     @staticmethod
     def connect(stomp_config: Box, gardens: Iterable[Garden]) -> Connection:
@@ -46,21 +43,16 @@ class StompManager(StoppableThread):
         )
 
         if conn.connect():
-            StompManager.logger.info("Successfully connected")
+            logger.info("Successfully connected")
         else:
-            StompManager.logger.info("Failed to connect")
+            logger.info("Failed to connect")
 
         return conn
 
     def __init__(self):
+        super().__init__(name="StompManager", logger_name="StompManager")
+
         self.conn_dict = {}
-
-        self._setup_operation_forwarding()
-
-        self.logger.debug("Starting forward processor")
-        beer_garden.router.forward_processor.start()
-
-        super().__init__(logger=self.logger, name="StompManager")
 
     def add_connection(self, stomp_config=None, name=None, is_main=False):
         host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
@@ -101,9 +93,6 @@ class StompManager(StoppableThread):
         self.logger.debug("Disconnecting connections")
         for value in self.conn_dict.values():
             value["conn"].disconnect()
-
-        self.logger.debug("Stopping forward processing")
-        beer_garden.router.forward_processor.stop()
 
         # This will almost definitely not be published because
         # it would need to make it up to the main process and
@@ -187,9 +176,3 @@ class StompManager(StoppableThread):
         for key in connection_params:
             new_connection_params[key.replace(term, "")] = connection_params[key]
         return new_connection_params
-
-    @staticmethod
-    def _setup_operation_forwarding():
-        beer_garden.router.forward_processor = QueueListener(
-            action=beer_garden.router.forward
-        )

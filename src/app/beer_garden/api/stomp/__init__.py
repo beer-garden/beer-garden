@@ -7,18 +7,28 @@ from brewtils.models import Event, Events
 
 import beer_garden.config as config
 import beer_garden.events
+import beer_garden.router
 from beer_garden.api.stomp.manager import StompManager, EventManager
 from beer_garden.events import publish
+from beer_garden.events.processors import QueueListener
 from beer_garden.garden import get_gardens
 
 logger: logging.Logger = logging.getLogger(__name__)
 shutdown_event = threading.Event()
 
 
+def signal_handler(_: int, __: types.FrameType):
+    shutdown_event.set()
+
+
 def run(ep_conn):
     conn_manager = StompManager()
 
     _setup_event_handling(StompManager, ep_conn)
+    _setup_operation_forwarding()
+
+    logger.debug("Starting forward processor")
+    beer_garden.router.forward_processor.start()
 
     entry_config = config.get("entry.stomp")
     parent_config = config.get("parent.stomp")
@@ -71,6 +81,9 @@ def run(ep_conn):
     conn_manager.stop()
     conn_manager.join(5)
 
+    logger.debug("Stopping forward processing")
+    beer_garden.router.forward_processor.stop()
+
     beer_garden.events.manager.stop()
 
 
@@ -80,5 +93,7 @@ def _setup_event_handling(stomp_manager, ep_conn):
     )
 
 
-def signal_handler(_: int, __: types.FrameType):
-    shutdown_event.set()
+def _setup_operation_forwarding():
+    beer_garden.router.forward_processor = QueueListener(
+        action=beer_garden.router.forward
+    )
