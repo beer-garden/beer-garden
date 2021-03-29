@@ -39,3 +39,6 @@ test-remote-plugins: ## run rest integration tests
 
 test-local-plugins: ## run rest integration tests
 	pytest local_plugins/
+
+test-stomp: ## run rest integration tests
+	pytest stomp/
