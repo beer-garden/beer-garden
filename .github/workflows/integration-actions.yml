@@ -279,7 +279,7 @@ jobs:
         working-directory: ./test/integration
 
       - name: Test Plugins
-        run: python${{ matrix.python-version }} -m stomp/
+        run: python${{ matrix.python-version }} -m pytest stomp/
         working-directory: ./test/integration
 
       - name: Shutdown Docker Containers
