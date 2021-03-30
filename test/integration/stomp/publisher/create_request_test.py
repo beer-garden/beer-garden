@@ -64,7 +64,7 @@ class TestPublisher(object):
         if conn.is_connected():
             conn.disconnect()
 
-    @pytest.mark.usefixtures('easy_client')
+    @pytest.mark.usefixtures('easy_client', 'request_generator')
     def test_publish_create_request(self, stomp_connection):
         """Published the Request over STOMP and verifies of HTTP"""
 
