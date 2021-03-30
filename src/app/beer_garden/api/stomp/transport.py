@@ -170,7 +170,7 @@ class Connection:
                 cert_file=ssl.get("cert_file"),
             )
 
-    def connect(self) -> True:
+    def connect(self) -> bool:
         try:
             self.conn.connect(
                 username=self.username,
