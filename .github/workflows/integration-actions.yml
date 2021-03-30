@@ -265,9 +265,9 @@ jobs:
         with:
           python-version: 3.4
 
-#      - name: Build Local Beer Garden Docker
-#        run: make docker-build-unstable
-#        working-directory: ./src/app
+      - name: Build Local Beer Garden Docker
+        run: make docker-build-unstable
+        working-directory: ./src/app
 
       - name: Checkout Local Plugins
         uses: actions/checkout@v2
@@ -286,10 +286,6 @@ jobs:
 
       - name: Update Docker Compose
         run: cp test/conf/docker-compose-stomp.yml docker/docker-compose/docker-compose.yml
-        working-directory: ./
-
-      - name: Debugger Logger Added
-        run: cp test/conf/logging-config-debugger.yaml docker/docker-compose/data/logging-config.yaml
         working-directory: ./
 
       - name: Run Docker Beer Garden
