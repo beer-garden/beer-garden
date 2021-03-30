@@ -268,11 +268,20 @@ jobs:
         run: docker-compose up -d activemq beer-garden
         working-directory: ./docker/docker-compose
 
-      - name: Check if Beer Garden is Operational
-        run: curl http://localhost:2337/version
+#      - name: Check if Beer Garden is Operational
+#        run: curl http://localhost:2337/version
 
-      - name: Wait for Beer Garden to intialize
-        run: sleep 45
+      - name: Check If Beer Garden is Operational
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 5
+          command: curl http://localhost:2337/version
+
+#      - name: Wait for Beer Garden to intialize
+#        run: sleep 45
 
       - name: Grab logs from Beer-Garden
         run: docker-compose logs --tail 100 beer-garden
