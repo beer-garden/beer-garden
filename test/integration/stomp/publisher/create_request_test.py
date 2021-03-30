@@ -73,6 +73,13 @@ class TestPublisher(object):
     def test_publish_create_request(self, stomp_connection):
         """Published the Request over STOMP and verifies of HTTP"""
 
+        systems = self.easy_client.find_systems()
+
+        assert len(systems) > 0
+
+        for system in systems:
+            print(system)
+
         request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
 
         request_model['metadata'] = {"generated-by": "test_publish_create_request"}
