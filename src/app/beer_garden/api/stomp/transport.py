@@ -87,6 +87,10 @@ class OperationListener(stomp.ConnectionListener):
     def on_message(self, headers: dict, message: str):
         """Handle an incoming message
 
+        Will first verify that the model type (according to the message headers) is an
+        Operation. When creating requests on a child garden the initial response will be
+        the created Request object, which we want to ignore.
+
         Will parse the message as an Operation and attempt to route it. If the result of
         the routing is truthy will send a response with the result.
 
@@ -100,28 +104,29 @@ class OperationListener(stomp.ConnectionListener):
             None
         """
         try:
-            operation = SchemaParser.parse_operation(message, from_string=True)
+            if headers.get("model_class") == "Operation":
+                operation = SchemaParser.parse_operation(message, from_string=True)
 
-            if hasattr(operation, "kwargs"):
-                operation.kwargs.pop("wait_timeout", None)
+                if hasattr(operation, "kwargs"):
+                    operation.kwargs.pop("wait_timeout", None)
 
-            result = beer_garden.router.route(operation)
+                result = beer_garden.router.route(operation)
 
-            if result:
-                send(
-                    result,
-                    request_headers=headers,
-                    conn=self.conn,
-                    send_destination=self.send_destination,
-                )
+                if result:
+                    send(
+                        result,
+                        request_headers=headers,
+                        conn=self.conn,
+                        send_destination=self.send_destination,
+                    )
         except Exception as e:
+            logger.warning(f"Error parsing and routing message: {e}")
             send(
                 str(e),
                 request_headers=headers,
                 conn=self.conn,
                 send_destination=self.send_destination,
             )
-            logger.warning(str(e))
 
 
 class Connection:
