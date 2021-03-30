@@ -134,8 +134,7 @@ services:
             <<: *env
 
             BG_GARDEN_NAME: childdocker
-            BG_PARENT_HTTP_ENABLED: "true"
-            BG_PARENT_HTTP_HOST: beer-garden
+            BG_PARENT_STOMP_ENABLED: "true"
 
             # If you are running in Ubuntu, then you need to set the Timezone
             # We are actively investigating why this is
