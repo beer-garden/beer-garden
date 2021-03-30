@@ -89,6 +89,7 @@ class TestPublisher(object):
                                    headers={'subscription-type': 'MULTICAST',
                                             'durable-subscription-name': 'events'})
 
+        print(stomp_connection.is_connected())
         stomp_connection.send(
             body=SchemaParser.serialize_operation(sample_operation_request, to_string=True),
             headers={
