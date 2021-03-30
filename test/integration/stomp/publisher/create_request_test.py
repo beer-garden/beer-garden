@@ -35,13 +35,9 @@ class MessageListener(object):
         print('received an error %s' % headers)
 
     def on_message(self, headers, message):
-        print(message)
-        print(headers)
         try:
             if headers['model_class'] == 'Operation':
                 parsed = SchemaParser.parse_operation(message, from_string=True)
-                # parsed = SchemaParser.parse(message, from_string=True, model_class=eval(headers['model_class']))
-                # print("Parsed message:", parsed)
 
                 if isinstance(parsed, Operation):
                     if parsed.payload and parsed.payload.payload_type and parsed.payload.payload_type == "REQUEST_CREATED":
