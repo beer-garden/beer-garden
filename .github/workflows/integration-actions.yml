@@ -270,7 +270,7 @@ jobs:
 
       - name: Check if Beer Garden is Operational
         run: curl http://localhost:2337/version
-        
+
       - name: Wait for Beer Garden to intialize
         run: sleep 45
 
