@@ -51,7 +51,6 @@ class MessageListener(object):
             print("Error: unable to parse message:", message)
 
 
-
 class TestPublisher(object):
 
     @pytest.fixture()
