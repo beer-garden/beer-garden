@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 def consolidate_headers(*args) -> dict:
     """Consolidates header dictionaries into one dict
 
+    The args list will be iterated in the order provided, so the combined dictionary
+    will contain the value of the *last* dictionary to contain a particular key.
+
     Args:
         The iterable of header dictionaries to combine
 
@@ -63,7 +66,7 @@ def send(
 ):
     message, model_headers = process(body)
 
-    headers = consolidate_headers(model_headers, request_headers, garden_headers)
+    headers = consolidate_headers(request_headers, model_headers, garden_headers)
 
     if conn.is_connected() and send_destination:
         destination = send_destination
