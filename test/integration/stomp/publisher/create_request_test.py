@@ -36,7 +36,7 @@ class MessageListener(object):
             if isinstance(parsed, Operation):
                 if parsed.payload and parsed.payload.payload_type and parsed.payload.payload_type == "REQUEST_CREATED":
                     self.create_event_captured = True
-        except AttributeError:
+        except:
             print("Error: unable to parse message:", message)
 
 
