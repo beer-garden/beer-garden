@@ -247,9 +247,9 @@ jobs:
         with:
           python-version: 3.4
 
-      - name: Build Local Beer Garden Docker
-        run: make docker-build-unstable
-        working-directory: ./src/app
+#      - name: Build Local Beer Garden Docker
+#        run: make docker-build-unstable
+#        working-directory: ./src/app
 
       - name: Setup python
         uses: actions/setup-python@v2
