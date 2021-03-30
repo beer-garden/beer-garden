@@ -1,5 +1,5 @@
 import pytest
-from brewtils.models import PatchOperation
+from brewtils.models import PatchOperation, Garden
 
 try:
     from helper.assertion import assert_successful_request
@@ -19,7 +19,31 @@ def system_spec():
 class TestGardenSetup(object):
     child_garden_name = "childdocker"
 
-    def test_garden_auto_register_successful(self):
+
+
+    def test_update_garden_connection_info(self):
+
+        child_garden = Garden(name=self.child_garden_name,
+                              connection_type="STOMP",
+                              connection_params={"stomp_host": "localhost",
+                                                 "stomp_port": 61613,
+                                                 "stomp_send_destination": "Beer_Garden_Forward_Parent",
+                                                 "stomp_subscribe_destination": "Beer_Garden_Operations_Parent",
+                                                 "stomp_username": "beer_garden",
+                                                 "stomp_password": "password",
+                                                 "stomp_ssl": {"use_ssl": False},
+                                                 })
+
+        payload = self.parser.serialize_garden(child_garden)
+
+        response = self.easy_client.client.session.post(
+            self.easy_client.client.base_url + "api/v1/gardens", data=payload,
+            headers=self.easy_client.client.JSON_HEADERS
+        )
+
+        assert response.ok
+
+    def test_garden_manual_register_successful(self):
 
         response = self.easy_client.client.session.get(self.easy_client.client.base_url + "api/v1/gardens/")
 
@@ -27,40 +51,6 @@ class TestGardenSetup(object):
 
         print(gardens)
         assert len(gardens) == 2
-
-    def test_update_garden_connection_info(self):
-
-        response = self.easy_client.client.session.get(self.easy_client.client.base_url + "api/v1/gardens/")
-        gardens = self.parser.parse_garden(response.json(), many=True)
-
-        child_garden = None;
-        for garden in gardens:
-            if garden.name == self.child_garden_name:
-                child_garden = garden
-                break
-
-        child_garden.connection_type = "STOMP"
-        child_garden.connection_params = {"stomp_host": "0.0.0.0",
-                                          "stomp_port": 61613,
-                                          "stomp_send_destination": "Beer_Garden_Forward_Parent",
-                                          "stomp_subscribe_destination": "Beer_Garden_Operations_Parent",
-                                          "stomp_username": "beer_garden",
-                                          "stomp_password": "password",
-                                          "stomp_ssl": {"use_ssl": False},
-                                          }
-
-        patch = PatchOperation(operation="config", path='',
-                               value=self.parser.serialize_garden(child_garden, to_string=False))
-
-        payload = self.parser.serialize_patch(patch)
-
-        print(payload)
-        response = self.easy_client.client.session.patch(
-            self.easy_client.client.base_url + "api/v1/gardens/" + self.child_garden_name, data=payload,
-            headers=self.easy_client.client.JSON_HEADERS
-        )
-
-        assert response.ok
 
     def test_child_systems_register_successful(self):
 
