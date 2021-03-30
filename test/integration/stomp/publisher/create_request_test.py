@@ -70,7 +70,8 @@ class TestPublisher(object):
             conn.disconnect()
 
     @pytest.mark.usefixtures('easy_client', 'request_generator')
-    def test_publish_create_request(self, stomp_connection):
+    def publish_create_request(self, stomp_connection):
+    # def test_publish_create_request(self, stomp_connection):
         """Published the Request over STOMP and verifies of HTTP"""
 
         request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
