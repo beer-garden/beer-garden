@@ -70,15 +70,34 @@ class TestPublisher(object):
             conn.disconnect()
 
     @pytest.mark.usefixtures('easy_client', 'request_generator')
-    def publish_create_request(self, stomp_connection):
+    def test_listen_create_request(self, stomp_connection):
+        """Published the Request over HTTP and verifies of STOMP"""
+
+        request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
+
+        listener = MessageListener()
+        stomp_connection.set_listener('', listener)
+
+        stomp_connection.subscribe(destination='Beer_Garden_Events', id='event_listener', ack='auto',
+                                   headers={'subscription-type': 'MULTICAST',
+                                            'durable-subscription-name': 'events'})
+
+        self.easy_client.create_request(request_model)
+
+        time.sleep(10)
+
+        assert listener.create_event_captured
+
+    @pytest.mark.usefixtures('easy_client', 'request_generator')
+    def test_publish_create_request(self, stomp_connection):
         """Published the Request over STOMP and verifies of HTTP"""
 
-        systems = self.easy_client.find_systems()
+        # systems = self.easy_client.find_systems()
 
-        assert len(systems) > 0
-
-        for system in systems:
-            print(system)
+        # assert len(systems) > 0
+        #
+        # for system in systems:
+        #     print(system)
 
         request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
 
@@ -119,21 +138,3 @@ class TestPublisher(object):
         assert listener.create_event_captured
         assert found_request
 
-    @pytest.mark.usefixtures('easy_client', 'request_generator')
-    def test_listen_create_request(self, stomp_connection):
-        """Published the Request over HTTP and verifies of STOMP"""
-
-        request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
-
-        listener = MessageListener()
-        stomp_connection.set_listener('', listener)
-
-        stomp_connection.subscribe(destination='Beer_Garden_Events', id='event_listener', ack='auto',
-                                   headers={'subscription-type': 'MULTICAST',
-                                            'durable-subscription-name': 'events'})
-
-        self.easy_client.create_request(request_model)
-
-        time.sleep(10)
-
-        assert listener.create_event_captured
