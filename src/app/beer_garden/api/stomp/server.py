@@ -75,6 +75,8 @@ class OperationListener(stomp.ConnectionListener):
         logger.warning("received an error:" + str(headers))
 
     def on_message(self, headers, message):
+
+        logger.error(message)
         try:
             operation = SchemaParser.parse_operation(message, from_string=True)
             if hasattr(operation, "kwargs"):
