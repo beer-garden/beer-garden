@@ -288,7 +288,7 @@ jobs:
         continue-on-error: true
 
       - name: Grab logs from Beer-Garden
-        run: docker-compose logs --tail 100 beer-garden
+        run: docker-compose logs --tail 500 beer-garden
         working-directory: ./docker/docker-compose
 
       - name: Shutdown Docker Containers
