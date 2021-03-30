@@ -4,6 +4,7 @@ import stomp
 from brewtils.models import Operation, Request
 from brewtils.schema_parser import SchemaParser
 import pytest
+import time
 
 from brewtils.errors import ValidationError
 
@@ -50,8 +51,7 @@ class TestPublisher(object):
             command="say",
             parameters={"message": "Hello, World!", "loud": True},
             namespace="default",
-            metadata={"reply-to": "metadataReplyto",
-                      "generated-by": "test_publish_create_request"},
+            metadata={"generated-by": "test_publish_create_request"},
         )
 
         sample_operation_request = Operation(
@@ -63,11 +63,12 @@ class TestPublisher(object):
         stomp_connection.send(
             body=SchemaParser.serialize_operation(sample_operation_request, to_string=True),
             headers={
-                "reply-to": "replyto",
                 "model_class": sample_operation_request.__class__.__name__,
             },
             destination="Beer_Garden_Operations",
         )
+
+        time.sleep(10)
 
         requests = self.easy_client.find_requests()
 
