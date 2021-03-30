@@ -74,11 +74,12 @@ class TestPublisher(object):
 
         found_request = False
 
+        print(len(requests))
+
         for request in requests:
+            print(request)
             if "generated-by" in request.metadata and request.metadata["generated-by"] == "test_publish_create_request":
                 found_request = True
                 break
 
         assert found_request
-
-
