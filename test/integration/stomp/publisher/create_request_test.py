@@ -35,15 +35,18 @@ class MessageListener(object):
     def on_message(self, headers, message):
         print(message)
         print(headers)
-        # try:
-        #     parsed = SchemaParser.parse(message, from_string=True, model_class=eval(headers['model_class']))
-        #     print("Parsed message:", parsed)
-        #
-        #     if isinstance(parsed, Operation):
-        #         if parsed.payload and parsed.payload.payload_type and parsed.payload.payload_type == "REQUEST_CREATED":
-        #             self.create_event_captured = True
-        # except:
-        #     print("Error: unable to parse message:", message)
+        try:
+            parsed = SchemaParser.parse(message, from_string=True, model_class=eval(headers['model_class']))
+            print("Parsed message:", parsed)
+
+            if isinstance(parsed, Operation):
+                if parsed.payload and parsed.payload.payload_type and parsed.payload.payload_type == "REQUEST_CREATED":
+                    self.create_event_captured = True
+        except:
+            print("Error: unable to parse message:", message)
+
+    def on_disconnected(self):
+        assert self.create_event_captured
 
 
 class TestPublisher(object):
@@ -68,16 +71,6 @@ class TestPublisher(object):
     def test_publish_create_request(self, stomp_connection):
         """Published the Request over STOMP and verifies of HTTP"""
 
-        # request_model = Request(
-        #     system="echo",
-        #     system_version="3.0.0.dev0",
-        #     instance_name="default",
-        #     command="say",
-        #     parameters={"message": "Hello, World!", "loud": True},
-        #     namespace="docker",
-        #     metadata={"generated-by": "test_publish_create_request"},
-        # )
-
         request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
 
         request_model['metadata'] = {"generated-by": "test_publish_create_request"}
@@ -89,9 +82,6 @@ class TestPublisher(object):
         )
 
         stomp_connection.set_listener('', MessageListener())
-
-        # stomp_connection.subscribe(destination='Beer_Garden_Operations', id='operation_listener', ack='auto',
-        #                            headers={'subscription-type': 'MULTICAST', 'durable-subscription-name': 'Beer_Garden_Operations'})
 
         stomp_connection.subscribe(destination='Beer_Garden_Events', id='event_listener', ack='auto',
                                    headers={'subscription-type': 'MULTICAST',
@@ -105,7 +95,7 @@ class TestPublisher(object):
             destination="Beer_Garden_Operations",
         )
 
-        time.sleep(10)
+        time.sleep(30)
 
         requests = self.easy_client.find_requests()
 
