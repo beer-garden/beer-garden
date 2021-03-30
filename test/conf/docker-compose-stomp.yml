@@ -25,7 +25,7 @@ x-definitions: &env
 services:
     beer-garden:
         #image: bgio/beer-garden:unstable
-        image: bgio/beer-garden:unstable
+        image: bgio/beer-garden
         networks:
             - bg-network
         ports:
