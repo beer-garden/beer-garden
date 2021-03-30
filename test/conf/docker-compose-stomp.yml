@@ -57,6 +57,8 @@ services:
             # Enable stomp and point at the correct broker
             BG_ENTRY_STOMP_ENABLED: "true"
             BG_ENTRY_STOMP_HOST: activemq
+            BG_ENTRY_STOMP_SUBSCRIBE_DESTINATION: Beer_Garden_Operations
+            BG_ENTRY_STOMP_SEND_DESTINATION: Beer_Garden_Events
 
             # We expose grafana for you, but you can change this to an
             # external grafana URL if you would like. It just adds a
