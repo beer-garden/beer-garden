@@ -42,7 +42,6 @@ class MessageListener(object):
                 parsed = SchemaParser.parse_operation(message, from_string=True)
 
                 if parsed.model and parsed.model.name:
-                    print(parsed.model.name)
                     if parsed.model.name.startswith("REQUEST"):
                         self.create_event_captured = True
             elif headers['model_class'] == 'error_message':
@@ -91,13 +90,6 @@ class TestPublisher(object):
     @pytest.mark.usefixtures('easy_client', 'request_generator')
     def test_publish_create_request(self, stomp_connection):
         """Published the Request over STOMP and verifies of HTTP"""
-
-        # systems = self.easy_client.find_systems()
-
-        # assert len(systems) > 0
-        #
-        # for system in systems:
-        #     print(system)
 
         request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
 
