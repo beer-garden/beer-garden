@@ -269,6 +269,16 @@ jobs:
         run: make docker-build-unstable
         working-directory: ./src/app
 
+      - name: Checkout Local Plugins
+        uses: actions/checkout@v2
+        with:
+          repository: beer-garden/example-plugins
+          path: ./tmp
+
+      - name: Move Subset of Test Plugins
+        run: |
+          cp -r ./tmp/echo ./docker/docker-compose/data/localplugins
+
       - name: Setup python
         uses: actions/setup-python@v2
         with:
@@ -286,6 +296,13 @@ jobs:
         run: docker-compose up -d activemq beer-garden
         working-directory: ./docker/docker-compose
 
+      - name: Install Test Version of Brewtils
+        run: pip${{ matrix.python-version }} install brewtils
+
+      - name: Install Python Deps
+        run: pip${{ matrix.python-version }} install -r requirements.txt
+        working-directory: ./test/integration
+
       - name: Check If Beer Garden is Operational
         uses: nick-invision/retry@v2
         with:
@@ -298,13 +315,6 @@ jobs:
       - name: Grab logs from Beer-Garden
         run: docker-compose logs --tail 100 beer-garden
         working-directory: ./docker/docker-compose
-
-      - name: Install Test Version of Brewtils
-        run: pip${{ matrix.python-version }} install brewtils
-
-      - name: Install Python Deps
-        run: pip${{ matrix.python-version }} install -r requirements.txt
-        working-directory: ./test/integration
 
       - name: Test Plugins
         run: python${{ matrix.python-version }} -m pytest stomp/
