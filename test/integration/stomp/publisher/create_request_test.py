@@ -66,11 +66,8 @@ class TestPublisher(object):
 
         request_model = Request(
             system="echo",
-            system_version="3.0.0.dev0",
-            instance_name="default",
             command="say",
             parameters={"message": "Hello, World!", "loud": True},
-            namespace="default",
             metadata={"generated-by": "test_publish_create_request"},
         )
 
