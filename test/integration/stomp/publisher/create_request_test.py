@@ -82,8 +82,12 @@ class TestPublisher(object):
 
         stomp_connection.set_listener('', MessageListener())
 
-        stomp_connection.subscribe(destination='Beer_Garden_Operations', id='event_listener', ack='auto',
-                                   headers={'subscription-type': 'MULTICAST', 'durable-subscription-name': 'Beer_Garden_Operations'})
+        # stomp_connection.subscribe(destination='Beer_Garden_Operations', id='operation_listener', ack='auto',
+        #                            headers={'subscription-type': 'MULTICAST', 'durable-subscription-name': 'Beer_Garden_Operations'})
+
+        stomp_connection.subscribe(destination='Beer_Garden_Events', id='event_listener', ack='auto',
+                                   headers={'subscription-type': 'MULTICAST',
+                                            'durable-subscription-name': 'events'})
 
         stomp_connection.send(
             body=SchemaParser.serialize_operation(sample_operation_request, to_string=True),
