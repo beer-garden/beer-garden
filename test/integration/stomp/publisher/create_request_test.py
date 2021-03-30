@@ -70,7 +70,7 @@ class TestPublisher(object):
             conn.disconnect()
 
     @pytest.mark.usefixtures('easy_client', 'request_generator')
-    def test_publish_create_request(self, stomp_connection):
+    def publish_create_request(self, stomp_connection):
         """Published the Request over STOMP and verifies of HTTP"""
 
         systems = self.easy_client.find_systems()
