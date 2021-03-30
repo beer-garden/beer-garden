@@ -80,6 +80,8 @@ class TestPublisher(object):
 
         request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
 
+        request_model['metadata'] = {"generated-by": "test_publish_create_request"}
+
         sample_operation_request = Operation(
             operation_type="REQUEST_CREATE",
             model=request_model,
@@ -95,7 +97,6 @@ class TestPublisher(object):
                                    headers={'subscription-type': 'MULTICAST',
                                             'durable-subscription-name': 'events'})
 
-        print(stomp_connection.is_connected())
         stomp_connection.send(
             body=SchemaParser.serialize_operation(sample_operation_request, to_string=True),
             headers={
@@ -110,10 +111,10 @@ class TestPublisher(object):
 
         found_request = False
 
-        print(len(requests))
+        #print(len(requests))
 
         for request in requests:
-            print(request)
+            #print(request.metadata)
             if "generated-by" in request.metadata and request.metadata["generated-by"] == "test_publish_create_request":
                 found_request = True
                 break
