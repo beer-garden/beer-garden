@@ -23,7 +23,6 @@ except:
 
 
 class MessageListener(object):
-
     create_event_captured = False
 
     def on_error(self, headers, message):
@@ -34,8 +33,12 @@ class MessageListener(object):
             parsed = SchemaParser.parse(message, from_string=True, model_class=eval(headers['model_class']))
             print("Parsed message:", parsed)
 
+            if isinstance(parsed, Operation):
+                if parsed.payload and parsed.payload.payload_type and parsed.payload.payload_type == "REQUEST_CREATED":
+                    self.create_event_captured = True
         except AttributeError:
             print("Error: unable to parse message:", message)
+
 
 class TestPublisher(object):
 
@@ -54,8 +57,6 @@ class TestPublisher(object):
 
         if conn.is_connected():
             conn.disconnect()
-
-
 
     @pytest.mark.usefixtures('easy_client')
     def test_publish_create_request(self, stomp_connection):
@@ -77,10 +78,10 @@ class TestPublisher(object):
             model_type="Request",
         )
 
-        stomp_connection.conn.set_listener('', MessageListener())
+        stomp_connection.set_listener('', MessageListener())
 
-        conn.subscribe(destination='Beer_Garden_Operations', id='event_listener', ack='auto',
-                       headers={'subscription-type': 'MULTICAST', 'durable-subscription-name': 'events'})
+        stomp_connection.subscribe(destination='Beer_Garden_Operations', id='event_listener', ack='auto',
+                                   headers={'subscription-type': 'MULTICAST', 'durable-subscription-name': 'events'})
 
         stomp_connection.send(
             body=SchemaParser.serialize_operation(sample_operation_request, to_string=True),
