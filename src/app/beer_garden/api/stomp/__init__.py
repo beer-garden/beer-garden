@@ -66,7 +66,7 @@ def run(ep_conn):
 
             if connection:
                 logger.debug(f"{name}: Checking connection")
-                if not connection.is_connected() and connection.bg_active:
+                if not connection.is_connected():
                     logger.debug(f"{name}: Attempting to reconnect")
 
                     if connection.connect():

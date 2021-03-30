@@ -159,7 +159,6 @@ class Connection:
         self.password = password
         self.subscribe_destination = subscribe_destination
         self.send_destination = send_destination
-        self.bg_active = True
         self.conn = stomp.Connection(
             host_and_ports=[(self.host, self.port)], heartbeats=(10000, 0)
         )
@@ -204,7 +203,6 @@ class Connection:
             return False
 
     def disconnect(self):
-        self.bg_active = False
         if self.conn.is_connected():
             self.conn.disconnect()
 

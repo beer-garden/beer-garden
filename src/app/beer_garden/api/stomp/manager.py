@@ -142,7 +142,7 @@ class StompManager(BaseProcessor):
         for value in self.conn_dict.values():
             conn = value["conn"]
             if conn:
-                if conn.is_connected() and conn.bg_active:
+                if conn.is_connected():
                     if value["headers_list"]:
                         for headers in value["headers_list"]:
                             conn.send(event, headers=headers)
