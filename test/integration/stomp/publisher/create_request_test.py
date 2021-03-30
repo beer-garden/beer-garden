@@ -22,6 +22,25 @@ except:
                                   TestPluginV1BetterDescriptions)
 
 
+class MessageListener(object):
+    def on_error(self, headers, message):
+        print('received an error %s' % headers)
+
+    def on_message(self, headers, message):
+        global conn
+        try:
+            parsed = SchemaParser.parse(message, from_string=True, model_class=eval(headers['model_class']))
+            print("Parsed message:", parsed)
+
+            #  Forwards an event object to a destination if payload has a metadata
+            try:
+                if 'reply-to' in parsed.payload.metadata:
+                    conn.send(body=message, headers=headers, destination=parsed.payload.metadata['reply-to'])
+            except AttributeError:
+                pass
+        except AttributeError:
+            print("Error: unable to parse message:", message)
+
 class TestPublisher(object):
 
     @pytest.fixture()
@@ -39,6 +58,8 @@ class TestPublisher(object):
 
         if conn.is_connected():
             conn.disconnect()
+
+
 
     @pytest.mark.usefixtures('easy_client')
     def test_publish_create_request(self, stomp_connection):
@@ -59,6 +80,11 @@ class TestPublisher(object):
             model=request_model,
             model_type="Request",
         )
+
+        stomp_connection.conn.set_listener('', MessageListener())
+
+        conn.subscribe(destination='Beer_Garden_Operations', id='event_listener', ack='auto',
+                       headers={'subscription-type': 'MULTICAST', 'durable-subscription-name': 'events'})
 
         stomp_connection.send(
             body=SchemaParser.serialize_operation(sample_operation_request, to_string=True),
