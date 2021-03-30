@@ -19,8 +19,6 @@ def system_spec():
 class TestGardenSetup(object):
     child_garden_name = "childdocker"
 
-
-
     def test_update_garden_connection_info(self):
 
         child_garden = Garden(name=self.child_garden_name,
@@ -49,8 +47,20 @@ class TestGardenSetup(object):
 
         gardens = self.parser.parse_garden(response.json(), many=True)
 
-        print(gardens)
         assert len(gardens) == 2
+
+    def test_run_sync(self):
+        patch = PatchOperation(operation="sync", path='')
+
+        payload = self.parser.serialize_patch(patch)
+
+        response = self.easy_client.client.session.patch(
+            self.easy_client.client.base_url + "api/v1/gardens/" + self.child_garden_name, data=payload,
+            headers=self.easy_client.client.JSON_HEADERS
+        )
+
+        assert response.ok
+
 
     def test_child_systems_register_successful(self):
 
