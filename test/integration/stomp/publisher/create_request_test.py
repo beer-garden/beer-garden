@@ -5,6 +5,7 @@ from brewtils.models import Operation, Request
 from brewtils.schema_parser import SchemaParser
 import pytest
 import time
+import json
 
 from brewtils.errors import ValidationError
 
@@ -37,18 +38,18 @@ class MessageListener(object):
     def on_message(self, headers, message):
         try:
             if headers['model_class'] == 'Operation':
+
+                #parsed = json.loads(message)
                 parsed = SchemaParser.parse_operation(message, from_string=True)
 
-                if isinstance(parsed, Operation):
-                    if parsed.payload and parsed.payload.payload_type and parsed.payload.payload_type == "REQUEST_CREATED":
-                        self.create_event_captured = True
+                print(message)
+                if parsed.model and parsed.model.name and parsed.model.name.startswith("REQUEST"):
+                    self.create_event_captured = True
             elif headers['model_class'] == 'error_message':
                 print("Error Message Returned:", message)
         except:
             print("Error: unable to parse message:", message)
 
-    def on_disconnected(self):
-        assert self.create_event_captured
 
 
 class TestPublisher(object):
@@ -70,8 +71,7 @@ class TestPublisher(object):
             conn.disconnect()
 
     @pytest.mark.usefixtures('easy_client', 'request_generator')
-    def publish_create_request(self, stomp_connection):
-    # def test_publish_create_request(self, stomp_connection):
+    def test_publish_create_request(self, stomp_connection):
         """Published the Request over STOMP and verifies of HTTP"""
 
         request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
@@ -84,7 +84,8 @@ class TestPublisher(object):
             model_type="Request",
         )
 
-        stomp_connection.set_listener('', MessageListener())
+        listener = MessageListener()
+        stomp_connection.set_listener('', listener)
 
         stomp_connection.subscribe(destination='Beer_Garden_Events', id='event_listener', ack='auto',
                                    headers={'subscription-type': 'MULTICAST',
@@ -122,7 +123,8 @@ class TestPublisher(object):
 
         request_model['metadata'] = {"generated-by": "test_listen_create_request"}
 
-        stomp_connection.set_listener('', MessageListener())
+        listener = MessageListener()
+        stomp_connection.set_listener('', listener)
 
         stomp_connection.subscribe(destination='Beer_Garden_Events', id='event_listener', ack='auto',
                                    headers={'subscription-type': 'MULTICAST',
@@ -131,3 +133,5 @@ class TestPublisher(object):
         self.easy_client.create_request(request_model)
 
         time.sleep(10)
+
+        assert listener.create_event_captured
