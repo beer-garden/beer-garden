@@ -21,6 +21,10 @@ except:
                                   TestPluginV1, TestPluginV2,
                                   TestPluginV1BetterDescriptions)
 
+@pytest.fixture(scope="class")
+def system_spec():
+    return {'system': 'echo', 'system_version': '3.0.0.dev0', 'instance_name': 'default',
+            'command': 'say'}
 
 class MessageListener(object):
     create_event_captured = False
@@ -64,15 +68,17 @@ class TestPublisher(object):
     def test_publish_create_request(self, stomp_connection):
         """Published the Request over STOMP and verifies of HTTP"""
 
-        request_model = Request(
-            system="echo",
-            system_version="3.0.0.dev0",
-            instance_name="default",
-            command="say",
-            parameters={"message": "Hello, World!", "loud": True},
-            namespace="docker",
-            metadata={"generated-by": "test_publish_create_request"},
-        )
+        # request_model = Request(
+        #     system="echo",
+        #     system_version="3.0.0.dev0",
+        #     instance_name="default",
+        #     command="say",
+        #     parameters={"message": "Hello, World!", "loud": True},
+        #     namespace="docker",
+        #     metadata={"generated-by": "test_publish_create_request"},
+        # )
+
+        request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
 
         sample_operation_request = Operation(
             operation_type="REQUEST_CREATE",
