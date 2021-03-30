@@ -260,6 +260,10 @@ jobs:
         run: cp test/conf/docker-compose-stomp.yml docker/docker-compose/docker-compose.yml
         working-directory: ./
 
+      - name: Debugger Logger Added
+        run: cp test/conf/logging-config-debugger.yaml docker/docker-compose/data/logging-config.yaml
+        working-directory: ./
+
       - name: Run Docker Beer Garden
         run: docker-compose up -d activemq beer-garden
         working-directory: ./docker/docker-compose
