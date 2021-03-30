@@ -38,7 +38,7 @@ class MessageListener(object):
         try:
             parsed = SchemaParser.parse_operation(message, from_string=True)
             # parsed = SchemaParser.parse(message, from_string=True, model_class=eval(headers['model_class']))
-            print("Parsed message:", parsed)
+            # print("Parsed message:", parsed)
 
             if isinstance(parsed, Operation):
                 if parsed.payload and parsed.payload.payload_type and parsed.payload.payload_type == "REQUEST_CREATED":
@@ -127,10 +127,6 @@ class TestPublisher(object):
                                             'durable-subscription-name': 'events'})
 
         self.easy_client.create_request(request_model)
-
-        time.sleep(30)
-
-        self.easy_client.find_requests()
 
         time.sleep(10)
 
