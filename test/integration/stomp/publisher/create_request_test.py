@@ -21,10 +21,12 @@ except:
                                   TestPluginV1, TestPluginV2,
                                   TestPluginV1BetterDescriptions)
 
+
 @pytest.fixture(scope="class")
 def system_spec():
     return {'system': 'echo', 'system_version': '3.0.0.dev0', 'instance_name': 'default',
             'command': 'say'}
+
 
 class MessageListener(object):
     create_event_captured = False
@@ -36,13 +38,16 @@ class MessageListener(object):
         print(message)
         print(headers)
         try:
-            parsed = SchemaParser.parse_operation(message, from_string=True)
-            # parsed = SchemaParser.parse(message, from_string=True, model_class=eval(headers['model_class']))
-            # print("Parsed message:", parsed)
+            if headers['model_class'] == 'Operation':
+                parsed = SchemaParser.parse_operation(message, from_string=True)
+                # parsed = SchemaParser.parse(message, from_string=True, model_class=eval(headers['model_class']))
+                # print("Parsed message:", parsed)
 
-            if isinstance(parsed, Operation):
-                if parsed.payload and parsed.payload.payload_type and parsed.payload.payload_type == "REQUEST_CREATED":
-                    self.create_event_captured = True
+                if isinstance(parsed, Operation):
+                    if parsed.payload and parsed.payload.payload_type and parsed.payload.payload_type == "REQUEST_CREATED":
+                        self.create_event_captured = True
+            elif headers['model_class'] == 'error_message':
+                print("Error Message Returned:", message)
         except:
             print("Error: unable to parse message:", message)
 
@@ -102,10 +107,10 @@ class TestPublisher(object):
 
         found_request = False
 
-        #print(len(requests))
+        # print(len(requests))
 
         for request in requests:
-            #print(request.metadata)
+            # print(request.metadata)
             if "generated-by" in request.metadata and request.metadata["generated-by"] == "test_publish_create_request":
                 found_request = True
                 break
@@ -129,5 +134,3 @@ class TestPublisher(object):
         self.easy_client.create_request(request_model)
 
         time.sleep(10)
-
-
