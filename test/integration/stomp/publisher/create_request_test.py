@@ -36,7 +36,8 @@ class MessageListener(object):
         print(message)
         print(headers)
         try:
-            parsed = SchemaParser.parse(message, from_string=True, model_class=eval(headers['model_class']))
+            parsed = SchemaParser.parse_operation(message, from_string=True)
+            # parsed = SchemaParser.parse(message, from_string=True, model_class=eval(headers['model_class']))
             print("Parsed message:", parsed)
 
             if isinstance(parsed, Operation):
@@ -110,3 +111,27 @@ class TestPublisher(object):
                 break
 
         assert found_request
+
+    @pytest.mark.usefixtures('easy_client', 'request_generator')
+    def test_listen_create_request(self, stomp_connection):
+        """Published the Request over HTTP and verifies of STOMP"""
+
+        request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
+
+        request_model['metadata'] = {"generated-by": "test_listen_create_request"}
+
+        stomp_connection.set_listener('', MessageListener())
+
+        stomp_connection.subscribe(destination='Beer_Garden_Events', id='event_listener', ack='auto',
+                                   headers={'subscription-type': 'MULTICAST',
+                                            'durable-subscription-name': 'events'})
+
+        self.easy_client.create_request(request_model)
+
+        time.sleep(30)
+
+        self.easy_client.find_requests()
+
+        time.sleep(10)
+
+
