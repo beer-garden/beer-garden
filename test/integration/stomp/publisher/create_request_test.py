@@ -29,15 +29,17 @@ class MessageListener(object):
         print('received an error %s' % headers)
 
     def on_message(self, headers, message):
-        try:
-            parsed = SchemaParser.parse(message, from_string=True, model_class=eval(headers['model_class']))
-            print("Parsed message:", parsed)
-
-            if isinstance(parsed, Operation):
-                if parsed.payload and parsed.payload.payload_type and parsed.payload.payload_type == "REQUEST_CREATED":
-                    self.create_event_captured = True
-        except:
-            print("Error: unable to parse message:", message)
+        print(message)
+        print(headers)
+        # try:
+        #     parsed = SchemaParser.parse(message, from_string=True, model_class=eval(headers['model_class']))
+        #     print("Parsed message:", parsed)
+        #
+        #     if isinstance(parsed, Operation):
+        #         if parsed.payload and parsed.payload.payload_type and parsed.payload.payload_type == "REQUEST_CREATED":
+        #             self.create_event_captured = True
+        # except:
+        #     print("Error: unable to parse message:", message)
 
 
 class TestPublisher(object):
@@ -80,7 +82,7 @@ class TestPublisher(object):
 
         stomp_connection.set_listener('', MessageListener())
 
-        stomp_connection.subscribe(destination='Beer_Garden_Operations', id='event_listener', ack='auto',
+        stomp_connection.subscribe(destination='Beer_Garden_Events', id='event_listener', ack='auto',
                                    headers={'subscription-type': 'MULTICAST', 'durable-subscription-name': 'events'})
 
         stomp_connection.send(
