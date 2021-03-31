@@ -16,15 +16,15 @@ The router service is responsible for:
 
 import asyncio
 import logging
-import requests
-import stomp
 import threading
-from brewtils import EasyClient
-from brewtils.models import Event, Events, Garden, Operation, Request, System
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
-from stomp.exception import ConnectFailedException
 from typing import Dict, Union
+
+import stomp
+from brewtils import EasyClient
+from brewtils.models import Event, Events, Garden, Operation, Request, System
+from stomp.exception import ConnectFailedException
 
 import beer_garden
 import beer_garden.commands
