@@ -16,14 +16,15 @@ The router service is responsible for:
 
 import asyncio
 import logging
-import stomp
 import threading
-from brewtils import EasyClient
-from brewtils.models import Events, Garden, Operation, Request, System, Event
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
-from stomp.exception import ConnectFailedException
 from typing import Dict, Union
+
+import stomp
+from brewtils import EasyClient
+from brewtils.models import Event, Events, Garden, Operation, Request, System
+from stomp.exception import ConnectFailedException
 
 import beer_garden
 import beer_garden.commands
@@ -39,12 +40,10 @@ import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
-from beer_garden.api.stomp.processors import (
-    append_headers as stomp_append_headers,
-    process_send_message as stomp_process_message,
-)
+from beer_garden.api.stomp.transport import consolidate_headers, process
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 from beer_garden.events import publish
+from beer_garden.events.processors import BaseProcessor
 from beer_garden.garden import get_garden, get_gardens
 from beer_garden.requests import complete_request
 
@@ -66,6 +65,9 @@ t_pool = ThreadPoolExecutor()
 garden_lock = threading.Lock()
 gardens: Dict[str, Garden] = {}  # garden_name -> garden
 stomp_garden_connections: Dict[str, stomp.Connection] = {}
+
+# Used by entry points
+forward_processor: BaseProcessor
 
 # Used for determining WHERE to route an operation
 routing_lock = threading.Lock()
@@ -580,10 +582,9 @@ def _forward_stomp(operation: Operation, target_garden: Garden):
                     "client-id": target_garden.connection_params["stomp_username"]
                 },
             )
-        message, response_headers = stomp_process_message(operation)
-        response_headers = stomp_append_headers(
-            response_headers=response_headers,
-            garden_headers=target_garden.connection_params.get("stomp_headers"),
+        message, response_headers = process(operation)
+        response_headers = consolidate_headers(
+            response_headers, target_garden.connection_params.get("stomp_headers")
         )
         stomp_garden_connections[target_garden.name].send(
             body=message,
