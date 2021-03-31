@@ -1,11 +1,11 @@
 import json
 import pytest
 
-from brewtils.errors import ValidationError
+from brewtils.errors import ValidationError, SaveError
 
 
-def assert_system_running(client, system_name, system_version, **kwargs):
-    system = client.find_unique_system(name=system_name, version=system_version)
+def assert_system_running(client, system_name, system_version, garden=None, **kwargs):
+    system = client.find_unique_system(name=system_name, version=system_version, garden=garden)
     system_attrs = kwargs.pop('system', {})
     for key, value in system_attrs.items():
         actual = getattr(system, key)
@@ -23,6 +23,9 @@ def assert_instance_running(instance, **kwargs):
 def assert_validation_error(testcase, client, request, **kwargs):
     assert_error_creating_request(testcase, client, request, ValidationError, **kwargs)
 
+
+def assert_save_error(testcase, client, request, **kwargs):
+    assert_error_creating_request(testcase, client, request, SaveError, **kwargs)
 
 def assert_error_creating_request(testcase, client, request, exc_class, regex=None, **kwargs):
     if regex is None:

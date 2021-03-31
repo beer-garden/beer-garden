@@ -1,13 +1,17 @@
 import json
 import pytest
 
-from helper import wait_for_response
-from helper.assertion import assert_errored_request
+try:
+    from ...helper import wait_for_response
+    from ...helper.assertion import assert_errored_request
+except:
+    from helper import wait_for_response
+    from helper.assertion import assert_errored_request
 
 
 @pytest.fixture(scope="class")
 def system_spec():
-    return {'system': 'error', 'system_version': '1.0.0.dev0', 'instance_name': 'default',
+    return {'system': 'error', 'system_version': '3.0.0.dev0', 'instance_name': 'default',
             'command': 'string_error_message'}
 
 

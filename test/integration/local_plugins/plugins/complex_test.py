@@ -1,13 +1,17 @@
 import json
 import pytest
 
-from helper import wait_for_response
-from helper.assertion import assert_successful_request, assert_validation_error
+try:
+    from helper import wait_for_response
+    from helper.assertion import assert_successful_request, assert_validation_error, assert_save_error
+except:
+    from ...helper import wait_for_response
+    from ...helper.assertion import assert_successful_request, assert_validation_error, assert_save_error
 
 
 @pytest.fixture(scope="class")
 def system_spec():
-    return {'system': 'complex', 'system_version': '1.0.0.dev0', 'instance_name': 'c1'}
+    return {'system': 'complex', 'system_version': '3.0.0.dev0', 'instance_name': 'c1'}
 
 
 @pytest.mark.usefixtures('easy_client', 'request_generator')
@@ -19,11 +23,11 @@ class TestComplex(object):
 
     def test_invalid_system_name(self):
         request = self.request_generator.generate_request(system="BAD_SYSTEM_NAME", command="ping")
-        assert_validation_error(self, self.easy_client, request)
+        assert_save_error(self, self.easy_client, request)
 
     def test_invalid_system_version(self):
         request = self.request_generator.generate_request(system_version="INVALID_VERSION", command="ping")
-        assert_validation_error(self, self.easy_client, request)
+        assert_save_error(self, self.easy_client, request)
 
     def test_invalid_command(self):
         request = self.request_generator.generate_request(command="INVALID_COMMAND")

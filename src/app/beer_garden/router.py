@@ -19,8 +19,8 @@ import logging
 import requests
 import stomp
 import threading
-from brewtils.models import Events, Garden, Operation, Request, System, Event
-from brewtils.schema_parser import SchemaParser
+from brewtils import EasyClient
+from brewtils.models import Event, Events, Garden, Operation, Request, System
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
 from stomp.exception import ConnectFailedException
@@ -612,44 +612,33 @@ def _forward_http(operation: Operation, target_garden: Garden):
     """
 
     conn_info = target_garden.connection_params
-    endpoint = "{}://{}:{}{}api/v1/forward".format(
-        "https" if conn_info.get("ssl") else "http",
-        conn_info.get("host"),
-        conn_info.get("port"),
-        conn_info.get("url_prefix", "/"),
+
+    easy_client = EasyClient(
+        bg_host=conn_info.get("host"),
+        bg_port=conn_info.get("port"),
+        ssl_enabled=conn_info.get("ssl"),
+        bg_url_prefix=conn_info.get("url_prefix", "/"),
+        ca_cert=conn_info.get("ca_cert"),
+        ca_verify=conn_info.get("ca_verify"),
+        client_cert=conn_info.get("client_cert"),
     )
 
     try:
-        if conn_info.get("ssl"):
-            response = requests.post(
-                endpoint,
-                headers={"Content-type": "application/json", "Accept": "text/plain"},
-                data=SchemaParser.serialize_operation(operation),
-                cert=conn_info.get("client_cert"),
-                verify=conn_info.get("ca_cert"),
-            )
-
-        else:
-            response = requests.post(
-                endpoint,
-                headers={"Content-type": "application/json", "Accept": "text/plain"},
-                data=SchemaParser.serialize_operation(operation),
-            )
+        response = easy_client.forward(operation)
 
         if response.status_code != 200:
-
             _publish_failed_forward(
                 operation=operation,
                 event_name=Events.GARDEN_UNREACHABLE.name,
                 error_message=f"Attempted to forward operation to garden "
-                f"'{operation.target_garden_name}' via REST but the connection returned an "
-                f"error code of {response.status_code}. Please talk to your system "
-                f"administrator.",
+                f"'{operation.target_garden_name}' via REST but the connection "
+                f"returned an error code of {response.status_code}. Please talk to "
+                f"your system administrator.",
             )
         elif target_garden.status != "RUNNING":
             beer_garden.garden.update_garden_status(target_garden.name, "RUNNING")
 
-        return response
+        return response.json()
 
     except Exception as error:
         logger.error(error)
