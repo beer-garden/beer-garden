@@ -52,36 +52,37 @@ class StompManager(BaseProcessor):
         self.ep_conn = ep_conn
 
     def add_connection(self, stomp_config=None, name=None, is_main=False):
-        host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
-        subscribe_destination = stomp_config.get("subscribe_destination")
-        ssl = stomp_config.get("ssl")
+        if stomp_config.get("subscribe_destination"):
+            host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
+            subscribe_destination = stomp_config.get("subscribe_destination")
+            ssl = stomp_config.get("ssl")
 
-        use_ssl = ssl.get("use_ssl") or False
-        conn_dict_key = f"{host_and_ports}{subscribe_destination}{use_ssl}"
+            use_ssl = ssl.get("use_ssl") or False
+            conn_dict_key = f"{host_and_ports}{subscribe_destination}{use_ssl}"
 
-        if conn_dict_key in self.conn_dict:
-            if {"name": name, "main": is_main} not in self.conn_dict[conn_dict_key][
-                "gardens"
-            ]:
-                self.conn_dict[conn_dict_key]["gardens"].append(
-                    {"name": name, "main": is_main}
-                )
-        else:
-            self.conn_dict[conn_dict_key] = {
-                "conn": self.connect(stomp_config),
-                "gardens": [{"name": name, "main": is_main}],
-            }
+            if conn_dict_key in self.conn_dict:
+                if {"name": name, "main": is_main} not in self.conn_dict[conn_dict_key][
+                    "gardens"
+                ]:
+                    self.conn_dict[conn_dict_key]["gardens"].append(
+                        {"name": name, "main": is_main}
+                    )
+            else:
+                self.conn_dict[conn_dict_key] = {
+                    "conn": self.connect(stomp_config),
+                    "gardens": [{"name": name, "main": is_main}],
+                }
 
-        if "headers_list" not in self.conn_dict:
-            self.conn_dict[conn_dict_key]["headers_list"] = []
+            if "headers_list" not in self.conn_dict:
+                self.conn_dict[conn_dict_key]["headers_list"] = []
 
-        if stomp_config.get("headers") and is_main:
-            headers = self.convert_header_to_dict(stomp_config.get("headers"))
+            if stomp_config.get("headers") and is_main:
+                headers = self.convert_header_to_dict(stomp_config.get("headers"))
 
-            if headers not in self.conn_dict[conn_dict_key]["headers_list"]:
-                self.conn_dict[conn_dict_key]["headers_list"].append(headers)
+                if headers not in self.conn_dict[conn_dict_key]["headers_list"]:
+                    self.conn_dict[conn_dict_key]["headers_list"].append(headers)
 
-        return conn_dict_key
+            return conn_dict_key
 
     def run(self):
         while not self.stopped():
