@@ -309,7 +309,13 @@ class RequestValidator(object):
                         " must be a string or dictionary " % command_parameter.key
                     )
 
-                response = process_wait(choices_request, self._command_timeout)
+                try:
+                    response = process_wait(choices_request, self._command_timeout)
+                except TimeoutError:
+                    raise ModelValidationError(
+                        "Unable to validate choices for parameter '%s' - Choices "
+                        "request took too long to complete" % command_parameter.key
+                    )
 
                 raw_allowed = json.loads(response.output)
 
@@ -768,7 +774,9 @@ def process_wait(request: Request, timeout: float) -> Request:
             kwargs={"wait_event": req_complete},
         )
     )
-    req_complete.wait(timeout)
+
+    if not req_complete.wait(timeout):
+        raise TimeoutError("Request did not complete before the specified timeout")
 
     return db.query_unique(Request, id=created_request.id)
 
