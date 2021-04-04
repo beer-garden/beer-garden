@@ -2,7 +2,7 @@ import logging
 from box import Box
 from brewtils.models import Event, Events
 
-from beer_garden.api.stomp.transport import Connection
+from beer_garden.api.stomp.transport import Connection, format_connection_params
 from beer_garden.events import publish
 from beer_garden.events.processors import BaseProcessor
 
@@ -128,8 +128,8 @@ class StompManager(BaseProcessor):
 
             if event.payload.connection_type:
                 if event.payload.connection_type.casefold() == "stomp":
-                    stomp_config = self.format_connection_params(
-                        "stomp_", event.payload.connection_params
+                    stomp_config = format_connection_params(
+                        event.payload.connection_params
                     )
                     stomp_config["send_destination"] = None
                     skip_key = self.add_connection(
@@ -168,11 +168,3 @@ class StompManager(BaseProcessor):
             tmp_headers[header[key_to_key]] = header[key_to_value]
 
         return tmp_headers
-
-    @staticmethod
-    def format_connection_params(term, connection_params):
-        """Strips leading term from connection parameters"""
-        new_connection_params = {"ssl": {}}
-        for key in connection_params:
-            new_connection_params[key.replace(term, "")] = connection_params[key]
-        return new_connection_params

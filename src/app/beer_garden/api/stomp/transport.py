@@ -76,6 +76,17 @@ def send(
         conn.send(body=message, headers=headers, destination=destination)
 
 
+def format_connection_params(connection_params):
+    """Strips leading term from connection parameters"""
+    params = {}
+
+    for k, v in connection_params.items():
+        if k.startswith("stomp_"):
+            params[k[6:]] = v
+
+    return params
+
+
 class OperationListener(stomp.ConnectionListener):
     def __init__(self, conn=None, send_destination=None):
         self.conn = conn
