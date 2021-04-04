@@ -38,7 +38,12 @@ import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
-from beer_garden.api.stomp.transport import consolidate_headers, process, Connection
+from beer_garden.api.stomp.transport import (
+    consolidate_headers,
+    process,
+    Connection,
+    format_connection_params,
+)
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 from beer_garden.events import publish
 from beer_garden.events.processors import BaseProcessor
@@ -333,18 +338,19 @@ def forward(operation: Operation):
 
 
 def create_stomp_connection(garden: Garden) -> Connection:
-    """Create a stomp connection given connection params"""
-    stomp_config = garden.connection_params
+    """Create a stomp connection wrapper for a garden
 
-    return Connection(
-        host=stomp_config.get("stomp_host"),
-        port=stomp_config.get("stomp_port"),
-        send_destination=stomp_config.get("stomp_send_destination"),
-        subscribe_destination=stomp_config.get("stomp_subscribe_destination"),
-        ssl=stomp_config.get("stomp_ssl"),
-        username=stomp_config.get("stomp_username"),
-        password=stomp_config.get("stomp_password"),
-    )
+    Uses the format_connection_params to rip the "stomp_" prefix from the garden's
+    connection params and constructs a stomp connection wrapper from them.
+
+    Args:
+        garden: The garden specifying
+
+    Returns:
+        The created connection wrapper
+
+    """
+    return Connection(**format_connection_params(garden.connection_params))
 
 
 def setup_routing():

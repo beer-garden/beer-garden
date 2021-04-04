@@ -163,6 +163,7 @@ class Connection:
         ssl=None,
         username: str = None,
         password: str = None,
+        **_,
     ):
         self.host = host
         self.port = port
