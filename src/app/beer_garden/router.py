@@ -17,14 +17,12 @@ The router service is responsible for:
 import asyncio
 import logging
 import threading
-from concurrent.futures.thread import ThreadPoolExecutor
-from functools import partial
-from typing import Dict, Union
-
-import stomp
 from brewtils import EasyClient
 from brewtils.models import Event, Events, Garden, Operation, Request, System
+from concurrent.futures.thread import ThreadPoolExecutor
+from functools import partial
 from stomp.exception import ConnectFailedException
+from typing import Dict, Union
 
 import beer_garden
 import beer_garden.commands
@@ -40,7 +38,7 @@ import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
-from beer_garden.api.stomp.transport import consolidate_headers, process
+from beer_garden.api.stomp.transport import consolidate_headers, process, Connection
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 from beer_garden.events import publish
 from beer_garden.events.processors import BaseProcessor
@@ -64,7 +62,7 @@ t_pool = ThreadPoolExecutor()
 # Used for actually sending operations to other gardens
 garden_lock = threading.Lock()
 gardens: Dict[str, Garden] = {}  # garden_name -> garden
-stomp_garden_connections: Dict[str, stomp.Connection] = {}
+stomp_garden_connections: Dict[str, Connection] = {}
 
 # Used by entry points
 forward_processor: BaseProcessor
@@ -334,23 +332,19 @@ def forward(operation: Operation):
         raise RoutingRequestException(f"Unknown connection type {connection_type}")
 
 
-def setup_stomp(garden):
-    host_and_ports = [
-        (
-            garden.connection_params.get("stomp_host"),
-            garden.connection_params.get("stomp_port"),
-        )
-    ]
-    conn = stomp.Connection(host_and_ports=host_and_ports)
-    if garden.connection_params.get("stomp_ssl"):
-        if garden.connection_params.get("stomp_ssl").get("use_ssl"):
-            conn.set_ssl(
-                for_hosts=host_and_ports,
-                key_file=garden.connection_params["stomp_ssl"].get("private_key"),
-                cert_file=garden.connection_params["stomp_ssl"].get("cert_file"),
-            )
+def create_stomp_connection(garden: Garden) -> Connection:
+    """Create a stomp connection given connection params"""
+    stomp_config = garden.connection_params
 
-    return conn
+    return Connection(
+        host=stomp_config.get("stomp_host"),
+        port=stomp_config.get("stomp_port"),
+        send_destination=stomp_config.get("stomp_send_destination"),
+        subscribe_destination=stomp_config.get("stomp_subscribe_destination"),
+        ssl=stomp_config.get("stomp_ssl"),
+        username=stomp_config.get("stomp_username"),
+        password=stomp_config.get("stomp_password"),
+    )
 
 
 def setup_routing():
@@ -379,7 +373,9 @@ def setup_routing():
                     gardens[garden.name] = garden
                     if garden.connection_type.casefold() == "stomp":
                         if garden.name not in stomp_garden_connections:
-                            stomp_garden_connections[garden.name] = setup_stomp(garden)
+                            stomp_garden_connections[
+                                garden.name
+                            ] = create_stomp_connection(garden)
 
             else:
                 logger.warning(f"Garden with invalid connection info: {garden!r}")
@@ -436,9 +432,9 @@ def handle_event(event):
                         and stomp_garden_connections[event.payload.name].is_connected()
                     ):
                         stomp_garden_connections[event.payload.name].disconnect()
-                    stomp_garden_connections[event.payload.name] = setup_stomp(
-                        event.payload
-                    )
+                    stomp_garden_connections[
+                        event.payload.name
+                    ] = create_stomp_connection(event.payload)
 
         elif event.name == Events.GARDEN_REMOVED.name:
             try:
@@ -574,22 +570,18 @@ def _determine_target_garden(operation: Operation) -> str:
 def _forward_stomp(operation: Operation, target_garden: Garden):
     try:
         if not stomp_garden_connections[target_garden.name].is_connected():
-            stomp_garden_connections[target_garden.name].connect(
-                username=target_garden.connection_params["stomp_username"],
-                passcode=target_garden.connection_params["stomp_password"],
-                wait=True,
-                headers={
-                    "client-id": target_garden.connection_params["stomp_username"]
-                },
-            )
+            if not stomp_garden_connections[target_garden.name].connect():
+                raise ConnectFailedException()
+
         message, response_headers = process(operation)
+
         response_headers = consolidate_headers(
             response_headers, target_garden.connection_params.get("stomp_headers")
         )
+
         stomp_garden_connections[target_garden.name].send(
             body=message,
             headers=response_headers,
-            destination=target_garden.connection_params["stomp_send_destination"],
         )
     except ConnectFailedException:
         _publish_failed_forward(
