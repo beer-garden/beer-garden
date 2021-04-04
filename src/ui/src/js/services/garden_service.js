@@ -182,25 +182,30 @@ export default function gardenService($http) {
             'description': 'Whether to connect with provided certifications',
             'type': 'boolean',
           },
-          'cert_file': {
-            'title': 'Cert File Path',
-            'description': 'Path to client certificate to use when communicating with Beer-garden',
-            'type': 'string',
-          },
-          'private_key': {
-            'title': 'Private key Path',
-            'description': 'Path to client key to use when communicating with Beer-garden',
+          'ca_cert': {
+            'title': 'CA Cert',
+            'description': 'Path to certificate file containing the certificate of the authority that issued the message broker certificate',
             'type': 'string',
           },
           'verify_host': {
             'title': 'Verify Host',
-            'description': 'Whether to verify Host',
+            'description': 'Whether to verify the message broker certificate',
             'type': 'boolean',
           },
           'verify_hostname': {
             'title': 'Verify Hostname',
-            'description': 'Whether to verify Hostname',
+            'description': 'Whether to verify the broker hostname when connecting to the message broker',
             'type': 'boolean',
+          },
+          'client_cert': {
+            'title': 'Client Cert',
+            'description': 'Path to client public certificate to use when communicating with the message broker',
+            'type': 'string',
+          },
+          'client_key': {
+            'title': 'Client Key',
+            'description': 'Path to client private key to use when communicating with the message broker',
+            'type': 'string',
           },
         },
       },
