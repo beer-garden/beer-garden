@@ -70,15 +70,20 @@ class TestPublisher(object):
         # if conn.is_connected():
         #     conn.disconnect()
 
+    def create_request(self, function):
+        request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
+
+        request_model['metadata'] = {"generated-by": function}
+
+        return request_model
+
     @pytest.mark.usefixtures('easy_client', 'request_generator')
     def test_listen_create_request(self):
         """Published the Request over HTTP and verifies of STOMP"""
 
         stomp_connection = self.create_stomp_connection()
 
-        request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
-
-        request_model['metadata'] = {"generated-by": "test_listen_create_request"}
+        request_model = self.create_request("test_listen_create_request")
 
         sample_operation_request = Operation(
             operation_type="REQUEST_CREATE",
@@ -108,9 +113,7 @@ class TestPublisher(object):
 
         stomp_connection = self.create_stomp_connection()
 
-        request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
-
-        request_model['metadata'] = {"generated-by": "test_publish_create_request"}
+        request_model = self.create_request("test_publish_create_request")
 
         sample_operation_request = Operation(
             operation_type="REQUEST_CREATE",
