@@ -1,39 +1,21 @@
 import pytest
 from brewtils.models import PatchOperation
-import time
 
 try:
     from helper.assertion import assert_successful_request
-    from helper import wait_for_response, delete_plugins
-    from helper.plugin import create_plugin, start_plugin, stop_plugin, TestPluginV1
+    from helper import wait_for_response
 except:
     from ...helper.assertion import assert_successful_request
-    from ...helper import wait_for_response, delete_plugins
-    from ...helper.plugin import (create_plugin, start_plugin, stop_plugin,
-                                  TestPluginV1)
+    from ...helper import wait_for_response
 
 
 @pytest.fixture(scope="class")
 def system_spec():
-    return {'namespace': 'childdocker', 'system': 'test', 'system_version': '3.0.0.dev0', 'instance_name': 'default',
-            'command': 'add'}
+    return {'namespace': 'childdocker', 'system': 'echo', 'system_version': '3.0.0.dev0', 'instance_name': 'default',
+            'command': 'say'}
 
 
-@pytest.fixture(scope="class")
-@pytest.mark.usefixtures('child_easy_client')
-def manage_plugin(child_easy_client):
-    """Ensure there are no "test" plugins before or after the test"""
-
-    plugin = create_plugin("test", "3.0.0.dev0", TestPluginV1)
-    start_plugin(plugin, child_easy_client)
-    # Give child a couple seconds to publish events
-    time.sleep(15)
-    yield
-    stop_plugin(plugin)
-    delete_plugins(child_easy_client, "test")
-
-
-@pytest.mark.usefixtures('easy_client', 'parser', 'child_easy_client', 'request_generator', 'manage_plugin')
+@pytest.mark.usefixtures('easy_client', 'parser', 'child_easy_client', 'request_generator')
 class TestGardenSetup(object):
     child_garden_name = "childdocker"
 
@@ -104,14 +86,14 @@ class TestGardenSetup(object):
         assert self.child_garden_name in namespaces.keys() and namespaces[self.child_garden_name] > 0
 
     def test_child_request_from_parent(self):
-        request = self.request_generator.generate_request(parameters={"a": 1, "b": 2})
+        request = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
         response = wait_for_response(self.easy_client, request)
-        assert_successful_request(response, output="3")
+        assert_successful_request(response, output="test_string!!!!!!!!!")
 
     def test_child_request_from_child(self):
-        request = self.request_generator.generate_request(parameters={"a": 1, "b": 2})
+        request = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
         response = wait_for_response(self.child_easy_client, request)
-        assert_successful_request(response, output="3")
+        assert_successful_request(response, output="test_string!!!!!!!!!")
 
     def test_verify_requests(self):
         requests = self.easy_client.find_requests()
