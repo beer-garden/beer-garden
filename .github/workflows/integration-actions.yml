@@ -179,10 +179,10 @@ jobs:
           with:
             repository: beer-garden/example-plugins
             path: ./tmp
-
-        - name: Move Subset of Test Plugins
-          run: |
-            cp -r ./tmp/echo ./docker/docker-compose/data/localplugins
+#
+#        - name: Move Subset of Test Plugins
+#          run: |
+#            cp -r ./tmp/echo ./docker/docker-compose/data/localplugins
 
         - name: Verify Local Plugins
           run: ls ./docker/docker-compose/data/localplugins
