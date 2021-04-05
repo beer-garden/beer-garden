@@ -85,7 +85,11 @@ class TestPublisher(object):
 
         self.easy_client.create_request(request_model)
 
-        time.sleep(10)
+        for x in range(0, 10):
+            print(f"Slept 1 second at {time.time()}")
+            time.sleep(1)
+
+        # time.sleep(10)
 
         assert listener.create_event_captured
 
@@ -118,7 +122,11 @@ class TestPublisher(object):
             destination="Beer_Garden_Operations",
         )
 
-        time.sleep(10)
+        for x in range(0,10):
+            print(f"Slept 1 second at {time.time()}")
+            time.sleep(1)
+
+        # time.sleep(10)
 
         requests = self.easy_client.find_requests()
 
