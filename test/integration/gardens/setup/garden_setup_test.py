@@ -19,21 +19,23 @@ def system_spec():
             'command': 'add'}
 
 
-@pytest.mark.usefixtures('easy_client', 'parser', 'child_easy_client', 'request_generator')
+@pytest.fixture(scope="class")
+@pytest.mark.usefixtures('child_easy_client')
+def manage_plugin(child_easy_client):
+    """Ensure there are no "test" plugins before or after the test"""
+
+    plugin = create_plugin("test", "3.0.0.dev0", TestPluginV1)
+    start_plugin(plugin, child_easy_client)
+    # Give child a couple seconds to publish events
+    time.sleep(15)
+    yield
+    stop_plugin(plugin)
+    delete_plugins(child_easy_client, "test")
+
+
+@pytest.mark.usefixtures('easy_client', 'parser', 'child_easy_client', 'request_generator', 'manage_plugin')
 class TestGardenSetup(object):
     child_garden_name = "childdocker"
-
-    @pytest.fixture(autouse=True)
-    def manage_plugin(self):
-        """Ensure there are no "test" plugins before or after the test"""
-
-        plugin = create_plugin("test", "3.0.0.dev0", TestPluginV1)
-        start_plugin(plugin, self.child_easy_client)
-        # Give child a couple seconds to publish events
-        time.sleep(15)
-        yield
-        stop_plugin(plugin)
-        delete_plugins(self.child_easy_client, "test")
 
     def test_garden_auto_register_successful(self):
 
