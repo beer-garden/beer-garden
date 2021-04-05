@@ -409,6 +409,27 @@ jobs:
       - name: Sleep Before Testing
         run: sleep 60
 
+      - name: Run Docker Beer Garden
+        run: docker-compose down
+        working-directory: ./docker/docker-compose
+
+      - name: Run Docker Beer Garden
+        run: docker-compose up -d beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Sleep Before Testing
+        run: sleep 60
+
+
+      - name: Check If Beer Garden is Operational
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 5
+          command: curl http://localhost:2337/version
+
       - name: Grab logs from Beer-Garden
         run: docker-compose logs --tail 100 beer-garden
         working-directory: ./docker/docker-compose
