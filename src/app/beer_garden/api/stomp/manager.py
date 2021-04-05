@@ -55,9 +55,10 @@ class StompManager(BaseProcessor):
         if stomp_config.get("subscribe_destination"):
             host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
             subscribe_destination = stomp_config.get("subscribe_destination")
-            ssl = stomp_config.get("ssl")
 
+            ssl = stomp_config.get("ssl") or {}
             use_ssl = ssl.get("use_ssl") or False
+
             conn_dict_key = f"{host_and_ports}{subscribe_destination}{use_ssl}"
 
             if conn_dict_key in self.conn_dict:
