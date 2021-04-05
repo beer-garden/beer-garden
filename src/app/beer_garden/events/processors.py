@@ -22,6 +22,9 @@ class BaseProcessor(StoppableThread):
         except Exception as ex:
             logger.exception(f"Error processing: {ex}")
 
+    def put(self, item):
+        self.process(item)
+
 
 class QueueListener(BaseProcessor):
     """Listens for items on a multiprocessing.Queue"""
