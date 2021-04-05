@@ -315,9 +315,9 @@ def forward(operation: Operation):
             operation=operation,
             event_name=Events.GARDEN_NOT_CONFIGURED.name,
             error_message=f"Attempted to forward operation to garden "
-            f"'{operation.target_garden_name}' but the connection type was None. "
-            f"This probably means that the connection to the child garden has not "
-            f"been configured, please talk to your system administrator.",
+                          f"'{operation.target_garden_name}' but the connection type was None. "
+                          f"This probably means that the connection to the child garden has not "
+                          f"been configured, please talk to your system administrator.",
         )
 
         raise RoutingRequestException(
@@ -372,8 +372,8 @@ def setup_routing():
                 add_routing_system(system=system, garden_name=garden.name)
 
             if (
-                garden.connection_type is not None
-                and garden.connection_type.casefold() != "local"
+                    garden.connection_type is not None
+                    and garden.connection_type.casefold() != "local"
             ):
                 with garden_lock:
                     gardens[garden.name] = garden
@@ -413,14 +413,13 @@ def handle_event(event):
     # Event handling is not fast enough to deal with system changes arising from the
     # local garden, so only handle child gardens
     if event.garden != config.get("garden.name"):
-        if event.name == Events.GARDEN_SYNC.name:
+        if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
+            add_routing_system(system=event.payload, garden_name=event.garden)
+        elif event.name == Events.SYSTEM_REMOVED.name:
+            remove_routing_system(system=event.payload)
+        elif event.name == Events.GARDEN_SYNC.name:
             for system in event.payload.systems:
                 add_routing_system(system=system, garden_name=event.payload.name)
-
-    if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
-        add_routing_system(system=event.payload, garden_name=event.garden)
-    elif event.name == Events.SYSTEM_REMOVED.name:
-        remove_routing_system(system=event.payload)
 
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.
@@ -433,8 +432,8 @@ def handle_event(event):
             if event.payload.connection_type:
                 if event.payload.connection_type.casefold() == "stomp":
                     if (
-                        event.payload.name in stomp_garden_connections
-                        and stomp_garden_connections[event.payload.name].is_connected()
+                            event.payload.name in stomp_garden_connections
+                            and stomp_garden_connections[event.payload.name].is_connected()
                     ):
                         stomp_garden_connections[event.payload.name].disconnect()
                     stomp_garden_connections[event.payload.name] = setup_stomp(
@@ -517,15 +516,15 @@ def _determine_target_garden(operation: Operation) -> str:
 
     # Certain operations are ASSUMED to be targeted at the local garden
     if (
-        "READ" in operation.operation_type
-        or "GARDEN" in operation.operation_type
-        or "JOB" in operation.operation_type
-        or "FILE" in operation.operation_type
-        or operation.operation_type
-        in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
-        or "PUBLISH_EVENT" in operation.operation_type
-        or "RUNNER" in operation.operation_type
-        or operation.operation_type in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE")
+            "READ" in operation.operation_type
+            or "GARDEN" in operation.operation_type
+            or "JOB" in operation.operation_type
+            or "FILE" in operation.operation_type
+            or operation.operation_type
+            in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE", "SYSTEM_RESCAN")
+            or "PUBLISH_EVENT" in operation.operation_type
+            or "RUNNER" in operation.operation_type
+            or operation.operation_type in ("PLUGIN_LOG_RELOAD", "SYSTEM_CREATE")
     ):
         return config.get("garden.name")
 
@@ -547,8 +546,6 @@ def _determine_target_garden(operation: Operation) -> str:
             return _instance_id_lookup(operation.args[0])
 
     elif operation.operation_type == "REQUEST_CREATE":
-
-        setup_routing()
 
         target_system = System(
             namespace=operation.model.namespace,
@@ -600,9 +597,9 @@ def _forward_stomp(operation: Operation, target_garden: Garden):
             operation=operation,
             event_name=Events.GARDEN_UNREACHABLE.name,
             error_message=f"Attempted to forward operation to garden "
-            f"'{operation.target_garden_name}' via STOMP but "
-            f"failed to connect to STOMP. Please talk to your system "
-            f"administrator.",
+                          f"'{operation.target_garden_name}' via STOMP but "
+                          f"failed to connect to STOMP. Please talk to your system "
+                          f"administrator.",
         )
         raise
 
@@ -635,9 +632,9 @@ def _forward_http(operation: Operation, target_garden: Garden):
                 operation=operation,
                 event_name=Events.GARDEN_UNREACHABLE.name,
                 error_message=f"Attempted to forward operation to garden "
-                f"'{operation.target_garden_name}' via REST but the connection "
-                f"returned an error code of {response.status_code}. Please talk to "
-                f"your system administrator.",
+                              f"'{operation.target_garden_name}' via REST but the connection "
+                              f"returned an error code of {response.status_code}. Please talk to "
+                              f"your system administrator.",
             )
         elif target_garden.status != "RUNNING":
             beer_garden.garden.update_garden_status(target_garden.name, "RUNNING")
@@ -651,13 +648,13 @@ def _forward_http(operation: Operation, target_garden: Garden):
             operation=operation,
             event_name=Events.GARDEN_ERROR.name,
             error_message=f"Attempted to forward operation to garden "
-            f"'{operation.target_garden_name}' but an error occurred."
-            f"Please talk to your system administrator.",
+                          f"'{operation.target_garden_name}' but an error occurred."
+                          f"Please talk to your system administrator.",
         )
 
 
 def _publish_failed_forward(
-    operation: Operation = None, error_message: str = None, event_name: str = None
+        operation: Operation = None, error_message: str = None, event_name: str = None
 ):
     if operation.operation_type == "REQUEST_CREATE":
         complete_request(
