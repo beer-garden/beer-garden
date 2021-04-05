@@ -45,6 +45,8 @@ class MessageListener(object):
                     if parsed.model.name.startswith("REQUEST"):
                         print(message)
                         self.create_event_captured = True
+                    else:
+                        print(parsed.model.name)
             elif headers['model_class'] == 'error_message':
                 print("Error Message Returned:", message)
         except:
@@ -107,7 +109,11 @@ class TestPublisher(object):
         listener = MessageListener()
         stomp_connection.set_listener('', listener)
 
-        stomp_connection.subscribe(destination='Beer_Garden_Events', id='event_listener', ack='auto',
+        # stomp_connection.subscribe(destination='Beer_Garden_Events', id='event_listener', ack='auto',
+        #                            headers={'subscription-type': 'MULTICAST',
+        #                                     'durable-subscription-name': 'events'})
+
+        stomp_connection.subscribe(destination='Beer_Garden_Operations', id='event_listener', ack='auto',
                                    headers={'subscription-type': 'MULTICAST',
                                             'durable-subscription-name': 'events'})
 
