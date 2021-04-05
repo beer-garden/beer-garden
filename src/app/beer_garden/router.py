@@ -413,16 +413,16 @@ def handle_event(event):
     # Event handling is not fast enough to deal with system changes arising from the
     # local garden, so only handle child gardens
     if event.garden != config.get("garden.name"):
-        if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
+        if event.name == Events.SYSTEM_CREATED.name:
             add_routing_system(system=event.payload, garden_name=event.garden)
-        elif event.name == Events.SYSTEM_REMOVED.name:
-            remove_routing_system(system=event.payload)
         elif event.name == Events.GARDEN_SYNC.name:
             for system in event.payload.systems:
                 add_routing_system(system=system, garden_name=event.payload.name)
 
     if event.name == Events.SYSTEM_UPDATED.name:
         add_routing_system(system=event.payload, garden_name=event.garden)
+    elif event.name == Events.SYSTEM_REMOVED.name:
+        remove_routing_system(system=event.payload)
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.
     # It's *those* events we want to act on here, not the "raw" downstream ones.

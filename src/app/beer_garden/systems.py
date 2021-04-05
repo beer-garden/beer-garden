@@ -169,10 +169,10 @@ def update_system(
 
     system = db.modify(system, **updates)
 
-    # # Also need to let the routing module know
-    # from beer_garden.router import add_routing_system
-    #
-    # add_routing_system(system=system)
+    # Also need to let the routing module know
+    from beer_garden.router import add_routing_system
+
+    add_routing_system(system=system)
 
     return system
 

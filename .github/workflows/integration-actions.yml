@@ -371,11 +371,6 @@ jobs:
       - name: Move Subset of Test Plugins
         run: |
           cp -r ./tmp/echo ./docker/docker-compose/data/localplugins
-          cp -r ./tmp/complex ./docker/docker-compose/data/localplugins
-          cp -r ./tmp/dynamic ./docker/docker-compose/data/localplugins
-          cp -r ./tmp/sleeper ./docker/docker-compose/data/localplugins
-          cp -r ./tmp/echo-sleeper ./docker/docker-compose/data/localplugins
-          cp -r ./tmp/error ./docker/docker-compose/data/localplugins
 
       - name: Setup python
         uses: actions/setup-python@v2
