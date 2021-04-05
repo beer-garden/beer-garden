@@ -55,8 +55,7 @@ class MessageListener(object):
 
 class TestPublisher(object):
 
-    @pytest.fixture()
-    def stomp_connection(self):
+    def create_stomp_connection(self):
         """Creates the Connection class and closes when completed"""
 
         host_and_ports = [("localhost", 61613)]
@@ -72,8 +71,10 @@ class TestPublisher(object):
             conn.disconnect()
 
     @pytest.mark.usefixtures('easy_client', 'request_generator')
-    def test_listen_create_request(self, stomp_connection):
+    def test_listen_create_request(self):
         """Published the Request over HTTP and verifies of STOMP"""
+
+        stomp_connection = self.create_stomp_connection()
 
         request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
 
@@ -98,9 +99,12 @@ class TestPublisher(object):
 
         assert listener.create_event_captured
 
+
     @pytest.mark.usefixtures('easy_client', 'request_generator')
-    def test_publish_create_request(self, stomp_connection):
+    def test_publish_create_request(self):
         """Published the Request over STOMP and verifies of HTTP"""
+
+        stomp_connection = self.create_stomp_connection()
 
         request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
 
@@ -147,5 +151,4 @@ class TestPublisher(object):
         assert found_request
 
         assert listener.create_event_captured
-
 
