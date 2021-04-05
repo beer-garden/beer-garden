@@ -1,5 +1,6 @@
 import pytest
 from brewtils.models import PatchOperation, Garden
+import time
 
 try:
     from helper.assertion import assert_successful_request
@@ -50,6 +51,8 @@ class TestGardenSetup(object):
         assert len(gardens) == 2
 
     def test_run_sync(self):
+        # Give BG a second to setup connection
+        time.sleep(5)
         patch = PatchOperation(operation="sync", path='')
 
         payload = self.parser.serialize_patch(patch)
@@ -60,6 +63,9 @@ class TestGardenSetup(object):
         )
 
         assert response.ok
+
+        # Give BG a sync
+        time.sleep(5)
 
     def test_child_systems_register_successful(self):
 
