@@ -1,11 +1,11 @@
 name: Integration-Actions
 
-#on: pull_request # Used only for testing
+on: pull_request # Used only for testing
 
 # This will only run on the Default/Base Branch OR when a Tag is created
-on:
-  schedule:
-    - cron: '0 0 * * *' # Every Day at Midnight
+#on:
+#  schedule:
+#    - cron: '0 0 * * *' # Every Day at Midnight
 
 jobs:
   Remote-Plugin-Testing:
@@ -181,11 +181,6 @@ jobs:
         - name: Move Subset of Test Plugins
           run: |
             cp -r ./tmp/echo ./docker/docker-compose/data/localplugins
-            cp -r ./tmp/complex ./docker/docker-compose/data/localplugins
-            cp -r ./tmp/dynamic ./docker/docker-compose/data/localplugins
-            cp -r ./tmp/sleeper ./docker/docker-compose/data/localplugins
-            cp -r ./tmp/echo-sleeper ./docker/docker-compose/data/localplugins
-            cp -r ./tmp/error ./docker/docker-compose/data/localplugins
 
         - name: Verify Local Plugins
           run: ls ./docker/docker-compose/data/localplugins
