@@ -102,7 +102,6 @@ class TestPublisher(object):
         if stomp_connection.is_connected():
             stomp_connection.disconnect()
 
-
     @pytest.mark.usefixtures('easy_client', 'request_generator')
     def test_publish_create_request(self):
         """Published the Request over STOMP and verifies of HTTP"""
@@ -122,11 +121,7 @@ class TestPublisher(object):
         listener = MessageListener()
         stomp_connection.set_listener('', listener)
 
-        # stomp_connection.subscribe(destination='Beer_Garden_Events', id='event_listener', ack='auto',
-        #                            headers={'subscription-type': 'MULTICAST',
-        #                                     'durable-subscription-name': 'events'})
-
-        stomp_connection.subscribe(destination='Beer_Garden_Operations', id='event_listener', ack='auto',
+        stomp_connection.subscribe(destination='Beer_Garden_Events', id='event_listener', ack='auto',
                                    headers={'subscription-type': 'MULTICAST',
                                             'durable-subscription-name': 'events'})
 
