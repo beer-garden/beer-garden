@@ -61,7 +61,6 @@ class TestGardenSetup(object):
 
         assert response.ok
 
-
     def test_child_systems_register_successful(self):
 
         systems = self.child_easy_client.find_systems()
