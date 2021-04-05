@@ -43,6 +43,7 @@ class MessageListener(object):
 
                 if parsed.model and parsed.model.name:
                     if parsed.model.name.startswith("REQUEST"):
+                        print(message)
                         self.create_event_captured = True
             elif headers['model_class'] == 'error_message':
                 print("Error Message Returned:", message)
