@@ -74,6 +74,8 @@ class TestPublisher(object):
 
         request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
 
+        request_model['metadata'] = {"generated-by": "test_listen_create_request"}
+
         listener = MessageListener()
         stomp_connection.set_listener('', listener)
 
@@ -124,7 +126,7 @@ class TestPublisher(object):
 
         print(len(requests))
         for request in requests:
-            print(request.metadata)
+            print(SchemaParser.serialize_request(request, to_string=True))
             if "generated-by" in request.metadata and request.metadata["generated-by"] == "test_publish_create_request":
                 found_request = True
                 break
