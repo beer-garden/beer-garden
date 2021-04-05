@@ -79,6 +79,12 @@ class TestPublisher(object):
 
         request_model['metadata'] = {"generated-by": "test_listen_create_request"}
 
+        sample_operation_request = Operation(
+            operation_type="REQUEST_CREATE",
+            model=request_model,
+            model_type="Request",
+        )
+
         listener = MessageListener()
         stomp_connection.set_listener('', listener)
 
@@ -86,7 +92,7 @@ class TestPublisher(object):
                                    headers={'subscription-type': 'MULTICAST',
                                             'durable-subscription-name': 'events'})
 
-        self.easy_client.create_request(request_model)
+        self.easy_client.forward(sample_operation_request)
 
         time.sleep(10)
 
