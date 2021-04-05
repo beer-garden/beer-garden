@@ -65,10 +65,10 @@ class TestPublisher(object):
             "beer_garden", "password", wait=True, headers={"client-id": "beer_garden"}
         )
 
-        yield conn
+        return conn
 
-        if conn.is_connected():
-            conn.disconnect()
+        # if conn.is_connected():
+        #     conn.disconnect()
 
     @pytest.mark.usefixtures('easy_client', 'request_generator')
     def test_listen_create_request(self):
@@ -98,6 +98,9 @@ class TestPublisher(object):
         time.sleep(10)
 
         assert listener.create_event_captured
+
+        if stomp_connection.is_connected():
+            stomp_connection.disconnect()
 
 
     @pytest.mark.usefixtures('easy_client', 'request_generator')
@@ -152,3 +155,5 @@ class TestPublisher(object):
 
         assert listener.create_event_captured
 
+        if stomp_connection.is_connected():
+            stomp_connection.disconnect()
