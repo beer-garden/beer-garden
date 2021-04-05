@@ -529,8 +529,6 @@ def _determine_target_garden(operation: Operation) -> str:
     ):
         return config.get("garden.name")
 
-    setup_routing()
-
     # Otherwise, each operation needs to be "parsed"
     if operation.operation_type in ("SYSTEM_RELOAD", "SYSTEM_UPDATE"):
         return _system_id_lookup(operation.args[0])
@@ -549,6 +547,9 @@ def _determine_target_garden(operation: Operation) -> str:
             return _instance_id_lookup(operation.args[0])
 
     elif operation.operation_type == "REQUEST_CREATE":
+
+        setup_routing()
+
         target_system = System(
             namespace=operation.model.namespace,
             name=operation.model.system,
