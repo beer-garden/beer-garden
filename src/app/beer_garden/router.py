@@ -421,6 +421,8 @@ def handle_event(event):
             for system in event.payload.systems:
                 add_routing_system(system=system, garden_name=event.payload.name)
 
+    if event.name == Events.SYSTEM_UPDATED.name:
+        add_routing_system(system=event.payload, garden_name=event.garden)
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.
     # It's *those* events we want to act on here, not the "raw" downstream ones.
