@@ -845,29 +845,38 @@ _STOMP_SPEC = {
             "items": {
                 "use_ssl": {
                     "type": "bool",
-                    "description": "Use SSL for connection",
+                    "description": "Use SSL when connecting to the message broker",
                     "default": False,
                 },
-                "private_key": {
+                "client_key": {
                     "type": "str",
-                    "description": "Path to private key",
+                    "description": "Path to client private key to use when "
+                    "communicating with the message broker",
                     "required": False,
                 },
-                "cert_file": {
+                "client_cert": {
                     "type": "str",
-                    "description": "Path to certificate file",
+                    "description": "Path to client public certificate to use when "
+                    "communicating with the message broker",
+                    "required": False,
+                },
+                "ca_cert": {
+                    "type": "str",
+                    "description": "Path to certificate file containing the "
+                    "certificate of the authority that issued the "
+                    "message broker certificate",
                     "required": False,
                 },
                 "verify_host": {
                     "type": "bool",
-                    "description": "Verify the server's certificate "
+                    "description": "Whether to verify the message broker certificate "
                     "was signed by a trusted CA'",
                     "default": True,
                 },
                 "verify_hostname": {
                     "type": "bool",
-                    "description": "Verify the server's actual "
-                    "host name against the expected name'",
+                    "description": "Verify the broker's actual hostname against the "
+                    "expected name'",
                     "default": True,
                 },
             },

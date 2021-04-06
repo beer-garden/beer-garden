@@ -171,6 +171,7 @@ class Connection:
         self.password = password
         self.subscribe_destination = subscribe_destination
         self.send_destination = send_destination
+
         self.conn = stomp.Connection(
             host_and_ports=[(self.host, self.port)], heartbeats=(10000, 0)
         )
@@ -178,8 +179,9 @@ class Connection:
         if ssl and ssl.get("use_ssl"):
             self.conn.set_ssl(
                 for_hosts=[(self.host, self.port)],
-                key_file=ssl.get("private_key"),
-                cert_file=ssl.get("cert_file"),
+                key_file=ssl.get("client_key"),
+                cert_file=ssl.get("client_cert"),
+                ca_certs=ssl.get("ca_cert"),
             )
 
     def connect(self) -> bool:

@@ -37,8 +37,9 @@ entry:
     port: 61613
     send_destination: Beer_Garden_Events
     ssl:
-      cert_file: null
-      private_key: null
+      ca_cert: null
+      client_cert: null
+      client_key: null
       use_ssl: false
       verify_host: true
       verify_hostname: true
