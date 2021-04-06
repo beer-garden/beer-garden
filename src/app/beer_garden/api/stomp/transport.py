@@ -1,3 +1,4 @@
+import certifi
 import logging
 import stomp
 from brewtils.models import Operation
@@ -177,11 +178,16 @@ class Connection:
         )
 
         if ssl and ssl.get("use_ssl"):
+            # It's crazy to me that the default behavior is to NOT VERIFY CERTIFICATES
+            ca_certs = ssl.get("ca_cert")
+            if not ca_certs:
+                ca_certs = certifi.where()
+
             self.conn.set_ssl(
                 for_hosts=[(self.host, self.port)],
                 key_file=ssl.get("client_key"),
                 cert_file=ssl.get("client_cert"),
-                ca_certs=ssl.get("ca_cert"),
+                ca_certs=ca_certs,
             )
 
     def connect(self) -> bool:
