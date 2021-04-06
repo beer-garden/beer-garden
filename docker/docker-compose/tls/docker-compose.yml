@@ -130,7 +130,7 @@ services:
             - ../data/certs:/certs
 
     activemq:
-        image: vromero/activemq-artemis:latest
+        image: vromero/activemq-artemis:2.16-alpine-latest
         restart: always
         environment:
             - ARTEMIS_USERNAME=beer_garden
