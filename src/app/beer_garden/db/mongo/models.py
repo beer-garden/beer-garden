@@ -275,7 +275,6 @@ class Request(MongoModel, Document):
         "system": {"field": StringField, "kwargs": {"required": True}},
         "system_version": {"field": StringField, "kwargs": {"required": True}},
         "instance_name": {"field": StringField, "kwargs": {"required": True}},
-        "namespace": {"field": StringField, "kwargs": {"required": True}},
         "command": {"field": StringField, "kwargs": {"required": True}},
         "command_type": {"field": StringField, "kwargs": {}},
         "parameters": {"field": DictField, "kwargs": {}},
@@ -283,6 +282,9 @@ class Request(MongoModel, Document):
         "metadata": {"field": DictField, "kwargs": {}},
         "output_type": {"field": StringField, "kwargs": {}},
     }
+
+    # Shared field with RequestTemplate, but it is required when saving Request
+    namespace = StringField(required=True)
 
     for field_name, field_info in TEMPLATE_FIELDS.items():
         locals()[field_name] = field_info["field"](**field_info["kwargs"])
@@ -588,6 +590,9 @@ class RequestTemplate(MongoModel, EmbeddedDocument):
 
     for field_name, field_info in Request.TEMPLATE_FIELDS.items():
         locals()[field_name] = field_info["field"](**field_info["kwargs"])
+
+    # Shared field with Request, but it is not required when saving RequestTemplate
+    namespace = StringField(required=False)
 
 
 class DateTrigger(MongoModel, EmbeddedDocument):
