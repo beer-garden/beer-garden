@@ -867,18 +867,6 @@ _STOMP_SPEC = {
                     "message broker certificate",
                     "required": False,
                 },
-                "verify_host": {
-                    "type": "bool",
-                    "description": "Whether to verify the message broker certificate "
-                    "was signed by a trusted CA'",
-                    "default": True,
-                },
-                "verify_hostname": {
-                    "type": "bool",
-                    "description": "Verify the broker's actual hostname against the "
-                    "expected name'",
-                    "default": True,
-                },
             },
         },
     },

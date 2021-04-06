@@ -187,16 +187,6 @@ export default function gardenService($http) {
             'description': 'Path to certificate file containing the certificate of the authority that issued the message broker certificate',
             'type': 'string',
           },
-          'verify_host': {
-            'title': 'Verify Host',
-            'description': 'Whether to verify the message broker certificate',
-            'type': 'boolean',
-          },
-          'verify_hostname': {
-            'title': 'Verify Hostname',
-            'description': 'Whether to verify the broker hostname when connecting to the message broker',
-            'type': 'boolean',
-          },
           'client_cert': {
             'title': 'Client Cert',
             'description': 'Path to client public certificate to use when communicating with the message broker',
