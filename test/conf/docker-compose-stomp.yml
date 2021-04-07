@@ -137,7 +137,7 @@ services:
 
             BG_GARDEN_NAME: childdocker
             BG_PARENT_STOMP_ENABLED: "true"
-            BG_PARENT_STOMP_HOST: localhost
+            BG_PARENT_STOMP_HOST: activemq
             BG_PARENT_STOMP_SEND_DESTINATION: Beer_Garden_Operations_Parent
             BG_PARENT_STOMP_SUBCRIBE_DESTINATION: Beer_Garden_Forward_Parent
 
