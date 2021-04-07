@@ -208,9 +208,8 @@ class TestRequest(object):
 
     # Namespace was removed from the TEMPLATE_FIELDS list, so reduce by one
     def test_template_check(self):
-        assert (
-            len(Request.TEMPLATE_FIELDS)
-            == len(RequestTemplateSchema.get_attribute_names()) - 1
+        assert len(Request.TEMPLATE_FIELDS) == len(
+            RequestTemplateSchema.get_attribute_names()
         )
 
 
