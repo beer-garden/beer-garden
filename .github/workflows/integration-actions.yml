@@ -16,8 +16,8 @@ jobs:
     outputs:
       python-versions: "[ '2.7', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9']"
       python-default: "['3.7']"
-      brewtils-versions: "['3.0.0','3.0.1','3.0.2','3.1.0','3.2.0']"
-      brewtils-default: "['3.2.0']"
+      brewtils-versions: "['3.0.0','3.0.1','3.0.2','3.1.0','3.2.0','latest']"
+      brewtils-default: "['latest']"
       beer-garden-docker-images: "['3.0.0','3.0.1','3.0.2','3.0.3','3.0.4','3.0.5','3.1.0','3.1.1','3.2.0','3','latest']"
       beer-garden-docker-default: "['latest']"
       os-default: "['ubuntu-18.04']"
@@ -30,14 +30,14 @@ jobs:
     strategy:
       matrix:
         python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-versions)}}
-        plugin-brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-versions)}}
+        brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-versions)}}
         os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
 #        For Debugging
 #        python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
 #        plugin-brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
       fail-fast: false
 
-    name: Remote Plugins - Brewtils ${{matrix.plugin-brewtils}} - Python ${{ matrix.python-version }}
+    name: Remote Plugins - Brewtils ${{matrix.brewtils}} - Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
 
@@ -80,7 +80,12 @@ jobs:
         run: pip${{ matrix.python-version }} uninstall brewtils
 
       - name: Install Test Version of Brewtils
-        run: pip${{ matrix.python-version }} install brewtils==${{matrix.plugin-brewtils}}
+        if: ${{matrix.brewtils != 'latest'}}
+        run: pip${{ matrix.python-version }} install brewtils==${{matrix.brewtils}}
+
+      - name: Install Test Latest of Brewtils
+        if: ${{matrix.brewtils == 'latest'}}
+        run: pip${{ matrix.python-version }} install brewtils
 
       - name: Install Python Deps
         run: pip${{ matrix.python-version }} install -r requirements.txt
@@ -103,6 +108,7 @@ jobs:
       matrix:
         python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
         os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
+        brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
       fail-fast: false
 
     name: Local Plugins - Python ${{ matrix.python-version }}
@@ -154,6 +160,11 @@ jobs:
         working-directory: ./docker/docker-compose
 
       - name: Install Test Version of Brewtils
+        if: ${{matrix.brewtils != 'latest'}}
+        run: pip${{ matrix.python-version }} install brewtils==${{matrix.brewtils}}
+
+      - name: Install Test Latest of Brewtils
+        if: ${{matrix.brewtils == 'latest'}}
         run: pip${{ matrix.python-version }} install brewtils
 
       - name: Install Python Deps
@@ -178,6 +189,7 @@ jobs:
         os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
         python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
         child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-images)}}
+        brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
 #        For Debugging
 #        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-default)}}
       fail-fast: false
@@ -245,7 +257,12 @@ jobs:
           run: pip${{ matrix.python-version }} install -r requirements.txt
           working-directory: ./test/integration
 
-        - name: Install Latest Version of Brewtils
+        - name: Install Test Version of Brewtils
+          if: ${{matrix.brewtils != 'latest'}}
+          run: pip${{ matrix.python-version }} install brewtils==${{matrix.brewtils}}
+
+        - name: Install Test Latest of Brewtils
+          if: ${{matrix.brewtils == 'latest'}}
           run: pip${{ matrix.python-version }} install brewtils
 
         - name: Test Gardens
@@ -266,6 +283,7 @@ jobs:
         os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
         python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
         child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-images)}}
+        brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
 #        For Debugging
 #        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-default)}}
 
@@ -340,7 +358,12 @@ jobs:
         run: pip${{ matrix.python-version }} install -r requirements.txt
         working-directory: ./test/integration
 
-      - name: Install Latest Version of Brewtils
+      - name: Install Test Version of Brewtils
+        if: ${{matrix.brewtils != 'latest'}}
+        run: pip${{ matrix.python-version }} install brewtils==${{matrix.brewtils}}
+
+      - name: Install Test Latest of Brewtils
+        if: ${{matrix.brewtils == 'latest'}}
         run: pip${{ matrix.python-version }} install brewtils
 
       - name: Test Gardens
@@ -360,6 +383,7 @@ jobs:
       matrix:
         os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
         python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
+        brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
 
       fail-fast: false
 
@@ -409,6 +433,11 @@ jobs:
           command: curl http://localhost:2337/version
 
       - name: Install Test Version of Brewtils
+        if: ${{matrix.brewtils != 'latest'}}
+        run: pip${{ matrix.python-version }} install brewtils==${{matrix.brewtils}}
+
+      - name: Install Test Latest of Brewtils
+        if: ${{matrix.brewtils == 'latest'}}
         run: pip${{ matrix.python-version }} install brewtils
 
       - name: Install Stompy
