@@ -2,4 +2,3 @@ flake8
 mock
 pytest>=3.5.0
 pytest-timeout
-stomp.py==6.1.0

@@ -412,6 +412,9 @@ jobs:
       - name: Install Test Version of Brewtils
         run: pip${{ matrix.python-version }} install brewtils
 
+      - name: Install Stompy
+        run: pip${{ matrix.python-version }} install stomp.py==6.1.0
+
       - name: Install Python Deps
         run: pip${{ matrix.python-version }} install -r requirements.txt
         working-directory: ./test/integration
