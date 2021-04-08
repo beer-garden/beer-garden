@@ -547,8 +547,6 @@ def _determine_target_garden(operation: Operation) -> str:
 
     elif operation.operation_type == "REQUEST_CREATE":
 
-        # TODO DONT LET THIS INTO THE BASELINE!!!!
-        setup_routing()
         target_system = System(
             namespace=operation.model.namespace,
             name=operation.model.system,
