@@ -16,8 +16,12 @@ jobs:
 
     outputs:
       python-versions: "[ '2.7', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9']"
+      python-default: "['3.7']"
       brewtils-versions: "['3.0.0','3.0.1','3.0.2','3.1.0','3.2.0']"
+      brewtils-default: "['3.2.0']"
       beer-garden-docker-images: "['3.0.0','3.0.1','3.0.2','3.0.3','3.0.4','3.0.5','3.1.0','3.1.1','3.2.0','3','latest']"
+      beer-garden-docker-default: "['latest']"
+      os-default: "['ubuntu-18.04']"
 
   Remote-Plugin-Testing:
     needs: Setup-Release-Info
@@ -26,14 +30,12 @@ jobs:
 
     strategy:
       matrix:
-#        python-version: [ '2.7', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9']
-#        plugin-brewtils: ['3.0.0','3.0.1','3.0.2','3.1.0','3.2.0']
         python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-versions)}}
         plugin-brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-versions)}}
-        os: ['ubuntu-18.04']
+        os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
 #        For Debugging
-#        python-version: ['3.7']
-#        plugin-brewtils: ['3.1.0']
+#        python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
+#        plugin-brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
       fail-fast: false
 
     name: Remote Plugins - Brewtils ${{matrix.plugin-brewtils}} - Python ${{ matrix.python-version }}
@@ -94,13 +96,14 @@ jobs:
         working-directory: ./docker/docker-compose
 
   Local-Plugin-Testing:
+    needs: Setup-Release-Info
     runs-on: ${{ matrix.os }}
-    if: "false"
+#    if: "false"
 
     strategy:
       matrix:
-        python-version: ['3.7']
-        os: ['ubuntu-18.04']
+        python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
+        os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
       fail-fast: false
 
     name: Local Plugins - Python ${{ matrix.python-version }}
@@ -167,16 +170,17 @@ jobs:
         working-directory: ./docker/docker-compose
 
   Garden-HTTP-Testing:
+    needs: Setup-Release-Info
     runs-on: ${{ matrix.os }}
-    if: "false"
+#    if: "false"
 
     strategy:
       matrix:
-        os: ['ubuntu-18.04']
-        python-version: ['3.7']
-        child-garden: ['3.0.0','3.0.1','3.0.2','3.0.3','3.0.4','3.0.5','3.1.0','3.1.1','3.2.0','3','latest']
+        os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
+        python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
+        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-images)}}
 #        For Debugging
-#        child-garden: ['3']
+#        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-default)}}
       fail-fast: false
 
     name: Garden - HTTP - Child ${{matrix.child-garden}}
@@ -254,17 +258,24 @@ jobs:
           working-directory: ./docker/docker-compose
 
   Garden-Stomp-Testing:
+    needs: Setup-Release-Info
     runs-on: ${{ matrix.os }}
-    if: "false"
+#    if: "false"
 
     strategy:
       matrix:
-        os: ['ubuntu-18.04']
-        python-version: ['3.7']
-        # Added in 3.0.3
-        child-garden: ['3.0.3','3.0.4','3.0.5','3.1.0','3.1.1','3.2.0','3','latest']
+        os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
+        python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
+        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-images)}}
 #        For Debugging
-#        child-garden: ['3']
+#        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-default)}}
+
+        # Feature added in 3.0.3
+        exclude:
+          - child-garden: 3.0.0
+          - child-garden: 3.0.1
+          - child-garden: 3.0.2
+
       fail-fast: false
 
     name: Garden - STOMP - Child ${{matrix.child-garden}}
@@ -342,13 +353,14 @@ jobs:
         working-directory: ./docker/docker-compose
 
   Stomp-Testing:
+    needs: Setup-Release-Info
     runs-on: ${{ matrix.os }}
     if: "false"
 
     strategy:
       matrix:
-        os: ['ubuntu-18.04']
-        python-version: ['3.7']
+        os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
+        python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
 
       fail-fast: false
 
