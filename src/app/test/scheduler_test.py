@@ -52,7 +52,7 @@ def trigger_template():
 class TestRunJob(object):
     def test_run_job(self, monkeypatch, scheduler, bg_request_template):
         router_mock = Mock()
-        monkeypatch.setattr(beer_garden.scheduler, "beer_garden.router.route", router_mock)
+        monkeypatch.setattr(beer_garden.router, "route", router_mock)
 
         event_mock = Mock()
         monkeypatch.setattr(threading, "Event", event_mock)
@@ -69,7 +69,7 @@ class TestRunJob(object):
         self, monkeypatch, scheduler, trigger_template, trigger_event
     ):
         router_mock = Mock()
-        monkeypatch.setattr(beer_garden.scheduler, "beer_garden.router.route", router_mock)
+        monkeypatch.setattr(beer_garden.router, "route", router_mock)
 
         event_mock = Mock()
         monkeypatch.setattr(threading, "Event", event_mock)
