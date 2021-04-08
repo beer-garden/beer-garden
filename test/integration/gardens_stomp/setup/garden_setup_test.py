@@ -22,16 +22,18 @@ class TestGardenSetup(object):
 
     def test_update_garden_connection_info(self):
 
-        child_garden = Garden(name=self.child_garden_name,
-                              connection_type="STOMP",
-                              connection_params={"stomp_host": "activemq",
-                                                 "stomp_port": 61613,
-                                                 "stomp_send_destination": "Beer_Garden_Forward_Parent",
-                                                 "stomp_subscribe_destination": "Beer_Garden_Operations_Parent",
-                                                 "stomp_username": "beer_garden",
-                                                 "stomp_password": "password",
-                                                 "stomp_ssl": {"use_ssl": False},
-                                                 })
+        child_garden = Garden(name=self.child_garden_name)
+
+        # child_garden = Garden(name=self.child_garden_name,
+        #                       connection_type="STOMP",
+        #                       connection_params={"stomp_host": "activemq",
+        #                                          "stomp_port": 61613,
+        #                                          "stomp_send_destination": "Beer_Garden_Forward_Parent",
+        #                                          "stomp_subscribe_destination": "Beer_Garden_Operations_Parent",
+        #                                          "stomp_username": "beer_garden",
+        #                                          "stomp_password": "password",
+        #                                          "stomp_ssl": {"use_ssl": False},
+        #                                          })
 
         payload = self.parser.serialize_garden(child_garden)
 
@@ -41,6 +43,26 @@ class TestGardenSetup(object):
         )
 
         assert response.ok
+
+        created_child = response.json()
+
+        created_child['connection_type'] = "STOMP"
+        created_child['connection_params'] = {"stomp_host": "activemq",
+                                                 "stomp_port": 61613,
+                                                 "stomp_send_destination": "Beer_Garden_Forward_Parent",
+                                                 "stomp_subscribe_destination": "Beer_Garden_Operations_Parent",
+                                                 "stomp_username": "beer_garden",
+                                                 "stomp_password": "password",
+                                                 "stomp_ssl": {"use_ssl": False},
+                                                 }
+
+        updated_response = self.easy_client.client.session.post(
+            self.easy_client.client.base_url + "api/v1/gardens", data=created_child,
+            headers=self.easy_client.client.JSON_HEADERS
+        )
+
+        assert updated_response.ok
+
 
     def test_garden_manual_register_successful(self):
 
