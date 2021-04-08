@@ -46,23 +46,27 @@ class TestGardenSetup(object):
 
         created_child = response.json()
 
+        print(created_child)
+
         created_child['connection_type'] = "STOMP"
         created_child['connection_params'] = {"stomp_host": "activemq",
-                                                 "stomp_port": 61613,
-                                                 "stomp_send_destination": "Beer_Garden_Forward_Parent",
-                                                 "stomp_subscribe_destination": "Beer_Garden_Operations_Parent",
-                                                 "stomp_username": "beer_garden",
-                                                 "stomp_password": "password",
-                                                 "stomp_ssl": {"use_ssl": False},
-                                                 }
+                                              "stomp_port": 61613,
+                                              "stomp_send_destination": "Beer_Garden_Forward_Parent",
+                                              "stomp_subscribe_destination": "Beer_Garden_Operations_Parent",
+                                              "stomp_username": "beer_garden",
+                                              "stomp_password": "password",
+                                              "stomp_ssl": {"use_ssl": False},
+                                              }
 
-        updated_response = self.easy_client.client.session.post(
-            self.easy_client.client.base_url + "api/v1/gardens", data=created_child,
+        patch = PatchOperation(operation="config", path='', value=created_child)
+
+        payload = self.parser.serialize_patch(patch)
+
+        updated_response = self.easy_client.client.session.patch(
+            self.easy_client.client.base_url + "api/v1/gardens/" + self.child_garden_name, data=payload,
             headers=self.easy_client.client.JSON_HEADERS
         )
-
         assert updated_response.ok
-
 
     def test_garden_manual_register_successful(self):
 
