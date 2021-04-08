@@ -25,13 +25,13 @@ from watchdog.utils import has_attribute, unicode_paths
 from pathtools.patterns import match_any_paths
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from brewtils.models import Event, Events, Job
+from brewtils.models import Event, Events, Job, Operation
 
 import beer_garden
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.events import publish_event
-from beer_garden.requests import process_request, get_request
+from beer_garden.requests import get_request
 from beer_garden.db.mongo.jobstore import construct_trigger
 from brewtils.models import FileTrigger
 
@@ -455,7 +455,15 @@ def run_job(job_id, request_template, **kwargs):
 
     # TODO - Possibly allow specifying blocking timeout on the job definition
     wait_event = threading.Event()
-    request = process_request(request_template, wait_event=wait_event)
+
+    request = beer_garden.router.route(
+        Operation(
+            operation_type="REQUEST_CREATE",
+            model=request_template,
+            model_type="RequestTemplate",
+            kwargs={"wait_event": wait_event},
+        )
+    )
     wait_event.wait()
     try:
         db_job = db.query_unique(Job, id=job_id)
