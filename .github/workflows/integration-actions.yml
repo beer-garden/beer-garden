@@ -9,7 +9,7 @@ on: pull_request # Used only for testing
 
 jobs:
   Setup-Release-Info:
-    run-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
