@@ -52,7 +52,7 @@ def trigger_template():
 class TestRunJob(object):
     def test_run_job(self, monkeypatch, scheduler, bg_request_template):
         router_mock = Mock()
-        monkeypatch.setattr(beer_garden.router, "route", router_mock)
+        monkeypatch.setattr("beer_garden.router.route", router_mock)
 
         event_mock = Mock()
         monkeypatch.setattr(threading, "Event", event_mock)
@@ -63,13 +63,13 @@ class TestRunJob(object):
         run_job("job_id", bg_request_template)
 
         created_request = router_mock.call_args[0][0]
-        assert created_request.metadata["_bg_job_id"] == "job_id"
+        assert created_request.model.metadata["_bg_job_id"] == "job_id"
 
     def test_request_injection(
         self, monkeypatch, scheduler, trigger_template, trigger_event
     ):
         router_mock = Mock()
-        monkeypatch.setattr(beer_garden.router, "route", router_mock)
+        monkeypatch.setattr("beer_garden.router.route", router_mock)
 
         event_mock = Mock()
         monkeypatch.setattr(threading, "Event", event_mock)
@@ -80,4 +80,4 @@ class TestRunJob(object):
         run_job("job_id", trigger_template, event=trigger_event)
 
         created_request = router_mock.call_args[0][0]
-        assert created_request.parameters["message"] == "Hello my/test/path.txt!"
+        assert created_request.model.parameters["message"] == "Hello my/test/path.txt!"
