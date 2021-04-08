@@ -12,8 +12,6 @@ jobs:
     runs-on: ${{ matrix.os }}
 #    if: "false"
 
-    if: "false"
-
     strategy:
       matrix:
         python-version: [ '2.7', '3.4', '3.5', '3.6', '3.7', '3.8', '3.9']
@@ -83,7 +81,7 @@ jobs:
 
   Local-Plugin-Testing:
     runs-on: ${{ matrix.os }}
-    if: "false"
+#    if: "false"
 
     strategy:
       matrix:
@@ -156,7 +154,7 @@ jobs:
 
   Garden-HTTP-Testing:
     runs-on: ${{ matrix.os }}
-    if: "false"
+#    if: "false"
 
     strategy:
       matrix:
@@ -331,7 +329,7 @@ jobs:
 
   Stomp-Testing:
     runs-on: ${{ matrix.os }}
-    if: "false"
+#    if: "false"
 
     strategy:
       matrix:
