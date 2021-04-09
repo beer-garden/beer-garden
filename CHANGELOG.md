@@ -1,5 +1,27 @@
 # Beer Garden Changelog
 
+## 3.2.0
+4/1/21
+
+#### Bug Fixes
+- Better error message when request choices validation times out (Issue #938 / PR #945)
+- Fixes to STOMP connection behavior (Issue #914 / PR #917, #935)
+- No longer possible to define a Garden connection type as Local (Issue #906 / PR #909)
+- Fixed case where incorrect STOMP config could prevent startup (Issue #907 / PR #910)
+- Errors when changing garden connection info will be displayed (Issue #903 / PR #908)
+- Request creation no longer generating extraneous error logs (Issue #902 / PR #911)
+- Creating request for a child garden no longer shows UI error (Issue #893 / PR #894)
+- Preventing incorrect namespace value from breaking notifications (Issue #890 / PR #892)
+- Fixed problems with HTTP parent/child connection parameters (Issue #878, #879, #897 / PR #884, #899, #901)
+- Garden names now support Unicode (Issue #875 / PR #885)
+- Improved error logging for HTTP parent/child communication errors (Issue #873 / PR #889)
+
+#### Added Features
+- Added descriptions to system admin page (Issue #840 / PR #843)
+
+#### Other Changes
+- Event notifications are always wrapped in Operations (Issue #918 / PR #920)
+
 ## 3.1.1
 2/5/21
 
