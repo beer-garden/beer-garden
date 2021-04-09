@@ -206,6 +206,7 @@ class TestRequest(object):
     #     request.save()
     #     self.assertNotEqual(request.updated_at, "this_will_be_updated")
 
+    # Namespace was removed from the TEMPLATE_FIELDS list, so reduce by one
     def test_template_check(self):
         assert len(Request.TEMPLATE_FIELDS) == len(
             RequestTemplateSchema.get_attribute_names()

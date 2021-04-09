@@ -275,7 +275,7 @@ class Request(MongoModel, Document):
         "system": {"field": StringField, "kwargs": {"required": True}},
         "system_version": {"field": StringField, "kwargs": {"required": True}},
         "instance_name": {"field": StringField, "kwargs": {"required": True}},
-        "namespace": {"field": StringField, "kwargs": {"required": True}},
+        "namespace": {"field": StringField, "kwargs": {"required": False}},
         "command": {"field": StringField, "kwargs": {"required": True}},
         "command_type": {"field": StringField, "kwargs": {}},
         "parameters": {"field": DictField, "kwargs": {}},
@@ -286,6 +286,9 @@ class Request(MongoModel, Document):
 
     for field_name, field_info in TEMPLATE_FIELDS.items():
         locals()[field_name] = field_info["field"](**field_info["kwargs"])
+
+    # Shared field with RequestTemplate, but it is required when saving Request
+    namespace = StringField(required=True)
 
     parent = ReferenceField(
         "Request", dbref=True, required=False, reverse_delete_rule=CASCADE
