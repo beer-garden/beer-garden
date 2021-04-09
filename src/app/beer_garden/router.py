@@ -22,13 +22,7 @@ from functools import partial
 from typing import Dict, Union
 
 import stomp
-from brewtils import EasyClient
-from brewtils.models import Event, Events, Garden, Operation, Request, System
 from stomp.exception import ConnectFailedException
-from beer_garden.api.stomp.processors import (
-    append_headers as stomp_append_headers,
-    process_send_message as stomp_process_message,
-)
 from beer_garden.filters.permission_mapper import determine_permission
 from beer_garden.filters.db_filters import model_db_filter
 from beer_garden.filters.model_filter import model_filter

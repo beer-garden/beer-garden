@@ -30,10 +30,7 @@ def remote_user_account():
 
 @pytest.fixture
 def garden():
-    return Garden(
-        name="default",
-        connection_params={"key": "value"}
-    )
+    return Garden(name="default", connection_params={"key": "value"})
 
 
 def mock_operations(user_id="1"):
@@ -71,10 +68,10 @@ class TestPrincipalFilter(object):
         _config_get(monkeypatch)
 
         assert (
-                custom_filters.model_custom_filter(
-                    obj=operation, current_user=admin_account
-                )
-                is not None
+            custom_filters.model_custom_filter(
+                obj=operation, current_user=admin_account
+            )
+            is not None
         )
 
     @pytest.mark.parametrize(
@@ -85,10 +82,10 @@ class TestPrincipalFilter(object):
         _config_get(monkeypatch)
 
         assert (
-                custom_filters.model_custom_filter(
-                    obj=operation, raise_error=False, current_user=user_account
-                )
-                is None
+            custom_filters.model_custom_filter(
+                obj=operation, raise_error=False, current_user=user_account
+            )
+            is None
         )
 
     @pytest.mark.parametrize(
@@ -96,7 +93,7 @@ class TestPrincipalFilter(object):
         mock_operations(),
     )
     def test_operation_local_user_fail_raise_error(
-            self, operation, user_account, monkeypatch
+        self, operation, user_account, monkeypatch
     ):
         _config_get(monkeypatch)
         with pytest.raises(AuthorizationRequired):
@@ -112,8 +109,8 @@ class TestPrincipalFilter(object):
         )
 
         assert (
-                custom_filters.model_custom_filter(obj=operation, current_user=user_account)
-                is not None
+            custom_filters.model_custom_filter(obj=operation, current_user=user_account)
+            is not None
         )
 
     @pytest.mark.parametrize(
@@ -124,10 +121,10 @@ class TestPrincipalFilter(object):
         _config_get(monkeypatch)
 
         assert (
-                custom_filters.model_custom_filter(
-                    obj=principal, current_user=admin_account
-                )
-                is not None
+            custom_filters.model_custom_filter(
+                obj=principal, current_user=admin_account
+            )
+            is not None
         )
 
     @pytest.mark.parametrize(
@@ -138,8 +135,8 @@ class TestPrincipalFilter(object):
         _config_get(monkeypatch)
 
         assert (
-                custom_filters.model_custom_filter(obj=principal, current_user=user_account)
-                is not None
+            custom_filters.model_custom_filter(obj=principal, current_user=user_account)
+            is not None
         )
 
     @pytest.mark.parametrize(
@@ -150,10 +147,10 @@ class TestPrincipalFilter(object):
         _config_get(monkeypatch)
 
         assert (
-                custom_filters.model_custom_filter(
-                    obj=principal, raise_error=False, current_user=user_account
-                )
-                is None
+            custom_filters.model_custom_filter(
+                obj=principal, raise_error=False, current_user=user_account
+            )
+            is None
         )
 
     @pytest.mark.parametrize(
@@ -161,7 +158,7 @@ class TestPrincipalFilter(object):
         mock_principal(user_id="1"),
     )
     def test_princiapl_local_user_fail_raise(
-            self, principal, user_account, monkeypatch
+        self, principal, user_account, monkeypatch
     ):
         _config_get(monkeypatch)
 
@@ -174,8 +171,8 @@ class TestPrincipalFilter(object):
         _config_get(monkeypatch)
 
         garden = custom_filters.model_custom_filter(
-                obj=garden, raise_error=True, current_user=user_account
-            )
+            obj=garden, raise_error=True, current_user=user_account
+        )
 
         assert garden.connection_params is None
 
@@ -183,8 +180,8 @@ class TestPrincipalFilter(object):
         _config_get(monkeypatch)
 
         garden = custom_filters.model_custom_filter(
-                obj=garden, raise_error=True, current_user=admin_account
-            )
+            obj=garden, raise_error=True, current_user=admin_account
+        )
 
         assert garden.connection_params is not None
 
@@ -193,5 +190,5 @@ class TestPrincipalFilter(object):
 
         with pytest.raises(AuthorizationRequired):
             custom_filters.model_custom_filter(
-                    obj=garden, raise_error=True, current_user=remote_user_account
-                )
+                obj=garden, raise_error=True, current_user=remote_user_account
+            )
