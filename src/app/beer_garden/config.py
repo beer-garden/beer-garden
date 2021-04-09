@@ -797,42 +797,42 @@ _STOMP_SPEC = {
         "enabled": {
             "type": "bool",
             "default": False,
-            "description": "Run an stomp server",
+            "description": "Connect to a Stomp Broker",
         },
         "send_destination": {
             "type": "str",
-            "default": "Beer_Garden_Events",
-            "description": "Publish topic where events are sent",
+            "description": "Topic where events are published",
+            "required": False,
         },
         "subscribe_destination": {
             "type": "str",
-            "default": "Beer_Garden_Operations",
-            "description": "Subscription topic where Beer_Garden listens for operations",
+            "description": "Topic to listen for operations",
+            "required": False,
         },
         "host": {
             "type": "str",
             "default": "localhost",
-            "description": "Connection hostname",
+            "description": "Broker hostname",
         },
         "port": {
             "type": "int",
             "default": 61613,
-            "description": "Connection port number",
+            "description": "Broker port",
         },
         "username": {
             "type": "str",
             "description": "Username to use for authentication",
-            "default": "beer_garden",
+            "required": False,
         },
         "password": {
             "type": "str",
             "description": "Password to use for authentication",
-            "default": "password",
+            "required": False,
         },
         "headers": {
             "type": "list",
-            "description": "Headers to be sent with messages. Follows standard YAML formatting"
-            " for lists with two variables 'key' and 'value'",
+            "description": "Headers to be sent with messages. Follows standard YAML "
+            "formatting for lists with two variables 'key' and 'value'",
             "required": False,
             "items": {
                 "key": {"type": "str"},
