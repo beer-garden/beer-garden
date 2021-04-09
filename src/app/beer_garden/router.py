@@ -343,7 +343,7 @@ def create_stomp_connection(garden: Garden) -> Connection:
     Uses the format_connection_params to rip the "stomp_" prefix from the garden's
     connection params and constructs a stomp connection wrapper from them.
 
-    Will ignore subscription_destination as the router shouldn't be subscribing to
+    Will ignore subscribe_destination as the router shouldn't be subscribing to
     anything.
 
     Args:
@@ -354,7 +354,7 @@ def create_stomp_connection(garden: Garden) -> Connection:
 
     """
     connection_params = format_connection_params(garden.connection_params)
-    connection_params["subscription_destination"] = None
+    connection_params["subscribe_destination"] = None
 
     return Connection(**connection_params)
 
