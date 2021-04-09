@@ -1,5 +1,14 @@
 # Beer Garden Changelog
 
+## 3.2.1
+4/9/21
+
+#### Bug Fixes
+- Scheduled jobs now work without a namespace (Issue #952 / PR #954)
+
+#### Other Changes
+- UI image no longer uses IPv6 by default (Issue #950 / PR #951)
+
 ## 3.2.0
 4/1/21
 
