@@ -59,18 +59,25 @@ def get_gardens(include_local: bool = True) -> List[Garden]:
     return gardens
 
 
-def local_garden() -> Garden:
+def local_garden(all_systems: bool = False) -> Garden:
     """Get the local garden definition
+
+    Args:
+        all_systems: If False, only include "local" systems in the garden systems list
 
     Returns:
         The local Garden
 
     """
+    filter_params = {}
+    if not all_systems:
+        filter_params["local"] = True
+
     return Garden(
         name=config.get("garden.name"),
         connection_type="LOCAL",
         status="RUNNING",
-        systems=get_systems(filter_params={"local": True}),
+        systems=get_systems(filter_params=filter_params),
         namespaces=get_namespaces(),
     )
 
