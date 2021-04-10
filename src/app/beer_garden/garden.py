@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import List
 
 from brewtils.errors import PluginError
-from brewtils.models import Events, Garden, System, Event
+from brewtils.models import Events, Garden, Operation, System, Event
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -210,6 +210,45 @@ def update_garden(garden: Garden) -> Garden:
         The updated Garden
     """
     return db.update(garden)
+
+
+def garden_sync(sync_target: str = None):
+    """Do a garden sync
+
+    If we're here it means the Operation.target_garden_name was *this* garden. So the
+    sync_target is either *this garden* or None.
+
+    If the former then call the method to publish the current garden.
+
+    If the latter then we need to send sync operations to *all* known downstream
+    gardens.
+
+    Args:
+        sync_target:
+
+    Returns:
+
+    """
+    # If a Garden Name is provided, determine where to route the request
+    if sync_target:
+        logger.debug("Processing garden sync, about to publish")
+
+        publish_garden()
+
+    else:
+        from beer_garden.router import route
+
+        # Iterate over all gardens and forward the sync requests
+        for garden in get_gardens(include_local=False):
+            logger.debug(f"About to create sync operation for garden {garden.name}")
+
+            route(
+                Operation(
+                    operation_type="GARDEN_SYNC",
+                    target_garden_name=garden.name,
+                    kwargs={"sync_target": garden.name},
+                )
+            )
 
 
 def handle_event(event):
