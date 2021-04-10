@@ -540,20 +540,20 @@ def _determine_target_garden(operation: Operation) -> str:
     if operation.operation_type in ("SYSTEM_RELOAD", "SYSTEM_UPDATE"):
         return _system_id_lookup(operation.args[0])
 
-    elif operation.operation_type == "SYSTEM_DELETE":
+    if operation.operation_type == "SYSTEM_DELETE":
         # Force deletes get routed to local garden
         if operation.kwargs.get("force"):
             return config.get("garden.name")
 
         return _system_id_lookup(operation.args[0])
 
-    elif "INSTANCE" in operation.operation_type:
+    if "INSTANCE" in operation.operation_type:
         if "system_id" in operation.kwargs and "instance_name" in operation.kwargs:
             return _system_id_lookup(operation.kwargs["system_id"])
         else:
             return _instance_id_lookup(operation.args[0])
 
-    elif operation.operation_type == "REQUEST_CREATE":
+    if operation.operation_type == "REQUEST_CREATE":
         target_system = System(
             namespace=operation.model.namespace,
             name=operation.model.system,
@@ -561,13 +561,13 @@ def _determine_target_garden(operation: Operation) -> str:
         )
         return _system_name_lookup(target_system)
 
-    elif operation.operation_type.startswith("REQUEST"):
+    if operation.operation_type.startswith("REQUEST"):
         request = db.query_unique(Request, id=operation.args[0])
         operation.kwargs["request"] = request
 
         return config.get("garden.name")
 
-    elif operation.operation_type == "QUEUE_DELETE":
+    if operation.operation_type == "QUEUE_DELETE":
         # Need to deconstruct the queue name
         parts = operation.args[0].split(".")
         version = parts[2].replace("-", ".")
