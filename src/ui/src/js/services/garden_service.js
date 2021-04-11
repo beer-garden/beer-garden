@@ -99,124 +99,136 @@ export default function gardenService($http) {
         'type': 'string',
         'enum': GardenService.CONNECTION_TYPES,
       },
-      'name': {
-        'title': 'Garden Name',
-        'description': 'This is the globally routing name that Beer Garden utilizes when routing requests and events',
-        'type': 'string',
-      },
-      'host': {
-        'title': 'Host Name',
-        'description': 'Beer-garden hostname',
-        'type': 'string',
-        'minLength': 1,
-      },
-      'port': {
-        'title': 'Port',
-        'description': 'Beer-garden port',
-        'type': 'integer',
-        'minLength': 1,
-      },
-      'url_prefix': {
-        'title': 'URL Prefix',
-        'description': 'URL path that will be used as a prefix when communicating with Beer-garden. Useful if Beer-garden is running on a URL other than \'/\'.',
-        'type': 'string',
-      },
-      'ca_cert': {
-        'title': 'CA Cert Path',
-        'description': 'Path to certificate file containing the certificate of the authority that issued the Beer-garden server certificate',
-        'type': 'string',
-      },
-      'ca_verify': {
-        'title': 'CA Cert Verify',
-        'description': 'Whether to verify Beer-garden server certificate',
-        'type': 'boolean',
-      },
-      'ssl': {
-        'title': 'SSL Enabled',
-        'description': 'Whether to connect with provided certifications',
-        'type': 'boolean',
-      },
-      'client_cert': {
-        'title': 'Client Cert Path',
-        'description': 'Path to client certificate to use when communicating with Beer-garden',
-        'type': 'string',
-      },
-      'stomp_host': {
-        'title': 'Host Name',
-        'description': 'Beer-garden hostname',
-        'type': 'string',
-        'minLength': 1,
-      },
-      'stomp_port': {
-        'title': 'Port',
-        'description': 'Beer-garden port',
-        'type': 'integer',
-        'minLength': 1,
-      },
-      'stomp_send_destination': {
-        'title': 'Send Destination',
-        'description': 'Destination queue where Stomp will send messages.',
-        'type': 'string',
-      },
-      'stomp_subscribe_destination': {
-        'title': 'Subscribe Destination',
-        'description': 'Destination queue where Stomp will listen for messages.',
-        'type': 'string',
-      },
-      'stomp_username': {
-        'title': 'Username',
-        'description': 'Username for Stomp connection.',
-        'type': 'string',
-      },
-      'stomp_password': {
-        'title': 'Password',
-        'description': 'Password for Stomp connection.',
-        'type': 'string',
-      },
-      'stomp_ssl': {
+      'http': {
         'title': ' ',
-          'type': 'object',
-          'properties':{
-          'use_ssl': {
+        'type': 'object',
+        'properties': {
+          'name': {
+            'title': 'Garden Name',
+            'description': 'This is the globally routing name that Beer Garden utilizes when routing requests and events',
+            'type': 'string',
+          },
+          'host': {
+            'title': 'Host Name',
+            'description': 'Beer-garden hostname',
+            'type': 'string',
+            'minLength': 1,
+          },
+          'port': {
+            'title': 'Port',
+            'description': 'Beer-garden port',
+            'type': 'integer',
+            'minLength': 1,
+          },
+          'url_prefix': {
+            'title': 'URL Prefix',
+            'description': 'URL path that will be used as a prefix when communicating with Beer-garden. Useful if Beer-garden is running on a URL other than \'/\'.',
+            'type': 'string',
+          },
+          'ca_cert': {
+            'title': 'CA Cert Path',
+            'description': 'Path to certificate file containing the certificate of the authority that issued the Beer-garden server certificate',
+            'type': 'string',
+          },
+          'ca_verify': {
+            'title': 'CA Cert Verify',
+            'description': 'Whether to verify Beer-garden server certificate',
+            'type': 'boolean',
+          },
+          'ssl': {
             'title': 'SSL Enabled',
             'description': 'Whether to connect with provided certifications',
             'type': 'boolean',
           },
-          'ca_cert': {
-            'title': 'CA Cert',
-            'description': 'Path to certificate file containing the certificate of the authority that issued the message broker certificate',
-            'type': 'string',
-          },
           'client_cert': {
-            'title': 'Client Cert',
-            'description': 'Path to client public certificate to use when communicating with the message broker',
-            'type': 'string',
-          },
-          'client_key': {
-            'title': 'Client Key',
-            'description': 'Path to client private key to use when communicating with the message broker',
+            'title': 'Client Cert Path',
+            'description': 'Path to client certificate to use when communicating with Beer-garden',
             'type': 'string',
           },
         },
       },
-      'stomp_headers': {
-        'title': 'Headers',
-        'description': 'Headers to be sent with message',
-        'type': 'array',
-        'items':{
-          'title': ' ',
-          'type': 'object',
-          'properties': {
-            'key': {
-              'title': 'Key',
-              'description': '',
-              'type': 'string',
+      'stomp': {
+        'title': ' ',
+        'type': 'object',
+        'properties': {
+          'host': {
+            'title': 'Host Name',
+            'description': 'Beer-garden hostname',
+            'type': 'string',
+            'minLength': 1,
+          },
+          'port': {
+            'title': 'Port',
+            'description': 'Beer-garden port',
+            'type': 'integer',
+            'minLength': 1,
+          },
+          'send_destination': {
+            'title': 'Send Destination',
+            'description': 'Destination queue where Stomp will send messages.',
+            'type': 'string',
+          },
+          'subscribe_destination': {
+            'title': 'Subscribe Destination',
+            'description': 'Destination queue where Stomp will listen for messages.',
+            'type': 'string',
+          },
+          'username': {
+            'title': 'Username',
+            'description': 'Username for Stomp connection.',
+            'type': 'string',
+          },
+          'password': {
+            'title': 'Password',
+            'description': 'Password for Stomp connection.',
+            'type': 'string',
+          },
+          'ssl': {
+            'title': ' ',
+              'type': 'object',
+              'properties':{
+              'use_ssl': {
+                'title': 'SSL Enabled',
+                'description': 'Whether to connect with provided certifications',
+                'type': 'boolean',
+              },
+              'ca_cert': {
+                'title': 'CA Cert',
+                'description': 'Path to certificate file containing the certificate of the authority that issued the message broker certificate',
+                'type': 'string',
+              },
+              'client_cert': {
+                'title': 'Client Cert',
+                'description': 'Path to client public certificate to use when communicating with the message broker',
+                'type': 'string',
+              },
+              'client_key': {
+                'title': 'Client Key',
+                'description': 'Path to client private key to use when communicating with the message broker',
+                'type': 'string',
+              },
             },
-            'value': {
-              'title': 'Value',
-              'description': '',
-              'type': 'string',
-            }
+          },
+          'headers': {
+            'title': 'Headers',
+            'description': 'Headers to be sent with message',
+            'type': 'array',
+            'items': {
+              'title': ' ',
+              'type': 'object',
+              'properties': {
+                'key': {
+                  'title': 'Key',
+                  'description': '',
+                  'type': 'string',
+                },
+                'value': {
+                  'title': 'Value',
+                  'description': '',
+                  'type': 'string',
+                }
+              },
+            },
           },
         },
       },
@@ -240,26 +252,26 @@ export default function gardenService($http) {
             {
               'title': 'HTTP',
               'items': [
-                'host',
-                'port',
-                'url_prefix',
-                'ssl',
-                'ca_cert',
-                'ca_verify',
-                'client_cert'
+                'http.host',
+                'http.port',
+                'http.url_prefix',
+                'http.ssl',
+                'http.ca_cert',
+                'http.ca_verify',
+                'http.client_cert'
               ],
             },
             {
               'title': 'STOMP',
               'items': [
-                'stomp_host',
-                'stomp_port',
-                'stomp_send_destination',
-                'stomp_subscribe_destination',
-                'stomp_username',
-                'stomp_password',
-                'stomp_ssl',
-                'stomp_headers',
+                'stomp.host',
+                'stomp.port',
+                'stomp.send_destination',
+                'stomp.subscribe_destination',
+                'stomp.username',
+                'stomp.password',
+                'stomp.ssl',
+                'stomp.headers',
               ],
             },
           ],
