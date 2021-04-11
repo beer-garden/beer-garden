@@ -3,7 +3,9 @@ import logging
 import stomp
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
-from typing import Tuple, Any
+from random import choice
+from string import ascii_letters
+from typing import Any, Tuple
 
 import beer_garden.events
 import beer_garden.router
@@ -207,7 +209,7 @@ class Connection:
 
                 self.conn.subscribe(
                     destination=self.subscribe_destination,
-                    id=self.username,
+                    id="".join([choice(ascii_letters) for _ in range(10)]),
                     ack="auto",
                     # These are needed if the subscribe to a durable topic
                     # headers={
