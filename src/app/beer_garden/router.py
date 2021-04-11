@@ -590,7 +590,7 @@ def _forward_http(operation: Operation, target_garden: Garden):
         conn_info: Connection info
     """
 
-    conn_info = target_garden.connection_params
+    conn_info = target_garden.connection_params.get("http", {})
 
     easy_client = EasyClient(
         bg_host=conn_info.get("host"),
