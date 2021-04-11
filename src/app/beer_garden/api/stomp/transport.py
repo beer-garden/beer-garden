@@ -196,7 +196,8 @@ class Connection:
                 username=self.username,
                 passcode=self.password,
                 wait=True,
-                headers={"client-id": self.username},
+                # This is needed if the subscribe to a durable topic
+                # headers={"client-id": ?},
             )
 
             if self.subscribe_destination:
@@ -208,10 +209,11 @@ class Connection:
                     destination=self.subscribe_destination,
                     id=self.username,
                     ack="auto",
-                    headers={
-                        "subscription-type": "MULTICAST",
-                        "durable-subscription-name": self.subscribe_destination,
-                    },
+                    # These are needed if the subscribe to a durable topic
+                    # headers={
+                    #     "subscription-type": "MULTICAST",
+                    #     "durable-subscription-name": self.subscribe_destination,
+                    # },
                 )
 
             # This is probably always True at this point, but just to be safe
