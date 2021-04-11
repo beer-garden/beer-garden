@@ -4,9 +4,15 @@ import logging
 from box import Box
 from brewtils.models import BaseModel
 from brewtils.schema_parser import SchemaParser
-from mongoengine import NotUniqueError, connect, register_connection, DoesNotExist
+from mongoengine import (
+    DoesNotExist,
+    NotUniqueError,
+    QuerySet,
+    connect,
+    register_connection,
+)
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
-from typing import List, Optional, Type, Union, Tuple
+from typing import List, Optional, Tuple, Type, Union
 
 import beer_garden.db.mongo.models
 from beer_garden.db.mongo.models import MongoModel
@@ -68,28 +74,37 @@ def from_brewtils(obj: ModelItem) -> MongoModel:
 
 
 def to_brewtils(
-    obj: Union[MongoModel, List[MongoModel]]
-) -> Union[ModelItem, List[ModelItem]]:
+    obj: Union[MongoModel, List[MongoModel], QuerySet]
+) -> Union[ModelItem, List[ModelItem], None]:
     """Convert an item from its Mongo model to its Brewtils one
 
     Args:
-        obj: The Mongo model item
+        obj: The Mongo model item or QuerySet
 
     Returns:
         The Brewtils model item
 
     """
-    if obj is None or (isinstance(obj, list) and len(obj) == 0):
+    if obj is None:
         return obj
+
+    if isinstance(obj, (list, QuerySet)):
+        if len(obj) == 0:
+            return []
+
+        model_class = obj[0].brewtils_model
+        many = True
+    else:
+        model_class = obj.brewtils_model
+        many = False
 
     if getattr(obj, "pre_serialize", None):
         obj.pre_serialize()
 
-    serialized = MongoParser.serialize(obj, to_string=False)
-    many = True if isinstance(serialized, list) else False
-    model_class = obj[0].brewtils_model if many else obj.brewtils_model
+    serialized = MongoParser.serialize(obj, to_string=True)
+    parsed = SchemaParser.parse(serialized, model_class, from_string=True, many=many)
 
-    return SchemaParser.parse(serialized, model_class, from_string=False, many=many)
+    return parsed
 
 
 def check_connection(db_config: Box):
