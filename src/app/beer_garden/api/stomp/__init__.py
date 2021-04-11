@@ -9,7 +9,6 @@ import beer_garden.config as config
 import beer_garden.events
 import beer_garden.router
 from beer_garden.api.stomp.manager import StompManager
-from beer_garden.api.stomp.transport import format_connection_params
 from beer_garden.events import publish
 from beer_garden.events.processors import QueueListener
 from beer_garden.garden import get_gardens
@@ -45,7 +44,7 @@ def run(ep_conn):
     for garden in get_gardens(include_local=False):
         if garden.name != garden_name and garden.connection_type:
             if garden.connection_type.casefold() == "stomp":
-                connection_params = format_connection_params(garden.connection_params)
+                connection_params = garden.connection_params.get("stomp", {})
                 connection_params["send_destination"] = None
                 conn_manager.add_connection(
                     stomp_config=connection_params, name=garden.name
