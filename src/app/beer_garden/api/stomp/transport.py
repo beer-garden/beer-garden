@@ -150,8 +150,8 @@ class Connection:
 
     def __init__(
         self,
-        host: str,
-        port: int,
+        host: str = None,
+        port: int = None,
         send_destination: str = None,
         subscribe_destination: str = None,
         ssl=None,
