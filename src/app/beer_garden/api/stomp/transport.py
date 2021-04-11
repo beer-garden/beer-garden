@@ -117,6 +117,8 @@ class OperationListener(stomp.ConnectionListener):
         Returns:
             None
         """
+        logger.debug(f"Message:\n\tMessage: {message}\n\tHeaders: {headers}")
+
         try:
             if headers.get("model_class") == "Operation":
                 operation = SchemaParser.parse_operation(message, from_string=True)
