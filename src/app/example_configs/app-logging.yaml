@@ -21,14 +21,18 @@ handlers:
 loggers:
   apscheduler:
     level: "WARNING"
+  asyncio:
+    level: "INFO"
+  beer_garden:
+    level: "INFO"
   pika:
     level: "ERROR"
   tornado:
     level: "WARNING"
-  requests.packages.urllib3.connectionpool:
-    level: "WARNING"
   stomp:
     level: "WARNING"
+  urllib3:
+    level: "INFO"
 
 root:
   level: "INFO"
