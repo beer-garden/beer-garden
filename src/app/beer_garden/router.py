@@ -563,7 +563,8 @@ def _forward_stomp(operation: Operation, target_garden: Garden):
         message, response_headers = process(operation)
 
         response_headers = consolidate_headers(
-            response_headers, target_garden.connection_params.get("stomp_headers")
+            response_headers,
+            target_garden.connection_params.get("stomp", {}).get("headers", {})
         )
 
         stomp_garden_connections[target_garden.name].send(
