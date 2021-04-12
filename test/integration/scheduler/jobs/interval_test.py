@@ -60,6 +60,7 @@ class TestInterval(object):
         request_found = False
 
         for request in requests:
+            print(request.comment)
             if request.comment == job_name + ' Job':
                 request_found = True
                 break
