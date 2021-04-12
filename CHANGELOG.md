@@ -1,5 +1,16 @@
 # Beer Garden Changelog
 
+## 3.2.2
+4/12/21
+
+#### Bug Fixes
+- Fixed error where certain database models would hold onto references (Issue #959 / PR #960)
+- Fixed various issues with TLS stomp connections (Issue #946 / PR #947)
+- Garden sync operations now work more consistently (Issue #941 / PR #961)
+
+#### Other Changes
+- Change to how child garden connection parameters are stored (Issue #912 / PR #962)
+
 ## 3.2.1
 4/9/21
 
