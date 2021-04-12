@@ -55,20 +55,20 @@ class TestInterval(object):
         # Wait a minute before checking plus a little extra
         time.sleep(60 + 15)
 
-        job_update = self.easy_client.get_job(job_response.id)
+        jobs = self.easy_client.find_jobs()
 
-        print(job_update)
-
-        requests = self.easy_client.find_requests()
-
-        request_found = False
-
-        for request in requests:
-            print(request.comment)
-            if request.comment == job_name + ' Job':
-                request_found = True
+        found_job = None
+        for job in jobs:
+            if job.id == job_response.id:
+                found_job = job
                 break
 
-        assert request_found
+        assert found_job is not None
+
+        assert found_job.success_count > 0
+
+        assert self.easy_client.remove_job(job)
+
+
 
 
