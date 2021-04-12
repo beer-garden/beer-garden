@@ -1041,30 +1041,29 @@ _PARENT_SPEC = {
                     "items": {
                         "use_ssl": {
                             "type": "bool",
-                            "description": "Use SSL for connection",
+                            "description": "Use SSL when connecting to message broker",
                             "default": False,
                         },
-                        "private_key": {
+                        "client_key": {
                             "type": "str",
-                            "description": "Path to private key",
+                            "description": "Path to client private key to use when "
+                            "communicating with the message broker",
                             "required": False,
+                            "previous_names": ["private_key"],
                         },
-                        "cert_file": {
+                        "client_cert": {
                             "type": "str",
-                            "description": "Path to certificate file",
+                            "description": "Path to client public certificate to use "
+                            "when communicating with the message broker",
                             "required": False,
+                            "previous_names": ["cert_file"],
                         },
-                        "verify_host": {
-                            "type": "bool",
-                            "description": "Verify the server's certificate "
-                            "was signed by a trusted CA'",
-                            "default": True,
-                        },
-                        "verify_hostname": {
-                            "type": "bool",
-                            "description": "Verify the server's actual "
-                            "host name against the expected name'",
-                            "default": True,
+                        "ca_cert": {
+                            "type": "str",
+                            "description": "Path to certificate file containing the "
+                            "certificate of the authority that issued the message "
+                            "broker certificate",
+                            "required": False,
                         },
                     },
                 },
