@@ -1,10 +1,10 @@
 name: Integration-Actions
 
-#on: pull_request # Used only for testing
+on: pull_request # Used only for testing
 
-on:
-  schedule:
-    - cron: '0 0 * * *' # Every Day at Midnight
+#on:
+#  schedule:
+#    - cron: '0 0 * * *' # Every Day at Midnight
 
 jobs:
   Setup-Release-Info:
