@@ -116,18 +116,6 @@ export default function gardenService($http) {
         'type': 'integer',
         'minLength': 1,
       },
-      'stomp_host': {
-              'title': 'Host Name',
-              'description': 'Beer-garden hostname',
-              'type': 'string',
-              'minLength': 1,
-            },
-      'stomp_port': {
-              'title': 'Port',
-              'description': 'Beer-garden port',
-              'type': 'integer',
-              'minLength': 1,
-            },
       'url_prefix': {
         'title': 'URL Prefix',
         'description': 'URL path that will be used as a prefix when communicating with Beer-garden. Useful if Beer-garden is running on a URL other than \'/\'.',
@@ -153,78 +141,85 @@ export default function gardenService($http) {
         'description': 'Path to client certificate to use when communicating with Beer-garden',
         'type': 'string',
       },
+      'stomp_host': {
+        'title': 'Host Name',
+        'description': 'Beer-garden hostname',
+        'type': 'string',
+        'minLength': 1,
+      },
+      'stomp_port': {
+        'title': 'Port',
+        'description': 'Beer-garden port',
+        'type': 'integer',
+        'minLength': 1,
+      },
       'stomp_send_destination': {
-              'title': 'Send Destination',
-              'description': 'Destination queue where Stomp will send messages.',
-              'type': 'string',
+        'title': 'Send Destination',
+        'description': 'Destination queue where Stomp will send messages.',
+        'type': 'string',
       },
       'stomp_subscribe_destination': {
-                    'title': 'Subscribe Destination',
-                    'description': 'Destination queue where Stomp will listen for messages.',
-                    'type': 'string',
+        'title': 'Subscribe Destination',
+        'description': 'Destination queue where Stomp will listen for messages.',
+        'type': 'string',
       },
       'stomp_username': {
-                    'title': 'Username',
-                    'description': 'Username for Stomp connection.',
-                    'type': 'string',
+        'title': 'Username',
+        'description': 'Username for Stomp connection.',
+        'type': 'string',
       },
       'stomp_password': {
-                    'title': 'Password',
-                    'description': 'Password for Stomp connection.',
-                    'type': 'string',
+        'title': 'Password',
+        'description': 'Password for Stomp connection.',
+        'type': 'string',
       },
       'stomp_ssl': {
-                          'title': ' ',
-                                'type': 'object',
-                                'properties':{
-                                'use_ssl': {
-                                              'title': 'SSL Enabled',
-                                              'description': 'Whether to connect with provided certifications',
-                                              'type': 'boolean',
-                                },
-                                'cert_file': {
-                                              'title': 'Cert File Path',
-                                              'description': 'Path to client certificate to use when communicating with Beer-garden',
-                                              'type': 'string',
-                                },
-                                'private_key': {
-                                              'title': 'Private key Path',
-                                              'description': 'Path to client key to use when communicating with Beer-garden',
-                                              'type': 'string',
-                                },
-                                'verify_host': {
-                                              'title': 'Verify Host',
-                                              'description': 'Whether to verify Host',
-                                              'type': 'boolean',
-                                },
-                                'verify_hostname': {
-                                              'title': 'Verify Hostname',
-                                              'description': 'Whether to verify Hostname',
-                                              'type': 'boolean',
-                                },
-                          },
+        'title': ' ',
+          'type': 'object',
+          'properties':{
+          'use_ssl': {
+            'title': 'SSL Enabled',
+            'description': 'Whether to connect with provided certifications',
+            'type': 'boolean',
+          },
+          'ca_cert': {
+            'title': 'CA Cert',
+            'description': 'Path to certificate file containing the certificate of the authority that issued the message broker certificate',
+            'type': 'string',
+          },
+          'client_cert': {
+            'title': 'Client Cert',
+            'description': 'Path to client public certificate to use when communicating with the message broker',
+            'type': 'string',
+          },
+          'client_key': {
+            'title': 'Client Key',
+            'description': 'Path to client private key to use when communicating with the message broker',
+            'type': 'string',
+          },
+        },
       },
       'stomp_headers': {
-                          'title': 'Headers',
-                          'description': 'Headers to be sent with message',
-                          'type': 'array',
-                          'items':{
-                              'title': ' ',
-                              'type': 'object',
-                              'properties': {
-                                  'key': {
-                                         'title': 'Key',
-                                         'description': '',
-                                         'type': 'string',
-                                  },
-                                  'value': {
-                                         'title': 'Value',
-                                         'description': '',
-                                         'type': 'string',
-                                  }
-                              },
-                          },
+        'title': 'Headers',
+        'description': 'Headers to be sent with message',
+        'type': 'array',
+        'items':{
+          'title': ' ',
+          'type': 'object',
+          'properties': {
+            'key': {
+              'title': 'Key',
+              'description': '',
+              'type': 'string',
             },
+            'value': {
+              'title': 'Value',
+              'description': '',
+              'type': 'string',
+            }
+          },
+        },
+      },
     },
 
   }
