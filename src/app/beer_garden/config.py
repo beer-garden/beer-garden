@@ -853,12 +853,14 @@ _STOMP_SPEC = {
                     "description": "Path to client private key to use when "
                     "communicating with the message broker",
                     "required": False,
+                    "previous_names": ["private_key"],
                 },
                 "client_cert": {
                     "type": "str",
                     "description": "Path to client public certificate to use when "
                     "communicating with the message broker",
                     "required": False,
+                    "previous_names": ["cert_file"],
                 },
                 "ca_cert": {
                     "type": "str",
