@@ -55,6 +55,10 @@ class TestInterval(object):
         # Wait a minute before checking plus a little extra
         time.sleep(60 + 15)
 
+        job_update = self.easy_client.get_job(job_response.id)
+
+        print(job_update)
+
         requests = self.easy_client.find_requests()
 
         request_found = False
