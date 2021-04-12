@@ -58,7 +58,7 @@ routable_operations = [
     "INSTANCE_STOP",
     "REQUEST_CREATE",
     "SYSTEM_DELETE",
-    "GARDENS_SYNC",
+    "GARDEN_SYNC",
 ]
 
 # Executor used to run REQUEST_CREATE operations in an async context
@@ -77,32 +77,6 @@ routing_lock = threading.Lock()
 system_name_routes: Dict[str, str] = {}
 system_id_routes: Dict[str, str] = {}
 instance_id_routes: Dict[str, str] = {}
-
-
-def route_garden_sync(target_garden_name: str = None):
-    # If a Garden Name is provided, determine where to route the request
-    if target_garden_name:
-        if target_garden_name == config.get("garden.name"):
-            beer_garden.garden.publish_garden()
-        else:
-            forward(
-                Operation(
-                    operation_type="GARDEN_SYNC", target_garden_name=target_garden_name
-                )
-            )
-
-    else:
-        # Iterate over all gardens and forward the sync request
-        with garden_lock:
-            for garden in gardens.values():
-                if garden.name != config.get("garden.name"):
-                    forward(
-                        Operation(
-                            operation_type="GARDEN_SYNC", target_garden_name=garden.name
-                        )
-                    )
-        beer_garden.garden.publish_garden()
-
 
 # "Real" async function (async def)
 async_functions = {
@@ -157,7 +131,7 @@ route_functions = {
     "GARDEN_UPDATE_STATUS": beer_garden.garden.update_garden_status,
     "GARDEN_UPDATE_CONFIG": beer_garden.garden.update_garden_config,
     "GARDEN_DELETE": beer_garden.garden.remove_garden,
-    "GARDEN_SYNC": route_garden_sync,
+    "GARDEN_SYNC": beer_garden.garden.garden_sync,
     "PLUGIN_LOG_READ": beer_garden.log.get_plugin_log_config,
     "PLUGIN_LOG_READ_LEGACY": beer_garden.log.get_plugin_log_config_legacy,
     "PLUGIN_LOG_RELOAD": beer_garden.log.load_plugin_log_config,
@@ -525,7 +499,6 @@ def _determine_target_garden(operation: Operation) -> str:
     # Certain operations are ASSUMED to be targeted at the local garden
     if (
         "READ" in operation.operation_type
-        or "GARDEN" in operation.operation_type
         or "JOB" in operation.operation_type
         or "FILE" in operation.operation_type
         or operation.operation_type
@@ -540,21 +513,20 @@ def _determine_target_garden(operation: Operation) -> str:
     if operation.operation_type in ("SYSTEM_RELOAD", "SYSTEM_UPDATE"):
         return _system_id_lookup(operation.args[0])
 
-    elif operation.operation_type == "SYSTEM_DELETE":
+    if operation.operation_type == "SYSTEM_DELETE":
         # Force deletes get routed to local garden
         if operation.kwargs.get("force"):
             return config.get("garden.name")
 
         return _system_id_lookup(operation.args[0])
 
-    elif "INSTANCE" in operation.operation_type:
+    if "INSTANCE" in operation.operation_type:
         if "system_id" in operation.kwargs and "instance_name" in operation.kwargs:
             return _system_id_lookup(operation.kwargs["system_id"])
         else:
             return _instance_id_lookup(operation.args[0])
 
-    elif operation.operation_type == "REQUEST_CREATE":
-
+    if operation.operation_type == "REQUEST_CREATE":
         target_system = System(
             namespace=operation.model.namespace,
             name=operation.model.system,
@@ -562,13 +534,21 @@ def _determine_target_garden(operation: Operation) -> str:
         )
         return _system_name_lookup(target_system)
 
-    elif operation.operation_type.startswith("REQUEST"):
+    if operation.operation_type.startswith("REQUEST"):
         request = db.query_unique(Request, id=operation.args[0])
         operation.kwargs["request"] = request
 
         return config.get("garden.name")
 
-    elif operation.operation_type == "QUEUE_DELETE":
+    if "GARDEN" in operation.operation_type:
+        if operation.operation_type == "GARDEN_SYNC":
+            sync_target = operation.kwargs.get("sync_target")
+            if sync_target:
+                return sync_target
+
+        return config.get("garden.name")
+
+    if operation.operation_type == "QUEUE_DELETE":
         # Need to deconstruct the queue name
         parts = operation.args[0].split(".")
         version = parts[2].replace("-", ".")

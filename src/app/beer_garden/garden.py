@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import List
 
 from brewtils.errors import PluginError
-from brewtils.models import Events, Garden, System, Event
+from brewtils.models import Events, Garden, Operation, System, Event
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -59,43 +59,44 @@ def get_gardens(include_local: bool = True) -> List[Garden]:
     return gardens
 
 
-def local_garden() -> Garden:
+def local_garden(all_systems: bool = False) -> Garden:
     """Get the local garden definition
+
+    Args:
+        all_systems: If False, only include "local" systems in the garden systems list
 
     Returns:
         The local Garden
 
     """
+    filter_params = {}
+    if not all_systems:
+        filter_params["local"] = True
+
     return Garden(
         name=config.get("garden.name"),
         connection_type="LOCAL",
         status="RUNNING",
-        systems=get_systems(filter_params={"local": True}),
+        systems=get_systems(filter_params=filter_params),
         namespaces=get_namespaces(),
     )
 
 
-def publish_garden(
-    event_name: str = Events.GARDEN_SYNC.name, status: str = "RUNNING"
-) -> None:
-    """Publish a Garden event
+@publish_event(Events.GARDEN_SYNC)
+def publish_garden(status: str = "RUNNING") -> Garden:
+    """Get the local garden, publishing a GARDEN_SYNC event
 
     Args:
-        event_name: The event name to use
         status: The garden status
+
+    Returns:
+        The local garden, all systems
     """
-    publish(
-        Event(
-            name=event_name,
-            payload_type="Garden",
-            payload=Garden(
-                name=config.get("garden.name"),
-                status=status,
-                systems=get_systems(),
-                namespaces=get_namespaces(),
-            ),
-        )
-    )
+    garden = local_garden(all_systems=True)
+    garden.connection_type = None
+    garden.status = status
+
+    return garden
 
 
 def update_garden_config(garden: Garden) -> Garden:
@@ -209,6 +210,45 @@ def update_garden(garden: Garden) -> Garden:
         The updated Garden
     """
     return db.update(garden)
+
+
+def garden_sync(sync_target: str = None):
+    """Do a garden sync
+
+    If we're here it means the Operation.target_garden_name was *this* garden. So the
+    sync_target is either *this garden* or None.
+
+    If the former then call the method to publish the current garden.
+
+    If the latter then we need to send sync operations to *all* known downstream
+    gardens.
+
+    Args:
+        sync_target:
+
+    Returns:
+
+    """
+    # If a Garden Name is provided, determine where to route the request
+    if sync_target:
+        logger.debug("Processing garden sync, about to publish")
+
+        publish_garden()
+
+    else:
+        from beer_garden.router import route
+
+        # Iterate over all gardens and forward the sync requests
+        for garden in get_gardens(include_local=False):
+            logger.debug(f"About to create sync operation for garden {garden.name}")
+
+            route(
+                Operation(
+                    operation_type="GARDEN_SYNC",
+                    target_garden_name=garden.name,
+                    kwargs={"sync_target": garden.name},
+                )
+            )
 
 
 def handle_event(event):
