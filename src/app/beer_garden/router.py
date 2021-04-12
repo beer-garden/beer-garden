@@ -38,12 +38,7 @@ import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
-from beer_garden.api.stomp.transport import (
-    consolidate_headers,
-    process,
-    Connection,
-    format_connection_params,
-)
+from beer_garden.api.stomp.transport import Connection, consolidate_headers, process
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 from beer_garden.events import publish
 from beer_garden.events.processors import BaseProcessor
@@ -314,8 +309,7 @@ def forward(operation: Operation):
 def create_stomp_connection(garden: Garden) -> Connection:
     """Create a stomp connection wrapper for a garden
 
-    Uses the format_connection_params to rip the "stomp_" prefix from the garden's
-    connection params and constructs a stomp connection wrapper from them.
+    Constructs a stomp connection wrapper from the garden's stomp connection parameters.
 
     Will ignore subscribe_destination as the router shouldn't be subscribing to
     anything.
@@ -327,7 +321,7 @@ def create_stomp_connection(garden: Garden) -> Connection:
         The created connection wrapper
 
     """
-    connection_params = format_connection_params(garden.connection_params)
+    connection_params = garden.connection_params.get("stomp", {})
     connection_params["subscribe_destination"] = None
 
     return Connection(**connection_params)
@@ -596,7 +590,7 @@ def _forward_http(operation: Operation, target_garden: Garden):
         conn_info: Connection info
     """
 
-    conn_info = target_garden.connection_params
+    conn_info = target_garden.connection_params.get("http", {})
 
     easy_client = EasyClient(
         bg_host=conn_info.get("host"),
