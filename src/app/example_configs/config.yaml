@@ -104,7 +104,7 @@ parent:
   stomp:
     enabled: false
     headers: []
-    host: 0.0.0.0
+    host: localhost
     password: password
     port: 61613
     send_destination: Beer_Garden_Operations_Parent

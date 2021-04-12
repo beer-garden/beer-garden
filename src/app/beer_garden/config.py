@@ -1002,7 +1002,7 @@ _PARENT_SPEC = {
                 },
                 "host": {
                     "type": "str",
-                    "default": "0.0.0.0",
+                    "default": "localhost",
                     "description": "Connection hostname",
                 },
                 "username": {
