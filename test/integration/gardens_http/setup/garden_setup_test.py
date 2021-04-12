@@ -99,3 +99,6 @@ class TestGardenSetup(object):
         requests = self.easy_client.find_requests()
 
         assert len(requests) == 2
+
+    #TODO Add wait test
+
