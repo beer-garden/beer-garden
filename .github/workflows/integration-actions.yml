@@ -1,11 +1,11 @@
 name: Integration-Actions
 
-#on: pull_request # Used only for testing
+on: pull_request # Used only for testing
 
 # This will only run on the Default/Base Branch OR when a Tag is created
-on:
-  schedule:
-    - cron: '0 0 * * *' # Every Day at Midnight
+#on:
+#  schedule:
+#    - cron: '0 0 * * *' # Every Day at Midnight
 
 jobs:
   Remote-Plugin-Testing:
