@@ -546,6 +546,7 @@ def _determine_target_garden(operation: Operation) -> str:
             return _instance_id_lookup(operation.args[0])
 
     elif operation.operation_type == "REQUEST_CREATE":
+
         target_system = System(
             namespace=operation.model.namespace,
             name=operation.model.system,
