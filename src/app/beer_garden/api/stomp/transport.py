@@ -1,8 +1,11 @@
+import certifi
 import logging
 import stomp
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
-from typing import Tuple, Any
+from random import choice
+from string import ascii_letters
+from typing import Any, Tuple
 
 import beer_garden.events
 import beer_garden.router
@@ -76,6 +79,17 @@ def send(
         conn.send(body=message, headers=headers, destination=destination)
 
 
+def format_connection_params(connection_params):
+    """Strips leading term from connection parameters"""
+    params = {}
+
+    for k, v in connection_params.items():
+        if k.startswith("stomp_"):
+            params[k[6:]] = v
+
+    return params
+
+
 class OperationListener(stomp.ConnectionListener):
     def __init__(self, conn=None, send_destination=None):
         self.conn = conn
@@ -103,6 +117,8 @@ class OperationListener(stomp.ConnectionListener):
         Returns:
             None
         """
+        logger.debug(f"Message:\n\tMessage: {message}\n\tHeaders: {headers}")
+
         try:
             if headers.get("model_class") == "Operation":
                 operation = SchemaParser.parse_operation(message, from_string=True)
@@ -152,6 +168,7 @@ class Connection:
         ssl=None,
         username: str = None,
         password: str = None,
+        **_,
     ):
         self.host = host
         self.port = port
@@ -159,15 +176,22 @@ class Connection:
         self.password = password
         self.subscribe_destination = subscribe_destination
         self.send_destination = send_destination
+
         self.conn = stomp.Connection(
             host_and_ports=[(self.host, self.port)], heartbeats=(10000, 0)
         )
 
         if ssl and ssl.get("use_ssl"):
+            # It's crazy to me that the default behavior is to NOT VERIFY CERTIFICATES
+            ca_certs = ssl.get("ca_cert")
+            if not ca_certs:
+                ca_certs = certifi.where()
+
             self.conn.set_ssl(
                 for_hosts=[(self.host, self.port)],
-                key_file=ssl.get("private_key"),
-                cert_file=ssl.get("cert_file"),
+                key_file=ssl.get("client_key"),
+                cert_file=ssl.get("client_cert"),
+                ca_certs=ca_certs,
             )
 
     def connect(self) -> bool:
@@ -176,7 +200,8 @@ class Connection:
                 username=self.username,
                 passcode=self.password,
                 wait=True,
-                headers={"client-id": self.username},
+                # This is needed if the subscribe to a durable topic
+                # headers={"client-id": ?},
             )
 
             if self.subscribe_destination:
@@ -186,12 +211,13 @@ class Connection:
 
                 self.conn.subscribe(
                     destination=self.subscribe_destination,
-                    id=self.username,
+                    id="".join([choice(ascii_letters) for _ in range(10)]),
                     ack="auto",
-                    headers={
-                        "subscription-type": "MULTICAST",
-                        "durable-subscription-name": self.subscribe_destination,
-                    },
+                    # These are needed if the subscribe to a durable topic
+                    # headers={
+                    #     "subscription-type": "MULTICAST",
+                    #     "durable-subscription-name": self.subscribe_destination,
+                    # },
                 )
 
             # This is probably always True at this point, but just to be safe
