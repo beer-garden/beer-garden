@@ -18,7 +18,7 @@ def system_spec():
 
 
 @pytest.mark.usefixtures('easy_client')
-class IntervalTest(object):
+class TestInterval(object):
 
     def test_no_namespace_job(self):
 
