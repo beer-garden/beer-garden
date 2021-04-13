@@ -17,16 +17,23 @@ def system_spec():
             'command': 'say', 'parameters': {'message': "hello", 'loud': False}}
 
 
-@pytest.mark.usefixtures('easy_client')
+# @pytest.mark.usefixtures('easy_client')
 class TestCron(object):
 
     def test_start_date_job(self, system_spec):
+        self.easy_client = get_easy_client(**{"bg_host": "localhost",
+                                              "bg_port": 2337,
+                                              "ssl_enabled": False})
 
         job_name = "test_start_date_job"
         delay_start = 60 * 2
         job_wait = 5
 
-        start_date = round((time.time() + delay_start) * 1000)
+        # start_date = int(round((time.time() + delay_start) * 1000))
+
+        start_date = 1618334940000
+
+
 
         template = RequestTemplate(
             system=system_spec['system'],

@@ -17,13 +17,13 @@ def system_spec():
             'command': 'say', 'parameters': {'message': "hello", 'loud': False}}
 
 
-@pytest.mark.usefixtures('easy_client')
+# @pytest.mark.usefixtures('easy_client')
 class TestInterval(object):
 
     def test_no_namespace_job(self, system_spec):
-        # self.easy_client = get_easy_client(**{"bg_host": "localhost",
-        #                                       "bg_port": 2337,
-        #                                       "ssl_enabled": False})
+        self.easy_client = get_easy_client(**{"bg_host": "localhost",
+                                              "bg_port": 2337,
+                                              "ssl_enabled": False})
 
         job_name = "test_no_namespace_job"
         job_wait = 30
