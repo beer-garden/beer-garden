@@ -384,11 +384,15 @@ def add_routing_system(system=None, garden_name=None):
 def remove_routing_system(system=None):
     """Update the gardens used for routing"""
     with routing_lock:
-        del system_name_routes[str(system)]
-        del system_id_routes[system.id]
+        if str(system) in system_name_routes:
+            del system_name_routes[str(system)]
+
+        if system.id in system_id_routes:
+            del system_id_routes[system.id]
 
         for instance in system.instances:
-            del instance_id_routes[instance.id]
+            if instance.id in instance_id_routes:
+                del instance_id_routes[instance.id]
 
 
 def handle_event(event):
