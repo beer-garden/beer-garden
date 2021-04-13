@@ -1,11 +1,12 @@
-import certifi
 import logging
+from random import choice
+from string import ascii_letters
+from typing import Any, Dict, Tuple
+
+import certifi
 import stomp
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
-from random import choice
-from string import ascii_letters
-from typing import Any, Dict, List, Tuple
 
 import beer_garden.events
 import beer_garden.router
@@ -60,21 +61,24 @@ def process(body) -> Tuple[str, dict]:
     return body, {"model_class": model_class, "many": many}
 
 
-def parse_header_list(headers: List[Dict[str, str]]) -> Dict[str, str]:
-    """Convert a header list (from config, db) into a header dictionary
+def parse_header_list(headers: str) -> Dict[str, str]:
+    """Convert a header list (from config, db) into a header dictionary"""
+    tmp_headers = {}
+    key_to_key = None
+    key_to_value = None
 
-    Turns this:
+    for header in headers:
+        header = eval(header)
 
-        headers:
-          - key: yo
-            value: lo
+        for key in header.keys():
+            if "key" in key:
+                key_to_key = key
+            elif "value" in key:
+                key_to_value = key
 
-    Into this:
+        tmp_headers[header[key_to_key]] = header[key_to_value]
 
-        {"yo": "lo"}
-
-    """
-    return {header["key"]: header["value"] for header in headers}
+    return tmp_headers
 
 
 def send(
