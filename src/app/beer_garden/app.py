@@ -247,10 +247,8 @@ class Application(StoppableThread):
         self.logger.debug("Starting scheduler")
         self.scheduler.start()
 
-        self.logger.debug("Publishing startup event")
-        beer_garden.garden.publish_garden(
-            event_name=Events.GARDEN_STARTED.name, status="RUNNING"
-        )
+        self.logger.debug("Publishing startup sync")
+        beer_garden.garden.publish_garden()
 
         self.logger.debug("Starting plugin log config file monitors")
         if config.get("plugin.logging.config_file"):
@@ -269,10 +267,8 @@ class Application(StoppableThread):
             "Closing time! You don't have to go home, but you can't stay here."
         )
 
-        self.logger.debug("Publishing shutdown event")
-        beer_garden.garden.publish_garden(
-            event_name=Events.GARDEN_STOPPED.name, status="STOPPED"
-        )
+        self.logger.debug("Publishing shutdown sync")
+        beer_garden.garden.publish_garden(status="STOPPED")
 
         if self.scheduler.running:
             self.logger.debug("Pausing scheduler - no more jobs will be run")
@@ -322,9 +318,7 @@ class Application(StoppableThread):
         if cfg.enabled:
 
             def reconnect_action():
-                beer_garden.garden.publish_garden(
-                    event_name=Events.GARDEN_STARTED.name, status="RUNNING"
-                )
+                beer_garden.garden.publish_garden(status="RUNNING")
 
             easy_client = EasyClient(
                 bg_host=cfg.host,

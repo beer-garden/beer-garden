@@ -16,7 +16,7 @@ handlers:
     encoding: utf8
     formatter: simple
     maxBytes: 10485760
-    filename: "beer-garden.log"
+    filename: "log/beer-garden.log"
 
 loggers:
   apscheduler:

@@ -44,9 +44,7 @@ def run(ep_conn):
     for garden in get_gardens(include_local=False):
         if garden.name != garden_name and garden.connection_type:
             if garden.connection_type.casefold() == "stomp":
-                connection_params = StompManager.format_connection_params(
-                    "stomp_", garden.connection_params
-                )
+                connection_params = garden.connection_params.get("stomp", {})
                 connection_params["send_destination"] = None
                 conn_manager.add_connection(
                     stomp_config=connection_params, name=garden.name

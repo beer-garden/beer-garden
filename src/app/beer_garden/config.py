@@ -797,42 +797,42 @@ _STOMP_SPEC = {
         "enabled": {
             "type": "bool",
             "default": False,
-            "description": "Run an stomp server",
+            "description": "Connect to a Stomp Broker",
         },
         "send_destination": {
             "type": "str",
-            "default": "Beer_Garden_Events",
-            "description": "Publish topic where events are sent",
+            "description": "Topic where events are published",
+            "required": False,
         },
         "subscribe_destination": {
             "type": "str",
-            "default": "Beer_Garden_Operations",
-            "description": "Subscription topic where Beer_Garden listens for operations",
+            "description": "Topic to listen for operations",
+            "required": False,
         },
         "host": {
             "type": "str",
             "default": "localhost",
-            "description": "Connection hostname",
+            "description": "Broker hostname",
         },
         "port": {
             "type": "int",
             "default": 61613,
-            "description": "Connection port number",
+            "description": "Broker port",
         },
         "username": {
             "type": "str",
             "description": "Username to use for authentication",
-            "default": "beer_garden",
+            "required": False,
         },
         "password": {
             "type": "str",
             "description": "Password to use for authentication",
-            "default": "password",
+            "required": False,
         },
         "headers": {
             "type": "list",
-            "description": "Headers to be sent with messages. Follows standard YAML formatting"
-            " for lists with two variables 'key' and 'value'",
+            "description": "Headers to be sent with messages. Follows standard YAML "
+            "formatting for lists with two variables 'key' and 'value'",
             "required": False,
             "items": {
                 "key": {"type": "str"},
@@ -845,30 +845,29 @@ _STOMP_SPEC = {
             "items": {
                 "use_ssl": {
                     "type": "bool",
-                    "description": "Use SSL for connection",
+                    "description": "Use SSL when connecting to the message broker",
                     "default": False,
                 },
-                "private_key": {
+                "client_key": {
                     "type": "str",
-                    "description": "Path to private key",
+                    "description": "Path to client private key to use when "
+                    "communicating with the message broker",
                     "required": False,
+                    "previous_names": ["private_key"],
                 },
-                "cert_file": {
+                "client_cert": {
                     "type": "str",
-                    "description": "Path to certificate file",
+                    "description": "Path to client public certificate to use when "
+                    "communicating with the message broker",
                     "required": False,
+                    "previous_names": ["cert_file"],
                 },
-                "verify_host": {
-                    "type": "bool",
-                    "description": "Verify the server's certificate "
-                    "was signed by a trusted CA'",
-                    "default": True,
-                },
-                "verify_hostname": {
-                    "type": "bool",
-                    "description": "Verify the server's actual "
-                    "host name against the expected name'",
-                    "default": True,
+                "ca_cert": {
+                    "type": "str",
+                    "description": "Path to certificate file containing the "
+                    "certificate of the authority that issued the "
+                    "message broker certificate",
+                    "required": False,
                 },
             },
         },
@@ -1003,7 +1002,7 @@ _PARENT_SPEC = {
                 },
                 "host": {
                     "type": "str",
-                    "default": "0.0.0.0",
+                    "default": "localhost",
                     "description": "Connection hostname",
                 },
                 "username": {
@@ -1042,30 +1041,29 @@ _PARENT_SPEC = {
                     "items": {
                         "use_ssl": {
                             "type": "bool",
-                            "description": "Use SSL for connection",
+                            "description": "Use SSL when connecting to message broker",
                             "default": False,
                         },
-                        "private_key": {
+                        "client_key": {
                             "type": "str",
-                            "description": "Path to private key",
+                            "description": "Path to client private key to use when "
+                            "communicating with the message broker",
                             "required": False,
+                            "previous_names": ["private_key"],
                         },
-                        "cert_file": {
+                        "client_cert": {
                             "type": "str",
-                            "description": "Path to certificate file",
+                            "description": "Path to client public certificate to use "
+                            "when communicating with the message broker",
                             "required": False,
+                            "previous_names": ["cert_file"],
                         },
-                        "verify_host": {
-                            "type": "bool",
-                            "description": "Verify the server's certificate "
-                            "was signed by a trusted CA'",
-                            "default": True,
-                        },
-                        "verify_hostname": {
-                            "type": "bool",
-                            "description": "Verify the server's actual "
-                            "host name against the expected name'",
-                            "default": True,
+                        "ca_cert": {
+                            "type": "str",
+                            "description": "Path to certificate file containing the "
+                            "certificate of the authority that issued the message "
+                            "broker certificate",
+                            "required": False,
                         },
                     },
                 },

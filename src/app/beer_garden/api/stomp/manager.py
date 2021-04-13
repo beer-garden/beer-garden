@@ -55,9 +55,10 @@ class StompManager(BaseProcessor):
         if stomp_config.get("subscribe_destination"):
             host_and_ports = [(stomp_config.get("host"), stomp_config.get("port"))]
             subscribe_destination = stomp_config.get("subscribe_destination")
-            ssl = stomp_config.get("ssl")
 
+            ssl = stomp_config.get("ssl") or {}
             use_ssl = ssl.get("use_ssl") or False
+
             conn_dict_key = f"{host_and_ports}{subscribe_destination}{use_ssl}"
 
             if conn_dict_key in self.conn_dict:
@@ -128,9 +129,7 @@ class StompManager(BaseProcessor):
 
             if event.payload.connection_type:
                 if event.payload.connection_type.casefold() == "stomp":
-                    stomp_config = self.format_connection_params(
-                        "stomp_", event.payload.connection_params
-                    )
+                    stomp_config = event.payload.connection_params.get("stomp", {})
                     stomp_config["send_destination"] = None
                     skip_key = self.add_connection(
                         stomp_config=stomp_config, name=event.payload.name
@@ -168,11 +167,3 @@ class StompManager(BaseProcessor):
             tmp_headers[header[key_to_key]] = header[key_to_value]
 
         return tmp_headers
-
-    @staticmethod
-    def format_connection_params(term, connection_params):
-        """Strips leading term from connection parameters"""
-        new_connection_params = {"ssl": {}}
-        for key in connection_params:
-            new_connection_params[key.replace(term, "")] = connection_params[key]
-        return new_connection_params

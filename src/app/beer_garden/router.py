@@ -17,14 +17,12 @@ The router service is responsible for:
 import asyncio
 import logging
 import threading
-from concurrent.futures.thread import ThreadPoolExecutor
-from functools import partial
-from typing import Dict, Union
-
-import stomp
 from brewtils import EasyClient
 from brewtils.models import Event, Events, Garden, Operation, Request, System
+from concurrent.futures.thread import ThreadPoolExecutor
+from functools import partial
 from stomp.exception import ConnectFailedException
+from typing import Dict, Union
 
 import beer_garden
 import beer_garden.commands
@@ -40,7 +38,7 @@ import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
-from beer_garden.api.stomp.transport import consolidate_headers, process
+from beer_garden.api.stomp.transport import Connection, consolidate_headers, process
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 from beer_garden.events import publish
 from beer_garden.events.processors import BaseProcessor
@@ -55,7 +53,7 @@ routable_operations = [
     "INSTANCE_STOP",
     "REQUEST_CREATE",
     "SYSTEM_DELETE",
-    "GARDENS_SYNC",
+    "GARDEN_SYNC",
 ]
 
 # Executor used to run REQUEST_CREATE operations in an async context
@@ -64,7 +62,7 @@ t_pool = ThreadPoolExecutor()
 # Used for actually sending operations to other gardens
 garden_lock = threading.Lock()
 gardens: Dict[str, Garden] = {}  # garden_name -> garden
-stomp_garden_connections: Dict[str, stomp.Connection] = {}
+stomp_garden_connections: Dict[str, Connection] = {}
 
 # Used by entry points
 forward_processor: BaseProcessor
@@ -74,32 +72,6 @@ routing_lock = threading.Lock()
 system_name_routes: Dict[str, str] = {}
 system_id_routes: Dict[str, str] = {}
 instance_id_routes: Dict[str, str] = {}
-
-
-def route_garden_sync(target_garden_name: str = None):
-    # If a Garden Name is provided, determine where to route the request
-    if target_garden_name:
-        if target_garden_name == config.get("garden.name"):
-            beer_garden.garden.publish_garden()
-        else:
-            forward(
-                Operation(
-                    operation_type="GARDEN_SYNC", target_garden_name=target_garden_name
-                )
-            )
-
-    else:
-        # Iterate over all gardens and forward the sync request
-        with garden_lock:
-            for garden in gardens.values():
-                if garden.name != config.get("garden.name"):
-                    forward(
-                        Operation(
-                            operation_type="GARDEN_SYNC", target_garden_name=garden.name
-                        )
-                    )
-        beer_garden.garden.publish_garden()
-
 
 # "Real" async function (async def)
 async_functions = {
@@ -154,7 +126,7 @@ route_functions = {
     "GARDEN_UPDATE_STATUS": beer_garden.garden.update_garden_status,
     "GARDEN_UPDATE_CONFIG": beer_garden.garden.update_garden_config,
     "GARDEN_DELETE": beer_garden.garden.remove_garden,
-    "GARDEN_SYNC": route_garden_sync,
+    "GARDEN_SYNC": beer_garden.garden.garden_sync,
     "PLUGIN_LOG_READ": beer_garden.log.get_plugin_log_config,
     "PLUGIN_LOG_READ_LEGACY": beer_garden.log.get_plugin_log_config_legacy,
     "PLUGIN_LOG_RELOAD": beer_garden.log.load_plugin_log_config,
@@ -334,23 +306,25 @@ def forward(operation: Operation):
         raise RoutingRequestException(f"Unknown connection type {connection_type}")
 
 
-def setup_stomp(garden):
-    host_and_ports = [
-        (
-            garden.connection_params.get("stomp_host"),
-            garden.connection_params.get("stomp_port"),
-        )
-    ]
-    conn = stomp.Connection(host_and_ports=host_and_ports)
-    if garden.connection_params.get("stomp_ssl"):
-        if garden.connection_params.get("stomp_ssl").get("use_ssl"):
-            conn.set_ssl(
-                for_hosts=host_and_ports,
-                key_file=garden.connection_params["stomp_ssl"].get("private_key"),
-                cert_file=garden.connection_params["stomp_ssl"].get("cert_file"),
-            )
+def create_stomp_connection(garden: Garden) -> Connection:
+    """Create a stomp connection wrapper for a garden
 
-    return conn
+    Constructs a stomp connection wrapper from the garden's stomp connection parameters.
+
+    Will ignore subscribe_destination as the router shouldn't be subscribing to
+    anything.
+
+    Args:
+        garden: The garden specifying
+
+    Returns:
+        The created connection wrapper
+
+    """
+    connection_params = garden.connection_params.get("stomp", {})
+    connection_params["subscribe_destination"] = None
+
+    return Connection(**connection_params)
 
 
 def setup_routing():
@@ -379,7 +353,9 @@ def setup_routing():
                     gardens[garden.name] = garden
                     if garden.connection_type.casefold() == "stomp":
                         if garden.name not in stomp_garden_connections:
-                            stomp_garden_connections[garden.name] = setup_stomp(garden)
+                            stomp_garden_connections[
+                                garden.name
+                            ] = create_stomp_connection(garden)
 
             else:
                 logger.warning(f"Garden with invalid connection info: {garden!r}")
@@ -436,9 +412,9 @@ def handle_event(event):
                         and stomp_garden_connections[event.payload.name].is_connected()
                     ):
                         stomp_garden_connections[event.payload.name].disconnect()
-                    stomp_garden_connections[event.payload.name] = setup_stomp(
-                        event.payload
-                    )
+                    stomp_garden_connections[
+                        event.payload.name
+                    ] = create_stomp_connection(event.payload)
 
         elif event.name == Events.GARDEN_REMOVED.name:
             try:
@@ -517,7 +493,6 @@ def _determine_target_garden(operation: Operation) -> str:
     # Certain operations are ASSUMED to be targeted at the local garden
     if (
         "READ" in operation.operation_type
-        or "GARDEN" in operation.operation_type
         or "JOB" in operation.operation_type
         or "FILE" in operation.operation_type
         or operation.operation_type
@@ -532,20 +507,20 @@ def _determine_target_garden(operation: Operation) -> str:
     if operation.operation_type in ("SYSTEM_RELOAD", "SYSTEM_UPDATE"):
         return _system_id_lookup(operation.args[0])
 
-    elif operation.operation_type == "SYSTEM_DELETE":
+    if operation.operation_type == "SYSTEM_DELETE":
         # Force deletes get routed to local garden
         if operation.kwargs.get("force"):
             return config.get("garden.name")
 
         return _system_id_lookup(operation.args[0])
 
-    elif "INSTANCE" in operation.operation_type:
+    if "INSTANCE" in operation.operation_type:
         if "system_id" in operation.kwargs and "instance_name" in operation.kwargs:
             return _system_id_lookup(operation.kwargs["system_id"])
         else:
             return _instance_id_lookup(operation.args[0])
 
-    elif operation.operation_type == "REQUEST_CREATE":
+    if operation.operation_type == "REQUEST_CREATE":
         target_system = System(
             namespace=operation.model.namespace,
             name=operation.model.system,
@@ -553,13 +528,21 @@ def _determine_target_garden(operation: Operation) -> str:
         )
         return _system_name_lookup(target_system)
 
-    elif operation.operation_type.startswith("REQUEST"):
+    if operation.operation_type.startswith("REQUEST"):
         request = db.query_unique(Request, id=operation.args[0])
         operation.kwargs["request"] = request
 
         return config.get("garden.name")
 
-    elif operation.operation_type == "QUEUE_DELETE":
+    if "GARDEN" in operation.operation_type:
+        if operation.operation_type == "GARDEN_SYNC":
+            sync_target = operation.kwargs.get("sync_target")
+            if sync_target:
+                return sync_target
+
+        return config.get("garden.name")
+
+    if operation.operation_type == "QUEUE_DELETE":
         # Need to deconstruct the queue name
         parts = operation.args[0].split(".")
         version = parts[2].replace("-", ".")
@@ -574,22 +557,18 @@ def _determine_target_garden(operation: Operation) -> str:
 def _forward_stomp(operation: Operation, target_garden: Garden):
     try:
         if not stomp_garden_connections[target_garden.name].is_connected():
-            stomp_garden_connections[target_garden.name].connect(
-                username=target_garden.connection_params["stomp_username"],
-                passcode=target_garden.connection_params["stomp_password"],
-                wait=True,
-                headers={
-                    "client-id": target_garden.connection_params["stomp_username"]
-                },
-            )
+            if not stomp_garden_connections[target_garden.name].connect():
+                raise ConnectFailedException()
+
         message, response_headers = process(operation)
+
         response_headers = consolidate_headers(
             response_headers, target_garden.connection_params.get("stomp_headers")
         )
+
         stomp_garden_connections[target_garden.name].send(
             body=message,
             headers=response_headers,
-            destination=target_garden.connection_params["stomp_send_destination"],
         )
     except ConnectFailedException:
         _publish_failed_forward(
@@ -611,7 +590,7 @@ def _forward_http(operation: Operation, target_garden: Garden):
         conn_info: Connection info
     """
 
-    conn_info = target_garden.connection_params
+    conn_info = target_garden.connection_params.get("http", {})
 
     easy_client = EasyClient(
         bg_host=conn_info.get("host"),
