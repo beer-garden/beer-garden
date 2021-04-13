@@ -241,6 +241,8 @@ jobs:
             retry_on: error
             retry_wait_seconds: 5
             command: curl http://localhost:2337/version
+          continue-on-error: true
+
 
         - name: Check Docker Containers
           run: docker ps
