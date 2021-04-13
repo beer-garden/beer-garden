@@ -835,8 +835,13 @@ _STOMP_SPEC = {
             "formatting for lists with two variables 'key' and 'value'",
             "required": False,
             "items": {
-                "key": {"type": "str"},
-                "value": {"type": "str"},
+                "header": {
+                    "type": "dict",
+                    "items": {
+                        "key": {"type": "str"},
+                        "value": {"type": "str"},
+                    },
+                },
             },
             "default": [],
         },
@@ -1031,8 +1036,13 @@ _PARENT_SPEC = {
                     "two variables 'key' and 'value'",
                     "required": False,
                     "items": {
-                        "key": {"type": "str"},
-                        "value": {"type": "str"},
+                        "header": {
+                            "type": "dict",
+                            "items": {
+                                "key": {"type": "str"},
+                                "value": {"type": "str"},
+                            },
+                        },
                     },
                     "default": [],
                 },
