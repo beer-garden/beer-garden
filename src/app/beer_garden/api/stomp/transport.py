@@ -5,7 +5,7 @@ from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 from random import choice
 from string import ascii_letters
-from typing import Any, Tuple
+from typing import Any, Dict, List, Tuple
 
 import beer_garden.events
 import beer_garden.router
@@ -44,7 +44,7 @@ def process(body) -> Tuple[str, dict]:
         body: the message body to process
 
     Returns:
-        Tuple of the serialized message and response headers dict
+        Tuple of the serialized message and headers dict
 
     """
     many = isinstance(body, list)
@@ -58,6 +58,23 @@ def process(body) -> Tuple[str, dict]:
         body = SchemaParser.serialize(body, to_string=True, many=many)
 
     return body, {"model_class": model_class, "many": many}
+
+
+def parse_header_list(headers: List[Dict[str, str]]) -> Dict[str, str]:
+    """Convert a header list (from config, db) into a header dictionary
+
+    Turns this:
+
+        headers:
+          - key: yo
+            value: lo
+
+    Into this:
+
+        {"yo": "lo"}
+
+    """
+    return {header["key"]: header["value"] for header in headers}
 
 
 def send(

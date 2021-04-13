@@ -2,7 +2,7 @@ import logging
 from box import Box
 from brewtils.models import Event, Events
 
-from beer_garden.api.stomp.transport import Connection
+from beer_garden.api.stomp.transport import Connection, parse_header_list
 from beer_garden.events import publish
 from beer_garden.events.processors import BaseProcessor
 
@@ -78,7 +78,7 @@ class StompManager(BaseProcessor):
                 self.conn_dict[conn_dict_key]["headers_list"] = []
 
             if stomp_config.get("headers") and is_main:
-                headers = self.convert_header_to_dict(stomp_config.get("headers"))
+                headers = parse_header_list(stomp_config.get("headers"))
 
                 if headers not in self.conn_dict[conn_dict_key]["headers_list"]:
                     self.conn_dict[conn_dict_key]["headers_list"].append(headers)
@@ -148,22 +148,3 @@ class StompManager(BaseProcessor):
                             conn.send(event, headers=headers)
                     else:
                         conn.send(event)
-
-    @staticmethod
-    def convert_header_to_dict(headers):
-        tmp_headers = {}
-        key_to_key = None
-        key_to_value = None
-
-        for header in headers:
-            header = eval(header)
-
-            for key in header.keys():
-                if "key" in key:
-                    key_to_key = key
-                elif "value" in key:
-                    key_to_value = key
-
-            tmp_headers[header[key_to_key]] = header[key_to_value]
-
-        return tmp_headers
