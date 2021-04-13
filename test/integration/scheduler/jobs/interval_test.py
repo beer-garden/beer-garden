@@ -52,23 +52,21 @@ class TestInterval(object):
 
         assert job_response is not None
 
+        print(job_response)
+
         # Wait a minute before checking plus a little extra
         time.sleep(60 + 15)
 
-        jobs = self.easy_client.find_jobs()
+        found_job = self.easy_client.find_jobs(id=job.id)
 
-        found_job = None
-        for job in jobs:
-            if job.id == job_response.id:
-                found_job = job
-                break
+        # found_job = None
+        # for job in jobs:
+        #     if job.id == job_response.id:
+        #         found_job = job
+        #         break
 
         assert found_job is not None
 
         assert found_job.success_count > 0
 
         assert self.easy_client.remove_job(job)
-
-
-
-
