@@ -362,7 +362,14 @@ def setup_routing():
 
 
 def add_routing_system(system=None, garden_name=None):
-    """Update the gardens used for routing"""
+    """Update the gardens used for routing
+
+    NOTE: THIS NEEDS TO BE ABLE TO BE CALLED MULTIPLE TIMES FOR THE SAME SYSTEM!
+
+    This will be called twice in the HTTP entry point when systems are added, so make
+    sure this can handle that without breaking.
+
+    """
     # Default to local garden name
     garden_name = garden_name or config.get("garden.name")
 
@@ -386,14 +393,15 @@ def remove_routing_system(system=None):
 
 def handle_event(event):
     """Handle events"""
-    # Event handling is not fast enough to deal with system changes arising from the
-    # local garden, so only handle child gardens
+    if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
+        add_routing_system(system=event.payload, garden_name=event.garden)
+    elif event.name == Events.SYSTEM_REMOVED.name:
+        remove_routing_system(system=event.payload)
+
+    # Handle downstream events
     if event.garden != config.get("garden.name"):
-        if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
-            add_routing_system(system=event.payload, garden_name=event.garden)
-        elif event.name == Events.SYSTEM_REMOVED.name:
-            remove_routing_system(system=event.payload)
-        elif event.name == Events.GARDEN_SYNC.name:
+        if event.name == Events.GARDEN_SYNC.name:
+            # TODO - Do we also need to remove systems here?
             for system in event.payload.systems:
                 add_routing_system(system=system, garden_name=event.payload.name)
 
