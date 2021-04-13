@@ -369,7 +369,6 @@ def _event_callback(event):
     websocket_publish(event)
 
     # And also register handlers that the entry point needs to care about
-    # As of now that's only the routing subsystem
     for handler in [
         beer_garden.router.handle_event,
         beer_garden.log.handle_event,

@@ -2,6 +2,8 @@ import logging
 from box import Box
 from brewtils.models import Event, Events
 
+import beer_garden.log
+import beer_garden.router
 from beer_garden.api.stomp.transport import Connection, parse_header_list
 from beer_garden.events import publish
 from beer_garden.events.processors import BaseProcessor
@@ -121,6 +123,13 @@ class StompManager(BaseProcessor):
                     self.conn_dict.pop(key)
 
     def handle_event(self, event):
+        # And also register handlers that the entry point needs to care about
+        for handler in [beer_garden.router.handle_event, beer_garden.log.handle_event]:
+            try:
+                handler(event)
+            except Exception as ex:
+                logger.exception(f"Error executing callback for {event!r}: {ex}")
+
         if event.name == Events.GARDEN_REMOVED.name:
             self.remove_garden_from_list(garden_name=event.payload.name)
 

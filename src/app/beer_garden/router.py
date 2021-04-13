@@ -368,7 +368,14 @@ def setup_routing():
 
 
 def add_routing_system(system=None, garden_name=None):
-    """Update the gardens used for routing"""
+    """Update the gardens used for routing
+
+    NOTE: THIS NEEDS TO BE ABLE TO BE CALLED MULTIPLE TIMES FOR THE SAME SYSTEM!
+
+    This will be called twice in the HTTP entry point when systems are added, so make
+    sure this can handle that without breaking.
+
+    """
     # Default to local garden name
     garden_name = garden_name or config.get("garden.name")
 
@@ -383,23 +390,28 @@ def add_routing_system(system=None, garden_name=None):
 def remove_routing_system(system=None):
     """Update the gardens used for routing"""
     with routing_lock:
-        del system_name_routes[str(system)]
-        del system_id_routes[system.id]
+        if str(system) in system_name_routes:
+            del system_name_routes[str(system)]
+
+        if system.id in system_id_routes:
+            del system_id_routes[system.id]
 
         for instance in system.instances:
-            del instance_id_routes[instance.id]
+            if instance.id in instance_id_routes:
+                del instance_id_routes[instance.id]
 
 
 def handle_event(event):
     """Handle events"""
-    # Event handling is not fast enough to deal with system changes arising from the
-    # local garden, so only handle child gardens
+    if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
+        add_routing_system(system=event.payload, garden_name=event.garden)
+    elif event.name == Events.SYSTEM_REMOVED.name:
+        remove_routing_system(system=event.payload)
+
+    # Handle downstream events
     if event.garden != config.get("garden.name"):
-        if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
-            add_routing_system(system=event.payload, garden_name=event.garden)
-        elif event.name == Events.SYSTEM_REMOVED.name:
-            remove_routing_system(system=event.payload)
-        elif event.name == Events.GARDEN_SYNC.name:
+        if event.name == Events.GARDEN_SYNC.name:
+            # TODO - Do we also need to remove systems here?
             for system in event.payload.systems:
                 add_routing_system(system=system, garden_name=event.payload.name)
 
