@@ -1,4 +1,5 @@
 import pytest
+from brewtils import get_easy_client
 from brewtils.models import IntervalTrigger, RequestTemplate, Job
 import time
 
@@ -10,32 +11,33 @@ except:
     from ...helper.assertion import assert_successful_request, assert_validation_error
 
 
-# @pytest.fixture(scope="class")
 @pytest.fixture()
 def system_spec():
     return {'system': 'echo', 'system_version': '3.0.0.dev0', 'instance_name': 'default',
-            'command': 'say'}
+            'command': 'say', 'parameters': {'message': "hello", 'loud': False}}
 
 
 @pytest.mark.usefixtures('easy_client')
 class TestInterval(object):
 
-    def test_no_namespace_job(self):
+    def test_no_namespace_job(self, system_spec):
+        # self.easy_client = get_easy_client(**{"bg_host": "localhost",
+        #                                       "bg_port": 2337,
+        #                                       "ssl_enabled": False})
 
         job_name = "test_no_namespace_job"
+        job_wait = 30
+
         template = RequestTemplate(
-            system='echo',
-            system_version='3.0.0.dev0',
-            instance_name='default',
-            command='say',
-            parameters={
-                'message': "hello",
-                'loud': False
-            },
+            system=system_spec['system'],
+            system_version=system_spec['system_version'],
+            instance_name=system_spec['instance_name'],
+            command=system_spec['command'],
+            parameters=system_spec['parameters'],
             comment=job_name + ' Job'
         )
 
-        trigger = IntervalTrigger(minutes=1)
+        trigger = IntervalTrigger(seconds=job_wait)
         trigger.reschedule_on_finish = True
 
         job = Job(
@@ -52,21 +54,15 @@ class TestInterval(object):
 
         assert job_response is not None
 
-        print(job_response)
+        # Wait before checking plus a little extra
+        time.sleep(job_wait + 15)
 
-        # Wait a minute before checking plus a little extra
-        time.sleep(60 + 15)
+        found_jobs = self.easy_client.find_jobs(name=job_name)
 
-        found_job = self.easy_client.find_jobs(id=job.id)
+        assert len(found_jobs) == 1
 
-        # found_job = None
-        # for job in jobs:
-        #     if job.id == job_response.id:
-        #         found_job = job
-        #         break
+        assert found_jobs[0] is not None
 
-        assert found_job is not None
+        assert found_jobs[0].success_count > 0
 
-        assert found_job.success_count > 0
-
-        assert self.easy_client.remove_job(job)
+        assert self.easy_client.remove_job(found_jobs[0].id)
