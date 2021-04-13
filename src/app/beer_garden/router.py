@@ -17,12 +17,13 @@ The router service is responsible for:
 import asyncio
 import logging
 import threading
-from brewtils import EasyClient
-from brewtils.models import Event, Events, Garden, Operation, Request, System
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import partial
-from stomp.exception import ConnectFailedException
 from typing import Dict, Union
+
+from brewtils import EasyClient
+from brewtils.models import Event, Events, Garden, Operation, Request, System
+from stomp.exception import ConnectFailedException
 
 import beer_garden
 import beer_garden.commands
@@ -556,21 +557,18 @@ def _determine_target_garden(operation: Operation) -> str:
 
 def _forward_stomp(operation: Operation, target_garden: Garden):
     try:
-        if not stomp_garden_connections[target_garden.name].is_connected():
-            if not stomp_garden_connections[target_garden.name].connect():
-                raise ConnectFailedException()
+        conn = stomp_garden_connections[target_garden.name]
 
-        message, response_headers = process(operation)
+        if not conn.is_connected() and not conn.connect():
+            raise ConnectFailedException()
 
-        response_headers = consolidate_headers(
-            response_headers,
-            target_garden.connection_params.get("stomp", {}).get("headers", {})
-        )
+        header_list = target_garden.connection_params["stomp"].get("headers", {})
+        conn_headers = {item["key"]: item["value"] for item in header_list}
 
-        stomp_garden_connections[target_garden.name].send(
-            body=message,
-            headers=response_headers,
-        )
+        body, model_headers = process(operation)
+        headers = consolidate_headers(model_headers, conn_headers)
+
+        conn.send(body=body, headers=headers)
     except ConnectFailedException:
         _publish_failed_forward(
             operation=operation,
