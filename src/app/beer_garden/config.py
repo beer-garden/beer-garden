@@ -835,8 +835,13 @@ _STOMP_SPEC = {
             "formatting for lists with two variables 'key' and 'value'",
             "required": False,
             "items": {
-                "key": {"type": "str"},
-                "value": {"type": "str"},
+                "header": {
+                    "type": "dict",
+                    "items": {
+                        "key": {"type": "str"},
+                        "value": {"type": "str"},
+                    },
+                },
             },
             "default": [],
         },
@@ -995,34 +1000,35 @@ _PARENT_SPEC = {
                     "default": False,
                     "description": "Publish events to parent garden over STOMP",
                 },
-                "port": {
-                    "type": "int",
-                    "default": 61613,
-                    "description": "Connection port number",
-                },
                 "host": {
                     "type": "str",
                     "default": "localhost",
-                    "description": "Connection hostname",
+                    "description": "Broker hostname",
+                },
+                "port": {
+                    "type": "int",
+                    "default": 61613,
+                    "description": "Broker port",
                 },
                 "username": {
                     "type": "str",
-                    "default": "beer_garden",
+                    "description": "Username to use for authentication",
+                    "required": False,
                 },
                 "password": {
                     "type": "str",
-                    "default": "password",
+                    "description": "Password to use for authentication",
+                    "required": False,
                 },
                 "send_destination": {
                     "type": "str",
-                    "default": "Beer_Garden_Operations_Parent",
-                    "description": "Send topic where Beer_Garden sends operations",
+                    "description": "Topic where events are published",
+                    "required": False,
                 },
                 "subscribe_destination": {
                     "type": "str",
-                    "default": "Beer_Garden_Forward_Parent",
-                    "description": "Subscription topic where Beer_Garden"
-                    " listens for operations",
+                    "description": "Topic to listen for operations",
+                    "required": False,
                 },
                 "headers": {
                     "type": "list",
@@ -1031,8 +1037,13 @@ _PARENT_SPEC = {
                     "two variables 'key' and 'value'",
                     "required": False,
                     "items": {
-                        "key": {"type": "str"},
-                        "value": {"type": "str"},
+                        "header": {
+                            "type": "dict",
+                            "items": {
+                                "key": {"type": "str"},
+                                "value": {"type": "str"},
+                            },
+                        },
                     },
                     "default": [],
                 },
