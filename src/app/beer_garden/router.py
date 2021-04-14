@@ -575,7 +575,10 @@ def _forward_stomp(operation: Operation, target_garden: Garden):
             raise ConnectFailedException()
 
         header_list = target_garden.connection_params["stomp"].get("headers", {})
-        conn_headers = {item["key"]: item["value"] for item in header_list}
+        conn_headers = {}
+        for item in header_list:
+            if "key" in item and "value" in item:
+                conn_headers[item["key"]] = item["value"]
 
         body, model_headers = process(operation)
         headers = consolidate_headers(model_headers, conn_headers)
