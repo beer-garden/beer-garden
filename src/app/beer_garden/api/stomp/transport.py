@@ -236,10 +236,6 @@ class Connection:
         except Exception as ex:
             logger.warning(f"Connection error: {ex}")
 
-            logger.warning(type(ex))
-
-            raise ex
-
             return False
 
     def disconnect(self):
