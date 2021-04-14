@@ -56,6 +56,8 @@ services:
             # Enable stomp and point at the correct broker
             BG_ENTRY_STOMP_ENABLED: "true"
             BG_ENTRY_STOMP_HOST: activemq
+            BG_PARENT_STOMP_USERNAME: beer_garden
+            BG_PARENT_STOMP_PASSWORD: password
             BG_ENTRY_STOMP_SUBSCRIBE_DESTINATION: Beer_Garden_Operations
             BG_ENTRY_STOMP_SEND_DESTINATION: Beer_Garden_Events
 
@@ -138,6 +140,8 @@ services:
             BG_GARDEN_NAME: childdocker
             BG_PARENT_STOMP_ENABLED: "true"
             BG_PARENT_STOMP_HOST: activemq
+            BG_PARENT_STOMP_USERNAME: beer_garden
+            BG_PARENT_STOMP_PASSWORD: password
             BG_PARENT_STOMP_SEND_DESTINATION: Beer_Garden_Operations_Parent
             BG_PARENT_STOMP_SUBCRIBE_DESTINATION: Beer_Garden_Forward_Parent
 
