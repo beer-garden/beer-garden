@@ -39,12 +39,7 @@ import beer_garden.queues
 import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
-from beer_garden.api.stomp.transport import (
-    Connection,
-    consolidate_headers,
-    parse_header_list,
-    process,
-)
+from beer_garden.api.stomp.transport import Connection, consolidate_headers, process
 from beer_garden.errors import RoutingRequestException, UnknownGardenException
 from beer_garden.events import publish
 from beer_garden.events.processors import BaseProcessor
@@ -580,7 +575,10 @@ def _forward_stomp(operation: Operation, target_garden: Garden):
             raise ConnectFailedException()
 
         header_list = target_garden.connection_params["stomp"].get("headers", {})
-        conn_headers = parse_header_list(header_list)
+        conn_headers = {}
+        for item in header_list:
+            if "key" in item and "value" in item:
+                conn_headers[item["key"]] = item["value"]
 
         body, model_headers = process(operation)
         headers = consolidate_headers(model_headers, conn_headers)
