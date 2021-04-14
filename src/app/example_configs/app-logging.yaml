@@ -30,7 +30,7 @@ loggers:
   tornado:
     level: "WARNING"
   stomp:
-    level: "DEBUG"
+    level: "WARNING"
   urllib3:
     level: "INFO"
 
