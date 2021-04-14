@@ -18,6 +18,7 @@ import asyncio
 import logging
 import threading
 from concurrent.futures.thread import ThreadPoolExecutor
+from copy import deepcopy
 from functools import partial
 from typing import Dict, Union
 
@@ -323,6 +324,7 @@ def create_stomp_connection(garden: Garden) -> Connection:
 
     """
     connection_params = garden.connection_params.get("stomp", {})
+    connection_params = deepcopy(connection_params)
     connection_params["subscribe_destination"] = None
 
     return Connection(**connection_params)
