@@ -53,7 +53,7 @@ class TestGardenSetup(object):
                                                         "port": 61613,
                                                         "send_destination": "Beer_Garden_Operations_Parent",
                                                         "subscribe_destination": "Beer_Garden_Events_Parent",
-                                                        "username": "beer_garden",
+                                                        "username": "beer_garden_BAD",
                                                         "password": "password",
                                                         "ssl": {"use_ssl": False},
                                                         }}
