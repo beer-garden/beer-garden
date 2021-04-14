@@ -35,12 +35,12 @@ jobs:
       os-default: "['ubuntu-18.04']"
 
       # If tests fail, should it proceed to print logs
-      allow-failure: "[true]"
+      allow-failure: "[false]"
 
   Remote-Plugin-Testing:
     needs: Setup-Release-Info
     runs-on: ${{ matrix.os }}
-    if: "false"
+#    if: "false"
 
     strategy:
       matrix:
@@ -126,7 +126,7 @@ jobs:
   Local-Plugin-Testing:
     needs: Setup-Release-Info
     runs-on: ${{ matrix.os }}
-    if: "false"
+#    if: "false"
 
     strategy:
       matrix:
@@ -214,7 +214,7 @@ jobs:
   Garden-HTTP-Testing:
     needs: Setup-Release-Info
     runs-on: ${{ matrix.os }}
-    if: "false"
+#    if: "false"
 
     strategy:
       matrix:
