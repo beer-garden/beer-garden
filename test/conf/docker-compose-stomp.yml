@@ -151,7 +151,7 @@ services:
             BG_ENTRY_STOMP_USERNAME: beer_garden
             BG_ENTRY_STOMP_PASSWORD: password
             BG_ENTRY_STOMP_SUBSCRIBE_DESTINATION: Beer_Garden_Operations_Parent
-            BG_ENTRY_STOMP_SEND_DESTINATION: Beer_Garden_Forward_Parent
+            BG_ENTRY_STOMP_SEND_DESTINATION: Beer_Garden_Events_parent
 
 
             # If you are running in Ubuntu, then you need to set the Timezone

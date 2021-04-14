@@ -51,8 +51,8 @@ class TestGardenSetup(object):
         created_child['connection_type'] = "STOMP"
         created_child['connection_params'] = {"stomp": {"host": "activemq",
                                                         "port": 61613,
-                                                        "send_destination": "Beer_Garden_Forward_Parent",
-                                                        "subscribe_destination": "Beer_Garden_Operations_Parent",
+                                                        "send_destination": "Beer_Garden_Operations_Parent",
+                                                        "subscribe_destination": "Beer_Garden_Events_Parent",
                                                         "username": "beer_garden",
                                                         "password": "password",
                                                         "ssl": {"use_ssl": False},
