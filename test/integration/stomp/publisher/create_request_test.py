@@ -82,6 +82,8 @@ class TestPublisher(object):
         """Published the Request over HTTP and verifies of STOMP"""
 
         stomp_connection = self.create_stomp_connection()
+        
+        assert stomp_connection.is_connected()
 
         request_model = self.create_request("test_listen_create_request")
 
