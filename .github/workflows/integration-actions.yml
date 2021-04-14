@@ -40,7 +40,7 @@ jobs:
   Remote-Plugin-Testing:
     needs: Setup-Release-Info
     runs-on: ${{ matrix.os }}
-#    if: "false"
+    if: "false"
 
     strategy:
       matrix:
@@ -126,7 +126,7 @@ jobs:
   Local-Plugin-Testing:
     needs: Setup-Release-Info
     runs-on: ${{ matrix.os }}
-#    if: "false"
+    if: "false"
 
     strategy:
       matrix:
@@ -214,7 +214,7 @@ jobs:
   Garden-HTTP-Testing:
     needs: Setup-Release-Info
     runs-on: ${{ matrix.os }}
-#    if: "false"
+    if: "false"
 
     strategy:
       matrix:
@@ -396,14 +396,6 @@ jobs:
       - name: Check Docker Containers
         run: docker ps
 
-      - name: Grab logs from Child Beer-Garden
-        run: BG=${{matrix.beer-garden-local}} RELEASE=${{matrix.child-garden}} docker-compose logs --tail 100 beer-garden-child
-        working-directory: ./docker/docker-compose
-
-      - name: Grab logs from Beer-Garden
-        run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
-        working-directory: ./docker/docker-compose
-
       - name: Install Python Deps
         run: pip${{ matrix.python-version }} install -r requirements.txt
         working-directory: ./test/integration
@@ -415,6 +407,14 @@ jobs:
       - name: Install Test Latest of Brewtils
         if: ${{matrix.brewtils == 'latest'}}
         run: pip${{ matrix.python-version }} install brewtils
+
+      - name: Grab logs from Child Beer-Garden
+        run: BG=${{matrix.beer-garden-local}} RELEASE=${{matrix.child-garden}} docker-compose logs --tail 100 beer-garden-child
+        working-directory: ./docker/docker-compose
+
+      - name: Grab logs from Beer-Garden
+        run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
+        working-directory: ./docker/docker-compose
 
       - name: Test Gardens
         run: python${{ matrix.python-version }} -m pytest gardens_stomp/
@@ -436,7 +436,7 @@ jobs:
   Stomp-Testing:
     needs: Setup-Release-Info
     runs-on: ${{ matrix.os }}
-#    if: "false"
+    if: "false"
 
     strategy:
       matrix:
