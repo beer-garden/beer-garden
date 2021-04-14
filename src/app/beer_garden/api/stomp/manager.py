@@ -2,7 +2,9 @@ import logging
 from box import Box
 from brewtils.models import Event, Events
 
-from beer_garden.api.stomp.transport import Connection
+import beer_garden.log
+import beer_garden.router
+from beer_garden.api.stomp.transport import Connection, parse_header_list
 from beer_garden.events import publish
 from beer_garden.events.processors import BaseProcessor
 
@@ -78,7 +80,7 @@ class StompManager(BaseProcessor):
                 self.conn_dict[conn_dict_key]["headers_list"] = []
 
             if stomp_config.get("headers") and is_main:
-                headers = self.convert_header_to_dict(stomp_config.get("headers"))
+                headers = parse_header_list(stomp_config.get("headers"))
 
                 if headers not in self.conn_dict[conn_dict_key]["headers_list"]:
                     self.conn_dict[conn_dict_key]["headers_list"].append(headers)
@@ -121,6 +123,13 @@ class StompManager(BaseProcessor):
                     self.conn_dict.pop(key)
 
     def handle_event(self, event):
+        # And also register handlers that the entry point needs to care about
+        for handler in [beer_garden.router.handle_event, beer_garden.log.handle_event]:
+            try:
+                handler(event)
+            except Exception as ex:
+                logger.exception(f"Error executing callback for {event!r}: {ex}")
+
         if event.name == Events.GARDEN_REMOVED.name:
             self.remove_garden_from_list(garden_name=event.payload.name)
 
@@ -148,22 +157,3 @@ class StompManager(BaseProcessor):
                             conn.send(event, headers=headers)
                     else:
                         conn.send(event)
-
-    @staticmethod
-    def convert_header_to_dict(headers):
-        tmp_headers = {}
-        key_to_key = None
-        key_to_value = None
-
-        for header in headers:
-            header = eval(header)
-
-            for key in header.keys():
-                if "key" in key:
-                    key_to_key = key
-                elif "value" in key:
-                    key_to_value = key
-
-            tmp_headers[header[key_to_key]] = header[key_to_value]
-
-        return tmp_headers
