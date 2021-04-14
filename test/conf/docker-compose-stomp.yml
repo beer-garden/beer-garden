@@ -171,8 +171,8 @@ services:
             BG_MQ_CONNECTIONS_MESSAGE_PASSWORD: password
 
             # Enable stomp and point at the correct broker
-            BG_ENTRY_STOMP_ENABLED: "false"
-            BG_ENTRY_STOMP_HOST: activemq
+#            BG_ENTRY_STOMP_ENABLED: "false"
+#            BG_ENTRY_STOMP_HOST: activemq
 
             # We expose grafana for you, but you can change this to an
             # external grafana URL if you would like. It just adds a
