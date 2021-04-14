@@ -19,8 +19,6 @@ loggers:
     level: "WARN"
   requests.packages.urllib3.connectionpool:
     level: "WARN"
-  stomp:
-    level: "DEBUG"
 
 root:
   level: "INFO"
