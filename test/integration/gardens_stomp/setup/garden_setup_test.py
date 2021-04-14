@@ -49,13 +49,13 @@ class TestGardenSetup(object):
         print(created_child)
 
         created_child['connection_type'] = "STOMP"
-        created_child['connection_params'] = {"stomp": {"stomp_host": "activemq",
-                                                        "stomp_port": 61613,
-                                                        "stomp_send_destination": "Beer_Garden_Forward_Parent",
-                                                        "stomp_subscribe_destination": "Beer_Garden_Operations_Parent",
-                                                        "stomp_username": "beer_garden",
-                                                        "stomp_password": "password",
-                                                        "stomp_ssl": {"use_ssl": False},
+        created_child['connection_params'] = {"stomp": {"host": "activemq",
+                                                        "port": 61613,
+                                                        "send_destination": "Beer_Garden_Forward_Parent",
+                                                        "subscribe_destination": "Beer_Garden_Operations_Parent",
+                                                        "username": "beer_garden",
+                                                        "password": "password",
+                                                        "ssl": {"use_ssl": False},
                                                         }}
 
         patch = PatchOperation(operation="config", path='', value=created_child)
