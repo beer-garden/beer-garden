@@ -24,17 +24,6 @@ class TestGardenSetup(object):
 
         child_garden = Garden(name=self.child_garden_name)
 
-        # child_garden = Garden(name=self.child_garden_name,
-        #                       connection_type="STOMP",
-        #                       connection_params={"stomp_host": "activemq",
-        #                                          "stomp_port": 61613,
-        #                                          "stomp_send_destination": "Beer_Garden_Forward_Parent",
-        #                                          "stomp_subscribe_destination": "Beer_Garden_Operations_Parent",
-        #                                          "stomp_username": "beer_garden",
-        #                                          "stomp_password": "password",
-        #                                          "stomp_ssl": {"use_ssl": False},
-        #                                          })
-
         payload = self.parser.serialize_garden(child_garden)
 
         response = self.easy_client.client.session.post(
