@@ -36,7 +36,7 @@ jobs:
       os-default: "['ubuntu-18.04']"
 
       # If tests fail, should it proceed to print logs
-      allow-failure: "[false]"
+      allow-failure: "[true]"
 
   Remote-Plugin-Testing:
     needs: Setup-Release-Info
