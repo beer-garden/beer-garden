@@ -1,11 +1,12 @@
-import certifi
 import logging
+from random import choice
+from string import ascii_letters
+from typing import Any, Dict, Tuple
+
+import certifi
 import stomp
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
-from random import choice
-from string import ascii_letters
-from typing import Any, Tuple
 
 import beer_garden.events
 import beer_garden.router
@@ -44,7 +45,7 @@ def process(body) -> Tuple[str, dict]:
         body: the message body to process
 
     Returns:
-        Tuple of the serialized message and response headers dict
+        Tuple of the serialized message and headers dict
 
     """
     many = isinstance(body, list)
@@ -58,6 +59,26 @@ def process(body) -> Tuple[str, dict]:
         body = SchemaParser.serialize(body, to_string=True, many=many)
 
     return body, {"model_class": model_class, "many": many}
+
+
+def parse_header_list(headers: str) -> Dict[str, str]:
+    """Convert a header list (from config, db) into a header dictionary"""
+    tmp_headers = {}
+    key_to_key = None
+    key_to_value = None
+
+    for header in headers:
+        header = eval(header)
+
+        for key in header.keys():
+            if "key" in key:
+                key_to_key = key
+            elif "value" in key:
+                key_to_value = key
+
+        tmp_headers[header[key_to_key]] = header[key_to_value]
+
+    return tmp_headers
 
 
 def send(

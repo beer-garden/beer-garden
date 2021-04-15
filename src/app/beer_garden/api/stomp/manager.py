@@ -2,7 +2,10 @@ import logging
 from box import Box
 from brewtils.models import Event, Events
 
-from beer_garden.api.stomp.transport import Connection
+import beer_garden.log
+import beer_garden.requests
+import beer_garden.router
+from beer_garden.api.stomp.transport import Connection, parse_header_list
 from beer_garden.events import publish
 from beer_garden.events.processors import BaseProcessor
 
@@ -78,7 +81,7 @@ class StompManager(BaseProcessor):
                 self.conn_dict[conn_dict_key]["headers_list"] = []
 
             if stomp_config.get("headers") and is_main:
-                headers = self.convert_header_to_dict(stomp_config.get("headers"))
+                headers = parse_header_list(stomp_config.get("headers"))
 
                 if headers not in self.conn_dict[conn_dict_key]["headers_list"]:
                     self.conn_dict[conn_dict_key]["headers_list"].append(headers)
@@ -120,24 +123,26 @@ class StompManager(BaseProcessor):
                     self.conn_dict[key]["conn"].disconnect()
                     self.conn_dict.pop(key)
 
-    def handle_event(self, event):
-        if event.name == Events.GARDEN_REMOVED.name:
-            self.remove_garden_from_list(garden_name=event.payload.name)
+    def _event_handler(self, event):
+        """Internal event handler"""
+        if not event.error:
+            if event.name == Events.GARDEN_REMOVED.name:
+                self.remove_garden_from_list(garden_name=event.payload.name)
 
-        elif event.name == Events.GARDEN_UPDATED.name:
-            skip_key = None
+            elif event.name == Events.GARDEN_UPDATED.name:
+                skip_key = None
 
-            if event.payload.connection_type:
-                if event.payload.connection_type.casefold() == "stomp":
-                    stomp_config = event.payload.connection_params.get("stomp", {})
-                    stomp_config["send_destination"] = None
-                    skip_key = self.add_connection(
-                        stomp_config=stomp_config, name=event.payload.name
-                    )
+                if event.payload.connection_type:
+                    if event.payload.connection_type.casefold() == "stomp":
+                        stomp_config = event.payload.connection_params.get("stomp", {})
+                        stomp_config["send_destination"] = None
+                        skip_key = self.add_connection(
+                            stomp_config=stomp_config, name=event.payload.name
+                        )
 
-            self.remove_garden_from_list(
-                garden_name=event.payload.name, skip_key=skip_key
-            )
+                self.remove_garden_from_list(
+                    garden_name=event.payload.name, skip_key=skip_key
+                )
 
         for value in self.conn_dict.values():
             conn = value["conn"]
@@ -149,21 +154,25 @@ class StompManager(BaseProcessor):
                     else:
                         conn.send(event)
 
-    @staticmethod
-    def convert_header_to_dict(headers):
-        tmp_headers = {}
-        key_to_key = None
-        key_to_value = None
+    def handle_event(self, event):
+        """Main event entry point
 
-        for header in headers:
-            header = eval(header)
+        This registers handlers that this entry point needs to care about.
 
-            for key in header.keys():
-                if "key" in key:
-                    key_to_key = key
-                elif "value" in key:
-                    key_to_value = key
+        - All entry points need the router and log handlers
+        - You might think that the requests handler isn't needed since the stomp entry
+        point specifically doesn't support wait events. However, the request validator
+        does use wait events internally, so we still need it.
+        - And then the actually event handler logic for this entry point
 
-            tmp_headers[header[key_to_key]] = header[key_to_value]
-
-        return tmp_headers
+        """
+        for handler in [
+            beer_garden.router.handle_event,
+            beer_garden.log.handle_event,
+            beer_garden.requests.handle_event,
+            self._event_handler,
+        ]:
+            try:
+                handler(event)
+            except Exception as ex:
+                logger.exception(f"Error executing callback for {event!r}: {ex}")
