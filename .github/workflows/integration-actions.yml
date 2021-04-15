@@ -24,7 +24,6 @@ jobs:
 
       # Versions of BG utilized for Parent/Child testing
       beer-garden-docker-images: "['3.0.0','3.0.1','3.0.2','3.0.3','3.0.4','3.0.5','3.1.0','3.1.1','3.2.0','3.2.1','3.2.2','3','latest','unstable']"
-#      beer-garden-docker-images: "['unstable']"
 
       # Default Child if in debug mode
       beer-garden-docker-remote-default: "['latest']"
@@ -41,7 +40,7 @@ jobs:
   Remote-Plugin-Testing:
     needs: Setup-Release-Info
     runs-on: ${{ matrix.os }}
-    if: "false"
+#    if: "false"
 
     strategy:
       matrix:
@@ -127,7 +126,7 @@ jobs:
   Local-Plugin-Testing:
     needs: Setup-Release-Info
     runs-on: ${{ matrix.os }}
-    if: "false"
+#    if: "false"
 
     strategy:
       matrix:
@@ -215,7 +214,7 @@ jobs:
   Garden-HTTP-Testing:
     needs: Setup-Release-Info
     runs-on: ${{ matrix.os }}
-    if: "false"
+#    if: "false"
 
     strategy:
       matrix:
@@ -334,11 +333,17 @@ jobs:
 #        For Debugging
 #        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-remote-default)}}
 
-        # Feature added in 3.0.3
+        # Feature added get fixed until 3.2.2
         exclude:
           - child-garden: 3.0.0
           - child-garden: 3.0.1
           - child-garden: 3.0.2
+          - child-garden: 3.0.3
+          - child-garden: 3.0.4
+          - child-garden: 3.0.5
+          - child-garden: 3.1.0
+          - child-garden: 3.2.0
+          - child-garden: 3.2.1
 
       fail-fast: false
 
@@ -437,7 +442,7 @@ jobs:
   Stomp-Testing:
     needs: Setup-Release-Info
     runs-on: ${{ matrix.os }}
-    if: "false"
+#    if: "false"
 
     strategy:
       matrix:
