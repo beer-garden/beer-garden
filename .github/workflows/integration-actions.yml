@@ -1,10 +1,10 @@
 name: Integration-Actions
 
-on: pull_request # Used only for testing
+#on: pull_request # Used only for testing
 
-#on:
-#  schedule:
-#    - cron: '0 0 * * *' # Every Day at Midnight
+on:
+  schedule:
+    - cron: '0 0 * * *' # Every Day at Midnight
 
 jobs:
   Setup-Release-Info:
@@ -342,6 +342,7 @@ jobs:
           - child-garden: 3.0.4
           - child-garden: 3.0.5
           - child-garden: 3.1.0
+          - child-garden: 3.1.1
           - child-garden: 3.2.0
           - child-garden: 3.2.1
 
