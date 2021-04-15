@@ -40,7 +40,7 @@ class TestGardenSetup(object):
                 break
 
         child_garden.connection_type = "HTTP"
-        child_garden.connection_params = {"host": "beer-garden-child", "port": 2337, "ssl": False}
+        child_garden.connection_params = {"http": {"host": "beer-garden-child", "port": 2337, "ssl": False}}
 
         patch = PatchOperation(operation="config", path='',
                                value=self.parser.serialize_garden(child_garden, to_string=False))

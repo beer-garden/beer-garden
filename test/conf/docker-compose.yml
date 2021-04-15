@@ -24,7 +24,7 @@ x-definitions: &env
 
 services:
     beer-garden:
-        image: bgio/beer-garden:unstable
+        image: bgio/beer-garden:$BG
         networks:
             - bg-network
         ports:
@@ -105,7 +105,7 @@ services:
             - rabbitmq-home:/var/lib/rabbitmq
 
     activemq:
-        image: vromero/activemq-artemis:2.15-alpine-latest
+        image: vromero/activemq-artemis:2.16-alpine-latest
         restart: always
         environment:
             - ARTEMIS_USERNAME=beer_garden
