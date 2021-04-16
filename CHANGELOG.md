@@ -1,5 +1,17 @@
 # Beer Garden Changelog
 
+## 3.2.3
+4/16/21
+
+#### Bug Fixes
+- Fixed regression where headers were not set when sending STOMP messages (Issue #969 / PR #970)
+- System creation events should now be handled by all entry points (Issue #949 / PR #971)
+- Stomp entry point no longer mangles event objects (Issue #978 / PR #979)
+- Child request view starts as collapsed on request view page (Issue #984 / PR #985)
+
+#### Other Changes
+- Changed STOMP configuration items (PR #968)
+
 ## 3.2.2
 4/12/21
 
