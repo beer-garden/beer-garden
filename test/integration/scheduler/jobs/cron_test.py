@@ -21,9 +21,6 @@ def system_spec():
 class TestCron(object):
 
     def test_start_date_job(self, system_spec):
-        # self.easy_client = get_easy_client(**{"bg_host": "localhost",
-        #                                       "bg_port": 2337,
-        #                                       "ssl_enabled": False})
 
         job_name = "test_start_date_job"
         delay_start = 60 * 2
