@@ -48,7 +48,7 @@ export default function requestViewController(
   $scope.filename = '';
   $scope.downloadVisible = false;
   $scope.childrenDisplay = [];
-  $scope.childrenCollapsed = false;
+  $scope.childrenCollapsed = true;
   $scope.rawOutput = undefined;
   $scope.htmlOutput = '';
   $scope.jsonOutput = '';
