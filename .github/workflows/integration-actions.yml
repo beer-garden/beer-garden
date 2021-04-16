@@ -544,6 +544,8 @@ jobs:
         os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
         python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
         brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
+        beer-garden-local: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-local-default)}}
+        allow-failure: ${{fromJson(needs.Setup-Release-Info.outputs.allow-failure)}}
       fail-fast: false
 
     name: Job Testing - Python ${{ matrix.python-version }}
@@ -555,9 +557,10 @@ jobs:
         with:
           python-version: 3.4
 
-      #      - name: Build Local Beer Garden Docker
-      #        run: make docker-build-unstable
-      #        working-directory: ./src/app
+      - name: Build Local Beer Garden Docker
+        if: ${{matrix.beer-garden-local == 'unstable'}}
+        run: make docker-build-unstable
+        working-directory: ./src/app
 
       - name: Setup python
         uses: actions/setup-python@v2
@@ -578,7 +581,7 @@ jobs:
         run: ls ./docker/docker-compose/data/localplugins
 
       - name: Run Docker Beer Garden
-        run: docker-compose up -d beer-garden
+        run: BG=${{matrix.beer-garden-local}} docker-compose up -d beer-garden
         working-directory: ./docker/docker-compose
 
       - name: Check If Beer Garden is Operational
@@ -609,6 +612,7 @@ jobs:
       - name: Test Plugins
         run: python${{ matrix.python-version }} -m pytest scheduler
         working-directory: ./test/integration
+        continue-on-error: ${{ matrix.allow-failure }}
 
       - name: Shutdown Docker Containers
         run: docker-compose stop
