@@ -131,6 +131,7 @@ export default function jobCreateRequestController(
 
   $scope.reset = function(form, model, system, command) {
     $scope.alerts.splice(0);
+
     if ($scope.job == null){
       $scope.model = {};
     }
