@@ -29,6 +29,7 @@ export default function jobCreateRequestController(
   $scope.schema = null;
   $scope.form = null;
   $scope.model = {};
+  $scope.job = null;
 
   if ($stateParams.job == null){
       $scope.system = $stateParams.system;
@@ -47,9 +48,14 @@ export default function jobCreateRequestController(
         }
       }
 
-      $scope.model = $stateParams.job.request_template;
+      $scope.job = $stateParams.job
+
+      //Clone to allow resets
+      $scope.model = _.cloneDeep($scope.job.request_template)
       $scope.modelJson = angular.toJson($scope.model, 2);
   }
+
+
 
   let generateRequestSF = function() {
     let sf = SFBuilderService.build($scope.system, $scope.command);
@@ -116,13 +122,7 @@ export default function jobCreateRequestController(
         newRequest['metadata'] = {'system_display_name': $scope.system['display_name']};
       }
 
-      if ($stateParams.job == null){
-        $state.go('base.jobscreatetrigger', {request: newRequest});
-      }
-      else {
-        $stateParams.job.request_template = newRequest
-        $state.go('base.jobscreatetrigger', {job: $stateParams.job});
-      }
+       $state.go('base.jobscreatetrigger', {job: $scope.job, request: newRequest});
 
     } else {
       $scope.alerts.push('Looks like there was an error validating the request.');
@@ -131,11 +131,12 @@ export default function jobCreateRequestController(
 
   $scope.reset = function(form, model, system, command) {
     $scope.alerts.splice(0);
-    if ($stateParams.job == null){
+    if ($scope.job == null){
       $scope.model = {};
     }
     else{
-      $scope.model = $stateParams.job.request_template;
+      $scope.model = _.cloneDeep($scope.job.request_template)
+      $scope.modelJson = angular.toJson($scope.model, 2);
     }
 
     generateRequestSF();
