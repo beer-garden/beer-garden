@@ -165,23 +165,23 @@ export default function jobService($http, NamespaceService) {
       formModel['days'] = job['trigger']['days'] || 0
 
       if (job['trigger']['weeks'] != 0){
-        formModel['interval'] === 'weeks'
+        formModel['interval'] = 'weeks'
         formModel['interval_num'] = job['trigger']['weeks']
       }
       else if (job['trigger']['minutes'] != 0){
-        formModel['interval'] === 'minutes'
+        formModel['interval'] = 'minutes'
         formModel['interval_num'] = job['trigger']['minutes']
       }
       else if (job['trigger']['hours'] != 0){
-        formModel['interval'] === 'hours'
+        formModel['interval'] = 'hours'
         formModel['interval_num'] = job['trigger']['hours']
       }
       else if (job['trigger']['seconds'] != 0){
-        formModel['interval'] === 'seconds'
+        formModel['interval'] = 'seconds'
         formModel['interval_num'] = job['trigger']['seconds']
       }
       else if (job['trigger']['days'] != 0){
-        formModel['interval'] === 'days'
+        formModel['interval'] = 'days'
         formModel['interval_num'] = job['trigger']['days']
       }
 
