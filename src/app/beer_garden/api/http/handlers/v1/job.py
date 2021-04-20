@@ -104,6 +104,13 @@ class JobAPI(BaseHandler):
                         raise ModelValidationError(
                             f"Unsupported status value '{op.value}'"
                         )
+                elif op.path == "/job":
+                    response = await self.client(
+                        Operation(
+                            operation_type="JOB_UPDATE",
+                            args=[SchemaParser.parse_job(op.value)],
+                        )
+                    )
                 else:
                     raise ModelValidationError(f"Unsupported path value '{op.path}'")
             else:

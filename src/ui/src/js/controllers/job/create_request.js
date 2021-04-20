@@ -5,6 +5,7 @@ jobCreateRequestController.$inject = [
   '$state',
   '$stateParams',
   'SFBuilderService',
+  'SystemService',
 ];
 
 /**
@@ -13,22 +14,42 @@ jobCreateRequestController.$inject = [
  * @param  {Object} $state            Angular's $state object.
  * @param  {Object} $stateParams      Angular's $stateParams object.
  * @param  {Object} SFBuilderService  Beer-Garden's schema-form service.
+ * @param  {Object} SystemService   Beer-Garden's system service object.
  */
 export default function jobCreateRequestController(
     $scope,
     $state,
     $stateParams,
-    SFBuilderService) {
+    SFBuilderService,
+    SystemService) {
   $scope.setWindowTitle('scheduler');
 
   $scope.alerts = [];
 
   $scope.schema = null;
   $scope.form = null;
-  $scope.model = $stateParams.request || {};
+  $scope.model = {};
 
-  $scope.system = $stateParams.system;
-  $scope.command = $stateParams.command;
+  if ($stateParams.job == null){
+      $scope.system = $stateParams.system;
+      $scope.command = $stateParams.command;
+  }
+  else{
+
+      $scope.system = SystemService.findSystem(
+            $stateParams.job.request_template.namespace, $stateParams.job.request_template.system , $stateParams.job.request_template.system_version
+      );
+
+      for (let i in $scope.system.commands){
+        if ($scope.system.commands[i].name == $stateParams.job.request_template.command){
+          $scope.command = $scope.system.commands[i];
+          break;
+        }
+      }
+
+      $scope.model = $stateParams.job.request_template;
+      $scope.modelJson = angular.toJson($scope.model, 2);
+  }
 
   let generateRequestSF = function() {
     let sf = SFBuilderService.build($scope.system, $scope.command);
@@ -95,7 +116,13 @@ export default function jobCreateRequestController(
         newRequest['metadata'] = {'system_display_name': $scope.system['display_name']};
       }
 
-      $state.go('base.jobscreatetrigger', {request: newRequest});
+      if ($stateParams.job == null){
+        $state.go('base.jobscreatetrigger', {request: newRequest});
+      }
+      else {
+        $stateParams.job.request_template = newRequest
+        $state.go('base.jobscreatetrigger', {job: $stateParams.job});
+      }
 
     } else {
       $scope.alerts.push('Looks like there was an error validating the request.');
@@ -104,11 +131,17 @@ export default function jobCreateRequestController(
 
   $scope.reset = function(form, model, system, command) {
     $scope.alerts.splice(0);
-    $scope.model = {};
+    if ($stateParams.job == null){
+      $scope.model = {};
+    }
+    else{
+      $scope.model = $stateParams.job.request_template;
+    }
 
     generateRequestSF();
     form.$setPristine();
   };
 
   generateRequestSF();
+
 };

@@ -20,7 +20,11 @@ export default function jobService($http, NamespaceService) {
   };
 
   JobService.createJob = function(job) {
-    return $http.post('api/v1/jobs', job);
+    if (job['id'] == null){
+        return $http.post('api/v1/jobs', job);
+    }
+
+    return JobService.updateJob(job)
   };
 
   JobService.deleteJob = function(id) {
@@ -29,6 +33,21 @@ export default function jobService($http, NamespaceService) {
 
   JobService.patchJob = function(id, payload) {
     return $http.patch('api/v1/jobs/' + id, payload);
+  };
+
+  JobService.updateJob = function(job) {
+    return JobService.patchJob(
+      job['id'],
+      {
+        'operations': [
+          {
+            'operation': 'update',
+            'path': '/job',
+            'value': job,
+          },
+        ],
+      }
+    );
   };
 
   JobService.resumeJob = function(jobId) {
@@ -122,6 +141,82 @@ export default function jobService($http, NamespaceService) {
     }
   };
 
+  JobService.serverModelToForm = function(job) {
+    let formModel = {};
+
+    formModel['name'] = job['name'];
+    formModel['misfire_grace_time'] = job['misfire_grace_time'];
+    formModel['trigger_type'] = job['trigger_type'];
+    formModel['coalesce'] = job['coalesce'];
+    formModel['max_instances'] = job['max_instances'];
+    formModel['id'] = job['id'] || null;
+
+    if (job['trigger_type'] === 'date') {
+
+      formModel['run_date'] = job['trigger']['run_date']
+      formModel['date_timezone'] = job['trigger']['timezone']
+
+    } else if (job['trigger_type'] === 'interval') {
+
+      formModel['weeks'] = job['trigger']['weeks'] || 0
+      formModel['minutes'] = job['trigger']['minutes'] || 0
+      formModel['hours'] = job['trigger']['hours'] || 0
+      formModel['seconds'] = job['trigger']['seconds'] || 0
+      formModel['days'] = job['trigger']['days'] || 0
+
+      if (job['trigger']['weeks'] != 0){
+        formModel['interval'] === 'weeks'
+        formModel['interval_num'] = job['trigger']['weeks']
+      }
+      else if (job['trigger']['minutes'] != 0){
+        formModel['interval'] === 'minutes'
+        formModel['interval_num'] = job['trigger']['minutes']
+      }
+      else if (job['trigger']['hours'] != 0){
+        formModel['interval'] === 'hours'
+        formModel['interval_num'] = job['trigger']['hours']
+      }
+      else if (job['trigger']['seconds'] != 0){
+        formModel['interval'] === 'seconds'
+        formModel['interval_num'] = job['trigger']['seconds']
+      }
+      else if (job['trigger']['days'] != 0){
+        formModel['interval'] === 'days'
+        formModel['interval_num'] = job['trigger']['days']
+      }
+
+      formModel['interval_jitter'] = job['trigger']['jitter']
+      formModel['interval_start_date'] = job['trigger']['start_date']
+      formModel['interval_end_date'] = job['trigger']['end_date']
+      formModel['interval_timezone'] = job['trigger']['timezone']
+      formModel['interval_reschedule_on_finish'] = job['trigger']['reschedule_on_finish']
+
+    } else if (job['trigger_type'] === 'file') {
+
+      formModel['file_pattern'] = job['trigger']['pattern']
+      formModel['file_path'] = job['trigger']['path']
+      formModel['file_recursive'] = job['trigger']['recursive']
+      formModel['file_callbacks'] = job['trigger']['callbacks']
+
+    }
+    else {
+      formModel['minute'] = job['trigger']['minute']
+      formModel['hour'] = job['trigger']['hour']
+      formModel['day'] = job['trigger']['day']
+      formModel['month'] = job['trigger']['month']
+      formModel['day_of_week'] = job['trigger']['day_of_week']
+      formModel['year'] = job['trigger']['year']
+      formModel['week'] = job['trigger']['week']
+      formModel['second'] = job['trigger']['second']
+      formModel['cron_jitter'] = job['trigger']['jitter']
+      formModel['cron_start_date'] = job['trigger']['start_date']
+      formModel['cron_end_date'] = job['trigger']['end_date']
+      formModel['cron_timezone'] = job['trigger']['timezone']
+    }
+
+    return formModel
+  }
+
   JobService.formToServerModel = function(formModel, requestTemplate) {
     let serviceModel = {};
     serviceModel['name'] = formModel['name'];
@@ -131,6 +226,7 @@ export default function jobService($http, NamespaceService) {
     serviceModel['request_template'] = requestTemplate;
     serviceModel['coalesce'] = formModel['coalesce'];
     serviceModel['max_instances'] = formModel['max_instances'];
+    serviceModel['id'] = formModel['id'] || null;
     return serviceModel;
   };
 

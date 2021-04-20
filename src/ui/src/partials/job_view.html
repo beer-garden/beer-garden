@@ -3,6 +3,10 @@
 
   <span ng-if="responseState(response) === 'success'">
     <small>{{data.name}} - {{data.id}}</small>
+    <button type="button" class="btn btn-success pull-right"
+            ng-click="updateJob(data)">
+      Update Job
+    </button>
     <button type="button" class="btn btn-warning pull-right"
             ng-if="data.status === 'RUNNING'"
             ng-click="pauseJob(data.id)">

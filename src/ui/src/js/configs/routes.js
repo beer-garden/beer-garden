@@ -145,6 +145,7 @@ export default function routeConfig(
       params: {
         'system': null,
         'command': null,
+        'job': null,
       },
     })
     .state('base.jobscreatetrigger', {
@@ -153,6 +154,7 @@ export default function routeConfig(
       controller: 'JobCreateTriggerController',
       params: {
         'request': null,
+        'job': null,
       },
     })
     .state('base.job', {

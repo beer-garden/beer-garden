@@ -110,6 +110,7 @@ route_functions = {
     "INSTANCE_STOP": beer_garden.plugin.stop,
     "INSTANCE_LOGS": beer_garden.plugin.read_logs,
     "JOB_CREATE": beer_garden.scheduler.create_job,
+    "JOB_UPDATE": beer_garden.scheduler.update_job,
     "JOB_READ": beer_garden.scheduler.get_job,
     "JOB_READ_ALL": beer_garden.scheduler.get_jobs,
     "JOB_PAUSE": beer_garden.scheduler.pause_job,
