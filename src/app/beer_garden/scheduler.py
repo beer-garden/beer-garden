@@ -35,7 +35,6 @@ from beer_garden.requests import get_request
 from beer_garden.db.mongo.jobstore import construct_trigger
 from brewtils.models import FileTrigger
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -518,6 +517,20 @@ def create_job(job: Job) -> Job:
     return job
 
 
+@publish_event(Events.JOB_UPDATED)
+def update_job(job: Job) -> Job:
+    """Update a Job and add it to the scheduler
+
+    Args:
+        job: The Job to be updated
+
+    Returns:
+        The added Job
+    """
+
+    return db.update(job)
+
+
 @publish_event(Events.JOB_PAUSED)
 def pause_job(job_id: str) -> Job:
     """Pause a Job
@@ -582,7 +595,7 @@ def handle_event(event: Event) -> None:
 
     if event.garden == config.get("garden.name"):
 
-        if event.name == Events.JOB_CREATED.name:
+        if event.name in [Events.JOB_CREATED.name, Events.JOB_UPDATED.name]:
             try:
                 beer_garden.application.scheduler.add_job(
                     run_job,
@@ -597,7 +610,8 @@ def handle_event(event: Event) -> None:
                     coalesce=event.payload.coalesce,
                     max_instances=event.payload.max_instances,
                     jobstore="beer_garden",
-                    replace_existing=False,
+                    replace_existing=True,
+                    id=event.payload.id,
                 )
             except Exception:
                 db.delete(event.payload)

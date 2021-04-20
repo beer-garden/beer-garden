@@ -25,9 +25,15 @@ export default function jobCreateTriggerController(
 
   $scope.schema = JobService.SCHEMA;
   $scope.form = JobService.FORM;
-  $scope.model = {};
-
   $scope.request = $stateParams.request;
+
+  if ($stateParams.job == null){
+    $scope.model = {};
+  }
+  else{
+    $scope.model = JobService.serverModelToForm($stateParams.job);
+  }
+
 
   let generateJobSF = function() {
     $scope.$broadcast('schemaFormRedraw');
@@ -156,8 +162,12 @@ export default function jobCreateTriggerController(
   $scope.reset = function(form, model, system, command) {
     $scope.createResponse = undefined;
     $scope.alerts.splice(0);
-    $scope.model = {};
-
+    if ($stateParams.job == null){
+      $scope.model = {};
+    }
+    else{
+      $scope.model = JobService.serverModelToForm($stateParams.job);
+    }
     generateJobSF();
     form.$setPristine();
   };

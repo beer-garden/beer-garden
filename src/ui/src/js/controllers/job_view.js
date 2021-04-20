@@ -65,6 +65,10 @@ export default function jobViewController(
     );
   };
 
+  $scope.updateJob = function(job) {
+    $state.go('base.jobscreaterequest', {job: job});
+  };
+
   $scope.deleteJob = function(jobId) {
     JobService.deleteJob(jobId).then(
       $state.go('base.jobs'),
