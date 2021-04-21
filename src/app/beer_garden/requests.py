@@ -19,7 +19,12 @@ import urllib3
 
 from beer_garden.errors import NotUniqueException
 from brewtils.choices import parse
-from brewtils.errors import ConflictError, ModelValidationError, RequestPublishException
+from brewtils.errors import (
+    ConflictError,
+    ModelValidationError,
+    RequestPublishException,
+    RequestStatusTransitionError,
+)
 from brewtils.models import Choices, Events, Request, RequestTemplate, System, Operation
 from builtins import str
 from requests import Session
@@ -800,24 +805,30 @@ def handle_event(event):
 
     # Only care about downstream garden
     elif event.garden != config.get("garden.name"):
-
-        if event.name == Events.REQUEST_CREATED.name:
-            # Attempt to create the request, if it already exists then continue on
-            try:
-                db.create(event.payload)
-            except NotUniqueException:
-                pass
-
-        elif event.name in (Events.REQUEST_STARTED.name, Events.REQUEST_COMPLETED.name):
+        if event.name in (
+            Events.REQUEST_CREATED.name,
+            Events.REQUEST_STARTED.name,
+            Events.REQUEST_COMPLETED.name,
+        ):
             # When we send child requests to child gardens where the parent was on
             # the local garden we remove the parent before sending them. Only setting
             # the subset of fields that change "corrects" the parent
             existing_request = db.query_unique(Request, id=event.payload.id)
 
-            for field in ("status", "output", "error_class"):
-                setattr(existing_request, field, getattr(event.payload, field))
+            if existing_request:
+                for field in ("status", "output", "error_class"):
+                    setattr(existing_request, field, getattr(event.payload, field))
 
-            db.update(existing_request)
+                try:
+                    db.update(existing_request)
+                except RequestStatusTransitionError:
+                    pass
+            else:
+                # Attempt to create the request, if it already exists then continue on
+                try:
+                    db.create(event.payload)
+                except NotUniqueException:
+                    pass
 
     # Required if the main process spawns a wait Request
     if event.name == Events.REQUEST_COMPLETED.name:
