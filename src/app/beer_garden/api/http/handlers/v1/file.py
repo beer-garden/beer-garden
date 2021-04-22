@@ -45,7 +45,7 @@ class FileAPI(BaseHandler):
         """
         file_id = self.get_argument("file_id", default=None)
         chunk = self.get_argument("chunk", default=None)
-        verify = bool(self.get_argument("verify", default=False))
+        verify = self.get_argument("verify", default="").lower() == "true"
 
         if file_id is None:
             raise ValueError("Cannot fetch a file or chunk without a file ID.")
@@ -100,7 +100,7 @@ class FileAPI(BaseHandler):
           - Files
         """
         file_id = self.get_argument("file_id", default=None)
-        upsert = self.get_argument("upsert", default=False)
+        upsert = self.get_argument("upsert", default="").lower() == "true"
 
         args = tornado.escape.json_decode(self.request.body)
         data = args.get("data", None)
@@ -214,9 +214,9 @@ class FileNameAPI(BaseHandler):
         file_size = self.get_argument("file_size", default=None)
         chunk_size = self.get_argument("chunk_size", default=None)
         file_id = self.get_argument("file_id", default=None)
-        upsert = self.get_argument("upsert", default=False)
         owner_id = self.get_argument("owner_id", default=None)
         owner_type = self.get_argument("owner_type", default=None)
+        upsert = self.get_argument("upsert", default="").lower() == "true"
 
         if chunk_size is None:
             raise ModelValidationError(f"No chunk_size sent with file {file_name}.")
