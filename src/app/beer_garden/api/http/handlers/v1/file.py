@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import tornado.web
+from brewtils.errors import ModelValidationError
+from brewtils.models import Operation
+from tornado.escape import json_decode
 
 from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
-from brewtils.errors import ModelValidationError
-from brewtils.models import Operation
 
 
 class FileAPI(BaseHandler):
@@ -104,7 +104,7 @@ class FileAPI(BaseHandler):
         file_id = self.get_argument("file_id", default=None)
         upsert = self.get_argument("upsert", default="").lower() == "true"
 
-        args = tornado.escape.json_decode(self.request.body)
+        args = json_decode(self.request.body)
         data = args.get("data", None)
         offset = args.get("offset", None)
 
