@@ -1,19 +1,28 @@
 # -*- coding: utf-8 -*-
 import six
-from math import ceil
+from base64 import b64decode, b64encode
+from brewtils.errors import ModelValidationError, NotFoundError
+from brewtils.models import (
+    Event,
+    Events,
+    File,
+    FileChunk,
+    FileStatus,
+    Job,
+    Operation,
+    Request,
+)
+from brewtils.resolvers.parameter import UI_FILE_ID_PREFIX
 from bson import ObjectId
 from bson.errors import InvalidId
-from base64 import b64decode, b64encode
 from datetime import datetime
+from math import ceil
+from typing import Any, Callable, Dict, List, Union
 
-import beer_garden.db.api as db
 import beer_garden.config as config
+import beer_garden.db.api as db
 import beer_garden.router as router
 from beer_garden.errors import NotUniqueException
-from brewtils.errors import ModelValidationError, NotFoundError
-from brewtils.models import File, FileChunk, Request, Job, FileStatus, Events, Operation
-from brewtils.resolvers.parameter import UI_FILE_ID_PREFIX
-
 
 # 15MB
 MAX_CHUNK_SIZE = 1024 * 1024 * 15
@@ -41,28 +50,36 @@ def _remove_prefix(file_id: str) -> str:
     return file_id
 
 
-def _format_id(dictionary: dict, file_id) -> dict:
+def _format_id(dictionary: dict, file_id: str) -> dict:
     """Updates the given dictionary with the standard formatting for BG File IDs."""
     dictionary["file_id"] = _add_prefix(file_id)
     return dictionary
 
 
-def _unroll_object(obj, key_map=None, ignore=None):
-    """
-    Reads the object __dict__ and uses the map or ignore
-    fields to return an altered version of it.
+def _unroll_object(
+    obj: object,
+    key_map: Dict[str, Union[str, Callable[[dict, str], Any]]] = None,
+    ignore: List[str] = None,
+) -> dict:
+    """Returns an altered obj __dict__
 
-    Parameters:
+    Args:
         obj: The object to unroll into a dictionary.
         key_map: A map to transform a set of keys to another key.
-                 Valid values are new keys or functions of the signature func(dict, key);
+                 Valid values are new keys or functions of the signature func(dict, key)
                  the function is expected to alter the dict in-place.
                  (e.g. {'original_key': 'new_key', 'other_key': func})
+        ignore: List of keys to be excluded
+
+    Returns:
+        The altered __dict__
     """
     if key_map is None:
         key_map = {}
+
     if ignore is None:
         ignore = []
+
     ret = {}
     for (key, val) in obj.__dict__.items():
         if key in key_map:
@@ -72,6 +89,7 @@ def _unroll_object(obj, key_map=None, ignore=None):
                 ret[key_map[key]] = val
         elif key not in ignore:
             ret[key] = val
+
     return ret
 
 
@@ -103,26 +121,23 @@ def _safe_build_object(cls, *objects, ignore=None, **manual_kwargs):
             kwargs.update(_unroll_object(obj))
 
     kwargs.update(manual_kwargs)
+
     return cls(**kwargs)
 
 
-def check_file(file_id: str, upsert: bool = False):
-    """
-    Checks that the file with file_id exists in the DB.
+def check_file(file_id: str, upsert: bool = False) -> File:
+    """Checks that the file with file_id exists in the DB
 
-    Parameters:
+    Args:
         file_id: The id for the requested file.
-        upsert: (Optional) If the file doesn't exist, create a
-                placeholder file to be modified later.
+        upsert: If the file doesn't exist create a placeholder file
 
     Returns:
-        The file object.
+        The file object
 
     Raises:
-        NotFoundError: Raised when a file with the requested
-                       ID doesn't exist and is expected to.
-        ModelValidationError: Raised when an ID is provided,
-                              but is of the incorrect format.
+        NotFoundError: File with the requested ID doesn't exist and is expected to
+        ModelValidationError: Incorrectly formatted ID is given
     """
     file_id = _remove_prefix(file_id)
 
@@ -135,31 +150,31 @@ def check_file(file_id: str, upsert: bool = False):
         )
 
     res = db.query_unique(File, id=file_id)
+
     if res is None:
         if upsert:
             create_file("BG_placeholder", 0, 0, file_id)
             res = db.query_unique(File, id=file_id)
         else:
-            raise NotFoundError(f"Tried to fetch an unsaved file {file_id}.")
+            raise NotFoundError(f"Tried to fetch an unsaved file {file_id}")
+
         db.modify(res, updated_at=datetime.utcnow())
+
     return res
 
 
 def check_chunk(chunk_id: str):
-    """
-    Checks that the file with file_id exists in the DB.
+    """Checks that the file with file_id exists in the DB
 
-    Parameters:
+    Args:
         chunk_id: The id for the requested chunk.
 
     Returns:
         The file object.
 
     Raises:
-        NotFoundError: Raised when a chunk with the requested
-                       ID doesn't exist.
-        ModelValidationError: Raised when an ID is provided, but
-                              is of the incorrect format.
+        NotFoundError: Chunk with the requested ID doesn't exist.
+        ModelValidationError: Incorrectly formatted ID is given
     """
     chunk_id = _remove_prefix(chunk_id)
 
@@ -171,48 +186,45 @@ def check_chunk(chunk_id: str):
             "Requires 24-character hex string."
         )
 
-    res = db.query_unique(FileChunk, id=chunk_id, raise_missing=True)
-    return res
+    return db.query_unique(FileChunk, id=chunk_id, raise_missing=True)
 
 
 def check_chunks(file_id: str):
-    """
-    Checks that the file with file_id has a valid chunks field.
+    """Checks that the file with file_id has a valid chunks field
 
-    Parameters:
-        file_id: This should be a valid file id.
+    Args:
+        file_id: Valid file id.
 
     Returns:
         The wrapped function.
 
     Raises:
-        NotFoundError: Raised when a file with the requested
-                       ID doesn't exist and is expected to.
-        ModelValidationError: Raised when a file with the requested
-                              ID doesn't have any associate file chunks.
+        NotFoundError: File with the requested ID doesn't exist and is expected to
+        ModelValidationError: File with the requested ID has no associated file chunks
     """
     res = check_file(file_id)
+
     if res.chunks is None:
         raise ModelValidationError(
             f"Tried to load a file {res.id} with no associated chunks."
         )
+
     return res
 
 
-def create_chunk(file_id: str, offset: int = None, data: str = None, **kwargs):
-    """
-    Saves the provided chunk data to the DB and updates
-    the parent document with the chunk id.
+def create_chunk(
+    file_id: str, offset: int = None, data: str = None, **kwargs
+) -> FileStatus:
+    """Saves provided chunk to the DB, updates the parent document with the chunk id
 
-    Parameters:
+    Args:
         file_id: This should be a valid file id.
         offset: The offset index. (e.g. 0, 1, 2, ...)
         data: The base64 encoded data
         kwargs: The other parameters for FileChunk that we don't need to check
 
     Raises:
-        NotFoundError: Raised when a file with the requested
-                       ID doesn't exist and is expected to.
+        NotFoundError: File with the requested ID doesn't exist and is expected to
     """
     if len(data) > MAX_CHUNK_SIZE:
         return FileStatus(
@@ -228,8 +240,9 @@ def create_chunk(file_id: str, offset: int = None, data: str = None, **kwargs):
     chunk = FileChunk(
         file_id=file.id, offset=offset, data=data, owner=kwargs.get("owner", None)
     )
-    chunk = db.create(chunk)
+
     # This is starting to get DB-specific, but we want to be sure this is an atomic operation.
+    chunk = db.create(chunk)
     modify = {f"set__chunks__{offset}": chunk.id}
     file = db.modify(file, **modify)
     chunk = db.modify(chunk, owner=file.id)
@@ -237,21 +250,18 @@ def create_chunk(file_id: str, offset: int = None, data: str = None, **kwargs):
     return _safe_build_object(FileStatus, file, chunk, operation_complete=True)
 
 
-def _verify_chunks(file_id: str):
-    """
-    Processes the requested file to determine if any chunks are missing.
+def _verify_chunks(file_id: str) -> FileStatus:
+    """Processes the requested file to determine if any chunks are missing
 
-    Parameters:
-        file_id: This should be a valid file id.
+    Args:
+        file_id: Valid file id
 
     Returns:
-        A dictionary that describes the validity of the file.
+        A dictionary that describes the validity of the file
 
     Raises:
-        NotFoundError: Raised when a file with the requested
-                       ID doesn't exist and is expected to.
-        ModelValidationError: Raised when a file with the requested
-                              ID doesn't have any associate file chunks.
+        NotFoundError: File with the requested ID doesn't exist and is expected to
+        ModelValidationError: File with the requested ID has no associated chunks
     """
     file = check_chunks(file_id)
     num_chunks = ceil(file.file_size / file.chunk_size)
@@ -263,6 +273,7 @@ def _verify_chunks(file_id: str):
     missing = [
         x for x in range(len(file.chunks)) if file.chunks.get(str(x), None) is None
     ]
+
     return _safe_build_object(
         FileStatus,
         file,
@@ -277,11 +288,10 @@ def _verify_chunks(file_id: str):
     )
 
 
-def _fetch_chunk(file_id: str, chunk_num: int):
-    """
-    Fetches a single chunk of the requested file.
+def _fetch_chunk(file_id: str, chunk_num: int) -> FileStatus:
+    """Fetches a single chunk of the requested file
 
-    Parameters:
+    Args:
         file_id: This should be a valid file id.
         chunk_num: The offset index. (e.g. 0, 1, 2, ..)
 
@@ -289,12 +299,9 @@ def _fetch_chunk(file_id: str, chunk_num: int):
         The chunk data.
 
     Raises:
-        NotFoundError: Raised when a file with the requested
-                       ID doesn't exist and is expected to.
-        ModelValidationError: Raised when a file with the requested
-                              ID doesn't have any associate file chunks.
-        ValueError: Raised when the chunk number requested is not
-                    associated with the given file.
+        NotFoundError: File with the requested ID doesn't exist and is expected to
+        ModelValidationError: File with the requested ID has no associated chunks
+        ValueError: Chunk number requested is not associated with the given file
     """
     file = check_chunks(file_id)
     if str(chunk_num) in file.chunks:
@@ -308,30 +315,29 @@ def _fetch_chunk(file_id: str, chunk_num: int):
         raise ValueError(f"Chunk number {chunk_num} is invalid for file {file.id}")
 
 
-def _fetch_file(file_id: str):
-    """
-    Fetches the entire requested file.
+def _fetch_file(file_id: str) -> FileStatus:
+    """Fetches the entire requested file
 
-    Parameters:
+    Args:
         file_id: This should be a valid file id.
 
     Returns:
-        The file data, if the file is valid; None otherwise.
+        The file data if the file is valid; None otherwise.
 
     Raises:
-        NotFoundError: Raised when a file with the requested
-                       ID doesn't exist and is expected to.
-        ModelValidationError: Raised when a file with the requested
-                              ID doesn't have any associate file chunks.
+        NotFoundError: File with the requested ID doesn't exist and is expected to.
+        ModelValidationError: File with the requested ID has no associated chunks.
     """
     # This is going to get big, try our best to be efficient
     check = _verify_chunks(file_id)
+
     if check.valid:
         file = check_chunks(file_id)
         all_data = [
             db.query_unique(FileChunk, id=file.chunks[str(x)]).data
             for x in range(len(file.chunks))
         ]
+
         return _safe_build_object(
             FileStatus,
             file,
@@ -351,11 +357,10 @@ def create_file(
     file_id: str = None,
     upsert: bool = False,
     **kwargs,
-):
-    """
-    Creates a top-level File object to track chunks
+) -> FileStatus:
+    """Creates a top-level File object to track chunks
 
-    Parameters:
+    Args:
         file_name: The name of the file to be uploaded.
         file_size: The size of the file to be uploaded (in bytes).
         chunk_size: The size of the chunks that the file is broken into (in bytes).
@@ -365,13 +370,12 @@ def create_file(
         kwargs: (Optional) Any other valid file fields that can be populated
 
     Returns:
-        A dictionary with the id.
+        A dictionary with the id
 
     Raises:
-        ValueError: Raised when the chunk size provided exceeds the size allowed.
-        ModelValidationError: Raised when a file id (if provided)
-                              is not a valid ObjectId string.
-        NotUniqueException: Raised when a file with the requested ID already exists.
+        ValueError: Chunk size provided exceeds the size allowed
+        ModelValidationError: File id (if provided) is not a valid ObjectId string
+        NotUniqueException: File with the requested ID already exists
     """
     if chunk_size > MAX_CHUNK_SIZE:
         raise ValueError(
@@ -425,12 +429,11 @@ def create_file(
         return _safe_build_object(FileStatus, file, operation_complete=True)
 
 
-def fetch_file(file_id: str, chunk: int = None, verify: bool = False):
-    """
-    Fetches file information.
+def fetch_file(file_id: str, chunk: int = None, verify: bool = False) -> FileStatus:
+    """Fetches file information
 
-    Parameters:
-        file_id: The id of the file to fetch.
+    Args:
+        file_id: The id of the file to fetch
         chunk: (Optional) If included, fetches a single chunk instead of the entire file.
         verify: (Optional) If included, fetches file validity information instead of data.
 
@@ -448,24 +451,26 @@ def fetch_file(file_id: str, chunk: int = None, verify: bool = False):
         return _fetch_file(file_id)
 
 
-def delete_file(file_id: str):
-    """
-    Deletes a file and its chunks.
+def delete_file(file_id: str) -> FileStatus:
+    """Deletes a file and its chunks
 
-    Parameters:
+    Args:
         file_id: The id of the file.
     """
     file = check_file(file_id)
+
     # This should delete the associated chunks as well.
     db.delete(file)
-    return FileStatus(operation_complete=True, **_format_id({}, file_id))
+
+    return FileStatus(operation_complete=True, file_id=_add_prefix(file_id))
 
 
-def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
-    """
-    Sets the owner field of the file.  This is used for DB pruning.
+def set_owner(file_id: str, owner_id: str = None, owner_type: str = None) -> FileStatus:
+    """Sets the owner field of the file.
 
-    Parameters:
+    This is used for DB pruning.
+
+    Args:
         file_id: The id of the file.
         owner_id: The id of the owner.
         owner_type: The type of the owner (job/request).
@@ -474,6 +479,7 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
         file = check_file(file_id)
         old_owner_priority = OWNERSHIP_PRIORITY.get(file.owner_type, 1_000_000)
         new_owner_priority = OWNERSHIP_PRIORITY.get(owner_type, 1_000_000)
+
         # Case 1 : New owner has equal or higher priority
         # Case 2 : The old owner is a higher priority than the new one, but it was deleted.
         if new_owner_priority <= old_owner_priority or (
@@ -493,6 +499,7 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
                 )
             else:
                 file = db.modify(file, owner_id=owner_id, owner_type=owner_type)
+
             return _safe_build_object(FileStatus, file, operation_complete=True)
 
         return _safe_build_object(
@@ -509,16 +516,19 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None):
     )
 
 
-def _check_file_ids(parameter, ids=None):
+def _check_file_ids(parameter, ids=None) -> List[str]:
     """Used to scan operations for the FileID prefix.
-    Parameters:
+
+    Args:
         parameter: The object to be scanned.
         ids: The current list of discovered file ids
+
     Returns:
         A list of file ids (may be empty).
     """
     if ids is None:
         ids = []
+
     if isinstance(parameter, six.string_types):
         if UI_FILE_ID_PREFIX in parameter:
             try:
@@ -530,6 +540,7 @@ def _check_file_ids(parameter, ids=None):
 
     else:
         iterable = parameter.values() if isinstance(parameter, dict) else parameter
+
         try:
             for item in iterable:
                 _check_file_ids(item, ids)
@@ -539,11 +550,11 @@ def _check_file_ids(parameter, ids=None):
     return ids
 
 
-def forward_file(operation: Operation):
-    """ Send file data before forwarding an operation with a file parameter. """
-    ids = _check_file_ids(operation.model.parameters)
-    for id in ids:
-        file = check_chunks(id)
+def forward_file(operation: Operation) -> None:
+    """ Send file data before forwarding an operation with a file parameter."""
+
+    for file_id in _check_file_ids(operation.model.parameters):
+        file = check_chunks(file_id)
         args = [file.file_name, file.file_size, file.chunk_size]
         # Make sure we get all of the other data
         kwargs = _safe_build_object(
@@ -564,6 +575,7 @@ def forward_file(operation: Operation):
             target_garden_name=operation.target_garden_name,
             source_garden_name=operation.source_garden_name,
         )
+
         # This should put push the file operations before the current one
         router.forward_processor.put(file_op)
 
@@ -581,17 +593,18 @@ def forward_file(operation: Operation):
                 target_garden_name=operation.target_garden_name,
                 source_garden_name=operation.source_garden_name,
             )
+
             # This should put push the file operations before the current one
             router.forward_processor.put(chunk_op)
 
 
-def handle_event(event):
+def handle_event(event: Event) -> None:
     """Handle events"""
     if event.garden == config.get("garden.name"):
         if event.name == Events.JOB_CREATED.name:
-            for id in _check_file_ids(event.payload.request_template.parameters):
-                set_owner(id, owner_id=event.payload.id, owner_type="JOB")
+            for file_id in _check_file_ids(event.payload.request_template.parameters):
+                set_owner(file_id, owner_id=event.payload.id, owner_type="JOB")
 
         if event.name == Events.REQUEST_CREATED.name:
-            for id in _check_file_ids(event.payload.parameters):
-                set_owner(id, owner_id=event.payload.id, owner_type="REQUEST")
+            for file_id in _check_file_ids(event.payload.parameters):
+                set_owner(file_id, owner_id=event.payload.id, owner_type="REQUEST")
