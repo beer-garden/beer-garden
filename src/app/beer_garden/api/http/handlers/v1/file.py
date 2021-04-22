@@ -57,6 +57,8 @@ class FileAPI(BaseHandler):
                 kwargs={"chunk": chunk, "verify": verify},
             )
         )
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
     @authenticated(permissions=[Permissions.CREATE])
@@ -122,6 +124,8 @@ class FileAPI(BaseHandler):
                 kwargs={"upsert": upsert},
             )
         )
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
     async def delete(self):
@@ -153,6 +157,8 @@ class FileAPI(BaseHandler):
         response = await self.client(
             Operation(operation_type="FILE_DELETE", args=[file_id])
         )
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
 
@@ -235,4 +241,6 @@ class FileNameAPI(BaseHandler):
                 },
             )
         )
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
