@@ -27,11 +27,24 @@ OWNERSHIP_MAP = {
 }
 
 
-def _format_id(dictionary, id):
-    """
-    Updates the given dictionary with the standard formatting for BG File IDs.
-    """
-    dictionary["file_id"] = f"{UI_FILE_ID_PREFIX} {id}"
+def _add_prefix(file_id: str) -> str:
+    if UI_FILE_ID_PREFIX not in file_id:
+        file_id = f"{UI_FILE_ID_PREFIX} {file_id}"
+
+    return file_id
+
+
+def _remove_prefix(file_id: str) -> str:
+    if UI_FILE_ID_PREFIX in file_id:
+        file_id = file_id.split(" ")[1]
+
+    return file_id
+
+
+def _format_id(dictionary: dict, file_id) -> dict:
+    """Updates the given dictionary with the standard formatting for BG File IDs."""
+    dictionary["file_id"] = _add_prefix(file_id)
+    return dictionary
 
 
 def _unroll_object(obj, key_map=None, ignore=None):
@@ -111,8 +124,7 @@ def check_file(file_id: str, upsert: bool = False):
         ModelValidationError: Raised when an ID is provided,
                               but is of the incorrect format.
     """
-    if UI_FILE_ID_PREFIX in file_id:
-        file_id = file_id.split(" ")[1]
+    file_id = _remove_prefix(file_id)
 
     try:
         ObjectId(file_id)
@@ -149,8 +161,7 @@ def check_chunk(chunk_id: str):
         ModelValidationError: Raised when an ID is provided, but
                               is of the incorrect format.
     """
-    if UI_FILE_ID_PREFIX in chunk_id:
-        chunk_id = chunk_id.split(" ")[1]
+    chunk_id = _remove_prefix(chunk_id)
 
     try:
         ObjectId(chunk_id)
@@ -376,8 +387,8 @@ def create_file(
 
     # Override the file id if passed in
     if file_id is not None:
-        if UI_FILE_ID_PREFIX in file_id:
-            file_id = file_id.split(" ")[1]
+        file_id = _remove_prefix(file_id)
+
         try:
             file.id = ObjectId(file_id)
         except (InvalidId, TypeError):
