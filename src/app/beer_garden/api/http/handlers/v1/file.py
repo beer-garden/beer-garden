@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import tornado.web
+from brewtils.errors import ModelValidationError
+from brewtils.models import Operation
+from tornado.escape import json_decode
 
 from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
-from brewtils.errors import ModelValidationError
-from brewtils.models import Operation
 
 
 class FileAPI(BaseHandler):
@@ -45,7 +45,7 @@ class FileAPI(BaseHandler):
         """
         file_id = self.get_argument("file_id", default=None)
         chunk = self.get_argument("chunk", default=None)
-        verify = bool(self.get_argument("verify", default=False))
+        verify = self.get_argument("verify", default="").lower() == "true"
 
         if file_id is None:
             raise ValueError("Cannot fetch a file or chunk without a file ID.")
@@ -57,6 +57,8 @@ class FileAPI(BaseHandler):
                 kwargs={"chunk": chunk, "verify": verify},
             )
         )
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
     @authenticated(permissions=[Permissions.CREATE])
@@ -100,9 +102,9 @@ class FileAPI(BaseHandler):
           - Files
         """
         file_id = self.get_argument("file_id", default=None)
-        upsert = self.get_argument("upsert", default=False)
+        upsert = self.get_argument("upsert", default="").lower() == "true"
 
-        args = tornado.escape.json_decode(self.request.body)
+        args = json_decode(self.request.body)
         data = args.get("data", None)
         offset = args.get("offset", None)
 
@@ -122,6 +124,8 @@ class FileAPI(BaseHandler):
                 kwargs={"upsert": upsert},
             )
         )
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
     async def delete(self):
@@ -153,6 +157,8 @@ class FileAPI(BaseHandler):
         response = await self.client(
             Operation(operation_type="FILE_DELETE", args=[file_id])
         )
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
 
@@ -214,9 +220,9 @@ class FileNameAPI(BaseHandler):
         file_size = self.get_argument("file_size", default=None)
         chunk_size = self.get_argument("chunk_size", default=None)
         file_id = self.get_argument("file_id", default=None)
-        upsert = self.get_argument("upsert", default=False)
         owner_id = self.get_argument("owner_id", default=None)
         owner_type = self.get_argument("owner_type", default=None)
+        upsert = self.get_argument("upsert", default="").lower() == "true"
 
         if chunk_size is None:
             raise ModelValidationError(f"No chunk_size sent with file {file_name}.")
@@ -235,4 +241,6 @@ class FileNameAPI(BaseHandler):
                 },
             )
         )
+
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
