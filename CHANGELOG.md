@@ -1,5 +1,15 @@
 # Beer Garden Changelog
 
+## 3.3.0
+4/23/21
+
+#### Added Features
+- Can now modify scheduled jobs (Issue #294 / PR #988)
+
+#### Bug Fixes
+- Fixed file parameters regression (Issue #992 / PR #995)
+- Better handling for out-of-order request updates from child gardens (Issue #982 / PR #993)
+
 ## 3.2.3
 4/16/21
 
