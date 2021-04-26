@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import io
 
-from brewtils.models import Operation
+from brewtils.resolvers.parameter import BYTES_PREFIX
 
 from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
@@ -15,10 +15,10 @@ class RawFileAPI(BaseHandler):
         ---
         summary: Retrieve a File
         parameters:
-          - name: name
+          - name: file_id
             in: query
             required: true
-            description: The file name
+            description: The file ID
             type: string
         responses:
           200:
@@ -32,7 +32,7 @@ class RawFileAPI(BaseHandler):
         tags:
           - Files
         """
-        db_file = RawFile.objects.get(name=self.get_argument("name", default=""))
+        db_file = RawFile.objects.get(id=self.get_argument("file_id", default=""))
         file = db_file.file.read()
 
         self.set_header("Content-Type", "application/octet-stream")
@@ -65,11 +65,13 @@ class RawFileAPI(BaseHandler):
         tags:
           - Files
         """
+        name = self.get_argument("name", default="")
         db_file = RawFile(name=self.get_argument("name", default=""))
-        db_file.file.put(io.BytesIO(self.request.body))
+        db_file.file.put(io.BytesIO(self.request.body), filename=name)
         db_file.save()
 
-        self.set_status(201)
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(BYTES_PREFIX + str(db_file.id))
 
     async def delete(self):
         """
