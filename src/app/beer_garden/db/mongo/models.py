@@ -219,6 +219,7 @@ class Command(MongoModel, EmbeddedDocument):
     template = StringField()
     hidden = BooleanField()
     icon_name = StringField()
+    metadata = DictField()
 
     def clean(self):
         """Validate before saving to the database"""
