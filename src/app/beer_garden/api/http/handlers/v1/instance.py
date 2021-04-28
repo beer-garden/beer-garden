@@ -252,6 +252,8 @@ class InstanceLogAPI(BaseHandler):
         )
 
         wait_timeout = float(self.get_argument("timeout", default="-1"))
+        if wait_timeout < 0:
+            wait_timeout = None
         if not await event_wait(wait_event, wait_timeout):
             raise TimeoutExceededError("Timeout exceeded")
 
