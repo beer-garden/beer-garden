@@ -5,83 +5,191 @@
 #    pip-compile requirements.in
 #
 -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils  # via -r requirements.in
-alabaster==0.7.12         # via sphinx
-apispec==0.38.0           # via -r requirements.in
-appdirs==1.4.4            # via black, brewtils
-apscheduler==3.6.3        # via -r requirements.in
-attrs==20.3.0             # via flake8-bugbear, pytest
-babel==2.9.0              # via sphinx
-black==21.4b2             # via -r requirements.in
-certifi==2020.11.8        # via requests
-chardet==3.0.4            # via requests
-click==7.1.2              # via black
-codecov==2.1.10           # via -r requirements.in
-coverage==5.3             # via -r requirements.in, codecov
-docopt==0.6.2             # via stomp.py
-docutils==0.16            # via sphinx
-flake8-bugbear==20.1.4    # via -r requirements.in
-flake8==3.8.4             # via -r requirements.in, flake8-bugbear
-idna==2.10                # via requests
-imagesize==1.2.0          # via sphinx
-importlib-metadata==2.0.0  # via flake8, pluggy, pytest
-iniconfig==1.1.1          # via pytest
-jinja2==2.11.2            # via sphinx
-lark-parser==0.6.7        # via brewtils
-markupsafe==1.1.1         # via jinja2
-marshmallow-polyfield==3.2  # via brewtils
-marshmallow==2.21.0       # via brewtils, marshmallow-polyfield
-mccabe==0.6.1             # via flake8
-mock==4.0.2               # via -r requirements.in
-mongoengine==0.20.0       # via -r requirements.in
-mongomock==3.21.0         # via -r requirements.in
-more-itertools==8.6.0     # via -r requirements.in
-motor==2.3.0              # via -r requirements.in
-mypy-extensions==0.4.3    # via black
-packaging==20.4           # via brewtils, pytest, sphinx
-passlib==1.7.4            # via -r requirements.in
-pathspec==0.8.1           # via black
-pathtools==0.1.2          # via watchdog
-pika==1.1.0               # via brewtils
-pluggy==0.13.1            # via pytest
-prometheus-client==0.9.0  # via -r requirements.in
-py==1.9.0                 # via pytest
-pycodestyle==2.6.0        # via flake8
-pyflakes==2.2.0           # via flake8
-pygments==2.7.2           # via sphinx
-pyjwt==1.7.1              # via brewtils
-pymongo==3.11.0           # via mongoengine, motor
-pyparsing==2.4.7          # via packaging
-pyrabbit2==1.0.7          # via -r requirements.in
-pytest-lazy-fixture==0.6.3  # via -r requirements.in
-pytest-mock==3.3.1        # via -r requirements.in
-pytest-tornado==0.8.1     # via -r requirements.in
-pytest==6.1.2             # via -r requirements.in, pytest-lazy-fixture, pytest-mock, pytest-tornado
-python-box==3.4.6         # via yapconf
-pytz==2020.4              # via -r requirements.in, apscheduler, babel, brewtils, tzlocal
-pyyaml==5.3.1             # via apispec
-regex==2020.11.13         # via black
-requests==2.25.0          # via brewtils, codecov, pyrabbit2, sphinx
-ruamel.yaml.clib==0.2.2   # via ruamel.yaml
-ruamel.yaml==0.16.12      # via -r requirements.in
-sentinels==1.0.0          # via mongomock
-simplejson==3.17.2        # via brewtils
-six==1.15.0               # via apscheduler, brewtils, mongomock, packaging, sphinx, yapconf
-snowballstemmer==2.0.0    # via sphinx
-sphinx-rtd-theme==0.5.0   # via -r requirements.in
-sphinx==1.8.5             # via -r requirements.in, sphinx-rtd-theme
-sphinxcontrib-serializinghtml==1.1.4  # via sphinxcontrib-websupport
-sphinxcontrib-websupport==1.2.4  # via sphinx
-stomp.py==6.1.0           # via -r requirements.in
-toml==0.10.2              # via black, pytest
-tornado==6.1              # via -r requirements.in, pytest-tornado
-typed-ast==1.4.3          # via black
-typing-extensions==3.7.4.3  # via black
-tzlocal==2.1              # via apscheduler
-urllib3==1.26.2           # via requests
-watchdog==0.10.3          # via yapconf
-wrapt==1.12.1             # via brewtils
-yapconf==0.3.7            # via brewtils
-zipp==3.4.0               # via importlib-metadata
+    # via -r requirements.in
+alabaster==0.7.12
+    # via sphinx
+apispec==0.38.0
+    # via -r requirements.in
+appdirs==1.4.4
+    # via
+    #   black
+    #   brewtils
+apscheduler==3.6.3
+    # via -r requirements.in
+attrs==20.3.0
+    # via
+    #   flake8-bugbear
+    #   pytest
+babel==2.9.0
+    # via sphinx
+black==21.4b2
+    # via -r requirements.in
+certifi==2020.11.8
+    # via requests
+chardet==3.0.4
+    # via requests
+click==7.1.2
+    # via black
+codecov==2.1.10
+    # via -r requirements.in
+coverage==5.3
+    # via
+    #   -r requirements.in
+    #   codecov
+docopt==0.6.2
+    # via stomp.py
+docutils==0.16
+    # via sphinx
+flake8-bugbear==20.1.4
+    # via -r requirements.in
+flake8==3.8.4
+    # via
+    #   -r requirements.in
+    #   flake8-bugbear
+idna==2.10
+    # via requests
+imagesize==1.2.0
+    # via sphinx
+iniconfig==1.1.1
+    # via pytest
+jinja2==2.11.2
+    # via sphinx
+lark-parser==0.6.7
+    # via brewtils
+markupsafe==1.1.1
+    # via jinja2
+marshmallow-polyfield==3.2
+    # via brewtils
+marshmallow==2.21.0
+    # via
+    #   brewtils
+    #   marshmallow-polyfield
+mccabe==0.6.1
+    # via flake8
+mock==4.0.2
+    # via -r requirements.in
+mongoengine==0.20.0
+    # via -r requirements.in
+mongomock==3.21.0
+    # via -r requirements.in
+more-itertools==8.6.0
+    # via -r requirements.in
+motor==2.3.0
+    # via -r requirements.in
+mypy-extensions==0.4.3
+    # via black
+packaging==20.4
+    # via
+    #   brewtils
+    #   pytest
+    #   sphinx
+passlib==1.7.4
+    # via -r requirements.in
+pathspec==0.8.1
+    # via black
+pathtools==0.1.2
+    # via watchdog
+pika==1.1.0
+    # via brewtils
+pluggy==0.13.1
+    # via pytest
+prometheus-client==0.9.0
+    # via -r requirements.in
+py==1.9.0
+    # via pytest
+pycodestyle==2.6.0
+    # via flake8
+pyflakes==2.2.0
+    # via flake8
+pygments==2.7.2
+    # via sphinx
+pyjwt==1.7.1
+    # via brewtils
+pymongo==3.11.0
+    # via
+    #   mongoengine
+    #   motor
+pyparsing==2.4.7
+    # via packaging
+pyrabbit2==1.0.7
+    # via -r requirements.in
+pytest-lazy-fixture==0.6.3
+    # via -r requirements.in
+pytest-mock==3.3.1
+    # via -r requirements.in
+pytest-tornado==0.8.1
+    # via -r requirements.in
+pytest==6.1.2
+    # via
+    #   -r requirements.in
+    #   pytest-lazy-fixture
+    #   pytest-mock
+    #   pytest-tornado
+python-box==3.4.6
+    # via yapconf
+pytz==2020.4
+    # via
+    #   -r requirements.in
+    #   apscheduler
+    #   babel
+    #   brewtils
+    #   tzlocal
+pyyaml==5.4
+    # via apispec
+regex==2020.11.13
+    # via black
+requests==2.25.0
+    # via
+    #   brewtils
+    #   codecov
+    #   pyrabbit2
+    #   sphinx
+ruamel.yaml==0.16.12
+    # via -r requirements.in
+sentinels==1.0.0
+    # via mongomock
+simplejson==3.17.2
+    # via brewtils
+six==1.15.0
+    # via
+    #   apscheduler
+    #   brewtils
+    #   mongomock
+    #   packaging
+    #   sphinx
+    #   yapconf
+snowballstemmer==2.0.0
+    # via sphinx
+sphinx-rtd-theme==0.5.0
+    # via -r requirements.in
+sphinx==1.8.5
+    # via
+    #   -r requirements.in
+    #   sphinx-rtd-theme
+sphinxcontrib-serializinghtml==1.1.4
+    # via sphinxcontrib-websupport
+sphinxcontrib-websupport==1.2.4
+    # via sphinx
+stomp.py==6.1.0
+    # via -r requirements.in
+toml==0.10.2
+    # via
+    #   black
+    #   pytest
+tornado==6.1
+    # via
+    #   -r requirements.in
+    #   pytest-tornado
+tzlocal==2.1
+    # via apscheduler
+urllib3==1.26.2
+    # via requests
+watchdog==0.10.3
+    # via yapconf
+wrapt==1.12.1
+    # via brewtils
+yapconf==0.3.7
+    # via brewtils
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
