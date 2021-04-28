@@ -551,7 +551,7 @@ def _check_file_ids(parameter, ids=None) -> List[str]:
 
 
 def forward_file(operation: Operation) -> None:
-    """ Send file data before forwarding an operation with a file parameter."""
+    """Send file data before forwarding an operation with a file parameter."""
 
     for file_id in _check_file_ids(operation.model.parameters):
         file = check_chunks(file_id)

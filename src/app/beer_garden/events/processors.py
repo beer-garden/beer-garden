@@ -78,7 +78,7 @@ class PipeListener(BaseProcessor):
         self._conn = conn
 
     def run(self):
-        """Process events as they are received """
+        """Process events as they are received"""
         while not self.stopped():
             if self._conn.poll(0.1):
                 self.process(self._conn.recv())
