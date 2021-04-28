@@ -251,7 +251,7 @@ class InstanceLogAPI(BaseHandler):
             serialize_kwargs={"to_string": False},
         )
 
-        wait_timeout = float(self.get_argument("timeout", default="-1"))
+        wait_timeout = float(self.get_argument("timeout", default="15"))
         if wait_timeout < 0:
             wait_timeout = None
         if not await event_wait(wait_event, wait_timeout):
