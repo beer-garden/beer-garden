@@ -73,15 +73,8 @@ export default function routeConfig(
       templateUrl: 'system_index.html',
       controller: 'SystemIndexController',
     })
-    .state('base.systemID', {
-      url: 'systems/:id/',
-      controller: ['$state', '$stateParams', 'SystemService', ($state, $stateParams, SystemService) => {
-        let sys = SystemService.findSystemByID($stateParams.id);
-        $state.go('base.system', {namespace: sys.namespace, systemName: sys.name, systemVersion: sys.version});
-      }],
-    })
     .state('base.system', {
-      url: 'commands?namespace&systemName&systemVersion',
+      url: 'systems/:namespace/:systemName/:systemVersion',
       templateUrl: 'command_index.html',
       controller: 'CommandIndexController',
       resolve: {
@@ -92,11 +85,32 @@ export default function routeConfig(
         }],
       },
     })
-    // This is just an alias for base.system with no query args at this point
+    .state('base.systemNs', {
+      url: 'systems/:namespace',
+      templateUrl: 'command_index.html',
+      controller: 'CommandIndexController',
+      resolve: {
+        system: ['$stateParams', 'SystemService', ($stateParams, SystemService) => {
+          return SystemService.findSystem($stateParams.namespace) || {};
+        }],
+      },
+    })
+    .state('base.systemName', {
+      url: 'systems/:namespace/:systemName',
+      templateUrl: 'command_index.html',
+      controller: 'CommandIndexController',
+      resolve: {
+        system: ['$stateParams', 'SystemService', ($stateParams, SystemService) => {
+          return SystemService.findSystem(
+            $stateParams.namespace, $stateParams.systemName
+          ) || {};
+        }],
+      },
+    })
     .state('base.commands', {
       url: 'commands/',
       templateUrl: 'command_index.html',
-      controller: ['$state', ($state) => {$state.go('base.system');}],
+      controller: 'CommandIndexController',
     })
     // Don't ask me why this can't be nested as base.system.command
     // Think it's something to do with nested views... I think maybe because
