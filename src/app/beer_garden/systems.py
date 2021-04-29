@@ -133,13 +133,13 @@ def update_system(
 
     # If we set an attribute to None mongoengine marks that attribute for deletion
     # That's why we explicitly test each of these
-    if description:
+    if description is not None:
         updates["description"] = description
 
-    if display_name:
+    if display_name is not None:
         updates["display_name"] = display_name
 
-    if icon_name:
+    if icon_name is not None:
         updates["icon_name"] = icon_name
 
     if metadata:
