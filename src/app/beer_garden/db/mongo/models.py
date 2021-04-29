@@ -494,6 +494,7 @@ class System(MongoModel, Document):
     display_name = StringField()
     metadata = DictField()
     local = BooleanField(default=True)
+    template = StringField()
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
