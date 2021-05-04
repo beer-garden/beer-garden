@@ -213,11 +213,11 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/vbeta/runners/?", vbeta.runner.RunnerListAPI),
         (rf"{prefix}api/vbeta/runners/(\w+)/?", vbeta.runner.RunnerAPI),
         (
-            rf"{prefix}api/vbeta/files/?",
+            rf"{prefix}api/vbeta/chunks/?",
             beer_garden.api.http.handlers.vbeta.chunk.FileChunkAPI,
         ),
         (
-            rf"{prefix}api/vbeta/files/id/?",
+            rf"{prefix}api/vbeta/chunks/id/?",
             beer_garden.api.http.handlers.vbeta.chunk.ChunkNameAPI,
         ),
         (rf"{prefix}api/vbeta/file/?", vbeta.file.RawFileAPI),
