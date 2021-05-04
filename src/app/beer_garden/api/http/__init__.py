@@ -208,12 +208,18 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/jobs/(\w+)/?", v1.job.JobAPI),
         (rf"{prefix}api/v1/logging/?", v1.logging.LoggingAPI),
         (rf"{prefix}api/v1/gardens/([\w%]+)/?", v1.garden.GardenAPI),
-        (rf"{prefix}api/v1/files/?", v1.file.FileAPI),
-        (rf"{prefix}api/v1/files/id/?", v1.file.FileNameAPI),
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
         (rf"{prefix}api/vbeta/runners/?", vbeta.runner.RunnerListAPI),
         (rf"{prefix}api/vbeta/runners/(\w+)/?", vbeta.runner.RunnerAPI),
+        (
+            rf"{prefix}api/vbeta/files/?",
+            beer_garden.api.http.handlers.vbeta.chunk.FileChunkAPI,
+        ),
+        (
+            rf"{prefix}api/vbeta/files/id/?",
+            beer_garden.api.http.handlers.vbeta.chunk.ChunkNameAPI,
+        ),
         (rf"{prefix}api/vbeta/file/?", vbeta.file.RawFileAPI),
         # V2
         (rf"{prefix}api/v2/users/?", v1.user.UsersAPI),

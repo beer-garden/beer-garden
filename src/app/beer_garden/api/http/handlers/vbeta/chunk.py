@@ -8,7 +8,7 @@ from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
 
 
-class FileAPI(BaseHandler):
+class FileChunkAPI(BaseHandler):
     @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
@@ -162,7 +162,7 @@ class FileAPI(BaseHandler):
         self.write(response)
 
 
-class FileNameAPI(BaseHandler):
+class ChunkNameAPI(BaseHandler):
     @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
