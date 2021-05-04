@@ -10,13 +10,13 @@ from beer_garden.db.mongo.models import RawFile
 
 class RawFileAPI(BaseHandler):
     @authenticated(permissions=[Permissions.READ])
-    async def get(self):
+    async def get(self, file_id):
         """
         ---
         summary: Retrieve a File
         parameters:
           - name: file_id
-            in: query
+            in: body
             required: true
             description: The file ID
             type: string
@@ -32,11 +32,42 @@ class RawFileAPI(BaseHandler):
         tags:
           - Files
         """
-        db_file = RawFile.objects.get(id=self.get_argument("file_id", default=""))
+        db_file = RawFile.objects.get(id=file_id)
         file = db_file.file.read()
 
         self.set_header("Content-Type", "application/octet-stream")
         self.write(file)
+
+    async def delete(self, file_id):
+        """
+        ---
+        summary: Delete a file
+        parameters:
+          - name: file_name
+            in: path
+            required: true
+            description: The file ID
+            type: string
+        responses:
+          204:
+            description: The file and all of its contents have been removed.
+            schema:
+              $ref: '#/definitions/FileStatus'
+          400:
+            $ref: '#/definitions/400Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Files
+        """
+        db_file = RawFile.objects.get(id=file_id)
+        db_file.file.delete()
+        db_file.save()
+
+        self.set_status(204)
+
+
+class RawFileListAPI(BaseHandler):
 
     @authenticated(permissions=[Permissions.CREATE])
     async def put(self):
@@ -44,11 +75,6 @@ class RawFileAPI(BaseHandler):
         ---
         summary: Create a new File
         parameters:
-          - name: name
-            in: query
-            required: true
-            description: The file name
-            type: string
           - name: body
             in: body
             required: true
@@ -72,31 +98,3 @@ class RawFileAPI(BaseHandler):
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(BYTES_PREFIX + str(db_file.id))
-
-    async def delete(self):
-        """
-        ---
-        summary: Delete a file
-        parameters:
-          - name: file_name
-            in: query
-            required: true
-            description: The name of the file
-            type: string
-        responses:
-          200:
-            description: The file and all of its contents have been removed.
-            schema:
-              $ref: '#/definitions/FileStatus'
-          400:
-            $ref: '#/definitions/400Error'
-          50x:
-            $ref: '#/definitions/50xError'
-        tags:
-          - Files
-        """
-        db_file = RawFile.objects.get(name=self.get_argument("name", default=""))
-        db_file.file.delete()
-        db_file.save()
-
-        self.set_status(204)

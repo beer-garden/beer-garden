@@ -220,7 +220,8 @@ def _setup_tornado_app() -> Application:
             rf"{prefix}api/vbeta/chunks/id/?",
             beer_garden.api.http.handlers.vbeta.chunk.ChunkNameAPI,
         ),
-        (rf"{prefix}api/vbeta/file/?", vbeta.file.RawFileAPI),
+        (rf"{prefix}api/vbeta/file/?", vbeta.file.RawFileListAPI),
+        (rf"{prefix}api/vbeta/file/(\w+)/?", vbeta.file.RawFileAPI),
         # V2
         (rf"{prefix}api/v2/users/?", v1.user.UsersAPI),
         (rf"{prefix}api/v2/users/(\w+)/?", v1.user.UserAPI),
