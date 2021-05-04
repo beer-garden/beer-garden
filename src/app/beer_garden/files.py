@@ -12,7 +12,7 @@ from brewtils.models import (
     Operation,
     Request,
 )
-from brewtils.resolvers.parameter import UI_FILE_ID_PREFIX
+from brewtils.resolvers.file import UI_FILE_ID_PREFIX
 from bson import ObjectId
 from bson.errors import InvalidId
 from datetime import datetime

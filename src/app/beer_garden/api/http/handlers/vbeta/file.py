@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import io
 
-from brewtils.resolvers.parameter import BYTES_PREFIX
+from brewtils.resolvers.bytes import BYTES_PREFIX
 
 from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
