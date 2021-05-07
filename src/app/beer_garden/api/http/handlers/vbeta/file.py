@@ -70,7 +70,7 @@ class RawFileAPI(BaseHandler):
 class RawFileListAPI(BaseHandler):
 
     @authenticated(permissions=[Permissions.CREATE])
-    async def put(self):
+    async def post(self):
         """
         ---
         summary: Create a new File
