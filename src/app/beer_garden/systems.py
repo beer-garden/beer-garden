@@ -95,6 +95,7 @@ def update_system(
     display_name: str = None,
     icon_name: str = None,
     metadata: dict = None,
+    template: str = None,
 ) -> System:
     """Update an already existing System
 
@@ -107,6 +108,7 @@ def update_system(
         display_name: Replacement display_name
         icon_name: Replacement icon_name
         metadata: Dictionary that will be incorporated into current metadata
+        template: Replacement template
 
     Returns:
         The updated System
@@ -141,6 +143,9 @@ def update_system(
 
     if icon_name is not None:
         updates["icon_name"] = icon_name
+
+    if template is not None:
+        updates["template"] = template
 
     if metadata:
         metadata_update = copy.deepcopy(system.metadata)

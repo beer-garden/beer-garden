@@ -157,7 +157,12 @@ class SystemAPI(BaseHandler):
                     kwargs["new_commands"] = SchemaParser.parse_command(
                         op.value, many=True
                     )
-                elif op.path in ["/description", "/icon_name", "/display_name"]:
+                elif op.path in [
+                    "/description",
+                    "/icon_name",
+                    "/display_name",
+                    "/template",
+                ]:
                     kwargs[op.path.strip("/")] = op.value
                 else:
                     raise ModelValidationError(
