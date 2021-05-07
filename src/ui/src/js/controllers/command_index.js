@@ -2,14 +2,17 @@ commandIndexController.$inject = [
   '$rootScope',
   '$scope',
   '$stateParams',
+  '$sce',
   'localStorageService',
   'DTOptionsBuilder',
+  'SystemService',
 ];
 
 /**
  * commandIndexController - Angular controller for all commands page.
  * @param  {Object} $rootScope       Angular's $rootScope object.
  * @param  {Object} $scope           Angular's $scope object.
+ * @param  {Object} $sce             Angular's $sce object.
  * @param  {Object} localStorageService  Storage service
  * @param  {Object} DTOptionsBuilder Data-tables' builder for options.
  */
@@ -17,10 +20,13 @@ export default function commandIndexController(
     $rootScope,
     $scope,
     $stateParams,
+    $sce,
     localStorageService,
-    DTOptionsBuilder) {
+    DTOptionsBuilder,
+    SystemService) {
   $scope.setWindowTitle('commands');
   $scope.filterHidden = false;
+  $scope.template = '';
   $scope.dtInstance = {};
   $scope.dtOptions = DTOptionsBuilder.newOptions()
     .withOption('autoWidth', false)
@@ -87,6 +93,18 @@ export default function commandIndexController(
         if ($stateParams.systemVersion){
           commands = _.filter(commands, {version: $stateParams.systemVersion});
           breadCrumbs.push($stateParams.systemVersion);
+
+          // If there's a fully specified system and it has a template, show it
+          let foundSystem = SystemService.findSystem(
+            $stateParams.namespace, $stateParams.systemName, $stateParams.systemVersion
+          );
+          if (foundSystem.template) {
+            if ($scope.config.executeJavascript) {
+              $scope.template = $sce.trustAsHtml(foundSystem.template);
+            } else {
+              $scope.template = foundSystem.template;
+            }
+          }
         }
       }
     }

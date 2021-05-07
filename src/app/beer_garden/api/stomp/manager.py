@@ -27,7 +27,7 @@ class StompManager(BaseProcessor):
 
     @staticmethod
     def connect(stomp_config: Box) -> Connection:
-        """Create and return a stomp connection """
+        """Create and return a stomp connection"""
 
         conn = Connection(
             host=stomp_config.get("host"),

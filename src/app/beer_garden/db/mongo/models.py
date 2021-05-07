@@ -219,6 +219,7 @@ class Command(MongoModel, EmbeddedDocument):
     template = StringField()
     hidden = BooleanField()
     icon_name = StringField()
+    metadata = DictField()
 
     def clean(self):
         """Validate before saving to the database"""
@@ -493,6 +494,7 @@ class System(MongoModel, Document):
     display_name = StringField()
     metadata = DictField()
     local = BooleanField(default=True)
+    template = StringField()
 
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
