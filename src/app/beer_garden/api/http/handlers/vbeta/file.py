@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import io
 
-from brewtils.resolvers.bytes import BYTES_PREFIX
+from brewtils.models import Resolvable
+from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
@@ -96,5 +97,8 @@ class RawFileListAPI(BaseHandler):
         db_file.file.put(io.BytesIO(self.request.body), filename=name)
         db_file.save()
 
+        resolvable = Resolvable(storage="gridfs", details={"id": str(db_file.id)})
+        response = SchemaParser.serialize(resolvable, to_string=True)
+
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(BYTES_PREFIX + str(db_file.id))
+        self.write(response)
