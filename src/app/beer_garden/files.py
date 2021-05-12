@@ -12,7 +12,6 @@ from brewtils.models import (
     Operation,
     Request,
 )
-from brewtils.resolvers.chunks import UI_FILE_ID_PREFIX
 from bson import ObjectId
 from bson.errors import InvalidId
 from datetime import datetime
@@ -24,8 +23,8 @@ import beer_garden.db.api as db
 import beer_garden.router as router
 from beer_garden.errors import NotUniqueException
 
-# 15MB
-MAX_CHUNK_SIZE = 1024 * 1024 * 15
+UI_FILE_ID_PREFIX = "BGFileID:"
+MAX_CHUNK_SIZE = 1024 * 1024 * 15  # 15MB
 OWNERSHIP_PRIORITY = {
     "JOB": 1,
     "REQUEST": 2,
