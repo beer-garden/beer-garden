@@ -69,7 +69,6 @@ class RawFileAPI(BaseHandler):
 
 
 class RawFileListAPI(BaseHandler):
-
     @authenticated(permissions=[Permissions.CREATE])
     async def post(self):
         """
