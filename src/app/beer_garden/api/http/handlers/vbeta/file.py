@@ -17,7 +17,7 @@ class RawFileAPI(BaseHandler):
         summary: Retrieve a File
         parameters:
           - name: file_id
-            in: body
+            in: path
             required: true
             description: The file ID
             type: string
