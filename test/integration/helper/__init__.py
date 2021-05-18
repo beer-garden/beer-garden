@@ -177,6 +177,8 @@ def get_config(is_child=False):
             path = "../configs/"
         elif cwd.endswith("/integration"):
             path = "configs/"
+        elif cwd.endswith("/test"):
+            path = "integration/configs/"
 
         try:
             with open(path + config_file) as config_file:
