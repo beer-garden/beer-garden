@@ -12,32 +12,46 @@ from brewtils.errors import ValidationError
 try:
     from helper import delete_plugins
     from helper.assertion import assert_system_running
-    from helper.plugin import (create_plugin, start_plugin, stop_plugin,
-                               TestPluginV1, TestPluginV2,
-                               TestPluginV1BetterDescriptions)
+    from helper.plugin import (
+        create_plugin,
+        start_plugin,
+        stop_plugin,
+        TestPluginV1,
+        TestPluginV2,
+        TestPluginV1BetterDescriptions,
+    )
 except:
     from ...helper import delete_plugins
     from ...helper.assertion import assert_system_running
-    from ...helper.plugin import (create_plugin, start_plugin, stop_plugin,
-                                  TestPluginV1, TestPluginV2,
-                                  TestPluginV1BetterDescriptions)
+    from ...helper.plugin import (
+        create_plugin,
+        start_plugin,
+        stop_plugin,
+        TestPluginV1,
+        TestPluginV2,
+        TestPluginV1BetterDescriptions,
+    )
 
 
 @pytest.fixture(scope="class")
 def system_spec():
-    return {'system': 'echo', 'system_version': '3.0.0.dev0', 'instance_name': 'default',
-            'command': 'say'}
+    return {
+        "system": "echo",
+        "system_version": "3.0.0.dev0",
+        "instance_name": "default",
+        "command": "say",
+    }
 
 
 class MessageListener(object):
     create_event_captured = False
 
     def on_error(self, headers, message):
-        print('received an error %s' % headers)
+        print("received an error %s" % headers)
 
     def on_message(self, headers, message):
         try:
-            if headers['model_class'] == 'Operation':
+            if headers["model_class"] == "Operation":
 
                 parsed = SchemaParser.parse_operation(message, from_string=True)
 
@@ -47,14 +61,13 @@ class MessageListener(object):
                         self.create_event_captured = True
                     else:
                         print(parsed.model.name)
-            elif headers['model_class'] == 'error_message':
+            elif headers["model_class"] == "error_message":
                 print("Error Message Returned:", message)
         except:
             print("Error: unable to parse message:", message)
 
 
 class TestPublisher(object):
-
     def create_stomp_connection(self):
         """Creates the Connection class and closes when completed"""
 
@@ -71,13 +84,15 @@ class TestPublisher(object):
         #     conn.disconnect()
 
     def create_request(self, function):
-        request_model = self.request_generator.generate_request(parameters={"message": "test_string", "loud": True})
+        request_model = self.request_generator.generate_request(
+            parameters={"message": "test_string", "loud": True}
+        )
 
-        request_model['metadata'] = {"generated-by": function}
+        request_model["metadata"] = {"generated-by": function}
 
         return request_model
 
-    @pytest.mark.usefixtures('easy_client', 'request_generator')
+    @pytest.mark.usefixtures("easy_client", "request_generator")
     def test_listen_create_request(self):
         """Published the Request over HTTP and verifies of STOMP"""
 
@@ -92,11 +107,17 @@ class TestPublisher(object):
         )
 
         listener = MessageListener()
-        stomp_connection.set_listener('', listener)
+        stomp_connection.set_listener("", listener)
 
-        stomp_connection.subscribe(destination='Beer_Garden_Events', id='event_listener', ack='auto',
-                                   headers={'subscription-type': 'MULTICAST',
-                                            'durable-subscription-name': 'events'})
+        stomp_connection.subscribe(
+            destination="Beer_Garden_Events",
+            id="event_listener",
+            ack="auto",
+            headers={
+                "subscription-type": "MULTICAST",
+                "durable-subscription-name": "events",
+            },
+        )
 
         self.easy_client.forward(sample_operation_request)
 
@@ -107,7 +128,7 @@ class TestPublisher(object):
         if stomp_connection.is_connected():
             stomp_connection.disconnect()
 
-    @pytest.mark.usefixtures('easy_client', 'request_generator')
+    @pytest.mark.usefixtures("easy_client", "request_generator")
     def test_publish_create_request(self):
         """Published the Request over STOMP and verifies of HTTP"""
 
@@ -122,14 +143,22 @@ class TestPublisher(object):
         )
 
         listener = MessageListener()
-        stomp_connection.set_listener('', listener)
+        stomp_connection.set_listener("", listener)
 
-        stomp_connection.subscribe(destination='Beer_Garden_Events', id='event_listener', ack='auto',
-                                   headers={'subscription-type': 'MULTICAST',
-                                            'durable-subscription-name': 'events'})
+        stomp_connection.subscribe(
+            destination="Beer_Garden_Events",
+            id="event_listener",
+            ack="auto",
+            headers={
+                "subscription-type": "MULTICAST",
+                "durable-subscription-name": "events",
+            },
+        )
 
         stomp_connection.send(
-            body=SchemaParser.serialize_operation(sample_operation_request, to_string=True),
+            body=SchemaParser.serialize_operation(
+                sample_operation_request, to_string=True
+            ),
             headers={
                 "model_class": sample_operation_request.__class__.__name__,
             },
@@ -145,7 +174,10 @@ class TestPublisher(object):
         print(len(requests))
         for request in requests:
             print(SchemaParser.serialize_request(request, to_string=True))
-            if "generated-by" in request.metadata and request.metadata["generated-by"] == "test_publish_create_request":
+            if (
+                "generated-by" in request.metadata
+                and request.metadata["generated-by"] == "test_publish_create_request"
+            ):
                 found_request = True
                 break
 

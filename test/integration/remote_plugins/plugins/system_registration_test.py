@@ -1,24 +1,33 @@
 import pytest
 
 from brewtils.errors import ValidationError
+
 try:
     from helper import delete_plugins
     from helper.assertion import assert_system_running
-    from helper.plugin import (create_plugin, start_plugin, stop_plugin,
-                               TestPluginV1, TestPluginV2,
-                           TestPluginV1BetterDescriptions)
+    from helper.plugin import (
+        create_plugin,
+        start_plugin,
+        stop_plugin,
+        TestPluginV1,
+        TestPluginV2,
+        TestPluginV1BetterDescriptions,
+    )
 except:
     from ...helper import delete_plugins
     from ...helper.assertion import assert_system_running
-    from ...helper.plugin import (create_plugin, start_plugin, stop_plugin,
-                                  TestPluginV1, TestPluginV2,
-                                  TestPluginV1BetterDescriptions)
+    from ...helper.plugin import (
+        create_plugin,
+        start_plugin,
+        stop_plugin,
+        TestPluginV1,
+        TestPluginV2,
+        TestPluginV1BetterDescriptions,
+    )
 
 
-@pytest.mark.usefixtures('easy_client')
+@pytest.mark.usefixtures("easy_client")
 class TestSystemRegistration(object):
-
-
     @pytest.fixture(autouse=True)
     def delete_test_plugin(self):
         """Ensure there are no "test" plugins before or after the test"""
@@ -40,15 +49,27 @@ class TestSystemRegistration(object):
         stop_plugin(plugin)
 
         # Now create the new plugin and register that one
-        plugin = create_plugin("test", "1.0.0", TestPluginV1BetterDescriptions,
-                               description="A better description",
-                               metadata={"foo": "bar"}, icon_name="fa-coffee",
-                               display_name="new_display_name")
+        plugin = create_plugin(
+            "test",
+            "1.0.0",
+            TestPluginV1BetterDescriptions,
+            description="A better description",
+            metadata={"foo": "bar"},
+            icon_name="fa-coffee",
+            display_name="new_display_name",
+        )
         start_plugin(plugin, self.easy_client)
-        assert_system_running(self.easy_client, "test", "1.0.0",
-                              system={"description": "A better description",
-                                      "metadata": {"foo": "bar"}, "icon_name": "fa-coffee",
-                                      'display_name': 'new_display_name'})
+        assert_system_running(
+            self.easy_client,
+            "test",
+            "1.0.0",
+            system={
+                "description": "A better description",
+                "metadata": {"foo": "bar"},
+                "icon_name": "fa-coffee",
+                "display_name": "new_display_name",
+            },
+        )
         stop_plugin(plugin)
 
     def test_system_register_dev_different_commands(self):

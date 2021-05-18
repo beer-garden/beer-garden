@@ -8,7 +8,6 @@ except:
     from helper import setup_easy_client, RequestGenerator
 
 
-
 @pytest.fixture(scope="class")
 def request_generator(request, system_spec):
     request.cls.request_generator = RequestGenerator(**system_spec)
@@ -22,9 +21,9 @@ def easy_client(request):
 
 @pytest.fixture(scope="class")
 def child_easy_client(request):
-    request.cls.child_easy_client = get_easy_client(bg_host="localhost",
-                                                    bg_port=2347,
-                                                    ssl_enabled=False)
+    request.cls.child_easy_client = get_easy_client(
+        bg_host="localhost", bg_port=2347, ssl_enabled=False
+    )
     return request.cls.child_easy_client
 
 

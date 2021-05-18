@@ -9,25 +9,26 @@ except:
     from ...helper import setup_system_client, wait_for_response, RequestGenerator
 
 
-@pytest.mark.usefixtures('easy_client')
+@pytest.mark.usefixtures("easy_client")
 class TestRequestListApi(object):
-
     @staticmethod
     @pytest.fixture
     def echo_generator():
         return RequestGenerator(
-            system='echo',
-            system_version='3.0.0.dev0',
-            instance_name='default',
-            command='say',
+            system="echo",
+            system_version="3.0.0.dev0",
+            instance_name="default",
+            command="say",
         )
 
     def test_get_requests(self, echo_generator):
         # Make a couple of requests just to ensure there are some
         request_1 = echo_generator.generate_request(
-            parameters={"message": "test_string", "loud": True})
+            parameters={"message": "test_string", "loud": True}
+        )
         request_2 = echo_generator.generate_request(
-            parameters={"message": "test_string", "loud": False})
+            parameters={"message": "test_string", "loud": False}
+        )
         wait_for_response(self.easy_client, request_1)
         wait_for_response(self.easy_client, request_2)
 
@@ -38,17 +39,16 @@ class TestRequestListApi(object):
         assert response[0].command is not None
 
 
-@pytest.mark.usefixtures('easy_client')
+@pytest.mark.usefixtures("easy_client")
 class TestEasyClient(object):
-
     @staticmethod
     @pytest.fixture
     def sleeper_generator():
         return RequestGenerator(
-            system='sleeper',
-            system_version='3.0.0.dev0',
-            instance_name='default',
-            command='sleep',
+            system="sleeper",
+            system_version="3.0.0.dev0",
+            instance_name="default",
+            command="sleep",
         )
 
     def test_no_wait(self, sleeper_generator):
@@ -68,25 +68,24 @@ class TestEasyClient(object):
             self.easy_client.create_request(req, blocking=True, timeout=1)
 
 
-@pytest.mark.usefixtures('easy_client')
+@pytest.mark.usefixtures("easy_client")
 class TestSystemClient(object):
-
     def test_blocking(self):
-        sys_client = setup_system_client(
-            system_name='sleeper', timeout=1)
+        sys_client = setup_system_client(system_name="sleeper", timeout=1)
 
         req = sys_client.sleep(amount=0)
-        assert req.status == 'SUCCESS'
+        assert req.status == "SUCCESS"
 
         with pytest.raises(TimeoutExceededError):
             sys_client.sleep(amount=2)
 
     def test_non_blocking(self):
         sys_client = setup_system_client(
-            system_name='sleeper', blocking=False, timeout=1)
+            system_name="sleeper", blocking=False, timeout=1
+        )
 
         future = sys_client.sleep(amount=0)
-        assert future.result().status == 'SUCCESS'
+        assert future.result().status == "SUCCESS"
 
         with pytest.raises(TimeoutExceededError):
             sys_client.sleep(amount=2).result()
