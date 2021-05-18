@@ -5,7 +5,7 @@ import time
 import pytest
 
 # This is the recommended import pattern, see https://github.com/google/python-subprocess32
-if os.name == 'posix' and sys.version_info[0] < 3:
+if os.name == "posix" and sys.version_info[0] < 3:
     import subprocess32 as subprocess
 else:
     import subprocess
@@ -13,11 +13,13 @@ else:
 
 @pytest.mark.timeout(20)
 class TestShutdown(object):
-
-    @pytest.mark.parametrize('command', [
-        ('brew-view',),
-        ('bartender',),
-    ])
+    @pytest.mark.parametrize(
+        "command",
+        [
+            ("brew-view",),
+            ("bartender",),
+        ],
+    )
     def test_solo(self, command):
         proc = subprocess.Popen(command)
         time.sleep(3)
@@ -28,8 +30,8 @@ class TestShutdown(object):
         assert proc.poll() == 0
 
     def test_both(self):
-        bv_proc = subprocess.Popen('brew-view')
-        bt_proc = subprocess.Popen('bartender')
+        bv_proc = subprocess.Popen("brew-view")
+        bt_proc = subprocess.Popen("bartender")
 
         time.sleep(10)
 

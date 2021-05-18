@@ -13,25 +13,29 @@ except:
 
 @pytest.fixture()
 def system_spec():
-    return {'system': 'echo', 'system_version': '3.0.0.dev0', 'instance_name': 'default',
-            'command': 'say', 'parameters': {'message': "hello", 'loud': False}}
+    return {
+        "system": "echo",
+        "system_version": "3.0.0.dev0",
+        "instance_name": "default",
+        "command": "say",
+        "parameters": {"message": "hello", "loud": False},
+    }
 
 
-@pytest.mark.usefixtures('easy_client')
+@pytest.mark.usefixtures("easy_client")
 class TestInterval(object):
-
     def test_no_namespace_job(self, system_spec):
 
         job_name = "test_no_namespace_job"
         job_wait = 30
 
         template = RequestTemplate(
-            system=system_spec['system'],
-            system_version=system_spec['system_version'],
-            instance_name=system_spec['instance_name'],
-            command=system_spec['command'],
-            parameters=system_spec['parameters'],
-            comment=job_name + ' Job'
+            system=system_spec["system"],
+            system_version=system_spec["system_version"],
+            instance_name=system_spec["instance_name"],
+            command=system_spec["command"],
+            parameters=system_spec["parameters"],
+            comment=job_name + " Job",
         )
 
         trigger = IntervalTrigger(seconds=job_wait)
@@ -39,12 +43,12 @@ class TestInterval(object):
 
         job = Job(
             name=job_name,
-            trigger_type='interval',
+            trigger_type="interval",
             trigger=trigger,
             request_template=template,
             status="RUNNING",
             coalesce=True,
-            max_instances=1
+            max_instances=1,
         )
 
         job_response = self.easy_client.create_job(job)

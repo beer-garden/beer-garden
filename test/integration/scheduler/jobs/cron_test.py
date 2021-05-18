@@ -13,13 +13,17 @@ except:
 
 @pytest.fixture()
 def system_spec():
-    return {'system': 'echo', 'system_version': '3.0.0.dev0', 'instance_name': 'default',
-            'command': 'say', 'parameters': {'message': "hello", 'loud': False}}
+    return {
+        "system": "echo",
+        "system_version": "3.0.0.dev0",
+        "instance_name": "default",
+        "command": "say",
+        "parameters": {"message": "hello", "loud": False},
+    }
 
 
-@pytest.mark.usefixtures('easy_client')
+@pytest.mark.usefixtures("easy_client")
 class TestCron(object):
-
     def test_start_date_job(self, system_spec):
 
         job_name = "test_start_date_job"
@@ -29,38 +33,39 @@ class TestCron(object):
         start_date = int(round((time.time() + delay_start) * 1000))
 
         template = RequestTemplate(
-            system=system_spec['system'],
-            system_version=system_spec['system_version'],
-            instance_name=system_spec['instance_name'],
-            command=system_spec['command'],
-            parameters=system_spec['parameters'],
-            comment=job_name + ' Job',
-            output_type="STRING"
-
+            system=system_spec["system"],
+            system_version=system_spec["system_version"],
+            instance_name=system_spec["instance_name"],
+            command=system_spec["command"],
+            parameters=system_spec["parameters"],
+            comment=job_name + " Job",
+            output_type="STRING",
         )
 
-        trigger = CronTrigger(year="*",
-                              month="*",
-                              day="*",
-                              week="*",
-                              day_of_week="*",
-                              hour="*",
-                              minute="*",
-                              second=f"*/{job_wait}",
-                              start_date=start_date,
-                              end_date=None,
-                              jitter=None,
-                              timezone="UTC")
+        trigger = CronTrigger(
+            year="*",
+            month="*",
+            day="*",
+            week="*",
+            day_of_week="*",
+            hour="*",
+            minute="*",
+            second=f"*/{job_wait}",
+            start_date=start_date,
+            end_date=None,
+            jitter=None,
+            timezone="UTC",
+        )
         trigger.reschedule_on_finish = True
 
         job = Job(
             name=job_name,
-            trigger_type='cron',
+            trigger_type="cron",
             trigger=trigger,
             request_template=template,
             status="RUNNING",
             coalesce=True,
-            max_instances=1
+            max_instances=1,
         )
 
         job_response = self.easy_client.create_job(job)
