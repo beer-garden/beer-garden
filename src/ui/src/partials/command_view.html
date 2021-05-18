@@ -15,8 +15,8 @@
       </h1>
 
       <ol class="tagline breadcrumb">
-        <li><a ui-sref="base.system({namespace: breadCrumbs[0]})">{{breadCrumbs[0]}}</a></li
-        ><li><a ui-sref="base.system({namespace: breadCrumbs[0], systemName: breadCrumbs[1]})">{{breadCrumbs[1]}}</a></li
+        <li><a ui-sref="base.systemNs({namespace: breadCrumbs[0]})">{{breadCrumbs[0]}}</a></li
+        ><li><a ui-sref="base.systemName({namespace: breadCrumbs[0], systemName: breadCrumbs[1]})">{{breadCrumbs[1]}}</a></li
         ><li><a ui-sref="base.system({namespace: breadCrumbs[0], systemName: breadCrumbs[1], systemVersion: breadCrumbs[2]})">{{breadCrumbs[2]}}</a></li
         ><li class="active">{{breadCrumbs[3]}}</li>
       </ol>
