@@ -511,8 +511,6 @@ class RequestValidator(object):
                 return int(value)
             elif parameter.type.upper() == "FLOAT":
                 return float(value)
-            elif parameter.type.upper() == "ANY":
-                return value
             elif parameter.type.upper() == "BOOLEAN":
                 if value in [True, False]:
                     return value
@@ -530,9 +528,7 @@ class RequestValidator(object):
                 return int(value)
             elif parameter.type.upper() == "DATETIME":
                 return int(value)
-            elif parameter.type.upper() == "BASE64":
-                return value
-            elif parameter.type.upper() == "BYTES":
+            elif parameter.type.upper() in ("ANY", "BASE64", "BYTES", "FILE"):
                 return value
             else:
                 raise ModelValidationError(
