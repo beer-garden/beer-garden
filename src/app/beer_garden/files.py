@@ -23,7 +23,6 @@ import beer_garden.db.api as db
 import beer_garden.router as router
 from beer_garden.errors import NotUniqueException
 
-UI_FILE_ID_PREFIX = "BGFileID:"
 MAX_CHUNK_SIZE = 1024 * 1024 * 15  # 15MB
 OWNERSHIP_PRIORITY = {
     "JOB": 1,
@@ -33,26 +32,6 @@ OWNERSHIP_MAP = {
     "JOB": Job,
     "REQUEST": Request,
 }
-
-
-def _add_prefix(file_id: str) -> str:
-    if UI_FILE_ID_PREFIX not in file_id:
-        file_id = f"{UI_FILE_ID_PREFIX} {file_id}"
-
-    return file_id
-
-
-def _remove_prefix(file_id: str) -> str:
-    if UI_FILE_ID_PREFIX in file_id:
-        file_id = file_id.split(" ")[1]
-
-    return file_id
-
-
-def _format_id(dictionary: dict, file_id: str) -> dict:
-    """Updates the given dictionary with the standard formatting for BG File IDs."""
-    dictionary["file_id"] = _add_prefix(file_id)
-    return dictionary
 
 
 def _unroll_object(
@@ -102,7 +81,7 @@ def _safe_build_object(cls, *objects, ignore=None, **manual_kwargs):
             kwargs.update(
                 _unroll_object(
                     obj,
-                    key_map={"id": _format_id},
+                    key_map={"id": "file_id"},
                     ignore=["job", "owner", "request", "updated_at"] + ignore,
                 )
             )
@@ -138,8 +117,6 @@ def check_file(file_id: str, upsert: bool = False) -> File:
         NotFoundError: File with the requested ID doesn't exist and is expected to
         ModelValidationError: Incorrectly formatted ID is given
     """
-    file_id = _remove_prefix(file_id)
-
     try:
         ObjectId(file_id)
     except (InvalidId, TypeError):
@@ -175,8 +152,6 @@ def check_chunk(chunk_id: str):
         NotFoundError: Chunk with the requested ID doesn't exist.
         ModelValidationError: Incorrectly formatted ID is given
     """
-    chunk_id = _remove_prefix(chunk_id)
-
     try:
         ObjectId(chunk_id)
     except (InvalidId, TypeError):
@@ -390,8 +365,6 @@ def create_file(
 
     # Override the file id if passed in
     if file_id is not None:
-        file_id = _remove_prefix(file_id)
-
         try:
             file.id = ObjectId(file_id)
         except (InvalidId, TypeError):
@@ -461,7 +434,7 @@ def delete_file(file_id: str) -> FileStatus:
     # This should delete the associated chunks as well.
     db.delete(file)
 
-    return FileStatus(operation_complete=True, file_id=_add_prefix(file_id))
+    return FileStatus(operation_complete=True, file_id=file_id)
 
 
 def set_owner(file_id: str, owner_id: str = None, owner_type: str = None) -> FileStatus:
@@ -529,13 +502,7 @@ def _check_file_ids(parameter, ids=None) -> List[str]:
         ids = []
 
     if isinstance(parameter, six.string_types):
-        if UI_FILE_ID_PREFIX in parameter:
-            try:
-                tmp_list = parameter.split(" ")
-                prefix_idx = parameter.index(UI_FILE_ID_PREFIX)
-                ids.append(tmp_list[prefix_idx + 1])
-            except (IndexError, ValueError):
-                pass
+        ids.append(parameter)
 
     else:
         iterable = parameter.values() if isinstance(parameter, dict) else parameter
