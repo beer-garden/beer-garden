@@ -91,9 +91,8 @@ class RawFileListAPI(BaseHandler):
         tags:
           - Files
         """
-        name = self.get_argument("name", default="")
-        db_file = RawFile(name=self.get_argument("name", default=""))
-        db_file.file.put(io.BytesIO(self.request.body), filename=name)
+        db_file = RawFile()
+        db_file.file.put(io.BytesIO(self.request.body))
         db_file.save()
 
         resolvable = Resolvable(storage="gridfs", details={"id": str(db_file.id)})

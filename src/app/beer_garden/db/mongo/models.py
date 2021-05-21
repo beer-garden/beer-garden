@@ -762,5 +762,4 @@ class FileChunk(MongoModel, Document):
 
 
 class RawFile(Document):
-    name = StringField()
     file = FileField()
