@@ -244,7 +244,7 @@ class ChunkNameAPI(BaseHandler):
             serialize_kwargs={"to_string": False},
         )
 
-        resolvable = Resolvable(storage="gridfs", details=file_status)
+        resolvable = Resolvable(type="chunk", storage="gridfs", details=file_status)
         response = SchemaParser.serialize(resolvable, to_string=True)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
