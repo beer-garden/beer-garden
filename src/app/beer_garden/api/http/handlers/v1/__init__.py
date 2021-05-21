@@ -16,4 +16,3 @@ import beer_garden.api.http.handlers.v1.user
 import beer_garden.api.http.handlers.v1.garden
 import beer_garden.api.http.handlers.v1.forward
 import beer_garden.api.http.handlers.v1.namespace
-import beer_garden.api.http.handlers.v1.file

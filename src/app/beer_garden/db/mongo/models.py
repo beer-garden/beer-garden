@@ -759,3 +759,7 @@ class FileChunk(MongoModel, Document):
     data = StringField(required=True)
     # Delete Rule (2) = CASCADE; This causes this document to be deleted when the owner doc is.
     owner = LazyReferenceField(File, required=False, reverse_delete_rule=CASCADE)
+
+
+class RawFile(Document):
+    file = FileField()

@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 
 from brewtils.errors import ModelValidationError
-from brewtils.models import Operation
+from brewtils.models import Operation, Resolvable
+from brewtils.schema_parser import SchemaParser
 from tornado.escape import json_decode
 
 from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
 
 
-class FileAPI(BaseHandler):
+class FileChunkAPI(BaseHandler):
     @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
@@ -162,7 +163,7 @@ class FileAPI(BaseHandler):
         self.write(response)
 
 
-class FileNameAPI(BaseHandler):
+class ChunkNameAPI(BaseHandler):
     @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
@@ -229,7 +230,7 @@ class FileNameAPI(BaseHandler):
         if file_size is None:
             raise ModelValidationError(f"No file_size sent with file {file_name}.")
 
-        response = await self.client(
+        file_status = await self.client(
             Operation(
                 operation_type="FILE_CREATE",
                 args=[file_name, int(file_size), int(chunk_size)],
@@ -239,8 +240,12 @@ class FileNameAPI(BaseHandler):
                     "owner_id": owner_id,
                     "owner_type": owner_type,
                 },
-            )
+            ),
+            serialize_kwargs={"to_string": False},
         )
+
+        resolvable = Resolvable(type="chunk", storage="gridfs", details=file_status)
+        response = SchemaParser.serialize(resolvable, to_string=True)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

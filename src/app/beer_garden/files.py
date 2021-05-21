@@ -12,7 +12,6 @@ from brewtils.models import (
     Operation,
     Request,
 )
-from brewtils.resolvers.parameter import UI_FILE_ID_PREFIX
 from bson import ObjectId
 from bson.errors import InvalidId
 from datetime import datetime
@@ -24,8 +23,7 @@ import beer_garden.db.api as db
 import beer_garden.router as router
 from beer_garden.errors import NotUniqueException
 
-# 15MB
-MAX_CHUNK_SIZE = 1024 * 1024 * 15
+MAX_CHUNK_SIZE = 1024 * 1024 * 15  # 15MB
 OWNERSHIP_PRIORITY = {
     "JOB": 1,
     "REQUEST": 2,
@@ -34,26 +32,6 @@ OWNERSHIP_MAP = {
     "JOB": Job,
     "REQUEST": Request,
 }
-
-
-def _add_prefix(file_id: str) -> str:
-    if UI_FILE_ID_PREFIX not in file_id:
-        file_id = f"{UI_FILE_ID_PREFIX} {file_id}"
-
-    return file_id
-
-
-def _remove_prefix(file_id: str) -> str:
-    if UI_FILE_ID_PREFIX in file_id:
-        file_id = file_id.split(" ")[1]
-
-    return file_id
-
-
-def _format_id(dictionary: dict, file_id: str) -> dict:
-    """Updates the given dictionary with the standard formatting for BG File IDs."""
-    dictionary["file_id"] = _add_prefix(file_id)
-    return dictionary
 
 
 def _unroll_object(
@@ -103,7 +81,7 @@ def _safe_build_object(cls, *objects, ignore=None, **manual_kwargs):
             kwargs.update(
                 _unroll_object(
                     obj,
-                    key_map={"id": _format_id},
+                    key_map={"id": "file_id"},
                     ignore=["job", "owner", "request", "updated_at"] + ignore,
                 )
             )
@@ -139,8 +117,6 @@ def check_file(file_id: str, upsert: bool = False) -> File:
         NotFoundError: File with the requested ID doesn't exist and is expected to
         ModelValidationError: Incorrectly formatted ID is given
     """
-    file_id = _remove_prefix(file_id)
-
     try:
         ObjectId(file_id)
     except (InvalidId, TypeError):
@@ -176,8 +152,6 @@ def check_chunk(chunk_id: str):
         NotFoundError: Chunk with the requested ID doesn't exist.
         ModelValidationError: Incorrectly formatted ID is given
     """
-    chunk_id = _remove_prefix(chunk_id)
-
     try:
         ObjectId(chunk_id)
     except (InvalidId, TypeError):
@@ -391,8 +365,6 @@ def create_file(
 
     # Override the file id if passed in
     if file_id is not None:
-        file_id = _remove_prefix(file_id)
-
         try:
             file.id = ObjectId(file_id)
         except (InvalidId, TypeError):
@@ -462,7 +434,7 @@ def delete_file(file_id: str) -> FileStatus:
     # This should delete the associated chunks as well.
     db.delete(file)
 
-    return FileStatus(operation_complete=True, file_id=_add_prefix(file_id))
+    return FileStatus(operation_complete=True, file_id=file_id)
 
 
 def set_owner(file_id: str, owner_id: str = None, owner_type: str = None) -> FileStatus:
@@ -516,36 +488,26 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None) -> Fil
     )
 
 
-def _check_file_ids(parameter, ids=None) -> List[str]:
-    """Used to scan operations for the FileID prefix.
+def _find_chunk_params(param_values) -> List[str]:
+    """Look through parameter values for chunk Resolvables
 
     Args:
-        parameter: The object to be scanned.
-        ids: The current list of discovered file ids
+        param_values: The parameter values to be scanned
 
     Returns:
         A list of file ids (may be empty).
     """
-    if ids is None:
-        ids = []
+    ids = []
 
-    if isinstance(parameter, six.string_types):
-        if UI_FILE_ID_PREFIX in parameter:
-            try:
-                tmp_list = parameter.split(" ")
-                prefix_idx = parameter.index(UI_FILE_ID_PREFIX)
-                ids.append(tmp_list[prefix_idx + 1])
-            except (IndexError, ValueError):
-                pass
+    # Resolvables can only be dicts, so we only care about those
+    if isinstance(param_values, dict):
+        if param_values.get("type") == "chunk":
+            ids.append(param_values.get("details", {}).get("file_id"))
 
-    else:
-        iterable = parameter.values() if isinstance(parameter, dict) else parameter
-
-        try:
-            for item in iterable:
-                _check_file_ids(item, ids)
-        except TypeError:
-            pass
+        # If it's not a resolvable it might be a model, so recurse down and check
+        else:
+            for value in param_values.values():
+                ids += _find_chunk_params(value)
 
     return ids
 
@@ -553,7 +515,9 @@ def _check_file_ids(parameter, ids=None) -> List[str]:
 def forward_file(operation: Operation) -> None:
     """Send file data before forwarding an operation with a file parameter."""
 
-    for file_id in _check_file_ids(operation.model.parameters):
+    # HEADS UP - THIS IS PROBABLY BROKEN
+
+    for file_id in _find_chunk_params(operation.model.parameters):
         file = check_chunks(file_id)
         args = [file.file_name, file.file_size, file.chunk_size]
         # Make sure we get all of the other data
@@ -602,9 +566,11 @@ def handle_event(event: Event) -> None:
     """Handle events"""
     if event.garden == config.get("garden.name"):
         if event.name == Events.JOB_CREATED.name:
-            for file_id in _check_file_ids(event.payload.request_template.parameters):
+            for file_id in _find_chunk_params(
+                event.payload.request_template.parameters
+            ):
                 set_owner(file_id, owner_id=event.payload.id, owner_type="JOB")
 
         if event.name == Events.REQUEST_CREATED.name:
-            for file_id in _check_file_ids(event.payload.parameters):
+            for file_id in _find_chunk_params(event.payload.parameters):
                 set_owner(file_id, owner_id=event.payload.id, owner_type="REQUEST")
