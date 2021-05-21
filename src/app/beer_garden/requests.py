@@ -528,7 +528,7 @@ class RequestValidator(object):
                 return int(value)
             elif parameter.type.upper() == "DATETIME":
                 return int(value)
-            elif parameter.type.upper() in ("ANY", "BASE64", "BYTES", "FILE"):
+            elif parameter.type.upper() in ("ANY", "BASE64", "BYTES"):
                 return value
             else:
                 raise ModelValidationError(
