@@ -39,16 +39,31 @@ class EndpointRemovedException(Exception):
 
 
 # Routing
-class UnknownGardenException(Exception):
+class RoutingException(Exception):
+    """Base Routing Exception"""
+
+    pass
+
+
+class UnknownGardenException(RoutingException):
     """Route requested is not valid"""
 
     pass
 
 
-class RoutingRequestException(Exception):
+class RoutingRequestException(RoutingException):
     """Route requested is not valid"""
 
     pass
+
+
+class ForwardException(RoutingException):
+    """Error forwarding an Operation"""
+
+    def __init__(self, message=None, operation=None, event_name=None):
+        self.message = message
+        self.operation = operation
+        self.event_name = event_name
 
 
 # Database

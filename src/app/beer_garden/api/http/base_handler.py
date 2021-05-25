@@ -36,6 +36,7 @@ from beer_garden.api.http.metrics import http_api_latency_total
 from beer_garden.errors import (
     EndpointRemovedException,
     NotFoundException,
+    RoutingException,
     RoutingRequestException,
     NotUniqueException,
 )
@@ -81,6 +82,7 @@ class BaseHandler(AuthMixin, RequestHandler):
         EndpointRemovedException: {"status_code": 410, "message": "Endpoint removed"},
         DocumentTooLarge: {"status_code": 413, "message": "Resource too large"},
         RequestPublishException: {"status_code": 502},
+        RoutingException: {"status_code": 500},
         socket.timeout: {"status_code": 504, "message": "Backend request timed out"},
     }
 
