@@ -330,28 +330,6 @@ def forward(operation: Operation):
         raise
 
 
-def create_stomp_connection(garden: Garden) -> Connection:
-    """Create a stomp connection wrapper for a garden
-
-    Constructs a stomp connection wrapper from the garden's stomp connection parameters.
-
-    Will ignore subscribe_destination as the router shouldn't be subscribing to
-    anything.
-
-    Args:
-        garden: The garden specifying
-
-    Returns:
-        The created connection wrapper
-
-    """
-    connection_params = garden.connection_params.get("stomp", {})
-    connection_params = deepcopy(connection_params)
-    connection_params["subscribe_destination"] = None
-
-    return Connection(**connection_params)
-
-
 def setup_routing():
     """Initialize the routing subsystem
 
@@ -591,6 +569,47 @@ def _determine_target_garden(operation: Operation) -> str:
     raise Exception(f"Bad operation type {operation.operation_type}")
 
 
+def _system_name_lookup(system: Union[str, System]) -> str:
+    system_name = str(system)
+
+    with routing_lock:
+        return system_name_routes[system_name]
+
+
+def _system_id_lookup(system_id: str) -> str:
+    with routing_lock:
+        return system_id_routes[system_id]
+
+
+def _instance_id_lookup(instance_id: str) -> str:
+    with routing_lock:
+        return instance_id_routes[instance_id]
+
+
+# TRANSPORT TYPE STUFF
+# This should be moved out of this module
+def create_stomp_connection(garden: Garden) -> Connection:
+    """Create a stomp connection wrapper for a garden
+
+    Constructs a stomp connection wrapper from the garden's stomp connection parameters.
+
+    Will ignore subscribe_destination as the router shouldn't be subscribing to
+    anything.
+
+    Args:
+        garden: The garden specifying
+
+    Returns:
+        The created connection wrapper
+
+    """
+    connection_params = garden.connection_params.get("stomp", {})
+    connection_params = deepcopy(connection_params)
+    connection_params["subscribe_destination"] = None
+
+    return Connection(**connection_params)
+
+
 def _forward_stomp(operation: Operation, target_garden: Garden):
     try:
         conn = stomp_garden_connections[target_garden.name]
@@ -649,20 +668,3 @@ def _forward_http(operation: Operation, target_garden: Garden):
         beer_garden.garden.update_garden_status(target_garden.name, "RUNNING")
 
     return response.json()
-
-
-def _system_name_lookup(system: Union[str, System]) -> str:
-    system_name = str(system)
-
-    with routing_lock:
-        return system_name_routes[system_name]
-
-
-def _system_id_lookup(system_id: str) -> str:
-    with routing_lock:
-        return system_id_routes[system_id]
-
-
-def _instance_id_lookup(instance_id: str) -> str:
-    with routing_lock:
-        return instance_id_routes[instance_id]
