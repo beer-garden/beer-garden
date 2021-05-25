@@ -251,7 +251,7 @@ def initiate_forward(operation: Operation):
     except RoutingRequestException:
         # TODO - Special case for dealing with removing downstream systems
         if operation.operation_type == "SYSTEM_DELETE" and operation.kwargs["force"]:
-            return beer_garden.systems.remove_system(system=operation.payload)
+            return beer_garden.systems.remove_system(system=operation.model)
 
         raise
 
