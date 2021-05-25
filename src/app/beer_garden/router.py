@@ -377,10 +377,13 @@ def add_routing_system(system=None, garden_name=None):
     garden_name = garden_name or config.get("garden.name")
 
     with routing_lock:
+        logger.debug(f"{garden_name}: Adding system {system} ({system.id})")
+
         system_name_routes[str(system)] = garden_name
         system_id_routes[system.id] = garden_name
 
         for instance in system.instances:
+            logger.debug(f"{garden_name}: Adding {system} instance ({instance.id})")
             instance_id_routes[instance.id] = garden_name
 
 
@@ -388,13 +391,16 @@ def remove_routing_system(system=None):
     """Update the gardens used for routing"""
     with routing_lock:
         if str(system) in system_name_routes:
+            logger.debug(f"Removing system {system}")
             del system_name_routes[str(system)]
 
         if system.id in system_id_routes:
+            logger.debug(f"Removing system {system.id}")
             del system_id_routes[system.id]
 
         for instance in system.instances:
             if instance.id in instance_id_routes:
+                logger.debug(f"Removing {system} instance ({instance.id})")
                 del instance_id_routes[instance.id]
 
 
