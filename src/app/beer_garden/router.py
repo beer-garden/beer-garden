@@ -594,20 +594,18 @@ def _determine_target_garden(operation: Operation) -> str:
 
 
 def _system_name_lookup(system: Union[str, System]) -> str:
-    system_name = str(system)
-
     with routing_lock:
-        return system_name_routes[system_name]
+        return system_name_routes.get(str(system))
 
 
 def _system_id_lookup(system_id: str) -> str:
     with routing_lock:
-        return system_id_routes[system_id]
+        return system_id_routes.get(system_id)
 
 
 def _instance_id_lookup(instance_id: str) -> str:
     with routing_lock:
-        return instance_id_routes[instance_id]
+        return instance_id_routes.get(instance_id)
 
 
 # TRANSPORT TYPE STUFF
