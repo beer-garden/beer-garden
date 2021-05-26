@@ -51,6 +51,6 @@
 #           flake8 --max-complexity ${{ matrix.complexity-threshold }} | sed -E ${{ matrix.sed-filter }} > ~/old_complexity.txt
 
 #       - name: Compare complexities
-#         working-directory: ./new/.github/workflows/scripts
+#         working-directory: ./new/.github/workflows/complexity
 #         run: |
 #           python parse_diff_complexity.py "$HOME/old_complexity.txt" "$HOME/current_complexity.txt"
