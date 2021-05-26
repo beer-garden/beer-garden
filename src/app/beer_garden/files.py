@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import six
+
 from base64 import b64decode, b64encode
 from brewtils.errors import ModelValidationError, NotFoundError
 from brewtils.models import (
