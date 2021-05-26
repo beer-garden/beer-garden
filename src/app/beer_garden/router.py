@@ -404,6 +404,21 @@ def remove_routing_system(system=None):
                 del instance_id_routes[instance.id]
 
 
+def remove_routing_garden(garden_name=None):
+    """Remove all routing to a given garden"""
+    global system_name_routes, system_id_routes, instance_id_routes
+    with routing_lock:
+        system_name_routes = {
+            k: v for k, v in system_name_routes.items() if v != garden_name
+        }
+        system_id_routes = {
+            k: v for k, v in system_id_routes.items() if v != garden_name
+        }
+        instance_id_routes = {
+            k: v for k, v in instance_id_routes.items() if v != garden_name
+        }
+
+
 def handle_event(event):
     """Handle events"""
     if event.name in (Events.SYSTEM_CREATED.name, Events.SYSTEM_UPDATED.name):
@@ -413,8 +428,11 @@ def handle_event(event):
 
     # Handle downstream events
     if event.garden != config.get("garden.name"):
-        if event.name == Events.GARDEN_SYNC.name:
-            # TODO - Do we also need to remove systems here?
+        if event.name == Events.GARDEN_SYNC.name and not event.error:
+            # First remove all current routes to this garden
+            remove_routing_garden(garden_name=event.garden)
+
+            # Then add routes to the new systems
             for system in event.payload.systems:
                 add_routing_system(system=system, garden_name=event.payload.name)
 
@@ -422,7 +440,7 @@ def handle_event(event):
     # any downstream garden changes since handling those changes is nontrivial.
     # It's *those* events we want to act on here, not the "raw" downstream ones.
     # This is also why we only handle GARDEN_UPDATED and not STARTED or STOPPED
-    if event.garden == config.get("garden.name"):
+    if event.garden == config.get("garden.name") and not event.error:
         if event.name == Events.GARDEN_UPDATED.name:
             gardens[event.payload.name] = event.payload
 
