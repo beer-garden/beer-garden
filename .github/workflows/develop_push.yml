@@ -3,7 +3,7 @@ name: Develop Push
 on:
   push:
     branches:
-      - 'issue/1018'
+      - develop
 
 jobs:
   docker-publish-unstable:
