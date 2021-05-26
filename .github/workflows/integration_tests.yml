@@ -1,4 +1,4 @@
-name: Integration-Actions
+name: Integration Tests
 
 #on: pull_request # Used only for testing
 

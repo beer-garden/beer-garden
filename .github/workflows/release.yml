@@ -1,4 +1,4 @@
-name: Tag-Actions
+name: Release
 
 on:
   push:
