@@ -1,4 +1,4 @@
-name: Push Actions
+name: Develop Push
 
 on:
   push:
