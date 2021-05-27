@@ -57,6 +57,15 @@ class Thread_Plugin(Plugin):
 
 def create_plugin(name, version, clazz, **kwargs):
     config = helper.get_config()
+
+    # Brewtils 3.2.0ish has a bug that breaks when reusing the same client class
+    # It's been fixed in brewtils, but fix it here so we can run tests on that version
+    # See https://github.com/beer-garden/beer-garden/issues/1014
+    if hasattr(clazz, "current_request"):
+        delattr(clazz, "current_request")
+    if hasattr(clazz, "_current_request"):
+        delattr(clazz, "_current_request")
+
     return Thread_Plugin(
         client=clazz(),
         name=name,
