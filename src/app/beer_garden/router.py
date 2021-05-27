@@ -66,7 +66,7 @@ routable_operations = [
 t_pool = ThreadPoolExecutor()
 
 # Used for actually sending operations to other gardens
-garden_lock = threading.Lock()
+garden_lock = threading.RLock()
 gardens: Dict[str, Garden] = {}  # garden_name -> garden
 stomp_garden_connections: Dict[str, Connection] = {}
 
@@ -74,7 +74,7 @@ stomp_garden_connections: Dict[str, Connection] = {}
 forward_processor: BaseProcessor
 
 # Used for determining WHERE to route an operation
-routing_lock = threading.Lock()
+routing_lock = threading.RLock()
 system_name_routes: Dict[str, str] = {}
 system_id_routes: Dict[str, str] = {}
 instance_id_routes: Dict[str, str] = {}
@@ -429,12 +429,13 @@ def handle_event(event):
     # Handle downstream events
     if event.garden != config.get("garden.name"):
         if event.name == Events.GARDEN_SYNC.name and not event.error:
-            # First remove all current routes to this garden
-            remove_routing_garden(garden_name=event.garden)
+            with routing_lock:
+                # First remove all current routes to this garden
+                remove_routing_garden(garden_name=event.garden)
 
-            # Then add routes to the new systems
-            for system in event.payload.systems:
-                add_routing_system(system=system, garden_name=event.payload.name)
+                # Then add routes to the new systems
+                for system in event.payload.systems:
+                    add_routing_system(system=system, garden_name=event.payload.name)
 
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.
