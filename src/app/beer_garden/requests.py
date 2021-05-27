@@ -802,7 +802,7 @@ def handle_event(event):
                 request_map[request_event].set()
 
     # Only care about downstream garden
-    elif event.garden != config.get("garden.name"):
+    elif event.garden != config.get("garden.name") and not event.error:
         if event.name in (
             Events.REQUEST_CREATED.name,
             Events.REQUEST_STARTED.name,

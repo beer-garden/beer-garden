@@ -41,7 +41,11 @@ import beer_garden.requests
 import beer_garden.scheduler
 import beer_garden.systems
 from beer_garden.api.stomp.transport import Connection, consolidate_headers, process
-from beer_garden.errors import RoutingRequestException, UnknownGardenException
+from beer_garden.errors import (
+    ForwardException,
+    RoutingRequestException,
+    UnknownGardenException,
+)
 from beer_garden.events import publish
 from beer_garden.events.processors import BaseProcessor
 from beer_garden.garden import get_garden, get_gardens
@@ -62,7 +66,7 @@ routable_operations = [
 t_pool = ThreadPoolExecutor()
 
 # Used for actually sending operations to other gardens
-garden_lock = threading.Lock()
+garden_lock = threading.RLock()
 gardens: Dict[str, Garden] = {}  # garden_name -> garden
 stomp_garden_connections: Dict[str, Connection] = {}
 
@@ -70,7 +74,7 @@ stomp_garden_connections: Dict[str, Connection] = {}
 forward_processor: BaseProcessor
 
 # Used for determining WHERE to route an operation
-routing_lock = threading.Lock()
+routing_lock = threading.RLock()
 system_name_routes: Dict[str, str] = {}
 system_id_routes: Dict[str, str] = {}
 instance_id_routes: Dict[str, str] = {}
@@ -247,7 +251,7 @@ def initiate_forward(operation: Operation):
     except RoutingRequestException:
         # TODO - Special case for dealing with removing downstream systems
         if operation.operation_type == "SYSTEM_DELETE" and operation.kwargs["force"]:
-            return beer_garden.systems.remove_system(system=operation.payload)
+            return beer_garden.systems.remove_system(system=operation.model)
 
         raise
 
@@ -278,57 +282,52 @@ def forward(operation: Operation):
     if not target_garden:
         target_garden = get_garden(operation.target_garden_name)
 
-    if not target_garden:
-        raise UnknownGardenException(
-            f"Unknown child garden {operation.target_garden_name}"
+    try:
+        if not target_garden:
+            raise UnknownGardenException(
+                f"Unknown child garden {operation.target_garden_name}"
+            )
+
+        if not target_garden.connection_type:
+            raise RoutingRequestException(
+                f"Attempted to forward operation to garden "
+                f"'{operation.target_garden_name}' but the connection type was None. "
+                f"This probably means that the connection to the child garden has not "
+                f"been configured, please talk to your system administrator."
+            )
+
+        if target_garden.connection_type.casefold() == "http":
+            return _forward_http(operation, target_garden)
+        elif target_garden.connection_type.casefold() == "stomp":
+            return _forward_stomp(operation, target_garden)
+        else:
+            raise RoutingRequestException(
+                f"Unknown connection type {target_garden.connection_type}"
+            )
+
+    except ForwardException as ex:
+        error_message = str(ex)
+        operation = ex.operation
+
+        if operation.operation_type == "REQUEST_CREATE":
+            complete_request(
+                operation.model.id,
+                status="ERROR",
+                output=error_message,
+                error_class=ex.event_name,
+            )
+
+        # Publish an event
+        publish(
+            Event(
+                name=ex.event_name,
+                payload_type="Operation",
+                payload=operation,
+                error_message=error_message,
+            )
         )
 
-    connection_type = target_garden.connection_type
-
-    if connection_type is None:
-        _publish_failed_forward(
-            operation=operation,
-            event_name=Events.GARDEN_NOT_CONFIGURED.name,
-            error_message=f"Attempted to forward operation to garden "
-            f"'{operation.target_garden_name}' but the connection type was None. "
-            f"This probably means that the connection to the child garden has not "
-            f"been configured, please talk to your system administrator.",
-        )
-
-        raise RoutingRequestException(
-            f"Attempted to forward operation to garden "
-            f"'{operation.target_garden_name}' but the connection type was None. "
-            f"This probably means that the connection to the child garden has not "
-            f"been configured, please talk to your system administrator."
-        )
-    elif connection_type.casefold() == "http":
-        return _forward_http(operation, target_garden)
-    elif connection_type.casefold() == "stomp":
-        return _forward_stomp(operation, target_garden)
-    else:
-        raise RoutingRequestException(f"Unknown connection type {connection_type}")
-
-
-def create_stomp_connection(garden: Garden) -> Connection:
-    """Create a stomp connection wrapper for a garden
-
-    Constructs a stomp connection wrapper from the garden's stomp connection parameters.
-
-    Will ignore subscribe_destination as the router shouldn't be subscribing to
-    anything.
-
-    Args:
-        garden: The garden specifying
-
-    Returns:
-        The created connection wrapper
-
-    """
-    connection_params = garden.connection_params.get("stomp", {})
-    connection_params = deepcopy(connection_params)
-    connection_params["subscribe_destination"] = None
-
-    return Connection(**connection_params)
+        raise
 
 
 def setup_routing():
@@ -378,10 +377,13 @@ def add_routing_system(system=None, garden_name=None):
     garden_name = garden_name or config.get("garden.name")
 
     with routing_lock:
+        logger.debug(f"{garden_name}: Adding system {system} ({system.id})")
+
         system_name_routes[str(system)] = garden_name
         system_id_routes[system.id] = garden_name
 
         for instance in system.instances:
+            logger.debug(f"{garden_name}: Adding {system} instance ({instance.id})")
             instance_id_routes[instance.id] = garden_name
 
 
@@ -389,14 +391,32 @@ def remove_routing_system(system=None):
     """Update the gardens used for routing"""
     with routing_lock:
         if str(system) in system_name_routes:
+            logger.debug(f"Removing system {system}")
             del system_name_routes[str(system)]
 
         if system.id in system_id_routes:
+            logger.debug(f"Removing system {system.id}")
             del system_id_routes[system.id]
 
         for instance in system.instances:
             if instance.id in instance_id_routes:
+                logger.debug(f"Removing {system} instance ({instance.id})")
                 del instance_id_routes[instance.id]
+
+
+def remove_routing_garden(garden_name=None):
+    """Remove all routing to a given garden"""
+    global system_name_routes, system_id_routes, instance_id_routes
+    with routing_lock:
+        system_name_routes = {
+            k: v for k, v in system_name_routes.items() if v != garden_name
+        }
+        system_id_routes = {
+            k: v for k, v in system_id_routes.items() if v != garden_name
+        }
+        instance_id_routes = {
+            k: v for k, v in instance_id_routes.items() if v != garden_name
+        }
 
 
 def handle_event(event):
@@ -408,16 +428,20 @@ def handle_event(event):
 
     # Handle downstream events
     if event.garden != config.get("garden.name"):
-        if event.name == Events.GARDEN_SYNC.name:
-            # TODO - Do we also need to remove systems here?
-            for system in event.payload.systems:
-                add_routing_system(system=system, garden_name=event.payload.name)
+        if event.name == Events.GARDEN_SYNC.name and not event.error:
+            with routing_lock:
+                # First remove all current routes to this garden
+                remove_routing_garden(garden_name=event.garden)
+
+                # Then add routes to the new systems
+                for system in event.payload.systems:
+                    add_routing_system(system=system, garden_name=event.payload.name)
 
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.
     # It's *those* events we want to act on here, not the "raw" downstream ones.
     # This is also why we only handle GARDEN_UPDATED and not STARTED or STOPPED
-    if event.garden == config.get("garden.name"):
+    if event.garden == config.get("garden.name") and not event.error:
         if event.name == Events.GARDEN_UPDATED.name:
             gardens[event.payload.name] = event.payload
 
@@ -570,6 +594,45 @@ def _determine_target_garden(operation: Operation) -> str:
     raise Exception(f"Bad operation type {operation.operation_type}")
 
 
+def _system_name_lookup(system: Union[str, System]) -> str:
+    with routing_lock:
+        return system_name_routes.get(str(system))
+
+
+def _system_id_lookup(system_id: str) -> str:
+    with routing_lock:
+        return system_id_routes.get(system_id)
+
+
+def _instance_id_lookup(instance_id: str) -> str:
+    with routing_lock:
+        return instance_id_routes.get(instance_id)
+
+
+# TRANSPORT TYPE STUFF
+# This should be moved out of this module
+def create_stomp_connection(garden: Garden) -> Connection:
+    """Create a stomp connection wrapper for a garden
+
+    Constructs a stomp connection wrapper from the garden's stomp connection parameters.
+
+    Will ignore subscribe_destination as the router shouldn't be subscribing to
+    anything.
+
+    Args:
+        garden: The garden specifying
+
+    Returns:
+        The created connection wrapper
+
+    """
+    connection_params = garden.connection_params.get("stomp", {})
+    connection_params = deepcopy(connection_params)
+    connection_params["subscribe_destination"] = None
+
+    return Connection(**connection_params)
+
+
 def _forward_stomp(operation: Operation, target_garden: Garden):
     try:
         conn = stomp_garden_connections[target_garden.name]
@@ -587,25 +650,17 @@ def _forward_stomp(operation: Operation, target_garden: Garden):
         headers = consolidate_headers(model_headers, conn_headers)
 
         conn.send(body=body, headers=headers)
-    except ConnectFailedException:
-        _publish_failed_forward(
+    except Exception as ex:
+        raise ForwardException(
+            message=f"Failed to forward operation to garden "
+            f"'{operation.target_garden_name}' via STOMP.",
             operation=operation,
             event_name=Events.GARDEN_UNREACHABLE.name,
-            error_message=f"Attempted to forward operation to garden "
-            f"'{operation.target_garden_name}' via STOMP but "
-            f"failed to connect to STOMP. Please talk to your system "
-            f"administrator.",
-        )
-        raise
+        ) from ex
 
 
 def _forward_http(operation: Operation, target_garden: Garden):
-    """Actually forward an operation using HTTP
-
-    Args:
-        operation: The operation to forward
-        conn_info: Connection info
-    """
+    """Actually forward an operation using HTTP"""
 
     conn_info = target_garden.connection_params.get("http", {})
 
@@ -619,70 +674,20 @@ def _forward_http(operation: Operation, target_garden: Garden):
         client_cert=conn_info.get("client_cert"),
     )
 
-    try:
-        response = easy_client.forward(operation)
+    response = easy_client.forward(operation)
 
-        if response.status_code != 200:
-            _publish_failed_forward(
-                operation=operation,
-                event_name=Events.GARDEN_UNREACHABLE.name,
-                error_message=f"Attempted to forward operation to garden "
-                f"'{operation.target_garden_name}' via REST but the connection "
-                f"returned an error code of {response.status_code}. Please talk to "
-                f"your system administrator.",
-            )
-        elif target_garden.status != "RUNNING":
-            beer_garden.garden.update_garden_status(target_garden.name, "RUNNING")
+    if response.status_code != 200:
+        error_message = f"Attempted to forward operation to garden "
+        f"'{operation.target_garden_name}' via REST but the connection "
+        f"returned an error code of {response.status_code}. Please talk to "
+        f"your system administrator."
 
-        return response.json()
-
-    except Exception as error:
-        logger.error(error)
-
-        _publish_failed_forward(
+        raise ForwardException(
+            message=error_message,
             operation=operation,
             event_name=Events.GARDEN_ERROR.name,
-            error_message=f"Attempted to forward operation to garden "
-            f"'{operation.target_garden_name}' but an error occurred."
-            f"Please talk to your system administrator.",
         )
+    elif target_garden.status != "RUNNING":
+        beer_garden.garden.update_garden_status(target_garden.name, "RUNNING")
 
-
-def _publish_failed_forward(
-    operation: Operation = None, error_message: str = None, event_name: str = None
-):
-    if operation.operation_type == "REQUEST_CREATE":
-        complete_request(
-            operation.model.id,
-            status="ERROR",
-            output=error_message,
-            error_class=event_name,
-        )
-
-    publish(
-        Event(
-            name=event_name,
-            payload_type="Operation",
-            payload=operation,
-            error_message=error_message,
-        )
-    )
-
-    raise RoutingRequestException(error_message)
-
-
-def _system_name_lookup(system: Union[str, System]) -> str:
-    system_name = str(system)
-
-    with routing_lock:
-        return system_name_routes[system_name]
-
-
-def _system_id_lookup(system_id: str) -> str:
-    with routing_lock:
-        return system_id_routes[system_id]
-
-
-def _instance_id_lookup(instance_id: str) -> str:
-    with routing_lock:
-        return instance_id_routes[instance_id]
+    return response.json()
