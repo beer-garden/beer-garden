@@ -4,12 +4,13 @@ from asyncio import Event
 from typing import Sequence
 
 from brewtils.errors import ModelValidationError, TimeoutExceededError
-from brewtils.models import Operation, Request
+from brewtils.models import Operation, Request, System
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.db.api as db
 from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler, event_wait
+from beer_garden.errors import RoutingException
 
 
 class RequestAPI(BaseHandler):
@@ -426,15 +427,25 @@ class RequestListAPI(BaseHandler):
             # Also don't publish latency measurements
             self.request.ignore_latency = True
 
-        created_request = await self.client(
-            Operation(
-                operation_type="REQUEST_CREATE",
-                model=request_model,
-                model_type="Request",
-                kwargs={"wait_event": wait_event},
-            ),
-            serialize_kwargs={"to_string": False},
-        )
+        try:
+            created_request = await self.client(
+                Operation(
+                    operation_type="REQUEST_CREATE",
+                    model=request_model,
+                    model_type="Request",
+                    kwargs={"wait_event": wait_event},
+                ),
+                serialize_kwargs={"to_string": False},
+            )
+        except RoutingException as ex:
+            req_system = System(
+                namespace=request_model.namespace,
+                name=request_model.system,
+                version=request_model.system_version,
+            )
+            raise ModelValidationError(
+                f"Could not find a garden containing system {req_system}"
+            ) from ex
 
         # Wait for the request to complete, if requested
         if wait_event:
