@@ -201,13 +201,6 @@ export default function requestViewController(
 
     if (RequestService.isComplete($scope.request)) {
 
-      if (sizeOf(request) > 5000000) {
-        $scope.formatErrorTitle = 'Output is too large';
-        $scope.formatErrorMsg = 'The output for this request is too large to display, please download instead';
-      } else {
-        $scope.formatOutput();
-      }
-
       if ($scope.request.output) {
         $scope.downloadVisible = true;
 
@@ -218,6 +211,13 @@ export default function requestViewController(
         } else if ($scope.request.output_type == 'JSON') {
           $scope.filename += ".json";
         }
+      }
+
+      if (sizeOf($scope.request.output) > 5000000) {
+        $scope.formatErrorTitle = 'Output is too large';
+        $scope.formatErrorMsg = 'The output for this request is too large to display, please download instead';
+      } else {
+        $scope.formatOutput();
       }
 
       $scope.complete = true;
