@@ -3,18 +3,10 @@ import pytest
 
 try:
     from helper import wait_for_response
-    from helper.assertion import (
-        assert_successful_request,
-        assert_validation_error,
-        assert_save_error,
-    )
-except:
+    from helper.assertion import assert_successful_request, assert_validation_error
+except ImportError:
     from ...helper import wait_for_response
-    from ...helper.assertion import (
-        assert_successful_request,
-        assert_validation_error,
-        assert_save_error,
-    )
+    from ...helper.assertion import assert_successful_request, assert_validation_error
 
 
 @pytest.fixture(scope="class")
@@ -34,13 +26,13 @@ class TestComplex(object):
         request = self.request_generator.generate_request(
             system="BAD_SYSTEM_NAME", command="ping"
         )
-        assert_save_error(self, self.easy_client, request)
+        assert_validation_error(self, self.easy_client, request)
 
     def test_invalid_system_version(self):
         request = self.request_generator.generate_request(
             system_version="INVALID_VERSION", command="ping"
         )
-        assert_save_error(self, self.easy_client, request)
+        assert_validation_error(self, self.easy_client, request)
 
     def test_invalid_command(self):
         request = self.request_generator.generate_request(command="INVALID_COMMAND")
