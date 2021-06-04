@@ -98,7 +98,7 @@ async def startup():
     logger.debug("Starting forward processor")
     beer_garden.router.forward_processor.start()
 
-    beer_garden.api.http.logger.info("Http entry point is started. Hello!")
+    logger.info("Http entry point started")
 
     publish(
         Event(name=Events.ENTRY_STARTED.name, metadata={"entry_point_type": "HTTP"})

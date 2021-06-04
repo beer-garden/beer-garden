@@ -39,7 +39,7 @@ class PrometheusServer(StoppableThread):
         )
 
     def run(self):
-        self.logger.info("Initializing metric counts")
+        self.logger.debug("Initializing metric counts")
         initialize_counts()
 
         self.logger.info(f"Starting {self.display_name} on {self._host}:{self._port}")
