@@ -65,15 +65,18 @@ class HttpParentUpdater(QueueListener):
         while not self.stopped() and not self._connected:
             self.logger.warning("Attempting to reconnect to parent garden")
 
-            if self._ez_client.can_connect():
-                self._connected = True
+            try:
+                if self._ez_client.can_connect():
+                    self._connected = True
 
-                self.logger.warning("Successfully reconnected to parent garden")
+                    self.logger.warning("Successfully reconnected to parent garden")
 
-                if self._reconnect_action:
-                    self._reconnect_action()
+                    if self._reconnect_action:
+                        self._reconnect_action()
+            except RequestException:
+                pass
 
-            else:
+            if not self._connected:
                 self.logger.debug("Waiting %.1f seconds before next attempt", wait_time)
                 self.wait(wait_time)
                 wait_time = min(wait_time * 2, 30)
