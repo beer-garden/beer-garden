@@ -396,38 +396,46 @@ class Request(MongoModel, Document):
     logger = logging.getLogger(__name__)
 
     def pre_serialize(self):
+        """Pull any fields out of GridFS"""
         encoding = "utf-8"
-        """If string output was over 16MB it was spilled over to the GridFS storage solution"""
+
         if self.output_gridfs:
-            self.logger.debug("~~~Retrieving output from gridfs")
+            self.logger.debug("Retrieving output from GridFS")
             self.output = self.output_gridfs.read().decode(encoding)
             self.output_gridfs = None
 
         if self.parameters_gridfs:
-            self.logger.debug("~~~Retrieving parameters from gridfs")
+            self.logger.debug("Retrieving parameters from GridFS")
             self.parameters = json.loads(self.parameters_gridfs.read().decode(encoding))
             self.parameters_gridfs = None
 
     def save(self, *args, **kwargs):
-        self.updated_at = datetime.datetime.utcnow()
-        max_size = 15 * 1_000_000
-        encoding = "utf-8"
-        parameter_size = sys.getsizeof(self.parameters)
+        """Save a Request
 
-        if self.output:
-            parameter_size = sys.getsizeof(self.parameters)
-            if parameter_size > max_size:
-                self.logger.info("~~~Parameter size too big, storing in gridfs")
+        This does a couple of things:
+        - Updates fields that need to be set every time
+        - Handles the case where the Request is too big to fit into a single document
+        """
+        self.updated_at = datetime.datetime.utcnow()
+
+        max_size = 15 * 1_000_000
+        request_size = 0
+        encoding = "utf-8"
+
+        if self.parameters:
+            request_size += sys.getsizeof(self.parameters)
+            if request_size > max_size:
+                self.logger.debug("Parameters too big, storing in GridFS")
                 self.parameters_gridfs.put(
                     json.dumps(self.parameters), encoding=encoding
                 )
                 self.parameters = None
-                parameter_size = 0
+                request_size = 0
 
-            # If the output size is too large, we switch it over
-            # Max size for Mongo is 16MB, switching over at 15MB to be safe
-            if self.output and (sys.getsizeof(self.output) + parameter_size) > max_size:
-                self.logger.info("~~~Output size too big, storing in gridfs")
+        if self.output:
+            request_size += sys.getsizeof(self.output)
+            if request_size > max_size:
+                self.logger.debug("Output too big, storing in GridFS")
                 self.output_gridfs.put(self.output, encoding=encoding)
                 self.output = None
 
