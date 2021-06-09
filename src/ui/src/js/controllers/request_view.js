@@ -83,6 +83,7 @@ export default function requestViewController(
     'SUCCESS': 'The request has completed successfully',
     'ERROR': 'The request encountered an error during processing and will ' +
              'not be reprocessed.',
+    'INVALID': 'The request did not pass validation checks',
   };
 
   $scope.formatDate = formatDate;
