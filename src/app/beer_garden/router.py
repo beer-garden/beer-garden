@@ -633,7 +633,7 @@ def create_stomp_connection(garden: Garden) -> Connection:
     return Connection(**connection_params)
 
 
-def _forward_stomp(operation: Operation, target_garden: Garden):
+def _forward_stomp(operation: Operation, target_garden: Garden) -> None:
     try:
         conn = stomp_garden_connections[target_garden.name]
 
@@ -659,7 +659,7 @@ def _forward_stomp(operation: Operation, target_garden: Garden):
         ) from ex
 
 
-def _forward_http(operation: Operation, target_garden: Garden):
+def _forward_http(operation: Operation, target_garden: Garden) -> None:
     """Actually forward an operation using HTTP"""
 
     conn_info = target_garden.connection_params.get("http", {})
@@ -674,20 +674,12 @@ def _forward_http(operation: Operation, target_garden: Garden):
         client_cert=conn_info.get("client_cert"),
     )
 
-    response = easy_client.forward(operation)
-
-    if response.status_code != 200:
-        error_message = f"Attempted to forward operation to garden "
-        f"'{operation.target_garden_name}' via REST but the connection "
-        f"returned an error code of {response.status_code}. Please talk to "
-        f"your system administrator."
-
+    try:
+        response = easy_client.forward(operation)
+        response.raise_for_status()
+    except Exception as e:
         raise ForwardException(
-            message=error_message,
+            message=f"Error forwarding to garden '{operation.target_garden_name}': {e}",
             operation=operation,
             event_name=Events.GARDEN_ERROR.name,
-        )
-    elif target_garden.status != "RUNNING":
-        beer_garden.garden.update_garden_status(target_garden.name, "RUNNING")
-
-    return response.json()
+        ) from e
