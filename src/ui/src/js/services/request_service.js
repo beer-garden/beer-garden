@@ -10,7 +10,7 @@ requestService.$inject = ['$q', '$http', '$timeout'];
  * @return {Object}                   An Object for interacting with the Request API.
  */
 export default function requestService($q, $http, $timeout) {
-  const completeStatuses = ['SUCCESS', 'ERROR', 'CANCELED'];
+  const completeStatuses = ['SUCCESS', 'ERROR', 'CANCELED', 'INVALID'];
 
   let service = {
     getRequests: (data) => {

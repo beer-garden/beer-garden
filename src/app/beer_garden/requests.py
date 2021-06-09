@@ -607,28 +607,26 @@ def process_request(
             f"brewtils.models.Request or brewtils.models.RequestTemplate,"
         )
 
-    # Validates the request based on what is in the database.
-    # This includes the validation of the request parameters,
-    # systems are there, commands are there etc.
     # Validation is only required for non Admin commands because Admin commands
     # are hard coded to map Plugin functions
     if not is_admin:
-        request = RequestValidator.instance().validate_request(request)
+        try:
+            request = RequestValidator.instance().validate_request(request)
+        except ModelValidationError:
+            return invalid_request(request)
 
-    # Save after validation since validate can modify the request
-    if not request.command_type == "EPHEMERAL":
+    if request.command_type == "EPHEMERAL":
+        logger.debug(f"Publishing {request!r}")
+    else:
+        # Save after validation since validate can modify the request
         request = create_request(request)
 
-    if wait_event:
-        request_map[request.id] = wait_event
+        logger.info(f"Publishing {request!r}")
+
+        if wait_event:
+            request_map[request.id] = wait_event
 
     try:
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(f"Publishing {request!r}")
-        else:
-            if not request.command_type == "EPHEMERAL":
-                logger.info(f"Publishing {request!r}")
-
         queue.put(
             request,
             is_admin=is_admin,
@@ -642,8 +640,8 @@ def process_request(
         if not request.command_type == "EPHEMERAL":
             db.delete(request)
 
-        if wait_event:
-            request_map.pop(request.id, None)
+            if wait_event:
+                request_map.pop(request.id, None)
 
         raise RequestPublishException(
             f"Error while publishing {request!r} to message broker"
@@ -749,6 +747,12 @@ def cancel_request(request_id: str = None, request: Request = None) -> Request:
     return request
 
 
+@publish_event(Events.REQUEST_UPDATED)
+def invalid_request(request: Request = None):
+    request.status = "INVALID"
+    return request
+
+
 def process_wait(request: Request, timeout: float) -> Request:
     """Helper to process a request and wait for completion using a threading.Event
 
@@ -807,6 +811,7 @@ def handle_event(event):
             Events.REQUEST_CREATED.name,
             Events.REQUEST_STARTED.name,
             Events.REQUEST_COMPLETED.name,
+            Events.REQUEST_UPDATED.name,
         ):
             # When we send child requests to child gardens where the parent was on
             # the local garden we remove the parent before sending them. Only setting
@@ -827,8 +832,3 @@ def handle_event(event):
                     db.create(event.payload)
                 except NotUniqueException:
                     pass
-
-    # Required if the main process spawns a wait Request
-    if event.name == Events.REQUEST_COMPLETED.name:
-        if str(event.payload.id) in request_map:
-            request_map[str(event.payload.id)].set()
