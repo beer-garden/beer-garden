@@ -832,8 +832,3 @@ def handle_event(event):
                     db.create(event.payload)
                 except NotUniqueException:
                     pass
-
-    # Required if the main process spawns a wait Request
-    if event.name == Events.REQUEST_COMPLETED.name:
-        if str(event.payload.id) in request_map:
-            request_map[str(event.payload.id)].set()
