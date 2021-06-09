@@ -615,20 +615,18 @@ def process_request(
         except ModelValidationError:
             return invalid_request(request)
 
-    # Save after validation since validate can modify the request
-    if not request.command_type == "EPHEMERAL":
+    if request.command_type == "EPHEMERAL":
+        logger.debug(f"Publishing {request!r}")
+    else:
+        # Save after validation since validate can modify the request
         request = create_request(request)
 
-    if wait_event:
-        request_map[request.id] = wait_event
+        logger.info(f"Publishing {request!r}")
+
+        if wait_event:
+            request_map[request.id] = wait_event
 
     try:
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(f"Publishing {request!r}")
-        else:
-            if not request.command_type == "EPHEMERAL":
-                logger.info(f"Publishing {request!r}")
-
         queue.put(
             request,
             is_admin=is_admin,
@@ -642,8 +640,8 @@ def process_request(
         if not request.command_type == "EPHEMERAL":
             db.delete(request)
 
-        if wait_event:
-            request_map.pop(request.id, None)
+            if wait_event:
+                request_map.pop(request.id, None)
 
         raise RequestPublishException(
             f"Error while publishing {request!r} to message broker"
