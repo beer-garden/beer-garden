@@ -494,12 +494,6 @@ def _pre_forward(operation: Operation) -> Operation:
         )
 
     if operation.operation_type == "REQUEST_CREATE":
-        operation.model = (
-            beer_garden.requests.RequestValidator.instance().validate_request(
-                operation.model
-            )
-        )
-
         # Save the request so it'll have an ID and we'll have something to update
         operation.model = db.create(operation.model)
 
