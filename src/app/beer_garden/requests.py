@@ -607,13 +607,13 @@ def process_request(
             f"brewtils.models.Request or brewtils.models.RequestTemplate,"
         )
 
-    # Validates the request based on what is in the database.
-    # This includes the validation of the request parameters,
-    # systems are there, commands are there etc.
     # Validation is only required for non Admin commands because Admin commands
     # are hard coded to map Plugin functions
     if not is_admin:
-        request = RequestValidator.instance().validate_request(request)
+        try:
+            request = RequestValidator.instance().validate_request(request)
+        except ModelValidationError:
+            return invalid_request(request)
 
     # Save after validation since validate can modify the request
     if not request.command_type == "EPHEMERAL":
@@ -749,6 +749,12 @@ def cancel_request(request_id: str = None, request: Request = None) -> Request:
     return request
 
 
+@publish_event(Events.REQUEST_UPDATED)
+def invalid_request(request: Request = None):
+    request.status = "INVALID"
+    return request
+
+
 def process_wait(request: Request, timeout: float) -> Request:
     """Helper to process a request and wait for completion using a threading.Event
 
@@ -807,6 +813,7 @@ def handle_event(event):
             Events.REQUEST_CREATED.name,
             Events.REQUEST_STARTED.name,
             Events.REQUEST_COMPLETED.name,
+            Events.REQUEST_UPDATED.name,
         ):
             # When we send child requests to child gardens where the parent was on
             # the local garden we remove the parent before sending them. Only setting
