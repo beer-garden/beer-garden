@@ -37,7 +37,18 @@
           <th scope="col">System</th>
           <th scope="col">System Version</th>
           <th scope="col">Instance Name</th>
-          <th scope="col">Status</th>
+          <th scope="col"
+            >Status<span
+              uib-popover="{{statusDescriptions[request.status]}}"
+              popover-animation="true"
+              popover-placement="right"
+              popover-trigger="'mouseenter'"
+              popover-title="{{request.status}}"
+              style="color: gray; padding-top: 5px; padding-left: 5px;"
+            ><span
+              class="glyphicon glyphicon-info-sign"
+            ></span></span>
+          </th>
           <th scope="col" ng-show="showErrorColumn(request, children)">Error Type</th>
           <th scope="col">Created</th>
           <th scope="col">Updated</th>
@@ -64,16 +75,7 @@
             </div>
           </td>
           <td>{{request.instance_name}}</td>
-          <td>{{request.status}}
-            <span uib-popover="{{statusDescriptions[request.status]}}"
-                  popover-animation="true"
-                  popover-placement="right"
-                  popover-trigger="'mouseenter'"
-                  popover-title="{{request.status}}"
-                  style="color: gray; padding-top: 5px">
-              <span class="glyphicon glyphicon-info-sign"></span>
-            </span>
-          </td>
+          <td>{{request.status}}</td>
           <td ng-show="showErrorColumn(request, children)">{{request.error_class}}</td>
           <td>{{formatDate(request.created_at)}}</td>
           <td>{{formatDate(request.updated_at)}}</td>
