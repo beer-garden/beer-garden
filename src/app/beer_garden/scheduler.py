@@ -429,6 +429,8 @@ def run_job(job_id, request_template, **kwargs):
         job_id: The Beer-Garden job ID that triggered this event.
         request_template: Request template specified by the job.
     """
+    import beer_garden.router
+
     request_template.metadata["_bg_job_id"] = job_id
 
     # Attempt to inject information into the request template
@@ -452,34 +454,40 @@ def run_job(job_id, request_template, **kwargs):
         except Exception as ex:
             logger.exception(f"Could not inject parameters: {ex}")
 
-    # TODO - Possibly allow specifying blocking timeout on the job definition
+    db_job = db.query_unique(Job, id=job_id)
     wait_event = threading.Event()
 
-    request = beer_garden.router.route(
-        Operation(
-            operation_type="REQUEST_CREATE",
-            model=request_template,
-            model_type="RequestTemplate",
-            kwargs={"wait_event": wait_event},
-        )
-    )
-    wait_event.wait()
+    # I'm not sure what would cause this, but just be safe
+    if not db_job:
+        logger.error(f"Could not find job {job_id} in database, job will not be run")
+        return
+
     try:
-        db_job = db.query_unique(Job, id=job_id)
-        if db_job:
-            request = get_request(request.id)
+        request = beer_garden.router.route(
+            Operation(
+                operation_type="REQUEST_CREATE",
+                model=request_template,
+                model_type="RequestTemplate",
+                kwargs={"wait_event": wait_event},
+            )
+        )
 
-            if request.status == "ERROR":
-                db_job.error_count += 1
-            elif request.status == "SUCCESS":
-                db_job.success_count += 1
-
-            db.update(db_job)
-        else:
-            # If the job is not in the database, don't proceed to update scheduler
+        # Wait for the request to complete
+        timeout = db_job.timeout or None
+        if not wait_event.wait(timeout=timeout):
+            logger.warning(f"Execution of job {db_job} timed out.")
             return
+
+        request = get_request(request.id)
+
+        if request.status == "ERROR":
+            db_job.error_count += 1
+        elif request.status == "SUCCESS":
+            db_job.success_count += 1
+
+        db.update(db_job)
     except Exception as ex:
-        logger.exception(f"Could not update job counts: {ex}")
+        logger.exception(f"Error executing {db_job}: {ex}")
 
     # Be a little careful here as the job could have been removed or paused
     job = beer_garden.application.scheduler.get_job(job_id)

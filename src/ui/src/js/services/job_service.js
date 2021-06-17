@@ -149,6 +149,7 @@ export default function jobService($http, NamespaceService) {
     formModel['trigger_type'] = job['trigger_type'];
     formModel['coalesce'] = job['coalesce'];
     formModel['max_instances'] = job['max_instances'];
+    formModel['timeout'] = job['timeout'];
     formModel['id'] = job['id'] || null;
 
     if (job['trigger_type'] === 'date') {
@@ -226,6 +227,7 @@ export default function jobService($http, NamespaceService) {
     serviceModel['request_template'] = requestTemplate;
     serviceModel['coalesce'] = formModel['coalesce'];
     serviceModel['max_instances'] = formModel['max_instances'];
+    serviceModel['timeout'] = formModel['timeout'];
     serviceModel['id'] = formModel['id'] || null;
     return serviceModel;
   };
@@ -337,6 +339,11 @@ export default function jobService($http, NamespaceService) {
         'type': 'integer',
         'minimum': 1,
         'default': 3,
+      },
+      'timeout': {
+        'title': 'Timeout',
+        'description': 'Job timeout (in seconds).',
+        'type': 'integer',
       },
       'run_date': {
         'title': 'Run Date',
@@ -517,6 +524,7 @@ export default function jobService($http, NamespaceService) {
                 'coalesce',
                 'misfire_grace_time',
                 'max_instances',
+                'timeout',
               ],
             },
             {
