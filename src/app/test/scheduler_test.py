@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
-import threading
 
 import pytest
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
-from watchdog.events import FileSystemEvent
-from mock import Mock
-from pytz import utc
-
-import beer_garden
-from beer_garden.scheduler import run_job, MixedScheduler
 from brewtils.models import RequestTemplate
+from pytz import utc
+from watchdog.events import FileSystemEvent
+
+from beer_garden.scheduler import MixedScheduler
 
 
 @pytest.fixture
@@ -47,37 +44,3 @@ def trigger_template():
         "output_type": "STRING",
     }
     return RequestTemplate(**request_dict)
-
-
-class TestRunJob(object):
-    def test_run_job(self, monkeypatch, scheduler, bg_request_template):
-        router_mock = Mock()
-        monkeypatch.setattr("beer_garden.router.route", router_mock)
-
-        event_mock = Mock()
-        monkeypatch.setattr(threading, "Event", event_mock)
-
-        app_mock = Mock(scheduler=scheduler)
-        monkeypatch.setattr(beer_garden, "application", app_mock)
-
-        run_job("job_id", bg_request_template)
-
-        created_request = router_mock.call_args[0][0]
-        assert created_request.model.metadata["_bg_job_id"] == "job_id"
-
-    def test_request_injection(
-        self, monkeypatch, scheduler, trigger_template, trigger_event
-    ):
-        router_mock = Mock()
-        monkeypatch.setattr("beer_garden.router.route", router_mock)
-
-        event_mock = Mock()
-        monkeypatch.setattr(threading, "Event", event_mock)
-
-        app_mock = Mock(scheduler=scheduler)
-        monkeypatch.setattr(beer_garden, "application", app_mock)
-
-        run_job("job_id", trigger_template, event=trigger_event)
-
-        created_request = router_mock.call_args[0][0]
-        assert created_request.model.parameters["message"] == "Hello my/test/path.txt!"

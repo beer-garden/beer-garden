@@ -28,7 +28,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils.models import Event, Events, Job, Operation
 
 import beer_garden
-import beer_garden.router
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.events import publish_event
@@ -430,6 +429,8 @@ def run_job(job_id, request_template, **kwargs):
         job_id: The Beer-Garden job ID that triggered this event.
         request_template: Request template specified by the job.
     """
+    import beer_garden.router
+
     request_template.metadata["_bg_job_id"] = job_id
 
     # Attempt to inject information into the request template
