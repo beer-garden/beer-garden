@@ -813,6 +813,7 @@ def handle_event(event):
             Events.REQUEST_STARTED.name,
             Events.REQUEST_COMPLETED.name,
             Events.REQUEST_UPDATED.name,
+            Events.REQUEST_CANCELED.name,
         ):
             # When we send child requests to child gardens where the parent was on
             # the local garden we remove the parent before sending them. Only setting
