@@ -293,7 +293,7 @@ def forward(operation: Operation):
                 f"Attempted to forward operation to garden "
                 f"'{operation.target_garden_name}' but the connection type was None. "
                 f"This probably means that the connection to the child garden has not "
-                f"been configured, please talk to your system administrator."
+                f"been configured."
             )
 
         if target_garden.connection_type.casefold() == "http":
