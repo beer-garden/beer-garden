@@ -10,7 +10,7 @@ from brewtils.schema_parser import SchemaParser
 import beer_garden.db.api as db
 from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler, event_wait
-from beer_garden.errors import RoutingException
+from beer_garden.errors import UnknownGardenException
 
 
 class RequestAPI(BaseHandler):
@@ -437,7 +437,7 @@ class RequestListAPI(BaseHandler):
                 ),
                 serialize_kwargs={"to_string": False},
             )
-        except RoutingException as ex:
+        except UnknownGardenException as ex:
             req_system = System(
                 namespace=request_model.namespace,
                 name=request_model.system,
