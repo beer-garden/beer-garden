@@ -613,7 +613,8 @@ def process_request(
         try:
             request = RequestValidator.instance().validate_request(request)
         except ModelValidationError:
-            return invalid_request(request)
+            invalid_request(request)
+            raise
 
     if request.command_type == "EPHEMERAL":
         logger.debug(f"Publishing {request!r}")
