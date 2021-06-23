@@ -47,7 +47,6 @@ from beer_garden.errors import (
     UnknownGardenException,
 )
 from beer_garden.events import publish
-from beer_garden.events.processors import BaseProcessor
 from beer_garden.garden import get_garden, get_gardens
 from beer_garden.requests import complete_request
 
@@ -69,9 +68,6 @@ t_pool = ThreadPoolExecutor()
 garden_lock = threading.RLock()
 gardens: Dict[str, Garden] = {}  # garden_name -> garden
 stomp_garden_connections: Dict[str, Connection] = {}
-
-# Used by entry points
-forward_processor: BaseProcessor
 
 # Used for determining WHERE to route an operation
 routing_lock = threading.RLock()
