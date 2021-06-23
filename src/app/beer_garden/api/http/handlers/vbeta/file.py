@@ -95,9 +95,7 @@ class RawFileListAPI(BaseHandler):
         db_file.file.put(io.BytesIO(self.request.body))
         db_file.save()
 
-        resolvable = Resolvable(
-            type="bytes", storage="gridfs", details={"id": str(db_file.id)}
-        )
+        resolvable = Resolvable(id=str(db_file.id), type="bytes", storage="gridfs")
         response = SchemaParser.serialize(resolvable, to_string=True)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
