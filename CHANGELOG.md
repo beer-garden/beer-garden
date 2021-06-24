@@ -1,5 +1,28 @@
 # Beer Garden Changelog
 
+## 3.4.0
+6/24/21
+
+#### Added Features
+- Scheduled jobs now have a timeout field (Issue #1046 / PR #1049)
+- Forwarding REST calls now support `blocking` and `timeout` parameters (Issue #895 / PR #325)
+- Bytes-type parameters are now supported (Issue #991 / PR #996)
+- Systems can now have UI templates (Issue #997 / PR #1005)
+- Commands now have a metadata field (Issue #358 / PR #998)
+
+#### Bug Fixes
+- Scheduled job now displays next run time correctly (Issue #972 / PR #1059)
+- Handling request cancellation events from child gardens (Issue #932 / PR #1056)
+- Better error handling when HTTP connection from child to parent garden fails (Issue #1035 / PR #1037)
+- Changed standard nginx config to allow for larger request output (Issue #1027 / PR #1032)
+- Large child output no longer prevents parent output from being displayed (Issue #1026 / PR #1030)
+- Better error message when creating a Request with an incorrect namespace (Issue #1017 / PR #1024)
+- System attributes (like description) can now be cleared (Issue #1002 / PR #1003)
+- Fixed issue with plugin log reads immediately timing out (Issue #999 / PR #1000)
+
+#### Other Changes
+- Moved status icon on request view page (Issue #1041 / PR #1042)
+
 ## 3.3.0
 4/23/21
 
