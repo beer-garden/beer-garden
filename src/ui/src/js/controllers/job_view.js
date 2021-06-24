@@ -31,9 +31,7 @@ export default function jobViewController(
     formatJsonDisplay(_editor, true);
   };
 
-  $scope.formatDate = function(data) {
-    formatDate(data);
-  };
+  $scope.formatDate = formatDate;
 
   $scope.successCallback = function(response) {
     $scope.response = response;
