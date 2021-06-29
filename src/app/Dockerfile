@@ -11,6 +11,7 @@ ADD example_configs/plugin-logging.yaml /conf/
 
 RUN set -ex \
     && apk add --no-cache --virtual .build-deps \
-       gcc make musl-dev libffi-dev openssl-dev \
+       gcc make musl-dev libffi-dev openssl-dev alpine-conf \
+    && setup-timezone -z UTC \
     && pip install --no-cache-dir beer-garden==$VERSION \
     && apk del .build-deps
