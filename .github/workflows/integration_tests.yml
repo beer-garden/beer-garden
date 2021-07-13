@@ -515,7 +515,7 @@ jobs:
         working-directory: ./docker/docker-compose
 
       - name: Test Plugins
-        run: python${{ matrix.python-version }} -m pytest stomp/
+        run: python${{ matrix.python-version }} -m pytest stomp_/
         working-directory: ./test/integration
         continue-on-error: ${{ matrix.allow-failure }}
 
