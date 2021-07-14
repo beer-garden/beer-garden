@@ -73,24 +73,19 @@ class RequestValidator(object):
         system = self.get_and_validate_system(request)
         command = self.get_and_validate_command_for_system(request, system)
         request.parameters = self.get_and_validate_parameters(request, command)
-        request.has_parent = self.get_and_validate_parent(request)
+
+        self.validate_parent_status(request)
 
         return request
 
-    def get_and_validate_parent(self, request):
+    def validate_parent_status(self, request):
         """Ensure that a Request's parent request hasn't already completed.
 
         :param request: The request to validate
-        :return: Boolean indicating if this request has a parent
         :raises ConflictError: The parent request has already completed
         """
-        if not request.parent:
-            return False
-
-        if request.parent.status in Request.COMPLETED_STATUSES:
+        if request.parent and request.parent.status in Request.COMPLETED_STATUSES:
             raise ConflictError("Parent request has already completed")
-
-        return True
 
     def get_and_validate_system(self, request):
         """Ensure there is a system in the DB that corresponds to this Request.
