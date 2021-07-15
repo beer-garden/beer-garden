@@ -86,3 +86,9 @@ node_modules
 # extra stuff
 plugins/
 brewtils/
+
+# fluff added by act runner
+tmp/
+workflow/
+test/conf/data
+docker/docker-compose/data/localplugins/*
