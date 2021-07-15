@@ -52,13 +52,13 @@ class MessageListener(ConnectionListener):
                         if parsed.model.name.startswith("REQUEST"):
                             self.create_event_captured = True
                         else:
-                            print(f"ERROR: no 'REQUEST' is parsed model")
+                            print("ERROR: no 'REQUEST' in parsed model")
                     else:
                         print("ERROR: no parsed model found")
                 elif headers["model_class"] == "error_message":
                     print(f"ERROR: Message returned: {message!r}")
-                else:
-                    print(f"ERROR: 'model_class' not in headers, message={message}")
+            else:
+                print(f"ERROR: 'model_class' not in headers, message={message}")
         except Exception:
             print(f"ERROR: unable to parse, message={message}")
 
