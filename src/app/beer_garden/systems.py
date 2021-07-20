@@ -124,6 +124,7 @@ def update_system(
 
         if (
             system.commands
+            and not config.get("plugin.allow_update_systems")
             and "dev" not in system.version
             and system.has_different_commands(brew_commands)
         ):
