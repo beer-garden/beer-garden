@@ -1261,7 +1261,7 @@ _PLUGIN_SPEC = {
                 },
             },
         },
-        "allow_update_system": {
+        "allow_update_systems": {
             "type": "bool",
             "default": False,
             "description": "Allow updating the commands of a a non-dev system",

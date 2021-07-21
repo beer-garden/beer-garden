@@ -116,6 +116,7 @@ parent:
     subscribe_destination: Beer_Garden_Forward_Parent
     username: beer_garden
 plugin:
+  allow_update_systems: false
   local:
     auth:
       password: password
@@ -134,7 +135,6 @@ plugin:
     logging:
       config_file: example_configs/plugin-logging.yaml
       fallback_level: INFO
-  allow_update_systems: false
   status_heartbeat: 5
   status_timeout: 30
 request_validation:
