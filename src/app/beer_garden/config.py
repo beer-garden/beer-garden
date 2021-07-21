@@ -1263,8 +1263,8 @@ _PLUGIN_SPEC = {
         },
         "allow_update_system": {
             "type": "bool",
-            "default": "false",
-            "description": "Allow updating the commands of a a non-dev system", 
+            "default": False,
+            "description": "Allow updating the commands of a a non-dev system",
         },
         "status_heartbeat": {
             "type": "int",
