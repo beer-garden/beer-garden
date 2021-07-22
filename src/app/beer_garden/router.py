@@ -176,13 +176,27 @@ def route(operation: Operation):
         )
 
     # Determine which garden the operation is targeting
-    if not operation.target_garden_name:
-        operation.target_garden_name = _determine_target_garden(operation)
+    target_garden = _determine_target_garden(operation)
 
-    if not operation.target_garden_name:
+    if not target_garden and not operation.target_garden_name:
         raise UnknownGardenException(
             f"Could not determine the target garden for routing {operation!r}"
         )
+
+    elif not target_garden:
+        logger.warning(
+            f"Couldn't determine a target garden but the operation had one, using "
+            f"{operation.target_garden_name}"
+        )
+
+    elif not operation.target_garden_name:
+        operation.target_garden_name = target_garden
+
+    else:
+        # This is most likely caused by an operation targeted at a grandchild of the
+        # source garden
+        if operation.target_garden_name != target_garden:
+            operation.target_garden_name = target_garden
 
     # If it's targeted at THIS garden, execute
     if operation.target_garden_name == config.get("garden.name"):
