@@ -116,7 +116,7 @@ parent:
     subscribe_destination: Beer_Garden_Forward_Parent
     username: beer_garden
 plugin:
-  allow_update_systems: false
+  allow_system_command_updates: false
   local:
     auth:
       password: password
