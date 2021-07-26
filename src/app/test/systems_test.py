@@ -25,20 +25,20 @@ class TestSystem:
     def setup_class(cls):
         connect("beer_garden", host="mongomock://localhost")
 
-    def test_disallow_system_command_updates(self, system):
+    def test_disallow_command_updates(self, system):
         """System commands should not be allowed to update if the
-        allow_system_command_updates config is set to False
+        allow_command_updates config is set to False
         """
-        config._CONFIG = {"plugin": {"allow_system_command_updates": False}}
+        config._CONFIG = {"plugin": {"allow_command_updates": False}}
 
         with pytest.raises(ModelValidationError):
             update_system(system=system, new_commands=[Command(name="changed_command")])
 
-    def test_allow_system_command_updates(self, system):
+    def test_allow_command_updates(self, system):
         """System commands should be allowed to update if the
-        allow_system_command_updates config is set to True
+        allow_command_updates config is set to True
         """
-        config._CONFIG = {"plugin": {"allow_system_command_updates": True}}
+        config._CONFIG = {"plugin": {"allow_command_updates": True}}
         updated_system = update_system(
             system=system, new_commands=[Command(name="changed_command")]
         )
