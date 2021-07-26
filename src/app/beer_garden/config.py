@@ -1261,6 +1261,17 @@ _PLUGIN_SPEC = {
                 },
             },
         },
+        "allow_command_updates": {
+            "type": "bool",
+            "default": False,
+            "description": "Allow commands of non-dev systems to be updated",
+            "long_description": "When False, this prevents changes to the command "
+            "definitions of a registered version of a system. This means that the "
+            "system will fail to start if the commands do not match what is on "
+            "record for that version of the system. When True, the system will be "
+            "allowed to start and the commands on record will be updated accordingly. "
+            "NOTE: System versions containing 'dev' are exempt from this check.",
+        },
         "status_heartbeat": {
             "type": "int",
             "default": 10,
