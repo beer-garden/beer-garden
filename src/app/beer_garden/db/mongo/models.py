@@ -409,10 +409,6 @@ class Request(MongoModel, Document):
             self.parameters_gridfs = None
 
     def save(self, *args, **kwargs):
-        # Set has_parent if not already set
-        if self.has_parent is None:
-            self.has_parent = bool(self.parent)
-
         self.updated_at = datetime.datetime.utcnow()
         max_size = 15 * 1_000_000
         encoding = "utf-8"
@@ -459,6 +455,20 @@ class Request(MongoModel, Document):
         ):
             raise ModelValidationError(
                 f"Can not save Request {self}: Invalid output type '{self.output_type}'"
+            )
+
+        # Deal with has_parent
+        if self.has_parent is None:
+            self.has_parent = bool(self.parent)
+        elif self.has_parent is False and self.parent:
+            raise ModelValidationError(
+                f"Can not save Request {self}: Request has a parent field but "
+                f"has_parent is False"
+            )
+        elif self.has_parent is True and not self.parent:
+            raise ModelValidationError(
+                f"Can not save Request {self}: Request does not have a parent field "
+                f"but has_parent is True"
             )
 
     def clean_update(self):
