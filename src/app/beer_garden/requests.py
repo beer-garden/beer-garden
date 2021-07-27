@@ -754,6 +754,12 @@ def invalid_request(request: Request = None):
     return request
 
 
+@publish_event(Events.REQUEST_UPDATED)
+def update_request(request: Request):
+    db.update(request)
+    return request
+
+
 def process_wait(request: Request, timeout: float) -> Request:
     """Helper to process a request and wait for completion using a threading.Event
 
@@ -825,7 +831,7 @@ def handle_event(event):
                     setattr(existing_request, field, getattr(event.payload, field))
 
                 try:
-                    db.update(existing_request)
+                    update_request(existing_request)
                 except RequestStatusTransitionError:
                     pass
             else:
