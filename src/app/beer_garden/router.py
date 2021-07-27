@@ -43,6 +43,7 @@ import beer_garden.systems
 from beer_garden.api.stomp.transport import Connection, consolidate_headers, process
 from beer_garden.errors import (
     ForwardException,
+    RoutingException,
     RoutingRequestException,
     UnknownGardenException,
 )
@@ -176,27 +177,7 @@ def route(operation: Operation):
         )
 
     # Determine which garden the operation is targeting
-    target_garden = _determine_target_garden(operation)
-
-    if not target_garden and not operation.target_garden_name:
-        raise UnknownGardenException(
-            f"Could not determine the target garden for routing {operation!r}"
-        )
-
-    elif not target_garden:
-        logger.warning(
-            f"Couldn't determine a target garden but the operation had one, using "
-            f"{operation.target_garden_name}"
-        )
-
-    elif not operation.target_garden_name:
-        operation.target_garden_name = target_garden
-
-    else:
-        # This is most likely caused by an operation targeted at a grandchild of the
-        # source garden
-        if operation.target_garden_name != target_garden:
-            operation.target_garden_name = target_garden
+    operation.target_garden_name = _determine_target(operation)
 
     # If it's targeted at THIS garden, execute
     if operation.target_garden_name == config.get("garden.name"):
@@ -531,9 +512,38 @@ def _pre_execute(operation: Operation) -> Operation:
     return operation
 
 
-def _determine_target_garden(operation: Operation) -> str:
-    """Determine the system the operation is targeting"""
+def _determine_target(operation: Operation) -> str:
+    """Determine the garden the operation is targeting"""
+    # First determine the target based on the operation type
+    target_garden = _target_from_type(operation)
 
+    # Now do some additional processing to ensure the target is correct
+    if not target_garden and not operation.target_garden_name:
+        raise UnknownGardenException(
+            f"Could not determine the target garden for routing {operation!r}"
+        )
+
+    elif not target_garden:
+        logger.warning(
+            f"Couldn't determine a target garden but the operation had one, using "
+            f"{operation.target_garden_name}"
+        )
+        return operation.target_garden_name
+
+    elif not operation.target_garden_name:
+        return target_garden
+
+    else:
+        # This is most likely caused by an operation targeted at a grandchild of the
+        # source garden
+        if operation.target_garden_name != target_garden:
+            return target_garden
+
+    raise RoutingException(f"Unable to determine target garden for {operation!r}")
+
+
+def _target_from_type(operation: Operation) -> str:
+    """Determine the target garden based on the operation type"""
     # Certain operations are ASSUMED to be targeted at the local garden
     if (
         "READ" in operation.operation_type
