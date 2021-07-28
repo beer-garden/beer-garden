@@ -8,10 +8,19 @@ The schedule service is responsible for:
 import logging
 import threading
 from os.path import isdir
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Iterator
 from datetime import datetime, timedelta
 
+import bson
+import pymongo
+import pymongo.database
+from pymongo.client_session import ClientSession
+from pymongo.collection import Collection
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
+
+# from mongoengine import get_db, get_connection, Document
+import mongoengine
+from pymongo.results import InsertOneResult
 
 from watchdog.observers.polling import PollingObserver as Observer
 from watchdog.events import (
@@ -25,7 +34,9 @@ from watchdog.utils import has_attribute, unicode_paths
 from pathtools.patterns import match_any_paths
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from brewtils.models import Event, Events, Job, Operation
+
+from beer_garden.db.mongo.api import from_brewtils
+from brewtils.models import Event, Events, Job, Operation, JobDefinitionList, JobIDList
 
 import beer_garden
 import beer_garden.config as config
@@ -514,6 +525,21 @@ def get_jobs(filter_params: Optional[Dict] = None) -> List[Job]:
     return db.query(Job, filter_params=filter_params)
 
 
+def get_some_jobs(filter_params: Optional[Dict] = None) -> JobDefinitionList:
+    """Get a filtered set of job definitions.
+
+    Args:
+        filter_params: The filter parameters that will be passed to the Mongo
+        engine.
+
+    Returns:
+        A JobDefinitionList that holds the job definitions.
+    """
+    job_dfn_list: List[Job] = get_jobs(filter_params)
+
+    return JobDefinitionList(job_dfn_list)
+
+
 @publish_event(Events.JOB_CREATED)
 def create_job(job: Job) -> Job:
     """Create a new Job and add it to the scheduler
@@ -528,6 +554,48 @@ def create_job(job: Job) -> Job:
     job = db.create(job)
 
     return job
+
+
+def create_jobs(jobs: JobDefinitionList) -> JobIDList:
+    """Create multiple new Jobs and add them to the scheduler.
+
+    Args:
+        jobs: A `JobDefinitionList` that holds the `Job`s to be added
+
+    Returns:
+        A `JobIDList` that holds the `id`s of the `Job`s that were added
+    """
+    jobs_list: Iterator[Job] = jobs.jobs
+    jobs_created_list: List[Job] = []
+    job_collection_name = "job"
+
+    # we want the addition of Jobs to obey ACID: either all will succeed or none
+    # will succeed; hence we skip using mongoengine and use the pymongo library
+    # directly
+
+    the_connection: pymongo.MongoClient = mongoengine.get_connection()
+    the_db: pymongo.database.Database = mongoengine.get_db()
+
+    session: ClientSession
+    with the_connection.start_session() as session:
+        job_collection: Collection = the_db.get_collection(job_collection_name)
+
+        for job in jobs_list:
+            mongo_obj: mongoengine.Document = from_brewtils(job)  # noqa
+            job_as_son: bson.BSON = mongo_obj.to_mongo()
+
+            result: InsertOneResult = job_collection.insert_one(
+                job_as_son, session=session
+            )
+
+            jobs_created_list.append(result.inserted_id)
+
+    if not len(jobs_created_list):
+        raise ValueError(
+            "Not all job descriptions were successfully parsed, so none were added"
+        )
+
+    return JobIDList(jobs_created_list)
 
 
 @publish_event(Events.JOB_UPDATED)
