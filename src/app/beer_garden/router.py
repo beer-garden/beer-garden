@@ -43,7 +43,6 @@ import beer_garden.systems
 from beer_garden.api.stomp.transport import Connection, consolidate_headers, process
 from beer_garden.errors import (
     ForwardException,
-    RoutingException,
     RoutingRequestException,
     UnknownGardenException,
 )
@@ -513,33 +512,28 @@ def _pre_execute(operation: Operation) -> Operation:
 
 
 def _determine_target(operation: Operation) -> str:
-    """Determine the garden the operation is targeting"""
-    # First determine the target based on the operation type
+    """Determine the garden the operation is targeting
+
+    Note that while the operation can already have a target garden field this will only
+    be used as a fallback if a better target can't be calculated.
+
+    See https://github.com/beer-garden/beer-garden/issues/1076
+    """
     target_garden = _target_from_type(operation)
 
-    # Now do some additional processing to ensure the target is correct
-    if not target_garden and not operation.target_garden_name:
-        raise UnknownGardenException(
-            f"Could not determine the target garden for routing {operation!r}"
-        )
+    if not target_garden:
+        if not operation.target_garden_name:
+            raise UnknownGardenException(
+                f"Could not determine the target garden for routing {operation!r}"
+            )
 
-    elif not target_garden:
         logger.warning(
             f"Couldn't determine a target garden but the operation had one, using "
             f"{operation.target_garden_name}"
         )
         return operation.target_garden_name
 
-    elif not operation.target_garden_name:
-        return target_garden
-
-    else:
-        # This is most likely caused by an operation targeted at a grandchild of the
-        # source garden
-        if operation.target_garden_name != target_garden:
-            return target_garden
-
-    raise RoutingException(f"Unable to determine target garden for {operation!r}")
+    return target_garden
 
 
 def _target_from_type(operation: Operation) -> str:
