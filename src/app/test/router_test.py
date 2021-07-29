@@ -37,6 +37,14 @@ class TestDetermineTarget:
 
         assert _determine_target(op) == "parent"
 
+    def test_same(self, monkeypatch, op):
+        monkeypatch.setattr(
+            beer_garden.router, "_target_from_type", Mock(return_value="child")
+        )
+        op.target_garden_name = "child"
+
+        assert _determine_target(op) == "child"
+
     def test_mismatch(self, monkeypatch, op):
         monkeypatch.setattr(
             beer_garden.router, "_target_from_type", Mock(return_value="child")
