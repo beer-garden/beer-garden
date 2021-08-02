@@ -15,7 +15,7 @@ export default function gardenService($http) {
   }
 
   GardenService.getGarden = function(name){
-    return $http.get('api/v1/gardens/' + name);
+    return $http.get('api/v1/gardens/' + encodeURIComponent(name));
   }
 
   GardenService.createGarden = function(garden){
@@ -23,7 +23,7 @@ export default function gardenService($http) {
   }
 
   GardenService.updateGardenConfig = function(garden){
-    return $http.patch('api/v1/gardens/' + garden.name, {operation: 'config', path: '', value: garden});
+    return $http.patch('api/v1/gardens/' + encodeURIComponent(garden.name), {operation: 'config', path: '', value: garden});
   }
 
   GardenService.syncGardens = function(){
@@ -31,11 +31,11 @@ export default function gardenService($http) {
   }
 
   GardenService.syncGarden = function(name){
-    return $http.patch('api/v1/gardens/' + name, {operation: 'sync', path: '', value: ''})
+    return $http.patch('api/v1/gardens/' + encodeURIComponent(name), {operation: 'sync', path: '', value: ''})
   }
 
   GardenService.deleteGarden = function(name){
-    return $http.delete('api/v1/gardens/' + name);
+    return $http.delete('api/v1/gardens/' + encodeURIComponent(name));
   }
 
   GardenService.serverModelToForm = function(model){
