@@ -463,6 +463,8 @@ def run_job(job_id, request_template, **kwargs):
         return
 
     try:
+        logger.debug(f"About to execute {db_job!r}")
+
         request = beer_garden.router.route(
             Operation(
                 operation_type="REQUEST_CREATE",
@@ -480,12 +482,15 @@ def run_job(job_id, request_template, **kwargs):
 
         request = get_request(request.id)
 
+        updates = {}
         if request.status == "ERROR":
-            db_job.error_count += 1
+            updates["inc__error_count"] = 1
+            logger.debug(f"{db_job!r} request completed with ERROR status")
         elif request.status == "SUCCESS":
-            db_job.success_count += 1
+            logger.debug(f"{db_job!r} request completed with SUCCESS status")
+            updates["inc__success_count"] = 1
 
-        db.update(db_job)
+        db.modify(db_job, **updates)
     except Exception as ex:
         logger.exception(f"Error executing {db_job}: {ex}")
 
