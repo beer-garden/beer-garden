@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 class SerializeHelper(object):
-    async def __call__(self, operation: Operation, serialize_kwargs=None, **kwargs):
-        result = beer_garden.router.route(operation, **kwargs)
+    async def __call__(self, operation: Operation, serialize_kwargs=None):
+        result = beer_garden.router.route(operation)
 
         # Await any coroutines
         if isawaitable(result):
