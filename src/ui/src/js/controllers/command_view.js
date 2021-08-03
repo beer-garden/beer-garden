@@ -73,11 +73,7 @@ export default function commandViewController(
       };
     }
 
-    return RequestService.createRequestWait(request).then(
-      function(response) {
-        return response.data;
-      }
-    );
+    return RequestService.createRequestWait(request);
   };
 
   $scope.checkInstance = function() {
