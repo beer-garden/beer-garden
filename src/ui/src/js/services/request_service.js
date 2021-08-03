@@ -50,6 +50,9 @@ export default function requestService($q, $http, $timeout) {
       service.createRequest(request, options).then(
         (response) => {
           checkForCompletion(response.data.id);
+        },
+        (response) => {
+          deferred.reject(response.data);
         }
       );
 
