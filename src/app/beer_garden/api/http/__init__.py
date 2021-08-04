@@ -199,7 +199,7 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/tokens/(\w+)/?", v1.token.TokenAPI),
         (rf"{prefix}api/v1/jobs/(\w+)/?", v1.job.JobAPI),
         (rf"{prefix}api/v1/logging/?", v1.logging.LoggingAPI),
-        (rf"{prefix}api/v1/gardens/([\w%]+)/?", v1.garden.GardenAPI),
+        (rf"{prefix}api/v1/gardens/(.*)/?", v1.garden.GardenAPI),
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
         (rf"{prefix}api/vbeta/runners/?", vbeta.runner.RunnerListAPI),
