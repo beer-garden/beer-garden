@@ -1,15 +1,15 @@
 import _ from 'lodash';
 
-requestService.$inject = ['$q', '$http', '$timeout'];
+requestService.$inject = ['$q', '$http', '$interval'];
 
 /**
  * requestService - Service for accessing the Request API.
- * @param  {Object} $q                Angular's $q object.
- * @param  {Object} $http             Angular's $http object.
- * @param  {Object} $timeout          Angular's $timeout object.
+ * @param  {Object} $q                Angular $q object.
+ * @param  {Object} $http             Angular $http object.
+ * @param  {Object} $interval         Angular $interval object.
  * @return {Object}                   An Object for interacting with the Request API.
  */
-export default function requestService($q, $http, $timeout) {
+export default function requestService($q, $http, $interval) {
   const completeStatuses = ['SUCCESS', 'ERROR', 'CANCELED', 'INVALID'];
 
   let service = {
@@ -21,37 +21,47 @@ export default function requestService($q, $http, $timeout) {
     getRequest: (id) => {
       return $http.get('api/v1/requests/' + id);
     },
-    createRequest: (request) => {
-      return $http.post('api/v1/requests', request);
-    },
     isComplete: (request) => {
       return _.includes(completeStatuses, request.status);
     },
   };
 
   _.assign(service, {
-    createRequestWait: (request, options = {}) => {
+    createRequest: (request, waitForCompletion) => {
+      let promise = $http.post('api/v1/requests', request);
+
+      if(!waitForCompletion) {
+        return promise;
+      }
+
       let deferred = $q.defer();
-
-      const checkForCompletion = function(id) {
-        service.getRequest(id, options).then(
-          (response) => {
-            if (!service.isComplete(response.data)) {
-              $timeout(() => {
-                checkForCompletion(id);
-              }, 500);
-            } else {
-              deferred.resolve(response.data);
-            }
-        });
-      };
-
-      service.createRequest(request, options).then(
+      promise.then(
         (response) => {
-          checkForCompletion(response.data.id);
+          let maxTries = 60;
+          let curTry = 0;
+
+          let inter = $interval(() => {
+            service.getRequest(response.data.id).then(
+              (response) => {
+                if(service.isComplete(response.data)) {
+                  deferred.resolve(response.data);
+                  $interval.cancel(inter);
+                }
+
+                if(curTry++ >= maxTries) {
+                  deferred.reject("Timeout expired");
+                  $interval.cancel(inter);
+                }
+              },
+              (errorResponse) => {
+                deferred.reject(errorResponse.data);
+                $interval.cancel(inter);
+              }
+            );
+          }, 500);
         },
-        (response) => {
-          deferred.reject(response.data);
+        (errorResponse) => {
+          deferred.reject(errorResponse.data);
         }
       );
 
