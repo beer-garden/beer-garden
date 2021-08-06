@@ -183,7 +183,7 @@ class TestRequest(object):
 
         @pytest.mark.parametrize(
             "parent, has_parent",
-            [(None, True), ("something", False)],
+            [(None, True), (Request(command="say"), False)],
         )
         def test_parent_mismatch(self, parent, has_parent):
             req = Request(command="bar", parent=parent, has_parent=has_parent)

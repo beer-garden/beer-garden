@@ -460,15 +460,10 @@ class Request(MongoModel, Document):
         # Deal with has_parent
         if self.has_parent is None:
             self.has_parent = bool(self.parent)
-        elif self.has_parent is False and self.parent:
+        elif self.has_parent != bool(self.parent):
             raise ModelValidationError(
-                f"Can not save Request {self}: Request has a parent field but "
-                f"has_parent is False"
-            )
-        elif self.has_parent is True and not self.parent:
-            raise ModelValidationError(
-                f"Can not save Request {self}: Request does not have a parent field "
-                f"but has_parent is True"
+                f"Cannot save Request {self}: parent value of {self.parent!r} is not "
+                f"consistent with has_parent value of {self.has_parent}"
             )
 
     def clean_update(self):
