@@ -159,31 +159,55 @@ class TestRequest(object):
         assert "name" in repr(request)
         assert "CREATED" in repr(request)
 
-    @pytest.mark.parametrize(
-        "req",
-        [
-            Request(system="foo", command="bar", status="bad"),
-            Request(system="foo", command="bar", command_type="BAD"),
-            Request(system="foo", command="bar", output_type="BAD"),
-        ],
-    )
-    def test_clean_fail(self, req):
-        with pytest.raises(ModelValidationError):
+    class TestClean:
+        @pytest.mark.parametrize(
+            "req",
+            [
+                Request(system="foo", command="bar", status="bad"),
+                Request(system="foo", command="bar", command_type="BAD"),
+                Request(system="foo", command="bar", output_type="BAD"),
+            ],
+        )
+        def test_bad_values(self, req):
+            with pytest.raises(ModelValidationError):
+                req.clean()
+
+        @pytest.mark.parametrize(
+            "parent, has_parent",
+            [(None, False), ("something", True)],
+        )
+        def test_set_has_parent(self, parent, has_parent):
+            req = Request(command="bar", parent=parent)
             req.clean()
+            assert req.has_parent is has_parent
 
-    @pytest.mark.parametrize(
-        "start,end",
-        [("SUCCESS", "IN_PROGRESS"), ("SUCCESS", "ERROR"), ("IN_PROGRESS", "CREATED")],
-    )
-    def test_invalid_status_transitions(self, bg_request, start, end):
-        bg_request.status = start
-        bg_request.output = None
+        @pytest.mark.parametrize(
+            "parent, has_parent",
+            [(None, True), (Request(command="say"), False)],
+        )
+        def test_parent_mismatch(self, parent, has_parent):
+            req = Request(command="bar", parent=parent, has_parent=has_parent)
+            with pytest.raises(ModelValidationError):
+                req.clean()
 
-        db.create(bg_request)
+    class TestCleanUpdate:
+        @pytest.mark.parametrize(
+            "start, end",
+            [
+                ("SUCCESS", "IN_PROGRESS"),
+                ("SUCCESS", "ERROR"),
+                ("IN_PROGRESS", "CREATED"),
+            ],
+        )
+        def test_invalid_transitions(self, bg_request, start, end):
+            bg_request.status = start
+            bg_request.output = None
 
-        with pytest.raises(RequestStatusTransitionError):
-            bg_request.status = end
-            db.update(bg_request)
+            db.create(bg_request)
+
+            with pytest.raises(RequestStatusTransitionError):
+                bg_request.status = end
+                db.update(bg_request)
 
     # TODO - Make these integration tests
     # @patch("bg_utils.mongo.models.Request.objects")
