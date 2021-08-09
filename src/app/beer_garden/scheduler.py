@@ -8,7 +8,7 @@ The schedule service is responsible for:
 import logging
 import threading
 from os.path import isdir
-from typing import Dict, List
+from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
@@ -510,7 +510,7 @@ def get_job(job_id: str) -> Job:
     return db.query_unique(Job, id=job_id)
 
 
-def get_jobs(filter_params: Dict = None) -> List[Job]:
+def get_jobs(filter_params: Optional[Dict] = None) -> List[Job]:
     return db.query(Job, filter_params=filter_params)
 
 

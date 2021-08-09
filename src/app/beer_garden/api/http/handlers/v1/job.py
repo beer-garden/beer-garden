@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from typing import Optional, Awaitable, List, Dict, Any
+
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
@@ -210,11 +212,117 @@ class JobListAPI(BaseHandler):
             Operation(
                 operation_type="JOB_CREATE",
                 args=[
-                    SchemaParser.parse_job(self.request.decoded_body, from_string=True)
+                    SchemaParser.parse_job(
+                        self.request.body.decode("utf-8"), from_string=True
+                    )
                 ],
             )
         )
 
         self.set_status(201)
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(response)
+
+
+class JobImportAPI(BaseHandler):
+    def data_received(self, chunk: bytes) -> Optional[Awaitable[None]]:
+        return super().data_received(chunk)
+
+    @authenticated(permissions=[Permissions.CREATE])
+    async def post(self):
+        """
+        ---
+        summary: Schedule a list of Jobs from a list of job descriptions.
+        description: |
+          Given a list of jobs from /export/jobs, each will be scheduled to run
+          on the intervals set in their trigger arguments.
+        parameters:
+          - name: jobs
+            in: body
+            description: The Jobs to create/schedule
+            schema:
+              $ref: '#/definitions/JobExport'
+        responses:
+          201:
+            description: All new jobs have been created
+            schema:
+              $ref: '#/definitions/JobImport'
+          400:
+            $ref: '#/definitions/400Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Jobs
+        """
+        pass
+
+
+class JobExportAPI(BaseHandler):
+    def data_received(self, chunk: bytes) -> Optional[Awaitable[None]]:
+        return super().data_received(chunk)
+
+    @authenticated(permissions=[Permissions.CREATE])
+    async def post(self):
+        """
+        ---
+        summary: Exports a list of Jobs from a list of IDs.
+        description: |
+          Jobs will be scheduled from a provided list to run on the intervals
+          set in their trigger arguments.
+        parameters:
+          - name: jobs
+            in: body
+            description: A list of the Jobs IDs whose job definitions should be \
+            exported. Omitting this parameter will export all jobs.
+            schema:
+              $ref: '#/definitions/JobImport'
+        responses:
+          201:
+            description: A list of jobs has been exported.
+            schema:
+              $ref: '#/definitions/JobExport'
+          400:
+            $ref: '#/definitions/400Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Jobs
+        """
+        filter_params_dict = {}
+
+        # we're focused on the "ids" list, but if other keys and values
+        # are present in the body and/or if arguments are passed, allow
+        # them through; that is, provide maximum flexibility to the user
+        for key in self.request.arguments:
+            if key in JobSchema.get_attribute_names():
+                filter_params_dict[key] = self.get_query_argument(key)
+
+        decoded_body = self.request.body.decode("utf-8")
+
+        if len(decoded_body):
+            ids_string = "ids"
+            arg_dict: Dict[str, Any] = SchemaParser.parse_job_ids(
+                decoded_body, from_string=True
+            )
+
+            if ids_string not in arg_dict:
+                raise ValueError(f"JSON body did not include '{ids_string}' key")
+
+            ids = arg_dict[ids_string]
+            assert isinstance(ids, list)
+
+            filter_params_dict["id__in"] = ids
+
+            for key, val in arg_dict.items():
+                if key != ids_string:
+                    filter_params_dict[key] = val
+
+        response = await self.client(
+            Operation(
+                operation_type="JOB_READ_ALL",
+                kwargs={"filter_params": filter_params_dict},
+            )
+        )
+
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

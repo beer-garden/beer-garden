@@ -18,6 +18,8 @@ from brewtils.schemas import (
     IntervalTriggerSchema,
     JobSchema,
     LegacyRoleSchema,
+    JobExportSchema,
+    JobExportListSchema,
     LoggingConfigSchema,
     OperationSchema,
     ParameterSchema,
@@ -201,6 +203,8 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/jobs/(\w+)/?", v1.job.JobAPI),
         (rf"{prefix}api/v1/logging/?", v1.logging.LoggingAPI),
         (rf"{prefix}api/v1/gardens/(.*)/?", v1.garden.GardenAPI),
+        (rf"{prefix}api/v1/export/jobs/?", v1.job.JobExportAPI),
+        (rf"{prefix}api/v1/import/jobs/?", v1.job.JobImportAPI),
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
         (rf"{prefix}api/vbeta/runners/?", vbeta.runner.RunnerListAPI),
@@ -333,6 +337,9 @@ def _load_swagger(url_specs, title=None):
         ]
     }
     api_spec._definitions["Job"]["properties"]["trigger"] = trigger_properties
+
+    api_spec.definition("JobExport", schema=JobExportSchema)
+    api_spec.definition("JobImport", schema=JobExportListSchema)
 
     error = {"message": {"type": "string"}}
     api_spec.definition(
