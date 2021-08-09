@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 import re
-from typing import Optional, Awaitable, List, Dict, Any
+from typing import Optional, Awaitable
 from copy import deepcopy
 
 import brewtils.models
-from beer_garden.systems import get_systems
 
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import JobSchema
 from brewtils.models import JobDefinitionList, JobIDList
-from brewtils.models import System
 
 from beer_garden.api.http.authorization import authenticated, Permissions
 from beer_garden.api.http.base_handler import BaseHandler
@@ -278,8 +276,6 @@ class JobImportAPI(BaseHandler):
         cleaned_job_dfn_list = JobDefinitionList(
             list(map(self._clean_job, parsed_job_dfn_list.jobs))
         )
-
-        installed_systems: List[System] = get_systems()
 
         response = await self.client(
             Operation(operation_type="JOB_CREATE_MULTI", args=[cleaned_job_dfn_list])

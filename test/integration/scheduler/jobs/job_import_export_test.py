@@ -15,8 +15,6 @@ from brewtils.models import (  # type: ignore
 
 # TODO: understand when the try block will succeed and when the except
 # TODO: block will execute; i.e. find out why this pattern is necessary
-from brewtils.schema_parser import SchemaParser
-
 try:
     from helper import wait_for_response
     from helper.assertion import assert_successful_request, assert_validation_error
