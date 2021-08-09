@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 from inspect import isawaitable
+from typing import Optional, Any
 
 import six
 from brewtils.models import BaseModel
@@ -33,7 +34,7 @@ class SerializeHelper(object):
         return SchemaParser.serialize(result, **(serialize_kwargs or {}))
 
     @staticmethod
-    def json_dump(result) -> bool:
+    def json_dump(result: Optional[Any]) -> bool:
         """Determine whether to just json dump the result"""
         if result is None:
             return True

@@ -14,7 +14,7 @@ from brewtils.errors import (
     WaitExceededError,
     NotFoundError,
 )
-from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
+from jwt import ExpiredSignatureError, InvalidSignatureError
 from mongoengine.errors import (
     DoesNotExist,
     NotUniqueError,

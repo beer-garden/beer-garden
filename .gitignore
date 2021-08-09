@@ -92,3 +92,7 @@ tmp/
 workflow/
 test/conf/data
 docker/docker-compose/data/localplugins/*
+
+# submodule stuff
+.gitmodules
+src/brewtils

@@ -217,7 +217,7 @@ def _principal_from_token(token):
         decoded = jwt.decode(
             token, key=auth_config.token.secret, algorithm=auth_config.token.algorithm
         )
-    except jwt.exceptions.ExpiredSignatureError:
+    except jwt.ExpiredSignatureError:
         raise HTTPError(status_code=401, log_message="Signature expired")
 
     return BrewtilsPrincipal(
