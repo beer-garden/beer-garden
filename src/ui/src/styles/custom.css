@@ -293,3 +293,6 @@ table.dataTable{
 #loading i{
   margin-top: 10px;
 }
+
+/* Allows animated elements to be hidden immediately */
+.animate-fix.ng-animate { -webkit-animation: none 0s; }
