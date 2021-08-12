@@ -416,16 +416,20 @@ def handle_event(event):
     elif event.name == Events.SYSTEM_REMOVED.name:
         remove_routing_system(system=event.payload)
 
-    # Handle downstream events
-    if event.garden != config.get("garden.name"):
-        if event.name == Events.GARDEN_SYNC.name and not event.error:
-            with routing_lock:
-                # First remove all current routes to this garden
-                remove_routing_garden(garden_name=event.garden)
+    # Here we want to handle sync events from immediate children only
+    if (
+        not event.error
+        and (event.name == Events.GARDEN_SYNC.name)
+        and (event.garden != config.get("garden.name"))
+        and (event.garden == event.payload.name)
+    ):
+        with routing_lock:
+            # First remove all current routes to this garden
+            remove_routing_garden(garden_name=event.garden)
 
-                # Then add routes to the new systems
-                for system in event.payload.systems:
-                    add_routing_system(system=system, garden_name=event.payload.name)
+            # Then add routes to the new systems
+            for system in event.payload.systems:
+                add_routing_system(system=system, garden_name=event.payload.name)
 
     # This is a little unintuitive. We want to let the garden module deal with handling
     # any downstream garden changes since handling those changes is nontrivial.
