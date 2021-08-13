@@ -293,6 +293,7 @@ def handle_event(event):
                     publish(
                         Event(
                             name=Events.SYSTEM_UPDATED.name,
+                            garden=event.garden,
                             payload_type="System",
                             payload=system,
                         )
