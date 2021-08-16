@@ -60,7 +60,7 @@ export default function adminGardenController(
     $scope.create_garden_popover_message = null
     $scope.create_garden_popover_active = false
     for (let i = 0; i < $scope.data.length; i++) {
-        if ($scope.data[i].name == encodeURIComponent($scope.create_garden_name)) {
+        if ($scope.data[i].name == $scope.create_garden_name) {
             $scope.is_unique_garden_name = false;
             $scope.create_garden_popover_message = "Garden name is already in use."
             break;
@@ -68,16 +68,12 @@ export default function adminGardenController(
     }
   }
 
-  $scope.decode = function(str) {
-    return decodeURIComponent(str);
-  }
-
   $scope.createGarden = function() {
     if ($scope.is_unique_garden_name) {
-        GardenService.createGarden({"name":encodeURIComponent($scope.create_garden_name), "status":"NOT_CONFIGURED"});
+        GardenService.createGarden({"name":$scope.create_garden_name, "status":"NOT_CONFIGURED"});
         $state.go('base.garden_view',
               {
-                'name': encodeURIComponent($scope.create_garden_name),
+                'name': $scope.create_garden_name,
               }
             );
     }
