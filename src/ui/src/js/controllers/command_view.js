@@ -7,6 +7,7 @@ commandViewController.$inject = [
   '$state',
   '$stateParams',
   '$sce',
+  '$q',
   'RequestService',
   'SFBuilderService',
   'system',
@@ -20,6 +21,7 @@ commandViewController.$inject = [
  * @param  {Object} $state            Angular's $state object.
  * @param  {Object} $stateParams      Angular's $stateParams object.
  * @param  {Object} $sce              Angular's $sce object.
+ * @param  {Object} $q                Angular's $q object.
  * @param  {Object} RequestService    Beer-Garden's request service object.
  * @param  {Object} SFBuilderService  Beer-Garden's schema-form builder service object.
  */
@@ -29,6 +31,7 @@ export default function commandViewController(
     $state,
     $stateParams,
     $sce,
+    $q,
     RequestService,
     SFBuilderService,
     system,
@@ -60,9 +63,18 @@ export default function commandViewController(
       namespace: requestPrototype['namespace'] || $scope.system.namespace,
       system: requestPrototype['system'] || $scope.system.name,
       system_version: requestPrototype['system_version'] || $scope.system.version,
-      instance_name: requestPrototype['instance_name'] || $scope.model['instance_name'] ||
-          'default',
+      instance_name: requestPrototype['instance_name'] || $scope.model['instance_name']
     };
+
+    // If a system has more than one instance this will be undefined on initial page
+    // load. We could just let this continue as normal, but the backend would return
+    // an error like "Could not find instance with name 'None' in system". That's not
+    // the best, so this special handling makes the error message a little nicer.
+    if (!request.instance_name) {
+      let deferred = $q.defer();
+      deferred.reject("Please select an instance");
+      return deferred.promise;
+    }
 
     // If parameters are specified we need to use the model value
     if (angular.isDefined(requestPrototype['parameterNames'])) {
