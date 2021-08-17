@@ -59,9 +59,7 @@ class GardenAPI(BaseHandler):
         tags:
           - Garden
         """
-        await self.client(
-            Operation(operation_type="GARDEN_DELETE", args=[garden_name])
-        )
+        await self.client(Operation(operation_type="GARDEN_DELETE", args=[garden_name]))
 
         self.set_status(204)
 
