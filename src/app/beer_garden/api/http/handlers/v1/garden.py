@@ -4,7 +4,6 @@ from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
-from requests.utils import unquote
 
 
 class GardenAPI(BaseHandler):
@@ -33,7 +32,7 @@ class GardenAPI(BaseHandler):
         """
 
         response = await self.client(
-            Operation(operation_type="GARDEN_READ", args=[unquote(garden_name)])
+            Operation(operation_type="GARDEN_READ", args=[garden_name])
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -61,7 +60,7 @@ class GardenAPI(BaseHandler):
           - Garden
         """
         await self.client(
-            Operation(operation_type="GARDEN_DELETE", args=[unquote(garden_name)])
+            Operation(operation_type="GARDEN_DELETE", args=[garden_name])
         )
 
         self.set_status(204)
@@ -122,14 +121,14 @@ class GardenAPI(BaseHandler):
                 response = await self.client(
                     Operation(
                         operation_type="GARDEN_UPDATE_STATUS",
-                        args=[unquote(garden_name), operation.upper()],
+                        args=[garden_name, operation.upper()],
                     )
                 )
             elif operation == "heartbeat":
                 response = await self.client(
                     Operation(
                         operation_type="GARDEN_UPDATE_STATUS",
-                        args=[unquote(garden_name), "RUNNING"],
+                        args=[garden_name, "RUNNING"],
                     )
                 )
             elif operation == "config":
@@ -143,7 +142,7 @@ class GardenAPI(BaseHandler):
                 response = await self.client(
                     Operation(
                         operation_type="GARDEN_SYNC",
-                        kwargs={"sync_target": unquote(garden_name)},
+                        kwargs={"sync_target": garden_name},
                     )
                 )
 
