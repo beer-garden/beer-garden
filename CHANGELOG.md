@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+## 3.4.1
+8/2/21
+
+#### Bug Fixes
+- Jobs removed during an execution no longer respawn upon completion (Issue #1081/ PR #1084)
+
 ## 3.4.0
 6/24/21
 
