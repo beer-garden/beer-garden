@@ -42,7 +42,7 @@
   <div ng-repeat="garden in data" class="container-item panel panel-default">
     <div class="panel-heading">
       <h3>
-        <span>{{decode(garden.name)}}</span>
+        <span>{{garden.name}}</span>
         <span ng-show="garden.id == null || garden.connection_type == 'LOCAL'">(LOCAL)</span>
         <span ng-show="garden.id != null && garden.connection_type != 'LOCAL'">(REMOTE)</span>
       </h3>
@@ -68,14 +68,14 @@
 
         <button type="button" class="btn btn-primary btn-lg btn-block"
                 ng-click="editGarden(garden)" style="...">
-          Edit {{decode(garden.name)}} configurations
+          Edit {{garden.name}} configurations
         </button>
         <button type="button" class="btn btn-danger btn-lg btn-block"
                 ng-click="deleteGarden(garden.name)" style="..."
                 ng-show="garden.id != null && garden.connection_type != 'LOCAL'"
-                confirm="Are you sure you want to delete {{decode(garden.name)}}?
-                    This will also delete all Systems assocaited with {{decode(garden.name)}}.">
-          Delete {{decode(garden.name)}}
+                confirm="Are you sure you want to delete {{garden.name}}?
+                    This will also delete all Systems assocaited with {{garden.name}}.">
+          Delete {{garden.name}}
         </button>
       </div>
     </div>
