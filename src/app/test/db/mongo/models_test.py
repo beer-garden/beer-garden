@@ -4,8 +4,10 @@ import pytest
 from brewtils.errors import ModelValidationError, RequestStatusTransitionError
 from brewtils.schemas import RequestTemplateSchema
 from mock import Mock
+from mongoengine import ValidationError
 
 import beer_garden.db.api as db
+from beer_garden.api.authorization import Permissions
 from beer_garden.db.mongo.models import (
     Choices,
     Command,
@@ -14,7 +16,10 @@ from beer_garden.db.mongo.models import (
     Job,
     Parameter,
     Request,
+    Role,
+    RoleAssignment,
     System,
+    User,
 )
 
 
@@ -454,3 +459,65 @@ class TestJob(object):
         date_trigger = DateTrigger()
         with pytest.raises(ModelValidationError):
             Job(trigger_type="cron", trigger=date_trigger).clean()
+
+
+class TestRole:
+    @pytest.fixture(autouse=True)
+    def drop(self, mongo_conn):
+        Role.drop_collection()
+
+    def test_create_with_valid_permissions(self):
+        permissions = [Permissions.REQUEST_READ.value, Permissions.REQUEST_CREATE.value]
+
+        role = Role(name="test_role", permissions=permissions)
+        role.save()
+
+        assert Role.objects.filter(name="test_role").count() == 1
+
+    def test_create_with_invalid_permissions(self):
+        permissions = ["invalid_permission"]
+
+        role = Role(name="test_role", permissions=permissions)
+
+        with pytest.raises(ValidationError):
+            role.save()
+
+
+class TestUser:
+    @classmethod
+    def setup_class(cls):
+        Role(name="test_role", permissions=[Permissions.REQUEST_READ.value]).save()
+
+    @pytest.fixture(autouse=True)
+    def drop(self, mongo_conn):
+        User.drop_collection()
+
+    @pytest.fixture()
+    def role(self):
+        return Role.objects.get(name="test_role")
+
+    @pytest.fixture()
+    def role_assignment(self, role):
+        return RoleAssignment(role=role, domain="test_garden")
+
+    def test_create(self, role_assignment):
+        User(username="testuser", role_assignments=[role_assignment]).save()
+
+        assert User.objects.filter(username="testuser").count() == 1
+
+    def test_set_password(self):
+        user = User(username="testuser")
+        user.set_password("password")
+
+        # Testing for a specific value would be too tightly coupled with the hashing
+        # algorithm we use, so instead just verify that the password is not stored
+        # in its original form
+        assert user.password is not None
+        assert user.password != "password"
+
+    def test_verify_password(self):
+        user = User(username="testuser")
+        user.set_password("password")
+
+        assert user.verify_password("password") is True
+        assert user.verify_password("mismatch") is False

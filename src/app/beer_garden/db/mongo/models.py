@@ -6,6 +6,7 @@ import sys
 
 import pytz
 import six
+from passlib.apps import custom_app_context
 
 try:
     from lark import ParseError
@@ -47,6 +48,7 @@ from mongoengine import (
 from mongoengine.errors import DoesNotExist
 
 from .fields import DummyField, StatusInfo
+from .validators import validate_permissions
 
 __all__ = [
     "System",
@@ -68,6 +70,9 @@ __all__ = [
     "Garden",
     "File",
     "FileChunk",
+    "Role",
+    "RoleAssignment",
+    "User",
 ]
 
 
@@ -771,3 +776,53 @@ class FileChunk(MongoModel, Document):
 
 class RawFile(Document):
     file = FileField()
+
+
+class Role(Document):
+    name = StringField()
+    description = StringField()
+    permissions = ListField(field=StringField(), validation=validate_permissions)
+
+    meta = {
+        "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
+    }
+
+
+class RoleAssignment(EmbeddedDocument):
+    domain = StringField()
+    role = ReferenceField("Role")
+
+
+class User(Document):
+    username = StringField(required=True)
+    password = StringField()
+    role_assignments = EmbeddedDocumentListField("RoleAssignment")
+
+    meta = {
+        "indexes": [{"name": "unique_index", "fields": ["username"], "unique": True}],
+    }
+
+    def set_password(self, password: str):
+        """This helper should be used to set the user's password, rather than directly
+        assigning a value. This ensures that the password is stored as a hash rather
+        than in plain text
+
+        Args:
+            password: String to set as the user's password.
+
+        Returns:
+            None
+        """
+        self.password = custom_app_context.hash(password)
+
+    def verify_password(self, password: str):
+        """Checks the provided plaintext password against thea user's stored password
+        hash
+
+        Args:
+            password: Plaintext string to check against user's password"
+
+        Returns:
+            bool: True if the password matches, False otherwise
+        """
+        return custom_app_context.verify(password, self.password)

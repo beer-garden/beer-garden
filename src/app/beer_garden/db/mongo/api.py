@@ -56,7 +56,11 @@ ModelItem = Union[
 _model_map = {}
 for model_name in beer_garden.db.mongo.models.__all__:
     mongo_class = getattr(beer_garden.db.mongo.models, model_name)
-    _model_map[mongo_class.brewtils_model] = mongo_class
+
+    brewtils_model = getattr(mongo_class, "brewtils_model", None)
+
+    if brewtils_model:
+        _model_map[brewtils_model] = mongo_class
 
 
 def from_brewtils(obj: ModelItem) -> MongoModel:

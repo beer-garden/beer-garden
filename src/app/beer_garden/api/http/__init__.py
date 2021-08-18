@@ -22,12 +22,14 @@ from brewtils.schemas import (
     OperationSchema,
     ParameterSchema,
     PatchSchema,
-    PrincipalSchema,
     QueueSchema,
     RefreshTokenSchema,
     RequestSchema,
     RunnerSchema,
     SystemSchema,
+    UserCreateSchema,
+    UserListSchema,
+    UserSchema,
 )
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
@@ -177,7 +179,7 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/requests/?", v1.request.RequestListAPI),
         (rf"{prefix}api/v1/systems/?", v1.system.SystemListAPI),
         (rf"{prefix}api/v1/queues/?", v1.queue.QueueListAPI),
-        (rf"{prefix}api/v1/users/?", v1.user.UsersAPI),
+        (rf"{prefix}api/v1/users/?", v1.user.UserListAPI),
         (rf"{prefix}api/v1/roles/?", v1.role.LegacyRolesAPI),
         (rf"{prefix}api/v1/permissions/?", v1.permissions.PermissionsAPI),
         (rf"{prefix}api/v1/tokens/?", v1.token.TokenListAPI),
@@ -214,7 +216,7 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/vbeta/file/?", vbeta.file.RawFileListAPI),
         (rf"{prefix}api/vbeta/file/(\w+)/?", vbeta.file.RawFileAPI),
         # V2
-        (rf"{prefix}api/v2/users/?", v1.user.UsersAPI),
+        (rf"{prefix}api/v2/users/?", v1.user.UserListAPI),
         (rf"{prefix}api/v2/users/(\w+)/?", v1.user.UserAPI),
         (rf"{prefix}api/v2/tokens/?", v1.token.TokenListAPI),
         (rf"{prefix}api/v2/tokens/(\w+)/?", v1.token.TokenAPI),
@@ -299,7 +301,9 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("System", schema=SystemSchema)
     api_spec.definition("LoggingConfig", schema=LoggingConfigSchema)
     api_spec.definition("Event", schema=EventSchema)
-    api_spec.definition("User", schema=PrincipalSchema)
+    api_spec.definition("User", schema=UserSchema)
+    api_spec.definition("UserCreate", schema=UserCreateSchema)
+    api_spec.definition("UserList", schema=UserListSchema)
     api_spec.definition("Role", schema=LegacyRoleSchema)
     api_spec.definition("Queue", schema=QueueSchema)
     api_spec.definition("Operation", schema=OperationSchema)

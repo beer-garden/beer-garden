@@ -1,36 +1,26 @@
 # -*- coding: utf-8 -*-
-import json
+from brewtils.schemas import UserCreateSchema, UserListSchema, UserSchema
 
-from brewtils.errors import ModelValidationError, RequestForbidden
-from mongoengine.errors import DoesNotExist, ValidationError
-from passlib.apps import custom_app_context
-
-import beer_garden.api.http
-from beer_garden.api.http.authorization import (
-    Permissions,
-    authenticated,
-    check_permission,
-    coalesce_permissions,
-)
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.db.mongo.models import LegacyRole, Principal
-from beer_garden.db.mongo.parser import MongoParser
+from beer_garden.db.mongo.models import User
+from beer_garden.user import create_user, update_user
 
 
+# TODO: Update endpoints with authorization checks
 class UserAPI(BaseHandler):
-    def get(self, user_identifier):
+    def get(self, username):
         """
         ---
         summary: Retrieve a specific User
         parameters:
-          - name: user_identifier
+          - name: username
             in: path
             required: true
-            description: The ID or name of the User
+            description: The username of the User
             type: string
         responses:
           200:
-            description: User with the given ID
+            description: User with the given username
             schema:
               $ref: '#/definitions/User'
           404:
@@ -40,35 +30,20 @@ class UserAPI(BaseHandler):
         tags:
           - Users
         """
-        if user_identifier == "anonymous":
-            principal = beer_garden.api.http.anonymous_principal
-        else:
-            # Need fine-grained access control here
-            if user_identifier not in [
-                str(self.current_user.id),
-                self.current_user.username,
-            ]:
-                check_permission(self.current_user, [Permissions.USER_READ])
+        user = User.objects.get(username=username)
+        response = UserSchema().dump(user).data
 
-            try:
-                principal = Principal.objects.get(id=str(user_identifier))
-            except (DoesNotExist, ValidationError):
-                principal = Principal.objects.get(username=str(user_identifier))
+        self.write(response)
 
-        principal.permissions = coalesce_permissions(principal.roles)[1]
-
-        self.write(MongoParser.serialize_principal(principal, to_string=False))
-
-    @authenticated(permissions=[Permissions.LOCAL_ADMIN])
-    def delete(self, user_id):
+    def delete(self, username):
         """
         ---
         summary: Delete a specific User
         parameters:
-          - name: user_id
+          - name: username
             in: path
             required: true
-            description: The ID of the User
+            description: The username of the User
             type: string
         responses:
           204:
@@ -80,38 +55,31 @@ class UserAPI(BaseHandler):
         tags:
           - Users
         """
-        principal = Principal.objects.get(id=str(user_id))
-        principal.delete()
+        user = User.objects.get(username=username)
+        user.delete()
 
         self.set_status(204)
 
-    def patch(self, user_id):
+    def patch(self, username):
         """
         ---
         summary: Partially update a User
-        description: |
-          The body of the request needs to contain a set of instructions
-          detailing the updates to apply:
-          ```JSON
-          [
-            { "operation": "add", "path": "/roles", "value": "admin" }
-          ]
-          ```
         parameters:
-          - name: user_id
+          - name: username
             in: path
             required: true
-            description: The ID of the User
+            description: The username of the User
             type: string
           - name: patch
             in: body
             required: true
-            description: Instructions for how to update the User
+            description: |
+              A subset of User attributes to update, most commonly the password.
             schema:
-              $ref: '#/definitions/Patch'
+              $ref: '#/definitions/UserCreate'
         responses:
           200:
-            description: User with the given ID
+            description: User with the given username
             schema:
               $ref: '#/definitions/User'
           400:
@@ -123,93 +91,15 @@ class UserAPI(BaseHandler):
         tags:
           - Users
         """
-        principal = Principal.objects.get(id=str(user_id))
-        operations = MongoParser.parse_patch(
-            self.request.decoded_body, many=True, from_string=True
-        )
+        user_data = UserCreateSchema().load(self.request_body, partial=True).data
+        db_user = User.objects.get(username=username)
+        user = update_user(db_user, **user_data)
 
-        # Most things only need a permission check if updating a different user
-        if user_id != str(self.current_user.id):
-            check_permission(self.current_user, [Permissions.USER_UPDATE])
-
-        for op in operations:
-            if op.path == "/roles":
-                # Updating roles always requires USER_UPDATE
-                check_permission(self.current_user, [Permissions.USER_UPDATE])
-
-                try:
-                    if op.operation == "add":
-                        principal.roles.append(LegacyRole.objects.get(name=op.value))
-                    elif op.operation == "remove":
-                        principal.roles.remove(LegacyRole.objects.get(name=op.value))
-                    elif op.operation == "set":
-                        principal.roles = [
-                            LegacyRole.objects.get(name=name) for name in op.value
-                        ]
-                    else:
-                        raise ModelValidationError(
-                            "Unsupported operation '%s'" % op.operation
-                        )
-                except DoesNotExist:
-                    raise ModelValidationError("Role '%s' does not exist" % op.value)
-
-            elif op.path == "/username":
-
-                if op.operation == "update":
-                    principal.username = op.value
-                else:
-                    raise ModelValidationError(
-                        "Unsupported operation '%s'" % op.operation
-                    )
-
-            elif op.path == "/password":
-                if op.operation != "update":
-                    raise ModelValidationError(
-                        "Unsupported operation '%s'" % op.operation
-                    )
-
-                if isinstance(op.value, dict):
-                    current_password = op.value.get("current_password")
-                    new_password = op.value.get("new_password")
-                else:
-                    current_password = None
-                    new_password = op.value
-
-                if user_id == str(self.current_user.id):
-                    if current_password is None:
-                        raise ModelValidationError(
-                            "In order to update your own password, you must provide "
-                            "your current password"
-                        )
-
-                    if not custom_app_context.verify(
-                        current_password, self.current_user.hash
-                    ):
-                        raise RequestForbidden("Invalid password")
-
-                principal.hash = custom_app_context.hash(new_password)
-                if "changed" in principal.metadata:
-                    principal.metadata["changed"] = True
-
-            elif op.path == "/preferences/theme":
-                if op.operation == "set":
-                    principal.preferences["theme"] = op.value
-                else:
-                    raise ModelValidationError(
-                        "Unsupported operation '%s'" % op.operation
-                    )
-
-            else:
-                raise ModelValidationError("Unsupported path '%s'" % op.path)
-
-        principal.save()
-
-        principal.permissions = coalesce_permissions(principal.roles)[1]
-        self.write(MongoParser.serialize_principal(principal, to_string=False))
+        response = UserSchema().dump(user).data
+        self.write(response)
 
 
-class UsersAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.LOCAL_ADMIN])
+class UserListAPI(BaseHandler):
     def get(self):
         """
         ---
@@ -218,25 +108,17 @@ class UsersAPI(BaseHandler):
           200:
             description: All Users
             schema:
-              type: array
-              items:
-                $ref: '#/definitions/User'
+              $ref: '#/definitions/UserList'
           50x:
             $ref: '#/definitions/50xError'
         tags:
           - Users
         """
-        principals = Principal.objects.all().select_related(max_depth=1)
+        users = User.objects.all()
+        response = UserListSchema().dump({"users": users}).data
 
-        for principal in principals:
-            principal.permissions = coalesce_permissions(principal.roles)[1]
+        self.write(response)
 
-        self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(
-            MongoParser.serialize_principal(principals, to_string=True, many=True)
-        )
-
-    @authenticated(permissions=[Permissions.LOCAL_ADMIN])
     def post(self):
         """
         ---
@@ -246,17 +128,7 @@ class UsersAPI(BaseHandler):
             in: body
             description: The user
             schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                  description: the name
-                password:
-                  type: string
-                  description: the password
-              required:
-                - username
-                - password
+              $ref: '#/definitions/UserCreate'
         consumes:
           - application/json
         responses:
@@ -271,18 +143,7 @@ class UsersAPI(BaseHandler):
         tags:
           - Users
         """
-        parsed = json.loads(self.request.decoded_body)
-
-        user = Principal(
-            username=parsed["username"],
-            hash=custom_app_context.hash(parsed["password"]),
-        )
-
-        if "roles" in parsed:
-            user.roles = [LegacyRole.objects.get(name=name) for name in parsed["roles"]]
-
-        user.save()
-        user.permissions = coalesce_permissions(user.roles)[1]
+        user_data = UserCreateSchema().load(self.request_body).data
+        create_user(**user_data)
 
         self.set_status(201)
-        self.write(MongoParser.serialize_principal(user, to_string=False))
