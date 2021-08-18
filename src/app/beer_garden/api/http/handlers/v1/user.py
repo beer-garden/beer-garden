@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 import json
 
+from brewtils.errors import ModelValidationError, RequestForbidden
 from mongoengine.errors import DoesNotExist, ValidationError
 from passlib.apps import custom_app_context
 
 import beer_garden.api.http
-from beer_garden.db.mongo.models import Principal, Role
-from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.api.http.authorization import (
+    Permissions,
     authenticated,
     check_permission,
-    Permissions,
     coalesce_permissions,
 )
 from beer_garden.api.http.base_handler import BaseHandler
-from brewtils.errors import ModelValidationError, RequestForbidden
+from beer_garden.db.mongo.models import LegacyRole, Principal
+from beer_garden.db.mongo.parser import MongoParser
 
 
 class UserAPI(BaseHandler):
@@ -139,12 +139,12 @@ class UserAPI(BaseHandler):
 
                 try:
                     if op.operation == "add":
-                        principal.roles.append(Role.objects.get(name=op.value))
+                        principal.roles.append(LegacyRole.objects.get(name=op.value))
                     elif op.operation == "remove":
-                        principal.roles.remove(Role.objects.get(name=op.value))
+                        principal.roles.remove(LegacyRole.objects.get(name=op.value))
                     elif op.operation == "set":
                         principal.roles = [
-                            Role.objects.get(name=name) for name in op.value
+                            LegacyRole.objects.get(name=name) for name in op.value
                         ]
                     else:
                         raise ModelValidationError(
@@ -279,7 +279,7 @@ class UsersAPI(BaseHandler):
         )
 
         if "roles" in parsed:
-            user.roles = [Role.objects.get(name=name) for name in parsed["roles"]]
+            user.roles = [LegacyRole.objects.get(name=name) for name in parsed["roles"]]
 
         user.save()
         user.permissions = coalesce_permissions(user.roles)[1]

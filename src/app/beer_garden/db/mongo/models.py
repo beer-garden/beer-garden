@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import datetime
+import json
 import logging
+import sys
 
 import pytz
 import six
-import sys
-import json
 
 try:
     from lark import ParseError
@@ -14,8 +14,19 @@ except ImportError:
     from lark.common import ParseError
 
     LarkError = ParseError
+import brewtils.models
+from brewtils.choices import parse
+from brewtils.errors import ModelValidationError, RequestStatusTransitionError
+from brewtils.models import Command as BrewtilsCommand
+from brewtils.models import Instance as BrewtilsInstance
+from brewtils.models import Job as BrewtilsJob
+from brewtils.models import Parameter as BrewtilsParameter
+from brewtils.models import Request as BrewtilsRequest
 from bson.objectid import ObjectId
 from mongoengine import (
+    CASCADE,
+    NULLIFY,
+    PULL,
     BooleanField,
     DateTimeField,
     DictField,
@@ -24,31 +35,18 @@ from mongoengine import (
     EmbeddedDocument,
     EmbeddedDocumentField,
     EmbeddedDocumentListField,
+    FileField,
     GenericEmbeddedDocumentField,
-    LazyReferenceField,
     IntField,
+    LazyReferenceField,
     ListField,
     ObjectIdField,
     ReferenceField,
     StringField,
-    FileField,
-    CASCADE,
-    NULLIFY,
-    PULL,
 )
 from mongoengine.errors import DoesNotExist
 
-import brewtils.models
 from .fields import DummyField, StatusInfo
-from brewtils.choices import parse
-from brewtils.errors import ModelValidationError, RequestStatusTransitionError
-from brewtils.models import (
-    Command as BrewtilsCommand,
-    Instance as BrewtilsInstance,
-    Parameter as BrewtilsParameter,
-    Request as BrewtilsRequest,
-    Job as BrewtilsJob,
-)
 
 __all__ = [
     "System",
@@ -59,7 +57,7 @@ __all__ = [
     "Choices",
     "Event",
     "Principal",
-    "Role",
+    "LegacyRole",
     "RefreshToken",
     "Job",
     "RequestTemplate",
@@ -547,8 +545,8 @@ class Event(MongoModel, Document):
     timestamp = DateTimeField()
 
 
-class Role(MongoModel, Document):
-    brewtils_model = brewtils.models.Role
+class LegacyRole(MongoModel, Document):
+    brewtils_model = brewtils.models.LegacyRole
 
     name = StringField(required=True)
     description = StringField()
@@ -566,7 +564,7 @@ class Principal(MongoModel, Document):
 
     username = StringField(required=True)
     hash = StringField()
-    roles = ListField(field=ReferenceField("Role", reverse_delete_rule=PULL))
+    roles = ListField(field=ReferenceField("LegacyRole", reverse_delete_rule=PULL))
     preferences = DictField()
     metadata = DictField()
 

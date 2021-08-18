@@ -2,17 +2,17 @@
 import base64
 from enum import Enum
 
+import beer_garden.api.http
+import beer_garden.config as config
 import jwt
 import wrapt
+from beer_garden.db.mongo.models import LegacyRole, Principal
 from brewtils.errors import RequestForbidden
-from brewtils.models import Principal as BrewtilsPrincipal, Role as BrewtilsRole
+from brewtils.models import LegacyRole as BrewtilsRole
+from brewtils.models import Principal as BrewtilsPrincipal
 from mongoengine.errors import DoesNotExist
 from passlib.apps import custom_app_context
 from tornado.web import HTTPError
-
-import beer_garden.api.http
-import beer_garden.config as config
-from beer_garden.db.mongo.models import Principal, Role
 
 
 class Permissions(Enum):
@@ -101,7 +101,7 @@ def anonymous_principal() -> BrewtilsPrincipal:
     """Load correct anonymous permissions
 
     This exists in a weird space. We need to set the roles attribute to a 'real'
-    Role object so it works correctly when the REST handler goes to serialize
+    LegacyRole object so it works correctly when the REST handler goes to serialize
     this principal.
 
     However, we also need to set the permissions attribute to the consolidated
@@ -117,7 +117,7 @@ def anonymous_principal() -> BrewtilsPrincipal:
     #     # user, which means there are no roles.
     #     roles = []
     # else:
-    roles = [Role(name="bg-admin", permissions=["bg-all"])]
+    roles = [LegacyRole(name="bg-admin", permissions=["bg-all"])]
 
     _, permissions = coalesce_permissions(roles)
 

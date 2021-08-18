@@ -6,17 +6,18 @@ import types
 from typing import Optional, Tuple
 
 from apispec import APISpec
-from brewtils.models import Event, Events
-from brewtils.models import Principal
+from brewtils.models import Event, Events, Principal
 from brewtils.schemas import (
     CommandSchema,
     CronTriggerSchema,
     DateTriggerSchema,
     EventSchema,
+    FileStatusSchema,
     GardenSchema,
     InstanceSchema,
     IntervalTriggerSchema,
     JobSchema,
+    LegacyRoleSchema,
     LoggingConfigSchema,
     OperationSchema,
     ParameterSchema,
@@ -25,10 +26,8 @@ from brewtils.schemas import (
     QueueSchema,
     RefreshTokenSchema,
     RequestSchema,
-    RoleSchema,
     RunnerSchema,
     SystemSchema,
-    FileStatusSchema,
 )
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
@@ -179,7 +178,7 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/systems/?", v1.system.SystemListAPI),
         (rf"{prefix}api/v1/queues/?", v1.queue.QueueListAPI),
         (rf"{prefix}api/v1/users/?", v1.user.UsersAPI),
-        (rf"{prefix}api/v1/roles/?", v1.role.RolesAPI),
+        (rf"{prefix}api/v1/roles/?", v1.role.LegacyRolesAPI),
         (rf"{prefix}api/v1/permissions/?", v1.permissions.PermissionsAPI),
         (rf"{prefix}api/v1/tokens/?", v1.token.TokenListAPI),
         (rf"{prefix}api/v1/admin/?", v1.admin.AdminAPI),
@@ -195,7 +194,7 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/systems/(\w+)/?", v1.system.SystemAPI),
         (rf"{prefix}api/v1/queues/([\w\.-]+)/?", v1.queue.QueueAPI),
         (rf"{prefix}api/v1/users/(\w+)/?", v1.user.UserAPI),
-        (rf"{prefix}api/v1/roles/(\w+)/?", v1.role.RoleAPI),
+        (rf"{prefix}api/v1/roles/(\w+)/?", v1.role.LegacyRoleAPI),
         (rf"{prefix}api/v1/tokens/(\w+)/?", v1.token.TokenAPI),
         (rf"{prefix}api/v1/jobs/(\w+)/?", v1.job.JobAPI),
         (rf"{prefix}api/v1/logging/?", v1.logging.LoggingAPI),
@@ -301,7 +300,7 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("LoggingConfig", schema=LoggingConfigSchema)
     api_spec.definition("Event", schema=EventSchema)
     api_spec.definition("User", schema=PrincipalSchema)
-    api_spec.definition("Role", schema=RoleSchema)
+    api_spec.definition("Role", schema=LegacyRoleSchema)
     api_spec.definition("Queue", schema=QueueSchema)
     api_spec.definition("Operation", schema=OperationSchema)
     api_spec.definition("FileStatus", schema=FileStatusSchema)

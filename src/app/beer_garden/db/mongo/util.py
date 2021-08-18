@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import os
+
 from bson import DBRef
 from mongoengine.connection import get_db
 from mongoengine.errors import (
@@ -23,17 +24,17 @@ def ensure_roles():
     Then there are roles that MUST be present. These will always be created if
     they do not exist.
     """
-    from .models import Role
+    from .models import LegacyRole
 
     convenience_roles = [
-        Role(
+        LegacyRole(
             name="bg-readonly",
             description="Allows only standard read actions",
             permissions=[
                 "bg-read",
             ],
         ),
-        Role(
+        LegacyRole(
             name="bg-operator",
             description="Standard Beergarden user role",
             permissions=[
@@ -45,15 +46,17 @@ def ensure_roles():
     ]
 
     mandatory_roles = [
-        Role(
+        LegacyRole(
             name="bg-anonymous",
             description="Special role used for non-authenticated users",
             permissions=[
                 "bg-read",
             ],
         ),
-        Role(name="bg-admin", description="Allows all actions", permissions=["bg-all"]),
-        Role(
+        LegacyRole(
+            name="bg-admin", description="Allows all actions", permissions=["bg-all"]
+        ),
+        LegacyRole(
             name="bg-plugin",
             description="Allows actions necessary for plugins to function",
             permissions=[
@@ -66,7 +69,7 @@ def ensure_roles():
     ]
 
     # Only create convenience roles if this is a fresh database
-    if Role.objects.count() == 0:
+    if LegacyRole.objects.count() == 0:
         logger.warning("No roles found: creating convenience roles")
 
         for role in convenience_roles:
@@ -90,7 +93,7 @@ def ensure_users(guest_login_enabled):
     Then there are users that MUST be present. These will always be created if
     they do not exist.
     """
-    from .models import Principal, Role
+    from .models import LegacyRole, Principal
 
     if _should_create_admin():
         default_password = os.environ.get("BG_DEFAULT_ADMIN_PASSWORD")
@@ -108,7 +111,7 @@ def ensure_users(guest_login_enabled):
         Principal(
             username="admin",
             hash=custom_app_context.hash(default_password),
-            roles=[Role.objects.get(name="bg-admin")],
+            roles=[LegacyRole.objects.get(name="bg-admin")],
             metadata={"auto_change": True, "changed": False},
         ).save()
 
@@ -132,7 +135,8 @@ def ensure_users(guest_login_enabled):
         if guest_login_enabled:
             logger.info("Creating anonymous user.")
             Principal(
-                username="anonymous", roles=[Role.objects.get(name="bg-anonymous")]
+                username="anonymous",
+                roles=[LegacyRole.objects.get(name="bg-anonymous")],
             ).save()
 
 
@@ -211,11 +215,11 @@ def ensure_v2_to_v3_model_migration():
     it would be better if we could seamlessly move the existing commands into existing
     Systems.
     """
-    from beer_garden.db.mongo.models import Role, System
+    from beer_garden.db.mongo.models import LegacyRole, System
 
     try:
-        if Role.objects.count() > 0:
-            _ = Role.objects()[0]
+        if LegacyRole.objects.count() > 0:
+            _ = LegacyRole.objects()[0]
         if System.objects.count() > 0:
             _ = System.objects()[0]
     except (FieldDoesNotExist, InvalidDocumentError):
@@ -259,8 +263,9 @@ def check_indexes(document_class):
     Raises:
         mongoengine.OperationFailure: Unhandled mongo error
     """
-    from pymongo.errors import OperationFailure
     from mongoengine.connection import get_db
+    from pymongo.errors import OperationFailure
+
     from .models import Request
 
     try:
@@ -362,10 +367,10 @@ def _update_request_has_parent_model():
 
 def _create_role(role):
     """Create a role if it doesn't already exist"""
-    from .models import Role
+    from .models import LegacyRole
 
     try:
-        Role.objects.get(name=role.name)
+        LegacyRole.objects.get(name=role.name)
     except DoesNotExist:
         logger.warning("Role %s missing, about to create" % role.name)
         role.save()

@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
+from brewtils.errors import ModelValidationError
 from mongoengine.errors import DoesNotExist
 
 import beer_garden.api.http
-from beer_garden.db.mongo.models import Role
-from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.api.http.authorization import (
+    Permissions,
     anonymous_principal,
     authenticated,
-    Permissions,
 )
 from beer_garden.api.http.base_handler import BaseHandler
-from brewtils.errors import ModelValidationError
+from beer_garden.db.mongo.models import LegacyRole
+from beer_garden.db.mongo.parser import MongoParser
 
 
-class RoleAPI(BaseHandler):
+class LegacyRoleAPI(BaseHandler):
     @authenticated(permissions=[Permissions.LOCAL_ADMIN])
     def get(self, role_id):
         """
@@ -39,7 +39,7 @@ class RoleAPI(BaseHandler):
         """
         self.write(
             MongoParser.serialize_role(
-                Role.objects.get(id=str(role_id)), to_string=False
+                LegacyRole.objects.get(id=str(role_id)), to_string=False
             )
         )
 
@@ -64,7 +64,7 @@ class RoleAPI(BaseHandler):
         tags:
           - Roles
         """
-        role = Role.objects.get(id=str(role_id))
+        role = LegacyRole.objects.get(id=str(role_id))
         if role.name in ("bg-admin", "bg-anonymous", "bg-plugin"):
             raise ModelValidationError("Unable to remove '%s' role" % role.name)
 
@@ -111,7 +111,7 @@ class RoleAPI(BaseHandler):
         tags:
           - Roles
         """
-        role = Role.objects.get(id=str(role_id))
+        role = LegacyRole.objects.get(id=str(role_id))
         operations = MongoParser.parse_patch(
             self.request.decoded_body, many=True, from_string=True
         )
@@ -139,17 +139,17 @@ class RoleAPI(BaseHandler):
             elif op.path == "/roles":
                 try:
                     if op.operation == "add":
-                        new_nested = Role.objects.get(name=op.value)
+                        new_nested = LegacyRole.objects.get(name=op.value)
                         ensure_no_cycles(role, new_nested)
                         role.roles.append(new_nested)
                     elif op.operation == "remove":
-                        role.roles.remove(Role.objects.get(name=op.value))
+                        role.roles.remove(LegacyRole.objects.get(name=op.value))
                     elif op.operation == "set":
                         # Do this one at a time to be super sure about cycles
                         role.roles = []
 
                         for role_name in op.value:
-                            new_role = Role.objects.get(name=role_name)
+                            new_role = LegacyRole.objects.get(name=role_name)
                             ensure_no_cycles(role, new_role)
                             role.roles.append(new_role)
                     else:
@@ -177,7 +177,7 @@ class RoleAPI(BaseHandler):
         self.write(MongoParser.serialize_role(role, to_string=False))
 
 
-class RolesAPI(BaseHandler):
+class LegacyRolesAPI(BaseHandler):
     @authenticated(permissions=[Permissions.LOCAL_ADMIN])
     def get(self):
         """
@@ -197,7 +197,9 @@ class RolesAPI(BaseHandler):
         """
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(
-            MongoParser.serialize_role(Role.objects.all(), many=True, to_string=True)
+            MongoParser.serialize_role(
+                LegacyRole.objects.all(), many=True, to_string=True
+            )
         )
 
     @authenticated(permissions=[Permissions.LOCAL_ADMIN])
@@ -236,7 +238,7 @@ class RolesAPI(BaseHandler):
         nested_roles = []
         for nested_role in role.roles:
             try:
-                db_role = Role.objects.get(name=nested_role.name)
+                db_role = LegacyRole.objects.get(name=nested_role.name)
 
                 # There shouldn't be any way to construct a cycle with a new
                 # role, but check just to be sure

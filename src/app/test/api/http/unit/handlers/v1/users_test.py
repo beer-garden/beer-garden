@@ -2,17 +2,17 @@
 import json
 
 import pytest
-from tornado.httpclient import HTTPRequest
-
-from beer_garden.db.mongo.models import Principal, Role
 from brewtils.models import PatchOperation
 from brewtils.schema_parser import SchemaParser
+from tornado.httpclient import HTTPRequest
+
+from beer_garden.db.mongo.models import LegacyRole, Principal
 
 
 @pytest.fixture(autouse=True)
 def drop_principals(app):
     Principal.drop_collection()
-    Role.drop_collection()
+    LegacyRole.drop_collection()
 
 
 @pytest.mark.skip("TODO")
@@ -73,7 +73,7 @@ class TestPrincipalAPI(object):
     def test_patch_add_role(self, http_client, base_url, mongo_principal, mongo_role):
         mongo_role.save()
         mongo_principal.save()
-        new_role = Role(
+        new_role = LegacyRole(
             name="new_role", description="Some desc", roles=[], permissions=["bg-all"]
         )
         new_role.save()
@@ -122,7 +122,7 @@ class TestPrincipalAPI(object):
     def test_patch_set_roles(self, http_client, base_url, mongo_principal, mongo_role):
         mongo_role.save()
         mongo_principal.save()
-        new_role = Role(
+        new_role = LegacyRole(
             name="new_role", description="Some desc", roles=[], permissions=["bg-all"]
         )
         new_role.save()

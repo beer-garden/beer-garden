@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 import pytest
-from tornado.httpclient import HTTPRequest
-
-from beer_garden.db.mongo.models import Role
 from brewtils.models import PatchOperation
 from brewtils.schema_parser import SchemaParser
+from tornado.httpclient import HTTPRequest
+
+from beer_garden.db.mongo.models import LegacyRole
 
 
 @pytest.fixture(autouse=True)
 def drop_roles(app):
-    Role.drop_collection()
+    LegacyRole.drop_collection()
 
 
 @pytest.mark.skip("TODO")
-class TestRolesAPI(object):
+class TestLegacyRolesAPI(object):
     @pytest.mark.gen_test
     @pytest.mark.parametrize(
         "operation,value,expected_value,succeed",

@@ -17,13 +17,13 @@ def model_mocks(monkeypatch):
 
     request_mock.__name__ = "Request"
     system_mock.__name__ = "System"
-    role_mock.__name__ = "Role"
+    role_mock.__name__ = "LegacyRole"
     job_mock.__name__ = "Job"
     principal_mock.__name__ = "Principal"
 
     monkeypatch.setattr(beer_garden.db.mongo.models, "Request", request_mock)
     monkeypatch.setattr(beer_garden.db.mongo.models, "System", system_mock)
-    monkeypatch.setattr(beer_garden.db.mongo.models, "Role", role_mock)
+    monkeypatch.setattr(beer_garden.db.mongo.models, "LegacyRole", role_mock)
     monkeypatch.setattr(beer_garden.db.mongo.models, "Job", job_mock)
     monkeypatch.setattr(beer_garden.db.mongo.models, "Principal", principal_mock)
 
@@ -36,7 +36,7 @@ def model_mocks(monkeypatch):
     }
 
 
-class TestEnsureRoles(object):
+class TestEnsureLegacyRoles(object):
     def test_ensure_roles(self, model_mocks):
         beer_garden.db.mongo.util.ensure_roles()
         assert 3 == model_mocks["role"].objects.get.call_count
@@ -280,7 +280,7 @@ class TestCheckIndexes(object):
         assert update_has_parent_mock.called is True
 
 
-class TestCreateRole(object):
+class TestCreateLegacyRole(object):
     def test_exists(self, model_mocks):
         role = Mock()
         model_mocks["role"].objects.get.return_value = role
