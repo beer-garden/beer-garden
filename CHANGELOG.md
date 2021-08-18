@@ -1,5 +1,24 @@
 # Beer Garden Changelog
 
+## 3.5.0
+8/18/21
+
+#### Added Features
+- Command-based choices request will now time out after 30 seconds
+- Theme selection now persisted in browser storage
+- Added config option for changing commands of non-dev systems
+
+#### Bug Fixes
+- Command-based choices now wait for an instance to be selected
+- Read-log requests now fully formed
+- Fixed issue where gardens with certain characters in their name could not be accessed
+- Republishing a modified event when child request changes
+- Fixed operations being routed to incorrect gardens in certain cases
+- Command-based choices now show an indication when request fails
+
+#### Other Changes
+- Setting timezone to UTC in docker image
+
 ## 3.4.1
 8/2/21
 
