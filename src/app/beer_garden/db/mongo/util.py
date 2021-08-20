@@ -220,10 +220,10 @@ def ensure_v2_to_v3_model_migration():
             _ = System.objects()[0]
     except (FieldDoesNotExist, InvalidDocumentError):
         logger.warning(
-            "Encountered an error loading Roles or Systems. This is most likely because "
-            "the database is using the old (v2) style of storing in the database. "
-            "To fix this the roles, principles, systems, instances, and commands "
-            "collections will be dropped."
+            "Encountered an error loading Roles or Systems. This is most likely because"
+            " the database is using the old (v2) style of storing in the database. To"
+            " fix this the roles, principles, systems, instances, and commands"
+            " collections will be dropped."
         )
 
         db = get_db()
@@ -308,8 +308,7 @@ def check_indexes(document_class):
             logger.warning("Dropped indexes for %s collection", document_class.__name__)
         except OperationFailure:
             logger.error(
-                "Dropping %s indexes failed, please check the database "
-                "configuration",
+                "Dropping %s indexes failed, please check the database configuration",
                 document_class.__name__,
             )
             raise
@@ -333,7 +332,7 @@ def check_indexes(document_class):
             logger.warning("%s indexes rebuilt successfully", document_class.__name__)
         except OperationFailure:
             logger.error(
-                "%s index rebuild failed, please check the database " "configuration",
+                "%s index rebuild failed, please check the database configuration",
                 document_class.__name__,
             )
             raise

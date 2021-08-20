@@ -1,13 +1,10 @@
 import json
-import time
-import re
-
-from brewtils import get_easy_client, load_config, SystemClient
-from brewtils.errors import ValidationError, SaveError
-from brewtils.models import PatchOperation
 import os
-from urllib3.exceptions import TimeoutError
+import re
+import time
 
+from brewtils import SystemClient, get_easy_client, load_config
+from urllib3.exceptions import TimeoutError
 
 COMPLETED_STATUSES = ["SUCCESS", "ERROR", "CANCELED"]
 CONFIG = None

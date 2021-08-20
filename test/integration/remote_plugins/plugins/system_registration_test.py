@@ -1,28 +1,27 @@
 import pytest
-
 from brewtils.errors import ValidationError
 
 try:
     from helper import delete_plugins
     from helper.assertion import assert_system_running
     from helper.plugin import (
+        TestPluginV1,
+        TestPluginV1BetterDescriptions,
+        TestPluginV2,
         create_plugin,
         start_plugin,
         stop_plugin,
-        TestPluginV1,
-        TestPluginV2,
-        TestPluginV1BetterDescriptions,
     )
-except:
+except ImportError:
     from ...helper import delete_plugins
     from ...helper.assertion import assert_system_running
     from ...helper.plugin import (
+        TestPluginV1,
+        TestPluginV1BetterDescriptions,
+        TestPluginV2,
         create_plugin,
         start_plugin,
         stop_plugin,
-        TestPluginV1,
-        TestPluginV2,
-        TestPluginV1BetterDescriptions,
     )
 
 

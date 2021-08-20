@@ -1,9 +1,9 @@
 import pytest
 
 try:
-    from helper import setup_easy_client, RequestGenerator
-except:
-    from ..helper import setup_easy_client, RequestGenerator
+    from helper import RequestGenerator, setup_easy_client
+except ImportError:
+    from ..helper import RequestGenerator, setup_easy_client
 
 
 @pytest.fixture(scope="class")

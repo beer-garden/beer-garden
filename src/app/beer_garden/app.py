@@ -414,7 +414,7 @@ class HelperThread(object):
 
         if not self.thread.is_alive():
             self.logger.warning(
-                "Uh-oh. Looks like a bad shutdown - the %s " "was already stopped",
+                "Uh-oh. Looks like a bad shutdown - the %s was already stopped",
                 self.display_name,
             )
         else:

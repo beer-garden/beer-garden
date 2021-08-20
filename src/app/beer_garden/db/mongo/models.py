@@ -125,19 +125,19 @@ class Choices(MongoModel, EmbeddedDocument):
         if self.type == "static" and not isinstance(self.value, (list, dict)):
             raise ModelValidationError(
                 f"Can not save choices '{self}': type is 'static' but the value is "
-                f"not a list or dictionary"
+                "not a list or dictionary"
             )
         elif self.type == "url" and not isinstance(self.value, six.string_types):
             raise ModelValidationError(
                 f"Can not save choices '{self}': type is 'url' but the value is "
-                f"not a string"
+                "not a string"
             )
         elif self.type == "command" and not isinstance(
             self.value, (six.string_types, dict)
         ):
             raise ModelValidationError(
                 f"Can not save choices '{self}': type is 'command' but the value is "
-                f"not a string or dict"
+                "not a string or dict"
             )
 
         if self.type == "command" and isinstance(self.value, dict):
@@ -195,14 +195,15 @@ class Parameter(MongoModel, EmbeddedDocument):
         if not self.nullable and self.optional and self.default is None:
             raise ModelValidationError(
                 f"Can not save Parameter {self}: For this Parameter nulls are not "
-                f"allowed, but the parameter is optional with no default defined."
+                "allowed, but the parameter is optional with no default defined."
             )
 
         if len(self.parameters) != len(
             set(parameter.key for parameter in self.parameters)
         ):
             raise ModelValidationError(
-                f"Can not save Parameter {self}: Contains Parameters with duplicate keys"
+                f"Can not save Parameter {self}: Contains Parameters with duplicate"
+                " keys"
             )
 
 
@@ -229,7 +230,8 @@ class Command(MongoModel, EmbeddedDocument):
 
         if self.command_type not in BrewtilsCommand.COMMAND_TYPES:
             raise ModelValidationError(
-                f"Can not save Command {self}: Invalid command type '{self.command_type}'"
+                f"Can not save Command {self}: Invalid command type"
+                f" '{self.command_type}'"
             )
 
         if self.output_type not in BrewtilsCommand.OUTPUT_TYPES:
@@ -446,7 +448,8 @@ class Request(MongoModel, Document):
             and self.command_type not in BrewtilsRequest.COMMAND_TYPES
         ):
             raise ModelValidationError(
-                f"Can not save Request {self}: Invalid command type '{self.command_type}'"
+                f"Can not save Request {self}: Invalid command type"
+                f" '{self.command_type}'"
             )
 
         if (
@@ -474,7 +477,7 @@ class Request(MongoModel, Document):
         if self.status != old_status:
             if old_status in BrewtilsRequest.COMPLETED_STATUSES:
                 raise RequestStatusTransitionError(
-                    f"Status for a request cannot be updated once it has been "
+                    "Status for a request cannot be updated once it has been "
                     f"completed. Current: {old_status}, Requested: {self.status}"
                 )
 
@@ -483,7 +486,7 @@ class Request(MongoModel, Document):
                 and self.status not in BrewtilsRequest.COMPLETED_STATUSES
             ):
                 raise RequestStatusTransitionError(
-                    f"Request status can only transition from IN_PROGRESS to a "
+                    "Request status can only transition from IN_PROGRESS to a "
                     f"completed status. Requested: {self.status}, completed statuses "
                     f"are {BrewtilsRequest.COMPLETED_STATUSES}."
                 )

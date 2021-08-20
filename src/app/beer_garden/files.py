@@ -203,8 +203,10 @@ def create_chunk(
     if len(data) > MAX_CHUNK_SIZE:
         return FileStatus(
             operation_complete=False,
-            message=f"Chunk data length exceeds the maximum "
-            f"allowable length of {MAX_CHUNK_SIZE}.",
+            message=(
+                "Chunk data length exceeds the maximum "
+                f"allowable length of {MAX_CHUNK_SIZE}."
+            ),
             file_id=file_id,
             offset=offset,
             data=data,
@@ -378,8 +380,7 @@ def create_file(
             file = db.create(file)
         except NotUniqueException:
             raise NotUniqueException(
-                f"Cannot create a file with id {file_id}; "
-                "file with id already exists."
+                f"Cannot create a file with id {file_id}; file with id already exists."
             )
         return _safe_build_object(FileStatus, file, operation_complete=True)
 
@@ -477,14 +478,18 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None) -> Fil
         return _safe_build_object(
             FileStatus,
             operation_complete=False,
-            message=f"Owner type {owner_type} has lower priority than {file.owner_type}",
+            message=(
+                f"Owner type {owner_type} has lower priority than {file.owner_type}"
+            ),
         )
 
     return _safe_build_object(
         FileStatus,
         operation_complete=False,
-        message=f"Operation FILE_OWN requires an owner type "
-        f"and id. Got {owner_type} and {owner_id}",
+        message=(
+            "Operation FILE_OWN requires an owner type "
+            f"and id. Got {owner_type} and {owner_id}"
+        ),
     )
 
 
