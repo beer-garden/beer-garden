@@ -230,9 +230,6 @@ class JobListAPI(BaseHandler):
 
 
 class JobImportAPI(BaseHandler):
-    def data_received(self, chunk: bytes) -> Optional[Awaitable[None]]:
-        return super().data_received(chunk)
-
     @authenticated(permissions=[Permissions.CREATE])
     async def post(self):
         """
@@ -299,9 +296,6 @@ class JobImportAPI(BaseHandler):
 
 
 class JobExportAPI(BaseHandler):
-    def data_received(self, chunk: bytes) -> Optional[Awaitable[None]]:
-        return super().data_received(chunk)
-
     @authenticated(permissions=[Permissions.CREATE])
     async def post(self):
         """
@@ -330,13 +324,6 @@ class JobExportAPI(BaseHandler):
           - Jobs
         """
         filter_params_dict = {}
-
-        # we're focused on the "ids" list, but if arguments are passed, allow
-        # them through; that is, provide maximum flexibility to the user
-        for key in self.request.arguments:
-            if key in JobSchema.get_attribute_names():
-                filter_params_dict[key] = self.get_query_argument(key)
-
         decoded_body: str = self.request.body.decode("utf-8")
 
         if len(decoded_body):
