@@ -1,14 +1,17 @@
+import time
+
 import pytest
-from brewtils import get_easy_client
-from brewtils.models import CronTrigger, RequestTemplate, Job
-import time, datetime
+from brewtils.models import CronTrigger, Job, RequestTemplate
 
 try:
     from helper import wait_for_response
     from helper.assertion import assert_successful_request, assert_validation_error
-except:
-    from ...helper import wait_for_response
-    from ...helper.assertion import assert_successful_request, assert_validation_error
+except ImportError:
+    from ...helper import wait_for_response  # noqa
+    from ...helper.assertion import (  # noqa
+        assert_successful_request,
+        assert_validation_error,
+    )
 
 
 @pytest.fixture()
@@ -77,7 +80,7 @@ class TestCron(object):
         if time.time() < start_date:
             assert found_jobs[0].success_count == 0
         else:
-            assert False
+            raise AssertionError
 
         # Verify that is can run
         time.sleep(delay_start + job_wait)

@@ -68,8 +68,10 @@ class CommandAPIOld(BaseHandler):
           - Deprecated
         """
         raise EndpointRemovedException(
-            message="This endpoint has been removed as Commands no longer have IDs. "
-            "Please use /systems/<system_id>/commands/<command_name> instead."
+            message=(
+                "This endpoint has been removed as Commands no longer have IDs. "
+                "Please use /systems/<system_id>/commands/<command_name> instead."
+            )
         )
 
 

@@ -114,7 +114,7 @@ def migrate(args: Sequence[str]):
 
     if not config.configuration.file:
         raise SystemExit(
-            "Please specify a config file to update" " in the CLI arguments (-c)"
+            "Please specify a config file to update in the CLI arguments (-c)"
         )
 
     current_root, current_extension = os.path.splitext(config.configuration.file)
@@ -443,8 +443,10 @@ _MQ_SPEC = {
         "host": {
             "type": "str",
             "default": "localhost",
-            "description": "Will be used by the Beergarden application as the location "
-            "of the message broker.",
+            "description": (
+                "Will be used by the Beergarden application as the location "
+                "of the message broker."
+            ),
         },
         "admin_queue_expiry": {
             "type": "int",
@@ -561,10 +563,12 @@ _UI_SPEC = {
             "type": "bool",
             "default": False,
             "description": "Execute plugin-provided javascript",
-            "long_description": "This is dangerous!! Setting this to true will instruct "
-            "the browser to execute javascript provided by plugins. This means you "
-            "MUST have control over all plugins running in the environment, otherwise "
-            "this is a problem waiting to happen.",
+            "long_description": (
+                "This is dangerous!! Setting this to true will instruct the browser to"
+                " execute javascript provided by plugins. This means you MUST have"
+                " control over all plugins running in the environment, otherwise this"
+                " is a problem waiting to happen."
+            ),
             "previous_names": [
                 "application_allow_unsafe_templates",
                 "allow_unsanitized_templates",
@@ -603,8 +607,10 @@ _AUTH_SPEC = {
         "guest_login_enabled": {
             "type": "bool",
             "default": True,
-            "description": "Only applicable if auth is enabled. If set to "
-            "true, guests can login without username/passwords.",
+            "description": (
+                "Only applicable if auth is enabled. If set to "
+                "true, guests can login without username/passwords."
+            ),
         },
         "token": {
             "type": "dict",
@@ -680,24 +686,30 @@ _DB_SPEC = {
                 "action": {
                     "type": "int",
                     "default": -1,
-                    "description": "Number of minutes to wait before deleting "
-                    "ACTION requests (negative number for never)",
+                    "description": (
+                        "Number of minutes to wait before deleting "
+                        "ACTION requests (negative number for never)"
+                    ),
                     "previous_names": ["action_request_ttl"],
                     "alt_env_names": ["ACTION_REQUEST_TTL"],
                 },
                 "info": {
                     "type": "int",
                     "default": 15,
-                    "description": "Number of minutes to wait before deleting "
-                    "INFO requests (negative number for never)",
+                    "description": (
+                        "Number of minutes to wait before deleting "
+                        "INFO requests (negative number for never)"
+                    ),
                     "previous_names": ["info_request_ttl"],
                     "alt_env_names": ["INFO_REQUEST_TTL"],
                 },
                 "file": {
                     "type": "int",
                     "default": 15,
-                    "description": "Number of minutes to wait before deleting "
-                    "FILE documents (negative number for never)",
+                    "description": (
+                        "Number of minutes to wait before deleting "
+                        "FILE documents (negative number for never)"
+                    ),
                     "alt_env_names": ["FILE_REQUEST_TTL"],
                 },
             },
@@ -752,18 +764,14 @@ _HTTP_SPEC = {
                 },
                 "ca_cert": {
                     "type": "str",
-                    "description": (
-                        "Path to CA certificate file to use for SSLContext"
-                    ),
+                    "description": "Path to CA certificate file to use for SSLContext",
                     "required": False,
                     "previous_names": ["ca_cert"],
                     "alt_env_names": ["CA_CERT"],
                 },
                 "ca_path": {
                     "type": "str",
-                    "description": (
-                        "Path to CA certificate path to use for SSLContext"
-                    ),
+                    "description": "Path to CA certificate path to use for SSLContext",
                     "required": False,
                     "previous_names": ["ca_path"],
                     "alt_env_names": ["CA_PATH"],
@@ -831,8 +839,10 @@ _STOMP_SPEC = {
         },
         "headers": {
             "type": "list",
-            "description": "Headers to be sent with messages. Follows standard YAML "
-            "formatting for lists with two variables 'key' and 'value'",
+            "description": (
+                "Headers to be sent with messages. Follows standard YAML "
+                "formatting for lists with two variables 'key' and 'value'"
+            ),
             "required": False,
             "items": {
                 "key": {"type": "str"},
@@ -850,23 +860,29 @@ _STOMP_SPEC = {
                 },
                 "client_key": {
                     "type": "str",
-                    "description": "Path to client private key to use when "
-                    "communicating with the message broker",
+                    "description": (
+                        "Path to client private key to use when "
+                        "communicating with the message broker"
+                    ),
                     "required": False,
                     "previous_names": ["private_key"],
                 },
                 "client_cert": {
                     "type": "str",
-                    "description": "Path to client public certificate to use when "
-                    "communicating with the message broker",
+                    "description": (
+                        "Path to client public certificate to use when "
+                        "communicating with the message broker"
+                    ),
                     "required": False,
                     "previous_names": ["cert_file"],
                 },
                 "ca_cert": {
                     "type": "str",
-                    "description": "Path to certificate file containing the "
-                    "certificate of the authority that issued the "
-                    "message broker certificate",
+                    "description": (
+                        "Path to certificate file containing the "
+                        "certificate of the authority that issued the "
+                        "message broker certificate"
+                    ),
                     "required": False,
                 },
             },
@@ -912,12 +928,13 @@ _PARENT_SPEC = {
                 "client_timeout": {
                     "type": "float",
                     "description": "Max time RestClient will wait for server response",
-                    "long_description": "This setting controls how long the HTTP(s) "
-                    "client will wait when opening a connection to Beergarden before "
-                    "aborting. This prevents some strange Beergarden server state from "
-                    "causing plugins to hang indefinitely. "
-                    "Set to -1 to disable (this is a bad idea in production code, see "
-                    "the Requests documentation).",
+                    "long_description": (
+                        "This setting controls how long the HTTP(s) client will wait"
+                        " when opening a connection to Beergarden before aborting. This"
+                        " prevents some strange Beergarden server state from causing"
+                        " plugins to hang indefinitely. Set to -1 to disable (this is a"
+                        " bad idea in production code, see the Requests documentation)."
+                    ),
                     "default": -1,
                 },
                 "username": {
@@ -1027,9 +1044,11 @@ _PARENT_SPEC = {
                 },
                 "headers": {
                     "type": "list",
-                    "description": "Headers to be sent with messages. "
-                    "Follows standard YAML formatting for lists with "
-                    "two variables 'key' and 'value'",
+                    "description": (
+                        "Headers to be sent with messages. "
+                        "Follows standard YAML formatting for lists with "
+                        "two variables 'key' and 'value'"
+                    ),
                     "required": False,
                     "items": {
                         "key": {"type": "str"},
@@ -1047,23 +1066,29 @@ _PARENT_SPEC = {
                         },
                         "client_key": {
                             "type": "str",
-                            "description": "Path to client private key to use when "
-                            "communicating with the message broker",
+                            "description": (
+                                "Path to client private key to use when "
+                                "communicating with the message broker"
+                            ),
                             "required": False,
                             "previous_names": ["private_key"],
                         },
                         "client_cert": {
                             "type": "str",
-                            "description": "Path to client public certificate to use "
-                            "when communicating with the message broker",
+                            "description": (
+                                "Path to client public certificate to use "
+                                "when communicating with the message broker"
+                            ),
                             "required": False,
                             "previous_names": ["cert_file"],
                         },
                         "ca_cert": {
                             "type": "str",
-                            "description": "Path to certificate file containing the "
-                            "certificate of the authority that issued the message "
-                            "broker certificate",
+                            "description": (
+                                "Path to certificate file containing the "
+                                "certificate of the authority that issued the message "
+                                "broker certificate"
+                            ),
                             "required": False,
                         },
                     },
@@ -1142,14 +1167,18 @@ _PLUGIN_SPEC = {
                     "items": {
                         "username": {
                             "type": "str",
-                            "description": "Username that local plugins will use for "
-                            "authentication (needs bg-plugin role)",
+                            "description": (
+                                "Username that local plugins will use for "
+                                "authentication (needs bg-plugin role)"
+                            ),
                             "required": False,
                         },
                         "password": {
                             "type": "str",
-                            "description": "Password that local plugins will use for "
-                            "authentication (needs bg-plugin role)",
+                            "description": (
+                                "Password that local plugins will use for "
+                                "authentication (needs bg-plugin role)"
+                            ),
                             "required": False,
                         },
                     },
@@ -1165,22 +1194,27 @@ _PLUGIN_SPEC = {
                     "type": "list",
                     "items": {"env_var": {"type": "str"}},
                     "default": [],
-                    "description": "Host environment variables that will be propagated "
-                    "to local plugin processes",
+                    "description": (
+                        "Host environment variables that will be propagated "
+                        "to local plugin processes"
+                    ),
                 },
                 "logging": {
                     "type": "dict",
                     "items": {
                         "config_file": {
                             "type": "str",
-                            "description": "Path to a logging configuration file for "
-                            "local plugins",
+                            "description": (
+                                "Path to a logging configuration file for local plugins"
+                            ),
                             "required": False,
                         },
                         "fallback_level": {
                             "type": "str",
-                            "description": "Level that will be used with a default logging "
-                            "configuration if config_file is not specified",
+                            "description": (
+                                "Level that will be used with a default logging "
+                                "configuration if config_file is not specified"
+                            ),
                             "previous_names": ["plugin_logging_level"],
                             "default": "INFO",
                             "choices": [
@@ -1200,8 +1234,9 @@ _PLUGIN_SPEC = {
                         "shutdown": {
                             "type": "int",
                             "default": 10,
-                            "description": "Seconds to wait for a plugin to stop"
-                            "gracefully",
+                            "description": (
+                                "Seconds to wait for a plugin to stopgracefully"
+                            ),
                             "previous_names": ["plugin_shutdown_timeout"],
                             "alt_env_names": ["PLUGIN_SHUTDOWN_TIMEOUT"],
                         },
@@ -1222,10 +1257,12 @@ _PLUGIN_SPEC = {
                 "host": {
                     "type": "str",
                     "description": "Globally resolvable host name of message broker",
-                    "long_description": "This will be supplied to all plugins as the "
-                    "location of the message broker. In order to support both local "
-                    "and remote plugins it's important that this value be universally "
-                    "resolvable.",
+                    "long_description": (
+                        "This will be supplied to all plugins as the location of the"
+                        " message broker. In order to support both local and remote"
+                        " plugins it's important that this value be universally"
+                        " resolvable."
+                    ),
                     "default": "localhost",
                     "alt_env_names": ["BG_PUBLISH_HOSTNAME", "PUBLISH_HOSTNAME"],
                 },
@@ -1239,13 +1276,17 @@ _PLUGIN_SPEC = {
                     "items": {
                         "config_file": {
                             "type": "str",
-                            "description": "Path to a logging configuration file for plugins",
+                            "description": (
+                                "Path to a logging configuration file for plugins"
+                            ),
                             "required": False,
                         },
                         "fallback_level": {
                             "type": "str",
-                            "description": "Level that will be used with a default logging "
-                            "configuration if config_file is not specified",
+                            "description": (
+                                "Level that will be used with a default logging "
+                                "configuration if config_file is not specified"
+                            ),
                             "previous_names": ["plugin_logging_level"],
                             "default": "INFO",
                             "choices": [
@@ -1265,12 +1306,14 @@ _PLUGIN_SPEC = {
             "type": "bool",
             "default": False,
             "description": "Allow commands of non-dev systems to be updated",
-            "long_description": "When False, this prevents changes to the command "
-            "definitions of a registered version of a system. This means that the "
-            "system will fail to start if the commands do not match what is on "
-            "record for that version of the system. When True, the system will be "
-            "allowed to start and the commands on record will be updated accordingly. "
-            "NOTE: System versions containing 'dev' are exempt from this check.",
+            "long_description": (
+                "When False, this prevents changes to the command definitions of a"
+                " registered version of a system. This means that the system will fail"
+                " to start if the commands do not match what is on record for that"
+                " version of the system. When True, the system will be allowed to start"
+                " and the commands on record will be updated accordingly. NOTE: System"
+                " versions containing 'dev' are exempt from this check."
+            ),
         },
         "status_heartbeat": {
             "type": "int",
@@ -1281,8 +1324,9 @@ _PLUGIN_SPEC = {
         "status_timeout": {
             "type": "int",
             "default": 30,
-            "description": "Amount of time to wait before marking a plugin as"
-            "unresponsive",
+            "description": (
+                "Amount of time to wait before marking a plugin asunresponsive"
+            ),
             "previous_names": ["plugin_status_timeout "],
         },
     },
@@ -1303,8 +1347,7 @@ _SCHEDULER_SPEC = {
                     "type": "bool",
                     "default": True,
                     "description": (
-                        "Should jobs run only once if multiple have missed their "
-                        "window"
+                        "Should jobs run only once if multiple have missed their window"
                     ),
                 },
                 "max_instances": {
@@ -1331,8 +1374,9 @@ _REQUEST_VALIDATION_SPEC = {
                         "timeout": {
                             "type": "int",
                             "default": 10,
-                            "description": "Time to wait for a command-based choices "
-                            "validation",
+                            "description": (
+                                "Time to wait for a command-based choices validation"
+                            ),
                             "required": False,
                         }
                     },
@@ -1348,8 +1392,9 @@ _REQUEST_VALIDATION_SPEC = {
                         "ca_verify": {
                             "type": "bool",
                             "default": True,
-                            "description": "Verify external certificates for url-based "
-                            "choices",
+                            "description": (
+                                "Verify external certificates for url-based choices"
+                            ),
                             "required": False,
                         },
                     },

@@ -1,13 +1,14 @@
-import pytest
-from brewtils.models import PatchOperation, Garden
 import time
 
+import pytest
+from brewtils.models import Garden, PatchOperation
+
 try:
-    from helper.assertion import assert_successful_request
     from helper import wait_for_response
-except:
-    from ...helper.assertion import assert_successful_request
+    from helper.assertion import assert_successful_request
+except ImportError:
     from ...helper import wait_for_response
+    from ...helper.assertion import assert_successful_request
 
 
 @pytest.fixture(scope="class")
@@ -102,28 +103,7 @@ class TestGardenSetup(object):
         time.sleep(5)
 
     def test_child_systems_register_successful(self):
-
-        time.sleep(5)
-
         systems = self.child_easy_client.find_systems()
-
-        namespaces = dict()
-
-        for system in systems:
-            if system.namespace not in namespaces.keys():
-                namespaces[system.namespace] = 1
-            else:
-                namespaces[system.namespace] += 1
-
-        print(namespaces)
-        assert (
-            self.child_garden_name in namespaces.keys()
-            and namespaces[self.child_garden_name] > 0
-        )
-
-    def test_child_systems_register_successful(self):
-
-        systems = self.easy_client.find_systems()
 
         namespaces = dict()
 

@@ -168,7 +168,7 @@ def update_system(
             if instance.name in instance_names:
                 raise ModelValidationError(
                     f"Unable to add Instance {instance} to System {system}: Duplicate "
-                    f"instance names"
+                    "instance names"
                 )
 
             updates["push_all__instances"].append(db.from_brewtils(instance))
@@ -286,7 +286,7 @@ def purge_system(
 
                 logger.warning(
                     f"Error while stopping instance {system}[{instance.name}]. "
-                    f"Force flag was specified so system delete will continue. "
+                    "Force flag was specified so system delete will continue. "
                     f"Underlying exception was: {ex}"
                 )
         else:
@@ -297,12 +297,12 @@ def purge_system(
                 except Exception as ex:
                     if not force:
                         raise RequestPublishException(
-                            f"Error attempting to publish stop message for "
+                            "Error attempting to publish stop message for "
                             f"{system}[{instance.name}"
                         ) from ex
 
                     logger.warning(
-                        f"Error while publishing stop message for "
+                        "Error while publishing stop message for "
                         f"{system}[{instance.name}]. Force flag was specified so "
                         f"system delete will continue. Underlying exception was: {ex}"
                     )

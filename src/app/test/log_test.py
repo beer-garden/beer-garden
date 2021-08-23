@@ -149,7 +149,7 @@ class PluginLoggingManagerTest(unittest.TestCase):
                     "formatters": {"logstash": "%(ascitime)s - %(message)s"},
                 },
                 "plugin2": {"level": "DEBUG", "handlers": ["stdout"]},
-                "plugin3": {"level": "INFO", "handlers": {"logstash": {"foo" "bar"}}},
+                "plugin3": {"level": "INFO", "handlers": {"logstash": {"foobar"}}},
             },
         }
 

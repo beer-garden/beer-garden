@@ -1,10 +1,11 @@
-import pytest
 import time
 
+import pytest
+
 try:
-    from helper import wait_for_in_progress, COMPLETED_STATUSES
-except:
-    from ...helper import wait_for_in_progress, COMPLETED_STATUSES
+    from helper import COMPLETED_STATUSES, wait_for_in_progress
+except ImportError:
+    from ...helper import COMPLETED_STATUSES, wait_for_in_progress
 
 
 @pytest.fixture(scope="class")
@@ -23,7 +24,8 @@ class TestSleeper(object):
     def test_only_process_single_request_at_a_time(self):
         """A single-threaded plugin shouldn't process more than one request at a time."""
 
-        # The amount here means that it is impossible for this test to complete in less than 2.1 seconds.
+        # The amount here means that it is impossible for this test to complete in less
+        # than 2.1 seconds.
         amounts = [2, 0.1]
         first_request_dict = self.request_generator.generate_request(
             parameters={"amount": amounts[0]}
@@ -40,8 +42,9 @@ class TestSleeper(object):
         # Generate a second request now that the first one is processing.
         second_request = self.easy_client.create_request(second_request_dict)
 
-        # Now we go through and wait for both requests to be finished. We also check to make sure that
-        # the second request didn't start unless the first one is in some form of a completed state.
+        # Now we go through and wait for both requests to be finished. We also check to
+        # make sure that the second request didn't start unless the first one is in some
+        # form of a completed state.
         completed = False
         time_waited = 0
         total_timeout = sum(amounts) + 1
@@ -50,8 +53,9 @@ class TestSleeper(object):
             second_request = self.easy_client.find_unique_request(id=second_request.id)
 
             if second_request.status != "CREATED":
-                # We fetch the first_request again to make sure we didn't run into some kind of weird timing bug where
-                # request 1 finished between the two fetches.
+                # We fetch the first_request again to make sure we didn't run into some
+                # kind of weird timing bug where request 1 finished between the two
+                # fetches.
                 first_request = self.easy_client.find_unique_request(
                     id=first_request.id
                 )

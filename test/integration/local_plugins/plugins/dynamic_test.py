@@ -3,7 +3,7 @@ import pytest
 try:
     from helper import wait_for_response
     from helper.assertion import assert_successful_request, assert_validation_error
-except:
+except ImportError:
     from ...helper import wait_for_response
     from ...helper.assertion import assert_successful_request, assert_validation_error
 

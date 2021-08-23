@@ -1,10 +1,11 @@
 import json
+
 import pytest
 
 try:
     from ...helper import wait_for_response
     from ...helper.assertion import assert_errored_request
-except:
+except ImportError:
     from helper import wait_for_response
     from helper.assertion import assert_errored_request
 

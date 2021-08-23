@@ -1,14 +1,17 @@
-import pytest
-from brewtils import get_easy_client
-from brewtils.models import IntervalTrigger, RequestTemplate, Job
 import time
+
+import pytest
+from brewtils.models import IntervalTrigger, Job, RequestTemplate
 
 try:
     from helper import wait_for_response
     from helper.assertion import assert_successful_request, assert_validation_error
-except:
-    from ...helper import wait_for_response
-    from ...helper.assertion import assert_successful_request, assert_validation_error
+except ImportError:
+    from ...helper import wait_for_response  # noqa
+    from ...helper.assertion import (  # noqa
+        assert_successful_request,
+        assert_validation_error,
+    )
 
 
 @pytest.fixture()

@@ -1,12 +1,10 @@
-from concurrent.futures import TimeoutError
-
 import pytest
 from brewtils.errors import TimeoutExceededError
 
 try:
-    from helper import setup_system_client, wait_for_response, RequestGenerator
-except:
-    from ...helper import setup_system_client, wait_for_response, RequestGenerator
+    from helper import RequestGenerator, setup_system_client, wait_for_response
+except ImportError:
+    from ...helper import RequestGenerator, setup_system_client, wait_for_response
 
 
 @pytest.mark.usefixtures("easy_client")

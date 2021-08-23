@@ -280,10 +280,10 @@ def forward(operation: Operation):
 
         if not target_garden.connection_type:
             raise RoutingRequestException(
-                f"Attempted to forward operation to garden "
+                "Attempted to forward operation to garden "
                 f"'{operation.target_garden_name}' but the connection type was None. "
-                f"This probably means that the connection to the child garden has not "
-                f"been configured."
+                "This probably means that the connection to the child garden has not "
+                "been configured."
             )
 
         if target_garden.connection_type.casefold() == "http":
@@ -532,7 +532,7 @@ def _determine_target(operation: Operation) -> str:
             )
 
         logger.warning(
-            f"Couldn't determine a target garden but the operation had one, using "
+            "Couldn't determine a target garden but the operation had one, using "
             f"{operation.target_garden_name}"
         )
         return operation.target_garden_name
@@ -664,8 +664,10 @@ def _forward_stomp(operation: Operation, target_garden: Garden) -> None:
         conn.send(body=body, headers=headers)
     except Exception as ex:
         raise ForwardException(
-            message=f"Failed to forward operation to garden "
-            f"'{operation.target_garden_name}' via STOMP.",
+            message=(
+                "Failed to forward operation to garden "
+                f"'{operation.target_garden_name}' via STOMP."
+            ),
             operation=operation,
             event_name=Events.GARDEN_UNREACHABLE.name,
         ) from ex

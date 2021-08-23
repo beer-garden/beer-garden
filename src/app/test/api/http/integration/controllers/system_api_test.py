@@ -149,8 +149,10 @@ class SystemAPITest(unittest.TestCase):
         response = self.app.patch(
             "/api/v1/systems/id",
             content_type="application/json",
-            data='{"operations": [{"operation": "bad_op", "path": "/status", '
-            '"value": "STOPPED"}]}',
+            data=(
+                '{"operations": [{"operation": "bad_op", "path": "/status", '
+                '"value": "STOPPED"}]}'
+            ),
         )
         self.assertEqual(400, response.status_code)
 
@@ -160,8 +162,10 @@ class SystemAPITest(unittest.TestCase):
         response = self.app.patch(
             "/api/v1/systems/id",
             content_type="application/json",
-            data='{"operations": [{"operation": "replace", "path": "bad_path", '
-            '"value": "STOPPED"}]}',
+            data=(
+                '{"operations": [{"operation": "replace", "path": "bad_path", '
+                '"value": "STOPPED"}]}'
+            ),
         )
         self.assertEqual(400, response.status_code)
 
@@ -171,7 +175,9 @@ class SystemAPITest(unittest.TestCase):
         response = self.app.patch(
             "/api/v1/systems/id",
             content_type="application/json",
-            data='{"operations": [{"operation": "replace", "path": "/status", '
-            '"value": "bad_value"}]}',
+            data=(
+                '{"operations": [{"operation": "replace", "path": "/status", '
+                '"value": "bad_value"}]}'
+            ),
         )
         self.assertEqual(400, response.status_code)

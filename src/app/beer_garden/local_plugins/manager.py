@@ -576,9 +576,9 @@ class ConfigLoader(object):
         if not len(config_dict["INSTANCES"]):
             logger.warning(
                 f"Config file {config_file} resulted in an empty instance list, which "
-                f"means no plugins will be started. This is normally caused by "
-                f"INSTANCES=[] or PLUGIN_ARGS={{}} lines in beer.conf. If this is not "
-                f"what you want please remove those lines."
+                "means no plugins will be started. This is normally caused by "
+                "INSTANCES=[] or PLUGIN_ARGS={} lines in beer.conf. If this is not "
+                "what you want please remove those lines."
             )
 
         return config_dict
@@ -694,8 +694,8 @@ class ConfigLoader(object):
             return
 
         raise PluginValidationError(
-            f"{ConfigKeys.PLUGIN_ENTRY.name} '{entry_point}' must be a Python file or a "
-            f"runnable package"
+            f"{ConfigKeys.PLUGIN_ENTRY.name} '{entry_point}' must be a Python file or a"
+            " runnable package"
         )
 
     @staticmethod
@@ -704,8 +704,8 @@ class ConfigLoader(object):
 
         if instances is not None and not isinstance(instances, list):
             raise PluginValidationError(
-                f"Invalid {ConfigKeys.INSTANCES.name} entry '{instances}': if present it "
-                f"must be a list"
+                f"Invalid {ConfigKeys.INSTANCES.name} entry '{instances}': if present"
+                " it must be a list"
             )
 
     @staticmethod
@@ -740,7 +740,8 @@ class ConfigLoader(object):
 
         else:
             raise PluginValidationError(
-                f"Invalid {ConfigKeys.PLUGIN_ARGS.name} '{args}': must be a list or dict"
+                f"Invalid {ConfigKeys.PLUGIN_ARGS.name} '{args}': must be a list or"
+                " dict"
             )
 
     @staticmethod
@@ -773,24 +774,26 @@ class ConfigLoader(object):
 
         if not isinstance(env, dict):
             raise PluginValidationError(
-                f"Invalid {ConfigKeys.ENVIRONMENT.name} entry '{env}': if present it must "
-                f"be a dict"
+                f"Invalid {ConfigKeys.ENVIRONMENT.name} entry '{env}': if present it"
+                " must be a dict"
             )
 
         for key, value in env.items():
             if not isinstance(key, str):
                 raise PluginValidationError(
-                    f"Invalid {ConfigKeys.ENVIRONMENT.name} key '{key}': must be a string"
+                    f"Invalid {ConfigKeys.ENVIRONMENT.name} key '{key}': must be a"
+                    " string"
                 )
 
             if not isinstance(value, str):
                 raise PluginValidationError(
-                    f"Invalid {ConfigKeys.ENVIRONMENT.name} value '{value}': must be a string"
+                    f"Invalid {ConfigKeys.ENVIRONMENT.name} value '{value}': must be a"
+                    " string"
                 )
 
             if key.startswith("BG_"):
                 raise PluginValidationError(
-                    f"Invalid {ConfigKeys.ENVIRONMENT.name} key '{key}': Can't specify an "
-                    f"environment variable with a 'BG_' prefix as it can mess with "
-                    f"internal Beer-garden machinery. Sorry about that :/"
+                    f"Invalid {ConfigKeys.ENVIRONMENT.name} key '{key}': Can't specify"
+                    " an environment variable with a 'BG_' prefix as it can mess with"
+                    " internal Beer-garden machinery. Sorry about that :/"
                 )

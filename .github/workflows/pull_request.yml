@@ -12,8 +12,8 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.7']
-        os: ['ubuntu-latest']
+        python-version: ["3.7"]
+        os: ["ubuntu-latest"]
 
     name: Linting OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
     steps:
@@ -33,7 +33,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.python-version }}-pip-lint
 
-      - name: Run Linting
+      - name: Run Linting (src/app)
+        run: |
+          pip install black flake8
+          make lint
+
+      - name: Run Linting (test/integration)
+        working-directory: ./test/integration
         run: |
           pip install black flake8
           make lint
@@ -42,7 +48,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     env:
-     brewtils: 'develop'
+      brewtils: "develop"
 
     defaults:
       run:
@@ -50,8 +56,8 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.7', '3.8']
-        os: ['ubuntu-latest']
+        python-version: ["3.7", "3.8"]
+        os: ["ubuntu-latest"]
 
     name: PyTests OS ${{ matrix.os }} - Python ${{ matrix.python-version }}
     steps:
@@ -66,9 +72,9 @@ jobs:
       - name: Find Brewtils Branch
         uses: TheBurchLog/body-env-tag-action@1.0
         with:
-          tag: 'brewtils:'
-          env-variable: 'brewtils'
-          default-value: 'develop'
+          tag: "brewtils:"
+          env-variable: "brewtils"
+          default-value: "develop"
           tag-position: -1
 
       # Used the hashtag here instead of slash allow for branches to have slashes in them
@@ -92,7 +98,6 @@ jobs:
         run: make test
 
   CodeCoverage:
-
     runs-on: ${{ matrix.os }}
 
     defaults:
@@ -101,8 +106,8 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.7']
-        os: ['ubuntu-latest']
+        python-version: ["3.7"]
+        os: ["ubuntu-latest"]
 
     env:
       OS: ${{ matrix.os }}
@@ -147,8 +152,8 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [ '3.7' ]
-        os: [ 'ubuntu-latest' ]
+        python-version: ["3.7"]
+        os: ["ubuntu-latest"]
 
     env:
       OS: ${{ matrix.os }}

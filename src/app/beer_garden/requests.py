@@ -434,8 +434,8 @@ class RequestValidator(object):
             request_values = request_value
             if not isinstance(request_values, list):
                 raise ModelValidationError(
-                    "%s was specified as a list, "
-                    "but was not provided as such" % command_parameter.key
+                    "%s was specified as a list, but was not provided as such"
+                    % command_parameter.key
                 )
 
             value_to_return = []
@@ -599,7 +599,7 @@ def process_request(
     else:
         raise TypeError(
             f"new_request type is {type(new_request)}, expected "
-            f"brewtils.models.Request or brewtils.models.RequestTemplate,"
+            "brewtils.models.Request or brewtils.models.RequestTemplate,"
         )
 
     # Validation is only required for non Admin commands because Admin commands
