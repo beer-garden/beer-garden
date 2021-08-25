@@ -1,5 +1,6 @@
 import logging
 from copy import deepcopy
+from threading import Lock
 
 from box import Box
 from brewtils.models import Event, Events
@@ -48,13 +49,22 @@ class StompManager(BaseProcessor):
 
     def __init__(self, ep_conn):
         super().__init__(
-            action=lambda item: self.ep_conn.send(item),
+            action=self.pipe_send,
             name="StompManager",
             logger_name=".".join([self.__module__, self.__class__.__name__]),
         )
 
         self.conn_dict = {}
         self.ep_conn = ep_conn
+        self.ep_lock = Lock()
+
+    def pipe_send(self, event):
+        """Send an event over the pipe to the main process"""
+        try:
+            with self.ep_lock:
+                self.ep_conn.send(event)
+        except Exception as e:
+            logger.error(f"Error sending event {event} to main process: {e}")
 
     def add_connection(self, stomp_config=None, name=None, is_main=False):
         if stomp_config.get("subscribe_destination"):
@@ -93,7 +103,9 @@ class StompManager(BaseProcessor):
     def run(self):
         while not self.stopped():
             if self.ep_conn.poll(0.1):
-                self.handle_event(self.ep_conn.recv())
+                with self.ep_lock:
+                    event = self.ep_conn.recv()
+                self.handle_event(event)
 
     def shutdown(self):
         self.logger.debug("Disconnecting connections")
