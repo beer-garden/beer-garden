@@ -4,7 +4,7 @@ import pytest
 
 try:
     from helper import COMPLETED_STATUSES, wait_for_in_progress
-except ImportError:
+except (ImportError, ValueError):
     from ...helper import COMPLETED_STATUSES, wait_for_in_progress
 
 

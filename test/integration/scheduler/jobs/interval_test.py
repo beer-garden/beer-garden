@@ -6,7 +6,7 @@ from brewtils.models import IntervalTrigger, Job, RequestTemplate
 try:
     from helper import wait_for_response
     from helper.assertion import assert_successful_request, assert_validation_error
-except ImportError:
+except (ImportError, ValueError):
     from ...helper import wait_for_response  # noqa
     from ...helper.assertion import (  # noqa
         assert_successful_request,

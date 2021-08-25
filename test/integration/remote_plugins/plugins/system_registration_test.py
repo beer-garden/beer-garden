@@ -12,7 +12,7 @@ try:
         start_plugin,
         stop_plugin,
     )
-except ImportError:
+except (ImportError, ValueError):
     from ...helper import delete_plugins
     from ...helper.assertion import assert_system_running
     from ...helper.plugin import (
@@ -104,7 +104,6 @@ class TestSystemRegistration(object):
         assert_system_running(self.easy_client, "test", "1.0.0")
         assert_system_running(self.easy_client, "test", "2.0.0")
 
-    @pytest.mark.xfail(reason="Depends on beer-garden/bartender#7")
     def test_system_register_same_instance_name(self):
         plugin = create_plugin("test", "1.0.0", TestPluginV1)
         start_plugin(plugin, self.easy_client)
