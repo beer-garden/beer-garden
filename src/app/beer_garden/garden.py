@@ -15,6 +15,7 @@ from typing import List
 
 from brewtils.errors import PluginError
 from brewtils.models import Event, Events, Garden, Operation, System
+from mongoengine import DoesNotExist
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -183,9 +184,9 @@ def garden_add_system(system: System, garden_name: str) -> Garden:
         The updated Garden
 
     """
-    garden = get_garden(garden_name)
-
-    if garden is None:
+    try:
+        garden = get_garden(garden_name)
+    except DoesNotExist:
         raise PluginError(
             f"Garden '{garden_name}' does not exist, unable to map '{str(system)}"
         )
@@ -272,7 +273,10 @@ def handle_event(event):
         ):
             # Only do stuff for direct children
             if event.payload.name == event.garden:
-                existing_garden = get_garden(event.payload.name)
+                try:
+                    existing_garden = get_garden(event.payload.name)
+                except DoesNotExist:
+                    existing_garden = None
 
                 for system in event.payload.systems:
                     system.local = False

@@ -3,7 +3,7 @@ from brewtils.errors import TimeoutExceededError
 
 try:
     from helper import RequestGenerator, setup_system_client, wait_for_response
-except ImportError:
+except (ImportError, ValueError):
     from ...helper import RequestGenerator, setup_system_client, wait_for_response
 
 

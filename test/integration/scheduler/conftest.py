@@ -2,7 +2,7 @@ import pytest
 
 try:
     from helper import RequestGenerator, setup_easy_client
-except ImportError:
+except (ImportError, ValueError):
     from ..helper import RequestGenerator, setup_easy_client  # noqa
 
 

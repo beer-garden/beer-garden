@@ -4,7 +4,7 @@ from brewtils.models import PatchOperation
 try:
     from helper import wait_for_response
     from helper.assertion import assert_successful_request
-except ImportError:
+except (ImportError, ValueError):
     from ...helper import wait_for_response
     from ...helper.assertion import assert_successful_request
 
@@ -76,7 +76,7 @@ class TestGardenSetup(object):
 
     def test_child_systems_register_successful(self):
 
-        systems = self.child_easy_client.find_systems()
+        systems = self.easy_client.find_systems()
 
         namespaces = dict()
 
