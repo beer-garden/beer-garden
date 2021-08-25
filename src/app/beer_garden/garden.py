@@ -14,11 +14,11 @@ from datetime import datetime
 from typing import List
 
 from brewtils.errors import PluginError
-from brewtils.models import Events, Garden, Operation, System, Event
+from brewtils.models import Event, Events, Garden, Operation, System
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-from beer_garden.events import publish_event, publish
+from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems, remove_system
 
@@ -38,7 +38,7 @@ def get_garden(garden_name: str) -> Garden:
     if garden_name == config.get("garden.name"):
         return local_garden()
 
-    return db.query_unique(Garden, name=garden_name)
+    return db.query_unique(Garden, name=garden_name, raise_missing=True)
 
 
 def get_gardens(include_local: bool = True) -> List[Garden]:
@@ -147,7 +147,7 @@ def remove_garden(garden_name: str) -> None:
         None
 
     """
-    garden = db.query_unique(Garden, name=garden_name)
+    garden = db.query_unique(Garden, name=garden_name, raise_missing=True)
 
     for system in garden.systems:
         remove_system(system.id)
