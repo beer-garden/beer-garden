@@ -11,6 +11,9 @@ except (ImportError, ValueError):
     from ...helper.assertion import assert_successful_request
 
 
+class IntegrationTestSetupFailure(Exception):
+    pass
+
 @pytest.fixture(scope="class")
 def system_spec():
     return {
@@ -26,28 +29,87 @@ def system_spec():
     "easy_client", "parser", "child_easy_client", "request_generator"
 )
 class TestGardenSetup(object):
+    parent_garden_name = "default"
     child_garden_name = "childdocker"
 
-    def test_update_garden_connection_info(self):
-
-        child_garden = Garden(name=self.child_garden_name)
-
-        payload = self.parser.serialize_garden(child_garden)
-
-        response = self.easy_client.client.session.post(
-            self.easy_client.client.base_url + "api/v1/gardens",
-            data=payload,
-            headers=self.easy_client.client.JSON_HEADERS,
+    def _get_gardens(self) -> List[Garden]:
+        """Return a list of the gardens present on beer garden."""
+        gardens = self.parser.parse_garden(
+            self.easy_client.client.session.get(
+                self.easy_client.client.base_url + "api/v1/gardens/"
+            ).json(),
+            many=True,
         )
 
-        assert response.ok
+        if len(gardens) > 0:
+            return gardens
 
-        created_child = response.json()
+        raise IntegrationTestSetupFailure("No Gardens found")
 
-        print(created_child)
+    def _get_child_garden(self) -> Garden:
+        """Return the garden whose name indicates its a child garden."""
+        child = list(
+            filter(lambda x: x.name == self.child_garden_name, self._get_gardens())
+        )
 
-        created_child["connection_type"] = "STOMP"
-        created_child["connection_params"] = {
+        if len(child) == 0:
+            raise IntegrationTestSetupFailure("No child Garden found")
+        elif len(child) > 1:
+            # this normally shouldn't happen in this test environment
+            raise IntegrationTestSetupFailure("Multiple child Gardens found")
+
+        return child.pop()
+
+    def _prepare_beer_garden(self) -> None:
+        """Ensure the beer garden environment is correct for the tests."""
+        parent, child, other = [], [], []
+        gardens = self._get_gardens()
+
+        # partition the gardens on the system
+        for garden in gardens:
+            if garden.name == self.parent_garden_name:
+                parent.append(garden)
+            elif garden.name == self.child_garden_name:
+                child.append(garden)
+            else:
+                other.append(garden)
+
+        if not len(parent) > 0:
+            raise IntegrationTestSetupFailure("Empty parent list")
+        _ = parent.pop(0)
+
+        if len(child) == 0:
+            # if there is no child garden, create one
+            if not self.easy_client.client.session.post(
+                self.easy_client.client.base_url + "api/v1/gardens",
+                data=self.parser.serialize_garden(Garden(name=self.child_garden_name)),
+                headers=self.easy_client.client.JSON_HEADERS,
+            ).ok:
+                raise IntegrationTestSetupFailure(
+                    "No child garden present and unable to create one"
+                )
+
+        else:
+            _ = child.pop(0)
+
+        # so we can be 100% sure that there are exactly 2 gardens (parent and child),
+        # delete any other gardens if they exist
+        for garden in parent + child + other:
+            self.easy_client.client.session.delete(
+                self.easy_client.client.base_url + "api/v1/gardens/" + garden.name
+            )
+
+    def setup_method(self, _) -> None:
+        """Use one of the `pytest`-preferred ways to initialize state before a test."""
+        self._prepare_beer_garden()
+
+    def test_update_garden_connection_info(self):
+        child_garden_json = self.parser.serialize_garden(
+            self._get_child_garden(), to_string=False
+        )
+
+        child_garden_json["connection_type"] = "STOMP"
+        child_garden_json["connection_params"] = {
             "stomp": {
                 "host": "activemq",
                 "port": 61613,
@@ -59,10 +121,8 @@ class TestGardenSetup(object):
             }
         }
 
-        patch = PatchOperation(operation="config", path="", value=created_child)
-
+        patch = PatchOperation(operation="config", path="", value=child_garden_json)
         payload = self.parser.serialize_patch(patch)
-
         updated_response = self.easy_client.client.session.patch(
             self.easy_client.client.base_url
             + "api/v1/gardens/"
@@ -70,6 +130,7 @@ class TestGardenSetup(object):
             data=payload,
             headers=self.easy_client.client.JSON_HEADERS,
         )
+
         assert updated_response.ok
 
     def test_garden_manual_register_successful(self):
