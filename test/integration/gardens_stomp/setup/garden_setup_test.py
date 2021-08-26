@@ -1,4 +1,5 @@
 import time
+from typing import List
 
 import pytest
 from brewtils.models import Garden, PatchOperation
@@ -161,7 +162,7 @@ class TestGardenSetup(object):
         assert response.ok
 
         # Give BG a sync
-        time.sleep(5)
+        time.sleep(5)  # TODO: verify if these sleeps are actually needed
 
     def test_child_systems_register_successful(self):
         systems = self.child_easy_client.find_systems()
