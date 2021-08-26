@@ -1,1 +1,0 @@
-./integration_tests.py /home/jcbanni/src/beergarden/integration_tests /home/jcbanni/src/beergarden/beer-garden/src/brewtils --test gardens_http

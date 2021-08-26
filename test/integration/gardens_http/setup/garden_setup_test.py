@@ -27,7 +27,6 @@ def system_spec():
 )
 class TestGardenSetup(object):
     child_garden_name = "childdocker"
-    child_namespace = "child"
 
     def test_garden_auto_register_successful(self):
 
@@ -91,8 +90,8 @@ class TestGardenSetup(object):
 
         print(namespaces)
         assert (
-            self.child_namespace in namespaces.keys()
-            and namespaces[self.child_namespace] > 0
+            self.child_garden_name in namespaces.keys()
+            and namespaces[self.child_garden_name] > 0
         )
 
     def test_child_request_from_parent(self):
