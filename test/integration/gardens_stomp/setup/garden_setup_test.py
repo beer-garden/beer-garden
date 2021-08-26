@@ -31,7 +31,8 @@ def system_spec():
     "easy_client", "parser", "child_easy_client", "request_generator"
 )
 class TestGardenSetup(object):
-    parent_garden_name = "default"
+    # parent_garden_name = "default"
+    parent_garden_name = "docker"
     child_garden_name = "childdocker"
 
     def _get_gardens(self) -> List[Garden]:
@@ -167,7 +168,9 @@ class TestGardenSetup(object):
 
         gardens = self.parser.parse_garden(response.json(), many=True)
 
-        assert len(gardens) == 2
+        # changed from 2 because we're creating an additional garden in the
+        # helper function
+        assert len(gardens) == 3
 
     def test_run_sync(self):
         # Give BG a second to setup connection
