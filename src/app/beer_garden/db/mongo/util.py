@@ -12,7 +12,29 @@ from mongoengine.errors import (
 )
 from passlib.apps import custom_app_context
 
+from beer_garden import config
+
 logger = logging.getLogger(__name__)
+
+
+def ensure_local_garden():
+    """Creates an entry in the database for the local garden
+
+    The local garden info is configured via the configuration file. Internally
+    however, it is better to treat local and remote gardens the same in terms of how
+    we access them, etc. For that reason, we read the garden info from the configuration
+    and create or update the Garden database entry for it.
+    """
+    from .models import Garden
+
+    try:
+        garden = Garden.objects.get(connection_type="LOCAL")
+    except DoesNotExist:
+        garden = Garden(connection_type="LOCAL", status="RUNNING")
+
+    garden.name = config.get("garden.name")
+
+    garden.save()
 
 
 def ensure_roles():
