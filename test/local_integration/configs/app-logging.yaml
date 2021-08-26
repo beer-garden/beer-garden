@@ -1,0 +1,40 @@
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  simple:
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+handlers:
+  stream:
+    class: "logging.StreamHandler"
+    formatter: "simple"
+    stream: "ext://sys.stdout"
+  file:
+    backupCount: 1
+    class: "logging.handlers.RotatingFileHandler"
+    encoding: utf8
+    formatter: simple
+    maxBytes: 10485760
+    filename: "beer-garden.log"
+
+loggers:
+  apscheduler:
+    level: "WARNING"
+  asyncio:
+    level: "INFO"
+  beer_garden:
+    level: "INFO"
+  pika:
+    level: "ERROR"
+  tornado:
+    level: "WARNING"
+  stomp:
+    level: "WARNING"
+  urllib3:
+    level: "INFO"
+
+root:
+  level: "INFO"
+  handlers:
+    - "stream"
