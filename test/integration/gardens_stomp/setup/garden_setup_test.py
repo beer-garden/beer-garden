@@ -34,6 +34,7 @@ class TestGardenSetup(object):
     # parent_garden_name = "default"
     parent_garden_name = "docker"
     child_garden_name = "childdocker"
+    created_gardens = 0
 
     def _get_gardens(self) -> List[Garden]:
         """Return a list of the gardens present on beer garden."""
@@ -70,10 +71,11 @@ class TestGardenSetup(object):
 
         return child.pop()
 
-    def _prepare_beer_garden(self) -> None:
+    def _prepare_beer_garden(self) -> int:
         """Ensure the beer garden environment is correct for the tests."""
         parent, child, other = [], [], []
         gardens = self._get_gardens()
+        garden_count = 0
 
         # partition the gardens on the system
         for garden in gardens:
@@ -102,7 +104,10 @@ class TestGardenSetup(object):
                     raise IntegrationTestSetupFailure(
                         f"No {label} garden present and unable to create one"
                     )
+                else:
+                    garden_count += 1
             else:
+                garden_count += 1
                 _ = garden_list.pop()
 
         # if len(child) == 0:
@@ -126,9 +131,11 @@ class TestGardenSetup(object):
                 self.easy_client.client.base_url + "api/v1/gardens/" + garden.name
             )
 
+        return garden_count
+
     def setup_method(self, _) -> None:
         """Use one of the `pytest`-preferred ways to initialize state before a test."""
-        self._prepare_beer_garden()
+        self.created_gardens = self._prepare_beer_garden()
 
     def test_update_garden_connection_info(self):
         child_garden_json = self.parser.serialize_garden(
@@ -165,12 +172,11 @@ class TestGardenSetup(object):
         response = self.easy_client.client.session.get(
             self.easy_client.client.base_url + "api/v1/gardens/"
         )
-
         gardens = self.parser.parse_garden(response.json(), many=True)
 
         # changed from 2 because we're creating an additional garden in the
         # helper function
-        assert len(gardens) == 3
+        assert len(gardens) == self.created_gardens + 1
 
     def test_run_sync(self):
         # Give BG a second to setup connection
