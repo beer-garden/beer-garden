@@ -322,12 +322,12 @@ jobs:
       matrix:
         os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
         python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
-        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-images)}}
+#        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-images)}}
         brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
         beer-garden-local: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-local-default)}}
         allow-failure: ${{fromJson(needs.Setup-Release-Info.outputs.allow-failure)}}
 #        For Debugging
-#        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-remote-default)}}
+        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-remote-default)}}
 
         # Feature added get fixed until 3.2.2
         exclude:
