@@ -38,282 +38,282 @@ jobs:
       # If tests fail, should it proceed to print logs
       allow-failure: "[false]"
 
-#  Remote-Plugin-Testing:
-#    needs: Setup-Release-Info
-#    runs-on: ${{ matrix.os }}
-#
-#    strategy:
-#      matrix:
-#        python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-versions)}}
-#        brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-versions)}}
-#        os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
-#        beer-garden-local: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-local-default)}}
-#        allow-failure: ${{fromJson(needs.Setup-Release-Info.outputs.allow-failure)}}
-##        For Debugging
-##        python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
-##        plugin-brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
-#      fail-fast: false
-#
-#    name: Remote Plugins - Brewtils ${{matrix.brewtils}} - Python ${{ matrix.python-version }}
-#    steps:
-#      - uses: actions/checkout@v2
-#
-#      - name: Setup python
-#        uses: actions/setup-python@v2
-#        with:
-#          python-version: 3.4
-#
-#      - name: Build Local Beer Garden Docker
-#        if: ${{matrix.beer-garden-local == 'unstable'}}
-#        run: make docker-build-unstable
-#        working-directory: ./src/app
-#
-#      - name: Setup python
-#        uses: actions/setup-python@v2
-#        with:
-#          python-version: ${{ matrix.python-version }}
-#
-#      - name: Update Docker Compose
-#        run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
-#        working-directory: ./
-#
-#      - name: Run Docker Beer Garden
-#        run: BG=${{matrix.beer-garden-local}} docker-compose up -d beer-garden
-#        working-directory: ./docker/docker-compose
-#
-#      - name: Check If Beer Garden is Operational
-#        uses: nick-invision/retry@v2
-#        with:
-#          timeout_seconds: 30
-#          max_attempts: 20
-#          retry_on: error
-#          retry_wait_seconds: 5
-#          command: curl http://localhost:2337/version
-#
-#      - name: Grab logs from Beer-Garden
-#        run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
-#        working-directory: ./docker/docker-compose
-#
-#      - name: Uninstall Brewtils
-#        run: pip${{ matrix.python-version }} uninstall brewtils
-#
-#      - name: Install Test Version of Brewtils
-#        if: ${{matrix.brewtils != 'develop'}}
-#        run: pip${{ matrix.python-version }} install brewtils==${{matrix.brewtils}}
-#
-#      - name: Install Develop Version of Brewtils
-#        if: ${{matrix.brewtils == 'develop'}}
-#        run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
-#
-#      - name: Install Testing Dependencies
-#        run: pip${{ matrix.python-version }} install -r requirements.txt
-#        working-directory: ./test/integration
-#
-#      - name: Test Plugins
-#        run: python${{ matrix.python-version }} -m pytest remote_plugins/
-#        working-directory: ./test/integration
-#        continue-on-error: ${{ matrix.allow-failure }}
-#
-#      - name: Grab logs from Beer-Garden
-#        run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
-#        working-directory: ./docker/docker-compose
-#
-#      - name: Shutdown Docker Containers
-#        run: docker-compose stop
-#        working-directory: ./docker/docker-compose
-#
-#  Local-Plugin-Testing:
-#    needs: Setup-Release-Info
-#    runs-on: ${{ matrix.os }}
-#
-#    strategy:
-#      matrix:
-#        python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
-#        os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
-#        brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
-#        beer-garden-local: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-local-default)}}
-#        allow-failure: ${{fromJson(needs.Setup-Release-Info.outputs.allow-failure)}}
-#      fail-fast: false
-#
-#    name: Local Plugins - Python ${{ matrix.python-version }}
-#    steps:
-#      - uses: actions/checkout@v2
-#
-#      - name: Setup python
-#        uses: actions/setup-python@v2
-#        with:
-#          python-version: 3.4
-#
-#      - name: Build Local Beer Garden Docker
-#        if: ${{matrix.beer-garden-local == 'unstable'}}
-#        run: make docker-build-unstable
-#        working-directory: ./src/app
-#
-#      - name: Setup python
-#        uses: actions/setup-python@v2
-#        with:
-#          python-version: ${{ matrix.python-version }}
-#
-#      - name: Update Docker Compose
-#        run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
-#        working-directory: ./
-#
-#      - name: Checkout Local Plugins
-#        uses: actions/checkout@v2
-#        with:
-#          repository: beer-garden/example-plugins
-#          path: ./docker/docker-compose/data/localplugins
-#
-#      - name: Verify Local Plugins
-#        run: ls ./docker/docker-compose/data/localplugins
-#
-#      - name: Run Docker Beer Garden
-#        run: BG=${{matrix.beer-garden-local}} docker-compose up -d beer-garden
-#        working-directory: ./docker/docker-compose
-#
-#      - name: Check If Beer Garden is Operational
-#        uses: nick-invision/retry@v2
-#        with:
-#          timeout_seconds: 30
-#          max_attempts: 20
-#          retry_on: error
-#          retry_wait_seconds: 5
-#          command: curl http://localhost:2337/version
-#
-#      - name: Grab logs from Beer-Garden
-#        run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
-#        working-directory: ./docker/docker-compose
-#
-#      - name: Install Test Version of Brewtils
-#        if: ${{matrix.brewtils != 'develop'}}
-#        run: pip${{ matrix.python-version }} install brewtils==${{matrix.brewtils}}
-#
-#      - name: Install Develop Version of Brewtils
-#        if: ${{matrix.brewtils == 'develop'}}
-#        run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
-#
-#      - name: Install Testing Dependencies
-#        run: pip${{ matrix.python-version }} install -r requirements.txt
-#        working-directory: ./test/integration
-#
-#      - name: Test Plugins
-#        run: python${{ matrix.python-version }} -m pytest local_plugins
-#        working-directory: ./test/integration
-#        continue-on-error: ${{ matrix.allow-failure }}
-#
-#      - name: Grab logs from Beer-Garden
-#        run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
-#        working-directory: ./docker/docker-compose
-#
-#      - name: Shutdown Docker Containers
-#        run: docker-compose stop
-#        working-directory: ./docker/docker-compose
+  Remote-Plugin-Testing:
+    needs: Setup-Release-Info
+    runs-on: ${{ matrix.os }}
 
-#  Garden-HTTP-Testing:
-#    needs: Setup-Release-Info
-#    runs-on: ${{ matrix.os }}
-#
-#    strategy:
-#      matrix:
-#        os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
+    strategy:
+      matrix:
+        python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-versions)}}
+        brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-versions)}}
+        os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
+        beer-garden-local: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-local-default)}}
+        allow-failure: ${{fromJson(needs.Setup-Release-Info.outputs.allow-failure)}}
+#        For Debugging
 #        python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
-#        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-images)}}
-#        brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
-#        beer-garden-local: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-local-default)}}
-#        allow-failure: ${{fromJson(needs.Setup-Release-Info.outputs.allow-failure)}}
-##        For Debugging
-##        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-remote-default)}}
-#      fail-fast: false
-#
-#    name: Garden - HTTP - Child ${{matrix.child-garden}}
-#    steps:
-#        - uses: actions/checkout@v2
-#
-#        - name: Setup python
-#          uses: actions/setup-python@v2
-#          with:
-#            python-version: 3.4
-#
-#        - name: Build Local Beer Garden Docker
-#          if: ${{matrix.beer-garden-local == 'unstable'}}
-#          run: make docker-build-unstable
-#          working-directory: ./src/app
-#
-#        - name: Setup python
-#          uses: actions/setup-python@v2
-#          with:
-#            python-version: ${{ matrix.python-version }}
-#
-#        - name: Update Docker Compose
-#          run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
-#          working-directory: ./
-#
-#        - name: Checkout Local Plugins
-#          uses: actions/checkout@v2
-#          with:
-#            repository: beer-garden/example-plugins
-#            path: ./tmp
-#
-#        - name: Move Subset of Test Plugins
-#          run: |
-#            cp -r ./tmp/echo ./docker/docker-compose/data/localplugins
-#
-#        - name: Verify Local Plugins
-#          run: ls ./docker/docker-compose/data/localplugins
-#
-#        - name: Run Docker Beer Garden Child
-#          run: BG=${{matrix.beer-garden-local}} RELEASE=${{matrix.child-garden}} docker-compose up -d beer-garden-child
-#          working-directory: ./docker/docker-compose
-#
-#        - name: Check If Beer Garden is Operational
-#          uses: nick-invision/retry@v2
-#          with:
-#            timeout_seconds: 30
-#            max_attempts: 20
-#            retry_on: error
-#            retry_wait_seconds: 5
-#            command: curl http://localhost:2337/version
-#
-#        - name: Check Docker Containers
-#          run: docker ps
-#
-#        - name: Grab logs from Child Beer-Garden
-#          run: BG=${{matrix.beer-garden-local}} RELEASE=${{matrix.child-garden}} docker-compose logs --tail 100 beer-garden-child
-#          working-directory: ./docker/docker-compose
-#
-#        - name: Grab logs from Beer-Garden
-#          run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
-#          working-directory: ./docker/docker-compose
-#
-#        - name: Install Testing Dependencies
-#          run: pip${{ matrix.python-version }} install -r requirements.txt
-#          working-directory: ./test/integration
-#
-#        - name: Install Test Version of Brewtils
-#          if: ${{matrix.brewtils != 'develop'}}
-#          run: pip${{ matrix.python-version }} install brewtils==${{matrix.brewtils}}
-#
-#        - name: Install Develop Version of Brewtils
-#          if: ${{matrix.brewtils == 'develop'}}
-#          run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
-#
-#        - name: Test Gardens
-#          run: python${{ matrix.python-version }} -m pytest gardens_http/
-#          working-directory: ./test/integration
-#          continue-on-error: ${{ matrix.allow-failure }}
-#
-#        - name: Grab logs from Child Beer-Garden
-#          run: BG=${{matrix.beer-garden-local}} RELEASE=${{matrix.child-garden}} docker-compose logs --tail 100 beer-garden-child
-#          working-directory: ./docker/docker-compose
-#
-#        - name: Grab logs from Beer-Garden
-#          run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
-#          working-directory: ./docker/docker-compose
-#
-#        - name: Shutdown Docker Containers
-#          run: docker-compose stop
-#          working-directory: ./docker/docker-compose
-#
+#        plugin-brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
+      fail-fast: false
+
+    name: Remote Plugins - Brewtils ${{matrix.brewtils}} - Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.4
+
+      - name: Build Local Beer Garden Docker
+        if: ${{matrix.beer-garden-local == 'unstable'}}
+        run: make docker-build-unstable
+        working-directory: ./src/app
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Update Docker Compose
+        run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
+        working-directory: ./
+
+      - name: Run Docker Beer Garden
+        run: BG=${{matrix.beer-garden-local}} docker-compose up -d beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Check If Beer Garden is Operational
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 5
+          command: curl http://localhost:2337/version
+
+      - name: Grab logs from Beer-Garden
+        run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Uninstall Brewtils
+        run: pip${{ matrix.python-version }} uninstall brewtils
+
+      - name: Install Test Version of Brewtils
+        if: ${{matrix.brewtils != 'develop'}}
+        run: pip${{ matrix.python-version }} install brewtils==${{matrix.brewtils}}
+
+      - name: Install Develop Version of Brewtils
+        if: ${{matrix.brewtils == 'develop'}}
+        run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
+
+      - name: Install Testing Dependencies
+        run: pip${{ matrix.python-version }} install -r requirements.txt
+        working-directory: ./test/integration
+
+      - name: Test Plugins
+        run: python${{ matrix.python-version }} -m pytest remote_plugins/
+        working-directory: ./test/integration
+        continue-on-error: ${{ matrix.allow-failure }}
+
+      - name: Grab logs from Beer-Garden
+        run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Shutdown Docker Containers
+        run: docker-compose stop
+        working-directory: ./docker/docker-compose
+
+  Local-Plugin-Testing:
+    needs: Setup-Release-Info
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
+        os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
+        brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
+        beer-garden-local: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-local-default)}}
+        allow-failure: ${{fromJson(needs.Setup-Release-Info.outputs.allow-failure)}}
+      fail-fast: false
+
+    name: Local Plugins - Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.4
+
+      - name: Build Local Beer Garden Docker
+        if: ${{matrix.beer-garden-local == 'unstable'}}
+        run: make docker-build-unstable
+        working-directory: ./src/app
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Update Docker Compose
+        run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
+        working-directory: ./
+
+      - name: Checkout Local Plugins
+        uses: actions/checkout@v2
+        with:
+          repository: beer-garden/example-plugins
+          path: ./docker/docker-compose/data/localplugins
+
+      - name: Verify Local Plugins
+        run: ls ./docker/docker-compose/data/localplugins
+
+      - name: Run Docker Beer Garden
+        run: BG=${{matrix.beer-garden-local}} docker-compose up -d beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Check If Beer Garden is Operational
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 5
+          command: curl http://localhost:2337/version
+
+      - name: Grab logs from Beer-Garden
+        run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Install Test Version of Brewtils
+        if: ${{matrix.brewtils != 'develop'}}
+        run: pip${{ matrix.python-version }} install brewtils==${{matrix.brewtils}}
+
+      - name: Install Develop Version of Brewtils
+        if: ${{matrix.brewtils == 'develop'}}
+        run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
+
+      - name: Install Testing Dependencies
+        run: pip${{ matrix.python-version }} install -r requirements.txt
+        working-directory: ./test/integration
+
+      - name: Test Plugins
+        run: python${{ matrix.python-version }} -m pytest local_plugins
+        working-directory: ./test/integration
+        continue-on-error: ${{ matrix.allow-failure }}
+
+      - name: Grab logs from Beer-Garden
+        run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Shutdown Docker Containers
+        run: docker-compose stop
+        working-directory: ./docker/docker-compose
+
+  Garden-HTTP-Testing:
+    needs: Setup-Release-Info
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
+        python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
+        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-images)}}
+        brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
+        beer-garden-local: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-local-default)}}
+        allow-failure: ${{fromJson(needs.Setup-Release-Info.outputs.allow-failure)}}
+#        For Debugging
+#        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-remote-default)}}
+      fail-fast: false
+
+    name: Garden - HTTP - Child ${{matrix.child-garden}}
+    steps:
+        - uses: actions/checkout@v2
+
+        - name: Setup python
+          uses: actions/setup-python@v2
+          with:
+            python-version: 3.4
+
+        - name: Build Local Beer Garden Docker
+          if: ${{matrix.beer-garden-local == 'unstable'}}
+          run: make docker-build-unstable
+          working-directory: ./src/app
+
+        - name: Setup python
+          uses: actions/setup-python@v2
+          with:
+            python-version: ${{ matrix.python-version }}
+
+        - name: Update Docker Compose
+          run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
+          working-directory: ./
+
+        - name: Checkout Local Plugins
+          uses: actions/checkout@v2
+          with:
+            repository: beer-garden/example-plugins
+            path: ./tmp
+
+        - name: Move Subset of Test Plugins
+          run: |
+            cp -r ./tmp/echo ./docker/docker-compose/data/localplugins
+
+        - name: Verify Local Plugins
+          run: ls ./docker/docker-compose/data/localplugins
+
+        - name: Run Docker Beer Garden Child
+          run: BG=${{matrix.beer-garden-local}} RELEASE=${{matrix.child-garden}} docker-compose up -d beer-garden-child
+          working-directory: ./docker/docker-compose
+
+        - name: Check If Beer Garden is Operational
+          uses: nick-invision/retry@v2
+          with:
+            timeout_seconds: 30
+            max_attempts: 20
+            retry_on: error
+            retry_wait_seconds: 5
+            command: curl http://localhost:2337/version
+
+        - name: Check Docker Containers
+          run: docker ps
+
+        - name: Grab logs from Child Beer-Garden
+          run: BG=${{matrix.beer-garden-local}} RELEASE=${{matrix.child-garden}} docker-compose logs --tail 100 beer-garden-child
+          working-directory: ./docker/docker-compose
+
+        - name: Grab logs from Beer-Garden
+          run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
+          working-directory: ./docker/docker-compose
+
+        - name: Install Testing Dependencies
+          run: pip${{ matrix.python-version }} install -r requirements.txt
+          working-directory: ./test/integration
+
+        - name: Install Test Version of Brewtils
+          if: ${{matrix.brewtils != 'develop'}}
+          run: pip${{ matrix.python-version }} install brewtils==${{matrix.brewtils}}
+
+        - name: Install Develop Version of Brewtils
+          if: ${{matrix.brewtils == 'develop'}}
+          run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
+
+        - name: Test Gardens
+          run: python${{ matrix.python-version }} -m pytest gardens_http/
+          working-directory: ./test/integration
+          continue-on-error: ${{ matrix.allow-failure }}
+
+        - name: Grab logs from Child Beer-Garden
+          run: BG=${{matrix.beer-garden-local}} RELEASE=${{matrix.child-garden}} docker-compose logs --tail 100 beer-garden-child
+          working-directory: ./docker/docker-compose
+
+        - name: Grab logs from Beer-Garden
+          run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
+          working-directory: ./docker/docker-compose
+
+        - name: Shutdown Docker Containers
+          run: docker-compose stop
+          working-directory: ./docker/docker-compose
+
   Garden-Stomp-Testing:
     needs: Setup-Release-Info
     runs-on: ${{ matrix.os }}
@@ -322,12 +322,12 @@ jobs:
       matrix:
         os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
         python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
-#        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-images)}}
+        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-images)}}
         brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
         beer-garden-local: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-local-default)}}
         allow-failure: ${{fromJson(needs.Setup-Release-Info.outputs.allow-failure)}}
 #        For Debugging
-        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-remote-default)}}
+#        child-garden: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-remote-default)}}
 
         # Feature added get fixed until 3.2.2
         exclude:
@@ -436,181 +436,181 @@ jobs:
         run: docker-compose stop
         working-directory: ./docker/docker-compose
 
-#  Stomp-Testing:
-#    needs: Setup-Release-Info
-#    runs-on: ${{ matrix.os }}
-#
-#    strategy:
-#      matrix:
-#        os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
-#        python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
-#        brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
-#        beer-garden-local: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-local-default)}}
-#        allow-failure: ${{fromJson(needs.Setup-Release-Info.outputs.allow-failure)}}
-#
-#      fail-fast: false
-#
-#    name: Stomp Testing - Python ${{ matrix.python-version }}
-#    steps:
-#      - uses: actions/checkout@v2
-#
-#      - name: Setup python
-#        uses: actions/setup-python@v2
-#        with:
-#          python-version: 3.4
-#
-#      - name: Build Local Beer Garden Docker
-#        if: ${{matrix.beer-garden-local == 'unstable'}}
-#        run: make docker-build-unstable
-#        working-directory: ./src/app
-#
-#      - name: Checkout Local Plugins
-#        uses: actions/checkout@v2
-#        with:
-#          repository: beer-garden/example-plugins
-#          path: ./tmp
-#
-#      - name: Move Subset of Test Plugins
-#        run: |
-#          cp -r ./tmp/echo ./docker/docker-compose/data/localplugins
-#
-#      - name: Setup python
-#        uses: actions/setup-python@v2
-#        with:
-#          python-version: ${{ matrix.python-version }}
-#
-#      - name: Update Docker Compose
-#        run: cp test/conf/docker-compose-stomp.yml docker/docker-compose/docker-compose.yml
-#        working-directory: ./
-#
-#      - name: Run Docker Beer Garden
-#        run: BG=${{matrix.beer-garden-local}} docker-compose up -d beer-garden
-#        working-directory: ./docker/docker-compose
-#
-#      - name: Check If Beer Garden is Operational
-#        uses: nick-invision/retry@v2
-#        with:
-#          timeout_seconds: 30
-#          max_attempts: 20
-#          retry_on: error
-#          retry_wait_seconds: 5
-#          command: curl http://localhost:2337/version
-#
-#      - name: Install Test Version of Brewtils
-#        if: ${{matrix.brewtils != 'develop'}}
-#        run: pip${{ matrix.python-version }} install brewtils==${{matrix.brewtils}}
-#
-#      - name: Install Develop Version of Brewtils
-#        if: ${{matrix.brewtils == 'develop'}}
-#        run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
-#
-#      - name: Install Stompy
-#        run: pip${{ matrix.python-version }} install stomp.py==6.1.0
-#
-#      - name: Install Testing Dependencies
-#        run: pip${{ matrix.python-version }} install -r requirements.txt
-#        working-directory: ./test/integration
-#
-#      - name: Grab logs from Beer-Garden
-#        run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
-#        working-directory: ./docker/docker-compose
-#
-#      - name: Test Plugins
-#        run: python${{ matrix.python-version }} -m pytest stomp_/
-#        working-directory: ./test/integration
-#        continue-on-error: ${{ matrix.allow-failure }}
-#
-#      - name: Grab logs from Beer-Garden
-#        run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
-#        working-directory: ./docker/docker-compose
-#
-#      - name: Shutdown Docker Containers
-#        run: docker-compose stop
-#        working-directory: ./docker/docker-compose
-#
-#  Scheduler-Testing:
-#    needs: Setup-Release-Info
-#    runs-on: ${{ matrix.os }}
-#
-#    strategy:
-#      matrix:
-#        os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
-#        python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
-#        brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
-#        beer-garden-local: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-local-default)}}
-#        allow-failure: ${{fromJson(needs.Setup-Release-Info.outputs.allow-failure)}}
-#      fail-fast: false
-#
-#    name: Job Testing - Python ${{ matrix.python-version }}
-#    steps:
-#      - uses: actions/checkout@v2
-#
-#      - name: Setup python
-#        uses: actions/setup-python@v2
-#        with:
-#          python-version: 3.4
-#
-#      - name: Build Local Beer Garden Docker
-#        if: ${{matrix.beer-garden-local == 'unstable'}}
-#        run: make docker-build-unstable
-#        working-directory: ./src/app
-#
-#      - name: Setup python
-#        uses: actions/setup-python@v2
-#        with:
-#          python-version: ${{ matrix.python-version }}
-#
-#      - name: Update Docker Compose
-#        run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
-#        working-directory: ./
-#
-#      - name: Checkout Local Plugins
-#        uses: actions/checkout@v2
-#        with:
-#          repository: beer-garden/example-plugins
-#          path: ./docker/docker-compose/data/localplugins
-#
-#      - name: Verify Local Plugins
-#        run: ls ./docker/docker-compose/data/localplugins
-#
-#      - name: Run Docker Beer Garden
-#        run: BG=${{matrix.beer-garden-local}} docker-compose up -d beer-garden
-#        working-directory: ./docker/docker-compose
-#
-#      - name: Check If Beer Garden is Operational
-#        uses: nick-invision/retry@v2
-#        with:
-#          timeout_seconds: 30
-#          max_attempts: 20
-#          retry_on: error
-#          retry_wait_seconds: 5
-#          command: curl http://localhost:2337/version
-#
-#      - name: Install Test Version of Brewtils
-#        if: ${{matrix.brewtils != 'develop'}}
-#        run: pip${{ matrix.python-version }} install brewtils==${{matrix.brewtils}}
-#
-#      - name: Install Develop Version of Brewtils
-#        if: ${{matrix.brewtils == 'develop'}}
-#        run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
-#
-#      - name: Install Testing Dependencies
-#        run: pip${{ matrix.python-version }} install -r requirements.txt
-#        working-directory: ./test/integration
-#
-#      - name: Grab logs from Beer-Garden
-#        run: docker-compose logs --tail 100 beer-garden
-#        working-directory: ./docker/docker-compose
-#
-#      - name: Test Plugins
-#        run: python${{ matrix.python-version }} -m pytest scheduler
-#        working-directory: ./test/integration
-#        continue-on-error: ${{ matrix.allow-failure }}
-#
-#      - name: Grab logs from Beer-Garden
-#        run: docker-compose logs --tail 100 beer-garden
-#        working-directory: ./docker/docker-compose
-#
-#      - name: Shutdown Docker Containers
-#        run: docker-compose stop
-#        working-directory: ./docker/docker-compose
+  Stomp-Testing:
+    needs: Setup-Release-Info
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
+        python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
+        brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
+        beer-garden-local: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-local-default)}}
+        allow-failure: ${{fromJson(needs.Setup-Release-Info.outputs.allow-failure)}}
+
+      fail-fast: false
+
+    name: Stomp Testing - Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.4
+
+      - name: Build Local Beer Garden Docker
+        if: ${{matrix.beer-garden-local == 'unstable'}}
+        run: make docker-build-unstable
+        working-directory: ./src/app
+
+      - name: Checkout Local Plugins
+        uses: actions/checkout@v2
+        with:
+          repository: beer-garden/example-plugins
+          path: ./tmp
+
+      - name: Move Subset of Test Plugins
+        run: |
+          cp -r ./tmp/echo ./docker/docker-compose/data/localplugins
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Update Docker Compose
+        run: cp test/conf/docker-compose-stomp.yml docker/docker-compose/docker-compose.yml
+        working-directory: ./
+
+      - name: Run Docker Beer Garden
+        run: BG=${{matrix.beer-garden-local}} docker-compose up -d beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Check If Beer Garden is Operational
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 5
+          command: curl http://localhost:2337/version
+
+      - name: Install Test Version of Brewtils
+        if: ${{matrix.brewtils != 'develop'}}
+        run: pip${{ matrix.python-version }} install brewtils==${{matrix.brewtils}}
+
+      - name: Install Develop Version of Brewtils
+        if: ${{matrix.brewtils == 'develop'}}
+        run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
+
+      - name: Install Stompy
+        run: pip${{ matrix.python-version }} install stomp.py==6.1.0
+
+      - name: Install Testing Dependencies
+        run: pip${{ matrix.python-version }} install -r requirements.txt
+        working-directory: ./test/integration
+
+      - name: Grab logs from Beer-Garden
+        run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Test Plugins
+        run: python${{ matrix.python-version }} -m pytest stomp_/
+        working-directory: ./test/integration
+        continue-on-error: ${{ matrix.allow-failure }}
+
+      - name: Grab logs from Beer-Garden
+        run: BG=${{matrix.beer-garden-local}} docker-compose logs --tail 100 beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Shutdown Docker Containers
+        run: docker-compose stop
+        working-directory: ./docker/docker-compose
+
+  Scheduler-Testing:
+    needs: Setup-Release-Info
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: ${{fromJson(needs.Setup-Release-Info.outputs.os-default)}}
+        python-version: ${{fromJson(needs.Setup-Release-Info.outputs.python-default)}}
+        brewtils: ${{fromJson(needs.Setup-Release-Info.outputs.brewtils-default)}}
+        beer-garden-local: ${{fromJson(needs.Setup-Release-Info.outputs.beer-garden-docker-local-default)}}
+        allow-failure: ${{fromJson(needs.Setup-Release-Info.outputs.allow-failure)}}
+      fail-fast: false
+
+    name: Job Testing - Python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.4
+
+      - name: Build Local Beer Garden Docker
+        if: ${{matrix.beer-garden-local == 'unstable'}}
+        run: make docker-build-unstable
+        working-directory: ./src/app
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Update Docker Compose
+        run: cp test/conf/docker-compose.yml docker/docker-compose/docker-compose.yml
+        working-directory: ./
+
+      - name: Checkout Local Plugins
+        uses: actions/checkout@v2
+        with:
+          repository: beer-garden/example-plugins
+          path: ./docker/docker-compose/data/localplugins
+
+      - name: Verify Local Plugins
+        run: ls ./docker/docker-compose/data/localplugins
+
+      - name: Run Docker Beer Garden
+        run: BG=${{matrix.beer-garden-local}} docker-compose up -d beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Check If Beer Garden is Operational
+        uses: nick-invision/retry@v2
+        with:
+          timeout_seconds: 30
+          max_attempts: 20
+          retry_on: error
+          retry_wait_seconds: 5
+          command: curl http://localhost:2337/version
+
+      - name: Install Test Version of Brewtils
+        if: ${{matrix.brewtils != 'develop'}}
+        run: pip${{ matrix.python-version }} install brewtils==${{matrix.brewtils}}
+
+      - name: Install Develop Version of Brewtils
+        if: ${{matrix.brewtils == 'develop'}}
+        run: pip${{ matrix.python-version }} install -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
+
+      - name: Install Testing Dependencies
+        run: pip${{ matrix.python-version }} install -r requirements.txt
+        working-directory: ./test/integration
+
+      - name: Grab logs from Beer-Garden
+        run: docker-compose logs --tail 100 beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Test Plugins
+        run: python${{ matrix.python-version }} -m pytest scheduler
+        working-directory: ./test/integration
+        continue-on-error: ${{ matrix.allow-failure }}
+
+      - name: Grab logs from Beer-Garden
+        run: docker-compose logs --tail 100 beer-garden
+        working-directory: ./docker/docker-compose
+
+      - name: Shutdown Docker Containers
+        run: docker-compose stop
+        working-directory: ./docker/docker-compose
