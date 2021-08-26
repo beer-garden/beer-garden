@@ -174,9 +174,14 @@ class TestGardenSetup(object):
         )
         gardens = self.parser.parse_garden(response.json(), many=True)
 
+        # this is a terrible kludge and will be removed once these tests are
+        # refactored to be more useful
+        is_default = 0
+        is_default += sum(map(lambda x: x.name == "default", gardens))
+
         # changed from 2 because we're creating an additional garden in the
         # helper function
-        assert len(gardens) == self.created_gardens + 1
+        assert len(gardens) - is_default == self.created_gardens
 
     def test_run_sync(self):
         # Give BG a second to setup connection
