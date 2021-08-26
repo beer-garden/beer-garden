@@ -1,0 +1,1 @@
+APP_SRC=/home/jcbanni/src/beergarden/integration_tests BREWTILS_SRC=/home/jcbanni/src/beergarden/brewtils PARENT_CONFIG=`pwd`/configs/config.yaml CHILD_CONFIG=`pwd`/configs/config-child.yaml docker-compose -f docker-compose-local-integration-tests.yml up -d

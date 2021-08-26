@@ -30,18 +30,18 @@ entry:
       public_key: null
     url_prefix: /
   stomp:
-    enabled: false
+    enabled: true
     headers: []
     host: activemq
     password: password
     port: 61613
-    send_destination: null
+    send_destination: Beer_Garden_Child_Events
     ssl:
       ca_cert: null
       client_cert: null
       client_key: null
       use_ssl: false
-    subscribe_destination: child_operations
+    subscribe_destination: Beer_Garden_Child_Operations
     username: beer_garden
 garden:
   name: childdocker
@@ -102,7 +102,7 @@ parent:
     username: null
   skip_events: []
   stomp:
-    enabled: false
+    enabled: true
     headers: []
     host: beer-garden
     password: password

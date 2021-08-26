@@ -10,26 +10,25 @@ from typing import Any, Dict, List
 import docker
 import pytest
 from docker import DockerClient
-from docker.errors import APIError, BuildError, DockerException
+from docker.errors import APIError, BuildError, DockerException, NotFound
 from docker.models.containers import Container
 from docker.models.images import Image
 from docker.models.volumes import VolumeCollection
+from requests.exceptions import HTTPError
 from testcontainers.compose import DockerCompose
 
 ENV_FILENAME = "integration_env"
-BG_CONTAINER_NAME = "integration_local_beer-garden_1"
-BG_CHILD_CONTAINER_NAME = "integration_local_beer-garden_1"
 CONTAINERS = {
-    "beer garden": "integration_local_beer-garden_1",
-    "beer garden child": "integration_local_beer-garden-child_1",
-    "activemq": "integration_local_activemq_1",
-    "mongodb": "integration_local_mongodb_1",
-    "rabbitmq": "integration_local_rabbitmq_1",
+    "beer garden": "local_integration_beer-garden_1",
+    "beer garden child": "local_integration_beer-garden-child_1",
+    "activemq": "local_integration_activemq_1",
+    "mongodb": "local_integration_mongodb_1",
+    "rabbitmq": "local_integration_rabbitmq_1",
 }
 BG_IMAGE_NAME = "beer_garden_integration_tests"
 BG_IMAGE_TAGS = BG_IMAGE_NAME + ":latest"
-ALL_IMAGES = ["mongodb", "rabbitmq", "beer-garden", "beer-garden-child"]
-VOLUMES = {
+ALL_IMAGES = ["mongodb", "rabbitmq", "activemq", "beer-garden", "beer-garden-child"]
+NAMED_VOLUMES_FOR_TESTS = {
     "integration_local_mongo-config",
     "integration_local_mongo-data",
     "integration_local_rabbitmq-home",
@@ -39,32 +38,47 @@ TEST_SUITE_OPTIONS_BASE = [ALL_TESTS]
 OS_ENVIRON_DICT = {"BG_HOST": "localhost", "BG_SSL_ENABLED": str(False)}
 
 
+class LocalIntegrationTestError(Exception):
+    """Exception specific to this tool."""
+
+
 def _start_network(
     docker_client: DockerClient, docker_compose_client: DockerCompose
 ) -> None:
-    docker_compose_client.stop()
+    """Bring up and verify all images."""
+    _stop_network(docker_client, docker_compose_client)
 
-    if not _remove_volumes(docker_client):
-        raise RuntimeError("Unable to remove volumes from previous run")
+    label = ""
+    container_name = ""
+    try:
+        docker_compose_client.start()
 
-    docker_compose_client.start()
+        for label, container_name in CONTAINERS.items():
+            container: Container = docker_client.containers.get(container_name)
 
-    for label, container_name in CONTAINERS.items():
-        container: Container = docker_client.containers.get(container_name)
-
-        assert (
-            container.status == "running"
-        ), f"{label} not running after docker-compose ... up, cannot continue"
+            assert (
+                container.status == "running"
+            ), f"{label} not running after docker-compose ... up, cannot continue"
+    except AssertionError:
+        docker_compose_client.stop()
+        raise
+    except (HTTPError, NotFound):
+        docker_compose_client.stop()
+        raise LocalIntegrationTestError(
+            f"Docker API cannot access the {label} container, "
+            f"whose name is expected to be {container_name}"
+        )
 
 
 def _stop_network(
     docker_client: DockerClient, docker_compose_client: DockerCompose
 ) -> None:
+    """Bring down all images."""
     print("Tearing down beer garden docker images. Please wait...")
     docker_compose_client.stop()
 
     if not _remove_volumes(docker_client):
-        raise ValueError("Unable to remove volumes from this run")
+        raise LocalIntegrationTestError("Unable to remove volumes from this run")
 
 
 def _remove_volumes(client: DockerClient) -> bool:
@@ -72,7 +86,7 @@ def _remove_volumes(client: DockerClient) -> bool:
     volumes: VolumeCollection = client.volumes
 
     for volume in volumes.list():
-        if volume.name in VOLUMES:
+        if volume.name in NAMED_VOLUMES_FOR_TESTS:
             try:
                 volume.remove(force=True)
             except DockerException:
@@ -130,7 +144,9 @@ def main(bgarden: Path, btils: Path, tests: List[Path]) -> None:
                 path=str(this_cwd), tag=BG_IMAGE_NAME, rm=True
             )
         except (BuildError, APIError) as exc:
-            raise RuntimeError("Unable to build beer garden docker image") from exc
+            raise LocalIntegrationTestError(
+                "Unable to build beer garden docker image"
+            ) from exc
 
         assert BG_IMAGE_TAGS in new_image.tags
 

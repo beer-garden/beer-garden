@@ -1,0 +1,1 @@
+ clear && BG_HOST=localhost BG_SSL_ENABLED=false pytest ../integration/local_plugins/plugins/complex_test.py::TestComplex::test_echo_model_with_nested_defaults_no_main_nothing_provided
