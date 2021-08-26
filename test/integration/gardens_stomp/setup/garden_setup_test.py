@@ -15,6 +15,7 @@ except (ImportError, ValueError):
 class IntegrationTestSetupFailure(Exception):
     pass
 
+
 @pytest.fixture(scope="class")
 def system_spec():
     return {
@@ -75,23 +76,40 @@ class TestGardenSetup(object):
             else:
                 other.append(garden)
 
-        if not len(parent) > 0:
-            raise IntegrationTestSetupFailure("Empty parent list")
-        _ = parent.pop(0)
+        # if not len(parent) > 0:
+        #     raise IntegrationTestSetupFailure("Empty parent list")
+        # _ = parent.pop(0)
 
-        if len(child) == 0:
-            # if there is no child garden, create one
-            if not self.easy_client.client.session.post(
-                self.easy_client.client.base_url + "api/v1/gardens",
-                data=self.parser.serialize_garden(Garden(name=self.child_garden_name)),
-                headers=self.easy_client.client.JSON_HEADERS,
-            ).ok:
-                raise IntegrationTestSetupFailure(
-                    "No child garden present and unable to create one"
-                )
+        for garden_list, garden_name, the_client, label in [
+            (parent, self.parent_garden_name, self.easy_client, "parent"),
+            (child, self.child_garden_name, self.child_easy_client, "child")
+        ]:
+            if len(garden_list) == 0:
+                # if there is no garden of this type, create one
+                if not the_client.client.session.post(
+                    the_client.client.base_url + "api/v1/gardens",
+                    data=self.parser.serialize_garden(Garden(name=garden_name)),
+                    headers=the_client.client.JSON_HEADERS,
+                ).ok:
+                    raise IntegrationTestSetupFailure(
+                        f"No {label} garden present and unable to create one"
+                    )
+            else:
+                _ = garden_list.pop()
 
-        else:
-            _ = child.pop(0)
+        # if len(child) == 0:
+        #     # if there is no child garden, create one
+        #     if not self.easy_client.client.session.post(
+        #         self.easy_client.client.base_url + "api/v1/gardens",
+        #         data=self.parser.serialize_garden(Garden(name=self.child_garden_name)),
+        #         headers=self.easy_client.client.JSON_HEADERS,
+        #     ).ok:
+        #         raise IntegrationTestSetupFailure(
+        #             "No child garden present and unable to create one"
+        #         )
+        #
+        # else:
+        #     _ = child.pop(0)
 
         # so we can be 100% sure that there are exactly 2 gardens (parent and child),
         # delete any other gardens if they exist
