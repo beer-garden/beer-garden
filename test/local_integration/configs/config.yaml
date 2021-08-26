@@ -1,0 +1,157 @@
+auth:
+  enabled: false
+  guest_login_enabled: true
+  token:
+    algorithm: HS256
+    lifetime: 1200
+    secret: IAMSUPERSECRET
+db:
+  connection:
+    host: mongodb
+    password: null
+    port: 27017
+    username: null
+  name: beer_garden
+  ttl:
+    action: -1
+    file: 15
+    info: 15
+entry:
+  http:
+    enabled: true
+    host: 0.0.0.0
+    port: 2337
+    ssl:
+      ca_cert: null
+      ca_path: null
+      client_cert_verify: NONE
+      enabled: false
+      private_key: null
+      public_key: null
+    url_prefix: /
+  stomp:
+    enabled: true
+    headers: []
+    host: activemq
+    password: password
+    port: 61613
+    send_destination: Beer_Garden_Events
+    ssl:
+      ca_cert: null
+      client_cert: null
+      client_key: null
+      use_ssl: false
+    subscribe_destination: Beer_Garden_Operations
+    username: beer_garden
+garden:
+  name: default
+log:
+  config_file: /conf/app-logging.yaml
+  fallback_file: null
+  fallback_level: INFO
+metrics:
+  prometheus:
+    enabled: false
+    host: 0.0.0.0
+    port: 2339
+    url: http://localhost:3000
+mq:
+  admin_queue_expiry: 3600000
+  blocked_connection_timeout: 5
+  connection_attempts: 3
+  connections:
+    admin:
+      password: password
+      port: 15672
+      ssl:
+        ca_cert: null
+        ca_verify: true
+        client_cert: null
+        enabled: false
+      user: beer_garden
+    message:
+      password: password
+      port: 5672
+      ssl:
+        ca_cert: null
+        ca_verify: true
+        client_cert: null
+        enabled: false
+      user: beer_garden
+  exchange: beer_garden
+  heartbeat_interval: 3600
+  host: rabbitmq
+  virtual_host: /
+parent:
+  http:
+    access_token: null
+    api_version: 1
+    client_timeout: -1
+    enabled: false
+    host: null
+    password: null
+    port: 2337
+    refresh_token: null
+    ssl:
+      ca_cert: null
+      ca_verify: true
+      client_cert: null
+      client_key: null
+      enabled: false
+    url_prefix: /
+    username: null
+  skip_events: []
+  stomp:
+    enabled: false
+    headers: []
+    host: activemq
+    password: password
+    port: 61613
+    send_destination: Beer_Garden_Operations_Parent
+    ssl:
+      ca_cert: null
+      client_cert: null
+      client_key: null
+      use_ssl: false
+    subscribe_destination: Beer_Garden_Forward_Parent
+    username: beer_garden
+plugin:
+  allow_command_updates: false
+  local:
+    auth:
+      password: password
+      username: admin
+    directory: ./plugins
+    host_env_vars: []
+    logging:
+      config_file: /conf/plugin-logging.yaml
+      fallback_level: INFO
+    timeout:
+      shutdown: 10
+      startup: 2
+  mq:
+    host: rabbitmq
+  remote:
+    logging:
+      config_file: /conf/plugin-logging.yaml
+      fallback_level: INFO
+  status_heartbeat: 5
+  status_timeout: 30
+request_validation:
+  dynamic_choices:
+    command:
+      timeout: 10
+    url:
+      ca_cert: null
+      ca_verify: true
+scheduler:
+  job_defaults:
+    coalesce: true
+    max_instances: 3
+  max_workers: 10
+ui:
+  cors_enabled: true
+  debug_mode: true
+  execute_javascript: false
+  icon_default: fa-beer
+  name: Beer Garden

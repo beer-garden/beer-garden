@@ -1,3 +1,5 @@
+from time import sleep
+
 import pytest
 from brewtils.models import PatchOperation
 
@@ -107,8 +109,22 @@ class TestGardenSetup(object):
         assert_successful_request(response, output="test_string!!!!!!!!!")
 
     def test_verify_requests(self):
-        requests = self.easy_client.find_requests()
+        sleep(0.5)  # TODO: it is ridiculous that this is necessary
+        orig_requests_len = len(self.easy_client.find_requests())
 
-        assert len(requests) == 2
+        new_request_clients = [self.easy_client, self.child_easy_client]
+
+        for client in new_request_clients:
+            new_request = wait_for_response(
+                client,
+                self.request_generator.generate_request(
+                    parameters={"message": "test_string", "loud": True}
+                ),
+            )
+            assert new_request.status == "SUCCESS"
+
+        new_requests_len = len(self.easy_client.find_requests())
+
+        assert new_requests_len == orig_requests_len + len(new_request_clients)
 
     # TODO Add wait test

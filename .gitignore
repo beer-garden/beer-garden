@@ -92,3 +92,6 @@ tmp/
 workflow/
 test/conf/data
 docker/docker-compose/data/localplugins/*
+
+# ignore symlinks
+src/brewtils
