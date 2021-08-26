@@ -123,12 +123,12 @@ class TestGardenSetup(object):
         self._prepare_beer_garden()
 
     def test_update_garden_connection_info(self):
-        child_garden_json = self.parser.serialize_garden(
+        child_garden_dict = self.parser.serialize_garden(
             self._get_child_garden(), to_string=False
         )
 
-        child_garden_json["connection_type"] = "STOMP"
-        child_garden_json["connection_params"] = {
+        child_garden_dict["connection_type"] = "STOMP"
+        child_garden_dict["connection_params"] = {
             "stomp": {
                 "host": "activemq",
                 "port": 61613,
@@ -140,7 +140,7 @@ class TestGardenSetup(object):
             }
         }
 
-        patch = PatchOperation(operation="config", path="", value=child_garden_json)
+        patch = PatchOperation(operation="config", path="", value=child_garden_dict)
         payload = self.parser.serialize_patch(patch)
         updated_response = self.easy_client.client.session.patch(
             self.easy_client.client.base_url
