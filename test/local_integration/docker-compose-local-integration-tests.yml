@@ -1,26 +1,13 @@
 version: '3.5'
 
 x-definitions: &env
-    # IMPORTANT!!
-    # Change this to whatever you want your garden name / namespace default to be
-
     # If you are running in Ubuntu, then you need to set the Timezone
-    # We are actively investigating why this is
     TZ: UTC
 
     # IMPORTANT!!
     # Change this to support both local and remote plugins
     # Should be resolvable from inside and outside the docker network
     BG_PLUGIN_MQ_HOST: rabbitmq
-
-    # IMPORTANT!!
-    # If you are connection to a Parent BG instance, toggle true
-
-
-    # IMPORTANT !!
-    # If you are connecting to a Parent BG instance, change this the resolvable DNS entry
-
-
 
 services:
     beer-garden:
@@ -31,8 +18,6 @@ services:
             - "2337:2337"
             - "2338:2338"
         volumes:
-#            - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
-#            - ./data/localplugins:/plugins
             - ${APP_SRC}:/beer_garden
             - ${BREWTILS_SRC}:/brewtils
             - ${PARENT_CONFIG}:/conf/config.yaml
@@ -73,20 +58,6 @@ services:
         depends_on:
             - mongodb
             - rabbitmq
-
-#    ui:
-#        image: bgio/ui:3
-#        networks:
-#            - bg-network
-#        ports:
-#            - "80:80"
-#              #- "443:443"
-#        environment:
-#            BEERGARDEN_HOST: "beer-garden"
-#            BEERGARDEN_PORT: "2337"
-#        depends_on:
-#            - beer-garden
-
     mongodb:
         image: mongo:4.2
         restart: always
@@ -97,7 +68,6 @@ services:
         volumes:
             - mongo-data:/data/db
             - mongo-config:/data/configdb
-
     rabbitmq:
         image: rabbitmq:3.8-management-alpine
         restart: always
@@ -112,7 +82,6 @@ services:
             - "15672:15672"
         volumes:
             - rabbitmq-home:/var/lib/rabbitmq
-
     activemq:
         image: vromero/activemq-artemis:2.16-alpine-latest
         restart: always
@@ -126,7 +95,6 @@ services:
           - "8161:8161"
         volumes:
             - ./data/activemq-config/etc-override-non-ssl:/var/lib/artemis/etc-override
-
     beer-garden-child:
         image: beer_garden_integration_tests
         networks:
@@ -173,32 +141,15 @@ services:
             # link in our About section if it is defined.
             BG_METRICS_URL: http://localhost:3000
             BG_METRICS_PROMETHEUS_ENABLED: "false"
-
         depends_on:
             - beer-garden
-
         links:
             -   "mongodb:mongodb"
             -   "rabbitmq:rabbitmq"
-#
-#    ui-child:
-#        image: bgio/ui:3
-#        networks:
-#            - bg-network
-#        ports:
-#            - "8080:80"
-#            #- "443:443"
-#        environment:
-#            BEERGARDEN_HOST: "beer-garden-child"
-#            BEERGARDEN_PORT: "2337"
-#        depends_on:
-#            - beer-garden-child
-
 networks:
     bg-integration-test-network:
         driver: bridge
         name: bg-integration-test-network
-
 volumes:
     plugins:
     plugin-logs:

@@ -190,7 +190,10 @@ def main(bgarden: Path, btils: Path, tests: List[Path]) -> None:
 if __name__ == "__main__":
     cwd = Path.cwd()
     tests_home = cwd.parent / "integration"
-    bad_dirs = {"configs", "helper", "old_v2_stuff"}
+    bad_dirs = set(
+        ["configs", "helper", "old_v2_stuff"]
+        + [y for y in [str(x.stem) for x in tests_home.glob("*")] if y.startswith(".")]
+    )
     test_dirs_dict = {
         str(x.stem): x
         for x in tests_home.glob("*")

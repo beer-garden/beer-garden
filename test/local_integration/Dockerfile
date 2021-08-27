@@ -8,8 +8,6 @@ ENV _BREWTILS_HOME /brewtils
 VOLUME $_BREWTILS_HOME
 
 ENV CONF_DIR=/conf
-#ARG PLUGINS_VERSION=3.0.0
-#ARG PLUGINS_LINK=https://github.com/beer-garden/example-plugins/archive/refs/tags/$PLUGINS_VERSION.tar.gz
 
 # This is an unfortunate work-around. TODO
 ARG PLUGINS_SHA1=8af0577
@@ -29,8 +27,6 @@ RUN set -ex \
     && pip install -r $CONF_DIR/requirements.txt
 
 WORKDIR /
-#RUN curl -sL $PLUGINS_LINK | tar xz \
-#    && ln -s example-plugins-$PLUGINS_VERSION $BG_PLUGIN_LOCAL_DIRECTORY
 RUN curl -sL $PLUGINS_LINK | tar xz \
     && ln -s beer-garden-example-plugins-$PLUGINS_SHA1 $BG_PLUGIN_LOCAL_DIRECTORY
 
