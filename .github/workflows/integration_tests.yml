@@ -3,15 +3,7 @@ name: Integration Tests
 # This will only run on the Default/Base Branch OR when a Tag is created
 on:
   # pull_request:  # Only for testing
-<<<<<<< HEAD
-<<<<<<< HEAD
   #push:  # Only for testing
-=======
-  push:  # Only for testing
->>>>>>> 63fea75f (#1073 - Edited github action for testing)
-=======
-  #push:  # Only for testing
->>>>>>> e3098496 (#1037 - Disabled integration tests on push)
   schedule:
     - cron: '0 0 * * *' # Every Day at Midnight
 

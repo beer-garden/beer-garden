@@ -1,18 +1,3 @@
 integration_env
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 61595a9b (#1073 - Backed out an unneeded change to test)
-docker_cmds.txt
-ipython_cmds.txt
-pytest_cmds.txt
-tool_cmd.txt
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 55b3c730 (#1073 - Updated .gitignore in case file remains after crash)
-=======
->>>>>>> 61595a9b (#1073 - Backed out an unneeded change to test)
-=======
 data/
->>>>>>> e01b9eb7 (#1073 - Added README and cleaned up files)
+

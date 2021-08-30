@@ -30,42 +30,18 @@ entry:
       public_key: null
     url_prefix: /
   stomp:
-<<<<<<< HEAD
-<<<<<<< HEAD
     enabled: true
-=======
-    enabled: false
->>>>>>> e8367a3b (#1073 - Initial commit for local integration tests)
-=======
-    enabled: true
->>>>>>> 21200da3 (#1073 - Minor tweaks to main script)
     headers: []
     host: activemq
     password: password
     port: 61613
-<<<<<<< HEAD
-<<<<<<< HEAD
     send_destination: Beer_Garden_Child_Events
-=======
-    send_destination: null
->>>>>>> e8367a3b (#1073 - Initial commit for local integration tests)
-=======
-    send_destination: Beer_Garden_Child_Events
->>>>>>> 21200da3 (#1073 - Minor tweaks to main script)
     ssl:
       ca_cert: null
       client_cert: null
       client_key: null
       use_ssl: false
-<<<<<<< HEAD
-<<<<<<< HEAD
     subscribe_destination: Beer_Garden_Child_Operations
-=======
-    subscribe_destination: child_operations
->>>>>>> e8367a3b (#1073 - Initial commit for local integration tests)
-=======
-    subscribe_destination: Beer_Garden_Child_Operations
->>>>>>> 21200da3 (#1073 - Minor tweaks to main script)
     username: beer_garden
 garden:
   name: childdocker
@@ -126,15 +102,7 @@ parent:
     username: null
   skip_events: []
   stomp:
-<<<<<<< HEAD
-<<<<<<< HEAD
     enabled: true
-=======
-    enabled: false
->>>>>>> e8367a3b (#1073 - Initial commit for local integration tests)
-=======
-    enabled: true
->>>>>>> 21200da3 (#1073 - Minor tweaks to main script)
     headers: []
     host: beer-garden
     password: password
