@@ -17,6 +17,7 @@ from brewtils.errors import (
     WaitExceededError,
 )
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
+from marshmallow.exceptions import ValidationError as MarshmallowValidationError
 from mongoengine.errors import DoesNotExist, NotUniqueError
 from mongoengine.errors import ValidationError as MongoValidationError
 from pymongo.errors import DocumentTooLarge
@@ -62,6 +63,7 @@ class BaseHandler(AuthMixin, RequestHandler):
     charset_re = re.compile(r"charset=(.*)$")
 
     error_map = {
+        MarshmallowValidationError: {"status_code": 400},
         MongoValidationError: {"status_code": 400},
         ModelError: {"status_code": 400},
         RoutingRequestException: {"status_code": 400},
@@ -258,9 +260,14 @@ class BaseHandler(AuthMixin, RequestHandler):
 
         Returns:
             dict: if request has a decoded_body
-            None: otherwise
+
+        Raises:
+            HTTPError: request has no decoded_body
         """
         if hasattr(self.request, "decoded_body"):
             return json.loads(self.request.decoded_body)
         else:
-            return None
+            raise HTTPError(
+                400,
+                reason="A body was expected with the request, but none was provided.",
+            )

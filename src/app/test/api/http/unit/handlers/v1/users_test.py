@@ -70,6 +70,19 @@ class TestUserAPI:
 
         assert response.code == 200
 
+    @pytest.mark.gen_test
+    def test_patch_responds_400_when_no_body_provided(
+        self, http_client, base_url, user
+    ):
+        url = f"{base_url}/api/v1/users/{user.username}"
+
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(
+                url, method="PATCH", allow_nonstandard_methods=True, body=None
+            )
+
+        assert excinfo.value.code == 400
+
 
 class TestUserListAPI:
     @classmethod
@@ -98,3 +111,15 @@ class TestUserListAPI:
         )
 
         assert 201 == response.code
+
+    @pytest.mark.gen_test
+    def test_post_responds_400_when_required_fields_are_missing(
+        self, http_client, base_url
+    ):
+        url = f"{base_url}/api/v1/users/"
+        headers = {"Content-Type": "application/json"}
+
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(url, method="POST", headers=headers, body="{}")
+
+        assert excinfo.value.code == 400
