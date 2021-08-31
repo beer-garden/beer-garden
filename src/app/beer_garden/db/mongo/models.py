@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import datetime
+import json
 import logging
+import sys
 
 import pytz
 import six
-import sys
-import json
+from passlib.apps import custom_app_context
 
 try:
     from lark import ParseError
@@ -14,8 +15,19 @@ except ImportError:
     from lark.common import ParseError
 
     LarkError = ParseError
+import brewtils.models
+from brewtils.choices import parse
+from brewtils.errors import ModelValidationError, RequestStatusTransitionError
+from brewtils.models import Command as BrewtilsCommand
+from brewtils.models import Instance as BrewtilsInstance
+from brewtils.models import Job as BrewtilsJob
+from brewtils.models import Parameter as BrewtilsParameter
+from brewtils.models import Request as BrewtilsRequest
 from bson.objectid import ObjectId
 from mongoengine import (
+    CASCADE,
+    NULLIFY,
+    PULL,
     BooleanField,
     DateTimeField,
     DictField,
@@ -24,31 +36,19 @@ from mongoengine import (
     EmbeddedDocument,
     EmbeddedDocumentField,
     EmbeddedDocumentListField,
+    FileField,
     GenericEmbeddedDocumentField,
-    LazyReferenceField,
     IntField,
+    LazyReferenceField,
     ListField,
     ObjectIdField,
     ReferenceField,
     StringField,
-    FileField,
-    CASCADE,
-    NULLIFY,
-    PULL,
 )
 from mongoengine.errors import DoesNotExist
 
-import brewtils.models
 from .fields import DummyField, StatusInfo
-from brewtils.choices import parse
-from brewtils.errors import ModelValidationError, RequestStatusTransitionError
-from brewtils.models import (
-    Command as BrewtilsCommand,
-    Instance as BrewtilsInstance,
-    Parameter as BrewtilsParameter,
-    Request as BrewtilsRequest,
-    Job as BrewtilsJob,
-)
+from .validators import validate_permissions
 
 __all__ = [
     "System",
@@ -59,7 +59,7 @@ __all__ = [
     "Choices",
     "Event",
     "Principal",
-    "Role",
+    "LegacyRole",
     "RefreshToken",
     "Job",
     "RequestTemplate",
@@ -70,6 +70,9 @@ __all__ = [
     "Garden",
     "File",
     "FileChunk",
+    "Role",
+    "RoleAssignment",
+    "User",
 ]
 
 
@@ -550,8 +553,8 @@ class Event(MongoModel, Document):
     timestamp = DateTimeField()
 
 
-class Role(MongoModel, Document):
-    brewtils_model = brewtils.models.Role
+class LegacyRole(MongoModel, Document):
+    brewtils_model = brewtils.models.LegacyRole
 
     name = StringField(required=True)
     description = StringField()
@@ -569,7 +572,7 @@ class Principal(MongoModel, Document):
 
     username = StringField(required=True)
     hash = StringField()
-    roles = ListField(field=ReferenceField("Role", reverse_delete_rule=PULL))
+    roles = ListField(field=ReferenceField("LegacyRole", reverse_delete_rule=PULL))
     preferences = DictField()
     metadata = DictField()
 
@@ -776,3 +779,53 @@ class FileChunk(MongoModel, Document):
 
 class RawFile(Document):
     file = FileField()
+
+
+class Role(Document):
+    name = StringField()
+    description = StringField()
+    permissions = ListField(field=StringField(), validation=validate_permissions)
+
+    meta = {
+        "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
+    }
+
+
+class RoleAssignment(EmbeddedDocument):
+    domain = StringField()
+    role = ReferenceField("Role")
+
+
+class User(Document):
+    username = StringField(required=True)
+    password = StringField()
+    role_assignments = EmbeddedDocumentListField("RoleAssignment")
+
+    meta = {
+        "indexes": [{"name": "unique_index", "fields": ["username"], "unique": True}],
+    }
+
+    def set_password(self, password: str):
+        """This helper should be used to set the user's password, rather than directly
+        assigning a value. This ensures that the password is stored as a hash rather
+        than in plain text
+
+        Args:
+            password: String to set as the user's password.
+
+        Returns:
+            None
+        """
+        self.password = custom_app_context.hash(password)
+
+    def verify_password(self, password: str):
+        """Checks the provided plaintext password against thea user's stored password
+        hash
+
+        Args:
+            password: Plaintext string to check against user's password"
+
+        Returns:
+            bool: True if the password matches, False otherwise
+        """
+        return custom_app_context.verify(password, self.password)

@@ -21,7 +21,7 @@ class MongoParser(SchemaParser):
             "ChoicesSchema": beer_garden.db.mongo.models.Choices,
             "EventSchema": beer_garden.db.mongo.models.Event,
             "PrincipalSchema": beer_garden.db.mongo.models.Principal,
-            "RoleSchema": beer_garden.db.mongo.models.Role,
+            "LegacyRoleSchema": beer_garden.db.mongo.models.LegacyRole,
             "RefreshTokenSchema": beer_garden.db.mongo.models.RefreshToken,
             "JobSchema": beer_garden.db.mongo.models.Job,
             "DateTriggerSchema": beer_garden.db.mongo.models.DateTrigger,

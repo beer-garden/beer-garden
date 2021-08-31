@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import datetime
+import json
 import re
 import socket
+from typing import Union
 
 from brewtils.errors import (
     AuthorizationRequired,
     ConflictError,
     ModelError,
     ModelValidationError,
+    NotFoundError,
     RequestForbidden,
     RequestPublishException,
     WaitExceededError,
-    NotFoundError,
 )
 from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
-from mongoengine.errors import (
-    DoesNotExist,
-    NotUniqueError,
-    ValidationError as MongoValidationError,
-)
+from marshmallow.exceptions import ValidationError as MarshmallowValidationError
+from mongoengine.errors import DoesNotExist, NotUniqueError
+from mongoengine.errors import ValidationError as MongoValidationError
 from pymongo.errors import DocumentTooLarge
 from tornado.web import HTTPError, RequestHandler
 
@@ -36,9 +36,9 @@ from beer_garden.api.http.metrics import http_api_latency_total
 from beer_garden.errors import (
     EndpointRemovedException,
     NotFoundException,
+    NotUniqueException,
     RoutingException,
     RoutingRequestException,
-    NotUniqueException,
 )
 
 
@@ -63,6 +63,7 @@ class BaseHandler(AuthMixin, RequestHandler):
     charset_re = re.compile(r"charset=(.*)$")
 
     error_map = {
+        MarshmallowValidationError: {"status_code": 400},
         MongoValidationError: {"status_code": 400},
         ModelError: {"status_code": 400},
         RoutingRequestException: {"status_code": 400},
@@ -251,3 +252,22 @@ class BaseHandler(AuthMixin, RequestHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.set_status(code)
         self.finish({"message": message})
+
+    @property
+    def request_body(self) -> Union[dict, None]:
+        """A convenience helper that handles transforming the request.decoded_body into
+        a proper dict
+
+        Returns:
+            dict: if request has a decoded_body
+
+        Raises:
+            HTTPError: request has no decoded_body
+        """
+        if hasattr(self.request, "decoded_body"):
+            return json.loads(self.request.decoded_body)
+        else:
+            raise HTTPError(
+                400,
+                reason="A body was expected with the request, but none was provided.",
+            )

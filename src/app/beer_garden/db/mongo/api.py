@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-import brewtils.models
 import logging
+from typing import List, Optional, Tuple, Type, Union
+
+import brewtils.models
 from box import Box
 from brewtils.models import BaseModel
 from brewtils.schema_parser import SchemaParser
@@ -12,7 +14,6 @@ from mongoengine import (
     register_connection,
 )
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
-from typing import List, Optional, Tuple, Type, Union
 
 import beer_garden.db.mongo.models
 from beer_garden.db.mongo.models import MongoModel
@@ -55,7 +56,11 @@ ModelItem = Union[
 _model_map = {}
 for model_name in beer_garden.db.mongo.models.__all__:
     mongo_class = getattr(beer_garden.db.mongo.models, model_name)
-    _model_map[mongo_class.brewtils_model] = mongo_class
+
+    brewtils_model = getattr(mongo_class, "brewtils_model", None)
+
+    if brewtils_model:
+        _model_map[brewtils_model] = mongo_class
 
 
 def from_brewtils(obj: ModelItem) -> MongoModel:
@@ -170,7 +175,7 @@ def initial_setup(guest_login_enabled):
     for doc in (
         beer_garden.db.mongo.models.Job,
         beer_garden.db.mongo.models.Request,
-        beer_garden.db.mongo.models.Role,
+        beer_garden.db.mongo.models.LegacyRole,
         beer_garden.db.mongo.models.System,
         beer_garden.db.mongo.models.Principal,
     ):
