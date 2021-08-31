@@ -1,18 +1,12 @@
 # -*- coding: utf-8 -*-
 import re
-from typing import Optional, Awaitable
-from copy import deepcopy
 
-import brewtils.models
-
+from beer_garden.api.http.authorization import Permissions, authenticated
+from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import JobSchema
-from brewtils.models import JobDefinitionList, JobIDList
-
-from beer_garden.api.http.authorization import authenticated, Permissions
-from beer_garden.api.http.base_handler import BaseHandler
 
 
 class JobAPI(BaseHandler):
@@ -256,43 +250,23 @@ class JobImportAPI(BaseHandler):
         tags:
           - Jobs
         """
-        empty_body_regex = re.compile(r"\s*\{\s*\}\s*")  # noqa
+        empty_body_regex = re.compile(r"\s*\{\s*\}\s*|\s*")  # noqa
         decoded_body: str = self.request.body.decode("utf-8")
 
-        if not len(decoded_body) or empty_body_regex.match(decoded_body):
+        if len(decoded_body) == 0 or empty_body_regex.match(decoded_body) is not None:
             raise ValueError("Body was empty")
 
-        parsed_job_dfn_list: Optional[JobDefinitionList]
-        parsed_job_dfn_list = SchemaParser.parse_job_definitions(
-            decoded_body, from_string=True
-        )
-
-        if parsed_job_dfn_list is None or parsed_job_dfn_list.jobs is None:
-            raise ValueError("Could not parse any job definitions")
-
-        cleaned_job_dfn_list = JobDefinitionList(
-            list(map(self._clean_job, parsed_job_dfn_list.jobs))
+        parsed_job_list = SchemaParser.parse_job(
+            decoded_body, from_string=True, many=True
         )
 
         response = await self.client(
-            Operation(operation_type="JOB_CREATE_MULTI", args=[cleaned_job_dfn_list])
+            Operation(operation_type="JOB_CREATE_MULTI", args=[parsed_job_list])
         )
 
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
-
-    @classmethod
-    def _clean_job(cls, job: brewtils.models.Job) -> brewtils.models.Job:
-        """Remove fields from a Job definition that a new Job would not have."""
-        job_copy = deepcopy(job)
-
-        job_copy.error_count = 0
-        job_copy.id = None
-        job_copy.next_run_time = None
-        job_copy.success_count = 0
-
-        return job_copy
 
 
 class JobExportAPI(BaseHandler):
@@ -326,22 +300,18 @@ class JobExportAPI(BaseHandler):
         filter_params_dict = {}
         decoded_body: str = self.request.body.decode("utf-8")
 
-        if len(decoded_body):
-            ids_string = "ids"
-            job_id_list: JobIDList = SchemaParser.parse_job_ids(
-                decoded_body, from_string=True
-            )
+        if len(decoded_body) > 0:
+            filter_params_dict["id__in"] = decoded_body
 
-            ids = getattr(job_id_list, ids_string)
-
-            if ids:
-                filter_params_dict["id__in"] = ids
-
-        response = await self.client(
+        response_objects = await self.client(
             Operation(
-                operation_type="JOB_READ_SOME",
+                operation_type="JOB_READ_ALL",
                 kwargs={"filter_params": filter_params_dict},
-            )
+            ),
+            serialize_kwargs={"return_raw": True},
+        )
+        response = SchemaParser.serialize(
+            response_objects, to_string=True, schema_name="JobExportSchema"
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")

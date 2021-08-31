@@ -22,10 +22,6 @@ from copy import deepcopy
 from functools import partial
 from typing import Dict, Union
 
-from brewtils import EasyClient
-from brewtils.models import Event, Events, Garden, Operation, Request, System
-from stomp.exception import ConnectFailedException
-
 import beer_garden
 import beer_garden.commands
 import beer_garden.config as config
@@ -44,11 +40,14 @@ from beer_garden.api.stomp.transport import Connection, consolidate_headers, pro
 from beer_garden.errors import (
     ForwardException,
     RoutingRequestException,
-    UnknownGardenException,
+    UnknownGardenException
 )
 from beer_garden.events import publish
 from beer_garden.garden import get_garden, get_gardens
 from beer_garden.requests import complete_request
+from brewtils import EasyClient
+from brewtils.models import Event, Events, Garden, Operation, Request, System
+from stomp.exception import ConnectFailedException
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +113,6 @@ route_functions = {
     "JOB_UPDATE": beer_garden.scheduler.update_job,
     "JOB_READ": beer_garden.scheduler.get_job,
     "JOB_READ_ALL": beer_garden.scheduler.get_jobs,
-    "JOB_READ_SOME": beer_garden.scheduler.get_some_jobs,
     "JOB_PAUSE": beer_garden.scheduler.pause_job,
     "JOB_RESUME": beer_garden.scheduler.resume_job,
     "JOB_DELETE": beer_garden.scheduler.remove_job,
