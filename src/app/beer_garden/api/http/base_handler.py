@@ -130,6 +130,19 @@ class BaseHandler(AuthMixin, RequestHandler):
                 "Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS"
             )
 
+    def get_decoded_body_raise_on_empty(self):
+        """Get the decoded body of a request and invoke a status 400 if empty."""
+        empty_body_regex = re.compile(r"^\s*\{\s*\}\s*$|^\s*\[\s*\]\s*$|^\s*$")  # noqa
+        decoded_body = self.request.body.decode("utf-8")
+
+        if len(decoded_body) == 0 or empty_body_regex.match(decoded_body) is not None:
+            # the combination of the length check and the regex match ensure the
+            # body is not an empty string, a string of only whitespace, an empty list,
+            # or an empty map
+            raise ValueError()  # to invoke a 400 error
+
+        return decoded_body
+
     @property
     def prometheus_endpoint(self):
         """Removes Mongo ID from endpoint."""
