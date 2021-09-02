@@ -32,6 +32,7 @@ from brewtils.schemas import (
     UserCreateSchema,
     UserListSchema,
     UserSchema,
+    JobExportInputSchema,
 )
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
@@ -336,10 +337,15 @@ def _load_swagger(url_specs, title=None):
             {"$ref": "#/definitions/IntervalTrigger"},
         ]
     }
-    api_spec._definitions["Job"]["properties"]["trigger"] = trigger_properties
+    api_spec._definitions["Job"]["properties"]["trigger"] = trigger_properties  # noqa
 
+<<<<<<< HEAD
     api_spec.definition("JobExport", schema=JobExportSchema)
     api_spec.definition("JobImport", schema=JobExportListSchema)
+=======
+    api_spec.definition("JobExport", schema=JobExportInputSchema)
+    api_spec.definition("JobImport", schema=JobExportSchema)  # naming is confusing
+>>>>>>> 6a31201e (#1067 - Refactor)
 
     error = {"message": {"type": "string"}}
     api_spec.definition(

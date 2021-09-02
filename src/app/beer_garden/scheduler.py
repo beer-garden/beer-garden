@@ -5,12 +5,15 @@ The schedule service is responsible for:
 * CRUD operations of `Job` operations
 * Triggering `Job` based `Requests`
 """
+import json
 import logging
 import threading
 from datetime import datetime, timedelta
 from operator import methodcaller
 from os.path import isdir
 from typing import Dict, List, Optional
+
+from bson import ObjectId
 
 import beer_garden
 import beer_garden.config as config
@@ -29,12 +32,13 @@ from pathtools.patterns import match_any_paths
 from pymongo.client_session import ClientSession
 from pymongo.collection import Collection
 from pymongo.results import InsertManyResult
+from bson import json_util
 from watchdog.events import (
     EVENT_TYPE_CREATED,
     EVENT_TYPE_DELETED,
     EVENT_TYPE_MODIFIED,
     EVENT_TYPE_MOVED,
-    PatternMatchingEventHandler
+    PatternMatchingEventHandler,
 )
 from watchdog.observers.polling import PollingObserver as Observer
 from watchdog.utils import has_attribute, unicode_paths
@@ -558,14 +562,32 @@ def create_jobs(jobs: List[Job]) -> List[str]:
         to_mongo_caller = methodcaller("to_mongo")
         job_bson_objects = map(to_mongo_caller, map(from_brewtils, jobs))
 
-        with session.start_transaction():
-            result: InsertManyResult = job_collection.insert_many(
-                job_bson_objects, session=session
-            )
-            jobs_created_list = result.inserted_ids
+        # this does not work for mongodb running standalone
+        # transactions are only supported when the database instance is a
+        # replica set or a distubuted cluster
+        # one more point for getting rid of mongodb
+        #
+        # this is left here for reference in case anything changes
+        # with session.start_transaction():
+        #     result: InsertManyResult = job_collection.insert_many(
+        #         job_bson_objects, session=session
+        #     )
+        #     job_ids_created_list = result.inserted_ids
 
-    # if we've reached this point, jobs_created_list exists
-    return jobs_created_list
+        result: InsertManyResult = job_collection.insert_many(
+            job_bson_objects, session=session
+        )
+        job_ids_created_list: List[ObjectId] = result.inserted_ids
+
+    # if we've reached this point, job_ids_created_list exists
+    oid_key = "$oid"
+    job_ids_json = json_util.dumps(job_ids_created_list)
+
+    # what we get back is not useful for our purposes, unfortunately, so we convert
+    # to dictionary so that we can extract what we need
+    job_ids_dict_list = json.loads(job_ids_json)
+
+    return [job_id_dict[oid_key] for job_id_dict in job_ids_dict_list]
 
 
 @publish_event(Events.JOB_UPDATED)
