@@ -9,30 +9,21 @@ import json
 import logging
 import threading
 from datetime import datetime, timedelta
-from operator import methodcaller
+from operator import attrgetter, methodcaller
 from os.path import isdir
 from typing import Dict, List, Optional
 
-from bson import ObjectId
-
-import beer_garden
-import beer_garden.config as config
-import beer_garden.db.api as db
 import mongoengine
 import pymongo
 import pymongo.database
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
-from beer_garden.db.mongo.api import from_brewtils
-from beer_garden.db.mongo.jobstore import construct_trigger
-from beer_garden.events import publish_event
-from beer_garden.requests import get_request
-from brewtils.models import Event, Events, FileTrigger, Job, Operation
+from bson import ObjectId, json_util
 from pathtools.patterns import match_any_paths
 from pymongo.client_session import ClientSession
 from pymongo.collection import Collection
+from pymongo.cursor import Cursor
 from pymongo.results import InsertManyResult
-from bson import json_util
 from watchdog.events import (
     EVENT_TYPE_CREATED,
     EVENT_TYPE_DELETED,
@@ -42,6 +33,16 @@ from watchdog.events import (
 )
 from watchdog.observers.polling import PollingObserver as Observer
 from watchdog.utils import has_attribute, unicode_paths
+
+import beer_garden
+import beer_garden.config as config
+import beer_garden.db.api as db
+from beer_garden.db.mongo.api import from_brewtils
+from beer_garden.db.mongo.jobstore import construct_trigger
+from beer_garden.events import publish_event
+from beer_garden.requests import get_request
+from brewtils.models import Event, Events, FileTrigger, Job, Operation
+from brewtils.schema_parser import SchemaParser
 
 logger = logging.getLogger(__name__)
 
@@ -548,6 +549,7 @@ def create_jobs(jobs: List[Job]) -> List[str]:
         A list containing the `id`s of the `Job`s that were added
     """
     job_collection_name = "job"
+    id_key, oid_key = "_id", "$oid"
 
     # we want the addition of Jobs to obey ACID: either all will succeed or none
     # will succeed; hence we skip using mongoengine and use the pymongo library
@@ -564,7 +566,7 @@ def create_jobs(jobs: List[Job]) -> List[str]:
 
         # this does not work for mongodb running standalone
         # transactions are only supported when the database instance is a
-        # replica set or a distubuted cluster
+        # replica set or a distributed cluster
         # one more point for getting rid of mongodb
         #
         # this is left here for reference in case anything changes
@@ -578,16 +580,26 @@ def create_jobs(jobs: List[Job]) -> List[str]:
             job_bson_objects, session=session
         )
         job_ids_created_list: List[ObjectId] = result.inserted_ids
+        jobs_created_cursor: Cursor = job_collection.find(
+            {id_key: {"$in": job_ids_created_list}}
+        )
 
-    # if we've reached this point, job_ids_created_list exists
-    oid_key = "$oid"
-    job_ids_json = json_util.dumps(job_ids_created_list)
+    # if we've reached this point, job_ids_created_list and jobs_created_cursor exist
 
-    # what we get back is not useful for our purposes, unfortunately, so we convert
-    # to dictionary so that we can extract what we need
-    job_ids_dict_list = json.loads(job_ids_json)
+    @publish_event(Events.JOB_CREATED)
+    def publish_the_job_created(raw_job):
+        """Parse the job to a brewtils Job after replacing the unusable `id`."""
+        raw_object_id: ObjectId = raw_job.pop(id_key)
+        object_id_as_dict = json.loads(json_util.dumps(raw_object_id))
+        raw_job["id"] = object_id_as_dict[oid_key]
 
-    return [job_id_dict[oid_key] for job_id_dict in job_ids_dict_list]
+        # the `publish_event` wrapper needs the whole Job object
+        return SchemaParser.parse_job(raw_job)
+
+    # but we're only interested in the `id` field
+    return list(
+        map(attrgetter("id"), map(publish_the_job_created, jobs_created_cursor))
+    )
 
 
 @publish_event(Events.JOB_UPDATED)
