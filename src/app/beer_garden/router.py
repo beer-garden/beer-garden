@@ -40,7 +40,7 @@ from beer_garden.api.stomp.transport import Connection, consolidate_headers, pro
 from beer_garden.errors import (
     ForwardException,
     RoutingRequestException,
-    UnknownGardenException
+    UnknownGardenException,
 )
 from beer_garden.events import publish
 from beer_garden.garden import get_garden, get_gardens

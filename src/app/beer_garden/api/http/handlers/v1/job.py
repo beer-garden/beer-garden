@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import re
-
 from marshmallow import ValidationError
 
 from beer_garden.api.http.authorization import Permissions, authenticated

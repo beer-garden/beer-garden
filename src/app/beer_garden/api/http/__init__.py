@@ -32,7 +32,6 @@ from brewtils.schemas import (
     UserCreateSchema,
     UserListSchema,
     UserSchema,
-    JobExportInputSchema,
 )
 from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
