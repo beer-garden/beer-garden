@@ -52,7 +52,9 @@ def get_gardens(include_local: bool = True) -> List[Garden]:
         All known gardens
 
     """
-    gardens = db.query(Garden)
+    # This is necessary for as long as local_garden is still needed. See the notes
+    # there for more detail.
+    gardens = db.query(Garden, filter_params={"connection_type__ne": "LOCAL"})
 
     if include_local:
         gardens += [local_garden()]
@@ -68,19 +70,23 @@ def local_garden(all_systems: bool = False) -> Garden:
 
     Returns:
         The local Garden
-
     """
+    # This function is still necessary because there are various things that expect
+    # the system information to be embedded in the garden document itself (as opposed
+    # Systems just having a reference to their garden). There is nothing that would
+    # keep a LOCAL garden's embedded list of systems up to date currently, so we instead
+    # build the list of systems (and namespaces) at call time. Once the System
+    # relationship has been refactored, the need for this function should go away.
+    garden: Garden = db.query_unique(Garden, connection_type="LOCAL")
+
     filter_params = {}
     if not all_systems:
         filter_params["local"] = True
 
-    return Garden(
-        name=config.get("garden.name"),
-        connection_type="LOCAL",
-        status="RUNNING",
-        systems=get_systems(filter_params=filter_params),
-        namespaces=get_namespaces(),
-    )
+    garden.systems = get_systems(filter_params=filter_params)
+    garden.namespaces = get_namespaces()
+
+    return garden
 
 
 @publish_event(Events.GARDEN_SYNC)
@@ -145,15 +151,18 @@ def remove_garden(garden_name: str) -> None:
         garden_name: The Garden name
 
     Returns:
-        None
-
+        The deleted garden
     """
-    garden = db.query_unique(Garden, name=garden_name, raise_missing=True)
+    garden = get_garden(garden_name)
 
-    for system in garden.systems:
+    # TODO: Switch to lookup by garden_name rather than namespace
+    systems = get_systems(filter_params={"namespace": garden_name})
+
+    for system in systems:
         remove_system(system.id)
 
     db.delete(garden)
+
     return garden
 
 

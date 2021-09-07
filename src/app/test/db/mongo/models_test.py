@@ -4,7 +4,7 @@ import pytest
 from brewtils.errors import ModelValidationError, RequestStatusTransitionError
 from brewtils.schemas import RequestTemplateSchema
 from mock import Mock
-from mongoengine import ValidationError
+from mongoengine import NotUniqueError, ValidationError
 
 import beer_garden.db.api as db
 from beer_garden.api.authorization import Permissions
@@ -12,6 +12,7 @@ from beer_garden.db.mongo.models import (
     Choices,
     Command,
     DateTrigger,
+    Garden,
     Instance,
     Job,
     Parameter,
@@ -521,3 +522,28 @@ class TestUser:
 
         assert user.verify_password("password") is True
         assert user.verify_password("mismatch") is False
+
+
+class TestGarden:
+    @classmethod
+    def setup_class(cls):
+        Garden.drop_collection()
+        Garden.ensure_indexes()
+
+    @pytest.fixture()
+    def testgarden(self, mongo_conn):
+        garden = Garden(name="testgarden", connection_type="LOCAL").save()
+        yield garden
+        garden.delete()
+
+    def test_garden_names_are_required_to_be_unique(self, testgarden):
+        """Attempting to create a garden that shares a name with an existing garden
+        should raise an exception"""
+        with pytest.raises(NotUniqueError):
+            Garden(name=testgarden.name, connection_type="HTTP").save()
+
+    def test_only_one_local_garden_may_exist(self, testgarden):
+        """Attempting to create more than one garden with connection_type of LOCAL
+        should raise an exception"""
+        with pytest.raises(NotUniqueError):
+            Garden(name=f"not{testgarden.name}", connection_type="LOCAL").save()
