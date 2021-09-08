@@ -9,8 +9,6 @@ from brewtils import EasyClient  # type: ignore
 from brewtils.models import (  # type: ignore
     IntervalTrigger,
     Job,
-    JobDefinitionList,
-    JobIDList,
     RequestTemplate,
 )
 
