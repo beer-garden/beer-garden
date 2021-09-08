@@ -22,10 +22,6 @@ from copy import deepcopy
 from functools import partial
 from typing import Dict, Union
 
-from brewtils import EasyClient
-from brewtils.models import Event, Events, Garden, Operation, Request, System
-from stomp.exception import ConnectFailedException
-
 import beer_garden
 import beer_garden.commands
 import beer_garden.config as config
@@ -49,6 +45,9 @@ from beer_garden.errors import (
 from beer_garden.events import publish
 from beer_garden.garden import get_garden, get_gardens
 from beer_garden.requests import complete_request
+from brewtils import EasyClient
+from brewtils.models import Event, Events, Garden, Operation, Request, System
+from stomp.exception import ConnectFailedException
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +109,7 @@ route_functions = {
     "INSTANCE_STOP": beer_garden.plugin.stop,
     "INSTANCE_LOGS": beer_garden.plugin.read_logs,
     "JOB_CREATE": beer_garden.scheduler.create_job,
+    "JOB_CREATE_MULTI": beer_garden.scheduler.create_jobs,
     "JOB_UPDATE": beer_garden.scheduler.update_job,
     "JOB_READ": beer_garden.scheduler.get_job,
     "JOB_READ_ALL": beer_garden.scheduler.get_jobs,
@@ -471,7 +471,7 @@ def _pre_route(operation: Operation) -> Operation:
             operation.model.namespace = config.get("garden.name")
 
     elif operation.operation_type == "SYSTEM_READ_ALL":
-        if operation.kwargs.get("filter_params", {}).get("namespace") == "":
+        if operation.kwargs.get("filter_params", {}).get("namespace", "") == "":
             operation.kwargs["filter_params"]["namespace"] = config.get("garden.name")
 
     return operation
