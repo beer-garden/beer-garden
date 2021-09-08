@@ -21,7 +21,6 @@ from beer_garden.db.mongo.parser import MongoParser
 from beer_garden.db.mongo.pruner import MongoPruner
 from beer_garden.db.mongo.util import (
     check_indexes,
-    ensure_local_garden,
     ensure_model_migration,
     ensure_roles,
     ensure_users,
@@ -65,7 +64,7 @@ for model_name in beer_garden.db.mongo.models.__all__:
 
 
 def from_brewtils(obj: ModelItem) -> MongoModel:
-    """Convert an item from its Brewtils model to its  one
+    """Convert an item from its Brewtils model to its Mongo one.
 
     Args:
         obj: The Brewtils model item
@@ -174,7 +173,6 @@ def initial_setup(guest_login_enabled):
     ensure_model_migration()
 
     for doc in (
-        beer_garden.db.mongo.models.Garden,
         beer_garden.db.mongo.models.Job,
         beer_garden.db.mongo.models.Request,
         beer_garden.db.mongo.models.LegacyRole,
@@ -183,7 +181,6 @@ def initial_setup(guest_login_enabled):
     ):
         check_indexes(doc)
 
-    ensure_local_garden()
     ensure_roles()
     ensure_users(guest_login_enabled)
 
@@ -342,7 +339,7 @@ def create(obj: ModelItem) -> ModelItem:
         The saved Brewtils model
 
     """
-    mongo_obj = from_brewtils(obj)
+    mongo_obj: MongoModel = from_brewtils(obj)
 
     try:
         if hasattr(mongo_obj, "deep_save"):

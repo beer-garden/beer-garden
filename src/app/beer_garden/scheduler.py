@@ -5,35 +5,44 @@ The schedule service is responsible for:
 * CRUD operations of `Job` operations
 * Triggering `Job` based `Requests`
 """
+import json
 import logging
 import threading
-from os.path import isdir
-from typing import Dict, List
 from datetime import datetime, timedelta
+from operator import attrgetter, methodcaller
+from os.path import isdir
+from typing import Dict, List, Optional
 
+import mongoengine
+import pymongo
+import pymongo.database
+from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
-
-from watchdog.observers.polling import PollingObserver as Observer
+from bson import ObjectId, json_util
+from pathtools.patterns import match_any_paths
+from pymongo.client_session import ClientSession
+from pymongo.collection import Collection
+from pymongo.cursor import Cursor
+from pymongo.results import InsertManyResult
 from watchdog.events import (
-    PatternMatchingEventHandler,
     EVENT_TYPE_CREATED,
     EVENT_TYPE_DELETED,
-    EVENT_TYPE_MOVED,
     EVENT_TYPE_MODIFIED,
+    EVENT_TYPE_MOVED,
+    PatternMatchingEventHandler,
 )
+from watchdog.observers.polling import PollingObserver as Observer
 from watchdog.utils import has_attribute, unicode_paths
-from pathtools.patterns import match_any_paths
-
-from apscheduler.schedulers.background import BackgroundScheduler
-from brewtils.models import Event, Events, Job, Operation
 
 import beer_garden
 import beer_garden.config as config
 import beer_garden.db.api as db
+from beer_garden.db.mongo.api import from_brewtils
+from beer_garden.db.mongo.jobstore import construct_trigger
 from beer_garden.events import publish_event
 from beer_garden.requests import get_request
-from beer_garden.db.mongo.jobstore import construct_trigger
-from brewtils.models import FileTrigger
+from brewtils.models import Event, Events, FileTrigger, Job, Operation
+from brewtils.schema_parser import SchemaParser
 
 logger = logging.getLogger(__name__)
 
@@ -510,7 +519,7 @@ def get_job(job_id: str) -> Job:
     return db.query_unique(Job, id=job_id)
 
 
-def get_jobs(filter_params: Dict = None) -> List[Job]:
+def get_jobs(filter_params: Optional[Dict] = None) -> List[Job]:
     return db.query(Job, filter_params=filter_params)
 
 
@@ -528,6 +537,69 @@ def create_job(job: Job) -> Job:
     job = db.create(job)
 
     return job
+
+
+def create_jobs(jobs: List[Job]) -> List[str]:
+    """Create multiple new Jobs and add them to the scheduler.
+
+    Args:
+        jobs: A list containing the `Job`s to be added
+
+    Returns:
+        A list containing the `id`s of the `Job`s that were added
+    """
+    job_collection_name = "job"
+    id_key, oid_key = "_id", "$oid"
+
+    # we want the addition of Jobs to obey ACID: either all will succeed or none
+    # will succeed; hence we skip using mongoengine and use the pymongo library
+    # directly
+    the_connection: pymongo.MongoClient = mongoengine.get_connection()
+    the_db: pymongo.database.Database = mongoengine.get_db()
+
+    session: ClientSession
+    with the_connection.start_session() as session:
+        job_collection: Collection = the_db.get_collection(job_collection_name)
+
+        to_mongo_caller = methodcaller("to_mongo")
+        job_bson_objects = map(to_mongo_caller, map(from_brewtils, jobs))
+
+        # this does not work for mongodb running standalone
+        # transactions are only supported when the database instance is a
+        # replica set or a distributed cluster
+        # one more point for getting rid of mongodb
+        #
+        # this is left here for reference in case anything changes
+        # with session.start_transaction():
+        #     result: InsertManyResult = job_collection.insert_many(
+        #         job_bson_objects, session=session
+        #     )
+        #     job_ids_created_list = result.inserted_ids
+
+        result: InsertManyResult = job_collection.insert_many(
+            job_bson_objects, session=session
+        )
+        job_ids_created_list: List[ObjectId] = result.inserted_ids
+        jobs_created_cursor: Cursor = job_collection.find(
+            {id_key: {"$in": job_ids_created_list}}
+        )
+
+    # if we've reached this point, job_ids_created_list and jobs_created_cursor exist
+
+    @publish_event(Events.JOB_CREATED)
+    def publish_the_job_created(raw_job):
+        """Parse the job to a brewtils Job after replacing the unusable `id`."""
+        raw_object_id: ObjectId = raw_job.pop(id_key)
+        object_id_as_dict = json.loads(json_util.dumps(raw_object_id))
+        raw_job["id"] = object_id_as_dict[oid_key]
+
+        # the `publish_event` wrapper needs the whole Job object
+        return SchemaParser.parse_job(raw_job)
+
+    # but we're only interested in the `id` field
+    return list(
+        map(attrgetter("id"), map(publish_the_job_created, jobs_created_cursor))
+    )
 
 
 @publish_event(Events.JOB_UPDATED)

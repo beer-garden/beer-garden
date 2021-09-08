@@ -733,15 +733,7 @@ class Garden(MongoModel, Document):
     meta = {
         "auto_create_index": False,  # We need to manage this ourselves
         "index_background": True,
-        "indexes": [
-            {"name": "unique_index", "fields": ["name"], "unique": True},
-            {
-                "name": "local_unique_index",
-                "fields": ["connection_type"],
-                "unique": True,
-                "partialFilterExpression": {"connection_type": "LOCAL"},
-            },
-        ],
+        "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
     }
 
     def deep_save(self):
