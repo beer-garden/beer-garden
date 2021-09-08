@@ -3,7 +3,6 @@ from marshmallow import ValidationError
 
 from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
-from typing import Optional, Awaitable, List, Dict, Any
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser

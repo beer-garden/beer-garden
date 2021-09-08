@@ -18,7 +18,7 @@ import pymongo
 import pymongo.database
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
-from bson import ObjectId, json_util
+from bson import ObjectId
 from pathtools.patterns import match_any_paths
 from pymongo.client_session import ClientSession
 from pymongo.collection import Collection
