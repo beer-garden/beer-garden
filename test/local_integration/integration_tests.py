@@ -205,9 +205,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="integration_tests",
         description="Run BeerGarden integration tests locally.",
-        usage="integration_tests.py [-h] beer_garden_path brewtils_path "\
-              "[--test {all|scheduler|local_plugins|remote_plugins|garde"\
-              "ns_stomp|stomp_|gardens_http}*]",
+        usage="integration_tests.py [-h] beer_garden_path brewtils_path "
+        "[--test {all|scheduler|local_plugins|remote_plugins|garde"
+        "ns_stomp|stomp_|gardens_http}*]",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
