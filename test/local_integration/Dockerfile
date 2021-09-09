@@ -20,11 +20,11 @@ ENV BG_LOG_CONFIG_FILE=/conf/app-logging.yaml \
 COPY configs/app-logging.yaml $CONF_DIR/
 COPY configs/plugin-logging.yaml $CONF_DIR/
 COPY configs/config.yaml $CONF_DIR/
-COPY requirements.txt $CONF_DIR/
+COPY configs/requirements-for-brewtils-inside-container.txt $CONF_DIR/
 
 RUN set -ex \
     \
-    && pip install -r $CONF_DIR/requirements.txt
+    && pip install -r $CONF_DIR/requirements-for-brewtils-inside-container.txt
 
 WORKDIR /
 RUN curl -sL $PLUGINS_LINK | tar xz \

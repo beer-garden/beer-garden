@@ -205,6 +205,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="integration_tests",
         description="Run BeerGarden integration tests locally.",
+        usage="integration_tests.py [-h] beer_garden_path brewtils_path "\
+              "[--test {all|scheduler|local_plugins|remote_plugins|garde"\
+              "ns_stomp|stomp_|gardens_http}*]",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
@@ -235,13 +238,13 @@ if __name__ == "__main__":
         if not path.exists() or not path.is_dir():
             print(
                 f"Argument must point to the top-level directory of the {name} "
-                f"sources: {str(bg_path)}"
+                f"sources: {str(path)}"
             )
             sys.exit()
 
     if args.test is None or len(args.test) == 0 or ALL_TESTS in args.test:
         test_list = list(test_dirs_dict.values())
     else:
-        test_list = [test_dirs_dict[test] for test in args.test]
+        test_list = [test_dirs_dict[test] for test in set(args.test)]
 
     main(bg_path, btils_path, test_list)
