@@ -81,7 +81,7 @@ class TestGardenSetup(object):
 
         for garden_list, garden_name, the_client, label in [
             (parent, self.parent_garden_name, self.easy_client, "parent"),
-            (child, self.child_garden_name, self.easy_client, "child")
+            (child, self.child_garden_name, self.easy_client, "child"),
         ]:
             if len(garden_list) == 0:
                 # if there is no garden of this type, create one
