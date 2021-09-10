@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 import pytest
-from mock import MagicMock, Mock, patch
-from mongoengine import DoesNotExist, NotUniqueError, connect
+import yaml
+from mock import MagicMock, Mock, mock_open, patch
+from mongoengine import DoesNotExist, connect
 
 import beer_garden.db.mongo.models
 import beer_garden.db.mongo.util
 from beer_garden import config
-from beer_garden.db.mongo.models import Garden
-from beer_garden.db.mongo.util import ensure_local_garden
+from beer_garden.db.mongo.models import Garden, Role
+from beer_garden.db.mongo.util import ensure_local_garden, ensure_roles
 
 
 @pytest.fixture
@@ -37,39 +38,6 @@ def model_mocks(monkeypatch):
         "job": job_mock,
         "principal": principal_mock,
     }
-
-
-class TestEnsureLegacyRoles(object):
-    def test_ensure_roles(self, model_mocks):
-        beer_garden.db.mongo.util.ensure_roles()
-        assert 3 == model_mocks["role"].objects.get.call_count
-
-    def test_new_install(self, model_mocks):
-        model_mocks["role"].objects.count.return_value = 0
-        model_mocks["role"].objects.get.side_effect = DoesNotExist
-
-        beer_garden.db.mongo.util.ensure_roles()
-        assert 5 == model_mocks["role"].objects.get.call_count
-
-    def test_new_install_race_convenience(self, model_mocks):
-        """Race condition where another process created a convenience role"""
-        model_mocks["role"].objects.count.return_value = 0
-        model_mocks["role"].objects.get.side_effect = [NotUniqueError] + [
-            DoesNotExist for _ in range(4)
-        ]
-
-        beer_garden.db.mongo.util.ensure_roles()
-        assert 5 == model_mocks["role"].objects.get.call_count
-
-    def test_new_install_race_mandatory(self, model_mocks):
-        """Race condition where another process created a mandatory role"""
-        model_mocks["role"].objects.count.return_value = 0
-        model_mocks["role"].objects.get.side_effect = [
-            DoesNotExist for _ in range(4)
-        ] + [NotUniqueError]
-
-        with pytest.raises(NotUniqueError):
-            beer_garden.db.mongo.util.ensure_roles()
 
 
 class TestEnsureUsers(object):
@@ -331,3 +299,48 @@ class TestEnsureLocalGarden:
         garden = Garden.objects.get(connection_type="LOCAL")
 
         assert garden.name == config.get("garden.name")
+
+
+class TestEnsureRoles:
+    @pytest.fixture
+    def role_definition_yaml(self):
+        role_list = [{"name": "testrole1", "permissions": ["garden:read"]}]
+        yield yaml.dump(role_list)
+
+    @classmethod
+    def setup_class(cls):
+        connect("beer_garden", host="mongomock://localhost")
+
+    def teardown_method(self):
+        beer_garden.db.mongo.models.Role.drop_collection()
+
+    def config_get_value(self, config_name):
+        return "/some/file/path"
+
+    def config_get_none(self, config_name):
+        return None
+
+    def test_ensure_roles_creates_roles_defined_in_file(
+        self, monkeypatch, role_definition_yaml
+    ):
+        """ensure_roles should create the roles defined in the auth.role_definition_file
+        if specified"""
+        monkeypatch.setattr(config, "get", self.config_get_value)
+
+        role_definition_file = config.get("auth.role_definition_file")
+
+        with patch(
+            "builtins.open", mock_open(read_data=role_definition_yaml)
+        ) as mock_file_read:
+            ensure_roles()
+            mock_file_read.assert_called_with(role_definition_file, "r")
+
+        assert len(Role.objects.filter(name="testrole1")) == 1
+
+    def test_ensure_roles_creates_no_roles_if_no_file_specified(self, monkeypatch):
+        """ensure_roles should not create anything if no auth.role_definition_file
+        is specified"""
+        monkeypatch.setattr(config, "get", self.config_get_none)
+        ensure_roles()
+
+        assert len(Role.objects.filter(name="testrole1")) == 0
