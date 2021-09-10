@@ -89,9 +89,9 @@ def _delete_roles_not_in_list(roles: list) -> int:
     """
     role_names = [role["name"] for role in roles]
 
-    affected_roles = Role.objects.filter(name__nin=role_names)
+    roles_to_remove = Role.objects.filter(name__nin=role_names)
 
-    for role in affected_roles:
+    for role in roles_to_remove:
         remove_role(role)
 
-    return len(affected_roles)
+    return len(roles_to_remove)
