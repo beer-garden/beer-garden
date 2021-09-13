@@ -138,7 +138,6 @@ class TestGarden:
 
         bg_garden.connection_params.update(connection_params)
 
-        # can be fixture-ized?
         correct_config = {
             "host": "localhost",
             "port": 1337,
@@ -151,21 +150,14 @@ class TestGarden:
 
         garden = create_garden(bg_garden)
         for key in correct_config:
-            assert garden.connection_params['http'][key] == correct_config[key]
+            assert garden.connection_params["http"][key] == correct_config[key]
 
         for key in connection_params:
-            assert not key in garden.connection_params
+            assert key not in garden.connection_params
 
     def test_create_garden_with_empty_connection_params(self, bg_garden):
         """create_garden should explicitly load default HTTP configs from brewtils when empty"""
 
-        bg_garden.connection_params = {}
-
-        # bg_host is required by brewtils spec and must be passed to load_config
-        spec = YapconfSpec(_CONNECTION_SPEC)
-        defaults = spec.load_config({'bg_host': ''})
-
-        # can be fixture-ized?
         correct_config = {
             "host": "",
             "port": 2337,
@@ -178,6 +170,6 @@ class TestGarden:
 
         garden = create_garden(bg_garden)
         for key in correct_config:
-            assert garden.connection_params['http'][key] == correct_config[key]
+            assert garden.connection_params["http"][key] == correct_config[key]
 
-        assert not 'bg_host' in garden.connection_params
+        assert "bg_host" not in garden.connection_params

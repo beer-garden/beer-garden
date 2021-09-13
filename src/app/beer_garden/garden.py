@@ -186,7 +186,7 @@ def create_garden(garden: Garden) -> Garden:
 
     connection_params = getattr(garden, "connection_params", {})
     # bg_host is required by brewtils garden spec
-    connection_params.setdefault('bg_host', '')
+    connection_params.setdefault("bg_host", "")
 
     spec = YapconfSpec(_CONNECTION_SPEC)
     connection_params = spec.load_config(connection_params)
@@ -202,7 +202,7 @@ def create_garden(garden: Garden) -> Garden:
         "client_cert": "client_cert",
     }
     key_dict.update(config_map)
-    garden.connection_params['http'] = {
+    garden.connection_params["http"] = {
         key_dict[key]: value for key, value in connection_params.items()
     }
     for key in config_map:
