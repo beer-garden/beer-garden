@@ -557,7 +557,10 @@ class TestUser:
 
     @pytest.fixture()
     def role_assignment(self, role):
-        return RoleAssignment(role=role, domain="test_garden")
+        return RoleAssignment(
+            role=role,
+            domain={"scope": "Garden", "identifiers": {"name": "test_garden"}},
+        )
 
     def test_create(self, role_assignment):
         User(username="testuser", role_assignments=[role_assignment]).save()

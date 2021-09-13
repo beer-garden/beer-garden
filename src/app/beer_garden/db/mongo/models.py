@@ -675,7 +675,19 @@ class Job(MongoModel, Document):
         "auto_create_index": False,
         "index_background": True,
         "indexes": [
-            {"name": "next_run_time_index", "fields": ["next_run_time"], "sparse": True}
+            {
+                "name": "next_run_time_index",
+                "fields": ["next_run_time"],
+                "sparse": True,
+            },
+            {
+                "name": "job_system_fields",
+                "fields": [
+                    "request_template.namespace",
+                    "request_template.system",
+                    "request_template.system_version",
+                ],
+            },
         ],
     }
 
@@ -797,8 +809,13 @@ class Role(Document):
     }
 
 
+class RoleAssignmentDomain(EmbeddedDocument):
+    scope = StringField(required=True, choices=["Garden", "System", "Command"])
+    identifiers = DictField(required=True)
+
+
 class RoleAssignment(EmbeddedDocument):
-    domain = StringField()
+    domain = EmbeddedDocumentField(RoleAssignmentDomain)
     role = ReferenceField("Role")
 
 
