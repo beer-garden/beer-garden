@@ -15,6 +15,7 @@ from typing import List
 
 from brewtils.errors import PluginError
 from brewtils.models import Event, Events, Garden, Operation, System
+from brewtils.specification import _CONNECTION_SPEC
 from mongoengine import DoesNotExist
 
 import beer_garden.config as config
@@ -22,6 +23,8 @@ import beer_garden.db.api as db
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems, remove_system
+
+from yapconf import YapconfSpec
 
 logger = logging.getLogger(__name__)
 
@@ -177,6 +180,34 @@ def create_garden(garden: Garden) -> Garden:
         The created Garden
 
     """
+    # Explicitly load default config options into garden params
+    if garden.connection_params is None:
+        garden.connection_params = {}
+
+    connection_params = getattr(garden, "connection_params", {})
+    # bg_host is required by brewtils garden spec
+    connection_params.setdefault('bg_host', '')
+
+    spec = YapconfSpec(_CONNECTION_SPEC)
+    connection_params = spec.load_config(connection_params)
+
+    key_dict = {key: key for key, _ in connection_params.items()}
+    config_map = {
+        "bg_host": "host",
+        "bg_port": "port",
+        "ssl_enabled": "ssl",
+        "bg_url_prefix": "url_prefix",
+        "ca_cert": "ca_cert",
+        "ca_verify": "ca_verify",
+        "client_cert": "client_cert",
+    }
+    key_dict.update(config_map)
+    garden.connection_params['http'] = {
+        key_dict[key]: value for key, value in connection_params.items()
+    }
+    for key in config_map:
+        garden.connection_params.pop(key, None)
+
     garden.status_info["heartbeat"] = datetime.utcnow()
 
     return db.create(garden)

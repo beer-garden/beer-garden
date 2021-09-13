@@ -2,7 +2,9 @@
 import pytest
 from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import System as BrewtilsSystem
+from brewtils.specification import _CONNECTION_SPEC
 from mongoengine import DoesNotExist, connect
+from yapconf import YapconfSpec
 
 from beer_garden import config
 from beer_garden.db.mongo.models import Garden, System
@@ -120,3 +122,62 @@ class TestGarden:
 
         # confirm that systems of other gardens remain intact
         assert len(System.objects.filter(namespace=localgarden.name)) == 1
+
+    def test_create_garden_loads_default_config(self, bg_garden):
+        """create_garden should explicitly load default HTTP configs from brewtils"""
+
+        connection_params = {
+            "bg_host": "localhost",
+            "bg_port": 1337,
+            "bg_url_prefix": "/",
+            "ssl_enabled": True,
+            "ca_cert": "/abc",
+            "ca_verify": True,
+            "client_cert": "/def",
+        }
+
+        bg_garden.connection_params.update(connection_params)
+
+        # can be fixture-ized?
+        correct_config = {
+            "host": "localhost",
+            "port": 1337,
+            "url_prefix": "/",
+            "ssl": True,
+            "ca_cert": "/abc",
+            "ca_verify": True,
+            "client_cert": "/def",
+        }
+
+        garden = create_garden(bg_garden)
+        for key in correct_config:
+            assert garden.connection_params['http'][key] == correct_config[key]
+
+        for key in connection_params:
+            assert not key in garden.connection_params
+
+    def test_create_garden_with_empty_connection_params(self, bg_garden):
+        """create_garden should explicitly load default HTTP configs from brewtils when empty"""
+
+        bg_garden.connection_params = {}
+
+        # bg_host is required by brewtils spec and must be passed to load_config
+        spec = YapconfSpec(_CONNECTION_SPEC)
+        defaults = spec.load_config({'bg_host': ''})
+
+        # can be fixture-ized?
+        correct_config = {
+            "host": "",
+            "port": 2337,
+            "url_prefix": "/",
+            "ssl": True,
+            "ca_cert": None,
+            "ca_verify": True,
+            "client_cert": None,
+        }
+
+        garden = create_garden(bg_garden)
+        for key in correct_config:
+            assert garden.connection_params['http'][key] == correct_config[key]
+
+        assert not 'bg_host' in garden.connection_params
