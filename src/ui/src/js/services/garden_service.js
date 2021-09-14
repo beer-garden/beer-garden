@@ -54,7 +54,7 @@ export default function gardenService($http) {
           }
           else {
             // Recursively remove null/empty values from json payload
-            parameter_value = (function filter(obj) {
+            var parameter_value = (function filter(obj) {
               Object.entries(obj).forEach(([key, val]) =>
                 (val && typeof val === 'object') && filter(val) ||
                 (val === null || val === "") && delete obj[key]
