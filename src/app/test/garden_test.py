@@ -136,7 +136,7 @@ class TestGarden:
             "client_cert": "/def",
         }
 
-        bg_garden.connection_params = {'http': http_params}
+        bg_garden.connection_params = {"http": http_params}
 
         garden = create_garden(bg_garden)
         for key in http_params:
@@ -161,4 +161,4 @@ class TestGarden:
 
         garden = create_garden(bg_garden)
         for key in config_map:
-            assert garden.connection_params['http'][config_map[key]] == defaults[key]
+            assert garden.connection_params["http"][config_map[key]] == defaults[key]

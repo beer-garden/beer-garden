@@ -197,10 +197,10 @@ def create_garden(garden: Garden) -> Garden:
 
     if garden.connection_params is None:
         garden.connection_params = {}
-    garden.connection_params.setdefault('http', {})
+    garden.connection_params.setdefault("http", {})
 
     for key in config_map:
-        garden.connection_params['http'].setdefault(config_map[key], defaults[key])
+        garden.connection_params["http"].setdefault(config_map[key], defaults[key])
 
     garden.status_info["heartbeat"] = datetime.utcnow()
 
