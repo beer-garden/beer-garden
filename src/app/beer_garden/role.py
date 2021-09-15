@@ -81,8 +81,8 @@ def _delete_roles_not_in_list(roles: list) -> int:
     """Delete all Roles in the database not represented in the provided list by name.
 
     Args:
-       roles: A list of dictionaries containing role data, with any role not present
-         in the list being a candidate for deletion.
+       roles: A list of dictionaries containing role data. Any role not present
+         in the list will be deleted.
 
     Returns:
         int: The number of roles deleted

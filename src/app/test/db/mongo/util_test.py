@@ -9,6 +9,7 @@ import beer_garden.db.mongo.util
 from beer_garden import config
 from beer_garden.db.mongo.models import Garden, Role
 from beer_garden.db.mongo.util import ensure_local_garden, ensure_roles
+from beer_garden.errors import ConfigurationError
 
 
 @pytest.fixture
@@ -344,3 +345,53 @@ class TestEnsureRoles:
         ensure_roles()
 
         assert len(Role.objects.filter(name="testrole1")) == 0
+
+    def test_ensure_roles_raises_exception_when_file_not_found(self, monkeypatch):
+        """ensure_roles should raise ConfigurationError if the file specified by
+        auth.role_definition_file is not found"""
+        monkeypatch.setattr(config, "get", self.config_get_value)
+
+        def file_not_found(arg1, arg2):
+            raise FileNotFoundError
+
+        with patch("builtins.open", mock_open()) as mock_file_read:
+            mock_file_read.side_effect = file_not_found
+            with pytest.raises(ConfigurationError):
+                ensure_roles()
+
+    def test_ensure_roles_raises_exception_on_schema_errors(
+        self, monkeypatch, role_definition_yaml
+    ):
+        """ensure_roles should raise ConfigurationError if the file specified by
+        raises a schema validation error (i.e. does not conform to the expected format)
+        """
+        from marshmallow.exceptions import ValidationError
+
+        def validation_error(arg):
+            raise ValidationError("error")
+
+        monkeypatch.setattr(config, "get", self.config_get_value)
+        monkeypatch.setattr(beer_garden.db.mongo.util, "sync_roles", validation_error)
+
+        with patch("builtins.open", mock_open(read_data=role_definition_yaml)):
+            with pytest.raises(ConfigurationError):
+                ensure_roles()
+
+    def test_ensure_roles_raises_exception_on_permissions_error(
+        self, monkeypatch, role_definition_yaml
+    ):
+        """ensure_roles should raise ConfigurationError if the file specified by
+        raises a mongo validation error (e.g. one of the specified permissions is not
+        a recognized, valid permission)
+        """
+        from mongoengine.errors import ValidationError
+
+        def validation_error(arg):
+            raise ValidationError("error")
+
+        monkeypatch.setattr(config, "get", self.config_get_value)
+        monkeypatch.setattr(beer_garden.db.mongo.util, "sync_roles", validation_error)
+
+        with patch("builtins.open", mock_open(read_data=role_definition_yaml)):
+            with pytest.raises(ConfigurationError):
+                ensure_roles()
