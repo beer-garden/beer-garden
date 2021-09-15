@@ -2,6 +2,8 @@
 import pytest
 from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import System as BrewtilsSystem
+from brewtils.specification import _CONNECTION_SPEC
+from yapconf import YapconfSpec
 from mongoengine import DoesNotExist, connect
 
 from beer_garden import config
@@ -120,3 +122,43 @@ class TestGarden:
 
         # confirm that systems of other gardens remain intact
         assert len(System.objects.filter(namespace=localgarden.name)) == 1
+
+    def test_create_garden_loads_default_config(self, bg_garden):
+        """create_garden should explicitly load default HTTP configs from brewtils"""
+
+        http_params = {
+            "host": "localhost",
+            "port": 1337,
+            "url_prefix": "/",
+            "ssl": True,
+            "ca_cert": "/abc",
+            "ca_verify": True,
+            "client_cert": "/def",
+        }
+
+        bg_garden.connection_params = {"http": http_params}
+
+        garden = create_garden(bg_garden)
+        for key in http_params:
+            assert garden.connection_params["http"][key] == http_params[key]
+
+    def test_create_garden_with_empty_connection_params(self, bg_garden):
+        """create_garden should explicitly load default HTTP configs from brewtils when empty"""
+
+        config_map = {
+            "bg_host": "host",
+            "bg_port": "port",
+            "ssl_enabled": "ssl",
+            "bg_url_prefix": "url_prefix",
+            "ca_cert": "ca_cert",
+            "ca_verify": "ca_verify",
+            "client_cert": "client_cert",
+        }
+
+        spec = YapconfSpec(_CONNECTION_SPEC)
+        # bg_host is required by brewtils garden spec
+        defaults = spec.load_config({"bg_host": ""})
+
+        garden = create_garden(bg_garden)
+        for key in config_map:
+            assert garden.connection_params["http"][config_map[key]] == defaults[key]

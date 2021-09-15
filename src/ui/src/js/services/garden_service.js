@@ -53,7 +53,16 @@ export default function gardenService($http) {
             values[parameter] = stomp_headers;
           }
           else {
-            values[parameter] = model['connection_params'][parameter];
+            // Recursively remove null/empty values from json payload
+            var parameter_value = (function filter(obj) {
+              Object.entries(obj).forEach(([key, val]) =>
+                (val && typeof val === 'object') && filter(val) ||
+                (val === null || val === "") && delete obj[key]
+              );
+            return obj;
+            })(model.connection_params[parameter]);
+
+            values[parameter] = parameter_value;
           }
         }
     }
