@@ -20,7 +20,6 @@ from typing import Any, Callable, Dict, List, Union
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-import beer_garden.router as router
 from beer_garden.errors import NotUniqueException
 
 MAX_CHUNK_SIZE = 1024 * 1024 * 15  # 15MB
@@ -521,6 +520,8 @@ def forward_file(operation: Operation) -> None:
     """Send file data before forwarding an operation with a file parameter."""
 
     # HEADS UP - THIS IS PROBABLY BROKEN
+    # import here bypasses circular dependency
+    import beer_garden.router as router
 
     for file_id in _find_chunk_params(operation.model.parameters):
         file = check_chunks(file_id)

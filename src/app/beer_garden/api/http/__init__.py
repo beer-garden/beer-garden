@@ -4,6 +4,7 @@ import os
 import ssl
 import types
 from typing import Optional, Tuple
+from copy import deepcopy
 
 from apispec import APISpec
 from brewtils.models import Event, Events, Principal
@@ -380,6 +381,6 @@ def _event_callback(event):
         beer_garden.requests.handle_event,
     ]:
         try:
-            handler(event)
+            handler(deepcopy(event))
         except Exception as ex:
             logger.exception(f"Error executing callback for {event!r}: {ex}")
