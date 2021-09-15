@@ -1,0 +1,4 @@
+docker==5.0.0
+pytest==6.1.2
+requests==2.25.0
+testcontainers==3.4.1
