@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from copy import deepcopy
 from brewtils.models import Event
 
 import beer_garden.config
@@ -45,6 +46,6 @@ def garden_callbacks(event: Event) -> None:
         beer_garden.local_plugins.manager.handle_event,
     ]:
         try:
-            handler(event)
+            handler(deepcopy(event))
         except Exception as ex:
             logger.exception(f"Error executing callback for {event!r}: {ex}")

@@ -188,6 +188,6 @@ class StompManager(BaseProcessor):
             self._event_handler,
         ]:
             try:
-                handler(event)
+                handler(deepcopy(event))
             except Exception as ex:
                 logger.exception(f"Error executing callback for {event!r}: {ex}")
