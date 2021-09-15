@@ -181,17 +181,10 @@ def create_garden(garden: Garden) -> Garden:
 
     """
     # Explicitly load default config options into garden params
-    if garden.connection_params is None:
-        garden.connection_params = {}
-
-    connection_params = getattr(garden, "connection_params", {})
-    # bg_host is required by brewtils garden spec
-    connection_params.setdefault("bg_host", "")
-
     spec = YapconfSpec(_CONNECTION_SPEC)
-    connection_params = spec.load_config(connection_params)
+    # bg_host is required to load brewtils garden spec
+    defaults = spec.load_config({"bg_host": ""})
 
-    key_dict = {key: key for key, _ in connection_params.items()}
     config_map = {
         "bg_host": "host",
         "bg_port": "port",
@@ -201,12 +194,13 @@ def create_garden(garden: Garden) -> Garden:
         "ca_verify": "ca_verify",
         "client_cert": "client_cert",
     }
-    key_dict.update(config_map)
-    garden.connection_params["http"] = {
-        key_dict[key]: value for key, value in connection_params.items()
-    }
+
+    if garden.connection_params is None:
+        garden.connection_params = {}
+    garden.connection_params.setdefault('http', {})
+
     for key in config_map:
-        garden.connection_params.pop(key, None)
+        garden.connection_params['http'].setdefault(config_map[key], defaults[key])
 
     garden.status_info["heartbeat"] = datetime.utcnow()
 
