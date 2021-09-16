@@ -633,6 +633,13 @@ _AUTH_SPEC = {
                 },
             },
         },
+        "role_definition_file": {
+            "type": "str",
+            "description": (
+                "Path to the yaml file that defines roles used for authorization"
+            ),
+            "required": False,
+        },
     },
 }
 

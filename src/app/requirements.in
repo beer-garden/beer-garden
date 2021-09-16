@@ -2,6 +2,7 @@
 -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
 apispec < 0.39
 apscheduler < 4
+marshmallow < 3
 mongoengine < 0.21
 more-itertools < 9
 motor < 3
