@@ -18,8 +18,8 @@ from brewtils.schemas import (
     IntervalTriggerSchema,
     JobSchema,
     LegacyRoleSchema,
+    JobExportInputSchema,
     JobExportSchema,
-    JobExportListSchema,
     LoggingConfigSchema,
     OperationSchema,
     ParameterSchema,
@@ -338,8 +338,11 @@ def _load_swagger(url_specs, title=None):
     }
     api_spec._definitions["Job"]["properties"]["trigger"] = trigger_properties  # noqa
 
-    api_spec.definition("JobExport", schema=JobExportSchema)
-    api_spec.definition("JobImport", schema=JobExportListSchema)
+    api_spec.definition("JobExport", schema=JobExportInputSchema)
+    api_spec.definition("JobImport", schema=JobExportSchema)
+    api_spec._definitions["JobImport"]["properties"][  # noqa
+        "trigger"
+    ] = trigger_properties
 
     error = {"message": {"type": "string"}}
     api_spec.definition(

@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from marshmallow import ValidationError
-
 from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
@@ -237,7 +235,9 @@ class JobImportAPI(BaseHandler):
             in: body
             description: The Jobs to create/schedule
             schema:
-              $ref: '#/definitions/JobImport'
+              type: array
+              items:
+                $ref: '#/definitions/JobImport'
         responses:
           201:
             description: All new jobs have been created
@@ -250,8 +250,7 @@ class JobImportAPI(BaseHandler):
         tags:
           - Jobs
         """
-        body = self.get_decoded_body_raise_on_empty()
-        parsed_job_list = SchemaParser.parse_job(body, from_string=True, many=True)
+        parsed_job_list = SchemaParser.parse_job(self.request_body, many=True)
 
         response = await self.client(
             Operation(operation_type="JOB_CREATE_MULTI", args=[parsed_job_list])
@@ -272,17 +271,20 @@ class JobExportAPI(BaseHandler):
           Jobs will be scheduled from a provided list to run on the intervals
           set in their trigger arguments.
         parameters:
-          - name: jobs
+          - name: ids
             in: body
             description: A list of the Jobs IDs whose job definitions should be \
-            exported. Omitting this parameter will export all jobs.
+            exported. Omitting this parameter or providing an empty map will export \
+            all jobs.
             schema:
               $ref: '#/definitions/JobExport'
         responses:
           201:
             description: A list of jobs has been exported.
             schema:
-              $ref: '#/definitions/JobImport'
+              type: array
+              items:
+                $ref: '#/definitions/JobImport'
           400:
             $ref: '#/definitions/400Error'
           50x:
@@ -291,18 +293,16 @@ class JobExportAPI(BaseHandler):
           - Jobs
         """
         filter_params_dict = {}
-        decoded_body: str = self.request.body.decode("utf-8")
 
-        if len(decoded_body) > 0:
-            input_schema = JobExportInputSchema()
+        # self.request_body is designed to return a 400 on a completely absent body
+        # but we want to return all jobs if that's the case
+        if len(self.request.body) > 0:
+            decoded_body_as_dict = self.request_body
 
-            try:
-                input_data_dict: dict = input_schema.loads(decoded_body).data
-                filter_params_dict["id__in"] = input_data_dict[
-                    input_schema.get_attribute_names()[0]
-                ]
-            except ValidationError:
-                raise ValueError()  # to invoke a 400 error
+            if len(decoded_body_as_dict) > 0:  # i.e. it has keys
+                input_schema = JobExportInputSchema()
+                validated_input_data_dict = input_schema.load(decoded_body_as_dict).data
+                filter_params_dict["id__in"] = validated_input_data_dict["ids"]
 
         response_objects = await self.client(
             Operation(

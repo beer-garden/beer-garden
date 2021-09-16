@@ -565,12 +565,16 @@ def create_jobs(jobs: List[Job]) -> List[str]:
         to_mongo_caller = methodcaller("to_mongo")
         job_bson_objects = map(to_mongo_caller, map(from_brewtils, jobs))
 
-        # this does not work for mongodb running standalone
-        # transactions are only supported when the database instance is a
+        # the below commented code does not work for mongodb running standalone;
+        # proper transactions are only supported when the database instance is a
         # replica set or a distributed cluster
-        # one more point for getting rid of mongodb
+        # (maybe one more point for getting rid of mongodb...)
         #
-        # this is left here for reference in case anything changes
+        # this is left here for reference in case anything changes; for example,
+        # a user actually running mongo in a replica set, in which case code to
+        # determine if that's the case can be added and then the following will
+        # work as intended:
+        #
         # with session.start_transaction():
         #     result: InsertManyResult = job_collection.insert_many(
         #         job_bson_objects, session=session
