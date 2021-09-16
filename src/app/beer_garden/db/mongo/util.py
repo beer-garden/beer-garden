@@ -1,18 +1,23 @@
 # -*- coding: utf-8 -*-
 import logging
 import os
+from typing import Union
 
+import yaml
 from bson import DBRef
+from marshmallow.exceptions import ValidationError as SchemaValidationError
 from mongoengine.connection import get_db
 from mongoengine.errors import (
     DoesNotExist,
     FieldDoesNotExist,
     InvalidDocumentError,
-    NotUniqueError,
+    ValidationError,
 )
 from passlib.apps import custom_app_context
 
 from beer_garden import config
+from beer_garden.errors import ConfigurationError
+from beer_garden.role import sync_roles
 
 logger = logging.getLogger(__name__)
 
@@ -40,70 +45,34 @@ def ensure_local_garden():
 def ensure_roles():
     """Create roles if necessary
 
-    There are certain 'convenience' roles that will be created if this is a new
-    install (if no roles currently exist).
-
-    Then there are roles that MUST be present. These will always be created if
-    they do not exist.
+    If auth.role_definition_file is set in the main application config, this will
+    load that file and pass it over to sync_roles to make the Role definitions in the
+    database match what is defined in the file.
     """
-    from .models import LegacyRole
+    role_definition_file: Union[str, None] = config.get("auth.role_definition_file")
 
-    convenience_roles = [
-        LegacyRole(
-            name="bg-readonly",
-            description="Allows only standard read actions",
-            permissions=[
-                "bg-read",
-            ],
-        ),
-        LegacyRole(
-            name="bg-operator",
-            description="Standard Beergarden user role",
-            permissions=[
-                "bg-read",
-                "bg-create",
-                "bg-delete",
-            ],
-        ),
-    ]
+    if role_definition_file:
+        logger.info(f"Syncing role definitions from {role_definition_file}")
 
-    mandatory_roles = [
-        LegacyRole(
-            name="bg-anonymous",
-            description="Special role used for non-authenticated users",
-            permissions=[
-                "bg-read",
-            ],
-        ),
-        LegacyRole(
-            name="bg-admin", description="Allows all actions", permissions=["bg-all"]
-        ),
-        LegacyRole(
-            name="bg-plugin",
-            description="Allows actions necessary for plugins to function",
-            permissions=[
-                "bg-update",
-                "bg-create",
-                "bg-delete",
-                "bg-read",
-            ],
-        ),
-    ]
-
-    # Only create convenience roles if this is a fresh database
-    if LegacyRole.objects.count() == 0:
-        logger.warning("No roles found: creating convenience roles")
-
-        for role in convenience_roles:
-            try:
-                # Since we have a race potential here catch the case where
-                # another process has already created the role
-                _create_role(role)
-            except NotUniqueError:
-                logger.warning("Role %s already exists" % role.name)
-
-    for role in mandatory_roles:
-        _create_role(role)
+        try:
+            with open(role_definition_file, "r") as filestream:
+                role_definitions = yaml.safe_load(filestream)
+                sync_roles(role_definitions)
+        except FileNotFoundError:
+            raise ConfigurationError(
+                f"Role definition file {role_definition_file} not found."
+            )
+        except SchemaValidationError:
+            raise ConfigurationError(
+                f"Error processing role definition file {role_definition_file}."
+            )
+        except ValidationError as validation_error:
+            raise ConfigurationError(
+                f"Invalid role definition in {role_definition_file}: "
+                f"{validation_error}"
+            )
+    else:
+        logger.info("auth.role_definition_file not defined. No roles will be synced.")
 
 
 def ensure_users(guest_login_enabled):
@@ -115,7 +84,7 @@ def ensure_users(guest_login_enabled):
     Then there are users that MUST be present. These will always be created if
     they do not exist.
     """
-    from .models import LegacyRole, Principal
+    from .models import Principal
 
     if _should_create_admin():
         default_password = os.environ.get("BG_DEFAULT_ADMIN_PASSWORD")
@@ -133,7 +102,7 @@ def ensure_users(guest_login_enabled):
         Principal(
             username="admin",
             hash=custom_app_context.hash(default_password),
-            roles=[LegacyRole.objects.get(name="bg-admin")],
+            roles=[],
             metadata={"auto_change": True, "changed": False},
         ).save()
 
@@ -158,7 +127,7 @@ def ensure_users(guest_login_enabled):
             logger.info("Creating anonymous user.")
             Principal(
                 username="anonymous",
-                roles=[LegacyRole.objects.get(name="bg-anonymous")],
+                roles=[],
             ).save()
 
 
