@@ -11,6 +11,7 @@ class TestHandlers:
 
         def mangle(event):
             event = "mangled"
+            return event
 
         beer_garden.application = Mock()
 
