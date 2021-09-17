@@ -10,8 +10,7 @@ class TestHandlers:
         """garden_ballbacks should send a copy of event to handlers as to not mangle it"""
 
         def mangle(event):
-            event = "mangled"
-            return event
+            event.garden = "mangled"
 
         beer_garden.application = Mock()
 
@@ -29,4 +28,4 @@ class TestHandlers:
             monkeypatch.setattr(handler, "handle_event", mangle)
 
         garden_callbacks(bg_event)
-        assert bg_event != "mangled"
+        assert bg_event.garden != "mangled"
