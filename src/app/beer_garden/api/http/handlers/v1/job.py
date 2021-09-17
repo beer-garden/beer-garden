@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
+from beer_garden.api.http.authorization import Permissions, authenticated
+from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
-from brewtils.schemas import JobSchema
-
-from beer_garden.api.http.authorization import authenticated, Permissions
-from beer_garden.api.http.base_handler import BaseHandler
+from brewtils.schemas import JobSchema, JobExportInputSchema
 
 
 class JobAPI(BaseHandler):
@@ -210,11 +209,111 @@ class JobListAPI(BaseHandler):
             Operation(
                 operation_type="JOB_CREATE",
                 args=[
-                    SchemaParser.parse_job(self.request.decoded_body, from_string=True)
+                    SchemaParser.parse_job(
+                        self.request.body.decode("utf-8"), from_string=True
+                    )
                 ],
             )
         )
 
         self.set_status(201)
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(response)
+
+
+class JobImportAPI(BaseHandler):
+    @authenticated(permissions=[Permissions.CREATE])
+    async def post(self):
+        """
+        ---
+        summary: Schedule a list of Jobs from a list of job descriptions.
+        description: |
+          Given a list of jobs from /export/jobs, each will be scheduled to run
+          on the intervals that are set in their trigger arguments.
+        parameters:
+          - name: jobs
+            in: body
+            description: The Jobs to create/schedule
+            schema:
+              type: array
+              items:
+                $ref: '#/definitions/JobImport'
+        responses:
+          201:
+            description: All new jobs have been created
+            schema:
+              $ref: '#/definitions/JobExport'
+          400:
+            $ref: '#/definitions/400Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Jobs
+        """
+        parsed_job_list = SchemaParser.parse_job(self.request_body, many=True)
+
+        response = await self.client(
+            Operation(operation_type="JOB_CREATE_MULTI", args=[parsed_job_list])
+        )
+
+        self.set_status(201)
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(response)
+
+
+class JobExportAPI(BaseHandler):
+    @authenticated(permissions=[Permissions.CREATE])
+    async def post(self):
+        """
+        ---
+        summary: Exports a list of Jobs from a list of IDs.
+        description: |
+          Jobs will be scheduled from a provided list to run on the intervals
+          set in their trigger arguments.
+        parameters:
+          - name: ids
+            in: body
+            description: A list of the Jobs IDs whose job definitions should be \
+            exported. Omitting this parameter or providing an empty map will export \
+            all jobs.
+            schema:
+              $ref: '#/definitions/JobExport'
+        responses:
+          201:
+            description: A list of jobs has been exported.
+            schema:
+              type: array
+              items:
+                $ref: '#/definitions/JobImport'
+          400:
+            $ref: '#/definitions/400Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Jobs
+        """
+        filter_params_dict = {}
+
+        # self.request_body is designed to return a 400 on a completely absent body
+        # but we want to return all jobs if that's the case
+        if len(self.request.body) > 0:
+            decoded_body_as_dict = self.request_body
+
+            if len(decoded_body_as_dict) > 0:  # i.e. it has keys
+                input_schema = JobExportInputSchema()
+                validated_input_data_dict = input_schema.load(decoded_body_as_dict).data
+                filter_params_dict["id__in"] = validated_input_data_dict["ids"]
+
+        response_objects = await self.client(
+            Operation(
+                operation_type="JOB_READ_ALL",
+                kwargs={"filter_params": filter_params_dict},
+            ),
+            serialize_kwargs={"return_raw": True},
+        )
+        response = SchemaParser.serialize(
+            response_objects, to_string=True, schema_name="JobExportSchema"
+        )
+
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

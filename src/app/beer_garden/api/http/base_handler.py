@@ -16,10 +16,13 @@ from brewtils.errors import (
     RequestPublishException,
     WaitExceededError,
 )
-from jwt.exceptions import ExpiredSignatureError, InvalidSignatureError
+from jwt import ExpiredSignatureError, InvalidSignatureError
 from marshmallow.exceptions import ValidationError as MarshmallowValidationError
-from mongoengine.errors import DoesNotExist, NotUniqueError
-from mongoengine.errors import ValidationError as MongoValidationError
+from mongoengine.errors import (
+    DoesNotExist,
+    NotUniqueError,
+    ValidationError as MongoValidationError,
+)
 from pymongo.errors import DocumentTooLarge
 from tornado.web import HTTPError, RequestHandler
 

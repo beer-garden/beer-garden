@@ -93,5 +93,8 @@ workflow/
 test/conf/data
 docker/docker-compose/data/localplugins/*
 
+# submodule stuff
+.gitmodules
+
 # ignore symlinks
 src/brewtils

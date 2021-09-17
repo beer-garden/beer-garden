@@ -65,7 +65,7 @@ for model_name in beer_garden.db.mongo.models.__all__:
 
 
 def from_brewtils(obj: ModelItem) -> MongoModel:
-    """Convert an item from its Brewtils model to its  one
+    """Convert an item from its Brewtils model to its Mongo one.
 
     Args:
         obj: The Brewtils model item
@@ -342,7 +342,7 @@ def create(obj: ModelItem) -> ModelItem:
         The saved Brewtils model
 
     """
-    mongo_obj = from_brewtils(obj)
+    mongo_obj: MongoModel = from_brewtils(obj)
 
     try:
         if hasattr(mongo_obj, "deep_save"):
