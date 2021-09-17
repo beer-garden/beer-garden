@@ -242,6 +242,50 @@ class TestRequest(object):
             RequestTemplateSchema.get_attribute_names()
         )
 
+    @pytest.fixture()
+    def request_model(self):
+        req = Request(
+            system="foo",
+            command="bar",
+            status="CREATED",
+            system_version="1.0.0",
+            instance_name="foobar",
+            namespace="barfoo",
+        )
+        req.parameters = {"message": "hi"}
+        req.output = "bye"
+        req.parameters_gridfs.put = Mock()
+        req.output_gridfs.put = Mock()
+        return req
+
+    def test_save_stores_in_gridfs_after_maxsize(self, request_model):
+        request_model.parameters = {"message": "a" * 6 * 1_000_000}
+        request_model.output = "a" * 6 * 1_000_000
+        request_model.save()
+
+        request_model.parameters_gridfs.put.assert_called_once()
+        request_model.output_gridfs.put.assert_called_once()
+
+    def test_save_retains_if_under_maxsize(self, request_model):
+        request_model.save()
+
+        request_model.parameters_gridfs.put.assert_not_called()
+        request_model.output_gridfs.put.assert_not_called()
+
+    def test_save_retains_only_parameters(self, request_model):
+        request_model.output = "a" * 6 * 1_000_000
+        request_model.save()
+
+        request_model.parameters_gridfs.put.assert_not_called()
+        request_model.output_gridfs.put.assert_called_once()
+
+    def test_save_retains_only_output(self, request_model):
+        request_model.parameters = {"message": "a" * 6 * 1_000_000}
+        request_model.save()
+
+        request_model.parameters_gridfs.put.assert_called_once()
+        request_model.output_gridfs.put.assert_not_called()
+
 
 class TestSystem(object):
     @pytest.fixture(autouse=True)
