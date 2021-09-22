@@ -471,7 +471,14 @@ def _pre_route(operation: Operation) -> Operation:
             operation.model.namespace = config.get("garden.name")
 
     elif operation.operation_type == "SYSTEM_READ_ALL":
-        if operation.kwargs.get("filter_params", {}).get("namespace", "") == "":
+        # what looks like a sensible edit is to change the next line to:
+        #   operation.kwargs.get("filter_params", {}).get("namespace", "") == "":
+        # but that will break everything, as it turns out. So, unless
+        # operation.kwargs has a key called filter_params whose value is a dictionary
+        # that has a key called namespace and its value is an empty string, the follow-
+        # ing never runs. Intuition says that's not what was intended here, so
+        # TODO: look into this
+        if operation.kwargs.get("filter_params", {}).get("namespace") == "":
             operation.kwargs["filter_params"]["namespace"] = config.get("garden.name")
 
     return operation
