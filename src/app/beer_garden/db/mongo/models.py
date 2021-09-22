@@ -2,7 +2,6 @@
 import datetime
 import json
 import logging
-import sys
 
 import pytz
 import six
