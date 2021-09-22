@@ -414,7 +414,7 @@ class Request(MongoModel, Document):
             self.parameters_gridfs = None
 
     def save(self, *args, **kwargs):
-        """Save a request, moving requests to GridFS if too big"""
+        """Save a request, moving request attributes to GridFS if too big"""
         self.updated_at = datetime.datetime.utcnow()
         # 5MB
         max_param_size = 5 * 1_000_000
