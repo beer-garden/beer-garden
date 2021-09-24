@@ -74,6 +74,8 @@ __all__ = [
     "User",
 ]
 
+REQUEST_MAX_PARAM_SIZE = 5 * 1_000_000
+
 
 class MongoModel:
     brewtils_model = None
@@ -416,29 +418,20 @@ class Request(MongoModel, Document):
     def save(self, *args, **kwargs):
         """Save a request, moving request attributes to GridFS if too big"""
         self.updated_at = datetime.datetime.utcnow()
-        # 5MB
-        max_param_size = 5 * 1_000_000
-        max_output_size = 5 * 1_000_000
         encoding = "utf-8"
 
-        def get_size(data):
-            # This func may not work for multi-byte encodings (e.g. utf-16)
-            klen = sum(len(k.encode(encoding)) for k in data.keys())
-            vlen = sum(len(v.encode(encoding)) for v in data.values())
-            return klen + vlen
-
         if self.parameters:
-            if get_size(self.parameters) > max_param_size:
+            params_json = json.dumps(self.parameters)
+            if len(params_json) > REQUEST_MAX_PARAM_SIZE:
                 self.logger.debug("Parameters too bg, storing in GridFS")
-                self.parameters_gridfs.put(
-                    json.dumps(self.parameters), encoding=encoding
-                )
+                self.parameters_gridfs.put(params_json, encoding=encoding)
                 self.parameters = None
 
         if self.output:
-            if len(str(self.output)) > max_output_size:
+            output_json = json.dumps(self.output)
+            if len(output_json) > REQUEST_MAX_PARAM_SIZE:
                 self.logger.info("Output size too big, storing in gridfs")
-                self.output_gridfs.put(json.dumps(self.output), encoding=encoding)
+                self.output_gridfs.put(output_json, encoding=encoding)
                 self.output = None
 
         super(Request, self).save(*args, **kwargs)
