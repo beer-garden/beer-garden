@@ -5,7 +5,7 @@ import pytest
 from mongoengine import connect
 from mongomock.gridfs import enable_gridfs_integration
 
-from beer_garden.auth import (
+from beer_garden.authorization import (
     permissions_for_user,
     user_has_permission_for_object,
     user_permitted_objects,
@@ -195,7 +195,7 @@ class TestAuth:
         user_with_role_assignments,
     ):
         """permissions_for_user should skip role_assignments that correspond to no
-        existing object and continue on withought error
+        existing object and continue on without error
         """
         # Here we call permissions_for_user without using any of the fixtures
         # that generate Garden or System objects
@@ -229,18 +229,12 @@ class TestAuth:
         """user_has_permission_for_object should return false for a permission and
         object for which they have no role_assignment granting the specified permission
         """
-        assert (
-            user_has_permission_for_object(
-                user_with_role_assignments, "unassigned_permission", test_garden
-            )
-            is False
+        assert not user_has_permission_for_object(
+            user_with_role_assignments, "unassigned_permission", test_garden
         )
 
-        assert (
-            user_has_permission_for_object(
-                user_with_role_assignments, "unassigned_permission", test_system_1_0_0
-            )
-            is False
+        assert not user_has_permission_for_object(
+            user_with_role_assignments, "unassigned_permission", test_system_1_0_0
         )
 
     def test_user_has_permission_for_object_when_having_no_permissions(
@@ -255,11 +249,8 @@ class TestAuth:
         """
         user_with_role_assignments.role_assignments = []
 
-        assert (
-            user_has_permission_for_object(
-                user_with_role_assignments, "request:read", test_system_1_0_0
-            )
-            is False
+        assert not user_has_permission_for_object(
+            user_with_role_assignments, "request:read", test_system_1_0_0
         )
 
     def test_user_has_permission_for_object_job_through_garden(
