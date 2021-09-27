@@ -3,8 +3,8 @@ import logging
 import os
 import ssl
 import types
-from typing import Optional, Tuple
 from copy import deepcopy
+from typing import Optional, Tuple
 
 from apispec import APISpec
 from brewtils.models import Event, Events, Principal
@@ -17,10 +17,10 @@ from brewtils.schemas import (
     GardenSchema,
     InstanceSchema,
     IntervalTriggerSchema,
-    JobSchema,
-    LegacyRoleSchema,
     JobExportInputSchema,
     JobExportSchema,
+    JobSchema,
+    LegacyRoleSchema,
     LoggingConfigSchema,
     OperationSchema,
     ParameterSchema,
@@ -51,6 +51,7 @@ import beer_garden.router
 from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
 from beer_garden.api.http.client import SerializeHelper
 from beer_garden.api.http.processors import EventManager, websocket_publish
+from beer_garden.api.http.schemas.v1.login import LoginInputSchema, LoginResponseSchema
 from beer_garden.events import publish
 
 io_loop: IOLoop = None
@@ -206,6 +207,7 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/gardens/(.*)/?", v1.garden.GardenAPI),
         (rf"{prefix}api/v1/export/jobs/?", v1.job.JobExportAPI),
         (rf"{prefix}api/v1/import/jobs/?", v1.job.JobImportAPI),
+        (rf"{prefix}api/v1/login", v1.login.LoginAPI),
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
         (rf"{prefix}api/vbeta/runners/?", vbeta.runner.RunnerListAPI),
@@ -313,6 +315,8 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("Queue", schema=QueueSchema)
     api_spec.definition("Operation", schema=OperationSchema)
     api_spec.definition("FileStatus", schema=FileStatusSchema)
+    api_spec.definition("LoginInput", schema=LoginInputSchema)
+    api_spec.definition("LoginResponse", schema=LoginResponseSchema)
 
     api_spec.definition("RefreshToken", schema=RefreshTokenSchema)
 
