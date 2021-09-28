@@ -45,10 +45,14 @@ def role_sync_data_missing_fields():
 @pytest.fixture
 def user_with_role_assignments():
     role = Role(name="assignedrole1", permissions=["garden:read"]).save()
-    role_assignment = RoleAssignment(domain="garden1", role=role)
+    role_assignment = RoleAssignment(
+        domain={"scope": "Garden", "identifiers": {"name": "garden1"}}, role=role
+    )
     user = User(username="testuser", role_assignments=[role_assignment]).save()
 
     yield user
+    user.delete()
+    role.delete()
 
 
 class TestRole:

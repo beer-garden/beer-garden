@@ -4,7 +4,7 @@ import pytest
 from brewtils.errors import ModelValidationError, RequestStatusTransitionError
 from brewtils.schemas import RequestTemplateSchema
 from mock import Mock
-from mongoengine import NotUniqueError, ValidationError
+from mongoengine import NotUniqueError, ValidationError, connect
 
 import beer_garden.db.api as db
 import beer_garden.db.mongo.models
@@ -545,27 +545,35 @@ class TestRole:
 class TestUser:
     @classmethod
     def setup_class(cls):
-        Role(name="test_role", permissions=[Permissions.REQUEST_READ.value]).save()
-
-    @pytest.fixture(autouse=True)
-    def drop(self, mongo_conn):
-        User.drop_collection()
+        connect("beer_garden", host="mongomock://localhost")
 
     @pytest.fixture()
     def role(self):
-        return Role.objects.get(name="test_role")
+        role = Role(
+            name="test_role", permissions=[Permissions.REQUEST_READ.value]
+        ).save()
+
+        yield role
+        role.delete()
 
     @pytest.fixture()
     def role_assignment(self, role):
-        return RoleAssignment(role=role, domain="test_garden")
+        return RoleAssignment(
+            role=role,
+            domain={"scope": "Garden", "identifiers": {"name": "test_garden"}},
+        )
 
-    def test_create(self, role_assignment):
-        User(username="testuser", role_assignments=[role_assignment]).save()
+    @pytest.fixture()
+    def user(self, role_assignment):
+        user = User(username="testuser", role_assignments=[role_assignment]).save()
 
+        yield user
+        user.delete()
+
+    def test_create(self, user):
         assert User.objects.filter(username="testuser").count() == 1
 
-    def test_set_password(self):
-        user = User(username="testuser")
+    def test_set_password(self, user):
         user.set_password("password")
 
         # Testing for a specific value would be too tightly coupled with the hashing
@@ -574,12 +582,11 @@ class TestUser:
         assert user.password is not None
         assert user.password != "password"
 
-    def test_verify_password(self):
-        user = User(username="testuser")
+    def test_verify_password(self, user):
         user.set_password("password")
 
-        assert user.verify_password("password") is True
-        assert user.verify_password("mismatch") is False
+        assert user.verify_password("password")
+        assert not user.verify_password("mismatch")
 
 
 class TestGarden:
