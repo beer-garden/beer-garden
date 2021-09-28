@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Type
 
 from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import Job as BrewtilsJob
@@ -7,6 +7,7 @@ from brewtils.models import System as BrewtilsSystem
 from bson import ObjectId
 from mongoengine import Document, DoesNotExist, Q, QuerySet
 
+import beer_garden.db.mongo.models
 from beer_garden.db.mongo.models import (
     Garden,
     Job,
@@ -86,14 +87,14 @@ def user_has_permission_for_object(user: User, permission: str, obj) -> bool:
     permitted_system_ids = permitted_domains["system_ids"]
 
     return (
-        True
-        if _get_object_garden_id(obj) in permitted_garden_ids
+        _get_object_garden_id(obj) in permitted_garden_ids
         or _get_object_system_id(obj) in permitted_system_ids
-        else False
     )
 
 
-def user_permitted_objects(user: User, model: Document, permission: str) -> QuerySet:
+def user_permitted_objects(
+    user: User, model: Type[Document], permission: str
+) -> QuerySet:
     """Generates a QuerySet filtered down to the objects for which the user has the
     given permission
 
@@ -117,7 +118,7 @@ def user_permitted_objects(user: User, model: Document, permission: str) -> Quer
     return model.objects.filter(garden_filter | system_filter)
 
 
-def _get_garden_filter(model: Document, garden_ids: list) -> Q:
+def _get_garden_filter(model: Type[Document], garden_ids: list) -> Q:
     """Returns a Q filter object for filtering a queryset by a list of garden ids"""
     garden_name_field = _get_garden_name_field(model)
     garden_names = Garden.objects.filter(id__in=garden_ids).values_list("name")
@@ -125,7 +126,7 @@ def _get_garden_filter(model: Document, garden_ids: list) -> Q:
     return Q(**{f"{garden_name_field}__in": garden_names})
 
 
-def _get_system_filter(model: Document, system_ids: list) -> Q:
+def _get_system_filter(model: Type[Document], system_ids: list) -> Q:
     """Returns a Q filter object for filtering a queryset by a list of system ids"""
     if model == System:
         q_filter = Q(id__in=system_ids)
@@ -153,7 +154,7 @@ def _get_system_filter(model: Document, system_ids: list) -> Q:
     return q_filter
 
 
-def _get_garden_name_field(model: Document):
+def _get_garden_name_field(model: Type[Document]):
     """Returns the name of the model field that corresponds to garden name"""
     field_name_map = {
         "Garden": "name",
@@ -167,8 +168,6 @@ def _get_garden_name_field(model: Document):
 
 def _get_object_ids_from_domain(domain: RoleAssignmentDomain) -> list:
     """Retrieve the object ids (as strings) that correspond to the given domain"""
-    import beer_garden.db.mongo.models
-
     model = getattr(beer_garden.db.mongo.models, domain.scope)
     model_objects = model.objects.filter(**domain.identifiers)
 
@@ -216,9 +215,9 @@ def _get_object_garden_id(obj) -> Optional[str]:
     """Finds the Garden id (as a string) for the supplied object"""
     garden_id = None
 
-    if type(obj) == Garden:
+    if isinstance(obj, Garden):
         garden_id = obj.id
-    elif type(obj) == BrewtilsGarden:
+    elif isinstance(obj, BrewtilsGarden):
         garden_id = ObjectId(obj.id)
     else:
         garden_id = _get_garden_id_from_namespace(obj)
@@ -230,9 +229,9 @@ def _get_object_system_id(obj) -> Optional[str]:
     """Finds the System id (as a string) for the supplied object"""
     system_id = None
 
-    if type(obj) == System:
+    if isinstance(obj, System):
         system_id = obj.id
-    elif type(obj) == BrewtilsSystem:
+    elif isinstance(obj, BrewtilsSystem):
         system_id = ObjectId(obj.id)
     elif type(obj) in _types_that_derive_system_from_request:
         system_id = _get_system_id_from_request(obj)
