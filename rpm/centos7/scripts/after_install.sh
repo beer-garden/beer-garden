@@ -69,7 +69,7 @@ fi
 if [ ! -f "$REMOTE_PLUGIN_LOG_CONFIG" ] || [ ! -f "$LOCAL_PLUGIN_LOG_CONFIG" ]; then
     "$APP_HOME/bin/generate_plugin_logging_config" \
         --local_conf "$LOCAL_PLUGIN_LOG_CONFIG" \
-	--remote_conf "$REMOTE_PLUGIN_LOG_CONFIG" \
+        --remote_conf "$REMOTE_PLUGIN_LOG_CONFIG" \
         --no-stdout \
         --file \
         --filename "$PLUGIN_LOG_FILE"
