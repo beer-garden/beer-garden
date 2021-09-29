@@ -11,7 +11,8 @@ PLUGIN_HOME="$APP_HOME/plugins"
 
 CONFIG_FILE="${CONFIG_HOME}/config.yaml"
 APP_LOG_CONFIG="${CONFIG_HOME}/app-logging.yaml"
-PLUGIN_LOG_CONFIG="${CONFIG_HOME}/plugin-logging.yaml"
+LOCAL_PLUGIN_LOG_CONFIG="${CONFIG_HOME}/local-plugin-logging.yaml"
+REMOTE_PLUGIN_LOG_CONFIG="${CONFIG_HOME}/remote-plugin-logging.yaml"
 
 APP_LOG_FILE="$LOG_HOME/beer-garden.log"
 PLUGIN_LOG_FILE="${PLUGIN_LOG_HOME}/%%(namespace)s/%%(system_name)s/%%(system_version)s/%%(instance_name)s.log"
@@ -53,8 +54,8 @@ if [ ! -f "$CONFIG_FILE" ]; then
     "$APP_HOME/bin/generate_config" \
         -c "$CONFIG_FILE" -l "$APP_LOG_CONFIG" \
         --plugin-local-directory "$PLUGIN_HOME" \
-        --plugin-local-logging-config-file "$PLUGIN_LOG_CONFIG" \
-        --plugin-remote-logging-config-file "$PLUGIN_LOG_CONFIG"
+        --plugin-local-logging-config-file "$LOCAL_PLUGIN_LOG_CONFIG" \
+        --plugin-remote-logging-config-file "$REMOTE_PLUGIN_LOG_CONFIG"
 fi
 
 # Generate application logging config if it doesn't exist
@@ -64,10 +65,19 @@ if [ ! -f "$APP_LOG_CONFIG" ]; then
         --filename "$APP_LOG_FILE"
 fi
 
-# Generate plugin logging config if it doesn't exist
-if [ ! -f "$PLUGIN_LOG_CONFIG" ]; then
+# Generate local plugin logging config if it doesn't exist
+if [ ! -f "$LOCAL_PLUGIN_LOG_CONFIG" ]; then
     "$APP_HOME/bin/generate_plugin_logging_config" \
-        --config-file "$PLUGIN_LOG_CONFIG" \
+        --config-file "$LOCAL_PLUGIN_LOG_CONFIG" \
+        --no-stdout \
+        --file \
+        --filename "$PLUGIN_LOG_FILE"
+fi
+
+# Generate remote plugin logging config if it doesn't exist
+if [ ! -f "$REMOTE_PLUGIN_LOG_CONFIG" ]; then
+    "$APP_HOME/bin/generate_plugin_logging_config" \
+        --config-file "$REMOTE_PLUGIN_LOG_CONFIG" \
         --no-stdout \
         --file \
         --filename "$PLUGIN_LOG_FILE"

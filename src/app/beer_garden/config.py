@@ -179,7 +179,7 @@ def generate_plugin_logging(args: Sequence[str]) -> dict:
 
     Args:
         args: Command line arguments
-            --config-file: Configuration will be written to this file (will print to
+            --config-file: Plugin configuration will be written to this file (will print to
                 stdout if missing)
             --stdout: Explicitly enable logging to stdout
             --no-stdout: Explicitly disable logging to stdout
