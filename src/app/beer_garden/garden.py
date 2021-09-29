@@ -312,36 +312,8 @@ def handle_event(event):
                 except DoesNotExist:
                     existing_garden = None
 
-                foreign_systems_known_before_update = {
-                    getattr(foreign_system, "id"): foreign_system
-                    for foreign_system in get_systems(filter_params={"local": False})
-                }
-
                 for system in event.payload.systems:
-                    # we whittle down *foreign_systems_known_before_update* to be only
-                    # the systems that aren't in this event's list of systems
-                    foreign_system_id = getattr(system, "id")
-
-                    if (
-                        foreign_system_id is not None
-                        and foreign_system_id in foreign_systems_known_before_update
-                    ):
-                        foreign_systems_known_before_update.pop(foreign_system_id)
-
                     system.local = False
-
-                # now delete (some of) those systems
-                for foreign_system_id in foreign_systems_known_before_update:
-                    foreign_system = foreign_systems_known_before_update[
-                        foreign_system_id
-                    ]
-
-                    # we don't have the garden embedded in the system, so we use
-                    # the namespace as a workaround; this prevents us from incorrectly
-                    # deleting systems if there's more than one child garden
-                    if getattr(foreign_system, "namespace") == event.garden:
-                        logger.debug("Removing System with ID(%s)" % foreign_system_id)
-                        remove_system(system=foreign_system)
 
                 if existing_garden is None:
                     event.payload.connection_type = None

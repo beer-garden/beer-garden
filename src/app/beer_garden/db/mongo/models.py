@@ -14,6 +14,7 @@ except ImportError:
     from lark.common import ParseError
 
     LarkError = ParseError
+from beer_garden.systems import get_systems, remove_system
 import brewtils.models
 from brewtils.choices import parse
 from brewtils.errors import ModelValidationError, RequestStatusTransitionError
@@ -45,6 +46,8 @@ from mongoengine import (
     StringField,
 )
 from mongoengine.errors import DoesNotExist
+from operator import attrgetter
+from typing import Tuple
 
 from .fields import DummyField, StatusInfo
 from .validators import validate_permissions
@@ -755,8 +758,56 @@ class Garden(MongoModel, Document):
     }
 
     def deep_save(self):
+        logger = logging.getLogger(self.__class__.__name__)
+
+        # if the call to this method is on a child garden object, we ensure that
+        # when saving the systems, unknowns are deleted
+        def _get_system_triple(system: System) -> Tuple[str, str, str]:
+            return (
+                getattr(system, "namespace"),
+                getattr(system, "name"),
+                getattr(system, "version"),
+            )
+
+        our_namespaces = set(self.namespaces).union(
+            set(map(attrgetter("namespace"), self.systems))
+        )
+        # we leverage the fact that systems must be unique up to the triple of their
+        # namespaces, names and versions
+        child_systems_already_known = {
+            _get_system_triple(system): str(getattr(system, "id"))
+            for system in get_systems(
+                filter_params={"local": False, "namespace__in": our_namespaces}
+            )
+        }
+
         for system in self.systems:
+            triple = _get_system_triple(system)
+
+            if triple in child_systems_already_known:
+                system_id_to_remove = child_systems_already_known.pop(triple)
+
+                if system_id_to_remove != str(getattr(system, "id")):
+                    logger.error(
+                        f"Removing System <{triple[0]}"
+                        f", {triple[1]}"
+                        f", {triple[2]}> with ID={system_id_to_remove}"
+                        f"; doesn't match ID={str(getattr(system, 'id'))}"
+                        " for known system with same attributes"
+                    )
+                    remove_system(system_id=system_id_to_remove)
+
             system.save()
+
+        # if there's anything left over, delete those too; this could occur, e.g.,
+        # if a child system deleted a particular version of a plugin and installed
+        # another version of the same plugin
+        for bad_system_id in child_systems_already_known.values():
+            logger.error(
+                f"Removing System with ID={str(bad_system_id)} because it "
+                "matches no known system"
+            )
+            remove_system(system_id=bad_system_id)
 
         self.save()
 

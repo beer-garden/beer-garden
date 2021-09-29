@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import copy
 
 import pytest
 from brewtils.errors import ModelValidationError, RequestStatusTransitionError
@@ -590,8 +591,12 @@ class TestUser:
 
 
 class TestGarden:
+    v1_str = "v1"
+    v2_str = "v2"
+
     @classmethod
     def setup_class(cls):
+        connect("beer_garden", host="mongomock://localhost")
         Garden.drop_collection()
         Garden.ensure_indexes()
 
@@ -599,6 +604,34 @@ class TestGarden:
     def testgarden(self, mongo_conn):
         garden = Garden(name="testgarden", connection_type="LOCAL").save()
         yield garden
+        garden.delete()
+
+    @pytest.fixture
+    def child_system(self):
+        return System(name="echoer", namespace="child_garden")
+
+    @pytest.fixture
+    def child_system_v1(self, child_system):
+        system = copy.deepcopy(child_system)
+        setattr(system, "version", self.v1_str)
+        return system
+
+    @pytest.fixture
+    def child_system_v2(self, child_system):
+        system = copy.deepcopy(child_system)
+        setattr(system, "version", self.v2_str)
+        return system
+
+    @pytest.fixture
+    def child_garden(self, mongo_conn, child_system_v1):
+        child_system_v1.save()
+        garden = Garden(
+            name="child_garden", connection_type="http", systems=[child_system_v1]
+        ).save()
+
+        yield garden
+
+        child_system_v1.delete()
         garden.delete()
 
     def test_garden_names_are_required_to_be_unique(self, testgarden):
@@ -612,3 +645,25 @@ class TestGarden:
         should raise an exception"""
         with pytest.raises(NotUniqueError):
             Garden(name=f"not{testgarden.name}", connection_type="LOCAL").save()
+
+    def test_child_garden_system_update(self, child_garden, child_system_v2):
+        """If the systems of a child garden are updated, the original systems are
+        removed and replaced with the new systems."""
+        orig_ids = set(map(lambda x: str(getattr(x, "id")), child_garden.systems))
+        orig_versions = set(
+            map(lambda x: str(getattr(x, "version")), child_garden.systems)
+        )
+
+        assert self.v1_str in orig_versions and self.v2_str not in orig_versions
+
+        child_system_v2.save()
+        child_garden.systems = [child_system_v2]
+        child_garden.deep_save()
+
+        new_ids = set(map(lambda x: str(getattr(x, "id")), child_garden.systems))
+        new_vers = set(map(lambda x: str(getattr(x, "version")), child_garden.systems))
+
+        assert self.v1_str not in new_vers and self.v2_str in new_vers
+        assert new_ids.intersection(orig_ids) == set()
+
+        child_system_v2.delete()
