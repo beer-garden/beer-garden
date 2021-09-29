@@ -124,7 +124,7 @@ plugin:
     directory: ./plugins
     host_env_vars: []
     logging:
-      config_file: example_configs/plugin-logging.yaml
+      config_file: example_configs/local-plugin-logging.yaml
       fallback_level: INFO
     timeout:
       shutdown: 10
@@ -133,7 +133,7 @@ plugin:
     host: localhost
   remote:
     logging:
-      config_file: example_configs/plugin-logging.yaml
+      config_file: example_configs/remote-plugin-logging.yaml
       fallback_level: INFO
   status_heartbeat: 5
   status_timeout: 30
