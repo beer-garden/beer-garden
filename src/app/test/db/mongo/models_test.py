@@ -612,14 +612,14 @@ class TestGarden:
 
     @pytest.fixture
     def child_system_v1(self, child_system):
-        system = copy.deepcopy(child_system)
-        setattr(system, "version", self.v1_str)
+        system: System = copy.deepcopy(child_system)
+        system.version = self.v1_str
         return system
 
     @pytest.fixture
     def child_system_v2(self, child_system):
-        system = copy.deepcopy(child_system)
-        setattr(system, "version", self.v2_str)
+        system: System = copy.deepcopy(child_system)
+        system.version = self.v2_str
         return system
 
     @pytest.fixture
@@ -649,9 +649,13 @@ class TestGarden:
     def test_child_garden_system_update(self, child_garden, child_system_v2):
         """If the systems of a child garden are updated, the original systems are
         removed and replaced with the new systems."""
-        orig_ids = set(map(lambda x: str(getattr(x, "id")), child_garden.systems))
+        orig_ids = set(
+            map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
+        )
         orig_versions = set(
-            map(lambda x: str(getattr(x, "version")), child_garden.systems)
+            map(
+                lambda x: str(getattr(x, "version")), child_garden.systems  # noqa: B009
+            )
         )
 
         assert self.v1_str in orig_versions and self.v2_str not in orig_versions
@@ -660,8 +664,14 @@ class TestGarden:
         child_garden.systems = [child_system_v2]
         child_garden.deep_save()
 
-        new_ids = set(map(lambda x: str(getattr(x, "id")), child_garden.systems))
-        new_vers = set(map(lambda x: str(getattr(x, "version")), child_garden.systems))
+        new_ids = set(
+            map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
+        )
+        new_vers = set(
+            map(
+                lambda x: str(getattr(x, "version")), child_garden.systems  # noqa: B009
+            )
+        )
 
         assert self.v1_str not in new_vers and self.v2_str in new_vers
         assert new_ids.intersection(orig_ids) == set()
