@@ -593,6 +593,7 @@ class TestUser:
 class TestGarden:
     v1_str = "v1"
     v2_str = "v2"
+    garden_name = "test_garden"
 
     @classmethod
     def setup_class(cls):
@@ -601,9 +602,11 @@ class TestGarden:
         Garden.ensure_indexes()
 
     @pytest.fixture()
-    def testgarden(self, mongo_conn):
-        garden = Garden(name="testgarden", connection_type="LOCAL").save()
+    def local_garden(self, mongo_conn):
+        garden = Garden(name=self.garden_name, connection_type="LOCAL").save()
+
         yield garden
+
         garden.delete()
 
     @pytest.fixture
@@ -614,66 +617,109 @@ class TestGarden:
     def child_system_v1(self, child_system):
         system: System = copy.deepcopy(child_system)
         system.version = self.v1_str
-        return system
+        system.save()
+
+        yield system
+
+        system.delete()
 
     @pytest.fixture
     def child_system_v2(self, child_system):
         system: System = copy.deepcopy(child_system)
         system.version = self.v2_str
-        return system
+        system.save()
+
+        yield system
+
+        system.delete()
 
     @pytest.fixture
-    def child_garden(self, mongo_conn, child_system_v1):
-        child_system_v1.save()
+    def child_system_v1_diff_id(self, child_system):
+        system: System = copy.deepcopy(child_system)
+        system.version = self.v1_str
+        system.save()
+
+        return system
+
+        system.delete()
+
+    @pytest.fixture
+    def child_garden(self, child_system_v1):
         garden = Garden(
             name="child_garden", connection_type="http", systems=[child_system_v1]
         ).save()
 
         yield garden
 
-        child_system_v1.delete()
         garden.delete()
 
-    def test_garden_names_are_required_to_be_unique(self, testgarden):
+    def test_garden_names_are_required_to_be_unique(self, local_garden):
         """Attempting to create a garden that shares a name with an existing garden
         should raise an exception"""
         with pytest.raises(NotUniqueError):
-            Garden(name=testgarden.name, connection_type="HTTP").save()
+            Garden(name=local_garden.name, connection_type="HTTP").save()
 
-    def test_only_one_local_garden_may_exist(self, testgarden):
+    def test_only_one_local_garden_may_exist(self, local_garden):
         """Attempting to create more than one garden with connection_type of LOCAL
         should raise an exception"""
         with pytest.raises(NotUniqueError):
-            Garden(name=f"not{testgarden.name}", connection_type="LOCAL").save()
+            Garden(name=f"not{local_garden.name}", connection_type="LOCAL").save()
 
-    def test_child_garden_system_update(self, child_garden, child_system_v2):
-        """If the systems of a child garden are updated, the original systems are
-        removed and replaced with the new systems."""
-        orig_ids = set(
+    def test_child_garden_system_attrib_update(self, child_garden, child_system_v2):
+        """If the systems of a child garden are updated such that their names,
+        namespaces, or versions are changed, the original systems are removed and
+        replaced with the new systems when the garden is saved."""
+        orig_system_ids = set(
             map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
         )
-        orig_versions = set(
+        orig_system_versions = set(
             map(
                 lambda x: str(getattr(x, "version")), child_garden.systems  # noqa: B009
             )
         )
 
-        assert self.v1_str in orig_versions and self.v2_str not in orig_versions
+        assert (
+            self.v1_str in orig_system_versions
+            and self.v2_str not in orig_system_versions
+        )
 
-        child_system_v2.save()
         child_garden.systems = [child_system_v2]
         child_garden.deep_save()
 
-        new_ids = set(
+        # we check that the garden written to the DB has the correct systems
+        db_garden = Garden.objects().first()
+
+        new_system_ids = set(
+            map(lambda x: str(getattr(x, "id")), db_garden.systems)  # noqa: B009
+        )
+        new_system_versions = set(
+            map(lambda x: str(getattr(x, "version")), db_garden.systems)  # noqa: B009
+        )
+
+        assert (
+            self.v1_str not in new_system_versions
+            and self.v2_str in new_system_versions
+        )
+        assert new_system_ids.intersection(orig_system_ids) == set()
+
+    def test_child_garden_system_id_update(self, child_garden, child_system_v1_diff_id):
+        """If the systems of a child garden are updated such that the names, namespaces
+        and versions remain constant, but the IDs are different, the original systms
+        are removed and replaced with the new systems when the garden is saved."""
+        orig_system_ids = set(
             map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
         )
-        new_vers = set(
-            map(
-                lambda x: str(getattr(x, "version")), child_garden.systems  # noqa: B009
-            )
+        new_system_id = str(child_system_v1_diff_id.id)
+
+        assert new_system_id not in orig_system_ids
+
+        child_garden.systems = [child_system_v1_diff_id]
+        child_garden.deep_save()
+        db_garden = Garden.objects().first()
+
+        new_system_ids = set(
+            map(lambda x: str(getattr(x, "id")), db_garden.systems)  # noqa: B009
         )
 
-        assert self.v1_str not in new_vers and self.v2_str in new_vers
-        assert new_ids.intersection(orig_ids) == set()
-
-        child_system_v2.delete()
+        assert new_system_id in new_system_ids
+        assert orig_system_ids.intersection(new_system_ids) == set()
