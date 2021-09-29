@@ -65,11 +65,19 @@ if [ ! -f "$APP_LOG_CONFIG" ]; then
         --filename "$APP_LOG_FILE"
 fi
 
-# Generate plugin logging config if it doesn't exist
-if [ ! -f "$REMOTE_PLUGIN_LOG_CONFIG" ] || [ ! -f "$LOCAL_PLUGIN_LOG_CONFIG" ]; then
+# Generate local plugin logging config if it doesn't exist
+if [ ! -f "$LOCAL_PLUGIN_LOG_CONFIG" ]; then
     "$APP_HOME/bin/generate_plugin_logging_config" \
-        --local_conf "$LOCAL_PLUGIN_LOG_CONFIG" \
-        --remote_conf "$REMOTE_PLUGIN_LOG_CONFIG" \
+        --config-file "$LOCAL_PLUGIN_LOG_CONFIG" \
+        --no-stdout \
+        --file \
+        --filename "$PLUGIN_LOG_FILE"
+fi
+
+# Generate remote plugin logging config if it doesn't exist
+if [ ! -f "$REMOTE_PLUGIN_LOG_CONFIG" ]; then
+    "$APP_HOME/bin/generate_plugin_logging_config" \
+        --config-file "$REMOTE_PLUGIN_LOG_CONFIG" \
         --no-stdout \
         --file \
         --filename "$PLUGIN_LOG_FILE"

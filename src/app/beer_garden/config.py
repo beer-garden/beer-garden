@@ -179,10 +179,8 @@ def generate_plugin_logging(args: Sequence[str]) -> dict:
 
     Args:
         args: Command line arguments
-            --local_conf: Local plugin configuration will be written to this file
-                (will print to stdout if missing)
-            --remote_conf: Remote plugin configuration will be written to this file
-                (will print to stdout if missing)
+            --config-file: Plugin configuration will be written to this file (will print to
+                stdout if missing)
             --stdout: Explicitly enable logging to stdout
             --no-stdout: Explicitly disable logging to stdout
             --file: Explicitly enable logging to a file
@@ -194,8 +192,7 @@ def generate_plugin_logging(args: Sequence[str]) -> dict:
         Logging configuration in dict form
     """
     parser = ArgumentParser()
-    parser.add_argument("--local_conf", type=str, default=None)
-    parser.add_argument("--remote_conf", type=str, default=None)
+    parser.add_argument("--config-file", type=str, default=None)
     parser.add_argument("--level", type=str, default=None)
     parser.add_argument("--filename", type=str, default=None)
 
@@ -214,8 +211,7 @@ def generate_plugin_logging(args: Sequence[str]) -> dict:
         filename=parsed_args.get("filename"),
     )
 
-    dump_data(logging_config, filename=parsed_args.get("local_conf"), file_type="yaml")
-    dump_data(logging_config, filename=parsed_args.get("remote_conf"), file_type="yaml")
+    dump_data(logging_config, filename=parsed_args.get("config_file"), file_type="yaml")
 
     return logging_config
 
