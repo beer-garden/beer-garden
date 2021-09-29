@@ -21,7 +21,7 @@ application = tornado.web.Application(
 
 @pytest.fixture
 def app_config():
-    yield Box({"auth": {"token": {"secret": "keepitsecret"}}})
+    yield Box({"auth": {"token_secret": "keepitsecret"}})
 
 
 @pytest.fixture
@@ -64,7 +64,7 @@ class TestLoginAPI:
         token = response_body["token"]
         token_headers = jwt.get_unverified_header(token)
         decoded_token = jwt.decode(
-            token, key=app_config.auth.token.secret, algorithms=[token_headers["alg"]]
+            token, key=app_config.auth.token_secret, algorithms=[token_headers["alg"]]
         )
 
         assert response.code == 200

@@ -146,8 +146,8 @@ def _setup_application():
     moto.create_connection(db_config=beer_garden.config.get("db"))
 
     auth_config = config.get("auth")
-    if not auth_config.token.secret:
-        auth_config.token.secret = os.urandom(20)
+    if not auth_config.token_secret:
+        auth_config.token_secret = os.urandom(20)
         if auth_config.enabled:
             logger.warning(
                 "Brew-view was started with authentication enabled and no "
@@ -256,7 +256,7 @@ def _setup_tornado_app() -> Application:
     return Application(
         published_url_specs + unpublished_url_specs,
         debug=ui_config.debug_mode,
-        cookie_secret=auth_config.token.secret,
+        cookie_secret=auth_config.token_secret,
         autoreload=False,
         client=SerializeHelper(),
     )

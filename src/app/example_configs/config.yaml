@@ -1,10 +1,7 @@
 auth:
   enabled: false
   guest_login_enabled: true
-  token:
-    algorithm: HS256
-    lifetime: 1200
-    secret: IAMSUPERSECRET
+  token_secret: IAMSUPERSECRET
 db:
   connection:
     host: localhost

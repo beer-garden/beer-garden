@@ -44,7 +44,7 @@ def generate_access_token(user: User) -> str:
     Returns:
       str: The encoded JWT
     """
-    secret_key = config.get("auth").token.secret
+    secret_key = config.get("auth").token_secret
 
     jwt_headers = {"alg": "HS256", "typ": "JWT"}
     jwt_payload = {
