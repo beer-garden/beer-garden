@@ -2,37 +2,41 @@ from typing import Optional
 
 from tornado.httputil import HTTPServerRequest
 
+from beer_garden.api.http.authentication.login_handlers.base import BaseLoginHandler
 from beer_garden.api.http.schemas.v1.login import LoginInputSchema
 from beer_garden.db.mongo.models import User
 
 
-def get_user(request: HTTPServerRequest) -> Optional[User]:
-    """Gets the User corresponding to the username and password supplied in the request
-    body
+class BasicLoginHandler(BaseLoginHandler):
+    """Handler for username and password based authentication"""
 
-    Args:
-        request: tornado HTTPServerRequest object
+    def get_user(self, request: HTTPServerRequest) -> Optional[User]:
+        """Gets the User corresponding to the username and password supplied in the
+        request body
 
-    Returns:
-        User: The User object matching the supplied username and password
-        None: If no User was found or the supplied password was invalid
-    """
-    authenticated_user = None
+        Args:
+            request: tornado HTTPServerRequest object
 
-    if request.body:
-        schema = LoginInputSchema()
+        Returns:
+            User: The User object matching the supplied username and password
+            None: If no User was found or the supplied password was invalid
+        """
+        authenticated_user = None
 
-        request_data = schema.loads(request.body.decode("utf-8")).data
-        username = request_data.get("username")
-        password = request_data.get("password")
+        if request.body:
+            schema = LoginInputSchema()
 
-        if username and password:
-            try:
-                user = User.objects.get(username=username)
+            request_data = schema.loads(request.body.decode("utf-8")).data
+            username = request_data.get("username")
+            password = request_data.get("password")
 
-                if user.verify_password(password):
-                    authenticated_user = user
-            except User.DoesNotExist:
-                pass
+            if username and password:
+                try:
+                    user = User.objects.get(username=username)
 
-    return authenticated_user
+                    if user.verify_password(password):
+                        authenticated_user = user
+                except User.DoesNotExist:
+                    pass
+
+        return authenticated_user

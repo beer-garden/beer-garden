@@ -1,3 +1,4 @@
-from beer_garden.api.http.authentication.login_handlers import basic, certificate
+from .basic import BasicLoginHandler
+from .certificate import CertificateLoginHandler
 
-LOGIN_HANDLERS = [basic, certificate]
+LOGIN_HANDLERS = [BasicLoginHandler, CertificateLoginHandler]

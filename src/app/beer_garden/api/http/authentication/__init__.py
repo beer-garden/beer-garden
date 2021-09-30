@@ -27,7 +27,7 @@ def user_login(request: HTTPServerRequest) -> Optional[User]:
     user = None
 
     for handler in LOGIN_HANDLERS:
-        user = handler.get_user(request)
+        user = handler().get_user(request)
 
         if user:
             break
