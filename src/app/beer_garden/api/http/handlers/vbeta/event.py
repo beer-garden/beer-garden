@@ -1,6 +1,5 @@
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.events import publish
 
@@ -9,7 +8,6 @@ class EventPublisherAPI(BaseHandler):
 
     parser = SchemaParser()
 
-    @authenticated(permissions=[Permissions.CREATE])
     def post(self):
         """
         ---

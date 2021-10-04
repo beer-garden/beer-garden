@@ -5,12 +5,10 @@ from brewtils.models import Operation, Resolvable
 from brewtils.schema_parser import SchemaParser
 from tornado.escape import json_decode
 
-from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
 
 
 class FileChunkAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
         ---
@@ -62,7 +60,6 @@ class FileChunkAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.CREATE])
     async def post(self):
         """
         ---
@@ -164,7 +161,6 @@ class FileChunkAPI(BaseHandler):
 
 
 class ChunkNameAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
         ---

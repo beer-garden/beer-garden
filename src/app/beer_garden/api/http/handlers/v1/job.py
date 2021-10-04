@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
-from beer_garden.api.http.authorization import Permissions, authenticated
-from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
-from brewtils.schemas import JobSchema, JobExportInputSchema
+from brewtils.schemas import JobExportInputSchema, JobSchema
+
+from beer_garden.api.http.base_handler import BaseHandler
 
 
 class JobAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.READ])
     async def get(self, job_id):
         """
         ---
@@ -39,7 +38,6 @@ class JobAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.UPDATE])
     async def patch(self, job_id):
         """
         ---
@@ -118,7 +116,6 @@ class JobAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.DELETE])
     async def delete(self, job_id):
         """
         ---
@@ -147,7 +144,6 @@ class JobAPI(BaseHandler):
 
 
 class JobListAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
         ---
@@ -178,7 +174,6 @@ class JobListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.CREATE])
     async def post(self):
         """
         ---
@@ -222,7 +217,6 @@ class JobListAPI(BaseHandler):
 
 
 class JobImportAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.CREATE])
     async def post(self):
         """
         ---
@@ -262,7 +256,6 @@ class JobImportAPI(BaseHandler):
 
 
 class JobExportAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.CREATE])
     async def post(self):
         """
         ---
