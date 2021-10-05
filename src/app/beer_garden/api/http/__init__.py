@@ -199,6 +199,7 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/export/jobs/?", v1.job.JobExportAPI),
         (rf"{prefix}api/v1/import/jobs/?", v1.job.JobImportAPI),
         (rf"{prefix}api/v1/login", v1.login.LoginAPI),
+        (rf"{prefix}api/v1/whoami", v1.user.WhoAmIAPI),
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
         (rf"{prefix}api/vbeta/runners/?", vbeta.runner.RunnerListAPI),
@@ -342,6 +343,10 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition(
         "400Error", properties=error, description="Parameter validation error"
     )
+    api_spec.definition(
+        "401Error", properties=error, description="Authorization required"
+    )
+    api_spec.definition("403Error", properties=error, description="Access denied")
     api_spec.definition(
         "404Error", properties=error, description="Resource does not exist"
     )

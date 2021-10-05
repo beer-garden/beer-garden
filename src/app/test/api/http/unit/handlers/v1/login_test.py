@@ -19,9 +19,12 @@ application = tornado.web.Application(
 )
 
 
-@pytest.fixture
-def app_config():
-    yield Box({"auth": {"token_secret": "keepitsecret"}})
+@pytest.fixture(autouse=True)
+def app_config(monkeypatch):
+    app_config = Box({"auth": {"enabled": False, "token_secret": "keepitsecret"}})
+    monkeypatch.setattr(config, "_CONFIG", app_config)
+
+    yield app_config
 
 
 @pytest.fixture
@@ -51,10 +54,8 @@ class TestLoginAPI:
 
     @pytest.mark.gen_test
     def test_post_returns_token_on_valid_login(
-        self, monkeypatch, http_client, app_config, base_url, user, user_password
+        self, http_client, app_config, base_url, user, user_password
     ):
-        monkeypatch.setattr(config, "_CONFIG", app_config)
-
         url = f"{base_url}/api/v1/login"
         body = json.dumps({"username": user.username, "password": user_password})
 

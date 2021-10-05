@@ -16,7 +16,6 @@ from brewtils.errors import (
     RequestPublishException,
     WaitExceededError,
 )
-from jwt import ExpiredSignatureError, InvalidSignatureError
 from marshmallow.exceptions import ValidationError as MarshmallowValidationError
 from mongoengine.errors import DoesNotExist, NotUniqueError
 from mongoengine.errors import ValidationError as MongoValidationError
@@ -26,6 +25,7 @@ from tornado.web import HTTPError, RequestHandler
 import beer_garden.api.http
 import beer_garden.config as config
 import beer_garden.db.mongo.models
+from beer_garden.api.http.exceptions import BaseHTTPError
 from beer_garden.api.http.metrics import http_api_latency_total
 from beer_garden.errors import (
     EndpointRemovedException,
@@ -59,10 +59,8 @@ class BaseHandler(RequestHandler):
         RoutingRequestException: {"status_code": 400},
         ModelValidationError: {"status_code": 400},
         ValueError: {"status_code": 400},
-        ExpiredSignatureError: {"status_code": 401},
         AuthorizationRequired: {"status_code": 401},
         RequestForbidden: {"status_code": 403},
-        InvalidSignatureError: {"status_code": 403},
         DoesNotExist: {"status_code": 404, "message": "Resource does not exist"},
         NotFoundError: {"status_code": 404},
         NotFoundException: {"status_code": 404},
@@ -102,7 +100,6 @@ class BaseHandler(RequestHandler):
 
     def prepare(self):
         """Called before each verb handler"""
-
         # Used for calculating request handling duration
         self.request.created_time = datetime.datetime.utcnow()
 
@@ -196,7 +193,9 @@ class BaseHandler(RequestHandler):
                 # Thrift exceptions should have a message attribute
                 message = error_dict.get("message", getattr(e, "message", str(e)))
                 code = error_dict.get("status_code", 500)
-
+            elif issubclass(typ3, BaseHTTPError):
+                message = typ3.reason
+                code = typ3.status_code
             elif config.get("ui.debug_mode"):
                 message = str(e)
 

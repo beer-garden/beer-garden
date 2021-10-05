@@ -1,4 +1,4 @@
-from typing import Optional, Type
+from typing import TYPE_CHECKING, Optional, Type
 
 from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import Job as BrewtilsJob
@@ -14,13 +14,16 @@ from beer_garden.db.mongo.models import (
     Request,
     RoleAssignmentDomain,
     System,
-    User,
 )
+
+if TYPE_CHECKING:
+    from beer_garden.db.mongo.models import User
+
 
 _types_that_derive_system_from_request = [Job, BrewtilsJob, Request, BrewtilsRequest]
 
 
-def permissions_for_user(user: User) -> dict:
+def permissions_for_user(user: "User") -> dict:
     """Generates a dict containing the user's permissions organized by permission and
     listing the domains in which the user holds that permission based on their current
     role_assignments. The final output will look something like:
@@ -65,7 +68,7 @@ def permissions_for_user(user: User) -> dict:
     return user_permissions
 
 
-def user_has_permission_for_object(user: User, permission: str, obj) -> bool:
+def user_has_permission_for_object(user: "User", permission: str, obj) -> bool:
     """Determines if the supplied user has a specified permission for a given object
 
     Args:
@@ -78,7 +81,7 @@ def user_has_permission_for_object(user: User, permission: str, obj) -> bool:
         bool: True if the user has the specified permission for the object.
               False otherwise.
     """
-    permitted_domains = permissions_for_user(user).get(permission, None)
+    permitted_domains = user.permissions.get(permission, None)
 
     if permitted_domains is None:
         return False
@@ -93,7 +96,7 @@ def user_has_permission_for_object(user: User, permission: str, obj) -> bool:
 
 
 def user_permitted_objects(
-    user: User, model: Type[Document], permission: str
+    user: "User", model: Type[Document], permission: str
 ) -> QuerySet:
     """Generates a QuerySet filtered down to the objects for which the user has the
     given permission
@@ -107,7 +110,7 @@ def user_permitted_objects(
     Returns:
         QuerySet: A mongo QuerySet filtered down to the objects the user has access to
     """
-    permitted_domains = permissions_for_user(user).get(permission)
+    permitted_domains = user.permissions.get(permission)
 
     if permitted_domains is None:
         return model.objects.none()

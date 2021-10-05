@@ -2,6 +2,7 @@
 from brewtils.schemas import UserCreateSchema, UserListSchema, UserSchema
 
 from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import User
 from beer_garden.user import create_user, update_user
 
@@ -147,3 +148,26 @@ class UserListAPI(BaseHandler):
         create_user(**user_data)
 
         self.set_status(201)
+
+
+class WhoAmIAPI(AuthorizationHandler):
+    def get(self):
+        """
+        ---
+        summary: Retrieve requesting User
+        responses:
+          200:
+            description: Requesting User
+            schema:
+              $ref: '#/definitions/User'
+          401:
+            $ref: '#/definitions/401Error'
+          403:
+            $ref: '#/definitions/403Error'
+        tags:
+          - Users
+        """
+        user = self.current_user
+        response = UserSchema().dump(user).data
+
+        self.write(response)
