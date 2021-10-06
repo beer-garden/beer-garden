@@ -219,3 +219,44 @@ class TestKill(object):
         runner.process = Mock(poll=Mock(return_value="dead"))
         runner.kill()
         assert not runner.process.kill.called
+
+
+class TestBadPlugin:
+    """Test the failure modes of ProcessRunner.run"""
+
+    def test_plugin_instance_id_not_set_before_exit(self, caplog, monkeypatch, runner):
+        def mock_get_process(*args, **kwargs):
+            class PopenWithBadWait:
+                def wait(self, timeout=None):
+                    return
+
+            return PopenWithBadWait()
+
+        monkeypatch.setattr(ProcessRunner, "_get_process", mock_get_process)
+
+        with caplog.at_level(logging.WARNING):
+            runner.run()
+
+        assert runner.dead
+        assert any(
+            [
+                "terminated before successfully initializing" in msg
+                for msg in caplog.messages
+            ]
+        )
+
+    def test_exception_thrown_in_plugin(self, caplog, monkeypatch, runner):
+        def mock_get_process(*args, **kwargs):
+            class PopenWithExceptionWait:
+                def wait(self, timeout=None):
+                    raise ValueError()
+
+            return PopenWithExceptionWait()
+
+        monkeypatch.setattr(ProcessRunner, "_get_process", mock_get_process)
+
+        with caplog.at_level(logging.ERROR):
+            runner.run()
+
+        assert runner.dead
+        assert any(["died" in msg for msg in caplog.messages])

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import string
+import time
 from concurrent.futures import ThreadPoolExecutor, wait
 from concurrent.futures._base import Future
 from enum import Enum
@@ -68,14 +69,17 @@ def rescan(*args, **kwargs) -> List[Runner]:
     """Scans plugin directory and starts any new runners"""
     new_runners = lpm_proxy.scan_path(*args, **kwargs)
 
-    for runner in new_runners:
-        publish(
-            Event(
-                name=Events.RUNNER_STARTED.name,
-                payload_type=Runner.__name__,
-                payload=runner,
+    for index, runner in enumerate(new_runners):
+        if runner is None:
+            _ = new_runners.pop(index)
+        else:
+            publish(
+                Event(
+                    name=Events.RUNNER_STARTED.name,
+                    payload_type=Runner.__name__,
+                    payload=runner,
+                )
             )
-        )
 
     return new_runners
 
@@ -427,6 +431,7 @@ class PluginManager(StoppableThread):
         new_runners = []
 
         for instance_name in plugin_config["INSTANCES"]:
+            # TODO: collisions
             runner_id = "".join([choice(string.ascii_letters) for _ in range(10)])
             capture_streams = plugin_config.get("CAPTURE_STREAMS")
             process_args = self._process_args(plugin_config, instance_name)
@@ -449,6 +454,11 @@ class PluginManager(StoppableThread):
         for runner in new_runners:
             self.logger.debug(f"Starting runner {runner}")
             runner.start()
+
+        # as obnoxious as it is to have a sleep here, we have to wait for the
+        # threads to complete their run() methods before we know whether they're dead
+        # or not; smaller values were tried but were not reliable
+        time.sleep(1)
 
         return new_runners
 

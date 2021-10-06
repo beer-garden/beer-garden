@@ -179,21 +179,20 @@ class ProcessRunner(Thread):
         self.logger.debug(f"Starting process with args {self.process_args}")
 
         try:
-            self.process = subprocess.Popen(
+            self.process = self._get_process(
                 args=self.process_args,
                 env=self.process_env,
                 cwd=str(self.process_cwd.resolve()),
-                restore_signals=False,
-                close_fds=True,
-                text=True,
-                stdout=subprocess.PIPE if self.capture_streams else None,
-                stderr=subprocess.PIPE if self.capture_streams else None,
+                capture_streams=self.capture_streams,
             )
 
             with StreamReader(self):
                 self.process.wait()
 
+            # if we are here and an instance ID hasn't been set, then something's gone
+            # wrong and we mark the plugin as 'dead'
             if not self.instance_id:
+                self.dead = True
                 self.logger.warning(
                     f"Plugin {self} terminated before successfully initializing."
                 )
@@ -201,4 +200,19 @@ class ProcessRunner(Thread):
             self.logger.debug("Plugin is officially stopped")
 
         except Exception as ex:
+            self.dead = True
             self.logger.exception(f"Plugin {self} died: {ex}")
+
+    @staticmethod
+    def _get_process(args, env, cwd, capture_streams=False) -> subprocess.Popen:
+        # this is factored out of ProcessRunner.run to ease unit testing
+        return subprocess.Popen(
+            args=args,
+            env=env,
+            cwd=cwd,
+            restore_signals=False,
+            close_fds=True,
+            text=True,
+            stdout=subprocess.PIPE if capture_streams else None,
+            stderr=subprocess.PIPE if capture_streams else None,
+        )
