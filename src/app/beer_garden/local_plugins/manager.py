@@ -69,17 +69,14 @@ def rescan(*args, **kwargs) -> List[Runner]:
     """Scans plugin directory and starts any new runners"""
     new_runners = lpm_proxy.scan_path(*args, **kwargs)
 
-    for index, runner in enumerate(new_runners):
-        if runner is None:
-            _ = new_runners.pop(index)
-        else:
-            publish(
-                Event(
-                    name=Events.RUNNER_STARTED.name,
-                    payload_type=Runner.__name__,
-                    payload=runner,
-                )
+    for runner in new_runners:
+        publish(
+            Event(
+                name=Events.RUNNER_STARTED.name,
+                payload_type=Runner.__name__,
+                payload=runner,
             )
+        )
 
     return new_runners
 
