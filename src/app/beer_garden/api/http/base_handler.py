@@ -111,6 +111,7 @@ class BaseHandler(RequestHandler):
             if self.request.mime_type not in [
                 "application/json",
                 "application/x-www-form-urlencoded",
+                "multipart/form-data",
             ]:
                 raise ModelValidationError("Unsupported or missing content-type header")
 
@@ -121,7 +122,9 @@ class BaseHandler(RequestHandler):
                 if search_result:
                     charset = search_result.group(1)
             self.request.charset = charset
-            self.request.decoded_body = self.request.body.decode(charset)
+
+            if self.request.mime_type != "multipart/form-data":
+                self.request.decoded_body = self.request.body.decode(charset)
 
     def on_finish(self):
         """Called after a handler completes processing"""

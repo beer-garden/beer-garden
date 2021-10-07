@@ -7,17 +7,19 @@ The request service is responsible for:
 * Request completion notification
 """
 
+import base64
+import gzip
 import json
 import logging
 import re
 import threading
+from builtins import str
+from copy import deepcopy
 from typing import Dict, List, Sequence, Union
 
 import pika.spec
 import six
 import urllib3
-
-from beer_garden.errors import NotUniqueException
 from brewtils.choices import parse
 from brewtils.errors import (
     ConflictError,
@@ -25,13 +27,14 @@ from brewtils.errors import (
     RequestPublishException,
     RequestStatusTransitionError,
 )
-from brewtils.models import Choices, Events, Request, RequestTemplate, System, Operation
-from builtins import str
+from brewtils.models import Choices, Events, Operation, Request, RequestTemplate, System
 from requests import Session
 
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
+from beer_garden.db.mongo.models import RawFile
+from beer_garden.errors import NotUniqueException
 from beer_garden.events import publish_event
 from beer_garden.metrics import request_completed, request_created, request_started
 
@@ -573,6 +576,23 @@ def get_requests(**kwargs) -> List[Request]:
     return db.query(Request, **kwargs)
 
 
+def _publish_request(request: Request, is_admin: bool, priority: int):
+    """Publish a Request"""
+    queue.put(
+        request,
+        is_admin=is_admin,
+        priority=priority,
+        confirm=True,
+        mandatory=True,
+        delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE,
+    )
+
+
+def _validate_request(request: Request):
+    """Validates a Request"""
+    return RequestValidator.instance().validate_request(request)
+
+
 def process_request(
     new_request: Union[Request, RequestTemplate],
     wait_event: threading.Event = None,
@@ -606,7 +626,7 @@ def process_request(
     # are hard coded to map Plugin functions
     if not is_admin:
         try:
-            request = RequestValidator.instance().validate_request(request)
+            request = _validate_request(request)
         except ModelValidationError:
             invalid_request(request)
             raise
@@ -623,14 +643,7 @@ def process_request(
             request_map[request.id] = wait_event
 
     try:
-        queue.put(
-            request,
-            is_admin=is_admin,
-            priority=priority,
-            confirm=True,
-            mandatory=True,
-            delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE,
-        )
+        _publish_request(request, is_admin=is_admin, priority=priority)
     except Exception as ex:
         # An error publishing means this request will never complete, so remove it
         if not request.command_type == "EPHEMERAL":
@@ -651,7 +664,58 @@ def process_request(
 
 @publish_event(Events.REQUEST_CREATED)
 def create_request(request: Request) -> Request:
+    """Create a database entry (mongo Document based Request object) from a brewtils
+    Request model object. Some transformations happen on a copy of the supplied Request
+    prior to saving it to the database. The returned Request object is derived from this
+    transformed copy, while the input Request object remains unmodified.
+
+    Args:
+        request: The brewtils Request object from which a database entry will be created
+
+    Returns:
+        Request: A brewtils Request model based on the newly created database entry.
+            The parameters of the returned object may have been modified from the
+            during processing of files in "bytes" type parameters.
+    """
+    request = deepcopy(request)
+    replace_with_raw_file = request.namespace == config.get("garden.name")
+    remove_bytes_parameter_base64(request.parameters, replace_with_raw_file)
+
     return db.create(request)
+
+
+def remove_bytes_parameter_base64(
+    parameters: dict, replace_with_raw_file: bool
+) -> None:
+    """Strips out the "base64" property of any parameters that are of type "bytes".
+    Optionally can create a RawFile object from the "base64" and insert a reference
+    to the RawFile.id in its place.
+
+    This is done because the "base64" property is only used for transport of the
+    request to remote gardens and is never intended to be persisted as an actual
+    parameter.
+
+    Args:
+       parameters: A dict representing the request parameters
+       replace_with_raw_file: If True, a RawFile will be created from the "base64" and
+           an "id" reference to the RawFile will be inserted in place of "base64".
+
+    Returns:
+        None
+    """
+    for param in parameters:
+        request_param = parameters[param]
+        if isinstance(request_param, dict) and request_param.get("type") == "bytes":
+            bytes_base64 = request_param.get("base64")
+
+            if bytes_base64 is not None:
+                if replace_with_raw_file:
+                    raw_file = RawFile(
+                        file=gzip.decompress(base64.b64decode(bytes_base64))
+                    ).save()
+                    request_param["id"] = str(raw_file.id)
+
+                del request_param["base64"]
 
 
 @publish_event(Events.REQUEST_STARTED)

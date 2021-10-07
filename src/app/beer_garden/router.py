@@ -22,6 +22,10 @@ from copy import deepcopy
 from functools import partial
 from typing import Dict, Union
 
+from brewtils import EasyClient
+from brewtils.models import Event, Events, Garden, Operation, Request, System
+from stomp.exception import ConnectFailedException
+
 import beer_garden
 import beer_garden.commands
 import beer_garden.config as config
@@ -44,10 +48,7 @@ from beer_garden.errors import (
 )
 from beer_garden.events import publish
 from beer_garden.garden import get_garden, get_gardens
-from beer_garden.requests import complete_request
-from brewtils import EasyClient
-from brewtils.models import Event, Events, Garden, Operation, Request, System
-from stomp.exception import ConnectFailedException
+from beer_garden.requests import complete_request, create_request
 
 logger = logging.getLogger(__name__)
 
@@ -484,7 +485,6 @@ def _pre_route(operation: Operation) -> Operation:
     return operation
 
 
-# TODO - After this is called, if one of the params is a file, ship it down range too.
 def _pre_forward(operation: Operation) -> Operation:
     """Called before forwarding an operation"""
 
@@ -496,14 +496,13 @@ def _pre_forward(operation: Operation) -> Operation:
 
     if operation.operation_type == "REQUEST_CREATE":
         # Save the request so it'll have an ID and we'll have something to update
-        operation.model = db.create(operation.model)
+        local_request = create_request(operation.model)
+        operation.model.id = local_request.id
 
         # Clear parent before forwarding so the child doesn't freak out about an
         # unknown request
         operation.model.parent = None
         operation.model.has_parent = False
-
-        beer_garden.files.forward_file(operation)
 
         # Pull out and store the wait event, if it exists
         wait_event = operation.kwargs.pop("wait_event", None)
