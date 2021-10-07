@@ -16,25 +16,16 @@ from brewtils.errors import (
     RequestPublishException,
     WaitExceededError,
 )
-from jwt import ExpiredSignatureError, InvalidSignatureError
 from marshmallow.exceptions import ValidationError as MarshmallowValidationError
-from mongoengine.errors import (
-    DoesNotExist,
-    NotUniqueError,
-    ValidationError as MongoValidationError,
-)
+from mongoengine.errors import DoesNotExist, NotUniqueError
+from mongoengine.errors import ValidationError as MongoValidationError
 from pymongo.errors import DocumentTooLarge
 from tornado.web import HTTPError, RequestHandler
 
 import beer_garden.api.http
 import beer_garden.config as config
 import beer_garden.db.mongo.models
-from beer_garden.api.http.authorization import (
-    AuthMixin,
-    basic_auth,
-    bearer_auth,
-    coalesce_permissions,
-)
+from beer_garden.api.http.exceptions import BaseHTTPError
 from beer_garden.api.http.metrics import http_api_latency_total
 from beer_garden.errors import (
     EndpointRemovedException,
@@ -54,14 +45,10 @@ async def event_wait(evt, timeout):
     return evt.is_set()
 
 
-class BaseHandler(AuthMixin, RequestHandler):
+class BaseHandler(RequestHandler):
     """Base handler from which all handlers inherit"""
 
-    auth_providers = frozenset([bearer_auth, basic_auth])
-
     MONGO_ID_PATTERN = r".*/([0-9a-f]{24}).*"
-    REFRESH_COOKIE_NAME = "refresh_id"
-    REFRESH_COOKIE_EXP = 14
 
     charset_re = re.compile(r"charset=(.*)$")
 
@@ -72,10 +59,8 @@ class BaseHandler(AuthMixin, RequestHandler):
         RoutingRequestException: {"status_code": 400},
         ModelValidationError: {"status_code": 400},
         ValueError: {"status_code": 400},
-        ExpiredSignatureError: {"status_code": 401},
         AuthorizationRequired: {"status_code": 401},
         RequestForbidden: {"status_code": 403},
-        InvalidSignatureError: {"status_code": 403},
         DoesNotExist: {"status_code": 404, "message": "Resource does not exist"},
         NotFoundError: {"status_code": 404},
         NotFoundException: {"status_code": 404},
@@ -89,39 +74,6 @@ class BaseHandler(AuthMixin, RequestHandler):
         RoutingException: {"status_code": 500},
         socket.timeout: {"status_code": 504, "message": "Backend request timed out"},
     }
-
-    def get_refresh_id_from_cookie(self):
-        token_id = self.get_secure_cookie(self.REFRESH_COOKIE_NAME)
-        if token_id:
-            return token_id.decode()
-        return None
-
-    def _get_user_from_cookie(self):
-        refresh_id = self.get_refresh_id_from_cookie()
-        if not refresh_id:
-            return None
-
-        token = beer_garden.db.mongo.models.RefreshToken.objects.get(id=refresh_id)
-        now = datetime.datetime.utcnow()
-        if not token or token.expires < now:
-            return None
-
-        principal = token.get_principal()
-        if not principal:
-            return None
-
-        _, principal.permissions = coalesce_permissions(principal.roles)
-        token.expires = now + datetime.timedelta(days=self.REFRESH_COOKIE_EXP)
-        token.save()
-        return principal
-
-    def get_current_user(self):
-        user = AuthMixin.get_current_user(self)
-        if not user or user == beer_garden.api.http.anonymous_principal:
-            cookie_user = self._get_user_from_cookie()
-            if cookie_user:
-                user = cookie_user
-        return user
 
     def set_default_headers(self):
         """Headers set here will be applied to all responses"""
@@ -148,7 +100,6 @@ class BaseHandler(AuthMixin, RequestHandler):
 
     def prepare(self):
         """Called before each verb handler"""
-
         # Used for calculating request handling duration
         self.request.created_time = datetime.datetime.utcnow()
 
@@ -242,7 +193,9 @@ class BaseHandler(AuthMixin, RequestHandler):
                 # Thrift exceptions should have a message attribute
                 message = error_dict.get("message", getattr(e, "message", str(e)))
                 code = error_dict.get("status_code", 500)
-
+            elif issubclass(typ3, BaseHTTPError):
+                message = typ3.reason
+                code = typ3.status_code
             elif config.get("ui.debug_mode"):
                 message = str(e)
 

@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
-from beer_garden.api.http.authorization import authenticated, Permissions
-from beer_garden.api.http.base_handler import BaseHandler
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
+from beer_garden.api.http.base_handler import BaseHandler
+
 
 class GardenAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.READ])
     async def get(self, garden_name):
         """
         ---
@@ -38,32 +37,6 @@ class GardenAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.SYSTEM_ADMIN])
-    async def delete(self, garden_name):
-        """
-        ---
-        summary: Delete a specific Garden
-        parameters:
-          - name: garden_name
-            in: path
-            required: true
-            description: Garden to use
-            type: string
-        responses:
-          204:
-            description: Garden has been successfully deleted
-          404:
-            $ref: '#/definitions/404Error'
-          50x:
-            $ref: '#/definitions/50xError'
-        tags:
-          - Garden
-        """
-        await self.client(Operation(operation_type="GARDEN_DELETE", args=[garden_name]))
-
-        self.set_status(204)
-
-    @authenticated(permissions=[Permissions.SYSTEM_ADMIN])
     async def patch(self, garden_name):
         """
         ---
@@ -152,7 +125,6 @@ class GardenAPI(BaseHandler):
 
 
 class GardenListAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
         ---
@@ -177,7 +149,6 @@ class GardenListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.SYSTEM_ADMIN])
     async def post(self):
         """
         ---
@@ -215,7 +186,6 @@ class GardenListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.SYSTEM_ADMIN])
     async def patch(self):
         """
         ---

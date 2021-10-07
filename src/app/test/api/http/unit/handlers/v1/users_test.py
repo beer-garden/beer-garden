@@ -3,9 +3,11 @@ import json
 
 import pytest
 import tornado.web
+from box import Box
 from mongoengine import connect
 from tornado.httpclient import HTTPError
 
+from beer_garden import config
 from beer_garden.api.http.handlers.v1.user import UserAPI, UserListAPI
 from beer_garden.db.mongo.models import User
 
@@ -21,6 +23,14 @@ application = tornado.web.Application(
 @pytest.fixture(autouse=True)
 def drop_users(app):
     User.drop_collection()
+
+
+@pytest.fixture(autouse=True)
+def app_config(monkeypatch):
+    app_config = Box({"auth": {"enabled": False, "token_secret": "keepitsecret"}})
+    monkeypatch.setattr(config, "_CONFIG", app_config)
+
+    yield app_config
 
 
 @pytest.fixture

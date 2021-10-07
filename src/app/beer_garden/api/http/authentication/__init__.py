@@ -49,9 +49,14 @@ def generate_access_token(user: User) -> str:
     jwt_headers = {"alg": "HS256", "typ": "JWT"}
     jwt_payload = {
         "sub": str(user.id),
-        "exp": datetime.utcnow() + timedelta(hours=12),
+        "exp": _get_token_expiration(),
         "username": user.username,
         "permissions": permissions_for_user(user),
     }
 
     return jwt.encode(jwt_payload, key=secret_key, headers=jwt_headers).decode()
+
+
+def _get_token_expiration() -> datetime:
+    """Calculate and return the token expiration time"""
+    return datetime.utcnow() + timedelta(hours=12)

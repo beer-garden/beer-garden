@@ -4,13 +4,11 @@ import io
 from brewtils.models import Resolvable
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.db.mongo.models import RawFile
 
 
 class RawFileAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.READ])
     async def get(self, file_id):
         """
         ---
@@ -69,7 +67,6 @@ class RawFileAPI(BaseHandler):
 
 
 class RawFileListAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.CREATE])
     async def post(self):
         """
         ---

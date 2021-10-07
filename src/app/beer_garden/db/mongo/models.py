@@ -14,6 +14,9 @@ except ImportError:
     from lark.common import ParseError
 
     LarkError = ParseError
+from operator import attrgetter
+from typing import Optional, Tuple
+
 import brewtils.models
 from brewtils.choices import parse
 from brewtils.errors import ModelValidationError, RequestStatusTransitionError
@@ -45,8 +48,6 @@ from mongoengine import (
     StringField,
 )
 from mongoengine.errors import DoesNotExist
-from operator import attrgetter
-from typing import Tuple
 
 from .fields import DummyField, StatusInfo
 from .validators import validate_permissions
@@ -885,6 +886,50 @@ class User(Document):
     meta = {
         "indexes": [{"name": "unique_index", "fields": ["username"], "unique": True}],
     }
+
+    _permissions_cache: Optional[dict] = None
+
+    @property
+    def permissions(self) -> dict:
+        """Return the user's permissions organized by permission name. This is
+        calculated via beer_garden.authorization.permissions_for_user and is cached on
+        the User object to avoid unnecessary recalculation.
+
+        Returns:
+            dict: The user's permissions organized by permission name
+        """
+        from beer_garden.authorization import permissions_for_user
+
+        if self._permissions_cache is None:
+            self._permissions_cache = permissions_for_user(self)
+
+        return self._permissions_cache
+
+    def clear_permissions_cache(self) -> None:
+        """Clear the cached permission set for the user. This is useful if the user's
+        role assignments have been changed and you want to perform a permission check
+        using those new role assignments without reloading the entire user object.
+        """
+        self._permissions_cache = None
+
+    def set_permissions_cache(self, permissions: dict) -> None:
+        """Manually set the cached permission set for the user. This cache is typically
+        set and checked by the permissions property method. In cases where those
+        permissions are externally sourced (such as an access token in a web request
+        that was provided via initial authentication), this method can be used to
+        manually set the _permissions_cache value so that subsequent calls to
+        permissions related helper functions do not unnecessarily recalculate the user
+        permissions.
+
+        Args:
+            permissions: A dictionary containing the user's permissions. The format
+                should match the one produced by permissions_for_user in
+                beer_garden.authorization
+
+        Returns:
+            None
+        """
+        self._permissions_cache = permissions
 
     def set_password(self, password: str):
         """This helper should be used to set the user's password, rather than directly

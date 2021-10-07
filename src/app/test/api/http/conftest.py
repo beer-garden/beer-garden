@@ -1,9 +1,8 @@
 import pytest
-from mock import Mock, MagicMock
+from mock import MagicMock, Mock
 from mongoengine import connect
 
 import beer_garden.api.http as bv
-from beer_garden.api.http.authorization import anonymous_principal
 
 
 @pytest.fixture
@@ -26,7 +25,6 @@ def app(monkeypatch, config, mongo, event_publishers):
     monkeypatch.setattr(bv, "_load_swagger", Mock())
     monkeypatch.setattr(bv, "event_publishers", event_publishers)
     monkeypatch.setattr(bv, "config", config)
-    monkeypatch.setattr(bv, "anonymous_principal", anonymous_principal())
 
     application = bv._setup_tornado_app()
 

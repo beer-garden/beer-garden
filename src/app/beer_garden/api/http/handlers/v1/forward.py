@@ -4,14 +4,12 @@ import asyncio
 from brewtils.errors import TimeoutExceededError
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler
 
 
 class ForwardAPI(BaseHandler):
 
     # @Todo Create new Persmission
-    @authenticated(permissions=[Permissions.UPDATE])
     async def post(self):
         """
         ---

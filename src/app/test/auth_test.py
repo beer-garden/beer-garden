@@ -248,6 +248,7 @@ class TestAuth:
         object, not just the specified one
         """
         user_with_role_assignments.role_assignments = []
+        user_with_role_assignments.clear_permissions_cache()
 
         assert not user_has_permission_for_object(
             user_with_role_assignments, "request:read", test_system_1_0_0
@@ -266,6 +267,7 @@ class TestAuth:
         # Set the user's role assignments to be just the Garden scoped one (i.e. no
         # System scoped role assignments)
         user_with_role_assignments.role_assignments = [role_assignment_for_garden_scope]
+        user_with_role_assignments.clear_permissions_cache()
 
         assert user_has_permission_for_object(
             user_with_role_assignments, "job:read", test_job
@@ -283,6 +285,7 @@ class TestAuth:
         """
         # Set the user's role assignments to be just the System scoped one
         user_with_role_assignments.role_assignments = [role_assignment_for_system_scope]
+        user_with_role_assignments.clear_permissions_cache()
 
         assert user_has_permission_for_object(
             user_with_role_assignments, "request:create", test_request
@@ -301,6 +304,7 @@ class TestAuth:
         # Set the user's role assignments to be just the Garden scoped one (i.e. no
         # System scoped role assignments)
         user_with_role_assignments.role_assignments = [role_assignment_for_garden_scope]
+        user_with_role_assignments.clear_permissions_cache()
 
         assert user_has_permission_for_object(
             user_with_role_assignments, "system:read", test_system_1_0_0
@@ -325,6 +329,7 @@ class TestAuth:
         )
 
         user_with_role_assignments.role_assignments = []
+        user_with_role_assignments.clear_permissions_cache()
 
         assert not user_has_permission_for_object(
             user_with_role_assignments, "garden:read", brewtils_garden

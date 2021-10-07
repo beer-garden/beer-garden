@@ -48,7 +48,6 @@ import beer_garden.events
 import beer_garden.log
 import beer_garden.requests
 import beer_garden.router
-from beer_garden.api.http.authorization import anonymous_principal as load_anonymous
 from beer_garden.api.http.client import SerializeHelper
 from beer_garden.api.http.processors import EventManager, websocket_publish
 from beer_garden.api.http.schemas.v1.login import LoginInputSchema, LoginResponseSchema
@@ -90,9 +89,6 @@ async def startup():
     This is the first thing called from within the ioloop context.
     """
     global anonymous_principal
-
-    # Need to wait until after mongo connection established to load
-    anonymous_principal = load_anonymous()
 
     http_config = config.get("entry.http")
     logger.debug(f"Starting HTTP server on {http_config.host}:{http_config.port}")
@@ -184,9 +180,6 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/systems/?", v1.system.SystemListAPI),
         (rf"{prefix}api/v1/queues/?", v1.queue.QueueListAPI),
         (rf"{prefix}api/v1/users/?", v1.user.UserListAPI),
-        (rf"{prefix}api/v1/roles/?", v1.role.LegacyRolesAPI),
-        (rf"{prefix}api/v1/permissions/?", v1.permissions.PermissionsAPI),
-        (rf"{prefix}api/v1/tokens/?", v1.token.TokenListAPI),
         (rf"{prefix}api/v1/admin/?", v1.admin.AdminAPI),
         (rf"{prefix}api/v1/jobs/?", v1.job.JobListAPI),
         (rf"{prefix}api/v1/gardens/?", v1.garden.GardenListAPI),
@@ -200,14 +193,13 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/systems/(\w+)/?", v1.system.SystemAPI),
         (rf"{prefix}api/v1/queues/([\w\.-]+)/?", v1.queue.QueueAPI),
         (rf"{prefix}api/v1/users/(\w+)/?", v1.user.UserAPI),
-        (rf"{prefix}api/v1/roles/(\w+)/?", v1.role.LegacyRoleAPI),
-        (rf"{prefix}api/v1/tokens/(\w+)/?", v1.token.TokenAPI),
         (rf"{prefix}api/v1/jobs/(\w+)/?", v1.job.JobAPI),
         (rf"{prefix}api/v1/logging/?", v1.logging.LoggingAPI),
         (rf"{prefix}api/v1/gardens/(.*)/?", v1.garden.GardenAPI),
         (rf"{prefix}api/v1/export/jobs/?", v1.job.JobExportAPI),
         (rf"{prefix}api/v1/import/jobs/?", v1.job.JobImportAPI),
         (rf"{prefix}api/v1/login", v1.login.LoginAPI),
+        (rf"{prefix}api/v1/whoami", v1.user.WhoAmIAPI),
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
         (rf"{prefix}api/vbeta/runners/?", vbeta.runner.RunnerListAPI),
@@ -225,8 +217,6 @@ def _setup_tornado_app() -> Application:
         # V2
         (rf"{prefix}api/v2/users/?", v1.user.UserListAPI),
         (rf"{prefix}api/v2/users/(\w+)/?", v1.user.UserAPI),
-        (rf"{prefix}api/v2/tokens/?", v1.token.TokenListAPI),
-        (rf"{prefix}api/v2/tokens/(\w+)/?", v1.token.TokenAPI),
         # Deprecated
         (rf"{prefix}api/v1/commands/?", v1.command.CommandListAPI),
         (rf"{prefix}api/v1/commands/(\w+)/?", v1.command.CommandAPIOld),
@@ -353,6 +343,10 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition(
         "400Error", properties=error, description="Parameter validation error"
     )
+    api_spec.definition(
+        "401Error", properties=error, description="Authorization required"
+    )
+    api_spec.definition("403Error", properties=error, description="Access denied")
     api_spec.definition(
         "404Error", properties=error, description="Resource does not exist"
     )

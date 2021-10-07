@@ -8,13 +8,11 @@ from brewtils.models import Operation, Request, System
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.db.api as db
-from beer_garden.api.http.authorization import Permissions, authenticated
 from beer_garden.api.http.base_handler import BaseHandler, event_wait
 from beer_garden.errors import UnknownGardenException
 
 
 class RequestAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.READ])
     async def get(self, request_id):
         """
         ---
@@ -45,7 +43,6 @@ class RequestAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    @authenticated(permissions=[Permissions.UPDATE])
     async def patch(self, request_id):
         """
         ---
@@ -128,7 +125,6 @@ class RequestAPI(BaseHandler):
 
 
 class RequestOutputAPI(BaseHandler):
-    @authenticated(permissions=[Permissions.READ])
     async def get(self, request_id):
         """
         ---
@@ -174,7 +170,6 @@ class RequestOutputAPI(BaseHandler):
 class RequestListAPI(BaseHandler):
     parser = SchemaParser()
 
-    @authenticated(permissions=[Permissions.READ])
     async def get(self):
         """
         ---
@@ -364,7 +359,6 @@ class RequestListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(json.dumps(requests))
 
-    @authenticated(permissions=[Permissions.CREATE])
     async def post(self):
         """
         ---

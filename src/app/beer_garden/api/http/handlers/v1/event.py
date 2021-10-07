@@ -5,22 +5,13 @@ from brewtils.errors import RequestForbidden
 from tornado.web import HTTPError
 from tornado.websocket import WebSocketHandler
 
-from beer_garden.api.http.authorization import (
-    AuthMixin,
-    Permissions,
-    check_permission,
-    query_token_auth,
-)
-
 logger = logging.getLogger(__name__)
 
 
-class EventSocket(AuthMixin, WebSocketHandler):
+class EventSocket(WebSocketHandler):
 
     closing = False
     listeners = set()
-
-    auth_providers = frozenset([query_token_auth])
 
     def check_origin(self, origin):
         return True
@@ -32,7 +23,10 @@ class EventSocket(AuthMixin, WebSocketHandler):
 
         # We can't go though the 'normal' BaseHandler exception translation
         try:
-            check_permission(self.current_user, [Permissions.READ])
+            # TODO: A permissions check for the old bg-read permission was here
+            # This is likely not the appropriate place for the permission check, but
+            # we should evaluate and then remove this bit if appropriate
+            pass
         except (HTTPError, RequestForbidden) as ex:
             self.close(reason=str(ex))
             return
