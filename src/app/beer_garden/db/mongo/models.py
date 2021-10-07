@@ -891,16 +891,16 @@ class User(Document):
 
     @property
     def permissions(self) -> dict:
-        """Return the user's permissions organized by permission name. This is calculated
-        via beer_garden.authorization.permissions_for_user and is cached on the User
-        object to avoid unnecessary recalcualtion.
+        """Return the user's permissions organized by permission name. This is
+        calculated via beer_garden.authorization.permissions_for_user and is cached on
+        the User object to avoid unnecessary recalculation.
 
         Returns:
             dict: The user's permissions organized by permission name
         """
         from beer_garden.authorization import permissions_for_user
 
-        if not self._permissions_cache:
+        if self._permissions_cache is None:
             self._permissions_cache = permissions_for_user(self)
 
         return self._permissions_cache
@@ -908,7 +908,7 @@ class User(Document):
     def clear_permissions_cache(self) -> None:
         """Clear the cached permission set for the user. This is useful if the user's
         role assignments have been changed and you want to perform a permission check
-        using those new role assignments without reloading the entire user object
+        using those new role assignments without reloading the entire user object.
         """
         self._permissions_cache = None
 

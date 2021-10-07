@@ -43,7 +43,7 @@ class AuthorizationHandler(BaseHandler):
         # get_current_user(). The result is cached, so subsequent calls to
         # self.current_user within the life of the request will not result in a
         # duplication of the work required to identify and retrieve the User object.
-        self.current_user
+        _ = self.current_user
 
     def _anonymous_superuser(self) -> "User":
         """Return a User object with all permissions for all gardens"""
@@ -113,7 +113,7 @@ class AuthorizationHandler(BaseHandler):
             algorithm = jwt.get_unverified_header(token)["alg"]
 
             return jwt.decode(token, key=secret_key, algorithms=[algorithm])
-        except (jwt.InvalidSignatureError, jwt.DecodeError):
+        except (jwt.InvalidSignatureError, jwt.DecodeError, KeyError, IndexError):
             raise InvalidToken
-        except (jwt.ExpiredSignatureError):
+        except jwt.ExpiredSignatureError:
             raise ExpiredToken
