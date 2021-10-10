@@ -10,11 +10,8 @@ from mock import Mock, patch
 from pytz import utc
 
 from beer_garden.db.mongo.jobstore import construct_job
-from beer_garden.db.mongo.models import (
-    DateTrigger as MongoDateTrigger,
-    Job,
-    RequestTemplate,
-)
+from beer_garden.db.mongo.models import DateTrigger as MongoDateTrigger
+from beer_garden.db.mongo.models import Job, RequestTemplate
 
 
 @pytest.fixture

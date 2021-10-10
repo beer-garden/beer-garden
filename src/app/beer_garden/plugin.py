@@ -19,12 +19,13 @@ delegate requesting information from the plugin to the request service.
 
 import logging
 import threading
+from datetime import datetime, timedelta
+from typing import Tuple
+
 from brewtils.models import Event, Events, Instance, Request, RequestTemplate, System
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
 from bson import ObjectId
-from datetime import datetime, timedelta
-from typing import Tuple
 
 import beer_garden.config as config
 import beer_garden.db.api as db

@@ -4,6 +4,7 @@
 These are abstract classes generated to be utilizes for functions based off OS file events
 """
 from pathlib import Path
+
 from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers.polling import PollingObserver
 

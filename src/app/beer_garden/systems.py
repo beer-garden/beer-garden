@@ -9,8 +9,9 @@ The system service is responible for:
 """
 
 import copy
-
 import logging
+from typing import List, Sequence
+
 from brewtils.errors import (
     BrewtilsException,
     ModelValidationError,
@@ -19,7 +20,6 @@ from brewtils.errors import (
 )
 from brewtils.models import Command, Event, Events, Instance, System
 from brewtils.schemas import SystemSchema
-from typing import List, Sequence
 
 import beer_garden.config as config
 import beer_garden.db.api as db

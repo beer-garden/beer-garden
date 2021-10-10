@@ -22,6 +22,10 @@ from copy import deepcopy
 from functools import partial
 from typing import Dict, Union
 
+from brewtils import EasyClient
+from brewtils.models import Event, Events, Garden, Operation, Request, System
+from stomp.exception import ConnectFailedException
+
 import beer_garden
 import beer_garden.commands
 import beer_garden.config as config
@@ -45,9 +49,6 @@ from beer_garden.errors import (
 from beer_garden.events import publish
 from beer_garden.garden import get_garden, get_gardens
 from beer_garden.requests import complete_request
-from brewtils import EasyClient
-from brewtils.models import Event, Events, Garden, Operation, Request, System
-from stomp.exception import ConnectFailedException
 
 logger = logging.getLogger(__name__)
 

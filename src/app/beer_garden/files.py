@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from base64 import b64decode, b64encode
+from datetime import datetime
+from math import ceil
+from typing import Any, Callable, Dict, List, Union
+
 from brewtils.errors import ModelValidationError, NotFoundError
 from brewtils.models import (
     Event,
@@ -14,9 +18,6 @@ from brewtils.models import (
 )
 from bson import ObjectId
 from bson.errors import InvalidId
-from datetime import datetime
-from math import ceil
-from typing import Any, Callable, Dict, List, Union
 
 import beer_garden.config as config
 import beer_garden.db.api as db

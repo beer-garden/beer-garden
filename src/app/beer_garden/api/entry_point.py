@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-import os
-from importlib import import_module
-
 import logging
 import multiprocessing
+import os
 import signal
-from box import Box
-from brewtils.models import Event
+from importlib import import_module
 from multiprocessing.connection import Connection, Pipe
 from multiprocessing.context import SpawnContext
 from multiprocessing.queues import Queue
 from types import FrameType
 from typing import Any, Callable
+
+from box import Box
+from brewtils.models import Event
 
 import beer_garden
 import beer_garden.config

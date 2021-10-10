@@ -2,11 +2,12 @@
 import copy
 import json
 import unittest
-
 from datetime import datetime
+
 from mock import patch
 
-from beer_garden.db.mongo.models import Job, DateTrigger, RequestTemplate
+from beer_garden.db.mongo.models import DateTrigger, Job, RequestTemplate
+
 from .. import TestHandlerBase
 
 

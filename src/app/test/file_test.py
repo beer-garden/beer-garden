@@ -1,22 +1,23 @@
 # -*- coding: utf-8 -*-
-import pytest
-from mock import Mock
-from bson import ObjectId
-from base64 import b64encode, b64decode
+from base64 import b64decode, b64encode
 
-import beer_garden.files as files
-import beer_garden.db.api as db
-from beer_garden.errors import NotUniqueException
+import pytest
 from brewtils.errors import ModelValidationError, NotFoundError
 from brewtils.models import (
     File,
     FileChunk,
-    Request,
-    Job,
-    FileTrigger,
-    RequestTemplate,
     FileStatus,
+    FileTrigger,
+    Job,
+    Request,
+    RequestTemplate,
 )
+from bson import ObjectId
+from mock import Mock
+
+import beer_garden.db.api as db
+import beer_garden.files as files
+from beer_garden.errors import NotUniqueException
 
 
 class TestFileOperations(object):

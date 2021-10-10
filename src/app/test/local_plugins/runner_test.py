@@ -1,10 +1,10 @@
 import logging
 import string
 import subprocess
+import sys
 from random import choice
 
 import pytest
-import sys
 from mock import Mock, call
 
 from beer_garden.local_plugins.runner import ProcessRunner

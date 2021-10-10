@@ -8,17 +8,18 @@ from brewtils.rest.client import RestClient
 from brewtils.schema_parser import SchemaParser
 from mock import MagicMock, Mock, PropertyMock, patch
 from tornado.gen import Future
-from tornado.httpclient import HTTPRequest, HTTPClientError
+from tornado.httpclient import HTTPClientError, HTTPRequest
 
 import beer_garden
 from beer_garden.api.http.handlers.v1.request import RequestListAPI
 from beer_garden.db.mongo.models import (
-    Request,
-    Job,
-    RequestTemplate,
     DateTrigger,
+    Job,
+    Request,
+    RequestTemplate,
     System,
 )
+
 from .. import TestHandlerBase
 
 

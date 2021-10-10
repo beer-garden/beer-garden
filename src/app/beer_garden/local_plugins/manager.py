@@ -1,23 +1,23 @@
 # -*- coding: utf-8 -*-
+import json
+import logging
+import os
 import string
+import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, wait
 from concurrent.futures._base import Future
 from enum import Enum
-
-import json
-import logging
-import os
-import sys
-from brewtils.models import Event, Events, Runner, System
-from brewtils.specification import _SYSTEM_SPEC
-from brewtils.stoppable_thread import StoppableThread
 from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from random import choice
 from types import ModuleType
 from typing import Any, Dict, Iterable, List, Optional
+
+from brewtils.models import Event, Events, Runner, System
+from brewtils.specification import _SYSTEM_SPEC
+from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.config as config
 from beer_garden.errors import PluginValidationError

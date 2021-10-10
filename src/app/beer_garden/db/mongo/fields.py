@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from mongoengine import EmbeddedDocument, DateTimeField
+from mongoengine import DateTimeField, EmbeddedDocument
 from mongoengine.base import BaseField
 
 

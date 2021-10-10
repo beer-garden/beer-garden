@@ -1,10 +1,10 @@
 import json
 import unittest
 
+from brewtils.errors import ModelValidationError
 from mock import patch
 from mongoengine.errors import DoesNotExist
 
-from brewtils.errors import ModelValidationError
 from .handlers import TestHandlerBase
 
 

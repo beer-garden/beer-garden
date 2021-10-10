@@ -13,7 +13,7 @@ from http.server import ThreadingHTTPServer
 
 from brewtils.models import Request
 from brewtils.stoppable_thread import StoppableThread
-from prometheus_client import Gauge, Counter, Summary
+from prometheus_client import Counter, Gauge, Summary
 from prometheus_client.exposition import MetricsHandler
 from prometheus_client.registry import REGISTRY
 
