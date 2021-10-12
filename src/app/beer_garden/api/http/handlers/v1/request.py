@@ -10,10 +10,8 @@ from brewtils.models import Operation, Request, System
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.db.api as db
-from beer_garden import config
 from beer_garden.api.http.base_handler import BaseHandler, event_wait
 from beer_garden.api.http.exceptions import BadRequest
-from beer_garden.db.mongo.models import RawFile
 from beer_garden.errors import UnknownGardenException
 from beer_garden.requests import remove_bytes_parameter_base64
 
@@ -659,36 +657,22 @@ class RequestListAPI(BaseHandler):
         the supplied request_form_dict representing the Request object that will be
         constructed.
 
-        If the target garden for this request is the local garden, this means creating
-        a RawFile object from the file, and then adding a corresponding parameter of
-        type "bytes" that contains the id reference to the RawFile.
-
-        If the target is a remote garden, the file will be still be added as parameter
-        of type "bytes", but no RawFile will be created. Instead, the file is base64
-        encoded and embedded into the parameter under the "base64" field. This allows
-        for transport down the child garden, which will be responsible for creating the
-        RawFile and replacing "base64_encoded_data" with the id reference field on its
-        end.
+        The files are base64 encoded and embedded into a parameter under the "base64"
+        field. This allows for transport down a child garden if necessary. The target
+        garden, whether it be local or remote, will then convert this file data into a
+        RawFile and replace "base64" with the an "id" reference field for final storage.
         """
         file_parameters = {}
         files = self.request.files
-        local_garden_name = config.get("garden.name")
 
         for _file in files:
             file_contents = files[_file][0]["body"]
 
-            if request_form_dict["namespace"] == local_garden_name:
-                raw_file = RawFile(file=file_contents).save()
-                file_parameters[_file] = {
-                    "type": "bytes",
-                    "id": str(raw_file.id),
-                }
-            else:
-                file_parameters[_file] = {
-                    "type": "bytes",
-                    "base64": base64.b64encode(gzip.compress(file_contents)).decode(
-                        "ascii"
-                    ),
-                }
+            file_parameters[_file] = {
+                "type": "bytes",
+                "base64": base64.b64encode(gzip.compress(file_contents)).decode(
+                    "ascii"
+                ),
+            }
 
         request_form_dict["parameters"].update(file_parameters)

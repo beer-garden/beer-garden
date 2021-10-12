@@ -497,7 +497,14 @@ def _pre_forward(operation: Operation) -> Operation:
     if operation.operation_type == "REQUEST_CREATE":
         # Save the request so it'll have an ID and we'll have something to update
         local_request = create_request(operation.model)
-        operation.model.id = local_request.id
+
+        if operation.model.namespace == config.get("garden.name"):
+            operation.model = local_request
+        else:
+            # When the target is a remote garden, just capture the id. We don't
+            # want to replace the entire model, as we'd lose the base64 encoded file
+            # parameter data.
+            operation.model.id = local_request.id
 
         # Clear parent before forwarding so the child doesn't freak out about an
         # unknown request

@@ -677,6 +677,9 @@ def create_request(request: Request) -> Request:
             The parameters of the returned object may have been modified from the
             during processing of files in "bytes" type parameters.
     """
+    # TODO: This deepcopy could be very memory intensive if the request contains large
+    # file parameters. This should be revisited to see if there is a way to persist
+    # remote requests locally without the base64 encoded data while avoiding this copy.
     request = deepcopy(request)
     replace_with_raw_file = request.namespace == config.get("garden.name")
     remove_bytes_parameter_base64(request.parameters, replace_with_raw_file)
