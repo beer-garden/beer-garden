@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import base64
+import gzip
 import json
 from asyncio import Event
 from typing import Sequence
@@ -9,7 +11,9 @@ from brewtils.schema_parser import SchemaParser
 
 import beer_garden.db.api as db
 from beer_garden.api.http.base_handler import BaseHandler, event_wait
+from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.errors import UnknownGardenException
+from beer_garden.requests import remove_bytes_parameter_base64
 
 
 class RequestAPI(BaseHandler):
@@ -381,9 +385,28 @@ class RequestListAPI(BaseHandler):
             description: Max seconds to wait for request completion. (-1 = wait forever)
             type: float
             default: -1
+          - name: request
+            in: formData
+            required: true
+            description: |
+              For multipart/form-data requests (required when uploading a
+              a file as a parameter) this field acts the same as the request (body)
+              parameter and should be formatted per that field's definition.
+            type: object
+          - name: file_upload
+            in: formData
+            required: false
+            type: file
+            description: |
+              A file to upload for use as input to a "bytes" type request
+              parameter. NOTE: The name of the field in the submitted form data should
+              match the name of the actual "bytes" type field that the command being
+              tasked is expecting. The "file_upload" name is just a stand-in, since
+              the actual expected name will vary for each command.
         consumes:
           - application/json
           - application/x-www-form-urlencoded
+          - multipart/form-data
         responses:
           201:
             description: A new Request has been created
@@ -408,6 +431,8 @@ class RequestListAPI(BaseHandler):
             )
         elif self.request.mime_type == "application/x-www-form-urlencoded":
             request_model = self._parse_form_request()
+        elif self.request.mime_type == "multipart/form-data":
+            request_model = self._parse_multipart_form_data()
         else:
             raise ModelValidationError("Unsupported or missing content-type header")
 
@@ -455,6 +480,8 @@ class RequestListAPI(BaseHandler):
                 Operation(operation_type="REQUEST_READ", args=[created_request["id"]])
             )
         else:
+            # We don't want to echo back the base64 encoding of any file parameters
+            remove_bytes_parameter_base64(created_request["parameters"], False)
             response = SchemaParser.serialize_request(created_request)
 
         self.set_status(201)
@@ -606,3 +633,46 @@ class RequestListAPI(BaseHandler):
         real_hint.append("index")
 
         return "_".join(real_hint)
+
+    def _parse_multipart_form_data(self) -> Request:
+        """Generate a Request object from multipart/form-data input"""
+        request_form = self.get_body_argument("request")
+
+        if request_form is None:
+            raise BadRequest(
+                reason="request parameter required for multipart/form-data requests"
+            )
+
+        try:
+            request_form_dict = json.loads(request_form)
+        except (json.JSONDecodeError):
+            raise BadRequest(reason="request parameter must be valid JSON")
+
+        self._add_files_to_request(request_form_dict)
+
+        return Request(**request_form_dict)
+
+    def _add_files_to_request(self, request_form_dict: dict) -> None:
+        """Processes any files attached to the request and adds them as parameters to
+        the supplied request_form_dict representing the Request object that will be
+        constructed.
+
+        The files are base64 encoded and embedded into a parameter under the "base64"
+        field. This allows for transport down to a child garden if necessary. The target
+        garden, whether it be local or remote, will then convert this file data into a
+        RawFile and replace "base64" with the an "id" reference field for final storage.
+        """
+        file_parameters = {}
+        files = self.request.files
+
+        for _file in files:
+            file_contents = files[_file][0]["body"]
+
+            file_parameters[_file] = {
+                "type": "bytes",
+                "base64": base64.b64encode(gzip.compress(file_contents)).decode(
+                    "ascii"
+                ),
+            }
+
+        request_form_dict["parameters"].update(file_parameters)

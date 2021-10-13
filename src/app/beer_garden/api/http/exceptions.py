@@ -31,6 +31,11 @@ class BaseHTTPError(HTTPError):
         )
 
 
+class BadRequest(BaseHTTPError):
+    status_code: int = 400
+    reason: str = "Bad request"
+
+
 class AuthorizationRequired(BaseHTTPError):
     status_code: int = 401
     reason: str = "Authorization required"
