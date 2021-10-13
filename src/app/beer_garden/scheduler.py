@@ -18,7 +18,7 @@ import pymongo
 import pymongo.database
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
-from brewtils.models import Event, Events, FileTrigger, Job, Operation
+from brewtils.models import DateTrigger, Event, Events, FileTrigger, Job, Operation
 from brewtils.schema_parser import SchemaParser
 from bson import ObjectId, json_util
 from pathtools.patterns import match_any_paths
@@ -249,7 +249,7 @@ class MixedScheduler(object):
                     run_job,
                     trigger=job.trigger,
                     coalesce=job.coalesce,
-                    kwargs={"job_id": job.id, "request_template": job.request_template},
+                    kwargs={"job_id": 'ad-hoc', "request_template": job.request_template},
                 )
 
     def __init__(self, interval_config=None):
@@ -356,6 +356,28 @@ class MixedScheduler(object):
             db.delete(db.query_unique(Job, id=job_id))
         else:
             self._sync_scheduler.remove_job(job_id, **kwargs)
+
+    def execute_job(self, job_id, reset_interval=False, **kwargs):
+        """Executes the job ad-hoc
+
+        Args:
+            job_id: The job id
+            reset_interval: Whether to set the job's interval begin time to now
+        """
+        job = db.query_unique(Job, id=job_id)
+        self.add_job(
+            run_job,
+            trigger=DateTrigger(datetime.now(), timezone='UTC'), # tz needs to come from config
+            trigger_type='date',
+            coalesce=job.coalesce,
+            kwargs={"job_id": job.id, "request_template": job.request_template}, # job.id needs to be unique-ified
+            id='ad-hoc,'
+        )
+
+        if reset_interval:
+            pass
+            #if job_id not in self._async_jobs:
+            #    self._sync_scheduler.reschedule_job(job_id, trigger=job.trigger, **kwargs)
 
     def _add_triggers(self, handler, triggers, func):
         """Attaches the function to the handler callback
@@ -669,6 +691,22 @@ def remove_job(job_id: str) -> None:
     # The scheduler takes care of removing the Job from the database
     return db.query_unique(Job, id=job_id)
 
+@publish_event(Events.JOB_EXECUTED)
+def execute_job(job_id: str, reset_interval=False) -> Job:
+    """Execute a Job ad-hoc
+
+    Creates a new job with a trigger for now.
+
+    Args:
+        job_id: The Job ID
+        reset_interval: Whether executing should reset the job interval trigger
+
+    Returns:
+        The spawned Request
+    """
+    logger.info('Job executed from routing')
+
+    return db.query_unique(Job, id=job_id)
 
 def handle_event(event: Event) -> None:
     """Handle JOB events
@@ -716,5 +754,9 @@ def handle_event(event: Event) -> None:
             )
         elif event.name == Events.JOB_DELETED.name:
             beer_garden.application.scheduler.remove_job(
+                event.payload.id, jobstore="beer_garden"
+            )
+        elif event.name == Events.JOB_EXECUTED.name:
+            beer_garden.application.scheduler.execute_job(
                 event.payload.id, jobstore="beer_garden"
             )

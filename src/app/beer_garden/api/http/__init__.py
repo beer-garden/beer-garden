@@ -194,6 +194,7 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/queues/([\w\.-]+)/?", v1.queue.QueueAPI),
         (rf"{prefix}api/v1/users/(\w+)/?", v1.user.UserAPI),
         (rf"{prefix}api/v1/jobs/(\w+)/?", v1.job.JobAPI),
+        #(rf"{prefix}api/v1/jobs/(\w+)/execute/?", v1.job.JobAPI),
         (rf"{prefix}api/v1/logging/?", v1.logging.LoggingAPI),
         (rf"{prefix}api/v1/gardens/(.*)/?", v1.garden.GardenAPI),
         (rf"{prefix}api/v1/export/jobs/?", v1.job.JobExportAPI),
