@@ -174,7 +174,7 @@ class TestLoadNew(object):
             manager.scan_path([plugin_path])
 
         assert len(manager._runners) == 0
-        assert "Ignoring hidden" in caplog.messages[0]
+        assert "hidden file" in caplog.messages[0]
 
     def test_scan_path_no_paths(self, manager, caplog):
         setattr(manager, "_plugin_path", None)
@@ -218,9 +218,9 @@ class TestLoadPlugin(object):
         [
             (None, "malformed plugin path"),
             (Path("/not/a_real/directory"), "does not exist"),
-            (lazy_fixture("_file_path"), "is not a directory"),
-            (Path("."), "Cannot determine plugin path"),
-            (lazy_fixture("_hidden_path"), "Ignoring hidden plugin path"),
+            (lazy_fixture("_file_path"), "not a directory"),
+            (Path("."), "empty path"),
+            (lazy_fixture("_hidden_path"), "hidden file"),
             (lazy_fixture("_good_path"), "does not exist"),
             (lazy_fixture("_good_path_bad_config"), "is not a file"),
         ],

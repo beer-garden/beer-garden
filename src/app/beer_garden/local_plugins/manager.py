@@ -424,32 +424,31 @@ class PluginManager(StoppableThread):
     ) -> bool:
         try:
             if path is None:
-                raise PluginValidationError(f"Received malformed plugin path: {path}")
-            if not path.exists():
-                raise PluginValidationError(f"Plugin path {path} does not exist")
-            if not path.is_dir():
-                raise PluginValidationError(f"Plugin path {path} is not a directory")
+                raise PluginValidationError("malformed plugin path, NoneType")
 
             path_parts = path.parts
 
             if len(path_parts) == 0:
-                raise PluginValidationError(f"Cannot determine plugin path from {path}")
+                raise PluginValidationError("empty path")
             if path_parts[-1].startswith("."):
-                the_logger.debug("Ignoring hidden plugin path: %s" % str(path))
+                raise PluginValidationError("hidden file")
 
-                return False
+            if not path.exists():
+                raise PluginValidationError("does not exist")
+            if not path.is_dir():
+                raise PluginValidationError("not a directory")
 
             config_file = path / CONFIG_NAME
 
             if not config_file.exists():
-                raise PluginValidationError(f"Config file {config_file} does not exist")
+                raise PluginValidationError(f"config file {config_file} does not exist")
             if not config_file.is_file():
-                raise PluginValidationError(f"Config file {config_file} is not a file")
+                raise PluginValidationError(f"config file {config_file} is not a file")
 
             return path not in known_paths
         except PluginValidationError as plugin_error:
-            the_logger.exception(
-                "Error loading plugin at %s: %s" % (str(path), str(plugin_error))
+            the_logger.warning(
+                "Not loading plugin at %s: %s" % (str(path), str(plugin_error))
             )
             return False
 
