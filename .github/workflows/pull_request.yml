@@ -35,13 +35,13 @@ jobs:
 
       - name: Run Linting (src/app)
         run: |
-          pip install black flake8
+          pip install black flake8 isort
           make lint
 
       - name: Run Linting (test/integration)
         working-directory: ./test/integration
         run: |
-          pip install black flake8
+          pip install black flake8 isort
           make lint
 
   PyTest:
