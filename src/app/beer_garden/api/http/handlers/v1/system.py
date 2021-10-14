@@ -4,10 +4,18 @@ from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import SystemSchema
 
-from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.api.authorization import Permissions
+from beer_garden.api.http.handlers import AuthorizationHandler
+from beer_garden.db.mongo.api import MongoParser
+from beer_garden.db.mongo.models import System
+
+SYSTEM_CREATE = Permissions.SYSTEM_CREATE.value
+SYSTEM_READ = Permissions.SYSTEM_READ.value
+SYSTEM_UPDATE = Permissions.SYSTEM_UPDATE.value
+SYSTEM_DELETE = Permissions.SYSTEM_DELETE.value
 
 
-class SystemAPI(BaseHandler):
+class SystemAPI(AuthorizationHandler):
     async def get(self, system_id):
         """
         ---
@@ -36,9 +44,7 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
-        response = await self.client(
-            Operation(operation_type="SYSTEM_READ", args=[system_id])
-        )
+        system = self.get_or_raise(System, SYSTEM_READ, id=system_id)
 
         # This is only here because of backwards compatibility
         include_commands = (
@@ -46,9 +52,9 @@ class SystemAPI(BaseHandler):
         )
 
         if not include_commands:
-            system = SchemaParser.parse_system(response, from_string=True)
             system.commands = []
-            response = SchemaParser.serialize(system)
+
+        response = MongoParser.serialize(system)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -84,11 +90,12 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
+        system = self.get_or_raise(System, SYSTEM_DELETE, id=system_id)
 
         await self.client(
             Operation(
                 operation_type="SYSTEM_DELETE",
-                args=[system_id],
+                args=[system.id],
                 kwargs={
                     "force": self.get_argument("force", default="").lower() == "true"
                 },
@@ -142,6 +149,8 @@ class SystemAPI(BaseHandler):
         tags:
           - Systems
         """
+        system = self.get_or_raise(System, SYSTEM_UPDATE, id=system_id)
+
         kwargs = {}
         do_reload = False
 
@@ -193,20 +202,20 @@ class SystemAPI(BaseHandler):
         if kwargs:
             response = await self.client(
                 Operation(
-                    operation_type="SYSTEM_UPDATE", args=[system_id], kwargs=kwargs
+                    operation_type="SYSTEM_UPDATE", args=[system.id], kwargs=kwargs
                 )
             )
 
         if do_reload:
             await self.client(
-                Operation(operation_type="SYSTEM_RELOAD", args=[system_id])
+                Operation(operation_type="SYSTEM_RELOAD", args=[system.id])
             )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
 
-class SystemListAPI(BaseHandler):
+class SystemListAPI(AuthorizationHandler):
     REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
     async def get(self):
@@ -271,6 +280,8 @@ class SystemListAPI(BaseHandler):
         tags:
           - Systems
         """
+        permitted_objects_filter = self.permitted_objects_filter(System, SYSTEM_READ)
+
         order_by = self.get_query_argument("order_by", None)
 
         dereference_nested = self.get_query_argument("dereference_nested", None)
@@ -306,6 +317,7 @@ class SystemListAPI(BaseHandler):
                 operation_type="SYSTEM_READ_ALL",
                 kwargs={
                     "serialize_kwargs": serialize_kwargs,
+                    "q_filter": permitted_objects_filter,
                     "filter_params": filter_params,
                     "order_by": order_by,
                     "include_fields": include_fields,
@@ -347,15 +359,14 @@ class SystemListAPI(BaseHandler):
         tags:
           - Systems
         """
+        system = SchemaParser.parse_system(self.request.decoded_body, from_string=True)
+
+        self.verify_user_permission_for_object(SYSTEM_CREATE, system)
 
         response = await self.client(
             Operation(
                 operation_type="SYSTEM_CREATE",
-                args=[
-                    SchemaParser.parse_system(
-                        self.request.decoded_body, from_string=True
-                    )
-                ],
+                args=[system],
             )
         )
         self.set_status(201)

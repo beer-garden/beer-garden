@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 from brewtils.schemas import UserCreateSchema, UserListSchema, UserSchema
 
-from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import User
 from beer_garden.user import create_user, update_user
 
 
-# TODO: Update endpoints with authorization checks
-class UserAPI(BaseHandler):
+class UserAPI(AuthorizationHandler):
     def get(self, username):
         """
         ---
@@ -100,7 +98,7 @@ class UserAPI(BaseHandler):
         self.write(response)
 
 
-class UserListAPI(BaseHandler):
+class UserListAPI(AuthorizationHandler):
     def get(self):
         """
         ---

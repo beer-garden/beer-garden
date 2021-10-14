@@ -1,11 +1,13 @@
-from typing import TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING, Optional, Type, Union
 
+from brewtils.models import BaseModel as BrewtilsModel
 from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System as BrewtilsSystem
 from bson import ObjectId
 from mongoengine import Document, DoesNotExist, Q, QuerySet
+from mongoengine.queryset.visitor import QCombination
 
 import beer_garden.db.mongo.models
 from beer_garden.db.mongo.models import (
@@ -68,7 +70,9 @@ def permissions_for_user(user: "User") -> dict:
     return user_permissions
 
 
-def user_has_permission_for_object(user: "User", permission: str, obj) -> bool:
+def user_has_permission_for_object(
+    user: "User", permission: str, obj: Union[Document, BrewtilsModel]
+) -> bool:
     """Determines if the supplied user has a specified permission for a given object
 
     Args:
@@ -108,17 +112,41 @@ def user_permitted_objects(
             access to the object
 
     Returns:
-        QuerySet: A mongo QuerySet filtered down to the objects the user has access to
+        QuerySet: A mongoengine QuerySet filtered to the objects the user has access to
+    """
+    q_filter = user_permitted_objects_filter(user, model, permission)
+
+    if q_filter is not None:
+        return model.objects.filter(q_filter)
+    else:
+        return model.objects.none()
+
+
+def user_permitted_objects_filter(
+    user: "User", model: Type[Document], permission: str
+) -> QCombination:
+    """Generates a QCombination that can be used to filter a QuerySet down to the
+    objects for which the user has the given permission
+
+    Args:
+        user: The User whose permissions will be used as the basis for filtering
+        model: The mongoengine Document model class that access will be checked for
+        permission: The permission that the user must have in order to be permitted
+            access to the object
+
+    Returns:
+        QCombination: A mongoengine QCombination filter
+        None: The user has access to no objects
     """
     permitted_domains = user.permissions.get(permission)
 
     if permitted_domains is None:
-        return model.objects.none()
+        return None
 
     garden_filter = _get_garden_filter(model, permitted_domains["garden_ids"])
     system_filter = _get_system_filter(model, permitted_domains["system_ids"])
 
-    return model.objects.filter(garden_filter | system_filter)
+    return garden_filter | system_filter
 
 
 def _get_garden_filter(model: Type[Document], garden_ids: list) -> Q:

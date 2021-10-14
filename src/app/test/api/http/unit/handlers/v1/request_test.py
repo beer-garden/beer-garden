@@ -6,14 +6,24 @@ import tornado.web
 from box import Box
 from mongoengine import connect
 from mongomock.gridfs import enable_gridfs_integration
+from tornado.httpclient import HTTPError, HTTPRequest
 
 import beer_garden.events
 import beer_garden.requests
 import beer_garden.router
 from beer_garden import config
+from beer_garden.api.http.authentication import generate_access_token
 from beer_garden.api.http.client import SerializeHelper
-from beer_garden.api.http.handlers.v1.request import RequestListAPI
-from beer_garden.db.mongo.models import Garden, RawFile, System
+from beer_garden.api.http.handlers.v1.request import RequestAPI, RequestListAPI
+from beer_garden.db.mongo.models import (
+    Garden,
+    RawFile,
+    Request,
+    Role,
+    RoleAssignment,
+    System,
+    User,
+)
 
 enable_gridfs_integration()
 
@@ -21,6 +31,7 @@ enable_gridfs_integration()
 application = tornado.web.Application(
     [
         (r"/api/v1/requests/?", RequestListAPI),
+        (r"/api/v1/requests/(\w+)/?", RequestAPI),
     ],
     client=SerializeHelper(),
 )
@@ -36,6 +47,32 @@ def format_form_data(metadata: list, data: str, boundary: str):
     form_data += f"\r\n--{boundary}"
 
     return form_data
+
+
+@pytest.fixture
+def app_config_auth_enabled(monkeypatch):
+    app_config = Box(
+        {
+            "auth": {"enabled": True, "token_secret": "notsosecret"},
+            "garden": {"name": "somegarden"},
+        }
+    )
+    monkeypatch.setattr(config, "_CONFIG", app_config)
+
+    yield app_config
+
+
+@pytest.fixture
+def app_config_auth_disabled(monkeypatch):
+    app_config = Box(
+        {
+            "auth": {"enabled": False, "token_secret": "notsosecret"},
+            "garden": {"name": "somegarden"},
+        }
+    )
+    monkeypatch.setattr(config, "_CONFIG", app_config)
+
+    yield app_config
 
 
 @pytest.fixture
@@ -57,9 +94,9 @@ def app_config(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def common_mocks(monkeypatch, test_remote_system):
+def common_mocks(monkeypatch, local_system):
     def mock_determine_target(operation):
-        return test_remote_system.namespace
+        return local_system.namespace
 
     def mock_validate(request):
         return request
@@ -81,7 +118,7 @@ def db_cleanup():
 
 
 @pytest.fixture
-def test_local_garden():
+def local_garden():
     garden = Garden(name="somegarden", connection_type="LOCAL").save()
 
     yield garden
@@ -89,7 +126,7 @@ def test_local_garden():
 
 
 @pytest.fixture
-def test_remote_garden():
+def remote_garden():
     garden = Garden(name="remotegarden", connection_type="HTTP").save()
 
     yield garden
@@ -97,9 +134,9 @@ def test_remote_garden():
 
 
 @pytest.fixture
-def test_local_system(test_local_garden):
+def local_system(local_garden):
     system = System(
-        name="somesystem", version="1.0.0", namespace=test_local_garden.name
+        name="somesystem", version="1.0.0", namespace=local_garden.name
     ).save()
 
     yield system
@@ -107,13 +144,91 @@ def test_local_system(test_local_garden):
 
 
 @pytest.fixture
-def test_remote_system(test_remote_garden):
+def remote_system(remote_garden):
     system = System(
-        name="somesystem", version="1.0.0", namespace=test_remote_garden.name
+        name="somesystem", version="1.0.0", namespace=remote_garden.name
     ).save()
 
     yield system
     system.delete()
+
+
+@pytest.fixture(autouse=True)
+def request_permitted(remote_system):
+    request = Request(
+        system=remote_system.name,
+        system_version=remote_system.version,
+        namespace=remote_system.namespace,
+        command="mycommand",
+        instance_name="default",
+        parameters={"this": "doesntmatter"},
+    )
+    request.save()
+
+    yield request
+    request.delete()
+
+
+@pytest.fixture(autouse=True)
+def request_not_permitted(local_system):
+    request = Request(
+        system=local_system.name,
+        system_version=local_system.version,
+        namespace=local_system.namespace,
+        command="mycommand",
+        instance_name="default",
+        parameters={"this": "doesntmatter"},
+    )
+    request.save()
+
+    yield request
+    request.delete()
+
+
+@pytest.fixture(autouse=True)
+def request_cleanup():
+    yield
+    Request.drop_collection()
+
+
+@pytest.fixture
+def operator_role():
+    role = Role(
+        name="operator",
+        permissions=[
+            "request:create",
+            "request:read",
+            "request:update",
+            "request:delete",
+        ],
+    ).save()
+
+    yield role
+    role.delete()
+
+
+@pytest.fixture
+def user(request_permitted, operator_role):
+    role_assignment = RoleAssignment(
+        role=operator_role,
+        domain={
+            "scope": "System",
+            "identifiers": {
+                "name": request_permitted.system,
+                "namespace": request_permitted.namespace,
+            },
+        },
+    )
+
+    user = User(username="testuser", role_assignments=[role_assignment]).save()
+
+    yield user
+    user.delete()
+
+
+@pytest.fixture
+def access_token(user):
+    yield generate_access_token(user)
 
 
 def generate_form_data(system) -> dict:
@@ -150,6 +265,115 @@ def generate_form_data(system) -> dict:
     return {"headers": headers, "body": body}
 
 
+class TestRequestAPI:
+    @classmethod
+    def setup_class(cls):
+        connect("beer_garden", host="mongomock://localhost")
+
+    @pytest.mark.gen_test
+    def test_auth_disabled_returns_any_request(
+        self, http_client, app_config_auth_disabled, base_url, request_not_permitted
+    ):
+        url = f"{base_url}/api/v1/requests/{request_not_permitted.id}"
+
+        response = yield http_client.fetch(url)
+        response_body = json.loads(response.body.decode("utf-8"))
+
+        assert response.code == 200
+        assert response_body["id"] == str(request_not_permitted.id)
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_returns_permitted_request(
+        self,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        access_token,
+        request_permitted,
+    ):
+        url = f"{base_url}/api/v1/requests/{request_permitted.id}"
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        response = yield http_client.fetch(url, headers=headers)
+        response_body = json.loads(response.body.decode("utf-8"))
+
+        assert response.code == 200
+        assert response_body["id"] == str(request_permitted.id)
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_returns_403_for_not_permitted_request(
+        self,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        access_token,
+        request_not_permitted,
+    ):
+        url = f"{base_url}/api/v1/requests/{request_not_permitted.id}"
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(url, headers=headers)
+
+        assert excinfo.value.code == 403
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_allows_patch_for_permitted_request(
+        self,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        access_token,
+        request_permitted,
+    ):
+        url = f"{base_url}/api/v1/requests/{request_permitted.id}"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+        }
+
+        patch_body = [
+            {"operation": "replace", "path": "/status", "value": "IN_PROGRESS"}
+        ]
+        request = HTTPRequest(
+            url, method="PATCH", headers=headers, body=json.dumps(patch_body)
+        )
+        response = yield http_client.fetch(request)
+
+        assert response.code == 200
+        assert Request.objects.get(id=request_permitted.id).status == "IN_PROGRESS"
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_rejects_patch_for_not_permitted_request(
+        self,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        access_token,
+        request_not_permitted,
+    ):
+        url = f"{base_url}/api/v1/requests/{request_not_permitted.id}"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+        }
+
+        patch_body = [
+            {"operation": "replace", "path": "/status", "value": "IN_PROGRESS"}
+        ]
+        request = HTTPRequest(
+            url, method="PATCH", headers=headers, body=json.dumps(patch_body)
+        )
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(request)
+
+        assert excinfo.value.code == 403
+        assert (
+            Request.objects.get(id=request_not_permitted.id).status
+            == request_not_permitted.status
+        )
+
+
 class TestRequestListAPI:
     @classmethod
     def setup_class(cls):
@@ -161,10 +385,10 @@ class TestRequestListAPI:
         http_client,
         app_config,
         base_url,
-        test_local_system,
+        local_system,
     ):
         url = f"{base_url}/api/v1/requests"
-        form_data = generate_form_data(test_local_system)
+        form_data = generate_form_data(local_system)
         headers = form_data["headers"]
         body = form_data["body"]
 
@@ -185,11 +409,11 @@ class TestRequestListAPI:
         http_client,
         app_config,
         base_url,
-        test_remote_system,
-        test_local_garden,
+        remote_system,
+        local_garden,
     ):
         url = f"{base_url}/api/v1/requests"
-        form_data = generate_form_data(test_remote_system)
+        form_data = generate_form_data(remote_system)
         headers = form_data["headers"]
         body = form_data["body"]
 
@@ -202,3 +426,101 @@ class TestRequestListAPI:
         assert response_body["parameters"]["myfile"].get("id") is None
         assert response_body["parameters"]["myfile"].get("base64") is None
         assert len(RawFile.objects.all()) == 0
+
+    @pytest.mark.gen_test
+    def test_auth_disabled_returns_all_requests(
+        self, http_client, app_config_auth_disabled, base_url
+    ):
+        url = f"{base_url}/api/v1/requests"
+
+        response = yield http_client.fetch(url)
+        response_body = json.loads(response.body.decode("utf-8"))
+
+        assert response.code == 200
+        assert len(response_body) == 2
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_returns_permitted_requests(
+        self,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        access_token,
+        request_permitted,
+    ):
+        url = f"{base_url}/api/v1/requests"
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        response = yield http_client.fetch(url, headers=headers)
+        response_body = json.loads(response.body.decode("utf-8"))
+
+        assert response.code == 200
+        assert len(response_body) == 1
+        assert response_body[0]["id"] == str(request_permitted.id)
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_allows_post_permitted_request(
+        self,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        user,
+        access_token,
+        request_permitted,
+    ):
+        url = f"{base_url}/api/v1/requests"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+        }
+        request_before_count = len(Request.objects.all())
+
+        post_body = {
+            "system": request_permitted.system,
+            "system_version": request_permitted.system_version,
+            "namespace": request_permitted.namespace,
+            "command": "mycommand",
+            "instance_name": "default",
+            "parameters": {"this": "doesntmatter"},
+        }
+        request = HTTPRequest(
+            url, method="POST", headers=headers, body=json.dumps(post_body)
+        )
+        response = yield http_client.fetch(request)
+
+        assert response.code == 201
+        assert len(Request.objects.all()) == request_before_count + 1
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_rejects_post_for_not_permitted_request(
+        self,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        user,
+        access_token,
+        request_not_permitted,
+    ):
+        url = f"{base_url}/api/v1/requests"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+        }
+        request_before_count = len(Request.objects.all())
+
+        post_body = {
+            "system": request_not_permitted.system,
+            "system_version": request_not_permitted.system_version,
+            "namespace": request_not_permitted.namespace,
+            "command": "mycommand",
+            "instance_name": "default",
+            "parameters": {"this": "doesntmatter"},
+        }
+        request = HTTPRequest(
+            url, method="POST", headers=headers, body=json.dumps(post_body)
+        )
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(request)
+
+        assert excinfo.value.code == 403
+        assert len(Request.objects.all()) == request_before_count

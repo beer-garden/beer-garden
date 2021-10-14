@@ -3,10 +3,19 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.api.authorization import Permissions
+from beer_garden.api.http.handlers import AuthorizationHandler
+from beer_garden.db.mongo.api import MongoParser
+from beer_garden.db.mongo.models import Garden
+from beer_garden.garden import local_garden
+
+GARDEN_CREATE = Permissions.GARDEN_CREATE.value
+GARDEN_READ = Permissions.GARDEN_READ.value
+GARDEN_UPDATE = Permissions.GARDEN_UPDATE.value
+GARDEN_DELETE = Permissions.GARDEN_DELETE.value
 
 
-class GardenAPI(BaseHandler):
+class GardenAPI(AuthorizationHandler):
     async def get(self, garden_name):
         """
         ---
@@ -29,10 +38,9 @@ class GardenAPI(BaseHandler):
         tags:
           - Garden
         """
+        garden = self.get_or_raise(Garden, GARDEN_READ, name=garden_name)
 
-        response = await self.client(
-            Operation(operation_type="GARDEN_READ", args=[garden_name])
-        )
+        response = MongoParser.serialize(garden)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -82,6 +90,7 @@ class GardenAPI(BaseHandler):
         tags:
           - Garden
         """
+        garden = self.get_or_raise(Garden, GARDEN_UPDATE, name=garden_name)
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
@@ -92,14 +101,14 @@ class GardenAPI(BaseHandler):
                 response = await self.client(
                     Operation(
                         operation_type="GARDEN_UPDATE_STATUS",
-                        args=[garden_name, operation.upper()],
+                        args=[garden.name, operation.upper()],
                     )
                 )
             elif operation == "heartbeat":
                 response = await self.client(
                     Operation(
                         operation_type="GARDEN_UPDATE_STATUS",
-                        args=[garden_name, "RUNNING"],
+                        args=[garden.name, "RUNNING"],
                     )
                 )
             elif operation == "config":
@@ -113,7 +122,7 @@ class GardenAPI(BaseHandler):
                 response = await self.client(
                     Operation(
                         operation_type="GARDEN_SYNC",
-                        kwargs={"sync_target": garden_name},
+                        kwargs={"sync_target": garden.name},
                     )
                 )
 
@@ -124,7 +133,7 @@ class GardenAPI(BaseHandler):
         self.write(response)
 
 
-class GardenListAPI(BaseHandler):
+class GardenListAPI(AuthorizationHandler):
     async def get(self):
         """
         ---
@@ -143,8 +152,9 @@ class GardenListAPI(BaseHandler):
         tags:
           - Garden
         """
+        permitted_gardens = self.permissioned_queryset(Garden, GARDEN_READ)
 
-        response = await self.client(Operation(operation_type="GARDEN_READ_ALL"))
+        response = MongoParser.serialize(permitted_gardens, to_string=True)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -171,14 +181,14 @@ class GardenListAPI(BaseHandler):
         tags:
           - Garden
         """
+        garden = SchemaParser.parse_garden(self.request.decoded_body, from_string=True)
+
+        self.verify_user_permission_for_object(GARDEN_CREATE, garden)
+
         response = await self.client(
             Operation(
                 operation_type="GARDEN_CREATE",
-                args=[
-                    SchemaParser.parse_garden(
-                        self.request.decoded_body, from_string=True
-                    )
-                ],
+                args=[garden],
             )
         )
 
@@ -227,6 +237,7 @@ class GardenListAPI(BaseHandler):
         tags:
           - Garden
         """
+        self.verify_user_permission_for_object(GARDEN_UPDATE, local_garden())
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
