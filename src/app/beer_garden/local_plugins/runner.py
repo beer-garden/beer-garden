@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-from brewtils.models import Runner
-from io import TextIOBase
-
 import logging
 import subprocess
+from io import TextIOBase
 from pathlib import Path
 from threading import Thread
 from typing import Sequence
+
+from brewtils.models import Runner
 
 log_levels = [n for n in getattr(logging, "_nameToLevel").keys()]
 

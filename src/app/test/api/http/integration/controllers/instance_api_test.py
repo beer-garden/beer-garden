@@ -1,9 +1,8 @@
 import unittest
 
-from mock import MagicMock, Mock, patch
-
 from brewtils.models import Command, Instance, System
 from brewtils.schema_parser import SchemaParser
+from mock import MagicMock, Mock, patch
 
 
 @unittest.skip("TODO")

@@ -3,6 +3,7 @@
 import logging
 import threading
 import types
+
 from brewtils.models import Event, Events
 
 import beer_garden.config as config

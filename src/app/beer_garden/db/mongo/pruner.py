@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import logging
-from brewtils.stoppable_thread import StoppableThread
 from datetime import datetime, timedelta
-from mongoengine import Q
 from typing import List, Tuple
 
-from beer_garden.db.mongo.models import Request, File
+from brewtils.stoppable_thread import StoppableThread
+from mongoengine import Q
+
+from beer_garden.db.mongo.models import File, Request
 
 
 class MongoPruner(StoppableThread):

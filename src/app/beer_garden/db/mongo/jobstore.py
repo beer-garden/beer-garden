@@ -6,12 +6,12 @@ from apscheduler.jobstores.base import BaseJobStore
 from apscheduler.triggers.base import BaseTrigger
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
+from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from brewtils.models import Job
 from pytz import utc
 
 from beer_garden.db.mongo.api import delete, query, query_unique, update
 from beer_garden.db.mongo.models import Job as MongoJob
-from apscheduler.triggers.interval import IntervalTrigger as APInterval
 
 logger = logging.getLogger(__name__)
 

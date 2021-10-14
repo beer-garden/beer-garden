@@ -10,8 +10,8 @@ from typing import List
 
 from brewtils.models import Garden, Request, System
 
-import beer_garden.db.api as db
 import beer_garden.config as config
+import beer_garden.db.api as db
 
 
 def default() -> str:

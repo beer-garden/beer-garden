@@ -3,8 +3,8 @@ import pytest
 from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import System as BrewtilsSystem
 from brewtils.specification import _CONNECTION_SPEC
-from yapconf import YapconfSpec
 from mongoengine import DoesNotExist, connect
+from yapconf import YapconfSpec
 
 from beer_garden import config
 from beer_garden.db.mongo.models import Garden, System

@@ -3,7 +3,6 @@ import unittest
 
 from mock import Mock, patch
 
-
 from beer_garden.db.mongo.models import Garden
 from beer_garden.db.mongo.parser import MongoParser
 

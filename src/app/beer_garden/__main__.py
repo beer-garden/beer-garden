@@ -3,9 +3,8 @@
 import argparse
 import logging
 import signal
-from pathlib import Path
-
 import sys
+from pathlib import Path
 
 import beer_garden
 import beer_garden.config

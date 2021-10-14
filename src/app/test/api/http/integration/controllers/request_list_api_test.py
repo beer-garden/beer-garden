@@ -2,7 +2,7 @@ import json
 import unittest
 import urllib
 
-from mock import Mock, MagicMock, patch
+from mock import MagicMock, Mock, patch
 from mongoengine import Q
 
 from beer_garden.db.mongo.models import Request

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 from inspect import isawaitable
-from typing import Optional, Any
+from typing import Any, Optional
 
 import six
 from brewtils.models import BaseModel

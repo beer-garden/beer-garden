@@ -6,17 +6,18 @@ in Beer-Garden will be initialized within this class.
 """
 import logging
 import signal
+from datetime import timedelta
+from functools import partial
+from multiprocessing.managers import BaseManager
+from typing import Callable
+
 from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecutor
 
 # from apscheduler.schedulers.background import BackgroundScheduler
 from brewtils import EasyClient
 from brewtils.models import Event, Events
 from brewtils.stoppable_thread import StoppableThread
-from datetime import timedelta
-from functools import partial
-from multiprocessing.managers import BaseManager
 from pytz import utc
-from typing import Callable
 
 import beer_garden.api
 import beer_garden.api.entry_point
@@ -30,10 +31,7 @@ import beer_garden.queue.api as queue
 import beer_garden.router
 from beer_garden.events.handlers import garden_callbacks
 from beer_garden.events.parent_procesors import HttpParentUpdater
-from beer_garden.events.processors import (
-    FanoutProcessor,
-    QueueListener,
-)
+from beer_garden.events.processors import FanoutProcessor, QueueListener
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import PrometheusServer

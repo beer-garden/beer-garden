@@ -18,13 +18,14 @@ import pymongo
 import pymongo.database
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
-from bson import ObjectId
+from brewtils.models import Event, Events, FileTrigger, Job, Operation
+from brewtils.schema_parser import SchemaParser
+from bson import ObjectId, json_util
 from pathtools.patterns import match_any_paths
 from pymongo.client_session import ClientSession
 from pymongo.collection import Collection
 from pymongo.cursor import Cursor
 from pymongo.results import InsertManyResult
-from bson import json_util
 from watchdog.events import (
     EVENT_TYPE_CREATED,
     EVENT_TYPE_DELETED,
@@ -42,8 +43,6 @@ from beer_garden.db.mongo.api import from_brewtils
 from beer_garden.db.mongo.jobstore import construct_trigger
 from beer_garden.events import publish_event
 from beer_garden.requests import get_request
-from brewtils.models import Event, Events, FileTrigger, Job, Operation
-from brewtils.schema_parser import SchemaParser
 
 logger = logging.getLogger(__name__)
 

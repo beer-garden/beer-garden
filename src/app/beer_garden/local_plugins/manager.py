@@ -6,7 +6,7 @@ import string
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, wait
-from concurrent.futures._base import Future  # noqa
+from concurrent.futures._base import Future
 from enum import Enum
 from importlib.machinery import SourceFileLoader
 from importlib.util import module_from_spec, spec_from_file_location
@@ -15,8 +15,8 @@ from random import choice
 from types import ModuleType
 from typing import Any, Dict, Iterable, List, Optional
 
-from brewtils.models import Event, Events, Runner, System  # noqa
-from brewtils.specification import _SYSTEM_SPEC  # noqa
+from brewtils.models import Event, Events, Runner, System
+from brewtils.specification import _SYSTEM_SPEC
 from brewtils.stoppable_thread import StoppableThread
 
 import beer_garden.config as config

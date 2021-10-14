@@ -17,14 +17,13 @@ from brewtils.errors import PluginError
 from brewtils.models import Event, Events, Garden, Operation, System
 from brewtils.specification import _CONNECTION_SPEC
 from mongoengine import DoesNotExist
+from yapconf import YapconfSpec
 
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.events import publish, publish_event
 from beer_garden.namespace import get_namespaces
 from beer_garden.systems import get_systems, remove_system
-
-from yapconf import YapconfSpec
 
 logger = logging.getLogger(__name__)
 
