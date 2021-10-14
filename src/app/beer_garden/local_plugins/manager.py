@@ -167,9 +167,7 @@ class PluginManager(StoppableThread):
         username=None,
         password=None,
     ):
-        super().__init__(
-            **{"logger": logging.getLogger(__name__), "name": "PluginManager"}
-        )
+        super().__init__(logger=logging.getLogger(__name__), name="PluginManager")
 
         self._display_name = "Plugin Manager"
         self._runners: List[ProcessRunner] = []
@@ -401,7 +399,7 @@ class PluginManager(StoppableThread):
             List of Runners to run the plugins.
         """
         if paths is None and self._plugin_path is None:
-            self.logger.exception("PluginManager.scan_path has no path to scan")
+            self.logger.error("PluginManager.scan_path has no path to scan")
             return []
 
         plugin_paths = paths or self._plugin_path.iterdir()
