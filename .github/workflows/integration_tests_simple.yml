@@ -58,7 +58,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.4
+          python-version: 3.7
 
       - name: Build Local Beer Garden Docker
         if: ${{matrix.beer-garden-local == 'unstable'}}
@@ -139,7 +139,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.4
+          python-version: 3.7
 
       - name: Build Local Beer Garden Docker
         if: ${{matrix.beer-garden-local == 'unstable'}}
@@ -229,7 +229,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.4
+          python-version: 3.7
 
       - name: Build Local Beer Garden Docker
         if: ${{matrix.beer-garden-local == 'unstable'}}
@@ -348,7 +348,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.4
+          python-version: 3.7
 
       - name: Build Local Beer Garden Docker
         if: ${{matrix.beer-garden-local == 'unstable'}}
@@ -454,7 +454,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.4
+          python-version: 3.7
 
       - name: Build Local Beer Garden Docker
         if: ${{matrix.beer-garden-local == 'unstable'}}
@@ -545,7 +545,7 @@ jobs:
       - name: Setup python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.4
+          python-version: 3.7
 
       - name: Build Local Beer Garden Docker
         if: ${{matrix.beer-garden-local == 'unstable'}}
