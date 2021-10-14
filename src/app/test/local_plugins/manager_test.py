@@ -1,4 +1,6 @@
 import logging
+import pathlib
+import tempfile
 import textwrap
 from pathlib import Path
 
@@ -6,6 +8,7 @@ import pytest
 from box import Box
 from brewtils.models import Instance, System
 from mock import Mock
+from pytest_lazyfixture import lazy_fixture
 
 import beer_garden.db.api as db
 from beer_garden.errors import PluginValidationError
@@ -53,6 +56,12 @@ def config_all_serialized():
 
 
 @pytest.fixture
+def tmp_path():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        yield pathlib.Path(tmp_dir)
+
+
+@pytest.fixture
 def plugin_1(tmp_path, config_all_serialized):
     plugin_1 = tmp_path / "plugin_1"
     plugin_1.mkdir()
@@ -81,6 +90,31 @@ def write_file(plugin_path, file_contents):
     return config_file
 
 
+def _none_returner(*args, **kwargs):
+    return None
+
+
+class TestHandlersAndRunnerMethods:
+    @pytest.mark.parametrize(
+        "method,method_args, exception",
+        [
+            ("get_runner", (None,), None),
+            ("restart", (None, None), None),
+            ("update", (None, None), None),
+            ("stop_one", (None, None), Exception),
+        ],
+    )
+    def test_runner_or_instance_ops_none_args(
+        self, method, method_args, exception, manager
+    ):
+        """Test operations on runners/instances return `None` if given args of `None`"""
+        if exception is not None:  # expect an exception
+            with pytest.raises(exception):
+                getattr(manager, method)(*method_args)
+        else:
+            assert getattr(manager, method)(*method_args) is None
+
+
 @pytest.mark.skip
 class TestLoadPlugins(object):
     def test_empty(self, tmp_path, loader):
@@ -93,23 +127,26 @@ class TestLoadPlugins(object):
         loader.load_plugins(path=tmp_path)
 
 
-@pytest.mark.skip
 class TestLoadNew(object):
-    def test_empty_path(self, tmp_path, manager):
-        manager.load_new(path=tmp_path)
-        assert manager._runners == {}
+    def test_path_with_no_plugins(self, tmp_path, manager):
+        manager.scan_path([tmp_path])
+        assert manager._runners == []
 
-    def test_single(self, tmp_path, manager):
+    def test_single(self, tmp_path, manager, monkeypatch):
+        monkeypatch.setattr(PluginManager, "_environment", _none_returner)
+
         plugin_path = tmp_path / "tester"
         plugin_path.mkdir()
         (plugin_path / "entry.py").touch()
 
         write_file(plugin_path, "PLUGIN_ENTRY='entry.py'")
 
-        manager.load_new()
+        manager.scan_path([plugin_path])
         assert len(manager._runners) == 1
 
-    def test_multiple(self, tmp_path, manager):
+    def test_multiple(self, tmp_path, manager, monkeypatch):
+        monkeypatch.setattr(PluginManager, "_environment", _none_returner)
+
         plugin_path = tmp_path / "tester"
         plugin_path.mkdir()
         (plugin_path / "entry.py").touch()
@@ -124,24 +161,85 @@ class TestLoadNew(object):
             ),
         )
 
-        manager.load_new()
+        manager.scan_path([plugin_path])
         assert len(manager._runners) == 2
 
+    def test_dot_dir(self, tmp_path, manager, monkeypatch, caplog):
+        monkeypatch.setattr(PluginManager, "_environment", _none_returner)
 
-@pytest.mark.skip
+        plugin_path = tmp_path / ".please_ignore"
+        plugin_path.mkdir()
+
+        with caplog.at_level(logging.DEBUG):
+            manager.scan_path([plugin_path])
+
+        assert len(manager._runners) == 0
+        assert "Ignoring hidden" in caplog.messages[0]
+
+    def test_scan_path_no_paths(self, manager, caplog):
+        setattr(manager, "_plugin_path", None)
+
+        with caplog.at_level(logging.DEBUG):
+            result = manager.scan_path()
+
+        assert result == []
+        assert "no path" in caplog.messages[0]
+
+
 class TestLoadPlugin(object):
-    # @pytest.fixture(autouse=True)
-    # def drop_collections(self, mongo_conn):
-    #     import beer_garden.db.mongo.models
-    #
-    #     beer_garden.db.mongo.models.Instance.drop_collection()
-    #     beer_garden.db.mongo.models.System.drop_collection()
+    @pytest.fixture
+    def _file_path(self, tmp_path):
+        new_file_path = tmp_path / "new_file"
+        new_file_path.touch()
+        return new_file_path
 
+    @pytest.fixture
+    def _hidden_path(self, tmp_path):
+        hidden_directory_path = tmp_path / ".hidden_directory"
+        hidden_directory_path.mkdir()
+        return hidden_directory_path
+
+    @pytest.fixture
+    def _good_path(self, tmp_path):
+        good_directory_path = tmp_path / "good_directory"
+        good_directory_path.mkdir()
+        return good_directory_path
+
+    @pytest.fixture
+    def _good_path_bad_config(self, tmp_path):
+        good_directory_base_path = tmp_path / "good_directory"
+        good_directory_base_path.mkdir()
+        bad_config_file = good_directory_base_path / CONFIG_NAME
+        bad_config_file.mkdir()
+        return good_directory_base_path
+
+    @pytest.mark.parametrize(
+        "value,message",
+        [
+            (None, "malformed plugin path"),
+            (Path("/not/a_real/directory"), "does not exist"),
+            (lazy_fixture("_file_path"), "is not a directory"),
+            (Path("."), "Cannot determine plugin path"),
+            (lazy_fixture("_hidden_path"), "Ignoring hidden plugin path"),
+            (lazy_fixture("_good_path"), "does not exist"),
+            (lazy_fixture("_good_path_bad_config"), "is not a file"),
+        ],
+    )
+    def test_plugin_path_validator_bad_paths(self, value, message, manager, caplog):
+        logger = logging.getLogger(__name__)
+
+        with caplog.at_level(logging.DEBUG):
+            assert not manager._is_valid_plugin_path(value, None, logger)
+
+        assert message in caplog.messages[0]
+
+    @pytest.mark.skip
     @pytest.mark.parametrize("path", [None, Path("/not/real")])
     def test_bad_path(self, loader, path):
         with pytest.raises(PluginValidationError):
             loader.load_plugin(path)
 
+    @pytest.mark.skip
     def test_single_instance(self, loader, registry, plugin_1):
         plugin_runners = loader.load_plugin(plugin_1)
 
@@ -149,6 +247,7 @@ class TestLoadPlugin(object):
         assert plugin_runners[0].name == "foo[default]-1.0"
         assert plugin_runners[0].entry_point == "entry.py"
 
+    @pytest.mark.skip
     def test_multiple_instances(self, tmp_path, loader):
         plugin = tmp_path / "plugin"
         plugin.mkdir()
@@ -174,6 +273,7 @@ class TestLoadPlugin(object):
         assert sorted_runners[1].name == "foo[instance2]-1.0"
         assert sorted_runners[1].entry_point == "entry.py"
 
+    @pytest.mark.skip
     def test_existing(self, loader, registry, plugin_1):
         system_id = "58542eb571afd47ead90face"
         instance_id = "58542eb571afd47ead90beef"
@@ -194,6 +294,7 @@ class TestLoadPlugin(object):
         assert plugin_runners[0].name == "foo[default]-1.0"
         assert plugin_runners[0].entry_point == "entry.py"
 
+    @pytest.mark.skip
     def test_existing_multiple(self, tmp_path, loader, registry, plugin_1, bg_instance):
         """This is mainly to test that Instance IDs are correct
 
@@ -240,6 +341,7 @@ class TestLoadPlugin(object):
         assert instance2_db is not None
         assert instance2_db.id == instance2.id
 
+    @pytest.mark.skip
     def test_bad_config(self, monkeypatch, caplog, tmp_path, loader, validator):
         monkeypatch.setattr(
             loader, "_load_config", Mock(side_effect=PluginValidationError)

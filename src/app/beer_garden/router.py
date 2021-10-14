@@ -48,7 +48,7 @@ from beer_garden.errors import (
 )
 from beer_garden.events import publish
 from beer_garden.garden import get_garden, get_gardens
-from beer_garden.requests import complete_request
+from beer_garden.requests import complete_request, create_request
 
 logger = logging.getLogger(__name__)
 
@@ -485,7 +485,6 @@ def _pre_route(operation: Operation) -> Operation:
     return operation
 
 
-# TODO - After this is called, if one of the params is a file, ship it down range too.
 def _pre_forward(operation: Operation) -> Operation:
     """Called before forwarding an operation"""
 
@@ -497,14 +496,20 @@ def _pre_forward(operation: Operation) -> Operation:
 
     if operation.operation_type == "REQUEST_CREATE":
         # Save the request so it'll have an ID and we'll have something to update
-        operation.model = db.create(operation.model)
+        local_request = create_request(operation.model)
+
+        if operation.model.namespace == config.get("garden.name"):
+            operation.model = local_request
+        else:
+            # When the target is a remote garden, just capture the id. We don't
+            # want to replace the entire model, as we'd lose the base64 encoded file
+            # parameter data.
+            operation.model.id = local_request.id
 
         # Clear parent before forwarding so the child doesn't freak out about an
         # unknown request
         operation.model.parent = None
         operation.model.has_parent = False
-
-        beer_garden.files.forward_file(operation)
 
         # Pull out and store the wait event, if it exists
         wait_event = operation.kwargs.pop("wait_event", None)

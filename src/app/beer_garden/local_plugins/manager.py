@@ -37,7 +37,7 @@ def runner(*args, **kwargs):
     return lpm_proxy.get_runner(*args, **kwargs)
 
 
-def runners(*args, **kwargs):
+def runners():
     return lpm_proxy.get_runners()
 
 
@@ -66,52 +66,69 @@ def remove(*args, **kwargs):
 
 
 def rescan(*args, **kwargs) -> List[Runner]:
-    """Scans plugin directory and starts any new runners"""
+    """Scan plugin directory and start any new runners.
+
+    Args:
+        *args: Arguments to pass to ``scan_path`` in the PluginManager object.
+        **kwargs: Keyword arguments to pass to ``scan_path`` in the PluginManager
+            object.
+
+    Returns:
+        A list of the new runners
+    """
     new_runners = lpm_proxy.scan_path(*args, **kwargs)
 
-    for runner in new_runners:
+    for the_runner in new_runners:
         publish(
             Event(
                 name=Events.RUNNER_STARTED.name,
                 payload_type=Runner.__name__,
-                payload=runner,
+                payload=the_runner,
             )
         )
 
     return new_runners
 
 
-def reload(path: str = None, system: System = None):
-    """Reload runners in a directory
+def reload(path: Optional[str] = None, system: Optional[System] = None):
+    """Reload runners in a directory.
+
+    Note:
+        Will first remove any existing runners, stopping them if necessary, and then
+        initiate a rescan on the directory.
 
     Args:
         path: The path to reload. It's expected this will be only the final part of the
-        full path, so it will be appended to the overall plugin path.
+            full path, so it will be appended to the overall plugin path. Optional.
         system: If path is not specified, will attempt to determine the correct path to
-        use based on the given system
-
-    Will first remove any existing runners (stopping them if necessary) and then
-    initiate a rescan on the directory.
+            use based on the given system.
     """
     all_runners = runners()
 
     if path is None:
         for instance in system.instances:
-            for runner in all_runners:
-                if runner.instance_id == instance.id:
-                    path = runner.path
+            for the_runner in all_runners:
+                if the_runner.instance_id == instance.id:
+                    path = the_runner.path
                     break
 
     logger.debug(f"Reloading runners in directory {path}")
 
-    for r in [r for r in all_runners if r.path == path]:
-        remove(runner_id=r.id, remove=True)
+    for the_runner in all_runners:
+        if the_runner.path == path:
+            remove(runner_id=the_runner.id, remove=True)
 
     return rescan(paths=[lpm_proxy.plugin_path() / path])
 
 
-def handle_event(event):
-    # Only care about local garden
+def handle_event(event: Event) -> None:
+    """Delegate handling of events to the plugin manager.
+
+    Deals only with instance events associated with the local garden.
+
+    Args:
+        event: An Event object we might be interested in.
+    """
     if event.garden == config.get("garden.name"):
         if event.name == Events.INSTANCE_INITIALIZED.name:
             lpm_proxy.handle_initialize(event)
@@ -120,26 +137,26 @@ def handle_event(event):
 
 
 class PluginManager(StoppableThread):
-    """Manages creation and destruction of PluginRunners
+    """Manage creation and destruction of PluginRunners.
 
     The instance of this class is intended to be created with a
-    ``multiprocessing.managers.BaseManager``. This essentially means that it lives in
-    its own process, and access to it is achieved using a proxy object. This proxy
-    object is the module-scoped ``lpm_proxy``.
+    ``multiprocessing.managers.BaseManager``. That is, it will exist in its own process
+    and access is via a proxy object. This proxy object is the module-scoped
+    ``lpm_proxy``.
 
-    We do this because we can use the proxy object in the main application process AND
-    we can pass it to the entry point processes. The entry point processes can then use
-    the proxy transparently.
+    A proxied object is used so that it can be safely manipulated in the main
+    application process and also safely passed to the entry point processes. The entry
+    point processes can then use the proxy transparently.
 
-    There are some catches, of course. One is performance, but I don't think it's
+    There are some catches: One is performance, but I don't think it's
     significant enough to be a concern. The other is important enough to emphasize:
 
-      HEY: RETURN TYPES FOR ALL PUBLIC METHODS OF THIS CLASS **MUST** BE PICKLEABLE!
+      RETURN TYPES FOR ALL PUBLIC METHODS OF THIS CLASS **MUST** BE PICKLE-ABLE!
 
-    This proxy concept is pretty neat, but at some point the data does need to traverse
-    a process boundary. All public (non-underscore) methods are exposed (able to be
-    called by a client using the proxy). That means that anything returned from those
-    methods must be pickleable to work.
+    At some point the data needs to traverse a process boundary. All public
+    (non-underscored) methods are exposed and are therefore able to be called by a
+    client using the proxy. That means that anything returned from those methods must be
+    pickle-able to work.
     """
 
     def __init__(
@@ -155,13 +172,16 @@ class PluginManager(StoppableThread):
         self._display_name = "Plugin Manager"
         self._runners: List[ProcessRunner] = []
 
-        self._plugin_path = Path(plugin_dir) if plugin_dir else None
-        self._log_dir = log_dir
+        self._plugin_path: Optional[Path] = Path(plugin_dir) if plugin_dir else None
+        self._log_dir: Optional[str] = log_dir
         self._connection_info = connection_info
-        self._username = username
-        self._password = password
+        self._username: Optional[str] = username
+        self._password: Optional[str] = password
+
+        self._runner_id_generator = None
 
     def run(self):
+        """Run this thread."""
         self.logger.debug(self._display_name + " is started")
 
         while not self.wait(1):
@@ -169,45 +189,59 @@ class PluginManager(StoppableThread):
 
         self.logger.debug(self._display_name + " is stopped")
 
-    def monitor(self):
-        """Ensure that processes are still alive
+    def monitor(self) -> None:
+        """Ensure processes are still alive.
 
         Iterate through all runners, restarting any processes that have stopped.
 
-        This must be done inside of the PluginManager class because of the
-        process.poll() check. That can only be done from within this class.
+        Note:
+            This must be done inside of the PluginManager class because of the
+            process.poll() check. That can only be done from within this class.
         """
-        for runner in self._runners:
+        for the_runner in self._runners:
             if self.stopped():
                 break
 
-            if runner.process and runner.process.poll() is not None:
-                if runner.restart:
-                    self.logger.warning(f"Runner {runner} stopped, restarting")
-                    self._restart(runner)
-                elif not runner.stopped and not runner.dead:
-                    self.logger.warning(f"Runner {runner} is dead, not restarting")
-                    runner.dead = True
+            if the_runner.process and the_runner.process.poll() is not None:
+                if the_runner.restart:
+                    self.logger.warning(f"Runner {the_runner} stopped, restarting")
+                    self._restart(the_runner)
+                elif not the_runner.stopped and not the_runner.dead:
+                    self.logger.warning(f"Runner {the_runner} is dead, not restarting")
+                    the_runner.dead = True
 
     def plugin_path(self):
         return self._plugin_path
 
     def paths(self) -> List[str]:
-        """All current runner paths"""
-        return list({runner.process_cwd for runner in self._runners})
+        """Get all current runner paths."""
+        return list({the_runner.process_cwd for the_runner in self._runners})
 
-    def get_runner(self, runner_id=None) -> Optional[Runner]:
-        """Get a representation of current runners"""
-        process_runner = self._from_runner_id(runner_id)
-        if process_runner:
+    def get_runner(self, runner_id: Optional[str] = None) -> Optional[Runner]:
+        """Get a representation of a runner.
+
+        Args:
+            runner_id: The Runner ID to lookup, optional.
+
+        Returns:
+            The Runner associated with the provided ID or ``None`` if no argument was
+            passed.
+        """
+        process_runner = (
+            self._from_runner_id(runner_id) if runner_id is not None else None
+        )
+
+        if process_runner is not None:
             return process_runner.state()
 
+        return None
+
     def get_runners(self) -> List[Runner]:
-        """Get a representation of current runners"""
-        return [runner.state() for runner in self._runners]
+        """Get a representation of current runners."""
+        return [the_runner.state() for the_runner in self._runners]
 
     def has_instance_id(self, instance_id: str) -> bool:
-        """Bool indicating if a given instance ID has an associated runner"""
+        """Determine if a given instance ID has an associated runner."""
         return self._from_instance_id(instance_id=instance_id) is not None
 
     def handle_initialize(self, event: Event) -> None:
@@ -217,55 +251,85 @@ class PluginManager(StoppableThread):
         """
         runner_id = event.payload.metadata.get("runner_id")
 
-        if runner_id:
+        if runner_id is not None:
             instance = event.payload
 
-            self.logger.debug(f"Associating {runner_id} with {instance.id}")
+            self.logger.debug(
+                f"Associating runner ID ({runner_id}) with instance ID ({instance.id})"
+            )
 
-            runner = self._from_runner_id(runner_id)
-            runner.associate(instance=instance)
-            runner.restart = True
+            the_runner = self._from_runner_id(runner_id)
+            the_runner.associate(instance=instance)
+            the_runner.restart = True
 
     def handle_stopped(self, event: Event) -> None:
-        """Called whenever an INSTANCE_STOPPED occurs
+        """Called whenever an INSTANCE_STOPPED occurs.
 
         If the event instance is associated with any runner that this PluginManager
         knows about then that runner will be marked as stopped and no longer monitored.
         """
-        runner = self._from_instance_id(event.payload.id)
+        the_runner = self._from_instance_id(event.payload.id)
 
-        if runner:
-            runner.stopped = True
-            runner.restart = False
-            runner.dead = False
+        if the_runner is not None:
+            the_runner.stopped = True
+            the_runner.restart = False
+            the_runner.dead = False
 
-    def restart(self, runner_id=None, instance_id=None) -> Optional[Runner]:
-        """Restart the runner for a particular Instance ID"""
-        runner = self._from_runner_id(runner_id) or self._from_instance_id(instance_id)
+    def restart(
+        self, runner_id: Optional[str] = None, instance_id: Optional[str] = None
+    ) -> Optional[Runner]:
+        """Restart the runner for a particular Runner ID or Instance ID.
 
-        if runner:
-            return self._restart(runner).state()
+        Args:
+            runner_id: An ID string associated with a Runner object, optional
+            instance_id: An ID string associated with an Instance object, optional
+
+        Returns:
+            The Runner associated with the provided ID or ``None`` if neither argument
+            is provided.
+        """
+        the_runner = None
+
+        if runner_id is not None:
+            the_runner = self._from_runner_id(runner_id)
+        elif instance_id is not None:
+            the_runner = self._from_instance_id(instance_id)
+
+        return self._restart(the_runner).state() if the_runner is not None else None
 
     def update(
-        self, runner_id=None, instance_id=None, restart=None, stopped=None
-    ) -> Runner:
-        """Update a runner state"""
-        runner = self._from_runner_id(runner_id) or self._from_instance_id(instance_id)
+        self,
+        runner_id: Optional[str] = None,
+        instance_id: Optional[str] = None,
+        restart: Optional[bool] = None,
+        stopped: Optional[bool] = None,
+    ) -> Optional[Runner]:
+        """Update a runner's state."""
+        the_runner = None
 
-        if not runner:
-            return
+        if runner_id is not None:
+            the_runner = self._from_runner_id(runner_id)
+        elif instance_id is not None:
+            the_runner = self._from_instance_id(instance_id)
+
+        if the_runner is None:
+            return None
 
         if stopped is not None:
-            runner.stopped = stopped
+            the_runner.stopped = stopped
         if restart is not None:
-            runner.restart = restart
+            the_runner.restart = restart
 
-        return runner.state()
+        return the_runner.state()
 
     def stop_one(
-        self, runner_id=None, instance_id=None, send_sigterm=True, remove=False
+        self,
+        runner_id: Optional[str] = None,
+        instance_id: Optional[str] = None,
+        send_sigterm: bool = True,
+        remove: bool = False,  # noqa
     ) -> Runner:
-        """Stop the runner for a given runner or Instance ID
+        """Stop the runner for a given Runner ID or Instance ID.
 
         The PluginManager has no ability to places messages on the message queue, so
         it's possible that a stop message will already have been sent to the plugin
@@ -277,64 +341,74 @@ class PluginManager(StoppableThread):
         SIGKILL.
 
         Args:
-            runner_id: The runner ID to stop
-            instance_id: The instance ID to stop
-            send_sigterm: If true, send SIGTERM before waiting
-            remove: Flag controlling if the runner should be removed from runner list
+            runner_id: The runner ID to stop, optional.
+            instance_id: The instance ID to stop, optional.
+            send_sigterm: If true, send SIGTERM before waiting. Defaults to ``True``.
+            remove: Flag controlling if the runner should be removed from runner list.
+                Defaults to ``False``.
 
         Returns:
-            The stopped runner
+            The stopped runner.
         """
-        runner = self._from_runner_id(runner_id) or self._from_instance_id(instance_id)
+        the_runner = None
 
-        if not runner:
+        if runner_id is not None:
+            the_runner = self._from_runner_id(runner_id)
+        elif instance_id is not None:
+            the_runner = self._from_instance_id(instance_id)
+
+        if the_runner is None:
             raise Exception(
-                f"Could not determine runner using runner ID {runner_id} and "
-                f"instance ID {instance_id}"
+                f"Could not determine runner using runner ID ({runner_id}) and "
+                f"instance ID ({instance_id})"
             )
 
         if send_sigterm:
-            runner.term()
+            the_runner.term()
 
-        runner.join(config.get("plugin.local.timeout.shutdown"))
+        the_runner.join(config.get("plugin.local.timeout.shutdown"))
 
-        if runner.is_alive():
-            runner.dead = True
-            runner.kill()
+        if the_runner.is_alive():
+            the_runner.dead = True
+            the_runner.kill()
 
-        runner.stopped = True
-        runner.restart = False
+        the_runner.stopped = True
+        the_runner.restart = False
 
         if remove:
-            self._runners.remove(runner)
+            self._runners.remove(the_runner)
 
-        return runner.state()
+        return the_runner.state()
 
     def stop_all(self) -> None:
-        """Stop all known runners"""
+        """Stop all known runners."""
         return self._stop_multiple(self._runners)
 
-    def scan_path(self, paths: Iterable[str] = None) -> List[Runner]:
-        """Scan a given directory for valid plugins
+    def scan_path(self, paths: Optional[Iterable[Path]] = None) -> List[Runner]:
+        """Scan a directory for valid plugins.
 
-        Note: This scan does not walk the directory tree - all plugins must be
-        in the top level of the given path.
+        Note:
+            This scan does not walk the directory tree--all plugins must be in the
+            top-level of the given path.
 
         Args:
-            paths: The paths to scan. If None will be all subdirectories of the plugin
-            path specified at initialization
+            paths: The paths to scan, Optional. If ``None``, will be all subdirectories
+                of the plugin path specified at initialization
 
         Returns:
-            None
+            List of Runners to run the plugins.
         """
-        plugin_paths = paths or self._plugin_path.iterdir()
+        if paths is None and self._plugin_path is None:
+            self.logger.error("PluginManager.scan_path has no path to scan")
+            return []
 
+        plugin_paths = paths or self._plugin_path.iterdir()
         new_runners = []
 
         try:
             for path in plugin_paths:
                 try:
-                    if path.is_dir() and path not in self.paths():
+                    if self._is_valid_plugin_path(path, self.paths(), self.logger):
                         new_runners += self._create_runners(path)
                 except Exception as ex:
                     self.logger.exception(f"Error loading plugin at {path}: {ex}")
@@ -342,94 +416,150 @@ class PluginManager(StoppableThread):
         except Exception as ex:
             self.logger.exception(f"Error scanning plugin path: {ex}")
 
-        return [runner.state() for runner in new_runners]
+        return [the_runner.state() for the_runner in new_runners]
+
+    @staticmethod
+    def _is_valid_plugin_path(
+        path: Optional[Path], known_paths: List[str], the_logger: logging.Logger
+    ) -> bool:
+        try:
+            if path is None:
+                raise PluginValidationError(f"Received malformed plugin path: {path}")
+            if not path.exists():
+                raise PluginValidationError(f"Plugin path {path} does not exist")
+            if not path.is_dir():
+                raise PluginValidationError(f"Plugin path {path} is not a directory")
+
+            path_parts = path.parts
+
+            if len(path_parts) == 0:
+                raise PluginValidationError(f"Cannot determine plugin path from {path}")
+            if path_parts[-1].startswith("."):
+                the_logger.debug("Ignoring hidden plugin path: %s" % str(path))
+
+                return False
+
+            config_file = path / CONFIG_NAME
+
+            if not config_file.exists():
+                raise PluginValidationError(f"Config file {config_file} does not exist")
+            if not config_file.is_file():
+                raise PluginValidationError(f"Config file {config_file} is not a file")
+
+            return path not in known_paths
+        except PluginValidationError as plugin_error:
+            the_logger.exception(
+                "Error loading plugin at %s: %s" % (str(path), str(plugin_error))
+            )
+            return False
 
     def _from_instance_id(self, instance_id: str) -> Optional[ProcessRunner]:
-        for runner in self._runners:
-            if runner.instance_id == instance_id:
-                return runner
+        for the_runner in self._runners:
+            if the_runner.instance_id == instance_id:
+                return the_runner
+
         return None
 
     def _from_runner_id(self, runner_id: str) -> Optional[ProcessRunner]:
-        for runner in self._runners:
-            if runner.runner_id == runner_id:
-                return runner
+        for the_runner in self._runners:
+            if the_runner.runner_id == runner_id:
+                return the_runner
+
         return None
 
-    def _restart(self, runner: ProcessRunner) -> ProcessRunner:
+    def _restart(self, the_runner: ProcessRunner) -> ProcessRunner:
         new_runner = ProcessRunner(
-            runner_id=runner.runner_id,
-            process_args=runner.process_args,
-            process_cwd=runner.process_cwd,
-            process_env=runner.process_env,
-            capture_streams=runner.capture_streams,
+            runner_id=the_runner.runner_id,
+            process_args=the_runner.process_args,
+            process_cwd=the_runner.process_cwd,
+            process_env=the_runner.process_env,
+            capture_streams=the_runner.capture_streams,
         )
 
-        self._runners.remove(runner)
+        self._runners.remove(the_runner)
         self._runners.append(new_runner)
 
         new_runner.start()
 
         return new_runner
 
-    def _stop_multiple(self, runners: Iterable[ProcessRunner] = None) -> None:
+    def _stop_multiple(
+        self, the_runners: Optional[Iterable[ProcessRunner]] = None
+    ) -> None:
         # If not specified, default to all runners
-        if runners is None:
-            runners = self._runners
+        if the_runners is None:
+            the_runners = self._runners
 
         # If empty, we're done
-        if len(runners) < 1:
+        if len(the_runners) == 0:
             return
 
-        shutdown_pool = ThreadPoolExecutor(len(runners))
+        shutdown_pool = ThreadPoolExecutor(len(the_runners))
         stop_futures: List[Future] = []
 
-        for runner in runners:
+        for the_runner in the_runners:
             stop_futures.append(
                 shutdown_pool.submit(
-                    self.stop_one, runner_id=runner.runner_id, send_sigterm=True
+                    self.stop_one, runner_id=the_runner.runner_id, send_sigterm=True
                 )
             )
 
         wait(stop_futures)
 
-        for runner in runners:
-            self._runners.remove(runner)
+        for the_runner in the_runners:
+            self._runners.remove(the_runner)
+
+    def _get_runner_id(self) -> str:
+        """Get a 10-letter string to serve as a runner ID."""
+        if self._runner_id_generator is None:
+            self._runner_id_generator = self._runner_id_generator_factory()
+        return next(self._runner_id_generator)
+
+    @staticmethod
+    def _runner_id_generator_factory() -> str:
+        """Will not yield the same result twice, but is theoretically less than
+        ideal because of a potentially long-running loop. In any case, a solution
+        that removes this defect is heavy-weight (absent *numpy*) and is judged to not
+        be worth the initial effort nor the maintenance for this application.
+        """
+
+        def _runner_id():
+            return "".join([choice(string.ascii_letters) for _ in range(10)])
+
+        seen = set()
+
+        while True:
+            runner_id = _runner_id()
+
+            while runner_id in seen:
+                runner_id = _runner_id()
+
+            seen.add(runner_id)
+
+            yield runner_id
 
     def _create_runners(self, plugin_path: Path) -> List[ProcessRunner]:
-        """Create and start ProcessRunners for a particular directory
+        """Create and start ProcessRunners for a particular directory.
 
-        It will use the validator to validate the config.
+        Uses the validator to validate the config.
 
         Args:
-            plugin_path: The path of the plugin
+            plugin_path: The path of the plugin.
 
         Returns:
-            Newly created runner dictionary
+            List of newly created runners.
 
         """
-        config_file = plugin_path / CONFIG_NAME
-
-        if not plugin_path:
-            raise PluginValidationError(f"Plugin path {plugin_path} does not exist")
-        if not plugin_path.is_dir():
-            raise PluginValidationError(f"Plugin path {plugin_path} is not a directory")
-        if not config_file.exists():
-            raise PluginValidationError(f"Config file {config_file} does not exist")
-        if not config_file.is_file():
-            raise PluginValidationError(f"Config file {config_file} is not a file")
-
-        try:
-            plugin_config = ConfigLoader.load(config_file)
-        except PluginValidationError as ex:
-            self.logger.error(f"Error loading config for plugin at {plugin_path}: {ex}")
-            return []
-
         new_runners = []
 
+        try:
+            plugin_config = ConfigLoader.load(plugin_path / CONFIG_NAME)
+        except PluginValidationError as ex:
+            self.logger.error(f"Error loading config for plugin at {plugin_path}: {ex}")
+            return new_runners
+
         for instance_name in plugin_config["INSTANCES"]:
-            # TODO: collisions
-            runner_id = "".join([choice(string.ascii_letters) for _ in range(10)])
+            runner_id = self._get_runner_id()
             capture_streams = plugin_config.get("CAPTURE_STREAMS")
             process_args = self._process_args(plugin_config, instance_name)
             process_env = self._environment(
@@ -448,9 +578,9 @@ class PluginManager(StoppableThread):
 
         self._runners += new_runners
 
-        for runner in new_runners:
-            self.logger.debug(f"Starting runner {runner}")
-            runner.start()
+        for the_runner in new_runners:
+            self.logger.debug(f"Starting runner {the_runner}")
+            the_runner.start()
 
         # as obnoxious as it is to have a sleep here, we have to wait for the
         # threads to complete their run() methods before we know whether they're dead
@@ -460,21 +590,25 @@ class PluginManager(StoppableThread):
         return new_runners
 
     @staticmethod
-    def _process_args(plugin_config, instance_name):
-        if plugin_config.get("INTERPRETER_PATH"):
-            process_args = [plugin_config.get("INTERPRETER_PATH")]
-        else:
-            process_args = [sys.executable]
+    def _process_args(plugin_config: Dict[str, Any], instance_name: str):
+        interp_path = plugin_config.get("INTERPRETER_PATH")
+        process_args = [interp_path] if interp_path is not None else [sys.executable]
 
-        if plugin_config.get("PLUGIN_ENTRY"):
-            process_args += plugin_config["PLUGIN_ENTRY"].split(" ")
-        elif plugin_config.get("NAME"):
-            process_args += ["-m", plugin_config["NAME"]]
+        plugin_entry = plugin_config.get("PLUGIN_ENTRY")
+
+        if plugin_entry is not None:
+            process_args += plugin_entry.split(" ")
         else:
-            raise PluginValidationError("Can't generate process args")
+            plugin_name = plugin_config.get("NAME")
+
+            if plugin_name is not None:
+                process_args += ["-m", plugin_name]
+            else:
+                raise PluginValidationError("Can't generate process args")
 
         plugin_args = plugin_config["PLUGIN_ARGS"].get(instance_name)
-        if plugin_args:
+
+        if plugin_args is not None:
             process_args += plugin_args
 
         return process_args
