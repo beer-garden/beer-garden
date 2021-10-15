@@ -1,5 +1,29 @@
 # Beer Garden Changelog
 
+## 3.7.1
+
+10/15/21
+
+#### Added Features
+
+- Login endpoint added allowing user/password entry to receive a *JWT* auth token (Issue #1134)
+- The `get_current_user` method in the `BaseHandler` class now gets the `User` object based on the *JWT* auth token (Issue #1144)
+- Local and remote plugin logging config files now separated (Issue #817)
+- Helper functions created to determine a user's permissions (Issue #1122)
+
+#### Bug Fixes
+
+- Hidden files in a plugin directory no longer show an error in the logs (Issue #1097)
+- File parameters are now handled correctly and a file posted to a child garden from the parent is correctly encoded and compressed for transport (Issue #1055)
+- Dead runners on a child garden now correctly show their status on the parent's UI (Issue #809)
+- Stale systems are now removed when syncing child gardens (Issue #1101)
+- Large requests now better determined whether they need to be stored in GridFS (Issue #1038)
+
+#### Other Changes
+
+- Project is now able to accept pull requests from those who are working from a fork
+- Contribution guide updated
+
 ## 3.6.0
 
 9/22/21
