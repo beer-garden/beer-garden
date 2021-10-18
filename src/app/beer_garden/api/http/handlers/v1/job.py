@@ -41,11 +41,11 @@ class JobAPI(BaseHandler):
     async def patch(self, job_id):
         """
         ---
-        summary: Pause/Resume/Execute a job
+        summary: Pause/Resume a job
         description: |
           The body of the request needs to contain a set of instructions
-          detailing the actions to take. For example, the `operation`
-          `update` with `path` of `/status`.
+          detailing the actions to take. Currently the only operation
+          supported is `update` with `path` of `/status`.
 
 
           You can pause a job with:
@@ -56,12 +56,6 @@ class JobAPI(BaseHandler):
           And resume it with:
           ```JSON
           { "operation": "update", "path": "/status", "value": "RUNNING" }
-          ```
-
-          You can also execute an existing job with:
-          ```JSON
-          { "operation": "update", "path": "/execute", "value": "True" }
-          { "operation": "update", "path": "/reset_interval", "value": "true" } <-- how do this?
           ```
         parameters:
           - name: job_id
@@ -342,11 +336,10 @@ class JobExecutionAPI(BaseHandler):
           - Jobs
         """
 
-        reset_interval = True
         response = await self.client(
             Operation(
                 operation_type="JOB_EXECUTE",
-                args=[job_id, reset_interval]
+                args=[job_id]
             )
         )
         self.set_status(201)

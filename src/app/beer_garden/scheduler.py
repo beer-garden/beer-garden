@@ -371,7 +371,7 @@ class MixedScheduler(object):
             trigger_type='date',
             coalesce=job.coalesce,
             kwargs={"job_id": job.id, "request_template": job.request_template}, # job.id needs to be unique-ified
-            id='ad-hoc,'
+            id='ad-hoc',
         )
 
     def _add_triggers(self, handler, triggers, func):
@@ -699,9 +699,6 @@ def execute_job(job_id: str, reset_interval=False) -> Job:
     Returns:
         The spawned Request
     """
-    logger.info('Job executed from routing')
-    if reset_interval:
-        pass
     return db.query_unique(Job, id=job_id)
 
 def handle_event(event: Event) -> None:
