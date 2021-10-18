@@ -10,9 +10,32 @@ from beer_garden.db.mongo.models import DateTrigger, Job, RequestTemplate
 
 from .. import TestHandlerBase
 
+class JobAPITest:
+    def test_execute(self, http_client, base_url):
+        url = f"{base_url}/api/v1/jobs/abcde/execute"
+        body = json.dumps({"operatiion": "update", "path": "/execute", "value": "true"})
+
+        response = yield http_client.fetch(url, method="POST", body=body)
+        response_body = json.loads(response.body.decode("utf-8"))
+
+        assert response.code == 200
+        assert response_body["token"] is None
+        assert response_body["message"] is not None
+
+    def test_execute_job_not_found(self, http_client, base_url):
+        url = f"{base_url}/api/v1/jobs/abcde/execute"
+        body = json.dumps({"operatiion": "update", "path": "/execute", "value": "true"})
+
+        response = yield http_client.fetch(url, method="POST", body=body)
+        response_body = json.loads(response.body.decode("utf-8"))
+
+        assert response.code == 200
+        assert response_body["token"] is None
+        assert response_body["message"] is not None
+
 
 @unittest.skip("TODO")
-class JobAPITest(TestHandlerBase):
+class JobAPITest2(TestHandlerBase):
     def setUp(self):
         self.ts_epoch = 1451606400000
         self.ts_dt = datetime(2016, 1, 1)
@@ -227,7 +250,7 @@ class JobListAPITest(TestHandlerBase):
         self.assertEqual(200, response.code)
         self.assertEqual(json.loads(response.body.decode("utf-8")), [self.job_dict])
 
-    @patch("brew_view.request_scheduler")
+    #@patch("brew_view.request_scheduler")
     def test_post(self, scheduler_mock):
         body = json.dumps(self.job_dict)
         self.job_dict["id"] = None
@@ -238,7 +261,7 @@ class JobListAPITest(TestHandlerBase):
         self.assertEqual(data_without_id, self.job_dict)
         self.assertEqual(scheduler_mock.add_job.call_count, 1)
 
-    @patch("brew_view.request_scheduler")
+    #@patch("brew_view.request_scheduler")
     def test_post_error_delete(self, scheduler_mock):
         body = json.dumps(self.job_dict)
         self.job_dict["id"] = None

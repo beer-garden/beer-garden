@@ -114,14 +114,6 @@ class JobAPI(BaseHandler):
                             args=[SchemaParser.parse_job(op.value)],
                         )
                     )
-                elif op.path == "/execute":
-                    reset_interval = True
-                    response = await self.client(
-                        Operation(
-                            operation_type="JOB_EXECUTE",
-                            args=[job_id, reset_interval]
-                        )
-                    )
                 else:
                     raise ModelValidationError(f"Unsupported path value '{op.path}'")
             else:
@@ -322,5 +314,41 @@ class JobExportAPI(BaseHandler):
             response_objects, to_string=True, schema_name="JobExportSchema"
         )
 
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write(response)
+
+class JobExecutionAPI(BaseHandler):
+    async def post(self, job_id):
+        """
+        ---
+        summary: Executes a Job ad-hoc.
+        description: |
+          Given a job, it will run that job independent
+          of any interval/trigger associated with that job.
+        parameters:
+          - name: job_id
+            in: path
+            required: true
+            description: The ID of the Job
+            type: string
+        responses:
+          201:
+            description: Job has been executed
+          400:
+            $ref: '#/definitions/400Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Jobs
+        """
+
+        reset_interval = True
+        response = await self.client(
+            Operation(
+                operation_type="JOB_EXECUTE",
+                args=[job_id, reset_interval]
+            )
+        )
+        self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)

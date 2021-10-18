@@ -249,7 +249,7 @@ class MixedScheduler(object):
                     run_job,
                     trigger=job.trigger,
                     coalesce=job.coalesce,
-                    kwargs={"job_id": 'ad-hoc', "request_template": job.request_template},
+                    kwargs={"job_id": job.id, "request_template": job.request_template},
                 )
 
     def __init__(self, interval_config=None):
@@ -373,11 +373,6 @@ class MixedScheduler(object):
             kwargs={"job_id": job.id, "request_template": job.request_template}, # job.id needs to be unique-ified
             id='ad-hoc,'
         )
-
-        if reset_interval:
-            pass
-            #if job_id not in self._async_jobs:
-            #    self._sync_scheduler.reschedule_job(job_id, trigger=job.trigger, **kwargs)
 
     def _add_triggers(self, handler, triggers, func):
         """Attaches the function to the handler callback
@@ -705,7 +700,8 @@ def execute_job(job_id: str, reset_interval=False) -> Job:
         The spawned Request
     """
     logger.info('Job executed from routing')
-
+    if reset_interval:
+        pass
     return db.query_unique(Job, id=job_id)
 
 def handle_event(event: Event) -> None:
