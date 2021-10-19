@@ -9,7 +9,7 @@ userService.$inject = ['$http'];
  * @return {Object}      Service for interacting with the user API.
  */
 export default function userService($http) {
-  let service = {
+  const service = {
     getUser: (userId) => {
       return $http.get('api/v1/users/' + userId);
     },

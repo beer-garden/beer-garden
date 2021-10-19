@@ -75,7 +75,7 @@ export default function appRun(
     'slate': false,
   };
 
-  $rootScope.menu_page = "main"
+  $rootScope.menu_page = 'main';
 
   $rootScope.responseState = responseState;
 
@@ -83,27 +83,27 @@ export default function appRun(
 
   $rootScope.loadUser = function(token) {
     $rootScope.userPromise = UserService.loadUser(token).then(
-      (response) => {
+        (response) => {
         // Angular doesn't do a deep watch here, so make sure we calculate
         // and set the permissions before setting $rootScope.user
-        let user = response.data;
+          const user = response.data;
 
-        // coalescePermissions [0] is roles, [1] is permissions
-        user.permissions = RoleService.coalescePermissions(user.roles)[1];
+          // coalescePermissions [0] is roles, [1] is permissions
+          user.permissions = RoleService.coalescePermissions(user.roles)[1];
 
-        // If user is logged in, change to their default theme selection
-        let theme;
-        if (user.id) {
-          theme = _.get(user, 'preferences.theme', 'default');
-        } else {
-          theme = localStorageService.get('currentTheme') || 'default';
+          // If user is logged in, change to their default theme selection
+          let theme;
+          if (user.id) {
+            theme = _.get(user, 'preferences.theme', 'default');
+          } else {
+            theme = localStorageService.get('currentTheme') || 'default';
+          }
+          $rootScope.changeTheme(theme, false);
+
+          $rootScope.user = user;
+        }, (response) => {
+          return $q.reject(response);
         }
-        $rootScope.changeTheme(theme, false);
-
-        $rootScope.user = user;
-      }, (response) => {
-        return $q.reject(response);
-      }
     );
     return $rootScope.userPromise;
   };
@@ -113,16 +113,16 @@ export default function appRun(
     // SystemService.loadSystems();
 
     $rootScope.loadUser(token).then(
-      () => {
-        $state.reload();
+        () => {
+          $state.reload();
         // $rootScope.$broadcast('userChange');
-      }
+        }
     );
   };
 
   $rootScope.initialLoad = function() {
     // Very first thing is to load up a token if one exists
-    let token = localStorageService.get('token', 'sessionStorage');
+    const token = localStorageService.get('token', 'sessionStorage');
     if (token) {
       TokenService.handleToken(token);
     }
@@ -132,7 +132,7 @@ export default function appRun(
 
     // Load theme from local storage
     // REMOVE THIS ONCE THE rootScope.loadUser CALL BELOW IS ENABLED
-    let theme = localStorageService.get('currentTheme') || 'default';
+    const theme = localStorageService.get('currentTheme') || 'default';
     $rootScope.changeTheme(theme, false);
 
     // $rootScope.loadUser(token).catch(
@@ -152,7 +152,7 @@ export default function appRun(
 
     // This makes it possible to pass an array or a single string
     return _.intersection(
-      user.permissions, _.castArray(permissions)
+        user.permissions, _.castArray(permissions)
     ).length;
   };
 
@@ -168,7 +168,6 @@ export default function appRun(
   };
 
 
-
   $rootScope.isUser = function(user) {
     return user && user.username !== 'anonymous';
   };
@@ -181,15 +180,15 @@ export default function appRun(
         template: loginTemplate,
       });
       loginModal.result.then(
-        () => {
-          $rootScope.changeUser(TokenService.getToken());
-        },
-        _.noop // Prevents annoying console log messages
+          () => {
+            $rootScope.changeUser(TokenService.getToken());
+          },
+          _.noop // Prevents annoying console log messages
       );
       loginModal.closed.then(
-        () => {
-          loginModal = undefined;
-        }
+          () => {
+            loginModal = undefined;
+          }
       );
     }
     return loginModal;
@@ -211,16 +210,16 @@ export default function appRun(
     $state.go('base.systems');
   });
 
-  $rootScope.setMenuPage = function(page){
-    $rootScope.menu_page = page
-  }
+  $rootScope.setMenuPage = function(page) {
+    $rootScope.menu_page = page;
+  };
 
   $rootScope.checkMenuPage = function(page) {
-    return $rootScope.menu_page == page
-  }
+    return $rootScope.menu_page == page;
+  };
 
   function upsertSystem(system) {
-    let index = _.findIndex($rootScope.systems, {id: system.id});
+    const index = _.findIndex($rootScope.systems, {id: system.id});
 
     if (index == -1) {
       $rootScope.systems.push(system);
@@ -230,7 +229,7 @@ export default function appRun(
   }
 
   function removeSystem(system) {
-    let index = _.findIndex($rootScope.systems, {id: system.id});
+    const index = _.findIndex($rootScope.systems, {id: system.id});
 
     if (index != -1) {
       $rootScope.systems.splice(index, 1);
@@ -239,7 +238,7 @@ export default function appRun(
 
   function updateInstance(instance) {
     _.forEach($rootScope.systems, (sys) => {
-      let index = _.findIndex(sys.instances, {id: instance.id});
+      const index = _.findIndex(sys.instances, {id: instance.id});
 
       if (index != -1) {
         sys.instances.splice(index, 1, instance);
@@ -253,11 +252,9 @@ export default function appRun(
   EventService.addCallback('global_systems', (event) => {
     if (['SYSTEM_CREATED', 'SYSTEM_UPDATED'].includes(event.name)) {
       upsertSystem(event.payload);
-    }
-    else if (event.name == 'SYSTEM_REMOVED') {
+    } else if (event.name == 'SYSTEM_REMOVED') {
       removeSystem(event.payload);
-    }
-    else if (event.name.startsWith('INSTANCE')) {
+    } else if (event.name.startsWith('INSTANCE')) {
       updateInstance(event.payload);
     }
   });

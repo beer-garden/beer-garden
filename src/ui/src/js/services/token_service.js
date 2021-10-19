@@ -9,8 +9,7 @@ tokenService.$inject = ['$http', 'localStorageService'];
  * @return {Object}       Service for interacting with the token API.
  */
 export default function tokenService($http, localStorageService) {
-
-  let service = {
+  const service = {
     getToken: () => {
       return localStorageService.get('token', 'sessionStorage');
     },
@@ -29,7 +28,7 @@ export default function tokenService($http, localStorageService) {
       localStorageService.set('refresh', refreshToken, 'sessionStorage');
     },
     clearRefresh: () => {
-      let refreshToken = localStorageService.get('refresh', 'sessionStorage');
+      const refreshToken = localStorageService.get('refresh', 'sessionStorage');
       if (refreshToken) {
         // It's possible the refresh token was already removed from the database
         // We usually don't care if that's the case, so set a noop error handler
@@ -45,17 +44,17 @@ export default function tokenService($http, localStorageService) {
         username: username,
         password: password,
       }).then(
-        (response) => {
-          service.handleRefresh(response.data.refresh);
-          service.handleToken(response.data.token);
-        }
+          (response) => {
+            service.handleRefresh(response.data.refresh);
+            service.handleToken(response.data.token);
+          }
       );
     },
     doRefresh: (refreshToken) => {
       return $http.get('/api/v1/tokens/' + refreshToken).then(
-        (response) => {
-          service.handleToken(response.data.token);
-        }
+          (response) => {
+            service.handleToken(response.data.token);
+          }
       );
     },
   });
