@@ -10,14 +10,16 @@ userService.$inject = ['$http'];
  */
 export default function userService($http) {
   const service = {
-    getUser: (userId) => {
-      return $http.get('api/v1/users/' + userId);
+    getUser: (userName) => {
+      return $http.get('api/v1/users/' + userName);
     },
-    deleteUser: (userId) => {
-      return $http.delete('api/v1/users/' + userId);
+    deleteUser: (userName) => {
+      return $http.delete('api/v1/users/' + userName);
     },
-    updateUser: (userId, operations) => {
-      return $http.patch('api/v1/users/' + userId, {operations: operations});
+    updateUser: (userName, operations) => {
+      return $http.patch('api/v1/users/' + userName, {
+        operations: operations,
+      });
     },
     getUsers: () => {
       return $http.get('api/v1/users/');
@@ -32,14 +34,20 @@ export default function userService($http) {
 
   _.assign(service, {
     addRoles: (userId, roles) => {
-      return service.updateUser(userId, _.map(roles, (value) => {
-        return {operation: 'add', path: '/roles', value: value};
-      }));
+      return service.updateUser(
+          userId,
+          _.map(roles, (value) => {
+            return {operation: 'add', path: '/roles', value: value};
+          })
+      );
     },
     removeRoles: (userId, roles) => {
-      return service.updateUser(userId, _.map(roles, (value) => {
-        return {operation: 'remove', path: '/roles', value: value};
-      }));
+      return service.updateUser(
+          userId,
+          _.map(roles, (value) => {
+            return {operation: 'remove', path: '/roles', value: value};
+          })
+      );
     },
     setRoles: (userId, roles) => {
       return service.updateUser(userId, [
@@ -48,7 +56,7 @@ export default function userService($http) {
     },
 
     loadUser: (token) => {
-      return service.getUser(token ? jwtDecode(token).sub : 'anonymous');
+      return service.getUser(token ? jwtDecode(token).username : 'anonymous');
     },
     setTheme: (userId, theme) => {
       return service.updateUser(userId, [
@@ -58,4 +66,4 @@ export default function userService($http) {
   });
 
   return service;
-};
+}

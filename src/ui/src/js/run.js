@@ -125,6 +125,7 @@ export default function appRun(
     const token = localStorageService.get('token', 'sessionStorage');
     if (token) {
       TokenService.handleToken(token);
+      $rootScope.changeUser(TokenService.getToken());
     }
 
     // Connect to the event socket
@@ -199,6 +200,7 @@ export default function appRun(
     TokenService.clearRefresh();
 
     $rootScope.changeUser(undefined);
+    location.reload();
   };
 
   $rootScope.setWindowTitle = function(...titleParts) {

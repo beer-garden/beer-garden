@@ -40,24 +40,22 @@ export default function tokenService($http, localStorageService) {
 
   _.assign(service, {
     doLogin: (username, password) => {
-      return $http.post('/api/v1/tokens', {
-        username: username,
-        password: password,
-      }).then(
-          (response) => {
+      return $http
+          .post('/api/v1/login', {
+            username: username,
+            password: password,
+          })
+          .then((response) => {
             service.handleRefresh(response.data.refresh);
             service.handleToken(response.data.token);
-          }
-      );
+          });
     },
     doRefresh: (refreshToken) => {
-      return $http.get('/api/v1/tokens/' + refreshToken).then(
-          (response) => {
-            service.handleToken(response.data.token);
-          }
-      );
+      return $http.get('/api/v1/tokens/' + refreshToken).then((response) => {
+        service.handleToken(response.data.token);
+      });
     },
   });
 
   return service;
-};
+}
