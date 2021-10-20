@@ -21,7 +21,7 @@ def mongo():
 
 
 @pytest.fixture
-def app(monkeypatch, config, mongo, event_publishers):
+def app(monkeypatch, config, mongo):
     monkeypatch.setattr(bv, "_load_swagger", Mock())
     monkeypatch.setattr(bv, "event_publishers", event_publishers)
     monkeypatch.setattr(bv, "config", config)
