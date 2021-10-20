@@ -31,4 +31,5 @@ pytest-mock
 pytest-lazy-fixture
 pytest-tornado
 isort < 6
+wheel
 
