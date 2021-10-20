@@ -204,6 +204,8 @@ urllib3==1.26.6
     # via requests
 watchdog==0.10.4
     # via yapconf
+wheel==0.37.0
+    # via -r requirements.in
 wrapt==1.12.1
     # via brewtils
 yapconf==0.3.7
