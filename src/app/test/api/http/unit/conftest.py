@@ -1,20 +1,94 @@
 # -*- coding: utf-8 -*-
-import copy
-
 import pytest
+import tornado.web
+from box import Box
 
-from beer_garden.db.mongo.models import DateTrigger
+from beer_garden import config
+from beer_garden.api.http.authentication import generate_access_token
+from beer_garden.api.http.client import SerializeHelper
+from beer_garden.api.http.handlers.v1.admin import AdminAPI
+from beer_garden.api.http.handlers.v1.command import CommandAPI, CommandListAPI
+from beer_garden.api.http.handlers.v1.garden import GardenAPI, GardenListAPI
+from beer_garden.api.http.handlers.v1.instance import (
+    InstanceAPI,
+    InstanceLogAPI,
+    InstanceQueuesAPI,
+)
+from beer_garden.api.http.handlers.v1.job import (
+    JobAPI,
+    JobExecutionAPI,
+    JobExportAPI,
+    JobImportAPI,
+    JobListAPI,
+)
+from beer_garden.api.http.handlers.v1.logging import LoggingAPI, LoggingConfigAPI
+from beer_garden.api.http.handlers.v1.login import LoginAPI
+from beer_garden.api.http.handlers.v1.namespace import NamespaceListAPI
+from beer_garden.api.http.handlers.v1.queue import QueueAPI, QueueListAPI
+from beer_garden.api.http.handlers.v1.request import RequestAPI, RequestListAPI
+from beer_garden.api.http.handlers.v1.system import SystemAPI, SystemListAPI
+from beer_garden.api.http.handlers.v1.user import UserAPI, UserListAPI
+from beer_garden.db.mongo.models import User
+
+# TODO: Load this from conftest using the actual _setup_application call
+application = tornado.web.Application(
+    [
+        (r"/api/v1/admin/?", AdminAPI),
+        (r"/api/v1/commands/?", CommandListAPI),
+        (r"/api/v1/config/logging/?", LoggingConfigAPI),
+        (r"/api/v1/export/jobs/?", JobExportAPI),
+        (r"/api/v1/import/jobs/?", JobImportAPI),
+        (r"/api/v1/gardens/?", GardenListAPI),
+        (r"/api/v1/gardens/(.*)/?", GardenAPI),
+        (r"/api/v1/instances/(\w+)/?", InstanceAPI),
+        (r"/api/v1/instances/(\w+)/logs/?", InstanceLogAPI),
+        (r"/api/v1/instances/(\w+)/queues/?", InstanceQueuesAPI),
+        (r"/api/v1/jobs/?", JobListAPI),
+        (r"/api/v1/jobs/(\w+)/?", JobAPI),
+        (r"/api/v1/jobs/(\w+)/execute/?", JobExecutionAPI),
+        (r"/api/v1/logging/?", LoggingAPI),
+        (r"/api/v1/login/?", LoginAPI),
+        (r"/api/v1/namespaces/?", NamespaceListAPI),
+        (r"/api/v1/queues/?", QueueListAPI),
+        (r"/api/v1/queues/([\w\.-]+)/?", QueueAPI),
+        (r"/api/v1/requests/?", RequestListAPI),
+        (r"/api/v1/requests/(\w+)/?", RequestAPI),
+        (r"/api/v1/systems/?", SystemListAPI),
+        (r"/api/v1/systems/(\w+)/?", SystemAPI),
+        (r"/api/v1/systems/(\w+)/commands/(\w+)/?", CommandAPI),
+        (r"/api/v1/users/?", UserListAPI),
+        (r"/api/v1/users/(\w+)/?", UserAPI),
+    ],
+    client=SerializeHelper(),
+)
 
 
 @pytest.fixture
-def trigger_dict(ts_epoch):
-    """A dictionary representing a date trigger."""
-    return {"run_date": ts_epoch, "timezone": "utc"}
+def app():
+    return application
 
 
 @pytest.fixture
-def bg_trigger(trigger_dict, ts_dt):
-    """A beer-garden trigger object."""
-    dict_copy = copy.deepcopy(trigger_dict)
-    dict_copy["run_date"] = ts_dt
-    return DateTrigger(**dict_copy)
+def app_config_auth_disabled(monkeypatch):
+    app_config = Box(
+        {
+            "auth": {"enabled": False, "token_secret": "notsosecret"},
+            "garden": {"name": "somegarden"},
+        }
+    )
+    monkeypatch.setattr(config, "_CONFIG", app_config)
+
+    yield app_config
+
+
+@pytest.fixture
+def user_without_permission():
+    user = User(username="testuser").save()
+
+    yield user
+    user.delete()
+
+
+@pytest.fixture
+def access_token_not_permitted(user_without_permission):
+    yield generate_access_token(user_without_permission)

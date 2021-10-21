@@ -3,10 +3,14 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.api.authorization import Permissions
+from beer_garden.api.http.handlers import AuthorizationHandler
+from beer_garden.garden import local_garden
+
+GARDEN_UPDATE = Permissions.GARDEN_UPDATE.value
 
 
-class AdminAPI(BaseHandler):
+class AdminAPI(AuthorizationHandler):
     async def patch(self):
         """
         ---
@@ -49,6 +53,8 @@ class AdminAPI(BaseHandler):
         tags:
           - Admin
         """
+        self.verify_user_permission_for_object(GARDEN_UPDATE, local_garden())
+
         operations = SchemaParser.parse_patch(
             self.request.decoded_body, many=True, from_string=True
         )

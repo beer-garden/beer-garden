@@ -2,19 +2,13 @@
 import json
 
 import pytest
-import tornado.web
-from box import Box
-from mongoengine import connect
 from mongomock.gridfs import enable_gridfs_integration
 from tornado.httpclient import HTTPError, HTTPRequest
 
 import beer_garden.events
 import beer_garden.requests
 import beer_garden.router
-from beer_garden import config
 from beer_garden.api.http.authentication import generate_access_token
-from beer_garden.api.http.client import SerializeHelper
-from beer_garden.api.http.handlers.v1.request import RequestAPI, RequestListAPI
 from beer_garden.db.mongo.models import (
     Garden,
     RawFile,
@@ -26,15 +20,6 @@ from beer_garden.db.mongo.models import (
 )
 
 enable_gridfs_integration()
-
-# TODO: Load this from conftest using the actual _setup_application call
-application = tornado.web.Application(
-    [
-        (r"/api/v1/requests/?", RequestListAPI),
-        (r"/api/v1/requests/(\w+)/?", RequestAPI),
-    ],
-    client=SerializeHelper(),
-)
 
 
 def format_form_data(metadata: list, data: str, boundary: str):
@@ -49,48 +34,38 @@ def format_form_data(metadata: list, data: str, boundary: str):
     return form_data
 
 
-@pytest.fixture
-def app_config_auth_enabled(monkeypatch):
-    app_config = Box(
-        {
-            "auth": {"enabled": True, "token_secret": "notsosecret"},
-            "garden": {"name": "somegarden"},
-        }
+def generate_form_data(system) -> dict:
+    boundary = "longuuidlikething"
+    headers = {"Content-Type": f"multipart/form-data; boundary={boundary}"}
+
+    request_parameter = {
+        "system": system.name,
+        "system_version": system.version,
+        "namespace": system.namespace,
+        "command": "mycommand",
+        "instance_name": "default",
+        "parameters": {"this": "doesntmatter"},
+    }
+
+    body = f"--{boundary}"
+    body += format_form_data(
+        ['Content-Disposition: form-data; name="request"'],
+        json.dumps(request_parameter),
+        boundary,
     )
-    monkeypatch.setattr(config, "_CONFIG", app_config)
 
-    yield app_config
-
-
-@pytest.fixture
-def app_config_auth_disabled(monkeypatch):
-    app_config = Box(
-        {
-            "auth": {"enabled": False, "token_secret": "notsosecret"},
-            "garden": {"name": "somegarden"},
-        }
+    body += format_form_data(
+        [
+            'Content-Disposition: form-data; name="myfile"; filename="testfile.txt"',
+            "Content-Type: text/plain",
+        ],
+        "a very witty example of plaintext",
+        boundary,
     )
-    monkeypatch.setattr(config, "_CONFIG", app_config)
 
-    yield app_config
+    body += "--\r\n"
 
-
-@pytest.fixture
-def app():
-    return application
-
-
-@pytest.fixture(autouse=True)
-def app_config(monkeypatch):
-    app_config = Box(
-        {
-            "auth": {"enabled": False, "token_secret": "keepitsecret"},
-            "garden": {"name": "somegarden"},
-        }
-    )
-    monkeypatch.setattr(config, "_CONFIG", app_config)
-
-    yield app_config
+    return {"headers": headers, "body": body}
 
 
 @pytest.fixture(autouse=True)
@@ -115,6 +90,7 @@ def common_mocks(monkeypatch, local_system):
 def db_cleanup():
     yield
     RawFile.drop_collection()
+    Request.drop_collection()
 
 
 @pytest.fixture
@@ -185,12 +161,6 @@ def request_not_permitted(local_system):
     request.delete()
 
 
-@pytest.fixture(autouse=True)
-def request_cleanup():
-    yield
-    Request.drop_collection()
-
-
 @pytest.fixture
 def operator_role():
     role = Role(
@@ -231,48 +201,10 @@ def access_token(user):
     yield generate_access_token(user)
 
 
-def generate_form_data(system) -> dict:
-    boundary = "longuuidlikething"
-    headers = {"Content-Type": f"multipart/form-data; boundary={boundary}"}
-
-    request_parameter = {
-        "system": system.name,
-        "system_version": system.version,
-        "namespace": system.namespace,
-        "command": "mycommand",
-        "instance_name": "default",
-        "parameters": {"this": "doesntmatter"},
-    }
-
-    body = f"--{boundary}"
-    body += format_form_data(
-        ['Content-Disposition: form-data; name="request"'],
-        json.dumps(request_parameter),
-        boundary,
-    )
-
-    body += format_form_data(
-        [
-            'Content-Disposition: form-data; name="myfile"; filename="testfile.txt"',
-            "Content-Type: text/plain",
-        ],
-        "a very witty example of plaintext",
-        boundary,
-    )
-
-    body += "--\r\n"
-
-    return {"headers": headers, "body": body}
-
-
 class TestRequestAPI:
-    @classmethod
-    def setup_class(cls):
-        connect("beer_garden", host="mongomock://localhost")
-
     @pytest.mark.gen_test
     def test_auth_disabled_returns_any_request(
-        self, http_client, app_config_auth_disabled, base_url, request_not_permitted
+        self, http_client, base_url, request_not_permitted
     ):
         url = f"{base_url}/api/v1/requests/{request_not_permitted.id}"
 
@@ -375,15 +307,10 @@ class TestRequestAPI:
 
 
 class TestRequestListAPI:
-    @classmethod
-    def setup_class(cls):
-        connect("beer_garden", host="mongomock://localhost")
-
     @pytest.mark.gen_test
     def test_post_file_parameter_stores_as_raw_file_on_local_garden(
         self,
         http_client,
-        app_config,
         base_url,
         local_system,
     ):
@@ -407,7 +334,6 @@ class TestRequestListAPI:
         self,
         monkeypatch,
         http_client,
-        app_config,
         base_url,
         remote_system,
         local_garden,
@@ -428,9 +354,7 @@ class TestRequestListAPI:
         assert len(RawFile.objects.all()) == 0
 
     @pytest.mark.gen_test
-    def test_auth_disabled_returns_all_requests(
-        self, http_client, app_config_auth_disabled, base_url
-    ):
+    def test_auth_disabled_returns_all_requests(self, http_client, base_url):
         url = f"{base_url}/api/v1/requests"
 
         response = yield http_client.fetch(url)

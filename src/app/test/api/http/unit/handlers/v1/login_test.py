@@ -3,28 +3,8 @@ import json
 
 import jwt
 import pytest
-import tornado.web
-from box import Box
-from mongoengine import connect
 
-from beer_garden import config
-from beer_garden.api.http.handlers.v1.login import LoginAPI
 from beer_garden.db.mongo.models import User
-
-# TODO: Load this from conftest using the actual _setup_application call
-application = tornado.web.Application(
-    [
-        (r"/api/v1/login/?", LoginAPI),
-    ]
-)
-
-
-@pytest.fixture(autouse=True)
-def app_config(monkeypatch):
-    app_config = Box({"auth": {"enabled": False, "token_secret": "keepitsecret"}})
-    monkeypatch.setattr(config, "_CONFIG", app_config)
-
-    yield app_config
 
 
 @pytest.fixture
@@ -42,19 +22,10 @@ def user(user_password):
     user.delete()
 
 
-@pytest.fixture
-def app():
-    return application
-
-
 class TestLoginAPI:
-    @classmethod
-    def setup_class(cls):
-        connect("beer_garden", host="mongomock://localhost")
-
     @pytest.mark.gen_test
     def test_post_returns_token_on_valid_login(
-        self, http_client, app_config, base_url, user, user_password
+        self, http_client, app_config_auth_enabled, base_url, user, user_password
     ):
         url = f"{base_url}/api/v1/login"
         body = json.dumps({"username": user.username, "password": user_password})
@@ -65,7 +36,9 @@ class TestLoginAPI:
         token = response_body["token"]
         token_headers = jwt.get_unverified_header(token)
         decoded_token = jwt.decode(
-            token, key=app_config.auth.token_secret, algorithms=[token_headers["alg"]]
+            token,
+            key=app_config_auth_enabled.auth.token_secret,
+            algorithms=[token_headers["alg"]],
         )
 
         assert response.code == 200

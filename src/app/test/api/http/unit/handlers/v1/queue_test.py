@@ -1,132 +1,225 @@
 # -*- coding: utf-8 -*-
-import json
-import unittest
+from unittest.mock import Mock
 
-from mock import MagicMock, Mock, PropertyMock, patch
-from tornado.gen import Future
+import pytest
+from tornado.httpclient import HTTPError, HTTPRequest
 
-from .. import TestHandlerBase
-
-
-@unittest.skip("TODO")
-class QueueAPITest(TestHandlerBase):
-    def setUp(self):
-        self.client_mock = Mock(name="client_mock")
-        self.fake_context = MagicMock(
-            __enter__=Mock(return_value=self.client_mock),
-            __exit__=Mock(return_value=False),
-        )
-
-        super(QueueAPITest, self).setUp()
-
-    @patch("brew_view.handlers.v1.queue.thrift_context")
-    def test_delete_calls(self, context_mock):
-        context_mock.return_value = self.fake_context
-
-        self.fetch("/api/v1/queues/name", method="DELETE")
-        self.client_mock.clearQueue.assert_called_once_with("name")
+import beer_garden.router
+from beer_garden.api.http.authentication import generate_access_token
+from beer_garden.db.mongo.models import Garden, Role, RoleAssignment, User
 
 
-@unittest.skip("TODO")
-class QueueListAPITest(TestHandlerBase):
-    def setUp(self):
-        self.instance_mock = Mock(status="RUNNING")
-        type(self.instance_mock).name = PropertyMock(return_value="default")
-        self.system_mock = Mock(
-            id="1234",
-            display_name="display",
-            version="1.0.0",
-            instances=[self.instance_mock],
-        )
-        type(self.system_mock).name = PropertyMock(return_value="system_name")
-        self.queue_name = "%s[%s]-%s" % (
-            self.system_mock.name,
-            self.instance_mock.name,
-            self.system_mock.version,
-        )
+@pytest.fixture(autouse=True)
+def garden_permitted():
+    garden = Garden(
+        name="somegarden", connection_type="LOCAL", namespaces=["somegarden"]
+    ).save()
 
-        self.client_mock = Mock(name="client_mock")
-        self.fake_context = MagicMock(
-            __enter__=Mock(return_value=self.client_mock),
-            __exit__=Mock(return_value=False),
-        )
-        self.future_mock = Future()
+    yield garden
+    garden.delete()
 
-        super(QueueListAPITest, self).setUp()
 
-    @patch("brew_view.handlers.v1.queue.System.objects")
-    def test_get_empty(self, objects_mock):
-        objects_mock.all.return_value.select_related = Mock(return_value=[])
+@pytest.fixture
+def queue_manager_role():
+    role = Role(
+        name="queue_manager",
+        permissions=["queue:read", "queue:delete"],
+    ).save()
 
-        response = self.fetch("/api/v1/queues")
-        self.assertEqual("[]", response.body.decode("utf-8"))
+    yield role
+    role.delete()
 
-    @patch("brew_view.handlers.v1.queue.thrift_context")
-    @patch("brew_view.handlers.v1.queue.System.objects")
-    def test_get(self, objects_mock, context_mock):
-        objects_mock.all.return_value.select_related = Mock(
-            return_value=[self.system_mock]
-        )
-        context_mock.return_value = self.fake_context
 
-        queue_return_mock = Mock(size=1)
-        type(queue_return_mock).name = PropertyMock(return_value=self.queue_name)
-        self.client_mock.getQueueInfo.return_value = self.future_mock
-        self.future_mock.set_result(queue_return_mock)
-
-        response = self.fetch("/api/v1/queues")
-        output = json.loads(response.body.decode("utf-8"))
-        self.client_mock.getQueueInfo.assert_called_once_with(
-            self.system_mock.name, self.system_mock.version, self.instance_mock.name
-        )
-        self.assertEqual(1, len(output))
-        self.assertDictEqual(
-            {
-                "system": self.system_mock.name,
-                "display": self.system_mock.display_name,
-                "version": self.system_mock.version,
-                "system_id": self.system_mock.id,
-                "instance": self.instance_mock.name,
-                "name": self.queue_name,
-                "size": 1,
+@pytest.fixture
+def user_with_permission(garden_permitted, queue_manager_role):
+    role_assignment = RoleAssignment(
+        role=queue_manager_role,
+        domain={
+            "scope": "Garden",
+            "identifiers": {
+                "name": garden_permitted.name,
             },
-            output[0],
-        )
+        },
+    )
 
-    @patch("brew_view.handlers.v1.queue.thrift_context")
-    @patch("brew_view.handlers.v1.queue.System.objects")
-    def test_get_with_exception(self, objects_mock, context_mock):
-        objects_mock.all.return_value.select_related = Mock(
-            return_value=[self.system_mock]
-        )
-        context_mock.return_value = self.fake_context
-        self.client_mock.getVersion.return_value = self.future_mock
-        self.future_mock.set_exception(ValueError("ERROR"))
+    user = User(username="testuser", role_assignments=[role_assignment]).save()
 
-        response = self.fetch("/api/v1/queues")
-        output = json.loads(response.body.decode("utf-8"))
-        self.assertEqual(1, len(output))
-        self.assertEqual(
-            {
-                "system": self.system_mock.name,
-                "display": self.system_mock.display_name,
-                "version": self.system_mock.version,
-                "system_id": self.system_mock.id,
-                "instance": self.instance_mock.name,
-                "name": "UNKNOWN",
-                "size": -1,
-            },
-            output[0],
-        )
+    yield user
+    user.delete()
 
-    @patch("brew_view.handlers.v1.queue.thrift_context")
-    @patch("brew_view.handlers.v1.queue.System.objects")
-    def test_delete(self, objects_mock, context_mock):
-        objects_mock.all = Mock(return_value=[self.system_mock])
-        context_mock.return_value = self.fake_context
-        self.client_mock.clearAllQueues.return_value = self.future_mock
-        self.future_mock.set_result(None)
 
-        response = self.fetch("/api/v1/queues", method="DELETE")
-        self.assertEqual(204, response.code)
-        self.client_mock.clearAllQueues.assert_called_once_with()
+@pytest.fixture
+def access_token_permitted(user_with_permission):
+    yield generate_access_token(user_with_permission)
+
+
+@pytest.fixture
+def queue_function_mock():
+    queue_function = Mock()
+    queue_function.return_value = {}
+
+    return queue_function
+
+
+@pytest.fixture(autouse=True)
+def common_mocks(monkeypatch, garden_permitted, queue_function_mock):
+    def mock_determine_target(operation):
+        return garden_permitted.name
+
+    route_functions = {
+        "QUEUE_READ": queue_function_mock,
+        "QUEUE_DELETE": queue_function_mock,
+        "QUEUE_DELETE_ALL": queue_function_mock,
+        "QUEUE_READ_INSTANCE": queue_function_mock,
+    }
+
+    monkeypatch.setattr(beer_garden.router, "_determine_target", mock_determine_target)
+    monkeypatch.setattr(beer_garden.router, "route_functions", route_functions)
+
+
+class TestQueueAPI:
+    @pytest.mark.gen_test
+    def test_auth_disabled_allows_delete(
+        self, http_client, base_url, queue_function_mock
+    ):
+        url = f"{base_url}/api/v1/queues/somequeue"
+
+        request = HTTPRequest(url, method="DELETE")
+        response = yield http_client.fetch(request)
+
+        assert response.code == 204
+        assert queue_function_mock.called is True
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_allows_delete_with_permissions(
+        self,
+        http_client,
+        app_config_auth_enabled,
+        base_url,
+        access_token_permitted,
+        queue_function_mock,
+    ):
+        url = f"{base_url}/api/v1/queues/somequeue"
+        headers = {"Authorization": f"Bearer {access_token_permitted}"}
+
+        request = HTTPRequest(url, method="DELETE", headers=headers)
+        response = yield http_client.fetch(request)
+
+        assert response.code == 204
+        assert queue_function_mock.called is True
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_rejects_delete_without_permissions(
+        self,
+        http_client,
+        app_config_auth_enabled,
+        base_url,
+        access_token_not_permitted,
+        queue_function_mock,
+    ):
+        url = f"{base_url}/api/v1/queues/somequeue"
+        headers = {"Authorization": f"Bearer {access_token_not_permitted}"}
+
+        request = HTTPRequest(url, method="DELETE", headers=headers)
+
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(request)
+
+        assert excinfo.value.code == 403
+        assert queue_function_mock.called is False
+
+
+class TestQueueListAPI:
+    @pytest.mark.gen_test
+    def test_auth_disabled_allows_get(self, http_client, base_url, queue_function_mock):
+        url = f"{base_url}/api/v1/queues/"
+
+        response = yield http_client.fetch(url)
+
+        assert response.code == 200
+        assert queue_function_mock.called is True
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_allows_get_with_permission(
+        self,
+        http_client,
+        app_config_auth_enabled,
+        base_url,
+        access_token_permitted,
+        queue_function_mock,
+    ):
+        url = f"{base_url}/api/v1/queues/"
+        headers = {"Authorization": f"Bearer {access_token_permitted}"}
+
+        response = yield http_client.fetch(url, headers=headers)
+
+        assert response.code == 200
+        assert queue_function_mock.called is True
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_rejects_get_without_permission(
+        self,
+        http_client,
+        app_config_auth_enabled,
+        base_url,
+        access_token_not_permitted,
+        queue_function_mock,
+    ):
+        url = f"{base_url}/api/v1/queues/"
+        headers = {"Authorization": f"Bearer {access_token_not_permitted}"}
+
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(url, headers=headers)
+
+        assert excinfo.value.code == 403
+        assert queue_function_mock.called is False
+
+    @pytest.mark.gen_test
+    def test_auth_disabled_allows_delete(
+        self, http_client, base_url, queue_function_mock
+    ):
+        url = f"{base_url}/api/v1/queues/"
+
+        request = HTTPRequest(url, method="DELETE")
+        response = yield http_client.fetch(request)
+
+        assert response.code == 204
+        assert queue_function_mock.called is True
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_allows_delete_with_permissions(
+        self,
+        http_client,
+        app_config_auth_enabled,
+        base_url,
+        access_token_permitted,
+        queue_function_mock,
+    ):
+        url = f"{base_url}/api/v1/queues/"
+        headers = {"Authorization": f"Bearer {access_token_permitted}"}
+
+        request = HTTPRequest(url, method="DELETE", headers=headers)
+        response = yield http_client.fetch(request)
+
+        assert response.code == 204
+        assert queue_function_mock.called is True
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_rejects_delete_without_permissions(
+        self,
+        http_client,
+        app_config_auth_enabled,
+        base_url,
+        access_token_not_permitted,
+        queue_function_mock,
+    ):
+        url = f"{base_url}/api/v1/queues/"
+        headers = {"Authorization": f"Bearer {access_token_not_permitted}"}
+
+        request = HTTPRequest(url, method="DELETE", headers=headers)
+
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(request)
+
+        assert excinfo.value.code == 403
+        assert queue_function_mock.called is False

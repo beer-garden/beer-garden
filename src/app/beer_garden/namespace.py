@@ -6,12 +6,12 @@ The namespace service is responsible for
 * Providing list of all known namespaces
 """
 
-from typing import List
+from typing import List, Optional
 
-from brewtils.models import Garden, Request, System
+from mongoengine import QuerySet
 
 import beer_garden.config as config
-import beer_garden.db.api as db
+from beer_garden.db.mongo.models import Garden, Request, System
 
 
 def default() -> str:
@@ -23,18 +23,25 @@ def default() -> str:
     return config.get("garden.name")
 
 
-def get_namespaces() -> List[str]:
+def get_namespaces(
+    garden_queryset: Optional[QuerySet] = None,
+    system_queryset: Optional[QuerySet] = None,
+    request_queryset: Optional[QuerySet] = None,
+) -> List[str]:
     """Get the distinct namespaces in the Garden
 
     Returns:
         List
-
     """
-    namespaces = set(
-        set(db.distinct(Request, "namespace")) | set(db.distinct(System, "namespace"))
-    )
+    gardens = garden_queryset or Garden.objects
+    systems = system_queryset or System.objects
+    requests = request_queryset or Request.objects
 
-    for garden in db.query(Garden, include_fields=["namespaces"]):
+    namespaces = set()
+    namespaces |= set(requests.distinct("namespace"))
+    namespaces |= set(systems.distinct("namespace"))
+
+    for garden in gardens.only("namespaces"):
         namespaces |= set(garden.namespaces)
 
     # Filter out None, empty string

@@ -3,10 +3,15 @@ from brewtils.errors import ModelValidationError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.api.authorization import Permissions
+from beer_garden.api.http.handlers import AuthorizationHandler
+from beer_garden.garden import local_garden
+
+GARDEN_READ = Permissions.GARDEN_READ.value
+GARDEN_UPDATE = Permissions.GARDEN_UPDATE.value
 
 
-class LoggingAPI(BaseHandler):
+class LoggingAPI(AuthorizationHandler):
     async def get(self):
         """
         ---
@@ -29,6 +34,8 @@ class LoggingAPI(BaseHandler):
         tags:
           - Logging
         """
+        self.verify_user_permission_for_object(GARDEN_READ, local_garden())
+
         local = self.get_query_argument("local", None)
         if local is None:
             local = False
@@ -43,7 +50,7 @@ class LoggingAPI(BaseHandler):
         self.write(response)
 
 
-class LoggingConfigAPI(BaseHandler):
+class LoggingConfigAPI(AuthorizationHandler):
     async def get(self):
         """
         ---
@@ -65,6 +72,8 @@ class LoggingConfigAPI(BaseHandler):
         tags:
           - Deprecated
         """
+        self.verify_user_permission_for_object(GARDEN_READ, local_garden())
+
         response = await self.client(Operation(operation_type="PLUGIN_LOG_READ_LEGACY"))
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -98,6 +107,7 @@ class LoggingConfigAPI(BaseHandler):
         tags:
           - Deprecated
         """
+        self.verify_user_permission_for_object(GARDEN_UPDATE, local_garden())
 
         patch = SchemaParser.parse_patch(
             self.request.decoded_body, many=True, from_string=True
