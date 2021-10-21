@@ -46,6 +46,7 @@ from mongoengine import (
     ObjectIdField,
     ReferenceField,
     StringField,
+    ValidationError,
 )
 from mongoengine.errors import DoesNotExist
 
@@ -869,8 +870,14 @@ class Role(Document):
 
 
 class RoleAssignmentDomain(EmbeddedDocument):
-    scope = StringField(required=True, choices=["Garden", "System", "Command"])
-    identifiers = DictField(required=True)
+    scope = StringField(required=True, choices=["Garden", "Global", "System"])
+    identifiers = DictField(required=False)
+
+    def clean(self):
+        if self.identifiers == {} and self.scope != "Global":
+            raise ValidationError(
+                "identifiers field is required for all scopes other than Global"
+            )
 
 
 class RoleAssignment(EmbeddedDocument):
@@ -904,6 +911,16 @@ class User(Document):
             self._permissions_cache = permissions_for_user(self)
 
         return self._permissions_cache
+
+    @property
+    def domain_permissions(self) -> dict:
+        """Returns the domain_permissions portion of self.permissions"""
+        return self.permissions["domain_permissions"]
+
+    @property
+    def global_permissions(self) -> dict:
+        """Returns the global_permissions portion of self.permissions"""
+        return self.permissions["global_permissions"]
 
     def clear_permissions_cache(self) -> None:
         """Clear the cached permission set for the user. This is useful if the user's

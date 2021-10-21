@@ -565,6 +565,10 @@ class TestUser:
         )
 
     @pytest.fixture()
+    def role_assignment_missing_identifiers(self, role):
+        return RoleAssignment(role=role, domain={"scope": "Garden"})
+
+    @pytest.fixture()
     def user(self, role_assignment):
         user = User(username="testuser", role_assignments=[role_assignment]).save()
 
@@ -588,6 +592,14 @@ class TestUser:
 
         assert user.verify_password("password")
         assert not user.verify_password("mismatch")
+
+    def test_role_assignment_missing_identifiers_raises_validation_error(
+        self, user, role_assignment_missing_identifiers
+    ):
+        user.role_assignments = [role_assignment_missing_identifiers]
+
+        with pytest.raises(ValidationError):
+            user.save()
 
 
 class TestGarden:
