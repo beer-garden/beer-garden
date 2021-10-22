@@ -367,10 +367,10 @@ class MixedScheduler(object):
         job = db.query_unique(Job, id=job_id)
         self.add_job(
             run_job,
-            trigger=DateTrigger(datetime.now(), timezone='UTC'), # tz needs to come from config
+            trigger=DateTrigger(datetime.now(), timezone='UTC'),
             trigger_type='date',
             coalesce=job.coalesce,
-            kwargs={"job_id": job.id, "request_template": job.request_template}, # job.id needs to be unique-ified
+            kwargs={"job_id": job.id, "request_template": job.request_template},
             id='ad-hoc',
         )
 
@@ -687,14 +687,13 @@ def remove_job(job_id: str) -> None:
     return db.query_unique(Job, id=job_id)
 
 @publish_event(Events.JOB_EXECUTED)
-def execute_job(job_id: str, reset_interval=False) -> Job:
+def execute_job(job_id: str) -> Job:
     """Execute a Job ad-hoc
 
     Creates a new job with a trigger for now.
 
     Args:
         job_id: The Job ID
-        reset_interval: Whether executing should reset the job interval trigger
 
     Returns:
         The spawned Request

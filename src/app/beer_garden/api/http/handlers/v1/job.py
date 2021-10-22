@@ -311,6 +311,7 @@ class JobExportAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
+
 class JobExecutionAPI(BaseHandler):
     async def post(self, job_id):
         """
@@ -335,7 +336,6 @@ class JobExecutionAPI(BaseHandler):
         tags:
           - Jobs
         """
-
         response = await self.client(
             Operation(
                 operation_type="JOB_EXECUTE",

@@ -2,7 +2,9 @@
 import pytest
 import tornado.web
 from mock import Mock
+from mongoengine import connect
 
+from beer_garden import config
 from beer_garden.api.http.handlers.v1.job import JobExecutionAPI
 
 from tornado.httpclient import HTTPClientError
@@ -21,10 +23,14 @@ def app():
 
 
 class TestJobExecutionAPI:
+    @classmethod
+    def setup_class(cls):
+        connect("beer_garden", host="mongomock://localhost")
+
     @pytest.mark.gen_test
-    def test_execute(self, app, base_url, http_client, monkeypatch, bg_job):
+    def test_execute(self, base_url, http_client, monkeypatch, bg_job):
         monkeypatch.setattr(
-            beer_garden.scheduler, "execute_job", Mock(return_value=bg_job)
+            JobExecutionAPI, "client", Mock(return_value=bg_job)
         )
         job_id = "real_id"
         url = f"{base_url}/api/v1/jobs/{job_id}/execute"
