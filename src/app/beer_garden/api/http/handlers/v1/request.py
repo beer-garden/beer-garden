@@ -98,9 +98,9 @@ class RequestAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        request = self.get_or_raise(Request, REQUEST_UPDATE, id=request_id)
+        _ = self.get_or_raise(Request, REQUEST_UPDATE, id=request_id)
 
-        operation = Operation(args=[request.id])
+        operation = Operation(args=[request_id])
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
@@ -161,10 +161,10 @@ class RequestOutputAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        request = self.get_or_raise(Request, REQUEST_READ, id=request_id)
+        _ = self.get_or_raise(Request, REQUEST_READ, id=request_id)
 
         response = await self.client(
-            Operation(operation_type="REQUEST_READ", args=[request.id]),
+            Operation(operation_type="REQUEST_READ", args=[request_id]),
             serialize_kwargs={"to_string": False},
         )
 

@@ -90,12 +90,12 @@ class SystemAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        system = self.get_or_raise(System, SYSTEM_DELETE, id=system_id)
+        _ = self.get_or_raise(System, SYSTEM_DELETE, id=system_id)
 
         await self.client(
             Operation(
                 operation_type="SYSTEM_DELETE",
-                args=[system.id],
+                args=[system_id],
                 kwargs={
                     "force": self.get_argument("force", default="").lower() == "true"
                 },
@@ -149,7 +149,7 @@ class SystemAPI(AuthorizationHandler):
         tags:
           - Systems
         """
-        system = self.get_or_raise(System, SYSTEM_UPDATE, id=system_id)
+        _ = self.get_or_raise(System, SYSTEM_UPDATE, id=system_id)
 
         kwargs = {}
         do_reload = False
@@ -202,13 +202,13 @@ class SystemAPI(AuthorizationHandler):
         if kwargs:
             response = await self.client(
                 Operation(
-                    operation_type="SYSTEM_UPDATE", args=[system.id], kwargs=kwargs
+                    operation_type="SYSTEM_UPDATE", args=[system_id], kwargs=kwargs
                 )
             )
 
         if do_reload:
             await self.client(
-                Operation(operation_type="SYSTEM_RELOAD", args=[system.id])
+                Operation(operation_type="SYSTEM_RELOAD", args=[system_id])
             )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
