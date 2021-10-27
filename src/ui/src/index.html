@@ -57,32 +57,31 @@
           </ul>
         </li>
 
-<!--        Add back in when users are refactored-->
-<!--        <li ng-show=!isUser(user)>-->
-<!--          <a href="" ng-click="doLogin()">-->
-<!--            <i style="padding: 3px;" class="fa fa-user"></i>-->
-<!--            <span>Login</span>-->
-<!--          </a>-->
-<!--        </li>-->
+        <li ng-show=!isUser(user)>
+          <a href="" ng-click="doLogin()">
+            <i style="padding: 3px;" class="fa fa-user"></i>
+            <span>Login</span>
+          </a>
+        </li>
 
-<!--        <li ng-show="isUser(user)">-->
-<!--          <a href="">Hello, {{user.username}}!</a>-->
-<!--        </li>-->
-<!--        <li ng-show="isUser(user)">-->
-<!--          <a ng-click="doLogout()" href="">-->
-<!--            <i style="padding: 3px;" class="fa fa-user"></i>-->
-<!--            <span>Logout</span>-->
-<!--          </a>-->
-<!--        </li>-->
+        <li ng-show="isUser(user)">
+          <a href="">Hello, {{user.username}}!</a>
+        </li>
+        <li ng-show="isUser(user)">
+          <a ng-click="doLogout()" href="">
+            <i style="padding: 3px;" class="fa fa-user"></i>
+            <span>Logout</span>
+          </a>
+        </li>
 
-        <li ng-show="hasPermission(user, 'bg-read')">
+        <li>
           <a ui-sref="base.systems" ng-class="{active: ($state.current.name.startsWith('base.systems'))}">Systems</a>
         </li>
-        <li ng-show="hasPermission(user, 'bg-read')">
+        <li>
           <a ui-sref="base.requests"
              ng-class="{active: ($state.current.name.startsWith('request'))}">Requests</a>
         </li>
-        <li ng-show="hasPermission(user, 'bg-read')">
+        <li>
           <a ui-sref="base.jobs"
              ng-class="{active: ($state.current.name.startsWith('job'))}">Scheduler</a>
         </li>

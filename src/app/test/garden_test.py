@@ -20,6 +20,7 @@ from beer_garden.systems import create_system
 
 @pytest.fixture(autouse=True)
 def drop():
+    yield
     Garden.drop_collection()
     System.drop_collection()
 

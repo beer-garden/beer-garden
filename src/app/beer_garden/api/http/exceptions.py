@@ -54,3 +54,8 @@ class ExpiredToken(BaseHTTPError):
 class RequestForbidden(BaseHTTPError):
     status_code: int = 403
     reason: str = "Access denied"
+
+
+class NotFound(BaseHTTPError):
+    status_code: int = 404
+    reason: str = "Not Found"

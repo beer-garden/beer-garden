@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Type, Union
 
 import jwt
+from brewtils.models import BaseModel as BrewtilsModel
+from mongoengine import Document, QuerySet
+from mongoengine.queryset.visitor import Q, QCombination
 
 import beer_garden.config as config
 from beer_garden.api.authorization import Permissions
@@ -10,7 +13,13 @@ from beer_garden.api.http.exceptions import (
     AuthorizationRequired,
     ExpiredToken,
     InvalidToken,
+    NotFound,
     RequestForbidden,
+)
+from beer_garden.authorization import (
+    user_has_permission_for_object,
+    user_permitted_objects,
+    user_permitted_objects_filter,
 )
 
 if TYPE_CHECKING:
@@ -32,6 +41,74 @@ class AuthorizationHandler(BaseHandler):
         else:
             return self._anonymous_superuser()
 
+    def get_or_raise(self, model: Type[Document], permission: str, **kwargs):
+        """Get Document model objects specified by **kwargs if the requesting user
+        has the given permission for that object.
+
+        Args:
+            model: The Document based model class of the object to retrieve
+            permission: The permission required to access the object
+            **kwargs: Used as queryset filter parameters to identify the object
+
+        Returns:
+            Document: The requested object, which will be a model class derived from
+              Document
+
+        Raises:
+            NotFound: The requested object does not exist
+            RequestForbidden: This is raised through the permission verification call
+              if the requesting user does not have permissions to the object
+        """
+        provided_filter = Q(**kwargs)
+
+        try:
+            requested_object = model.objects.get(provided_filter)
+        except model.DoesNotExist:
+            raise NotFound
+
+        self.verify_user_permission_for_object(permission, requested_object)
+
+        return requested_object
+
+    def permissioned_queryset(self, model: Type[Document], permission: str) -> QuerySet:
+        """Returns a QuerySet for the provided Document model filtered down to only
+        the objects for which the requesting user has the given permission
+
+        Args:
+            model: The Document model to be filtered
+            permission: The required permission that will be used to filter objects
+
+        Returns:
+            QuerySet: A QuerySet for model filtered down to objects the requesting user
+              has access to.
+        """
+        return user_permitted_objects(self.current_user, model, permission)
+
+    def permitted_objects_filter(
+        self, model: Type[Document], permission: str
+    ) -> QCombination:
+        """Returns a QCombination that can be used to filter a QuerySet down to the
+        objects for which the requesting user has the given permission.
+
+        Args:
+            model: The mongoengine Document class against which access will be checked
+            permission: The permission that the user must have in order to be permitted
+                access to the object
+
+        Returns:
+            QCombination: A mongoengine QCombination filter
+
+        Raises:
+            RequestForbidden: The requesting user has access to no objects of the given
+                model type
+        """
+        q_filter = user_permitted_objects_filter(self.current_user, model, permission)
+
+        if q_filter is None:
+            raise RequestForbidden
+
+        return q_filter
+
     def prepare(self) -> None:
         """Called before each verb handler"""
         # super() must be called first because the BaseHandler's prepare() sets
@@ -44,6 +121,26 @@ class AuthorizationHandler(BaseHandler):
         # self.current_user within the life of the request will not result in a
         # duplication of the work required to identify and retrieve the User object.
         _ = self.current_user
+
+    def verify_user_permission_for_object(
+        self, permission: str, obj: Union[Document, BrewtilsModel]
+    ) -> None:
+        """Verifies that the requesting user has the specified permission for the
+        given object.
+
+        Args:
+            permission: The permission to check against
+            obj: The object to check against. This can be either a brewtils model
+              or a mongoengine Document model.
+
+        Raises:
+            RequestForbidden: The user does not have the required object permissions
+
+        Returns:
+            None
+        """
+        if not user_has_permission_for_object(self.current_user, permission, obj):
+            raise RequestForbidden
 
     def _anonymous_superuser(self) -> "User":
         """Return a User object with all permissions for all gardens"""
@@ -62,7 +159,10 @@ class AuthorizationHandler(BaseHandler):
         ]
 
         for permission in Permissions:
-            permissions[permission.value] = {"garden_ids": all_garden_ids}
+            permissions[permission.value] = {
+                "garden_ids": all_garden_ids,
+                "system_ids": [],
+            }
 
         anonymous_superuser.set_permissions_cache(permissions)
 
