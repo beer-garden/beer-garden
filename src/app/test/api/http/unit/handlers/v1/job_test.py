@@ -18,7 +18,7 @@ application = tornado.web.Application(
     [
         (r"/api/v1/jobs/(\w+)/execute/?", JobExecutionAPI),
     ],
-    client=SerializeHelper()
+    client=SerializeHelper(),
 )
 
 

@@ -367,11 +367,11 @@ class MixedScheduler(object):
         job = db.query_unique(Job, id=job_id)
         self.add_job(
             run_job,
-            trigger=DateTrigger(datetime.now(), timezone='UTC'),
-            trigger_type='date',
+            trigger=DateTrigger(datetime.now(), timezone="UTC"),
+            trigger_type="date",
             coalesce=job.coalesce,
             kwargs={"job_id": job.id, "request_template": job.request_template},
-            id='ad-hoc',
+            id="ad-hoc",
         )
 
     def _add_triggers(self, handler, triggers, func):
@@ -686,6 +686,7 @@ def remove_job(job_id: str) -> None:
     # The scheduler takes care of removing the Job from the database
     return db.query_unique(Job, id=job_id)
 
+
 @publish_event(Events.JOB_EXECUTED)
 def execute_job(job_id: str) -> Job:
     """Execute a Job ad-hoc
@@ -699,6 +700,7 @@ def execute_job(job_id: str) -> Job:
         The spawned Request
     """
     return db.query_unique(Job, id=job_id)
+
 
 def handle_event(event: Event) -> None:
     """Handle JOB events

@@ -337,10 +337,7 @@ class JobExecutionAPI(BaseHandler):
           - Jobs
         """
         response = await self.client(
-            Operation(
-                operation_type="JOB_EXECUTE",
-                args=[job_id]
-            )
+            Operation(operation_type="JOB_EXECUTE", args=[job_id])
         )
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
