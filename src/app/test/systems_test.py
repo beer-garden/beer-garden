@@ -1,23 +1,27 @@
 # -*- coding: utf-8 -*-
 import pytest
 from brewtils.errors import ModelValidationError
-from brewtils.models import Command, System
+from brewtils.models import Command as BrewtilsCommand
+from brewtils.models import System as BrewtilsSystem
 from mongoengine import connect
 
 from beer_garden import config
+from beer_garden.db.mongo.models import System
 from beer_garden.systems import create_system, update_system
 
 
 @pytest.fixture
 def system():
     yield create_system(
-        System(
+        BrewtilsSystem(
             name="original",
             version="v0.0.1",
             namespace="beer_garden",
-            commands=[Command(name="original")],
+            commands=[BrewtilsCommand(name="original")],
         )
     )
+
+    System.drop_collection()
 
 
 class TestSystem:
@@ -32,7 +36,9 @@ class TestSystem:
         config._CONFIG = {"plugin": {"allow_command_updates": False}}
 
         with pytest.raises(ModelValidationError):
-            update_system(system=system, new_commands=[Command(name="changed_command")])
+            update_system(
+                system=system, new_commands=[BrewtilsCommand(name="changed_command")]
+            )
 
     def test_allow_command_updates(self, system):
         """System commands should be allowed to update if the
@@ -40,7 +46,7 @@ class TestSystem:
         """
         config._CONFIG = {"plugin": {"allow_command_updates": True}}
         updated_system = update_system(
-            system=system, new_commands=[Command(name="changed_command")]
+            system=system, new_commands=[BrewtilsCommand(name="changed_command")]
         )
         assert (
             updated_system.commands[0].name == "changed_command"

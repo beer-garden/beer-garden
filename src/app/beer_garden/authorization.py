@@ -140,7 +140,7 @@ def user_permitted_objects(
 
 def user_permitted_objects_filter(
     user: "User", model: Type[Document], permission: str
-) -> Optional[QCombination]:
+) -> Optional[Union[Q, QCombination]]:
     """Generates a QCombination that can be used to filter a QuerySet down to the
     objects for which the user has the given permission
 
@@ -151,11 +151,12 @@ def user_permitted_objects_filter(
             access to the object
 
     Returns:
+        Q: An empty mongoengine Q filter, representing global access
         QCombination: A mongoengine QCombination filter
         None: The user has access to no objects
     """
     if permission in user.global_permissions:
-        return model.objects
+        return Q()
 
     permitted_domains = user.domain_permissions.get(permission)
 
