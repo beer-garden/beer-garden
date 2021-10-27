@@ -124,7 +124,7 @@ def user_permitted_objects(
 
 def user_permitted_objects_filter(
     user: "User", model: Type[Document], permission: str
-) -> QCombination:
+) -> Optional[QCombination]:
     """Generates a QCombination that can be used to filter a QuerySet down to the
     objects for which the user has the given permission
 
