@@ -56,6 +56,14 @@ def role_for_system_scope():
 
 
 @pytest.fixture()
+def role_for_global_scope():
+    role = Role(name="gardencreator", permissions=["garden:create"]).save()
+
+    yield role
+    role.delete()
+
+
+@pytest.fixture()
 def role_assignment_for_garden_scope(role_for_garden_scope):
     yield RoleAssignment(
         domain={"scope": "Garden", "identifiers": {"name": "testgarden"}},
@@ -74,15 +82,28 @@ def role_assignment_for_system_scope(role_for_system_scope):
     )
 
 
+@pytest.fixture()
+def role_assignment_for_global_scope(role_for_global_scope):
+    yield RoleAssignment(
+        domain={
+            "scope": "Global",
+        },
+        role=role_for_global_scope,
+    )
+
+
 @pytest.fixture
 def user_with_role_assignments(
-    role_assignment_for_garden_scope, role_assignment_for_system_scope
+    role_assignment_for_garden_scope,
+    role_assignment_for_system_scope,
+    role_assignment_for_global_scope,
 ):
     user = User(
         username="testuser",
         role_assignments=[
             role_assignment_for_garden_scope,
             role_assignment_for_system_scope,
+            role_assignment_for_global_scope,
         ],
     ).save()
 
@@ -167,6 +188,7 @@ class TestAuth:
         self,
         role_assignment_for_garden_scope,
         role_assignment_for_system_scope,
+        role_assignment_for_global_scope,
         test_garden,
         test_system_1_0_0,
         test_system_2_0_0,
@@ -176,19 +198,26 @@ class TestAuth:
         User's permissions based on their role_assignments
         """
         user_permissions = permissions_for_user(user_with_role_assignments)
+        domain_permissions = user_permissions["domain_permissions"]
+        global_permissions = user_permissions["global_permissions"]
 
         for permission in role_assignment_for_garden_scope.role.permissions:
-            assert permission in user_permissions.keys()
-            assert str(test_garden.id) in user_permissions[permission]["garden_ids"]
+            assert permission in domain_permissions.keys()
+            assert str(test_garden.id) in domain_permissions[permission]["garden_ids"]
 
         for permission in role_assignment_for_system_scope.role.permissions:
-            assert permission in user_permissions.keys()
+            assert permission in domain_permissions.keys()
             assert (
-                str(test_system_1_0_0.id) in user_permissions[permission]["system_ids"]
+                str(test_system_1_0_0.id)
+                in domain_permissions[permission]["system_ids"]
             )
             assert (
-                str(test_system_2_0_0.id) in user_permissions[permission]["system_ids"]
+                str(test_system_2_0_0.id)
+                in domain_permissions[permission]["system_ids"]
             )
+
+        for permission in role_assignment_for_global_scope.role.permissions:
+            assert permission in global_permissions
 
     def test_permissions_for_user_skips_nonexistent_objects(
         self,
@@ -200,11 +229,15 @@ class TestAuth:
         # Here we call permissions_for_user without using any of the fixtures
         # that generate Garden or System objects
         user_permissions = permissions_for_user(user_with_role_assignments)
+        domain_permissions = user_permissions["domain_permissions"]
 
         for role_assignment in user_with_role_assignments.role_assignments:
+            if role_assignment.domain.scope == "Global":
+                continue
+
             for permission in role_assignment.role.permissions:
-                assert len(user_permissions[permission]["garden_ids"]) == 0
-                assert len(user_permissions[permission]["system_ids"]) == 0
+                assert len(domain_permissions[permission]["garden_ids"]) == 0
+                assert len(domain_permissions[permission]["system_ids"]) == 0
 
     def test_user_has_permission_for_object_returns_true_when_permitted(
         self, test_garden, test_system_1_0_0, user_with_role_assignments
@@ -218,6 +251,16 @@ class TestAuth:
 
         assert user_has_permission_for_object(
             user_with_role_assignments, "request:read", test_system_1_0_0
+        )
+
+    def test_user_has_permission_for_object_returns_true_when_permitted_via_global(
+        self, test_garden, test_system_1_0_0, user_with_role_assignments
+    ):
+        """user_has_permission_for_object should return true for a permission and object
+        for which they have a corresponding role_assignment for the "Global" scope
+        """
+        assert user_has_permission_for_object(
+            user_with_role_assignments, "garden:create", test_garden
         )
 
     def test_user_has_permission_for_object_when_lacking_specified_permission(
@@ -343,6 +386,15 @@ class TestAuth:
     ):
         permitted_gardens = user_permitted_objects(
             user_with_role_assignments, Garden, "garden:read"
+        )
+
+        assert test_garden in permitted_gardens
+
+    def test_user_permitted_objects_returns_permitted_gardens_via_global(
+        self, user_with_role_assignments, test_garden
+    ):
+        permitted_gardens = user_permitted_objects(
+            user_with_role_assignments, Garden, "garden:create"
         )
 
         assert test_garden in permitted_gardens

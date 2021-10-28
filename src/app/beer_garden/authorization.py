@@ -31,13 +31,16 @@ def permissions_for_user(user: "User") -> dict:
     role_assignments. The final output will look something like:
 
     {
-        "garden:read": {
-            "garden_ids": ["61391177f150fcc57019d48f", "61391177f150fcc57062338a"]
-            "system_ids": []
-        },
-        "request:create": {
-            "garden_ids": ["61391177f150fcc57019d48f"],
-            "system_ids": ["61391187766f458bf9625905", "613911898c962bcacc470279"]
+        "global_permissions": ["system:read", "request:read"],
+        "domain_permissions": {
+            "garden:read": {
+                "garden_ids": ["61391177f150fcc57019d48f", "61391177f150fcc57062338a"]
+                "system_ids": []
+            },
+            "request:create": {
+                "garden_ids": ["61391177f150fcc57019d48f"],
+                "system_ids": ["61391187766f458bf9625905", "613911898c962bcacc470279"]
+            }
         }
     }
 
@@ -47,14 +50,19 @@ def permissions_for_user(user: "User") -> dict:
     Returns:
         dict: Dictionary formatted as described above
     """
-    user_permissions = {}
+    global_permissions = []
+    domain_permissions = {}
 
     for role_assignment in user.role_assignments:
         permissions = role_assignment.role.permissions
 
+        if role_assignment.domain.scope == "Global":
+            global_permissions.extend(permissions)
+            continue
+
         for permission in permissions:
-            if permission not in user_permissions.keys():
-                user_permissions[permission] = {"garden_ids": [], "system_ids": []}
+            if permission not in domain_permissions.keys():
+                domain_permissions[permission] = {"garden_ids": [], "system_ids": []}
 
             domain_object_ids = _get_object_ids_from_domain(role_assignment.domain)
 
@@ -63,9 +71,14 @@ def permissions_for_user(user: "User") -> dict:
             object_ids_to_add = [
                 object_id
                 for object_id in domain_object_ids
-                if object_id not in user_permissions[permission][permission_key]
+                if object_id not in domain_permissions[permission][permission_key]
             ]
-            user_permissions[permission][permission_key].extend(object_ids_to_add)
+            domain_permissions[permission][permission_key].extend(object_ids_to_add)
+
+    user_permissions = {
+        "global_permissions": list(set(global_permissions)),
+        "domain_permissions": domain_permissions,
+    }
 
     return user_permissions
 
@@ -85,7 +98,10 @@ def user_has_permission_for_object(
         bool: True if the user has the specified permission for the object.
               False otherwise.
     """
-    permitted_domains = user.permissions.get(permission, None)
+    if permission in user.global_permissions:
+        return True
+
+    permitted_domains = user.domain_permissions.get(permission, None)
 
     if permitted_domains is None:
         return False
@@ -124,7 +140,7 @@ def user_permitted_objects(
 
 def user_permitted_objects_filter(
     user: "User", model: Type[Document], permission: str
-) -> Optional[QCombination]:
+) -> Optional[Union[Q, QCombination]]:
     """Generates a QCombination that can be used to filter a QuerySet down to the
     objects for which the user has the given permission
 
@@ -135,10 +151,14 @@ def user_permitted_objects_filter(
             access to the object
 
     Returns:
+        Q: An empty mongoengine Q filter, representing global access
         QCombination: A mongoengine QCombination filter
         None: The user has access to no objects
     """
-    permitted_domains = user.permissions.get(permission)
+    if permission in user.global_permissions:
+        return Q()
+
+    permitted_domains = user.domain_permissions.get(permission)
 
     if permitted_domains is None:
         return None

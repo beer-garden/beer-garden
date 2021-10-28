@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import TYPE_CHECKING, Type, Union
+from typing import Type, Union
 
 import jwt
 from brewtils.models import BaseModel as BrewtilsModel
@@ -21,9 +21,7 @@ from beer_garden.authorization import (
     user_permitted_objects,
     user_permitted_objects_filter,
 )
-
-if TYPE_CHECKING:
-    from beer_garden.db.mongo.models import User
+from beer_garden.db.mongo.models import User
 
 
 class AuthorizationHandler(BaseHandler):
@@ -144,25 +142,15 @@ class AuthorizationHandler(BaseHandler):
 
     def _anonymous_superuser(self) -> "User":
         """Return a User object with all permissions for all gardens"""
-
-        # Import here to avoid circular import
-        from beer_garden.db.mongo.models import Garden, User
-
         anonymous_superuser = User(username="anonymous")
 
         # Manually set the permissions cache (to all permissions for all gardens) since
         # the anonymous user has no actual role assignments from which the permissions
         # could be calculated
-        permissions = {}
-        all_garden_ids = [
-            str(garden_id) for garden_id in Garden.objects.all().values_list("id")
-        ]
+        permissions = {"global_permissions": [], "domain_permissions": {}}
 
         for permission in Permissions:
-            permissions[permission.value] = {
-                "garden_ids": all_garden_ids,
-                "system_ids": [],
-            }
+            permissions["global_permissions"].append(permission.value)
 
         anonymous_superuser.set_permissions_cache(permissions)
 
