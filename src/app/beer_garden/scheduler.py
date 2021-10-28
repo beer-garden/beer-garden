@@ -364,6 +364,7 @@ class MixedScheduler(object):
             job_id: The job id
             reset_interval: Whether to set the job's interval begin time to now
         """
+        raise Exception()
         job = db.query_unique(Job, id=job_id)
         self.add_job(
             run_job,
@@ -699,7 +700,7 @@ def execute_job(job_id: str) -> Job:
     Returns:
         The spawned Request
     """
-    return db.query_unique(Job, id=job_id)
+    return db.query_unique(Job, id=job_id, raise_missing=True)
 
 
 def handle_event(event: Event) -> None:

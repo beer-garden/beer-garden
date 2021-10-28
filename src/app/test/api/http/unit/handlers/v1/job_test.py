@@ -4,6 +4,7 @@ import json
 import pytest
 import tornado.web
 from box import Box
+from bson import ObjectId
 from mongoengine import connect
 
 from beer_garden import config
@@ -11,7 +12,7 @@ from beer_garden.api.http.client import SerializeHelper
 from beer_garden.api.http.handlers.v1.job import JobExecutionAPI
 from beer_garden.db.mongo.api import from_brewtils
 
-from tornado.httpclient import HTTPClientError
+from tornado.httpclient import HTTPError
 
 
 application = tornado.web.Application(
@@ -54,21 +55,28 @@ class TestJobExecutionAPI:
         connect("beer_garden", host="mongomock://localhost")
 
     @pytest.mark.gen_test
-    def test_execute(self, base_url, http_client, monkeypatch, scheduled_job_id):
+    def test_execute(self, base_url, http_client, scheduled_job_id):
         url = f"{base_url}/api/v1/jobs/{scheduled_job_id}/execute"
         body = ""
 
         response = yield http_client.fetch(url, method="POST", body=body)
-        response_body = json.loads(response.body.decode("utf-8"))
 
-        assert response.code == 201
+        assert response.code == 202
 
     @pytest.mark.gen_test
-    def test_execute_job_not_found(self, http_client, base_url):
-        job_id = "not_real"
+    @pytest.mark.parametrize(
+            "job_id",
+            [
+                ObjectId(),
+                "not_real",
+            ]
+    )
+    def test_execute_job_not_found(self, http_client, base_url, job_id):
         url = f"{base_url}/api/v1/jobs/{job_id}/execute"
         body = ""
 
         # 404 error
-        with pytest.raises(HTTPClientError):
-            response = yield http_client.fetch(url, method="POST", body=body)
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(url, method="POST", body=body)
+
+        assert excinfo.value.code == 404
