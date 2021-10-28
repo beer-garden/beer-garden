@@ -6,17 +6,28 @@ from asyncio import Event
 from typing import Sequence
 
 from brewtils.errors import ModelValidationError, TimeoutExceededError
-from brewtils.models import Operation, Request, System
+from brewtils.models import Operation
+from brewtils.models import Request as BrewtilsRequest
+from brewtils.models import System as BrewtilsSystem
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.db.api as db
-from beer_garden.api.http.base_handler import BaseHandler, event_wait
+from beer_garden.api.authorization import Permissions
+from beer_garden.api.http.base_handler import event_wait
 from beer_garden.api.http.exceptions import BadRequest
+from beer_garden.api.http.handlers import AuthorizationHandler
+from beer_garden.db.mongo.api import MongoParser
+from beer_garden.db.mongo.models import Request
 from beer_garden.errors import UnknownGardenException
 from beer_garden.requests import remove_bytes_parameter_base64
 
+REQUEST_CREATE = Permissions.REQUEST_CREATE.value
+REQUEST_READ = Permissions.REQUEST_READ.value
+REQUEST_UPDATE = Permissions.REQUEST_UPDATE.value
+REQUEST_DELETE = Permissions.REQUEST_DELETE.value
 
-class RequestAPI(BaseHandler):
+
+class RequestAPI(AuthorizationHandler):
     async def get(self, request_id):
         """
         ---
@@ -39,10 +50,9 @@ class RequestAPI(BaseHandler):
         tags:
           - Requests
         """
+        request = self.get_or_raise(Request, REQUEST_READ, id=request_id)
 
-        response = await self.client(
-            Operation(operation_type="REQUEST_READ", args=[request_id])
-        )
+        response = MongoParser.serialize(request)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
@@ -88,8 +98,9 @@ class RequestAPI(BaseHandler):
         tags:
           - Requests
         """
-        operation = Operation(args=[request_id])
+        _ = self.get_or_raise(Request, REQUEST_UPDATE, id=request_id)
 
+        operation = Operation(args=[request_id])
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
@@ -102,7 +113,7 @@ class RequestAPI(BaseHandler):
                         operation.kwargs = {}
                         break
 
-                    elif op.value.upper() in Request.COMPLETED_STATUSES:
+                    elif op.value.upper() in BrewtilsRequest.COMPLETED_STATUSES:
                         operation.operation_type = "REQUEST_COMPLETE"
                         operation.kwargs["status"] = op.value
 
@@ -128,7 +139,7 @@ class RequestAPI(BaseHandler):
         self.write(response)
 
 
-class RequestOutputAPI(BaseHandler):
+class RequestOutputAPI(AuthorizationHandler):
     async def get(self, request_id):
         """
         ---
@@ -150,6 +161,7 @@ class RequestOutputAPI(BaseHandler):
         tags:
           - Requests
         """
+        _ = self.get_or_raise(Request, REQUEST_READ, id=request_id)
 
         response = await self.client(
             Operation(operation_type="REQUEST_READ", args=[request_id]),
@@ -171,7 +183,7 @@ class RequestOutputAPI(BaseHandler):
             self.set_status(204)
 
 
-class RequestListAPI(BaseHandler):
+class RequestListAPI(AuthorizationHandler):
     parser = SchemaParser()
 
     async def get(self):
@@ -329,6 +341,10 @@ class RequestListAPI(BaseHandler):
         # V1 API is a mess, it's basically written for datatables
         query_args = self._parse_datatables_parameters()
 
+        # Add the filter for only requests the user is permitted to see
+        q_filter = self.permitted_objects_filter(Request, REQUEST_READ)
+        query_args["q_filter"] = q_filter
+
         # There are also some sane parameters
         query_args["start"] = self.get_argument("start", default="0")
         query_args["length"] = self.get_argument("length", default="100")
@@ -351,8 +367,10 @@ class RequestListAPI(BaseHandler):
             "start": query_args["start"],
             "length": len(requests),
             # And these are required by datatables
-            "recordsFiltered": db.count(Request, **query_args["filter_params"]),
-            "recordsTotal": db.count(Request),
+            "recordsFiltered": db.count(
+                BrewtilsRequest, q_filter=q_filter, **query_args["filter_params"]
+            ),
+            "recordsTotal": db.count(BrewtilsRequest, q_filter=q_filter),
             "draw": self.get_argument("draw", ""),
         }
 
@@ -436,6 +454,8 @@ class RequestListAPI(BaseHandler):
         else:
             raise ModelValidationError("Unsupported or missing content-type header")
 
+        self.verify_user_permission_for_object(REQUEST_CREATE, request_model)
+
         if self.current_user:
             request_model.requester = self.current_user.username
 
@@ -457,7 +477,7 @@ class RequestListAPI(BaseHandler):
                 serialize_kwargs={"to_string": False},
             )
         except UnknownGardenException as ex:
-            req_system = System(
+            req_system = BrewtilsSystem(
                 namespace=request_model.namespace,
                 name=request_model.system,
                 version=request_model.system_version,
@@ -488,7 +508,7 @@ class RequestListAPI(BaseHandler):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
 
-    def _parse_form_request(self) -> Request:
+    def _parse_form_request(self) -> BrewtilsRequest:
         args = {"parameters": {}}
 
         for key, value in self.request.body_arguments.items():
@@ -499,7 +519,7 @@ class RequestListAPI(BaseHandler):
             else:
                 args[key] = decoded_param
 
-        return Request(**args)
+        return BrewtilsRequest(**args)
 
     def _parse_datatables_parameters(self) -> dict:
         """Parse the HTTP request's datatables query parameters
@@ -634,7 +654,7 @@ class RequestListAPI(BaseHandler):
 
         return "_".join(real_hint)
 
-    def _parse_multipart_form_data(self) -> Request:
+    def _parse_multipart_form_data(self) -> BrewtilsRequest:
         """Generate a Request object from multipart/form-data input"""
         request_form = self.get_body_argument("request")
 
@@ -650,7 +670,7 @@ class RequestListAPI(BaseHandler):
 
         self._add_files_to_request(request_form_dict)
 
-        return Request(**request_form_dict)
+        return BrewtilsRequest(**request_form_dict)
 
     def _add_files_to_request(self, request_form_dict: dict) -> None:
         """Processes any files attached to the request and adds them as parameters to

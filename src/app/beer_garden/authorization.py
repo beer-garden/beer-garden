@@ -1,11 +1,13 @@
-from typing import TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING, Optional, Type, Union
 
+from brewtils.models import BaseModel as BrewtilsModel
 from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System as BrewtilsSystem
 from bson import ObjectId
 from mongoengine import Document, DoesNotExist, Q, QuerySet
+from mongoengine.queryset.visitor import QCombination
 
 import beer_garden.db.mongo.models
 from beer_garden.db.mongo.models import (
@@ -29,13 +31,16 @@ def permissions_for_user(user: "User") -> dict:
     role_assignments. The final output will look something like:
 
     {
-        "garden:read": {
-            "garden_ids": ["61391177f150fcc57019d48f", "61391177f150fcc57062338a"]
-            "system_ids": []
-        },
-        "request:create": {
-            "garden_ids": ["61391177f150fcc57019d48f"],
-            "system_ids": ["61391187766f458bf9625905", "613911898c962bcacc470279"]
+        "global_permissions": ["system:read", "request:read"],
+        "domain_permissions": {
+            "garden:read": {
+                "garden_ids": ["61391177f150fcc57019d48f", "61391177f150fcc57062338a"]
+                "system_ids": []
+            },
+            "request:create": {
+                "garden_ids": ["61391177f150fcc57019d48f"],
+                "system_ids": ["61391187766f458bf9625905", "613911898c962bcacc470279"]
+            }
         }
     }
 
@@ -45,14 +50,19 @@ def permissions_for_user(user: "User") -> dict:
     Returns:
         dict: Dictionary formatted as described above
     """
-    user_permissions = {}
+    global_permissions = []
+    domain_permissions = {}
 
     for role_assignment in user.role_assignments:
         permissions = role_assignment.role.permissions
 
+        if role_assignment.domain.scope == "Global":
+            global_permissions.extend(permissions)
+            continue
+
         for permission in permissions:
-            if permission not in user_permissions.keys():
-                user_permissions[permission] = {"garden_ids": [], "system_ids": []}
+            if permission not in domain_permissions.keys():
+                domain_permissions[permission] = {"garden_ids": [], "system_ids": []}
 
             domain_object_ids = _get_object_ids_from_domain(role_assignment.domain)
 
@@ -61,14 +71,21 @@ def permissions_for_user(user: "User") -> dict:
             object_ids_to_add = [
                 object_id
                 for object_id in domain_object_ids
-                if object_id not in user_permissions[permission][permission_key]
+                if object_id not in domain_permissions[permission][permission_key]
             ]
-            user_permissions[permission][permission_key].extend(object_ids_to_add)
+            domain_permissions[permission][permission_key].extend(object_ids_to_add)
+
+    user_permissions = {
+        "global_permissions": list(set(global_permissions)),
+        "domain_permissions": domain_permissions,
+    }
 
     return user_permissions
 
 
-def user_has_permission_for_object(user: "User", permission: str, obj) -> bool:
+def user_has_permission_for_object(
+    user: "User", permission: str, obj: Union[Document, BrewtilsModel]
+) -> bool:
     """Determines if the supplied user has a specified permission for a given object
 
     Args:
@@ -81,7 +98,10 @@ def user_has_permission_for_object(user: "User", permission: str, obj) -> bool:
         bool: True if the user has the specified permission for the object.
               False otherwise.
     """
-    permitted_domains = user.permissions.get(permission, None)
+    if permission in user.global_permissions:
+        return True
+
+    permitted_domains = user.domain_permissions.get(permission, None)
 
     if permitted_domains is None:
         return False
@@ -108,17 +128,45 @@ def user_permitted_objects(
             access to the object
 
     Returns:
-        QuerySet: A mongo QuerySet filtered down to the objects the user has access to
+        QuerySet: A mongoengine QuerySet filtered to the objects the user has access to
     """
-    permitted_domains = user.permissions.get(permission)
+    q_filter = user_permitted_objects_filter(user, model, permission)
+
+    if q_filter is not None:
+        return model.objects.filter(q_filter)
+    else:
+        return model.objects.none()
+
+
+def user_permitted_objects_filter(
+    user: "User", model: Type[Document], permission: str
+) -> Optional[Union[Q, QCombination]]:
+    """Generates a QCombination that can be used to filter a QuerySet down to the
+    objects for which the user has the given permission
+
+    Args:
+        user: The User whose permissions will be used as the basis for filtering
+        model: The mongoengine Document model class that access will be checked for
+        permission: The permission that the user must have in order to be permitted
+            access to the object
+
+    Returns:
+        Q: An empty mongoengine Q filter, representing global access
+        QCombination: A mongoengine QCombination filter
+        None: The user has access to no objects
+    """
+    if permission in user.global_permissions:
+        return Q()
+
+    permitted_domains = user.domain_permissions.get(permission)
 
     if permitted_domains is None:
-        return model.objects.none()
+        return None
 
     garden_filter = _get_garden_filter(model, permitted_domains["garden_ids"])
     system_filter = _get_system_filter(model, permitted_domains["system_ids"])
 
-    return model.objects.filter(garden_filter | system_filter)
+    return garden_filter | system_filter
 
 
 def _get_garden_filter(model: Type[Document], garden_ids: list) -> Q:

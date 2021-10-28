@@ -13,6 +13,7 @@ from mongoengine import (
     connect,
     register_connection,
 )
+from mongoengine.queryset.visitor import Q, QCombination
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 
 import beer_garden.db.mongo.models
@@ -202,7 +203,9 @@ def get_job_store():
     return MongoJobStore()
 
 
-def count(model_class: ModelType, **kwargs) -> int:
+def count(
+    model_class: ModelType, q_filter: Union[Q, QCombination, None] = None, **kwargs
+) -> int:
     """Count the number of items matching a query
 
     Args:
@@ -219,6 +222,10 @@ def count(model_class: ModelType, **kwargs) -> int:
             kwargs[k] = from_brewtils(v)
 
     query_set = _model_map[model_class].objects(**kwargs)
+
+    if q_filter:
+        query_set = query_set.filter(q_filter)
+
     return query_set.count()
 
 
@@ -264,7 +271,9 @@ def query_unique(
         return None
 
 
-def query(model_class: ModelType, **kwargs) -> List[ModelItem]:
+def query(
+    model_class: ModelType, q_filter: Union[Q, QCombination, None] = None, **kwargs
+) -> List[ModelItem]:
     """Query a collection
 
     It's possible to specify `include_fields` _and_ `exclude_fields`. This doesn't make
@@ -273,6 +282,7 @@ def query(model_class: ModelType, **kwargs) -> List[ModelItem]:
 
     Args:
         model_class: The Brewtils model class to query for
+        q_filter: Q or QCombination filter to be applied to the QuerySet
         **kwargs: Arguments to control the query. Valid options are:
             filter_params: Dict of filtering parameters
             order_by: Field that will be used to order the result list
@@ -289,6 +299,9 @@ def query(model_class: ModelType, **kwargs) -> List[ModelItem]:
 
     """
     query_set = _model_map[model_class].objects
+
+    if q_filter:
+        query_set = query_set.filter(q_filter)
 
     if kwargs.get("filter_params"):
         filter_params = kwargs["filter_params"]
