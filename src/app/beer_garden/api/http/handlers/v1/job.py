@@ -338,9 +338,7 @@ class JobExecutionAPI(BaseHandler):
           - Jobs
         """
         try:
-            await self.client(
-                Operation(operation_type="JOB_EXECUTE", args=[job_id])
-            )
+            await self.client(Operation(operation_type="JOB_EXECUTE", args=[job_id]))
         except ValidationError:
             raise NotFoundError
 

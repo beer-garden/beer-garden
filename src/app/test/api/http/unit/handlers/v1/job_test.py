@@ -65,11 +65,11 @@ class TestJobExecutionAPI:
 
     @pytest.mark.gen_test
     @pytest.mark.parametrize(
-            "job_id",
-            [
-                ObjectId(),
-                "not_real",
-            ]
+        "job_id",
+        [
+            ObjectId(),
+            "not_real",
+        ],
     )
     def test_execute_job_not_found(self, http_client, base_url, job_id):
         url = f"{base_url}/api/v1/jobs/{job_id}/execute"
