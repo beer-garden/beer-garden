@@ -27,7 +27,7 @@ def noop_event_manager():
     """Set a noop event manager so the tests don't try to publish things"""
 
     class NoopManager:
-        def put(self):
+        def put(self, *args, **kwargs):
             pass
 
     beer_garden.events.manager = NoopManager()

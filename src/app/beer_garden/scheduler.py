@@ -18,7 +18,7 @@ import pymongo
 import pymongo.database
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
-from brewtils.models import Event, Events, FileTrigger, Job, Operation
+from brewtils.models import DateTrigger, Event, Events, FileTrigger, Job, Operation
 from brewtils.schema_parser import SchemaParser
 from bson import ObjectId, json_util
 from pathtools.patterns import match_any_paths
@@ -357,6 +357,24 @@ class MixedScheduler(object):
         else:
             self._sync_scheduler.remove_job(job_id, **kwargs)
 
+    def execute_job(self, job_id, reset_interval=False, **kwargs):
+        """Executes the job ad-hoc
+
+        Args:
+            job_id: The job id
+            reset_interval: Whether to set the job's interval begin time to now
+        """
+        raise Exception()
+        job = db.query_unique(Job, id=job_id)
+        self.add_job(
+            run_job,
+            trigger=DateTrigger(datetime.now(), timezone="UTC"),
+            trigger_type="date",
+            coalesce=job.coalesce,
+            kwargs={"job_id": job.id, "request_template": job.request_template},
+            id="ad-hoc",
+        )
+
     def _add_triggers(self, handler, triggers, func):
         """Attaches the function to the handler callback
 
@@ -670,6 +688,21 @@ def remove_job(job_id: str) -> None:
     return db.query_unique(Job, id=job_id)
 
 
+@publish_event(Events.JOB_EXECUTED)
+def execute_job(job_id: str) -> Job:
+    """Execute a Job ad-hoc
+
+    Creates a new job with a trigger for now.
+
+    Args:
+        job_id: The Job ID
+
+    Returns:
+        The spawned Request
+    """
+    return db.query_unique(Job, id=job_id, raise_missing=True)
+
+
 def handle_event(event: Event) -> None:
     """Handle JOB events
 
@@ -716,5 +749,9 @@ def handle_event(event: Event) -> None:
             )
         elif event.name == Events.JOB_DELETED.name:
             beer_garden.application.scheduler.remove_job(
+                event.payload.id, jobstore="beer_garden"
+            )
+        elif event.name == Events.JOB_EXECUTED.name:
+            beer_garden.application.scheduler.execute_job(
                 event.payload.id, jobstore="beer_garden"
             )

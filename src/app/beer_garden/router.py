@@ -117,6 +117,7 @@ route_functions = {
     "JOB_PAUSE": beer_garden.scheduler.pause_job,
     "JOB_RESUME": beer_garden.scheduler.resume_job,
     "JOB_DELETE": beer_garden.scheduler.remove_job,
+    "JOB_EXECUTE": beer_garden.scheduler.execute_job,
     "SYSTEM_CREATE": beer_garden.systems.upsert,
     "SYSTEM_READ": beer_garden.systems.get_system,
     "SYSTEM_READ_ALL": beer_garden.systems.get_systems,

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-from brewtils.errors import ModelValidationError
+from brewtils.errors import ModelValidationError, NotFoundError
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import JobExportInputSchema, JobSchema
+from mongoengine.errors import ValidationError
 
 from beer_garden.api.http.base_handler import BaseHandler
 
@@ -310,3 +311,37 @@ class JobExportAPI(BaseHandler):
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
+
+
+class JobExecutionAPI(BaseHandler):
+    async def post(self, job_id):
+        """
+        ---
+        summary: Executes a Job ad-hoc.
+        description: |
+          Given a job, it will run that job independent
+          of any interval/trigger associated with that job.
+        parameters:
+          - name: job_id
+            in: path
+            required: true
+            description: The ID of the Job
+            type: string
+        responses:
+          202:
+            description: Job has been executed
+          404:
+            $ref: '#/definitions/404Error'
+          50x:
+            $ref: '#/definitions/50xError'
+        tags:
+          - Jobs
+        """
+        try:
+            await self.client(Operation(operation_type="JOB_EXECUTE", args=[job_id]))
+        except ValidationError:
+            raise NotFoundError
+
+        self.set_status(202)
+        self.set_header("Content-Type", "application/json; charset=UTF-8")
+        self.write("")
