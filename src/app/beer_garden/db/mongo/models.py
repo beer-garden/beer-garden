@@ -312,6 +312,7 @@ class Request(MongoModel, Document):
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
     created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     updated_at = DateTimeField(default=None, required=True)
+    status_updated_at = DateTimeField(default=None, required=True)
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
     hidden = BooleanField(required=False)
@@ -331,6 +332,7 @@ class Request(MongoModel, Document):
             {"name": "status_index", "fields": ["status"]},
             {"name": "created_at_index", "fields": ["created_at"]},
             {"name": "updated_at_index", "fields": ["updated_at"]},
+            {"name": "status_updated_at_index", "fields": ["status_updated_at"]},
             {"name": "comment_index", "fields": ["comment"]},
             {"name": "parent_ref_index", "fields": ["parent"]},
             {"name": "parent_index", "fields": ["has_parent"]},
