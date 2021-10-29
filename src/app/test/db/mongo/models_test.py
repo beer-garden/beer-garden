@@ -301,6 +301,12 @@ class TestRequest(object):
         request_model.parameters_gridfs.put.assert_not_called()
         request_model.output_gridfs.put.assert_not_called()
 
+    def test_save_preserves_status_updated_at_field(self, request_model):
+        first_time = request_model.status_updated_at
+        request_model.save()
+
+        assert first_time == request_model.status_updated_at
+
 
 class TestSystem(object):
     @pytest.fixture(autouse=True)
