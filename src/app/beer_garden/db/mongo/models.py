@@ -312,7 +312,7 @@ class Request(MongoModel, Document):
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
     created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     updated_at = DateTimeField(default=None, required=True)
-    status_updated_at = DateTimeField(default=None, required=True)
+    status_updated_at = DateTimeField(default=None, required=False)
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
     hidden = BooleanField(required=False)
