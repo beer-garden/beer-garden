@@ -26,7 +26,6 @@ from brewtils.schemas import (
     ParameterSchema,
     PatchSchema,
     QueueSchema,
-    RefreshTokenSchema,
     RequestSchema,
     RunnerSchema,
     SystemSchema,
@@ -50,7 +49,11 @@ import beer_garden.requests
 import beer_garden.router
 from beer_garden.api.http.client import SerializeHelper
 from beer_garden.api.http.processors import EventManager, websocket_publish
-from beer_garden.api.http.schemas.v1.login import LoginInputSchema, LoginResponseSchema
+from beer_garden.api.http.schemas.v1.token import (
+    TokenInputSchema,
+    TokenRefreshInputSchema,
+    TokenResponseSchema,
+)
 from beer_garden.events import publish
 
 io_loop: IOLoop = None
@@ -199,8 +202,10 @@ def _setup_tornado_app() -> Application:
         (rf"{prefix}api/v1/gardens/(.*)/?", v1.garden.GardenAPI),
         (rf"{prefix}api/v1/export/jobs/?", v1.job.JobExportAPI),
         (rf"{prefix}api/v1/import/jobs/?", v1.job.JobImportAPI),
-        (rf"{prefix}api/v1/login", v1.login.LoginAPI),
-        (rf"{prefix}api/v1/whoami", v1.user.WhoAmIAPI),
+        (rf"{prefix}api/v1/token/?", v1.token.TokenAPI),
+        (rf"{prefix}api/v1/token/revoke/?", v1.token.TokenRevokeAPI),
+        (rf"{prefix}api/v1/token/refresh/?", v1.token.TokenRefreshAPI),
+        (rf"{prefix}api/v1/whoami/?", v1.user.WhoAmIAPI),
         # Beta
         (rf"{prefix}api/vbeta/events/?", vbeta.event.EventPublisherAPI),
         (rf"{prefix}api/vbeta/runners/?", vbeta.runner.RunnerListAPI),
@@ -306,10 +311,9 @@ def _load_swagger(url_specs, title=None):
     api_spec.definition("Queue", schema=QueueSchema)
     api_spec.definition("Operation", schema=OperationSchema)
     api_spec.definition("FileStatus", schema=FileStatusSchema)
-    api_spec.definition("LoginInput", schema=LoginInputSchema)
-    api_spec.definition("LoginResponse", schema=LoginResponseSchema)
-
-    api_spec.definition("RefreshToken", schema=RefreshTokenSchema)
+    api_spec.definition("TokenInput", schema=TokenInputSchema)
+    api_spec.definition("TokenRefreshInput", schema=TokenRefreshInputSchema)
+    api_spec.definition("TokenResponse", schema=TokenResponseSchema)
 
     api_spec.definition("Garden", schema=GardenSchema)
     api_spec.definition("Runner", schema=RunnerSchema)

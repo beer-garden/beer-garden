@@ -10,7 +10,7 @@ from tornado.httpclient import HTTPError
 
 import beer_garden.api.http.authentication
 from beer_garden import config
-from beer_garden.api.http.authentication import generate_access_token
+from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.api.http.handlers.v1.user import WhoAmIAPI
 from beer_garden.db.mongo.models import User
 
@@ -53,7 +53,7 @@ def user(user_password):
 
 @pytest.fixture
 def access_token(user):
-    yield generate_access_token(user)
+    yield issue_token_pair(user)["access"]
 
 
 @pytest.fixture
@@ -61,7 +61,7 @@ def app():
     return application
 
 
-class TestLoginAPI:
+class TestAuthorizationHandler:
     @classmethod
     def setup_class(cls):
         connect("beer_garden", host="mongomock://localhost")
@@ -163,12 +163,14 @@ class TestLoginAPI:
             return datetime.utcnow() - timedelta(days=1)
 
         monkeypatch.setattr(
-            beer_garden.api.http.authentication, "_get_token_expiration", yesterday
+            beer_garden.api.http.authentication,
+            "_get_access_token_expiration",
+            yesterday,
         )
 
         url = f"{base_url}/api/v1/whoami"
 
-        access_token = generate_access_token(user)
+        access_token = issue_token_pair(user)["access"]
         headers = {"Authorization": f"Bearer {access_token}"}
 
         with pytest.raises(HTTPError) as excinfo:
@@ -178,3 +180,21 @@ class TestLoginAPI:
 
         assert excinfo.value.code == 401
         assert "expired" in response_body["message"]
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_blocks_access_with_refresh_token(
+        self, http_client, base_url, app_config_auth_enabled, user
+    ):
+
+        url = f"{base_url}/api/v1/whoami"
+
+        refresh_token = issue_token_pair(user)["refresh"]
+        headers = {"Authorization": f"Bearer {refresh_token}"}
+
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(url, headers=headers)
+
+        response_body = json.loads(excinfo.value.response.body.decode("utf-8"))
+
+        assert excinfo.value.code == 401
+        assert "invalid" in response_body["message"]

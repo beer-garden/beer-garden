@@ -166,6 +166,10 @@ export default function appRun(
     }
   };
 
+  $rootScope.authEnabled = function () {
+    return $rootScope.config.authEnabled;
+  };
+
   $rootScope.isUser = function (user) {
     return user && user.username !== "anonymous";
   };

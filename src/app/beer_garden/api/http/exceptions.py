@@ -41,6 +41,11 @@ class AuthorizationRequired(BaseHTTPError):
     reason: str = "Authorization required"
 
 
+class AuthenticationFailed(BaseHTTPError):
+    status_code: int = 401
+    reason: str = "Authentication Failed"
+
+
 class InvalidToken(BaseHTTPError):
     status_code: int = 401
     reason: str = "Authorization token invalid"
@@ -59,3 +64,8 @@ class RequestForbidden(BaseHTTPError):
 class NotFound(BaseHTTPError):
     status_code: int = 404
     reason: str = "Not Found"
+
+
+class UnprocessableEntity(BaseHTTPError):
+    status_code: int = 422
+    reason: str = "Unprocessable Entity"

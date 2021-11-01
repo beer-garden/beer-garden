@@ -4,7 +4,7 @@ import json
 import pytest
 from tornado.httpclient import HTTPError
 
-from beer_garden.api.http.authentication import generate_access_token
+from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.db.mongo.models import (
     Command,
     Garden,
@@ -81,7 +81,7 @@ def user(system_permitted, system_read_role):
 
 @pytest.fixture
 def access_token(user):
-    yield generate_access_token(user)
+    yield issue_token_pair(user)["access"]
 
 
 class TestCommandAPI:

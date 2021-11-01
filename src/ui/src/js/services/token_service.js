@@ -22,18 +22,20 @@ export default function tokenService($http, localStorageService) {
       $http.defaults.headers.common.Authorization = undefined;
     },
     getRefresh: () => {
-      return localStorageService.get("refresh", "sessionStorage");
+      return localStorageService.get("refresh");
     },
     handleRefresh: (refreshToken) => {
-      localStorageService.set("refresh", refreshToken, "sessionStorage");
+      localStorageService.set("refresh", refreshToken);
     },
     clearRefresh: () => {
-      const refreshToken = localStorageService.get("refresh", "sessionStorage");
+      const refreshToken = localStorageService.get("refresh");
       if (refreshToken) {
         // It's possible the refresh token was already removed from the database
         // We usually don't care if that's the case, so set a noop error handler
-        localStorageService.remove("refresh", "sessionStorage");
-        return $http.delete("api/v1/tokens/" + refreshToken).catch(() => {});
+        localStorageService.remove("refresh");
+        return $http
+          .post("api/v1/token/revoke", { refresh: refreshToken })
+          .catch(() => {});
       }
     },
   };
@@ -41,19 +43,22 @@ export default function tokenService($http, localStorageService) {
   _.assign(service, {
     doLogin: (username, password) => {
       return $http
-        .post("/api/v1/login", {
+        .post("/api/v1/token", {
           username: username,
           password: password,
         })
         .then((response) => {
           service.handleRefresh(response.data.refresh);
-          service.handleToken(response.data.token);
+          service.handleToken(response.data.access);
         });
     },
     doRefresh: (refreshToken) => {
-      return $http.get("/api/v1/tokens/" + refreshToken).then((response) => {
-        service.handleToken(response.data.token);
-      });
+      return $http
+        .post("/api/v1/token/refresh", { refresh: refreshToken })
+        .then((response) => {
+          service.handleRefresh(response.data.refresh);
+          service.handleToken(response.data.access);
+        });
     },
   });
 

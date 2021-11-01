@@ -7,7 +7,7 @@ from bson import ObjectId
 from tornado.httpclient import HTTPError, HTTPRequest
 
 import beer_garden.router
-from beer_garden.api.http.authentication import generate_access_token
+from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.db.mongo.api import MongoParser, from_brewtils
 from beer_garden.db.mongo.models import Garden, Job, Role, RoleAssignment, System, User
 
@@ -73,7 +73,7 @@ def user(system_permitted, job_manager_role):
 
 @pytest.fixture
 def access_token(user):
-    yield generate_access_token(user)
+    yield issue_token_pair(user)["access"]
 
 
 @pytest.fixture

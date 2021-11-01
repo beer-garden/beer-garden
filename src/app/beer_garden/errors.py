@@ -77,3 +77,16 @@ class NotUniqueException(Exception):
     """Something wasn't unique"""
 
     pass
+
+
+# Token
+class ExpiredTokenException(Exception):
+    """Token has expired"""
+
+    pass
+
+
+class InvalidTokenException(Exception):
+    """Token has expired"""
+
+    pass

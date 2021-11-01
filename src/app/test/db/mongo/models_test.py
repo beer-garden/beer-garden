@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import copy
+from datetime import datetime, timedelta
+from uuid import uuid4
 
 import pytest
 from brewtils.errors import ModelValidationError, RequestStatusTransitionError
@@ -23,6 +25,7 @@ from beer_garden.db.mongo.models import (
     RoleAssignment,
     System,
     User,
+    UserToken,
 )
 
 
@@ -575,6 +578,17 @@ class TestUser:
         yield user
         user.delete()
 
+    @pytest.fixture()
+    def user_token(self, user):
+        user_token = UserToken(
+            expires_at=datetime.utcnow() + timedelta(minutes=10),
+            user=user,
+            uuid=uuid4(),
+        ).save()
+
+        yield user_token
+        user_token.delete()
+
     def test_create(self, user):
         assert User.objects.filter(username="testuser").count() == 1
 
@@ -600,6 +614,11 @@ class TestUser:
 
         with pytest.raises(ValidationError):
             user.save()
+
+    def test_revoke_tokens(self, user, user_token):
+        assert len(UserToken.objects.filter(user=user)) > 0
+        user.revoke_tokens()
+        assert len(UserToken.objects.filter(user=user)) == 0
 
 
 class TestGarden:

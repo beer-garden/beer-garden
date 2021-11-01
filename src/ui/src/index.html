@@ -57,7 +57,7 @@
           </ul>
         </li>
 
-        <li ng-show=!isUser(user)>
+        <li ng-show="authEnabled() && !isUser(user)">
           <a href="" ng-click="doLogin()">
             <i style="padding: 3px;" class="fa fa-user"></i>
             <span>Login</span>

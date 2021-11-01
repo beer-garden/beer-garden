@@ -21,7 +21,7 @@ from beer_garden.authorization import (
     user_permitted_objects,
     user_permitted_objects_filter,
 )
-from beer_garden.db.mongo.models import User
+from beer_garden.db.mongo.models import User, UserToken
 
 
 class AuthorizationHandler(BaseHandler):
@@ -168,16 +168,20 @@ class AuthorizationHandler(BaseHandler):
             RequestForbidden: If the token is valid, but the corresponding User no
                 longer exists.
         """
-
-        # Import here to avoid circular import
-        from beer_garden.db.mongo.models import User
-
         access_token = self._get_token_payload_from_request()
 
         try:
             user = User.objects.get(id=access_token["sub"])
         except User.DoesNotExist:
             raise RequestForbidden
+
+        try:
+            _ = UserToken.objects.get(uuid=access_token["jti"])
+        except UserToken.DoesNotExist:
+            # This could be a sign of a compromised token, so err on the side of caution
+            # and remove all of the user's tokens to force them to re-authenticate.
+            user.revoke_tokens()
+            raise AuthorizationRequired
 
         user.set_permissions_cache(access_token["permissions"])
 
@@ -200,8 +204,13 @@ class AuthorizationHandler(BaseHandler):
             token = auth_header.split(" ")[1]
             algorithm = jwt.get_unverified_header(token)["alg"]
 
-            return jwt.decode(token, key=secret_key, algorithms=[algorithm])
+            decoded_token = jwt.decode(token, key=secret_key, algorithms=[algorithm])
         except (jwt.InvalidSignatureError, jwt.DecodeError, KeyError, IndexError):
             raise InvalidToken
         except jwt.ExpiredSignatureError:
             raise ExpiredToken
+
+        if decoded_token["type"] != "access":
+            raise InvalidToken
+
+        return decoded_token

@@ -46,9 +46,9 @@ from mongoengine import (
     ObjectIdField,
     ReferenceField,
     StringField,
+    UUIDField,
     ValidationError,
 )
-from mongoengine.errors import DoesNotExist
 
 from .fields import DummyField, StatusInfo
 from .validators import validate_permissions
@@ -63,7 +63,7 @@ __all__ = [
     "Event",
     "Principal",
     "LegacyRole",
-    "RefreshToken",
+    "UserToken",
     "Job",
     "RequestTemplate",
     "DateTrigger",
@@ -585,24 +585,19 @@ class Principal(MongoModel, Document):
     }
 
 
-class RefreshToken(Document):
-    brewtils_model = brewtils.models.RefreshToken
+class UserToken(Document):
+    issued_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
+    expires_at = DateTimeField(required=True)
+    user = LazyReferenceField("User", required=True, reverse_delelete_rule=CASCADE)
+    uuid = UUIDField(binary=False, required=True, unique="True")
 
-    issued = DateTimeField(required=True)
-    expires = DateTimeField(required=True)
-    payload = DictField(required=True)
-
-    meta = {"indexes": [{"fields": ["expires"], "expireAfterSeconds": 0}]}
-
-    def get_principal(self):
-        principal_id = self.payload.get("sub")
-        if not principal_id:
-            return None
-
-        try:
-            return Principal.objects.get(id=principal_id)
-        except DoesNotExist:
-            return None
+    meta = {
+        "indexes": [
+            {"fields": ["expires_at"], "expireAfterSeconds": 0},
+            {"fields": ["user"]},
+            {"fields": ["uuid"]},
+        ]
+    }
 
 
 class RequestTemplate(MongoModel, EmbeddedDocument):
@@ -972,3 +967,10 @@ class User(Document):
             bool: True if the password matches, False otherwise
         """
         return custom_app_context.verify(password, self.password)
+
+    def revoke_tokens(self) -> None:
+        """Remove all tokens from the user's list of valid tokens. This is useful for
+        requiring the user to explicitly login, which one may want to do for a variety
+        of reasons.
+        """
+        UserToken.objects.filter(user=self).delete()
