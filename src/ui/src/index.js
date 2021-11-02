@@ -68,8 +68,11 @@ import routeConfig from './js/configs/routes.js';
 import {interceptorService, authInterceptorService, interceptorConfig}
   from './js/configs/http_interceptor.js';
 
+import { compilerConfig } from './js/configs/compiler_config.js';
+
 import fetchDataDirective from './js/directives/fetch_data.js';
 import bgStatusDirective from './js/directives/system_status.js';
+import customOnChangeDirective from './js/directives/custom_on_change.js';
 
 import adminService from './js/services/admin_service.js';
 import commandService from './js/services/command_service.js';
@@ -106,6 +109,8 @@ import systemIndexController from './js/controllers/system_index.js';
 import jobIndexController from './js/controllers/job_index.js';
 import jobViewController from './js/controllers/job_view.js';
 import jobCreateSystemController from './js/controllers/job/create_system.js';
+import jobExportSystemsController from './js/controllers/job/export_systems.js';
+import {jobImportSystemsController, jobImportModalController} from './js/controllers/job/import_systems.js';
 import jobCreateCommandController from './js/controllers/job/create_command.js';
 import jobCreateRequestController from './js/controllers/job/create_request.js';
 import jobCreateTriggerController from './js/controllers/job/create_trigger.js';
@@ -157,12 +162,14 @@ angular.module('bgApp',
 .run(runDTRenderer)
 .config(routeConfig)
 .config(interceptorConfig)
+.config(compilerConfig)
 .service('APIInterceptor', interceptorService)
 .service('authInterceptorService', authInterceptorService)
 .animation('.slide', slideAnimation)
 
 .directive('fetchData', fetchDataDirective)
 .directive('bgStatus', bgStatusDirective)
+.directive('customOnChange', customOnChangeDirective)
 
 .factory('AdminService', adminService)
 .factory('CommandService', commandService)
@@ -204,4 +211,7 @@ angular.module('bgApp',
 .controller('JobCreateCommandController', jobCreateCommandController)
 .controller('JobCreateRequestController', jobCreateRequestController)
 .controller('JobCreateTriggerController', jobCreateTriggerController)
+.controller('JobExportSystemsController', jobExportSystemsController)
+.controller('JobImportSystemsController', jobImportSystemsController)
+.controller('JobImportModalController', jobImportModalController)
 .controller('LoginController', loginController)

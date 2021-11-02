@@ -1,5 +1,22 @@
 <h1 class='page-header'>
   <span>Request Scheduler</span>
+  
+  <button type="button"
+          ng-if="responseState(response) === 'success'"
+          class="btn btn-primary pull-right"
+          ng-controller="JobImportSystemsController"
+          ng-click="openImportSystemsPopup()">
+    Import Jobs
+  </button>
+
+  <button type="button"
+          ng-if="responseState(response) === 'success'"
+          class="btn btn-primary pull-right"
+          ng-controller="JobExportSystemsController"
+          ng-click="exportAllSystems()">
+    Export Jobs
+  </button>
+  
   <button type="button"
           ng-if="responseState(response) === 'success'"
           class="btn btn-primary pull-right"

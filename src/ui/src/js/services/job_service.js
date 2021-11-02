@@ -19,6 +19,14 @@ export default function jobService($http, NamespaceService) {
     return $http.get('api/v1/jobs/' + id);
   };
 
+  JobService.exportJobs = function() {
+    return $http.post('api/v1/export/jobs/');
+  };
+
+  JobService.importJobs = function(payload) {
+    return $http.post('api/v1/import/jobs/', payload);
+  }
+
   JobService.createJob = function(job) {
     if (job['id'] == null){
         return $http.post('api/v1/jobs', job);
