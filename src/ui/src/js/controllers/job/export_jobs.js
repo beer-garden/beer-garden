@@ -1,15 +1,13 @@
 
-jobExportSystemsController.$inject = [ '$scope', '$rootScope', 'JobService' ];
+jobExportController.$inject = [ '$scope', '$rootScope', '$filter', 'JobService' ];
 
 /**
- * jobExportSystemsController - Controller for the job export page.
+ * jobExportController - Controller for the job export page.
  * @param  {Object} $scope            Angular's $scope object.
  * @param  {Object} $rootScope        Angular's $rootScope object.
  * @param  {Object} JobService        Beer-Garden's job service.
  */
-export default function jobExportSystemsController( $scope, $rootScope, JobService) {
-  $scope.setWindowTitle('Export');
-
+export default function jobExportController($scope, $rootScope, $filter, JobService) {
   $scope.response = $rootScope.sysResponse;
   $scope.data = $rootScope.systems;
 
@@ -29,10 +27,10 @@ export default function jobExportSystemsController( $scope, $rootScope, JobServi
         + hour + minutes + seconds
   };
 
-  $scope.exportAllSystems = function() {
+  $scope.exportAllJobs = function() {
     JobService.exportJobs().then(
       function(response) {
-        let filename = getFilename();
+        let filename = "JobExport_"  + $filter("date")(new Date(Date.now()), "yyyyMMdd_HHmmss");
         let blob = new Blob([JSON.stringify(response.data)], {type: 'application/json;charset=utf-8'});
         let downloadLink = angular.element('<a></a>')
         downloadLink.attr('href', window.URL.createObjectURL(blob))

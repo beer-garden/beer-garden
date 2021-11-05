@@ -4,5 +4,5 @@ compilerConfig.$inject = ['$compileProvider']
  * @param {$compileProvider} $compileProvider Angular's $compileProvider object.
  */
 export function compilerConfig($compileProvider) {
-    $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|tel|file|blob):/);
+    $compileProvider.aHrefSanitizationTrustedUrlList(/^\s*(https?|ftp|mailto|tel|file|blob):/);
 };

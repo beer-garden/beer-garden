@@ -109,8 +109,8 @@ import systemIndexController from './js/controllers/system_index.js';
 import jobIndexController from './js/controllers/job_index.js';
 import jobViewController from './js/controllers/job_view.js';
 import jobCreateSystemController from './js/controllers/job/create_system.js';
-import jobExportSystemsController from './js/controllers/job/export_systems.js';
-import {jobImportSystemsController, jobImportModalController} from './js/controllers/job/import_systems.js';
+import jobExportController from './js/controllers/job/export_jobs.js';
+import {jobImportController, jobImportModalController} from './js/controllers/job/import_jobs.js';
 import jobCreateCommandController from './js/controllers/job/create_command.js';
 import jobCreateRequestController from './js/controllers/job/create_request.js';
 import jobCreateTriggerController from './js/controllers/job/create_trigger.js';
@@ -211,7 +211,7 @@ angular.module('bgApp',
 .controller('JobCreateCommandController', jobCreateCommandController)
 .controller('JobCreateRequestController', jobCreateRequestController)
 .controller('JobCreateTriggerController', jobCreateTriggerController)
-.controller('JobExportSystemsController', jobExportSystemsController)
-.controller('JobImportSystemsController', jobImportSystemsController)
+.controller('JobExportController', jobExportController)
+.controller('JobImportController', jobImportController)
 .controller('JobImportModalController', jobImportModalController)
 .controller('LoginController', loginController)

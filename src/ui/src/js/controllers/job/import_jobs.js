@@ -1,21 +1,19 @@
-import template from '../../../templates/import_systems.html'
+import template from '../../../templates/import_jobs.html'
 
-jobImportSystemsController.$inject = ['$scope', '$rootScope', '$uibModal', 'JobService'];
+jobImportController.$inject = ['$scope', '$rootScope', '$uibModal', '$state', 'JobService'];
 
 /**
- * jobImportSystemsController - Controller for job import.
+ * jobImportController - Controller for job import.
  * @param  {Object} $scope            Angular's $scope object.
  * @param  {Object} $rootScope        Angular's $rootScope object.
  * @param  {Object} $uibModal         Angular UI's $uibModal object.
  * @param  {Object} JobService        Beer-Garden's job service.
  */
-export function jobImportSystemsController( $scope, $rootScope, $uibModal, JobService) {
-  $scope.setWindowTitle('Import');
-
+export function jobImportController( $scope, $rootScope, $uibModal, $state, JobService) {
   $scope.response = $rootScope.sysResponse;
   $scope.data = $rootScope.systems;
 
-  $scope.openImportSystemsPopup = function () {
+  $scope.openImportJobsPopup = function () {
       let popupInstance = $uibModal.open({
           animation: true,
           controller: 'JobImportModalController',
@@ -25,10 +23,9 @@ export function jobImportSystemsController( $scope, $rootScope, $uibModal, JobSe
       popupInstance.result.then(
           function(resolvedResponse){
             let jsonFileContents = resolvedResponse.jsonFileContents;
-            console.log(jsonFileContents);
             JobService.importJobs(jsonFileContents).then(
                 function(response) {
-                    alert("Successful import. Refresh page to see imported Jobs.")
+                    $state.reload();
                 },
                 function(response) {
                     alert("Failure! Server returned status " + response.status)
