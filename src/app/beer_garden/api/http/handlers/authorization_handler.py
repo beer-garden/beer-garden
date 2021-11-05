@@ -3,7 +3,7 @@ from typing import Type, Union
 
 import jwt
 from brewtils.models import BaseModel as BrewtilsModel
-from mongoengine import Document, QuerySet
+from mongoengine import Document, QuerySet, ValidationError
 from mongoengine.queryset.visitor import Q, QCombination
 
 import beer_garden.config as config
@@ -61,7 +61,7 @@ class AuthorizationHandler(BaseHandler):
 
         try:
             requested_object = model.objects.get(provided_filter)
-        except model.DoesNotExist:
+        except (model.DoesNotExist, ValidationError):
             raise NotFound
 
         self.verify_user_permission_for_object(permission, requested_object)

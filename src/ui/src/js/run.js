@@ -183,6 +183,7 @@ export default function appRun(
       loginModal.result.then(
           () => {
             $rootScope.changeUser(TokenService.getToken());
+            location.reload();
           },
           _.noop // Prevents annoying console log messages
       );

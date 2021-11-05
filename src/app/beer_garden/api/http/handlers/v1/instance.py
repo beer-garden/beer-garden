@@ -9,10 +9,17 @@ from brewtils.errors import (
 from brewtils.models import Operation
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.base_handler import BaseHandler, event_wait
+from beer_garden.api.authorization import Permissions
+from beer_garden.api.http.base_handler import event_wait
+from beer_garden.api.http.handlers import AuthorizationHandler
+from beer_garden.db.mongo.models import System
+
+SYSTEM_READ = Permissions.SYSTEM_READ.value
+SYSTEM_UPDATE = Permissions.SYSTEM_UPDATE.value
+QUEUE_READ = Permissions.QUEUE_READ.value
 
 
-class InstanceAPI(BaseHandler):
+class InstanceAPI(AuthorizationHandler):
     async def get(self, instance_id):
         """
         ---
@@ -35,6 +42,7 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
+        _ = self.get_or_raise(System, SYSTEM_READ, instances__id=instance_id)
 
         response = await self.client(
             Operation(operation_type="INSTANCE_READ", args=[instance_id])
@@ -63,6 +71,7 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
+        _ = self.get_or_raise(System, SYSTEM_UPDATE, instances__id=instance_id)
 
         await self.client(
             Operation(operation_type="INSTANCE_DELETE", args=[instance_id])
@@ -115,6 +124,8 @@ class InstanceAPI(BaseHandler):
         tags:
           - Instances
         """
+        _ = self.get_or_raise(System, SYSTEM_UPDATE, instances__id=instance_id)
+
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
@@ -180,7 +191,7 @@ class InstanceAPI(BaseHandler):
         self.write(response)
 
 
-class InstanceLogAPI(BaseHandler):
+class InstanceLogAPI(AuthorizationHandler):
     async def get(self, instance_id):
         """
         ---
@@ -219,6 +230,8 @@ class InstanceLogAPI(BaseHandler):
         tags:
           - Instances
         """
+        _ = self.get_or_raise(System, SYSTEM_READ, instances__id=instance_id)
+
         start_line = self.get_query_argument("start_line", default=None)
         if start_line == "":
             start_line = None
@@ -231,6 +244,13 @@ class InstanceLogAPI(BaseHandler):
         elif end_line:
             end_line = int(end_line)
 
+        response = await self._generate_get_response(instance_id, start_line, end_line)
+
+        self.set_header("request_id", response["id"])
+        self.set_header("Content-Type", "text/plain; charset=UTF-8")
+        self.write(response["output"])
+
+    async def _generate_get_response(self, instance_id, start_line, end_line):
         wait_event = Event()
 
         response = await self.client(
@@ -260,12 +280,8 @@ class InstanceLogAPI(BaseHandler):
         if response["status"] == "ERROR":
             raise RequestProcessingError(response["output"])
 
-        self.set_header("request_id", response["id"])
-        self.set_header("Content-Type", "text/plain; charset=UTF-8")
-        self.write(response["output"])
 
-
-class InstanceQueuesAPI(BaseHandler):
+class InstanceQueuesAPI(AuthorizationHandler):
     async def get(self, instance_id):
         """
         ---
@@ -288,6 +304,7 @@ class InstanceQueuesAPI(BaseHandler):
         tags:
           - Queues
         """
+        _ = self.get_or_raise(System, QUEUE_READ, instances__id=instance_id)
 
         response = await self.client(
             Operation(operation_type="QUEUE_READ_INSTANCE", args=[instance_id])

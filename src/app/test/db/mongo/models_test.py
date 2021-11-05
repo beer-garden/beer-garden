@@ -651,7 +651,7 @@ class TestGarden:
         system.version = self.v1_str
         system.save()
 
-        return system
+        yield system
 
         system.delete()
 

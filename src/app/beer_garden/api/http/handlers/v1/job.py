@@ -5,10 +5,17 @@ from brewtils.schema_parser import SchemaParser
 from brewtils.schemas import JobExportInputSchema, JobSchema
 from mongoengine.errors import ValidationError
 
-from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.api.authorization import Permissions
+from beer_garden.api.http.handlers import AuthorizationHandler
+from beer_garden.db.mongo.models import Job
+
+JOB_CREATE = Permissions.JOB_CREATE.value
+JOB_READ = Permissions.JOB_READ.value
+JOB_UPDATE = Permissions.JOB_UPDATE.value
+JOB_DELETE = Permissions.JOB_DELETE.value
 
 
-class JobAPI(BaseHandler):
+class JobAPI(AuthorizationHandler):
     async def get(self, job_id):
         """
         ---
@@ -31,6 +38,7 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
+        _ = self.get_or_raise(Job, JOB_READ, id=job_id)
 
         response = await self.client(
             Operation(operation_type="JOB_READ", args=[job_id])
@@ -84,6 +92,7 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
+        _ = self.get_or_raise(Job, JOB_UPDATE, id=job_id)
 
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
@@ -138,13 +147,14 @@ class JobAPI(BaseHandler):
         tags:
           - Jobs
         """
+        _ = self.get_or_raise(Job, JOB_DELETE, id=job_id)
 
         await self.client(Operation(operation_type="JOB_DELETE", args=[job_id]))
 
         self.set_status(204)
 
 
-class JobListAPI(BaseHandler):
+class JobListAPI(AuthorizationHandler):
     async def get(self):
         """
         ---
@@ -161,6 +171,8 @@ class JobListAPI(BaseHandler):
         tags:
           - Jobs
         """
+        permitted_objects_filter = self.permitted_objects_filter(Job, JOB_READ)
+
         filter_params = {}
         for key in self.request.arguments.keys():
             if key in JobSchema.get_attribute_names():
@@ -168,7 +180,11 @@ class JobListAPI(BaseHandler):
 
         response = await self.client(
             Operation(
-                operation_type="JOB_READ_ALL", kwargs={"filter_params": filter_params}
+                operation_type="JOB_READ_ALL",
+                kwargs={
+                    "q_filter": permitted_objects_filter,
+                    "filter_params": filter_params,
+                },
             )
         )
 
@@ -200,15 +216,16 @@ class JobListAPI(BaseHandler):
         tags:
           - Jobs
         """
+        job = SchemaParser.parse_job(
+            self.request.body.decode("utf-8"), from_string=True
+        )
+
+        self.verify_user_permission_for_object(JOB_CREATE, job)
 
         response = await self.client(
             Operation(
                 operation_type="JOB_CREATE",
-                args=[
-                    SchemaParser.parse_job(
-                        self.request.body.decode("utf-8"), from_string=True
-                    )
-                ],
+                args=[job],
             )
         )
 
@@ -217,7 +234,7 @@ class JobListAPI(BaseHandler):
         self.write(response)
 
 
-class JobImportAPI(BaseHandler):
+class JobImportAPI(AuthorizationHandler):
     async def post(self):
         """
         ---
@@ -247,6 +264,9 @@ class JobImportAPI(BaseHandler):
         """
         parsed_job_list = SchemaParser.parse_job(self.request_body, many=True)
 
+        for job in parsed_job_list:
+            self.verify_user_permission_for_object(JOB_CREATE, job)
+
         response = await self.client(
             Operation(operation_type="JOB_CREATE_MULTI", args=[parsed_job_list])
         )
@@ -256,7 +276,7 @@ class JobImportAPI(BaseHandler):
         self.write(response)
 
 
-class JobExportAPI(BaseHandler):
+class JobExportAPI(AuthorizationHandler):
     async def post(self):
         """
         ---
@@ -287,6 +307,7 @@ class JobExportAPI(BaseHandler):
           - Jobs
         """
         filter_params_dict = {}
+        permitted_objects_filter = self.permitted_objects_filter(Job, JOB_READ)
 
         # self.request_body is designed to return a 400 on a completely absent body
         # but we want to return all jobs if that's the case
@@ -301,7 +322,10 @@ class JobExportAPI(BaseHandler):
         response_objects = await self.client(
             Operation(
                 operation_type="JOB_READ_ALL",
-                kwargs={"filter_params": filter_params_dict},
+                kwargs={
+                    "q_filter": permitted_objects_filter,
+                    "filter_params": filter_params_dict,
+                },
             ),
             serialize_kwargs={"return_raw": True},
         )
@@ -313,7 +337,7 @@ class JobExportAPI(BaseHandler):
         self.write(response)
 
 
-class JobExecutionAPI(BaseHandler):
+class JobExecutionAPI(AuthorizationHandler):
     async def post(self, job_id):
         """
         ---
@@ -337,6 +361,8 @@ class JobExecutionAPI(BaseHandler):
         tags:
           - Jobs
         """
+        _ = self.get_or_raise(Job, JOB_CREATE, id=job_id)
+
         try:
             await self.client(Operation(operation_type="JOB_EXECUTE", args=[job_id]))
         except ValidationError:
