@@ -1,11 +1,11 @@
-import {formatDate, formatJsonDisplay} from '../services/utility_service.js';
+import { formatDate, formatJsonDisplay } from "../services/utility_service.js";
 
 jobViewController.$inject = [
-  '$scope',
-  '$rootScope',
-  '$state',
-  '$stateParams',
-  'JobService',
+  "$scope",
+  "$rootScope",
+  "$state",
+  "$stateParams",
+  "JobService",
 ];
 
 /**
@@ -17,23 +17,24 @@ jobViewController.$inject = [
  * @param  {Object} JobService    Beer-Garden's job service.
  */
 export default function jobViewController(
-    $scope,
-    $rootScope,
-    $state,
-    $stateParams,
-    JobService) {
-  $scope.setWindowTitle('scheduler');
+  $scope,
+  $rootScope,
+  $state,
+  $stateParams,
+  JobService
+) {
+  $scope.setWindowTitle("scheduler");
 
-  $scope.formattedRequestTemplate = '';
-  $scope.formattedTrigger = '';
+  $scope.formattedRequestTemplate = "";
+  $scope.formattedTrigger = "";
 
-  $scope.loadPreview = function(_editor) {
+  $scope.loadPreview = function (_editor) {
     formatJsonDisplay(_editor, true);
   };
 
   $scope.formatDate = formatDate;
 
-  $scope.successCallback = function(response) {
+  $scope.successCallback = function (response) {
     $scope.response = response;
     $scope.data = response.data;
 
@@ -42,39 +43,35 @@ export default function jobViewController(
       undefined,
       2
     );
-    $scope.formattedTrigger = JSON.stringify(
-      $scope.data.trigger,
-      undefined,
-      2
-    );
+    $scope.formattedTrigger = JSON.stringify($scope.data.trigger, undefined, 2);
   };
 
-  $scope.resumeJob = function(jobId) {
+  $scope.resumeJob = function (jobId) {
     JobService.resumeJob(jobId).then(
       $scope.successCallback,
       $scope.failureCallback
     );
   };
 
-  $scope.pauseJob = function(jobId) {
+  $scope.pauseJob = function (jobId) {
     JobService.pauseJob(jobId).then(
       $scope.successCallback,
       $scope.failureCallback
     );
   };
 
-  $scope.updateJob = function(job) {
-    $state.go('base.jobscreaterequest', {job: job});
+  $scope.updateJob = function (job) {
+    $state.go("base.jobscreaterequest", { job: job });
   };
 
-  $scope.deleteJob = function(jobId) {
+  $scope.deleteJob = function (jobId) {
     JobService.deleteJob(jobId).then(
-      $state.go('base.jobs'),
+      $state.go("base.jobs"),
       $scope.failureCallback
     );
   };
 
-  $scope.failureCallback = function(response) {
+  $scope.failureCallback = function (response) {
     $scope.response = response;
     $scope.data = [];
   };
@@ -89,9 +86,9 @@ export default function jobViewController(
     );
   }
 
-  $scope.$on('userChange', () => {
+  $scope.$on("userChange", () => {
     loadJob();
   });
 
   loadJob();
-};
+}

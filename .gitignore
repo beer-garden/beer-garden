@@ -98,3 +98,4 @@ docker/docker-compose/data/localplugins/*
 
 # ignore symlinks
 src/brewtils
+src/app/plugins

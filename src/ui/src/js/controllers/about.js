@@ -1,5 +1,4 @@
-
-AboutController.$inject = ['$scope', 'UtilityService'];
+AboutController.$inject = ["$scope", "UtilityService"];
 
 /**
  * AboutController - Angular controller for the about page.
@@ -7,7 +6,7 @@ AboutController.$inject = ['$scope', 'UtilityService'];
  * @param  {Object} UtilityService Beer-Garden's utility service object.
  */
 export default function AboutController($scope, UtilityService) {
-  $scope.setWindowTitle('about');
+  $scope.setWindowTitle("about");
 
   UtilityService.getVersion().then(
     (response) => {
@@ -18,4 +17,4 @@ export default function AboutController($scope, UtilityService) {
       $scope.response = response;
     }
   );
-};
+}

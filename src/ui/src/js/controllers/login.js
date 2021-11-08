@@ -1,11 +1,11 @@
-import _ from 'lodash';
-import angular from 'angular';
+import _ from "lodash";
+import angular from "angular";
 
 loginController.$inject = [
-  '$scope',
-  '$timeout',
-  '$uibModalInstance',
-  'TokenService',
+  "$scope",
+  "$timeout",
+  "$uibModalInstance",
+  "TokenService",
 ];
 
 /**
@@ -23,7 +23,7 @@ export default function loginController(
 ) {
   $scope.model = {};
 
-  $scope.doLogin = function() {
+  $scope.doLogin = function () {
     $scope.badUsername = false;
     $scope.badPassword = false;
 
@@ -44,11 +44,11 @@ export default function loginController(
     );
   };
 
-  $scope.cancel = function() {
+  $scope.cancel = function () {
     $uibModalInstance.dismiss();
   };
 
   $timeout(() => {
     angular.element('input[type="text"]').focus();
   });
-};
+}

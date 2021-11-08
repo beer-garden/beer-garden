@@ -1,5 +1,4 @@
-
-systemService.$inject = ['$rootScope', '$http'];
+systemService.$inject = ["$rootScope", "$http"];
 
 /**
  * Compare two system versions. Intended to be used for sorting.
@@ -15,9 +14,9 @@ systemService.$inject = ['$rootScope', '$http'];
  * @param {string} version2 - second version
  * @return {int} - result of comparison
  */
-const compareVersions = function(version1, version2) {
-  let parts1 = version1.split('.');
-  let parts2 = version2.split('.');
+const compareVersions = function (version1, version2) {
+  let parts1 = version1.split(".");
+  let parts2 = version2.split(".");
 
   let numParts = Math.min(parts1.length, parts2.length);
 
@@ -56,15 +55,14 @@ const compareVersions = function(version1, version2) {
  * @return {Object}                   Object for interacting with the system API.
  */
 export default function systemService($rootScope, $http) {
-
   let service = {
     getSystem: (id, options = {}) => {
-      return $http.get('api/v1/systems/' + id,
-        {params: {include_commands: options.includeCommands}}
-      );
+      return $http.get("api/v1/systems/" + id, {
+        params: { include_commands: options.includeCommands },
+      });
     },
-    getSystems: (options = {}, headers={}) => {
-      return $http.get('api/v1/systems', {
+    getSystems: (options = {}, headers = {}) => {
+      return $http.get("api/v1/systems", {
         params: {
           dereference_nested: options.dereferenceNested,
           include_fields: options.includeFields,
@@ -75,16 +73,19 @@ export default function systemService($rootScope, $http) {
       });
     },
     deleteSystem: (system) => {
-      return $http.delete('api/v1/systems/' + system.id);
+      return $http.delete("api/v1/systems/" + system.id);
     },
     forceDeleteSystem: (system) => {
-      return $http.delete('api/v1/systems/' + system.id,
-      {params: {force: true}});
+      return $http.delete("api/v1/systems/" + system.id, {
+        params: { force: true },
+      });
     },
     reloadSystem: (system) => {
-      return $http.patch('api/v1/systems/' + system.id,
-        {operation: 'reload', path: '', value: ''}
-      );
+      return $http.patch("api/v1/systems/" + system.id, {
+        operation: "reload",
+        path: "",
+        value: "",
+      });
     },
   };
 
@@ -93,17 +94,17 @@ export default function systemService($rootScope, $http) {
    * @param {Object} system - system for which you want the version URL.
    * @return {string} - either the system's version or 'latest'.
    */
-  service['getVersionForUrl'] = (system) => {
+  service["getVersionForUrl"] = (system) => {
     // All versions for systems with the given system name
     let versions = _.map(
-      _.filter($rootScope.systems, {name: system.name}),
-      _.property('version')
+      _.filter($rootScope.systems, { name: system.name }),
+      _.property("version")
     );
 
     // Sorted according to the system comparison function
     let sorted = versions.sort(compareVersions);
 
-    return system.version == sorted[0] ? 'latest' : system.version;
+    return system.version == sorted[0] ? "latest" : system.version;
   };
 
   /**
@@ -111,14 +112,14 @@ export default function systemService($rootScope, $http) {
    * @param {string} systemId  - ObjectID for system.
    * @return {string} url to use for UI routing.
    */
-  service['getSystemUrl'] = (systemId) => {
+  service["getSystemUrl"] = (systemId) => {
     for (let system of $rootScope.systems) {
       if (system.id == systemId) {
         let version = service.getVersionForUrl(system);
-        return '/systems/' + system.name + '/' + version;
+        return "/systems/" + system.name + "/" + version;
       }
     }
-    return '/systems';
+    return "/systems";
   };
 
   /**
@@ -129,28 +130,33 @@ export default function systemService($rootScope, $http) {
    * @param {string} version - The version you want to find (or latest)
    * @return {Object} The latest system or undefined if it is not found.
    */
-  service['findSystem'] = (namespace, name, version) => {
+  service["findSystem"] = (namespace, name, version) => {
     let notFound = {
-      data: {message: 'No matching system'},
-      errorGroup: 'system',
+      data: { message: "No matching system" },
+      errorGroup: "system",
       status: 404,
     };
 
-    if (version !== 'latest') {
-      return _.find(
-        $rootScope.systems, {namespace: namespace, name: name, version: version}
-      );
+    if (version !== "latest") {
+      return _.find($rootScope.systems, {
+        namespace: namespace,
+        name: name,
+        version: version,
+      });
     }
 
-    let filteredSystems = _.filter($rootScope.systems, {namespace: namespace, name: name});
+    let filteredSystems = _.filter($rootScope.systems, {
+      namespace: namespace,
+      name: name,
+    });
     if (_.isEmpty(filteredSystems)) {
       return undefined;
     }
 
-    let versions = _.map(filteredSystems, _.property('version'));
+    let versions = _.map(filteredSystems, _.property("version"));
     let sorted = versions.sort(compareVersions);
 
-    return _.find(filteredSystems, {version: sorted[0]});
+    return _.find(filteredSystems, { version: sorted[0] });
   };
 
   /**
@@ -158,7 +164,7 @@ export default function systemService($rootScope, $http) {
    * @param {string} systemId - System's ObjectID
    * @return {Object} the system with this ID.
    */
-  service['findSystemByID'] = (systemId) => {
+  service["findSystemByID"] = (systemId) => {
     for (let system of $rootScope.systems) {
       if (system.id === systemId) {
         return system;
@@ -167,4 +173,4 @@ export default function systemService($rootScope, $http) {
   };
 
   return service;
-};
+}

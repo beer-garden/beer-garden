@@ -1,7 +1,4 @@
-
-runDTRenderer.$inject = [
-  'DTRendererService',
-];
+runDTRenderer.$inject = ["DTRendererService"];
 
 /**
  * runDTRenderer - Tweak datatables rendering
@@ -9,113 +6,122 @@ runDTRenderer.$inject = [
  */
 export default function runDTRenderer(DTRendererService) {
   DTRendererService.registerPlugin({
-    postRender: function(options, result) {
-
+    postRender: function (options, result) {
       if (options && options.childContainer) {
-        let childContainer = $('<span>')
-          .attr('id', 'childContainer')
-          .css('margin-right', '20px')
+        let childContainer = $("<span>")
+          .attr("id", "childContainer")
+          .css("margin-right", "20px")
           .append(
-            $('<input>')
-              .attr('id', 'childCheck')
-              .attr('type', 'checkbox')
-              .css('margin-top', '-4px')
-              .change(() => { $('.dataTable').dataTable().fnUpdate(); })
+            $("<input>")
+              .attr("id", "childCheck")
+              .attr("type", "checkbox")
+              .css("margin-top", "-4px")
+              .change(() => {
+                $(".dataTable").dataTable().fnUpdate();
+              })
           )
           .append(
-            $('<label>')
-              .attr('for', 'childCheck')
-              .css('padding-left', '4px')
-              .text('Show Children')
+            $("<label>")
+              .attr("for", "childCheck")
+              .css("padding-left", "4px")
+              .text("Show Children")
           );
-        $('.dataTables_filter').prepend(childContainer);
+        $(".dataTables_filter").prepend(childContainer);
       }
 
       if (options && options.hiddenRequestContainer) {
-        let hiddenRequestContainer = $('<span>')
-          .attr('id', 'hiddenRequestContainer')
-          .css('margin-right', '20px')
+        let hiddenRequestContainer = $("<span>")
+          .attr("id", "hiddenRequestContainer")
+          .css("margin-right", "20px")
           .append(
-            $('<input>')
-              .attr('id', 'hiddenRequestCheck')
-              .attr('type', 'checkbox')
-              .css('margin-top', '-4px')
-              .change(() => { $('.dataTable').dataTable().fnUpdate(); })
+            $("<input>")
+              .attr("id", "hiddenRequestCheck")
+              .attr("type", "checkbox")
+              .css("margin-top", "-4px")
+              .change(() => {
+                $(".dataTable").dataTable().fnUpdate();
+              })
           )
           .append(
-            $('<label>')
-              .attr('for', 'hiddenRequestCheck')
-              .css('padding-left', '4px')
-              .text('Show Hidden')
+            $("<label>")
+              .attr("for", "hiddenRequestCheck")
+              .css("padding-left", "4px")
+              .text("Show Hidden")
           );
-        $('.dataTables_filter').prepend(hiddenRequestContainer);
+        $(".dataTables_filter").prepend(hiddenRequestContainer);
       }
 
       if (options && options.hiddenContainer) {
-        let hiddenContainer = $('<ul>')
-          .attr('id', 'hiddenList')
-          .css('margin-right', '20px')
-          .attr('style', 'list-style-type:none;margin-right:20px; display:inline; padding-left:0px;')
-          .append(
-            $('<label>')
-            .attr('for', 'filterHidden')
-            .css('padding-left', '4px')
-            .text('Show Hidden')
+        let hiddenContainer = $("<ul>")
+          .attr("id", "hiddenList")
+          .css("margin-right", "20px")
+          .attr(
+            "style",
+            "list-style-type:none;margin-right:20px; display:inline; padding-left:0px;"
           )
-        $('.dataTables_filter').prepend(hiddenContainer);
+          .append(
+            $("<label>")
+              .attr("for", "filterHidden")
+              .css("padding-left", "4px")
+              .text("Show Hidden")
+          );
+        $(".dataTables_filter").prepend(hiddenContainer);
         var node = document.getElementById("filterHidden");
         var list = document.getElementById("hiddenList");
         list.insertBefore(node, list.childNodes[0]);
       }
 
       if (options && options.refreshButton) {
-        let refreshButton = $('<button>')
-          .attr('id', 'refreshButton')
-          .attr('type', 'button')
-          .addClass('btn')
-          .addClass('btn-default')
-          .addClass('btn-sm')
-          .css('margin-left', '20px')
-          .css('margin-bottom', '5px')
-          .click(() => { $('.dataTable').dataTable().fnUpdate(); })
-          .append($('<span>')
-            .addClass('fa')
-            .addClass('fa-refresh')
-            .css('padding-right', '5px')
+        let refreshButton = $("<button>")
+          .attr("id", "refreshButton")
+          .attr("type", "button")
+          .addClass("btn")
+          .addClass("btn-default")
+          .addClass("btn-sm")
+          .css("margin-left", "20px")
+          .css("margin-bottom", "5px")
+          .click(() => {
+            $(".dataTable").dataTable().fnUpdate();
+          })
+          .append(
+            $("<span>")
+              .addClass("fa")
+              .addClass("fa-refresh")
+              .css("padding-right", "5px")
           )
-          .append($('<span>').text('Refresh'));
-        $('.dataTables_length').append(refreshButton);
+          .append($("<span>").text("Refresh"));
+        $(".dataTables_length").append(refreshButton);
       }
 
       if (options && options.newData) {
-        let newData = $('<span>')
-          .attr('id', 'newData')
-          .css('margin-left', '20px')
-          .css('margin-bottom', '5px')
-          .css('visiblity', 'hidden')
-          .append($('<span>')
-            .addClass('glyphicon')
-            .addClass('glyphicon-info-sign')
-            .css('padding-right', '5px')
+        let newData = $("<span>")
+          .attr("id", "newData")
+          .css("margin-left", "20px")
+          .css("margin-bottom", "5px")
+          .css("visiblity", "hidden")
+          .append(
+            $("<span>")
+              .addClass("glyphicon")
+              .addClass("glyphicon-info-sign")
+              .css("padding-right", "5px")
           )
-          .append($('<span>')
-            .css('cursor', 'default')
-            .text('Updates Detected')
+          .append(
+            $("<span>").css("cursor", "default").text("Updates Detected")
           );
-        $('.dataTables_length').append(newData);
+        $(".dataTables_length").append(newData);
       }
 
-      let spinner = $('<span>')
-        .attr('id', 'dtSpinner')
-        .addClass('fa fa-spinner fa-pulse fa-lg')
-        .css('margin-right', '20px')
-        .css('margin-left', '20px')
-        .css('visibility', 'hidden');
-      $('.dataTables_filter').prepend(spinner);
+      let spinner = $("<span>")
+        .attr("id", "dtSpinner")
+        .addClass("fa fa-spinner fa-pulse fa-lg")
+        .css("margin-right", "20px")
+        .css("margin-left", "20px")
+        .css("visibility", "hidden");
+      $(".dataTables_filter").prepend(spinner);
 
       // Register callback to show / hide spinner thingy
       let processingDelay = null;
-      $('.dataTable').on('processing.dt', function(e, settings, processing) {
+      $(".dataTable").on("processing.dt", function (e, settings, processing) {
         // Regardless of whether this event is the start or end of processing
         // we want to clear the current timeout if one exists
         if (processingDelay) {
@@ -123,15 +129,15 @@ export default function runDTRenderer(DTRendererService) {
         }
 
         if (!processing) {
-          $('#dtSpinner').css('visibility', 'hidden');
-          $('#refreshButton').prop('disabled', false);
+          $("#dtSpinner").css("visibility", "hidden");
+          $("#refreshButton").prop("disabled", false);
         } else {
-          processingDelay = setTimeout(function() {
-            $('#dtSpinner').css('visibility', 'visible');
-            $('#refreshButton').prop('disabled', true);
+          processingDelay = setTimeout(function () {
+            $("#dtSpinner").css("visibility", "visible");
+            $("#refreshButton").prop("disabled", true);
           }, 500);
         }
       });
     },
   });
-};
+}
