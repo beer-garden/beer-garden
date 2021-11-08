@@ -1,5 +1,4 @@
-
-interceptorService.$inject = ['$rootScope', '$templateCache'];
+interceptorService.$inject = ["$rootScope", "$templateCache"];
 /**
  * interceptorService - Used to intercept API requests.
  * @param  {$rootScope} $rootScope         Angular's $rootScope object.
@@ -8,21 +7,22 @@ interceptorService.$inject = ['$rootScope', '$templateCache'];
 export function interceptorService($rootScope, $templateCache) {
   /* eslint-disable no-invalid-this */
   let service = this;
-  service.request = function(config) {
+  service.request = function (config) {
     // Only match things that we know are targeted at our backend
-    if ($rootScope.apiBaseUrl && (config.url.startsWith('config') ||
-        config.url.startsWith('version') || config.url.startsWith('api'))) {
+    if (
+      $rootScope.apiBaseUrl &&
+      (config.url.startsWith("config") ||
+        config.url.startsWith("version") ||
+        config.url.startsWith("api"))
+    ) {
       config.url = $rootScope.apiBaseUrl + config.url;
     }
 
     return config;
   };
-};
+}
 
-authInterceptorService.$inject = [
-  '$q',
-  '$injector',
-];
+authInterceptorService.$inject = ["$q", "$injector"];
 /**
  * authInterceptorService - Used to intercept API requests.
  * @param  {$q} $q                                   $q object
@@ -35,9 +35,9 @@ export function authInterceptorService($q, $injector) {
       // 401 means 'needs authentication'
       if (rejection.status === 401) {
         // Can't use normal dependency injection in here as it causes a cycle
-        let $http = $injector.get('$http');
-        let $rootScope = $injector.get('$rootScope');
-        let TokenService = $injector.get('TokenService');
+        let $http = $injector.get("$http");
+        let $rootScope = $injector.get("$rootScope");
+        let TokenService = $injector.get("TokenService");
 
         // This attempts to handle the condition where an access token has
         // expired but there's a refresh token in storage. We use the refresh
@@ -72,7 +72,7 @@ export function authInterceptorService($q, $injector) {
           // of by the controllers handling the userChange event.
           // For other verbs we'll retry if the login is successful
           let loginModal = $rootScope.doLogin();
-          if (rejection.config.method !== 'GET') {
+          if (rejection.config.method !== "GET") {
             return loginModal.result.then(
               (result) => {
                 // At this point there'll be updated tokens, so set the
@@ -97,14 +97,14 @@ export function authInterceptorService($q, $injector) {
       return $q.reject(rejection);
     },
   };
-};
+}
 
-interceptorConfig.$inject = ['$httpProvider'];
+interceptorConfig.$inject = ["$httpProvider"];
 /**
  * interceptorConfig - Angular configuration object for API interceptors.
  * @param  {$httpProvider} $httpProvider Angular's $httpProvider object.
  */
 export function interceptorConfig($httpProvider) {
-  $httpProvider.interceptors.push('APIInterceptor');
-  $httpProvider.interceptors.push('authInterceptorService');
-};
+  $httpProvider.interceptors.push("APIInterceptor");
+  $httpProvider.interceptors.push("authInterceptorService");
+}

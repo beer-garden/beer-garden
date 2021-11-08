@@ -1,12 +1,12 @@
-import angular from 'angular';
+import angular from "angular";
 
 adminQueueController.$inject = [
-  '$scope',
-  '$uibModalInstance',
-  '$interval',
-  'QueueService',
-  'system',
-  'instance',
+  "$scope",
+  "$uibModalInstance",
+  "$interval",
+  "QueueService",
+  "system",
+  "instance",
 ];
 
 /**
@@ -22,77 +22,76 @@ adminQueueController.$inject = [
  * @param  {Object} QueueService      Beer-Garden's queue service object.
  */
 export default function adminQueueController(
-    $scope,
-    $uibModalInstance,
-    $interval,
-    QueueService,
-    system,
-    instance,) {
-
+  $scope,
+  $uibModalInstance,
+  $interval,
+  QueueService,
+  system,
+  instance
+) {
   $scope.alerts = [];
-  $scope.system = system
-  $scope.instance = instance
-  $scope.queues = []
+  $scope.system = system;
+  $scope.instance = instance;
+  $scope.queues = [];
 
-  $scope.clearQueue = function(queueName) {
+  $scope.clearQueue = function (queueName) {
     QueueService.clearQueue(queueName).then(
       $scope.addSuccessAlert,
       $scope.failureCallback
     );
   };
 
-  $scope.closeAlert = function(index) {
+  $scope.closeAlert = function (index) {
     $scope.alerts.splice(index, 1);
   };
 
-  $scope.addSuccessAlert = function(response) {
+  $scope.addSuccessAlert = function (response) {
     $scope.alerts.push({
-      type: 'success',
-      msg: 'Success! Please allow 10 seconds for the message counts to update.',
+      type: "success",
+      msg: "Success! Please allow 10 seconds for the message counts to update.",
     });
   };
 
-  $scope.addErrorAlert = function(response) {
-    let msg = 'Uh oh! It looks like there was a problem clearing the queue.\n';
+  $scope.addErrorAlert = function (response) {
+    let msg = "Uh oh! It looks like there was a problem clearing the queue.\n";
     if (response.data !== undefined && response.data !== null) {
       msg += response.data;
     }
     $scope.alerts.push({
-      type: 'danger',
+      type: "danger",
       msg: msg,
     });
   };
 
-  $scope.successCallback = function(response) {
+  $scope.successCallback = function (response) {
     $scope.response = response;
     $scope.queues = response.data;
     return response.data;
   };
 
-  $scope.failureCallback = function(response) {
+  $scope.failureCallback = function (response) {
     $scope.response = response;
   };
 
-  $scope.closeDialog = function() {
-
-    if (angular.isDefined(poller)){
+  $scope.closeDialog = function () {
+    if (angular.isDefined(poller)) {
       $interval.cancel(poller);
       poller = undefined;
     }
 
     $uibModalInstance.close();
+  };
 
-  }
+  let poller = $interval(function () {
+    loadQueues();
+  }, 10000);
 
-  let poller = $interval(function(){
-    loadQueues();}, 10000)
-
-  $scope.$on('$destroy', function(){
-    if (angular.isDefined(poller)){
+  $scope.$on("$destroy", function () {
+    if (angular.isDefined(poller)) {
       $inteval.cancel(poller);
       poller = undefined;
     }
-  })
+  });
 
   function loadQueues() {
     $scope.response = undefined;
@@ -104,4 +103,4 @@ export default function adminQueueController(
   }
 
   loadQueues();
-};
+}

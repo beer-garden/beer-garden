@@ -1,15 +1,15 @@
-import _ from 'lodash';
-import {arrayToMap, mapToArray} from '../services/utility_service.js';
+import _ from "lodash";
+import { arrayToMap, mapToArray } from "../services/utility_service.js";
 
-import template from '../../templates/new_user.html';
+import template from "../../templates/new_user.html";
 
 adminUserController.$inject = [
-  '$scope',
-  '$q',
-  '$uibModal',
-  'RoleService',
-  'UserService',
-  'PermissionService',
+  "$scope",
+  "$q",
+  "$uibModal",
+  "RoleService",
+  "UserService",
+  "PermissionService",
 ];
 
 /**
@@ -22,13 +22,14 @@ adminUserController.$inject = [
  * @param  {Object} PermissionService Beer-Garden's permission service object.
  */
 export function adminUserController(
-    $scope,
-    $q,
-    $uibModal,
-    RoleService,
-    UserService,
-    PermissionService) {
-  $scope.setWindowTitle('users');
+  $scope,
+  $q,
+  $uibModal,
+  RoleService,
+  UserService,
+  PermissionService
+) {
+  $scope.setWindowTitle("users");
 
   // This holds the raw responses from the backend
   $scope.raws = {};
@@ -45,17 +46,19 @@ export function adminUserController(
   // Normal loader
   $scope.loader = {};
 
-  $scope.doCreate = function() {
+  $scope.doCreate = function () {
     let modalInstance = $uibModal.open({
-      controller: 'NewUserController',
-      size: 'sm',
+      controller: "NewUserController",
+      size: "sm",
       template: template,
     });
 
     modalInstance.result.then(
       (create) => {
         if (create.password === create.verify) {
-          UserService.createUser(create.username, create.password).then(loadUsers);
+          UserService.createUser(create.username, create.password).then(
+            loadUsers
+          );
         }
       },
       // We don't really need to do anything if canceled
@@ -63,21 +66,21 @@ export function adminUserController(
     );
   };
 
-  $scope.doDelete = function(userId) {
+  $scope.doDelete = function (userId) {
     UserService.deleteUser(userId).then(loadUsers);
   };
 
-  $scope.doReset = function(userId) {
-    let original = _.find($scope.serverUsers, {'id': userId});
-    let changed = _.find($scope.users, {'id': userId});
+  $scope.doReset = function (userId) {
+    let original = _.find($scope.serverUsers, { id: userId });
+    let changed = _.find($scope.users, { id: userId });
 
     changed.roles = _.cloneDeep(original.roles);
     changed.permissions = _.cloneDeep(original.permissions);
   };
 
-  $scope.doUpdate = function() {
+  $scope.doUpdate = function () {
     let userId = $scope.selectedUser.id;
-    let original = _.find($scope.serverUsers, {'id': userId});
+    let original = _.find($scope.serverUsers, { id: userId });
     let promises = [];
 
     let originalList = mapToArray(original.primaryRoles);
@@ -96,43 +99,46 @@ export function adminUserController(
     $q.all(promises).then(loadUsers, $scope.addErrorAlert);
   };
 
-  $scope.addErrorAlert = function(response) {
+  $scope.addErrorAlert = function (response) {
     $scope.alerts.push({
-      type: 'danger',
-      msg: 'Something went wrong on the backend: ' +
-        _.get(response, 'data.message', 'Please check the server logs'),
+      type: "danger",
+      msg:
+        "Something went wrong on the backend: " +
+        _.get(response, "data.message", "Please check the server logs"),
     });
   };
 
-  $scope.closeAlert = function(index) {
+  $scope.closeAlert = function (index) {
     $scope.alerts.splice(index, 1);
   };
 
-  $scope.color = function(userId, path) {
+  $scope.color = function (userId, path) {
     // Pull the correct users based on the current selected user's id
-    let originalSelectedUser = _.find($scope.serverUsers, {'id': userId});
-    let changedSelectedUser = _.find($scope.users, {'id': userId});
+    let originalSelectedUser = _.find($scope.serverUsers, { id: userId });
+    let changedSelectedUser = _.find($scope.users, { id: userId });
 
     // Now pull the original and changed values out
     let originalValue = _.get(originalSelectedUser, path);
     let changedValue = _.get(changedSelectedUser, path);
 
     if (changedValue && !originalValue) {
-      return {'color': 'green'};
+      return { color: "green" };
     } else if (!changedValue && originalValue) {
-      return {'color': 'red'};
+      return { color: "red" };
     }
 
     return {};
   };
 
-  $scope.isRoleDisabled = function(roleName) {
+  $scope.isRoleDisabled = function (roleName) {
     // Roles need to be disabled if it's enabled because it's nested
-    return $scope.selectedUser.roles[roleName] &&
-      $scope.selectedUser.nestedRoles[roleName];
+    return (
+      $scope.selectedUser.roles[roleName] &&
+      $scope.selectedUser.nestedRoles[roleName]
+    );
   };
 
-  $scope.roleChange = function(roleName) {
+  $scope.roleChange = function (roleName) {
     let changed = $scope.selectedUser;
 
     // Since this is a result of a click, we need to update primary roles
@@ -142,9 +148,12 @@ export function adminUserController(
     let primaryRoleNames = mapToArray(changed.primaryRoles);
 
     // Now we need the actual role definitions for those roles...
-    let primaryRoleList = _.filter($scope.raws.roles, (value, key, collection) => {
-      return _.indexOf(primaryRoleNames, value.name) !== -1;
-    });
+    let primaryRoleList = _.filter(
+      $scope.raws.roles,
+      (value, key, collection) => {
+        return _.indexOf(primaryRoleNames, value.name) !== -1;
+      }
+    );
 
     // ...so that we can calculate nested permissions...
     let coalesced = RoleService.coalescePermissions(primaryRoleList);
@@ -153,7 +162,6 @@ export function adminUserController(
     // Finally, convert that list back into the map angular wants
     let permissionMap = arrayToMap(permissionNames, $scope.raws.permissions);
     changed.permissions = permissionMap;
-
 
     // Now deal with roles too
     let allRoleNames = coalesced[0];
@@ -176,7 +184,7 @@ export function adminUserController(
     let thaUsers = [];
 
     for (let user of $scope.raws.users) {
-      let primaryRoleNames = _.map(user.roles, 'name');
+      let primaryRoleNames = _.map(user.roles, "name");
 
       let coalesced = RoleService.coalescePermissions(user.roles);
 
@@ -186,7 +194,10 @@ export function adminUserController(
       let allPermissionNames = coalesced[1];
 
       let roleMap = arrayToMap(allRoleNames, $scope.roleNames);
-      let permissionMap = arrayToMap(allPermissionNames, $scope.raws.permissions);
+      let permissionMap = arrayToMap(
+        allPermissionNames,
+        $scope.raws.permissions
+      );
 
       let primaryRoleMap = arrayToMap(primaryRoleNames, $scope.roleNames);
       let nestedRoleMap = arrayToMap(nestedRoleNames, $scope.roleNames);
@@ -205,14 +216,14 @@ export function adminUserController(
 
     // This is super annoying, but I can't find a better way
     // Save off the current selection ID so we can keep it selected
-    let selectedId = $scope.selectedUser['id'];
+    let selectedId = $scope.selectedUser["id"];
     let selectedUser = undefined;
 
     $scope.serverUsers = _.cloneDeep(thaUsers);
     $scope.users = _.cloneDeep(thaUsers);
 
     if (selectedId) {
-      selectedUser = _.find($scope.users, {'id': selectedId});
+      selectedUser = _.find($scope.users, { id: selectedId });
     }
     $scope.selectedUser = selectedUser || $scope.users[0];
   }
@@ -246,9 +257,9 @@ export function adminUserController(
           users: responses.users.data,
         };
 
-        $scope.roleNames = _.map($scope.raws.roles, 'name');
+        $scope.roleNames = _.map($scope.raws.roles, "name");
         $scope.permissions = _.groupBy($scope.raws.permissions, (value) => {
-          return value.split('-').slice(0, 2).join('-');
+          return value.split("-").slice(0, 2).join("-");
         });
 
         handleUsersResponse(responses.users);
@@ -261,20 +272,17 @@ export function adminUserController(
         $scope.response = response;
       }
     );
-  };
+  }
 
-  $scope.$on('userChange', () => {
+  $scope.$on("userChange", () => {
     $scope.response = undefined;
     loadAll();
   });
 
   loadAll();
-};
+}
 
-newUserController.$inject = [
-  '$scope',
-  '$uibModalInstance',
-];
+newUserController.$inject = ["$scope", "$uibModalInstance"];
 
 /**
  * newUserController - New User controller.
@@ -284,11 +292,11 @@ newUserController.$inject = [
 export function newUserController($scope, $uibModalInstance) {
   $scope.create = {};
 
-  $scope.ok = function() {
+  $scope.ok = function () {
     $uibModalInstance.close($scope.create);
   };
 
-  $scope.cancel = function() {
-    $uibModalInstance.dismiss('cancel');
+  $scope.cancel = function () {
+    $uibModalInstance.dismiss("cancel");
   };
-};
+}

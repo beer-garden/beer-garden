@@ -1,4 +1,4 @@
-permissionService.$inject = ['$http'];
+permissionService.$inject = ["$http"];
 
 /**
  * roleService - Service for interacting with the role API.
@@ -8,7 +8,7 @@ permissionService.$inject = ['$http'];
 export default function permissionService($http) {
   return {
     getPermissions: () => {
-      return $http.get('api/v1/permissions/');
+      return $http.get("api/v1/permissions/");
     },
   };
-};
+}

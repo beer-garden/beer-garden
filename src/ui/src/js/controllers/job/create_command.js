@@ -1,5 +1,4 @@
-
-jobCreateCommandController.$inject = [ '$scope', '$stateParams' ];
+jobCreateCommandController.$inject = ["$scope", "$stateParams"];
 
 /**
  * jobCreateController - Controller for the job create page.
@@ -7,7 +6,7 @@ jobCreateCommandController.$inject = [ '$scope', '$stateParams' ];
  * @param  {Object} $stateParams      Angular's $stateParams object.
  */
 export default function jobCreateCommandController($scope, $stateParams) {
-  $scope.setWindowTitle('scheduler');
+  $scope.setWindowTitle("scheduler");
 
   $scope.system = $stateParams.system;
-};
+}

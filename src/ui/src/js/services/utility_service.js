@@ -1,19 +1,18 @@
-
 export function responseState(response) {
   if (_.isUndefined(response)) {
-    return 'loading';
+    return "loading";
   }
 
   switch (response.status) {
     case 200:
       if (!_.isEmpty(response.data)) {
-        return 'success';
+        return "success";
       }
-      // Fall through
+    // Fall through
     case 404:
-      return 'empty';
+      return "empty";
     default:
-      return 'error';
+      return "error";
   }
 }
 
@@ -30,7 +29,7 @@ export function arrayToMap(array, allPossible) {
     map[itemName] = _.indexOf(array, itemName) !== -1;
   }
   return map;
-};
+}
 
 /**
  * mapToArray - Transform an object with name -> boolean mapping into an array
@@ -39,17 +38,21 @@ export function arrayToMap(array, allPossible) {
  * @return {Array}       Array of 'true' value names
  */
 export function mapToArray(map) {
-  return _.transform(map, (accumulator, value, key, obj) => {
-    if (value) {
-      accumulator.push(key);
-    }
-  }, []);
-};
+  return _.transform(
+    map,
+    (accumulator, value, key, obj) => {
+      if (value) {
+        accumulator.push(key);
+      }
+    },
+    []
+  );
+}
 
 export function camelCaseKeys(o) {
   if (o instanceof Array) {
-    return o.map(function(value) {
-      if (typeof value === 'object') {
+    return o.map(function (value) {
+      if (typeof value === "object") {
         value = camelCaseKeys(value);
       }
       return value;
@@ -59,7 +62,7 @@ export function camelCaseKeys(o) {
     for (const origKey in o) {
       if (o.hasOwnProperty(origKey)) {
         let value = o[origKey];
-        let newKey = origKey.replace(/(\_\w)/g, function(m) {
+        let newKey = origKey.replace(/(\_\w)/g, function (m) {
           return m[1].toUpperCase();
         });
         newO[newKey] = value;
@@ -67,25 +70,25 @@ export function camelCaseKeys(o) {
     }
     return newO;
   }
-};
+}
 
 export function escapeHtml(html) {
   let re = /[&<>"'/]/g;
   let entityMap = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    '\'': '&#39;',
-    '/': '&#x2F;',
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+    "/": "&#x2F;",
   };
 
   if (html) {
-    return String(html).replace(re, function(s) {
+    return String(html).replace(re, function (s) {
       return entityMap[s];
     });
   }
-};
+}
 
 export function formatJsonDisplay(_editor, readOnly) {
   _editor.setOptions({
@@ -98,8 +101,8 @@ export function formatJsonDisplay(_editor, readOnly) {
     showLineNumbers: false,
     showPrintMargin: false,
   });
-  _editor.setTheme('ace/theme/dawn');
-  _editor.session.setMode('ace/mode/json');
+  _editor.setTheme("ace/theme/dawn");
+  _editor.session.setMode("ace/mode/json");
   _editor.session.setUseWrapMode(true);
   _editor.session.setUseWorker(!readOnly);
   _editor.$blockScrolling = Infinity;
@@ -107,16 +110,15 @@ export function formatJsonDisplay(_editor, readOnly) {
   if (readOnly) {
     _editor.renderer.$cursorLayer.element.style.opacity = 0;
   }
-};
+}
 
 export function formatDate(timestamp) {
   if (timestamp) {
     return new Date(timestamp).toUTCString();
   }
-};
+}
 
-
-utilityService.$inject = ['$rootScope', '$http'];
+utilityService.$inject = ["$rootScope", "$http"];
 
 /**
  * utilityService - Used for getting configurations/icons and formatting
@@ -127,25 +129,27 @@ utilityService.$inject = ['$rootScope', '$http'];
 export default function utilityService($rootScope, $http) {
   return {
     getConfig: () => {
-      return $http.get('config');
+      return $http.get("config");
     },
     getVersion: () => {
-      return $http.get('version');
+      return $http.get("version");
     },
     getNamespaces: () => {
-      return $http.get('api/v1/namespaces');
+      return $http.get("api/v1/namespaces");
     },
     getIcon: (iconName) => {
       if (iconName === undefined || iconName == null) {
-        if ($rootScope.config === undefined ||
-            $rootScope.config.iconDefault === undefined) {
-          return '';
+        if (
+          $rootScope.config === undefined ||
+          $rootScope.config.iconDefault === undefined
+        ) {
+          return "";
         } else {
           iconName = $rootScope.config.iconDefault;
         }
       }
 
-      return iconName.substring(0, iconName.indexOf('-')) + ' ' + iconName;
+      return iconName.substring(0, iconName.indexOf("-")) + " " + iconName;
     },
   };
-};
+}

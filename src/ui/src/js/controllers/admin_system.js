@@ -1,20 +1,20 @@
-import _ from 'lodash';
-import readLogs from '../../templates/read_logs.html';
-import adminQueue from '../../templates/admin_queue.html';
-import forceDelete from '../../templates/system_force_delete.html';
-import {responseState} from '../services/utility_service.js';
+import _ from "lodash";
+import readLogs from "../../templates/read_logs.html";
+import adminQueue from "../../templates/admin_queue.html";
+import forceDelete from "../../templates/system_force_delete.html";
+import { responseState } from "../services/utility_service.js";
 
 adminSystemController.$inject = [
-  '$scope',
-  '$rootScope',
-  '$uibModal',
-  'SystemService',
-  'InstanceService',
-  'UtilityService',
-  'AdminService',
-  'QueueService',
-  'RunnerService',
-  'EventService',
+  "$scope",
+  "$rootScope",
+  "$uibModal",
+  "SystemService",
+  "InstanceService",
+  "UtilityService",
+  "AdminService",
+  "QueueService",
+  "RunnerService",
+  "EventService",
 ];
 
 /**
@@ -30,17 +30,17 @@ adminSystemController.$inject = [
  * @param  {Object} EventService    Beer-Garden's event service object.
  */
 export default function adminSystemController(
-    $scope,
-    $rootScope,
-    $uibModal,
-    SystemService,
-    InstanceService,
-    UtilityService,
-    AdminService,
-    QueueService,
-    RunnerService,
-    EventService,
-    ) {
+  $scope,
+  $rootScope,
+  $uibModal,
+  SystemService,
+  InstanceService,
+  UtilityService,
+  AdminService,
+  QueueService,
+  RunnerService,
+  EventService
+) {
   $scope.response = undefined;
   $scope.runnerResponse = undefined;
   $scope.groupedSystems = [];
@@ -49,70 +49,68 @@ export default function adminSystemController(
   $scope.showRunnersTile = false;
   $scope.groupedRunners = [];
 
-  $scope.setWindowTitle('systems');
+  $scope.setWindowTitle("systems");
 
   $scope.getIcon = UtilityService.getIcon;
 
-  $scope.rescan = function() {
+  $scope.rescan = function () {
     AdminService.rescan().then(_.noop, $scope.addErrorAlert);
   };
 
-  $scope.startSystem = function(system) {
+  $scope.startSystem = function (system) {
     _.forEach(system.instances, $scope.startInstance);
   };
 
-  $scope.stopSystem = function(system) {
+  $scope.stopSystem = function (system) {
     _.forEach(system.instances, $scope.stopInstance);
   };
 
-  $scope.reloadSystem = function(system) {
+  $scope.reloadSystem = function (system) {
     SystemService.reloadSystem(system).then(_.noop, $scope.addErrorAlert);
   };
 
-  $scope.deleteSystem = function(system) {
-
+  $scope.deleteSystem = function (system) {
     $scope.deletedSystem = system;
     SystemService.deleteSystem(system).then(_.noop, (response) => {
-        $uibModal.open({
-         template:forceDelete,
+      $uibModal.open({
+        template: forceDelete,
         resolve: {
-           system: $scope.deletedSystem,
-           response: response,
-         },
-         controller: 'AdminSystemForceDeleteController',
-         windowClass: 'app-modal-window',
+          system: $scope.deletedSystem,
+          response: response,
+        },
+        controller: "AdminSystemForceDeleteController",
+        windowClass: "app-modal-window",
       });
     });
-
   };
 
-  $scope.clearAllQueues = function() {
+  $scope.clearAllQueues = function () {
     QueueService.clearQueues().then(
       $scope.addSuccessAlert,
       $scope.addErrorAlert
     );
   };
 
-  $scope.hasRunningInstances = function(system) {
+  $scope.hasRunningInstances = function (system) {
     return system.instances.some((instance) => {
-      return instance.status == 'RUNNING';
+      return instance.status == "RUNNING";
     });
   };
 
-  $scope.startInstance = function(instance) {
+  $scope.startInstance = function (instance) {
     InstanceService.startInstance(instance).catch($scope.addErrorAlert);
   };
 
-  $scope.stopInstance = function(instance) {
+  $scope.stopInstance = function (instance) {
     InstanceService.stopInstance(instance).catch($scope.addErrorAlert);
   };
 
-  $scope.startRunner = function(runner) {
+  $scope.startRunner = function (runner) {
     runner.waiting = true;
     RunnerService.startRunner(runner).catch($scope.addErrorAlert);
   };
 
-  $scope.stopRunner = function(runner) {
+  $scope.stopRunner = function (runner) {
     runner.waiting = true;
     RunnerService.stopRunner(runner).catch($scope.addErrorAlert);
   };
@@ -122,39 +120,40 @@ export default function adminSystemController(
     RunnerService.removeRunner(runner).catch($scope.addErrorAlert);
   };
 
-  $scope.startRunners = function(runnerList) {
+  $scope.startRunners = function (runnerList) {
     _.forEach(runnerList, $scope.startRunner);
   };
 
-  $scope.stopRunners = function(runnerList) {
+  $scope.stopRunners = function (runnerList) {
     _.forEach(runnerList, $scope.stopRunner);
   };
 
-  $scope.reloadRunners = function(runnerList) {
+  $scope.reloadRunners = function (runnerList) {
     RunnerService.reloadRunners(runnerList[0].path).catch($scope.addErrorAlert);
   };
 
-  $scope.deleteRunners = function(runnerList) {
+  $scope.deleteRunners = function (runnerList) {
     _.forEach(runnerList, $scope.deleteRunner);
   };
 
-  $scope.isRunnerUnassociated = function(runner) {
+  $scope.isRunnerUnassociated = function (runner) {
     return instanceFromRunner(runner) === undefined;
   };
 
-  $scope.runnerInstanceName = function(runner) {
+  $scope.runnerInstanceName = function (runner) {
     return runner.instance ? runner.instance.name : "UNKNOWN";
   };
 
-  $scope.addErrorAlert = function(response) {
+  $scope.addErrorAlert = function (response) {
     $scope.alerts.push({
-      type: 'danger',
-      msg: 'Something went wrong on the backend: ' +
-        _.get(response, 'data.message', 'Please check the server logs'),
+      type: "danger",
+      msg:
+        "Something went wrong on the backend: " +
+        _.get(response, "data.message", "Please check the server logs"),
     });
   };
 
-  $scope.closeAlert = function(index) {
+  $scope.closeAlert = function (index) {
     $scope.alerts.splice(index, 1);
   };
 
@@ -180,7 +179,7 @@ export default function adminSystemController(
       for (let runner of $scope.runners) {
         runner.instance = instanceFromRunner(runner);
 
-        if ($scope.isRunnerUnassociated(runner)){
+        if ($scope.isRunnerUnassociated(runner)) {
           $scope.showRunnersTile = true;
         }
       }
@@ -196,7 +195,7 @@ export default function adminSystemController(
     }
   }
 
-  $scope.hasUnassociatedRunners = function(runners) {
+  $scope.hasUnassociatedRunners = function (runners) {
     for (let runner of runners) {
       if ($scope.isRunnerUnassociated(runner)) {
         return true;
@@ -208,51 +207,51 @@ export default function adminSystemController(
   $rootScope.$watchCollection("systems", groupSystems);
 
   $scope.showLogs = function (system, instance) {
-       $uibModal.open({
-         template:readLogs,
-         resolve: {
-           system: system,
-           instance: instance,
-         },
-         controller: 'AdminSystemLogsController',
-         windowClass: 'app-modal-window',
-      });
-    };
+    $uibModal.open({
+      template: readLogs,
+      resolve: {
+        system: system,
+        instance: instance,
+      },
+      controller: "AdminSystemLogsController",
+      windowClass: "app-modal-window",
+    });
+  };
 
   $scope.manageQueue = function (system, instance) {
-       $uibModal.open({
-         template:adminQueue,
-         resolve: {
-           system: system,
-           instance: instance,
-         },
-         controller: 'AdminQueueController',
-         windowClass: 'app-modal-window',
-      });
-    };
+    $uibModal.open({
+      template: adminQueue,
+      resolve: {
+        system: system,
+        instance: instance,
+      },
+      controller: "AdminQueueController",
+      windowClass: "app-modal-window",
+    });
+  };
 
   function eventCallback(event) {
-    if (event.name.startsWith('RUNNER')) {
+    if (event.name.startsWith("RUNNER")) {
       _.remove($scope.runners, (value) => {
         return value.id == event.payload.id;
       });
 
-      if (event.name != 'RUNNER_REMOVED') {
+      if (event.name != "RUNNER_REMOVED") {
         $scope.runners.push(event.payload);
       }
       groupRunners();
-
-    }
-    else if (event.name.startsWith('INSTANCE')) {
+    } else if (event.name.startsWith("INSTANCE")) {
       groupRunners();
     }
   }
 
-  EventService.addCallback('admin_system', (event) => {
-    $scope.$apply(() => {eventCallback(event);})
+  EventService.addCallback("admin_system", (event) => {
+    $scope.$apply(() => {
+      eventCallback(event);
+    });
   });
-  $scope.$on('$destroy', function() {
-    EventService.removeCallback('admin_system');
+  $scope.$on("$destroy", function () {
+    EventService.removeCallback("admin_system");
   });
 
   function instanceFromRunner(runner) {
@@ -274,11 +273,10 @@ export default function adminSystemController(
     $scope.runners = response.data;
 
     // This is kind of messy, but oh well
-    if (responseState($scope.response) === 'empty') {
+    if (responseState($scope.response) === "empty") {
       $scope.response = response;
     }
 
     groupRunners();
   });
-
-};
+}

@@ -1,5 +1,4 @@
-
-commandService.$inject = ['$http', '$rootScope'];
+commandService.$inject = ["$http", "$rootScope"];
 
 /**
  * commandService - Service for interacting with the command API.
@@ -10,7 +9,7 @@ commandService.$inject = ['$http', '$rootScope'];
 export default function commandService($http, $rootScope, SystemService) {
   return {
     getCommands: (params) => {
-      return $http.get('api/v1/commands', {params: params});
+      return $http.get("api/v1/commands", { params: params });
     },
   };
-};
+}

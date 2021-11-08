@@ -1,6 +1,4 @@
-
-namespaceService.$inject = ['$stateParams'];
-
+namespaceService.$inject = ["$stateParams"];
 
 /**
  * namespaceService - Service for getting namespaces from the API.
@@ -16,4 +14,4 @@ export default function namespaceService($stateParams) {
       return namespace || $stateParams.namespace;
     },
   };
-};
+}

@@ -1,4 +1,4 @@
-import template from '../../templates/system_status.html';
+import template from "../../templates/system_status.html";
 
 /**
  * systemStatusDirective - Directive for rendering system status.
@@ -6,34 +6,34 @@ import template from '../../templates/system_status.html';
  */
 export default function systemStatusDirective() {
   return {
-    restrict: 'E',
+    restrict: "E",
     scope: {
-      status: '=target',
+      status: "=target",
     },
     template: template,
-    link: function(scope, element, attrs) {
-      scope.$watch('status', function() {
+    link: function (scope, element, attrs) {
+      scope.$watch("status", function () {
         switch (scope.status) {
-          case 'RUNNING':
-            scope.labelClass = 'label-success';
+          case "RUNNING":
+            scope.labelClass = "label-success";
             break;
-          case 'STOPPING':
-          case 'UNRESPONSIVE':
-            scope.labelClass = 'label-warning';
+          case "STOPPING":
+          case "UNRESPONSIVE":
+            scope.labelClass = "label-warning";
             break;
-          case 'STARTING':
-          case 'INITIALIZING':
-            scope.labelClass = 'label-info';
+          case "STARTING":
+          case "INITIALIZING":
+            scope.labelClass = "label-info";
             break;
-          case 'RELOADING':
-            scope.labelClass = 'label-primary';
+          case "RELOADING":
+            scope.labelClass = "label-primary";
             break;
-          case 'DEAD':
-          case 'STOPPED':
-            scope.labelClass = 'label-danger';
+          case "DEAD":
+          case "STOPPED":
+            scope.labelClass = "label-danger";
             break;
         }
       });
     },
   };
-};
+}

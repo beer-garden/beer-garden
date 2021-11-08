@@ -1,6 +1,6 @@
-import _ from 'lodash';
+import _ from "lodash";
 
-requestService.$inject = ['$q', '$http', '$interval'];
+requestService.$inject = ["$q", "$http", "$interval"];
 
 /**
  * requestService - Service for accessing the Request API.
@@ -10,16 +10,14 @@ requestService.$inject = ['$q', '$http', '$interval'];
  * @return {Object}                   An Object for interacting with the Request API.
  */
 export default function requestService($q, $http, $interval) {
-  const completeStatuses = ['SUCCESS', 'ERROR', 'CANCELED', 'INVALID'];
+  const completeStatuses = ["SUCCESS", "ERROR", "CANCELED", "INVALID"];
 
   let service = {
     getRequests: (data) => {
-      return $http.get(
-        'api/v1/requests', {params: data}
-      );
+      return $http.get("api/v1/requests", { params: data });
     },
     getRequest: (id) => {
-      return $http.get('api/v1/requests/' + id);
+      return $http.get("api/v1/requests/" + id);
     },
     isComplete: (request) => {
       return _.includes(completeStatuses, request.status);
@@ -28,9 +26,9 @@ export default function requestService($q, $http, $interval) {
 
   _.assign(service, {
     createRequest: (request, waitForCompletion) => {
-      let promise = $http.post('api/v1/requests', request);
+      let promise = $http.post("api/v1/requests", request);
 
-      if(!waitForCompletion) {
+      if (!waitForCompletion) {
         return promise;
       }
 
@@ -43,12 +41,12 @@ export default function requestService($q, $http, $interval) {
           let inter = $interval(() => {
             service.getRequest(response.data.id).then(
               (response) => {
-                if(service.isComplete(response.data)) {
+                if (service.isComplete(response.data)) {
                   deferred.resolve(response.data);
                   $interval.cancel(inter);
                 }
 
-                if(curTry++ >= maxTries) {
+                if (curTry++ >= maxTries) {
                   deferred.reject("Timeout expired");
                   $interval.cancel(inter);
                 }
@@ -70,4 +68,4 @@ export default function requestService($q, $http, $interval) {
   });
 
   return service;
-};
+}

@@ -1,6 +1,6 @@
-import _ from 'lodash';
+import _ from "lodash";
 
-tokenService.$inject = ['$http', 'localStorageService'];
+tokenService.$inject = ["$http", "localStorageService"];
 
 /**
  * tokenService - Service for interacting with the token API.
@@ -11,29 +11,29 @@ tokenService.$inject = ['$http', 'localStorageService'];
 export default function tokenService($http, localStorageService) {
   const service = {
     getToken: () => {
-      return localStorageService.get('token', 'sessionStorage');
+      return localStorageService.get("token", "sessionStorage");
     },
     handleToken: (token) => {
-      localStorageService.set('token', token, 'sessionStorage');
-      $http.defaults.headers.common.Authorization = 'Bearer ' + token;
+      localStorageService.set("token", token, "sessionStorage");
+      $http.defaults.headers.common.Authorization = "Bearer " + token;
     },
     clearToken: () => {
-      localStorageService.remove('token', 'sessionStorage');
+      localStorageService.remove("token", "sessionStorage");
       $http.defaults.headers.common.Authorization = undefined;
     },
     getRefresh: () => {
-      return localStorageService.get('refresh', 'sessionStorage');
+      return localStorageService.get("refresh", "sessionStorage");
     },
     handleRefresh: (refreshToken) => {
-      localStorageService.set('refresh', refreshToken, 'sessionStorage');
+      localStorageService.set("refresh", refreshToken, "sessionStorage");
     },
     clearRefresh: () => {
-      const refreshToken = localStorageService.get('refresh', 'sessionStorage');
+      const refreshToken = localStorageService.get("refresh", "sessionStorage");
       if (refreshToken) {
         // It's possible the refresh token was already removed from the database
         // We usually don't care if that's the case, so set a noop error handler
-        localStorageService.remove('refresh', 'sessionStorage');
-        return $http.delete('api/v1/tokens/' + refreshToken).catch(() => {});
+        localStorageService.remove("refresh", "sessionStorage");
+        return $http.delete("api/v1/tokens/" + refreshToken).catch(() => {});
       }
     },
   };
@@ -41,17 +41,17 @@ export default function tokenService($http, localStorageService) {
   _.assign(service, {
     doLogin: (username, password) => {
       return $http
-          .post('/api/v1/login', {
-            username: username,
-            password: password,
-          })
-          .then((response) => {
-            service.handleRefresh(response.data.refresh);
-            service.handleToken(response.data.token);
-          });
+        .post("/api/v1/login", {
+          username: username,
+          password: password,
+        })
+        .then((response) => {
+          service.handleRefresh(response.data.refresh);
+          service.handleToken(response.data.token);
+        });
     },
     doRefresh: (refreshToken) => {
-      return $http.get('/api/v1/tokens/' + refreshToken).then((response) => {
+      return $http.get("/api/v1/tokens/" + refreshToken).then((response) => {
         service.handleToken(response.data.token);
       });
     },

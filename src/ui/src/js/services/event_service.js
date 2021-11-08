@@ -1,7 +1,4 @@
-
-eventService.$inject = [
-  'TokenService',
-];
+eventService.$inject = ["TokenService"];
 
 /**
  * eventService - Service for getting systems from the API.
@@ -9,7 +6,6 @@ eventService.$inject = [
  * @return {Object}                   Object for interacting with the event API.
  */
 export default function eventService(TokenService) {
-
   let socketConnection = undefined;
   let messageCallbacks = {};
 
@@ -30,14 +26,18 @@ export default function eventService(TokenService) {
     },
     connect: (token) => {
       // If socket is already open don't do anything
-      if (_.isUndefined(socketConnection) || socketConnection.readyState == WebSocket.CLOSED) {
-        let eventUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') +
+      if (
+        _.isUndefined(socketConnection) ||
+        socketConnection.readyState == WebSocket.CLOSED
+      ) {
+        let eventUrl =
+          (window.location.protocol === "https:" ? "wss://" : "ws://") +
           window.location.host +
           window.location.pathname +
           `api/v1/socket/events/`;
 
         if (token) {
-          eventUrl += '?token=' + token;
+          eventUrl += "?token=" + token;
         }
 
         socketConnection = new WebSocket(eventUrl);
@@ -56,4 +56,4 @@ export default function eventService(TokenService) {
       return socketConnection.readyState;
     },
   };
-};
+}
