@@ -2,53 +2,12 @@
 import json
 
 import pytest
-import tornado.web
-from box import Box
-from mongoengine import connect
 from tornado.httpclient import HTTPError, HTTPRequest
 
 import beer_garden.events
 import beer_garden.router
-from beer_garden import config
 from beer_garden.api.http.authentication import generate_access_token
-from beer_garden.api.http.client import SerializeHelper
-from beer_garden.api.http.handlers.v1.garden import GardenAPI, GardenListAPI
 from beer_garden.db.mongo.models import Garden, Role, RoleAssignment, User
-
-# TODO: Load this from conftest using the actual _setup_application call
-application = tornado.web.Application(
-    [
-        (r"/api/v1/gardens/?", GardenListAPI),
-        (r"/api/v1/gardens/(.*)/?", GardenAPI),
-    ],
-    client=SerializeHelper(),
-)
-
-
-@pytest.fixture
-def app_config_auth_enabled(monkeypatch):
-    app_config = Box(
-        {
-            "auth": {"enabled": True, "token_secret": "notsosecret"},
-            "garden": {"name": "somegarden"},
-        }
-    )
-    monkeypatch.setattr(config, "_CONFIG", app_config)
-
-    yield app_config
-
-
-@pytest.fixture
-def app_config_auth_disabled(monkeypatch):
-    app_config = Box(
-        {
-            "auth": {"enabled": False, "token_secret": "notsosecret"},
-            "garden": {"name": "somegarden"},
-        }
-    )
-    monkeypatch.setattr(config, "_CONFIG", app_config)
-
-    yield app_config
 
 
 @pytest.fixture(autouse=True)
@@ -107,11 +66,6 @@ def access_token(user):
     yield generate_access_token(user)
 
 
-@pytest.fixture
-def app():
-    return application
-
-
 @pytest.fixture(autouse=True)
 def common_mocks(monkeypatch, garden_permitted):
     def mock_determine_target(operation):
@@ -126,13 +80,9 @@ def common_mocks(monkeypatch, garden_permitted):
 
 
 class TestGardenAPI:
-    @classmethod
-    def setup_class(cls):
-        connect("beer_garden", host="mongomock://localhost")
-
     @pytest.mark.gen_test
     def test_auth_disabled_returns_any_garden(
-        self, http_client, app_config_auth_disabled, base_url, garden_not_permitted
+        self, http_client, base_url, garden_not_permitted
     ):
         url = f"{base_url}/api/v1/gardens/{garden_not_permitted.name}"
 
@@ -231,14 +181,8 @@ class TestGardenAPI:
 
 
 class TestGardenListAPI:
-    @classmethod
-    def setup_class(cls):
-        connect("beer_garden", host="mongomock://localhost")
-
     @pytest.mark.gen_test
-    def test_auth_disabled_returns_all_gardens(
-        self, http_client, app_config_auth_disabled, base_url
-    ):
+    def test_auth_disabled_returns_all_gardens(self, http_client, base_url):
         url = f"{base_url}/api/v1/gardens"
 
         response = yield http_client.fetch(url)

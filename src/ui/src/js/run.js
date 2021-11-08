@@ -178,10 +178,16 @@ export default function appRun(
         template: loginTemplate,
       });
       loginModal.result.then(
-        () => {
-          $rootScope.changeUser(TokenService.getToken());
-        },
-        _.noop // Prevents annoying console log messages
+          () => {
+            $rootScope.changeUser(TokenService.getToken());
+            location.reload();
+          },
+          _.noop // Prevents annoying console log messages
+      );
+      loginModal.closed.then(
+          () => {
+            loginModal = undefined;
+          }
       );
       loginModal.closed.then(() => {
         loginModal = undefined;

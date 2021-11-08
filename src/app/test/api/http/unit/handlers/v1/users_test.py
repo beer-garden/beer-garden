@@ -2,52 +2,22 @@
 import json
 
 import pytest
-import tornado.web
-from box import Box
-from mongoengine import connect
 from tornado.httpclient import HTTPError
 
-from beer_garden import config
-from beer_garden.api.http.handlers.v1.user import UserAPI, UserListAPI
 from beer_garden.db.mongo.models import User
-
-# TODO: Load this from conftest using the actual _setup_application call
-application = tornado.web.Application(
-    [
-        (rf"/api/v1/users/?", UserListAPI),
-        (rf"/api/v1/users/(\w+)/?", UserAPI),
-    ]
-)
-
-
-@pytest.fixture(autouse=True)
-def drop_users(app):
-    User.drop_collection()
-
-
-@pytest.fixture(autouse=True)
-def app_config(monkeypatch):
-    app_config = Box({"auth": {"enabled": False, "token_secret": "keepitsecret"}})
-    monkeypatch.setattr(config, "_CONFIG", app_config)
-
-    yield app_config
 
 
 @pytest.fixture
 def user():
-    yield User(username="testuser", password="password").save()
+    user = User(username="testuser")
+    user.set_password("password")
+    user.save()
 
-
-@pytest.fixture
-def app():
-    return application
+    yield user
+    user.delete()
 
 
 class TestUserAPI:
-    @classmethod
-    def setup_class(cls):
-        connect("beer_garden", host="mongomock://localhost")
-
     @pytest.mark.gen_test
     def test_get(self, http_client, base_url, user):
         url = f"{base_url}/api/v1/users/{user.username}"
@@ -95,10 +65,6 @@ class TestUserAPI:
 
 
 class TestUserListAPI:
-    @classmethod
-    def setup_class(cls):
-        connect("beer_garden", host="mongomock://localhost")
-
     @pytest.mark.gen_test
     def test_get(self, http_client, base_url, user):
         url = f"{base_url}/api/v1/users/"

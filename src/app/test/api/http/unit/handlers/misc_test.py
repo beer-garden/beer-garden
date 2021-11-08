@@ -7,11 +7,9 @@ from tornado.gen import Future
 
 from beer_garden.__version__ import __version__
 
-from . import TestHandlerBase
-
 
 @unittest.skip("TODO")
-class ConfigHandlerTest(TestHandlerBase):
+class ConfigHandlerTest:
     def test_config(self):
         import brew_view
 
@@ -26,7 +24,7 @@ class ConfigHandlerTest(TestHandlerBase):
 
 
 @unittest.skip("TODO")
-class VersionHandlerTest(TestHandlerBase):
+class VersionHandlerTest:
     def setUp(self):
         self.client_mock = Mock(name="client_mock")
         self.fake_context = MagicMock(

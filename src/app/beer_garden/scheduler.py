@@ -537,8 +537,8 @@ def get_job(job_id: str) -> Job:
     return db.query_unique(Job, id=job_id)
 
 
-def get_jobs(filter_params: Optional[Dict] = None) -> List[Job]:
-    return db.query(Job, filter_params=filter_params)
+def get_jobs(filter_params: Optional[Dict] = None, **kwargs) -> List[Job]:
+    return db.query(Job, filter_params=filter_params, **kwargs)
 
 
 @publish_event(Events.JOB_CREATED)
