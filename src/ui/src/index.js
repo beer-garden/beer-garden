@@ -118,7 +118,10 @@ import requestViewController, {
 } from "./js/controllers/request_view.js";
 import systemIndexController from "./js/controllers/system_index.js";
 import jobIndexController from "./js/controllers/job_index.js";
-import {jobViewController, jobRunNowModalController} from "./js/controllers/job_view.js";
+import {
+  jobViewController,
+  jobRunNowModalController,
+} from "./js/controllers/job_view.js";
 import jobCreateSystemController from "./js/controllers/job/create_system.js";
 import jobExportController from "./js/controllers/job/export_jobs.js";
 import {

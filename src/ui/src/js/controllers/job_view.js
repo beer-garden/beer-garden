@@ -102,7 +102,9 @@ export function jobViewController(
 
     JobService.runAdHocJob(jobId, $scope.resetTheInterval).then(
       function (response) {
-        console.log(`Ad hoc run of ID ${jobId}; reset interval: ${resettingInterval}`);
+        console.log(
+          `Ad hoc run of ID ${jobId}; reset interval: ${resettingInterval}`
+        );
         $state.go("base.jobs");
       },
       function (response) {
@@ -136,7 +138,7 @@ export function jobViewController(
       let popupInstance = $uibModal.open({
         animation: true,
         template: modalTemplate,
-        controller: "JobRunNowModalController"
+        controller: "JobRunNowModalController",
       });
 
       popupInstance.result.then(
@@ -148,8 +150,8 @@ export function jobViewController(
       );
     } else {
       runAdHoc(jobId);
-    }    
-  }
+    }
+  };
 
   loadJob();
 }
@@ -167,6 +169,6 @@ export function jobRunNowModalController($scope, $uibModalInstance) {
   };
 
   $scope.cancelRunNow = function () {
-    $uibModalInstance.dismiss("cancel")
+    $uibModalInstance.dismiss("cancel");
   };
 }
