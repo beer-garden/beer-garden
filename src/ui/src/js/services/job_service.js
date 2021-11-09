@@ -41,6 +41,12 @@ export default function jobService($http, NamespaceService) {
     return $http.patch("api/v1/jobs/" + id, payload);
   };
 
+  JobService.runAdHocJob = function (id, resetInterval) {
+    // `resetInterval` ignored until API understands what to
+    // do with it.
+    return $http.post(`api/v1/jobs/${id}/execute`)
+  };
+
   JobService.updateJob = function (job) {
     return JobService.patchJob(job["id"], {
       operations: [
