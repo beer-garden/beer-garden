@@ -121,7 +121,7 @@ export function jobViewController(
    * when the BG API can make sense of a reset interval value
    */
   function isIntervalTrigger(triggerType) {
-    return true;
+    return false;
   }
 
   /*
