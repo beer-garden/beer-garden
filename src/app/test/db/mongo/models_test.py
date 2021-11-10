@@ -621,6 +621,26 @@ class TestUser:
         assert len(UserToken.objects.filter(user=user)) == 0
 
 
+class TestUserToken:
+    @pytest.fixture()
+    def user_token(self):
+        user = User(username="testuser").save()
+        user_token = UserToken(
+            expires_at=datetime.utcnow() + timedelta(minutes=10),
+            user=user,
+            uuid=uuid4(),
+        ).save()
+
+        yield user_token
+        user_token.delete()
+        user.delete()
+
+    def test_user_delete_cascades_to_user_token(self, user_token):
+        assert len(UserToken.objects.filter(id=user_token.id)) == 1
+        user_token.user.fetch().delete()
+        assert len(UserToken.objects.filter(id=user_token.id)) == 0
+
+
 class TestGarden:
     v1_str = "v1"
     v2_str = "v2"

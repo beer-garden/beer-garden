@@ -193,6 +193,8 @@ class AuthorizationHandler(BaseHandler):
 
         Raises:
             AuthorizationRequired: The token is not present
+            ExpiredToken: The token has expired
+            InvalidToken: The token was not valid and failed to decode
         """
         secret_key = config.get("auth").token_secret
         auth_header = self.request.headers.get("Authorization")

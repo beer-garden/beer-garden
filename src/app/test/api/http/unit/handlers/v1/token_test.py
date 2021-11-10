@@ -110,10 +110,10 @@ class TestTokenRefreshAPI:
         assert decoded_access_token["sub"] == str(user.id)
         assert decoded_access_token["jti"] == decoded_refresh_token["jti"]
 
-        # Millesconds get lost during jwt.encode, so we just check the timedelta
+        # Milliseconds get lost during jwt.encode, so we just check the timedelta
         assert (
-            datetime.fromtimestamp(decoded_refresh_token["exp"], tz=timezone.utc)
-            - expiration
+            expiration
+            - datetime.fromtimestamp(decoded_refresh_token["exp"], tz=timezone.utc)
         ) < timedelta(seconds=1)
 
     @pytest.mark.gen_test

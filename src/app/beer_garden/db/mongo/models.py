@@ -585,21 +585,6 @@ class Principal(MongoModel, Document):
     }
 
 
-class UserToken(Document):
-    issued_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
-    expires_at = DateTimeField(required=True)
-    user = LazyReferenceField("User", required=True, reverse_delelete_rule=CASCADE)
-    uuid = UUIDField(binary=False, required=True, unique="True")
-
-    meta = {
-        "indexes": [
-            {"fields": ["expires_at"], "expireAfterSeconds": 0},
-            {"fields": ["user"]},
-            {"fields": ["uuid"]},
-        ]
-    }
-
-
 class RequestTemplate(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.RequestTemplate
 
@@ -974,3 +959,18 @@ class User(Document):
         of reasons.
         """
         UserToken.objects.filter(user=self).delete()
+
+
+class UserToken(Document):
+    issued_at = DateTimeField(required=True, default=datetime.datetime.utcnow)
+    expires_at = DateTimeField(required=True)
+    user = LazyReferenceField("User", required=True, reverse_delete_rule=CASCADE)
+    uuid = UUIDField(binary=False, required=True, unique="True")
+
+    meta = {
+        "indexes": [
+            "user",
+            "uuid",
+            {"fields": ["expires_at"], "expireAfterSeconds": 0},
+        ]
+    }
