@@ -117,7 +117,7 @@ class TestTokenRefreshAPI:
         ) < timedelta(seconds=1)
 
     @pytest.mark.gen_test
-    def test_post_with_expired_refresh_token_returns_422(
+    def test_post_with_expired_refresh_token_returns_400(
         self, http_client, base_url, user
     ):
         url = f"{base_url}/api/v1/token/refresh"
@@ -129,10 +129,10 @@ class TestTokenRefreshAPI:
         with pytest.raises(HTTPError) as excinfo:
             yield http_client.fetch(url, method="POST", body=body)
 
-        assert excinfo.value.code == 422
+        assert excinfo.value.code == 400
 
     @pytest.mark.gen_test
-    def test_post_with_revoked_refresh_token_returns_422(
+    def test_post_with_revoked_refresh_token_returns_400(
         self, http_client, base_url, user
     ):
         url = f"{base_url}/api/v1/token/refresh"
@@ -146,10 +146,10 @@ class TestTokenRefreshAPI:
         with pytest.raises(HTTPError) as excinfo:
             yield http_client.fetch(url, method="POST", body=body)
 
-        assert excinfo.value.code == 422
+        assert excinfo.value.code == 400
 
     @pytest.mark.gen_test
-    def test_post_with_invalid_refresh_token_returns_422(
+    def test_post_with_invalid_refresh_token_returns_400(
         self, http_client, base_url, user
     ):
         url = f"{base_url}/api/v1/token/refresh"
@@ -159,7 +159,7 @@ class TestTokenRefreshAPI:
         with pytest.raises(HTTPError) as excinfo:
             yield http_client.fetch(url, method="POST", body=body)
 
-        assert excinfo.value.code == 422
+        assert excinfo.value.code == 400
 
 
 class TestTokenRevokeAPI:
@@ -214,7 +214,7 @@ class TestTokenRevokeAPI:
         assert response.code == 204
 
     @pytest.mark.gen_test
-    def test_post_with_invalid_refresh_token_returns_422(
+    def test_post_with_invalid_refresh_token_returns_400(
         self, http_client, base_url, user
     ):
         url = f"{base_url}/api/v1/token/revoke"
@@ -224,4 +224,4 @@ class TestTokenRevokeAPI:
         with pytest.raises(HTTPError) as excinfo:
             yield http_client.fetch(url, method="POST", body=body)
 
-        assert excinfo.value.code == 422
+        assert excinfo.value.code == 400

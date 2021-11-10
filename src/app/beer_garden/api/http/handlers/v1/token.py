@@ -6,7 +6,7 @@ from beer_garden.api.http.authentication import (
     user_login,
 )
 from beer_garden.api.http.base_handler import BaseHandler
-from beer_garden.api.http.exceptions import AuthenticationFailed, UnprocessableEntity
+from beer_garden.api.http.exceptions import AuthenticationFailed, BadRequest
 from beer_garden.api.http.schemas.v1.token import TokenRefreshInputSchema
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 
@@ -74,7 +74,7 @@ class TokenRefreshAPI(BaseHandler):
                          refresh token will be the same as that of the supplied token.
             schema:
               $ref: '#/definitions/TokenResponse'
-          422:
+          400:
             description: The provided refresh token is invalid, possibly because it has
               expired or been revoked.
         tags:
@@ -85,7 +85,7 @@ class TokenRefreshAPI(BaseHandler):
         try:
             response = refresh_token_pair(refresh_token=refresh_token)
         except (ExpiredTokenException, InvalidTokenException):
-            raise UnprocessableEntity(reason="Invalid or expired token")
+            raise BadRequest(reason="Invalid or expired token")
 
         self.write(response)
 
@@ -109,6 +109,8 @@ class TokenRevokeAPI(BaseHandler):
         responses:
           204:
             description: Token successfully revoked
+          400:
+            description: The provided refresh token is invalid
         tags:
           - Token
         """
@@ -117,6 +119,6 @@ class TokenRevokeAPI(BaseHandler):
         try:
             revoke_token_pair(refresh_token)
         except InvalidTokenException:
-            raise UnprocessableEntity
+            raise BadRequest(reason="Invalid token")
 
         self.set_status(204)

@@ -64,8 +64,3 @@ class RequestForbidden(BaseHTTPError):
 class NotFound(BaseHTTPError):
     status_code: int = 404
     reason: str = "Not Found"
-
-
-class UnprocessableEntity(BaseHTTPError):
-    status_code: int = 422
-    reason: str = "Unprocessable Entity"
