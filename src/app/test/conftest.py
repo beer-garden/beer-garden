@@ -16,6 +16,7 @@ from beer_garden.db.mongo.models import (
     Request,
     System,
     User,
+    UserToken,
 )
 
 pytest_plugins = ["brewtils.test.fixtures"]
@@ -38,6 +39,7 @@ def data_cleanup():
     Request.drop_collection()
     System.drop_collection()
     User.drop_collection()
+    UserToken.drop_collection()
 
 
 @pytest.fixture(scope="module", autouse=True)

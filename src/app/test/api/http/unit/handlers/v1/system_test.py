@@ -6,7 +6,7 @@ from tornado.httpclient import HTTPError, HTTPRequest
 
 import beer_garden.events
 import beer_garden.router
-from beer_garden.api.http.authentication import generate_access_token
+from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.db.mongo.models import (
     Command,
     Garden,
@@ -89,7 +89,7 @@ def user(system_permitted, system_admin_role):
 
 @pytest.fixture
 def access_token(user):
-    yield generate_access_token(user)
+    yield issue_token_pair(user)["access"]
 
 
 @pytest.fixture(autouse=True)
@@ -295,7 +295,7 @@ class TestSystemListAPI:
             domain={"scope": "Garden", "identifiers": {"name": garden.name}},
         )
         user.role_assignments.append(garden_role_assignment)
-        access_token = generate_access_token(user)
+        access_token = issue_token_pair(user)["access"]
 
         url = f"{base_url}/api/v1/systems"
         headers = {"Authorization": f"Bearer {access_token}"}

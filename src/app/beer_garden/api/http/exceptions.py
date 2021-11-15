@@ -41,6 +41,11 @@ class AuthorizationRequired(BaseHTTPError):
     reason: str = "Authorization required"
 
 
+class AuthenticationFailed(BaseHTTPError):
+    status_code: int = 401
+    reason: str = "Authentication Failed"
+
+
 class InvalidToken(BaseHTTPError):
     status_code: int = 401
     reason: str = "Authorization token invalid"

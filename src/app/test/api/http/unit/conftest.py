@@ -4,7 +4,7 @@ import tornado.web
 from box import Box
 
 from beer_garden import config
-from beer_garden.api.http.authentication import generate_access_token
+from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.api.http.client import SerializeHelper
 from beer_garden.api.http.handlers.v1.admin import AdminAPI
 from beer_garden.api.http.handlers.v1.command import CommandAPI, CommandListAPI
@@ -22,11 +22,15 @@ from beer_garden.api.http.handlers.v1.job import (
     JobListAPI,
 )
 from beer_garden.api.http.handlers.v1.logging import LoggingAPI, LoggingConfigAPI
-from beer_garden.api.http.handlers.v1.login import LoginAPI
 from beer_garden.api.http.handlers.v1.namespace import NamespaceListAPI
 from beer_garden.api.http.handlers.v1.queue import QueueAPI, QueueListAPI
 from beer_garden.api.http.handlers.v1.request import RequestAPI, RequestListAPI
 from beer_garden.api.http.handlers.v1.system import SystemAPI, SystemListAPI
+from beer_garden.api.http.handlers.v1.token import (
+    TokenAPI,
+    TokenRefreshAPI,
+    TokenRevokeAPI,
+)
 from beer_garden.api.http.handlers.v1.user import UserAPI, UserListAPI
 from beer_garden.db.mongo.models import User
 
@@ -47,7 +51,9 @@ application = tornado.web.Application(
         (r"/api/v1/jobs/(\w+)/?", JobAPI),
         (r"/api/v1/jobs/(\w+)/execute/?", JobExecutionAPI),
         (r"/api/v1/logging/?", LoggingAPI),
-        (r"/api/v1/login/?", LoginAPI),
+        (r"/api/v1/token/?", TokenAPI),
+        (r"/api/v1/token/revoke/?", TokenRevokeAPI),
+        (r"/api/v1/token/refresh/?", TokenRefreshAPI),
         (r"/api/v1/namespaces/?", NamespaceListAPI),
         (r"/api/v1/queues/?", QueueListAPI),
         (r"/api/v1/queues/([\w\.-]+)/?", QueueAPI),
@@ -69,19 +75,6 @@ def app():
 
 
 @pytest.fixture
-def app_config_auth_disabled(monkeypatch):
-    app_config = Box(
-        {
-            "auth": {"enabled": False, "token_secret": "notsosecret"},
-            "garden": {"name": "somegarden"},
-        }
-    )
-    monkeypatch.setattr(config, "_CONFIG", app_config)
-
-    yield app_config
-
-
-@pytest.fixture
 def user_without_permission():
     user = User(username="testuser").save()
 
@@ -91,4 +84,4 @@ def user_without_permission():
 
 @pytest.fixture
 def access_token_not_permitted(user_without_permission):
-    yield generate_access_token(user_without_permission)
+    yield issue_token_pair(user_without_permission)["access"]

@@ -3,7 +3,7 @@ from typing import Optional
 from tornado.httputil import HTTPServerRequest
 
 from beer_garden.api.http.authentication.login_handlers.base import BaseLoginHandler
-from beer_garden.api.http.schemas.v1.login import LoginInputSchema
+from beer_garden.api.http.schemas.v1.token import TokenInputSchema
 from beer_garden.db.mongo.models import User
 
 
@@ -24,7 +24,7 @@ class BasicLoginHandler(BaseLoginHandler):
         authenticated_user = None
 
         if request.body:
-            schema = LoginInputSchema()
+            schema = TokenInputSchema()
 
             request_data = schema.loads(request.body.decode("utf-8")).data
             username = request_data.get("username")

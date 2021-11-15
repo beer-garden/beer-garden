@@ -6,7 +6,7 @@ import pytest
 from tornado.httpclient import HTTPError, HTTPRequest
 
 import beer_garden.router
-from beer_garden.api.http.authentication import generate_access_token
+from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.db.mongo.models import Garden, Role, RoleAssignment, User
 
 
@@ -44,7 +44,7 @@ def user_with_permission(garden, garden_admin_role):
 
 @pytest.fixture
 def access_token_permitted(user_with_permission):
-    yield generate_access_token(user_with_permission)
+    yield issue_token_pair(user_with_permission)["access"]
 
 
 @pytest.fixture

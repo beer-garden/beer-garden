@@ -4,7 +4,7 @@ import datetime
 import json
 import re
 import socket
-from typing import Union
+from typing import Type, Union
 
 from brewtils.errors import (
     AuthorizationRequired,
@@ -16,6 +16,7 @@ from brewtils.errors import (
     RequestPublishException,
     WaitExceededError,
 )
+from marshmallow import Schema
 from marshmallow.exceptions import ValidationError as MarshmallowValidationError
 from mongoengine.errors import DoesNotExist, NotUniqueError
 from mongoengine.errors import ValidationError as MongoValidationError
@@ -25,7 +26,7 @@ from tornado.web import HTTPError, RequestHandler
 import beer_garden.api.http
 import beer_garden.config as config
 import beer_garden.db.mongo.models
-from beer_garden.api.http.exceptions import BaseHTTPError
+from beer_garden.api.http.exceptions import BadRequest, BaseHTTPError
 from beer_garden.api.http.metrics import http_api_latency_total
 from beer_garden.errors import (
     EndpointRemovedException,
@@ -230,3 +231,22 @@ class BaseHandler(RequestHandler):
                 400,
                 reason="A body was expected with the request, but none was provided.",
             )
+
+    def schema_validated_body(self, schema: Type[Schema]) -> dict:
+        """Get the contents of the request body after having been loaded with the
+        supplied schema to ensure that the data validates properly.
+
+        Args:
+            schema: A schema derived from a marshmallow Schema that the request body
+                will be loaded and validated against.
+
+        Returns:
+            dict: The validated request body
+
+        Raises:
+            BadRequest: The request body failed to validate with the supplied schema
+        """
+        try:
+            return schema(strict=True).load(self.request_body).data
+        except MarshmallowValidationError:
+            raise BadRequest
