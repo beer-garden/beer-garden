@@ -79,7 +79,7 @@ jobs:
 
       # Used the hashtag here instead of slash allow for branches to have slashes in them
       - name: Update Brewtils Branch
-        run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements.txt
+        run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
 
       # Need to update if we support other OS's
       - name: Cache PIP Install

@@ -1,18 +1,8 @@
-# Dependencies
+# Constrain to versions in the requirements.txt
+-c requirements.txt
+
+# develop branch of brewtils
 -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
-apispec < 0.39
-apscheduler < 4
-marshmallow < 3
-mongoengine < 0.21
-more-itertools < 9
-motor < 3
-passlib < 1.8
-prometheus_client < 1
-pyrabbit2 < 2
-pytz < 2021
-ruamel.yaml < 0.17
-stomp.py < 6.2.0
-tornado < 7
 
 # Documentation Dependencies
 sphinx < 2
@@ -32,4 +22,3 @@ pytest-lazy-fixture
 pytest-tornado
 isort < 6
 wheel
-

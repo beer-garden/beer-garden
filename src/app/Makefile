@@ -47,13 +47,18 @@ install: clean ## install the package to the active Python's site-packages
 
 # Dependencies
 deps-python: ## install python dependencies
-	pip install -r requirements.txt
+	pip install -r requirements.txt -r requirements-dev.txt
 
 deps-python-master: ## install bg dependencies from master
 	pip install -e git+https://github.com/beer-garden/brewtils@master#egg=brewtils
 
 deps-python-develop: ## install bg dependencies from develop
 	pip install -e git+https://github.com/beer-garden/brewtils@develop#egg=brewtils
+
+deps-compile: ## Generate the requirements.txt and requirements-dev.txt files
+	pip install pip-tools
+	pip-compile
+	pip-compile requirements-dev.in
 
 deps: deps-python ## alias of deps-python
 
