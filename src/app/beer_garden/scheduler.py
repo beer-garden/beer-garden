@@ -364,6 +364,13 @@ class MixedScheduler(object):
             id="ad-hoc",
         )
 
+        if reset_interval:
+            job = beer_garden.application.scheduler.get_job(job_id)
+            # This should reset interval on job
+            beer_garden.application.scheduler.reschedule_job(
+                job_id, trigger=job.trigger
+            )
+
     def _add_triggers(self, handler, triggers, func):
         """Attaches the function to the handler callback
 
@@ -636,7 +643,7 @@ def remove_job(job_id: str) -> None:
 
 
 @publish_event(Events.JOB_EXECUTED)
-def execute_job(job_id: str) -> Job:
+def execute_job(job_id: str, reset_interval=False) -> Job:
     """Execute a Job ad-hoc
 
     Creates a new job with a trigger for now.
@@ -647,7 +654,13 @@ def execute_job(job_id: str) -> Job:
     Returns:
         The spawned Request
     """
-    return db.query_unique(Job, id=job_id, raise_missing=True)
+    job = db.query_unique(Job, id=job_id, raise_missing=True)
+    job.reset_interval = reset_interval
+
+    if reset_interval and job.trigger_type != "interval":
+        raise ModelValidationError()
+
+    return job
 
 
 def handle_event(event: Event) -> None:
@@ -700,5 +713,7 @@ def handle_event(event: Event) -> None:
             )
         elif event.name == Events.JOB_EXECUTED.name:
             beer_garden.application.scheduler.execute_job(
-                event.payload.id, jobstore="beer_garden"
+                event.payload.id,
+                jobstore="beer_garden",
+                reset_interval=event.payload.reset_interval,
             )

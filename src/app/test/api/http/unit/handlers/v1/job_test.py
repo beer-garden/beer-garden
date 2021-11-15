@@ -97,6 +97,15 @@ def job_not_permitted(bg_job, system_not_permitted):
     job.delete()
 
 
+@pytest.fixture
+def interval_job(bg_interval_job):
+    bg_interval_job.id = None
+    job = from_brewtils(bg_interval_job).save()
+
+    yield job
+    job.delete()
+
+
 @pytest.fixture(autouse=True)
 def drop_jobs():
     yield
@@ -358,6 +367,29 @@ class TestJobListAPI:
 
 
 class TestJobExecutionAPI:
+    @pytest.mark.gen_test
+    def test_reset_interval(self, http_client, base_url, interval_job):
+        url = f"{base_url}/api/v1/jobs/{interval_job.id}/execute?reset_interval=True"
+
+        response = yield http_client.fetch(url, method="POST", body="")
+
+        assert response.code == 202
+
+    @pytest.mark.gen_test
+    def test_reset_interval_on_non_interval_trigger_job(
+        self,
+        http_client,
+        base_url,
+        job_permitted,
+    ):
+        # job_permitted returns a job with a DateTrigger
+        url = f"{base_url}/api/v1/jobs/{job_permitted.id}/execute?reset_interval=True"
+
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(url, method="POST", body="")
+
+        assert excinfo.value.code == 400
+
     @pytest.mark.gen_test
     def test_auth_disabled_allows_post(self, base_url, http_client, job_not_permitted):
         url = f"{base_url}/api/v1/jobs/{job_not_permitted.id}/execute"
