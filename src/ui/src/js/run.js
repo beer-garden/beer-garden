@@ -115,17 +115,22 @@ export default function appRun(
     // SystemService.loadSystems();
 
     $rootScope.loadUser(token).then(() => {
-      $state.reload();
       // $rootScope.$broadcast('userChange');
     });
   };
 
   $rootScope.initialLoad = function () {
     // Very first thing is to load up a token if one exists
-    const token = localStorageService.get("token", "sessionStorage");
+    const token = TokenService.getToken();
+    const refreshToken = TokenService.getRefresh();
+
     if (token) {
       TokenService.handleToken(token);
       $rootScope.changeUser(TokenService.getToken());
+    } else if (refreshToken) {
+      TokenService.doRefresh(refreshToken).then(() => {
+        $rootScope.changeUser(TokenService.getToken());
+      });
     }
 
     // Connect to the event socket
@@ -182,17 +187,15 @@ export default function appRun(
         template: loginTemplate,
       });
       loginModal.result.then(
-          () => {
-            $rootScope.changeUser(TokenService.getToken());
-            location.reload();
-          },
-          _.noop // Prevents annoying console log messages
+        () => {
+          $rootScope.changeUser(TokenService.getToken());
+          location.reload();
+        },
+        _.noop // Prevents annoying console log messages
       );
-      loginModal.closed.then(
-          () => {
-            loginModal = undefined;
-          }
-      );
+      loginModal.closed.then(() => {
+        loginModal = undefined;
+      });
       loginModal.closed.then(() => {
         loginModal = undefined;
       });
