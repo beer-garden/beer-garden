@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import json
-from unittest.mock import Mock
 
 import pytest
+from brewtils.schema_parser import SchemaParser
 from bson import ObjectId
 from tornado.httpclient import HTTPError, HTTPRequest
 
-import beer_garden.router
 from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.db.mongo.api import MongoParser, from_brewtils
 from beer_garden.db.mongo.models import Garden, Job, Role, RoleAssignment, System, User
@@ -479,25 +478,8 @@ class TestJobExportAPI:
 
 
 class TestJobImportAPI:
-    @pytest.fixture
-    def import_function_mock(self):
-        import_function = Mock()
-        import_function.return_value = {}
-
-        return import_function
-
-    @pytest.fixture(autouse=True)
-    def common_mocks(self, monkeypatch, import_function_mock):
-        route_functions = {
-            "JOB_CREATE_MULTI": import_function_mock,
-        }
-
-        monkeypatch.setattr(beer_garden.router, "route_functions", route_functions)
-
     @pytest.mark.gen_test
-    def test_auth_disabled_allows_post(
-        self, import_function_mock, base_url, http_client, job_not_permitted
-    ):
+    def test_auth_disabled_allows_post(self, base_url, http_client, job_not_permitted):
         url = f"{base_url}/api/v1/import/jobs"
 
         import_job = MongoParser.serialize(job_not_permitted)
@@ -508,12 +490,10 @@ class TestJobImportAPI:
         )
 
         assert response.code == 201
-        assert import_function_mock.called is True
 
     @pytest.mark.gen_test
     def test_auth_enabled_allows_post_for_permitted_job(
         self,
-        import_function_mock,
         base_url,
         http_client,
         job_permitted,
@@ -531,12 +511,10 @@ class TestJobImportAPI:
         )
 
         assert response.code == 201
-        assert import_function_mock.called is True
 
     @pytest.mark.gen_test
     def test_auth_enabled_rejects_post_for_not_permitted_job(
         self,
-        import_function_mock,
         base_url,
         http_client,
         job_not_permitted,
@@ -555,4 +533,24 @@ class TestJobImportAPI:
             )
 
         assert excinfo.value.code == 403
-        assert import_function_mock.called is False
+
+    @pytest.mark.gen_test
+    def test_post_creates_only_valid_jobs(self, base_url, http_client, bg_job):
+        url = f"{base_url}/api/v1/import/jobs"
+        headers = {"Content-Type": "application/json"}
+
+        valid_job = SchemaParser.serialize(bg_job)
+        valid_job["id"] = None
+        invalid_job = SchemaParser.serialize(bg_job)
+        invalid_job["name"] = None
+
+        post_body = json.dumps([valid_job, invalid_job])
+
+        response = yield http_client.fetch(
+            url, method="POST", headers=headers, body=post_body
+        )
+        response_body = json.loads(response.body.decode("utf-8"))
+
+        assert response.code == 201
+        assert len(response_body["ids"]) == 1
+        assert len(Job.objects.all()) == 1
