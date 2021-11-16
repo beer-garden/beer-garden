@@ -596,6 +596,49 @@ _UI_SPEC = {
     },
 }
 
+_AUTHENTICATION_HANDLERS_SPEC = {
+    "type": "dict",
+    "items": {
+        "basic": {
+            "type": "dict",
+            "items": {
+                "enabled": {
+                    "type": "bool",
+                    "default": True,
+                    "description": "Enable authentication via username and" "password",
+                }
+            },
+        },
+        "trusted_header": {
+            "type": "dict",
+            "items": {
+                "enabled": {
+                    "type": "bool",
+                    "default": False,
+                    "description": "Enable authentication via trusted headers",
+                },
+                "username_header": {
+                    "type": "str",
+                    "default": "bg-username",
+                    "description": "The http header containing the username",
+                },
+                "user_groups_header": {
+                    "type": "str",
+                    "default": "bg-user-groups",
+                    "description": "The http header containing the comma separated "
+                    "list of the user's groups.",
+                },
+                "create_users": {
+                    "type": "bool",
+                    "default": True,
+                    "description": "Create an account for the user specified by"
+                    "username_header if one does not already exist",
+                },
+            },
+        },
+    },
+}
+
 _AUTH_SPEC = {
     "type": "dict",
     "items": {
@@ -625,6 +668,13 @@ _AUTH_SPEC = {
             ),
             "required": False,
         },
+        "group_definition_file": {
+            "type": "str",
+            "description": "Path to the file containg a mapping of "
+            "groups to beer garden role assignments",
+            "required": False,
+        },
+        "authentication_handlers": _AUTHENTICATION_HANDLERS_SPEC,
     },
 }
 

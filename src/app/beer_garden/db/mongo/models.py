@@ -871,8 +871,8 @@ class RoleAssignmentDomain(EmbeddedDocument):
 
 
 class RoleAssignment(EmbeddedDocument):
-    domain = EmbeddedDocumentField(RoleAssignmentDomain)
-    role = ReferenceField("Role")
+    domain = EmbeddedDocumentField(RoleAssignmentDomain, required=True)
+    role = ReferenceField("Role", required=True)
 
 
 class User(Document):

@@ -58,7 +58,13 @@ def app_config_auth_disabled():
 def app_config_auth_enabled(monkeypatch):
     app_config = Box(
         {
-            "auth": {"enabled": True, "token_secret": "notsosecret"},
+            "auth": {
+                "enabled": True,
+                "token_secret": "notsosecret",
+                "authentication_handlers": {
+                    "basic": {"enabled": True},
+                },
+            },
             "garden": {"name": "somegarden"},
         }
     )
