@@ -489,7 +489,7 @@ class Request(MongoModel, Document):
         old_status = Request.objects.get(id=self.id).status
 
         if self.status != old_status:
-            self.status_updated_at = datetime.datetime.now()
+            self.status_updated_at = datetime.datetime.utcnow()
             if old_status in BrewtilsRequest.COMPLETED_STATUSES:
                 raise RequestStatusTransitionError(
                     "Status for a request cannot be updated once it has been "
