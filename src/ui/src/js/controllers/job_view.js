@@ -1,10 +1,12 @@
 import { formatDate, formatJsonDisplay } from "../services/utility_service.js";
+import modalTemplate from "../../templates/reset_interval_modal.html";
 
 jobViewController.$inject = [
   "$scope",
   "$rootScope",
   "$state",
   "$stateParams",
+  "$uibModal",
   "JobService",
 ];
 
@@ -14,13 +16,15 @@ jobViewController.$inject = [
  * @param  {Object} $rootScope    Angular's $rootScope object.
  * @param  {Object} $state        Angular's $state object.
  * @param  {Object} $stateParams  Angular's $stateParams object.
+ * @param  {Object} $uibModal     Angular UI's $uibModal object.
  * @param  {Object} JobService    Beer-Garden's job service.
  */
-export default function jobViewController(
+export function jobViewController(
   $scope,
   $rootScope,
   $state,
   $stateParams,
+  $uibModal,
   JobService
 ) {
   $scope.setWindowTitle("scheduler");
@@ -90,5 +94,81 @@ export default function jobViewController(
     loadJob();
   });
 
+  /*
+   * Execute the job service's "run ad hoc job" functionality.
+   */
+  function runAdHoc(jobId) {
+    const resettingInterval = $scope.resetTheInterval;
+
+    JobService.runAdHocJob(jobId, $scope.resetTheInterval).then(
+      function (response) {
+        console.log(
+          `Ad hoc run of ID ${jobId}; reset interval: ${resettingInterval}`
+        );
+        $state.go("base.jobs");
+      },
+      function (response) {
+        alert("Failure! Server returned status " + response.status);
+      }
+    );
+  }
+
+  /*
+   * This is a stub: will be
+   *
+   *   return triggerType === "interval";
+   *
+   * when the BG API can make sense of a reset interval value
+   */
+  function isIntervalTrigger(triggerType) {
+    return false;
+  }
+
+  /*
+   * Schedule a job to be run immediately.
+   */
+  $scope.runJobNow = function (jobData) {
+    $scope.resetTheInterval = false;
+
+    let theTriggerIsInterval = isIntervalTrigger(jobData["trigger_type"]);
+    let jobId = jobData["id"];
+
+    if (theTriggerIsInterval) {
+      // open modal dialog to update resetTheInterval
+      let popupInstance = $uibModal.open({
+        animation: true,
+        template: modalTemplate,
+        controller: "JobRunNowModalController",
+      });
+
+      popupInstance.result.then(
+        function (result) {
+          $scope.resetTheInterval = result;
+          runAdHoc(jobId);
+        },
+        () => console.log("Ad hoc run cancelled")
+      );
+    } else {
+      runAdHoc(jobId);
+    }
+  };
+
   loadJob();
+}
+
+jobRunNowModalController.$inject = ["$scope", "$uibModalInstance"];
+
+/**
+ * jobRunNowModalController - Controller for the reset interval popup.
+ * @param  {Object} $scope             Angular's $scope object.
+ * @param  {Object} $uibModalInstance  Object for the modal popup window.
+ */
+export function jobRunNowModalController($scope, $uibModalInstance) {
+  $scope.setIntervalReset = function (result) {
+    $uibModalInstance.close(result);
+  };
+
+  $scope.cancelRunNow = function () {
+    $uibModalInstance.dismiss("cancel");
+  };
 }

@@ -3,27 +3,35 @@
 
   <span ng-if="responseState(response) === 'success'">
     <small>{{data.name}} - {{data.id}}</small>
-    <button type="button" class="btn btn-success pull-right"
-            ng-click="updateJob(data)">
-      Update Job
-    </button>
-    <button type="button" class="btn btn-warning pull-right"
-            ng-if="data.status === 'RUNNING'"
-            ng-click="pauseJob(data.id)">
-      Pause Job
-    </button>
-    <button type="button" class="btn btn-success pull-right"
-            ng-if="data.status === 'PAUSED'"
-            ng-click="resumeJob(data.id)">
-      Resume Job
-    </button>
-    <button type="button" class="btn btn-danger pull-right"
-            confirm="Are you sure you want to delete this job?"
-            ng-click="deleteJob(data.id)">
-      Delete Job
-    </button>
+    
   </span>
 </h1>
+<span>
+  <button type="button" class="btn btn-primary pull-right"
+          ng-click="runJobNow(data)">
+    Run Now
+  </button>
+  <button type="button" class="btn btn-danger pull-right"
+          confirm="Are you sure you want to delete this job?"
+          ng-click="deleteJob(data.id)">
+    Delete Job
+  </button>
+  <button type="button" class="btn btn-warning pull-right"
+          ng-if="data.status === 'RUNNING'"
+          ng-click="pauseJob(data.id)">
+    Pause Job
+  </button>
+  <button type="button" class="btn btn-success pull-right"
+          ng-click="updateJob(data)">
+    Update Job
+  </button>
+  <button type="button" class="btn btn-success pull-right"
+          ng-if="data.status === 'PAUSED'"
+          ng-click="resumeJob(data.id)">
+    Resume Job
+  </button>
+  
+</span>
 
 <fetch-data response="response"></fetch-data>
 

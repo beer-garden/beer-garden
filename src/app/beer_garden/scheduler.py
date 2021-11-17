@@ -367,7 +367,7 @@ class MixedScheduler(object):
         job = db.query_unique(Job, id=job_id)
         self.add_job(
             run_job,
-            trigger=DateTrigger(datetime.now(), timezone="UTC"),
+            trigger=DateTrigger(datetime.utcnow(), timezone="UTC"),
             trigger_type="date",
             coalesce=job.coalesce,
             kwargs={"job_id": job.id, "request_template": job.request_template},
