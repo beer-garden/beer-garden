@@ -109,6 +109,10 @@ class MongoModel:
     def pre_serialize(self):
         pass
 
+    @property
+    def changed_fields(self):
+        return getattr(self, "_changed_fields", [])
+
 
 # MongoEngine needs all EmbeddedDocuments to be defined before any Documents that
 # reference them. So Parameter must be defined before Command, and choices should be
@@ -312,6 +316,7 @@ class Request(MongoModel, Document):
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
     created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     updated_at = DateTimeField(default=None, required=True)
+    status_updated_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
     hidden = BooleanField(required=False)
@@ -331,6 +336,7 @@ class Request(MongoModel, Document):
             {"name": "status_index", "fields": ["status"]},
             {"name": "created_at_index", "fields": ["created_at"]},
             {"name": "updated_at_index", "fields": ["updated_at"]},
+            {"name": "status_updated_at_index", "fields": ["status_updated_at"]},
             {"name": "comment_index", "fields": ["comment"]},
             {"name": "parent_ref_index", "fields": ["parent"]},
             {"name": "parent_index", "fields": ["has_parent"]},
@@ -474,12 +480,16 @@ class Request(MongoModel, Document):
                 f"consistent with has_parent value of {self.has_parent}"
             )
 
+        if "status" in self.changed_fields:
+            self.status_updated_at = datetime.datetime.utcnow()
+
     def clean_update(self):
         """Ensure that the update would not result in an illegal status transition"""
         # Get the original status
         old_status = Request.objects.get(id=self.id).status
 
         if self.status != old_status:
+            self.status_updated_at = datetime.datetime.utcnow()
             if old_status in BrewtilsRequest.COMPLETED_STATUSES:
                 raise RequestStatusTransitionError(
                     "Status for a request cannot be updated once it has been "
