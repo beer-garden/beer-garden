@@ -8,6 +8,7 @@ from mongoengine.errors import ValidationError
 from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import Job
+from beer_garden.scheduler import create_jobs
 
 JOB_CREATE = Permissions.JOB_CREATE.value
 JOB_READ = Permissions.JOB_READ.value
@@ -267,9 +268,10 @@ class JobImportAPI(AuthorizationHandler):
         for job in parsed_job_list:
             self.verify_user_permission_for_object(JOB_CREATE, job)
 
-        response = await self.client(
-            Operation(operation_type="JOB_CREATE_MULTI", args=[parsed_job_list])
-        )
+        create_jobs_output = create_jobs(parsed_job_list)
+        created_jobs = create_jobs_output["created"]
+
+        response = {"ids": [job.id for job in created_jobs]}
 
         self.set_status(201)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
