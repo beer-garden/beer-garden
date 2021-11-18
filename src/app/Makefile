@@ -60,6 +60,11 @@ deps-compile: ## Generate the requirements.txt and requirements-dev.txt files
 	pip-compile
 	pip-compile requirements-dev.in
 
+deps-upgrade: ## Generate requirements files, updating all dependencies where possible
+	pip install pip-tools
+	pip-compile --upgrade
+	pip-compile --upgrade requirements-dev.in
+
 deps: deps-python ## alias of deps-python
 
 

@@ -20,7 +20,7 @@ attrs==21.2.0
     #   pytest
 babel==2.9.1
     # via sphinx
-black==21.10b0
+black==21.11b1
     # via -r requirements-dev.in
 certifi==2021.10.8
     # via
@@ -34,7 +34,7 @@ click==8.0.3
     # via black
 codecov==2.1.12
     # via -r requirements-dev.in
-coverage==6.1.1
+coverage==6.1.2
     # via
     #   -r requirements-dev.in
     #   codecov
@@ -121,7 +121,7 @@ pyjwt==1.7.1
     # via
     #   -c requirements.txt
     #   brewtils
-pyparsing==3.0.5
+pyparsing==3.0.6
     # via
     #   -c requirements.txt
     #   packaging
@@ -156,7 +156,7 @@ requests==2.26.0
     #   sphinx
 sentinels==1.0.0
     # via mongomock
-simplejson==3.17.5
+simplejson==3.17.6
     # via
     #   -c requirements.txt
     #   brewtils
@@ -167,9 +167,9 @@ six==1.16.0
     #   mongomock
     #   sphinx
     #   yapconf
-snowballstemmer==2.1.0
+snowballstemmer==2.2.0
     # via sphinx
-sphinx==1.8.5
+sphinx==1.8.6
     # via
     #   -r requirements-dev.in
     #   sphinx-rtd-theme
@@ -187,9 +187,9 @@ tornado==6.1
     # via
     #   -c requirements.txt
     #   pytest-tornado
-typed-ast==1.4.3
+typed-ast==1.5.0
     # via black
-typing-extensions==3.10.0.2
+typing-extensions==4.0.0
     # via
     #   black
     #   importlib-metadata
