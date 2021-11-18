@@ -155,7 +155,29 @@ export default function commandViewController(
       };
     }
 
-    RequestService.createRequest(newRequest).then(
+    let isFormData = false;
+    const fd = new FormData();
+    for (const i in $scope.command.parameters) {
+      if (
+        $scope.command.parameters[i].type.toLowerCase() === 'bytes' &&
+        !isFormData
+      ) {
+        fd.append('request', JSON.stringify(newRequest));
+        isFormData = true;
+      }
+      if ($scope.command.parameters[i].type.toLowerCase() === 'bytes') {
+        fd.append(
+            $scope.command.parameters[i].key,
+            document.getElementById($scope.command.parameters[i].key).files[0]
+        );
+      }
+    }
+
+    if (isFormData) {
+      newRequest = fd;
+    }
+
+    RequestService.createRequest(newRequest, false, isFormData).then(
       function (response) {
         $state.go("base.request", { requestId: response.data.id });
       },
