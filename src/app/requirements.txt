@@ -55,7 +55,7 @@ pymongo==3.12.1
     # via
     #   mongoengine
     #   motor
-pyparsing==3.0.5
+pyparsing==3.0.6
     # via packaging
 pyrabbit2==1.0.7
     # via beer-garden (setup.py)
@@ -80,7 +80,7 @@ ruamel.yaml==0.16.13
     # via beer-garden (setup.py)
 ruamel.yaml.clib==0.2.6
     # via ruamel.yaml
-simplejson==3.17.5
+simplejson==3.17.6
     # via brewtils
 six==1.16.0
     # via
