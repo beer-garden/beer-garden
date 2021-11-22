@@ -366,7 +366,6 @@ class MixedScheduler(object):
 
         if reset_interval:
             job = beer_garden.application.scheduler.get_job(job_id)
-            # This should reset interval on job
             beer_garden.application.scheduler.reschedule_job(
                 job_id, trigger=job.trigger
             )

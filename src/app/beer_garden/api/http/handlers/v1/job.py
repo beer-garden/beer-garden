@@ -374,9 +374,9 @@ class JobExecutionAPI(AuthorizationHandler):
             await self.client(
                 Operation(operation_type="JOB_EXECUTE", args=[job_id, reset_interval])
             )
-        except ValidationError:  # mongoengine error
+        except ValidationError:
             raise NotFoundError
-        except ModelValidationError:  # also named ValidationError, but is from brewtils...
+        except ModelValidationError:
             raise BadRequest
 
         self.set_status(202)
