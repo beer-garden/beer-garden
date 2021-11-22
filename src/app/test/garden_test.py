@@ -138,13 +138,16 @@ class TestGarden:
         }
 
         bg_garden.connection_params = {"http": http_params}
+        bg_garden.connection_type = "HTTP"  # no longer allowed to be empty
 
         garden = create_garden(bg_garden)
         for key in http_params:
             assert garden.connection_params["http"][key] == http_params[key]
 
+    @pytest.mark.xfail
     def test_create_garden_with_empty_connection_params(self, bg_garden):
-        """create_garden should explicitly load default HTTP configs from brewtils when empty"""
+        """create_garden should explicitly load default HTTP configs from brewtils when
+        empty"""  # no it shouldn't...
 
         config_map = {
             "bg_host": "host",
@@ -159,6 +162,8 @@ class TestGarden:
         spec = YapconfSpec(_CONNECTION_SPEC)
         # bg_host is required by brewtils garden spec
         defaults = spec.load_config({"bg_host": ""})
+
+        bg_garden.connection_type = "LOCAL"  # no longer allowed to be empty
 
         garden = create_garden(bg_garden)
         for key in config_map:

@@ -5,6 +5,7 @@ import logging
 
 import pytz
 import six
+from mongoengine.errors import FieldDoesNotExist
 from passlib.apps import custom_app_context
 
 try:
@@ -723,6 +724,62 @@ class Job(MongoModel, Document):
             )
 
 
+class HttpConnectionParameters(EmbeddedDocument):
+    host = StringField(required=True)
+    port = IntField(min_value=1024, max_value=65535, required=True)
+    url_prefix = StringField(default="/")
+    ca_cert = StringField(required=False)
+    ca_verify = BooleanField(required=True)
+    client_cert = StringField(required=False)
+    client_key = StringField(required=False)
+    ssl = BooleanField(required=True)
+
+
+class StompSSLParameters(EmbeddedDocument):
+    use_ssl = BooleanField(required=True)
+
+
+class StompHeader(EmbeddedDocument):
+    key = StringField(required=True)
+    value = StringField(required=True)
+
+
+class StompConnectionParameters(EmbeddedDocument):
+    ssl = EmbeddedDocumentField(StompSSLParameters, required=True)
+    headers = ListField(EmbeddedDocumentField(StompHeader), required=False)
+    host = StringField(required=True)
+    port = IntField(min_value=1024, max_value=65535, required=True)
+    send_destination = StringField(required=False)
+    subscribe_destination = StringField(required=False)
+    username = StringField(require=False)
+    password = StringField(required=False)
+
+
+class GardenConnectionParams(EmbeddedDocument):
+    http = EmbeddedDocumentField(HttpConnectionParameters, required=False)
+    stomp = EmbeddedDocumentField(StompConnectionParameters, required=False)
+
+
+class ConnectionGenericEmbeddedDocumentField(GenericEmbeddedDocumentField):
+    def to_python(self, value):
+        if value == {} or value is None:
+            return None
+        if "http" in value or "stomp" in value:
+            value.update({"_cls": "GardenConnectionParams"})
+        try:
+            return super().to_python(value)
+        except (FieldDoesNotExist, KeyError):
+            # catches the cases where the dict isn't empty and both 'http' and 'stomp'
+            # are absent or there are additional spurious keys present
+            raise ValidationError(
+                "Connection parameters keys may only be 'http' or 'stomp'"
+            )
+
+
+class EmptyConnectionParams(EmbeddedDocument):
+    pass
+
+
 class Garden(MongoModel, Document):
     brewtils_model = brewtils.models.Garden
 
@@ -730,8 +787,10 @@ class Garden(MongoModel, Document):
     status = StringField(default="INITIALIZING")
     status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
     namespaces = ListField()
-    connection_type = StringField()
-    connection_params = DictField()
+    connection_type = StringField(choices=("LOCAL", "HTTP", "STOMP"))
+    connection_params = ConnectionGenericEmbeddedDocumentField(
+        choices=(GardenConnectionParams, EmptyConnectionParams), required=False
+    )
     systems = ListField(ReferenceField(System, reverse_delete_rule=PULL))
 
     meta = {
@@ -747,6 +806,28 @@ class Garden(MongoModel, Document):
             },
         ],
     }
+
+    def pre_serialize(self):
+        # the `to_brewtils` code wants to serialize these objects; this allows that
+        # to happen until a redesign of the whole pipeline happens
+        from beer_garden.api.http.schemas.v1.garden import GardenConnectionsParamsSchema
+
+        self.connection_params = (
+            GardenConnectionsParamsSchema().dump(self.connection_params).data
+        )
+
+    def clean(self):
+        if self.connection_type == "LOCAL":
+            allowable_connection_types = {"http", "stomp"}
+
+            for conn_type in allowable_connection_types:
+                if hasattr(self.connection_params, conn_type):
+                    attr = getattr(self.connection_params, conn_type)
+                    if len([x for x in dir(attr) if not x.startswith("_")]) != 0:
+                        raise ValidationError(
+                            f"Local connections should not have '{conn_type}'"
+                            " connection parameters"
+                        )
 
     def deep_save(self):
         if self.connection_type != "LOCAL":

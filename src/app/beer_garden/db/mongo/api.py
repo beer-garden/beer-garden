@@ -96,10 +96,17 @@ def to_brewtils(
         return obj
 
     if isinstance(obj, (list, QuerySet)):
+        if isinstance(obj, QuerySet):
+            obj = [o for o in obj]
+
         if len(obj) == 0:
             return []
 
         model_class = obj[0].brewtils_model
+
+        if getattr(model_class, "pre_serialize", None):
+            for object in obj:
+                object.pre_serialize()
         many = True
     else:
         model_class = obj.brewtils_model

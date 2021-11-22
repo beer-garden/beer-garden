@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from copy import copy
 
+from brewtils.models import Garden as BrewtilsGarden
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.db.mongo.models
@@ -46,3 +47,17 @@ class MongoParser(SchemaParser):
         if isinstance(obj, beer_garden.db.mongo.models.MongoModel):
             return True
         return super(MongoParser, cls)._single_item(obj)
+
+    @classmethod
+    def serialize(cls, model, to_string=False, schema_name=None, **kwargs):
+        # one off change until *everything* can be decoupled from Brewtils
+        if not isinstance(model, (BrewtilsGarden, beer_garden.db.mongo.models.Garden)):
+            return super(MongoParser, cls).serialize(
+                model, to_string=to_string, schema_name=schema_name, **kwargs
+            )
+
+        from beer_garden.api.http.schemas.v1.garden import GardenSchema
+
+        schema = GardenSchema()
+
+        return schema.dumps(model).data if to_string else schema.dump(model).data
