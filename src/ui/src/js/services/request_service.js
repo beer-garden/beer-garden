@@ -25,8 +25,17 @@ export default function requestService($q, $http, $interval) {
   };
 
   _.assign(service, {
-    createRequest: (request, waitForCompletion) => {
-      let promise = $http.post("api/v1/requests", request);
+    createRequest: (request, waitForCompletion, isFormData) => {
+      let promise = undefined;
+      if (isFormData) {
+        promise = $http.post("api/v1/requests", request, {
+          headers: {
+            "Content-Type": undefined,
+          },
+        });
+      } else {
+        promise = $http.post("api/v1/requests", request);
+      }
 
       if (!waitForCompletion) {
         return promise;

@@ -1,6 +1,7 @@
 auth:
   enabled: false
   guest_login_enabled: true
+  role_definition_file: null
   token_secret: IAMSUPERSECRET
 db:
   connection:
