@@ -158,14 +158,11 @@ export default function commandViewController(
     let isFormData = false;
     const fd = new FormData();
     for (const i in $scope.command.parameters) {
-      if (
-        $scope.command.parameters[i].type.toLowerCase() === 'bytes' &&
-        !isFormData
-      ) {
-        fd.append('request', JSON.stringify(newRequest));
-        isFormData = true;
-      }
-      if ($scope.command.parameters[i].type.toLowerCase() === 'bytes') {
+      if ($scope.command.parameters[i].type.toLowerCase() === "bytes") {
+        if (!isFormData) {
+          fd.append("request", JSON.stringify(newRequest));
+          isFormData = true;
+        }
         fd.append(
             $scope.command.parameters[i].key,
             document.getElementById($scope.command.parameters[i].key).files[0]
