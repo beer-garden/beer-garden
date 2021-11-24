@@ -657,7 +657,7 @@ def execute_job(job_id: str, reset_interval=False) -> Job:
     job.reset_interval = reset_interval
 
     if reset_interval and job.trigger_type != "interval":
-        raise ModelValidationError()
+        raise ModelValidationError("reset_interval can only be used with trigger type of interval")
 
     return job
 

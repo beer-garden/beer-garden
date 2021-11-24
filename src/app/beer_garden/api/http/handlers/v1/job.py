@@ -367,7 +367,7 @@ class JobExecutionAPI(AuthorizationHandler):
         _ = self.get_or_raise(Job, JOB_CREATE, id=job_id)
 
         reset_interval = (
-            True if self.get_argument("reset_interval", "False") == "True" else False
+            True if self.get_argument("reset_interval", "False").lower() == "true" else False
         )
 
         try:
@@ -376,8 +376,8 @@ class JobExecutionAPI(AuthorizationHandler):
             )
         except ValidationError:
             raise NotFoundError
-        except ModelValidationError:
-            raise BadRequest
+        except ModelValidationError as exc:
+            raise BadRequest(reason=f"{exc}")
 
         self.set_status(202)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
