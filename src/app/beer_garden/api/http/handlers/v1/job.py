@@ -367,7 +367,9 @@ class JobExecutionAPI(AuthorizationHandler):
         _ = self.get_or_raise(Job, JOB_CREATE, id=job_id)
 
         reset_interval = (
-            True if self.get_argument("reset_interval", "False").lower() == "true" else False
+            True 
+            if self.get_argument("reset_interval", "False").lower() == "true"
+            else False
         )
 
         try:
