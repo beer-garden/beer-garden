@@ -6,6 +6,7 @@ from brewtils.schemas import JobExportInputSchema, JobSchema
 from mongoengine.errors import ValidationError
 
 from beer_garden.api.authorization import Permissions
+from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
 from beer_garden.db.mongo.models import Job
 from beer_garden.scheduler import create_jobs
@@ -365,10 +366,20 @@ class JobExecutionAPI(AuthorizationHandler):
         """
         _ = self.get_or_raise(Job, JOB_CREATE, id=job_id)
 
+        reset_interval = (
+            True
+            if self.get_argument("reset_interval", "False").lower() == "true"
+            else False
+        )
+
         try:
-            await self.client(Operation(operation_type="JOB_EXECUTE", args=[job_id]))
+            await self.client(
+                Operation(operation_type="JOB_EXECUTE", args=[job_id, reset_interval])
+            )
         except ValidationError:
             raise NotFoundError
+        except ModelValidationError as exc:
+            raise BadRequest(reason=f"{exc}")
 
         self.set_status(202)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
