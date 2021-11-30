@@ -1,0 +1,24 @@
+FROM python:3.10-slim
+ARG VERSION
+
+ENV BG_LOG_CONFIG_FILE=/etc/beer-garden/app-logging.yaml \
+    BG_PLUGIN_LOCAL_LOGGING_CONFIG_FILE=/etc/beer-garden/local-plugin-logging.yaml \
+    BG_PLUGIN_REMOTE_LOGGING_CONFIG_FILE=/etc/beer-garden/remote-plugin-logging.yaml \
+    BG_PLUGIN_LOCAL_DIRECTORY=/var/lib/beer-garden/plugins
+
+RUN set -ex \
+    && useradd --no-log-init -m beergarden \
+    && apt-get -y update \
+    && apt-get install -y gosu \
+    && pip install --upgrade pip \
+    && pip install --no-cache-dir beer-garden==$VERSION \
+    && mkdir /var/log/beer-garden \
+    && mkdir -p /var/lib/beer-garden/plugins \
+    && chown beergarden:beergarden /var/log/beer-garden \
+    && chown beergarden:beergarden /var/lib/beer-garden/plugins
+
+ADD example_configs/* /etc/beer-garden/
+ADD docker/docker-entrypoint.sh /usr/local/bin/
+
+EXPOSE 2337/tcp
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

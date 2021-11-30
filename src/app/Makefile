@@ -138,10 +138,18 @@ package: clean package-source package-wheel ## builds source and wheel package
 
 
 # Docker
-docker-build: ## build the docker images
-	docker build -t $(DOCKER_NAME):latest --build-arg VERSION=$(VERSION) .
+docker-build: docker-build-alpine docker-build-debian ## build the docker images
+
+docker-build-alpine:
+	docker build -t $(DOCKER_NAME):latest -f docker/Dockerfile.alpine --build-arg VERSION=$(VERSION) .
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)
+	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)-alpine
+	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)-alpine
+
+docker-build-debian:
+	docker build -t $(DOCKER_NAME):$(VERSION)-debian -f docker/Dockerfile.debian --build-arg VERSION=$(VERSION) .
+	docker tag $(DOCKER_NAME):$(VERSION)-debian $(DOCKER_NAME):$(SHORT_VERSION)-debian
 
 docker-build-unstable: package clean-python ## build nightly docker image
 	docker build -t $(DOCKER_NAME):unstable -f Dockerfile.unstable .
@@ -158,6 +166,8 @@ publish-docker: docker-build ## push the docker images
 	docker push $(DOCKER_NAME):latest
 	docker push $(DOCKER_NAME):$(VERSION)
 	docker push $(DOCKER_NAME):$(SHORT_VERSION)
+	docker push $(DOCKER_NAME):$(VERSION)-debian
+	docker push $(DOCKER_NAME):$(SHORT_VERSION)-debian
 
 publish-docker-unstable: docker-build-unstable ## push the unstable docker image
 	docker push $(DOCKER_NAME):unstable
