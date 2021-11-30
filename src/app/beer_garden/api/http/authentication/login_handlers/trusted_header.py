@@ -25,7 +25,7 @@ class SimpleRoleAssignmentSchema(BrewtilsRoleAssignmentSchema):
 
 
 class RoleAssignmentSchema(SimpleRoleAssignmentSchema):
-    """Schema for deserializing role assignments from the grou mapping config"""
+    """Schema for deserializing role assignments from the group mapping config"""
 
     _role = None
 

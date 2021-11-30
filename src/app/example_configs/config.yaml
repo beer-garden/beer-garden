@@ -2,7 +2,7 @@ auth:
   enabled: false
   guest_login_enabled: true
   role_definition_file: null
-  group_mapping_file: null
+  group_definition_file: null
   token_secret: IAMSUPERSECRET
   authentication_handlers:
     basic:
