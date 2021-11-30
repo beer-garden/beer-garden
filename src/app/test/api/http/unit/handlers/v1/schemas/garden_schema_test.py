@@ -1,12 +1,11 @@
 import copy
-from contextlib import nullcontext as does_not_raise
 import json
+from contextlib import nullcontext as does_not_raise
 
 import pytest
-
-from beer_garden.api.http.schemas.v1.garden import GardenConnectionsParamsSchema
 from marshmallow.exceptions import ValidationError as MarshmallowValidationError
 
+from beer_garden.api.http.schemas.v1.garden import GardenConnectionsParamsSchema
 
 garbage_headers_example_1 = [
     {"headers": {"0": {"0": {"": {"key": "key_1", "value": "value_1"}}}}},

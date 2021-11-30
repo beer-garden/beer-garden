@@ -1,8 +1,6 @@
 from brewtils.models import Garden
-from brewtils.schemas import (  # until we can fully decouple
-    StatusInfoSchema,
-    SystemSchema,
-)
+from brewtils.schemas import StatusInfoSchema  # noqa # until we can fully decouple
+from brewtils.schemas import SystemSchema  # noqa # until we can fully decouple
 from marshmallow import Schema, ValidationError, fields
 from marshmallow.decorators import post_load, pre_dump, pre_load, validates_schema
 
