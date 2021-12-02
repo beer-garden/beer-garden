@@ -113,6 +113,10 @@ class MongoModel:
     def changed_fields(self):
         return getattr(self, "_changed_fields", [])
 
+    @property
+    def created(self):
+        return getattr(self, "_created", False)
+
 
 # MongoEngine needs all EmbeddedDocuments to be defined before any Documents that
 # reference them. So Parameter must be defined before Command, and choices should be
@@ -316,7 +320,7 @@ class Request(MongoModel, Document):
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
     created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
     updated_at = DateTimeField(default=None, required=True)
-    status_updated_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    status_updated_at = DateTimeField()
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
     hidden = BooleanField(required=False)
@@ -480,7 +484,7 @@ class Request(MongoModel, Document):
                 f"consistent with has_parent value of {self.has_parent}"
             )
 
-        if "status" in self.changed_fields:
+        if "status" in self.changed_fields or self.created:
             self.status_updated_at = datetime.datetime.utcnow()
 
     def clean_update(self):
