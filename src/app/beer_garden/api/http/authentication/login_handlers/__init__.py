@@ -1,18 +1,19 @@
-from typing import List
+from typing import List, Type
 
 from beer_garden import config
 
+from .base import BaseLoginHandler
 from .basic import BasicLoginHandler
 from .trusted_header import TrustedHeaderLoginHandler
 
 LOGIN_HANDLERS = [BasicLoginHandler, TrustedHeaderLoginHandler]
 
 
-def enabled_login_handlers() -> List[type]:
+def enabled_login_handlers() -> List[Type[BaseLoginHandler]]:
     """Retrieve the list of login handlers that are currently enabled
 
     Returns:
-        List[type]: List containing enabled login handler classes
+        List[Type[BaseLoginHandler]]: List containing enabled login handler classes
     """
     config_root = "auth.authentication_handlers"
     handler_config_map = {
