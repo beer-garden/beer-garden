@@ -6,7 +6,7 @@ import jwt
 from tornado.httputil import HTTPServerRequest
 
 from beer_garden import config
-from beer_garden.api.http.authentication.login_handlers import LOGIN_HANDLERS
+from beer_garden.api.http.authentication.login_handlers import enabled_login_handlers
 from beer_garden.authorization import permissions_for_user
 from beer_garden.db.mongo.models import User, UserToken
 from beer_garden.errors import ExpiredTokenException, InvalidTokenException
@@ -28,7 +28,7 @@ def user_login(request: HTTPServerRequest) -> Optional[User]:
     """
     user = None
 
-    for handler in LOGIN_HANDLERS:
+    for handler in enabled_login_handlers():
         user = handler().get_user(request)
 
         if user:

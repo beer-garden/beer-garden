@@ -2,7 +2,16 @@ auth:
   enabled: false
   guest_login_enabled: true
   role_definition_file: null
+  group_definition_file: null
   token_secret: IAMSUPERSECRET
+  authentication_handlers:
+    basic:
+      enabled: True
+    trusted_header:
+      enabled: False
+      username_header: bg-username
+      user_groups_header: bg-user-groups
+      create_users: True
 db:
   connection:
     host: localhost

@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 import tornado.web
-from box import Box
 
-from beer_garden import config
 from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.api.http.client import SerializeHelper
 from beer_garden.api.http.handlers.v1.admin import AdminAPI

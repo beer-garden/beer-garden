@@ -1,0 +1,12 @@
+- group: GLOBAL_SUPERUSER
+  role_assignments:
+    - role_name: superuser
+      domain:
+        scope: Global
+- group: DEFAULT_SUPERUSER
+  role_assignments:
+    - role_name: superuser
+      domain:
+        scope: Garden
+        identifiers:
+          name: default
