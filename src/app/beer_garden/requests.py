@@ -706,6 +706,9 @@ def remove_bytes_parameter_base64(
     Returns:
         None
     """
+    if parameters is None:
+        parameters = {}
+
     for param in parameters:
         request_param = parameters[param]
         if isinstance(request_param, dict) and request_param.get("type") == "bytes":
