@@ -22,6 +22,7 @@
 
 - name: "superuser"
   permissions:
+    - "event:forward"
     - "job:create"
     - "job:read"
     - "job:update"

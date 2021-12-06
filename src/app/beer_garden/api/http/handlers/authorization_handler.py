@@ -120,6 +120,22 @@ class AuthorizationHandler(BaseHandler):
         # duplication of the work required to identify and retrieve the User object.
         _ = self.current_user
 
+    def verify_user_global_permission(self, permission: str) -> None:
+        """Verifies that the requesting use has the specified permission for the Global
+        scope.
+
+        Args:
+            permission: The permission to check against
+
+        Raises:
+            RequestForbidden: The user does not have the required object permissions
+
+        Returns:
+            None
+        """
+        if permission not in self.current_user.global_permissions:
+            raise RequestForbidden
+
     def verify_user_permission_for_object(
         self, permission: str, obj: Union[Document, BrewtilsModel]
     ) -> None:

@@ -6,6 +6,8 @@ class Permissions(Enum):
     that the permissions assigned to roles are ones that beer garden recognizes.
     """
 
+    EVENT_FORWARD = "event:forward"
+
     JOB_CREATE = "job:create"
     JOB_READ = "job:read"
     JOB_UPDATE = "job:update"
