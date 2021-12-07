@@ -1,5 +1,14 @@
 # Beer Garden Changelog
 
+## 3.8.1
+
+12/7/21
+
+#### Bug Fixes
+
+- Fixed an issue that prevented tasking of commands without parameters on remote
+  gardens (Issue #1209)
+
 ## 3.8.0
 
 11/18/21
