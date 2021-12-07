@@ -5,10 +5,12 @@ from typing import Any, Optional
 
 import six
 from brewtils.models import BaseModel
+from brewtils.models import Garden as BrewtilsGarden
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.api
 import beer_garden.router
+from beer_garden.db.schemas.garden_schema import GardenSchema
 
 
 class SerializeHelper(object):
@@ -30,6 +32,9 @@ class SerializeHelper(object):
 
         if self.json_dump(result):
             return json.dumps(result) if serialize_kwargs["to_string"] else result
+
+        if isinstance(result, BrewtilsGarden):
+            return GardenSchema(strict=True).dumps(result).data
 
         return SchemaParser.serialize(result, **(serialize_kwargs or {}))
 

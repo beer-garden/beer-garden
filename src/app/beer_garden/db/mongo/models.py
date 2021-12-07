@@ -5,7 +5,10 @@ import logging
 
 import pytz
 import six
+from marshmallow import ValidationError as MarshmallowValidationError
 from passlib.apps import custom_app_context
+
+from beer_garden.db.schemas.garden_schema import GardenConnectionsParamsSchema
 
 try:
     from lark import ParseError
@@ -49,6 +52,7 @@ from mongoengine import (
     UUIDField,
     ValidationError,
 )
+from mongoengine.errors import ValidationError as MongoengineValidationError
 
 from .fields import DummyField, StatusInfo
 from .validators import validate_permissions
@@ -751,6 +755,24 @@ class Garden(MongoModel, Document):
             },
         ],
     }
+
+    def clean(self):
+        try:
+            # use the marshmallow schema to validate the connection parameters
+            _ = GardenConnectionsParamsSchema(strict=True).load(
+                dict(self.connection_params)
+            )
+        except MarshmallowValidationError as mmve:
+            raise MongoengineValidationError(mmve.messages)
+
+    def save(self, *args, **kwargs):
+        """This exists so that it is never possible to call `save` on a Garden object
+        without validation of the connection parameters happening."""
+        kwargs.setdefault("write_concern", {"w": "majority"})  # as in `MongoModel`
+        kwargs["validate"] = True
+        kwargs["clean"] = True
+
+        return super().save(*args, **kwargs)
 
     def deep_save(self):
         if self.connection_type != "LOCAL":

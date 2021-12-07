@@ -75,7 +75,13 @@ def from_brewtils(obj: ModelItem) -> MongoModel:
         The Mongo model item
 
     """
-    model_dict = SchemaParser.serialize(obj, to_string=False)
+    if isinstance(obj, brewtils.models.Garden):
+        # first step in decoupling from Brewtils
+        from beer_garden.db.schemas.garden_schema import GardenSchema
+
+        model_dict = GardenSchema(strict=True).dump(obj).data
+    else:
+        model_dict = SchemaParser.serialize(obj, to_string=False)
     mongo_obj = MongoParser.parse(model_dict, type(obj), from_string=False)
     return mongo_obj
 
@@ -108,8 +114,18 @@ def to_brewtils(
     if getattr(obj, "pre_serialize", None):
         obj.pre_serialize()
 
-    serialized = MongoParser.serialize(obj, to_string=True)
-    parsed = SchemaParser.parse(serialized, model_class, from_string=True, many=many)
+    if model_class == brewtils.models.Garden:
+        # first step in decoupling from Brewtils
+        from beer_garden.db.schemas.garden_schema import GardenSchema
+
+        schema = GardenSchema(strict=True)
+        serialized = schema.dumps(obj).data
+        parsed = schema.loads(serialized, many=many).data
+    else:
+        serialized = MongoParser.serialize(obj, to_string=True)
+        parsed = SchemaParser.parse(
+            serialized, model_class, from_string=True, many=many
+        )
 
     return parsed
 
