@@ -5,7 +5,11 @@ import logging
 
 import pytz
 import six
+from marshmallow import ValidationError as MarshmallowValidationError
+from mongoengine.errors import FieldDoesNotExist
 from passlib.apps import custom_app_context
+
+from beer_garden.db.schemas.garden_schema import GardenSchema
 
 try:
     from lark import ParseError
@@ -49,6 +53,7 @@ from mongoengine import (
     UUIDField,
     ValidationError,
 )
+from mongoengine.errors import ValidationError as MongoengineValidationError
 
 from .fields import DummyField, StatusInfo
 from .validators import validate_permissions
@@ -727,6 +732,60 @@ class Job(MongoModel, Document):
             )
 
 
+class HttpConnectionParameters(EmbeddedDocument):
+    host = StringField(required=True)
+    port = IntField(min_value=1024, max_value=65535, required=True)
+    url_prefix = StringField(default="/")
+    ca_cert = StringField(required=False)
+    ca_verify = BooleanField(required=True)
+    client_cert = StringField(required=False)
+    client_key = StringField(required=False)
+    ssl = BooleanField(required=True)
+
+
+class StompSSLParameters(EmbeddedDocument):
+    use_ssl = BooleanField(required=True)
+
+
+class StompHeader(EmbeddedDocument):
+    key = StringField(required=True)
+    value = StringField(required=True)
+
+
+class StompConnectionParameters(EmbeddedDocument):
+    ssl = EmbeddedDocumentField(StompSSLParameters, required=True)
+    headers = ListField(EmbeddedDocumentField(StompHeader), required=False)
+    host = StringField(required=True)
+    port = IntField(min_value=1024, max_value=65535, required=True)
+    send_destination = StringField(required=False)
+    subscribe_destination = StringField(required=False)
+    username = StringField(require=False)
+    password = StringField(required=False)
+
+
+class GardenConnectionParams(EmbeddedDocument):
+    http = EmbeddedDocumentField(HttpConnectionParameters, required=False)
+    stomp = EmbeddedDocumentField(StompConnectionParameters, required=False)
+
+
+class ConnectionGenericEmbeddedDocumentField(GenericEmbeddedDocumentField):
+    def to_python(self, value):
+        if value == {} or value is None:
+            return None
+        if "http" in value or "stomp" in value:
+            value.update({"_cls": "GardenConnectionParams"})
+        try:
+            return super().to_python(value)
+        except (FieldDoesNotExist, KeyError) as err:
+            # catches the cases where the dict isn't empty and both 'http' and 'stomp'
+            # are absent or there are additional spurious keys present
+            raise ValidationError(f"Found bad key in connection parameters: {str(err)}")
+
+
+class EmptyConnectionParams(EmbeddedDocument):
+    pass
+
+
 class Garden(MongoModel, Document):
     brewtils_model = brewtils.models.Garden
 
@@ -735,6 +794,9 @@ class Garden(MongoModel, Document):
     status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
     namespaces = ListField()
     connection_type = StringField()
+    # connection_params = ConnectionGenericEmbeddedDocumentField(
+    #     choices=(GardenConnectionParams, EmptyConnectionParams), required=False
+    # )
     connection_params = DictField()
     systems = ListField(ReferenceField(System, reverse_delete_rule=PULL))
 
@@ -751,6 +813,29 @@ class Garden(MongoModel, Document):
             },
         ],
     }
+
+    def pre_serialize(self):
+        # the `to_brewtils` code wants to serialize these objects; this allows that
+        # to happen
+        from beer_garden.db.schemas.garden_schema import GardenConnectionsParamsSchema
+
+        self.connection_params = (
+            GardenConnectionsParamsSchema().dump(self.connection_params).data
+        )
+
+    def save(self, *args, **kwargs):
+        # validation via schema
+        try:
+            data, errs = GardenSchema(strict=True).dump(self)
+            logger = logging.getLogger(__name__)
+            from pprint import pformat
+
+            logger.error(f"Got data {pformat(data)}")
+            logger.error(f"Got errs {errs}")
+        except MarshmallowValidationError as mmve:
+            raise MongoengineValidationError(str(mmve))
+
+        super().save(*args, **kwargs)
 
     def deep_save(self):
         if self.connection_type != "LOCAL":

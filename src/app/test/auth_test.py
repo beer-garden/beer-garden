@@ -113,7 +113,11 @@ def user_with_role_assignments(
 
 @pytest.fixture
 def test_garden(role_assignment_for_garden_scope):
-    garden = Garden(**role_assignment_for_garden_scope.domain.identifiers).save()
+    args = {
+        **{"connection_type": "LOCAL"},
+        **role_assignment_for_garden_scope.domain.identifiers,
+    }
+    garden = Garden(**args).save()
 
     yield garden
     garden.delete()
