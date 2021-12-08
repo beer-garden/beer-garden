@@ -1,10 +1,43 @@
 # Beer Garden Changelog
 
+## 3.9.0
+
+12/8/21
+
+### Added Features
+
+- The `status_updated_at` timestamp is now displayed on the Request view page.
+  (Issue #1142)
+- The `/api/v1/job/<id>/execute` endpoint now takes an optional `reset_interval`
+  parameter which, when set to true, will update the next run time of an
+  interval trigger job to be based on the current adhoc execution, rather than
+  keeping the next run time that was based on the previously scheduled
+  execution. (Issue #1173)
+- Command parameters of type `Bytes` are now rendered as a file upload dialog in
+  the tasking interface. Files provided this way will be properly sent down to
+  remote gardens for tasking, unlike the `Base64` paramter type. For this
+  reason, it is recommended that `Bytes` be used for parameters that intend to
+  take a file as input. (Issue #1165)
+
+### Bug Fixes
+
+- Child requests are once again properly returned via the `/api/v1/request`
+  endpoint and properly displayed on the request page in the UI (Issue #1218)
+
+### Other Changes
+
+- Added the following for use in future authorization related features:
+  - A trusted header login handler for authenticating users based on request
+    headers that indicate the username and a list of group memberships. (Issue
+    #1198)
+  - Improved handling of refresh tokens in the UI (Issue #1187)
+  - Add authorization checks to the `/api/v1/forward` endpoint. (Issue #1207)
+
 ## 3.8.1
 
 12/7/21
 
-#### Bug Fixes
+### Bug Fixes
 
 - Fixed an issue that prevented tasking of commands without parameters on remote
   gardens (Issue #1209)
@@ -13,7 +46,7 @@
 
 11/18/21
 
-#### Added Features
+### Added Features
 
 - Requests now have a `status_updated_at` field representing the time of the
   last status change. (Issue #1132)
@@ -22,14 +55,14 @@
 - Added the ability to do ad-hoc runs of scheduled jobs via both the API and UI
   (Issues #1062, #1066)
 
-#### Bug Fixes
+### Bug Fixes
 
 - Properly validate input on the job import API (`/api/v1/import/job`) (Issue
   #1178)
 - Dependency versions for development and deployment are now consistent (Issue
   #1182)
 
-#### Other Changes
+### Other Changes
 
 - Added the following for use in future authorization related features:
   - Refresh token support (Issue #1171)
@@ -43,7 +76,7 @@
 
 10/15/21
 
-#### Added Features
+### Added Features
 
 - Login endpoint added allowing user/password entry to receive a _JWT_ auth
   token (Issue #1134)
@@ -52,7 +85,7 @@
 - Local and remote plugin logging config files now separated (Issue #817)
 - Helper functions created to determine a user's permissions (Issue #1122)
 
-#### Bug Fixes
+### Bug Fixes
 
 - Hidden files in a plugin directory no longer show an error in the logs (Issue
   #1097)
@@ -65,7 +98,7 @@
 - Large requests now better determined whether they need to be stored in GridFS
   (Issue #1038)
 
-#### Other Changes
+### Other Changes
 
 - Project is now able to accept pull requests from those who are working from a
   fork
@@ -75,11 +108,11 @@
 
 9/22/21
 
-#### Added Features
+### Added Features
 
 - Added new api endpoints for importing and exporting jobs (Issue #1067)
 
-#### Bug Fixes
+### Bug Fixes
 
 - It is no longer possible to create multiple gardens sharing the same name
   (Issue #727)
@@ -91,7 +124,7 @@
   default values are being used (Issue #1104)
 - Connection reliability fixes for the stomp entrypoint (Issue #1102)
 
-#### Other Changes
+### Other Changes
 
 - Added the following for use in future authorization related features:
   - Authorization related database models (Issue #1089)
@@ -102,13 +135,13 @@
 
 8/18/21
 
-#### Added Features
+### Added Features
 
 - Command-based choices request will now time out after 30 seconds
 - Theme selection now persisted in browser storage
 - Added config option for changing commands of non-dev systems
 
-#### Bug Fixes
+### Bug Fixes
 
 - Command-based choices now wait for an instance to be selected
 - Read-log requests now fully formed
@@ -118,7 +151,7 @@
 - Fixed operations being routed to incorrect gardens in certain cases
 - Command-based choices now show an indication when request fails
 
-#### Other Changes
+### Other Changes
 
 - Setting timezone to UTC in docker image
 
@@ -126,7 +159,7 @@
 
 8/2/21
 
-#### Bug Fixes
+### Bug Fixes
 
 - Jobs removed during an execution no longer respawn upon completion (Issue
   #1081/ PR #1084)
@@ -135,7 +168,7 @@
 
 6/24/21
 
-#### Added Features
+### Added Features
 
 - Scheduled jobs now have a timeout field (Issue #1046 / PR #1049)
 - Forwarding REST calls now support `blocking` and `timeout` parameters (Issue
@@ -144,7 +177,7 @@
 - Systems can now have UI templates (Issue #997 / PR #1005)
 - Commands now have a metadata field (Issue #358 / PR #998)
 
-#### Bug Fixes
+### Bug Fixes
 
 - Scheduled job now displays next run time correctly (Issue #972 / PR #1059)
 - Handling request cancellation events from child gardens (Issue #932 / PR
@@ -162,7 +195,7 @@
 - Fixed issue with plugin log reads immediately timing out (Issue #999 / PR
   #1000)
 
-#### Other Changes
+### Other Changes
 
 - Moved status icon on request view page (Issue #1041 / PR #1042)
 
@@ -170,11 +203,11 @@
 
 4/23/21
 
-#### Added Features
+### Added Features
 
 - Can now modify scheduled jobs (Issue #294 / PR #988)
 
-#### Bug Fixes
+### Bug Fixes
 
 - Fixed file parameters regression (Issue #992 / PR #995)
 - Better handling for out-of-order request updates from child gardens (Issue
@@ -184,7 +217,7 @@
 
 4/16/21
 
-#### Bug Fixes
+### Bug Fixes
 
 - Fixed regression where headers were not set when sending STOMP messages (Issue
   #969 / PR #970)
@@ -194,7 +227,7 @@
 - Child request view starts as collapsed on request view page (Issue #984 / PR
   #985)
 
-#### Other Changes
+### Other Changes
 
 - Changed STOMP configuration items (PR #968)
 
@@ -202,14 +235,14 @@
 
 4/12/21
 
-#### Bug Fixes
+### Bug Fixes
 
 - Fixed error where certain database models would hold onto references (Issue
   #959 / PR #960)
 - Fixed various issues with TLS stomp connections (Issue #946 / PR #947)
 - Garden sync operations now work more consistently (Issue #941 / PR #961)
 
-#### Other Changes
+### Other Changes
 
 - Change to how child garden connection parameters are stored (Issue #912 / PR
   #962)
@@ -218,11 +251,11 @@
 
 4/9/21
 
-#### Bug Fixes
+### Bug Fixes
 
 - Scheduled jobs now work without a namespace (Issue #952 / PR #954)
 
-#### Other Changes
+### Other Changes
 
 - UI image no longer uses IPv6 by default (Issue #950 / PR #951)
 
@@ -230,7 +263,7 @@
 
 4/1/21
 
-#### Bug Fixes
+### Bug Fixes
 
 - Better error message when request choices validation times out (Issue #938 /
   PR #945)
@@ -253,11 +286,11 @@
 - Improved error logging for HTTP parent/child communication errors (Issue #873
   / PR #889)
 
-#### Added Features
+### Added Features
 
 - Added descriptions to system admin page (Issue #840 / PR #843)
 
-#### Other Changes
+### Other Changes
 
 - Event notifications are always wrapped in Operations (Issue #918 / PR #920)
 
@@ -265,7 +298,7 @@
 
 2/5/21
 
-#### Bug Fixes
+### Bug Fixes
 
 - Database migration script no longer requires has_parent field (Issue #868 / PR
   #869)
@@ -274,19 +307,19 @@
 
 2/5/21
 
-#### Bug Fixes
+### Bug Fixes
 
 - Improved the position of the popover shown for a parent request (Issue #862 /
   PR #865)
 - Checkbox label on commands page now works correctly (Issue #860 / PR #866)
 - Fixing incorrect Request collection name (Issue #833 / PR #834)
 
-#### Added Features
+### Added Features
 
 - Requests based on a hidden command will now be marked as hidden themselves
   (Issue #414 / PR #849)
 
-#### Other Changes
+### Other Changes
 
 - Request index page checkbox labels have been tweaked (Issue #861 / PR #864)
 - Beer-garden systemd process now runs with umask 0002 (Issue #816 / PR #844)
@@ -295,7 +328,7 @@
 
 1/11/21
 
-#### Bug Fixes
+### Bug Fixes
 
 - System Queue Management Not Working on Admin Page(Issue #823 / PR #824)
 - Scheduler Not Rendering Trigger Form (Issue #819 / PR #821)
@@ -309,7 +342,7 @@
   #801)
 - Moved metadata field into STOMP shutdown event properly (PR #802)
 
-#### Added Features
+### Added Features
 
 - Run systemd service as beer-garden user (Issue #816 / PR #818)
 - Warn when beer.conf results in no instances (Issue #796 / PR #804)
@@ -322,7 +355,7 @@
 
 12/22/20
 
-#### Bug Fixes
+### Bug Fixes
 
 - Fixed issue with entry point status event publishing
 
@@ -330,12 +363,12 @@
 
 12/22/20
 
-#### Added Features
+### Added Features
 
 - Parent and child gardens can now use Stomp-based communication (#761)
 - Can now create a child garden using the UI (#726)
 
-#### Bug Fixes
+### Bug Fixes
 
 - Fixed regression that made it impossible to removed remote plugins (#794)
 - Better error handling during system removal (#749, #771)
@@ -344,12 +377,12 @@
 
 12/15/20
 
-#### Added Features
+### Added Features
 
 - Unassociated runners are now shown on the System Admin page (#708)
 - Can now pass files as parameters (#368)
 
-#### Bug Fixes
+### Bug Fixes
 
 - Shutdown procedure is more robust when running under systemd (#770)
 - Corrected tooltip for System Admin page start button (#768)
@@ -360,7 +393,7 @@
 
 11/12/20
 
-#### Bug Fixes
+### Bug Fixes
 
 - Fix issue preventing clean shutdown on Python 3.7 (#738)
 
@@ -371,7 +404,7 @@
 Note: This is a major release. Please check out the
 [site](https://beer-garden.io/) for more in-depth documentation.
 
-#### Added Features
+### Added Features
 
 - Scheduler now supports triggering from file events (#647)
 - jquery and lodash objects are now available when creating custom templates
@@ -389,7 +422,7 @@ Note: This is a major release. Please check out the
 - Plugin logs can now be retrieved and displayed on the UI System Admin page
 - All plugins automatically request a logging configuration from Beer-garden
 
-#### Other Changes
+### Other Changes
 
 - UI Queue Admin functionality has been moved into System Admin page (#533)
 - Drop official support for CentOS 6 (#225)
@@ -402,7 +435,7 @@ Note: This is a major release. Please check out the
 - Python version bundled with rpm is now 3.7 instead of 3.6
 - Commands no longer have an ID field
 
-#### Removed
+### Removed
 
 - Publishing events to RabbitMQ and Mongo has been removed (#681)
 - Authentication / Authorization functionality: Users, Roles, Login, etc.
@@ -411,7 +444,7 @@ Note: This is a major release. Please check out the
 
 10/27/20 Brew-view 2.4.19, Bartender 2.4.8, BG-utils 2.4.10
 
-#### Added Features
+### Added Features
 
 - Can now inject specific host environment variables into local plugin processes
   (#686)
@@ -420,7 +453,7 @@ Note: This is a major release. Please check out the
 
 10/13/20 Brew-view 2.4.19, Bartender 2.4.7, BG-utils 2.4.10
 
-#### Bug Fixes
+### Bug Fixes
 
 - Fixed command invocation error when request has no parameters (#351)
 
@@ -428,7 +461,7 @@ Note: This is a major release. Please check out the
 
 9/23/20 Brew-view 2.4.19, Bartender 2.4.7, BG-utils 2.4.10
 
-#### Bug Fixes
+### Bug Fixes
 
 - Removed mongo model caching from Pruner. Releasing memory once the delete is
   completed (#604)
@@ -437,7 +470,7 @@ Note: This is a major release. Please check out the
 
 2/20/20 Brew-view 2.4.19, Bartender 2.4.6, BG-utils 2.4.10
 
-#### Bug Fixes
+### Bug Fixes
 
 - Start and end dates are correctly applied to new interval jobs (#431)
 
@@ -445,7 +478,7 @@ Note: This is a major release. Please check out the
 
 1/30/20 Brew-view 2.4.18, Bartender 2.4.6, BG-utils 2.4.9
 
-#### Bug Fixes
+### Bug Fixes
 
 - Returning 418 status code when a model is too large to save (#308)
 
@@ -453,7 +486,7 @@ Note: This is a major release. Please check out the
 
 1/14/20 Brew-view 2.4.17, Bartender 2.4.6, BG-utils 2.4.9
 
-#### Bug Fixes
+### Bug Fixes
 
 - Fixed issue where scheduler would not work with self-signed cert (#391)
 
@@ -461,7 +494,7 @@ Note: This is a major release. Please check out the
 
 12/5/19 Brew-view 2.4.16, Bartender 2.4.6, BG-utils 2.4.9
 
-#### Added Features
+### Added Features
 
 - Added configuration flag to allow rendering unsanitized output (#360)
 
@@ -469,12 +502,12 @@ Note: This is a major release. Please check out the
 
 11/12/19 Brew-view 2.4.15, Bartender 2.4.6, BG-utils 2.4.9
 
-#### Bug Fixes
+### Bug Fixes
 
 - Requests should now survive a broker restart (#352)
 - Fixed issue where admin role and user pages could fail to update (#345)
 
-#### Other Changes
+### Other Changes
 
 - Admin queues are now durable (#356)
 - Admin queues are no longer created with the auto-delete flag (#350)
@@ -483,11 +516,11 @@ Note: This is a major release. Please check out the
 
 9/27/19 Brew-view 2.4.14, Bartender 2.4.5, BG-utils 2.4.8
 
-#### Bug Fixes
+### Bug Fixes
 
 - Static choices with alternate display text no longer fail validation (#325)
 
-#### Other Changes
+### Other Changes
 
 - Typeahead parameters now use a scrollable display (#318)
 - Better stacktrace logging for local plugins (#317)
@@ -496,11 +529,11 @@ Note: This is a major release. Please check out the
 
 9/5/19 Brew-view 2.4.13, Bartender 2.4.4, BG-utils 2.4.8
 
-#### Bug Fixes
+### Bug Fixes
 
 - HTML output is now rendered correctly (#312)
 
-#### Other Changes
+### Other Changes
 
 - Now using npm instead of yarn
 
@@ -508,13 +541,13 @@ Note: This is a major release. Please check out the
 
 6/27/19 Brew-view 2.4.12, Bartender 2.4.4, BG-utils 2.4.8
 
-#### Bug Fixes
+### Bug Fixes
 
 - Semicolon in request index page filters no longer breaks (#302)
 - Granfana link descriptions on about page respect application name (#301)
 - Frontend websocket connection now handles non-default base path (#298)
 
-#### Added Features
+### Added Features
 
 - Support for Pika v1 (#305)
 - Scheduled jobs can now specify a max number of concurrent executions (#209)
@@ -524,7 +557,7 @@ Note: This is a major release. Please check out the
 
 4/24/19 Brew-view 2.4.11, Bartender 2.4.3, BG-utils 2.4.7
 
-#### Bug Fixes
+### Bug Fixes
 
 - Fixed configuration generation regression caused by #224 (#254)
 - Child requests cannot be created after the parent is completed (#252)
@@ -532,7 +565,7 @@ Note: This is a major release. Please check out the
 - Fixed issue that could cause mongo pruner to not run (#245)
 - Mongo pruner will only directly remove top-level requests (#244)
 
-#### Added Features
+### Added Features
 
 - Toggle for displaying child requests on the index page (#248)
 - Added button for refreshing request index without reloading the page (#236)
@@ -542,7 +575,7 @@ Note: This is a major release. Please check out the
 
 2/22/19 Brew-view 2.4.10, Bartender 2.4.2, BG-utils 2.4.6
 
-#### Bug Fixes
+### Bug Fixes
 
 - Request index page overall search no longer specifies a hint (#235)
 - Bartender errors correctly propagate back through thrift interface (#229)
@@ -550,12 +583,12 @@ Note: This is a major release. Please check out the
 - Dynamic choices URL source works correctly with a list of strings (#218)
 - All files correctly removed when upgrading using the rpm (#215)
 
-#### Added Features
+### Added Features
 
 - Config file upgrades can now be converted between json and yaml (#72)
 - Centos 7 rpm install now uses real systemd unit files (#17)
 
-#### Other Changes
+### Other Changes
 
 - Config file extensions for rpm install are now .yaml, not .yml (#226)
 - Config files no longer contain bootstrap entries (#224)
@@ -564,7 +597,7 @@ Note: This is a major release. Please check out the
 
 1/11/19 Brew-view 2.4.7, Bartender 2.4.1, BG-utils 2.4.2
 
-#### Bug Fixes
+### Bug Fixes
 
 - Bartender avoids extra network call if shut down while still starting (#214)
 - Correct Brew-view startup failure when authentication is enabled (#207)
@@ -577,11 +610,11 @@ Note: This is a major release. Please check out the
 - Styling fix for Systems Management page (#174)
 - Changing choices configuration no longer requires removing System (#58)
 
-#### Added Features
+### Added Features
 
 - Request view page will show spinner while request is in progress (#204)
 
-#### Other Changes
+### Other Changes
 
 - Increased default Bartender timeout to 13 seconds (#182)
 - Added additional indexes to increase Request Index page performance (#105)
@@ -590,11 +623,11 @@ Note: This is a major release. Please check out the
 
 10/9/18 Brew-view 2.4.6, Bartender 2.4.0 BG-utils 2.4.0
 
-#### Bug Fixes
+### Bug Fixes
 
 - Fixed a race that could cause request creation to wait forever (#195)
 
-#### Added Features
+### Added Features
 
 - Added Instance deletion endpoint to REST API
 
@@ -602,7 +635,7 @@ Note: This is a major release. Please check out the
 
 9/25/18 Brew-view 2.4.5, Bartender 2.4.0, BG-utils 2.4.0
 
-#### Bug Fixes
+### Bug Fixes
 
 - Corrected problem with brew-view escalating CPU usage (#187)
 - Select boxes in the UI now have a maximum height (#169)
@@ -611,12 +644,12 @@ Note: This is a major release. Please check out the
 
 9/25/18 Brew-view 2.4.4, Bartender 2.4.0, BG-utils 2.4.0
 
-#### Bug Fixes
+### Bug Fixes
 
 - Request create timeout is now -1 by default to match pre-2.4 behavior (#183)
 - The landing page now links newly-created systems correctly (#181)
 
-#### Other Changes
+### Other Changes
 
 - Changed use of newly-reserved 'async' keyword to support Python 3.7 (#175)
 
@@ -624,7 +657,7 @@ Note: This is a major release. Please check out the
 
 9/5/18 Brew-view 2.4.1, Bartender 2.4.0, BG-utils 2.4.0
 
-#### Bug Fixes
+### Bug Fixes
 
 - Fixed issue with spinner always being shown on some pages (#172)
 
@@ -632,7 +665,7 @@ Note: This is a major release. Please check out the
 
 9/5/18 Brew-view 2.4.0, Bartender 2.4.0, BG-utils 2.4.0
 
-#### Added Features
+### Added Features
 
 - 'Created' filtering in request index view now supports second precision (#153)
 - Browser window title now reflects current page (#145)
@@ -649,7 +682,7 @@ Note: This is a major release. Please check out the
 - Request creation can now wait for completion without polling (brew-view #16)
 - Periodic request scheduler (#10)
 
-#### Bug Fixes
+### Bug Fixes
 
 - Bartender checks for connection to Brew-view before Mongo to fix a race (#160)
 - Corrected condition that could cause 'Error: ' to flash on request view (#151)
@@ -663,7 +696,7 @@ Note: This is a major release. Please check out the
 - Fixing support for Unicode string values when using Python 2 (#54)
 - Nested request display looks better when using slate theme (#41)
 
-#### Other Changes
+### Other Changes
 
 - Request index spinner icon looks better on slate theme (#155)
 - Split system and instance columns on request index page (#103)
@@ -672,7 +705,7 @@ Note: This is a major release. Please check out the
 
 6/14/18 Brew-view 2.3.10, Bartender 2.3.7, BG-utils 2.3.6
 
-#### Bug Fixes
+### Bug Fixes
 
 - Re-added Request indexes that were removed in 2.3.7
 
@@ -680,7 +713,7 @@ Note: This is a major release. Please check out the
 
 6/12/18 Brew-view 2.3.9, Bartender 2.3.6, BG-utils 2.3.4
 
-#### Bug Fixes
+### Bug Fixes
 
 - Fixed problem with new versions of Marshmallow causing empty requests to be
   returned from the request list endpoint
@@ -700,12 +733,12 @@ level as the upgrade occurs.
 
 See issue #84 for a detailed explanation.
 
-#### Bug Fixes
+### Bug Fixes
 
 - Database operations sometimes timed out on slow networks due to configuration
   error (#84)
 
-#### Other Changes
+### Other Changes
 
 - Reworked database indexes so Request queries are more efficient (#84)
 
@@ -713,7 +746,7 @@ See issue #84 for a detailed explanation.
 
 4/6/18 Brew-view 2.3.6, Bartender 2.3.5, BG-utils 2.3.3
 
-#### Added Features
+### Added Features
 
 - Using RabbitMQ publisher confirms when publishing requests (#37)
 - Brew-view accepts ca_cert, ca_path, and client_cert_verify configuration
@@ -721,7 +754,7 @@ See issue #84 for a detailed explanation.
 - Bartender now explictly checks for connectivity to Mongo and RabbitMQ admin
   interface on startup (#38, #48)
 
-#### Bug Fixes
+### Bug Fixes
 
 - Status monitor no longer continuously restarts when RabbitMQ connectivity is
   lost
@@ -729,7 +762,7 @@ See issue #84 for a detailed explanation.
 - Child rows in nested request display now show correct created time
 - Command-based dynamic choices now work without a 'default' instance (#47)
 
-#### Other Changes
+### Other Changes
 
 - Adding explict support for Python 3.4
 - Using non-Brewmaster exceptions from Brewtils
@@ -739,12 +772,12 @@ See issue #84 for a detailed explanation.
 
 4/3/18 Brew-view 2.3.5, Bartender 2.3.4, BG-utils 2.3.3
 
-#### Added Features
+### Added Features
 
 - Attempting to update a completed request without actually modifiying data is
   no longer an error (beer-garden/brew-view#49)
 
-#### Bug Fixes
+### Bug Fixes
 
 - Configuration file generation fix for Python 2
 
@@ -752,12 +785,12 @@ See issue #84 for a detailed explanation.
 
 2/21/18 Brew-view 2.3.3, Bartender 2.3.3, BG-utils 2.3.2
 
-#### Bug Fixes
+### Bug Fixes
 
 - Bartender shutdown will now be clean even before making Brew-view and RabbitMQ
   connections
 
-#### Other Changes
+### Other Changes
 
 - Using [Yapconf] for configuration loading
 - Running Flake8 linting on source and tests
@@ -766,7 +799,7 @@ See issue #84 for a detailed explanation.
 
 2/5/18 Brew-view 2.3.1, Bartender 2.3.0, BG-utils 2.3.0
 
-#### Bug Fixes
+### Bug Fixes
 
 - Fixing issue with manual request creation targeting incorrect system
 
@@ -774,7 +807,7 @@ See issue #84 for a detailed explanation.
 
 1/26/18
 
-#### Added Features
+### Added Features
 
 - Bartender can now be configured to skip server certificate verification when
   making HTTPS requests
@@ -796,7 +829,7 @@ See issue #84 for a detailed explanation.
 - Notifications are now published to RabbitMQ and/or a specified URL when
   significant events occur
 
-#### Bug Fixes
+### Bug Fixes
 
 - Multi Parameters that are type 'Dictionary' now work correctly
 - Corrected RabbitMQ users - the 'normal' user is now only used by plugins and
@@ -808,7 +841,7 @@ See issue #84 for a detailed explanation.
 - Corrected the validation icon and close button overlap for string parameters
   inside an array
 
-#### Other Changes
+### Other Changes
 
 - Systems can no longer be registered with the same display name and version as
   an existing System
@@ -820,7 +853,7 @@ See issue #84 for a detailed explanation.
 
 11/21/17
 
-#### Bug Fixes
+### Bug Fixes
 
 - Modified System deletion procedure so it works correctly on Systems with no
   Instances
@@ -831,7 +864,7 @@ See issue #84 for a detailed explanation.
 
 10/23/17
 
-#### Added Features
+### Added Features
 
 - Added popover icon with an explanation for a Request's status to the Request
   View page
@@ -859,7 +892,7 @@ See issue #84 for a detailed explanation.
 - Added `metadata` field to Instance model
 - Brewtils: `RestClient` and `EasyClient` now support PATCHing a `System`
 
-#### Bug Fixes
+### Bug Fixes
 
 - Link to RabbitMQ Admin page now works correctly with non-default virtual host
 - Large (>4MB) output no longer causes a Request to fail to complete
@@ -886,7 +919,7 @@ See issue #84 for a detailed explanation.
 - Smarter reconnect logic when the RabbitMQ connection fails
 - Attempting to remove 'orphaned' commands if any are found during a query
 
-#### Deprecations / Removals
+### Deprecations / Removals
 
 - The following API endpoints are deprecated:
   - POST `/api/v1/admin/system`
@@ -905,7 +938,7 @@ See issue #84 for a detailed explanation.
   - `BrewmasterEasyClient`, instead use `EasyClient`
   - `BrewmasterSystemClient`, instead use `SystemClient`
 
-#### Other Changes
+### Other Changes
 
 - Searching on Request Index page no longer searches request output
 - Reset button on the Command View page ignore 'Pour it Again' values and always
@@ -923,7 +956,7 @@ See issue #84 for a detailed explanation.
 
 8/04/17
 
-#### Bug Fixes
+### Bug Fixes
 
 - Corrected typo in request index page that prevented filtering for IN_PROGRESS
   requests from working
@@ -932,7 +965,7 @@ See issue #84 for a detailed explanation.
 
 8/01/17
 
-#### Bug Fixes
+### Bug Fixes
 
 - Reworked request index query to address performance bottleneck
 
@@ -940,7 +973,7 @@ See issue #84 for a detailed explanation.
 
 7/26/17
 
-#### Bug Fixes
+### Bug Fixes
 
 - Fixed frontend validation problem for a nullable boolean parameter with a null
   default
@@ -949,7 +982,7 @@ See issue #84 for a detailed explanation.
 
 7/14/17
 
-#### Bug Fixes
+### Bug Fixes
 
 - Added Object.assign shim for compatability with older browsers
 
@@ -957,7 +990,7 @@ See issue #84 for a detailed explanation.
 
 7/5/17
 
-#### Added Features
+### Added Features
 
 - Support for remote plugins
 - Support for custom HTML templates on request pages
@@ -967,7 +1000,7 @@ See issue #84 for a detailed explanation.
 - Support for metadata for a plugin
 - Support for Python 3
 
-#### Bug Fixes
+### Bug Fixes
 
 - Optional model with default values
 - Bug where nested parameters would not get checked in system validation
@@ -975,7 +1008,7 @@ See issue #84 for a detailed explanation.
 - Bug with optional list arguments
 - Bug where nested request output type didnt look right
 
-#### Other Changes
+### Other Changes
 
 - Added better exception handling to API
 - Better error reporting for serialization failures
@@ -983,14 +1016,14 @@ See issue #84 for a detailed explanation.
 - The command model has changed
 - RabbitMQ now uses a topic instead of an exchange
 
-#### Security
+### Security
 
 - All Docker images have been upgraded
 - We now build CentOS 6 and CentOS7 RPMs
 
 ## 1.1.0
 
-#### Added Features
+### Added Features
 
 - Support for auto-reconnect to brew-view if it is down on startup
 - Support for stopping, starting and reloading plugins
@@ -1002,7 +1035,7 @@ See issue #84 for a detailed explanation.
 
 7/19/2016
 
-#### Added Features
+### Added Features
 
 - Support for Multi-threaded, single instance plugins
 - Support for nested requests
@@ -1010,11 +1043,11 @@ See issue #84 for a detailed explanation.
 - Support for comments on requests
 - Support for purging INFO commands
 
-#### Bug Fixes
+### Bug Fixes
 
 - Bug where RPMs would not get correctly updated
 
-#### Other Changes
+### Other Changes
 
 - Join times for threads to be non-zero. This greatly reduces CPU utilization
 
@@ -1022,7 +1055,7 @@ See issue #84 for a detailed explanation.
 
 12/30/2015
 
-#### Bug Fixes
+### Bug Fixes
 
 - Bug where Plugins would not work with non-ssl enabled versions of brew-view
 
@@ -1030,7 +1063,7 @@ See issue #84 for a detailed explanation.
 
 12/3/15
 
-#### Security
+### Security
 
 - Added SSL Support
 
@@ -1038,7 +1071,7 @@ See issue #84 for a detailed explanation.
 
 11/10/15
 
-#### Other Changes
+### Other Changes
 
 - Bumped bg-utils version
 
@@ -1046,7 +1079,7 @@ See issue #84 for a detailed explanation.
 
 10/2/15
 
-#### Added Features
+### Added Features
 
 - Support for Local Plugins
 - Initial Build of the Backend Threads
