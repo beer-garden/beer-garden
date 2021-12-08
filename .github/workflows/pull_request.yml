@@ -122,6 +122,19 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      # Custom tag extractor to find Brewtils Branch
+      - name: Find Brewtils Branch
+        uses: TheBurchLog/body-env-tag-action@1.0
+        with:
+          tag: "brewtils:"
+          env-variable: "brewtils"
+          default-value: "develop"
+          tag-position: -1
+
+      # Used the hashtag here instead of slash allow for branches to have slashes in them
+      - name: Update Brewtils Branch
+        run: sed -i 's#brewtils@develop#brewtils@${{env.brewtils}}#g' requirements-dev.txt
+
       # Need to update if we support other OS's
       - name: Cache PIP Install
         uses: actions/cache@v2

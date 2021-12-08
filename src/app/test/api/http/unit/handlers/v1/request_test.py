@@ -162,6 +162,23 @@ def request_not_permitted(local_system):
 
 
 @pytest.fixture
+def request_permitted_child(remote_system, request_permitted):
+    request = Request(
+        system=remote_system.name,
+        system_version=remote_system.version,
+        namespace=remote_system.namespace,
+        command="mycommand",
+        instance_name="default",
+        parameters={"im": "thechild"},
+        parent=request_permitted,
+    )
+    request.save()
+
+    yield request
+    request.delete()
+
+
+@pytest.fixture
 def operator_role():
     role = Role(
         name="operator",
@@ -304,6 +321,19 @@ class TestRequestAPI:
             Request.objects.get(id=request_not_permitted.id).status
             == request_not_permitted.status
         )
+
+    @pytest.mark.gen_test
+    def test_get_populates_children_when_present(
+        self, http_client, base_url, request_permitted, request_permitted_child
+    ):
+        url = f"{base_url}/api/v1/requests/{request_permitted.id}"
+
+        response = yield http_client.fetch(url)
+        response_body = json.loads(response.body.decode("utf-8"))
+
+        assert response.code == 200
+        assert response_body["children"] is not None
+        assert response_body["children"][0]["id"] == str(request_permitted_child.id)
 
 
 class TestRequestListAPI:

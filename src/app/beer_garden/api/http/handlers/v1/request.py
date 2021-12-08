@@ -52,6 +52,10 @@ class RequestAPI(AuthorizationHandler):
         """
         request = self.get_or_raise(Request, REQUEST_READ, id=request_id)
 
+        # brewtils dependencies make universal handling of children overly cumbersome,
+        # so just manually populate them here for now.
+        request.children = Request.objects.filter(parent=request)
+
         response = MongoParser.serialize(request)
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
