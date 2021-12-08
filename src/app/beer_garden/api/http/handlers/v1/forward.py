@@ -4,12 +4,13 @@ import asyncio
 from brewtils.errors import TimeoutExceededError
 from brewtils.schema_parser import SchemaParser
 
-from beer_garden.api.http.base_handler import BaseHandler
+from beer_garden.api.authorization import Permissions
+from beer_garden.api.http.handlers import AuthorizationHandler
+
+EVENT_FORWARD = Permissions.EVENT_FORWARD.value
 
 
-class ForwardAPI(BaseHandler):
-
-    # @Todo Create new Persmission
+class ForwardAPI(AuthorizationHandler):
     async def post(self):
         """
         ---
@@ -37,7 +38,7 @@ class ForwardAPI(BaseHandler):
             schema:
                 $ref: '#/definitions/Forward'
         responses:
-          200:
+          204:
             description: Forward Request Accepted
           400:
             $ref: '#/definitions/400Error'
@@ -46,6 +47,8 @@ class ForwardAPI(BaseHandler):
         tags:
           - Forward
         """
+        self.verify_user_global_permission(EVENT_FORWARD)
+
         operation = SchemaParser.parse_operation(
             self.request.decoded_body, from_string=True
         )
