@@ -11,14 +11,14 @@ tokenService.$inject = ["$http", "localStorageService"];
 export default function tokenService($http, localStorageService) {
   const service = {
     getToken: () => {
-      return localStorageService.get("token", "sessionStorage");
+      return localStorageService.get("token");
     },
     handleToken: (token) => {
-      localStorageService.set("token", token, "sessionStorage");
+      localStorageService.set("token", token);
       $http.defaults.headers.common.Authorization = "Bearer " + token;
     },
     clearToken: () => {
-      localStorageService.remove("token", "sessionStorage");
+      localStorageService.remove("token");
       $http.defaults.headers.common.Authorization = undefined;
     },
     getRefresh: () => {
@@ -55,10 +55,16 @@ export default function tokenService($http, localStorageService) {
     doRefresh: (refreshToken) => {
       return $http
         .post("/api/v1/token/refresh", { refresh: refreshToken })
-        .then((response) => {
-          service.handleRefresh(response.data.refresh);
-          service.handleToken(response.data.access);
-        });
+        .then(
+          (response) => {
+            service.handleRefresh(response.data.refresh);
+            service.handleToken(response.data.access);
+          },
+          (response) => {
+            service.clearRefresh();
+            service.clearToken();
+          }
+        );
     },
   });
 

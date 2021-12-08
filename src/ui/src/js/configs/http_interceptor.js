@@ -30,6 +30,8 @@ authInterceptorService.$inject = ["$q", "$injector"];
  * @return {Object}                                  Interceptor object
  */
 export function authInterceptorService($q, $injector) {
+  let inFlightAuthRequest = null;
+
   return {
     responseError: (rejection) => {
       // 401 means 'needs authentication'
@@ -39,33 +41,36 @@ export function authInterceptorService($q, $injector) {
         let $rootScope = $injector.get("$rootScope");
         let TokenService = $injector.get("TokenService");
 
+        let deferred = $q.defer();
+
         // This attempts to handle the condition where an access token has
         // expired but there's a refresh token in storage. We use the refresh
         // token to get a new access token then re-attempt the original request.
         let refreshToken = TokenService.getRefresh();
         if (refreshToken) {
-          return TokenService.doRefresh(refreshToken).then(
-            (response) => {
-              // Set the Authorization header to the updated default
-              rejection.config.headers.Authorization =
-                $http.defaults.headers.common.Authorization;
+          if (!inFlightAuthRequest) {
+            inFlightAuthRequest = TokenService.doRefresh(refreshToken);
+          }
 
-              // And retry the original request
-              return $http(rejection.config);
-            },
-            (response) => {
-              // Refresh didn't work. Maybe it was expired / removed
-              // We're going to retry so clear the bad refresh token so we
-              // don't get stuck in an infinite retry cycle
-              $rootScope.doLogout();
+          inFlightAuthRequest.then((response) => {
+            inFlightAuthRequest = null;
 
-              // Clear the Authorization header
-              rejection.config.headers.Authorization = undefined;
+            // Set the Authorization header to the updated default
+            rejection.config.headers.Authorization =
+              $http.defaults.headers.common.Authorization;
 
-              // And then retry the original request
-              return $http(rejection.config);
-            }
-          );
+            // And retry the original request
+            $http(rejection.config).then(
+              (response) => {
+                deferred.resolve(response);
+              },
+              (response) => {
+                deferred.reject();
+              }
+            );
+          });
+
+          return deferred.promise;
         } else {
           // No refresh token - show the login modal
           // If this is a GET we're going to assume that retrying is taken care
