@@ -5,6 +5,7 @@ import pytest
 from mongomock.gridfs import enable_gridfs_integration
 from tornado.httpclient import HTTPError, HTTPRequest
 
+import beer_garden.db.mongo.models
 import beer_garden.events
 import beer_garden.requests
 import beer_garden.router
@@ -178,6 +179,30 @@ def request_permitted_child(remote_system, request_permitted):
     request.delete()
 
 
+def _gridfs_output():
+    return "large_output_stored_in_gridfs"
+
+
+@pytest.fixture
+def request_with_gridfs_output(monkeypatch, local_system):
+    monkeypatch.setattr(beer_garden.db.mongo.models, "REQUEST_MAX_PARAM_SIZE", 0)
+
+    request = Request(
+        system=local_system.name,
+        system_version=local_system.version,
+        namespace=local_system.namespace,
+        command="mycommand",
+        instance_name="default",
+        parameters={"this": "doesntmatter"},
+        status="SUCCESS",
+        output=_gridfs_output(),
+    )
+    request.save()
+
+    yield request
+    request.delete()
+
+
 @pytest.fixture
 def operator_role():
     role = Role(
@@ -334,6 +359,22 @@ class TestRequestAPI:
         assert response.code == 200
         assert response_body["children"] is not None
         assert response_body["children"][0]["id"] == str(request_permitted_child.id)
+
+    @pytest.mark.gen_test
+    def test_get_populates_output_from_gridfs(
+        self, http_client, base_url, request_with_gridfs_output
+    ):
+        url = f"{base_url}/api/v1/requests/{request_with_gridfs_output.id}"
+
+        response = yield http_client.fetch(url)
+        response_body = json.loads(response.body.decode("utf-8"))
+
+        # Verify data is setup correctly (output got stored in gridfs)
+        assert request_with_gridfs_output.output is None
+        assert request_with_gridfs_output.output_gridfs is not None
+
+        assert response.code == 200
+        assert response_body["output"] == _gridfs_output()
 
 
 class TestRequestListAPI:

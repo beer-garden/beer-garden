@@ -445,7 +445,7 @@ class Request(MongoModel, Document):
             output_json = json.dumps(self.output)
             if len(output_json) > REQUEST_MAX_PARAM_SIZE:
                 self.logger.info("Output size too big, storing in gridfs")
-                self.output_gridfs.put(output_json, encoding=encoding)
+                self.output_gridfs.put(self.output, encoding=encoding)
                 self.output = None
 
         super(Request, self).save(*args, **kwargs)
