@@ -14,7 +14,7 @@ backports.zoneinfo==0.2.1
     # via
     #   pytz-deprecation-shim
     #   tzlocal
-brewtils==3.8.0
+brewtils==3.9.0
     # via beer-garden (setup.py)
 certifi==2021.10.8
     # via requests
