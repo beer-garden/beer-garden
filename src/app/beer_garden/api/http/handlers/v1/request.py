@@ -16,7 +16,6 @@ from beer_garden.api.authorization import Permissions
 from beer_garden.api.http.base_handler import event_wait
 from beer_garden.api.http.exceptions import BadRequest
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.db.mongo.api import MongoParser
 from beer_garden.db.mongo.models import Request
 from beer_garden.errors import UnknownGardenException
 from beer_garden.requests import remove_bytes_parameter_base64
@@ -50,13 +49,11 @@ class RequestAPI(AuthorizationHandler):
         tags:
           - Requests
         """
-        request = self.get_or_raise(Request, REQUEST_READ, id=request_id)
+        _ = self.get_or_raise(Request, REQUEST_READ, id=request_id)
 
-        # brewtils dependencies make universal handling of children overly cumbersome,
-        # so just manually populate them here for now.
-        request.children = Request.objects.filter(parent=request)
-
-        response = MongoParser.serialize(request)
+        response = await self.client(
+            Operation(operation_type="REQUEST_READ", args=[request_id])
+        )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(response)
