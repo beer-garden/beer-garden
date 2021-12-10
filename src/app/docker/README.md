@@ -105,10 +105,10 @@ By default, beer-garden will look in `/var/lib/beer-garden/plugins`. If you wish
 to run local plugins, you should mount the directory containing the plugins on
 the host to that directory on the container.
 
-> **NOTE**: Currently local plugins can only be configured using the
-> configuration file method of configuration described above. Plugins will not
-> be able to read required configuration that is supplied via command line
-> arguments or environment variables.
+> **NOTE**: Currently local plugins can only be configured via a configuration
+> file, as described above. Plugins will not be able to read required
+> configuration that is supplied via command line arguments or environment
+> variables.
 
 ### Adding plugin dependencies
 
