@@ -9,6 +9,7 @@ import beer_garden.log
 import beer_garden.requests
 import beer_garden.router
 from beer_garden.api.stomp.transport import Connection, parse_header_list
+from beer_garden.db.mongo.util import is_in_command_black_list
 from beer_garden.events import publish
 from beer_garden.events.processors import BaseProcessor
 
@@ -159,15 +160,16 @@ class StompManager(BaseProcessor):
                     garden_name=event.payload.name, skip_key=skip_key
                 )
 
-        for value in self.conn_dict.values():
-            conn = value["conn"]
-            if conn:
-                if conn.is_connected():
-                    if value["headers_list"]:
-                        for headers in value["headers_list"]:
-                            conn.send(event, headers=headers)
-                    else:
-                        conn.send(event)
+        if not is_in_command_black_list(event):
+            for value in self.conn_dict.values():
+                conn = value["conn"]
+                if conn:
+                    if conn.is_connected():
+                        if value["headers_list"]:
+                            for headers in value["headers_list"]:
+                                conn.send(event, headers=headers)
+                        else:
+                            conn.send(event)
 
     def handle_event(self, event):
         """Main event entry point

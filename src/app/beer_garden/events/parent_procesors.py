@@ -1,6 +1,8 @@
 from brewtils.models import Event, Operation
 from requests import RequestException
 
+from beer_garden.db.mongo.util import is_in_command_black_list
+
 import beer_garden.config as conf
 from beer_garden.events.processors import QueueListener
 
@@ -43,7 +45,7 @@ class HttpParentUpdater(QueueListener):
         # TODO - This shouldn't be set here
         event.garden = conf.get("garden.name")
 
-        if event.name not in self._black_list:
+        if event.name not in self._black_list and not is_in_command_black_list(event):
             try:
                 operation = Operation(
                     operation_type="PUBLISH_EVENT", model=event, model_type="Event"

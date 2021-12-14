@@ -7,8 +7,12 @@ from mongoengine import DoesNotExist, connect
 import beer_garden.db.mongo.models
 import beer_garden.db.mongo.util
 from beer_garden import config
-from beer_garden.db.mongo.models import Garden, Role
-from beer_garden.db.mongo.util import ensure_local_garden, ensure_roles
+from beer_garden.db.mongo.models import Garden, Role, CommandBlackList
+from beer_garden.db.mongo.util import (
+    ensure_local_garden,
+    ensure_roles,
+    is_in_command_black_list,
+)
 from beer_garden.errors import ConfigurationError
 
 
@@ -19,17 +23,24 @@ def model_mocks(monkeypatch):
     role_mock = Mock()
     job_mock = Mock()
     principal_mock = Mock()
+    black_list_mock = Mock()
+    event_mock = Mock()
 
     request_mock.__name__ = "Request"
     system_mock.__name__ = "System"
     role_mock.__name__ = "LegacyRole"
     job_mock.__name__ = "Job"
+    black_list_mock.__name__ = "CommandBlackList"
+    event_mock.__name__ = "event"
     principal_mock.__name__ = "Principal"
 
     monkeypatch.setattr(beer_garden.db.mongo.models, "Request", request_mock)
     monkeypatch.setattr(beer_garden.db.mongo.models, "System", system_mock)
     monkeypatch.setattr(beer_garden.db.mongo.models, "LegacyRole", role_mock)
     monkeypatch.setattr(beer_garden.db.mongo.models, "Job", job_mock)
+    monkeypatch.setattr(
+        beer_garden.db.mongo.models, "CommandBlackList", black_list_mock
+    )
     monkeypatch.setattr(beer_garden.db.mongo.models, "Principal", principal_mock)
 
     return {
@@ -38,6 +49,8 @@ def model_mocks(monkeypatch):
         "role": role_mock,
         "job": job_mock,
         "principal": principal_mock,
+        "black_list": black_list_mock,
+        "event": event_mock,
     }
 
 
@@ -266,6 +279,41 @@ class TestCreateLegacyRole(object):
 
         beer_garden.db.mongo.util._create_role(role)
         assert role.save.called is True
+
+
+class TestCommandBlackList(object):
+    namespace = "test"
+    system = "system_test"
+    command = "command_test"
+
+    @pytest.fixture()
+    def command_black_list(self):
+        black_list = CommandBlackList(
+            namespace=self.namespace, system=self.system, command=self.command
+        ).save()
+
+        yield black_list
+        black_list.delete()
+
+    def test_exists(self, model_mocks, command_black_list):
+        model_mocks["event"].payload_type = "Request"
+        model_mocks["event"].payload.namespace = self.namespace
+        model_mocks["event"].payload.system = self.system
+        model_mocks["event"].payload.command = self.command
+
+        assert is_in_command_black_list(model_mocks["event"])
+
+    def test_missing(self, model_mocks):
+        model_mocks["event"].payload_type = "Request"
+        model_mocks["black_list"].objects.get.return_value = DoesNotExist
+
+        assert not is_in_command_black_list(model_mocks["event"])
+
+    def test_payload_type_not_request(self, model_mocks):
+        model_mocks["event"].payload_type = "Garden_create"
+        model_mocks["black_list"].objects.get.return_value = DoesNotExist
+
+        assert not is_in_command_black_list(model_mocks["event"])
 
 
 class TestEnsureLocalGarden:

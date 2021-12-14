@@ -18,6 +18,7 @@ from passlib.apps import custom_app_context
 from beer_garden import config
 from beer_garden.errors import ConfigurationError
 from beer_garden.role import sync_roles
+from beer_garden.db.mongo.models import CommandBlackList
 
 logger = logging.getLogger(__name__)
 
@@ -387,4 +388,18 @@ def _should_create_admin():
     # By default, if they have created other users that are not just the
     # anonymous users, we assume they do not want to re-create the admin
     # user.
+    return False
+
+
+def is_in_command_black_list(event):
+    if event.payload_type is "Request":
+        try:
+            CommandBlackList.objects.get(
+                namespace=event.payload.namespace,
+                system=event.payload.system,
+                command=event.payload.command,
+            )
+            return True
+        except DoesNotExist:
+            pass
     return False
