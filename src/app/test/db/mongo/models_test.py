@@ -255,7 +255,7 @@ class TestRequest(object):
             status="CREATED",
             system_version="1.0.0",
             instance_name="foobar",
-            namespace="barfoo",
+            namespace="somegarden",
         )
         req.parameters = {"message": "hi"}
         req.output = "bye"
@@ -304,20 +304,37 @@ class TestRequest(object):
         request_model.parameters_gridfs.put.assert_not_called()
         request_model.output_gridfs.put.assert_not_called()
 
-    def test_save_preserves_status_updated_at_field(self, request_model):
+    def test_save_preserves_status_updated_at_field_when_status_is_not_updated(
+        self, request_model
+    ):
         request_model.save()
         first_time = request_model.status_updated_at
         request_model.save()
 
         assert first_time == request_model.status_updated_at
 
-    def test_status_changes_status_updated_at_field(self, request_model):
+    def test_save_updates_status_updated_at_field_when_status_is_updated(
+        self, request_model
+    ):
         request_model.save()
         first_time = request_model.status_updated_at
         request_model.status = "SUCCESS"
         request_model.save()
 
         assert first_time != request_model.status_updated_at
+
+    def test_save_preserves_status_updated_at_for_child_garden_requests(
+        self, request_model
+    ):
+        request_model.namespace = "child_garden"
+        request_model.save()
+
+        status_updated_at = datetime.utcnow() - timedelta(days=1)
+        request_model.status = "SUCCESS"
+        request_model.status_updated_at = status_updated_at
+        request_model.save()
+
+        assert request_model.status_updated_at == status_updated_at
 
 
 class TestSystem(object):

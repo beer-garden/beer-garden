@@ -50,6 +50,8 @@ from mongoengine import (
     ValidationError,
 )
 
+from beer_garden import config
+
 from .fields import DummyField, StatusInfo
 from .validators import validate_permissions
 
@@ -484,7 +486,9 @@ class Request(MongoModel, Document):
                 f"consistent with has_parent value of {self.has_parent}"
             )
 
-        if "status" in self.changed_fields or self.created:
+        if (self.namespace == config.get("garden.name")) and (
+            "status" in self.changed_fields or self.created
+        ):
             self.status_updated_at = datetime.datetime.utcnow()
 
     def clean_update(self):
@@ -493,7 +497,6 @@ class Request(MongoModel, Document):
         old_status = Request.objects.get(id=self.id).status
 
         if self.status != old_status:
-            self.status_updated_at = datetime.datetime.utcnow()
             if old_status in BrewtilsRequest.COMPLETED_STATUSES:
                 raise RequestStatusTransitionError(
                     "Status for a request cannot be updated once it has been "
