@@ -152,7 +152,7 @@ docker-build-debian:
 	docker tag $(DOCKER_NAME):$(VERSION)-debian $(DOCKER_NAME):$(SHORT_VERSION)-debian
 
 docker-build-unstable: package clean-python ## build nightly docker image
-	docker build -t $(DOCKER_NAME):unstable -f Dockerfile.unstable .
+	docker build -t $(DOCKER_NAME):unstable -f docker/Dockerfile.unstable .
 
 
 # Publishing
