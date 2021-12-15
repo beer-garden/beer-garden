@@ -79,7 +79,7 @@ def from_brewtils(obj: ModelItem) -> MongoModel:
         # first step in decoupling from Brewtils
         from beer_garden.db.schemas.garden_schema import GardenSchema
 
-        model_dict = GardenSchema().dump(obj).data
+        model_dict = GardenSchema(strict=True).dump(obj).data
     else:
         model_dict = SchemaParser.serialize(obj, to_string=False)
     mongo_obj = MongoParser.parse(model_dict, type(obj), from_string=False)
@@ -118,7 +118,7 @@ def to_brewtils(
         # first step in decoupling from Brewtils
         from beer_garden.db.schemas.garden_schema import GardenSchema
 
-        schema = GardenSchema()
+        schema = GardenSchema(strict=True)
         serialized = schema.dumps(obj).data
         parsed = schema.loads(serialized, many=many).data
     else:

@@ -6,10 +6,9 @@ import logging
 import pytz
 import six
 from marshmallow import ValidationError as MarshmallowValidationError
-from mongoengine.errors import FieldDoesNotExist
 from passlib.apps import custom_app_context
 
-from beer_garden.db.schemas.garden_schema import GardenSchema
+from beer_garden.db.schemas.garden_schema import GardenConnectionsParamsSchema
 
 try:
     from lark import ParseError
@@ -53,6 +52,7 @@ from mongoengine import (
     UUIDField,
     ValidationError,
 )
+from mongoengine.errors import FieldDoesNotExist
 from mongoengine.errors import ValidationError as MongoengineValidationError
 
 from .fields import DummyField, StatusInfo
@@ -814,28 +814,23 @@ class Garden(MongoModel, Document):
         ],
     }
 
-    def pre_serialize(self):
-        # the `to_brewtils` code wants to serialize these objects; this allows that
-        # to happen
-        from beer_garden.db.schemas.garden_schema import GardenConnectionsParamsSchema
-
-        self.connection_params = (
-            GardenConnectionsParamsSchema().dump(self.connection_params).data
-        )
+    def clean(self):
+        try:
+            # use the marshmallow schema to validate the connection parameters
+            _ = GardenConnectionsParamsSchema(strict=True).load(
+                dict(self.connection_params)
+            )
+        except MarshmallowValidationError as mmve:
+            raise MongoengineValidationError(mmve.messages)
 
     def save(self, *args, **kwargs):
-        # validation via schema
-        try:
-            data, errs = GardenSchema(strict=True).dump(self)
-            logger = logging.getLogger(__name__)
-            from pprint import pformat
+        """This exists so that it is never possible to call `save` on a Garden object
+        without validation of the connection parameters happening."""
+        kwargs.setdefault("write_concern", {"w": "majority"})  # as in `MongoModel`
+        kwargs["validate"] = True
+        kwargs["clean"] = True
 
-            logger.error(f"Got data {pformat(data)}")
-            logger.error(f"Got errs {errs}")
-        except MarshmallowValidationError as mmve:
-            raise MongoengineValidationError(str(mmve))
-
-        super().save(*args, **kwargs)
+        return super().save(*args, **kwargs)
 
     def deep_save(self):
         if self.connection_type != "LOCAL":

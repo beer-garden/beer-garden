@@ -34,7 +34,7 @@ class SerializeHelper(object):
             return json.dumps(result) if serialize_kwargs["to_string"] else result
 
         if isinstance(result, BrewtilsGarden):
-            return GardenSchema().dumps(result).data
+            return GardenSchema(strict=True).dumps(result).data
 
         return SchemaParser.serialize(result, **(serialize_kwargs or {}))
 

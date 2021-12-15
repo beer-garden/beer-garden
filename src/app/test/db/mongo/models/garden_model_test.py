@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import copy
-import logging
 from contextlib import nullcontext as does_not_raise
 
 import pytest
@@ -197,27 +196,21 @@ class TestGardenConnectionParameters:
         return {**stomp_conn_params_basic, **bad_conn_params_with_partial_good}
 
     @pytest.mark.parametrize(
-        "conn_parm, msg",
+        "conn_parm",
         (
-            (pytest.lazy_fixture("bad_conn_params"), "Found bad key"),
-            (
-                pytest.lazy_fixture("bad_conn_params_with_partial_good"),
-                "Found bad key",
-            ),
-            (
-                pytest.lazy_fixture("bad_conn_params_with_full_good"),
-                "Found bad key",
-            ),
+            pytest.lazy_fixture("bad_conn_params"),
+            pytest.lazy_fixture("bad_conn_params_with_partial_good"),
+            pytest.lazy_fixture("bad_conn_params_with_full_good"),
         ),
     )
-    def test_local_garden_save_fails_with_nonempty_conn_params(self, conn_parm, msg):
+    def test_local_garden_save_fails_with_nonempty_conn_params(self, conn_parm):
         with pytest.raises(ValidationError) as excinfo:
             MongoGarden(
                 name=garden_name,
                 connection_type="LOCAL",
                 connection_params=conn_parm,
             ).save()
-        assert msg in str(excinfo.value)
+        assert "not allowed" in str(excinfo.value)
 
     def test_local_garden_save_succeeds_with_empty_conn_params(self):
         with does_not_raise():
@@ -240,7 +233,7 @@ class TestGardenConnectionParameters:
                 connection_type="HTTP",
                 connection_params=conn_parm,
             ).save()
-        assert "Found bad key" in str(excinfo.value)
+        assert "not allowed" in str(excinfo.value)
 
     @pytest.mark.parametrize("required", ("port", "ssl", "ca_verify", "host"))
     def test_required_http_params_missing_fails(self, http_conn_params, required):
@@ -252,7 +245,7 @@ class TestGardenConnectionParameters:
             MongoGarden(
                 name=garden_name, connection_type="HTTP", connection_params=conn_params
             ).save()
-        assert "is required" in str(excinfo.value)
+        assert "Missing data" in str(excinfo.value)
 
     @pytest.mark.parametrize("required", ("ssl", "host", "port"))
     def test_required_stomp_params_missing_fails(
@@ -266,7 +259,7 @@ class TestGardenConnectionParameters:
             MongoGarden(
                 name=garden_name, connection_type="HTTP", connection_params=conn_params
             ).save()
-        assert "is required" in str(excinfo.value)
+        assert "Missing data" in str(excinfo.value)
 
     def test_remote_garden_save_succeeds_with_only_good_http_headers(
         self, http_conn_params
@@ -295,7 +288,7 @@ class TestGardenConnectionParameters:
     @pytest.mark.parametrize(
         "bad_headers",
         (
-            # garbage_headers_extra_key,
+            garbage_headers_extra_key,
             garbage_headers_wrong_key,
         ),
     )
@@ -305,9 +298,6 @@ class TestGardenConnectionParameters:
         test_params = stomp_conn_params_basic["stomp"]
         test_params["headers"] = bad_headers
         connection_params = {"stomp": test_params}
-        from pprint import pformat
-
-        logging.getLogger(__name__).error(f"arg in test: {pformat(connection_params)}")
 
         with pytest.raises(ValidationError):
             MongoGarden(

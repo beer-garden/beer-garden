@@ -4,7 +4,7 @@ from brewtils.models import Garden as BrewtilsGarden
 from brewtils.schemas import StatusInfoSchema  # noqa # until we can fully decouple
 from brewtils.schemas import SystemSchema  # noqa # until we can fully decouple
 from marshmallow import Schema, ValidationError, fields
-from marshmallow.decorators import post_load, pre_dump, pre_load, validates_schema
+from marshmallow.decorators import post_load, pre_load, validates_schema
 from mongoengine.queryset.queryset import QuerySet
 
 logger = logging.getLogger(__name__)
@@ -16,6 +16,7 @@ class GardenBaseSchema(Schema):
     utilizing these would need to pull apart MarshalResult objects in order to return
     a meaningful error."""
 
+    @pre_load
     @validates_schema(skip_on_field_errors=False)
     def validate_all_keys(self, data, **kwargs):
         # do not allow extraneous keys if working on a dictionary
@@ -23,14 +24,16 @@ class GardenBaseSchema(Schema):
             extra_args = [key for key in data.keys() if key not in self.fields]
 
             if len(extra_args) > 0:
-                raise ValidationError(
-                    f"Only {', '.join(self.fields.keys())} allowed as keys; "
-                    f"these are not allowed: {', '.join(extra_args)}"
+                formatted_good_keys = ", ".join(
+                    map(lambda x: "'" + str(x) + "'", self.fields.keys())
                 )
-
-    # def load(self, data, many=None, partial=None):
-    #     logger.error("In load")
-    #     return super().load(data, many=many, partial=partial)
+                formatted_bad_keys = ", ".join(
+                    map(lambda x: "'" + str(x) + "'", extra_args)
+                )
+                raise ValidationError(
+                    f"Only {formatted_good_keys} allowed as keys; "
+                    f"these are not allowed: {formatted_bad_keys}"
+                )
 
     def dump(self, obj, many=None, update_fields=True, **kwargs):
         if isinstance(obj, (list, QuerySet)):
