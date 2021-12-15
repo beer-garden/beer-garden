@@ -7,7 +7,7 @@ from mongoengine import DoesNotExist, connect
 import beer_garden.db.mongo.models
 import beer_garden.db.mongo.util
 from beer_garden import config
-from beer_garden.db.mongo.models import Garden, Role, CommandBlackList
+from beer_garden.db.mongo.models import CommandBlackList, Garden, Role
 from beer_garden.db.mongo.util import (
     ensure_local_garden,
     ensure_roles,

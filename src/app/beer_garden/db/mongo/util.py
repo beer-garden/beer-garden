@@ -16,9 +16,9 @@ from mongoengine.errors import (
 from passlib.apps import custom_app_context
 
 from beer_garden import config
+from beer_garden.db.mongo.models import CommandBlackList
 from beer_garden.errors import ConfigurationError
 from beer_garden.role import sync_roles
-from beer_garden.db.mongo.models import CommandBlackList
 
 logger = logging.getLogger(__name__)
 

@@ -15,6 +15,7 @@ from beer_garden.api.authorization import Permissions
 from beer_garden.db.mongo.models import (
     Choices,
     Command,
+    CommandBlackList,
     DateTrigger,
     Garden,
     Instance,
@@ -26,7 +27,6 @@ from beer_garden.db.mongo.models import (
     System,
     User,
     UserToken,
-    CommandBlackList,
 )
 
 

@@ -1,9 +1,8 @@
 from brewtils.models import Event, Operation
 from requests import RequestException
 
-from beer_garden.db.mongo.util import is_in_command_black_list
-
 import beer_garden.config as conf
+from beer_garden.db.mongo.util import is_in_command_black_list
 from beer_garden.events.processors import QueueListener
 
 
