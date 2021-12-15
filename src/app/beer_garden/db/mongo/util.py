@@ -392,7 +392,7 @@ def _should_create_admin():
 
 
 def is_in_command_black_list(event):
-    if event.payload_type is "Request":
+    if event.payload_type == "Request":
         try:
             CommandBlackList.objects.get(
                 namespace=event.payload.namespace,
