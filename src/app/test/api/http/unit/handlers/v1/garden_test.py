@@ -179,6 +179,62 @@ class TestGardenAPI:
             == garden_not_permitted.status
         )
 
+    @pytest.mark.gen_test
+    def test_auth_disabled_allows_delete(
+        self, base_url, http_client, garden_not_permitted
+    ):
+        url = f"{base_url}/api/v1/gardens/{garden_not_permitted.name}"
+
+        request = HTTPRequest(url, method="DELETE")
+        response = yield http_client.fetch(request)
+
+        assert response.code == 204
+        assert len(Garden.objects.filter(id=garden_not_permitted.id)) == 0
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_allows_delete_for_permitted_garden(
+        self,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        access_token,
+        garden_permitted,
+    ):
+        url = f"{base_url}/api/v1/gardens/{garden_permitted.name}"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+        }
+
+        request = HTTPRequest(url, method="DELETE", headers=headers)
+        response = yield http_client.fetch(request)
+
+        assert response.code == 204
+        assert len(Garden.objects.filter(id=garden_permitted.id)) == 0
+
+    @pytest.mark.gen_test
+    def test_auth_enabled_rejects_delete_for_not_permitted_garden(
+        self,
+        http_client,
+        base_url,
+        app_config_auth_enabled,
+        access_token,
+        garden_not_permitted,
+    ):
+        url = f"{base_url}/api/v1/gardens/{garden_not_permitted.name}"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+        }
+
+        request = HTTPRequest(url, method="DELETE", headers=headers)
+
+        with pytest.raises(HTTPError) as excinfo:
+            yield http_client.fetch(request)
+
+        assert excinfo.value.code == 403
+        assert len(Garden.objects.filter(id=garden_not_permitted.id)) == 1
+
 
 class TestGardenListAPI:
     @pytest.mark.gen_test
