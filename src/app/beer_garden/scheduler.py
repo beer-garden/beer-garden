@@ -490,8 +490,8 @@ def run_job(job_id, request_template, **kwargs):
         request = beer_garden.router.route(
             Operation(
                 operation_type="REQUEST_CREATE",
-                model=request_template,
-                model_type="RequestTemplate",
+                model=Request.from_template(request_template),
+                model_type="Request",
                 kwargs={"wait_event": wait_event},
             )
         )
