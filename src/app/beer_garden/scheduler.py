@@ -14,7 +14,7 @@ from typing import Dict, List, Optional
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from brewtils.errors import ModelValidationError
-from brewtils.models import DateTrigger, Event, Events, FileTrigger, Job, Operation
+from brewtils.models import DateTrigger, Event, Events, FileTrigger, Job, Request, Operation
 from mongoengine import ValidationError
 from pathtools.patterns import match_any_paths
 from watchdog.events import (
@@ -512,7 +512,8 @@ def run_job(job_id, request_template, **kwargs):
             logger.debug(f"{db_job!r} request completed with SUCCESS status")
             updates["inc__success_count"] = 1
 
-        db.modify(db_job, **updates)
+        if updates != {}: 
+            db.modify(db_job, **updates)
     except Exception as ex:
         logger.exception(f"Error executing {db_job}: {ex}")
 
