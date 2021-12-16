@@ -6,7 +6,7 @@ from typing import List, Tuple
 from brewtils.stoppable_thread import StoppableThread
 from mongoengine import Q
 
-from beer_garden.db.mongo.models import File, Request
+from beer_garden.db.mongo.models import File, RawFile, Request
 
 
 class MongoPruner(StoppableThread):
@@ -31,7 +31,9 @@ class MongoPruner(StoppableThread):
         )
 
     def run(self):
-        self.logger.debug(self.display_name + " is started")
+        self.logger.debug(
+            "%s is started with run interval %ss", self.display_name, self._run_every
+        )
 
         while not self.wait(self._run_every):
             current_time = datetime.utcnow()
@@ -112,6 +114,13 @@ class MongoPruner(StoppableThread):
                             Q(owner_type__iexact="REQUEST") & Q(request=None)
                         )  # A request claimed me, but it's gone
                     ),
+                }
+            )
+            prune_tasks.append(
+                {
+                    "collection": RawFile,
+                    "field": "created_at",
+                    "delete_after": timedelta(minutes=file_ttl),
                 }
             )
 
