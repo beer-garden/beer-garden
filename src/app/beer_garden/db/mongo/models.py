@@ -44,11 +44,14 @@ from mongoengine import (
     LazyReferenceField,
     ListField,
     ObjectIdField,
+    QuerySet,
     ReferenceField,
     StringField,
     UUIDField,
     ValidationError,
 )
+
+from beer_garden import config
 
 from .fields import DummyField, StatusInfo
 from .validators import validate_permissions
@@ -429,8 +432,8 @@ class Request(MongoModel, Document):
             self.parameters = json.loads(self.parameters_gridfs.read().decode(encoding))
             self.parameters_gridfs = None
 
-    def save(self, *args, **kwargs):
-        """Save a request, moving request attributes to GridFS if too big"""
+    def _pre_save(self):
+        """Move request attributes to GridFS if too big"""
         self.updated_at = datetime.datetime.utcnow()
         encoding = "utf-8"
 
@@ -448,7 +451,33 @@ class Request(MongoModel, Document):
                 self.output_gridfs.put(self.output, encoding=encoding)
                 self.output = None
 
+    def _post_save(self):
+        if self.status == "CREATED" and self.namespace == config.get("garden.name"):
+            self._update_raw_file_references()
+
+    def _update_raw_file_references(self):
+        parameters = self.parameters or {}
+
+        for param_value in parameters.values():
+            if (
+                isinstance(param_value, dict)
+                and param_value.get("type") == "bytes"
+                and param_value.get("id") is not None
+            ):
+                try:
+                    raw_file = RawFile.objects.get(id=param_value["id"])
+                    raw_file.request = self
+                    raw_file.save()
+                except RawFile.DoesNotExist:
+                    self.logger.debug(
+                        f"Error locating RawFile with id {param_value['id']} "
+                        "while saving Request {self.id}"
+                    )
+
+    def save(self, *args, **kwargs):
+        self._pre_save()
         super(Request, self).save(*args, **kwargs)
+        self._post_save()
 
     def clean(self):
         """Validate before saving to the database"""
@@ -849,8 +878,22 @@ class FileChunk(MongoModel, Document):
     owner = LazyReferenceField(File, required=False, reverse_delete_rule=CASCADE)
 
 
+class RawFileQuerySet(QuerySet):
+    def delete(self, *args, **kwargs):
+        """Deletes the file for each item in the QuerySet prior to deleting the item
+        itself to ensure that objects are properly removed from GridFS"""
+        for raw_file in self.all():
+            raw_file.file.delete()
+
+        super().delete(*args, **kwargs)
+
+
 class RawFile(Document):
     file = FileField()
+    created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    request = LazyReferenceField(Request, required=False, reverse_delete_rule=CASCADE)
+
+    meta = {"queryset_class": RawFileQuerySet}
 
 
 class Role(Document):

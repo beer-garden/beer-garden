@@ -42,12 +42,17 @@ def data_cleanup():
     UserToken.drop_collection()
 
 
+@pytest.fixture(scope="module")
+def local_garden_name():
+    return "somegarden"
+
+
 @pytest.fixture(scope="module", autouse=True)
-def app_config_auth_disabled():
+def app_config_auth_disabled(local_garden_name):
     app_config = Box(
         {
             "auth": {"enabled": False, "token_secret": "notsosecret"},
-            "garden": {"name": "somegarden"},
+            "garden": {"name": local_garden_name},
         }
     )
     config.assign(app_config, force=True)
@@ -55,7 +60,7 @@ def app_config_auth_disabled():
 
 
 @pytest.fixture
-def app_config_auth_enabled(monkeypatch):
+def app_config_auth_enabled(monkeypatch, local_garden_name):
     app_config = Box(
         {
             "auth": {
@@ -65,7 +70,7 @@ def app_config_auth_enabled(monkeypatch):
                     "basic": {"enabled": True},
                 },
             },
-            "garden": {"name": "somegarden"},
+            "garden": {"name": local_garden_name},
         }
     )
     monkeypatch.setattr(config, "_CONFIG", app_config)
