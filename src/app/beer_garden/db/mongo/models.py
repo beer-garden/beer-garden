@@ -786,6 +786,17 @@ class EmptyConnectionParams(EmbeddedDocument):
     pass
 
 
+def validate_garden_connection_params(dict_field):
+    """Use the marshmallow schema to validate Garden connection parameters."""
+    from pprint import pformat
+
+    logging.getLogger(__name__).error(f"is validating \n{pformat(dict_field)}")
+    try:
+        GardenConnectionsParamsSchema(strict=True).validate(dict(dict_field))
+    except MarshmallowValidationError as mmve:
+        raise MongoengineValidationError(mmve.messages)
+
+
 class Garden(MongoModel, Document):
     brewtils_model = brewtils.models.Garden
 
@@ -794,10 +805,7 @@ class Garden(MongoModel, Document):
     status_info = EmbeddedDocumentField("StatusInfo", default=StatusInfo())
     namespaces = ListField()
     connection_type = StringField()
-    # connection_params = ConnectionGenericEmbeddedDocumentField(
-    #     choices=(GardenConnectionParams, EmptyConnectionParams), required=False
-    # )
-    connection_params = DictField()
+    connection_params = DictField(validation=validate_garden_connection_params)
     systems = ListField(ReferenceField(System, reverse_delete_rule=PULL))
 
     meta = {
@@ -813,24 +821,6 @@ class Garden(MongoModel, Document):
             },
         ],
     }
-
-    def clean(self):
-        try:
-            # use the marshmallow schema to validate the connection parameters
-            _ = GardenConnectionsParamsSchema(strict=True).load(
-                dict(self.connection_params)
-            )
-        except MarshmallowValidationError as mmve:
-            raise MongoengineValidationError(mmve.messages)
-
-    def save(self, *args, **kwargs):
-        """This exists so that it is never possible to call `save` on a Garden object
-        without validation of the connection parameters happening."""
-        kwargs.setdefault("write_concern", {"w": "majority"})  # as in `MongoModel`
-        kwargs["validate"] = True
-        kwargs["clean"] = True
-
-        return super().save(*args, **kwargs)
 
     def deep_save(self):
         if self.connection_type != "LOCAL":

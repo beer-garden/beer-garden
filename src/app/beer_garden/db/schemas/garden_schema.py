@@ -16,7 +16,7 @@ class GardenBaseSchema(Schema):
     utilizing these would need to pull apart MarshalResult objects in order to return
     a meaningful error."""
 
-    @pre_load
+    # @pre_load
     @validates_schema(skip_on_field_errors=False)
     def validate_all_keys(self, data, **kwargs):
         # do not allow extraneous keys if working on a dictionary
@@ -98,6 +98,7 @@ class GardenConnectionsParamsSchema(GardenBaseSchema):
 
 class GardenSchema(GardenBaseSchema):
     id = fields.Str(allow_none=True)
+    # TODO the name field must be allowed to be blacnk for child garden registration
     name = fields.Str(allow_none=False)
     status = fields.Str(allow_none=True)
     status_info = fields.Nested(StatusInfoSchema, allow_none=True)

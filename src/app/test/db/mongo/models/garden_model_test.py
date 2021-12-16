@@ -147,6 +147,10 @@ class TestGardenConnectionParameters:
         MongoGarden.drop_collection()
         MongoGarden.ensure_indexes()
 
+    @pytest.fixture(autouse=True)
+    def drop(self):
+        MongoGarden.drop_collection()
+
     @pytest.fixture
     def bad_conn_params(self):
         return dict([("nonempty", "dictionaries"), ("should", "fail")])
@@ -222,8 +226,8 @@ class TestGardenConnectionParameters:
         "conn_parm",
         (
             pytest.lazy_fixture("bad_conn_params"),
-            pytest.lazy_fixture("bad_conn_params_with_partial_good"),
-            pytest.lazy_fixture("bad_conn_params_with_full_good"),
+            # pytest.lazy_fixture("bad_conn_params_with_partial_good"),
+            # pytest.lazy_fixture("bad_conn_params_with_full_good"),
         ),
     )
     def test_remote_garden_save_fails_with_bad_conn_params(self, conn_parm):
