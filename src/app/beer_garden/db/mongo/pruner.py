@@ -114,6 +114,13 @@ class MongoPruner(StoppableThread):
                     ),
                 }
             )
+            prune_tasks.append(
+                {
+                    "collection": RawFile,
+                    "field": "created_at",
+                    "delete_after": timedelta(minutes=file_ttl),
+                }
+            )
 
         # Look at the various TTLs to determine how often to run
         real_ttls = [x for x in kwargs.values() if x > 0]
