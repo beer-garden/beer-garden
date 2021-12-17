@@ -95,6 +95,7 @@ clean: clean-all ## alias of clean-all
 # Formatting
 format: ## Run black formatter in-line
 	black $(MODULE_NAME) $(TEST_DIR)
+	isort $(MODULE_NAME) $(TEST_DIR)
 
 
 # Linting

@@ -176,8 +176,8 @@ class TestLoadNew(object):
         assert len(manager._runners) == 0
         assert "hidden file" in caplog.messages[0]
 
-    def test_scan_path_no_paths(self, manager, caplog):
-        setattr(manager, "_plugin_path", None)
+    def test_scan_path_no_paths(self, monkeypatch, manager, caplog):
+        monkeypatch.setattr(manager, "_plugin_path", None)
 
         with caplog.at_level(logging.DEBUG):
             result = manager.scan_path()
