@@ -8,7 +8,7 @@ from typing import Sequence
 
 from brewtils.models import Runner
 
-log_levels = [n for n in getattr(logging, "_nameToLevel").keys()]
+log_levels = [n for n in logging._nameToLevel.keys()]
 
 
 def read_stream(process: subprocess.Popen, stream: TextIOBase, logger: logging.Logger):
