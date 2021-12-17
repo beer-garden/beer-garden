@@ -9,8 +9,7 @@ import beer_garden.log
 import beer_garden.requests
 import beer_garden.router
 from beer_garden.api.stomp.transport import Connection, parse_header_list
-from beer_garden.db.mongo.util import is_in_command_black_list
-from beer_garden.events import publish
+from beer_garden.events import event_blacklisted, publish
 from beer_garden.events.processors import BaseProcessor
 
 logger = logging.getLogger(__name__)
@@ -160,7 +159,7 @@ class StompManager(BaseProcessor):
                     garden_name=event.payload.name, skip_key=skip_key
                 )
 
-        if not is_in_command_black_list(event):
+        if not event_blacklisted(event):
             for value in self.conn_dict.values():
                 conn = value["conn"]
                 if conn:

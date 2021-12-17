@@ -76,7 +76,7 @@ __all__ = [
     "Role",
     "RoleAssignment",
     "User",
-    "CommandBlackList",
+    "CommandPublishingBlackList",
 ]
 
 REQUEST_MAX_PARAM_SIZE = 5 * 1_000_000
@@ -850,7 +850,7 @@ class RawFile(Document):
     file = FileField()
 
 
-class CommandBlackList(Document):
+class CommandPublishingBlackList(Document):
 
     namespace = StringField(required=True)
     system = StringField(required=True)
