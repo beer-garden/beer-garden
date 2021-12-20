@@ -19,13 +19,11 @@ def model_mocks(monkeypatch):
     role_mock = Mock()
     job_mock = Mock()
     principal_mock = Mock()
-    event_mock = Mock()
 
     request_mock.__name__ = "Request"
     system_mock.__name__ = "System"
     role_mock.__name__ = "LegacyRole"
     job_mock.__name__ = "Job"
-    event_mock.__name__ = "event"
     principal_mock.__name__ = "Principal"
 
     monkeypatch.setattr(beer_garden.db.mongo.models, "Request", request_mock)
@@ -40,7 +38,6 @@ def model_mocks(monkeypatch):
         "role": role_mock,
         "job": job_mock,
         "principal": principal_mock,
-        "event": event_mock,
     }
 
 

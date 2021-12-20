@@ -6,7 +6,6 @@ from functools import partial
 
 import wrapt
 from brewtils.models import Event, Events
-from mongoengine.errors import DoesNotExist
 
 from beer_garden import config as config
 from beer_garden.db.mongo.models import CommandPublishingBlackList
@@ -154,8 +153,8 @@ def _event_blacklisted_by_command(event):
                 command=event.payload.command,
             )
             return True
-        except DoesNotExist:
-            pass
+        except CommandPublishingBlackList.DoesNotExist:
+            return False
 
 
 def event_blacklisted(event: Event) -> bool:
