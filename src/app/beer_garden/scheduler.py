@@ -20,8 +20,13 @@ from brewtils.models import (
     Events,
     FileTrigger,
     Job,
+<<<<<<< HEAD
     Operation,
     Request,
+=======
+    Request,
+    Operation,
+>>>>>>> Fix linting
 )
 from mongoengine import ValidationError
 from pathtools.patterns import match_any_paths
