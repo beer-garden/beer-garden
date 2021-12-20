@@ -76,6 +76,7 @@ __all__ = [
     "Role",
     "RoleAssignment",
     "User",
+    "CommandPublishingBlackList",
 ]
 
 REQUEST_MAX_PARAM_SIZE = 5 * 1_000_000
@@ -851,6 +852,17 @@ class FileChunk(MongoModel, Document):
 
 class RawFile(Document):
     file = FileField()
+
+
+class CommandPublishingBlackList(Document):
+
+    namespace = StringField(required=True)
+    system = StringField(required=True)
+    command = StringField(required=True)
+
+    meta = {
+        "indexes": [{"fields": ["namespace", "system", "command"], "unique": True}],
+    }
 
 
 class Role(Document):

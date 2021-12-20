@@ -8,6 +8,7 @@ import wrapt
 from brewtils.models import Event, Events
 
 from beer_garden import config as config
+from beer_garden.db.mongo.models import CommandPublishingBlackList
 
 # In this master process this should be an instance of EventManager, and in entry points
 # it should be an instance of EntryPointManager
@@ -137,3 +138,33 @@ def _async_callback(task, event_type=None):
             publish(event)
         except Exception as ex:
             logger.exception(f"Error publishing event: {ex}")
+
+
+def _event_blacklisted_by_name(event):
+    return event.name in config.get("parent.skip_events")
+
+
+def _event_blacklisted_by_command(event):
+    if event.payload_type == "Request":
+        try:
+            CommandPublishingBlackList.objects.get(
+                namespace=event.payload.namespace,
+                system=event.payload.system,
+                command=event.payload.command,
+            )
+            return True
+        except CommandPublishingBlackList.DoesNotExist:
+            return False
+
+
+def event_blacklisted(event: Event) -> bool:
+    """
+    This will determine if an event is black listed from being sent to a parent garden.
+
+    Args:
+        event: an Event object
+
+    Returns:
+        Boolean: The result of if event is black listed
+    """
+    return _event_blacklisted_by_name(event) or _event_blacklisted_by_command(event)
