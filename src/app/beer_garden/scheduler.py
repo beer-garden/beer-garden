@@ -20,8 +20,8 @@ from brewtils.models import (
     Events,
     FileTrigger,
     Job,
-    Request,
     Operation,
+    Request,
 )
 from mongoengine import ValidationError
 from pathtools.patterns import match_any_paths
