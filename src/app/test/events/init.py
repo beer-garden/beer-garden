@@ -4,10 +4,10 @@ from brewtils.models import Event
 
 from beer_garden import config
 from beer_garden.db.mongo.models import CommandPublishingBlackList, Request
-from beer_garden.events import event_blacklisted
+from beer_garden.events import can_send_event_to_parent, event_blacklisted
 
 
-class TestCommandBlackList(object):
+class TestSendEventToParent(object):
     event = Event(
         payload_type="Request",
         payload=Request(
@@ -31,12 +31,12 @@ class TestCommandBlackList(object):
         yield black_list
         black_list.delete()
 
-    def test_exists(self, command_black_list, monkeypatch):
+    def test_command_exists_in_blacklist(self, command_black_list, monkeypatch):
         monkeypatch.setattr(config, "get", self.config_get)
 
         assert event_blacklisted(self.event)
 
-    def test_missing(self, monkeypatch):
+    def test_command_missing_in_blacklist(self, monkeypatch):
         monkeypatch.setattr(config, "get", self.config_get)
 
         assert not event_blacklisted(self.event)
@@ -46,3 +46,21 @@ class TestCommandBlackList(object):
         event = Event(name="ENTRY_STARTED")
 
         assert not event_blacklisted(event)
+
+    def test_can_send_event_error(self, monkeypatch):
+        monkeypatch.setattr(config, "get", self.config_get)
+        event = Event(name="REQUEST_CREATE", error=True)
+
+        assert not can_send_event_to_parent(event)
+
+    def test_can_send_event_to_parent(self, monkeypatch):
+        monkeypatch.setattr(config, "get", self.config_get)
+
+        assert can_send_event_to_parent(self.event)
+
+    def test_can_send_event_to_parent_blacklisted(
+        self, command_black_list, monkeypatch
+    ):
+        monkeypatch.setattr(config, "get", self.config_get)
+
+        assert not can_send_event_to_parent(self.event)

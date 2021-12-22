@@ -2,7 +2,7 @@ from brewtils.models import Event, Operation
 from requests import RequestException
 
 import beer_garden.config as conf
-from beer_garden.events import event_blacklisted
+from beer_garden.events import can_send_event_to_parent
 from beer_garden.events.processors import QueueListener
 
 
@@ -44,7 +44,7 @@ class HttpParentUpdater(QueueListener):
         # TODO - This shouldn't be set here
         event.garden = conf.get("garden.name")
 
-        if not event_blacklisted(event):
+        if can_send_event_to_parent(event):
             try:
                 operation = Operation(
                     operation_type="PUBLISH_EVENT", model=event, model_type="Event"
