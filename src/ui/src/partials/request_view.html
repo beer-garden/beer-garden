@@ -49,9 +49,9 @@
               class="glyphicon glyphicon-info-sign"
             ></span></span>
           </th>
-	  <th scope="col">Status Updated</th>
           <th scope="col" ng-show="showErrorColumn(request, children)">Error Type</th>
           <th scope="col">Created</th>
+          <th scope="col">Status Updated</th>
           <th scope="col">Updated</th>
           <th scope="col">Comment</th>
         </tr>
@@ -77,9 +77,9 @@
           </td>
           <td>{{request.instance_name}}</td>
           <td>{{request.status}}</td>
-	  <td>{{formatDate(request.status_updated_at)}}</td>
           <td ng-show="showErrorColumn(request, children)">{{request.error_class}}</td>
           <td>{{formatDate(request.created_at)}}</td>
+          <td>{{formatDate(request.status_updated_at)}}</td>
           <td>{{formatDate(request.updated_at)}}</td>
           <td>{{request.comment}}</td>
         </tr>
@@ -98,6 +98,7 @@
           <td><div>{{child.status}}</div></td>
           <td ng-show="showErrorColumn(request, children)"><div>{{child.error_class}}</div></td>
           <td><div>{{formatDate(child.created_at)}}</div></td>
+          <td><div>{{formatDate(child.status_updated_at)}}</div></td>
           <td><div>{{formatDate(child.updated_at)}}</div></td>
           <td><div>{{child.comment}}</div></td>
         </tr>

@@ -1,13 +1,20 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
+
 import pytest
 from box import Box
 from brewtils.errors import ModelValidationError
-from brewtils.models import Choices, Command, Parameter, Request
+from brewtils.models import Choices, Command, Event, Events, Parameter
+from brewtils.models import Request as BrewtilsRequest
 from mock import Mock, call, patch
+from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden.config
 import beer_garden.requests
+from beer_garden.db.mongo.models import Request
 from beer_garden.requests import RequestValidator
+
+enable_gridfs_integration()
 
 
 @pytest.fixture
@@ -33,6 +40,22 @@ def validator(monkeypatch, mongo_conn):
     monkeypatch.setattr(beer_garden, "application", Mock(request_validator=val))
 
     return val
+
+
+@pytest.fixture
+def child_garden_request():
+    request = Request(
+        namespace="child_garden",
+        system="testsystem",
+        system_version="1.0.0",
+        instance_name="instance1",
+        command="somecommand",
+        parameters={},
+    )
+    request.save()
+
+    yield request
+    request.delete()
 
 
 def make_param(**kwargs):
@@ -65,7 +88,7 @@ def make_request(**kwargs):
         "parameters": {},
     }
     defaults.update(**kwargs)
-    return Mock(spec=Request, **defaults)
+    return Mock(spec=BrewtilsRequest, **defaults)
 
 
 def _process_mock(monkeypatch, return_value=""):
@@ -128,7 +151,7 @@ class TestGetAndValidateCommandForSystem(object):
     def test_no_request_command(self, validator):
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_command_for_system(
-                Request(system="foo", parameters={}), Mock()
+                BrewtilsRequest(system="foo", parameters={}), Mock()
             )
 
     def test_system_lookup(
@@ -164,12 +187,12 @@ class TestGetAndValidateParameters(object):
         assert params == bg_request.parameters
 
     def test_empty(self, validator):
-        req = Request(system="foo", command="command1")
+        req = BrewtilsRequest(system="foo", command="command1")
         command = Command(parameters=[])
         assert validator.get_and_validate_parameters(req, command) == {}
 
     def test_command_lookup(self, monkeypatch, validator):
-        request = Request(parameters={})
+        request = BrewtilsRequest(parameters={})
         lookup_mock = Mock(return_value=Mock(parameters=[]))
         monkeypatch.setattr(
             validator, "get_and_validate_command_for_system", lookup_mock
@@ -202,7 +225,7 @@ class TestGetAndValidateParameters(object):
         assert params["message"] == "foo"
 
     def test_missing_nested_parameters(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": {}})
+        req = BrewtilsRequest(system="foo", command="command1", parameters={"key1": {}})
         nested_parameter = Mock(key="foo", multi=False, type="String", optional=False)
         command_parameter = Mock(
             key="key1", multi=False, type="Dictionary", parameters=[nested_parameter]
@@ -216,7 +239,9 @@ class TestGetAndValidateParameters(object):
     def test_extract_parameter_non_multi_calls_no_default(
         self, validate_mock, validator
     ):
-        req = Request(system="foo", command="command1", parameters={"key1": "value1"})
+        req = BrewtilsRequest(
+            system="foo", command="command1", parameters={"key1": "value1"}
+        )
         command_parameter = Mock(key="key1", multi=False)
         command = Mock(parameters=[command_parameter])
         validate_mock.side_effect = lambda w, x, y, z: w
@@ -228,7 +253,7 @@ class TestGetAndValidateParameters(object):
     def test_extract_parameter_non_multi_calls_with_default(
         self, validate_mock, validator
     ):
-        req = Request(system="foo", command="command1", parameters={})
+        req = BrewtilsRequest(system="foo", command="command1", parameters={})
         command_parameter = Mock(key="key1", multi=False, default="default_value")
         command = Mock(parameters=[command_parameter])
         validate_mock.side_effect = lambda w, x, y, z: w
@@ -242,7 +267,9 @@ class TestGetAndValidateParameters(object):
     def test_update_and_validate_parameter_extract_parameter_multi(
         self, validate_mock, validator
     ):
-        req = Request(system="foo", command="command1", parameters={"key1": [1, 2]})
+        req = BrewtilsRequest(
+            system="foo", command="command1", parameters={"key1": [1, 2]}
+        )
         command_parameter = Mock(key="key1", multi=True)
         command = Mock(parameters=[command_parameter])
         validate_mock.side_effect = lambda w, x, y, z: w
@@ -259,7 +286,7 @@ class TestGetAndValidateParameters(object):
     def test_update_and_validate_parameter_extract_parameter_multi_not_list(
         self, validator
     ):
-        req = Request(
+        req = BrewtilsRequest(
             system="foo", command="command1", parameters={"key1": "NOT A LIST"}
         )
         command_parameter = Mock(key="key1", multi=True)
@@ -271,7 +298,7 @@ class TestGetAndValidateParameters(object):
     def test_update_and_validate_parameter_extract_parameter_optional_no_default(
         self, validator
     ):
-        req = Request(system="foo", command="command1", parameters={})
+        req = BrewtilsRequest(system="foo", command="command1", parameters={})
         command_parameter = Parameter(
             key="key1", multi=False, optional=True, default=None
         )
@@ -283,7 +310,7 @@ class TestGetAndValidateParameters(object):
     def test_update_and_validate_parameter_extract_parameter_nullable_no_default(
         self, validator
     ):
-        req = Request(system="foo", command="command1", parameters={})
+        req = BrewtilsRequest(system="foo", command="command1", parameters={})
         command_parameter = Parameter(
             key="key1", multi=False, nullable=True, default=None, optional=True
         )
@@ -292,7 +319,9 @@ class TestGetAndValidateParameters(object):
         assert validated_parameters["key1"] is None
 
     def test_validate_parameter_based_on_type_null_not_nullable(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": None})
+        req = BrewtilsRequest(
+            system="foo", command="command1", parameters={"key1": None}
+        )
         command_parameter = Mock(key="key1", multi=False, type="String", nullable=False)
         command = Mock(parameters=[command_parameter])
 
@@ -300,7 +329,9 @@ class TestGetAndValidateParameters(object):
             validator.get_and_validate_parameters(req, command)
 
     def test_validate_maximum_sequence(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": "value"})
+        req = BrewtilsRequest(
+            system="foo", command="command1", parameters={"key1": "value"}
+        )
 
         command_parameter = Parameter(
             key="key1", multi=False, type="String", optional=False, maximum=10
@@ -317,7 +348,7 @@ class TestGetAndValidateParameters(object):
             validator.get_and_validate_parameters(req, command)
 
     def test_validate_maximum_non_sequence(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": 5})
+        req = BrewtilsRequest(system="foo", command="command1", parameters={"key1": 5})
 
         command_parameter = Parameter(
             key="key1", multi=False, type="Integer", optional=False, maximum=10
@@ -334,7 +365,9 @@ class TestGetAndValidateParameters(object):
             validator.get_and_validate_parameters(req, command)
 
     def test_validate_minimum_sequence(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": "value"})
+        req = BrewtilsRequest(
+            system="foo", command="command1", parameters={"key1": "value"}
+        )
 
         command_parameter = Parameter(
             key="key1", multi=False, type="String", optional=False, minimum=3
@@ -351,7 +384,7 @@ class TestGetAndValidateParameters(object):
             validator.get_and_validate_parameters(req, command)
 
     def test_validate_minimum_non_sequence(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": 5})
+        req = BrewtilsRequest(system="foo", command="command1", parameters={"key1": 5})
 
         command_parameter = Parameter(
             key="key1", multi=False, type="Integer", optional=False, minimum=3
@@ -368,7 +401,7 @@ class TestGetAndValidateParameters(object):
             validator.get_and_validate_parameters(req, command)
 
     def test_validate_regex(self, validator):
-        req = Request(
+        req = BrewtilsRequest(
             system="foo", command="command1", parameters={"key1": "Hi World!"}
         )
 
@@ -387,7 +420,9 @@ class TestGetAndValidateParameters(object):
             validator.get_and_validate_parameters(req, command)
 
     def test_validate_regex_nullable(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": None})
+        req = BrewtilsRequest(
+            system="foo", command="command1", parameters={"key1": None}
+        )
         command_parameter = Parameter(
             key="key1", multi=False, type="String", regex=r"^Hi.*", nullable=True
         )
@@ -395,7 +430,9 @@ class TestGetAndValidateParameters(object):
         validator.get_and_validate_parameters(req, command)
 
     def test_validate_minimum_nullable(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": None})
+        req = BrewtilsRequest(
+            system="foo", command="command1", parameters={"key1": None}
+        )
         command_parameter = Parameter(
             key="key1",
             multi=False,
@@ -408,7 +445,9 @@ class TestGetAndValidateParameters(object):
         validator.get_and_validate_parameters(req, command)
 
     def test_validate_maximum_nullable(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": None})
+        req = BrewtilsRequest(
+            system="foo", command="command1", parameters={"key1": None}
+        )
         command_parameter = Parameter(
             key="key1",
             multi=False,
@@ -692,13 +731,17 @@ class TestValidateChoices(object):
                 validator.get_and_validate_parameters(req, self.command)
 
     def test_validate_value_in_choices_no_choices(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": "value"})
+        req = BrewtilsRequest(
+            system="foo", command="command1", parameters={"key1": "value"}
+        )
         command_parameter = Mock(key="key1", multi=False, type="String", choices=None)
         command = Mock(parameters=[command_parameter])
         validator.get_and_validate_parameters(req, command)
 
     def test_validate_value_value_in_choices_not_multi_valid_choice(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": "value"})
+        req = BrewtilsRequest(
+            system="foo", command="command1", parameters={"key1": "value"}
+        )
         command_parameter = Mock(
             key="key1",
             multi=False,
@@ -709,7 +752,9 @@ class TestValidateChoices(object):
         validator.get_and_validate_parameters(req, command)
 
     def test_validate_value_in_choices_not_multi_invalid_choice(self, validator):
-        req = Request(system="foo", command="command1", parameters={"key1": "value"})
+        req = BrewtilsRequest(
+            system="foo", command="command1", parameters={"key1": "value"}
+        )
         command_parameter = Mock(
             key="key1",
             multi=False,
@@ -723,7 +768,7 @@ class TestValidateChoices(object):
             validator.get_and_validate_parameters(req, command)
 
     def test_validate_value_in_choices_multi_valid_choice(self, validator):
-        req = Request(
+        req = BrewtilsRequest(
             system="foo", command="command1", parameters={"key1": ["v1", "v2"]}
         )
         command_parameter = Mock(
@@ -736,7 +781,7 @@ class TestValidateChoices(object):
         validator.get_and_validate_parameters(req, command)
 
     def test_validate_value_in_choices_multi_invalid_choice(self, validator):
-        req = Request(
+        req = BrewtilsRequest(
             system="foo", command="command1", parameters={"key1": ["v1", "v2"]}
         )
         command_parameter = Mock(
@@ -752,7 +797,7 @@ class TestValidateChoices(object):
             validator.get_and_validate_parameters(req, command)
 
     def test_validate_value_in_choices_optional_none_allowed(self, validator):
-        req = Request(system="foo", command="command1", parameters={})
+        req = BrewtilsRequest(system="foo", command="command1", parameters={})
         command_parameter = Mock(
             key="key1",
             multi=False,
@@ -779,7 +824,9 @@ class TestValidateChoices(object):
 
         command = Mock(parameters=[command_parameter])
 
-        req = Request(system="foo", command="command1", parameters={"key1": "1"})
+        req = BrewtilsRequest(
+            system="foo", command="command1", parameters={"key1": "1"}
+        )
 
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(req, command)
@@ -800,7 +847,9 @@ class TestValidateChoices(object):
         session_mock.get.return_value.text = response
         validator._session = session_mock
 
-        req = Request(system="foo", command="command1", parameters={"key1": "value"})
+        req = BrewtilsRequest(
+            system="foo", command="command1", parameters={"key1": "value"}
+        )
         command_parameter = Mock(
             key="key1",
             type="String",
@@ -819,7 +868,7 @@ class TestValidateChoices(object):
     def test_validate_command_choices_dict_value(self, monkeypatch, validator):
         process_mock = _process_mock(monkeypatch, return_value='["value"]')
 
-        request = Request(
+        request = BrewtilsRequest(
             system="foo",
             command="command1",
             parameters={"key1": "value"},
@@ -861,7 +910,7 @@ class TestValidateChoices(object):
     def test_validate_command_choices_bad_value_type(self, monkeypatch, validator):
         _process_mock(monkeypatch, return_value='["value"]')
 
-        request = Request(
+        request = BrewtilsRequest(
             system="foo",
             command="command1",
             parameters={"key1": "value"},
@@ -891,7 +940,7 @@ class TestValidateChoices(object):
     ):
         process_mock = _process_mock(monkeypatch, return_value='["value"]')
 
-        request = Request(
+        request = BrewtilsRequest(
             system="foo",
             command="command1",
             parameters={"key1": "value"},
@@ -922,7 +971,7 @@ class TestValidateChoices(object):
     ):
         process_mock = _process_mock(monkeypatch, return_value='[{"value": "value"}]')
 
-        request = Request(
+        request = BrewtilsRequest(
             system="foo",
             command="command1",
             parameters={"key1": "value"},
@@ -951,7 +1000,7 @@ class TestValidateChoices(object):
     def test_validate_command_choices_bad_parameter(self, monkeypatch, validator):
         _process_mock(monkeypatch, return_value='{"value": "value"}')
 
-        request = Request(
+        request = BrewtilsRequest(
             system="foo",
             command="command1",
             parameters={"key1": "value"},
@@ -975,7 +1024,7 @@ class TestValidateChoices(object):
     def test_validate_command_choices_empty_list_output(self, monkeypatch, validator):
         _process_mock(monkeypatch, return_value="[]")
 
-        request = Request(
+        request = BrewtilsRequest(
             system="foo",
             command="command1",
             parameters={"key1": "value"},
@@ -999,7 +1048,7 @@ class TestValidateChoices(object):
     def test_validate_command_choices_bad_output_type(self, monkeypatch, validator):
         _process_mock(monkeypatch, return_value='{"value": "value"}')
 
-        request = Request(
+        request = BrewtilsRequest(
             system="foo",
             command="command1",
             parameters={"key1": "value"},
@@ -1019,3 +1068,22 @@ class TestValidateChoices(object):
 
         with pytest.raises(ModelValidationError):
             validator.get_and_validate_parameters(request, command)
+
+
+class TestHandleEvent:
+    def test_status_updated_at_preserved_on_child_garden_requests(
+        self, child_garden_request
+    ):
+        status_updated_at = datetime.utcnow() - timedelta(days=1)
+        status_updated_at = status_updated_at.replace(microsecond=0)
+        child_garden_request.status = "SUCCESS"
+        child_garden_request.status_updated_at = status_updated_at
+        request_event = Event(
+            payload=child_garden_request, name=Events.REQUEST_UPDATED.name
+        )
+
+        beer_garden.requests.handle_event(request_event)
+
+        updated_request = Request.objects.get(id=child_garden_request.id)
+
+        assert updated_request.status_updated_at == status_updated_at

@@ -892,7 +892,7 @@ def handle_event(event):
             existing_request = db.query_unique(Request, id=event.payload.id)
 
             if existing_request:
-                for field in ("status", "output", "error_class"):
+                for field in ("status", "output", "error_class", "status_updated_at"):
                     setattr(existing_request, field, getattr(event.payload, field))
 
                 try:
