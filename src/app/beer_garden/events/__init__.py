@@ -17,25 +17,6 @@ manager = None
 logger = logging.getLogger(__name__)
 
 
-def _send_event_error(event):
-    return not (
-        event.error and event.name.startswith("REQUEST") and event.payload is None
-    )
-
-
-def can_send_event_to_parent(event):
-    """
-    This will determine if an event can be sent to a parent garden.
-
-    Args:
-        event: an Event object
-
-    Returns:
-        Boolean: Determination of whether event should be sent to parent
-    """
-    return _send_event_error(event) and not event_blacklisted(event)
-
-
 def publish(event: Event) -> None:
     """Convenience method for publishing events
 
