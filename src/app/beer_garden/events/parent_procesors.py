@@ -2,7 +2,7 @@ from brewtils.models import Event, Operation
 from requests import RequestException
 
 import beer_garden.config as conf
-from beer_garden.events import event_blacklisted
+from beer_garden.events import event_blocklisted
 from beer_garden.events.processors import QueueListener
 
 
@@ -18,10 +18,10 @@ class HttpParentUpdater(QueueListener):
     """
 
     def __init__(
-        self, easy_client=None, black_list=None, reconnect_action=None, **kwargs
+        self, easy_client=None, block_list=None, reconnect_action=None, **kwargs
     ):
         self._ez_client = easy_client
-        self._black_list = black_list or []
+        self._block_list = block_list or []
         self._reconnect_action = reconnect_action
         self._connected = True
 
@@ -44,7 +44,7 @@ class HttpParentUpdater(QueueListener):
         # TODO - This shouldn't be set here
         event.garden = conf.get("garden.name")
 
-        if not event_blacklisted(event):
+        if not event_blocklisted(event):
             try:
                 operation = Operation(
                     operation_type="PUBLISH_EVENT", model=event, model_type="Event"

@@ -232,14 +232,16 @@ export default function requestIndexController(
   };
 
   EventService.addCallback("request_index", (event) => {
-    switch (event.name) {
-      case "REQUEST_CREATED":
-      case "REQUEST_STARTED":
-      case "REQUEST_COMPLETED":
-        if ($scope.dtInstance) {
-          $("#newData").css("visibility", "visible");
-        }
-        break;
+    if (!event.error) {
+      switch (event.name) {
+        case "REQUEST_CREATED":
+        case "REQUEST_STARTED":
+        case "REQUEST_COMPLETED":
+          if ($scope.dtInstance) {
+            $("#newData").css("visibility", "visible");
+          }
+          break;
+      }
     }
   });
 

@@ -15,7 +15,7 @@ from beer_garden.api.authorization import Permissions
 from beer_garden.db.mongo.models import (
     Choices,
     Command,
-    CommandPublishingBlackList,
+    CommandPublishingBlockList,
     DateTrigger,
     Garden,
     Instance,
@@ -674,24 +674,24 @@ class TestUserToken:
         assert len(UserToken.objects.filter(id=user_token.id)) == 0
 
 
-class TestCommandBlackList:
+class TestCommandBlockList:
     namespace = "test"
     system = "system_test"
     command = "command_test"
 
     @pytest.fixture()
-    def command_black_list(self):
-        black_list = CommandPublishingBlackList(
+    def command_blocklist(self):
+        blocklist = CommandPublishingBlockList(
             namespace=self.namespace, system=self.system, command=self.command
         ).save()
 
-        yield black_list
-        black_list.delete()
+        yield blocklist
+        blocklist.delete()
 
-    def test_black_list_entries_are_required_to_be_unique(self, command_black_list):
-        """Attempting to create a black list entry already in database should raise an exception"""
+    def test_blocklist_entries_are_required_to_be_unique(self, command_blocklist):
+        """Attempting to create a blocklist entry already in database should raise an exception"""
         with pytest.raises(NotUniqueError):
-            CommandPublishingBlackList(
+            CommandPublishingBlockList(
                 namespace=self.namespace, system=self.system, command=self.command
             ).save()
 
