@@ -657,7 +657,7 @@ class TestUserToken:
         assert len(UserToken.objects.filter(id=user_token.id)) == 0
 
 
-class TestCommandBlackList:
+class TestCommandBlockList:
     namespace = "test"
     system = "system_test"
     command = "command_test"
