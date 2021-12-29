@@ -8,6 +8,7 @@ from brewtils.errors import ModelValidationError, RequestStatusTransitionError
 from brewtils.schemas import RequestTemplateSchema
 from mock import Mock
 from mongoengine import NotUniqueError, ValidationError, connect
+from mongomock.gridfs import enable_gridfs_integration
 
 import beer_garden.db.api as db
 import beer_garden.db.mongo.models
@@ -21,6 +22,7 @@ from beer_garden.db.mongo.models import (
     Instance,
     Job,
     Parameter,
+    RawFile,
     Request,
     Role,
     RoleAssignment,
@@ -28,6 +30,8 @@ from beer_garden.db.mongo.models import (
     User,
     UserToken,
 )
+
+enable_gridfs_integration()
 
 
 class TestCommand(object):
@@ -249,16 +253,26 @@ class TestRequest(object):
         )
 
     @pytest.fixture()
-    def request_model(self):
+    def raw_file(self):
+        rawfile = RawFile().save()
+
+        yield rawfile
+        rawfile.delete()
+
+    @pytest.fixture()
+    def request_model(self, raw_file, local_garden_name):
         req = Request(
             system="foo",
             command="bar",
             status="CREATED",
             system_version="1.0.0",
             instance_name="foobar",
-            namespace="somegarden",
+            namespace=local_garden_name,
         )
-        req.parameters = {"message": "hi"}
+        req.parameters = {
+            "message": "hi",
+            "file_param": {"type": "bytes", "id": str(raw_file.id)},
+        }
         req.output = "bye"
         req.parameters_gridfs.put = Mock()
         req.output_gridfs.put = Mock()
@@ -336,6 +350,20 @@ class TestRequest(object):
         request_model.save()
 
         assert request_model.status_updated_at == status_updated_at
+
+    def test_save_updates_raw_file_reference(self, request_model):
+        request_model.status = "CREATED"
+        request_model.save()
+
+        assert len(RawFile.objects.filter(request=request_model)) == 1
+
+    def test_delete_cascade_deletes_raw_file(self, request_model, raw_file):
+        request_model.save()
+        raw_file.request = request_model
+        raw_file.save()
+        request_model.delete()
+
+        assert len(RawFile.objects.filter(request=request_model)) == 0
 
 
 class TestSystem(object):

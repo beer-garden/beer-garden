@@ -51,6 +51,7 @@ from mongoengine import (
 )
 
 from beer_garden import config
+from beer_garden.db.mongo.querysets import FileFieldHandlingQuerySet
 
 from .fields import DummyField, StatusInfo
 from .validators import validate_permissions
@@ -331,6 +332,7 @@ class Request(MongoModel, Document):
     parameters_gridfs = FileField()
 
     meta = {
+        "queryset_class": FileFieldHandlingQuerySet,
         "auto_create_index": False,  # We need to manage this ourselves
         "index_background": True,
         "indexes": [
@@ -432,26 +434,74 @@ class Request(MongoModel, Document):
             self.parameters = json.loads(self.parameters_gridfs.read().decode(encoding))
             self.parameters_gridfs = None
 
-    def save(self, *args, **kwargs):
-        """Save a request, moving request attributes to GridFS if too big"""
+    def _pre_save(self):
+        """Move request attributes to GridFS if too big"""
         self.updated_at = datetime.datetime.utcnow()
         encoding = "utf-8"
 
-        if self.parameters:
+        # NOTE: The following was added for #1216, which aims to resolve the duplication
+        # and orphaning of files in gridfs. It is less than ideal to do an additional
+        # database lookup, but the various conversions to and from brewtils mean that
+        # we get here having lost the parameters_gridfs and output_gridfs values,
+        # preventing us from checking if they've already been populated. Rather than
+        # perform a potentially dangerous rework of the entire Request update flow,
+        # we opt to just pull the Request as it exists in the database so that we can
+        # check those gridfs field.
+        if self.id:
+            try:
+                old_request = Request.objects.get(id=self.id)
+                self.parameters_gridfs = old_request.parameters_gridfs
+                self.output_gridfs = old_request.output_gridfs
+            except self.DoesNotExist:
+                # Requests to child gardens have an id set from the parent, but no
+                # local Request yet
+                pass
+
+        if self.parameters and self.parameters_gridfs.grid_id is None:
             params_json = json.dumps(self.parameters)
             if len(params_json) > REQUEST_MAX_PARAM_SIZE:
-                self.logger.debug("Parameters too bg, storing in GridFS")
+                self.logger.debug("Parameters too big, storing in GridFS")
                 self.parameters_gridfs.put(params_json, encoding=encoding)
-                self.parameters = None
 
-        if self.output:
+        if self.parameters_gridfs.grid_id:
+            self.parameters = None
+
+        if self.output and self.output_gridfs.grid_id is None:
             output_json = json.dumps(self.output)
             if len(output_json) > REQUEST_MAX_PARAM_SIZE:
                 self.logger.info("Output size too big, storing in gridfs")
                 self.output_gridfs.put(self.output, encoding=encoding)
-                self.output = None
 
+        if self.output_gridfs.grid_id:
+            self.output = None
+
+    def _post_save(self):
+        if self.status == "CREATED" and self.namespace == config.get("garden.name"):
+            self._update_raw_file_references()
+
+    def _update_raw_file_references(self):
+        parameters = self.parameters or {}
+
+        for param_value in parameters.values():
+            if (
+                isinstance(param_value, dict)
+                and param_value.get("type") == "bytes"
+                and param_value.get("id") is not None
+            ):
+                try:
+                    raw_file = RawFile.objects.get(id=param_value["id"])
+                    raw_file.request = self
+                    raw_file.save()
+                except RawFile.DoesNotExist:
+                    self.logger.debug(
+                        f"Error locating RawFile with id {param_value['id']} "
+                        "while saving Request {self.id}"
+                    )
+
+    def save(self, *args, **kwargs):
+        self._pre_save()
         super(Request, self).save(*args, **kwargs)
+        self._post_save()
 
     def clean(self):
         """Validate before saving to the database"""
@@ -855,10 +905,13 @@ class FileChunk(MongoModel, Document):
 
 class RawFile(Document):
     file = FileField()
+    created_at = DateTimeField(default=datetime.datetime.utcnow, required=True)
+    request = LazyReferenceField(Request, required=False, reverse_delete_rule=CASCADE)
+
+    meta = {"queryset_class": FileFieldHandlingQuerySet}
 
 
 class CommandPublishingBlockList(Document):
-
     namespace = StringField(required=True)
     system = StringField(required=True)
     command = StringField(required=True)
