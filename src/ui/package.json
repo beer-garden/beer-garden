@@ -44,8 +44,8 @@
     "ui-select": "^0.19.8"
   },
   "devDependencies": {
-    "@babel/core": "^7.16.0",
-    "@babel/preset-env": "^7.16.4",
+    "@babel/core": "^7.16.7",
+    "@babel/preset-env": "^7.16.7",
     "babel-loader": "^8.2.3",
     "copy-webpack-plugin": "^5.1.1",
     "css-loader": "^3.4.2",

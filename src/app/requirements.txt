@@ -72,7 +72,7 @@ pyyaml==5.4.1
     # via
     #   apispec
     #   beer-garden (setup.py)
-requests==2.26.0
+requests==2.27.0
     # via
     #   brewtils
     #   pyrabbit2
