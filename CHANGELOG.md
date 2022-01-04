@@ -1,5 +1,32 @@
 # Beer Garden Changelog
 
+## 3.10.0
+
+1/4/22
+
+### Added Features
+
+- File parameters on requests are now cleaned up by the pruner per the
+  `db.ttl.file` setting. (Issue #1215)
+- File parameters are now cleaned up when the corresponding request is removed.
+  (Issue #1215)
+- Reduce log noise generated from ERROR events. (Issue #1213)
+
+### Bug Fixes
+
+- Request parameter and output data stored in GridFS no longer gets duplicated
+  throughout the life of a request. (Issue #1216)
+- Request `status_updated_at` field on requests from child gardens is now
+  properly preserved. (Issue #1143)
+- The DELETE method on the /api/v1/gardens endpoint has been restored. (Issue
+  #1230)
+
+### Other Changes
+
+- Added backend support for a command publishing blocklist that prevents
+  requests from listed commands from being published up to a parent garden. User
+  access to this feature will follow in a future release. (Issue #877)
+
 ## 3.9.0
 
 12/8/21
