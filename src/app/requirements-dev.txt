@@ -14,7 +14,7 @@ appdirs==1.4.4
     # via
     #   -c requirements.txt
     #   brewtils
-attrs==21.2.0
+attrs==21.4.0
     # via
     #   flake8-bugbear
     #   pytest
@@ -105,7 +105,7 @@ pika==1.2.0
     # via
     #   -c requirements.txt
     #   brewtils
-platformdirs==2.4.0
+platformdirs==2.4.1
     # via black
 pluggy==1.0.0
     # via pytest
@@ -115,7 +115,7 @@ pycodestyle==2.8.0
     # via flake8
 pyflakes==2.4.0
     # via flake8
-pygments==2.10.0
+pygments==2.11.1
     # via sphinx
 pyjwt==1.7.1
     # via
@@ -146,7 +146,7 @@ pytz==2020.5
     #   -c requirements.txt
     #   babel
     #   brewtils
-requests==2.26.0
+requests==2.27.0
     # via
     #   -c requirements.txt
     #   brewtils
@@ -179,7 +179,7 @@ sphinxcontrib-websupport==1.2.4
     # via sphinx
 toml==0.10.2
     # via pytest
-tomli==1.2.2
+tomli==1.2.3
     # via black
 tornado==6.1
     # via
@@ -199,7 +199,7 @@ watchdog==0.10.4
     # via
     #   -c requirements.txt
     #   yapconf
-wheel==0.37.0
+wheel==0.37.1
     # via -r requirements-dev.in
 wrapt==1.12.1
     # via
@@ -209,7 +209,7 @@ yapconf==0.3.7
     # via
     #   -c requirements.txt
     #   brewtils
-zipp==3.6.0
+zipp==3.7.0
     # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
