@@ -1,14 +1,15 @@
 import _ from "lodash";
 
-tokenService.$inject = ["$http", "localStorageService"];
+tokenService.$inject = ["$http", "localStorageService", "EventService"];
 
 /**
  * tokenService - Service for interacting with the token API.
  * @param  {Object} $http               Angular's $http Object.
  * @param  {Object} localStorageService Storage service
+ * @param  {Object} EventService Websocket event handling service
  * @return {Object}       Service for interacting with the token API.
  */
-export default function tokenService($http, localStorageService) {
+export default function tokenService($http, localStorageService, EventService) {
   const service = {
     getToken: () => {
       return localStorageService.get("token");
@@ -26,6 +27,7 @@ export default function tokenService($http, localStorageService) {
     },
     handleRefresh: (refreshToken) => {
       localStorageService.set("refresh", refreshToken);
+      EventService.updateToken(refreshToken);
     },
     clearRefresh: () => {
       const refreshToken = localStorageService.get("refresh");

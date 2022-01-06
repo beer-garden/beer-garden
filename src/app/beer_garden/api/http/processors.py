@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from brewtils.schema_parser import SchemaParser
-
 import beer_garden.api.http
 from beer_garden.api.http.handlers.v1.event import EventSocket
 
@@ -22,8 +20,6 @@ class EventManager:
 def websocket_publish(item):
     """Will serialize an event and publish it to all event websocket endpoints"""
     try:
-        beer_garden.api.http.io_loop.add_callback(
-            EventSocket.publish, SchemaParser.serialize(item, to_string=True)
-        )
+        beer_garden.api.http.io_loop.add_callback(EventSocket.publish, item)
     except Exception as ex:
         logger.exception(f"Error publishing event to websocket: {ex}")

@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 from typing import Type, Union
 
-import jwt
 from brewtils.models import BaseModel as BrewtilsModel
 from mongoengine import Document, QuerySet, ValidationError
 from mongoengine.queryset.visitor import Q, QCombination
 
 import beer_garden.config as config
 from beer_garden.api.authorization import Permissions
+from beer_garden.api.http.authentication import decode_token, get_user_from_token
 from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.api.http.exceptions import (
     AuthorizationRequired,
-    ExpiredToken,
-    InvalidToken,
     NotFound,
     RequestForbidden,
 )
@@ -21,7 +19,8 @@ from beer_garden.authorization import (
     user_permitted_objects,
     user_permitted_objects_filter,
 )
-from beer_garden.db.mongo.models import User, UserToken
+from beer_garden.db.mongo.models import User
+from beer_garden.errors import ExpiredTokenException, InvalidTokenException
 
 
 class AuthorizationHandler(BaseHandler):
@@ -35,7 +34,14 @@ class AuthorizationHandler(BaseHandler):
         to all gardens is returned"""
 
         if config.get("auth").enabled:
-            return self._get_user_from_request()
+            access_token = self._get_token_payload_from_request()
+
+            try:
+                return get_user_from_token(access_token)
+            except InvalidTokenException:
+                raise RequestForbidden(reason="Authorization token invalid")
+            except ExpiredTokenException:
+                raise AuthorizationRequired(reason="Authorization token expired")
         else:
             return self._anonymous_superuser()
 
@@ -172,63 +178,23 @@ class AuthorizationHandler(BaseHandler):
 
         return anonymous_superuser
 
-    def _get_user_from_request(self) -> "User":
-        """Gets the User object corresponding to the jwt access token provided in the
-        request.
-
-        Returns:
-            User: The User corresponding to the jwt access token in the request
-
-        Raise:
-            AuthorizationRequired: If the token is not present or invalid.
-            RequestForbidden: If the token is valid, but the corresponding User no
-                longer exists.
-        """
-        access_token = self._get_token_payload_from_request()
-
-        try:
-            user = User.objects.get(id=access_token["sub"])
-        except User.DoesNotExist:
-            raise RequestForbidden
-
-        try:
-            _ = UserToken.objects.get(uuid=access_token["jti"])
-        except UserToken.DoesNotExist:
-            # This could be a sign of a compromised token, so err on the side of caution
-            # and remove all of the user's tokens to force them to re-authenticate.
-            user.revoke_tokens()
-            raise AuthorizationRequired
-
-        user.set_permissions_cache(access_token["permissions"])
-
-        return user
-
     def _get_token_payload_from_request(self) -> dict:
         """Retrieves and decodes the jwt access token from the Authorization headers
         on the request.
 
         Raises:
             AuthorizationRequired: The token is not present
-            ExpiredToken: The token has expired
-            InvalidToken: The token was not valid and failed to decode
+            InvalidToken: The supplied token was invalid
         """
-        secret_key = config.get("auth").token_secret
         auth_header = self.request.headers.get("Authorization")
 
         if not auth_header or not auth_header.startswith("Bearer "):
-            raise AuthorizationRequired
+            raise AuthorizationRequired(reason="No authorization token provided")
 
         try:
             token = auth_header.split(" ")[1]
-            algorithm = jwt.get_unverified_header(token)["alg"]
-
-            decoded_token = jwt.decode(token, key=secret_key, algorithms=[algorithm])
-        except (jwt.InvalidSignatureError, jwt.DecodeError, KeyError, IndexError):
-            raise InvalidToken
-        except jwt.ExpiredSignatureError:
-            raise ExpiredToken
-
-        if decoded_token["type"] != "access":
-            raise InvalidToken
-
-        return decoded_token
+            return decode_token(token, expected_type="access")
+        except (InvalidTokenException, IndexError):
+            raise AuthorizationRequired(reason="Authorization token invalid")
+        except ExpiredTokenException:
+            raise AuthorizationRequired(reason="Authorization token expired")

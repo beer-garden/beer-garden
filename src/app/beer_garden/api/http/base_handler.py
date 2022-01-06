@@ -198,7 +198,7 @@ class BaseHandler(RequestHandler):
                 message = error_dict.get("message", getattr(e, "message", str(e)))
                 code = error_dict.get("status_code", 500)
             elif issubclass(typ3, BaseHTTPError):
-                message = typ3.reason
+                message = self._reason
                 code = typ3.status_code
             elif config.get("ui.debug_mode"):
                 message = str(e)
