@@ -39,8 +39,11 @@ There are also a limited number of special permissions that do not map to a
 typical entity or operation. These currently include:
 
 - `event:forward` - This permission is required for garden to garden
-  communications. When tasking a child garden, the user that the parent connects
-  to the child as would need to have this permission.
+  communications. When tasking a remote garden, the user that the local garden
+  connects to the remote garden as would need to have this permission on the
+  remote garden if authorization is also enabled on the remote garden. **NOTE:**
+  Regular users should not have this permission, as it allows for creation of
+  requests against any garden or system.
 
 ## Authentication Basics
 
@@ -130,8 +133,8 @@ Details on how to configure the group definition file can be found
 
 Path to a file that [defines roles](#defining-roles) and the permissions
 associated with each role. These are the roles that will be assigned to users in
-order to grant access to view data and perform actions on the garden and its
-children.
+order to grant access to view data and perform actions on the garden or any
+connected remote gardens.
 
 ### token_secret
 
@@ -252,7 +255,7 @@ assignment is defined as:
   `role_definition_file` points to.
 - **domain:** A domain is how we define the context in which the user has the
   assigned roles. A domain consists of a scope and some identifiers.
-  - **scope:** Scope can be one of _Global_ (univeral access), _Garden_ (access
+  - **scope:** Can be one of _Global_ (univeral access), _Garden_ (access
     gardens matching the identifiers), or _System_ (access to systems matching
     the identifiers).
   - **identifiers:** How to identify the items of the given scope that the user
@@ -264,13 +267,13 @@ assignment is defined as:
     result in access to all versions of that system across **all gardens**
     (namespaces) being granted.
 
-## Remote / Child Gardens
+## Remote Gardens
 
 One very important note about authorization in Beer Garden is that it is only
-performed against the parent garden. That is, the garden that the user is
-directly interacting with. If your garden has a remote (child) garden connected
-to it, permissions for that remote garden should be assigned by a role
-assignemnt in an appropriate domain on the parent.
+performed against the local garden. That is, the garden that the user is
+directly interacting with. If your garden has a remote garden connected to it,
+permissions for that remote garden should be assigned by a role assignment in an
+appropriate domain on the local garden.
 
 For instance, if you have a garden named "parent" and a remote garden connected
 to it named "child", you could have the following in your group definition file
@@ -296,6 +299,6 @@ to assign access to the "child" garden:
 ```
 
 It is important to note that no corresponding groups or users need to exist on
-the "child" garden. The remote garden effectively assumes that the parent has
-already performed the necessary authorization checks and treats all forwarded
-operations as trusted.
+the "child" garden. The remote garden effectively assumes that the local garden
+has already performed the necessary authorization checks and treats all
+forwarded operations as trusted.
