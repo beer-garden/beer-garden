@@ -523,7 +523,7 @@ def run_job(job_id, request_template, **kwargs):
         if updates != {}:
             db.modify(db_job, **updates)
     except Exception as ex:
-        logger.exception(f"Error executing {db_job}: {ex}")
+        logger.error(f"Error executing {db_job}: {ex}")
         db.modify(db_job, {"inc__error_count": 1})
 
     # Be a little careful here as the job could have been removed or paused
