@@ -38,12 +38,12 @@ example: `garden:read`, `system:update`, `request:delete`.
 There are also a limited number of special permissions that do not map to a
 typical entity or operation. These currently include:
 
-- `event:forward` - This permission is required for garden to garden
-  communications. When tasking a remote garden, the user that the local garden
-  connects to the remote garden as would need to have this permission on the
-  remote garden if authorization is also enabled on the remote garden. **NOTE:**
-  Regular users should not have this permission, as it allows for creation of
-  requests against any garden or system.
+- `event:forward` - This permission is required for garden-to-garden
+  communications. If your authorization is enabled on your remote gardens, this
+  permission must be assigned to the user account that your local garden uses to
+  communicate with those remote gardens. **NOTE:** Regular users should not have
+  this permission, as it allows for the creation of requests against any garden
+  or system.
 
 ## Authentication Basics
 
@@ -99,10 +99,10 @@ on all requests that go through a proxy, these fields can safely be left blank.
 Since the trusted headers will be included on the login request, the user will
 still be able to login.
 
-**NOTE:** If you enable this it is imperitive that users are required to access
+**NOTE:** If you enable this, it is imperative that users are required to access
 your garden through the proxy and do not have a means of accessing the garden
 directly. Direct garden access could allow users to set what are supposed to be
-trusted headers themselves, allowing them to masquerade as whomever they wish.
+trusted headers themselves. This would allow masquerading as whomever they wish.
 
 Available settings:
 
@@ -111,8 +111,9 @@ Available settings:
   account already exists for them.
 - **enabled:** Set to `true` to allow trusted header authentication.
 - **user_groups_header:** The name of the header that will contain a comma
-  separated list of the user's group memberships.
+  separated list of the user's group memberships. Default: bg-user-groups
 - **username_header:** The name of the header that will contain the username.
+  Default: bg-username
 
 ### enabled
 
@@ -124,10 +125,10 @@ no login is required and no permissions checks are performed.
 ### group_definition_file
 
 Path to a file mapping groups to beer garden role assignments. Currently groups
-can only assigned via the header defined in `trusted_header.user_groups_header`
-and are therefore only applicable when using that authentication handler.
-Details on how to configure the group definition file can be found
-[below](#group-definition-file).
+can only be assigned via the header defined in
+`trusted_header.user_groups_header` and are therefore only applicable when using
+that authentication handler. Details on how to configure the group definition
+file can be found [below](#group-definition-file).
 
 ### role_definition_file
 
@@ -185,12 +186,12 @@ The available permissions are discussed in the earlier
 
 ## Assigning Roles
 
-Users are not granted permissions directly. Instead they are assign roles in a
+Users are not granted permissions directly. Instead they are assigned roles in a
 specific domain, granting them all of the role's permissions in that domain.
 
 A domain is a set of gardens or systems (or the special "Global" domain scope,
 which provides universal access). When permissions get checked they follow a
-heirarchy, meaning access at the Global level confers access to all gardens and
+hierarchy, meaning access at the Global level confers access to all gardens and
 systems, access for a garden confers access for all systems in that garden, etc.
 
 There is currently no user accessible way to assign roles to users that are
@@ -263,7 +264,7 @@ assignment is defined as:
     requires a `name` identifier. _System_ requires at least a `name` or
     `namespace` and can optionally take a `version` as well. Providing fewer
     identifiers results in a broader level of access being granted. For example,
-    For a domain with scope _System_, supplying just a `name` identifier would
+    for a domain with scope _System_, supplying just a `name` identifier would
     result in access to all versions of that system across **all gardens**
     (namespaces) being granted.
 
