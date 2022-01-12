@@ -111,9 +111,9 @@ Available settings:
   account already exists for them.
 - **enabled:** Set to `true` to allow trusted header authentication.
 - **user_groups_header:** The name of the header that will contain a comma
-  separated list of the user's group memberships. Default: bg-user-groups
+  separated list of the user's group memberships. Default: `bg-user-groups`
 - **username_header:** The name of the header that will contain the username.
-  Default: bg-username
+  Default: `bg-username`
 
 ### enabled
 
