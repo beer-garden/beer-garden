@@ -524,7 +524,7 @@ def run_job(job_id, request_template, **kwargs):
             db.modify(db_job, **updates)
     except Exception as ex:
         logger.error(f"Error executing {db_job}: {ex}")
-        db.modify(db_job, {"inc__error_count": 1})
+        db.modify(db_job, inc__error_count=1)
 
     # Be a little careful here as the job could have been removed or paused
     job = beer_garden.application.scheduler.get_job(job_id)
