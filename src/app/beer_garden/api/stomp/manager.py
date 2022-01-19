@@ -184,7 +184,7 @@ class StompManager(BaseProcessor):
         for handler in [
             beer_garden.router.handle_event,
             beer_garden.log.handle_event,
-            beer_garden.requests.handle_event,
+            beer_garden.requests.handle_event_for_entrypoints,
             self._event_handler,
         ]:
             try:

@@ -860,7 +860,7 @@ def process_wait(request: Request, timeout: float) -> Request:
     return db.query_unique(Request, id=created_request.id)
 
 
-def handle_event(event):
+def handle_event_for_entrypoints(event):
     # Whenever a request is completed check to see if this process is waiting for it
     if event.name == Events.REQUEST_COMPLETED.name:
         completion_event = request_map.pop(event.payload.id, None)
@@ -877,8 +877,10 @@ def handle_event(event):
             for request_event in request_map:
                 request_map[request_event].set()
 
+
+def handle_event(event):
     # Only care about downstream garden
-    elif event.garden != config.get("garden.name") and not event.error:
+    if event.garden != config.get("garden.name") and not event.error:
         if event.name in (
             Events.REQUEST_CREATED.name,
             Events.REQUEST_STARTED.name,
