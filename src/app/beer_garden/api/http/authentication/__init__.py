@@ -180,7 +180,7 @@ def decode_token(encoded_token: str, expected_type: str = None) -> dict:
     token_type = decoded_token["type"]
     if expected_type and token_type != expected_type:
         raise InvalidTokenException(
-            f"Incorrect token type. Expected {expected_type}," "received {token_type}."
+            f"Incorrect token type. Expected {expected_type} received {token_type}."
         )
 
     return decoded_token
