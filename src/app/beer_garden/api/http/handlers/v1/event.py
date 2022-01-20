@@ -1,17 +1,61 @@
 # -*- coding: utf-8 -*-
 import logging
+from json import JSONDecodeError
+from typing import TYPE_CHECKING, Optional
 
-from brewtils.errors import RequestForbidden
-from tornado.web import HTTPError
+from brewtils.schema_parser import SchemaParser
+from marshmallow import Schema, ValidationError, fields, validate
 from tornado.websocket import WebSocketHandler
 
+from beer_garden import config
+from beer_garden.api.http.authentication import decode_token, get_user_from_token
+from beer_garden.authorization import user_has_permission_for_object
+from beer_garden.errors import ExpiredTokenException, InvalidTokenException
+
+if TYPE_CHECKING:
+    from brewtils.models import Event
+
+    from beer_garden.db.mongo.models import User
+
+
 logger = logging.getLogger(__name__)
+
+
+def _auth_enabled():
+    """Helper for checking the auth.enabled settings"""
+    return config.get("auth").enabled
+
+
+def _user_can_receive_messages_for_event(user: "User", event: "Event"):
+    """Check a that a user has access to view the supplied event"""
+    user_permitted = True
+    payload_type = event.payload_type.lower()
+
+    if event.payload and not user_has_permission_for_object(
+        user, f"{payload_type}:read", event.payload
+    ):
+        user_permitted = False
+
+    return user_permitted
+
+
+class IncomingMessageSchema(Schema):
+    """A simple schema for validating incoming messages. Currently only handles access
+    token updates."""
+
+    name = fields.Str(required=True, validate=validate.OneOf(["UPDATE_TOKEN"]))
+    payload = fields.Str(required=True)
 
 
 class EventSocket(WebSocketHandler):
 
     closing = False
     listeners = set()
+
+    def __init__(self, *args, **kwargs):
+        self.access_token: Optional[dict] = None
+
+        super().__init__(*args, **kwargs)
 
     def check_origin(self, origin):
         return True
@@ -21,32 +65,89 @@ class EventSocket(WebSocketHandler):
             self.close(reason="Shutting down")
             return
 
-        # We can't go though the 'normal' BaseHandler exception translation
-        try:
-            # TODO: A permissions check for the old bg-read permission was here
-            # This is likely not the appropriate place for the permission check, but
-            # we should evaluate and then remove this bit if appropriate
-            pass
-        except (HTTPError, RequestForbidden) as ex:
-            self.close(reason=str(ex))
-            return
-
         EventSocket.listeners.add(self)
+
+        if _auth_enabled():
+            self.request_authorization(reason="Access token required")
 
     def on_close(self):
         EventSocket.listeners.discard(self)
 
     def on_message(self, message):
-        pass
+        """Process incoming messages. Called by WebSocketHandler automatically when
+        a message is received."""
+        try:
+            token = IncomingMessageSchema(strict=True).loads(message).data["payload"]
+            self._update_access_token(token)
+        except (ValidationError, JSONDecodeError) as exc:
+            self._message_processing_error(
+                f"Invalid message received. Error was: {exc}"
+            )
+
+    def get_current_user(self) -> Optional["User"]:
+        """Retrieve the appropriate User object for the websocket connection.
+
+        Returns:
+            None: The token for the current connection is invalid or expired
+            User: The User associated with the connection token
+        """
+        user = None
+
+        if _auth_enabled() and self.access_token is not None:
+            try:
+                user = get_user_from_token(self.access_token, revoke_expired=False)
+            except (ExpiredTokenException, InvalidTokenException):
+                pass
+
+        return user
+
+    def request_authorization(self, reason: str):
+        """Publish a message requesting authorization"""
+        message = {"name": "AUTHORIZATION_REQUIRED", "payload": reason}
+        self.write_message(message)
+
+    def _message_processing_error(self, reason: str):
+        """Publish a message reporting an error while handling incoming messages"""
+        message = {"name": "BAD_MESSAGE", "payload": reason}
+        self.write_message(message)
+
+    def _update_access_token(self, token):
+        """Update the access token for the connection"""
+        try:
+            decoded_token = decode_token(token, expected_type="access")
+            _ = get_user_from_token(decoded_token)
+
+            self.access_token = decoded_token
+            self.write_message({"name": "TOKEN_UPDATED"})
+        except (ExpiredTokenException, InvalidTokenException):
+            self.access_token = None
+            self.request_authorization(
+                "Access token update message contained an invalid token"
+            )
 
     @classmethod
-    def publish(cls, message):
-        # Don't bother if nobody is listening
-        if not len(cls.listeners):
-            return
+    def publish(cls, event):
+        if len(cls.listeners) > 0:
+            message = SchemaParser.serialize(event, to_string=True)
 
-        for listener in cls.listeners:
-            listener.write_message(message)
+            for listener in cls.listeners:
+                if _auth_enabled():
+                    user = listener.get_current_user()
+
+                    if user is None:
+                        listener.request_authorization("Valid access token required")
+                        continue
+
+                    if not _user_can_receive_messages_for_event(user, event):
+                        logger.debug(
+                            "Skipping websocket publish of event %s to user %s due to "
+                            "lack of access",
+                            event.name,
+                            user.username,
+                        )
+                        continue
+
+                listener.write_message(message)
 
     @classmethod
     def shutdown(cls):

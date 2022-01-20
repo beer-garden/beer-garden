@@ -46,16 +46,6 @@ class AuthenticationFailed(BaseHTTPError):
     reason: str = "Authentication Failed"
 
 
-class InvalidToken(BaseHTTPError):
-    status_code: int = 401
-    reason: str = "Authorization token invalid"
-
-
-class ExpiredToken(BaseHTTPError):
-    status_code: int = 401
-    reason: str = "Authorization token expired"
-
-
 class RequestForbidden(BaseHTTPError):
     status_code: int = 403
     reason: str = "Access denied"

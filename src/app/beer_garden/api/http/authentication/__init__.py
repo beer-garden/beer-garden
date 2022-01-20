@@ -73,13 +73,16 @@ def refresh_token_pair(refresh_token: str) -> dict:
             { "access": <str>, "refresh": <str> }
 
     Raises:
-        ExpiredTokenException: The supplied refresh token has expired, either due
-            to reaching it's natural expiration or having been revoked.
+        ExpiredTokenException: The supplied refresh token has expired, either due to
+            reaching it's natural expiration or having been revoked.
+        InvalidTokenException: The token could not be decoded or is the incorrect type
+            of token and is therefore invalid
     """
+    decoded_refresh_token = decode_token(refresh_token)
+
     try:
-        decoded_refresh_token = _decode_token(refresh_token)
         refresh_token_obj = UserToken.objects.get(uuid=decoded_refresh_token["jti"])
-    except (jwt.ExpiredSignatureError, UserToken.DoesNotExist):
+    except UserToken.DoesNotExist:
         raise ExpiredTokenException
 
     expiration = datetime.fromtimestamp(decoded_refresh_token["exp"], tz=timezone.utc)
@@ -101,12 +104,86 @@ def revoke_token_pair(refresh_token: str) -> None:
         None
     """
     try:
-        decoded_refresh_token = _decode_token(refresh_token)
+        decoded_refresh_token = decode_token(refresh_token)
         UserToken.objects.get(uuid=decoded_refresh_token["jti"]).delete()
-    except (jwt.ExpiredSignatureError, UserToken.DoesNotExist):
+    except (ExpiredTokenException, UserToken.DoesNotExist):
         # Since we're trying to revoke the token anyway, do nothing if it was already
         # expired or revoked
         pass
+
+
+def get_user_from_token(access_token: dict, revoke_expired=True) -> User:
+    """Gets the User object corresponding to the jwt access token provided in the
+    request.
+
+    Args:
+        access_token: A decoded jwt access token
+        revoke_expired: Bool determining whether an expired token will result in all
+            of a user's tokens being revoked. This should be True when called in a
+            context where an expired token could be a sign of a compromised token.
+
+    Returns:
+        User: The User corresponding to the jwt access token in the request
+
+    Raise:
+        InvalidTokenException: The token is invalid as there is no matching UserToken
+        ExpiredTokenException: The token is valid, but the corresponding User no
+            longer exists.
+    """
+    try:
+        user = User.objects.get(id=access_token["sub"])
+    except User.DoesNotExist:
+        raise InvalidTokenException
+
+    try:
+        _ = UserToken.objects.get(uuid=access_token["jti"])
+    except UserToken.DoesNotExist:
+        if revoke_expired:
+            user.revoke_tokens()
+
+        raise ExpiredTokenException
+
+    user.set_permissions_cache(access_token["permissions"])
+
+    return user
+
+
+def decode_token(encoded_token: str, expected_type: str = None) -> dict:
+    """Decodes an encoded access token string
+
+    Args:
+        encoded_token: The encoded JWT string
+        expected_type: Specify the type of token expecting to be decoded. If specified
+            an exception will be thrown if the decoded type does not match. If not
+            specified, no check will be performed.
+
+    Returns:
+        dict: The decoded access token
+
+    Raises:
+        ExpiredTokenException: The token expiration date has passed
+        InvalidTokenException: The token could not be decoded or is the incorrect type
+            of token and is therefore invalid
+    """
+    secret_key = config.get("auth").token_secret
+
+    try:
+        algorithm = jwt.get_unverified_header(encoded_token)["alg"]
+        decoded_token = jwt.decode(
+            encoded_token, key=secret_key, algorithms=[algorithm]
+        )
+    except (jwt.InvalidSignatureError, jwt.DecodeError, KeyError) as exc:
+        raise InvalidTokenException(exc)
+    except jwt.ExpiredSignatureError:
+        raise ExpiredTokenException
+
+    token_type = decoded_token["type"]
+    if expected_type and token_type != expected_type:
+        raise InvalidTokenException(
+            f"Incorrect token type. Expected {expected_type} received {token_type}."
+        )
+
+    return decoded_token
 
 
 def _generate_access_token(user: User, identifier: UUID) -> str:
@@ -157,14 +234,3 @@ def _get_access_token_expiration() -> datetime:
 def _get_refresh_token_expiration() -> datetime:
     """Calculate and return the refresh token expiration time"""
     return datetime.utcnow() + timedelta(hours=12)
-
-
-def _decode_token(token) -> dict:
-    """Decode the supplied token and return the contents as a dict"""
-    secret_key = config.get("auth").token_secret
-
-    try:
-        token_headers = jwt.get_unverified_header(token)
-        return jwt.decode(token, key=secret_key, algorithms=[token_headers["alg"]])
-    except (jwt.DecodeError, jwt.InvalidSignatureError):
-        raise InvalidTokenException

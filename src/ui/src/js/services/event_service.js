@@ -1,11 +1,8 @@
-eventService.$inject = ["TokenService"];
-
 /**
  * eventService - Service for getting systems from the API.
- * @param  {Object} TokenService      Service for Token information.
  * @return {Object}                   Object for interacting with the event API.
  */
-export default function eventService(TokenService) {
+export default function eventService() {
   let socketConnection = undefined;
   let messageCallbacks = {};
 
@@ -24,7 +21,7 @@ export default function eventService(TokenService) {
     removeCallback: (name) => {
       delete messageCallbacks[name];
     },
-    connect: (token) => {
+    connect: () => {
       // If socket is already open don't do anything
       if (
         _.isUndefined(socketConnection) ||
@@ -35,10 +32,6 @@ export default function eventService(TokenService) {
           window.location.host +
           window.location.pathname +
           `api/v1/socket/events/`;
-
-        if (token) {
-          eventUrl += "?token=" + token;
-        }
 
         socketConnection = new WebSocket(eventUrl);
         socketConnection.onmessage = onMessage;
@@ -54,6 +47,13 @@ export default function eventService(TokenService) {
         return undefined;
       }
       return socketConnection.readyState;
+    },
+    updateToken: (token) => {
+      if (socketConnection.readyState == WebSocket.OPEN) {
+        socketConnection.send(
+            JSON.stringify({name: "UPDATE_TOKEN", payload: token})
+        );
+      }
     },
   };
 }

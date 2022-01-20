@@ -134,7 +134,7 @@ export default function appRun(
     }
 
     // Connect to the event socket
-    EventService.connect(token);
+    EventService.connect();
 
     // Load theme from local storage
     // REMOVE THIS ONCE THE rootScope.loadUser CALL BELOW IS ENABLED
@@ -266,6 +266,12 @@ export default function appRun(
       removeSystem(event.payload);
     } else if (event.name.startsWith("INSTANCE")) {
       updateInstance(event.payload);
+    }
+  });
+
+  EventService.addCallback("websocket_authorization", (event) => {
+    if (event.name === "AUTHORIZATION_REQUIRED") {
+      EventService.updateToken(TokenService.getToken());
     }
   });
 
