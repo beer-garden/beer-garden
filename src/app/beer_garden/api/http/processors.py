@@ -18,7 +18,7 @@ class EventManager:
 
 
 def websocket_publish(item):
-    """Will serialize an event and publish it to all event websocket endpoints"""
+    """Publish an event to all websocket endpoints"""
     try:
         beer_garden.api.http.io_loop.add_callback(EventSocket.publish, item)
     except Exception as ex:
