@@ -29,12 +29,11 @@ def _auth_enabled():
 def _user_can_receive_messages_for_event(user: "User", event: "Event"):
     """Check a that a user has access to view the supplied event"""
     user_permitted = True
-    payload_type = event.payload_type.lower()
 
-    if event.payload and not user_has_permission_for_object(
-        user, f"{payload_type}:read", event.payload
-    ):
-        user_permitted = False
+    if event.payload and event.payload_type:
+        user_permitted = user_has_permission_for_object(
+            user, f"{event.payload_type.lower()}:read", event.payload
+        )
 
     return user_permitted
 
