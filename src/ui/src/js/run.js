@@ -279,5 +279,9 @@ export default function appRun(
     EventService.connect(TokenService.getToken());
   }, 5000);
 
+  $interval(function () {
+    TokenService.preemptiveRefresh();
+  }, 30000);
+
   $rootScope.initialLoad();
 }
