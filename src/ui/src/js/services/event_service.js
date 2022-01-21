@@ -49,7 +49,7 @@ export default function eventService() {
       return socketConnection.readyState;
     },
     updateToken: (token) => {
-      if (socketConnection.readyState == WebSocket.OPEN) {
+      if (token && (socketConnection.readyState == WebSocket.OPEN)) {
         socketConnection.send(
             JSON.stringify({name: "UPDATE_TOKEN", payload: token})
         );

@@ -1,4 +1,5 @@
 import _ from "lodash";
+import jwtDecode from "jwt-decode";
 
 tokenService.$inject = ["$http", "localStorageService", "EventService"];
 
@@ -14,6 +15,20 @@ export default function tokenService($http, localStorageService, EventService) {
     getToken: () => {
       return localStorageService.get("token");
     },
+    preemptiveRefresh: () => {
+      const token = service.getToken();
+
+      if (token) {
+        const exp = jwtDecode(token).exp;
+        const expDate = new Date(exp * 1000);
+        const curDate = new Date();
+        const minDelta = (expDate - curDate) / (1000 * 60)
+
+        if (minDelta <= 2) {
+          service.doRefresh(service.getRefresh());
+        }
+      }
+    },
     handleToken: (token) => {
       localStorageService.set("token", token);
       $http.defaults.headers.common.Authorization = "Bearer " + token;
@@ -27,7 +42,6 @@ export default function tokenService($http, localStorageService, EventService) {
     },
     handleRefresh: (refreshToken) => {
       localStorageService.set("refresh", refreshToken);
-      EventService.updateToken(refreshToken);
     },
     clearRefresh: () => {
       const refreshToken = localStorageService.get("refresh");
@@ -61,6 +75,7 @@ export default function tokenService($http, localStorageService, EventService) {
           (response) => {
             service.handleRefresh(response.data.refresh);
             service.handleToken(response.data.access);
+            EventService.updateToken(response.data.access);
           },
           (response) => {
             service.clearRefresh();
