@@ -860,7 +860,7 @@ def process_wait(request: Request, timeout: float) -> Request:
     return db.query_unique(Request, id=created_request.id)
 
 
-def handle_event_for_entrypoints(event):
+def handle_wait_events(event):
     # Whenever a request is completed check to see if this process is waiting for it
     if event.name == Events.REQUEST_COMPLETED.name:
         completion_event = request_map.pop(event.payload.id, None)
