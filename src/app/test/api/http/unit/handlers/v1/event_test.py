@@ -12,16 +12,20 @@ from beer_garden.api.http.handlers.v1.event import EventSocket
 
 
 @pytest.fixture
-def eventsocket_mock(monkeypatch):
-    from beer_garden.api.http.handlers.v1 import event
-
+def get_current_user_mock(monkeypatch):
     def get_current_user(self):
         return "someuser"
+
+    monkeypatch.setattr(EventSocket, "get_current_user", get_current_user)
+
+
+@pytest.fixture
+def eventsocket_mock(get_current_user_mock, monkeypatch):
+    from beer_garden.api.http.handlers.v1 import event
 
     def _user_can_receive_messages_for_event(user, event):
         return True
 
-    monkeypatch.setattr(EventSocket, "get_current_user", get_current_user)
     monkeypatch.setattr(
         event,
         "_user_can_receive_messages_for_event",
@@ -153,3 +157,19 @@ class TestEventSocket(AsyncHTTPTestCase):
         response_dict = json.loads(response)
 
         assert response_dict["payload"]["name"] == self.event.payload.name
+
+    @gen_test
+    @pytest.mark.usefixtures("app_config_auth_enabled", "get_current_user_mock")
+    def test_publish_auth_enabled_publishes_event_without_payload_type(self):
+        ws_client = yield self.ws_connect()
+        yield ws_client.read_message()  # Read the AUTHORIZATION_REQUIRED message
+
+        event = Event(name="ENTRY_STARTED")
+        EventSocket.publish(event)
+
+        response = yield ws_client.read_message()
+        ws_client.close()
+        response_dict = json.loads(response)
+
+        assert response_dict["payload"] is None
+        assert response_dict["name"] == event.name

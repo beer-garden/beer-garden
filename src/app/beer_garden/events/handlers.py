@@ -39,6 +39,7 @@ def garden_callbacks(event: Event) -> None:
         beer_garden.garden.handle_event,
         beer_garden.plugin.handle_event,
         beer_garden.requests.handle_event,
+        beer_garden.requests.handle_wait_events,
         beer_garden.router.handle_event,
         beer_garden.systems.handle_event,
         beer_garden.scheduler.handle_event,
