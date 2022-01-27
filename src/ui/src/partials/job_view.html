@@ -5,7 +5,10 @@
     <small>{{data.name}} - {{data.id}}</small>
   </span>
 </h1>
-<span>
+<span
+  ng-if="responseState(response) === 'success'"
+  ng-show="hasJobPermission(user, 'job:update', data)"
+>
   <button
     type="button"
     class="btn btn-primary pull-right"

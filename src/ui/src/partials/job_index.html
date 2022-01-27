@@ -3,6 +3,7 @@
   
   <button type="button"
           ng-if="responseState(response) === 'success'"
+          ng-show="hasPermission(user, 'job:create')"
           class="btn btn-primary pull-right"
           ng-controller="JobImportController"
           ng-click="openImportJobsPopup()">
@@ -19,6 +20,7 @@
   
   <button type="button"
           ng-if="responseState(response) === 'success'"
+          ng-show="hasPermission(user, 'job:create')"
           class="btn btn-primary pull-right"
           ui-sref="base.jobscreatesystem()">
     Schedule a Job

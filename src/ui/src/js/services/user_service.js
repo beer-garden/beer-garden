@@ -1,14 +1,16 @@
 import _ from 'lodash';
 import jwtDecode from 'jwt-decode';
 
-userService.$inject = ['$http'];
+userService.$inject = ['$http', 'GardenService', 'SystemService'];
 
 /**
  * userService - Service for interacting with the user API.
- * @param  {$http} $http Angular's $http Object.
- * @return {Object}      Service for interacting with the user API.
+ * @param  {$http} $http           Angular's $http Object.
+ * @param  {Object} GardenService  Beer-Garden's garden service object.
+ * @param  {Object} SystemService  Beer-Garden's system service object.
+ * @return {Object}                Service for interacting with the user API.
  */
-export default function userService($http) {
+export default function userService($http, GardenService, SystemService) {
   const service = {
     getUser: (userName) => {
       return $http.get('api/v1/users/' + userName);
@@ -30,31 +32,65 @@ export default function userService($http) {
         password: password,
       });
     },
+    hasPermission: (user, permission) => {
+      // True if the user has the permission for any objects at all
+      return (
+        user.permissions.global_permissions.includes(permission) ||
+        user.permissions.domain_permissions.hasOwnProperty(permission)
+      );
+    },
+    hasGardenPermission: (user, permission, garden) => {
+      if (user.permissions.global_permissions.includes(permission)) {
+        return true;
+      }
+
+      if (user.permissions.domain_permissions.hasOwnProperty(permission)) {
+        return user.permissions.domain_permissions[
+            permission
+        ].garden_ids.includes(garden.id);
+      }
+
+      return false;
+    },
+    hasSystemPermission: (user, permission, system) => {
+      if (user.permissions.global_permissions.includes(permission)) {
+        return true;
+      }
+
+      const garden = GardenService.findGarden(system.namespace);
+      if (garden && service.hasGardenPermission(user, permission, garden)) {
+        return true;
+      }
+
+      if (user.permissions.domain_permissions.hasOwnProperty(permission)) {
+        return user.permissions.domain_permissions[
+            permission
+        ].system_ids.includes(system.id);
+      }
+
+      return false;
+    },
+    hasCommandPermission: (user, permission, command) => {
+      const system = SystemService.findSystem(
+          command.namespace,
+          command.system,
+          command.version,
+      );
+
+      return service.hasSystemPermission(user, permission, system);
+    },
+    hasJobPermission: (user, permission, job) => {
+      const system = SystemService.findSystem(
+          job.request_template.namespace,
+          job.request_template.system,
+          job.request_template.system_version,
+      );
+
+      return service.hasSystemPermission(user, permission, system);
+    },
   };
 
   _.assign(service, {
-    addRoles: (userId, roles) => {
-      return service.updateUser(
-          userId,
-          _.map(roles, (value) => {
-            return {operation: 'add', path: '/roles', value: value};
-          }),
-      );
-    },
-    removeRoles: (userId, roles) => {
-      return service.updateUser(
-          userId,
-          _.map(roles, (value) => {
-            return {operation: 'remove', path: '/roles', value: value};
-          }),
-      );
-    },
-    setRoles: (userId, roles) => {
-      return service.updateUser(userId, [
-        {operation: 'set', path: '/roles', value: roles},
-      ]);
-    },
-
     loadUser: (token) => {
       return service.getUser(token ? jwtDecode(token).username : 'anonymous');
     },

@@ -64,6 +64,20 @@ export default function routeConfig(
               );
             },
           ],
+          gardens: [
+            '$rootScope',
+            'GardenService',
+            ($rootScope, GardenService) => {
+              return GardenService.getGardens().then(
+                  (response) => {
+                    $rootScope.gardens = response.data;
+                  },
+                  (response) => {
+                    $rootScope.gardens = [];
+                  },
+              );
+            },
+          ],
         },
       })
       .state('base.about', {

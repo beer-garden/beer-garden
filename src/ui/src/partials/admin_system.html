@@ -130,6 +130,7 @@
 
   <div
     ng-repeat="systems in groupedSystems"
+    ng-show="hasSystemPermission(user, 'system:update', systems[0])"
     class="container-item panel panel-default"
     style="display: block"
   >

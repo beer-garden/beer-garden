@@ -47,7 +47,7 @@
             <th style="width: 10%" scope="col">Version</th>
             <th style="width: 25%" scope="col">Command</th>
             <th style="width: 35%" scope="col">Description</th>
-            <th style="width: 10%" scope="col"></th>
+            <th style="width: 10%" scope="col" ng-if="userCanTask"></th>
           </tr>
         </thead>
         <tbody>
@@ -66,7 +66,7 @@
               ></span>
             </td>
             <td>{{command.description}}</td>
-            <td>
+            <td ng-if="userCanTask">
               <a
                 class="btn btn-primary center-block word-wrap-button"
                 ui-sref="base.command({systemName: command.system, systemVersion: command.version, namespace: command.namespace, commandName: command.name})"

@@ -1,11 +1,12 @@
-gardenService.$inject = ['$http'];
+gardenService.$inject = ['$rootScope', '$http'];
 
 /**
  * gardenService - Service for interacting with the garden API.
- * @param  {$http} $http Angular's $http object.
- * @return {Object}      Service for interacting with the garden API.
+ * @param  {$rootScope} $rootScope    Angular's $rootScope object.
+ * @param  {$http}      $http         Angular's $http object.
+ * @return {Object}                   Service for interacting with the garden API.
  */
-export default function gardenService($http) {
+export default function gardenService($rootScope, $http) {
   const GardenService = {};
 
   GardenService.getGardens = function() {
@@ -46,6 +47,10 @@ export default function gardenService($http) {
 
   GardenService.deleteGarden = function(name) {
     return $http.delete('api/v1/gardens/' + encodeURIComponent(name));
+  };
+
+  GardenService.findGarden = function(name) {
+    return _.find($rootScope.gardens, {name: name});
   };
 
   GardenService.serverModelToForm = function(model) {
