@@ -70,7 +70,22 @@
   </div>
 
   <div ng-hide="isLocal">
-    <h4>Update Connection</h4>
+    <h4>
+      Update Connection
+      <button type="button"
+            class="btn btn-primary pull-right"
+            ng-controller="GardenConfigImportController"
+            ng-click="openImportGardenConfigPopup()">
+      Import Connection
+    </button>
+    <button type="button"
+            ng-if="responseState(response) === 'success'"
+            class="btn btn-primary pull-right"
+            ng-controller="GardenConfigExportController"
+            ng-click="exportGardenConfig(data.name)">
+      Export Connection
+    </button>
+    </h4>
     <div class="container-fluid">
       <div class="row">
         <form
