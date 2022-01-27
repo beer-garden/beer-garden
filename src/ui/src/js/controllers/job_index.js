@@ -1,6 +1,6 @@
-import { formatDate } from "../services/utility_service.js";
+import {formatDate} from '../services/utility_service.js';
 
-jobIndexController.$inject = ["$scope", "JobService"];
+jobIndexController.$inject = ['$scope', 'JobService'];
 
 /**
  * jobIndexController - Controller for the job index page.
@@ -8,14 +8,14 @@ jobIndexController.$inject = ["$scope", "JobService"];
  * @param  {Object} JobService  Beer-Garden's job service.
  */
 export default function jobIndexController($scope, JobService) {
-  $scope.setWindowTitle("scheduler");
+  $scope.setWindowTitle('scheduler');
 
-  $scope.successCallback = function (response) {
+  $scope.successCallback = function(response) {
     $scope.response = response;
     $scope.data = response.data;
   };
 
-  $scope.failureCallback = function (response) {
+  $scope.failureCallback = function(response) {
     $scope.response = response;
     $scope.data = {};
   };
@@ -29,7 +29,7 @@ export default function jobIndexController($scope, JobService) {
     JobService.getJobs().then($scope.successCallback, $scope.failureCallback);
   }
 
-  $scope.$on("userChange", () => {
+  $scope.$on('userChange', () => {
     loadJobs();
   });
 

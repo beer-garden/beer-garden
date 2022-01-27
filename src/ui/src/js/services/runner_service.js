@@ -1,4 +1,4 @@
-runnerService.$inject = ["$http"];
+runnerService.$inject = ['$http'];
 
 /**
  * runnerService - Service for interacting with the runner API.
@@ -8,27 +8,27 @@ runnerService.$inject = ["$http"];
 export default function runnerService($http) {
   return {
     getRunner: (runnerId) => {
-      return $http.get("api/vbeta/runners/" + runnerId);
+      return $http.get('api/vbeta/runners/' + runnerId);
     },
     getRunners: () => {
-      return $http.get("api/vbeta/runners/");
+      return $http.get('api/vbeta/runners/');
     },
     startRunner: (runner) => {
-      return $http.patch("api/vbeta/runners/" + runner.id, {
-        operation: "start",
+      return $http.patch('api/vbeta/runners/' + runner.id, {
+        operation: 'start',
       });
     },
     stopRunner: (runner) => {
-      return $http.patch("api/vbeta/runners/" + runner.id, {
-        operation: "stop",
+      return $http.patch('api/vbeta/runners/' + runner.id, {
+        operation: 'stop',
       });
     },
     removeRunner: (runner) => {
-      return $http.delete("api/vbeta/runners/" + runner.id);
+      return $http.delete('api/vbeta/runners/' + runner.id);
     },
     reloadRunners: (path) => {
-      return $http.patch("api/vbeta/runners/", {
-        operation: "reload",
+      return $http.patch('api/vbeta/runners/', {
+        operation: 'reload',
         path: path,
       });
     },

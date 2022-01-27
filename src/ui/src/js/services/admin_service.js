@@ -1,4 +1,4 @@
-adminService.$inject = ["$http"];
+adminService.$inject = ['$http'];
 
 /**
  * adminService - Service for interacting with the admin API.
@@ -8,7 +8,7 @@ adminService.$inject = ["$http"];
 export default function adminService($http) {
   return {
     rescan: () => {
-      return $http.patch("api/v1/admin/", { operation: "rescan" });
+      return $http.patch('api/v1/admin/', {operation: 'rescan'});
     },
   };
 }

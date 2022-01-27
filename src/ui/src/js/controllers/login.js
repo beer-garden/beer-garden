@@ -1,11 +1,11 @@
-import _ from "lodash";
-import angular from "angular";
+import _ from 'lodash';
+import angular from 'angular';
 
 loginController.$inject = [
-  "$scope",
-  "$timeout",
-  "$uibModalInstance",
-  "TokenService",
+  '$scope',
+  '$timeout',
+  '$uibModalInstance',
+  'TokenService',
 ];
 
 /**
@@ -16,35 +16,35 @@ loginController.$inject = [
  * @param  {Object} TokenService  TokenService object.
  */
 export default function loginController(
-  $scope,
-  $timeout,
-  $uibModalInstance,
-  TokenService
+    $scope,
+    $timeout,
+    $uibModalInstance,
+    TokenService,
 ) {
   $scope.model = {};
 
-  $scope.doLogin = function () {
+  $scope.doLogin = function() {
     $scope.badUsername = false;
     $scope.badPassword = false;
 
     TokenService.doLogin($scope.model.username, $scope.model.password).then(
-      (response) => {
-        $uibModalInstance.close();
-      },
-      () => {
-        if (_.isUndefined($scope.model.username)) {
-          $scope.badUsername = true;
-          angular.element('input[type="text"]').focus();
-        } else {
-          $scope.badPassword = true;
-          $scope.model.password = undefined;
-          angular.element('input[type="password"]').focus();
-        }
-      }
+        (response) => {
+          $uibModalInstance.close();
+        },
+        () => {
+          if (_.isUndefined($scope.model.username)) {
+            $scope.badUsername = true;
+            angular.element('input[type="text"]').focus();
+          } else {
+            $scope.badPassword = true;
+            $scope.model.password = undefined;
+            angular.element('input[type="password"]').focus();
+          }
+        },
     );
   };
 
-  $scope.cancel = function () {
+  $scope.cancel = function() {
     $uibModalInstance.dismiss();
   };
 

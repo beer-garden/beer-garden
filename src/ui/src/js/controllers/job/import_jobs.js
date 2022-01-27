@@ -1,11 +1,11 @@
-import template from "../../../templates/import_jobs.html";
+import template from '../../../templates/import_jobs.html';
 
 jobImportController.$inject = [
-  "$scope",
-  "$rootScope",
-  "$uibModal",
-  "$state",
-  "JobService",
+  '$scope',
+  '$rootScope',
+  '$uibModal',
+  '$state',
+  'JobService',
 ];
 
 /**
@@ -13,40 +13,41 @@ jobImportController.$inject = [
  * @param  {Object} $scope            Angular's $scope object.
  * @param  {Object} $rootScope        Angular's $rootScope object.
  * @param  {Object} $uibModal         Angular UI's $uibModal object.
+ * @param  {Object} $state
  * @param  {Object} JobService        Beer-Garden's job service.
  */
 export function jobImportController(
-  $scope,
-  $rootScope,
-  $uibModal,
-  $state,
-  JobService
+    $scope,
+    $rootScope,
+    $uibModal,
+    $state,
+    JobService,
 ) {
   $scope.response = $rootScope.sysResponse;
   $scope.data = $rootScope.systems;
 
-  $scope.openImportJobsPopup = function () {
-    let popupInstance = $uibModal.open({
+  $scope.openImportJobsPopup = function() {
+    const popupInstance = $uibModal.open({
       animation: true,
-      controller: "JobImportModalController",
+      controller: 'JobImportModalController',
       template: template,
     });
 
-    popupInstance.result.then(function (resolvedResponse) {
-      let jsonFileContents = resolvedResponse.jsonFileContents;
+    popupInstance.result.then(function(resolvedResponse) {
+      const jsonFileContents = resolvedResponse.jsonFileContents;
       JobService.importJobs(jsonFileContents).then(
-        function (response) {
-          $state.reload();
-        },
-        function (response) {
-          alert("Failure! Server returned status " + response.status);
-        }
+          function(response) {
+            $state.reload();
+          },
+          function(response) {
+            alert('Failure! Server returned status ' + response.status);
+          },
       );
     }, angular.noop);
   };
 }
 
-jobImportModalController.$inject = ["$scope", "$window", "$uibModalInstance"];
+jobImportModalController.$inject = ['$scope', '$window', '$uibModalInstance'];
 
 /**
  * jobImportModalController - Controller for the job import popup window.
@@ -60,17 +61,17 @@ export function jobImportModalController($scope, $window, $uibModalInstance) {
   $scope.fileContents = undefined;
   $scope.fileIsGoodJson = true;
 
-  $scope.inputClicker = function () {
-    $window.document.getElementById("fileSelectHiddenControl").click();
+  $scope.inputClicker = function() {
+    $window.document.getElementById('fileSelectHiddenControl').click();
   };
 
-  $scope.doImport = function () {
-    $scope.import["jsonFileContents"] = $scope.fileContents;
+  $scope.doImport = function() {
+    $scope.import['jsonFileContents'] = $scope.fileContents;
     $uibModalInstance.close($scope.import);
   };
 
-  $scope.cancelImport = function () {
-    $uibModalInstance.dismiss("cancel");
+  $scope.cancelImport = function() {
+    $uibModalInstance.dismiss('cancel');
   };
 
   function isParsableJson(string) {
@@ -82,15 +83,15 @@ export function jobImportModalController($scope, $window, $uibModalInstance) {
     return true;
   }
 
-  $scope.onFileSelected = function (event) {
-    let theFile = event.target.files[0];
+  $scope.onFileSelected = function(event) {
+    const theFile = event.target.files[0];
     $scope.fileName = theFile.name;
 
-    let reader = new FileReader();
-    reader.onload = function (e) {
-      $scope.$apply(function () {
-        let result = reader.result;
-        let isGoodJson = isParsableJson(result);
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      $scope.$apply(function() {
+        const result = reader.result;
+        const isGoodJson = isParsableJson(result);
 
         if (isGoodJson) {
           $scope.fileContents = result;
