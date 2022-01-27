@@ -2,32 +2,51 @@
   <div class="modal-header">
     <h3 class="modal-title" id="modal-title">Select File</h3>
   </div>
-  
+
   <div class="modal-body" id="modal-body">
     <div class="alert alert-danger" role="alert" ng-hide="fileIsGoodJson">
       <p class="mb-0">Couldn't parse as JSON.</p>
     </div>
-    <input type="file" id="fileSelectHiddenControl" class="file-input" style="visibility:hidden;" custom-on-change="onFileSelected">
-    
+    <input
+      type="file"
+      id="fileSelectHiddenControl"
+      class="file-input"
+      style="visibility: hidden"
+      custom-on-change="onFileSelected"
+    />
+
     <div class="input-group col-xs-12">
-      <input type="text" class="form-control input-lg" disabled placeholder="{{fileName || 'Select File'}}" />
+      <input
+        type="text"
+        class="form-control input-lg"
+        disabled
+        placeholder="{{fileName || 'Select File'}}"
+      />
       <span class="input-group-btn">
-        <button class="btn btn-primary input-lg" type="button" ng-click="inputClicker()">
-          <i class="glyphicon glyphicon-search"></i> Browse</button>
+        <button
+          class="btn btn-primary input-lg"
+          type="button"
+          ng-click="inputClicker()"
+        >
+          <i class="glyphicon glyphicon-search"></i> Browse
+        </button>
       </span>
     </div>
   </div>
-  
-  <div class="modal-footer">
-    <input type="button"
-            class="btn btn-danger"
-            value="Cancel"
-            ng-click="cancelImport()" />
-    <input type="submit"
-            class="btn btn-success"
-            value="Import"
-            ng-disabled="!(fileContents && fileIsGoodJson)"
-            ng-click="doImport()" />
-  </div>
 
+  <div class="modal-footer">
+    <input
+      type="button"
+      class="btn btn-danger"
+      value="Cancel"
+      ng-click="cancelImport()"
+    />
+    <input
+      type="submit"
+      class="btn btn-success"
+      value="Import"
+      ng-disabled="!(fileContents && fileIsGoodJson)"
+      ng-click="doImport()"
+    />
+  </div>
 </form>

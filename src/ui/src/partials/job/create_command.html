@@ -2,10 +2,11 @@
   <h3 class="text-center">Now select the command you would like</h3>
 
   <table
-  datatable="ng"
-  dt-options="dtOptions"
-  class="table table-striped table-bordered"
-  style="width: 100%">
+    datatable="ng"
+    dt-options="dtOptions"
+    class="table table-striped table-bordered"
+    style="width: 100%"
+  >
     <thead>
       <tr>
         <th id="th_command_name">Command Name</th>
@@ -18,9 +19,12 @@
         <td>{{command.name}}</td>
         <td>{{command.description || "No Description Given"}}</td>
         <td>
-          <a class="btn btn-primary btn-block btn-sm"
-          ui-sref="base.jobscreaterequest({system: system, command: command})"
-          role="button">Select</a>
+          <a
+            class="btn btn-primary btn-block btn-sm"
+            ui-sref="base.jobscreaterequest({system: system, command: command})"
+            role="button"
+            >Select</a
+          >
         </td>
       </tr>
     </tbody>

@@ -1,17 +1,17 @@
-
 <fetch-data response="response"></fetch-data>
 
 <div ng-if="responseState(response) === 'success'">
-  <h1 class='page-header'>Systems</h1>
+  <h1 class="page-header">Systems</h1>
 
   <div class="container-fluid animate-if">
     <table
-        id="systemIndexTable"
-        datatable="ng"
-        dt-options="dtOptions"
-        dt-instance="instanceCreated"
-        class="table table-striped table-bordered"
-        style="width: 100%">
+      id="systemIndexTable"
+      datatable="ng"
+      dt-options="dtOptions"
+      dt-instance="instanceCreated"
+      class="table table-striped table-bordered"
+      style="width: 100%"
+    >
       <thead>
         <tr>
           <th scope="col">Namespace</th>
@@ -22,11 +22,9 @@
           <th scope="col">Instances</th>
           <th scope="col"></th>
         </tr>
-
       </thead>
       <tbody>
-
-        <tr ng-repeat="system in data | filter:query" >
+        <tr ng-repeat="system in data | filter:query">
           <td>{{system.namespace}}</td>
           <td>{{system.name}}</td>
           <td>{{system.version}}</td>
@@ -34,8 +32,11 @@
           <td>{{system.commands.length}}</td>
           <td>{{system.instances.length}}</td>
           <td>
-            <a ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
-               class="btn btn-primary center-block">Explore</a>
+            <a
+              ui-sref="base.system({namespace: system.namespace, systemName: system.name, systemVersion: system.version})"
+              class="btn btn-primary center-block"
+              >Explore</a
+            >
           </td>
         </tr>
       </tbody>

@@ -3,35 +3,49 @@
 </div>
 
 <div class="modal-body" id="modal-body">
-  <div uib-alert
-      ng-repeat="alert in alerts"
-      ng-class="'alert-{{alert.type}}'"
-      close="closeAlert($index)">
+  <div
+    uib-alert
+    ng-repeat="alert in alerts"
+    ng-class="'alert-{{alert.type}}'"
+    close="closeAlert($index)"
+  >
     {{alert.msg}}
   </div>
   <div>
-      <div ng-if="system.local">If you would like to Force Delete
-          {{system.namespace}}/{{system.name}}-{{system.version}}, please check with your system administrator before
-          running this command. This will follow the standard shutdown process for
-          {{system.namespace}}/{{system.name}}-{{system.version}}. If an error occurs,
-          {{system.namespace}}/{{system.name}}-{{system.version}} will still be deleted from the database.</div>
-      <div ng-if="!system.local">
-          If you would like to Force Delete {{system.namespace}}/{{system.name}}-{{system.version}}, please check with
-          your system administrator before running this command. {{system.namespace}}/{{system.name}}-{{system.version}}
-          is managed by another Garden, this request will only be executed locally. This only deletes
-          {{system.namespace}}/{{system.name}}-{{system.version}} from the database and will not shutdown
-          {{system.namespace}}/{{system.name}}-{{system.version}} or remove RabbitMQ queues.</div>
-      <div>Please review the original error message before proceeding.</div>
-      <div uib-alert ng-class="'alert-danger'">{{error}}</div>
-      <button type="button"
-                      class="btn btn-danger"
-                      ng-click="forceDeleteSystem(system)">
-                    Force Delete
-      </button>
+    <div ng-if="system.local">
+      If you would like to Force Delete
+      {{system.namespace}}/{{system.name}}-{{system.version}}, please check with
+      your system administrator before running this command. This will follow
+      the standard shutdown process for
+      {{system.namespace}}/{{system.name}}-{{system.version}}. If an error
+      occurs, {{system.namespace}}/{{system.name}}-{{system.version}} will still
+      be deleted from the database.
+    </div>
+    <div ng-if="!system.local">
+      If you would like to Force Delete
+      {{system.namespace}}/{{system.name}}-{{system.version}}, please check with
+      your system administrator before running this command.
+      {{system.namespace}}/{{system.name}}-{{system.version}} is managed by
+      another Garden, this request will only be executed locally. This only
+      deletes {{system.namespace}}/{{system.name}}-{{system.version}} from the
+      database and will not shutdown
+      {{system.namespace}}/{{system.name}}-{{system.version}} or remove RabbitMQ
+      queues.
+    </div>
+    <div>Please review the original error message before proceeding.</div>
+    <div uib-alert ng-class="'alert-danger'">{{error}}</div>
+    <button
+      type="button"
+      class="btn btn-danger"
+      ng-click="forceDeleteSystem(system)"
+    >
+      Force Delete
+    </button>
   </div>
-
 </div>
 
 <div class="modal-footer">
-  <button class="btn btn-primary" type="button" ng-click="closeDialog()">Close</button>
+  <button class="btn btn-primary" type="button" ng-click="closeDialog()">
+    Close
+  </button>
 </div>

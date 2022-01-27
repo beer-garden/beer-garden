@@ -1,39 +1,38 @@
 /* Defining this here to hide things until Angular gets around to hiding them */
-[ng-cloak]
-{
+[ng-cloak] {
   display: none !important;
 }
 
 .clickable {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .sidebar li {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 pre {
-    font-size: 14px;
+  font-size: 14px;
 }
 
 /* This is in Bootstrap 4 so remove after upgrading */
 .m-b-0 {
-    margin-bottom: 0px !important;
+  margin-bottom: 0px !important;
 }
 .m-b-1 {
-    margin-bottom: 1rem !important;
+  margin-bottom: 1rem !important;
 }
 .m-b-2 {
-    margin-bottom: 2rem !important;
+  margin-bottom: 2rem !important;
 }
 .m-b-3 {
-    margin-bottom: 3rem !important;
+  margin-bottom: 3rem !important;
 }
 .w-100 {
-    width: 100% !important;
+  width: 100% !important;
 }
 .w-50 {
-    width: 50% !important;
+  width: 50% !important;
 }
 
 .clear-right {
@@ -41,119 +40,120 @@ pre {
 }
 
 .tagline {
-    margin-top: -15px;
-    margin-bottom: 20px;
+  margin-top: -15px;
+  margin-bottom: 20px;
 }
 
 .breadcrumb {
-    padding-top: 3px;
-    padding-bottom: 3px;
-    background-color: inherit;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  background-color: inherit;
 }
 .breadcrumb > li + li::before {
-    /* Default content is '/ ' which throws off the spacing */
-    content: '/';
+  /* Default content is '/ ' which throws off the spacing */
+  content: "/";
 }
 
 .nav-tabs {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 .ace_editor {
-    font-size: 16px !important;
-    border-style: solid;
-    border-color: rgb(235, 235, 235);
-    border-width: 1px;
-    border-radius: 4px;
+  font-size: 16px !important;
+  border-style: solid;
+  border-color: rgb(235, 235, 235);
+  border-width: 1px;
+  border-radius: 4px;
 }
 
 legend {
-    width: auto;
-    margin: 0;
-    border: 0px;
+  width: auto;
+  margin: 0;
+  border: 0px;
 }
 
 /* This is to keep the height of the pages at 100% to stretch the background to the bottom */
-html, body{
-    height: 100%;
-    background: inherit;
+html,
+body {
+  height: 100%;
+  background: inherit;
 }
-#page-wrapper{
-    margin: 0;
-    border-left: 0;
-    padding: 30px;
+#page-wrapper {
+  margin: 0;
+  border-left: 0;
+  padding: 30px;
 }
-.navbar{
-    margin-bottom: 0;
+.navbar {
+  margin-bottom: 0;
 }
-.page-header{
-    margin-top: 0px;
+.page-header {
+  margin-top: 0px;
 }
-.icon-color{
-    color: black !important;
+.icon-color {
+  color: black !important;
 }
 
 #requestTable {
-    margin-bottom: 35px;
+  margin-bottom: 35px;
 }
 
 /* Stuff for child rows in the request table */
 .child-row {
-    background-color: rgb(249, 249, 249);
+  background-color: rgb(249, 249, 249);
 }
 .child-link {
-    margin-left: 5px;
+  margin-left: 5px;
 }
 
 /* Stuff for the child request arrow */
 #chevron {
-    cursor: pointer;
-    transition: all 0.25s linear;
+  cursor: pointer;
+  transition: all 0.25s linear;
 }
 .fa-chevron-right {
-    margin-right: 8px;
+  margin-right: 8px;
 }
 .chevron-rotate {
-    transform: rotate(90deg);
+  transform: rotate(90deg);
 }
 
 .panel-container {
-    display: flex;
-    flex-flow: row wrap;
-    justify-content: space-around;
-    align-items: stretch;
-    padding-bottom: 20px;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
+  align-items: stretch;
+  padding-bottom: 20px;
 }
 
 .panel-container .container-item {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    margin: 10px;
-    min-width: 30%;
-    max-width: 30%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin: 10px;
+  min-width: 30%;
+  max-width: 30%;
 }
 
 .panel-container .container-item h3 {
-    margin-top: 10px;
-    margin-bottom: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .system-table {
-    padding-left: 0;
-    padding-right: 0;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .system-table.table-header {
-    font-weight: bold;
-    text-align: right;
-    padding-right: 8px;
+  font-weight: bold;
+  text-align: right;
+  padding-right: 8px;
 }
 
 .panel-container .container-item.empty {
-    height: 0;
-    min-width: 30%;
-    max-width: 30%;
+  height: 0;
+  min-width: 30%;
+  max-width: 30%;
 }
 
 /* For presenting any modal pop ups */
@@ -165,134 +165,141 @@ html, body{
 /* Stuff to make Garden Admin page look like the Systems Page */
 
 #gardens-container {
-    display: flex;
-    flex-flow: row wrap;
-    justify-content: space-around;
-    align-items: stretch;
-    padding-bottom: 20px;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
+  align-items: stretch;
+  padding-bottom: 20px;
 }
 
 #gardens-container .container-item {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    margin: 10px;
-    min-width: 30%;
-    max-width: 30%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin: 10px;
+  min-width: 30%;
+  max-width: 30%;
 }
 #gardens-container .container-item.empty {
-    height: 0;
-    min-width: 30%;
-    max-width: 30%;
+  height: 0;
+  min-width: 30%;
+  max-width: 30%;
 }
 
 #gardens-container .container-item h3 {
-    margin-top: 10px;
-    margin-bottom: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
-
 .garden-table {
-    padding-left: 0;
-    padding-right: 0;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .garden-table.table-header {
-    font-weight: bold;
-    text-align: right;
-    padding-right: 8px;
+  font-weight: bold;
+  text-align: right;
+  padding-right: 8px;
 }
-
 
 /* Stuff for collapsed/raw output display transitions */
-#rawOutput.ng-hide, #formattedOutput.ng-hide {
-    opacity: 0;
+#rawOutput.ng-hide,
+#formattedOutput.ng-hide {
+  opacity: 0;
 }
-#rawOutput.ng-hide-add, #rawOutput.ng-hide-remove,
-#formattedOutput.ng-hide-add, #formattedOutput.ng-hide-remove {
-    transition: 0s linear all;
+#rawOutput.ng-hide-add,
+#rawOutput.ng-hide-remove,
+#formattedOutput.ng-hide-add,
+#formattedOutput.ng-hide-remove {
+  transition: 0s linear all;
 }
-#rawOutput.ng-hide-add-active, #formattedOutput.ng-hide-add-active {
-    transition: .1s linear all;
+#rawOutput.ng-hide-add-active,
+#formattedOutput.ng-hide-add-active {
+  transition: 0.1s linear all;
 }
-#rawOutput.ng-hide-remove-active, #formattedOutput.ng-hide-remove-active {
-    transition: .1s linear all;
-    transition-delay: .2s;
+#rawOutput.ng-hide-remove-active,
+#formattedOutput.ng-hide-remove-active {
+  transition: 0.1s linear all;
+  transition-delay: 0.2s;
 }
-#rawOutput.ng-hide-animate, #formattedOutput.ng-hide-animate {
-    position: absolute;
-    width: 100%;
+#rawOutput.ng-hide-animate,
+#formattedOutput.ng-hide-animate {
+  position: absolute;
+  width: 100%;
 }
 
 /* Animation for side-menu plugins */
-.show-more{
-    -webkit-transition: max-height .3s;
-    -moz-transition: max-height .3s;
-    -ms-transition: max-height .3s;
-    -o-transition: max-height .3s;
-    transition: max-height .3s;
-    overflow: hidden;
+.show-more {
+  -webkit-transition: max-height 0.3s;
+  -moz-transition: max-height 0.3s;
+  -ms-transition: max-height 0.3s;
+  -o-transition: max-height 0.3s;
+  transition: max-height 0.3s;
+  overflow: hidden;
 }
 /* Stuff for datatables */
 table.dataTable tbody td,
 table.table-bordered.dataTable tbody td {
-    vertical-align: middle;
+  vertical-align: middle;
 }
-table.dataTable{
-    table-layout: fixed;
-    word-wrap: break-word;
+table.dataTable {
+  table-layout: fixed;
+  word-wrap: break-word;
 }
-.word-wrap-button, .btn{
-    white-space: normal !important;
-    word-wrap: break-word;
+.word-wrap-button,
+.btn {
+  white-space: normal !important;
+  word-wrap: break-word;
 }
 
 /* dropdown container to keep dropdown directly under button */
-.dropdown-container{
-    position: relative;
-    cursor: default;
+.dropdown-container {
+  position: relative;
+  cursor: default;
 }
 
-.dropdown-menu{
-    min-width: 110px;
-    max-height: 200px;
-    overflow: auto;
+.dropdown-menu {
+  min-width: 110px;
+  max-height: 200px;
+  overflow: auto;
 }
 
 #nav-extras hr {
-    margin: 4px 0px;
+  margin: 4px 0px;
 }
 
 /* Limits number of items shown in dropdowns */
-.select.dropdown-menu{
-    max-height: 195px;
-    overflow: auto;
+.select.dropdown-menu {
+  max-height: 195px;
+  overflow: auto;
 }
 
-[uib-typeahead-popup].dropdown-menu{
-    max-height: 195px;
-    overflow: auto;
+[uib-typeahead-popup].dropdown-menu {
+  max-height: 195px;
+  overflow: auto;
 }
 
-.red-border{
-    border: 2px solid red;
-    border-radius: 4px;
+.red-border {
+  border: 2px solid red;
+  border-radius: 4px;
 }
 
-.navbar-nav > .red-border{
-    margin: -2px;
+.navbar-nav > .red-border {
+  margin: -2px;
 }
 
-#alertClose{
-    padding: 10px;
-    position: absolute;
-    top: 0px;
-    right: 0px;
+#alertClose {
+  padding: 10px;
+  position: absolute;
+  top: 0px;
+  right: 0px;
 }
 
-#loading i{
+#loading i {
   margin-top: 10px;
 }
 
 /* Allows animated elements to be hidden immediately */
-.animate-fix.ng-animate { -webkit-animation: none 0s; }
+.animate-fix.ng-animate {
+  -webkit-animation: none 0s;
+}
